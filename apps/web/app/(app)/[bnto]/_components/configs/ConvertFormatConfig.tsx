@@ -1,20 +1,9 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import {
-  FormControl,
-  FormHelperText,
-  FormLabel,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Slider,
-} from "@bnto/ui";
+import { FormHelperText, Label, Slider } from "@bnto/ui";
 import type { ConvertFormatConfig as Config } from "./types";
-import { FORMAT_OPTIONS } from "./formatOptions";
+import { FormatSelect } from "./FormatSelect";
 import { useConfigChange } from "./useConfigChange";
 
 interface ConvertFormatConfigProps {
@@ -26,42 +15,6 @@ interface QualitySliderProps {
   value: Config;
   qualityValue: number[];
   onQualityChange: (v: number[]) => void;
-}
-
-function FormatSelect({
-  value,
-  onFormatChange,
-}: {
-  value: Config;
-  onFormatChange: (f: string) => void;
-}) {
-  return (
-    <FormControl className="shrink-0">
-      <FormLabel id="convert-format-label">Format</FormLabel>
-      <Select value={value.format} onValueChange={onFormatChange}>
-        <SelectTrigger
-          className="w-24"
-          aria-labelledby="convert-format-label"
-          aria-describedby="convert-format-help"
-          data-testid="format-select"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {FORMAT_OPTIONS.map((opt) => (
-            <SelectItem
-              key={opt.value}
-              value={opt.value}
-              data-testid={`format-option-${opt.value}`}
-            >
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <FormHelperText id="convert-format-help">Output type</FormHelperText>
-    </FormControl>
-  );
 }
 
 function QualitySlider({ value, qualityValue, onQualityChange }: QualitySliderProps) {
@@ -107,7 +60,14 @@ export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProp
 
   return (
     <div className="flex w-full items-end gap-4">
-      <FormatSelect value={value} onFormatChange={handleFormatChange} />
+      <FormatSelect
+        format={value.format}
+        labelId="convert-format-label"
+        describedBy="convert-format-help"
+        onFormatChange={handleFormatChange}
+      >
+        <FormHelperText id="convert-format-help">Output type</FormHelperText>
+      </FormatSelect>
       <QualitySlider
         value={value}
         qualityValue={qualityValue}

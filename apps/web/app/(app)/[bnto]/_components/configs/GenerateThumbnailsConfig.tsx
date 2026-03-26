@@ -2,18 +2,9 @@
 
 import type { ChangeEvent } from "react";
 import { useCallback } from "react";
-import {
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@bnto/ui";
+import { FormControl, FormLabel, Input } from "@bnto/ui";
 import type { GenerateThumbnailsConfig as Config } from "./types";
-import { FORMAT_OPTIONS } from "./formatOptions";
+import { FormatSelect } from "./FormatSelect";
 import { useConfigChange } from "./useConfigChange";
 
 interface GenerateThumbnailsConfigProps {
@@ -41,40 +32,6 @@ function WidthInput({
         wrapperClassName="w-24"
         onChange={onChange}
       />
-    </FormControl>
-  );
-}
-
-function FormatSelect({
-  value,
-  onFormatChange,
-}: {
-  value: Config;
-  onFormatChange: (f: string) => void;
-}) {
-  return (
-    <FormControl className="shrink-0">
-      <FormLabel id="thumb-format-label">Format</FormLabel>
-      <Select value={value.format} onValueChange={onFormatChange}>
-        <SelectTrigger
-          className="w-24"
-          aria-labelledby="thumb-format-label"
-          data-testid="format-select"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {FORMAT_OPTIONS.map((opt) => (
-            <SelectItem
-              key={opt.value}
-              value={opt.value}
-              data-testid={`format-option-${opt.value}`}
-            >
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </FormControl>
   );
 }
@@ -116,7 +73,11 @@ export function GenerateThumbnailsConfig({ value, onChange }: GenerateThumbnails
   return (
     <div className="flex w-full items-end gap-4">
       <WidthInput value={value.width} onChange={handleWidthChange} />
-      <FormatSelect value={value} onFormatChange={handleFormatChange} />
+      <FormatSelect
+        format={value.format}
+        labelId="thumb-format-label"
+        onFormatChange={handleFormatChange}
+      />
       <PrefixInput value={value.prefix} change={change} />
     </div>
   );

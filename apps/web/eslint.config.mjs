@@ -21,7 +21,7 @@ const eslintConfig = defineConfig([
     "test-results/**",
   ]),
   {
-    plugins: { sonarjs, react },
+    plugins: { sonarjs },
     rules: {
       // --- Complexity & size enforcement (code-standards.md) ---
       complexity: ["error", { max: 10 }],
@@ -36,8 +36,13 @@ const eslintConfig = defineConfig([
       "sonarjs/no-identical-conditions": "error",
       "sonarjs/no-collapsible-if": "error",
       "sonarjs/no-duplicated-branches": "error",
-
-      // --- JSX cleanliness — no inline functions in JSX props ---
+    },
+  },
+  // --- JSX cleanliness — no inline functions in JSX props ---
+  {
+    files: ["**/*.tsx"],
+    plugins: { react },
+    rules: {
       "react/jsx-no-bind": [
         "error",
         {

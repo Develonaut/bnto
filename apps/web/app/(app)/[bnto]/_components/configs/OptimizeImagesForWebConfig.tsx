@@ -2,19 +2,9 @@
 
 import type { ChangeEvent } from "react";
 import { useCallback, useMemo } from "react";
-import {
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Slider,
-} from "@bnto/ui";
+import { FormControl, FormLabel, Input, Slider } from "@bnto/ui";
 import type { OptimizeImagesForWebConfig as Config } from "./types";
-import { FORMAT_OPTIONS } from "./formatOptions";
+import { FormatSelect } from "./FormatSelect";
 import { useConfigChange } from "./useConfigChange";
 
 const COMPRESSION_PRESETS = [
@@ -48,40 +38,6 @@ function WidthInput({
         wrapperClassName="w-24"
         onChange={onChange}
       />
-    </FormControl>
-  );
-}
-
-function FormatSelect({
-  value,
-  onFormatChange,
-}: {
-  value: Config;
-  onFormatChange: (f: string) => void;
-}) {
-  return (
-    <FormControl className="shrink-0">
-      <FormLabel id="optimize-format-label">Format</FormLabel>
-      <Select value={value.format} onValueChange={onFormatChange}>
-        <SelectTrigger
-          className="w-24"
-          aria-labelledby="optimize-format-label"
-          data-testid="format-select"
-        >
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {FORMAT_OPTIONS.map((opt) => (
-            <SelectItem
-              key={opt.value}
-              value={opt.value}
-              data-testid={`format-option-${opt.value}`}
-            >
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
     </FormControl>
   );
 }
@@ -123,7 +79,11 @@ export function OptimizeImagesForWebConfig({ value, onChange }: OptimizeImagesFo
     <div className="flex w-full flex-col gap-3">
       <div className="flex w-full items-end gap-4">
         <WidthInput value={value.width} onChange={handleWidthChange} />
-        <FormatSelect value={value} onFormatChange={handleFormatChange} />
+        <FormatSelect
+          format={value.format}
+          labelId="optimize-format-label"
+          onFormatChange={handleFormatChange}
+        />
       </div>
       <CompressionSlider value={value} change={change} />
     </div>
