@@ -12,6 +12,45 @@
 import type { Definition } from "./definition";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 
+function createInputNode(): Definition {
+  return {
+    id: "input",
+    type: "input",
+    version: CURRENT_FORMAT_VERSION,
+    name: "Input",
+    position: { x: 0, y: 100 },
+    metadata: {},
+    parameters: {
+      mode: "file-upload",
+      accept: ["*/*"],
+      extensions: [],
+      label: "Any files",
+      multiple: true,
+    },
+    inputPorts: [],
+    outputPorts: [{ id: "out-1", name: "files" }],
+  };
+}
+
+function createOutputNode(): Definition {
+  return {
+    id: "output",
+    type: "output",
+    version: CURRENT_FORMAT_VERSION,
+    name: "Output",
+    position: { x: 400, y: 100 },
+    metadata: {},
+    parameters: {
+      mode: "download",
+      label: "Output Files",
+      zip: true,
+      autoDownload: true,
+    },
+    inputPorts: [{ id: "in-1", name: "files" }],
+    outputPorts: [],
+  };
+}
+
 /** Creates a blank recipe definition ready for the editor. */
 export function createBlankDefinition(): Definition {
   return {
@@ -20,50 +59,14 @@ export function createBlankDefinition(): Definition {
     version: CURRENT_FORMAT_VERSION,
     name: "New Recipe",
     position: { x: 0, y: 0 },
-    metadata: {
-      createdAt: new Date().toISOString(),
-    },
+    metadata: { createdAt: new Date().toISOString() },
     parameters: {},
     inputPorts: [{ id: crypto.randomUUID(), name: "input" }],
     outputPorts: [{ id: crypto.randomUUID(), name: "output" }],
     // I/O node IDs are stable strings ("input"/"output"), not UUIDs.
     // Each definition has exactly one of each — stable IDs simplify
     // lookup (getInputNode/getOutputNode) and edge wiring.
-    nodes: [
-      {
-        id: "input",
-        type: "input",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Input",
-        position: { x: 0, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "file-upload",
-          accept: ["*/*"],
-          extensions: [],
-          label: "Any files",
-          multiple: true,
-        },
-        inputPorts: [],
-        outputPorts: [{ id: "out-1", name: "files" }],
-      },
-      {
-        id: "output",
-        type: "output",
-        version: CURRENT_FORMAT_VERSION,
-        name: "Output",
-        position: { x: 400, y: 100 },
-        metadata: {},
-        parameters: {
-          mode: "download",
-          label: "Output Files",
-          zip: true,
-          autoDownload: true,
-        },
-        inputPorts: [{ id: "in-1", name: "files" }],
-        outputPorts: [],
-      },
-    ],
+    nodes: [createInputNode(), createOutputNode()],
     edges: [],
   };
 }

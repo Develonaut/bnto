@@ -13,8 +13,8 @@ import type {
   NodeRecipeMetadata,
   Recipe,
   ValidationError,
+  BrowserFileResult,
 } from "@bnto/core";
-import type { BrowserFileResult } from "@bnto/core";
 import type {
   EditorStore,
   EditorState,

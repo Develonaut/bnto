@@ -33,6 +33,12 @@ const roundedMap: Record<SurfaceRounded, string> = {
 
 type SurfaceBorder = "solid" | "dashed" | "none";
 
+const borderMap: Record<SurfaceBorder, string | undefined> = {
+  solid: undefined,
+  dashed: "surface-dashed",
+  none: "surface-border-none",
+};
+
 type SurfaceProps = ComponentProps<"div"> & {
   /** Color variant. `"default"` uses the card surface (no color class). */
   variant?: SurfaceVariant;
@@ -50,6 +56,26 @@ type SurfaceProps = ComponentProps<"div"> & {
   asChild?: boolean;
 };
 
+function resolveSurfaceClassName(
+  variant: SurfaceVariant,
+  elevation: SurfaceElevation,
+  rounded: SurfaceRounded,
+  spring: SpringMode | undefined,
+  border: SurfaceBorder,
+  className: string | undefined,
+) {
+  const resolvedElevation = variant === "ghost" ? "none" : elevation;
+  return cn(
+    "surface",
+    `elevation-${resolvedElevation}`,
+    variant !== "default" && `surface-${variant}`,
+    spring && "springable",
+    borderMap[border],
+    roundedMap[rounded],
+    className,
+  );
+}
+
 export function Surface({
   variant = "default",
   elevation = "md",
@@ -62,23 +88,11 @@ export function Surface({
   style,
   ...props
 }: SurfaceProps) {
-  const isGhost = variant === "ghost";
-  const resolvedElevation = isGhost ? "none" : elevation;
-
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
       data-grounded={spring && grounded ? "" : undefined}
-      className={cn(
-        "surface",
-        `elevation-${resolvedElevation}`,
-        variant !== "default" && `surface-${variant}`,
-        spring && "springable",
-        border === "dashed" && "surface-dashed",
-        border === "none" && "surface-border-none",
-        roundedMap[rounded],
-        className,
-      )}
+      className={resolveSurfaceClassName(variant, elevation, rounded, spring, border, className)}
       style={spring ? { ...SPRING_STYLES[spring], ...style } : style}
       {...props}
     />

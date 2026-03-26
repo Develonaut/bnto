@@ -12,13 +12,20 @@
     "postinstall": "lefthook install || true"
   },
   "devDependencies": {
+    "@auth/core": "^0.37.4",
+    "@convex-dev/auth": "^0.0.90",
     "@eslint/js": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-boundaries": "^6.0.1",
+    "eslint-plugin-check-file": "^3.3.1",
+    "eslint-plugin-import-x": "^4.16.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-sonarjs": "^4.0.2",
+    "eslint-plugin-unicorn": "^63.0.0",
     "knip": "^5.85.0",
     "prettier": "^3.8.1",
+    "sherif": "^1.11.0",
     "turbo": "^2.4.4",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:"
@@ -29,9 +36,5 @@
       "sharp",
       "unrs-resolver"
     ]
-  },
-  "dependencies": {
-    "@auth/core": "^0.37.4",
-    "@convex-dev/auth": "^0.0.90"
   }
 }

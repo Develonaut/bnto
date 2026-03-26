@@ -2,9 +2,9 @@
 
 import { useCallback } from "react";
 import type { NodeParamField, NodeParamFieldInfo, NodeParam } from "@bnto/core";
-import { Label } from "@bnto/ui";
 import { CONTROL_REGISTRY } from "./controls";
-import { getFieldLayout } from "./fieldLayout";
+import { FieldLabel } from "./controls/FieldLabel";
+import { SchemaFieldLayout } from "./SchemaFieldLayout";
 
 /**
  * SchemaField — renders the correct UI control via registry lookup.
@@ -27,22 +27,14 @@ interface SchemaFieldProps {
 }
 
 function SchemaField({ name, meta, fieldConfig, fieldInfo, value, onChange }: SchemaFieldProps) {
-  const handleChange = useCallback(
-    (newValue: unknown) => onChange(name, newValue),
-    [name, onChange],
-  );
-
+  const handleChange = useCallback((v: unknown) => onChange(name, v), [name, onChange]);
   const id = `param-${name}`;
   const Control = CONTROL_REGISTRY[fieldInfo.control];
-  const layout = getFieldLayout(fieldInfo.control);
-
   const label = (
-    <Label htmlFor={id} title={meta.description}>
+    <FieldLabel htmlFor={id} title={meta.description} required={fieldInfo.required}>
       {fieldConfig?.label ?? meta.label}
-      {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
-    </Label>
+    </FieldLabel>
   );
-
   const control = (
     <Control
       id={id}
@@ -54,24 +46,8 @@ function SchemaField({ name, meta, fieldConfig, fieldInfo, value, onChange }: Sc
     />
   );
 
-  if (layout === "self-labeled") {
-    return <div data-testid={`schema-field-${name}`}>{control}</div>;
-  }
-
-  if (layout === "inline") {
-    return (
-      <div className="flex items-center justify-between gap-2" data-testid={`schema-field-${name}`}>
-        {label}
-        {control}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-1.5" data-testid={`schema-field-${name}`}>
-      {label}
-      {control}
-    </div>
+    <SchemaFieldLayout name={name} control={fieldInfo.control} label={label} controlEl={control} />
   );
 }
 

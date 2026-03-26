@@ -7,10 +7,8 @@
  * validates, returning a ready-to-execute definition or validation errors.
  */
 
-import { validateDefinition } from "@bnto/core";
-import type { Definition, ValidationError } from "@bnto/core";
-import { definitionToPipeline } from "@bnto/core";
-import type { PipelineDefinition, PipelineNode } from "@bnto/core";
+import { validateDefinition, definitionToPipeline } from "@bnto/core";
+import type { Definition, ValidationError, PipelineDefinition, PipelineNode } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata, ExecutionState } from "../store/types";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";

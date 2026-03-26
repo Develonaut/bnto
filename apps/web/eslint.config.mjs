@@ -4,6 +4,9 @@ import nextTs from "eslint-config-next/typescript";
 import prettierConfig from "eslint-config-prettier";
 import sonarjs from "eslint-plugin-sonarjs";
 import react from "eslint-plugin-react";
+import unicorn from "eslint-plugin-unicorn";
+import { boundariesSettings, boundariesRules } from "../../eslint.config.base.mjs";
+import boundaries from "eslint-plugin-boundaries";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -21,7 +24,8 @@ const eslintConfig = defineConfig([
     "test-results/**",
   ]),
   {
-    plugins: { sonarjs },
+    plugins: { sonarjs, boundaries, unicorn },
+    settings: { ...boundariesSettings },
     rules: {
       // --- Complexity & size enforcement (code-standards.md) ---
       complexity: ["error", { max: 10 }],
@@ -36,6 +40,60 @@ const eslintConfig = defineConfig([
       "sonarjs/no-identical-conditions": "error",
       "sonarjs/no-collapsible-if": "error",
       "sonarjs/no-duplicated-branches": "error",
+
+      // --- TypeScript rules ---
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-inferrable-types": "error",
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "inline-type-imports" },
+      ],
+
+      // --- React hooks ---
+      "react-hooks/exhaustive-deps": "error",
+
+      // --- Style ---
+      "no-else-return": ["error", { allowElseIf: false }],
+
+      // --- Architecture boundaries ---
+      ...boundariesRules,
+
+      // --- Import quality (using eslint-plugin-import from eslint-config-next) ---
+      "import/no-cycle": ["error", { maxDepth: 3 }],
+      "import/no-duplicates": "error",
+
+      // --- Code quality (unicorn cherry-picks) ---
+      "unicorn/no-abusive-eslint-disable": "error",
+      "unicorn/prefer-node-protocol": "error",
+      "unicorn/no-useless-undefined": "error",
+      "unicorn/consistent-function-scoping": "warn",
+
+      // --- Restricted imports ---
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "tailwind-variants",
+              message: "Use createCn() from @bnto/ui instead.",
+            },
+          ],
+        },
+      ],
+
+      // --- Accessibility (beyond eslint-config-next defaults) ---
+      "jsx-a11y/anchor-has-content": "warn",
+      "jsx-a11y/anchor-is-valid": "warn",
+      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/heading-has-content": "warn",
+      "jsx-a11y/interactive-supports-focus": "warn",
+      "jsx-a11y/label-has-associated-control": "warn",
+      "jsx-a11y/no-autofocus": ["warn", { ignoreNonDOM: true }],
+      "jsx-a11y/no-noninteractive-element-interactions": "warn",
+      "jsx-a11y/no-static-element-interactions": "warn",
+      "jsx-a11y/no-noninteractive-tabindex": "warn",
+      "jsx-a11y/no-redundant-roles": "warn",
+      "jsx-a11y/tabindex-no-positive": "warn",
     },
   },
   // --- JSX cleanliness — no inline functions in JSX props ---

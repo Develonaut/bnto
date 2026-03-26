@@ -68,7 +68,7 @@ function deriveCenterContent(
   ) {
     return <ToolbarProgress execution={flow.browserExec} />;
   }
-  return undefined;
+  return;
 }
 
 /** Browser error card shown above the file grid in Phase 3. */

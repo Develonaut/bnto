@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
 
 import { BentoItemContext } from "./bentoGridContext";
+import type { BentoEntry } from "./partitionBentoChildren";
 import { Grid, GridItem } from "./Grid";
 import { partitionBentoChildren } from "./partitionBentoChildren";
 import type { GapSize } from "../utils/resolveGap";
@@ -20,6 +21,18 @@ export function BentoGridPinned({ children }: PinnedProps) {
   return <>{children}</>;
 }
 BentoGridPinned.displayName = "BentoGrid.Pinned";
+
+/* ── Cell ────────────────────────────────────────────────────── */
+
+function BentoCell({ entry }: { entry: BentoEntry }) {
+  return (
+    <BentoItemContext.Provider value={entry.layout}>
+      <GridItem colSpan={entry.layout.colSpan} rowSpan={entry.layout.rowSpan} className="min-h-0">
+        {entry.element}
+      </GridItem>
+    </BentoItemContext.Provider>
+  );
+}
 
 /* ── Component ───────────────────────────────────────────────── */
 
@@ -51,15 +64,7 @@ export function BentoGrid({
       style={{ gridTemplateRows: `repeat(${rows}, minmax(${minRowHeight}, auto))` }}
     >
       {entries.map((entry) => (
-        <BentoItemContext.Provider key={entry.key} value={entry.layout}>
-          <GridItem
-            colSpan={entry.layout.colSpan}
-            rowSpan={entry.layout.rowSpan}
-            className="min-h-0"
-          >
-            {entry.element}
-          </GridItem>
-        </BentoItemContext.Provider>
+        <BentoCell key={entry.key} entry={entry} />
       ))}
     </Grid>
   );

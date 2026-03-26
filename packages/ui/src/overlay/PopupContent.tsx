@@ -9,18 +9,23 @@ import { Popup } from "./Popup";
 import { POPUP_OFFSET_PX, type PopupOffset } from "./popupOffset";
 import type { SurfaceElevation } from "../surface/Surface";
 
+type PopupContentProps = Omit<
+  ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>,
+  "sideOffset"
+> & {
+  /** Offset from trigger edge. Default "md" (16px). */
+  offset?: PopupOffset;
+  /** Card elevation. Default "lg". */
+  elevation?: SurfaceElevation;
+  /** Collision boundary element. */
+  boundary?: Element | null;
+  /** Padding from collision boundary. Default 16. */
+  boundaryPadding?: number;
+};
+
 export const PopupContent = forwardRef<
   ElementRef<typeof PopoverPrimitive.Content>,
-  Omit<ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>, "sideOffset"> & {
-    /** Offset from trigger edge. Default "md" (16px). */
-    offset?: PopupOffset;
-    /** Card elevation. Default "lg". */
-    elevation?: SurfaceElevation;
-    /** Collision boundary element. */
-    boundary?: Element | null;
-    /** Padding from collision boundary. Default 16. */
-    boundaryPadding?: number;
-  }
+  PopupContentProps
 >(
   (
     {

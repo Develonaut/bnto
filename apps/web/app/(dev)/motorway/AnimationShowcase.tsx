@@ -9,9 +9,6 @@ import {
   SparklesIcon,
   Columns3Icon,
   RotateCcwIcon,
-} from "@bnto/ui";
-
-import {
   Stagger,
   ScaleIn,
   FadeIn,

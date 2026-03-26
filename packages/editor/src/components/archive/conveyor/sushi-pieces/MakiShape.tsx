@@ -10,7 +10,7 @@
  * — the shape is identical, only the fill color changes.
  */
 
-import { NORI, RICE, RICE_STROKE } from "../sushi-colors";
+import { NORI, RICE, RICE_STROKE } from "../sushiColors";
 import { S } from "./constants";
 
 export function MakiShape({ fill, line }: { fill: string; line?: string }) {

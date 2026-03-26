@@ -14,45 +14,53 @@ interface Debounced {
   destroy: () => void;
 }
 
+/** Mutable timer state shared between debounce methods. */
+interface TimerState {
+  timerId: ReturnType<typeof setTimeout> | null;
+  pending: (() => void) | null;
+  destroyed: boolean;
+}
+
+function cancelTimer(state: TimerState) {
+  if (state.timerId !== null) {
+    clearTimeout(state.timerId);
+    state.timerId = null;
+  }
+  state.pending = null;
+}
+
+function flushTimer(state: TimerState) {
+  if (state.pending) {
+    const fn = state.pending;
+    cancelTimer(state);
+    fn();
+  }
+}
+
+function scheduleTimer(state: TimerState, fn: () => void, delayMs: number) {
+  if (state.destroyed) return;
+  cancelTimer(state);
+  state.pending = fn;
+  state.timerId = setTimeout(() => {
+    const toRun = state.pending;
+    state.timerId = null;
+    state.pending = null;
+    toRun?.();
+  }, delayMs);
+}
+
 function debounce(delayMs: number): Debounced {
-  let timerId: ReturnType<typeof setTimeout> | null = null;
-  let pending: (() => void) | null = null;
-  let destroyed = false;
+  const state: TimerState = { timerId: null, pending: null, destroyed: false };
 
-  function cancel() {
-    if (timerId !== null) {
-      clearTimeout(timerId);
-      timerId = null;
-    }
-    pending = null;
-  }
-
-  function flush() {
-    if (pending) {
-      const fn = pending;
-      cancel();
-      fn();
-    }
-  }
-
-  function schedule(fn: () => void) {
-    if (destroyed) return;
-    cancel();
-    pending = fn;
-    timerId = setTimeout(() => {
-      const toRun = pending;
-      timerId = null;
-      pending = null;
-      toRun?.();
-    }, delayMs);
-  }
-
-  function destroy() {
-    cancel();
-    destroyed = true;
-  }
-
-  return { schedule, flush, cancel, destroy };
+  return {
+    schedule: (fn) => scheduleTimer(state, fn, delayMs),
+    flush: () => flushTimer(state),
+    cancel: () => cancelTimer(state),
+    destroy: () => {
+      cancelTimer(state);
+      state.destroyed = true;
+    },
+  };
 }
 
 export { debounce };

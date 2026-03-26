@@ -9,9 +9,11 @@ import {
   FileListMeta,
   FileListName,
   IconBadge,
+  FileIcon,
+  LoaderIcon,
+  XIcon,
+  formatFileSize,
 } from "@bnto/ui";
-import { FileIcon, LoaderIcon, XIcon } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
 
 interface PendingFileRowProps {
   file: File;

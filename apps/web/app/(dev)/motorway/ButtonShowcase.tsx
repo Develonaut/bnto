@@ -17,9 +17,14 @@ import {
   TrashIcon,
   UnderlineIcon,
   ZapIcon,
+  Button,
+  Card,
+  Heading,
+  Row,
+  Stack,
+  Text,
+  cn,
 } from "@bnto/ui";
-
-import { Button, Card, Heading, Row, Stack, Text, cn } from "@bnto/ui";
 
 type Variant =
   | "primary"

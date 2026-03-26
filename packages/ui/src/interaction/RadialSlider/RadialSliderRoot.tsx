@@ -4,14 +4,13 @@ import { useRef } from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "../../utils/cn";
-import { GripVerticalIcon } from "../../icons";
-import { Button } from "../Button";
 
-import { arcPath, polarToOffset } from "./geometry";
-import { valueToAngle } from "./valueMapping";
 import { useRadialPointer } from "./useRadialPointer";
 import { useRadialKeyboard } from "./useRadialKeyboard";
 import { RadialSliderSvg } from "./RadialSliderSvg";
+import { RadialSliderThumb } from "./RadialSliderThumb";
+import { computeRadialLayout } from "./useRadialLayout";
+import { resolveRadialDefaults } from "./resolveRadialDefaults";
 
 export interface RadialSliderProps {
   min: number;
@@ -36,67 +35,121 @@ export interface RadialSliderProps {
   className?: string;
 }
 
-export function RadialSliderRoot({
+export function RadialSliderRoot(props: RadialSliderProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const d = resolveRadialDefaults(props);
+
+  const layout = computeRadialLayout({
+    size: d.size,
+    strokeWidth: d.strokeWidth,
+    min: props.min,
+    max: props.max,
+    value: props.value,
+    startAngle: d.startAngle,
+    endAngle: d.endAngle,
+    hideProgress: d.hideProgress,
+  });
+  const pointer = useRadialPointer({
+    containerRef,
+    thumbRef,
+    min: props.min,
+    max: props.max,
+    startAngle: d.startAngle,
+    endAngle: d.endAngle,
+    onChange: props.onChange,
+  });
+  const onKeyDown = useRadialKeyboard({
+    min: props.min,
+    max: props.max,
+    value: props.value,
+    step: d.step,
+    onChange: props.onChange,
+  });
+  const thumb = resolveThumb(props, pointer, thumbRef);
+
+  return (
+    <RadialSliderContainer
+      containerRef={containerRef}
+      pointer={pointer}
+      onKeyDown={onKeyDown}
+      size={d.size}
+      ariaLabel={props["aria-label"]}
+      min={props.min}
+      max={props.max}
+      value={props.value}
+      className={props.className}
+    >
+      <RadialSliderSvg
+        size={d.size}
+        radius={layout.radius}
+        svgCenter={layout.svgCenter}
+        strokeWidth={d.strokeWidth}
+        startAngle={d.startAngle}
+        endAngle={d.endAngle}
+        trackClassName={d.trackClassName}
+        activeClassName={d.activeClassName}
+        hideRing={d.hideRing}
+        svgDefs={props.svgDefs}
+        trackStroke={props.trackStroke}
+        activeStroke={props.activeStroke}
+        activePath={layout.activePath}
+      />
+      {props.children && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          {props.children}
+        </div>
+      )}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2"
+        style={{
+          transform: `translate(calc(${layout.thumbOffset.x}px - 50%), calc(${layout.thumbOffset.y}px - 50%))`,
+        }}
+      >
+        {thumb}
+      </div>
+    </RadialSliderContainer>
+  );
+}
+
+function resolveThumb(
+  props: RadialSliderProps,
+  pointer: ReturnType<typeof useRadialPointer>,
+  thumbRef: React.RefObject<HTMLDivElement | null>,
+) {
+  if (props.renderThumb) return props.renderThumb({ isDragging: pointer.isDragging });
+  return (
+    <RadialSliderThumb
+      isDragging={pointer.isDragging}
+      isHovering={pointer.isHovering}
+      thumbRef={thumbRef}
+    />
+  );
+}
+
+function RadialSliderContainer({
+  containerRef,
+  pointer,
+  onKeyDown,
+  size,
+  ariaLabel,
   min,
   max,
   value,
-  onChange,
-  step = 1,
-  startAngle = 0,
-  endAngle = 360,
-  size = 48,
-  strokeWidth = 10,
-  trackClassName = "text-input",
-  activeClassName = "text-primary",
-  hideProgress = false,
-  hideRing = false,
-  svgDefs,
-  trackStroke,
-  activeStroke,
-  renderThumb,
-  children,
-  "aria-label": ariaLabel,
   className,
-}: RadialSliderProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const thumbRef = useRef<HTMLDivElement>(null);
-
-  // Track radius -- inset from the edge to leave room for the thumb
-  const trackInset = strokeWidth * 2 + 4;
-  const radius = (size - trackInset) / 2;
-  const svgCenter = size / 2;
-
-  // Thumb position as offset from center
-  const currentAngle = valueToAngle(value, min, max, startAngle, endAngle);
-  const thumbOffset = polarToOffset(currentAngle, radius);
-
-  // Active progress arc
-  const activePath =
-    !hideProgress && value > min
-      ? arcPath(startAngle, currentAngle, radius, svgCenter, svgCenter)
-      : "";
-
-  const { isDragging, isHovering, onPointerDown, onPointerMove, onPointerUp, clearHover } =
-    useRadialPointer({ containerRef, thumbRef, min, max, startAngle, endAngle, onChange });
-
-  const onKeyDown = useRadialKeyboard({ min, max, value, step, onChange });
-
-  const defaultThumb = (
-    <Button
-      asChild
-      variant="primary"
-      elevation="sm"
-      spring="bouncy"
-      pressed={isDragging}
-      hovered={isHovering}
-      className="rounded-full"
-    >
-      <div ref={thumbRef} className="flex items-center justify-center size-8 ring-0">
-        <GripVerticalIcon strokeWidth={3} className="size-3.5 shrink-0" />
-      </div>
-    </Button>
-  );
-
+  children,
+}: {
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  pointer: ReturnType<typeof useRadialPointer>;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  size: number;
+  ariaLabel?: string;
+  min: number;
+  max: number;
+  value: number;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <div
       ref={containerRef}
@@ -108,42 +161,13 @@ export function RadialSliderRoot({
       aria-valuemax={max}
       aria-valuenow={value}
       aria-label={ariaLabel}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={clearHover}
+      onPointerDown={pointer.onPointerDown}
+      onPointerMove={pointer.onPointerMove}
+      onPointerUp={pointer.onPointerUp}
+      onPointerLeave={pointer.clearHover}
       onKeyDown={onKeyDown}
     >
-      <RadialSliderSvg
-        size={size}
-        radius={radius}
-        svgCenter={svgCenter}
-        strokeWidth={strokeWidth}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        trackClassName={trackClassName}
-        activeClassName={activeClassName}
-        hideRing={hideRing}
-        svgDefs={svgDefs}
-        trackStroke={trackStroke}
-        activeStroke={activeStroke}
-        activePath={activePath}
-      />
-
-      {children && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {children}
-        </div>
-      )}
-
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2"
-        style={{
-          transform: `translate(calc(${thumbOffset.x}px - 50%), calc(${thumbOffset.y}px - 50%))`,
-        }}
-      >
-        {renderThumb ? renderThumb({ isDragging }) : defaultThumb}
-      </div>
+      {children}
     </div>
   );
 }

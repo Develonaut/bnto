@@ -15,7 +15,6 @@ import { NodeRoot, NodeBody, NodeIcon, NodeLabel, NodeSublabel } from "./Node";
  */
 
 export const CompartmentNode = memo(function CompartmentNode({
-  id,
   data,
   selected,
 }: NodeProps<BentoNode>) {

@@ -1,6 +1,6 @@
 import createMDX from "@next/mdx";
 import type { NextConfig } from "next";
-import { resolve } from "path";
+import { resolve } from "node:path";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "mdx", "ts", "tsx"],

@@ -6,7 +6,7 @@
  * classic onigiri emoji/icon shape.
  */
 
-import { NORI, RICE } from "../sushi-colors";
+import { NORI, RICE } from "../sushiColors";
 import { S } from "./constants";
 
 export function OnigiriShape() {

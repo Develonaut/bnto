@@ -14,8 +14,8 @@ function TagPickerControl({ id, meta, fieldConfig, value, onChange }: ControlPro
       return configOptions;
     }
     // When no predefined options, show current values as selectable
+    // Dep uses `value` (prop) not `values` (derived array with new ref each render)
     return values.map((v) => ({ value: v, label: v }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- values is derived from value prop
   }, [configOptions, value]);
 
   return (

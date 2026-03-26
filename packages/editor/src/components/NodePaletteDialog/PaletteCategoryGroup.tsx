@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@bnto/ui";
 import type { PaletteGroup } from "../../hooks/useNodePalette";
 import { CATEGORY_VARIANT } from "../../adapters/categoryVariant";
@@ -20,6 +21,7 @@ interface PaletteCategoryGroupProps {
 
 function PaletteCategoryGroup({ group, isFull, onAdd }: PaletteCategoryGroupProps) {
   const variant = CATEGORY_VARIANT[group.category.name] ?? "muted";
+  const handleAdd = useCallback((type: string) => onAdd(type), [onAdd]);
 
   return (
     <AccordionItem value={group.category.name} className="border-b-0">
@@ -31,13 +33,14 @@ function PaletteCategoryGroup({ group, isFull, onAdd }: PaletteCategoryGroupProp
           {group.items.map((item) => (
             <PaletteItem
               key={item.type}
+              type={item.type}
               label={item.label}
               description={item.description}
               icon={item.icon}
               variant={variant}
               browserCapable={item.browserCapable}
               disabled={isFull || !item.browserCapable}
-              onAdd={() => onAdd(item.type)}
+              onAdd={handleAdd}
               testId={`palette-item-${item.type}`}
             />
           ))}

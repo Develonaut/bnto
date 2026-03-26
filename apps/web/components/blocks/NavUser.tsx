@@ -4,8 +4,7 @@ import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { core } from "@bnto/core";
 
-import { CircleUserIcon } from "@bnto/ui";
-import { Menu, MenuTrigger, MenuContent, Stack } from "@bnto/ui";
+import { CircleUserIcon, Menu, MenuTrigger, MenuContent, Stack } from "@bnto/ui";
 
 import { NavUserMenuContent } from "./NavUserMenuContent";
 

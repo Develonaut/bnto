@@ -1,25 +1,15 @@
 "use client";
 
 import { useCallback } from "react";
-import {
-  Divider,
-  Heading,
-  Label,
-  Text,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@bnto/ui";
+import { Divider, Heading, Text } from "@bnto/ui";
 import type { IterationMode } from "@bnto/core";
 import { useEditor } from "../../context";
+import { IterationModeSelect } from "./IterationModeSelect";
 
 /**
  * RecipeSettingsPanel — shown in ConfigPanel when no node is selected.
  *
  * Surfaces recipe-level settings: name and iteration mode.
- * Replaces the old "Select a node to configure" placeholder.
  */
 function RecipeSettingsPanel() {
   const editor = useEditor();
@@ -29,10 +19,7 @@ function RecipeSettingsPanel() {
 
   const handleIterationChange = useCallback(
     (value: string) => {
-      editor.definition.setSettings({
-        ...definition?.settings,
-        iteration: value as IterationMode,
-      });
+      editor.definition.setSettings({ ...definition?.settings, iteration: value as IterationMode });
     },
     [editor, definition?.settings],
   );
@@ -50,23 +37,7 @@ function RecipeSettingsPanel() {
       <Divider />
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 p-3">
-          <div className="flex flex-col gap-1.5">
-            <Label>File Iteration</Label>
-            <Select value={iterationMode} onValueChange={handleIterationChange}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Auto</SelectItem>
-                <SelectItem value="explicit">Explicit</SelectItem>
-              </SelectContent>
-            </Select>
-            <Text size="xs" color="muted">
-              {iterationMode === "auto"
-                ? "Automatically processes each file through the pipeline."
-                : "Requires explicit loop nodes for per-file iteration."}
-            </Text>
-          </div>
+          <IterationModeSelect value={iterationMode} onChange={handleIterationChange} />
         </div>
       </div>
     </>

@@ -1,52 +1,25 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { Label, Slider } from "@bnto/ui";
-import type { SliderPreset } from "@bnto/ui";
+import { Slider } from "@bnto/ui";
 import type { ControlProps } from "./types";
-
-/** Convert between stored and display values when inverted is set. */
-function invertValue(value: number, min: number, max: number): number {
-  return min + max - value;
-}
+import { FieldLabel } from "./FieldLabel";
+import { useSliderState } from "./useSliderState";
 
 function SliderControl({ id, fieldInfo, meta, fieldConfig, value, onChange }: ControlProps) {
-  const min = fieldInfo.min ?? 0;
-  const max = fieldInfo.max ?? 100;
-  const storedValue = typeof value === "number" ? value : min;
+  const { min = 0, max = 100 } = fieldInfo;
   const inverted = fieldConfig?.inverted ?? false;
-
-  // Display value: invert if needed so the slider matches user mental model
-  const displayValue = inverted ? invertValue(storedValue, min, max) : storedValue;
-
-  // Convert presets from stored-value space to display-value space,
-  // sorted ascending by display value so justify-between aligns correctly
-  const presets = fieldConfig?.presets;
-  const displayPresets = useMemo((): SliderPreset[] | undefined => {
-    if (!presets) return undefined;
-    if (!inverted) return [...presets].sort((a, b) => a.value - b.value);
-    return presets
-      .map((p) => ({ ...p, value: invertValue(p.value, min, max) }))
-      .sort((a, b) => a.value - b.value);
-  }, [presets, inverted, min, max]);
-
-  const sliderValue = useMemo(() => [displayValue], [displayValue]);
-
-  const handleValueChange = useCallback(
-    (values: number[]) => {
-      const display = values[0]!;
-      onChange(inverted ? invertValue(display, min, max) : display);
-    },
-    [onChange, inverted, min, max],
-  );
-
-  const hasPresets = displayPresets && displayPresets.length > 0;
-
-  const sliderLabel = (
-    <Label htmlFor={id} title={meta.description}>
+  const { sliderValue, displayPresets, handleChange } = useSliderState({
+    min,
+    max,
+    inverted,
+    value,
+    presets: fieldConfig?.presets,
+    onChange,
+  });
+  const label = (
+    <FieldLabel htmlFor={id} title={meta.description} required={fieldInfo.required}>
       {fieldConfig?.label ?? meta.label}
-      {fieldInfo.required && <span className="ml-0.5 text-destructive">*</span>}
-    </Label>
+    </FieldLabel>
   );
 
   return (
@@ -55,9 +28,9 @@ function SliderControl({ id, fieldInfo, meta, fieldConfig, value, onChange }: Co
       min={min}
       max={max}
       value={sliderValue}
-      label={sliderLabel}
-      presets={hasPresets ? displayPresets : undefined}
-      onValueChange={handleValueChange}
+      label={label}
+      presets={displayPresets?.length ? displayPresets : undefined}
+      onValueChange={handleChange}
       data-testid={`control-slider-${id}`}
     />
   );

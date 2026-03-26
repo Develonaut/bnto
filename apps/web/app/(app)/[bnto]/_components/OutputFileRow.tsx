@@ -1,7 +1,6 @@
 "use client";
 
-import { Button, DownloadIcon, LoaderIcon } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
+import { Button, DownloadIcon, LoaderIcon, formatFileSize } from "@bnto/ui";
 import type { OutputFileUrl } from "@bnto/core";
 
 interface OutputFileRowProps {

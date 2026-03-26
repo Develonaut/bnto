@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "../icons";
@@ -42,6 +42,46 @@ export function SelectTrigger({
   );
 }
 
+type SelectContentProps = ComponentProps<typeof SelectPrimitive.Content> & {
+  /** Offset from trigger edge. Default "md" (16px). */
+  offset?: PopupOffset;
+  /** Card elevation. Default "lg". */
+  elevation?: SurfaceElevation;
+};
+
+function SelectContentInner({
+  children,
+  position,
+  elevation,
+  className,
+}: {
+  children: ReactNode;
+  position: string;
+  elevation: SurfaceElevation;
+  className?: string;
+}) {
+  return (
+    <Popup
+      originStyle="var(--radix-select-content-transform-origin)"
+      elevation={elevation}
+      className={className}
+    >
+      <div className="overflow-x-hidden overflow-y-auto">
+        <SelectScrollUpButton />
+        <SelectPrimitive.Viewport
+          className={cn(
+            "p-1",
+            position === "popper" && "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+          )}
+        >
+          {children}
+        </SelectPrimitive.Viewport>
+        <SelectScrollDownButton />
+      </div>
+    </Popup>
+  );
+}
+
 export function SelectContent({
   className,
   children,
@@ -49,19 +89,8 @@ export function SelectContent({
   align = "center",
   offset = "md",
   elevation = "lg",
-  boundary,
-  boundaryPadding = 16,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Content> & {
-  /** Offset from trigger edge. Default "md" (16px). */
-  offset?: PopupOffset;
-  /** Card elevation. Default "lg". */
-  elevation?: SurfaceElevation;
-  /** Collision boundary element. */
-  boundary?: Element | null;
-  /** Padding from collision boundary. Default 16. */
-  boundaryPadding?: number;
-}) {
+}: SelectContentProps) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -72,25 +101,9 @@ export function SelectContent({
         sideOffset={POPUP_OFFSET_PX[offset]}
         {...props}
       >
-        <Popup
-          originStyle="var(--radix-select-content-transform-origin)"
-          elevation={elevation}
-          className={className}
-        >
-          <div className="overflow-x-hidden overflow-y-auto">
-            <SelectScrollUpButton />
-            <SelectPrimitive.Viewport
-              className={cn(
-                "p-1",
-                position === "popper" &&
-                  "w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
-              )}
-            >
-              {children}
-            </SelectPrimitive.Viewport>
-            <SelectScrollDownButton />
-          </div>
-        </Popup>
+        <SelectContentInner position={position} elevation={elevation} className={className}>
+          {children}
+        </SelectContentInner>
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import { useCallback, type ComponentProps } from "react";
 
 import { cn } from "../../utils/cn";
 import { ScaleIn } from "../../animation/Animate";
@@ -14,6 +14,13 @@ interface FileUploadDropzoneProps extends ComponentProps<typeof Card> {
   disableAnimation?: boolean;
 }
 
+const DROPZONE_CN = [
+  "flex h-auto w-full flex-col items-center justify-center rounded-xl",
+  "outline-border [outline-style:dashed] [outline-width:3px] [outline-offset:-8px]",
+  "focus-visible:[outline-style:solid] focus-visible:[outline-color:var(--focus-ring)] focus-visible:[outline-width:2px]",
+  "data-disabled:pointer-events-none",
+].join(" ");
+
 export function FileUploadDropzone({
   disableAnimation,
   className,
@@ -23,9 +30,9 @@ export function FileUploadDropzone({
   const { getRootProps, getInputProps, isDragActive, open, disabled } =
     useFileUploadContext("FileUpload.Dropzone");
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (!disabled) open();
-  };
+  }, [disabled, open]);
 
   const card = (
     <Button asChild hovered={isDragActive}>
@@ -37,13 +44,7 @@ export function FileUploadDropzone({
         data-disabled={disabled ? "" : undefined}
         data-dragging={isDragActive ? "" : undefined}
         {...props}
-        className={cn(
-          "flex h-auto w-full flex-col items-center justify-center rounded-xl",
-          "outline-border [outline-style:dashed] [outline-width:3px] [outline-offset:-8px]",
-          "focus-visible:[outline-style:solid] focus-visible:[outline-color:var(--focus-ring)] focus-visible:[outline-width:2px]",
-          "data-disabled:pointer-events-none",
-          className,
-        )}
+        className={cn(DROPZONE_CN, className)}
         onClick={handleClick}
       >
         <input {...getInputProps()} aria-label="File upload" data-testid="file-input" />

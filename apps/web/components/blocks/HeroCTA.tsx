@@ -1,5 +1,4 @@
-import { GithubIcon } from "@bnto/ui";
-import { Button, Row } from "@bnto/ui";
+import { GithubIcon, Button, Row } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/copy";
 
 export function HeroCTA() {

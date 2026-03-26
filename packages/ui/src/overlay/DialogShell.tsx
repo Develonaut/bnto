@@ -1,12 +1,14 @@
 "use client";
 
 import type { ReactNode, ComponentProps } from "react";
-import { Dialog } from "./Dialog";
-import { DialogContent } from "./Dialog";
-import { DialogHeader } from "./Dialog";
-import { DialogTitle } from "./Dialog";
-import { DialogClose } from "./Dialog";
-import { DialogDescription } from "./Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+  DialogDescription,
+} from "./Dialog";
 
 type DialogSize = ComponentProps<typeof DialogContent>["size"];
 

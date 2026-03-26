@@ -52,15 +52,8 @@ interface NodePaletteResult {
 // Pure computation
 // ---------------------------------------------------------------------------
 
-function computePalette(
-  nodeTypes: Record<NodeTypeName, NodeTypeInfo>,
-  categories: readonly CategoryInfo[],
-  browserOnly: boolean,
-): NodePaletteResult {
-  // I/O nodes are structural (always present) — never shown in the palette.
-  const nonIoTypes = Object.values(nodeTypes).filter((t) => t.category !== "io");
-
-  const allItems: PaletteItem[] = nonIoTypes.map((info) => ({
+function toItem(info: NodeTypeInfo): PaletteItem {
+  return {
     type: info.name,
     label: info.label,
     description: info.description,
@@ -68,25 +61,36 @@ function computePalette(
     icon: info.icon,
     browserCapable: info.browserCapable,
     isContainer: info.isContainer,
-  }));
+  };
+}
 
-  const browserItems = allItems.filter((t) => t.browserCapable);
-  const displayItems = browserOnly ? browserItems : allItems;
-
-  // Group by category in display order
+function groupByCategory(
+  items: PaletteItem[],
+  categories: readonly CategoryInfo[],
+): PaletteGroup[] {
   const categoryMap = new Map<NodeCategory, PaletteItem[]>();
-  for (const item of displayItems) {
+  for (const item of items) {
     const existing = categoryMap.get(item.category) ?? [];
     existing.push(item);
     categoryMap.set(item.category, existing);
   }
-
-  const groups: PaletteGroup[] = categories
+  return categories
     .filter((cat) => categoryMap.has(cat.name))
-    .map((cat) => ({
-      category: cat,
-      items: categoryMap.get(cat.name)!,
-    }));
+    .map((cat) => ({ category: cat, items: categoryMap.get(cat.name)! }));
+}
+
+function computePalette(
+  nodeTypes: Record<NodeTypeName, NodeTypeInfo>,
+  categories: readonly CategoryInfo[],
+  browserOnly: boolean,
+): NodePaletteResult {
+  const allItems = Object.values(nodeTypes)
+    .filter((t) => t.category !== "io")
+    .map(toItem);
+
+  const browserItems = allItems.filter((t) => t.browserCapable);
+  const displayItems = browserOnly ? browserItems : allItems;
+  const groups = groupByCategory(displayItems, categories);
 
   return { groups, allItems, browserItems };
 }

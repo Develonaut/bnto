@@ -20,6 +20,17 @@ export interface GroupEntry {
 
 export type FormEntry = SingleEntry | GroupEntry;
 
+/** Resolve field info from Zod schema shape, falling back to text control. */
+function resolveFieldInfo(
+  schema: NodeSchema,
+  paramName: string,
+  fieldConfig?: GroupField["fieldConfig"],
+): NodeParamFieldInfo {
+  const zodField = schema.schema.shape[paramName];
+  if (zodField) return inferFieldType(zodField, fieldConfig);
+  return { type: "string" as const, control: "text" as const, required: true };
+}
+
 /**
  * Build form entries from schema + visible params.
  *
@@ -39,10 +50,7 @@ export function buildFormEntries(
     const meta = schema.params[paramName];
     if (!meta) continue;
     const fieldConfig = fields?.[paramName];
-    const zodField = schema.schema.shape[paramName];
-    const fieldInfo: NodeParamFieldInfo = zodField
-      ? inferFieldType(zodField, fieldConfig)
-      : { type: "string" as const, control: "text" as const, required: true };
+    const fieldInfo = resolveFieldInfo(schema, paramName, fieldConfig);
     const group = fieldConfig?.group;
 
     if (group && currentGroup?.groupName === group) {

@@ -19,22 +19,18 @@ export interface BentoEntry {
 }
 
 function isPinned(child: ReactNode): child is ReactElement<PinnedProps> {
-  return isValidElement(child) && (child.type as { displayName?: string }).displayName === "BentoGrid.Pinned";
+  return (
+    isValidElement(child) &&
+    (child.type as { displayName?: string }).displayName === "BentoGrid.Pinned"
+  );
 }
 
-/** Split children into pinned + flow, compute layouts for each. */
-export function partitionBentoChildren(
-  children: ReactNode,
-  cols: number,
-  uniform: boolean,
-): { entries: BentoEntry[]; rows: number } {
-  const childArray = Children.toArray(children);
-
-  const pinned: { layout: CellLayout; element: ReactNode; key: Key }[] = [];
+function classifyChildren(childArray: ReactNode[]) {
+  const pinned: BentoEntry[] = [];
   const flow: { element: ReactNode; key: Key }[] = [];
 
   childArray.forEach((child, i) => {
-    const key = isValidElement(child) ? child.key ?? i : i;
+    const key = isValidElement(child) ? (child.key ?? i) : i;
     if (isPinned(child)) {
       pinned.push({
         layout: {
@@ -50,14 +46,20 @@ export function partitionBentoChildren(
     }
   });
 
-  if (pinned.length > 0) {
-    return resolvePinnedLayout(pinned, flow, cols);
-  }
+  return { pinned, flow };
+}
 
-  if (uniform) {
-    return resolveUniformLayout(childArray, cols);
-  }
+/** Split children into pinned + flow, compute layouts for each. */
+export function partitionBentoChildren(
+  children: ReactNode,
+  cols: number,
+  uniform: boolean,
+): { entries: BentoEntry[]; rows: number } {
+  const childArray = Children.toArray(children);
+  const { pinned, flow } = classifyChildren(childArray);
 
+  if (pinned.length > 0) return resolvePinnedLayout(pinned, flow, cols);
+  if (uniform) return resolveUniformLayout(childArray, cols);
   return resolveAutoLayout(childArray, cols);
 }
 
@@ -72,10 +74,7 @@ function resolvePinnedLayout(
     cols,
   );
   return {
-    entries: [
-      ...pinned,
-      ...flow.map((f, i) => ({ ...f, layout: flowLayouts[i] })),
-    ],
+    entries: [...pinned, ...flow.map((f, i) => ({ ...f, layout: flowLayouts[i] }))],
     rows,
   };
 }
@@ -86,7 +85,7 @@ function resolveUniformLayout(childArray: ReactNode[], cols: number) {
     entries: childArray.map((child, i) => ({
       layout,
       element: child,
-      key: isValidElement(child) ? child.key ?? i : i,
+      key: isValidElement(child) ? (child.key ?? i) : i,
     })),
     rows: Math.ceil(childArray.length / cols),
   };
@@ -98,7 +97,7 @@ function resolveAutoLayout(childArray: ReactNode[], cols: number) {
     entries: childArray.map((child, i) => ({
       layout: result.layouts[i],
       element: child,
-      key: isValidElement(child) ? child.key ?? i : i,
+      key: isValidElement(child) ? (child.key ?? i) : i,
     })),
     rows: result.rows,
   };

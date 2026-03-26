@@ -9,16 +9,11 @@ import { Input } from "./Input";
 import { Row } from "../layout/Row";
 import { EyeIcon, EyeOffIcon } from "../icons";
 
-/** Prevent mousedown from stealing focus — keeps focus on the text input. */
+/** Prevent mousedown from stealing focus -- keeps focus on the text input. */
 function preventFocus(e: MouseEvent) {
   e.preventDefault();
 }
 
-/**
- * Password input with an outline eye icon button beside the field.
- *
- * The reveal button toggles between password/text visibility.
- */
 function PasswordInput({
   className,
   wrapperClassName,
@@ -26,8 +21,8 @@ function PasswordInput({
   ...props
 }: Omit<ComponentProps<"input">, "type"> & { wrapperClassName?: string }) {
   const [visible, setVisible] = useState(false);
-
   const toggleVisible = useCallback(() => setVisible((v) => !v), []);
+  const icon = visible ? <EyeOffIcon /> : <EyeIcon />;
 
   return (
     <Row className="gap-2">
@@ -48,7 +43,7 @@ function PasswordInput({
         onClick={toggleVisible}
         aria-label={visible ? "Hide password" : "Show password"}
       >
-        {visible ? <EyeOffIcon /> : <EyeIcon />}
+        {icon}
       </Button>
     </Row>
   );

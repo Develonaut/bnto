@@ -17,10 +17,7 @@ interface RecipeDialogProps {
 }
 
 function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
-  const { name, setName, hasChanges, handleSubmit } = useRecipeDialogForm({
-    open,
-    onOpenChange,
-  });
+  const { name, setName, hasChanges, handleSubmit } = useRecipeDialogForm({ open, onOpenChange });
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value),
@@ -35,26 +32,44 @@ function RecipeDialogRoot({ open, onOpenChange }: RecipeDialogProps) {
       description="Edit recipe name and metadata."
       size="sm"
     >
-      <form onSubmit={handleSubmit}>
-        <DialogBody>
-          <fieldset className="space-y-1.5">
-            <Label htmlFor="recipe-name">Name</Label>
-            <Input
-              id="recipe-name"
-              value={name}
-              onChange={handleNameChange}
-              placeholder="Recipe name"
-              autoFocus
-            />
-          </fieldset>
-        </DialogBody>
-        <DialogFooter>
-          <Button type="submit" disabled={!hasChanges}>
-            Save
-          </Button>
-        </DialogFooter>
-      </form>
+      <RecipeForm
+        name={name}
+        onNameChange={handleNameChange}
+        hasChanges={hasChanges}
+        onSubmit={handleSubmit}
+      />
     </DialogShell>
+  );
+}
+
+interface RecipeFormProps {
+  name: string;
+  onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  hasChanges: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+}
+
+function RecipeForm({ name, onNameChange, hasChanges, onSubmit }: RecipeFormProps) {
+  return (
+    <form onSubmit={onSubmit}>
+      <DialogBody>
+        <fieldset className="space-y-1.5">
+          <Label htmlFor="recipe-name">Name</Label>
+          <Input
+            id="recipe-name"
+            value={name}
+            onChange={onNameChange}
+            placeholder="Recipe name"
+            autoFocus
+          />
+        </fieldset>
+      </DialogBody>
+      <DialogFooter>
+        <Button type="submit" disabled={!hasChanges}>
+          Save
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }
 

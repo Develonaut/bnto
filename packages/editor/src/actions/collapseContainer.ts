@@ -11,49 +11,42 @@
  */
 
 import type { EditorState } from "../store/types";
+import type { NodeConfigs } from "../adapters/types";
 import { updateNodeInTree } from "../adapters/definitionTreeHelpers";
 import { withUndo } from "../store/withUndo";
 
-export function collapseContainer(
-  state: EditorState,
-  nodeId: string,
-): Partial<EditorState> | null {
+/** Write-through: sync child configs back to definition tree. */
+function syncChildConfigsToDefinition(
+  definition: EditorState["definition"],
+  idsToRemove: Set<string>,
+  configs: NodeConfigs,
+) {
+  let next = definition;
+  if (!next) return next;
+  for (const childId of idsToRemove) {
+    const config = configs[childId];
+    if (config) next = updateNodeInTree(next, childId, config.parameters);
+  }
+  return next;
+}
+
+export function collapseContainer(state: EditorState, nodeId: string): Partial<EditorState> | null {
   if (!state.expandedContainerIds.has(nodeId)) return null;
   if (!state.definition) return null;
 
-  // Collect all child node IDs (direct + nested) to remove from graph
   const idsToRemove = collectDescendantIds(state, nodeId);
+  const nextDefinition = syncChildConfigsToDefinition(state.definition, idsToRemove, state.configs);
 
-  // Write-through: sync child configs back to definition tree
-  let nextDefinition = state.definition;
-  for (const childId of idsToRemove) {
-    const config = state.configs[childId];
-    if (config) {
-      nextDefinition = updateNodeInTree(nextDefinition, childId, config.parameters);
-    }
-  }
-
-  // Remove child nodes from graph
   const nextNodes = state.nodes
     .filter((n) => !idsToRemove.has(n.id))
-    .map((n) =>
-      n.id === nodeId
-        ? { ...n, data: { ...n.data, isExpanded: false } }
-        : n,
-    );
+    .map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, isExpanded: false } } : n));
 
-  // Remove child configs
   const nextConfigs = { ...state.configs };
-  for (const id of idsToRemove) {
-    delete nextConfigs[id];
-  }
+  for (const id of idsToRemove) delete nextConfigs[id];
 
-  // Remove container + any nested expanded containers from expanded set
   const nextExpandedIds = new Set(state.expandedContainerIds);
   nextExpandedIds.delete(nodeId);
-  for (const id of idsToRemove) {
-    nextExpandedIds.delete(id);
-  }
+  for (const id of idsToRemove) nextExpandedIds.delete(id);
 
   return withUndo(state, {
     nodes: nextNodes,
@@ -69,7 +62,6 @@ function collectDescendantIds(state: EditorState, containerId: string): Set<stri
   for (const node of state.nodes) {
     if (node.data.parentContainerId === containerId) {
       ids.add(node.id);
-      // Recursively collect nested children if this child is also expanded
       if (state.expandedContainerIds.has(node.id)) {
         for (const nestedId of collectDescendantIds(state, node.id)) {
           ids.add(nestedId);

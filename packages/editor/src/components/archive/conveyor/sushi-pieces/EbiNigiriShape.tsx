@@ -5,7 +5,7 @@
  * pink-orange with curved segment stripes and a darker tail tip.
  */
 
-import { NORI, RICE, EBI, EBI_STRIPE, EBI_TAIL } from "../sushi-colors";
+import { NORI, RICE, EBI, EBI_STRIPE, EBI_TAIL } from "../sushiColors";
 import { S } from "./constants";
 
 export function EbiNigiriShape() {

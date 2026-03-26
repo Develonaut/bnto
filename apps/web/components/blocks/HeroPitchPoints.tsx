@@ -1,7 +1,15 @@
 import type { ComponentType } from "react";
 
-import { GlobeIcon, LaptopIcon, ShieldCheckIcon, ZapIcon } from "@bnto/ui";
-import { IconBadge, Row, Stack, Text } from "@bnto/ui";
+import {
+  GlobeIcon,
+  LaptopIcon,
+  ShieldCheckIcon,
+  ZapIcon,
+  IconBadge,
+  Row,
+  Stack,
+  Text,
+} from "@bnto/ui";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 
 interface PitchPoint {

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { runCountAnimation } from "./runCountAnimation";
+
 interface AnimatedCounterProps {
   /** Target value to count to */
   value: number;
@@ -22,10 +24,7 @@ interface AnimatedCounterProps {
  * with an ease-out cubic curve when `active` becomes true.
  *
  * Uses direct DOM writes (`textContent`) instead of React state
- * to avoid re-renders on every animation frame. The RAF loop is
- * unavoidable -- CSS cannot natively display a changing integer --
- * but removing `useState` means zero React reconciliation during
- * the animation (typically ~60-72 frames over 1.2 s).
+ * to avoid re-renders on every animation frame.
  */
 export function AnimatedCounter({
   value,
@@ -36,46 +35,15 @@ export function AnimatedCounter({
   className,
 }: AnimatedCounterProps) {
   const numberRef = useRef<HTMLSpanElement>(null);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = numberRef.current;
     if (!el) return;
-
-    const prefersReduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    // Reset to 0 when inactive
     if (!active) {
       el.textContent = "0";
       return;
     }
-
-    // Reduced motion: jump straight to final value
-    if (prefersReduced) {
-      el.textContent = String(value);
-      return;
-    }
-
-    const start = performance.now();
-
-    const tick = (now: number) => {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic: fast start, gentle settle
-      const eased = 1 - Math.pow(1 - progress, 3);
-      el.textContent = String(Math.round(eased * value));
-      if (progress < 1) {
-        rafRef.current = requestAnimationFrame(tick);
-      }
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    return runCountAnimation(el, value, duration);
   }, [active, value, duration]);
 
   return (

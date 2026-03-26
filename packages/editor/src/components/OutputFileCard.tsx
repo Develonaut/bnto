@@ -2,8 +2,16 @@
 
 import { useCallback } from "react";
 import type { BrowserFileResult } from "@bnto/core";
-import { Button, Card, CheckCircle2Icon, DownloadIcon, IconBadge, Row, Stack } from "@bnto/ui";
-import { formatFileSize } from "@bnto/ui";
+import {
+  Button,
+  Card,
+  CheckCircle2Icon,
+  DownloadIcon,
+  IconBadge,
+  Row,
+  Stack,
+  formatFileSize,
+} from "@bnto/ui";
 
 interface OutputFileCardProps {
   result: BrowserFileResult;
@@ -11,7 +19,6 @@ interface OutputFileCardProps {
 }
 
 function OutputFileCard({ result, onDownload }: OutputFileCardProps) {
-  const { originalSize, compressionRatio } = result.metadata;
   const handleDownload = useCallback(() => onDownload(result), [onDownload, result]);
 
   return (
@@ -20,21 +27,7 @@ function OutputFileCard({ result, onDownload }: OutputFileCardProps) {
       elevation="sm"
       data-testid="output-file"
     >
-      <Row className="min-w-0 flex-1 gap-3">
-        <IconBadge variant="primary" size="lg">
-          <CheckCircle2Icon className="size-5" />
-        </IconBadge>
-        <Stack className="min-w-0 flex-1 gap-0">
-          <span className="truncate text-sm font-semibold">{result.filename}</span>
-          <span className="truncate text-xs text-muted-foreground">
-            {formatFileSize(result.blob.size)}
-            {originalSize != null && compressionRatio != null && (
-              <span> &middot; {Math.round(compressionRatio)}% smaller</span>
-            )}
-          </span>
-        </Stack>
-      </Row>
-
+      <OutputFileInfo result={result} />
       <Button
         variant="outline"
         size="icon"
@@ -46,6 +39,26 @@ function OutputFileCard({ result, onDownload }: OutputFileCardProps) {
         <DownloadIcon className="size-4" />
       </Button>
     </Card>
+  );
+}
+
+function OutputFileInfo({ result }: { result: BrowserFileResult }) {
+  const { originalSize, compressionRatio } = result.metadata;
+  return (
+    <Row className="min-w-0 flex-1 gap-3">
+      <IconBadge variant="primary" size="lg">
+        <CheckCircle2Icon className="size-5" />
+      </IconBadge>
+      <Stack className="min-w-0 flex-1 gap-0">
+        <span className="truncate text-sm font-semibold">{result.filename}</span>
+        <span className="truncate text-xs text-muted-foreground">
+          {formatFileSize(result.blob.size)}
+          {originalSize != null && compressionRatio != null && (
+            <span> &middot; {Math.round(compressionRatio)}% smaller</span>
+          )}
+        </span>
+      </Stack>
+    </Row>
   );
 }
 

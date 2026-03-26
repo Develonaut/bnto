@@ -16,7 +16,7 @@ import type { StoreApi } from "zustand";
 import type { Definition } from "@bnto/core";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
-import { state, addNodeViaStore, removeNodeViaStore, updateParamsViaStore } from "./test-helpers";
+import { state, addNodeViaStore, removeNodeViaStore, updateParamsViaStore } from "./testHelpers";
 import { rfNodesToDefinition } from "../adapters/rfNodesToDefinition";
 import { findDefinitionById } from "../adapters/findDefinitionById";
 import { addNode } from "../actions/addNode";

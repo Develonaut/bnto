@@ -4,11 +4,11 @@ import { cn } from "../utils/cn";
 import { InputWrapper } from "./InputWrapper";
 import { useFormControlContext } from "./FormControl/context";
 
+const INPUT_CN =
+  "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground h-9 w-full min-w-0 rounded-md bg-transparent px-3 py-1 text-base outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm";
+
 /**
  * Text input with Motorway surface treatment.
- *
- * Uses InputWrapper for the surface/focus/disabled states. The wrapper
- * is needed because `<input>` is a void element (no ::before/::after).
  *
  * When inside a `<FormControl>`, auto-receives `id` and `aria-describedby`
  * from context. Explicit props override context values.
@@ -24,21 +24,15 @@ function Input({
   ...props
 }: ComponentProps<"input"> & { wrapperClassName?: string; suffix?: string }) {
   const formCtx = useFormControlContext();
-  const resolvedId = id ?? formCtx?.id;
-  const resolvedDescribedBy = ariaDescribedBy ?? formCtx?.helpTextId;
 
   return (
     <InputWrapper disabled={disabled} className={cn(suffix && "relative", wrapperClassName)}>
       <input
         type={type}
-        id={resolvedId}
-        aria-describedby={resolvedDescribedBy}
+        id={id ?? formCtx?.id}
+        aria-describedby={ariaDescribedBy ?? formCtx?.helpTextId}
         data-slot="input"
-        className={cn(
-          "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground h-9 w-full min-w-0 rounded-md bg-transparent px-3 py-1 text-base outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed md:text-sm",
-          suffix && "pr-8",
-          className,
-        )}
+        className={cn(INPUT_CN, suffix && "pr-8", className)}
         disabled={disabled}
         {...props}
       />

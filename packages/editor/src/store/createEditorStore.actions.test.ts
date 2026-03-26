@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import type { StoreApi } from "zustand";
 import { createEditorStore } from "./createEditorStore";
 import type { EditorStore } from "./types";
-import { state, addNodeViaStore, removeNodeViaStore, updateParamsViaStore } from "./test-helpers";
+import { state, addNodeViaStore, removeNodeViaStore, updateParamsViaStore } from "./testHelpers";
 
 // ---------------------------------------------------------------------------
 // Tests

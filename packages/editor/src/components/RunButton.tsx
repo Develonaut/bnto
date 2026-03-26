@@ -1,67 +1,27 @@
 "use client";
 
-import { useCallback, useRef } from "react";
 import { Button, PlayIcon, LoaderIcon } from "@bnto/ui";
-import { useExecution } from "../hooks/useExecution";
+import { useRunButton } from "./useRunButton";
 
 /**
  * RunButton — run/rerun button with hidden file input for selecting files.
  *
  * Phase-dependent:
- * - idle (no files staged) → play icon → opens file picker → runs
- * - idle (files staged via RunTab) → play icon → runs staged files
- * - running → spinner (disabled)
- * - completed/failed → play icon → reruns with same files
+ * - idle (no files staged) -> play icon -> opens file picker -> runs
+ * - idle (files staged via RunTab) -> play icon -> runs staged files
+ * - running -> spinner (disabled)
+ * - completed/failed -> play icon -> reruns with same files
  *
  * Full reset (clear files + results) is handled by the toolbar reset button
- * near undo/redo — not duplicated here.
+ * near undo/redo -- not duplicated here.
  */
 function RunButton() {
-  const { phase, canRun, inputFiles, fileAccept, run } = useExecution();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const hasFiles = inputFiles.length > 0;
-  const isDone = phase === "completed" || phase === "failed";
-
-  const handleClick = useCallback(() => {
-    if (hasFiles) {
-      run(inputFiles);
-      return;
-    }
-    fileInputRef.current?.click();
-  }, [hasFiles, inputFiles, run]);
-
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-      run(Array.from(files));
-      e.target.value = "";
-    },
-    [run],
-  );
-
-  const icon =
-    phase === "running" ? (
-      <LoaderIcon className="size-4 motion-safe:animate-spin" />
-    ) : (
-      <PlayIcon className="size-4" />
-    );
-
-  const label = phase === "running" ? "Running" : isDone && hasFiles ? "Run again" : "Run";
+  const { phase, canRun, fileAccept, isDone, label, fileInputRef, handleClick, handleFileChange } =
+    useRunButton();
 
   return (
     <>
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept={fileAccept}
-        aria-label="Select files to process"
-        className="hidden"
-        onChange={handleFileChange}
-        data-testid="run-file-input"
-      />
+      <RunFileInput ref={fileInputRef} accept={fileAccept} onChange={handleFileChange} />
       <Button
         size="icon"
         variant={phase === "failed" ? "destructive" : "primary"}
@@ -73,10 +33,39 @@ function RunButton() {
         data-testid="run-button"
         data-phase={phase}
       >
-        {icon}
+        {phase === "running" ? (
+          <LoaderIcon className="size-4 motion-safe:animate-spin" />
+        ) : (
+          <PlayIcon className="size-4" />
+        )}
       </Button>
     </>
   );
 }
+
+import { forwardRef } from "react";
+
+interface RunFileInputProps {
+  accept: string | undefined;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const RunFileInput = forwardRef<HTMLInputElement, RunFileInputProps>(function RunFileInput(
+  { accept, onChange },
+  ref,
+) {
+  return (
+    <input
+      ref={ref}
+      type="file"
+      multiple
+      accept={accept}
+      aria-label="Select files to process"
+      className="hidden"
+      onChange={onChange}
+      data-testid="run-file-input"
+    />
+  );
+});
 
 export { RunButton };

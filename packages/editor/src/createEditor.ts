@@ -35,26 +35,22 @@ import { debounce } from "./draft/debounce";
 
 const PERSIST_DELAY_MS = 1000;
 
-function createEditor(definition?: Definition, cloudId?: string): EditorInstance {
-  const storeApi = createEditorStore(definition, cloudId);
+type EditorStoreApi = ReturnType<typeof createEditorStore>;
 
-  // --- Services: thin wrappers around pure actions + store ---
-  const nodeService = createNodeService(storeApi);
-  const definitionService = createDefinitionService(storeApi);
-  const executionService = createExecutionService(storeApi);
-  const historyService = createHistoryService(storeApi);
-  const panelService = createPanelService(storeApi);
+/** Compose domain clients from services wired to the store. */
+function createClients(storeApi: EditorStoreApi) {
+  const nodes = createNodeClient(createNodeService(storeApi));
+  const definition = createDefinitionClient(createDefinitionService(storeApi));
+  const execution = createExecutionClient(createExecutionService(storeApi));
+  const history = createHistoryClient(createHistoryService(storeApi));
+  const panels = createPanelClient(createPanelService(storeApi));
+  return { nodes, definition, execution, history, panels };
+}
 
-  // --- Clients: domain-namespaced API (compose services for cross-domain) ---
-  const nodes = createNodeClient(nodeService);
-  const def = createDefinitionClient(definitionService);
-  const execution = createExecutionClient(executionService);
-  const history = createHistoryClient(historyService);
-  const panels = createPanelClient(panelService);
-
-  // --- Auto-persist: save recipe to core on dirty mutations ---
+/** Subscribe to store changes and auto-persist dirty state to core. */
+function subscribeAutoPersist(storeApi: EditorStoreApi) {
   const persistDebounced = debounce(PERSIST_DELAY_MS);
-  const unsubscribePersist = storeApi.subscribe((state) => {
+  const unsubscribe = storeApi.subscribe((state) => {
     if (!state.isDirty) return;
     persistDebounced.schedule(() => {
       const s = storeApi.getState();
@@ -62,32 +58,25 @@ function createEditor(definition?: Definition, cloudId?: string): EditorInstance
       core.recipes.save(exported, s.recipeMetadata);
     });
   });
+  return { persistDebounced, unsubscribe };
+}
 
-  const instance: EditorInstance = {
-    nodes,
-    definition: def,
-    execution,
-    history,
-    panels,
+function createEditor(definition?: Definition, cloudId?: string): EditorInstance {
+  const storeApi = createEditorStore(definition, cloudId);
+  const clients = createClients(storeApi);
+  const { persistDebounced, unsubscribe } = subscribeAutoPersist(storeApi);
 
-    getState(): EditorState {
-      return storeApi.getState();
-    },
-
-    subscribe(listener: (state: EditorState) => void) {
-      return storeApi.subscribe(listener);
-    },
-
+  return {
+    ...clients,
+    getState: () => storeApi.getState(),
+    subscribe: (listener: (state: EditorState) => void) => storeApi.subscribe(listener),
     destroy() {
       persistDebounced.flush();
       persistDebounced.destroy();
-      unsubscribePersist();
+      unsubscribe();
     },
-
     _storeApi: storeApi,
   };
-
-  return instance;
 }
 
 export { createEditor };

@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { cn } from "../utils/cn";
 import { clamp } from "../utils/clamp";
+import { LinearProgressHeader } from "./LinearProgressHeader";
 
 interface LinearProgressProps {
-  /** Current value (0–100). */
+  /** Current value (0-100). */
   value: number;
   /** Icon shown before the label text. */
   icon?: ReactNode;
@@ -16,14 +17,6 @@ interface LinearProgressProps {
   className?: string;
 }
 
-/**
- * Read-only progress bar that mirrors the Slider track style (no thumb).
- *
- * Layout:
- *   [icon] Label              64%  (above: icon + label left, value right)
- *   ████████████░░░░░░░░░░░░░░░░  (bar full-width below)
- *   Helper text                    (below, optional)
- */
 export function LinearProgress({
   value,
   icon,
@@ -33,19 +26,12 @@ export function LinearProgress({
   className,
 }: LinearProgressProps) {
   const clamped = clamp(value, 0, 100);
+  const showHeader = icon || label || valueLabel !== undefined;
 
   return (
     <div className={cn("flex w-full flex-col gap-3", className)}>
-      {(icon || label || valueLabel !== undefined) && (
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            {icon}
-            {label && <span className="truncate text-sm text-muted-foreground">{label}</span>}
-          </div>
-          <span className="shrink-0 font-mono text-sm tabular-nums text-muted-foreground">
-            {valueLabel ?? `${clamped}%`}
-          </span>
-        </div>
+      {showHeader && (
+        <LinearProgressHeader icon={icon} label={label} valueLabel={valueLabel ?? `${clamped}%`} />
       )}
       <div
         role="progressbar"

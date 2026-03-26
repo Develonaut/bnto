@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { BntoCoreProvider, TelemetryProvider } from "@bnto/core";
 import { isAuthPath } from "@/lib/routes";
@@ -43,9 +42,7 @@ export function Providers({ children }: ProvidersProps) {
       host={process.env.NEXT_PUBLIC_POSTHOG_HOST}
       pathname={pathname}
     >
-      <BntoCoreProvider onSessionLost={handleSessionLost}>
-        {children}
-      </BntoCoreProvider>
+      <BntoCoreProvider onSessionLost={handleSessionLost}>{children}</BntoCoreProvider>
     </TelemetryProvider>
   );
 }

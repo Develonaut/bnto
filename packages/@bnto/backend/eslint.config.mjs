@@ -5,4 +5,11 @@ export default [
   {
     ignores: ["convex/_generated/**"],
   },
+  // Convex convention: snake_case filenames (no hyphens allowed by Convex)
+  {
+    files: ["**/*.ts"],
+    rules: {
+      "check-file/filename-naming-convention": "off",
+    },
+  },
 ];
