@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useStore } from "zustand";
 import { core } from "../core";
 import { recipesStore } from "../stores/recipesStore";
-import { recipeToListItem } from "../transforms/recipe";
+import { recipeToListItem } from "../transforms/recipeToListItem";
 import { useIsAuthenticated } from "./useIsAuthenticated";
 
 /**

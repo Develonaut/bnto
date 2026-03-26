@@ -77,17 +77,36 @@ type PipelineExecutor = (
   onProgress?: (progress: BrowserFileProgressInput) => void,
 ) => Promise<BrowserFileResult[]>;
 
+/** Build a progress callback that respects abort state and throttles updates. */
+function buildProgressCallback(
+  store: ReturnType<typeof createExecutionInstanceStore>,
+  isAborted: () => boolean,
+): (progress: BrowserFileProgressInput) => void {
+  const throttled = createThrottledProgress(store);
+  return (progress) => {
+    if (!isAborted()) throttled(progress);
+  };
+}
+
+/** Finalize a run — record completed or failed into the store. */
+function finalizeRun(
+  store: ReturnType<typeof createExecutionInstanceStore>,
+  results: BrowserFileResult[],
+  durationMs: number,
+  error?: unknown,
+): BrowserRunResult {
+  if (error) {
+    const message = error instanceof Error ? error.message : "Processing failed";
+    store.getState().fail(message, Date.now());
+    return { status: "failed", results: [], durationMs, error: message };
+  }
+  store.getState().complete(results, Date.now());
+  return { status: "completed", results, durationMs };
+}
+
 export function createExecutionInstance(executePipeline: PipelineExecutor): ExecutionInstance {
   const store = createExecutionInstanceStore();
   let aborted = false;
-
-  /** Build a progress callback that respects abort and throttles updates. */
-  function buildProgressCallback(): (progress: BrowserFileProgressInput) => void {
-    const throttled = createThrottledProgress(store);
-    return (progress) => {
-      if (!aborted) throttled(progress);
-    };
-  }
 
   return {
     [EXECUTION_STORE]: store,
@@ -98,17 +117,20 @@ export function createExecutionInstance(executePipeline: PipelineExecutor): Exec
       store.getState().start(generateExecutionId(), startedAt);
 
       try {
-        const results = await executePipeline(definition, files, buildProgressCallback());
+        const results = await executePipeline(
+          definition,
+          files,
+          buildProgressCallback(store, () => aborted),
+        );
         const durationMs = Date.now() - startedAt;
-        if (aborted) return { status: "aborted", results: [], durationMs };
-        store.getState().complete(results, Date.now());
-        return { status: "completed", results, durationMs };
+        return aborted
+          ? { status: "aborted", results: [], durationMs }
+          : finalizeRun(store, results, durationMs);
       } catch (e) {
         const durationMs = Date.now() - startedAt;
-        if (aborted) return { status: "aborted", results: [], durationMs };
-        const error = e instanceof Error ? e.message : "Processing failed";
-        store.getState().fail(error, Date.now());
-        return { status: "failed", results: [], durationMs, error };
+        return aborted
+          ? { status: "aborted", results: [], durationMs }
+          : finalizeRun(store, [], durationMs, e);
       }
     },
 

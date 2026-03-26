@@ -19,12 +19,7 @@ interface RunRecipeParams {
   onFail: (message: string) => void;
 }
 
-/**
- * Execute a recipe via browser (WASM).
- *
- * Pure action function -- no React, no store access.
- * Tracks telemetry events at start, completion, and failure.
- */
+/** Execute a recipe via browser (WASM) or cloud. */
 export async function runRecipeAction(params: RunRecipeParams) {
   const { slug, files, isBrowserPath } = params;
   if (files.length === 0) return;
@@ -42,10 +37,9 @@ export async function runRecipeAction(params: RunRecipeParams) {
 
   if (isBrowserPath) {
     await runBrowserPath(params, runProps, startTime);
-    return;
+  } else {
+    await runCloudPath(params, runProps, startTime);
   }
-
-  await runCloudPath(params, runProps, startTime);
 }
 
 async function runBrowserPath(
@@ -54,14 +48,21 @@ async function runBrowserPath(
   startTime: number,
 ) {
   const recipe = core.registry.getRecipeBySlug(slug);
-  if (!recipe) {
-    throw new Error(`No browser implementation for slug "${slug}"`);
-  }
+  if (!recipe) throw new Error(`No browser implementation for slug "${slug}"`);
 
   const pipeline = definitionToPipeline(recipe.definition, config);
   const result = await browserInstance.run(pipeline, files);
   const durationMs = Date.now() - startTime;
 
+  trackBrowserResult(result, runProps, durationMs, slug);
+}
+
+function trackBrowserResult(
+  result: { status: string; results: { blob: Blob }[]; error?: string | null },
+  runProps: Record<string, unknown>,
+  durationMs: number,
+  slug: string,
+) {
   if (result.status === "completed" && result.results.length > 0) {
     const outputBytes = result.results.reduce((sum, r) => sum + r.blob.size, 0);
     core.telemetry.capture("recipe_run_completed", {
@@ -70,7 +71,10 @@ async function runBrowserPath(
       outputFileCount: result.results.length,
       outputBytes,
     });
-    await core.executions.downloadAllResults(result.results, slug);
+    core.executions.downloadAllResults(
+      result.results as Parameters<typeof core.executions.downloadAllResults>[0],
+      slug,
+    );
   } else if (result.status === "failed") {
     core.telemetry.capture("recipe_run_failed", {
       ...runProps,
@@ -99,11 +103,7 @@ async function runCloudPath(
   try {
     onStartUpload();
     const session = await upload(files);
-    const id = await startCloudExec({
-      slug,
-      definition,
-      sessionId: session.sessionId,
-    });
+    const id = await startCloudExec({ slug, definition, sessionId: session.sessionId });
     onStartExecution(String(id));
   } catch (e) {
     const durationMs = Date.now() - startTime;

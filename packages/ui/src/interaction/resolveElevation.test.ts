@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-import { resolveElevationClass, stripSizeElevation } from "./resolveElevation";
+import { resolveElevationClass } from "./resolveElevationClass";
+import { stripSizeElevation } from "./stripSizeElevation";
 
 describe("resolveElevationClass", () => {
   it("returns undefined for true (use built-in)", () => {

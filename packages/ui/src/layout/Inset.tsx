@@ -2,13 +2,9 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "../utils/cn";
 
-import {
-  type GapSize,
-  type LayoutElement,
-  paddingMap,
-  paddingXMap,
-  paddingYMap,
-} from "../utils/layoutTypes";
+import type { LayoutElement } from "../utils/layoutElement";
+import { paddingMap, paddingXMap, paddingYMap } from "../utils/paddingMaps";
+import type { GapSize } from "../utils/resolveGap";
 
 type InsetProps = HTMLAttributes<HTMLElement> & {
   /** Padding size. Uses the same token scale as gap. Default `"md"`. */
@@ -29,11 +25,7 @@ export function Inset({
   className,
   ...props
 }: InsetProps) {
-  const padClass = horizontal
-    ? paddingXMap[size]
-    : vertical
-      ? paddingYMap[size]
-      : paddingMap[size];
+  const padClass = horizontal ? paddingXMap[size] : vertical ? paddingYMap[size] : paddingMap[size];
 
   return <Tag className={cn(padClass, className)} {...props} />;
 }

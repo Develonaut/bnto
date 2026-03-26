@@ -1,27 +1,13 @@
 "use client";
 
-import { useCallback, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { core } from "@bnto/core";
 
 import { useControlled } from "@/hooks/useControlled";
 
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-  DialogBody,
-  DialogFooter,
-  Menu,
-  MenuContent,
-  PopoverAnchor,
-  Row,
-  Stack,
-  Text,
-} from "@bnto/ui";
+import { AuthGateDialogPrompt } from "./AuthGateDialogPrompt";
+import { AuthGateMenuPrompt } from "./AuthGateMenuPrompt";
+import { useGateHandlers } from "./useGateHandlers";
 
 /* ── Shared props ─────────────────────────────────────────────── */
 
@@ -42,51 +28,11 @@ interface AuthGateActionProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-/* ── Shared CTA ───────────────────────────────────────────────── */
-
-function AuthGateCTA() {
-  return (
-    <Row className="gap-3 pt-2">
-      <Button href="/signin" variant="primary" elevation="sm">
-        Sign up free
-      </Button>
-      <Button href="/signin" variant="outline">
-        Sign in
-      </Button>
-    </Row>
-  );
-}
-
-/** CTA for menu prompt. */
-function AuthGateMenuCTA() {
-  return (
-    <Row className="gap-2 justify-center">
-      <Button href="/signin" variant="primary" elevation="sm" className="h-8 px-4 text-sm">
-        Sign up free
-      </Button>
-      <Button href="/signin" variant="ghost" className="h-8 px-4 text-sm">
-        Sign in
-      </Button>
-    </Row>
-  );
-}
-
-/* ── Shared auth check ────────────────────────────────────────── */
-
-function useAuthGate() {
-  const { isAuthenticated, isLoading } = core.auth.useAuth();
-  return { isGated: !isLoading && !isAuthenticated, isLoading };
-}
-
 /* ── AuthGate.Action ──────────────────────────────────────────── */
 
 /**
  * Wraps an interactive element. Authenticated users click through normally.
  * Unauthenticated users see a conversion prompt.
- *
- * Two variants:
- * - "menu" (default): springy Card anchored near the trigger
- * - "dialog": full overlay dialog for heavier prompts
  */
 function AuthGateAction({
   children,
@@ -96,92 +42,26 @@ function AuthGateAction({
   open: controlledOpen,
   onOpenChange,
 }: AuthGateActionProps) {
-  const { isGated } = useAuthGate();
+  const { isAuthenticated, isLoading } = core.auth.useAuth();
+  const isGated = !isLoading && !isAuthenticated;
   const [open, setOpen] = useControlled(controlledOpen, false, onOpenChange);
+  const { handleGateClick, handleGateKeyDown } = useGateHandlers(setOpen);
 
-  const handleGateClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setOpen(true);
-    },
-    [setOpen],
-  );
+  if (!isGated) return <>{children}</>;
 
-  const handleGateKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        e.stopPropagation();
-        setOpen(true);
-      }
-    },
-    [setOpen],
-  );
+  const Prompt = variant === "dialog" ? AuthGateDialogPrompt : AuthGateMenuPrompt;
 
-  if (!isGated) {
-    return <>{children}</>;
-  }
-
-  if (variant === "dialog") {
-    return (
-      <>
-        <span
-          role="button"
-          tabIndex={0}
-          onClickCapture={handleGateClick}
-          onKeyDownCapture={handleGateKeyDown}
-          className="inline-flex cursor-pointer"
-        >
-          {children}
-        </span>
-
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{title}</DialogTitle>
-              <DialogClose />
-            </DialogHeader>
-            <DialogBody>
-              <DialogDescription>{description}</DialogDescription>
-            </DialogBody>
-            <DialogFooter>
-              <AuthGateCTA />
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
-  // Menu mode (default) — anchored Card with spring animation
   return (
-    <Menu open={open} onOpenChange={setOpen}>
-      <PopoverAnchor asChild>
-        <span
-          role="button"
-          tabIndex={0}
-          onClickCapture={handleGateClick}
-          onKeyDownCapture={handleGateKeyDown}
-          className="inline-flex cursor-pointer"
-        >
-          {children}
-        </span>
-      </PopoverAnchor>
-      <MenuContent side="top" align="center" className="w-72 p-5">
-        <Stack className="gap-4">
-          <Stack className="gap-1.5">
-            <Text size="base" weight="medium">
-              {title}
-            </Text>
-            <Text size="sm" color="muted">
-              {description}
-            </Text>
-          </Stack>
-          <AuthGateMenuCTA />
-        </Stack>
-      </MenuContent>
-    </Menu>
+    <Prompt
+      open={open}
+      setOpen={setOpen}
+      handleGateClick={handleGateClick}
+      handleGateKeyDown={handleGateKeyDown}
+      title={title}
+      description={description}
+    >
+      {children}
+    </Prompt>
   );
 }
 

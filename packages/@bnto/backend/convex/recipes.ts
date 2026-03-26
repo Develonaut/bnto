@@ -1,5 +1,7 @@
 import { ConvexError, v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import type { MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { getAppUserId } from "./_helpers/auth";
 import { NODE_TYPE_LABELS } from "./_helpers/nodeTypeLabels";
 
@@ -8,9 +10,11 @@ function extractNodeTypeLabels(nodes: Array<{ type?: string }>): string[] {
   const seen = new Set<string>();
   const labels: string[] = [];
   for (const node of nodes) {
-    const label = node.type ? NODE_TYPE_LABELS[node.type] : undefined;
-    if (!label || seen.has(node.type!)) continue;
-    seen.add(node.type!);
+    const type = node.type;
+    if (!type) continue;
+    const label = NODE_TYPE_LABELS[type];
+    if (!label || seen.has(type)) continue;
+    seen.add(type);
     labels.push(label);
   }
   return labels;
@@ -63,6 +67,11 @@ export const getByName = query({
   },
 });
 
+/** Extract format version string from a definition, if present. */
+function extractFormatVersion(definition: { version?: unknown }): string | undefined {
+  return typeof definition?.version === "string" ? definition.version : undefined;
+}
+
 /** Create or update a recipe. When `id` is provided, patches by ID with ownership check. */
 export const save = mutation({
   args: {
@@ -76,57 +85,87 @@ export const save = mutation({
     if (userId === null) throw new ConvexError("Not authenticated");
 
     const now = Date.now();
+    const formatVersion = extractFormatVersion(args.definition);
 
-    // Extract format version from the definition if present
-    const formatVersion =
-      typeof args.definition?.version === "string" ? args.definition.version : undefined;
-
-    // ID-based update — direct patch with ownership verification
     if (args.id) {
-      const existing = await ctx.db.get(args.id);
-      if (existing === null || existing.userId !== userId) {
-        throw new ConvexError("Recipe not found");
-      }
-      await ctx.db.patch(args.id, {
-        name: args.name,
-        definition: args.definition,
-        isPublic: args.isPublic ?? existing.isPublic,
-        version: existing.version + 1,
-        formatVersion: formatVersion ?? existing.formatVersion,
-        updatedAt: now,
-      });
-      return args.id;
+      return updateById(ctx, args.id, userId, args, formatVersion, now);
     }
-
-    // Name-based upsert — find existing by user + name
-    const existing = await ctx.db
-      .query("recipes")
-      .withIndex("by_user_name", (q) => q.eq("userId", userId).eq("name", args.name))
-      .unique();
-
-    if (existing !== null) {
-      await ctx.db.patch(existing._id, {
-        definition: args.definition,
-        isPublic: args.isPublic ?? existing.isPublic,
-        version: existing.version + 1,
-        formatVersion: formatVersion ?? existing.formatVersion,
-        updatedAt: now,
-      });
-      return existing._id;
-    }
-
-    return ctx.db.insert("recipes", {
-      userId,
-      name: args.name,
-      definition: args.definition,
-      version: 1,
-      formatVersion,
-      isPublic: args.isPublic ?? false,
-      createdAt: now,
-      updatedAt: now,
-    });
+    return upsertByName(ctx, userId, args, formatVersion, now);
   },
 });
+
+/** ID-based update — direct patch with ownership verification. */
+async function updateById(
+  ctx: MutationCtx,
+  id: Id<"recipes">,
+  userId: Id<"users">,
+  args: { name: string; definition: unknown; isPublic?: boolean },
+  formatVersion: string | undefined,
+  now: number,
+) {
+  const existing = await ctx.db.get(id);
+  if (existing === null || existing.userId !== userId) {
+    throw new ConvexError("Recipe not found");
+  }
+  await ctx.db.patch(id, {
+    name: args.name,
+    definition: args.definition,
+    isPublic: args.isPublic ?? existing.isPublic,
+    version: existing.version + 1,
+    formatVersion: formatVersion ?? existing.formatVersion,
+    updatedAt: now,
+  });
+  return id;
+}
+
+type SaveArgs = { name: string; definition: unknown; isPublic?: boolean };
+
+/** Name-based upsert — update existing or create new. */
+async function upsertByName(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  args: SaveArgs,
+  formatVersion: string | undefined,
+  now: number,
+) {
+  const existing = await ctx.db
+    .query("recipes")
+    .withIndex("by_user_name", (q) => q.eq("userId", userId).eq("name", args.name))
+    .unique();
+
+  if (existing !== null) {
+    await patchRecipe(ctx, existing, args, formatVersion, now);
+    return existing._id;
+  }
+
+  return ctx.db.insert("recipes", {
+    userId,
+    name: args.name,
+    definition: args.definition,
+    version: 1,
+    formatVersion,
+    isPublic: args.isPublic ?? false,
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
+/** Patch an existing recipe with new values, incrementing the version. */
+async function patchRecipe(
+  ctx: MutationCtx,
+  existing: { _id: Id<"recipes">; isPublic: boolean; version: number; formatVersion?: string },
+  args: SaveArgs,
+  formatVersion: string | undefined,
+  now: number,
+) {
+  await ctx.db.patch(existing._id, {
+    definition: args.definition,
+    isPublic: args.isPublic ?? existing.isPublic,
+    version: existing.version + 1,
+    formatVersion: formatVersion ?? existing.formatVersion,
+    updatedAt: now,
+  });
+}
 
 /** Delete a recipe. Idempotent — already-deleted is a no-op. */
 export const remove = mutation({

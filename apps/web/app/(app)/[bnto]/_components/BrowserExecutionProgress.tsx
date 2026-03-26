@@ -3,6 +3,7 @@
 import { ClockIcon, LoaderIcon, Row, Stack } from "@bnto/ui";
 import type { BrowserExecution } from "@bnto/core";
 import { useElapsedTime, formatElapsed } from "../_hooks/useElapsedTime";
+import { BrowserProgressBar } from "./BrowserProgressBar";
 
 interface BrowserExecutionProgressProps {
   execution: BrowserExecution;
@@ -42,21 +43,7 @@ export function BrowserExecutionProgress({ execution }: BrowserExecutionProgress
         </Row>
       </Row>
 
-      {fileProgress && (
-        <Stack className="gap-1.5">
-          <Row justify="between" className="text-xs text-muted-foreground">
-            <span>{fileProgress.message}</span>
-            <span>{fileProgress.overallPercent}%</span>
-          </Row>
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              data-testid="progress-bar"
-              className="h-full rounded-full bg-primary motion-safe:transition-[width] motion-safe:duration-fast"
-              style={{ width: `${fileProgress.overallPercent}%` }}
-            />
-          </div>
-        </Stack>
-      )}
+      {fileProgress && <BrowserProgressBar fileProgress={fileProgress} />}
     </Stack>
   );
 }

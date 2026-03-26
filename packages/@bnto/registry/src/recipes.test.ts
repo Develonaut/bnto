@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { getAllRecipes, getRecipeBySlug, getRecipesByCategory } from "./recipes";
+import { getAllRecipes } from "./getAllRecipes";
+import { getRecipeBySlug } from "./getRecipeBySlug";
+import { getRecipesByCategory } from "./getRecipesByCategory";
 
 describe("recipes", () => {
   describe("getAllRecipes", () => {

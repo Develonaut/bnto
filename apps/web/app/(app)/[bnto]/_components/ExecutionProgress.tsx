@@ -1,9 +1,11 @@
 "use client";
 
-import { CheckCircle2Icon, LoaderIcon, XCircleIcon, ClockIcon, cn } from "@bnto/ui";
 import { core } from "@bnto/core";
-import type { Execution, NodeProgress } from "@bnto/core";
-import { useElapsedTime, formatElapsed } from "../_hooks/useElapsedTime";
+import { useElapsedTime } from "../_hooks/useElapsedTime";
+import { ExecutionProgressLoading } from "./ExecutionProgressLoading";
+import { ExecutionProgressHeader } from "./ExecutionProgressHeader";
+import { NodeProgressRow } from "./NodeProgressRow";
+import { ExecutionErrorPanel } from "./ExecutionErrorPanel";
 
 interface ExecutionProgressProps {
   executionId: string;
@@ -23,18 +25,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
   const elapsed = useElapsedTime(execution?.startedAt, isActive);
 
   if (isLoading || !execution) {
-    return (
-      <div
-        className="rounded-lg border border-border bg-card p-4"
-        data-testid="execution-progress"
-        data-status="loading"
-      >
-        <div className="flex items-center gap-3">
-          <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />
-          <p className="text-sm text-muted-foreground">Starting execution&hellip;</p>
-        </div>
-      </div>
-    );
+    return <ExecutionProgressLoading />;
   }
 
   return (
@@ -43,16 +34,7 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
       data-testid="execution-progress"
       data-status={execution.status}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <StatusIcon status={execution.status} />
-          <p className="text-sm font-medium text-foreground">{getStatusLabel(execution.status)}</p>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ClockIcon className="size-3.5" />
-          <span>{formatElapsed(elapsed)}</span>
-        </div>
-      </div>
+      <ExecutionProgressHeader status={execution.status} elapsed={elapsed} />
 
       {execution.progress.length > 0 && (
         <ul className="space-y-1.5">
@@ -63,75 +45,8 @@ export function ExecutionProgress({ executionId }: ExecutionProgressProps) {
       )}
 
       {execution.status === "failed" && execution.error && (
-        <div
-          className="rounded-md border border-destructive/30 bg-destructive/5 p-3"
-          data-testid="execution-error"
-        >
-          <p className="text-sm text-destructive">{friendlyError(execution.error)}</p>
-          {execution.error !== friendlyError(execution.error) && (
-            <p className="mt-1 text-xs text-muted-foreground">{execution.error}</p>
-          )}
-        </div>
+        <ExecutionErrorPanel error={execution.error} />
       )}
     </div>
   );
-}
-
-function NodeProgressRow({ node }: { node: NodeProgress }) {
-  const isComplete = node.status === "completed";
-  const isFailed = node.status === "failed";
-
-  return (
-    <li
-      className="flex items-center gap-2 text-sm"
-      data-testid="node-progress"
-      data-node-id={node.nodeId}
-      data-node-status={node.status}
-    >
-      <span
-        className={cn(
-          "size-2 rounded-full",
-          isComplete && "bg-success",
-          isFailed && "bg-destructive",
-          !isComplete && !isFailed && "bg-primary motion-safe:animate-pulse",
-        )}
-      />
-      <span className="text-muted-foreground">{node.nodeId}</span>
-      <span className="ml-auto text-xs text-muted-foreground">{node.status}</span>
-    </li>
-  );
-}
-
-function StatusIcon({ status }: { status: Execution["status"] }) {
-  switch (status) {
-    case "pending":
-    case "running":
-      return <LoaderIcon className="size-5 shrink-0 text-primary motion-safe:animate-spin" />;
-    case "completed":
-      return <CheckCircle2Icon className="size-5 shrink-0 text-success" />;
-    case "failed":
-      return <XCircleIcon className="size-5 shrink-0 text-destructive" />;
-  }
-}
-
-function getStatusLabel(status: Execution["status"]): string {
-  switch (status) {
-    case "pending":
-      return "Queued...";
-    case "running":
-      return "Processing...";
-    case "completed":
-      return "Completed";
-    case "failed":
-      return "Failed";
-  }
-}
-
-/** Translate backend error strings into user-friendly messages. */
-function friendlyError(raw: string): string {
-  if (raw.includes("file transit not configured"))
-    return "The file processing server isn't fully configured. Please try again later.";
-  if (raw.includes("timed out") || raw.includes("polling limit"))
-    return "The execution took too long and was stopped. Try with fewer or smaller files.";
-  return raw;
 }

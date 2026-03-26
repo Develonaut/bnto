@@ -5,7 +5,7 @@ import { cn } from "../utils/cn";
 import { BentoItemContext } from "./bentoGridContext";
 import { Grid, GridItem } from "./Grid";
 import { partitionBentoChildren } from "./partitionBentoChildren";
-import type { GapSize } from "../utils/layoutTypes";
+import type { GapSize } from "../utils/resolveGap";
 
 /* ── Pinned marker ──────────────────────────────────────────── */
 

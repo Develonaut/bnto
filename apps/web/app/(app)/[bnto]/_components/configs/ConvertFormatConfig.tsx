@@ -1,22 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import {
-  Label,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-  Slider,
-} from "@bnto/ui";
 import type { ConvertFormatConfig as Config } from "./types";
-
-const FORMAT_OPTIONS = [
-  { value: "webp", label: "WebP" },
-  { value: "jpeg", label: "JPEG" },
-  { value: "png", label: "PNG" },
-] as const;
+import { useConvertFormatHandlers } from "./useConvertFormatHandlers";
+import { FormatSelect } from "./FormatSelect";
+import { QualitySlider } from "./QualitySlider";
 
 interface ConvertFormatConfigProps {
   value: Config;
@@ -24,74 +11,24 @@ interface ConvertFormatConfigProps {
 }
 
 export function ConvertFormatConfig({ value, onChange }: ConvertFormatConfigProps) {
-  const handleFormatChange = useCallback(
-    (format: string) => onChange({ ...value, format: format as Config["format"] }),
-    [onChange, value],
-  );
-
-  const qualityValue = useMemo(() => [value.quality], [value.quality]);
-
-  const handleQualityChange = useCallback(
-    ([quality]: number[]) => onChange({ ...value, quality: quality ?? value.quality }),
-    [onChange, value],
+  const { handleFormatChange, qualityValue, handleQualityChange } = useConvertFormatHandlers(
+    value,
+    onChange,
   );
 
   return (
     <div className="flex w-full items-end gap-4">
-      <div className="flex shrink-0 flex-col gap-1">
-        <Label id="convert-format-label" className="text-muted-foreground text-xs">
-          Format
-        </Label>
-        <Select value={value.format} onValueChange={handleFormatChange}>
-          <SelectTrigger
-            className="w-24"
-            aria-labelledby="convert-format-label"
-            aria-describedby="convert-format-help"
-            data-testid="format-select"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FORMAT_OPTIONS.map((opt) => (
-              <SelectItem
-                key={opt.value}
-                value={opt.value}
-                data-testid={`format-option-${opt.value}`}
-              >
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p id="convert-format-help" className="text-muted-foreground text-xs">
-          Output type
-        </p>
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Label id="convert-quality-label" className="text-muted-foreground text-xs">
-          Quality
-        </Label>
-        <div className="flex items-center gap-3">
-          <Slider
-            className="w-full"
-            aria-labelledby="convert-quality-label"
-            aria-describedby="convert-quality-help"
-            aria-valuetext={`${value.quality} percent`}
-            value={qualityValue}
-            onValueChange={handleQualityChange}
-            min={1}
-            max={100}
-            step={1}
-          />
-          <span className="text-muted-foreground shrink-0 font-mono text-sm tabular-nums">
-            {value.quality}%
-          </span>
-        </div>
-        <p id="convert-quality-help" className="text-muted-foreground text-xs">
-          Lower values reduce file size
-        </p>
-      </div>
+      <FormatSelect
+        id="convert-format"
+        value={value.format}
+        onChange={handleFormatChange}
+        helpText="Output type"
+      />
+      <QualitySlider
+        value={value.quality}
+        sliderValue={qualityValue}
+        onChange={handleQualityChange}
+      />
     </div>
   );
 }

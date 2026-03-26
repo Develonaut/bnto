@@ -8,7 +8,7 @@
 import { NewRecipeNavButton } from "./NewRecipeNavButton";
 import { NavButton } from "./NavButton";
 import { RecipesMenu } from "./RecipesMenu";
-import { PAGE_LINKS } from "./navData";
+import { PAGE_LINKS } from "./nav";
 
 export function DesktopNav() {
   return (

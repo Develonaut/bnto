@@ -4,6 +4,7 @@ import type { ChangeEvent } from "react";
 import { useCallback } from "react";
 import { Input, Label } from "@bnto/ui";
 import type { RenameFilesConfig as Config } from "./types";
+import { RenamePatternPreview } from "./RenamePatternPreview";
 
 interface RenameFilesConfigProps {
   value: Config;
@@ -31,13 +32,7 @@ export function RenameFilesConfig({ value, onChange }: RenameFilesConfigProps) {
           onChange={handlePatternChange}
           placeholder="renamed-{{name}}"
         />
-        {value.pattern && (
-          <span className="text-muted-foreground shrink-0 text-xs">
-            <span className="font-mono">
-              {value.pattern.replace("{{name}}", "photo").replace("{{ext}}", ".png")}
-            </span>
-          </span>
-        )}
+        <RenamePatternPreview pattern={value.pattern} />
       </div>
       <p id="rename-pattern-help" className="text-muted-foreground text-xs">
         Use <span className="font-mono">{"{{name}}"}</span> and{" "}

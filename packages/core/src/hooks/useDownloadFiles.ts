@@ -20,23 +20,28 @@ const IDLE_STATE: DownloadState = { status: "idle", urls: [] };
  * - `downloadFile(url)` — trigger a browser download for a single file
  * - `downloadAll()` — trigger downloads for all files sequentially
  */
+/** Fetch download URLs and return the new state. */
+async function requestUrls(executionId: string): Promise<DownloadState> {
+  try {
+    const result = await core.downloads.getDownloadUrls(executionId);
+    return { status: "ready", urls: result.urls };
+  } catch (error) {
+    return {
+      status: "failed",
+      urls: [],
+      error: error instanceof Error ? error.message : "Download failed",
+    };
+  }
+}
+
 export function useDownloadFiles() {
   const [state, setState] = useState<DownloadState>(IDLE_STATE);
 
   const fetchUrls = useCallback(async (executionId: string) => {
     setState({ status: "loading", urls: [] });
-    try {
-      const result = await core.downloads.getDownloadUrls(executionId);
-      setState({ status: "ready", urls: result.urls });
-      return result;
-    } catch (error) {
-      setState({
-        status: "failed",
-        urls: [],
-        error: error instanceof Error ? error.message : "Download failed",
-      });
-      return null;
-    }
+    const result = await requestUrls(executionId);
+    setState(result);
+    return result.status === "ready" ? result : null;
   }, []);
 
   const downloadFile = useCallback((file: OutputFileUrl) => {
@@ -44,9 +49,7 @@ export function useDownloadFiles() {
   }, []);
 
   const downloadAll = useCallback(() => {
-    for (const file of state.urls) {
-      core.downloads.downloadFile(file.url, file.name);
-    }
+    for (const file of state.urls) core.downloads.downloadFile(file.url, file.name);
   }, [state.urls]);
 
   const reset = useCallback(() => setState(IDLE_STATE), []);

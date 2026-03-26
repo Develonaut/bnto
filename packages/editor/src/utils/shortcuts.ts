@@ -69,25 +69,3 @@ export const SHORTCUTS: ShortcutDef[] = [
 
 /** Map from shortcut id to its definition for quick lookup. */
 export const SHORTCUT_MAP = new Map(SHORTCUTS.map((s) => [s.id, s]));
-
-/**
- * Detect whether the user is on macOS.
- *
- * Uses `navigator.platform` with a `navigator.userAgentData` fallback.
- * Returns false during SSR.
- */
-export function isMacPlatform(): boolean {
-  if (typeof navigator === "undefined") return false;
-
-  // Modern API (Chromium 93+)
-  const uaData = (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData;
-  if (uaData?.platform) return uaData.platform === "macOS";
-
-  // Legacy fallback
-  return /Mac|iPhone|iPad|iPod/.test(navigator.platform);
-}
-
-/** Return the display keys for a shortcut based on the current platform. */
-export function getShortcutKeys(def: ShortcutDef): string[] {
-  return isMacPlatform() ? def.mac : def.win;
-}

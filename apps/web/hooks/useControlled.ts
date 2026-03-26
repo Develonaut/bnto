@@ -28,13 +28,11 @@ export function useControlled<T>(
    * rule forbids reading ref.current during render. State is the safe alternative. */
   const [initiallyControlled] = useState(isControlled);
 
-  if (process.env.NODE_ENV !== "production") {
-    if (initiallyControlled !== isControlled) {
-      console.error(
-        "useControlled: component switched between controlled and uncontrolled. " +
+  if (process.env.NODE_ENV !== "production" && initiallyControlled !== isControlled) {
+    console.error(
+      "useControlled: component switched between controlled and uncontrolled. " +
         "Decide between using a controlled or uncontrolled value for the lifetime of the component.",
-      );
-    }
+    );
   }
 
   const [internalValue, setInternalValue] = useState(defaultValue);

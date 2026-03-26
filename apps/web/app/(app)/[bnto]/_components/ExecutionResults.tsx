@@ -1,18 +1,9 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import {
-  Button,
-  CheckCircle2Icon,
-  DownloadIcon,
-  FileDownIcon,
-  LoaderIcon,
-  Row,
-  Stack,
-} from "@bnto/ui";
 import type { OutputFileUrl } from "@bnto/core";
 import { core } from "@bnto/core";
-import { formatFileSize } from "@bnto/ui";
+import { ExecutionResultsBody } from "./ExecutionResultsBody";
 
 interface ExecutionResultsProps {
   executionId: string;
@@ -30,100 +21,28 @@ export function ExecutionResults({ executionId }: ExecutionResultsProps) {
     core.downloads.useDownloadFiles();
 
   const outputFiles = execution?.outputFiles ?? [];
-  const hasOutputFiles = outputFiles.length > 0;
   const isCompleted = execution?.status === "completed";
-  const duration =
-    execution?.completedAt && execution?.startedAt
-      ? Math.round((execution.completedAt - execution.startedAt) / 1000)
-      : null;
-
   const handleDownloadFile = useCallback(
     (url: OutputFileUrl) => () => downloadFile(url),
     [downloadFile],
   );
 
-  const handleDownloadSingleFile = useCallback(() => downloadFile(urls[0]), [downloadFile, urls]);
-
   useEffect(() => {
-    if (isCompleted && hasOutputFiles) {
-      fetchUrls(executionId);
-    }
-  }, [isCompleted, hasOutputFiles, executionId, fetchUrls]);
+    if (isCompleted && outputFiles.length > 0) fetchUrls(executionId);
+  }, [isCompleted, outputFiles.length, executionId, fetchUrls]);
 
-  if (!isCompleted || !hasOutputFiles) return null;
+  if (!isCompleted || outputFiles.length === 0) return null;
 
   return (
-    <Stack
-      className="gap-3 rounded-lg border border-border bg-card p-4"
-      data-testid="execution-results"
-    >
-      <Row justify="between">
-        <Row className="gap-2">
-          <CheckCircle2Icon className="size-5 shrink-0 text-success" />
-          <p className="text-sm font-medium text-foreground">
-            {outputFiles.length} {outputFiles.length === 1 ? "file" : "files"} ready
-          </p>
-        </Row>
-        {duration !== null && (
-          <p className="text-xs text-muted-foreground">Completed in {duration}s</p>
-        )}
-      </Row>
-
-      <Stack as="ul" className="gap-2">
-        {outputFiles.map((file) => {
-          const downloadUrl = urls.find((u) => u.key === file.key);
-          return (
-            <li
-              key={file.key}
-              className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-4 py-3"
-              data-testid="output-file"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
-                <p className="text-xs text-muted-foreground">{formatFileSize(file.sizeBytes)}</p>
-              </div>
-
-              {downloadUrl ? (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleDownloadFile(downloadUrl)}
-                  aria-label={`Download ${file.name}`}
-                  data-testid="download-button"
-                >
-                  <DownloadIcon className="size-4" />
-                </Button>
-              ) : (
-                <LoaderIcon className="size-4 shrink-0 text-muted-foreground motion-safe:animate-spin" />
-              )}
-            </li>
-          );
-        })}
-      </Stack>
-
-      {outputFiles.length > 1 && (
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={downloadAll}
-          disabled={!isReady || isLoading}
-          data-testid="download-all-button"
-        >
-          {isLoading ? (
-            <LoaderIcon className="size-4 motion-safe:animate-spin" />
-          ) : (
-            <FileDownIcon className="size-4" />
-          )}
-          Download All ({outputFiles.length} files)
-        </Button>
-      )}
-
-      {outputFiles.length === 1 && isReady && urls.length > 0 && (
-        <Button className="w-full" onClick={handleDownloadSingleFile} data-testid="download-button">
-          <DownloadIcon className="size-4" />
-          Download
-        </Button>
-      )}
-    </Stack>
+    <ExecutionResultsBody
+      outputFiles={outputFiles}
+      execution={execution}
+      urls={urls}
+      isReady={isReady}
+      isLoading={isLoading}
+      onDownloadFile={handleDownloadFile}
+      onDownloadSingle={() => downloadFile(urls[0])}
+      onDownloadAll={downloadAll}
+    />
   );
 }

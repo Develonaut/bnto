@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { toPairs, toRecord } from "./keyValueHelpers";
+import { toPairs } from "./toPairs";
+import { toRecord } from "./toRecord";
 
 describe("toPairs", () => {
   it("converts a record to an array of pairs", () => {

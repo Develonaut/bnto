@@ -5,11 +5,7 @@
  * paths. Transport detail is internal; consumers see a single API.
  */
 
-import {
-  addEntry,
-  getEntries,
-  clearEntries,
-} from "../adapters/local/localHistoryAdapter";
+import { addEntry, getEntries, clearEntries } from "../adapters/local/localHistoryAdapter";
 import {
   getExecutionHistoryRef,
   logExecutionEventStart,
@@ -22,11 +18,28 @@ import type { LocalHistoryEntry } from "../types/localHistory";
 
 const LOCAL_HISTORY_QUERY_KEY = ["local-history", "executions"] as const;
 
-export function createHistoryService() {
-  function invalidateLocal() {
-    getQueryClient().invalidateQueries({ queryKey: LOCAL_HISTORY_QUERY_KEY });
-  }
+function invalidateLocal() {
+  getQueryClient().invalidateQueries({ queryKey: LOCAL_HISTORY_QUERY_KEY });
+}
 
+/** Migrate local history entries to Convex. Returns count of migrated entries. */
+async function migrateToServer(): Promise<{ migrated: number }> {
+  const entries = await getEntries();
+  if (entries.length === 0) return { migrated: 0 };
+
+  try {
+    const result = await migrateLocalHistory(entries);
+    if (result && result.migrated > 0) {
+      await clearEntries();
+      invalidateLocal();
+    }
+    return result ?? { migrated: 0 };
+  } catch {
+    return { migrated: 0 };
+  }
+}
+
+export function createHistoryService() {
   return {
     serverRef: () => {
       const { funcRef, args } = getExecutionHistoryRef();
@@ -39,26 +52,19 @@ export function createHistoryService() {
       staleTime: Infinity,
     }),
 
-    /** Record to local history (always called — IndexedDB). */
     record: async (entry: LocalHistoryEntry) => {
       await addEntry(entry);
       invalidateLocal();
     },
 
-    /**
-     * Record to server history (Convex executionEvents).
-     * Returns the event ID for later completion, or null if unauthenticated.
-     */
     recordServerStart: async (slug: string): Promise<string | null> => {
       try {
-        const eventId = await logExecutionEventStart(slug);
-        return eventId ? String(eventId) : null;
+        return String((await logExecutionEventStart(slug)) ?? "");
       } catch {
         return null;
       }
     },
 
-    /** Complete a server execution event with status and duration. */
     recordServerComplete: async (
       eventId: string,
       durationMs: number,
@@ -67,33 +73,17 @@ export function createHistoryService() {
       try {
         await completeExecutionEvent(eventId, durationMs, status);
       } catch {
-        // Fire-and-forget — don't block execution on history updates
+        /* fire-and-forget */
       }
     },
 
-    /** Migrate local history entries to Convex (on signup). */
-    migrateToServer: async () => {
-      const entries = await getEntries();
-      if (entries.length === 0) return { migrated: 0 };
-
-      try {
-        const result = await migrateLocalHistory(entries);
-        if (result && result.migrated > 0) {
-          await clearEntries();
-          invalidateLocal();
-        }
-        return result ?? { migrated: 0 };
-      } catch {
-        return { migrated: 0 };
-      }
-    },
+    migrateToServer,
 
     clear: async () => {
       await clearEntries();
       invalidateLocal();
     },
 
-    /** For external invalidation (e.g., after sign-in migration). */
     queryKey: LOCAL_HISTORY_QUERY_KEY,
   } as const;
 }

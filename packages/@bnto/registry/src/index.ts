@@ -32,8 +32,11 @@ export type {
 export type { Recipe, AcceptSpec } from "./recipe";
 
 // ── Curation functions ──────────────────────────────────────────────────
-export { getAllRecipes, getRecipeBySlug, getRecipesByCategory } from "./recipes";
-export { getAllNodeTypes, getBrowserNodeTypes } from "./nodeTypes";
+export { getAllRecipes } from "./getAllRecipes";
+export { getRecipeBySlug } from "./getRecipeBySlug";
+export { getRecipesByCategory } from "./getRecipesByCategory";
+export { getAllNodeTypes } from "./getAllNodeTypes";
+export { getBrowserNodeTypes } from "./getBrowserNodeTypes";
 export { getAllCategories } from "./categories";
 export { getAllProcessors } from "./processors";
 
@@ -55,21 +58,20 @@ export { validateDefinition, validateEdges, validateNodeParams } from "./validat
 export type { ValidationError } from "./validation";
 export { validateRecipe } from "./validateRecipe";
 
-// ── Classification & helpers ────────────────────────────────────────────
-export {
-  isNodeType,
-  getNodeTypeInfo,
-  getNodeIcon,
-  getNodeSublabel,
-  isIoNodeType,
-  isContainerNodeType,
-  getCategoryInfo,
-  getInputNode,
-  getOutputNode,
-  deriveCategory,
-  isSupportedVersion,
-  isCompatibleVersion,
-} from "./helpers";
+// ── Classification ──────────────────────────────────────────────────────
+export { isNodeType, isIoNodeType, isContainerNodeType } from "./classification";
+
+// ── Node metadata ──────────────────────────────────────────────────────
+export { getNodeTypeInfo, getNodeIcon, getNodeSublabel } from "./nodeMetadata";
+
+// ── Category helpers ───────────────────────────────────────────────────
+export { getCategoryInfo, deriveCategory } from "./categoryHelpers";
+
+// ── I/O node helpers ───────────────────────────────────────────────────
+export { getInputNode, getOutputNode } from "./ioNodes";
+
+// ── Version checks ─────────────────────────────────────────────────────
+export { isSupportedVersion, isCompatibleVersion } from "./versionCheck";
 export { deriveAcceptSpec } from "./deriveAcceptSpec";
 
 // ── Schema introspection ────────────────────────────────────────────────

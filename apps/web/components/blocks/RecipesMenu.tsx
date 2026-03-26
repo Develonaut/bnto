@@ -4,11 +4,9 @@
  * Used in both DesktopNav and MobileNavMenu.
  */
 
-import Link from "next/link";
+import { BookOpenIcon, Menu, MenuTrigger, MenuContent } from "@bnto/ui";
 
-import { BookOpenIcon, Menu, MenuTrigger, MenuContent, MenuLabel, MenuItem } from "@bnto/ui";
-
-import { RECIPES } from "./navData";
+import { RecipesMenuGrid } from "./RecipesMenuGrid";
 
 export function RecipesMenu() {
   return (
@@ -18,31 +16,7 @@ export function RecipesMenu() {
         Explore
       </MenuTrigger>
       <MenuContent className="w-[28rem] p-3" offset="lg" data-testid="explore-dropdown">
-        <ul className="grid grid-cols-2 gap-1">
-          {RECIPES.map((category) => (
-            <li key={category.title} className="col-span-2">
-              <MenuLabel>{category.title}</MenuLabel>
-              <ul className="grid grid-cols-2 gap-1">
-                {category.links.map((link) => (
-                  <li key={link.url}>
-                    <MenuItem asChild className="flex-col items-start gap-1 py-2.5">
-                      <Link
-                        href={link.url}
-                        data-testid={`explore-link-${link.url.replace("/", "")}`}
-                        className="no-underline"
-                      >
-                        <span className="text-sm leading-normal font-medium">{link.label}</span>
-                        <span className="text-xs leading-normal text-muted-foreground">
-                          {link.description}
-                        </span>
-                      </Link>
-                    </MenuItem>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <RecipesMenuGrid />
       </MenuContent>
     </Menu>
   );

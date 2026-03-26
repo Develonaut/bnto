@@ -2,7 +2,8 @@
 
 import { useMemo } from "react";
 import { Kbd, KbdGroup } from "@bnto/ui";
-import { SHORTCUT_MAP, getShortcutKeys } from "../utils/shortcuts";
+import { SHORTCUT_MAP } from "../utils/shortcuts";
+import { getShortcutKeys } from "../utils/getShortcutKeys";
 
 interface ShortcutHintProps {
   /** Shortcut id from SHORTCUTS definitions. */

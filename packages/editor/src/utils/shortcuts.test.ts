@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { SHORTCUTS, SHORTCUT_MAP, isMacPlatform, getShortcutKeys } from "./shortcuts";
+import { SHORTCUTS, SHORTCUT_MAP } from "./shortcuts";
 import type { ShortcutDef } from "./shortcuts";
+import { isMacPlatform } from "./isMacPlatform";
+import { getShortcutKeys } from "./getShortcutKeys";
 
 describe("SHORTCUTS", () => {
   it("contains all expected shortcut ids", () => {
