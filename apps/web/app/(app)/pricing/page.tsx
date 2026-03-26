@@ -5,7 +5,7 @@ import { AppShellContent } from "@bnto/ui";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "All browser tools free, unlimited, forever. No signup required.",
+  description: "All browser recipes free, unlimited, forever. No signup required.",
 };
 
 export default function PricingPage() {

@@ -29,7 +29,7 @@ const CAPABILITIES: Capability[] = [
   {
     icon: CheckIcon,
     variant: "primary",
-    label: "Free forever — browser tools cost us nothing to run",
+    label: "Free forever — browser recipes cost us nothing to run",
   },
 ];
 

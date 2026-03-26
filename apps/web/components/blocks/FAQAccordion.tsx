@@ -4,32 +4,37 @@ const FAQS = [
   {
     question: "Where are my files processed?",
     answer:
-      "Most tools run entirely in your browser using Rust compiled to WebAssembly — your files are processed on your device. Some future tools may use server-side processing for more advanced features.",
+      "Everything runs in your browser using Rust compiled to WebAssembly — your files are processed on your device and never uploaded anywhere. Future premium recipes may use server-side processing for things browsers can't do, like AI or video.",
   },
   {
     question: "Is it really free?",
     answer:
-      "Yes. Every tool that runs in your browser is free, unlimited, forever. No signup, no watermarks, no quality reduction, no daily caps. We will never put limits on browser-based tools.",
+      "Yes. Every recipe that runs in your browser is free, unlimited, forever. No signup, no watermarks, no quality reduction, no daily caps. We will never put limits on browser-based recipes.",
   },
   {
     question: "What file types are supported?",
     answer:
-      "Images: JPEG, PNG, and WebP for compression, resizing, and format conversion. Data: CSV files for cleaning and column renaming. Files: any file type for batch renaming.",
+      "Images: JPEG, PNG, WebP, GIF, AVIF, BMP, and TIFF for compression, resizing, and format conversion. Data: CSV files for cleaning and column renaming. Files: any file type for batch renaming. More node types are coming.",
+  },
+  {
+    question: "Can I build my own recipes?",
+    answer:
+      "Yes. The visual recipe editor lets you compose nodes into multi-step pipelines — chain a resize into a format conversion into a compression, all in one recipe. Save your recipes and reuse them anytime.",
   },
   {
     question: "Is bnto open source?",
     answer:
-      "Yes. The engine is MIT licensed. You can inspect the source code, verify how tools work, or contribute.",
+      "Yes. The entire engine and web app are MIT licensed. You can inspect the source code, verify how recipes work, or contribute.",
   },
   {
     question: "Will bnto always be free?",
     answer:
-      "All current browser tools are free and unlimited — no signup, no caps. We plan to add a paid tier for advanced features that require server-side processing.",
+      "All browser-based recipes are free and unlimited — no signup, no caps. A Pro tier is planned for features that require server-side processing (AI, video, shell commands), persistence, and team collaboration.",
   },
   {
     question: "Do I need an account?",
     answer:
-      "No. Drop your files and use any tool immediately. No account, no signup, no email required.",
+      "No. Drop your files and run any recipe immediately. Create an account if you want to save custom recipes or access execution history.",
   },
   {
     question: "Can I process multiple files at once?",
