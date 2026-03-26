@@ -1,0 +1,1 @@
+export { ComparisonBar } from "./ComparisonBarRoot";

@@ -2,9 +2,9 @@
 
 import { useCallback } from "react";
 
-import type { KeyValuePair } from "./toPairs";
 import { toRecord } from "./toRecord";
 import { useKeyValueSync } from "./useKeyValueSync";
+import { useKeyValueHandlers } from "./useKeyValueHandlers";
 
 interface UseKeyValueEditorOptions {
   value: Record<string, string>;
@@ -17,42 +17,30 @@ export function useKeyValueEditor({ value, onChange, max }: UseKeyValueEditorOpt
   const [pairs, setPairs] = useKeyValueSync(value);
 
   const emitChange = useCallback(
-    (next: KeyValuePair[]) => {
+    (next: typeof pairs) => {
       setPairs(next);
       onChange(toRecord(next));
     },
     [onChange, setPairs],
   );
 
-  const updatePair = useCallback(
-    (index: number, field: "key" | "value", text: string) => {
-      const next = [...pairs];
-      next[index] = { ...next[index], [field]: text };
-      emitChange(next);
-    },
-    [pairs, emitChange],
-  );
+  const { updatePair, removePair } = useKeyValueHandlers(pairs, emitChange);
 
-  const removePair = useCallback(
-    (index: number) => emitChange(pairs.filter((_, i) => i !== index)),
-    [pairs, emitChange],
-  );
   const addPair = useCallback(() => {
     if (max !== undefined && pairs.length >= max) return;
     setPairs([...pairs, { key: "", value: "" }]);
   }, [pairs, max, setPairs]);
 
   const handleUpdateKey = useCallback(
-    (index: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
-      updatePair(index, "key", e.target.value),
+    (i: number) => (e: React.ChangeEvent<HTMLInputElement>) => updatePair(i, "key", e.target.value),
     [updatePair],
   );
   const handleUpdateValue = useCallback(
-    (index: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
-      updatePair(index, "value", e.target.value),
+    (i: number) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      updatePair(i, "value", e.target.value),
     [updatePair],
   );
-  const handleRemovePair = useCallback((index: number) => () => removePair(index), [removePair]);
+  const handleRemovePair = useCallback((i: number) => () => removePair(i), [removePair]);
 
   const atMax = max !== undefined && pairs.length >= max;
   return { pairs, addPair, handleUpdateKey, handleUpdateValue, handleRemovePair, atMax };

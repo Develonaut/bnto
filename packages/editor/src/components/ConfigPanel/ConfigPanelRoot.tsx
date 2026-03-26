@@ -25,7 +25,8 @@ function useConfigNodeId() {
   return selectedNodeId ?? prev ?? null;
 }
 
-function ConfigPanelRoot() {
+/** Resolves param change handler + derived display data for the config panel. */
+function useConfigPanel() {
   const editor = useEditor();
   const configNodeId = useConfigNodeId();
   const nodeData = useEditorNode(configNodeId);
@@ -39,7 +40,14 @@ function ConfigPanelRoot() {
 
   const { config, typeInfo } = nodeData;
   const nodeName = config && typeInfo ? config.displayName || config.name || typeInfo.label : "";
-  const hasContent = configNodeId && nodeData.node && config && typeInfo;
+
+  return { configNodeId, nodeData, handleParamChange, nodeName };
+}
+
+function ConfigPanelRoot() {
+  const { configNodeId, nodeData, handleParamChange, nodeName } = useConfigPanel();
+  const { config, typeInfo, node } = nodeData;
+  const hasContent = configNodeId && node && config && typeInfo;
 
   return (
     <EditorMenuPanel

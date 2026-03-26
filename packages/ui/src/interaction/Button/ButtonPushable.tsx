@@ -2,17 +2,9 @@
 
 import type { ElementType, ReactNode } from "react";
 
-import { cn } from "../../utils/cn";
-import { resolveElevationClass, type ElevationOverride } from "../resolveElevationClass";
-import {
-  type ButtonVariant,
-  VARIANT_CLASSES,
-  RADIUS_BY_SIZE,
-  ICON_ELEVATION_BY_SIZE,
-  TEXT_ELEVATION_BY_SIZE,
-  textFaceCn,
-  iconFaceCn,
-} from "./buttonVariants";
+import type { ElevationOverride } from "../resolveElevationClass";
+import type { ButtonVariant } from "./buttonVariants";
+import { resolvePushableClasses } from "./resolvePushableClasses";
 
 interface PushableRenderProps {
   Comp: ElementType;
@@ -37,27 +29,19 @@ export function ButtonPushable({
   className,
   content,
 }: PushableRenderProps) {
-  const elevationClass = resolveElevationClass(resolvedElevation);
-  const variantClass = resolvedVariant ? VARIANT_CLASSES[resolvedVariant] : undefined;
-  const sizeElevation = isIcon
-    ? ICON_ELEVATION_BY_SIZE[resolvedSize]
-    : TEXT_ELEVATION_BY_SIZE[resolvedSize];
-  const containerClasses = cn(
-    "pushable",
-    fullWidth ? "flex w-full" : "inline-flex",
-    variantClass,
-    elevationClass ?? sizeElevation,
+  const cls = resolvePushableClasses(
+    isIcon,
+    resolvedSize,
+    resolvedVariant,
+    resolvedElevation,
+    fullWidth,
+    className,
   );
-  const radiusClass = RADIUS_BY_SIZE[resolvedSize] ?? "rounded-md";
-  const faceClasses = isIcon
-    ? iconFaceCn({ size: resolvedSize })
-    : cn("flex-1 min-w-0", textFaceCn({ size: resolvedSize }));
-
   return (
-    <Comp {...sharedProps} className={cn(containerClasses, radiusClass, className)}>
+    <Comp {...sharedProps} className={cls.outer}>
       <span className="pushable-shadow" aria-hidden="true" />
       <span className="pushable-edge" aria-hidden="true" />
-      <span className={cn("pushable-face", faceClasses, className)}>{content}</span>
+      <span className={cls.face}>{content}</span>
     </Comp>
   );
 }

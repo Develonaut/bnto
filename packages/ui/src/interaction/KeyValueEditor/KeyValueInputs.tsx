@@ -1,34 +1,28 @@
-"use client";
+import type { ChangeEventHandler } from "react";
 
-import type { ChangeEventHandler, MouseEventHandler } from "react";
+import { Input } from "../Input";
 
-import { XIcon } from "../icons";
-import { Button } from "./Button";
-import { Input } from "./Input";
-
-interface KeyValueRowProps {
+interface KeyValueInputsProps {
   pairKey: string;
   pairValue: string;
   onKeyChange: ChangeEventHandler<HTMLInputElement>;
   onValueChange: ChangeEventHandler<HTMLInputElement>;
-  onRemove: MouseEventHandler;
   keyPlaceholder: string;
   valuePlaceholder: string;
   disabled: boolean;
 }
 
-export function KeyValueRow({
+export function KeyValueInputs({
   pairKey,
   pairValue,
   onKeyChange,
   onValueChange,
-  onRemove,
   keyPlaceholder,
   valuePlaceholder,
   disabled,
-}: KeyValueRowProps) {
+}: KeyValueInputsProps) {
   return (
-    <div className="flex items-center gap-2">
+    <>
       <Input
         value={pairKey}
         onChange={onKeyChange}
@@ -44,15 +38,6 @@ export function KeyValueRow({
         disabled={disabled}
         wrapperClassName="flex-1"
       />
-      {!disabled && (
-        <Button
-          type="button"
-          variant="outline"
-          icon={<XIcon />}
-          onClick={onRemove}
-          aria-label={`Remove ${pairKey || "row"}`}
-        />
-      )}
-    </div>
+    </>
   );
 }

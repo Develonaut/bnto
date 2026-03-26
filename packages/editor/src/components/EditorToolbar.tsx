@@ -33,7 +33,8 @@ function useCloseHandler(close: () => void) {
   );
 }
 
-function EditorToolbar() {
+/** Wire up all panel/dialog state the toolbar needs. */
+function useToolbarState() {
   const editor = useEditor();
   const { isOpen: paletteOpen, close: closePalette } = editor.panels.usePanels("palette");
   const { toggle: toggleConfig } = editor.panels.usePanels("config");
@@ -43,52 +44,107 @@ function EditorToolbar() {
   const handlePaletteOpenChange = useCloseHandler(closePalette);
   const handleHelpOpenChange = useCloseHandler(closeHelp);
 
+  return {
+    toggleConfig,
+    openHelp,
+    settingsDialog,
+    openRecipeDialog,
+    paletteOpen,
+    handlePaletteOpenChange,
+    helpOpen,
+    handleHelpOpenChange,
+  };
+}
+
+/** Properties + Help action buttons on the right side of the toolbar. */
+function ToolbarActions({
+  toggleConfig,
+  openHelp,
+}: {
+  toggleConfig: () => void;
+  openHelp: () => void;
+}) {
+  return (
+    <>
+      <ToolbarDivider />
+      <ToolbarGroup>
+        <Button
+          icon={<SlidersHorizontalIcon />}
+          variant="ghost"
+          elevation="sm"
+          onClick={toggleConfig}
+          aria-label="Properties"
+          data-testid="toolbar-properties"
+        />
+      </ToolbarGroup>
+      <ToolbarDivider />
+      <ToolbarGroup>
+        <Button
+          icon={<CircleHelpIcon />}
+          variant="ghost"
+          elevation="sm"
+          onClick={openHelp}
+          aria-label="Help"
+          data-testid="toolbar-help"
+        />
+      </ToolbarGroup>
+    </>
+  );
+}
+
+/** Toolbar button strip (file, run, config, help). */
+function ToolbarStrip({
+  toggleConfig,
+  openHelp,
+  onRename,
+  onImport,
+}: {
+  toggleConfig: () => void;
+  openHelp: () => void;
+  onRename: () => void;
+  onImport: () => void;
+}) {
+  return (
+    <Toolbar elevation="md" aria-label="Editor toolbar">
+      <ToolbarGroup>
+        <FileMenuButton onRename={onRename} onImport={onImport} />
+      </ToolbarGroup>
+      <ToolbarDivider />
+      <ToolbarGroup>
+        <RunButton />
+        <RunPanel />
+      </ToolbarGroup>
+      <ToolbarActions toggleConfig={toggleConfig} openHelp={openHelp} />
+    </Toolbar>
+  );
+}
+
+function EditorToolbar() {
+  const state = useToolbarState();
+
   return (
     <>
       <div
         className="pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2"
         data-testid="editor-toolbar"
       >
-        <Toolbar elevation="md" aria-label="Editor toolbar">
-          <ToolbarGroup>
-            <FileMenuButton
-              onRename={settingsDialog.openDialog}
-              onImport={openRecipeDialog.openDialog}
-            />
-          </ToolbarGroup>
-          <ToolbarDivider />
-          <ToolbarGroup>
-            <RunButton />
-            <RunPanel />
-          </ToolbarGroup>
-          <ToolbarDivider />
-          <ToolbarGroup>
-            <Button
-              icon={<SlidersHorizontalIcon />}
-              variant="ghost"
-              elevation="sm"
-              onClick={toggleConfig}
-              aria-label="Properties"
-              data-testid="toolbar-properties"
-            />
-          </ToolbarGroup>
-          <ToolbarDivider />
-          <ToolbarGroup>
-            <Button
-              icon={<CircleHelpIcon />}
-              variant="ghost"
-              elevation="sm"
-              onClick={openHelp}
-              aria-label="Help"
-              data-testid="toolbar-help"
-            />
-          </ToolbarGroup>
-        </Toolbar>
+        <ToolbarStrip
+          toggleConfig={state.toggleConfig}
+          openHelp={state.openHelp}
+          onRename={state.settingsDialog.openDialog}
+          onImport={state.openRecipeDialog.openDialog}
+        />
       </div>
-      <RecipeDialog open={settingsDialog.open} onOpenChange={settingsDialog.onOpenChange} />
-      <OpenRecipeDialog open={openRecipeDialog.open} onOpenChange={openRecipeDialog.onOpenChange} />
-      <NodePaletteDialog open={paletteOpen} onOpenChange={handlePaletteOpenChange} />
-      <HelpDialog open={helpOpen} onOpenChange={handleHelpOpenChange} />
+      <RecipeDialog
+        open={state.settingsDialog.open}
+        onOpenChange={state.settingsDialog.onOpenChange}
+      />
+      <OpenRecipeDialog
+        open={state.openRecipeDialog.open}
+        onOpenChange={state.openRecipeDialog.onOpenChange}
+      />
+      <NodePaletteDialog open={state.paletteOpen} onOpenChange={state.handlePaletteOpenChange} />
+      <HelpDialog open={state.helpOpen} onOpenChange={state.handleHelpOpenChange} />
     </>
   );
 }

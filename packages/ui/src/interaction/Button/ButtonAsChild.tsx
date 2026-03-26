@@ -2,10 +2,9 @@
 
 import type { ElementType } from "react";
 
-import { cn } from "../../utils/cn";
-import { resolveElevationClass, type ElevationOverride } from "../resolveElevationClass";
-import { stripSizeElevation } from "../stripSizeElevation";
-import { type ButtonVariant, VARIANT_CLASSES, textCn, iconCn } from "./buttonVariants";
+import type { ElevationOverride } from "../resolveElevationClass";
+import type { ButtonVariant } from "./buttonVariants";
+import { resolveAsChildClasses } from "./resolveAsChildClasses";
 
 interface AsChildRenderProps {
   Comp: ElementType;
@@ -22,41 +21,12 @@ interface AsChildRenderProps {
   content: React.ReactNode;
 }
 
-export function ButtonAsChild({
-  Comp,
-  sharedProps,
-  isIcon,
-  resolvedSize,
-  resolvedVariant,
-  resolvedElevation,
-  fullWidth,
-  size,
-  asChild,
-  as,
-  className,
-  content,
-}: AsChildRenderProps) {
-  const elevationClass = resolveElevationClass(resolvedElevation);
-  const variantClass = resolvedVariant ? VARIANT_CLASSES[resolvedVariant] : undefined;
-
-  const behaviorCn = cn(
-    "pressable outline-none surface",
-    variantClass,
-    elevationClass,
-    fullWidth && "flex w-full",
-  );
-  const applySize = size !== undefined || (!asChild && !as);
-  const sizeClasses = applySize
-    ? isIcon
-      ? iconCn({ variant: resolvedVariant, size: resolvedSize })
-      : textCn({ variant: resolvedVariant, size: resolvedSize })
-    : "";
-  const resolvedSizeClasses = behaviorCn.includes("elevation-")
-    ? stripSizeElevation(sizeClasses)
-    : sizeClasses;
+export function ButtonAsChild(props: AsChildRenderProps) {
+  const { Comp, sharedProps, content } = props;
+  const mergedClassName = resolveAsChildClasses(props);
 
   return (
-    <Comp {...sharedProps} className={cn(behaviorCn, resolvedSizeClasses, className)}>
+    <Comp {...sharedProps} className={mergedClassName}>
       {content}
     </Comp>
   );

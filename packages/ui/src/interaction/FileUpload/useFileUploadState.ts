@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useDropzone, type Accept } from "react-dropzone";
 
 import type { FileUploadContextValue } from "./context";
+import { buildFileUploadContext } from "./buildFileUploadContext";
 
 interface UseFileUploadStateOptions {
   value: File[];
@@ -16,58 +17,20 @@ interface UseFileUploadStateOptions {
 }
 
 /** Encapsulates dropzone setup and context value creation. */
-export function useFileUploadState({
-  value,
-  onValueChange,
-  accept,
-  multiple,
-  maxFiles,
-  maxSize,
-  disabled,
-}: UseFileUploadStateOptions): FileUploadContextValue {
+export function useFileUploadState(opts: UseFileUploadStateOptions): FileUploadContextValue {
+  const { value, onValueChange, disabled, ...dzOpts } = opts;
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => onValueChange([...value, ...acceptedFiles]),
+    (accepted: File[]) => onValueChange([...value, ...accepted]),
     [value, onValueChange],
   );
-
-  const dropzone = useDropzone({
-    onDrop,
-    accept,
-    multiple,
-    maxFiles,
-    maxSize,
-    disabled,
-    noClick: true,
-    noKeyboard: true,
-  });
-
+  const dz = useDropzone({ onDrop, ...dzOpts, disabled, noClick: true, noKeyboard: true });
   const removeFile = useCallback(
     (file: File) => onValueChange(value.filter((f) => f !== file)),
     [value, onValueChange],
   );
-
   const clearFiles = useCallback(() => onValueChange([]), [onValueChange]);
-
-  return useMemo<FileUploadContextValue>(
-    () => ({
-      files: value,
-      removeFile,
-      clearFiles,
-      isDragActive: dropzone.isDragActive,
-      open: dropzone.open,
-      disabled,
-      getRootProps: dropzone.getRootProps,
-      getInputProps: dropzone.getInputProps,
-    }),
-    [
-      value,
-      removeFile,
-      clearFiles,
-      dropzone.isDragActive,
-      dropzone.open,
-      disabled,
-      dropzone.getRootProps,
-      dropzone.getInputProps,
-    ],
+  return useMemo(
+    () => buildFileUploadContext({ value, removeFile, clearFiles, disabled, dropzone: dz }),
+    [value, removeFile, clearFiles, dz.isDragActive, dz.open, disabled, dz.getRootProps, dz.getInputProps],
   );
 }

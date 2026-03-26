@@ -2,12 +2,11 @@
 
 import { forwardRef } from "react";
 import type { ComponentPropsWithoutRef, ElementRef } from "react";
-
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
-import { Popup } from "./Popup";
-import { POPUP_OFFSET_PX, type PopupOffset } from "./popupOffset";
+import type { PopupOffset } from "./popupOffset";
 import type { SurfaceElevation } from "../surface/Surface";
+import { PopupContentInner } from "./PopupContentInner";
 
 type PopupContentProps = Omit<
   ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>,
@@ -29,33 +28,25 @@ export const PopupContent = forwardRef<
 >(
   (
     {
-      className,
-      children,
       side = "bottom",
       align = "center",
       offset = "md",
       elevation = "lg",
-      boundary,
       boundaryPadding = 16,
       ...props
     },
     ref,
   ) => (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Content
+      <PopupContentInner
         ref={ref}
         side={side}
         align={align}
-        sideOffset={POPUP_OFFSET_PX[offset]}
-        collisionBoundary={boundary ?? undefined}
-        collisionPadding={boundaryPadding}
-        className="z-dropdown outline-hidden"
+        offset={offset}
+        elevation={elevation}
+        boundaryPadding={boundaryPadding}
         {...props}
-      >
-        <Popup side={side} elevation={elevation} className={className}>
-          {children}
-        </Popup>
-      </PopoverPrimitive.Content>
+      />
     </PopoverPrimitive.Portal>
   ),
 );

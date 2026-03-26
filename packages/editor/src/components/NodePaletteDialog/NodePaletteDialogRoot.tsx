@@ -47,22 +47,22 @@ interface PaletteDialogBodyProps {
   onAdd: (type: string) => void;
 }
 
-function PaletteDialogBody({
-  search,
-  setSearch,
-  isFull,
+/** Accordion list of palette groups + empty search message. */
+function PaletteGroupList({
   filteredGroups,
   defaultExpanded,
+  isFull,
   onAdd,
-}: PaletteDialogBodyProps) {
+  search,
+}: {
+  filteredGroups: PaletteGroup[];
+  defaultExpanded: string[];
+  isFull: boolean;
+  onAdd: (type: string) => void;
+  search: string;
+}) {
   return (
-    <div className="flex h-[28rem] flex-col">
-      <PaletteSearchInput value={search} onChange={setSearch} />
-      {isFull && (
-        <Text size="xs" color="muted" className="pb-2">
-          Canvas is full ({SLOTS.length} nodes max).
-        </Text>
-      )}
+    <>
       <Accordion
         type="multiple"
         defaultValue={defaultExpanded}
@@ -82,6 +82,33 @@ function PaletteDialogBody({
           No nodes match &ldquo;{search}&rdquo;
         </Text>
       )}
+    </>
+  );
+}
+
+function PaletteDialogBody({
+  search,
+  setSearch,
+  isFull,
+  filteredGroups,
+  defaultExpanded,
+  onAdd,
+}: PaletteDialogBodyProps) {
+  return (
+    <div className="flex h-[28rem] flex-col">
+      <PaletteSearchInput value={search} onChange={setSearch} />
+      {isFull && (
+        <Text size="xs" color="muted" className="pb-2">
+          Canvas is full ({SLOTS.length} nodes max).
+        </Text>
+      )}
+      <PaletteGroupList
+        filteredGroups={filteredGroups}
+        defaultExpanded={defaultExpanded}
+        isFull={isFull}
+        onAdd={onAdd}
+        search={search}
+      />
     </div>
   );
 }

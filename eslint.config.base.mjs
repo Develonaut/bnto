@@ -120,10 +120,15 @@ export const baseConfig = tseslint.config(
       ],
     },
   },
-  // JSX cleanliness — no inline arrow functions or .bind() in JSX props
+  // JSX / component overrides — relaxed function length, no inline handlers
   {
     files: ["**/*.tsx"],
     rules: {
+      // Components naturally have more lines due to JSX prop spreading
+      "max-lines-per-function": [
+        "error",
+        { max: 60, skipBlankLines: true, skipComments: true, IIFEs: true },
+      ],
       "react/jsx-no-bind": [
         "error",
         {

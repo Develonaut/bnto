@@ -55,21 +55,47 @@ function NodeConfigForm({
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="p-3">
-        {schemaDef ? (
-          <SchemaForm
-            schema={schemaDef}
-            fields={fieldConfigs}
-            values={values}
-            visibleParams={visibleParams}
-            onChange={onChange}
-          />
-        ) : (
-          <Text size="xs" color="muted">
-            No configurable parameters.
-          </Text>
-        )}
+        <NodeConfigFormContent
+          schemaDef={schemaDef}
+          fieldConfigs={fieldConfigs}
+          values={values}
+          visibleParams={visibleParams}
+          onChange={onChange}
+        />
       </div>
     </div>
+  );
+}
+
+/** Inner content — renders SchemaForm or empty message. */
+function NodeConfigFormContent({
+  schemaDef,
+  fieldConfigs,
+  values,
+  visibleParams,
+  onChange,
+}: {
+  schemaDef: ReturnType<typeof useEditorNode>["schemaDef"];
+  fieldConfigs: ReturnType<typeof useEditorNode>["fieldConfigs"];
+  values: Record<string, unknown>;
+  visibleParams: ReturnType<typeof useEditorNode>["visibleParams"];
+  onChange: (paramName: string, value: unknown) => void;
+}) {
+  if (!schemaDef) {
+    return (
+      <Text size="xs" color="muted">
+        No configurable parameters.
+      </Text>
+    );
+  }
+  return (
+    <SchemaForm
+      schema={schemaDef}
+      fields={fieldConfigs}
+      values={values}
+      visibleParams={visibleParams}
+      onChange={onChange}
+    />
   );
 }
 
@@ -83,6 +109,18 @@ function CapabilityBadge({ browserCapable }: { browserCapable: boolean }) {
     <Badge variant="outline" className="text-xs">
       Pro
     </Badge>
+  );
+}
+
+/** Category + capability badge row. */
+function NodeBadges({ category, browserCapable }: { category: string; browserCapable: boolean }) {
+  return (
+    <div className="mt-2 flex items-center gap-1.5">
+      <Badge variant="secondary" className="text-xs">
+        {category}
+      </Badge>
+      <CapabilityBadge browserCapable={browserCapable} />
+    </div>
   );
 }
 
@@ -109,12 +147,7 @@ function NodeConfigHeader({
           {typeInfo.description}
         </Text>
       )}
-      <div className="mt-2 flex items-center gap-1.5">
-        <Badge variant="secondary" className="text-xs">
-          {typeInfo.category}
-        </Badge>
-        <CapabilityBadge browserCapable={typeInfo.browserCapable} />
-      </div>
+      <NodeBadges category={typeInfo.category} browserCapable={typeInfo.browserCapable} />
     </div>
   );
 }

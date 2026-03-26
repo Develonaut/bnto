@@ -20,39 +20,52 @@ interface EditorMenuPanelProps {
   children: ReactNode;
 }
 
-function EditorMenuPanel({
-  panelId,
-  side,
-  icon,
-  label,
-  width = "w-72",
-  boundaryPadding = 96,
-  dismissOnOutsideClick = false,
-  className,
-  children,
-}: EditorMenuPanelProps) {
+/** Sync Radix open state with store panel state. */
+function useMenuOpenChange(panelId: PanelId) {
   const { isOpen, toggle } = usePanels(panelId);
-
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (open !== isOpen) toggle();
     },
     [isOpen, toggle],
   );
+  return { isOpen, handleOpenChange };
+}
 
+/** Panel trigger — shows X when open, icon when closed. */
+function PanelTrigger({
+  isOpen,
+  icon,
+  label,
+  panelId,
+}: {
+  isOpen: boolean;
+  icon: ReactNode;
+  label: string;
+  panelId: PanelId;
+}) {
+  return (
+    <MenuTrigger
+      size="icon"
+      variant={isOpen ? "muted" : "ghost"}
+      elevation="sm"
+      aria-label={label}
+      data-testid={`toolbar-${panelId}`}
+    >
+      {isOpen ? <XIcon className="size-4" /> : icon}
+    </MenuTrigger>
+  );
+}
+
+function EditorMenuPanel(props: EditorMenuPanelProps) {
+  const { panelId, side, icon, label, className, children } = props;
+  const { width = "w-72", boundaryPadding = 96, dismissOnOutsideClick = false } = props;
+  const { isOpen, handleOpenChange } = useMenuOpenChange(panelId);
   const outsideHandler = dismissOnOutsideClick ? undefined : preventEvent;
 
   return (
     <Menu open={isOpen} onOpenChange={handleOpenChange}>
-      <MenuTrigger
-        size="icon"
-        variant={isOpen ? "muted" : "ghost"}
-        elevation="sm"
-        aria-label={label}
-        data-testid={`toolbar-${panelId}`}
-      >
-        {isOpen ? <XIcon className="size-4" /> : icon}
-      </MenuTrigger>
+      <PanelTrigger isOpen={isOpen} icon={icon} label={label} panelId={panelId} />
       <MenuContent
         side={side}
         offset="lg"

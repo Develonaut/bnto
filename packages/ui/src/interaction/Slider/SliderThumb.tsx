@@ -2,8 +2,8 @@
 
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
-import { GripVerticalIcon } from "../icons";
-import { Button } from "./Button";
+import { GripVerticalIcon } from "../../icons";
+import { Button } from "../Button";
 
 export function SliderThumb({
   ariaDescribedBy,

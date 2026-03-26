@@ -2,8 +2,7 @@
 
 import type { MouseEventHandler, KeyboardEventHandler } from "react";
 
-import { XIcon } from "../icons";
-import { Badge } from "../typography/Badge";
+import { ComboboxBadge } from "./ComboboxBadge";
 
 interface ComboboxBadgesProps {
   value: string[];
@@ -48,37 +47,5 @@ export function ComboboxBadges({
         <span className="text-xs text-muted-foreground">+{value.length - maxVisible} more</span>
       )}
     </>
-  );
-}
-
-function ComboboxBadge({
-  value,
-  label,
-  onMouseDown,
-  onClick,
-  onKeyDown,
-}: {
-  value: string;
-  label: string;
-  onMouseDown: MouseEventHandler;
-  onClick: MouseEventHandler<HTMLSpanElement>;
-  onKeyDown: KeyboardEventHandler<HTMLSpanElement>;
-}) {
-  return (
-    <Badge variant="secondary" size="sm">
-      {label}
-      <span
-        role="button"
-        tabIndex={0}
-        data-value={value}
-        className="ml-0.5 cursor-pointer rounded-full focus-ring focus-visible:outline-offset-0"
-        onMouseDown={onMouseDown}
-        onClick={onClick}
-        onKeyDown={onKeyDown}
-        aria-label={`Remove ${label}`}
-      >
-        <XIcon className="size-3 text-muted-foreground hover:text-foreground" />
-      </span>
-    </Badge>
   );
 }

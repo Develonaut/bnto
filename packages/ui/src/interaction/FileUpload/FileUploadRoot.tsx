@@ -3,10 +3,9 @@
 import type { ComponentProps } from "react";
 import type { Accept } from "react-dropzone";
 
-import { cn } from "../../utils/cn";
-
 import { FileUploadContext } from "./context";
 import { useFileUploadState } from "./useFileUploadState";
+import { FileUploadShell } from "./FileUploadShell";
 
 export interface FileUploadProps extends Omit<ComponentProps<"div">, "onDrop" | "defaultValue"> {
   value: File[];
@@ -26,9 +25,7 @@ export function FileUploadRoot({
   maxFiles,
   maxSize,
   disabled = false,
-  children,
-  className,
-  ...props
+  ...shellProps
 }: FileUploadProps) {
   const ctx = useFileUploadState({
     value,
@@ -42,14 +39,7 @@ export function FileUploadRoot({
 
   return (
     <FileUploadContext.Provider value={ctx}>
-      <div
-        data-slot="file-upload"
-        data-disabled={disabled ? "" : undefined}
-        {...props}
-        className={cn("relative flex flex-col gap-2", className)}
-      >
-        {children}
-      </div>
+      <FileUploadShell disabled={disabled} {...shellProps} />
     </FileUploadContext.Provider>
   );
 }

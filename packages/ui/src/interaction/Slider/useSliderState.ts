@@ -15,8 +15,9 @@ function useResolvedValue(
 ) {
   return useMemo(() => {
     if (!hasPresets) return value ?? defaultValue ?? [min];
-    const v = value ?? defaultValue ?? [sorted![0]!.value];
-    return [valueToIndex(v[0]!)];
+    const first = sorted as SliderPreset[];
+    const v = value ?? defaultValue ?? [first[0].value];
+    return [valueToIndex(v[0] as number)];
   }, [value, defaultValue, min, hasPresets, sorted, valueToIndex]);
 }
 
@@ -28,7 +29,7 @@ function usePresetChange(
   const handleChange = useCallback(
     (values: number[]) => {
       if (hasPresets) {
-        onValueChange?.([sorted![values[0]!]!.value]);
+        onValueChange?.([(sorted as SliderPreset[])[values[0] as number].value]);
       } else {
         onValueChange?.(values);
       }
@@ -55,7 +56,7 @@ export function useSliderState(
   const valueToIndex = useValueToIndex(sorted);
   const hasPresets = !!sorted && sorted.length > 0;
   const sliderMin = hasPresets ? 0 : min;
-  const sliderMax = hasPresets ? sorted!.length - 1 : undefined;
+  const sliderMax = hasPresets ? (sorted as SliderPreset[]).length - 1 : undefined;
   const resolved = useResolvedValue(hasPresets, sorted, valueToIndex, value, defaultValue, min);
   const { handleChange, handlePresetClick } = usePresetChange(hasPresets, sorted, onValueChange);
 

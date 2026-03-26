@@ -1,16 +1,13 @@
 "use client";
 
-import { useRef } from "react";
 import type { ReactNode } from "react";
 
-import { cn } from "../../utils/cn";
-
-import { useRadialPointer } from "./useRadialPointer";
-import { useRadialKeyboard } from "./useRadialKeyboard";
+import { useRadialSlider } from "./useRadialSlider";
 import { RadialSliderSvg } from "./RadialSliderSvg";
-import { RadialSliderThumb } from "./RadialSliderThumb";
-import { computeRadialLayout } from "./useRadialLayout";
-import { resolveRadialDefaults } from "./resolveRadialDefaults";
+import { RadialSliderContainer } from "./RadialSliderContainer";
+import { RadialSliderOverlay } from "./RadialSliderOverlay";
+import { ThumbPositioner } from "./ThumbPositioner";
+import { resolveThumb } from "./ResolveThumb";
 
 export interface RadialSliderProps {
   min: number;
@@ -35,50 +32,29 @@ export interface RadialSliderProps {
   className?: string;
 }
 
-export function RadialSliderRoot(props: RadialSliderProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const thumbRef = useRef<HTMLDivElement>(null);
-  const d = resolveRadialDefaults(props);
-
-  const layout = computeRadialLayout({
-    size: d.size,
-    strokeWidth: d.strokeWidth,
-    min: props.min,
-    max: props.max,
-    value: props.value,
-    startAngle: d.startAngle,
-    endAngle: d.endAngle,
-    hideProgress: d.hideProgress,
-  });
-  const pointer = useRadialPointer({
-    containerRef,
+export function RadialSliderRoot(p: RadialSliderProps) {
+  const { containerRef, thumbRef, d, layout, pointer, onKeyDown } = useRadialSlider(p);
+  const thumb = resolveThumb({
+    isDragging: pointer.isDragging,
+    isHovering: pointer.isHovering,
     thumbRef,
-    min: props.min,
-    max: props.max,
-    startAngle: d.startAngle,
-    endAngle: d.endAngle,
-    onChange: props.onChange,
+    renderThumb: p.renderThumb,
   });
-  const onKeyDown = useRadialKeyboard({
-    min: props.min,
-    max: props.max,
-    value: props.value,
-    step: d.step,
-    onChange: props.onChange,
-  });
-  const thumb = resolveThumb(props, pointer, thumbRef);
 
   return (
     <RadialSliderContainer
       containerRef={containerRef}
-      pointer={pointer}
+      onPointerDown={pointer.onPointerDown}
+      onPointerMove={pointer.onPointerMove}
+      onPointerUp={pointer.onPointerUp}
+      onPointerLeave={pointer.clearHover}
       onKeyDown={onKeyDown}
       size={d.size}
-      ariaLabel={props["aria-label"]}
-      min={props.min}
-      max={props.max}
-      value={props.value}
-      className={props.className}
+      ariaLabel={p["aria-label"]}
+      min={p.min}
+      max={p.max}
+      value={p.value}
+      className={p.className}
     >
       <RadialSliderSvg
         size={d.size}
@@ -90,84 +66,15 @@ export function RadialSliderRoot(props: RadialSliderProps) {
         trackClassName={d.trackClassName}
         activeClassName={d.activeClassName}
         hideRing={d.hideRing}
-        svgDefs={props.svgDefs}
-        trackStroke={props.trackStroke}
-        activeStroke={props.activeStroke}
+        svgDefs={p.svgDefs}
+        trackStroke={p.trackStroke}
+        activeStroke={p.activeStroke}
         activePath={layout.activePath}
       />
-      {props.children && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          {props.children}
-        </div>
-      )}
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/2"
-        style={{
-          transform: `translate(calc(${layout.thumbOffset.x}px - 50%), calc(${layout.thumbOffset.y}px - 50%))`,
-        }}
-      >
+      {p.children && <RadialSliderOverlay>{p.children}</RadialSliderOverlay>}
+      <ThumbPositioner offsetX={layout.thumbOffset.x} offsetY={layout.thumbOffset.y}>
         {thumb}
-      </div>
+      </ThumbPositioner>
     </RadialSliderContainer>
-  );
-}
-
-function resolveThumb(
-  props: RadialSliderProps,
-  pointer: ReturnType<typeof useRadialPointer>,
-  thumbRef: React.RefObject<HTMLDivElement | null>,
-) {
-  if (props.renderThumb) return props.renderThumb({ isDragging: pointer.isDragging });
-  return (
-    <RadialSliderThumb
-      isDragging={pointer.isDragging}
-      isHovering={pointer.isHovering}
-      thumbRef={thumbRef}
-    />
-  );
-}
-
-function RadialSliderContainer({
-  containerRef,
-  pointer,
-  onKeyDown,
-  size,
-  ariaLabel,
-  min,
-  max,
-  value,
-  className,
-  children,
-}: {
-  containerRef: React.RefObject<HTMLDivElement | null>;
-  pointer: ReturnType<typeof useRadialPointer>;
-  onKeyDown: (e: React.KeyboardEvent) => void;
-  size: number;
-  ariaLabel?: string;
-  min: number;
-  max: number;
-  value: number;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      ref={containerRef}
-      className={cn("relative touch-none select-none focus-ring rounded-full", className)}
-      style={{ width: size, height: size }}
-      role="slider"
-      tabIndex={0}
-      aria-valuemin={min}
-      aria-valuemax={max}
-      aria-valuenow={value}
-      aria-label={ariaLabel}
-      onPointerDown={pointer.onPointerDown}
-      onPointerMove={pointer.onPointerMove}
-      onPointerUp={pointer.onPointerUp}
-      onPointerLeave={pointer.clearHover}
-      onKeyDown={onKeyDown}
-    >
-      {children}
-    </div>
   );
 }

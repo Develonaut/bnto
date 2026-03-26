@@ -12,6 +12,7 @@ import { resolveButtonDefaults } from "./resolveButtonDefaults";
 import { buildSharedProps } from "./buildSharedProps";
 import { ButtonAsChild } from "./ButtonAsChild";
 import { ButtonPushable } from "./ButtonPushable";
+import { DormantWrapper } from "./DormantWrapper";
 
 /* -- Types -------------------------------------------------------- */
 
@@ -41,7 +42,9 @@ type ButtonProps = Omit<ComponentProps<"button">, "ref"> &
 function Button({ className, variant, href, style, ref, disabled, as, ...rest }: ButtonProps) {
   const d = resolveButtonDefaults(rest);
   const Comp = resolveComponent(as, d.asChild, href, rest.target as string | undefined);
-  const sharedProps = buildSharedProps({
+  const rv = resolveButtonVariant(variant, disabled);
+  const re = resolveButtonElevation(d.elevation, disabled);
+  const sp = buildSharedProps({
     ref,
     disabled,
     href,
@@ -59,11 +62,11 @@ function Button({ className, variant, href, style, ref, disabled, as, ...rest }:
     return (
       <ButtonAsChild
         Comp={Comp}
-        sharedProps={sharedProps}
+        sharedProps={sp}
         isIcon={d.isIcon}
         resolvedSize={d.resolvedSize}
-        resolvedVariant={resolveButtonVariant(variant, disabled)}
-        resolvedElevation={resolveButtonElevation(d.elevation, disabled)}
+        resolvedVariant={rv}
+        resolvedElevation={re}
         fullWidth={d.fullWidth}
         size={rest.size}
         asChild={d.asChild}
@@ -73,15 +76,14 @@ function Button({ className, variant, href, style, ref, disabled, as, ...rest }:
       />
     );
   }
-
   const pushable = (
     <ButtonPushable
       Comp={Comp}
-      sharedProps={sharedProps}
+      sharedProps={sp}
       isIcon={d.isIcon}
       resolvedSize={d.resolvedSize}
-      resolvedVariant={resolveButtonVariant(variant, disabled)}
-      resolvedElevation={resolveButtonElevation(d.elevation, disabled)}
+      resolvedVariant={rv}
+      resolvedElevation={re}
       fullWidth={d.fullWidth}
       className={className}
       content={d.content}
@@ -89,13 +91,6 @@ function Button({ className, variant, href, style, ref, disabled, as, ...rest }:
   );
   if (!d.dormant) return pushable;
   return <DormantWrapper disabled={disabled}>{pushable}</DormantWrapper>;
-}
-
-/** Wrap a dormant button with hover-zone padding. */
-function DormantWrapper({ disabled, children }: { disabled?: boolean; children: ReactNode }) {
-  if (disabled)
-    return <span className="inline-flex opacity-50 pointer-events-none">{children}</span>;
-  return <span className="group inline-flex p-4 -m-4">{children}</span>;
 }
 
 export { Button };

@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { cn } from "../utils/cn";
-import { clamp } from "../utils/clamp";
+import { cn } from "../../utils/cn";
+import { clamp } from "../../utils/clamp";
 import { LinearProgressHeader } from "./LinearProgressHeader";
+import { LinearProgressBar } from "./LinearProgressBar";
 
 interface LinearProgressProps {
   /** Current value (0-100). */
@@ -33,18 +34,7 @@ export function LinearProgress({
       {showHeader && (
         <LinearProgressHeader icon={icon} label={label} valueLabel={valueLabel ?? `${clamped}%`} />
       )}
-      <div
-        role="progressbar"
-        aria-valuenow={clamped}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        className="relative h-4 w-full overflow-hidden rounded-full border border-border bg-input"
-      >
-        <div
-          className="h-full rounded-full bg-primary motion-safe:transition-[width] motion-safe:duration-fast"
-          style={{ width: `${clamped}%` }}
-        />
-      </div>
+      <LinearProgressBar clamped={clamped} />
       <p className="min-h-4 text-xs text-muted-foreground">{helperText ?? "\u00A0"}</p>
     </div>
   );

@@ -30,21 +30,21 @@ function interactionProps(interactive: boolean, disable?: CanvasInnerProps["disa
   } as const;
 }
 
-function CanvasInner({
-  nodes,
-  onNodesChange,
-  edges,
-  onEdgesChange,
-  defaultNodes,
-  interactive = false,
-  disable,
-  onNodeClick,
-  onPaneClick,
-  children,
-}: CanvasInnerProps) {
-  useCanvasFitView();
+/** Resolve controlled vs uncontrolled node props. */
+function resolveNodeProps(props: CanvasInnerProps) {
+  return props.onNodesChange
+    ? {
+        nodes: props.nodes,
+        onNodesChange: props.onNodesChange,
+        edges: props.edges ?? EMPTY_EDGES,
+        onEdgesChange: props.onEdgesChange,
+      }
+    : { defaultNodes: props.defaultNodes, edges: EMPTY_EDGES };
+}
 
-  const handleNodeClick = useCallback(
+/** Filters clicks on synthetic or interactive child elements. */
+function useFilteredNodeClick(onNodeClick: ((id: string) => void) | undefined) {
+  return useCallback(
     (_event: React.MouseEvent, node: { id: string; type?: string }) => {
       if (!onNodeClick || SYNTHETIC_TYPES.has(node.type ?? "")) return;
       if ((_event.target as HTMLElement).closest("button, a, input, select, textarea")) return;
@@ -52,14 +52,16 @@ function CanvasInner({
     },
     [onNodeClick],
   );
+}
 
-  const controlled = onNodesChange
-    ? { nodes, onNodesChange, edges: edges ?? EMPTY_EDGES, onEdgesChange }
-    : { defaultNodes, edges: EMPTY_EDGES };
+function CanvasInner(props: CanvasInnerProps) {
+  const { interactive = false, disable, onNodeClick, onPaneClick, children } = props;
+  useCanvasFitView();
+  const handleNodeClick = useFilteredNodeClick(onNodeClick);
 
   return (
     <ReactFlow<BentoNode>
-      {...controlled}
+      {...resolveNodeProps(props)}
       nodeTypes={CANVAS_NODE_TYPES}
       onNodeClick={onNodeClick ? handleNodeClick : undefined}
       onPaneClick={onPaneClick}

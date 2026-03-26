@@ -78,20 +78,12 @@ function prepareInsertion(
   return { result, deselected, parentContainerId, newNode, isContainer };
 }
 
-export function addNode(
+/** Dispatch to top-level or sibling-child insertion based on parent. */
+function dispatchInsertion(
   state: EditorState,
-  type: NodeTypeName,
+  prep: NonNullable<ReturnType<typeof prepareInsertion>>,
   afterNodeId?: string | null,
-  intoContainerId?: string | null,
-  defaultParams?: Record<string, unknown>,
-): AddNodeResult | null {
-  if (isDuplicateIoNode(state, type)) return null;
-  if (intoContainerId)
-    return addChildIntoContainer(state, type, intoContainerId, afterNodeId, defaultParams);
-
-  const prep = prepareInsertion(state, type, afterNodeId, defaultParams);
-  if (!prep) return null;
-
+): AddNodeResult {
   if (!prep.parentContainerId) {
     return addTopLevel(
       state,
@@ -111,4 +103,20 @@ export function addNode(
     afterNodeId,
     prep.isContainer,
   );
+}
+
+export function addNode(
+  state: EditorState,
+  type: NodeTypeName,
+  afterNodeId?: string | null,
+  intoContainerId?: string | null,
+  defaultParams?: Record<string, unknown>,
+): AddNodeResult | null {
+  if (isDuplicateIoNode(state, type)) return null;
+  if (intoContainerId)
+    return addChildIntoContainer(state, type, intoContainerId, afterNodeId, defaultParams);
+
+  const prep = prepareInsertion(state, type, afterNodeId, defaultParams);
+  if (!prep) return null;
+  return dispatchInsertion(state, prep, afterNodeId);
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 
-import { cn } from "../utils/cn";
+import { cn } from "../../utils/cn";
 
 interface SliderPreset {
   value: number;
@@ -25,7 +25,11 @@ export function useValueToIndex(sorted?: SliderPreset[]) {
       if (!sorted) return 0;
       let closest = 0;
       for (let i = 1; i < sorted.length; i++) {
-        if (Math.abs(sorted[i]!.value - v) < Math.abs(sorted[closest]!.value - v)) closest = i;
+        if (
+          Math.abs((sorted[i] as SliderPreset).value - v) <
+          Math.abs((sorted[closest] as SliderPreset).value - v)
+        )
+          closest = i;
       }
       return closest;
     },

@@ -1,50 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import type * as SliderPrimitive from "@radix-ui/react-slider";
 
-import { cn } from "../utils/cn";
-import { Label } from "../typography/Label";
-import { Text } from "../typography/Text";
+import { cn } from "../../utils/cn";
 import { PresetLabels } from "./SliderPresets";
 import type { SliderPreset } from "./SliderPresets";
 import { useSliderState } from "./useSliderState";
+import { useSliderAnnotation } from "./useSliderAnnotation";
 import { SliderTrack } from "./SliderTrack";
+import { SliderHeader } from "./SliderHeader";
 
 interface SliderProps extends ComponentProps<typeof SliderPrimitive.Root> {
   presets?: SliderPreset[];
   /** When provided, renders a header row with the label and a value annotation. */
   label?: ReactNode;
-}
-
-function SliderHeader({ label, annotation }: { label: ReactNode; annotation: string | null }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      {typeof label === "string" ? <Label>{label}</Label> : label}
-      {annotation && (
-        <Text size="xs" mono color="muted">
-          {annotation}
-        </Text>
-      )}
-    </div>
-  );
-}
-
-function useAnnotation(
-  label: ReactNode,
-  value: number[] | undefined,
-  defaultValue: number[] | undefined,
-  sorted: SliderPreset[] | undefined,
-  valueToIndex: (v: number) => number,
-) {
-  return useMemo(() => {
-    if (!label) return null;
-    const current = value?.[0] ?? defaultValue?.[0];
-    if (current == null) return null;
-    if (sorted && sorted.length > 0) return sorted[valueToIndex(current)]?.label ?? null;
-    return String(current);
-  }, [label, value, defaultValue, sorted, valueToIndex]);
 }
 
 function Slider({
@@ -61,7 +31,13 @@ function Slider({
   ...props
 }: SliderProps) {
   const state = useSliderState(presets, value, defaultValue, min, onValueChange);
-  const annotation = useAnnotation(label, value, defaultValue, state.sorted, state.valueToIndex);
+  const annotation = useSliderAnnotation(
+    label,
+    value,
+    defaultValue,
+    state.sorted,
+    state.valueToIndex,
+  );
 
   return (
     <div className={cn("flex min-w-0 flex-col gap-3", className)}>
