@@ -17,6 +17,15 @@ interface SignInFormCardProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
+function FormError({ error }: { error: string }) {
+  if (!error) return null;
+  return (
+    <p className="text-sm text-destructive" role="alert" data-testid="auth-error">
+      {error}
+    </p>
+  );
+}
+
 export function SignInFormCard({
   isSignUp,
   name,
@@ -41,11 +50,7 @@ export function SignInFormCard({
           onEmailChange={onEmailChange}
           onPasswordChange={onPasswordChange}
         />
-        {error && (
-          <p className="text-sm text-destructive" role="alert" data-testid="auth-error">
-            {error}
-          </p>
-        )}
+        <FormError error={error} />
         <SubmitButton loading={loading} isSignUp={isSignUp} />
       </form>
     </div>

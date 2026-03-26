@@ -39,51 +39,54 @@ async function migrateToServer(): Promise<{ migrated: number }> {
   }
 }
 
+function serverRef() {
+  const { funcRef, args } = getExecutionHistoryRef();
+  return { funcRef, args, transform: toExecutionFromEvent };
+}
+
+function localQueryOptions() {
+  return { queryKey: LOCAL_HISTORY_QUERY_KEY, queryFn: getEntries, staleTime: Infinity } as const;
+}
+
+async function recordEntry(entry: LocalHistoryEntry) {
+  await addEntry(entry);
+  invalidateLocal();
+}
+
+async function recordServerStart(slug: string): Promise<string | null> {
+  try {
+    return String((await logExecutionEventStart(slug)) ?? "");
+  } catch {
+    return null;
+  }
+}
+
+async function recordServerComplete(
+  eventId: string,
+  durationMs: number,
+  status: "completed" | "failed",
+) {
+  try {
+    await completeExecutionEvent(eventId, durationMs, status);
+  } catch {
+    /* fire-and-forget */
+  }
+}
+
+async function clearHistory() {
+  await clearEntries();
+  invalidateLocal();
+}
+
 export function createHistoryService() {
   return {
-    serverRef: () => {
-      const { funcRef, args } = getExecutionHistoryRef();
-      return { funcRef, args, transform: toExecutionFromEvent };
-    },
-
-    localQueryOptions: () => ({
-      queryKey: LOCAL_HISTORY_QUERY_KEY,
-      queryFn: getEntries,
-      staleTime: Infinity,
-    }),
-
-    record: async (entry: LocalHistoryEntry) => {
-      await addEntry(entry);
-      invalidateLocal();
-    },
-
-    recordServerStart: async (slug: string): Promise<string | null> => {
-      try {
-        return String((await logExecutionEventStart(slug)) ?? "");
-      } catch {
-        return null;
-      }
-    },
-
-    recordServerComplete: async (
-      eventId: string,
-      durationMs: number,
-      status: "completed" | "failed",
-    ) => {
-      try {
-        await completeExecutionEvent(eventId, durationMs, status);
-      } catch {
-        /* fire-and-forget */
-      }
-    },
-
+    serverRef,
+    localQueryOptions,
+    record: recordEntry,
+    recordServerStart,
+    recordServerComplete,
     migrateToServer,
-
-    clear: async () => {
-      await clearEntries();
-      invalidateLocal();
-    },
-
+    clear: clearHistory,
     queryKey: LOCAL_HISTORY_QUERY_KEY,
   } as const;
 }

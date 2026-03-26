@@ -23,18 +23,18 @@ const eslintConfig = defineConfig([
     plugins: { sonarjs },
     rules: {
       // --- Complexity & size enforcement (code-standards.md) ---
-      complexity: ["warn", { max: 10 }],
-      "sonarjs/cognitive-complexity": ["warn", 15],
+      complexity: ["error", { max: 10 }],
+      "sonarjs/cognitive-complexity": ["error", 15],
       "max-lines-per-function": [
-        "warn",
+        "error",
         { max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
       ],
-      "max-lines": ["warn", { max: 250, skipBlankLines: true, skipComments: true }],
+      "max-lines": ["error", { max: 250, skipBlankLines: true, skipComments: true }],
 
       // --- Structural quality ---
       "sonarjs/no-identical-conditions": "error",
-      "sonarjs/no-collapsible-if": "warn",
-      "sonarjs/no-duplicated-branches": "warn",
+      "sonarjs/no-collapsible-if": "error",
+      "sonarjs/no-duplicated-branches": "error",
     },
   },
   {

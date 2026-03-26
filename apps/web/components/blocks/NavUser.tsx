@@ -8,6 +8,20 @@ import { Menu, MenuTrigger, MenuContent, Stack } from "@bnto/ui";
 
 import { NavUserMenuContent } from "./NavUserMenuContent";
 
+function NavUserTrigger() {
+  return (
+    <MenuTrigger
+      variant="primary"
+      size="icon"
+      elevation="sm"
+      aria-label="Account menu"
+      data-testid="nav-user-menu"
+    >
+      <CircleUserIcon />
+    </MenuTrigger>
+  );
+}
+
 /** Auth-aware navbar component. Trigger is always stable; auth state resolves inside the dropdown. */
 export function NavUser() {
   const { isAuthenticated, isLoading, user } = core.auth.useAuth();
@@ -21,15 +35,7 @@ export function NavUser() {
 
   return (
     <Menu>
-      <MenuTrigger
-        variant="primary"
-        size="icon"
-        elevation="sm"
-        aria-label="Account menu"
-        data-testid="nav-user-menu"
-      >
-        <CircleUserIcon />
-      </MenuTrigger>
+      <NavUserTrigger />
       <MenuContent className="w-56 p-2" offset="lg">
         <Stack className="gap-1">
           <NavUserMenuContent

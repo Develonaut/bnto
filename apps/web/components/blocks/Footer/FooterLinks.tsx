@@ -32,37 +32,43 @@ const TOOL_SECTIONS = [
   },
 ] as const;
 
+function FooterSection({ section }: { section: (typeof TOOL_SECTIONS)[number] }) {
+  return (
+    <div>
+      <Text
+        as="p"
+        size="xs"
+        weight="medium"
+        color="muted"
+        className="mb-3 uppercase tracking-wider"
+      >
+        {section.title}
+      </Text>
+      <Stack as="ul" className="gap-2.5">
+        {section.links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              data-testid={`footer-link-${link.href.replace("/", "")}`}
+              className="text-sm font-medium transition-colors hover:text-primary"
+              {...("external" in link && link.external
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
+            >
+              {link.name}
+            </Link>
+          </li>
+        ))}
+      </Stack>
+    </div>
+  );
+}
+
 export function FooterLinks() {
   return (
     <div className="grid flex-1 grid-cols-2 gap-8 sm:grid-cols-3">
       {TOOL_SECTIONS.map((section) => (
-        <div key={section.title}>
-          <Text
-            as="p"
-            size="xs"
-            weight="medium"
-            color="muted"
-            className="mb-3 uppercase tracking-wider"
-          >
-            {section.title}
-          </Text>
-          <Stack as="ul" className="gap-2.5">
-            {section.links.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  data-testid={`footer-link-${link.href.replace("/", "")}`}
-                  className="text-sm font-medium transition-colors hover:text-primary"
-                  {...("external" in link && link.external
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </Stack>
-        </div>
+        <FooterSection key={section.title} section={section} />
       ))}
     </div>
   );

@@ -104,36 +104,45 @@ function finalizeRun(
   return { status: "completed", results, durationMs };
 }
 
+/** Execute a pipeline run with abort awareness and store updates. */
+async function executeRun(
+  store: ReturnType<typeof createExecutionInstanceStore>,
+  executePipeline: PipelineExecutor,
+  isAborted: () => boolean,
+  definition: PipelineDefinition,
+  files: File[],
+): Promise<BrowserRunResult> {
+  const startedAt = Date.now();
+  store.getState().start(generateExecutionId(), startedAt);
+
+  try {
+    const results = await executePipeline(
+      definition,
+      files,
+      buildProgressCallback(store, isAborted),
+    );
+    const durationMs = Date.now() - startedAt;
+    return isAborted()
+      ? { status: "aborted", results: [], durationMs }
+      : finalizeRun(store, results, durationMs);
+  } catch (e) {
+    const durationMs = Date.now() - startedAt;
+    return isAborted()
+      ? { status: "aborted", results: [], durationMs }
+      : finalizeRun(store, [], durationMs, e);
+  }
+}
+
 export function createExecutionInstance(executePipeline: PipelineExecutor): ExecutionInstance {
   const store = createExecutionInstanceStore();
   let aborted = false;
 
   return {
     [EXECUTION_STORE]: store,
-
-    run: async (definition, files) => {
+    run: (definition, files) => {
       aborted = false;
-      const startedAt = Date.now();
-      store.getState().start(generateExecutionId(), startedAt);
-
-      try {
-        const results = await executePipeline(
-          definition,
-          files,
-          buildProgressCallback(store, () => aborted),
-        );
-        const durationMs = Date.now() - startedAt;
-        return aborted
-          ? { status: "aborted", results: [], durationMs }
-          : finalizeRun(store, results, durationMs);
-      } catch (e) {
-        const durationMs = Date.now() - startedAt;
-        return aborted
-          ? { status: "aborted", results: [], durationMs }
-          : finalizeRun(store, [], durationMs, e);
-      }
+      return executeRun(store, executePipeline, () => aborted, definition, files);
     },
-
     reset: () => {
       aborted = true;
       store.getState().reset();

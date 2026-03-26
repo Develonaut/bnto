@@ -10,6 +10,19 @@ interface RenameRecipeFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
+function RenameFormFooter({ hasChanges }: { hasChanges: boolean }) {
+  return (
+    <DialogFooter>
+      <DialogClose asChild>
+        <Button variant="ghost">Cancel</Button>
+      </DialogClose>
+      <Button type="submit" disabled={!hasChanges}>
+        Save
+      </Button>
+    </DialogFooter>
+  );
+}
+
 /** Inner form for the rename dialog — name input + cancel/save buttons. */
 export function RenameRecipeForm({
   nameInputId,
@@ -32,14 +45,7 @@ export function RenameRecipeForm({
           />
         </fieldset>
       </DialogBody>
-      <DialogFooter>
-        <DialogClose asChild>
-          <Button variant="ghost">Cancel</Button>
-        </DialogClose>
-        <Button type="submit" disabled={!hasChanges}>
-          Save
-        </Button>
-      </DialogFooter>
+      <RenameFormFooter hasChanges={hasChanges} />
     </form>
   );
 }

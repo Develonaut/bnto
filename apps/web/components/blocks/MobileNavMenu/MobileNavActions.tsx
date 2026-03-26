@@ -7,6 +7,21 @@ interface MobileNavActionsProps {
   onClose: () => void;
 }
 
+function GitHubButton() {
+  return (
+    <Button
+      variant="secondary"
+      size="icon"
+      href={GITHUB_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <GithubIcon />
+      <span className="sr-only">GitHub</span>
+    </Button>
+  );
+}
+
 export function MobileNavActions({ onClose }: MobileNavActionsProps) {
   return (
     <Row className="gap-4">
@@ -30,16 +45,7 @@ export function MobileNavActions({ onClose }: MobileNavActionsProps) {
           {link.label}
         </Button>
       ))}
-      <Button
-        variant="secondary"
-        size="icon"
-        href={GITHUB_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <GithubIcon />
-        <span className="sr-only">GitHub</span>
-      </Button>
+      <GitHubButton />
     </Row>
   );
 }

@@ -59,6 +59,16 @@ function StepLabel({ label, isActive }: { label: string; isActive: boolean }) {
   );
 }
 
+function stepBadgeCn(isCompleted: boolean, isActive: boolean) {
+  return cn(
+    "surface pressable pointer-events-none flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors duration-fast",
+    (isCompleted || isActive) && "surface-primary elevation-sm bg-primary text-primary-foreground",
+    !isCompleted &&
+      !isActive &&
+      "surface-card elevation-none border border-border text-muted-foreground",
+  );
+}
+
 function StepBadge({
   displayNumber,
   label,
@@ -75,14 +85,7 @@ function StepBadge({
       role="img"
       aria-current={isActive ? "step" : undefined}
       aria-label={`Step ${displayNumber}: ${label}${isCompleted ? " (completed)" : ""}`}
-      className={cn(
-        "surface pressable pointer-events-none flex size-7 items-center justify-center rounded-full text-xs font-medium transition-colors duration-fast",
-        (isCompleted || isActive) &&
-          "surface-primary elevation-sm bg-primary text-primary-foreground",
-        !isCompleted &&
-          !isActive &&
-          "surface-card elevation-none border border-border text-muted-foreground",
-      )}
+      className={stepBadgeCn(isCompleted, isActive)}
     >
       {isCompleted ? (
         <CheckIcon aria-hidden="true" className="size-3.5" />

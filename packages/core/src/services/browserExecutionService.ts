@@ -62,35 +62,39 @@ async function downloadAll(results: BrowserFileResult[], slug?: string): Promise
   downloadBlob(zipBlob, slug ? `${slug}-results.zip` : "bnto-results.zip");
 }
 
-export function createBrowserExecutionService() {
-  let workerInstance: BntoWorker | null = null;
+// ---------------------------------------------------------------------------
+// Lazy worker singleton + pipeline runner (module-scoped for size compliance)
+// ---------------------------------------------------------------------------
 
-  async function ensureWorker(): Promise<BntoWorker> {
-    if (!workerInstance) {
-      if (typeof window === "undefined")
-        throw new Error("Browser execution requires a browser environment.");
-      workerInstance = new BntoWorker();
-    }
-    await workerInstance.init();
-    return workerInstance;
+let workerInstance: BntoWorker | null = null;
+
+async function ensureWorker(): Promise<BntoWorker> {
+  if (!workerInstance) {
+    if (typeof window === "undefined")
+      throw new Error("Browser execution requires a browser environment.");
+    workerInstance = new BntoWorker();
   }
+  await workerInstance.init();
+  return workerInstance;
+}
 
-  const runPipeline = async (
-    definition: PipelineDefinition,
-    files: File[],
-    onProgress?: (progress: BrowserFileProgressInput) => void,
-    onEvent?: (event: PipelineEvent) => void,
-  ): Promise<BrowserFileResult[]> => {
-    if (files.length === 0) return [];
-    const worker = await ensureWorker();
-    const result = await worker.executePipeline(
-      JSON.stringify(definition),
-      files,
-      createEventHandler(onProgress, onEvent),
-    );
-    return toFileResults(result.files);
-  };
+async function runPipeline(
+  definition: PipelineDefinition,
+  files: File[],
+  onProgress?: (progress: BrowserFileProgressInput) => void,
+  onEvent?: (event: PipelineEvent) => void,
+): Promise<BrowserFileResult[]> {
+  if (files.length === 0) return [];
+  const worker = await ensureWorker();
+  const result = await worker.executePipeline(
+    JSON.stringify(definition),
+    files,
+    createEventHandler(onProgress, onEvent),
+  );
+  return toFileResults(result.files);
+}
 
+export function createBrowserExecutionService() {
   return {
     createExecution: (): ExecutionInstance => createExecutionInstance(runPipeline),
     runPipeline,

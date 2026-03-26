@@ -24,24 +24,24 @@ export const baseConfig = tseslint.config(
       // --- Complexity & size enforcement (code-standards.md) ---
 
       // Cyclomatic complexity — flag functions with too many paths
-      complexity: ["warn", { max: 10 }],
+      complexity: ["error", { max: 10 }],
 
       // Cognitive complexity (sonarjs) — readability metric
-      "sonarjs/cognitive-complexity": ["warn", 15],
+      "sonarjs/cognitive-complexity": ["error", 15],
 
       // Function length — 20-line target, 30 hard cap (skip blanks/comments)
       "max-lines-per-function": [
-        "warn",
+        "error",
         { max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
       ],
 
       // File length — 250-line hard cap from code-standards.md
-      "max-lines": ["warn", { max: 250, skipBlankLines: true, skipComments: true }],
+      "max-lines": ["error", { max: 250, skipBlankLines: true, skipComments: true }],
 
       // --- Structural quality (cherry-picked sonarjs rules) ---
       "sonarjs/no-identical-conditions": "error",
-      "sonarjs/no-collapsible-if": "warn",
-      "sonarjs/no-duplicated-branches": "warn",
+      "sonarjs/no-collapsible-if": "error",
+      "sonarjs/no-duplicated-branches": "error",
 
       // --- TypeScript rules ---
 

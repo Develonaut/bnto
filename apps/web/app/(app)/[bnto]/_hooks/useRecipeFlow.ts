@@ -13,6 +13,36 @@ import { toBrowserPhase, toCloudPhase } from "../_components/phaseMapping";
 import { useRecipeDefinition } from "./useRecipeDefinition";
 import { useRecipeActions } from "./useRecipeActions";
 
+interface FlowParts {
+  defn: ReturnType<typeof useRecipeDefinition>;
+  storeState: ReturnType<typeof useRecipeFlowStore>;
+  actions: ReturnType<typeof useRecipeActions>;
+  browser: ReturnType<typeof useRecipeBrowserExec>;
+  cloud: ReturnType<typeof useRecipeCloudExec>;
+  resolvedPhase: RunPhase;
+}
+
+function assembleFlowResult({
+  defn,
+  storeState,
+  actions,
+  browser,
+  cloud,
+  resolvedPhase,
+}: FlowParts) {
+  return {
+    ...defn,
+    ...storeState,
+    ...actions,
+    config: storeState.config as BntoConfigMap[BntoSlug],
+    browserExec: browser.exec,
+    cloudExecution: cloud.execution,
+    uploadProgress: cloud.uploadProgress,
+    resolvedPhase,
+    isProcessing: resolvedPhase === "uploading" || resolvedPhase === "running",
+  };
+}
+
 /** Manages the full recipe page lifecycle — files, config, execution, results. */
 export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
   const storeState = useRecipeFlowStore(entry.slug);
@@ -37,17 +67,7 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
     resetUpload: cloud.resetUpload,
   });
 
-  return {
-    ...defn,
-    ...storeState,
-    ...actions,
-    config: storeState.config as BntoConfigMap[BntoSlug],
-    browserExec: browser.exec,
-    cloudExecution: cloud.execution,
-    uploadProgress: cloud.uploadProgress,
-    resolvedPhase,
-    isProcessing: resolvedPhase === "uploading" || resolvedPhase === "running",
-  };
+  return assembleFlowResult({ defn, storeState, actions, browser, cloud, resolvedPhase });
 }
 
 /** Page-scoped store — files, config, cloud state. */

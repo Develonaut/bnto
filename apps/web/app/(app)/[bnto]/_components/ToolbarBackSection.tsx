@@ -14,6 +14,27 @@ interface ToolbarBackSectionProps {
   onDownloadAll: () => void;
 }
 
+function BackButton({
+  isProcessing,
+  activePhase,
+  onBack,
+}: Pick<ToolbarBackSectionProps, "isProcessing" | "activePhase" | "onBack">) {
+  const label = activePhase === 3 ? "Back to configure" : "Back to file selection";
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      elevation="sm"
+      disabled={isProcessing}
+      onClick={onBack}
+      aria-label={label}
+      data-testid="back-button"
+    >
+      <ArrowLeftIcon className="size-4" />
+    </Button>
+  );
+}
+
 /** Left section of the recipe toolbar — back button + file count + mobile actions. */
 export function ToolbarBackSection({
   activePhase,
@@ -24,20 +45,9 @@ export function ToolbarBackSection({
   onRun,
   onDownloadAll,
 }: ToolbarBackSectionProps) {
-  const backLabel = activePhase === 3 ? "Back to configure" : "Back to file selection";
   return (
     <Row gap="xs">
-      <Button
-        variant="ghost"
-        size="icon"
-        elevation="sm"
-        disabled={isProcessing}
-        onClick={onBack}
-        aria-label={backLabel}
-        data-testid="back-button"
-      >
-        <ArrowLeftIcon className="size-4" />
-      </Button>
+      <BackButton isProcessing={isProcessing} activePhase={activePhase} onBack={onBack} />
       <p className="shrink-0 text-sm font-medium text-foreground" data-testid="file-count">
         {fileCount} {fileCount === 1 ? "file" : "files"} selected
       </p>

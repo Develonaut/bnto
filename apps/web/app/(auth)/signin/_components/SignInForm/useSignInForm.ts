@@ -7,6 +7,12 @@ import { handleSignInSubmit } from "./handleSignInSubmit";
 import { useSignInFormFields } from "./useSignInFormFields";
 import { useSignInMode } from "./useSignInMode";
 
+function submitErrorMessage(isSignUp: boolean) {
+  return isSignUp
+    ? "Could not create account. Try a different email."
+    : "Invalid email or password.";
+}
+
 export function useSignInForm(defaultMode?: "signin" | "signup") {
   const { email: signInEmail } = core.auth.useSignIn();
   const { email: signUpEmail } = core.auth.useSignUp();
@@ -31,11 +37,7 @@ export function useSignInForm(defaultMode?: "signin" | "signup") {
       await handleSignInSubmit({ isSignUp, ...fields, signUpEmail, signInEmail });
       router.replace("/");
     } catch {
-      fields.setError(
-        isSignUp
-          ? "Could not create account. Try a different email."
-          : "Invalid email or password.",
-      );
+      fields.setError(submitErrorMessage(isSignUp));
     } finally {
       fields.setLoading(false);
     }
