@@ -54,7 +54,10 @@ pub fn run_explicit_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, 
         .unwrap();
 
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    assert!(output.status.success(), "[explicit/{slug}] stderr: {stderr}");
+    assert!(
+        output.status.success(),
+        "[explicit/{slug}] stderr: {stderr}"
+    );
     (out, stderr)
 }
 
