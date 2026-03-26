@@ -3,21 +3,26 @@
   "type": "group",
   "version": "1.0.0",
   "name": "Clean CSV",
-  "position": { "x": 0, "y": 0 },
+  "position": {
+    "x": 0,
+    "y": 0
+  },
   "metadata": {
     "description": "Accepts a CSV file and cleans it."
   },
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
-  "settings": { "iteration": "auto" },
   "nodes": [
     {
       "id": "input",
       "type": "input",
       "version": "1.0.0",
       "name": "Input",
-      "position": { "x": 0, "y": 100 },
+      "position": {
+        "x": 0,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "mode": "file-upload",
@@ -27,29 +32,50 @@
         "multiple": false
       },
       "inputPorts": [],
-      "outputPorts": [{ "id": "out-1", "name": "files" }]
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
     },
     {
       "id": "clean",
       "type": "spreadsheet-clean",
       "version": "1.0.0",
       "name": "Clean",
-      "position": { "x": 250, "y": 100 },
+      "position": {
+        "x": 250,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "trimWhitespace": true,
         "removeEmptyRows": true,
         "removeDuplicates": true
       },
-      "inputPorts": [{ "id": "in-1", "name": "files" }],
-      "outputPorts": [{ "id": "out-1", "name": "files" }]
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
     },
     {
       "id": "output",
       "type": "output",
       "version": "1.0.0",
       "name": "Output",
-      "position": { "x": 500, "y": 100 },
+      "position": {
+        "x": 500,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "mode": "download",
@@ -57,12 +83,25 @@
         "zip": false,
         "autoDownload": true
       },
-      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
       "outputPorts": []
     }
   ],
   "edges": [
-    { "id": "e1", "source": "input", "target": "clean" },
-    { "id": "e2", "source": "clean", "target": "output" }
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "clean"
+    },
+    {
+      "id": "e2",
+      "source": "clean",
+      "target": "output"
+    }
   ]
 }

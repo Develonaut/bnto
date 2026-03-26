@@ -13,6 +13,9 @@
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
   "nodes": [
     {
       "id": "input",
@@ -40,44 +43,20 @@
       ]
     },
     {
-      "id": "rename-loop",
-      "type": "loop",
+      "id": "rename-file",
+      "type": "file-rename",
       "version": "1.0.0",
-      "name": "For Each",
+      "name": "Rename",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "mode": "forEach"
+        "prefix": "renamed-"
       },
-      "inputPorts": [
-        {
-          "id": "in-1",
-          "name": "items"
-        }
-      ],
-      "outputPorts": [],
-      "nodes": [
-        {
-          "id": "rename-file",
-          "type": "file-rename",
-          "version": "1.0.0",
-          "name": "Rename",
-          "position": {
-            "x": 0,
-            "y": 0
-          },
-          "metadata": {},
-          "parameters": {
-            "prefix": "renamed-"
-          },
-          "inputPorts": [],
-          "outputPorts": []
-        }
-      ],
-      "edges": []
+      "inputPorts": [],
+      "outputPorts": []
     },
     {
       "id": "output",
@@ -108,11 +87,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "rename-loop"
+      "target": "rename-file"
     },
     {
       "id": "e2",
-      "source": "rename-loop",
+      "source": "rename-file",
       "target": "output"
     }
   ]

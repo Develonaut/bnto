@@ -1,21 +1,18 @@
 {
-  "id": "convert-image-format",
+  "id": "resize-images",
   "type": "group",
   "version": "1.0.0",
-  "name": "Convert Image Format",
+  "name": "Resize Images",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and converts each to a target format."
+    "description": "Accepts image files and resizes each one."
   },
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
-  "settings": {
-    "iteration": "auto"
-  },
   "nodes": [
     {
       "id": "input",
@@ -29,9 +26,9 @@
       "metadata": {},
       "parameters": {
         "mode": "file-upload",
-        "accept": ["image/jpeg", "image/png", "image/webp", "image/gif"],
-        "extensions": [".jpg", ".jpeg", ".png", ".webp", ".gif"],
-        "label": "JPEG, PNG, WebP, or GIF images",
+        "accept": ["image/jpeg", "image/png", "image/webp"],
+        "extensions": [".jpg", ".jpeg", ".png", ".webp"],
+        "label": "JPEG, PNG, or WebP images",
         "multiple": true
       },
       "inputPorts": [],
@@ -43,21 +40,46 @@
       ]
     },
     {
-      "id": "convert-image",
-      "type": "image-convert",
+      "id": "resize-loop",
+      "type": "loop",
       "version": "1.0.0",
-      "name": "Convert",
+      "name": "For Each",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "format": "webp",
-        "quality": 80
+        "mode": "forEach"
       },
-      "inputPorts": [],
-      "outputPorts": []
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "resize-image",
+          "type": "image-resize",
+          "version": "1.0.0",
+          "name": "Resize",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "metadata": {},
+          "parameters": {
+            "maintainAspect": true,
+            "quality": 80,
+            "width": 200
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
     },
     {
       "id": "output",
@@ -71,7 +93,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Converted Images",
+        "label": "Resized Images",
         "zip": true,
         "autoDownload": true
       },
@@ -88,11 +110,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "convert-image"
+      "target": "resize-loop"
     },
     {
       "id": "e2",
-      "source": "convert-image",
+      "source": "resize-loop",
       "target": "output"
     }
   ]

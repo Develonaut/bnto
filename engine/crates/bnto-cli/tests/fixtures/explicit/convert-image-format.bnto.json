@@ -13,9 +13,6 @@
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
-  "settings": {
-    "iteration": "auto"
-  },
   "nodes": [
     {
       "id": "input",
@@ -43,21 +40,45 @@
       ]
     },
     {
-      "id": "convert-image",
-      "type": "image-convert",
+      "id": "convert-loop",
+      "type": "loop",
       "version": "1.0.0",
-      "name": "Convert",
+      "name": "For Each",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "format": "webp",
-        "quality": 80
+        "mode": "forEach"
       },
-      "inputPorts": [],
-      "outputPorts": []
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "convert-image",
+          "type": "image-convert",
+          "version": "1.0.0",
+          "name": "Convert",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "metadata": {},
+          "parameters": {
+            "format": "webp",
+            "quality": 80
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
     },
     {
       "id": "output",
@@ -88,11 +109,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "convert-image"
+      "target": "convert-loop"
     },
     {
       "id": "e2",
-      "source": "convert-image",
+      "source": "convert-loop",
       "target": "output"
     }
   ]

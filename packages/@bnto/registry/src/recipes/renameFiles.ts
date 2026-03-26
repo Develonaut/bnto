@@ -29,6 +29,7 @@ export const renameFiles: Recipe = {
     parameters: {},
     inputPorts: [],
     outputPorts: [],
+    settings: { iteration: "auto" },
     nodes: [
       defaultInputNode({
         accept: ["*/*"],
@@ -36,38 +37,24 @@ export const renameFiles: Recipe = {
         label: "any files",
       }),
       {
-        id: "rename-loop",
-        type: "loop",
+        id: "rename-file",
+        type: "file-rename",
         version: CURRENT_FORMAT_VERSION,
-        name: "For Each",
+        name: "Rename",
         position: { x: 250, y: 100 },
         metadata: {},
-        parameters: { mode: "forEach" },
-        inputPorts: [{ id: "in-1", name: "items" }],
+        parameters: {
+          ...getProcessorDefaults("file-rename"),
+          prefix: "renamed-",
+        },
+        inputPorts: [],
         outputPorts: [],
-        nodes: [
-          {
-            id: "rename-file",
-            type: "file-rename",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Rename",
-            position: { x: 0, y: 0 },
-            metadata: {},
-            parameters: {
-              ...getProcessorDefaults("file-rename"),
-              prefix: "renamed-",
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
       },
       defaultOutputNode({ label: "Renamed Files" }),
     ],
     edges: [
-      { id: "e1", source: "input", target: "rename-loop" },
-      { id: "e2", source: "rename-loop", target: "output" },
+      { id: "e1", source: "input", target: "rename-file" },
+      { id: "e2", source: "rename-file", target: "output" },
     ],
   },
 };

@@ -30,6 +30,7 @@ export const convertImageFormat: Recipe = {
     parameters: {},
     inputPorts: [],
     outputPorts: [],
+    settings: { iteration: "auto" },
     nodes: [
       defaultInputNode({
         accept: ["image/jpeg", "image/png", "image/webp", "image/gif"],
@@ -37,38 +38,24 @@ export const convertImageFormat: Recipe = {
         label: "JPEG, PNG, WebP, or GIF images",
       }),
       {
-        id: "convert-loop",
-        type: "loop",
+        id: "convert-image",
+        type: "image-convert",
         version: CURRENT_FORMAT_VERSION,
-        name: "For Each",
+        name: "Convert",
         position: { x: 250, y: 100 },
         metadata: {},
-        parameters: { mode: "forEach" },
-        inputPorts: [{ id: "in-1", name: "items" }],
+        parameters: {
+          ...getProcessorDefaults("image-convert"),
+          format: "webp",
+        },
+        inputPorts: [],
         outputPorts: [],
-        nodes: [
-          {
-            id: "convert-image",
-            type: "image-convert",
-            version: CURRENT_FORMAT_VERSION,
-            name: "Convert",
-            position: { x: 0, y: 0 },
-            metadata: {},
-            parameters: {
-              ...getProcessorDefaults("image-convert"),
-              format: "webp",
-            },
-            inputPorts: [],
-            outputPorts: [],
-          },
-        ],
-        edges: [],
       },
       defaultOutputNode({ label: "Converted Images" }),
     ],
     edges: [
-      { id: "e1", source: "input", target: "convert-loop" },
-      { id: "e2", source: "convert-loop", target: "output" },
+      { id: "e1", source: "input", target: "convert-image" },
+      { id: "e2", source: "convert-image", target: "output" },
     ],
   },
 };

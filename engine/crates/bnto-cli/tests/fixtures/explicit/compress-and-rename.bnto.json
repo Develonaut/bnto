@@ -1,21 +1,18 @@
 {
-  "id": "compress-images",
+  "id": "compress-and-rename",
   "type": "group",
   "version": "1.0.0",
-  "name": "Compress Images",
+  "name": "Compress & Rename",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and compresses each one."
+    "description": "Accepts image files, compresses each one, and renames with a suffix."
   },
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
-  "settings": {
-    "iteration": "auto"
-  },
   "nodes": [
     {
       "id": "input",
@@ -43,20 +40,66 @@
       ]
     },
     {
-      "id": "compress-image",
-      "type": "image-compress",
+      "id": "process-loop",
+      "type": "loop",
       "version": "1.0.0",
-      "name": "Compress",
+      "name": "For Each",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "quality": 80
+        "mode": "forEach"
       },
-      "inputPorts": [],
-      "outputPorts": []
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "compress",
+          "type": "image-compress",
+          "version": "1.0.0",
+          "name": "Compress",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "metadata": {},
+          "parameters": {
+            "quality": 80
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "rename",
+          "type": "file-rename",
+          "version": "1.0.0",
+          "name": "Rename",
+          "position": {
+            "x": 250,
+            "y": 0
+          },
+          "metadata": {},
+          "parameters": {
+            "suffix": "-min"
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "le1",
+          "source": "compress",
+          "target": "rename"
+        }
+      ]
     },
     {
       "id": "output",
@@ -70,7 +113,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Compressed Images",
+        "label": "Compressed & Renamed",
         "zip": true,
         "autoDownload": true
       },
@@ -87,11 +130,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "compress-image"
+      "target": "process-loop"
     },
     {
       "id": "e2",
-      "source": "compress-image",
+      "source": "process-loop",
       "target": "output"
     }
   ]
