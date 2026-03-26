@@ -12,9 +12,8 @@ import { NodeConfigContent } from "./NodeConfigContent";
 /**
  * ConfigPanel — Menu-based config panel.
  *
- * Opens to the left from the right toolbar trigger. Store controls
- * open/close, Radix handles positioning. Parameter fields are
- * rendered by SchemaForm — fully schema-driven.
+ * Opens to the left from the right toolbar trigger. When a node is
+ * selected, shows node config; otherwise shows recipe settings.
  */
 
 /** Resolve the current config node ID (persists across deselection transitions). */

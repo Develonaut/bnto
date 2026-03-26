@@ -7,9 +7,10 @@ import { useEditor } from "../../context";
 import { IterationModeSelect } from "./IterationModeSelect";
 
 /**
- * RecipeSettingsPanel — shown in ConfigPanel when no node is selected.
+ * RecipeSettingsPanel — recipe-level settings content.
  *
  * Surfaces recipe-level settings: name and iteration mode.
+ * Used in both the config panel fallback and the dedicated recipe panel.
  */
 function RecipeSettingsPanel() {
   const editor = useEditor();

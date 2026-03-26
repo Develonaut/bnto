@@ -47,6 +47,7 @@ function buildInitialState(initial: ResolvedInitial): InitialState {
       palette: false,
       run: false,
       help: false,
+      recipe: false,
     },
     insertAfterNodeId: null,
     insertIntoContainerId: null,

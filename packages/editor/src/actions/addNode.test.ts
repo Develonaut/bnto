@@ -28,7 +28,7 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
     redoStack: [],
     definition: null,
     selectedNodeId: null,
-    panels: { config: false, palette: false, run: false, help: false },
+    panels: { config: false, palette: false, run: false, help: false, recipe: false },
     executionPhase: "idle",
     executionResults: [],
     executionErrors: [],

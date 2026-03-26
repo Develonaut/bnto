@@ -27,10 +27,10 @@ test.describe("Save recipe to account @auth", () => {
     await navigateToEditor(page);
     await addNodeFromPalette(page, "Compress Images");
 
-    // SAVE: Open File > Save, name it, confirm
-    await page.getByTestId("toolbar-file-menu").click();
-    // TODO: Save menu item removed from toolbar — add testid when Save is re-introduced
-    // await page.getByTestId("toolbar-save-item").click();
+    // SAVE: Open Recipe panel > Save, name it, confirm
+    await page.getByTestId("toolbar-recipe").click();
+    // TODO: Save action not yet in recipe panel — add testid when Save is re-introduced
+    // await page.getByTestId("panel-save").click();
 
     const nameInput = page.getByTestId("save-recipe-name");
     await nameInput.fill("Test Recipe SV1");
@@ -51,9 +51,9 @@ test.describe("Save recipe to account @auth", () => {
     await navigateToEditor(page);
     await addNodeFromPalette(page, "Compress Images");
 
-    await page.getByTestId("toolbar-file-menu").click();
-    // TODO: Save menu item removed from toolbar — add testid when Save is re-introduced
-    // await page.getByTestId("toolbar-save-item").click();
+    await page.getByTestId("toolbar-recipe").click();
+    // TODO: Save action not yet in recipe panel — add testid when Save is re-introduced
+    // await page.getByTestId("panel-save").click();
     await page.getByTestId("save-recipe-name").fill("SV3 Recipe");
     await page.getByTestId("save-recipe-confirm").click();
 

@@ -59,14 +59,19 @@ export async function getResultCount(page: Page) {
 // Export
 // ---------------------------------------------------------------------------
 
-/** Export the recipe via File > Export, returns the downloaded JSON buffer. */
+/** Export the recipe via Recipe panel > Export, returns the downloaded JSON buffer. */
 export async function exportRecipe(page: Page) {
-  // Open file menu
-  await page.getByTestId("toolbar-file-menu").click();
+  // Open recipe panel — has export action regardless of node selection
+  const panel = page.getByTestId("panel-recipe");
+  const panelVisible = await panel.isVisible().catch(() => false);
+  if (!panelVisible) {
+    await page.getByTestId("toolbar-recipe").click();
+    await expect(panel).toBeVisible({ timeout: 3_000 });
+  }
 
-  // Click Export menu item
+  // Click Export action button
   const downloadPromise = page.waitForEvent("download");
-  await page.getByTestId("menu-export").click();
+  await page.getByTestId("panel-export").click();
   const download = await downloadPromise;
 
   const downloadPath = await download.path();
