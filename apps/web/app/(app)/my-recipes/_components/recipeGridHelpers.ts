@@ -1,6 +1,6 @@
 import { NODE_TYPE_INFO } from "@bnto/core";
 import type { LucideIcon } from "@bnto/ui";
-import { CATEGORY_ICON } from "@/lib/categoryIcons";
+import { CATEGORY_ICON } from "@/constants/categoryIcons";
 import type { RecipeCategory, RecipeSortOrder } from "./RecipeFilterMenu";
 
 /** Reverse map: node type label -> category. */

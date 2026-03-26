@@ -1,5 +1,5 @@
 /**
- * Category → icon mapping shared between explore page and my-recipes grid.
+ * Category → icon mapping shared across all recipe card surfaces.
  */
 
 import type { LucideIcon } from "@bnto/ui";

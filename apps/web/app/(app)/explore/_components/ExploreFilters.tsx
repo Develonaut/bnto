@@ -10,7 +10,7 @@ import { useCallback, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAllCategories, getRecipesByCategory } from "@bnto/registry";
 import { Input, Row, SearchIcon } from "@bnto/ui";
-import { CATEGORY_ICON } from "@/lib/categoryIcons";
+import { CATEGORY_ICON } from "@/constants/categoryIcons";
 import { CategoryPill } from "./CategoryPill";
 
 /** Categories relevant for recipe filtering (exclude internal-only categories). */
