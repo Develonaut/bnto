@@ -12,13 +12,39 @@
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import prettierConfig from "eslint-config-prettier";
+import sonarjs from "eslint-plugin-sonarjs";
 
 export const baseConfig = tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   prettierConfig,
   {
+    plugins: { sonarjs },
     rules: {
+      // --- Complexity & size enforcement (code-standards.md) ---
+
+      // Cyclomatic complexity — flag functions with too many paths
+      complexity: ["warn", { max: 10 }],
+
+      // Cognitive complexity (sonarjs) — readability metric
+      "sonarjs/cognitive-complexity": ["warn", 15],
+
+      // Function length — 20-line target, 30 hard cap (skip blanks/comments)
+      "max-lines-per-function": [
+        "warn",
+        { max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
+      ],
+
+      // File length — 250-line hard cap from code-standards.md
+      "max-lines": ["warn", { max: 250, skipBlankLines: true, skipComments: true }],
+
+      // --- Structural quality (cherry-picked sonarjs rules) ---
+      "sonarjs/no-identical-conditions": "error",
+      "sonarjs/no-collapsible-if": "warn",
+      "sonarjs/no-duplicated-branches": "warn",
+
+      // --- TypeScript rules ---
+
       // Align with code-standards.md: no `any` without justification
       "@typescript-eslint/no-explicit-any": "warn",
 
