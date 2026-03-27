@@ -1,5 +1,5 @@
 import { ArrowUpRightIcon, Button, CoffeeIcon, GithubIcon, Stack } from "@bnto/ui";
-import { BUYMEACOFFEE_URL, GITHUB_URL } from "@/lib/copy";
+import { BUYMEACOFFEE_URL, GITHUB_URL } from "@/lib/links";
 
 /** GitHub + Buy Me a Coffee links in the footer brand column. */
 export function FooterBrandLinks() {

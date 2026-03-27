@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, Button, Row } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 
 /** Back to Home + Report Issue action buttons for the 404 page. */
 export function NotFoundActions() {

@@ -1,5 +1,5 @@
 import { Button, GithubIcon, Row } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 import { NewRecipeMobileButton } from "../NewRecipeMobileButton";
 import { PAGE_LINKS } from "../nav";
 

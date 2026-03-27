@@ -21,6 +21,7 @@
   "dependencies": {
     "@bnto/auth": "workspace:*",
     "@bnto/backend": "workspace:*",
+    "@bnto/i18n": "workspace:*",
     "@bnto/registry": "workspace:*",
     "@convex-dev/auth": "catalog:",
     "@convex-dev/react-query": "^0.1.0",

@@ -5,7 +5,7 @@
  * Truncates body to stay under GitHub's ~8,000 char URL limit.
  */
 
-import { GITHUB_URL } from "./copy";
+import { GITHUB_URL } from "./links";
 
 /** Maximum body length after encoding to stay under GitHub's URL limit. */
 const MAX_BODY_CHARS = 4000;

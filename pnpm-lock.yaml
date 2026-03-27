@@ -137,6 +137,9 @@ importers:
       '@bnto/form':
         specifier: workspace:*
         version: link:../../packages/@bnto/form
+      '@bnto/i18n':
+        specifier: workspace:*
+        version: link:../../packages/@bnto/i18n
       '@bnto/registry':
         specifier: workspace:*
         version: link:../../packages/@bnto/registry
@@ -310,6 +313,18 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
 
+  packages/@bnto/i18n:
+    devDependencies:
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.3(jiti@2.6.1)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@22.19.9)(jiti@2.6.1)(lightningcss@1.30.2)
+
   packages/@bnto/nodes:
     dependencies:
       zod:
@@ -350,6 +365,9 @@ importers:
       '@bnto/backend':
         specifier: workspace:*
         version: link:../@bnto/backend
+      '@bnto/i18n':
+        specifier: workspace:*
+        version: link:../@bnto/i18n
       '@bnto/registry':
         specifier: workspace:*
         version: link:../@bnto/registry

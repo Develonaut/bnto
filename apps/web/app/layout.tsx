@@ -4,7 +4,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
 import { AppShell } from "@bnto/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { DEFAULT_TITLE, SITE_DESCRIPTION, SITE_TITLE, TITLE_TEMPLATE } from "@/lib/copy";
+import { t } from "@bnto/i18n";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -26,10 +26,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: DEFAULT_TITLE,
-    template: TITLE_TEMPLATE,
+    default: t("site.defaultTitle"),
+    template: t("site.titleTemplate"),
   },
-  description: SITE_DESCRIPTION,
+  description: t("site.description"),
   keywords: [
     "compress images free",
     "clean csv online",
@@ -47,9 +47,9 @@ export const metadata: Metadata = {
     "privacy first tools",
     "rust webassembly tools",
   ],
-  authors: [{ name: SITE_TITLE }],
-  creator: SITE_TITLE,
-  publisher: SITE_TITLE,
+  authors: [{ name: t("site.title") }],
+  creator: t("site.title"),
+  publisher: t("site.title"),
   robots: {
     index: true,
     follow: true,
@@ -64,14 +64,14 @@ export const metadata: Metadata = {
     shortcut: [{ url: "/favicon/favicon.ico" }],
   },
   openGraph: {
-    title: DEFAULT_TITLE,
-    description: SITE_DESCRIPTION,
-    siteName: SITE_TITLE,
+    title: t("site.defaultTitle"),
+    description: t("site.description"),
+    siteName: t("site.title"),
   },
   twitter: {
     card: "summary_large_image",
-    title: DEFAULT_TITLE,
-    description: SITE_DESCRIPTION,
+    title: t("site.defaultTitle"),
+    description: t("site.description"),
   },
 };
 

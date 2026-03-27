@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Stack, Text } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 import { RECIPES as RECIPE_CATEGORIES } from "../nav/recipeLinks";
 
 interface FooterLink {
