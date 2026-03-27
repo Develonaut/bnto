@@ -4,6 +4,7 @@ import { type ReactNode, useCallback } from "react";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { Stepper, StepperList, StepperStep, StepperIndicator } from "@bnto/ui";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
+import { OpenInEditorLink } from "./OpenInEditorLink";
 import { RecipeShellUpload } from "./RecipeShellUpload";
 import { SessionMarker } from "./SessionMarker";
 import { deriveActivePhase } from "./phaseMapping";
@@ -32,6 +33,9 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
       <SessionMarker />
       <StepperIndicator />
       {children}
+      <div>
+        <OpenInEditorLink slug={entry.slug} config={flow.config as Record<string, unknown>} />
+      </div>
       <RecipeShellUpload
         flow={flow}
         entry={entry}

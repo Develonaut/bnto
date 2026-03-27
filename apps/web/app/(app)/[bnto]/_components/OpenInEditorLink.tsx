@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, PenLineIcon } from "@bnto/ui";
-import { core } from "@bnto/core";
+import { core, applyConfigToDefinition } from "@bnto/core";
 import { editorUrl } from "@/lib/routes";
 
 /**
@@ -13,16 +13,25 @@ import { editorUrl } from "@/lib/routes";
  * Synchronous: the definition is already in memory (registry), so
  * the recipe entry lands in localStorage before navigation starts.
  */
-export function OpenInEditorLink({ slug }: { slug: string }) {
+export function OpenInEditorLink({
+  slug,
+  config,
+}: {
+  slug: string;
+  config?: Record<string, unknown>;
+}) {
   const router = useRouter();
 
   const handleClick = useCallback(() => {
     const recipe = core.registry.getRecipeBySlug(slug);
     if (!recipe) return;
 
-    const id = core.recipes.createFromDefinition(recipe.definition);
+    const definition = config
+      ? applyConfigToDefinition(recipe.definition, config)
+      : recipe.definition;
+    const id = core.recipes.createFromDefinition(definition);
     router.push(editorUrl(id));
-  }, [slug, router]);
+  }, [slug, config, router]);
 
   return (
     <Button onClick={handleClick} variant="outline" elevation="sm">
