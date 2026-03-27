@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { AppShellContent, Container, Heading } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
-import { OpenInEditorLink } from "./_components/OpenInEditorLink";
 import { RecipeShell } from "./_components/RecipeShell";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404
@@ -56,9 +55,6 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
             <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
               {entry.description}
             </p>
-            <div>
-              <OpenInEditorLink slug={entry.slug} />
-            </div>
           </RecipeShell>
         </Container>
       </AppShellContent>

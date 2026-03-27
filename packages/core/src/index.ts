@@ -68,6 +68,7 @@ export { useShallow } from "zustand/react/shallow";
 // ── Pipeline types (execution-oriented definition for WASM) ───────────────
 export type { PipelineDefinition, PipelineNode } from "./types/pipeline";
 export { definitionToPipeline } from "./transforms/definitionToPipeline";
+export { applyConfigToDefinition } from "./transforms/applyConfigToDefinition";
 
 // ── Pipeline events (structured progress from Rust executor) ─────────────
 export type {
