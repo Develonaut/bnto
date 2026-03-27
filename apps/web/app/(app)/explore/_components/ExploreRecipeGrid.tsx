@@ -9,23 +9,24 @@
 
 import { useMemo } from "react";
 import { useSearchParams } from "next/navigation";
+import type { Recipe } from "@bnto/core";
 import { getAllRecipes } from "@bnto/core";
+import type { LucideIcon } from "@bnto/ui";
 import { ScaleIn, Stagger } from "@bnto/ui";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { ExploreRecipeCard } from "./ExploreRecipeCard";
-
-type CardSize = "sm" | "md" | "lg";
 import { ExploreEmptyState } from "./ExploreEmptyState";
 import { filterRecipes } from "./filterRecipes";
 import { useColumnCount } from "./useColumnCount";
 
-/** Pre-resolved icon map keyed by slug — avoids per-render component creation. */
-const RECIPE_ICONS = Object.fromEntries(getAllRecipes().map((r) => [r.slug, getBntoIcon(r.slug)]));
+type CardSize = "sm" | "md" | "lg";
 
-/**
- * Repeating size pattern across the grid (read left-to-right, row by row).
- * Designed so adjacent cards in the same column rarely share a size.
- */
+/** Pre-resolved icon map keyed by slug — avoids per-render component creation. */
+const RECIPE_ICONS: Record<string, LucideIcon> = Object.fromEntries(
+  getAllRecipes().map((r) => [r.slug, getBntoIcon(r.slug)]),
+);
+
+/** Repeating size pattern — adjacent cards in the same column rarely share a size. */
 const SIZE_PATTERN: CardSize[] = ["lg", "sm", "md", "sm", "lg", "md", "md", "lg", "sm"];
 
 function getCardSize(index: number) {
@@ -57,22 +58,36 @@ export function ExploreRecipeGrid() {
 
   return (
     <Stagger className="flex items-start gap-4">
-      {columns.map((column, colIndex) => (
-        <div key={colIndex} className="flex flex-1 flex-col gap-4">
-          {column.map((recipe, rowIndex) => {
-            const gridIndex = colIndex + rowIndex * columnCount;
-            return (
-              <ScaleIn key={recipe.id} index={gridIndex} from={0.9}>
-                <ExploreRecipeCard
-                  recipe={recipe}
-                  icon={RECIPE_ICONS[recipe.slug]}
-                  size={getCardSize(gridIndex)}
-                />
-              </ScaleIn>
-            );
-          })}
-        </div>
+      {columns.map((col, ci) => (
+        <MasonryColumn key={ci} recipes={col} colIndex={ci} columnCount={columnCount} />
       ))}
     </Stagger>
+  );
+}
+
+function MasonryColumn({
+  recipes,
+  colIndex,
+  columnCount,
+}: {
+  recipes: Recipe[];
+  colIndex: number;
+  columnCount: number;
+}) {
+  return (
+    <div className="flex flex-1 flex-col gap-4">
+      {recipes.map((recipe, rowIndex) => {
+        const gridIndex = colIndex + rowIndex * columnCount;
+        return (
+          <ScaleIn key={recipe.id} index={gridIndex} from={0.9}>
+            <ExploreRecipeCard
+              recipe={recipe}
+              icon={RECIPE_ICONS[recipe.slug]}
+              size={getCardSize(gridIndex)}
+            />
+          </ScaleIn>
+        );
+      })}
+    </div>
   );
 }
