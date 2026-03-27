@@ -190,7 +190,7 @@ test.describe("editor from-scratch journeys @browser", () => {
     // First run
     await runEditorWithFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
 
-    const runButton = page.getByTestId("run-button");
+    const runButton = page.getByTestId("editor-toolbar").getByTestId("run-button");
     await expect(runButton).toHaveAttribute("data-phase", "completed");
 
     // Run again (should reuse the same files)

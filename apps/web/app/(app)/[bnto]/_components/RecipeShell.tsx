@@ -2,11 +2,13 @@
 
 import { type ReactNode, useCallback } from "react";
 import type { BntoEntry } from "@/lib/bntoRegistry";
+import { Stepper, StepperList, StepperStep, StepperIndicator } from "@bnto/ui";
 import { useRecipeFlow } from "../_hooks/useRecipeFlow";
-import { PhaseIndicator } from "./PhaseIndicator";
 import { RecipeShellUpload } from "./RecipeShellUpload";
 import { SessionMarker } from "./SessionMarker";
 import { deriveActivePhase } from "./phaseMapping";
+
+const noop = () => {};
 
 /**
  * Recipe page interactive flow -- client island.
@@ -26,22 +28,44 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
   );
 
   return (
-    <div
-      className="space-y-6"
-      data-testid="bnto-shell"
-      data-session="ready"
-      data-execution-mode={flow.isBrowserPath ? "browser" : "cloud"}
-    >
+    <RecipeShellLayout activePhase={activePhase} isBrowserPath={flow.isBrowserPath}>
       <SessionMarker />
-      <PhaseIndicator activePhase={activePhase} />
+      <StepperIndicator />
       {children}
       <RecipeShellUpload
         flow={flow}
         entry={entry}
-        activePhase={activePhase}
         onClearFiles={handleClearFiles}
         onDeleteFile={handleDeleteFile}
       />
-    </div>
+    </RecipeShellLayout>
+  );
+}
+
+function RecipeShellLayout({
+  activePhase,
+  isBrowserPath,
+  children,
+}: {
+  activePhase: 1 | 2 | 3;
+  isBrowserPath: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Stepper
+      value={String(activePhase)}
+      onValueChange={noop}
+      className="space-y-6"
+      data-testid="bnto-shell"
+      data-session="ready"
+      data-execution-mode={isBrowserPath ? "browser" : "cloud"}
+    >
+      <StepperList>
+        <StepperStep value="1" label="Files" />
+        <StepperStep value="2" label="Configure" />
+        <StepperStep value="3" label="Results" />
+      </StepperList>
+      {children}
+    </Stepper>
   );
 }

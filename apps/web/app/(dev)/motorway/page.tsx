@@ -18,7 +18,6 @@ import { InputShowcase } from "./InputShowcase";
 import { KeyValueEditorShowcase } from "./KeyValueEditorShowcase";
 import { MenuShowcase } from "./MenuShowcase";
 import { ListShowcase } from "./ListShowcase";
-import { PhaseFlowShowcase } from "./PhaseFlowShowcase";
 import { ProgressShowcase } from "./ProgressShowcase";
 import { RadioGroupShowcase } from "./RadioGroupShowcase";
 import { RecipeCardShowcase } from "./RecipeCardShowcase";
@@ -58,7 +57,6 @@ export default function MotorwayPage() {
           <TabsTrigger value="forms">Forms</TabsTrigger>
           <TabsTrigger value="grids">Grids</TabsTrigger>
           <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="features">Features</TabsTrigger>
           <TabsTrigger value="schemas">Schemas</TabsTrigger>
         </TabsList>
 
@@ -313,18 +311,6 @@ export default function MotorwayPage() {
           </ShowcaseSection>
         </TabsContent>
 
-        {/* ── Features ─────────────────────────────────────────── */}
-        <TabsContent value="features">
-          <Stack gap="xl" className="gap-16">
-            <ShowcaseSection
-              id="phase-flow"
-              title="Recipe Phase Flow"
-              description="Step through the recipe page phases: Dropzone → Configure → Processing → Completed. The file grid persists across phases — no DOM jumping."
-            >
-              <PhaseFlowShowcase />
-            </ShowcaseSection>
-          </Stack>
-        </TabsContent>
         {/* ── Schemas ─────────────────────────────────────────── */}
         <TabsContent value="schemas">
           <ShowcaseSection

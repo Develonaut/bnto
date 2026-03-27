@@ -1,5 +1,13 @@
 import { useCallback } from "react";
-import { FileList } from "@bnto/ui";
+import {
+  FileList,
+  FileListContent,
+  FileListIcon,
+  FileListItem,
+  FileListName,
+  IconBadge,
+  XCircleIcon,
+} from "@bnto/ui";
 import type { BrowserFileResult } from "@bnto/core";
 import { deriveFileResultProps } from "@bnto/core";
 import type { FileProgress } from "../../store/types";
@@ -10,6 +18,7 @@ interface RunFileListProps {
   phase: string;
   inputFiles: File[];
   results: BrowserFileResult[];
+  errors: string[];
   fileProgress: FileProgress | null;
   onRemove: (index: number) => void;
   onDownload: (result: BrowserFileResult) => void;
@@ -19,11 +28,15 @@ function RunFileList({
   phase,
   inputFiles,
   results,
+  errors,
   fileProgress,
   onRemove,
   onDownload,
 }: RunFileListProps) {
-  if (phase === "completed" || phase === "failed") {
+  if (phase === "failed") {
+    return <FailedFileList errors={errors} results={results} onDownload={onDownload} />;
+  }
+  if (phase === "completed") {
     return <CompletedFileList results={results} onDownload={onDownload} />;
   }
   if (phase === "running") {
@@ -105,7 +118,50 @@ function IdleRow({
   );
 }
 
+/* -- Error display ---------------------------------------------- */
+
+function ErrorRow({ message }: { message: string }) {
+  return (
+    <FileListItem data-testid="error-row">
+      <FileListIcon>
+        <IconBadge variant="destructive" size="lg" aria-hidden="true">
+          <XCircleIcon className="size-5" />
+        </IconBadge>
+      </FileListIcon>
+      <FileListContent>
+        <FileListName className="text-destructive">{message}</FileListName>
+      </FileListContent>
+    </FileListItem>
+  );
+}
+
 /* -- Phase-specific lists --------------------------------------- */
+
+function FailedFileList({
+  errors,
+  results,
+  onDownload,
+}: {
+  errors: string[];
+  results: BrowserFileResult[];
+  onDownload: (r: BrowserFileResult) => void;
+}) {
+  return (
+    <FileList as="ul" className="px-4 py-3">
+      {errors.map((msg, i) => (
+        <ErrorRow key={`error-${i}`} message={msg} />
+      ))}
+      {results.map((r, i) => (
+        <CompletedResultItem
+          key={`${r.filename}-${i}`}
+          result={r}
+          index={i}
+          onDownload={onDownload}
+        />
+      ))}
+    </FileList>
+  );
+}
 
 function CompletedFileList({
   results,

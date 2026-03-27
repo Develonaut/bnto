@@ -33,10 +33,9 @@ test.describe("compress-images — error handling @browser", () => {
       timeout: 30000,
     });
 
-    // Error card should be visible
-    const errorCard = page.getByTestId("client-error");
-    await expect(errorCard).toBeVisible();
-    await expect(errorCard).toContainText("Something went wrong");
+    // Failed banner should be visible in toolbar
+    const toolbarProgress = page.getByTestId("toolbar-progress");
+    await expect(toolbarProgress).toHaveAttribute("data-status", "failed");
 
     // Page should still be functional — back button resets to configure phase
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
@@ -69,9 +68,9 @@ test.describe("compress-images — error handling @browser", () => {
       timeout: 30000,
     });
 
-    const errorCard = page.getByTestId("client-error");
-    await expect(errorCard).toBeVisible();
-    await expect(errorCard).toContainText("Something went wrong");
+    // Failed banner should be visible in toolbar
+    const toolbarProgress = page.getByTestId("toolbar-progress");
+    await expect(toolbarProgress).toHaveAttribute("data-status", "failed");
 
     // Back button resets to configure phase, ready to try different files
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
