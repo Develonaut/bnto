@@ -1,5 +1,4 @@
-import { BlocksIcon, ClockIcon, CloudIcon, CloudOffIcon, Row, Text } from "@bnto/ui";
-import { formatTimeAgo } from "@/lib/formatTimeAgo";
+import { BlocksIcon, ClockIcon, CloudIcon, CloudOffIcon, Row, Text, formatTimeAgo } from "@bnto/ui";
 
 interface RecipeCardMetaProps {
   nodeCount: number;

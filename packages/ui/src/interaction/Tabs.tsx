@@ -42,12 +42,13 @@ export function Tabs({
 
 export const TabsList = forwardRef<
   ElementRef<typeof TabsPrimitive.List>,
-  ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
+  ComponentPropsWithoutRef<typeof TabsPrimitive.List> & { fullWidth?: boolean }
+>(({ className, fullWidth, ...props }, ref) => (
   <TabsPrimitive.List
     ref={ref}
     className={cn(
       "inline-flex items-center gap-1 rounded-full bg-input border border-border p-1",
+      fullWidth && "flex w-full *:flex-1 [&_button]:w-full",
       className,
     )}
     {...props}

@@ -13,7 +13,7 @@ import { IterationModeSelect } from "./IterationModeSelect";
  */
 function RecipeSettingsPanel() {
   const editor = useEditor();
-  const { definition, recipeMetadata } = editor.definition.useDefinition();
+  const { definition } = editor.definition.useDefinition();
 
   const iterationMode: IterationMode = definition?.settings?.iteration ?? "explicit";
 
@@ -31,7 +31,7 @@ function RecipeSettingsPanel() {
           Recipe Settings
         </Heading>
         <Text size="xs" color="muted" className="mt-1">
-          {recipeMetadata.name}
+          Configure how the recipe processes files.
         </Text>
       </div>
       <Divider />

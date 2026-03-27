@@ -6,6 +6,7 @@ export { createCn } from "./utils/createCn";
 export { resolveResponsive } from "./utils/responsive";
 export { toDropzoneAccept } from "./utils/toDropzoneAccept";
 export { formatFileSize } from "./utils/formatFileSize";
+export { formatTimeAgo } from "./utils/formatTimeAgo";
 export type { Breakpoints, ResponsiveProp } from "./utils/responsive";
 export { type Align, alignMap } from "./utils/alignMap";
 export { type Justify, justifyMap } from "./utils/justifyMap";
