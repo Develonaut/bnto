@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Menu,
   MenuTrigger,
@@ -12,7 +12,12 @@ import {
   FileUpIcon,
   MenuSeparator,
   PenLineIcon,
+  CloudIcon,
+  CloudOffIcon,
+  Heading,
   Text,
+  Row,
+  formatTimeAgo,
 } from "@bnto/ui";
 import { useEditor } from "../context";
 import { downloadDefinition } from "../actions/downloadDefinition";
@@ -30,6 +35,26 @@ interface FileMenuItemsProps {
   download: () => void;
   canDownload: boolean;
   recipeName: string;
+  statusText: string;
+  isCloud: boolean;
+}
+
+/** Track sync status with relative timestamp. */
+function useSyncStatus(isDirty: boolean): string {
+  const savedAtRef = useRef(Date.now());
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    if (!isDirty) savedAtRef.current = Date.now();
+  }, [isDirty]);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1_000);
+    return () => clearInterval(id);
+  }, []);
+
+  if (isDirty) return "Saving…";
+  return `Saved ${formatTimeAgo(savedAtRef.current, now)}`;
 }
 
 /** File menu items (rename, new, export, import). */
@@ -40,13 +65,25 @@ function FileMenuItems({
   download,
   canDownload,
   recipeName,
+  statusText,
+  isCloud,
 }: FileMenuItemsProps) {
   return (
     <MenuContent side="top" className="w-52 p-1">
       <div className="px-3 py-2">
-        <Text weight="medium" size="sm" className="truncate">
+        <Heading level={3} size="xs" className="truncate">
           {recipeName}
-        </Text>
+        </Heading>
+        <Row className="mt-1 gap-1 items-center">
+          {isCloud ? (
+            <CloudIcon className="size-3 text-muted-foreground" />
+          ) : (
+            <CloudOffIcon className="size-3 text-muted-foreground" />
+          )}
+          <Text size="xs" color="muted">
+            {statusText}
+          </Text>
+        </Row>
       </div>
       <MenuSeparator />
       <MenuItem onClick={onRename} data-testid="menu-rename">
@@ -68,11 +105,13 @@ function FileMenuItems({
 
 function FileMenuButton({ onRename, onImport }: FileMenuButtonProps) {
   const editor = useEditor();
-  const { validationErrors, recipeMetadata } = editor.definition.useDefinition();
+  const { validationErrors, recipeMetadata, isDirty } = editor.definition.useDefinition();
   const { nodes } = editor.nodes.useNodes();
   const canDownload = validationErrors.length === 0 && nodes.length > 0;
   const handleNew = useCallback(() => editor.definition.createBlank(), [editor]);
   const download = useCallback(() => downloadDefinition(editor.definition), [editor]);
+  const isCloud = recipeMetadata.cloudId !== null;
+  const statusText = useSyncStatus(isDirty);
 
   return (
     <Menu>
@@ -90,6 +129,8 @@ function FileMenuButton({ onRename, onImport }: FileMenuButtonProps) {
         download={download}
         canDownload={canDownload}
         recipeName={recipeMetadata.name}
+        statusText={statusText}
+        isCloud={isCloud}
       />
     </Menu>
   );
