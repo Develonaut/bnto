@@ -1,13 +1,5 @@
-import {
-  ArrowLeftIcon,
-  Button,
-  DownloadIcon,
-  LoaderIcon,
-  PlayIcon,
-  RotateCcwIcon,
-  Row,
-  TrashIcon,
-} from "@bnto/ui";
+import { ArrowLeftIcon, Button, DownloadIcon, Row, TrashIcon } from "@bnto/ui";
+import { RunPlayButton } from "../RunPlayButton";
 import type { BrowserFileResult } from "@bnto/core";
 import type { FileProgress } from "../../store/types";
 import { RunningBanner, CompletedBanner, FailedBanner, IdleBanner } from "./RunHeaderBanners";
@@ -63,7 +55,6 @@ function RunHeader(props: RunHeaderProps) {
       <HeaderActions
         phase={phase}
         results={results}
-        hasFiles={inputFiles.length > 0}
         onClear={onClear}
         onDownloadAll={onDownloadAll}
         onRun={onRun}
@@ -91,21 +82,16 @@ function deriveCenterSlot(
 function HeaderActions({
   phase,
   results,
-  hasFiles,
   onClear,
   onDownloadAll,
   onRun,
 }: {
   phase: string;
   results: BrowserFileResult[];
-  hasFiles: boolean;
   onClear: () => void;
   onDownloadAll: () => void;
   onRun: () => void;
 }) {
-  const isProcessing = phase === "running";
-  const isDone = phase === "completed" || phase === "failed";
-
   return (
     <Row gap="xs" className="ml-auto shrink-0">
       {phase === "completed" && (
@@ -125,64 +111,8 @@ function HeaderActions({
           <TrashIcon className="size-4" />
         </Button>
       )}
-      <RunActionButton
-        phase={phase}
-        hasFiles={hasFiles}
-        onRun={onRun}
-        isProcessing={isProcessing}
-        isDone={isDone}
-      />
+      <RunPlayButton onClick={onRun} />
     </Row>
-  );
-}
-
-function RunActionButton({
-  phase,
-  hasFiles,
-  onRun,
-  isProcessing,
-  isDone,
-}: {
-  phase: string;
-  hasFiles: boolean;
-  onRun: () => void;
-  isProcessing: boolean;
-  isDone: boolean;
-}) {
-  if (isDone) {
-    return (
-      <Button
-        variant={phase === "failed" ? "outline" : "primary"}
-        size="icon"
-        elevation="sm"
-        onClick={onRun}
-        data-testid="run-button"
-        data-phase={phase}
-        aria-label={phase === "failed" ? "Try again" : "Rerun"}
-      >
-        <RotateCcwIcon className="size-4" />
-      </Button>
-    );
-  }
-
-  return (
-    <Button
-      size="icon"
-      elevation="sm"
-      variant={phase === "failed" ? "destructive" : "primary"}
-      onClick={onRun}
-      disabled={!hasFiles || isProcessing}
-      aria-label={isProcessing ? "Running" : "Run"}
-      aria-busy={isProcessing}
-      data-testid="run-button"
-      data-phase={phase}
-    >
-      {isProcessing ? (
-        <LoaderIcon className="size-4 motion-safe:animate-spin" />
-      ) : (
-        <PlayIcon className="size-4" />
-      )}
-    </Button>
   );
 }
 
