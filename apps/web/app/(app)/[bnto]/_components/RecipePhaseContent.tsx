@@ -1,12 +1,11 @@
 "use client";
 
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { SlideUp, Stack } from "@bnto/ui";
+import { Stack } from "@bnto/ui";
 import type { useRecipeFlow } from "../_hooks/useRecipeFlow";
 import { RecipeConfigSection } from "./RecipeConfigSection";
 import { RecipeToolbar } from "./RecipeToolbar";
 import { RecipeResultsSection } from "./RecipeResultsSection";
-import { ErrorCard } from "./ErrorCard";
 import { RecipeFileGrid } from "./RecipeFileGrid";
 import { ToolbarProgress } from "./ToolbarProgress";
 
@@ -39,7 +38,6 @@ export function RecipePhaseContent(props: RecipePhaseContentProps) {
         onDownloadAll={flow.downloadAll}
         centerContent={deriveCenterContent(entry, activePhase, flow)}
       />
-      <PhaseThreeErrors activePhase={activePhase} flow={flow} />
       <PhaseThreeCloudResults activePhase={activePhase} flow={flow} />
       <RecipeFileGrid
         files={flow.files}
@@ -62,36 +60,10 @@ function deriveCenterContent(
   if (activePhase === 2) {
     return <RecipeConfigSection slug={entry.slug} config={flow.config} onChange={flow.setConfig} />;
   }
-  if (
-    flow.isBrowserPath &&
-    (flow.browserExec.status === "processing" || flow.browserExec.status === "completed")
-  ) {
+  if (flow.isBrowserPath) {
     return <ToolbarProgress execution={flow.browserExec} />;
   }
   return;
-}
-
-/** Browser error card shown above the file grid in Phase 3. */
-function PhaseThreeErrors({
-  activePhase,
-  flow,
-}: {
-  activePhase: 2 | 3;
-  flow: ReturnType<typeof useRecipeFlow>;
-}) {
-  if (
-    activePhase !== 3 ||
-    !flow.isBrowserPath ||
-    flow.browserExec.status !== "failed" ||
-    !flow.browserExec.error
-  ) {
-    return null;
-  }
-  return (
-    <SlideUp>
-      <ErrorCard error={flow.browserExec.error} />
-    </SlideUp>
-  );
 }
 
 /** Cloud results section for Phase 3. */

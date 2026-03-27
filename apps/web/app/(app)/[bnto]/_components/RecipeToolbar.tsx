@@ -29,7 +29,7 @@ export function RecipeToolbar(props: RecipeToolbarProps) {
     <div
       role="toolbar"
       aria-label="Recipe actions"
-      className="flex min-h-10 flex-col gap-3 md:flex-row md:items-center md:gap-4"
+      className="flex min-h-[4.5rem] flex-col gap-3 md:flex-row md:items-center md:gap-4"
     >
       <ToolbarBackSection {...props} />
       {centerContent && (

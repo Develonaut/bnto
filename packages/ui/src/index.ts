@@ -241,6 +241,15 @@ export {
   RecipeCardTags,
 } from "./blocks/RecipeCard";
 
+/* Navigation */
+export {
+  Stepper,
+  StepperList,
+  StepperStep,
+  StepperContent,
+  StepperIndicator,
+} from "./navigation/Stepper";
+
 /* Animation */
 export {
   Stagger,

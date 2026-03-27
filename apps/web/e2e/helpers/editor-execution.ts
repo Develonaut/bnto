@@ -27,8 +27,9 @@ export async function runEditorWithFiles(
   const fileInput = page.getByTestId("run-file-input");
   await fileInput.setInputFiles(filePaths);
 
-  // Wait for execution to complete
-  const runButton = page.getByTestId("run-button");
+  // Wait for execution to complete — scope to editor toolbar to avoid
+  // matching the duplicate run-button inside the RunPanel header.
+  const runButton = page.getByTestId("editor-toolbar").getByTestId("run-button");
   await expect(runButton).toHaveAttribute("data-phase", "completed", {
     timeout,
   });
