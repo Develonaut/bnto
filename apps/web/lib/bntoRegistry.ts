@@ -71,4 +71,5 @@ export const RESERVED_PATHS = [
   "dashboard",
   "motorway",
   "ingest",
+  "explore",
 ] as const;

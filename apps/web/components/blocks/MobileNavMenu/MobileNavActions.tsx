@@ -1,25 +1,10 @@
-import { Button, GithubIcon, Row } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { Button, Row } from "@bnto/ui";
 import { NewRecipeMobileButton } from "../NewRecipeMobileButton";
 import { PAGE_LINKS } from "../nav";
+import { MobileNavGitHubButton } from "./MobileNavGitHubButton";
 
 interface MobileNavActionsProps {
   onClose: () => void;
-}
-
-function GitHubButton() {
-  return (
-    <Button
-      variant="secondary"
-      size="icon"
-      href={GITHUB_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      <GithubIcon />
-      <span className="sr-only">GitHub</span>
-    </Button>
-  );
 }
 
 export function MobileNavActions({ onClose }: MobileNavActionsProps) {
@@ -34,6 +19,9 @@ export function MobileNavActions({ onClose }: MobileNavActionsProps) {
       >
         My Recipes
       </Button>
+      <Button variant="outline" href="/explore" onClick={onClose} data-testid="mobile-link-explore">
+        Explore
+      </Button>
       {PAGE_LINKS.map((link) => (
         <Button
           key={link.href}
@@ -45,7 +33,7 @@ export function MobileNavActions({ onClose }: MobileNavActionsProps) {
           {link.label}
         </Button>
       ))}
-      <GitHubButton />
+      <MobileNavGitHubButton />
     </Row>
   );
 }

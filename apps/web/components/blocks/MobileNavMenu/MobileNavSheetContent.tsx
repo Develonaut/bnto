@@ -1,7 +1,6 @@
 "use client";
 
 import { Button, Container, SheetClose, SheetTitle, Stack, XIcon } from "@bnto/ui";
-import { MobileNavExplore } from "./MobileNavExplore";
 import { MobileNavActions } from "./MobileNavActions";
 import { MobileNavAuth } from "./MobileNavAuth";
 
@@ -9,7 +8,7 @@ interface MobileNavSheetContentProps {
   onClose: () => void;
 }
 
-/** Inner content of the mobile nav sheet — title, close, explore, actions, auth. */
+/** Inner content of the mobile nav sheet — title, close, actions, auth. */
 export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
   return (
     <div className="flex-1 overflow-y-auto">
@@ -26,9 +25,8 @@ export function MobileNavSheetContent({ onClose }: MobileNavSheetContentProps) {
           </SheetClose>
         </div>
         <Stack className="h-full justify-between gap-20 pt-16">
-          <MobileNavExplore onClose={onClose} />
+          <MobileNavActions onClose={onClose} />
           <Stack className="gap-6">
-            <MobileNavActions onClose={onClose} />
             <div className="h-px bg-primary-foreground/20" />
             <MobileNavAuth onClose={onClose} />
           </Stack>

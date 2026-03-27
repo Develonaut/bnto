@@ -23,6 +23,8 @@ export type { UseDialogReturn } from "./hooks/useDialog";
 export { useKeyDown } from "./hooks/useKeyDown";
 export { useMounted } from "./hooks/useMounted";
 export { usePrevious } from "./hooks/usePrevious";
+export { useWindowVirtualizer } from "./hooks/useWindowVirtualizer";
+export type { VirtualItem } from "./hooks/useWindowVirtualizer";
 
 /* Layout */
 export { AppShell, AppShellHeader, AppShellMain, AppShellContent } from "./layout/AppShell";

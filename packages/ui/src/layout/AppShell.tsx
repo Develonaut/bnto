@@ -10,20 +10,18 @@ import { createCn } from "../utils/createCn";
  *
  *   // Root layout:
  *   <AppShell>
- *     <AppShell.Header><Navbar /></AppShell.Header>
+ *     <AppShellHeader><Navbar /></AppShellHeader>
  *     {children}
  *   </AppShell>
  *
  *   // Route group layout:
- *   <AppShell.Main>
- *     {children}
- *   </AppShell.Main>
+ *   <AppShellMain>{children}</AppShellMain>
  *
  *   // Page:
- *   <AppShell.Content>
+ *   <AppShellContent>
  *     <Hero />
  *     <FeatureSection />
- *   </AppShell.Content>
+ *   </AppShellContent>
  * ────────────────────────────────────────────────────────────── */
 
 /* ── Root ──────────────────────────────────────────────────── */
@@ -64,11 +62,26 @@ export function AppShellMain({ clearance, className, ...props }: AppShellMainPro
 
 /* ── Content ──────────────────────────────────────────────── */
 
-export function AppShellContent({ className, children, ...props }: ComponentProps<"div">) {
+const GAP_MAP = {
+  sm: "gap-8",
+  md: "gap-20",
+} as const;
+
+type AppShellContentProps = ComponentProps<"div"> & {
+  /** Vertical gap between content sections. Default `"md"`. */
+  gap?: keyof typeof GAP_MAP;
+};
+
+export function AppShellContent({
+  gap = "md",
+  className,
+  children,
+  ...props
+}: AppShellContentProps) {
   return (
     <div className={cn("min-h-[80svh] flex-1 py-12", className)} {...props}>
       <Container>
-        <div className="flex flex-col gap-20">{children}</div>
+        <div className={cn("flex flex-col", GAP_MAP[gap])}>{children}</div>
       </Container>
     </div>
   );
