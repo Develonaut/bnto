@@ -28,7 +28,7 @@ export default function ExplorePage() {
   return (
     <>
       <ExploreJsonLd />
-      <AppShellContent>
+      <AppShellContent gap="sm">
         <ExploreHeader />
         <Suspense>
           <ExploreFilters />

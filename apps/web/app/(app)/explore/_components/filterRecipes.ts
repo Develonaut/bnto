@@ -2,13 +2,13 @@
  * Client-side recipe filtering by category and search text.
  */
 
-import { getAllRecipes } from "@bnto/registry";
+import { getAllRecipes } from "@bnto/core";
 import type { Recipe } from "@bnto/core";
 
 const ALL_RECIPES = getAllRecipes();
 
 export function filterRecipes(query: string, category: string): readonly Recipe[] {
-  let recipes = [...ALL_RECIPES] as Recipe[];
+  let recipes: Recipe[] = ALL_RECIPES.filter(() => true);
   if (category && category !== "all") {
     recipes = recipes.filter((r) => r.category === category);
   }

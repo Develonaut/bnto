@@ -1,90 +1,51 @@
 /**
- * Explore page filters — search input + category pill bar.
+ * Explore page filters — horizontal scrolling category cards.
  *
- * Reads and writes URL search params (?q=...&category=...).
+ * Reads and writes URL search params (?category=...).
  */
 
 "use client";
 
-import { useCallback, useTransition } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback } from "react";
 import { getAllCategories, getRecipesByCategory } from "@bnto/registry";
-import { Input, Row, SearchIcon } from "@bnto/ui";
+import { LayersIcon } from "@bnto/ui";
 import { CATEGORY_ICON } from "@/constants/categoryIcons";
-import { CategoryPill } from "./CategoryPill";
+import { CategoryCard } from "./CategoryCard";
+import { useExploreParams } from "./useExploreParams";
 
 /** Categories relevant for recipe filtering (exclude internal-only categories). */
 const RECIPE_CATEGORIES = getAllCategories().filter(
   (c) => c.name !== "io" && c.name !== "control" && c.name !== "system",
 );
 
-function useExploreParams() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-
-  const update = useCallback(
-    (key: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (!value || value === "all") params.delete(key);
-      else params.set(key, value);
-      const qs = params.toString();
-      startTransition(() => router.replace(`/explore${qs ? `?${qs}` : ""}`, { scroll: false }));
-    },
-    [router, searchParams, startTransition],
-  );
-
-  return {
-    query: searchParams.get("q") ?? "",
-    category: searchParams.get("category") ?? "all",
-    update,
-  };
-}
-
 export function ExploreFilters() {
-  const { query, category, update } = useExploreParams();
-  const handleSearch = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => update("q", e.target.value),
-    [update],
-  );
+  const { category, update } = useExploreParams();
   const handleCategorySelect = useCallback((c: string) => update("category", c), [update]);
+  const handleAll = useCallback(() => handleCategorySelect("all"), [handleCategorySelect]);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Search recipes..."
-          defaultValue={query}
-          onChange={handleSearch}
-          className="pl-9"
-          data-testid="explore-search"
+    <div className="-mx-6 overflow-x-auto px-6 scrollbar-none">
+      <div className="flex gap-3 py-3">
+        <CategoryCard
+          label="All"
+          icon={LayersIcon}
+          active={category === "all"}
+          onClick={handleAll}
         />
+        {RECIPE_CATEGORIES.map((cat) => (
+          <CategoryBarCard
+            key={cat.name}
+            cat={cat}
+            active={category === cat.name}
+            onSelect={handleCategorySelect}
+          />
+        ))}
       </div>
-      <CategoryBar category={category} onSelect={handleCategorySelect} />
     </div>
   );
 }
 
-function CategoryBar({ category, onSelect }: { category: string; onSelect: (c: string) => void }) {
-  const handleAll = useCallback(() => onSelect("all"), [onSelect]);
-
-  return (
-    <Row wrap className="gap-2">
-      <CategoryPill label="All" active={category === "all"} onClick={handleAll} />
-      {RECIPE_CATEGORIES.map((cat) => (
-        <CategoryBarPill
-          key={cat.name}
-          cat={cat}
-          active={category === cat.name}
-          onSelect={onSelect}
-        />
-      ))}
-    </Row>
-  );
-}
-
-function CategoryBarPill({
+function CategoryBarCard({
   cat,
   active,
   onSelect,
@@ -97,7 +58,7 @@ function CategoryBarPill({
   const handleClick = useCallback(() => onSelect(cat.name), [onSelect, cat.name]);
 
   return (
-    <CategoryPill
+    <CategoryCard
       label={cat.label}
       icon={CATEGORY_ICON[cat.name]}
       count={count}
