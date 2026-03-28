@@ -99,7 +99,10 @@
     "addNode": "Add Node",
     "addNodeDescription": "Search and select a node type to add to the canvas.",
     "searchNodes": "Search nodes...",
-    "openInEditor": "Open in Editor"
+    "openInEditor": "Open in Editor",
+    "iterationLabel": "File Iteration",
+    "iterationAutoDescription": "Automatically processes each file through the pipeline.",
+    "iterationExplicitDescription": "Requires explicit loop nodes for per-file iteration."
   },
   "a11y": {
     "srGithub": "GitHub",
