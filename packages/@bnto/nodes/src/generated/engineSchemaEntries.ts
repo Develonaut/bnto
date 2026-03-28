@@ -14,6 +14,7 @@ import { imageResizeNodeSchema } from "./schemas/imageResize";
 import { imageStripExifNodeSchema } from "./schemas/imageStripExif";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
+import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
 
 /**
@@ -28,6 +29,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "image-strip-exif": imageStripExifNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
+  "spreadsheet-merge": spreadsheetMergeNodeSchema,
   "spreadsheet-rename": spreadsheetRenameNodeSchema,
 };
 
@@ -43,5 +45,6 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "image-strip-exif": {},
   "spreadsheet-clean": {},
   "spreadsheet-convert": {},
+  "spreadsheet-merge": {},
   "spreadsheet-rename": {},
 };

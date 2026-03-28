@@ -21,6 +21,7 @@ import { parallelNodeType } from "./parallel";
 import { shellCommandNodeType } from "./shellCommand";
 import { spreadsheetCleanNodeType } from "./spreadsheetClean";
 import { spreadsheetConvertNodeType } from "./spreadsheetConvert";
+import { spreadsheetMergeNodeType } from "./spreadsheetMerge";
 import { spreadsheetRenameNodeType } from "./spreadsheetRename";
 import { transformNodeType } from "./transform";
 
@@ -44,6 +45,7 @@ export const NODE_TYPES = {
   shellCommand: "shell-command",
   spreadsheetClean: "spreadsheet-clean",
   spreadsheetConvert: "spreadsheet-convert",
+  spreadsheetMerge: "spreadsheet-merge",
   spreadsheetRename: "spreadsheet-rename",
   transform: "transform",
 } as const;
@@ -71,6 +73,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "shell-command": shellCommandNodeType,
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
+  "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
   "transform": transformNodeType,
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;

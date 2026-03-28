@@ -34,6 +34,7 @@ pub fn create_default_registry() -> NodeRegistry {
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
+    registry.register("spreadsheet-merge", Box::new(bnto_csv::MergeCsv::new()));
 
     registry
 }
@@ -70,7 +71,7 @@ mod tests {
     #[test]
     fn test_default_registry_has_all_processors() {
         let registry = create_default_registry();
-        assert_eq!(registry.len(), 8);
+        assert_eq!(registry.len(), 9);
 
         let expected = [
             "image-compress",
@@ -80,6 +81,7 @@ mod tests {
             "spreadsheet-clean",
             "spreadsheet-rename",
             "spreadsheet-convert",
+            "spreadsheet-merge",
             "file-rename",
         ];
 

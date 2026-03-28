@@ -21,6 +21,7 @@ export type NodeTypeName =
   | "shell-command"
   | "spreadsheet-clean"
   | "spreadsheet-convert"
+  | "spreadsheet-merge"
   | "spreadsheet-rename"
   | "transform";
 

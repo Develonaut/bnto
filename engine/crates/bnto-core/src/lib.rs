@@ -64,7 +64,7 @@ pub use pipeline::{
     IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
     PipelineResult, PipelineSettings,
 };
-pub use processor::NodeProcessor;
+pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;
 

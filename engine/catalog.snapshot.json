@@ -167,6 +167,17 @@
       "icon": "sheet"
     },
     {
+      "name": "spreadsheet-merge",
+      "label": "Merge CSV",
+      "description": "Combine multiple CSV files into one with header reconciliation and deduplication.",
+      "category": "spreadsheet",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "sheet"
+    },
+    {
       "name": "spreadsheet-rename",
       "label": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file.",
@@ -530,6 +541,45 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "spreadsheet-merge",
+      "name": "Merge CSV",
+      "description": "Combine multiple CSV files into one, with header reconciliation and deduplication.",
+      "category": "spreadsheet",
+      "accepts": [
+        "text/csv"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
+        {
+          "name": "headerHandling",
+          "label": "Header Handling",
+          "description": "How to reconcile headers across files",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              "first-file",
+              "union"
+            ]
+          },
+          "default": "first-file",
+          "surfaceable": true
+        },
+        {
+          "name": "deduplicate",
+          "label": "Remove Duplicates",
+          "description": "Remove duplicate rows across all files",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "spreadsheet-rename",

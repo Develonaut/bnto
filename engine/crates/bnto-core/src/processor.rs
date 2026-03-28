@@ -56,6 +56,30 @@ pub struct OutputFile {
     pub mime_type: String,
 }
 
+/// Input for batch processors that need all files at once (e.g., merge, zip).
+///
+/// Unlike `NodeInput` (one file), this carries the full set of pipeline files
+/// plus the shared configuration parameters.
+pub struct BatchInput {
+    /// All files to process as a group.
+    pub files: Vec<BatchFile>,
+
+    /// Configuration parameters for the node (same as `NodeInput.params`).
+    pub params: serde_json::Map<String, serde_json::Value>,
+}
+
+/// A single file within a batch input.
+pub struct BatchFile {
+    /// The raw file data (bytes).
+    pub data: Vec<u8>,
+
+    /// The original filename.
+    pub filename: String,
+
+    /// The MIME type, if known.
+    pub mime_type: Option<String>,
+}
+
 // =============================================================================
 // The NodeProcessor Trait
 // =============================================================================
@@ -97,6 +121,42 @@ pub trait NodeProcessor {
     /// node types to add parameter validation.
     fn validate(&self, _params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         Vec::new()
+    }
+
+    /// Process a batch of files together, producing combined output.
+    ///
+    /// Override this for processors with `InputCardinality::Batch` (merge, zip,
+    /// concat). The default falls back to calling `process()` per file and
+    /// concatenating results — suitable for `PerFile` processors.
+    fn process_batch(
+        &self,
+        input: BatchInput,
+        progress: &ProgressReporter,
+    ) -> Result<NodeOutput, BntoError> {
+        let total = input.files.len();
+        let mut all_files = Vec::new();
+        let mut combined_metadata = serde_json::Map::new();
+
+        for (i, file) in input.files.into_iter().enumerate() {
+            let pct = ((i as u32) * 100) / (total as u32).max(1);
+            progress.report(pct, &format!("Processing file {} of {total}...", i + 1));
+
+            let single_input = NodeInput {
+                data: file.data,
+                filename: file.filename,
+                mime_type: file.mime_type,
+                params: input.params.clone(),
+            };
+            let output = self.process(single_input, progress)?;
+            all_files.extend(output.files);
+            // Merge metadata from the last file processed.
+            combined_metadata = output.metadata;
+        }
+
+        Ok(NodeOutput {
+            files: all_files,
+            metadata: combined_metadata,
+        })
     }
 
     /// Return the processor's self-describing metadata.
@@ -233,5 +293,67 @@ mod tests {
         // The default validate() should return no errors.
         let errors = processor.validate(&params);
         assert!(errors.is_empty());
+    }
+
+    // --- Batch Processing Tests ---
+
+    #[test]
+    fn test_default_process_batch_falls_back_to_per_file() {
+        let processor = EchoProcessor;
+        let progress = ProgressReporter::new_noop();
+        let input = BatchInput {
+            files: vec![
+                BatchFile {
+                    data: b"file1".to_vec(),
+                    filename: "a.txt".to_string(),
+                    mime_type: None,
+                },
+                BatchFile {
+                    data: b"file2".to_vec(),
+                    filename: "b.txt".to_string(),
+                    mime_type: None,
+                },
+            ],
+            params: serde_json::Map::new(),
+        };
+
+        let output = processor.process_batch(input, &progress).unwrap();
+
+        // Default batch falls back to per-file: 2 inputs → 2 outputs.
+        assert_eq!(output.files.len(), 2);
+        assert_eq!(output.files[0].filename, "a.txt");
+        assert_eq!(output.files[0].data, b"file1");
+        assert_eq!(output.files[1].filename, "b.txt");
+        assert_eq!(output.files[1].data, b"file2");
+    }
+
+    #[test]
+    fn test_default_process_batch_empty_input() {
+        let processor = EchoProcessor;
+        let progress = ProgressReporter::new_noop();
+        let input = BatchInput {
+            files: vec![],
+            params: serde_json::Map::new(),
+        };
+
+        let output = processor.process_batch(input, &progress).unwrap();
+        assert_eq!(output.files.len(), 0);
+    }
+
+    #[test]
+    fn test_default_process_batch_propagates_errors() {
+        let processor = FailProcessor;
+        let progress = ProgressReporter::new_noop();
+        let input = BatchInput {
+            files: vec![BatchFile {
+                data: b"data".to_vec(),
+                filename: "test.txt".to_string(),
+                mime_type: None,
+            }],
+            params: serde_json::Map::new(),
+        };
+
+        let result = processor.process_batch(input, &progress);
+        assert!(result.is_err());
     }
 }

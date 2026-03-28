@@ -4,8 +4,9 @@
 
 use crate::errors::BntoError;
 use crate::events::PipelineEvent;
+use crate::metadata::InputCardinality;
 use crate::pipeline::PipelineFile;
-use crate::processor::NodeInput;
+use crate::processor::{BatchFile, BatchInput, NodeInput};
 use crate::progress::ProgressReporter;
 
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
@@ -98,8 +99,9 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
 
 /// Execute a primitive (leaf) node on a batch of files.
 ///
-/// Resolves the processor from the registry, iterates each file through it,
-/// and collects outputs. Emits FileProgress events per file.
+/// Resolves the processor from the registry, then dispatches based on
+/// input cardinality: PerFile processors iterate one file at a time,
+/// Batch processors receive all files at once.
 pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
@@ -107,23 +109,88 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     let processor = resolve_processor(ctx, node)?;
+    let cardinality = processor.metadata().input_cardinality;
     let local_file_count = files.len();
-    let mut output_files: Vec<PipelineFile> = Vec::with_capacity(local_file_count);
 
-    for (file_index, file) in files.into_iter().enumerate() {
-        process_single_file(
-            ctx,
-            processor,
-            &node.id,
-            &node.params,
-            file,
-            file_offset + file_index,
-            &mut output_files,
-        )?;
+    match cardinality {
+        InputCardinality::Batch => process_batch(ctx, processor, node, files, file_offset),
+        InputCardinality::PerFile => {
+            let mut output_files: Vec<PipelineFile> = Vec::with_capacity(local_file_count);
+            for (file_index, file) in files.into_iter().enumerate() {
+                process_single_file(
+                    ctx,
+                    processor,
+                    &node.id,
+                    &node.params,
+                    file,
+                    file_offset + file_index,
+                    &mut output_files,
+                )?;
+            }
+            Ok(NodeExecutionResult {
+                files_processed: local_file_count,
+                output_files,
+            })
+        }
+    }
+}
+
+/// Process all files at once through a batch processor.
+fn process_batch<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    processor: &dyn crate::processor::NodeProcessor,
+    node: PipelineNodeRef,
+    files: Vec<PipelineFile>,
+    file_offset: usize,
+) -> Result<NodeExecutionResult, BntoError> {
+    let file_count = files.len();
+
+    emit_file_progress(
+        ctx,
+        &node.id,
+        file_offset,
+        0,
+        format!("Processing batch of {} files...", file_count),
+    );
+
+    let batch_files: Vec<BatchFile> = files
+        .into_iter()
+        .map(|f| BatchFile {
+            data: f.data,
+            filename: f.name,
+            mime_type: Some(f.mime_type),
+        })
+        .collect();
+
+    let batch_input = BatchInput {
+        files: batch_files,
+        params: node.params.clone(),
+    };
+
+    let noop_reporter = ProgressReporter::new(|_, _| {});
+    let output = processor.process_batch(batch_input, &noop_reporter)?;
+
+    emit_file_progress(
+        ctx,
+        &node.id,
+        file_offset,
+        100,
+        format!("Completed batch of {} files", file_count),
+    );
+
+    let metadata = output.metadata;
+    let mut output_files = Vec::with_capacity(output.files.len());
+    for f in output.files {
+        output_files.push(PipelineFile {
+            name: f.filename,
+            data: f.data,
+            mime_type: f.mime_type,
+            metadata: metadata.clone(),
+        });
     }
 
     Ok(NodeExecutionResult {
-        files_processed: local_file_count,
+        files_processed: file_count,
         output_files,
     })
 }
