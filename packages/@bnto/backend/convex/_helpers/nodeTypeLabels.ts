@@ -20,5 +20,5 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "shell-command": "Shell Command",
   "spreadsheet-clean": "Clean CSV",
   "spreadsheet-rename": "Rename CSV Columns",
-  transform: "Transform",
+  "transform": "Transform",
 };

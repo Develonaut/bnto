@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { RECIPES, NODE_TYPE_INFO, CATEGORIES, PROCESSORS } from "@bnto/registry";
 import { registryStore } from "../stores/registryStore";
 import { createRegistryService } from "./registryService";
 
@@ -14,10 +15,10 @@ describe("registryService", () => {
 
     const state = registryStore.getState();
     expect(state.initialized).toBe(true);
-    expect(state.recipes).toHaveLength(10);
-    expect(Object.keys(state.nodeTypes)).toHaveLength(16);
-    expect(state.categories).toHaveLength(8);
-    expect(state.processors).toHaveLength(7);
+    expect(state.recipes).toHaveLength(RECIPES.length);
+    expect(Object.keys(state.nodeTypes)).toHaveLength(Object.keys(NODE_TYPE_INFO).length);
+    expect(state.categories).toHaveLength(CATEGORIES.length);
+    expect(state.processors).toHaveLength(PROCESSORS.length);
   });
 
   it("initialize() is idempotent — skips if already initialized", () => {

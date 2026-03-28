@@ -17,7 +17,7 @@ describe("registryClient", () => {
 
   describe("getRecipes", () => {
     it("returns all predefined recipes", () => {
-      expect(client.getRecipes()).toHaveLength(10);
+      expect(client.getRecipes()).toHaveLength(RECIPES.length);
     });
 
     it("every recipe has required fields", () => {
@@ -45,8 +45,8 @@ describe("registryClient", () => {
   });
 
   describe("getNodeTypes", () => {
-    it("returns all 16 node types", () => {
-      expect(Object.keys(client.getNodeTypes())).toHaveLength(16);
+    it("returns all registered node types", () => {
+      expect(Object.keys(client.getNodeTypes())).toHaveLength(Object.keys(NODE_TYPE_INFO).length);
     });
 
     it("every node type has required fields", () => {
@@ -76,14 +76,14 @@ describe("registryClient", () => {
   });
 
   describe("getCategories", () => {
-    it("returns all 8 categories", () => {
-      expect(client.getCategories()).toHaveLength(8);
+    it("returns all registered categories", () => {
+      expect(client.getCategories()).toHaveLength(CATEGORIES.length);
     });
   });
 
   describe("getProcessors", () => {
-    it("returns all 7 processors", () => {
-      expect(client.getProcessors()).toHaveLength(7);
+    it("returns all registered processors", () => {
+      expect(client.getProcessors()).toHaveLength(PROCESSORS.length);
     });
   });
 

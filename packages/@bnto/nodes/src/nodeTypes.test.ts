@@ -4,9 +4,14 @@ import { NODE_TYPES, NODE_TYPE_NAMES, NODE_TYPE_INFO } from "./generated/catalog
 import { isNodeType } from "./isNodeType";
 import { getNodeTypeInfo } from "./getNodeTypeInfo";
 
+// Derive expected count from the engine catalog snapshot (source of truth)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import catalog from "../../../engine/catalog.snapshot.json";
+const EXPECTED_NODE_TYPES = (catalog as { nodeTypes: unknown[] }).nodeTypes.length;
+
 describe("NODE_TYPES", () => {
-  it("contains all 16 registered node types", () => {
-    expect(Object.keys(NODE_TYPES)).toHaveLength(16);
+  it("contains all registered node types", () => {
+    expect(Object.keys(NODE_TYPES)).toHaveLength(EXPECTED_NODE_TYPES);
   });
 
   it("maps camelCase keys to kebab-case type names", () => {
@@ -29,8 +34,8 @@ describe("NODE_TYPES", () => {
 });
 
 describe("NODE_TYPE_NAMES", () => {
-  it("contains all 16 node type name strings", () => {
-    expect(NODE_TYPE_NAMES).toHaveLength(16);
+  it("contains all node type name strings", () => {
+    expect(NODE_TYPE_NAMES).toHaveLength(EXPECTED_NODE_TYPES);
   });
 
   it("matches the values of NODE_TYPES", () => {
