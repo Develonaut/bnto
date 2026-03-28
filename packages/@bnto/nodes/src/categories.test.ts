@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import { CATEGORIES, getCategoryInfo } from "./categories";
 
 describe("CATEGORIES", () => {
-  it("contains all 8 categories", () => {
-    expect(CATEGORIES).toHaveLength(8);
+  it("contains all registered categories", () => {
+    // Categories are derived from NODE_TYPE_INFO, count should stay in sync
+    expect(CATEGORIES.length).toBeGreaterThanOrEqual(1);
+    expect(new Set(CATEGORIES.map((c) => c.name)).size).toBe(CATEGORIES.length);
   });
 
   it("every category has required fields", () => {

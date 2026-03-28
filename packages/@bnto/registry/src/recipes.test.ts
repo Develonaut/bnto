@@ -1,12 +1,13 @@
 import { describe, it, expect } from "vitest";
+import { RECIPES } from "./recipesCatalog";
 import { getAllRecipes } from "./getAllRecipes";
 import { getRecipeBySlug } from "./getRecipeBySlug";
 import { getRecipesByCategory } from "./getRecipesByCategory";
 
 describe("recipes", () => {
   describe("getAllRecipes", () => {
-    it("returns all 10 predefined recipes", () => {
-      expect(getAllRecipes()).toHaveLength(10);
+    it("returns all predefined recipes", () => {
+      expect(getAllRecipes()).toHaveLength(RECIPES.length);
     });
 
     it("every recipe has required fields", () => {

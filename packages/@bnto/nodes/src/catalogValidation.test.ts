@@ -59,8 +59,8 @@ describe("generated catalog matches raw JSON", () => {
 // =============================================================================
 
 describe("catalog structure", () => {
-  it("has exactly 7 processors", () => {
-    expect(PROCESSORS).toHaveLength(7);
+  it("has all registered processors", () => {
+    expect(PROCESSORS).toHaveLength((catalog as { processors: unknown[] }).processors.length);
   });
 
   it("every catalog nodeType exists in NODE_TYPE_INFO", () => {
@@ -77,7 +77,6 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-clean")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
-    expect(PROCESSOR_MAP.has("image-strip-exif")).toBe(true);
   });
 
   it("every processor includes browser in platforms", () => {

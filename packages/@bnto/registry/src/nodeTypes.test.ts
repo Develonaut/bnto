@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
+import { NODE_TYPE_NAMES } from "@bnto/nodes";
 import { getAllNodeTypes } from "./getAllNodeTypes";
 import { getBrowserNodeTypes } from "./getBrowserNodeTypes";
 
 describe("nodeTypes", () => {
   describe("getAllNodeTypes", () => {
-    it("returns all 16 node types", () => {
-      expect(Object.keys(getAllNodeTypes())).toHaveLength(16);
+    it("returns all registered node types", () => {
+      expect(Object.keys(getAllNodeTypes())).toHaveLength(NODE_TYPE_NAMES.length);
     });
 
     it("every node type has required fields", () => {

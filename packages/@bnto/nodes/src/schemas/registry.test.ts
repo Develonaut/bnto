@@ -15,13 +15,16 @@ import {
   INPUT_MODES,
   OUTPUT_MODES,
 } from "./index";
+import { NODE_TYPE_NAMES } from "../generated/catalog";
 
 // ---------- Registry completeness ----------
 
 describe("NODE_SCHEMAS", () => {
   it("has a schema for every node type that has one", () => {
-    // 14 types have schemas (all except http-request and shell-command)
-    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(14);
+    // All types with schemas = total types minus unimplemented (http-request, shell-command)
+    const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
+    const expected = NODE_TYPE_NAMES.filter((n: string) => !TYPES_WITHOUT_SCHEMAS.has(n)).length;
+    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(expected);
   });
 
   it("every schema entry matches its nodeType key", () => {

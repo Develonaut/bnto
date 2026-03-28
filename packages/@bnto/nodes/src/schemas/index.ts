@@ -34,21 +34,8 @@ export { IMAGE_FORMATS } from "./imageConvert";
 export { GROUP_MODES } from "./group";
 export { ERROR_STRATEGIES } from "./parallel";
 
-// Per-type Zod schemas and inferred types (per-operation)
-export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";
-export type { ImageCompressParams } from "./imageCompress";
-export { imageResizeParamsSchema, imageResizeNodeSchema } from "./imageResize";
-export type { ImageResizeParams } from "./imageResize";
-export { imageConvertParamsSchema, imageConvertNodeSchema } from "./imageConvert";
-export type { ImageConvertParams } from "./imageConvert";
-export { imageStripExifParamsSchema, imageStripExifNodeSchema } from "./imageStripExif";
-export type { ImageStripExifParams } from "./imageStripExif";
-export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spreadsheetClean";
-export type { SpreadsheetCleanParams } from "./spreadsheetClean";
-export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
-export type { SpreadsheetRenameParams } from "./spreadsheetRename";
-export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
-export type { FileRenameParams } from "./fileRename";
+// Engine-backed Zod schemas and inferred types (auto-generated, per-processor)
+export * from "../generated/schemas";
 
 // Non-engine schema types (hand-written, not per-operation)
 export { inputParamsSchema, inputNodeSchema } from "./input";
