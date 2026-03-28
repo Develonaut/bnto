@@ -31,14 +31,11 @@ test.describe("editor entry & navigation @browser", () => {
   test("EN2: predefined recipe loads correct nodes", async ({ page }) => {
     await navigateToEditor(page, "compress-images");
 
-    // compress-images has: Input, For Each (loop containing Compress), Output
-    // Top-level nodes visible on canvas: Input, For Each, Output
+    // compress-images has: Input, Compress, Output (auto-iteration group)
     const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards.filter({ hasText: "Input" })).toHaveCount(1);
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);
-
-    // The loop container node should be visible
-    await expect(nodeCards.filter({ hasText: /For Each/i })).toHaveCount(1);
+    await expect(nodeCards.filter({ hasText: /Compress/i })).toHaveCount(1);
   });
 
   test("EN2b: clean-csv recipe loads correct nodes", async ({ page }) => {
