@@ -93,6 +93,27 @@ describe("createEditorStore", () => {
       expect(Object.keys(state(store).configs).length).toBe(2);
       expect(state(store).undoStack).toEqual([]);
     });
+
+    it("resets selection, panels, and insertion context", () => {
+      state(store).loadDefinition(compressImagesDefinition());
+      // Dirty up selection and panel state
+      const nodeId = state(store).nodes[0].id;
+      state(store).selectNode(nodeId);
+      state(store).openPanel("run");
+      state(store).setInsertAfterNodeId("some-id");
+      state(store).setInsertIntoContainerId("some-container");
+
+      state(store).createBlank();
+      expect(state(store).selectedNodeId).toBeNull();
+      expect(state(store).panels).toEqual({
+        config: false,
+        palette: false,
+        run: false,
+        help: false,
+      });
+      expect(state(store).insertAfterNodeId).toBeNull();
+      expect(state(store).insertIntoContainerId).toBeNull();
+    });
   });
 
   // --- Execution state ---

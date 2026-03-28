@@ -40,6 +40,20 @@ export function editorUrl(recipeId: string): string {
   return `/editor?recipe=${recipeId}`;
 }
 
+/**
+ * Validates a returnTo path is safe to redirect to (internal, relative path).
+ * Returns the path if valid, or "/" if not (prevents open redirects).
+ */
+export function safeReturnTo(returnTo?: string | null): string {
+  if (!returnTo) return "/";
+  // Must start with / and must not start with // (protocol-relative URL)
+  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) return "/";
+  // Must not be an auth path (avoid redirect loops)
+  const pathname = returnTo.split("?")[0];
+  if (isAuthPath(pathname)) return "/";
+  return returnTo;
+}
+
 type AuthPath = (typeof AUTH_PATHS)[number];
 type ProtectedPath = (typeof PROTECTED_PATHS)[number];
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { convexAuthNextjsMiddleware, nextjsMiddlewareRedirect } from "@bnto/auth/server";
-import { isAuthPath, isProtectedPath } from "@/lib/routes";
+import { isAuthPath, isProtectedPath, safeReturnTo } from "@/lib/routes";
 import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 
 function hasSignoutSignal(request: Request & { cookies: { has(name: string): boolean } }) {
@@ -46,12 +46,17 @@ export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
   // Skip redirect when signout signal cookie is set — the user is signing
   // out and needs to reach /signin despite the stale session cookie.
   if (isAuthenticated && isAuthPath(pathname) && !hasSignoutSignal(request)) {
-    return nextjsMiddlewareRedirect(request, "/");
+    const returnTo = safeReturnTo(request.nextUrl.searchParams.get("returnTo"));
+    return nextjsMiddlewareRedirect(request, returnTo);
   }
 
-  // Protected routes — redirect to /signin if not authenticated
+  // Protected routes — redirect to /signin if not authenticated.
+  // Preserve the original path so users return after signing in.
   if (!isAuthenticated && isProtectedPath(pathname)) {
-    return nextjsMiddlewareRedirect(request, "/signin");
+    const url = request.nextUrl.clone();
+    url.pathname = "/signin";
+    url.searchParams.set("returnTo", pathname + request.nextUrl.search);
+    return NextResponse.redirect(url);
   }
 });
 
