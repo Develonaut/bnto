@@ -12,12 +12,14 @@ import {
   compressAndRename,
   compressImages,
   convertImageFormat,
+  csvToJson,
   generateThumbnails,
   optimizeImagesForWeb,
   renameCsvColumns,
   renameFiles,
   resizeImages,
   standardizeCsv,
+  stripExif,
 } from "./recipes/index";
 
 /**
@@ -33,10 +35,12 @@ export const RECIPES: readonly Recipe[] = [
   renameFiles,
   cleanCsv,
   renameCsvColumns,
+  csvToJson,
   optimizeImagesForWeb,
   generateThumbnails,
   compressAndRename,
   standardizeCsv,
+  stripExif,
 ];
 
 // Re-export all recipes for direct access
@@ -45,10 +49,12 @@ export {
   compressAndRename,
   compressImages,
   convertImageFormat,
+  csvToJson,
   generateThumbnails,
   optimizeImagesForWeb,
   renameCsvColumns,
   renameFiles,
   resizeImages,
   standardizeCsv,
+  stripExif,
 };

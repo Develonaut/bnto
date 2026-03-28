@@ -19,6 +19,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "image-strip-exif": "Strip EXIF",
   "shell-command": "Shell Command",
   "spreadsheet-clean": "Clean CSV",
+  "spreadsheet-convert": "CSV to JSON",
   "spreadsheet-rename": "Rename CSV Columns",
-  "transform": "Transform",
+  transform: "Transform",
 };

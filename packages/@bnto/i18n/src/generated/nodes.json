@@ -57,6 +57,10 @@
       "label": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data."
     },
+    "spreadsheetConvert": {
+      "label": "CSV to JSON",
+      "description": "Convert CSV data to JSON format with configurable delimiters."
+    },
     "spreadsheetRename": {
       "label": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file."
@@ -146,6 +150,16 @@
       "removeDuplicates": {
         "label": "Remove Duplicates",
         "description": "Remove duplicate rows, keeping the first occurrence"
+      }
+    },
+    "spreadsheetConvert": {
+      "delimiter": {
+        "label": "Delimiter",
+        "description": "Column separator character"
+      },
+      "pretty": {
+        "label": "Pretty Print",
+        "description": "Format output JSON with indentation"
       }
     },
     "spreadsheetRename": {

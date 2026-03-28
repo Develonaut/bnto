@@ -74,8 +74,10 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("image-compress")).toBe(true);
     expect(PROCESSOR_MAP.has("image-resize")).toBe(true);
     expect(PROCESSOR_MAP.has("image-convert")).toBe(true);
+    expect(PROCESSOR_MAP.has("image-strip-exif")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-clean")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-rename")).toBe(true);
+    expect(PROCESSOR_MAP.has("spreadsheet-convert")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
   });
 

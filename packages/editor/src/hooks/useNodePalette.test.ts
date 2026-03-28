@@ -26,10 +26,11 @@ describe("computePalette", () => {
 
   it("creates one palette item per spreadsheet node type", () => {
     const items = allItems().filter((i) => i.category === "spreadsheet");
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
     const types = items.map((i) => i.type);
     expect(types).toContain("spreadsheet-clean");
     expect(types).toContain("spreadsheet-rename");
+    expect(types).toContain("spreadsheet-convert");
   });
 
   it("creates a palette item for file-rename", () => {

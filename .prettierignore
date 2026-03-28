@@ -6,6 +6,7 @@ out
 build
 public/wasm
 engine/target
+engine/crates/bnto-cli/tests/golden
 archive
 pnpm-lock.yaml
 **/convex/_generated

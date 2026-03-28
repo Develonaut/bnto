@@ -16,5 +16,7 @@ export { imageStripExifParamsSchema, imageStripExifNodeSchema } from "./imageStr
 export type { ImageStripExifParams } from "./imageStripExif";
 export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spreadsheetClean";
 export type { SpreadsheetCleanParams } from "./spreadsheetClean";
+export { spreadsheetConvertParamsSchema, spreadsheetConvertNodeSchema } from "./spreadsheetConvert";
+export type { SpreadsheetConvertParams } from "./spreadsheetConvert";
 export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
 export type { SpreadsheetRenameParams } from "./spreadsheetRename";

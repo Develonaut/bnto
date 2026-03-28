@@ -372,7 +372,7 @@ Design doc: `strategy/unified-recipe-model.md`
 - [ ] `engine` — **`bnto-image`: composite/watermark operation** — overlay image onto source. Needed for `/watermark-images` (Tier 3, 30K+ monthly searches). Reference: Go `image.go` composite logic
 - [x] `engine` — **`bnto-image`: EXIF metadata strip** — strip all EXIF data from images. Needed for `/strip-exif` (Tier 3, 15K+ monthly searches)
 - [ ] `engine` — **`bnto-csv`: merge operation** — concatenate + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 3, 12K+ monthly searches)
-- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — transform CSV rows to JSON objects. Needed for `/csv-to-json` (Tier 3, 25K+ monthly searches)
+- [x] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — transform CSV rows to JSON objects. Needed for `/csv-to-json` (Tier 3, 25K+ monthly searches)
 
 #### Wave 2 (parallel — recipes + codegen)
 

@@ -57,12 +57,12 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_seven_processors() {
-        // The default registry has 7 processors, so the catalog should too.
+    fn test_catalog_has_all_eight_processors() {
+        // The default registry has 8 processors, so the catalog should too.
         let registry = bnto_engine::create_default_registry();
         let catalog = registry.catalog();
 
-        assert_eq!(catalog.len(), 7, "Catalog should have exactly 7 processors");
+        assert_eq!(catalog.len(), 8, "Catalog should have exactly 8 processors");
     }
 
     #[test]
@@ -80,6 +80,7 @@ mod tests {
             "image-strip-exif",
             "spreadsheet-clean",
             "spreadsheet-rename",
+            "spreadsheet-convert",
             "file-rename",
         ];
 
@@ -131,9 +132,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 16);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 17);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 7);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 8);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),

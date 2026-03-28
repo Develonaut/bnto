@@ -76,6 +76,18 @@ fn golden_standardize_csv() {
     assert_golden("standardize-csv", &out);
 }
 
+#[test]
+fn golden_csv_to_json() {
+    let (out, _) = run_recipe_ok("csv-to-json", &fixture_csv("simple.csv"));
+    assert_golden("csv-to-json", &out);
+}
+
+#[test]
+fn golden_strip_exif() {
+    let (out, _) = run_recipe_ok("strip-exif", &fixture_image("small.jpg"));
+    assert_golden("strip-exif", &out);
+}
+
 // --- Explicit (loop-container) equivalence tests ---
 //
 // These use preserved explicit recipe fixtures with loop containers.
@@ -140,4 +152,16 @@ fn golden_rename_csv_columns_explicit() {
 fn golden_standardize_csv_explicit() {
     let (out, _) = run_explicit_recipe_ok("standardize-csv", &fixture_csv("messy.csv"));
     assert_golden("standardize-csv", &out);
+}
+
+#[test]
+fn golden_strip_exif_explicit() {
+    let (out, _) = run_explicit_recipe_ok("strip-exif", &fixture_image("small.jpg"));
+    assert_golden("strip-exif", &out);
+}
+
+#[test]
+fn golden_csv_to_json_explicit() {
+    let (out, _) = run_explicit_recipe_ok("csv-to-json", &fixture_csv("simple.csv"));
+    assert_golden("csv-to-json", &out);
 }

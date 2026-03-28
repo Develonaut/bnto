@@ -1,0 +1,5 @@
+id,price,quantity,active
+1,19.99,100,true
+2,0.50,0,false
+3,1000000,999999,true
+4,-5.25,1,false

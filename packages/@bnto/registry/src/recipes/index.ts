@@ -6,6 +6,7 @@
 
 export { cleanCsv } from "./cleanCsv";
 export { compressAndRename } from "./compressAndRename";
+export { csvToJson } from "./csvToJson";
 export { compressImages } from "./compressImages";
 export { convertImageFormat } from "./convertImageFormat";
 export { generateThumbnails } from "./generateThumbnails";
@@ -14,3 +15,4 @@ export { renameCsvColumns } from "./renameCsvColumns";
 export { renameFiles } from "./renameFiles";
 export { resizeImages } from "./resizeImages";
 export { standardizeCsv } from "./standardizeCsv";
+export { stripExif } from "./stripExif";
