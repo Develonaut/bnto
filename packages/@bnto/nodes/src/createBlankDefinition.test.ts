@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createBlankDefinition } from "./createBlankDefinition";
 import { validateDefinition } from "./validate";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
-import { ITERATION_MODES } from "./generated/catalog";
+import { ITERATION_MODES, NODE_TYPES } from "./generated/catalog";
 import { inputParamsSchema } from "./schemas/input";
 import { outputParamsSchema } from "./schemas/output";
 
@@ -16,7 +16,7 @@ describe("createBlankDefinition", () => {
 
   it("has type 'group' (root container)", () => {
     const def = createBlankDefinition();
-    expect(def.type).toBe("group");
+    expect(def.type).toBe(NODE_TYPES.group);
   });
 
   it("has a unique UUID as id", () => {
@@ -47,10 +47,10 @@ describe("createBlankDefinition", () => {
   it("starts with input and output nodes, no edges", () => {
     const def = createBlankDefinition();
     expect(def.nodes).toHaveLength(2);
-    expect(def.nodes![0]!.type).toBe("input");
-    expect(def.nodes![0]!.id).toBe("input");
-    expect(def.nodes![1]!.type).toBe("output");
-    expect(def.nodes![1]!.id).toBe("output");
+    expect(def.nodes![0]!.type).toBe(NODE_TYPES.input);
+    expect(def.nodes![0]!.id).toBe(NODE_TYPES.input);
+    expect(def.nodes![1]!.type).toBe(NODE_TYPES.output);
+    expect(def.nodes![1]!.id).toBe(NODE_TYPES.output);
     expect(def.edges).toEqual([]);
   });
 

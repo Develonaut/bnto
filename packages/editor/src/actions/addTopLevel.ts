@@ -60,7 +60,9 @@ function findInsertIndex(
   afterNodeId?: string | null,
 ): number {
   if (afterNodeId) return nodes.findIndex((n) => n.id === afterNodeId) + 1;
-  const outputIdx = nodes.findIndex((n) => state.configs[n.id]?.nodeType === "output");
+  const outputIdx = nodes.findIndex(
+    (n) => state.configs[n.id]?.nodeType === NODE_TYPE_INFO.output.name,
+  );
   return outputIdx >= 0 ? outputIdx : nodes.length;
 }
 
