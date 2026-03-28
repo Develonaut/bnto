@@ -16,15 +16,15 @@ bnto (like "bento") is a collection of instant, composable tools powered by Rust
 
 ## Why bnto?
 
-|                          | bnto               | TinyPNG              | Squoosh                 | CloudConvert       |
-| ------------------------ | ------------------ | -------------------- | ----------------------- | ------------------ |
-| **Free**                 | Unlimited, forever | 20 images/mo         | Unlimited (1 at a time) | Limited credits    |
-| **Private**              | Files stay in your browser | Uploads to server | Browser-based  | Uploads to server  |
-| **Batch processing**     | Unlimited files    | 20 max               | One at a time           | Per-conversion fee |
-| **Composable**           | Chain tools into recipes | Single tool     | Single tool             | Single tool        |
-| **Visual recipe editor** | Yes                | No                   | No                      | No                 |
-| **Offline**              | Yes, once loaded   | No                   | Yes                     | No                 |
-| **Open source**          | MIT licensed       | No                   | Yes                     | No                 |
+|                          | bnto                       | TinyPNG           | Squoosh                 | CloudConvert       |
+| ------------------------ | -------------------------- | ----------------- | ----------------------- | ------------------ |
+| **Free**                 | Unlimited, forever         | 20 images/mo      | Unlimited (1 at a time) | Limited credits    |
+| **Private**              | Files stay in your browser | Uploads to server | Browser-based           | Uploads to server  |
+| **Batch processing**     | Unlimited files            | 20 max            | One at a time           | Per-conversion fee |
+| **Composable**           | Chain tools into recipes   | Single tool       | Single tool             | Single tool        |
+| **Visual recipe editor** | Yes                        | No                | No                      | No                 |
+| **Offline**              | Yes, once loaded           | No                | Yes                     | No                 |
+| **Open source**          | MIT licensed               | No                | Yes                     | No                 |
 
 bnto replaces the five bookmarks small teams cobble together for everyday tasks. One place for compressing, converting, renaming, cleaning. Same interface, composable.
 
@@ -34,16 +34,22 @@ bnto replaces the five bookmarks small teams cobble together for everyday tasks.
 
 Recipes are what bnto calls its tools. Each one is a pipeline of nodes that process your files. Predefined recipes work out of the box. The visual editor lets you build your own.
 
-| Recipe | What it does | Try it |
-| --- | --- | --- |
-| Compress Images | Shrink JPEG, PNG, and WebP without uploading to a server | [bnto.io/compress-images](https://bnto.io/compress-images) |
-| Resize Images | Resize to exact dimensions or percentages | [bnto.io/resize-images](https://bnto.io/resize-images) |
-| Convert Image Format | Convert between PNG, JPEG, WebP, and GIF | [bnto.io/convert-image-format](https://bnto.io/convert-image-format) |
-| Clean CSV | Remove empty rows, trim whitespace, deduplicate | [bnto.io/clean-csv](https://bnto.io/clean-csv) |
-| Rename CSV Columns | Rename column headers in bulk | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns) |
-| Rename Files | Batch rename files with patterns | [bnto.io/rename-files](https://bnto.io/rename-files) |
-| Optimize Images for Web | Resize + convert to WebP + compress in one step | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
-| Generate Thumbnails | Resize to thumbnail size + convert to WebP + prefix | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails) |
+<!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
+
+| Recipe                  | What it does                                                                                                | Try it                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                 | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
+| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                 | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
+| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
+| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                 | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
+| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                  | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
+| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
+| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                         | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
+| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                        | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
+| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup. | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
+| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                             | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
+
+<!-- END AUTO-GENERATED RECIPES TABLE -->
 
 ### Visual Recipe Editor
 
@@ -84,7 +90,7 @@ That idea runs through everything:
 
 bnto starts with file tools in the browser, but the engine is designed to grow.
 
-**Today:** 8+ predefined recipes running client-side via Rust/WASM. A visual editor for building custom recipes. Free, unlimited, no account required.
+**Today:** 10 predefined recipes running client-side via Rust/WASM. A visual editor for building custom recipes. Free, unlimited, no account required.
 
 **Next:** A desktop app (Tauri) with full local execution — including nodes the browser can't run. Shell commands (`ffmpeg`, `yt-dlp`, `imagemagick`), filesystem operations, and BYOK AI. Same recipes, same engine, running natively.
 

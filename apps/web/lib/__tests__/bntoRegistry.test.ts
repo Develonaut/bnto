@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { getAllRecipes } from "@bnto/registry";
 import { BNTO_REGISTRY, RESERVED_PATHS, getBntoBySlug, isValidBntoSlug } from "../bntoRegistry";
+
+const allRecipes = getAllRecipes();
 
 describe("BNTO_REGISTRY", () => {
   it("has all Tier 1 bntos", () => {
@@ -70,5 +73,27 @@ describe("getBntoBySlug", () => {
 
   it("returns undefined for invalid slug", () => {
     expect(getBntoBySlug("nonexistent")).toBeUndefined();
+  });
+});
+
+describe("single source of truth — @bnto/registry propagation", () => {
+  it("BNTO_REGISTRY count matches getAllRecipes()", () => {
+    expect(BNTO_REGISTRY.length).toBe(allRecipes.length);
+  });
+
+  it("every registry recipe has a matching BntoEntry with correct metadata", () => {
+    for (const recipe of allRecipes) {
+      const entry = getBntoBySlug(recipe.slug);
+      expect(entry, `missing BntoEntry for slug: ${recipe.slug}`).toBeDefined();
+      expect(entry!.title).toContain(recipe.name);
+      expect(entry!.description).toBe(recipe.description);
+      expect(entry!.features).toEqual(recipe.features);
+    }
+  });
+
+  it("BNTO_REGISTRY order matches getAllRecipes() order", () => {
+    const registrySlugs = BNTO_REGISTRY.map((e) => e.slug);
+    const recipeSlugs = allRecipes.map((r) => r.slug);
+    expect(registrySlugs).toEqual(recipeSlugs);
   });
 });
