@@ -256,17 +256,15 @@ task check                # vet + test + build (full quality gate)
 
 ### 9. Test Coverage by Change Type
 
-| Change type                           | Required tests                     | Layer | Command               |
-| ------------------------------------- | ---------------------------------- | ----- | --------------------- |
-| Rust engine logic                     | Unit tests in `#[cfg(test)]`       | L1    | `task wasm:test:unit` |
-| WASM boundary                         | `wasm-bindgen-test` in `tests/`    | L2    | `task wasm:test`      |
-| Go engine logic                       | Table-driven subtests with `-race` | L1-L2 | `task test`           |
-| Go API endpoint                       | httptest integration tests         | L2    | `task api:test`       |
-| Convex functions                      | `convex-test` with auth identity   | L2    | `task ui:test`        |
-| Core API hooks/adapters               | Vitest mocking adapter layer       | L2    | `task ui:test`        |
-| Pure TS utilities                     | Input/output unit tests            | L1    | `task ui:test`        |
-| UI component/page (ANY visual change) | E2E spec with screenshots          | L4-L5 | `task e2e`            |
-| Config/types only                     | No tests required                  | —     | —                     |
+| Change type                           | Required tests                   | Layer | Command               |
+| ------------------------------------- | -------------------------------- | ----- | --------------------- |
+| Rust engine logic                     | Unit tests in `#[cfg(test)]`     | L1    | `task wasm:test:unit` |
+| WASM boundary                         | `wasm-bindgen-test` in `tests/`  | L2    | `task wasm:test`      |
+| Convex functions                      | `convex-test` with auth identity | L2    | `task ui:test`        |
+| Core API hooks/adapters               | Vitest mocking adapter layer     | L2    | `task ui:test`        |
+| Pure TS utilities                     | Input/output unit tests          | L1    | `task ui:test`        |
+| UI component/page (ANY visual change) | E2E spec with screenshots        | L4-L5 | `task e2e`            |
+| Config/types only                     | No tests required                | —     | —                     |
 
 ## Gotchas You Watch For
 

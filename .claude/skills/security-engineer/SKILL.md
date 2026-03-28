@@ -115,8 +115,6 @@ Security testing follows the same "each domain owns its boundary" principle, but
 | **Route protection**        | Unauth on private -> redirect, auth on signin -> redirect, signout signal | Unit tests on `proxy.ts` | Frontend + you         |
 | **Convex auth enforcement** | Every mutation rejects unauthenticated/wrong user                         | `convex-test`            | Backend engineer + you |
 | **Convex input validation** | Invalid inputs rejected by validators                                     | `convex-test`            | Backend engineer + you |
-| **Go API auth**             | Missing/invalid/valid token on every endpoint                             | `httptest`               | Go engineer + you      |
-| **Go API input**            | Oversized bodies, malformed JSON, unknown fields                          | `httptest`               | Go engineer + you      |
 | **XSS**                     | `<script>` in user input renders as text                                  | E2E                      | Frontend + you         |
 | **File upload**             | Disallowed type rejected, oversized file rejected                         | Integration test         | Backend engineer + you |
 | **Resource limits**         | Server-node execution time caps, file size limits                         | `convex-test`            | Backend engineer + you |

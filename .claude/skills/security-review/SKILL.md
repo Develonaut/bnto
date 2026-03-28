@@ -35,7 +35,6 @@ Before reviewing anything, read these files to understand the architecture and k
 | Auditing files in...                              | Domain persona skill |
 | ------------------------------------------------- | -------------------- |
 | `engine/`                                         | `/rust-expert`       |
-| `archive/engine-go/`, `archive/api-go/`           | `/go-engineer`       |
 | `apps/web/`                                       | `/frontend-engineer` |
 | `packages/core/`                                  | `/core-architect`    |
 | `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer`  |

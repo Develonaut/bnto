@@ -50,12 +50,12 @@ M3: Desktop App
 
     Rust succeeded in M1 → Desktop = Tauri (Rust-native).
     One codebase for browser + desktop + CLI.
-    Go engine becomes legacy (CLI keeps working, no new development).
+    Go engine deleted (Sprint 6, March 2026). Rust is the unified engine.
 
 M4: Premium Server-Side Bntos
-    Server-side engine (Rust or Go, per M3 outcome) for things
-    browsers can't do: AI inference, shell commands, video
-    processing, large file operations.
+    Server-side Rust engine for things browsers can't do:
+    AI inference, shell commands, video processing, large
+    file operations. Technology TBD (compiled service vs container).
 
 M5: Monetization
     Stripe. Pro tier. Revenue.
@@ -212,7 +212,7 @@ Users convert when they want something the browser can't provide alone. These ar
 | ------------------------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Rust WASM for browser nodes**      | Delivered (M1 complete) | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle.                                      |
 | **JS adapters as fallback**          | Not needed              | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                             |
-| **Go engine paused for web**         | Paused                  | 28k lines of proven code. Ready for M4 (premium server-side). Desktop will use Tauri (Rust-native).                                          |
+| **Go engine deleted**                | Archived (March 2026)   | Removed in Sprint 6. Rust is the unified engine for all targets. Source preserved in git history.                                            |
 | **`@bnto/nodes` is engine-agnostic** | Approved                | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                              |
 | **Railway deprioritized**            | Backlog (M4)            | Only needed for premium server-side bntos.                                                                                                   |
 | **R2 deprioritized**                 | Backlog (M4)            | Not needed for browser execution. File transit only for cloud path.                                                                          |
@@ -243,7 +243,7 @@ Users convert when they want something the browser can't provide alone. These ar
 
 - Rust is the engine for all targets (browser WASM, desktop native, CLI, cloud)
 - Desktop (M3) uses Tauri (Rust-native) — one codebase, one language
-- Go engine becomes legacy (CLI keeps working, no new development)
+- Go engine deleted (Sprint 6, March 2026) — source preserved in git history
 - The unified engine vision is real: one Rust codebase powering every execution target
 
 **The safety net remains: `@bnto/nodes` is engine-agnostic.** Node definitions, schemas, recipes, and validation rules live in TypeScript. They survive any future engine decisions.
