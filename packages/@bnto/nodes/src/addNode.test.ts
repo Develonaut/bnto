@@ -84,7 +84,7 @@ describe("addNode", () => {
   });
 
   // Test every node type can be added
-  describe("works for all 15 node types", () => {
+  describe("works for all 16 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       it(`adds ${typeName} node`, () => {
         const blank = createBlankDefinition();

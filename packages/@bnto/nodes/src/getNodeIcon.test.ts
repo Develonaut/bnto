@@ -102,9 +102,9 @@ describe("getNodeIcon", () => {
     expect(getNodeIcon("image" as any)).toBe("box");
   });
 
-  // --- All 15 node types return a non-empty string ---
+  // --- All 16 node types return a non-empty string ---
 
-  it("returns a non-empty string for all 15 node types", () => {
+  it("returns a non-empty string for all 16 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       const icon = getNodeIcon(typeName);
       expect(icon).toBeTruthy();

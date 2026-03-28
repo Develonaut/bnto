@@ -131,12 +131,13 @@ mod tests {
     #[test]
     fn test_shared_registry_has_all_processors() {
         let registry = bnto_engine::create_default_registry();
-        assert_eq!(registry.len(), 6);
+        assert_eq!(registry.len(), 7);
 
         let types = [
             "image-compress",
             "image-resize",
             "image-convert",
+            "image-strip-exif",
             "spreadsheet-clean",
             "spreadsheet-rename",
             "file-rename",

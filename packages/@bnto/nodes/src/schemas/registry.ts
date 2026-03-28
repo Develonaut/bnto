@@ -15,6 +15,7 @@ import { groupNodeSchema, groupFields } from "./group";
 import { imageCompressNodeSchema, imageCompressFields } from "./imageCompress";
 import { imageConvertNodeSchema, imageConvertFields } from "./imageConvert";
 import { imageResizeNodeSchema, imageResizeFields } from "./imageResize";
+import { imageStripExifNodeSchema, imageStripExifFields } from "./imageStripExif";
 import { inputNodeSchema, inputFields } from "./input";
 import { loopNodeSchema, loopFields } from "./loop";
 import { outputNodeSchema, outputFields } from "./output";
@@ -24,7 +25,7 @@ import { spreadsheetRenameNodeSchema, spreadsheetRenameFields } from "./spreadsh
 import { transformNodeSchema, transformFields } from "./transform";
 
 /**
- * Schema definitions for 13 of 15 registered node types.
+ * Schema definitions for 14 of 16 registered node types.
  *
  * Maps node type name -> NodeSchema (Zod schema + engine metadata).
  * Types without engine processors (http-request, shell-command) have
@@ -37,6 +38,7 @@ export const NODE_SCHEMAS: Partial<Record<NodeTypeName, NodeSchema>> = {
   "image-compress": imageCompressNodeSchema,
   "image-convert": imageConvertNodeSchema,
   "image-resize": imageResizeNodeSchema,
+  "image-strip-exif": imageStripExifNodeSchema,
   input: inputNodeSchema,
   loop: loopNodeSchema,
   output: outputNodeSchema,
@@ -47,7 +49,7 @@ export const NODE_SCHEMAS: Partial<Record<NodeTypeName, NodeSchema>> = {
 } as const;
 
 /**
- * UI field configs for 13 of 15 registered node types.
+ * UI field configs for 14 of 16 registered node types.
  *
  * Maps node type name -> NodeParamFields (UI presentation metadata).
  * Parallel structure to NODE_SCHEMAS — look up fields alongside
@@ -60,6 +62,7 @@ export const NODE_PARAM_FIELDS: Partial<Record<NodeTypeName, NodeParamFields>> =
   "image-compress": imageCompressFields,
   "image-convert": imageConvertFields,
   "image-resize": imageResizeFields,
+  "image-strip-exif": imageStripExifFields,
   input: inputFields,
   loop: loopFields,
   output: outputFields,

@@ -13,6 +13,7 @@ pub mod format;
 pub mod orientation;
 pub mod quantize;
 pub mod resize;
+pub mod strip_exif;
 pub mod wasm_bridge;
 
 #[cfg(test)]
@@ -25,3 +26,4 @@ pub use compress::CompressImages;
 pub use convert::ConvertImageFormat;
 pub use format::ImageFormat;
 pub use resize::ResizeImages;
+pub use strip_exif::StripExif;

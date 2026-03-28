@@ -45,8 +45,8 @@ describe("registryClient", () => {
   });
 
   describe("getNodeTypes", () => {
-    it("returns all 15 node types", () => {
-      expect(Object.keys(client.getNodeTypes())).toHaveLength(15);
+    it("returns all 16 node types", () => {
+      expect(Object.keys(client.getNodeTypes())).toHaveLength(16);
     });
 
     it("every node type has required fields", () => {
@@ -82,8 +82,8 @@ describe("registryClient", () => {
   });
 
   describe("getProcessors", () => {
-    it("returns all 6 processors", () => {
-      expect(client.getProcessors()).toHaveLength(6);
+    it("returns all 7 processors", () => {
+      expect(client.getProcessors()).toHaveLength(7);
     });
   });
 

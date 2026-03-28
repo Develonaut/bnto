@@ -16,6 +16,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "image-compress": "Compress Images",
   "image-convert": "Convert Image Format",
   "image-resize": "Resize Images",
+  "image-strip-exif": "Strip EXIF",
   "shell-command": "Shell Command",
   "spreadsheet-clean": "Clean CSV",
   "spreadsheet-rename": "Rename CSV Columns",

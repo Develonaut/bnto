@@ -20,8 +20,8 @@ import {
 
 describe("NODE_SCHEMAS", () => {
   it("has a schema for every node type that has one", () => {
-    // 13 types have schemas (all except http-request and shell-command)
-    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(13);
+    // 14 types have schemas (all except http-request and shell-command)
+    expect(Object.keys(NODE_SCHEMAS)).toHaveLength(14);
   });
 
   it("every schema entry matches its nodeType key", () => {
