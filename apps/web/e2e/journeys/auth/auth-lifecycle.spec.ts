@@ -12,8 +12,6 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
  * Emails use @test.bnto.dev domain — cleaned up by global teardown.
  */
 
-test.use({ reducedMotion: "reduce" });
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

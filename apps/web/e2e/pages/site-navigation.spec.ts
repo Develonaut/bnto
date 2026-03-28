@@ -8,8 +8,6 @@ import { test, expect } from "../fixtures";
  * Mobile: representative subset + mobile menu + 404
  */
 
-test.use({ reducedMotion: "reduce" });
-
 const PUBLIC_ROUTES = [
   { path: "/", name: "home" },
   { path: "/explore", name: "explore" },

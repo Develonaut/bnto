@@ -13,8 +13,6 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
  * default mode"
  */
 
-test.use({ reducedMotion: "reduce" });
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

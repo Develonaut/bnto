@@ -34,7 +34,11 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
       <StepperIndicator />
       {children}
       <div>
-        <OpenInEditorLink slug={entry.slug} config={flow.config as Record<string, unknown>} />
+        <OpenInEditorLink
+          slug={entry.slug}
+          config={flow.config as Record<string, unknown>}
+          files={flow.files}
+        />
       </div>
       <RecipeShellUpload
         flow={flow}
