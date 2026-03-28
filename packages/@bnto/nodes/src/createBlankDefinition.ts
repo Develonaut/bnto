@@ -11,6 +11,7 @@
 
 import type { Definition } from "./definition";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
+import { ITERATION_MODES } from "./generated/catalog";
 import { inputParamsSchema } from "./schemas/input";
 import { outputParamsSchema } from "./schemas/output";
 
@@ -62,6 +63,7 @@ export function createBlankDefinition(): Definition {
     position: { x: 0, y: 0 },
     metadata: { createdAt: new Date().toISOString() },
     parameters: {},
+    settings: { iteration: ITERATION_MODES[0] },
     inputPorts: [{ id: crypto.randomUUID(), name: "input" }],
     outputPorts: [{ id: crypto.randomUUID(), name: "output" }],
     // I/O node IDs are stable strings ("input"/"output"), not UUIDs.

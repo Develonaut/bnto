@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createBlankDefinition } from "./createBlankDefinition";
 import { validateDefinition } from "./validate";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
+import { ITERATION_MODES } from "./generated/catalog";
 import { inputParamsSchema } from "./schemas/input";
 import { outputParamsSchema } from "./schemas/output";
 
@@ -104,5 +105,17 @@ describe("createBlankDefinition", () => {
     expect(outputNode.parameters.mode).toBe(schemaDefaults.mode);
     expect(outputNode.parameters.zip).toBe(schemaDefaults.zip);
     expect(outputNode.parameters.autoDownload).toBe(schemaDefaults.autoDownload);
+  });
+
+  it("has settings with iteration mode derived from engine", () => {
+    const def = createBlankDefinition();
+    expect(def.settings).toBeDefined();
+    expect(def.settings!.iteration).toBe(ITERATION_MODES[0]);
+  });
+
+  it("iteration mode is a valid ITERATION_MODES value", () => {
+    const def = createBlankDefinition();
+    const validModes: readonly string[] = ITERATION_MODES;
+    expect(validModes).toContain(def.settings!.iteration);
   });
 });
