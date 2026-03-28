@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { core } from "@bnto/core";
+import { safeReturnTo } from "@/lib/routes";
 import { toggleSignInMode } from "./toggleSignInMode";
 import { handleSignInSubmit } from "./handleSignInSubmit";
 import { useSignInFormFields } from "./useSignInFormFields";
@@ -18,6 +19,7 @@ export function useSignInForm(defaultMode?: "signin" | "signup") {
   const { email: signUpEmail } = core.auth.useSignUp();
   const auth = core.auth.useAuth();
   const router = useRouter();
+  const returnTo = safeReturnTo(useSearchParams().get("returnTo"));
   const { isSignUp, setMode, setUserToggled } = useSignInMode(defaultMode, auth.hasAccount);
   const fields = useSignInFormFields(auth.user?.email ?? "");
 
@@ -35,7 +37,7 @@ export function useSignInForm(defaultMode?: "signin" | "signup") {
     fields.setLoading(true);
     try {
       await handleSignInSubmit({ isSignUp, ...fields, signUpEmail, signInEmail });
-      router.replace("/");
+      router.replace(returnTo);
     } catch {
       fields.setError(submitErrorMessage(isSignUp));
     } finally {

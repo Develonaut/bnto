@@ -6,6 +6,7 @@ import {
   isProtectedPath,
   PROTECTED_PATHS,
   ROUTES,
+  safeReturnTo,
 } from "../routes";
 
 describe("ROUTES", () => {
@@ -93,5 +94,32 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/compress-images")).toBe(false);
     expect(isProtectedPath("/clean-csv")).toBe(false);
     expect(isProtectedPath("/some-random-page")).toBe(false);
+  });
+});
+
+describe("safeReturnTo", () => {
+  it("returns the path for valid internal paths", () => {
+    expect(safeReturnTo("/editor")).toBe("/editor");
+    expect(safeReturnTo("/editor?recipe=abc")).toBe("/editor?recipe=abc");
+    expect(safeReturnTo("/settings")).toBe("/settings");
+  });
+
+  it("falls back to / for null or empty", () => {
+    expect(safeReturnTo(null)).toBe("/");
+    expect(safeReturnTo()).toBe("/");
+    expect(safeReturnTo("")).toBe("/");
+  });
+
+  it("rejects protocol-relative URLs", () => {
+    expect(safeReturnTo("//evil.com")).toBe("/");
+  });
+
+  it("rejects absolute URLs", () => {
+    expect(safeReturnTo("https://evil.com")).toBe("/");
+  });
+
+  it("rejects auth paths to prevent redirect loops", () => {
+    expect(safeReturnTo("/signin")).toBe("/");
+    expect(safeReturnTo("/signup")).toBe("/");
   });
 });

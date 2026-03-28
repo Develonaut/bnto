@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { BntoCoreProvider, TelemetryProvider } from "@bnto/core";
+import { SIGNOUT_COOKIE } from "@bnto/core/constants";
 import { isAuthPath } from "@/lib/routes";
 
 interface ProvidersProps {
@@ -33,7 +34,16 @@ export function Providers({ children }: ProvidersProps) {
     // transitions. Don't redirect to /signin if already on an auth page —
     // the session drop is expected.
     if (isAuthPath(pathnameRef.current)) return;
-    router.replace("/signin");
+
+    // During explicit sign-out, the signout signal cookie is set before
+    // the session drops. Don't add returnTo — signout code handles its own redirect.
+    const isSigningOut =
+      typeof document !== "undefined" &&
+      document.cookie.split(";").some((c) => c.trim().startsWith(`${SIGNOUT_COOKIE}=`));
+    if (isSigningOut) return;
+
+    const returnTo = encodeURIComponent(pathnameRef.current);
+    router.replace(`/signin?returnTo=${returnTo}`);
   }, [router]);
 
   return (
