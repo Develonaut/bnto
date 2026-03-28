@@ -30,6 +30,13 @@ fn test_convert_image_format() {
     );
 }
 
+#[test]
+fn test_strip_exif() {
+    let (out, _) = run_recipe_ok("strip-exif", &fixture_image("small.jpg"));
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1, "Expected 1 output file");
+}
+
 // --- File Recipes ---
 
 #[test]

@@ -33,6 +33,7 @@ pub fn create_default_registry() -> NodeRegistry {
     );
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
+    registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
 
     registry
 }
@@ -69,7 +70,7 @@ mod tests {
     #[test]
     fn test_default_registry_has_all_processors() {
         let registry = create_default_registry();
-        assert_eq!(registry.len(), 7);
+        assert_eq!(registry.len(), 8);
 
         let expected = [
             "image-compress",
@@ -78,6 +79,7 @@ mod tests {
             "image-strip-exif",
             "spreadsheet-clean",
             "spreadsheet-rename",
+            "spreadsheet-convert",
             "file-rename",
         ];
 
@@ -204,6 +206,46 @@ mod tests {
     }
 
     #[test]
+    fn test_generated_csv_to_json_recipe() {
+        let json = include_str!(
+            "../../../../packages/@bnto/registry/src/recipes/generated/csv-to-json.bnto.json"
+        );
+        let csv_data = include_bytes!("../../../../test-fixtures/csv/simple.csv");
+        let files = vec![PipelineFile {
+            name: "data.csv".to_string(),
+            data: csv_data.to_vec(),
+            mime_type: "text/csv".to_string(),
+            metadata: serde_json::Map::new(),
+        }];
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(json, files, &reporter).expect("csv-to-json recipe");
+
+        assert_eq!(result.files.len(), 1);
+        assert!(result.files[0].name.ends_with(".json"));
+    }
+
+    #[test]
+    fn test_generated_strip_exif_recipe() {
+        let json = include_str!(
+            "../../../../packages/@bnto/registry/src/recipes/generated/strip-exif.bnto.json"
+        );
+        let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
+        let files = vec![PipelineFile {
+            name: "photo.jpg".to_string(),
+            data: test_image.to_vec(),
+            mime_type: "image/jpeg".to_string(),
+            metadata: serde_json::Map::new(),
+        }];
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(json, files, &reporter).expect("strip-exif recipe");
+
+        assert_eq!(result.files.len(), 1);
+        assert!(!result.files[0].data.is_empty());
+    }
+
+    #[test]
     fn test_all_generated_recipes_parse() {
         let recipes = [
             include_str!(
@@ -235,6 +277,12 @@ mod tests {
             ),
             include_str!(
                 "../../../../packages/@bnto/registry/src/recipes/generated/standardize-csv.bnto.json"
+            ),
+            include_str!(
+                "../../../../packages/@bnto/registry/src/recipes/generated/csv-to-json.bnto.json"
+            ),
+            include_str!(
+                "../../../../packages/@bnto/registry/src/recipes/generated/strip-exif.bnto.json"
             ),
         ];
 

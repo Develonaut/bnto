@@ -20,6 +20,7 @@ export type NodeTypeName =
   | "parallel"
   | "shell-command"
   | "spreadsheet-clean"
+  | "spreadsheet-convert"
   | "spreadsheet-rename"
   | "transform";
 

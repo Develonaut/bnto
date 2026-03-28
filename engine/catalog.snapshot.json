@@ -156,6 +156,17 @@
       "icon": "sheet"
     },
     {
+      "name": "spreadsheet-convert",
+      "label": "CSV to JSON",
+      "description": "Convert CSV data to JSON format with configurable delimiters.",
+      "category": "spreadsheet",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "sheet"
+    },
+    {
       "name": "spreadsheet-rename",
       "label": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file.",
@@ -474,6 +485,47 @@
             "type": "boolean"
           },
           "default": true,
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "spreadsheet-convert",
+      "name": "CSV to JSON",
+      "description": "Convert CSV rows to a JSON array of objects",
+      "category": "spreadsheet",
+      "accepts": [
+        "text/csv"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
+        {
+          "name": "delimiter",
+          "label": "Delimiter",
+          "description": "Column separator character",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              "comma",
+              "semicolon",
+              "tab",
+              "pipe"
+            ]
+          },
+          "default": "comma",
+          "surfaceable": true
+        },
+        {
+          "name": "pretty",
+          "label": "Pretty Print",
+          "description": "Format output JSON with indentation",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
           "surfaceable": true
         }
       ],

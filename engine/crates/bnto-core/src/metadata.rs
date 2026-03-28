@@ -426,6 +426,15 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
             "browser",
             "sheet"
         ),
+        node_type!(
+            "spreadsheet-convert",
+            "CSV to JSON",
+            "Convert CSV data to JSON format with configurable delimiters.",
+            NodeCategory::Spreadsheet,
+            false,
+            "browser",
+            "sheet"
+        ),
     ]
 }
 
@@ -528,10 +537,10 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_16_entries() {
-        // The engine defines all 16 node types.
+    fn test_all_node_types_returns_17_entries() {
+        // The engine defines all 17 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 16, "Should have exactly 16 node types");
+        assert_eq!(types.len(), 17, "Should have exactly 17 node types");
     }
 
     #[test]
@@ -551,7 +560,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 16, "All node type names should be unique");
+        assert_eq!(names.len(), 17, "All node type names should be unique");
     }
 
     #[test]
