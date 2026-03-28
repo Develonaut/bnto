@@ -57,7 +57,7 @@ export function ExploreRecipeGrid() {
   if (filtered.length === 0) return <ExploreEmptyState />;
 
   return (
-    <Stagger className="flex items-start gap-4">
+    <Stagger className="flex items-start gap-4" data-testid="explore-recipe-grid">
       {columns.map((col, ci) => (
         <MasonryColumn key={ci} recipes={col} colIndex={ci} columnCount={columnCount} />
       ))}

@@ -38,6 +38,7 @@ export function ExploreRecipeCard({ recipe, icon: Icon, size = "md" }: ExploreRe
   return (
     <RecipeCard href={`/${recipe.slug}`} className="h-auto">
       <div
+        data-testid={`explore-recipe-${recipe.slug}`}
         className={`flex items-center justify-center rounded-t-lg bg-muted ${HERO_HEIGHT[size]}`}
       >
         <Icon className="size-10 text-primary" />

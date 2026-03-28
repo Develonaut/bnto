@@ -76,6 +76,12 @@ tasks:
     cmds:
       - npx tsx packages/@bnto/registry/scripts/generate-recipe-fixtures.ts
 
+  # README recipe table codegen (registry → README.md)
+  readme:generate:
+    desc: Update README.md recipe table from @bnto/registry
+    cmds:
+      - npx tsx packages/@bnto/registry/scripts/generate-readme-recipes.ts
+
   # Node codegen (engine → TypeScript)
   nodes:generate:
     desc: Generate TypeScript node definitions from engine catalog snapshot
