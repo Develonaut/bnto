@@ -4,9 +4,11 @@
 
 pub mod clean;
 pub mod csv_to_json;
+pub mod merge;
 pub mod rename_columns;
 pub mod wasm_bridge;
 
 pub use clean::CleanCsv;
 pub use csv_to_json::CsvToJson;
+pub use merge::MergeCsv;
 pub use rename_columns::RenameCsvColumns;

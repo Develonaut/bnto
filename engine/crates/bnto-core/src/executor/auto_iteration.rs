@@ -6,18 +6,21 @@
 // to manually wrap their processors in loop/group nodes.
 
 use crate::errors::BntoError;
+use crate::metadata::InputCardinality;
 use crate::pipeline::{PipelineFile, PipelineNode, is_container_node};
+use crate::registry::NodeRegistry;
 
 use super::{NodeExecutionResult, PipelineContext, run_node_chain};
 
-/// Execute a flat node list with auto-iteration: contiguous primitive nodes
-/// are run once per file (implicit per-file loop), containers dispatch as-is.
+/// Execute a flat node list with auto-iteration: contiguous per-file
+/// processors are wrapped in implicit per-file loops. Containers and
+/// batch processors act as iteration barriers — they break the sequence.
 pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
 ) -> Result<(Vec<PipelineFile>, usize), BntoError> {
-    let runs = partition_into_runs(nodes);
+    let runs = partition_into_runs(nodes, ctx.registry);
     let mut current_files = files;
     let mut total_processed: usize = 0;
 
@@ -35,6 +38,14 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
                 total_processed += processed;
                 current_files = output;
             }
+            Run::Batch { index } => {
+                // Batch nodes receive all files at once — dispatch as a
+                // single-node chain (primitive executor handles the batch).
+                let batch_node = &nodes[*index..*index + 1];
+                let (output, processed) = run_node_chain(ctx, batch_node, current_files, 0)?;
+                total_processed += processed;
+                current_files = output;
+            }
         }
     }
 
@@ -43,21 +54,33 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
 
 /// A contiguous run of nodes that share an execution strategy.
 enum Run {
-    /// Contiguous primitive (non-container) nodes — wrapped in an implicit
+    /// Contiguous per-file primitive nodes — wrapped in an implicit
     /// per-file loop. Each file passes through the full sequence.
     PerFileSequence { start: usize, len: usize },
     /// A container node — dispatched as-is (containers define own iteration).
     Container { index: usize },
+    /// A batch processor — receives all files at once. Breaks per-file sequences.
+    Batch { index: usize },
 }
 
-/// Partition the flat node list into runs based on node type.
-fn partition_into_runs(nodes: &[&PipelineNode]) -> Vec<Run> {
+/// Check if a primitive node has batch cardinality by consulting the registry.
+fn is_batch_node(node: &PipelineNode, registry: &NodeRegistry) -> bool {
+    let params = &node.params;
+    registry
+        .resolve(&node.node_type, params)
+        .map(|p| p.metadata().input_cardinality == InputCardinality::Batch)
+        .unwrap_or(false)
+}
+
+/// Partition the flat node list into runs based on node type and cardinality.
+/// Containers and batch nodes act as barriers that break per-file sequences.
+fn partition_into_runs(nodes: &[&PipelineNode], registry: &NodeRegistry) -> Vec<Run> {
     let mut runs = Vec::new();
     let mut seq_start: Option<usize> = None;
 
     for (i, node) in nodes.iter().enumerate() {
         if is_container_node(&node.node_type) {
-            // Flush any pending primitive sequence
+            // Flush any pending per-file sequence
             if let Some(start) = seq_start.take() {
                 runs.push(Run::PerFileSequence {
                     start,
@@ -65,12 +88,21 @@ fn partition_into_runs(nodes: &[&PipelineNode]) -> Vec<Run> {
                 });
             }
             runs.push(Run::Container { index: i });
+        } else if is_batch_node(node, registry) {
+            // Batch nodes also break per-file sequences
+            if let Some(start) = seq_start.take() {
+                runs.push(Run::PerFileSequence {
+                    start,
+                    len: i - start,
+                });
+            }
+            runs.push(Run::Batch { index: i });
         } else if seq_start.is_none() {
             seq_start = Some(i);
         }
     }
 
-    // Flush trailing primitive sequence
+    // Flush trailing per-file sequence
     if let Some(start) = seq_start {
         runs.push(Run::PerFileSequence {
             start,

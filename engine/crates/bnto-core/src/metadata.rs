@@ -250,7 +250,7 @@ macro_rules! node_type {
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(16);
+    let mut types = Vec::with_capacity(18);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -418,18 +418,27 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
             "sheet"
         ),
         node_type!(
-            "spreadsheet-rename",
-            "Rename CSV Columns",
-            "Rename column headers in a CSV file.",
+            "spreadsheet-convert",
+            "CSV to JSON",
+            "Convert CSV data to JSON format with configurable delimiters.",
             NodeCategory::Spreadsheet,
             false,
             "browser",
             "sheet"
         ),
         node_type!(
-            "spreadsheet-convert",
-            "CSV to JSON",
-            "Convert CSV data to JSON format with configurable delimiters.",
+            "spreadsheet-merge",
+            "Merge CSV",
+            "Combine multiple CSV files into one with header reconciliation and deduplication.",
+            NodeCategory::Spreadsheet,
+            false,
+            "browser",
+            "sheet"
+        ),
+        node_type!(
+            "spreadsheet-rename",
+            "Rename CSV Columns",
+            "Rename column headers in a CSV file.",
             NodeCategory::Spreadsheet,
             false,
             "browser",
@@ -537,10 +546,10 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_17_entries() {
-        // The engine defines all 17 node types.
+    fn test_all_node_types_returns_18_entries() {
+        // The engine defines all 18 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 17, "Should have exactly 17 node types");
+        assert_eq!(types.len(), 18, "Should have exactly 18 node types");
     }
 
     #[test]
@@ -560,7 +569,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 17, "All node type names should be unique");
+        assert_eq!(names.len(), 18, "All node type names should be unique");
     }
 
     #[test]

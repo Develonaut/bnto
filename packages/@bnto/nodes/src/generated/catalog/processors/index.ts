@@ -13,6 +13,7 @@ import { imageResizeProcessor } from "./imageResize";
 import { imageStripExifProcessor } from "./imageStripExif";
 import { spreadsheetCleanProcessor } from "./spreadsheetClean";
 import { spreadsheetConvertProcessor } from "./spreadsheetConvert";
+import { spreadsheetMergeProcessor } from "./spreadsheetMerge";
 import { spreadsheetRenameProcessor } from "./spreadsheetRename";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
@@ -23,5 +24,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   imageStripExifProcessor,
   spreadsheetCleanProcessor,
   spreadsheetConvertProcessor,
+  spreadsheetMergeProcessor,
   spreadsheetRenameProcessor,
 ] as const;

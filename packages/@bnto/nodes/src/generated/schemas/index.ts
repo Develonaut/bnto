@@ -18,5 +18,7 @@ export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spre
 export type { SpreadsheetCleanParams } from "./spreadsheetClean";
 export { spreadsheetConvertParamsSchema, spreadsheetConvertNodeSchema } from "./spreadsheetConvert";
 export type { SpreadsheetConvertParams } from "./spreadsheetConvert";
+export { spreadsheetMergeParamsSchema, spreadsheetMergeNodeSchema } from "./spreadsheetMerge";
+export type { SpreadsheetMergeParams } from "./spreadsheetMerge";
 export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
 export type { SpreadsheetRenameParams } from "./spreadsheetRename";
