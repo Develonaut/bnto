@@ -11,15 +11,15 @@
 
 import type { Definition } from "./definition";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
-import { ITERATION_MODES } from "./generated/catalog";
+import { ITERATION_MODES, NODE_TYPES } from "./generated/catalog";
 import { inputParamsSchema } from "./schemas/input";
 import { outputParamsSchema } from "./schemas/output";
 
 function createInputNode(): Definition {
   const defaults = inputParamsSchema.parse({});
   return {
-    id: "input",
-    type: "input",
+    id: NODE_TYPES.input,
+    type: NODE_TYPES.input,
     version: CURRENT_FORMAT_VERSION,
     name: "Input",
     position: { x: 0, y: 100 },
@@ -38,8 +38,8 @@ function createInputNode(): Definition {
 function createOutputNode(): Definition {
   const defaults = outputParamsSchema.parse({});
   return {
-    id: "output",
-    type: "output",
+    id: NODE_TYPES.output,
+    type: NODE_TYPES.output,
     version: CURRENT_FORMAT_VERSION,
     name: "Output",
     position: { x: 400, y: 100 },
@@ -57,7 +57,7 @@ function createOutputNode(): Definition {
 export function createBlankDefinition(): Definition {
   return {
     id: crypto.randomUUID(),
-    type: "group",
+    type: NODE_TYPES.group,
     version: CURRENT_FORMAT_VERSION,
     name: "New Recipe",
     position: { x: 0, y: 0 },
