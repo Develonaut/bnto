@@ -8,35 +8,37 @@
 
 **STOP.** Read the relevant documentation first.
 
-| If you're working on...        | Read this first                                                         |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| Any code                       | [code-standards.md](.claude/rules/code-standards.md)                    |
-| Any UI / styling work          | [rules/theming.md](.claude/rules/theming.md)                            |
-| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) |
-| Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                  |
-| Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)       |
-| Editor API layer (Sprint 5D)   | [editor-api.md](.claude/strategy/editor-api.md)                         |
-| Visual editor                  | [visual-editor.md](.claude/strategy/visual-editor.md)                   |
-| Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                             |
-| Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)      |
-| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)             |
-| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)               |
-| Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       |
-| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                        |
-| Implementation task            | [PLAN.md](.claude/PLAN.md)                                              |
-| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                   |
-| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices             |
-| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                          |
-| SEO & URL strategy             | [rules/seo.md](.claude/rules/seo.md)                                    |
-| Code editor (Sprint 4B)        | [code-editor.md](.claude/strategy/code-editor.md)                       |
-| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) |
-| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)               |
-| `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md)                                |
-| Environment variables          | [environment-variables.md](.claude/environment-variables.md)            |
-| Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       |
-| Config panel controls          | [config-controls.md](.claude/strategy/config-controls.md)               |
-| Feature flags & A/B testing    | [feature-flags.md](.claude/rules/feature-flags.md)                      |
-| Releases & versioning          | [releases.md](.claude/rules/releases.md)                                |
+| If you're working on...        | Read this first                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Any code                       | [code-standards.md](.claude/rules/code-standards.md)                                           |
+| Any UI / styling work          | [rules/theming.md](.claude/rules/theming.md)                                                   |
+| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)                        |
+| Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                                         |
+| Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                              |
+| Editor API layer (Sprint 5D)   | [editor-api.md](.claude/strategy/editor-api.md)                                                |
+| Visual editor                  | [visual-editor.md](.claude/strategy/visual-editor.md)                                          |
+| Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                    |
+| Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)                             |
+| Adding a new engine node       | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)                               |
+| Adding a new recipe            | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md#checklist-adding-a-new-recipe) |
+| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                    |
+| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                                      |
+| Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                              |
+| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                               |
+| Implementation task            | [PLAN.md](.claude/PLAN.md)                                                                     |
+| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                                          |
+| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                                    |
+| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                                                 |
+| SEO & URL strategy             | [rules/seo.md](.claude/rules/seo.md)                                                           |
+| Code editor (Sprint 4B)        | [code-editor.md](.claude/strategy/code-editor.md)                                              |
+| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)                        |
+| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                                      |
+| `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md)                                                       |
+| Environment variables          | [environment-variables.md](.claude/environment-variables.md)                                   |
+| Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)                              |
+| Config panel controls          | [config-controls.md](.claude/strategy/config-controls.md)                                      |
+| Feature flags & A/B testing    | [feature-flags.md](.claude/rules/feature-flags.md)                                             |
+| Releases & versioning          | [releases.md](.claude/rules/releases.md)                                                       |
 
 ---
 
@@ -217,21 +219,22 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ### Rules (auto-loaded, always active)
 
-| Document                                                           | Purpose                                                     |
-| ------------------------------------------------------------------ | ----------------------------------------------------------- |
-| [code-standards.md](.claude/rules/code-standards.md)               | Bento Box Principle, size limits, file organization         |
-| [architecture.md](.claude/rules/architecture.md)                   | Layered architecture, data flow, deployment topology        |
-| [components.md](.claude/rules/components.md)                       | Component patterns, hooks, flat exports, CSS-first states   |
-| [theming.md](.claude/rules/theming.md)                             | Color tokens, fonts, radius, shadows                        |
-| [animation.md](.claude/rules/animation.md)                         | Motion language, CSS animation system, animation components |
-| [seo.md](.claude/rules/seo.md)                                     | URL strategy, slug registry, metadata, shipping checklist   |
-| [pre-commit.md](.claude/rules/pre-commit.md)                       | Mandatory checklist before every commit                     |
-| [core-api.md](.claude/rules/core-api.md)                           | @bnto/core client/service/adapter pattern                   |
-| [auth-routing.md](.claude/rules/auth-routing.md)                   | Proxy route protection, auth flow                           |
-| [convex.md](.claude/rules/convex.md)                               | Query patterns, validators, N+1 prevention                  |
-| [node-responsibilities.md](.claude/rules/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix         |
-| [feature-flags.md](.claude/rules/feature-flags.md)                 | Feature flags & A/B testing via PostHog + `core.flags` API  |
-| [gotchas.md](.claude/rules/gotchas.md)                             | Known pitfalls and fixes                                    |
+| Document                                                           | Purpose                                                                                  |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| [code-standards.md](.claude/rules/code-standards.md)               | Bento Box Principle, size limits, file organization                                      |
+| [architecture.md](.claude/rules/architecture.md)                   | Layered architecture, data flow, deployment topology                                     |
+| [components.md](.claude/rules/components.md)                       | Component patterns, hooks, flat exports, CSS-first states                                |
+| [theming.md](.claude/rules/theming.md)                             | Color tokens, fonts, radius, shadows                                                     |
+| [animation.md](.claude/rules/animation.md)                         | Motion language, CSS animation system, animation components                              |
+| [seo.md](.claude/rules/seo.md)                                     | URL strategy, slug registry, metadata, shipping checklist                                |
+| [pre-commit.md](.claude/rules/pre-commit.md)                       | Mandatory checklist before every commit                                                  |
+| [core-api.md](.claude/rules/core-api.md)                           | @bnto/core client/service/adapter pattern                                                |
+| [auth-routing.md](.claude/rules/auth-routing.md)                   | Proxy route protection, auth flow                                                        |
+| [convex.md](.claude/rules/convex.md)                               | Query patterns, validators, N+1 prevention                                               |
+| [node-responsibilities.md](.claude/rules/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix                                      |
+| [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)   | Adding new nodes & recipes — full checklists, test counts, codegen, surface verification |
+| [feature-flags.md](.claude/rules/feature-flags.md)                 | Feature flags & A/B testing via PostHog + `core.flags` API                               |
+| [gotchas.md](.claude/rules/gotchas.md)                             | Known pitfalls and fixes                                                                 |
 
 ### Strategy & Reference (read on demand)
 

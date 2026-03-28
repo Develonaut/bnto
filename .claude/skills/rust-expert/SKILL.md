@@ -140,9 +140,10 @@ This is why target-agnostic node design matters: the same node logic you test na
 
 ## References
 
-| Document                                         | What it covers                                                               |
-| ------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `CLAUDE.md` "Rust Code Standards"                | Comment density, TDD layers, educational tone                                |
-| `CLAUDE.md` "Commands"                           | `task wasm:build`, `task wasm:test`, `task wasm:lint`, `task wasm:fmt`       |
-| `.claude/ROADMAP.md` "Engine Decision: Rust Won" | Evaluation results, unified engine vision, four targets                      |
-| `.claude/rules/code-standards.md`                | Bento Box Principle (applies to Rust too — one concept per file, <250 lines) |
+| Document                                         | What it covers                                                                          |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `CLAUDE.md` "Rust Code Standards"                | Comment density, TDD layers, educational tone                                           |
+| `CLAUDE.md` "Commands"                           | `task wasm:build`, `task wasm:test`, `task wasm:lint`, `task wasm:fmt`                  |
+| `.claude/ROADMAP.md` "Engine Decision: Rust Won" | Evaluation results, unified engine vision, four targets                                 |
+| `.claude/rules/code-standards.md`                | Bento Box Principle (applies to Rust too — one concept per file, <250 lines)            |
+| `.claude/rules/engine-node-patterns.md`          | **MANDATORY** when adding nodes — full 7-phase checklist, test counts, codegen pipeline |

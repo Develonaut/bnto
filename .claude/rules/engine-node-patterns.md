@@ -4,6 +4,339 @@ Correct patterns for creating and extending Rust node processors. Companion to [
 
 ---
 
+## Checklist: Adding a New Node Processor
+
+Adding a node processor is a foundational change that ripples through the entire stack. Every step below is required — not optional. The pipeline is sequential: each phase produces artifacts consumed by the next.
+
+### Phase 1: Rust Implementation (TDD-first)
+
+Write failing tests BEFORE implementing the processor.
+
+- [ ] **Create processor file** — `engine/crates/bnto-{crate}/src/{processor_name}.rs`
+- [ ] **Implement `NodeProcessor` trait** — `name()`, `metadata()`, `process()`, `validate()`
+- [ ] **`metadata()` complete** — all parameters have types, defaults, constraints, descriptions
+- [ ] **`metadata().input_cardinality`** — declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../strategy/smart-iteration.md)
+- [ ] **`process()` parameter contract** — every param in `metadata()` is read and used in ALL code paths
+- [ ] **`validate()`** — validate param combinations that metadata constraints can't express
+- [ ] **Image processors use `encode::encode_image()`** — never custom encode functions
+- [ ] **Shared params use `common.rs`** — e.g., `quality_param_def()`, `image_accepts()`
+- [ ] **Re-export from crate `lib.rs`** — add `pub mod {name};` and `pub use {name}::ProcessorName;`
+- [ ] **Unit tests pass** — `cargo test -p bnto-{crate}`
+
+#### Required Unit Tests
+
+| Test category        | What to verify                                                            |
+| -------------------- | ------------------------------------------------------------------------- |
+| **Trait basics**     | `name()` returns correct string, `validate()` passes with no params       |
+| **Happy path**       | Valid input → valid output (correct format, non-empty, correct MIME type) |
+| **Parameterized**    | Different param values produce measurably different outputs               |
+| **Output filename**  | Correct suffix/prefix applied (e.g., `-compressed`, `-stripped`)          |
+| **Output metadata**  | `NodeOutput.metadata` contains expected keys (sizes, format, etc.)        |
+| **Error handling**   | Unsupported format, corrupt input, empty data, truncated files            |
+| **Edge cases**       | 1x1 pixel images, single-byte files, boundary param values (min/max)      |
+| **EXIF orientation** | (image processors) Orientation correction preserved through pipeline      |
+
+### Phase 2: Engine Registration
+
+- [ ] **Register in `bnto-engine`** — add `registry.register("type-name", Box::new(...))` in `create_default_registry()` (`engine/crates/bnto-engine/src/lib.rs`)
+- [ ] **Update registry test count** — `test_default_registry_has_all_processors()` asserts exact count (e.g., 6 → 7)
+- [ ] **Add to expected list** — the `expected` array in the same test must include the new type key
+- [ ] **Add `NodeTypeInfo`** — add entry to the correct category function in `engine/crates/bnto-core/src/metadata.rs` (e.g., `image_node_types()`)
+- [ ] **Update node type count** — `test_all_node_types_returns_N_entries()` asserts exact count (e.g., 15 → 16)
+- [ ] **Update unique names count** — `test_all_node_types_unique_names()` also asserts the count
+- [ ] **Update WASM catalog tests** — `test_catalog_has_all_N_processors()` and `test_catalog_serializes_to_valid_json()` in `engine/crates/bnto-wasm/src/catalog.rs` assert exact processor and node type counts
+- [ ] **Update WASM expected types** — `test_catalog_contains_expected_node_types()` must include the new type key in its expected list
+- [ ] **All engine tests pass** — `task wasm:test`
+
+### Phase 3: Codegen Pipeline (Engine → TypeScript)
+
+The engine is the single source of truth. TypeScript types are generated, not hand-written.
+
+- [ ] **Generate catalog snapshot** — `task wasm:snapshot` writes `engine/catalog.snapshot.json`
+- [ ] **Generate TypeScript** — `task nodes:generate` reads the snapshot and produces:
+  - `packages/@bnto/nodes/src/generated/catalog.ts` — `NODE_TYPES`, `PROCESSORS`, `NODE_TYPE_INFO`, `PROCESSOR_MAP`
+  - `packages/@bnto/nodes/src/generated/schemas.ts` — Zod schemas per processor
+  - `packages/@bnto/nodes/src/generated/definitionSchema.ts` — JSON Schema
+  - `packages/@bnto/nodes/docs/{node-type}.md` — auto-generated documentation
+  - `packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts` — label map for Convex
+  - `packages/@bnto/i18n/src/generated/nodes.json` — i18n strings
+- [ ] **Or run the full pipeline** — `task wasm:codegen` (build → copy → snapshot → generate)
+
+#### Verify: Node Appears in Generated Output
+
+After codegen, verify the new node landed in every generated artifact:
+
+- [ ] **`NODE_TYPES`** — new camelCase key exists in `packages/@bnto/nodes/src/generated/catalog.ts`
+- [ ] **`NODE_TYPE_INFO`** — new entry with label, description, category, icon, browserCapable
+- [ ] **`PROCESSORS`** — new processor entry with parameters and accepts
+- [ ] **`PROCESSOR_MAP`** — `PROCESSOR_MAP.has("your-type-key")` is true
+- [ ] **Zod schema** — new schema file in `packages/@bnto/nodes/src/schemas/` (auto-generated)
+- [ ] **i18n** — node label and param labels in `packages/@bnto/i18n/src/generated/nodes.json`
+- [ ] **Convex labels** — new entry in `packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts`
+- [ ] **TypeScript compiles** — `task ui:build`
+
+#### Update TypeScript Test Counts
+
+The generated catalog changes will break exact-count assertions in TypeScript tests. Update these:
+
+- [ ] **`packages/@bnto/nodes/src/nodeTypes.test.ts`** — `NODE_TYPES` count (e.g., 15 → 16), `NODE_TYPE_NAMES` count, and add the new type to the `NODE_TYPES` key-value mapping test
+- [ ] **`packages/@bnto/nodes/src/catalogValidation.test.ts`** — `PROCESSORS` count (e.g., 6 → 7), add new type to the "all expected per-operation node types" test, add engine-default-to-Zod-schema verification for the new processor's params
+- [ ] **`packages/@bnto/registry/src/nodeTypes.test.ts`** — `getAllNodeTypes()` count (e.g., 15 → 16)
+- [ ] **`packages/@bnto/nodes/src/schemas/registry`** — add new schema to `NODE_SCHEMAS` and `NODE_PARAM_FIELDS` registries (if not auto-generated)
+- [ ] **TypeScript tests pass** — `task ui:test`
+
+### Phase 4: Recipe & Fixtures
+
+Every processor needs at least one recipe that exercises it. See [Checklist: Adding a New Recipe](#checklist-adding-a-new-recipe) below for the full recipe pipeline.
+
+- [ ] **Create TypeScript recipe** — `packages/@bnto/registry/src/recipes/{featureName}.ts`
+- [ ] **Register in catalog** — add to `RECIPES` array in `packages/@bnto/registry/src/recipesCatalog.ts`
+- [ ] **Export from barrel** — add to `packages/@bnto/registry/src/recipes/index.ts`
+- [ ] **Generate JSON fixture** — `task recipes:generate`
+- [ ] **Commit the fixture** — generated `.bnto.json` files are committed to git
+- [ ] **Add engine integration test** — `test_generated_{slug}_recipe()` in `bnto-engine/src/lib.rs`
+- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include the new recipe's `include_str!(...)`
+
+### Phase 5: Golden Tests (byte-exact output verification)
+
+Golden tests prove deterministic output and catch silent regressions.
+
+- [ ] **Add golden test** — `engine/crates/bnto-cli/tests/golden_tests.rs`:
+  ```rust
+  #[test]
+  fn golden_{slug_underscored}() {
+      let (out, _) = run_recipe_ok("{slug}", &fixture_image("small.jpg"));
+      assert_golden("{slug}", &out);
+  }
+  ```
+- [ ] **Add explicit (loop-container) equivalence test** — same file, proves auto and explicit iteration produce byte-identical output:
+  ```rust
+  #[test]
+  fn golden_{slug_underscored}_explicit() {
+      let (out, _) = run_explicit_recipe_ok("{slug}", &fixture_image("small.jpg"));
+      assert_golden("{slug}", &out);  // same golden dir as auto version
+  }
+  ```
+- [ ] **Create explicit fixture** — `engine/crates/bnto-cli/tests/fixtures/explicit/{slug}.bnto.json` (recipe with explicit loop containers instead of auto iteration)
+- [ ] **Bless golden files** — `BLESS=1 cargo test -p bnto-cli -- golden` (or `task cli:golden:bless`)
+- [ ] **Verify golden files** — `task cli:golden` (subsequent runs verify byte-exact match)
+- [ ] **Review golden diff** — `git diff engine/crates/bnto-cli/tests/golden/` before committing
+- [ ] **Commit golden files** — these are the source of truth for output correctness
+
+### Phase 6: Quality Gate
+
+- [ ] **Clippy clean** — `task wasm:lint`
+- [ ] **Rust formatted** — `task wasm:fmt`
+- [ ] **All Rust tests** — `task wasm:test`
+- [ ] **CLI tests + golden** — `task cli:test`
+- [ ] **TypeScript builds** — `task ui:build`
+- [ ] **TypeScript tests** — `task ui:test`
+- [ ] **All generated files committed** — snapshot, TS catalog, Zod schemas, recipe fixtures, golden files, i18n strings, Convex labels
+
+### Phase 7: SEO & Product (if the processor enables a new recipe page)
+
+Only when the new processor creates a user-facing recipe at a new URL. See [Checklist: Adding a New Recipe](#checklist-adding-a-new-recipe) below — the recipe checklist covers the full end-to-end verification including SEO surfaces.
+
+---
+
+## Checklist: Adding a New Recipe
+
+A recipe is a predefined pipeline composition that maps to a public URL. Adding a recipe touches TypeScript, codegen, engine tests, SEO, sitemap, and LLM discovery. Every surface is tested — but those tests have exact-count assertions or explicit lists that must include your new addition.
+
+### Step 1: Define the Recipe
+
+- [ ] **Create recipe file** — `packages/@bnto/registry/src/recipes/{featureName}.ts`
+  - Import `CURRENT_FORMAT_VERSION`, `getProcessorDefaults()`, `defaultInputNode()`, `defaultOutputNode()`
+  - Export a `Recipe` constant with: `id` (UUID), `slug`, `name`, `description`, `category`, `accept`, `features`, `definition`
+  - The `definition` contains the node graph: nodes array, edges, settings with iteration mode
+- [ ] **Export from barrel** — add to `packages/@bnto/registry/src/recipes/index.ts`
+- [ ] **Register in catalog** — add to `RECIPES` array in `packages/@bnto/registry/src/recipesCatalog.ts` (order = display order on home page)
+
+### Step 2: Generate Fixtures
+
+- [ ] **Generate JSON fixture** — `task recipes:generate` produces `packages/@bnto/registry/src/recipes/generated/{slug}.bnto.json`
+- [ ] **Verify fixture exists** — check the generated file was created and contains the correct definition structure
+- [ ] **Commit the fixture** — generated `.bnto.json` files are committed to git (source of truth for engine tests)
+
+### Step 3: Engine Integration Tests
+
+- [ ] **Add integration test** — `test_generated_{slug}_recipe()` in `engine/crates/bnto-engine/src/lib.rs` that runs the fixture through `run_pipeline()`
+- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include `include_str!("../../../../packages/@bnto/registry/src/recipes/generated/{slug}.bnto.json")`
+- [ ] **Engine tests pass** — `task wasm:test`
+
+### Step 4: Golden Tests
+
+- [ ] **Add golden test** — `golden_{slug_underscored}()` in `engine/crates/bnto-cli/tests/golden_tests.rs`
+- [ ] **Add explicit equivalence test** — `golden_{slug_underscored}_explicit()` in the same file
+- [ ] **Create explicit fixture** — `engine/crates/bnto-cli/tests/fixtures/explicit/{slug}.bnto.json`
+- [ ] **Bless golden files** — `task cli:golden:bless`
+- [ ] **Verify golden files** — `task cli:golden`
+- [ ] **Commit golden files** — `engine/crates/bnto-cli/tests/golden/{slug}/`
+
+### Step 5: Verify Recipe Appears in All Surfaces
+
+These surfaces auto-derive from the `RECIPES` array, but tests have assertions that must include your addition:
+
+| Surface            | How it picks up the recipe                                                                  | Test that catches a miss                                                |
+| ------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **RECIPES array**  | You added it in Step 1                                                                      | `recipesCatalog.test.ts` — "every recipe export is included in RECIPES" |
+| **Home page grid** | `ExploreRecipeGrid.tsx` reads `getAllRecipes()`                                             | Derived — shows automatically if in RECIPES                             |
+| **Nav dropdown**   | `recipeLinks.ts` reads `getAllRecipes()`, groups by category                                | `recipeLinks.test.ts` — categories contain expected links               |
+| **SEO pages**      | `apps/web/app/(app)/[bnto]/page.tsx` reads `BNTO_REGISTRY` (derived from `getAllRecipes()`) | `bntoRegistry.test.ts` — "BNTO_REGISTRY count matches getAllRecipes()"  |
+| **Sitemap**        | `buildBntoSitemapEntries.ts` reads `BNTO_REGISTRY`                                          | Derived — entry auto-generated if in BNTO_REGISTRY                      |
+| **llms.txt**       | `app/llms.txt/route.ts` reads `getAllRecipes()`                                             | Derived — auto-generated at build time                                  |
+| **llms-full.txt**  | `app/llms-full.txt/route.ts` reads `getAllRecipes()`                                        | Derived — auto-generated at build time                                  |
+| **README table**   | `task readme:generate` reads `RECIPES`                                                      | Manual — you must run the command                                       |
+| **Static params**  | `generateStaticParams()` reads `BNTO_REGISTRY`                                              | Build will generate the page if in registry                             |
+| **JSON-LD**        | `BntoJsonLd` renders from `BntoEntry`                                                       | Derived — auto-rendered per page                                        |
+
+**Key insight:** Almost every surface derives from `RECIPES` in `recipesCatalog.ts`. If the recipe is in that array, it flows everywhere automatically. The tests below verify the chain isn't broken:
+
+- [ ] **Recipe catalog tests pass** — `packages/@bnto/registry/src/recipesCatalog.test.ts` verifies every export is in RECIPES, unique slugs, valid definition structure
+- [ ] **SEO registry tests pass** — `apps/web/lib/__tests__/bntoRegistry.test.ts` verifies BNTO_REGISTRY count matches getAllRecipes(), all entries have required fields, no slug collisions with reserved paths
+- [ ] **Nav links tests pass** — `apps/web/components/blocks/nav/recipeLinks.test.ts` verifies categories and links
+
+### Step 6: Nav Category (if new category)
+
+If the recipe's `category` is new (not `image`, `spreadsheet`, or `file`):
+
+- [ ] **Add category title** — `CATEGORY_TITLES` in `apps/web/components/blocks/nav/recipeLinks.ts`
+- [ ] **Add to category order** — `CATEGORY_ORDER` in the same file
+- [ ] **Update nav test** — `recipeLinks.test.ts` — "categories are ordered" assertion must include the new category
+
+### Step 7: README Update
+
+- [ ] **Regenerate README table** — `task readme:generate` updates the recipe table in `README.md`
+- [ ] **Commit README** — the generated table between `<!-- BEGIN AUTO-GENERATED RECIPES TABLE -->` markers
+
+### Step 8: Quality Gate
+
+- [ ] **All Rust tests** — `task wasm:test`
+- [ ] **CLI tests + golden** — `task cli:test`
+- [ ] **TypeScript builds** — `task ui:build`
+- [ ] **TypeScript tests** — `task ui:test`
+- [ ] **All generated files committed** — recipe fixtures, golden files, README table
+
+---
+
+## Test Count Registry
+
+When adding a processor or recipe, these exact-count assertions MUST be updated. Search for the current values before changing.
+
+### Rust (engine)
+
+| File                                           | Test function                                 | What it counts                          |
+| ---------------------------------------------- | --------------------------------------------- | --------------------------------------- |
+| `engine/crates/bnto-engine/src/lib.rs`         | `test_default_registry_has_all_processors()`  | Processor count + expected key list     |
+| `engine/crates/bnto-engine/src/lib.rs`         | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list    |
+| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned) |
+| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_unique_names()`          | Same count (uniqueness check)           |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog         |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts     |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_contains_expected_node_types()` | Expected type key list                  |
+| `engine/crates/bnto-cli/tests/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)        |
+
+### TypeScript (packages)
+
+| File                                                 | Test                                        | What it counts                                                    |
+| ---------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------- |
+| `packages/@bnto/nodes/src/nodeTypes.test.ts`         | `NODE_TYPES` count, `NODE_TYPE_NAMES` count | Node type count (e.g., 15) + explicit key-value map               |
+| `packages/@bnto/nodes/src/catalogValidation.test.ts` | `PROCESSORS` count + expected type list     | Processor count (e.g., 6) + `PROCESSOR_MAP.has()` checks          |
+| `packages/@bnto/registry/src/nodeTypes.test.ts`      | `getAllNodeTypes()` count                   | Node type count (e.g., 15)                                        |
+| `packages/@bnto/registry/src/recipesCatalog.test.ts` | Completeness checks                         | Every export in RECIPES, unique slugs, valid definitions          |
+| `apps/web/lib/__tests__/bntoRegistry.test.ts`        | BNTO_REGISTRY parity                        | Count matches getAllRecipes(), metadata shape, no slug collisions |
+| `apps/web/components/blocks/nav/recipeLinks.test.ts` | Category order, link presence               | Categories ordered, specific slugs present                        |
+
+---
+
+## Surface Propagation Map
+
+This table shows how a node type flows from the engine through every consumer surface:
+
+```
+Engine (Rust)
+  └─ metadata.rs: NodeTypeInfo
+  └─ bnto-engine: registry.register()
+  └─ bnto-wasm: catalog.rs → node_catalog()
+        │
+        ▼
+  catalog.snapshot.json (task wasm:snapshot)
+        │
+        ▼
+  generate-from-catalog.ts (task nodes:generate)
+        │
+        ├─► @bnto/nodes/generated/catalog.ts → NODE_TYPES, NODE_TYPE_INFO, PROCESSORS
+        ├─► @bnto/nodes/generated/schemas.ts → Zod schemas
+        ├─► @bnto/nodes/generated/definitionSchema.ts → JSON Schema
+        ├─► @bnto/backend/convex/_helpers/nodeTypeLabels.ts → Convex labels
+        └─► @bnto/i18n/src/generated/nodes.json → i18n strings
+              │
+              ▼
+        @bnto/registry → re-exports all
+              │
+              ▼
+        @bnto/core → re-exports via registryClient
+              │
+              ├─► Editor node palette (useNodePalette)
+              ├─► Recipe pages (via BNTO_REGISTRY)
+              └─► Explore grid (via getAllRecipes)
+```
+
+And how a recipe flows from definition through every consumer surface:
+
+```
+Recipe Definition (TypeScript)
+  └─ packages/@bnto/registry/src/recipes/{name}.ts
+  └─ packages/@bnto/registry/src/recipesCatalog.ts → RECIPES array
+        │
+        ├─► task recipes:generate → .bnto.json fixtures
+        │     ├─► engine integration tests (include_str!)
+        │     ├─► CLI golden tests (recipe_path())
+        │     └─► explicit fixtures (hand-maintained)
+        │
+        ├─► getAllRecipes() → runtime consumers
+        │     ├─► apps/web/lib/bntoRegistry.ts → BNTO_REGISTRY
+        │     │     ├─► [bnto]/page.tsx → generateStaticParams + generateMetadata
+        │     │     ├─► buildBntoSitemapEntries.ts → sitemap.xml
+        │     │     └─► BntoJsonLd → structured data
+        │     ├─► llms.txt route → AI discovery
+        │     ├─► llms-full.txt route → detailed AI discovery
+        │     ├─► recipeLinks.ts → nav dropdown
+        │     ├─► ExploreRecipeGrid.tsx → home/explore grid
+        │     └─► RecipeMarquee.tsx → landing page marquee
+        │
+        └─► task readme:generate → README.md recipe table
+```
+
+---
+
+## Command Sequence (quick reference)
+
+```bash
+# 1. Implement + test processor
+cargo test -p bnto-{crate}                   # Unit tests
+
+# 2. Register + codegen
+task wasm:codegen                            # build → copy → snapshot → generate TS
+
+# 3. Recipe fixtures
+# ... create packages/@bnto/registry/src/recipes/{name}.ts
+# ... add to recipesCatalog.ts + recipes/index.ts
+task recipes:generate                        # Generate .bnto.json fixture
+
+# 4. Golden tests
+task cli:golden:bless                        # Generate golden files (first time)
+task cli:golden                              # Verify byte-exact (subsequent)
+
+# 5. README
+task readme:generate                         # Update recipe table in README.md
+
+# 6. Quality gate
+task check                                   # Full lint + test + build
+```
+
+---
+
 ## Parameter Contract
 
 **Every parameter defined in `metadata()` MUST be read and used in ALL code paths of `process()`.** If a param only applies to some formats, document that in the param description and validate it in `validate()`.
@@ -76,23 +409,19 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 
 ---
 
-## Checklist for Adding a New Node
-
-1. **metadata()** — Define all parameters with types, defaults, constraints, descriptions
-2. **metadata().input_cardinality** — Declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../strategy/smart-iteration.md)
-3. **process()** — Read and use EVERY parameter in ALL code paths
-4. **validate()** — Validate param combinations that metadata constraints can't express
-5. **shared encode** — Image processors use `encode::encode_image()`, never custom encode functions
-6. **parameterized tests** — Test that different param values produce different outputs
-7. **codegen** — Run `task wasm:codegen` to regenerate TypeScript from updated catalog
-
----
-
 ## Common Violations
 
-| Violation                                                               | Fix                                                              |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode        |
-| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                        |
-| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`) |
-| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values       |
+| Violation                                                               | Fix                                                               |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode         |
+| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                         |
+| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)  |
+| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values        |
+| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests        |
+| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion      |
+| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed |
+| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                 |
+| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this        |
+| Recipe not exported from barrel                                         | Add to `recipes/index.ts` — catalog test catches this             |
+| README table stale                                                      | Run `task readme:generate` after adding/changing recipes          |
+| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts` |
