@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Badge, Button, PenLineIcon } from "@bnto/ui";
-import { core, applyConfigToDefinition } from "@bnto/core";
+import { core, applyConfigToDefinition, stashFilesForTransfer } from "@bnto/core";
 import { editorUrl } from "@/lib/routes";
 
 /**
@@ -16,9 +16,11 @@ import { editorUrl } from "@/lib/routes";
 export function OpenInEditorLink({
   slug,
   config,
+  files = [],
 }: {
   slug: string;
   config?: Record<string, unknown>;
+  files?: File[];
 }) {
   const router = useRouter();
 
@@ -30,8 +32,9 @@ export function OpenInEditorLink({
       ? applyConfigToDefinition(recipe.definition, config)
       : recipe.definition;
     const id = core.recipes.createFromDefinition(definition);
+    stashFilesForTransfer(id, files);
     router.push(editorUrl(id));
-  }, [slug, config, router]);
+  }, [slug, config, files, router]);
 
   return (
     <Button onClick={handleClick} variant="outline" elevation="sm">

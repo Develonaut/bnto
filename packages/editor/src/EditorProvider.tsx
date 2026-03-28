@@ -18,15 +18,23 @@ import { registerEditorDebug } from "./debug/registerEditorDebug";
 interface EditorProviderProps {
   definition?: Definition;
   cloudId?: string;
+  initialFiles?: File[];
   children: ReactNode;
 }
 
-function EditorProvider({ definition, cloudId, children }: EditorProviderProps) {
+function EditorProvider({ definition, cloudId, initialFiles, children }: EditorProviderProps) {
   const [ctx] = useState<EditorContextValue>(() => createReactEditor(definition, cloudId));
 
   useEffect(() => {
     return registerEditorDebug(ctx.storeApi, ctx.instance);
   }, [ctx]);
+
+  useEffect(() => {
+    if (initialFiles?.length) {
+      ctx.instance.execution.setInputFiles(initialFiles);
+      ctx.instance.panels.openPanel("run");
+    }
+  }, []);
 
   return (
     <EditorContext.Provider value={ctx}>
