@@ -29,6 +29,10 @@
       "label": "Resize Images",
       "description": "Change image dimensions while maintaining quality."
     },
+    "imageStripExif": {
+      "label": "Strip EXIF",
+      "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)."
+    },
     "input": {
       "label": "Input",
       "description": "Declares how data enters the recipe."
@@ -119,6 +123,12 @@
         "label": "Maintain Aspect Ratio",
         "description": "Keep the original width-to-height ratio when resizing"
       },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
+    "imageStripExif": {
       "quality": {
         "label": "Quality",
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."

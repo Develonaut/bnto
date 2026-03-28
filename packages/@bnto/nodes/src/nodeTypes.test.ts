@@ -5,8 +5,8 @@ import { isNodeType } from "./isNodeType";
 import { getNodeTypeInfo } from "./getNodeTypeInfo";
 
 describe("NODE_TYPES", () => {
-  it("contains all 15 registered node types", () => {
-    expect(Object.keys(NODE_TYPES)).toHaveLength(15);
+  it("contains all 16 registered node types", () => {
+    expect(Object.keys(NODE_TYPES)).toHaveLength(16);
   });
 
   it("maps camelCase keys to kebab-case type names", () => {
@@ -29,8 +29,8 @@ describe("NODE_TYPES", () => {
 });
 
 describe("NODE_TYPE_NAMES", () => {
-  it("contains all 15 node type name strings", () => {
-    expect(NODE_TYPE_NAMES).toHaveLength(15);
+  it("contains all 16 node type name strings", () => {
+    expect(NODE_TYPE_NAMES).toHaveLength(16);
   });
 
   it("matches the values of NODE_TYPES", () => {

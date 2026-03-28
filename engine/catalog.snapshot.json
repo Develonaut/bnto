@@ -79,6 +79,17 @@
       "icon": "image"
     },
     {
+      "name": "image-strip-exif",
+      "label": "Strip EXIF",
+      "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
+      "category": "image",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "image"
+    },
+    {
       "name": "input",
       "label": "Input",
       "description": "Declares how data enters the recipe.",
@@ -373,6 +384,38 @@
           "default": true,
           "surfaceable": true
         },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "image-strip-exif",
+      "name": "Strip EXIF",
+      "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)",
+      "category": "image",
+      "accepts": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
         {
           "name": "quality",
           "label": "Quality",

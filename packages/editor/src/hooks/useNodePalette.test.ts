@@ -16,11 +16,12 @@ function allItems(browserOnly = false) {
 describe("computePalette", () => {
   it("creates one palette item per image node type", () => {
     const imageItems = allItems().filter((i) => i.category === "image");
-    expect(imageItems).toHaveLength(3);
+    expect(imageItems).toHaveLength(4);
     const types = imageItems.map((i) => i.type);
     expect(types).toContain("image-compress");
     expect(types).toContain("image-convert");
     expect(types).toContain("image-resize");
+    expect(types).toContain("image-strip-exif");
   });
 
   it("creates one palette item per spreadsheet node type", () => {

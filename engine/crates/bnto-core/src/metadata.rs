@@ -245,12 +245,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 15 registered node types.
+/// Return metadata for all 16 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(15);
+    let mut types = Vec::with_capacity(16);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -354,6 +354,15 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
             "image-resize",
             "Resize Images",
             "Change image dimensions while maintaining quality.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "image"
+        ),
+        node_type!(
+            "image-strip-exif",
+            "Strip EXIF",
+            "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
             NodeCategory::Image,
             false,
             "browser",
@@ -519,10 +528,10 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_15_entries() {
-        // The engine defines all 15 node types.
+    fn test_all_node_types_returns_16_entries() {
+        // The engine defines all 16 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 15, "Should have exactly 15 node types");
+        assert_eq!(types.len(), 16, "Should have exactly 16 node types");
     }
 
     #[test]
@@ -542,7 +551,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 15, "All node type names should be unique");
+        assert_eq!(names.len(), 16, "All node type names should be unique");
     }
 
     #[test]

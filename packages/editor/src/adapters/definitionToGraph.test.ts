@@ -245,7 +245,7 @@ describe("definitionToGraph", () => {
     expect(rfNode.data.isIoNode).toBe(false);
   });
 
-  it("handles all 15 node types", () => {
+  it("handles all 16 node types", () => {
     for (const typeName of NODE_TYPE_NAMES) {
       let def = createBlankDefinition();
       def = addNode(def, typeName).definition;

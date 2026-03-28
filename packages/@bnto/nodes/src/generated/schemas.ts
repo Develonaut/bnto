@@ -140,6 +140,27 @@ export const imageResizeNodeSchema: NodeSchema = {
   },
 };
 
+/** Zod schema for image-strip-exif node parameters (auto-generated from engine). */
+export const imageStripExifParamsSchema = z.object({
+    quality: z.number().min(1).max(100).optional().default(80),
+});
+
+/** Inferred TypeScript type for image-strip-exif node parameters. */
+export type ImageStripExifParams = z.infer<typeof imageStripExifParamsSchema>;
+
+/** Full schema definition for the image-strip-exif node type (auto-generated from engine). */
+export const imageStripExifNodeSchema: NodeSchema = {
+  nodeType: "image-strip-exif",
+  schemaVersion: 1,
+  schema: imageStripExifParamsSchema,
+  params: {
+    quality: {
+      label: "Quality",
+      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+    },
+  },
+};
+
 /** Zod schema for spreadsheet-clean node parameters (auto-generated from engine). */
 export const spreadsheetCleanParamsSchema = z.object({
     trimWhitespace: z.boolean().optional().default(true),

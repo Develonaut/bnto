@@ -27,9 +27,9 @@ describe("registryStore", () => {
     const state = registryStore.getState();
     expect(state.initialized).toBe(true);
     expect(state.recipes).toHaveLength(10);
-    expect(Object.keys(state.nodeTypes)).toHaveLength(15);
+    expect(Object.keys(state.nodeTypes)).toHaveLength(16);
     expect(state.categories).toHaveLength(8);
-    expect(state.processors).toHaveLength(6);
+    expect(state.processors).toHaveLength(7);
   });
 
   it("populate() is idempotent — calling twice keeps data intact", () => {
