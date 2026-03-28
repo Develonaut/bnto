@@ -91,6 +91,10 @@ export { deriveAcceptedTypes } from "./adapters/browser/deriveAcceptedTypes";
 export { deriveOutputConfig } from "./adapters/browser/deriveOutputConfig";
 export { createZipBlob } from "./adapters/browser/createZipBlob";
 
+// ── Strings (re-exported from @bnto/i18n for consumers) ──────────────────
+export { t, useT } from "@bnto/i18n";
+export type { StringKey } from "@bnto/i18n";
+
 // ── Node system (re-exported from @bnto/registry for consumers) ──────────
 
 // Types

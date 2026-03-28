@@ -15,6 +15,7 @@
     "@bnto/core": "workspace:*",
     "@bnto/editor": "workspace:*",
     "@bnto/form": "workspace:*",
+    "@bnto/i18n": "workspace:*",
     "@bnto/registry": "workspace:*",
     "@bnto/ui": "workspace:*",
     "@mdx-js/loader": "^3.1.1",

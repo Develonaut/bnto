@@ -1,5 +1,5 @@
 import { Heading, Stack, Text } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 
 import { FAQAccordion } from "./FAQAccordion";
 

@@ -57,6 +57,7 @@ function RecipeForm({ name, onNameChange, hasChanges, onSubmit }: RecipeFormProp
           <Label htmlFor="recipe-name">Name</Label>
           <Input
             id="recipe-name"
+            data-testid="save-recipe-name"
             value={name}
             onChange={onNameChange}
             placeholder="Recipe name"
@@ -65,7 +66,7 @@ function RecipeForm({ name, onNameChange, hasChanges, onSubmit }: RecipeFormProp
         </fieldset>
       </DialogBody>
       <DialogFooter>
-        <Button type="submit" disabled={!hasChanges}>
+        <Button type="submit" disabled={!hasChanges} data-testid="save-recipe-confirm">
           Save
         </Button>
       </DialogFooter>

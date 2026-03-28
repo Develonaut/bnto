@@ -1,0 +1,113 @@
+{
+  "site": {
+    "title": "bnto",
+    "defaultTitle": "bnto - Free Tools That Run in Your Browser",
+    "titleTemplate": "%s - bnto",
+    "description": "Free tools that run in your browser — compress images, clean CSVs, rename files, convert formats, and build custom recipes. No signup, no upload. Open source.",
+    "tagline": "Free tools that run in your browser. Compress, clean, convert, rename — or build your own.",
+    "trustLine": "Free, instant, runs in your browser.",
+    "licenseLine": "MIT Licensed. Browser recipes free forever."
+  },
+  "hero": {
+    "heading": "Pick a recipe. Drop your files.",
+    "subheading": "Compress, clean, convert, and rename — or build your own recipes. Everything runs in your browser. No uploads, no limits, no account required.",
+    "ctaTitle": "Create your own",
+    "ctaDescription": "Compose multi-step recipes with the visual editor.",
+    "privacyTitle": "100% private",
+    "privacyDescription": "Runs in your browser. Files never leave your device.",
+    "ossTitle": "Open source (MIT)",
+    "ossDescription": "Inspect every line. Contribute on GitHub."
+  },
+  "howItWorks": {
+    "label": "How it works",
+    "heading": "Your browser does the work.\nNot a server.",
+    "description": "Other tools upload your files to a server, process them remotely, and send the results back. That takes time, and it means your files leave your device. bnto runs entirely in your browser. Processing happens on your machine in milliseconds. Nothing is uploaded. Nothing leaves."
+  },
+  "noCatch": {
+    "label": "No catch",
+    "heading": "Free recipes that stay free.\nOpen source you can verify.",
+    "description": "No signup. No watermarks. No daily caps. No \u201820 free compressions per month.\u2019 Your browser does all the processing, so it costs us nothing to run. We\u2019ll never put a meter on it. The engine is open source and MIT licensed. You can read every line.",
+    "cta": "View on GitHub"
+  },
+  "trust": {
+    "signupRequired": "Signup required",
+    "fileSizeLimits": "File size limits",
+    "dailyUsageCaps": "Daily usage caps",
+    "watermarksOnOutput": "Watermarks on output",
+    "qualityReduction": "Quality reduction",
+    "upgradeToContinue": "\u201CUpgrade to continue\u201D",
+    "footerLabel": "MIT Licensed \u00b7 Open Source",
+    "footerCta": "GitHub"
+  },
+  "faq": {
+    "heading": "Frequently asked questions",
+    "helpText": "Can\u2019t find what you need?",
+    "helpLink": "Open an issue on GitHub",
+    "q1": "Where are my files processed?",
+    "a1": "Everything runs in your browser using Rust compiled to WebAssembly \u2014 your files are processed on your device and never uploaded anywhere. Future premium recipes may use server-side processing for things browsers can\u2019t do, like AI or video.",
+    "q2": "Is it really free?",
+    "a2": "Yes. Every recipe that runs in your browser is free, unlimited, forever. No signup, no watermarks, no quality reduction, no daily caps. We will never put limits on browser-based recipes.",
+    "q3": "What file types are supported?",
+    "a3": "Images: JPEG, PNG, WebP, GIF, AVIF, BMP, and TIFF for compression, resizing, and format conversion. Data: CSV files for cleaning and column renaming. Files: any file type for batch renaming. More node types are coming.",
+    "q4": "Can I build my own recipes?",
+    "a4": "Yes. The visual recipe editor lets you compose nodes into multi-step pipelines \u2014 chain a resize into a format conversion into a compression, all in one recipe. Save your recipes and reuse them anytime.",
+    "q5": "Is bnto open source?",
+    "a5": "Yes. The entire engine and web app are MIT licensed. You can inspect the source code, verify how recipes work, or contribute.",
+    "q6": "Will bnto always be free?",
+    "a6": "All browser-based recipes are free and unlimited \u2014 no signup, no caps. A Pro tier is planned for features that require server-side processing (AI, video, shell commands), persistence, and team collaboration.",
+    "q7": "Do I need an account?",
+    "a7": "No. Drop your files and run any recipe immediately. Create an account if you want to save custom recipes or access execution history.",
+    "q8": "Can I process multiple files at once?",
+    "a8": "Yes. Drop as many files as you want. bnto processes them all in a single batch. Results download as a ZIP when there are multiple output files."
+  },
+  "nav": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "myRecipes": "My Recipes",
+    "pricing": "Pricing",
+    "privacy": "Privacy Policy",
+    "motorway": "Motorway",
+    "github": "GitHub",
+    "openSource": "Open source",
+    "buyMeACoffee": "Buy me a coffee"
+  },
+  "auth": {
+    "signInTitle": "Sign in",
+    "signUpTitle": "Sign up",
+    "signUpToContinue": "Sign up to continue"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "serverNotConfigured": "The file processing server isn\u2019t fully configured. Please try again later.",
+    "timeout": "The execution took too long and was stopped. Try with fewer or smaller files.",
+    "unexpected": "An unexpected error occurred. Please try again."
+  },
+  "execution": {
+    "run": "Run",
+    "uploading": "Uploading",
+    "processing": "Processing",
+    "selectFiles": "Select files to run",
+    "tryAgain": "Try again",
+    "rerun": "Rerun",
+    "downloadAll": "Download all",
+    "clearAll": "Clear all files"
+  },
+  "editor": {
+    "properties": "Properties",
+    "help": "Help",
+    "addNode": "Add Node",
+    "addNodeDescription": "Search and select a node type to add to the canvas.",
+    "searchNodes": "Search nodes...",
+    "openInEditor": "Open in Editor"
+  },
+  "a11y": {
+    "srGithub": "GitHub",
+    "srBackToHome": "Back to Home",
+    "reportIssue": "Report Issue"
+  },
+  "notFound": {
+    "backToHome": "Back to Home",
+    "reportIssue": "Report Issue"
+  }
+}

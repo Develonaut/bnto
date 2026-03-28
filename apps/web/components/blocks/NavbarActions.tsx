@@ -1,5 +1,5 @@
 import { Button, GithubIcon, ToolbarGroup } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 import { MobileNav } from "./MobileNav";
 import { NavThemeMenu } from "./NavThemeMenu";
 import { NavUser } from "./NavUser";

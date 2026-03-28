@@ -7,6 +7,7 @@
  *   - `src/generated/schemas.ts` — Zod schemas for engine-backed node types
  *   - `src/generated/definitionSchema.ts` — JSON Schema for `.bnto.json` files
  *   - `packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts` — label map for Convex
+ *   - `packages/@bnto/i18n/src/generated/nodes.json` — i18n strings for node types + params
  *
  * The Rust engine is the single source of truth for ALL node metadata.
  * Run via: `task nodes:generate` or `npx tsx scripts/generate-from-catalog.ts`
@@ -28,6 +29,7 @@ const CONVEX_LABELS_OUTPUT = resolve(
   ROOT,
   "packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts",
 );
+const I18N_STRINGS_OUTPUT = resolve(ROOT, "packages/@bnto/i18n/src/generated/nodes.json");
 
 // Clean up old separate nodeTypes.ts if it exists
 const OLD_NODE_TYPES = resolve(GENERATED_DIR, "nodeTypes.ts");
@@ -633,6 +635,46 @@ ${entries}
 }
 
 // =============================================================================
+// i18n strings (nodes.json)
+// =============================================================================
+
+/** Generate i18n JSON for node type labels, param labels, and categories. */
+function generateI18nStringsFile(): string {
+  const nodeTypes: Record<string, Record<string, string>> = {};
+  const params: Record<string, Record<string, Record<string, string>>> = {};
+  const categories: Record<string, string> = {};
+
+  for (const nt of catalog.nodeTypes) {
+    const key = toCamelCase(nt.name);
+    nodeTypes[key] = { label: nt.label, description: nt.description };
+    if (!categories[nt.category]) {
+      categories[nt.category] = nt.category.charAt(0).toUpperCase() + nt.category.slice(1);
+    }
+  }
+
+  for (const proc of catalog.processors) {
+    const key = toCamelCase(proc.nodeType);
+    if (proc.parameters.length === 0) continue;
+    const paramEntries: Record<string, Record<string, string>> = {};
+    for (const p of proc.parameters) {
+      const entry: Record<string, string> = { label: p.label, description: p.description };
+      if (p.placeholder) entry.placeholder = p.placeholder;
+      paramEntries[p.name] = entry;
+    }
+    params[key] = paramEntries;
+  }
+
+  const output = {
+    _generatedBy: `generate-from-catalog.ts — DO NOT EDIT manually. Engine catalog v${catalog.version}`,
+    nodeTypes,
+    params,
+    categories,
+  };
+
+  return JSON.stringify(output, null, 2) + "\n";
+}
+
+// =============================================================================
 // Assemble and write
 // =============================================================================
 
@@ -658,12 +700,15 @@ const schemasOutput = generateSchemasFile();
 const defSchemaOutput = generateDefinitionSchemaFile();
 
 const convexLabelsOutput = generateConvexLabelsFile();
+const i18nStringsOutput = generateI18nStringsFile();
 
 mkdirSync(GENERATED_DIR, { recursive: true });
 writeFileSync(CATALOG_OUTPUT, catalogOutput, "utf-8");
 writeFileSync(SCHEMAS_OUTPUT, schemasOutput, "utf-8");
 writeFileSync(DEF_SCHEMA_OUTPUT, defSchemaOutput, "utf-8");
 writeFileSync(CONVEX_LABELS_OUTPUT, convexLabelsOutput, "utf-8");
+mkdirSync(dirname(I18N_STRINGS_OUTPUT), { recursive: true });
+writeFileSync(I18N_STRINGS_OUTPUT, i18nStringsOutput, "utf-8");
 generateAllNodeReadmes();
 
 // Clean up old separate file
@@ -689,4 +734,8 @@ console.log(
 console.log(`Generated ${CONVEX_LABELS_OUTPUT}`);
 console.log(
   `  ${catalog.nodeTypes.filter((t) => !t.isContainer && t.category !== "io").length} processing node labels for Convex`,
+);
+console.log(`Generated ${I18N_STRINGS_OUTPUT}`);
+console.log(
+  `  ${catalog.nodeTypes.length} node types + ${catalog.processors.length} processors i18n strings`,
 );

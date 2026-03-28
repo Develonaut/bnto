@@ -1,5 +1,5 @@
 import { GithubIcon, ScaleIn, Button, Card, Center, Row, Stack, Text } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 
 import { TrustAntiPatterns } from "./TrustAntiPatterns";
 

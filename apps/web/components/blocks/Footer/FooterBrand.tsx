@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { Stack, Text } from "@bnto/ui";
-import { TAGLINE, TRUST_LINE } from "@/lib/copy";
+import { t } from "@bnto/i18n";
 import { NavButton } from "../NavButton";
 import { FooterBrandLinks } from "./FooterBrandLinks";
 
@@ -17,7 +17,7 @@ export function FooterBrand() {
         bnto
       </NavButton>
       <Text size="sm" color="muted" leading="relaxed">
-        {TAGLINE} {TRUST_LINE}
+        {t("site.tagline")} {t("site.trustLine")}
       </Text>
       <FooterBrandLinks />
     </Stack>

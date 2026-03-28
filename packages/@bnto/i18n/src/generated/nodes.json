@@ -1,0 +1,158 @@
+{
+  "_generatedBy": "generate-from-catalog.ts — DO NOT EDIT manually. Engine catalog v1.0.0",
+  "nodeTypes": {
+    "editFields": {
+      "label": "Edit Fields",
+      "description": "Set field values from static values or template expressions."
+    },
+    "fileRename": {
+      "label": "Rename Files",
+      "description": "Transform filenames using patterns, find/replace, and case rules."
+    },
+    "group": {
+      "label": "Group",
+      "description": "Container for child nodes. Orchestrates sequential or parallel execution."
+    },
+    "httpRequest": {
+      "label": "HTTP Request",
+      "description": "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.)."
+    },
+    "imageCompress": {
+      "label": "Compress Images",
+      "description": "Reduce image file size while maintaining quality."
+    },
+    "imageConvert": {
+      "label": "Convert Image Format",
+      "description": "Convert images between JPEG, PNG, and WebP formats."
+    },
+    "imageResize": {
+      "label": "Resize Images",
+      "description": "Change image dimensions while maintaining quality."
+    },
+    "input": {
+      "label": "Input",
+      "description": "Declares how data enters the recipe."
+    },
+    "loop": {
+      "label": "Loop",
+      "description": "Iterate over arrays (forEach), repeat N times, or loop while condition."
+    },
+    "output": {
+      "label": "Output",
+      "description": "Declares how results are delivered."
+    },
+    "parallel": {
+      "label": "Parallel",
+      "description": "Execute tasks concurrently with configurable worker pool and error strategy."
+    },
+    "shellCommand": {
+      "label": "Shell Command",
+      "description": "Execute shell commands with stall detection, retry, and streaming output."
+    },
+    "spreadsheetClean": {
+      "label": "Clean CSV",
+      "description": "Remove empty rows, trim whitespace, and deduplicate CSV data."
+    },
+    "spreadsheetRename": {
+      "label": "Rename CSV Columns",
+      "description": "Rename column headers in a CSV file."
+    },
+    "transform": {
+      "label": "Transform",
+      "description": "Transform data using expressions (single value) or field mappings."
+    }
+  },
+  "params": {
+    "fileRename": {
+      "find": {
+        "label": "Find",
+        "description": "Text or regex pattern to search for in the filename"
+      },
+      "replace": {
+        "label": "Replace",
+        "description": "Replacement text (used with Find)"
+      },
+      "case": {
+        "label": "Case",
+        "description": "Transform the filename to a specific case"
+      },
+      "prefix": {
+        "label": "Prefix",
+        "description": "Text to prepend to the filename"
+      },
+      "suffix": {
+        "label": "Suffix",
+        "description": "Text to append before the file extension"
+      },
+      "pattern": {
+        "label": "Pattern",
+        "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
+        "placeholder": "{{name}}-compressed.{{ext}}"
+      }
+    },
+    "imageCompress": {
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
+    "imageConvert": {
+      "format": {
+        "label": "Output Format",
+        "description": "The target image format to convert to"
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
+    "imageResize": {
+      "width": {
+        "label": "Width",
+        "description": "Target width in pixels"
+      },
+      "height": {
+        "label": "Height",
+        "description": "Target height in pixels"
+      },
+      "maintainAspect": {
+        "label": "Maintain Aspect Ratio",
+        "description": "Keep the original width-to-height ratio when resizing"
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
+    "spreadsheetClean": {
+      "trimWhitespace": {
+        "label": "Trim Whitespace",
+        "description": "Remove leading and trailing whitespace from every cell"
+      },
+      "removeEmptyRows": {
+        "label": "Remove Empty Rows",
+        "description": "Skip rows where every cell is blank"
+      },
+      "removeDuplicates": {
+        "label": "Remove Duplicates",
+        "description": "Remove duplicate rows, keeping the first occurrence"
+      }
+    },
+    "spreadsheetRename": {
+      "columns": {
+        "label": "Column Mapping",
+        "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
+      }
+    }
+  },
+  "categories": {
+    "data": "Data",
+    "file": "File",
+    "control": "Control",
+    "network": "Network",
+    "image": "Image",
+    "io": "Io",
+    "system": "System",
+    "spreadsheet": "Spreadsheet"
+  }
+}

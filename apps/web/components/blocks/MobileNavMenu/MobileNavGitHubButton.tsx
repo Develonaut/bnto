@@ -1,5 +1,5 @@
 import { Button, GithubIcon } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 
 export function MobileNavGitHubButton() {
   return (

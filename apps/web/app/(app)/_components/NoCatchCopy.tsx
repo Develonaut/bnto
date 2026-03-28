@@ -1,5 +1,5 @@
 import { Button, GithubIcon, Heading, Stack, Text } from "@bnto/ui";
-import { GITHUB_URL } from "@/lib/copy";
+import { GITHUB_URL } from "@/lib/links";
 
 /** "No catch" copy block — heading, description, and GitHub CTA. */
 export function NoCatchCopy() {
