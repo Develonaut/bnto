@@ -8,15 +8,19 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { NODE_TYPE_INFO } from "./generated/catalog";
+import { NODE_TYPE_INFO, NODE_TYPE_NAMES, ITERATION_MODES } from "./generated/catalog";
 import { imageCompressParamsSchema } from "./schemas/imageCompress";
 import { imageResizeParamsSchema } from "./schemas/imageResize";
-import { IMAGE_FORMATS } from "./schemas/imageConvert";
+import { IMAGE_FORMATS, imageConvertFields } from "./schemas/imageConvert";
 import { spreadsheetCleanParamsSchema } from "./schemas/spreadsheetClean";
 import { fileRenameParamsSchema } from "./schemas/fileRename";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
+import { CATALOG_FORMAT_VERSION } from "./generated/formatVersion";
 import { PROCESSORS, PROCESSOR_MAP, getProcessorDefaults } from "./generated/catalog";
 import { CATEGORIES } from "./categories";
+import { NODE_SCHEMAS, NODE_PARAM_FIELDS } from "./schemas/registry";
+import { DEFINITION_JSON_SCHEMA } from "./generated/definitionSchema";
+import { inputFields } from "./schemas/input";
 
 // Import raw JSON to validate generated module matches it exactly
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -39,6 +43,14 @@ describe("generated catalog matches raw JSON", () => {
 
   it("version matches CURRENT_FORMAT_VERSION", () => {
     expect((catalog as { version: string }).version).toBe(CURRENT_FORMAT_VERSION);
+  });
+
+  it("CATALOG_FORMAT_VERSION matches catalog version", () => {
+    expect(CATALOG_FORMAT_VERSION).toBe((catalog as { version: string }).version);
+  });
+
+  it("CURRENT_FORMAT_VERSION derives from CATALOG_FORMAT_VERSION", () => {
+    expect(CURRENT_FORMAT_VERSION).toBe(CATALOG_FORMAT_VERSION);
   });
 });
 
@@ -116,6 +128,85 @@ describe("engine defaults flow through to schemas", () => {
     const engineFormats = [...(formatParam?.options ?? [])].sort();
     const tsFormats = [...IMAGE_FORMATS].sort();
     expect(engineFormats).toEqual(tsFormats);
+  });
+});
+
+// =============================================================================
+// Schema registry completeness — every node type has a schema entry
+// =============================================================================
+
+describe("schema registry completeness", () => {
+  // http-request and shell-command have no processors yet
+  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
+
+  it("every node type in NODE_TYPE_NAMES has a NODE_SCHEMAS entry (except unimplemented types)", () => {
+    for (const name of NODE_TYPE_NAMES) {
+      if (TYPES_WITHOUT_SCHEMAS.has(name)) continue;
+      expect(NODE_SCHEMAS[name], `Missing NODE_SCHEMAS entry for "${name}"`).toBeDefined();
+    }
+  });
+
+  it("every NODE_SCHEMAS entry has a matching NODE_PARAM_FIELDS entry", () => {
+    for (const name of Object.keys(NODE_SCHEMAS)) {
+      expect(
+        NODE_PARAM_FIELDS[name],
+        `Missing NODE_PARAM_FIELDS entry for "${name}"`,
+      ).toBeDefined();
+    }
+  });
+});
+
+// =============================================================================
+// Image convert options — derived from IMAGE_FORMATS
+// =============================================================================
+
+describe("image convert field options sync", () => {
+  it("image-convert field options match IMAGE_FORMATS", () => {
+    const fieldOptions = imageConvertFields.format!.options!.map((o: { value: string }) => o.value);
+    expect(fieldOptions.sort()).toEqual([...IMAGE_FORMATS].sort());
+  });
+});
+
+// =============================================================================
+// Iteration modes — match definition JSON Schema
+// =============================================================================
+
+describe("iteration modes sync", () => {
+  it("ITERATION_MODES matches definition schema iteration enum", () => {
+    const schema = DEFINITION_JSON_SCHEMA as Record<string, unknown>;
+    const defs = schema.$defs as Record<string, unknown>;
+    const ps = defs.PipelineSettings as { properties: { iteration: { enum: string[] } } };
+    const iterEnum = ps.properties.iteration.enum;
+    expect([...ITERATION_MODES]).toEqual(iterEnum);
+  });
+});
+
+// =============================================================================
+// File extension advisory — input extensions cover processor-accepted types
+// =============================================================================
+
+describe("input extensions coverage (advisory)", () => {
+  it("input extensions options cover common processor-accepted file types", () => {
+    const extensionOptions =
+      inputFields.extensions?.options?.map((o: { value: string }) => o.value) ?? [];
+    // MIME type → expected extension mapping for known processors
+    const mimeToExt: Record<string, string> = {
+      "image/jpeg": ".jpg",
+      "image/png": ".png",
+      "image/webp": ".webp",
+      "text/csv": ".csv",
+    };
+    const allAccepts = PROCESSORS.flatMap((p) => [...p.accepts]);
+    const uniqueAccepts = [...new Set(allAccepts)];
+    for (const mime of uniqueAccepts) {
+      const ext = mimeToExt[mime];
+      if (ext) {
+        expect(
+          extensionOptions,
+          `Extension "${ext}" (for ${mime}) should be in input field options`,
+        ).toContain(ext);
+      }
+    }
   });
 });
 

@@ -6,6 +6,7 @@
  * definition tree, and captures undo state.
  */
 
+import { NODE_TYPE_INFO } from "@bnto/core";
 import type { NodeTypeName, Definition } from "@bnto/core";
 import type { EditorState } from "../store/types";
 import type { BentoNode } from "../adapters/types";
@@ -59,7 +60,9 @@ function findInsertIndex(
   afterNodeId?: string | null,
 ): number {
   if (afterNodeId) return nodes.findIndex((n) => n.id === afterNodeId) + 1;
-  const outputIdx = nodes.findIndex((n) => state.configs[n.id]?.nodeType === "output");
+  const outputIdx = nodes.findIndex(
+    (n) => state.configs[n.id]?.nodeType === NODE_TYPE_INFO.output.name,
+  );
   return outputIdx >= 0 ? outputIdx : nodes.length;
 }
 
@@ -83,7 +86,7 @@ function insertIntoDefinition(
     const idx = rootNodes.findIndex((n) => n.id === afterNodeId);
     defInsertIndex = idx >= 0 ? idx + 1 : rootNodes.length;
   } else {
-    const outputIdx = rootNodes.findIndex((n) => n.type === "output");
+    const outputIdx = rootNodes.findIndex((n) => n.type === NODE_TYPE_INFO.output.name);
     defInsertIndex = outputIdx >= 0 ? outputIdx : rootNodes.length;
   }
 

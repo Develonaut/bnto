@@ -23,11 +23,10 @@ export const IMAGE_FORMATS = (formatParam?.options ?? ["jpeg", "png", "webp"]) a
 /** UI presentation metadata for image-convert node fields. */
 export const imageConvertFields: NodeParamFields = {
   format: {
-    options: [
-      { value: "jpeg", label: "JPEG" },
-      { value: "png", label: "PNG" },
-      { value: "webp", label: "WebP" },
-    ],
+    options: IMAGE_FORMATS.map((f) => ({
+      value: f,
+      label: f.toUpperCase(),
+    })),
   },
   quality: {
     suffix: "%",

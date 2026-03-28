@@ -25,6 +25,7 @@ const CATALOG_OUTPUT = resolve(GENERATED_DIR, "catalog.ts");
 const SCHEMAS_OUTPUT = resolve(GENERATED_DIR, "schemas.ts");
 const DEF_SCHEMA_OUTPUT = resolve(GENERATED_DIR, "definitionSchema.ts");
 const DOCS_DIR = resolve(ROOT, "packages/@bnto/nodes/docs");
+const FORMAT_VERSION_OUTPUT = resolve(GENERATED_DIR, "formatVersion.ts");
 const CONVEX_LABELS_OUTPUT = resolve(
   ROOT,
   "packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts",
@@ -635,6 +636,41 @@ ${entries}
 }
 
 // =============================================================================
+// Format version (formatVersion.ts)
+// =============================================================================
+
+function generateFormatVersionFile(): string {
+  return `/**
+ * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ *
+ * The catalog format version, extracted from the engine catalog.
+ * Run \`task nodes:generate\` to regenerate after engine changes.
+ *
+ * Engine catalog v${catalog.version}
+ */
+
+/** The format version from the engine catalog. */
+export const CATALOG_FORMAT_VERSION = ${JSON.stringify(catalog.version)};
+`;
+}
+
+// =============================================================================
+// Iteration modes (extracted from definition JSON Schema)
+// =============================================================================
+
+function extractIterationModes(): string[] | null {
+  if (!catalog.definitionSchema) return null;
+  const defs = (catalog.definitionSchema as Record<string, unknown>).$defs as
+    | Record<string, unknown>
+    | undefined;
+  if (!defs) return null;
+  const ps = defs.PipelineSettings as
+    | { properties?: { iteration?: { enum?: string[] } } }
+    | undefined;
+  return ps?.properties?.iteration?.enum ?? null;
+}
+
+// =============================================================================
 // i18n strings (nodes.json)
 // =============================================================================
 
@@ -700,12 +736,31 @@ const schemasOutput = generateSchemasFile();
 const defSchemaOutput = generateDefinitionSchemaFile();
 
 const convexLabelsOutput = generateConvexLabelsFile();
+const formatVersionOutput = generateFormatVersionFile();
 const i18nStringsOutput = generateI18nStringsFile();
 
+// Add ITERATION_MODES to catalog output if available
+const iterationModes = extractIterationModes();
+const iterationModesSection = iterationModes
+  ? `\n// =============================================================================
+// Iteration Modes — extracted from definition JSON Schema
+// =============================================================================
+
+/** Valid iteration modes from the engine's definition schema. */
+export const ITERATION_MODES = ${JSON.stringify(iterationModes)} as const;
+
+/** Union type of valid iteration mode strings. */
+export type IterationModeValue = (typeof ITERATION_MODES)[number];
+`
+  : "";
+
+const fullCatalogOutput = catalogOutput + iterationModesSection;
+
 mkdirSync(GENERATED_DIR, { recursive: true });
-writeFileSync(CATALOG_OUTPUT, catalogOutput, "utf-8");
+writeFileSync(CATALOG_OUTPUT, fullCatalogOutput, "utf-8");
 writeFileSync(SCHEMAS_OUTPUT, schemasOutput, "utf-8");
 writeFileSync(DEF_SCHEMA_OUTPUT, defSchemaOutput, "utf-8");
+writeFileSync(FORMAT_VERSION_OUTPUT, formatVersionOutput, "utf-8");
 writeFileSync(CONVEX_LABELS_OUTPUT, convexLabelsOutput, "utf-8");
 mkdirSync(dirname(I18N_STRINGS_OUTPUT), { recursive: true });
 writeFileSync(I18N_STRINGS_OUTPUT, i18nStringsOutput, "utf-8");
@@ -731,6 +786,11 @@ console.log(`Generated ${DEF_SCHEMA_OUTPUT}`);
 console.log(
   `  Definition JSON Schema ${catalog.definitionSchema ? "included" : "NOT included (engine didn't provide it)"}`,
 );
+console.log(`Generated ${FORMAT_VERSION_OUTPUT}`);
+console.log(`  Catalog format version: ${catalog.version}`);
+if (iterationModes) {
+  console.log(`  ITERATION_MODES: ${iterationModes.join(", ")}`);
+}
 console.log(`Generated ${CONVEX_LABELS_OUTPUT}`);
 console.log(
   `  ${catalog.nodeTypes.filter((t) => !t.isContainer && t.category !== "io").length} processing node labels for Convex`,

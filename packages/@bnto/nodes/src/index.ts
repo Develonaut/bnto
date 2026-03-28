@@ -109,8 +109,14 @@ export {
   getProcessorDefaults,
   getParamConstraints,
   getProcessorAccepts,
+  ITERATION_MODES,
 } from "./generated/catalog";
-export type { ProcessorDef, ProcessorParam, ParamType } from "./generated/catalog";
+export type {
+  ProcessorDef,
+  ProcessorParam,
+  ParamType,
+  IterationModeValue,
+} from "./generated/catalog";
 
 // Definition JSON Schema (generated from engine — validates .bnto.json files)
 export { DEFINITION_JSON_SCHEMA } from "./generated/definitionSchema";

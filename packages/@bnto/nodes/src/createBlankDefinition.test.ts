@@ -3,6 +3,9 @@ import { describe, expect, it } from "vitest";
 import { createBlankDefinition } from "./createBlankDefinition";
 import { validateDefinition } from "./validate";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
+import { ITERATION_MODES, NODE_TYPES } from "./generated/catalog";
+import { inputParamsSchema } from "./schemas/input";
+import { outputParamsSchema } from "./schemas/output";
 
 describe("createBlankDefinition", () => {
   it("returns a valid definition with no validation errors", () => {
@@ -13,7 +16,7 @@ describe("createBlankDefinition", () => {
 
   it("has type 'group' (root container)", () => {
     const def = createBlankDefinition();
-    expect(def.type).toBe("group");
+    expect(def.type).toBe(NODE_TYPES.group);
   });
 
   it("has a unique UUID as id", () => {
@@ -44,10 +47,10 @@ describe("createBlankDefinition", () => {
   it("starts with input and output nodes, no edges", () => {
     const def = createBlankDefinition();
     expect(def.nodes).toHaveLength(2);
-    expect(def.nodes![0]!.type).toBe("input");
-    expect(def.nodes![0]!.id).toBe("input");
-    expect(def.nodes![1]!.type).toBe("output");
-    expect(def.nodes![1]!.id).toBe("output");
+    expect(def.nodes![0]!.type).toBe(NODE_TYPES.input);
+    expect(def.nodes![0]!.id).toBe(NODE_TYPES.input);
+    expect(def.nodes![1]!.type).toBe(NODE_TYPES.output);
+    expect(def.nodes![1]!.id).toBe(NODE_TYPES.output);
     expect(def.edges).toEqual([]);
   });
 
@@ -85,5 +88,34 @@ describe("createBlankDefinition", () => {
   it("has position at origin", () => {
     const def = createBlankDefinition();
     expect(def.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("input node defaults match inputParamsSchema defaults", () => {
+    const def = createBlankDefinition();
+    const inputNode = def.nodes![0]!;
+    const schemaDefaults = inputParamsSchema.parse({});
+    expect(inputNode.parameters.mode).toBe(schemaDefaults.mode);
+    expect(inputNode.parameters.multiple).toBe(schemaDefaults.multiple);
+  });
+
+  it("output node defaults match outputParamsSchema defaults", () => {
+    const def = createBlankDefinition();
+    const outputNode = def.nodes![1]!;
+    const schemaDefaults = outputParamsSchema.parse({});
+    expect(outputNode.parameters.mode).toBe(schemaDefaults.mode);
+    expect(outputNode.parameters.zip).toBe(schemaDefaults.zip);
+    expect(outputNode.parameters.autoDownload).toBe(schemaDefaults.autoDownload);
+  });
+
+  it("has settings with iteration mode derived from engine", () => {
+    const def = createBlankDefinition();
+    expect(def.settings).toBeDefined();
+    expect(def.settings!.iteration).toBe(ITERATION_MODES[0]);
+  });
+
+  it("iteration mode is a valid ITERATION_MODES value", () => {
+    const def = createBlankDefinition();
+    const validModes: readonly string[] = ITERATION_MODES;
+    expect(validModes).toContain(def.settings!.iteration);
   });
 });

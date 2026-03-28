@@ -7,7 +7,7 @@
  * validates, returning a ready-to-execute definition or validation errors.
  */
 
-import { validateDefinition, definitionToPipeline } from "@bnto/core";
+import { validateDefinition, definitionToPipeline, isIoNodeType } from "@bnto/core";
 import type { Definition, ValidationError, PipelineDefinition, PipelineNode } from "@bnto/core";
 import type { BentoNode, NodeConfigs } from "../adapters/types";
 import type { RecipeMetadata, ExecutionState } from "../store/types";
@@ -93,7 +93,7 @@ function isPipelineError(result: RunPipelineResult | RunPipelineError): result i
 
 function collectNodeStates(nodes: PipelineNode[], state: ExecutionState): void {
   for (const node of nodes) {
-    state[node.id] = node.type === "input" || node.type === "output" ? "idle" : "pending";
+    state[node.id] = isIoNodeType(node.type) ? "idle" : "pending";
     if (node.children) collectNodeStates(node.children, state);
   }
 }

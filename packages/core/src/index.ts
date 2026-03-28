@@ -138,6 +138,7 @@ export {
   CATEGORIES,
   PROCESSORS,
   RECIPES,
+  ITERATION_MODES,
 } from "@bnto/registry";
 
 // Classification & helpers
