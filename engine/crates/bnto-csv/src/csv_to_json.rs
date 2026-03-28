@@ -600,10 +600,7 @@ mod tests {
         let text = String::from_utf8(output.files[0].data.clone()).unwrap();
 
         assert!(text.contains('\n'), "Pretty output should have newlines");
-        assert!(
-            text.contains("  "),
-            "Pretty output should have indentation"
-        );
+        assert!(text.contains("  "), "Pretty output should have indentation");
     }
 
     #[test]
@@ -746,10 +743,7 @@ mod tests {
         let data = include_bytes!("../../../../test-fixtures/csv/semicolon.csv");
         let mut params = serde_json::Map::new();
         params.insert("delimiter".into(), serde_json::json!("semicolon"));
-        let input = make_input_with_params(
-            std::str::from_utf8(data).unwrap(),
-            params,
-        );
+        let input = make_input_with_params(std::str::from_utf8(data).unwrap(), params);
         let output = process_ok(input);
         let json = output_json(&output);
 

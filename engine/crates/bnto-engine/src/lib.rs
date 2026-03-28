@@ -33,10 +33,7 @@ pub fn create_default_registry() -> NodeRegistry {
     );
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
-    registry.register(
-        "spreadsheet-convert",
-        Box::new(bnto_csv::CsvToJson::new()),
-    );
+    registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
 
     registry
 }
