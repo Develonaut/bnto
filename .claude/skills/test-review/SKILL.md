@@ -38,13 +38,12 @@ Before reviewing ANY tests, read and internalize:
 
 Identify which packages the tests under review belong to and invoke the relevant persona skill(s):
 
-| Test files in... | Persona skill |
-|---|---|
-| `engine/` | `/rust-expert` |
-| `archive/engine-go/`, `archive/api-go/` | `/go-engineer` |
-| `apps/web/` (including `e2e/`) | `/frontend-engineer` |
-| `packages/core/` | `/core-architect` |
-| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer` |
+| Test files in...                                  | Persona skill        |
+| ------------------------------------------------- | -------------------- |
+| `engine/`                                         | `/rust-expert`       |
+| `apps/web/` (including `e2e/`)                    | `/frontend-engineer` |
+| `packages/core/`                                  | `/core-architect`    |
+| `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer`  |
 
 **If reviewing E2E tests** (`apps/web/e2e/`), also invoke `/quality-engineer` — the quality persona owns E2E infrastructure, journey-based test design, screenshot regression workflows, selector patterns, and port isolation. It complements `/frontend-engineer` (which owns component structure) with testing-specific expertise.
 
@@ -87,14 +86,14 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 **Source:** Go community (Dave Cheney, Learn Go with Tests), Google SWE Book
 
-| What to test | Value | Pattern | Example |
-|---|---|---|---|
-| Node type `Execute()` — happy path + errors | **Critical** | Table-driven subtests for multi-case, narrative for complex flows | `image_test.go` |
-| Full workflow execution with fixture `.bnto.json` | **Critical** | Fixture-driven integration test | `csv_pipeline_test.go` |
-| Output structure stability | **High** | Golden tests (`*_golden_test.go`) | `progress_golden_test.go` |
-| Validator rules — valid + invalid inputs | **High** | Paired valid/invalid fixtures (Bluesky interop pattern) | `omakase_test.go` |
-| Error wrapping and context messages | **Medium** | Assert error string contains context | — |
-| Context cancellation in loops | **Medium** | Cancel context mid-execution, verify early exit | — |
+| What to test                                      | Value        | Pattern                                                           | Example                   |
+| ------------------------------------------------- | ------------ | ----------------------------------------------------------------- | ------------------------- |
+| Node type `Execute()` — happy path + errors       | **Critical** | Table-driven subtests for multi-case, narrative for complex flows | `image_test.go`           |
+| Full workflow execution with fixture `.bnto.json` | **Critical** | Fixture-driven integration test                                   | `csv_pipeline_test.go`    |
+| Output structure stability                        | **High**     | Golden tests (`*_golden_test.go`)                                 | `progress_golden_test.go` |
+| Validator rules — valid + invalid inputs          | **High**     | Paired valid/invalid fixtures (Bluesky interop pattern)           | `omakase_test.go`         |
+| Error wrapping and context messages               | **Medium**   | Assert error string contains context                              | —                         |
+| Context cancellation in loops                     | **Medium**   | Cancel context mid-execution, verify early exit                   | —                         |
 
 **Anti-patterns to flag:**
 
@@ -115,13 +114,13 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 **Source:** Go community (httptest patterns), Speedscale, Martin Fowler
 
-| What to test | Value | Pattern | Example |
-|---|---|---|---|
-| Handler request/response contract | **Critical** | `httptest.NewRecorder` + table-driven for auth states | `handler_test.go` |
-| Auth enforcement — missing/invalid/valid token | **Critical** | Three subtests per endpoint | `handler_test.go` |
-| R2 upload/download flow | **High** | Integration with mock R2 or real temp dir | `run_transit_test.go` |
-| CORS headers | **Medium** | Assert headers present on response | `contract_test.go` |
-| Error response shape | **Medium** | Assert JSON error body matches contract | — |
+| What to test                                   | Value        | Pattern                                               | Example               |
+| ---------------------------------------------- | ------------ | ----------------------------------------------------- | --------------------- |
+| Handler request/response contract              | **Critical** | `httptest.NewRecorder` + table-driven for auth states | `handler_test.go`     |
+| Auth enforcement — missing/invalid/valid token | **Critical** | Three subtests per endpoint                           | `handler_test.go`     |
+| R2 upload/download flow                        | **High**     | Integration with mock R2 or real temp dir             | `run_transit_test.go` |
+| CORS headers                                   | **Medium**   | Assert headers present on response                    | `contract_test.go`    |
+| Error response shape                           | **Medium**   | Assert JSON error body matches contract               | —                     |
 
 **Anti-patterns to flag:**
 
@@ -133,18 +132,18 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 **Source:** Convex docs, Convex Stack blog (testing patterns)
 
-| What to test | Value | Pattern | Example |
-|---|---|---|---|
-| Auth enforcement — mutation rejects unauthenticated/wrong user | **Critical** | `convex-test` without/with wrong identity | `auth.test.ts` |
-| Quota boundary — free tier limit (run N ok, run N+1 rejected) | **Critical** | Seed user near limit, test the boundary | `quota.test.ts` |
-| Execution state machine — valid and invalid transitions | **High** | Seed execution in state X, attempt transition to Y | `executions.test.ts` |
-| Business rules in mutations (validation, side effects) | **High** | `t.mutation()` with controlled inputs | — |
-| Schema migration safety — new fields work with existing docs | **Medium** | Insert old-shape doc, run migration, verify | — |
+| What to test                                                   | Value        | Pattern                                            | Example              |
+| -------------------------------------------------------------- | ------------ | -------------------------------------------------- | -------------------- |
+| Auth enforcement — mutation rejects unauthenticated/wrong user | **Critical** | `convex-test` without/with wrong identity          | `auth.test.ts`       |
+| Quota boundary — free tier limit (run N ok, run N+1 rejected)  | **Critical** | Seed user near limit, test the boundary            | `quota.test.ts`      |
+| Execution state machine — valid and invalid transitions        | **High**     | Seed execution in state X, attempt transition to Y | `executions.test.ts` |
+| Business rules in mutations (validation, side effects)         | **High**     | `t.mutation()` with controlled inputs              | —                    |
+| Schema migration safety — new fields work with existing docs   | **Medium**   | Insert old-shape doc, run migration, verify        | —                    |
 
 **Anti-patterns to flag:**
 
 - [ ] **Testing that Convex stores and retrieves data** — `t.mutation(insert)` then `t.query(get)` on a pass-through CRUD function is testing Convex, not your code
-- [ ] **Testing validator shapes with valid data** — the schema already validates this. Test that *invalid* inputs are rejected if you have custom validation beyond schema validators
+- [ ] **Testing validator shapes with valid data** — the schema already validates this. Test that _invalid_ inputs are rejected if you have custom validation beyond schema validators
 - [ ] **Mocking `convex-test` itself** — `convex-test` IS the mock. Using `vi.mock` on top of it means you're testing nothing
 - [ ] **Testing simple pass-through queries** — a query that just calls `ctx.db.get(id)` has zero test value
 - [ ] **Testing `.withIndex()` ordering** — that's Convex's responsibility
@@ -155,12 +154,12 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 **Source:** TkDodo (React Query maintainer), TanStack docs
 
-| What to test | Value | Pattern | Example |
-|---|---|---|---|
-| Transform functions (doc -> API type mappers) | **Critical** | Pure function tests — input doc, assert output shape | `execution.test.ts` |
-| Service orchestration — correct args passed to adapter | **Medium** | Mock adapter, verify call args | `executionService.test.ts` |
-| Error handling paths — adapter throws, transform receives null | **Medium** | Mock adapter to throw, assert service behavior | — |
-| Cache invalidation — save() invalidates the right query keys | **Low** | Verify `invalidateQueries` called with correct key | — |
+| What to test                                                   | Value        | Pattern                                              | Example                    |
+| -------------------------------------------------------------- | ------------ | ---------------------------------------------------- | -------------------------- |
+| Transform functions (doc -> API type mappers)                  | **Critical** | Pure function tests — input doc, assert output shape | `execution.test.ts`        |
+| Service orchestration — correct args passed to adapter         | **Medium**   | Mock adapter, verify call args                       | `executionService.test.ts` |
+| Error handling paths — adapter throws, transform receives null | **Medium**   | Mock adapter to throw, assert service behavior       | —                          |
+| Cache invalidation — save() invalidates the right query keys   | **Low**      | Verify `invalidateQueries` called with correct key   | —                          |
 
 **Anti-patterns to flag:**
 
@@ -176,15 +175,15 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 **Source:** Kent C. Dodds (Testing Library), Bluesky (thin unit + thick E2E)
 
-| What to test | Value | Pattern | Example |
-|---|---|---|---|
-| Pure utility functions (formatters, validators) | **High** | Input/output, edge cases | `formatFileSize.test.ts` |
-| Route protection logic (proxy/middleware) | **High** | Mock auth state, assert redirects | `middleware.test.ts` |
-| Slug registry validation | **High** | Assert all slugs resolve, no collisions | `bntoRegistry.test.ts` |
-| Complex hook logic (if extracted) | **Medium** | `renderHook` with controlled inputs | — |
-| Simple presentational components | **Zero** | TypeScript validates props. E2E validates rendering | — |
-| shadcn primitive wrappers | **Zero** | Radix already tested these | — |
-| CSS class application | **Zero** | Visual regression via E2E screenshots | — |
+| What to test                                    | Value      | Pattern                                             | Example                  |
+| ----------------------------------------------- | ---------- | --------------------------------------------------- | ------------------------ |
+| Pure utility functions (formatters, validators) | **High**   | Input/output, edge cases                            | `formatFileSize.test.ts` |
+| Route protection logic (proxy/middleware)       | **High**   | Mock auth state, assert redirects                   | `middleware.test.ts`     |
+| Slug registry validation                        | **High**   | Assert all slugs resolve, no collisions             | `bntoRegistry.test.ts`   |
+| Complex hook logic (if extracted)               | **Medium** | `renderHook` with controlled inputs                 | —                        |
+| Simple presentational components                | **Zero**   | TypeScript validates props. E2E validates rendering | —                        |
+| shadcn primitive wrappers                       | **Zero**   | Radix already tested these                          | —                        |
+| CSS class application                           | **Zero**   | Visual regression via E2E screenshots               | —                        |
 
 **Anti-patterns to flag:**
 
@@ -200,14 +199,14 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 **Source:** Bluesky (Maestro flows), Playwright docs, Google Testing Blog
 
-| What to test | Value | Pattern | Example |
-|---|---|---|---|
-| Critical user journeys (drop files -> run -> download) | **Critical** | Journey-based spec with screenshot assertions | `execution-flow.spec.ts` |
-| Auth redirects (unauth on protected route) | **High** | Navigate, assert redirect | — |
-| SEO (metadata, JSON-LD, sitemap) | **High** | Assert meta tags present and correct | `seo-metadata.spec.ts` |
-| Tool page initial state | **High** | Assert config panel, drop zone, disabled run button | `bnto-config.spec.ts` |
-| File interactions (add, remove, clear) | **Medium** | Programmatic file input, assert UI updates | `file-drop.spec.ts` |
-| Every intermediate UI state | **Low** | Transient states (uploading, running) are flaky to screenshot | — |
+| What to test                                           | Value        | Pattern                                                       | Example                  |
+| ------------------------------------------------------ | ------------ | ------------------------------------------------------------- | ------------------------ |
+| Critical user journeys (drop files -> run -> download) | **Critical** | Journey-based spec with screenshot assertions                 | `execution-flow.spec.ts` |
+| Auth redirects (unauth on protected route)             | **High**     | Navigate, assert redirect                                     | —                        |
+| SEO (metadata, JSON-LD, sitemap)                       | **High**     | Assert meta tags present and correct                          | `seo-metadata.spec.ts`   |
+| Tool page initial state                                | **High**     | Assert config panel, drop zone, disabled run button           | `bnto-config.spec.ts`    |
+| File interactions (add, remove, clear)                 | **Medium**   | Programmatic file input, assert UI updates                    | `file-drop.spec.ts`      |
+| Every intermediate UI state                            | **Low**      | Transient states (uploading, running) are flaky to screenshot | —                        |
 
 **Anti-patterns to flag:**
 
@@ -257,14 +256,14 @@ Ask for each test: **If I delete this test and the codebase has a real bug, woul
 
 ### 3c: Is this test at the right level?
 
-| Signal | Correct level |
-|---|---|
-| Testing pure logic with many edge cases | Unit test |
-| Testing that two systems work together correctly | Integration test |
-| Testing what the user sees and interacts with | E2E test |
-| Testing that a button has the right CSS class | **Wrong level — delete or move to E2E screenshot** |
-| Testing that a Convex mutation stores data | **Wrong level — this tests Convex** |
-| Testing that `useQuery` returns loading state | **Wrong level — this tests React Query** |
+| Signal                                           | Correct level                                      |
+| ------------------------------------------------ | -------------------------------------------------- |
+| Testing pure logic with many edge cases          | Unit test                                          |
+| Testing that two systems work together correctly | Integration test                                   |
+| Testing what the user sees and interacts with    | E2E test                                           |
+| Testing that a button has the right CSS class    | **Wrong level — delete or move to E2E screenshot** |
+| Testing that a Convex mutation stores data       | **Wrong level — this tests Convex**                |
+| Testing that `useQuery` returns loading state    | **Wrong level — this tests React Query**           |
 
 ### 3d: Is the test isolated?
 
@@ -311,7 +310,7 @@ These user journeys MUST have E2E coverage. Flag any that are missing:
 
 ### 4d: Paired valid/invalid test vectors
 
-For the Go engine's validators, verify paired test cases exist:
+For the engine's validators, verify paired test cases exist:
 
 - [ ] Valid `.bnto.json` fixtures that execute cleanly
 - [ ] Invalid `.bnto.json` fixtures that produce specific, tested error messages

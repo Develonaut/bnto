@@ -137,14 +137,13 @@ If you're picking up a batch, claim all tasks in the batch at once. This signals
 
 Now that you know your task's `[package]` tag, activate the domain expert persona by invoking it as a skill:
 
-| Package tag               | Persona skill                      |
-| ------------------------- | ---------------------------------- |
-| `[engine]`                | `/rust-expert`                     |
-| `[engine-go]`, `[api-go]` | `/go-engineer`                     |
-| `[web]`, `[ui]`           | `/frontend-engineer`               |
-| `[core]`                  | `/core-architect`                  |
-| `[backend]`, `[auth]`     | `/backend-engineer`                |
-| `[monorepo]`, `[infra]`   | No persona — use general standards |
+| Package tag             | Persona skill                      |
+| ----------------------- | ---------------------------------- |
+| `[engine]`              | `/rust-expert`                     |
+| `[web]`, `[ui]`         | `/frontend-engineer`               |
+| `[core]`                | `/core-architect`                  |
+| `[backend]`, `[auth]`   | `/backend-engineer`                |
+| `[monorepo]`, `[infra]` | No persona — use general standards |
 
 **Sprint-specific persona overrides:**
 

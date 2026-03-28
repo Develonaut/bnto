@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 18, 2026 (groomed — Sprint 6 complete, Sprint 7 active, backlog cleaned: 34 archived items removed, recipe tags bug fixed)
+**Last Updated:** March 28, 2026 (groomed — Sprint 7 nearly complete, side quest audit, Sprint 8 defined for Tier 3 recipes, Desktop renumbered to Sprint 9-10)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -35,7 +35,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
 - **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), tag-triggered release pipeline (CI gate → Vercel preview → E2E → Lighthouse → auto-deploy Vercel + Convex to production on stable tags → GitHub Release), PostHog telemetry wired
-- **Packages:** `@bnto/core` (7 domains: recipes, executions, user, auth, telemetry, registry, flags), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/ui`, `@bnto/editor`
+- **Packages:** `@bnto/core` (7 domains: recipes, executions, user, auth, telemetry, registry, flags), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/registry`, `@bnto/ui`, `@bnto/editor`, `@bnto/i18n`
 
 ---
 
@@ -76,6 +76,12 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Sprint 5 Editor v1: Auto-download default, config panel controls (Textarea, Combobox, KeyValueEditor), Motorway showcase, control registry wiring, inferFieldType updates, schema metadata cleanup, DRY recipe I/O nodes, save button + My Recipes integration, unsaved changes warning, E2E verification, keyboard shortcuts, accessibility audit
 - [x] Input node file extension filter fix: `deriveFileInputAccept` pure function, store selector in RunButton, unit tests, E2E verification
 - [x] Unified recipe model (Sprint 7): Layered types (`Recipe` in `@bnto/nodes`, `UserRecipe` in `@bnto/core`), deleted `RecipeDefinition` duplicates, `BntoEntry` derived from `Recipe`. `core.registry` as 6th domain (Zustand store, client API, React hooks). `?from={slug}` eliminated — "Open in Editor" clones template, navigates by ID. Runtime surfaces consume `core.registry`, build-time surfaces keep direct imports
+- [x] Explore page (`/explore`): Full-page searchable/filterable recipe & node browser with ExploreHeader, ExploreFilters, ExploreRecipeGrid, ExploreJsonLd. Server component page with client interactive leaves (PR #281)
+- [x] `@bnto/i18n` package: Centralized string management — `t()` dot-path resolver, `useT()` hook, `en.json` app strings + auto-generated `nodes.json` from engine catalog. Type-safe `StringKey` derived from JSON (PR #282)
+- [x] Engine catalog codegen: Downstream TS values (format version, node metadata) derived from Rust engine catalog snapshot — single source of truth (PR #289)
+- [x] Recipe flattening: Predefined recipes simplified to `settings.iteration: "auto"` — removed explicit loop/group nesting, engine handles per-file iteration implicitly (PR #278)
+- [x] Editor UX polish (Sprint 7): Config panel tabs + sync status (PR #283), unified toolbar layout (PR #284), carry flow config into editor (PR #285), unified run button (PR #286), carry dropped files into editor (PR #287), fix editor reset + returnTo redirects (PR #288)
+- [x] Quality tooling: Knip dead-code detection in lefthook (PR #270), ESLint complexity rules promoted to error (PR #271), ESLint extended to all packages (PR #273), non-null assertions replaced (PR #274), SEO/README/copy improvements (PR #275), cloud→local recipe hydration (PR #276), footer links from registry (PR #277)
 
 ---
 
@@ -95,8 +101,9 @@ Pricing, revenue projections, and "ready to charge" criteria live in private bus
 | Sprint 4     | Recipe editor (headless + visual)            | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
 | Sprint 4D-4G | Package extraction + versioning + validation | Clean architecture. Zod schemas. Packages ready for desktop (M3).                                                                |
 | Sprint 5     | Editor v1 (config controls, save, polish)    | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
-| Sprint 8-9   | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
-| Sprint 10    | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
+| Sprint 8     | Tier 3 near-term recipes                     | **SEO expansion.** 4 new browser recipes targeting 82K+ combined monthly searches. Product catalog grows.                        |
+| Sprint 9-10  | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
+| Sprint 11    | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
 
 ---
 
@@ -202,9 +209,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**M2 is delivered. Sprint 6 (Quality & Cleanup) is complete.** Direction decided: **Tier 2 (Explore & Discovery Infrastructure)** → then **Tier 3 (Near-Term Recipes)**. Unify how recipes/nodes are listed before expanding the recipe catalog. See `bntos.md` for the full tier breakdown.
+**M2 is delivered. Sprint 6 (Quality & Cleanup) is complete. Sprint 7 (Explore & Discovery) is nearly complete** — `/explore` page built, recipe model unified, 5 tasks remain (navbar link, SEO verification, E2E tests, README auto-gen). Direction: **close Sprint 7 → Sprint 8 (Tier 3 Near-Term Recipes)** → then Desktop (Sprint 9-10). See `bntos.md` for the full tier breakdown.
 
-**Next up:** Sprint 7 (Explore & Discovery, Tier 2) → Sprint 8 (Near-Term Recipes, Tier 3).
+**Next up:** Close Sprint 7 (5 remaining tasks) → Sprint 8 (Tier 3 Recipes — engine operations + recipe fixtures + SEO pages).
 
 ---
 
@@ -321,7 +328,7 @@ Design doc: `strategy/unified-recipe-model.md`
 
 - [x] `apps/web` — **Migrate runtime surfaces to `core.registry`**: RecipeMarquee, RecipeCardShowcase consume `core.registry` hooks. Build-time surfaces (navData, sitemap, llms.txt) keep direct `@bnto/nodes` imports (SSG can't use Zustand). _(PR #229)_
 - [x] `packages/editor` — **Migrate editor surfaces to `core.registry`**: `useNodePalette` and `RecipePickerGrid` consume `core.registry` hooks instead of direct `@bnto/nodes` imports. _(PR #229)_
-- [ ] `apps/web` — **Build `/explore` page**: Full-page searchable/filterable recipe & node browser. Categories, search, metadata cards. Server component page with client interactive leaves. Uses `core.catalog`.
+- [x] `apps/web` — **Build `/explore` page**: Full-page searchable/filterable recipe & node browser. Categories, search, metadata cards. Server component page with client interactive leaves. Uses `core.registry`. _(PR #281)_
 - [ ] `apps/web` — **Migrate navbar Explore**: Replace dropdown with a link to `/explore`. Keep a compact "quick access" subset if desired, but primary action is navigating to the Explore page.
 
 #### Wave 4 (sequential — verify + auto-generation)
@@ -344,15 +351,52 @@ Design doc: `strategy/unified-recipe-model.md`
 
 ---
 
+## Sprint 8: Tier 3 Near-Term Recipes
+
+**Goal:** Expand the recipe catalog with high-SEO-value recipes that run 100% client-side. Each recipe needs: Rust engine operation, `@bnto/nodes` recipe fixture, SEO page with metadata + JSON-LD, E2E verification. This is the first product expansion since M1.
+
+**Why now:** Sprint 7 unified the discovery infrastructure — adding a recipe to `@bnto/nodes` now automatically appears on every surface. The pipeline is ready for new recipes. Tier 3 recipes target high-volume search queries (watermark: 30K/mo, strip-exif: 15K/mo, merge-csv: 12K/mo, csv-to-json: 25K/mo).
+
+**Prerequisite:** Sprint 7 must be complete (all surfaces unified, `/explore` page live with E2E).
+
+**Persona ownership:**
+
+| Package       | Persona              |
+| ------------- | -------------------- |
+| `engine`      | `/rust-expert`       |
+| `@bnto/nodes` | `/core-architect`    |
+| `apps/web`    | `/frontend-engineer` |
+
+#### Wave 1 (parallel — engine operations)
+
+- [ ] `engine` — **`bnto-image`: composite/watermark operation** — overlay image onto source. Needed for `/watermark-images` (Tier 3, 30K+ monthly searches). Reference: Go `image.go` composite logic
+- [ ] `engine` — **`bnto-image`: EXIF metadata strip** — strip all EXIF data from images. Needed for `/strip-exif` (Tier 3, 15K+ monthly searches)
+- [ ] `engine` — **`bnto-csv`: merge operation** — concatenate + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 3, 12K+ monthly searches)
+- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — transform CSV rows to JSON objects. Needed for `/csv-to-json` (Tier 3, 25K+ monthly searches)
+
+#### Wave 2 (parallel — recipes + codegen)
+
+- [ ] `@bnto/nodes` — **Recipe fixtures for Tier 3**: Create `.bnto.json` definitions for watermark-images, strip-exif, merge-csv, csv-to-json. Run `task nodes:generate` to propagate
+- [ ] `engine` — **CLI golden tests**: Add golden test fixtures for each new operation (byte-exact output verification)
+- [ ] `@bnto/nodes` — **Update catalog + codegen**: Run `task wasm:codegen` to regenerate TypeScript from updated catalog. Verify Zod schemas generated for new params
+
+#### Wave 3 (parallel — SEO pages + E2E)
+
+- [ ] `apps/web` — **SEO pages for Tier 3 recipes**: Add to `bntoRegistry.ts`, verify `generateStaticParams`, `generateMetadata`, JSON-LD, sitemap inclusion. Each recipe gets a root-level slug page
+- [ ] `apps/web` — **E2E tests**: Playwright tests for each new recipe — upload file, configure, execute, verify output (magic bytes, file sizes). Programmatic assertions, not screenshots
+- [ ] `apps/web` — **Lighthouse audit**: Verify new pages pass accessibility, SEO, best-practices thresholds
+
+---
+
 ## Phase 2: Desktop App (Local Execution)
 
 **Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
 
 **Desktop tech: Tauri (Rust-native).** M1 Rust evaluation passed — one codebase for browser WASM + desktop native + CLI.
 
-**Sprint numbering:** Desktop Bootstrap = Sprint 8, Local Execution = Sprint 9.
+**Sprint numbering:** Desktop Bootstrap = Sprint 9, Local Execution = Sprint 10.
 
-### Sprint 8: Desktop Bootstrap
+### Sprint 9: Desktop Bootstrap
 
 **Persona ownership:**
 | Package | Persona |
@@ -380,9 +424,9 @@ Design doc: `strategy/unified-recipe-model.md`
 
 ---
 
-### Sprint 9: Local Execution
+### Sprint 10: Local Execution
 
-**Persona ownership:** Same as Sprint 8 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
+**Persona ownership:** Same as Sprint 9 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
 
 #### Wave 1 (parallel — execution)
 
@@ -409,9 +453,9 @@ Design doc: `strategy/unified-recipe-model.md`
 
 **Goal:** Wire up payments, enforce quotas, make the product feel complete.
 
-**"Ready to charge" gate:** Before Sprint 10, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
+**"Ready to charge" gate:** Before Sprint 11, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
 
-### Sprint 10: Stripe + Pro Tier (M5)
+### Sprint 11: Stripe + Pro Tier (M5)
 
 **Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
 
@@ -503,14 +547,7 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 ### Engine: Unmigrated Node Operations (Rust WASM)
 
-**Priority: Medium.** Bring Go engine operations that have no Rust equivalent yet. Reference: [go-engine-migration.md](strategy/go-engine-migration.md).
-
-**Tier 3 recipe blockers:**
-
-- [ ] `engine` — **`bnto-image`: composite operation** — overlay/watermark. Needed for `/watermark-images` (Tier 3, 30K+ monthly searches). See Go `image.go` composite logic
-- [ ] `engine` — **`bnto-image`: EXIF metadata strip** — needed for `/strip-exif` (Tier 3, 15K+ monthly searches). Go used `imaging` library strip
-- [ ] `engine` — **`bnto-csv`: merge operation** — concat + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 3, 12K+ monthly searches)
-- [ ] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — needed for `/csv-to-json` (Tier 3, 25K+ monthly searches). May be a `transform` concern
+**Priority: Medium.** Tier 3 recipe blockers promoted to **Sprint 8**. Remaining items below.
 
 **Orchestration (multi-step recipe support):**
 
@@ -571,7 +608,7 @@ Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifac
 
 ### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
 
-**Milestone: M4/M5 (Sprint 9+).** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
+**Milestone: M4/M5 (Sprint 10+).** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
 
 - [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
 - [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
@@ -662,7 +699,7 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 
 ### UX: Conversion Hook Messaging Audit — M2/M5
 
-**M2 (Sprint 3) for hook UX, M5 (Sprint 9) for Stripe.** Value-driven conversion hooks (Save, History, Premium Bntos, Team) — no "limit reached" messaging for browser bntos.
+**M2 (Sprint 3) for hook UX, M5 (Sprint 11) for Stripe.** Value-driven conversion hooks (Save, History, Premium Bntos, Team) — no "limit reached" messaging for browser bntos.
 
 - [ ] `@bnto/backend` — Separate browser (no limits) from server-side (quota) error paths
 - [ ] `apps/web` — Design conversion hook components with value-driven CTAs
@@ -884,10 +921,6 @@ Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version fi
 
 Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
 
-### ~~Triage: Lefthook Quality Gates — knip + sonarjs enforcement~~ DONE
-
-Completed in PR on `chore/lefthook-quality-gates`. Triaged ~130 knip findings to 0: deleted 8 dead config wrappers, removed 14 dead type exports from `@bnto/core` + `@bnto/nodes`, configured knip to ignore generated code + intentional public API + binaries. Re-enabled lefthook `dead-code` pre-commit hook. sonarjs complexity rules already enforced as warnings via `task ui:lint` (3 pre-existing warnings in core services — tracked separately).
-
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
@@ -899,7 +932,7 @@ Completed in PR on `chore/lefthook-quality-gates`. Triaged ~130 knip findings to
 | `.claude/strategy/visual-editor.md`                              | Bento box visual editor — compartment design, grid layout, execution state                                        |
 | `.claude/strategy/code-editor.md`                                | Code editor design — CM6, slash commands, JSON Schema                                                             |
 | `.claude/strategy/visual-editor.md`                              | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| `.claude/strategy/go-engine-migration.md`                        | Go engine node inventory — migration reference before archive deletion                                            |
+| `.claude/strategy/go-engine-migration.md`                        | HISTORICAL — Go node parameter inventory (engine deleted, git history preserves source)                           |
 | `.claude/strategy/cloud-desktop-strategy.md`                     | Architecture, cost analysis, cloud execution topology                                                             |
 | `.claude/strategy/core-principles.md`                            | Trust commitments, "For Claude Code" guidance                                                                     |
 | `.claude/rules/`                                                 | Auto-loaded rules (architecture, code-standards, components, etc.)                                                |

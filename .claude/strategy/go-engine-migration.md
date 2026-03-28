@@ -1,7 +1,7 @@
 # Go Engine Node Migration Reference
 
 **Last Updated:** March 2026
-**Status:** Reference tables for Rust migration. Full Go source preserved in `archive/engine-go/`.
+**Status:** HISTORICAL — Go engine deleted (Sprint 6, March 2026). `archive/engine-go/` removed from repo. This document preserves the Go node parameter inventory as a reference for building equivalent Rust operations. Git history preserves the original source code.
 
 ---
 
@@ -130,6 +130,6 @@ Notable: stall detection (byte-level, handles `\r` progress), auto-retry with ba
 
 ## Open Decisions
 
-- **M4 cloud execution:** Go API on Railway (existing) vs Rust compiled service. No decision yet.
+- **M4 cloud execution:** Technology TBD. Go API deleted — options are Rust compiled service or containerized runtime.
 - **Expression evaluation in browser:** Which JS library replaces `expr-lang/expr`?
 - **Template engine for browser:** Go `text/template` syntax vs Mustache/Handlebars.
