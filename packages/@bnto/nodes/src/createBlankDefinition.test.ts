@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { createBlankDefinition } from "./createBlankDefinition";
 import { validateDefinition } from "./validate";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
+import { inputParamsSchema } from "./schemas/input";
+import { outputParamsSchema } from "./schemas/output";
 
 describe("createBlankDefinition", () => {
   it("returns a valid definition with no validation errors", () => {
@@ -85,5 +87,22 @@ describe("createBlankDefinition", () => {
   it("has position at origin", () => {
     const def = createBlankDefinition();
     expect(def.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("input node defaults match inputParamsSchema defaults", () => {
+    const def = createBlankDefinition();
+    const inputNode = def.nodes![0]!;
+    const schemaDefaults = inputParamsSchema.parse({});
+    expect(inputNode.parameters.mode).toBe(schemaDefaults.mode);
+    expect(inputNode.parameters.multiple).toBe(schemaDefaults.multiple);
+  });
+
+  it("output node defaults match outputParamsSchema defaults", () => {
+    const def = createBlankDefinition();
+    const outputNode = def.nodes![1]!;
+    const schemaDefaults = outputParamsSchema.parse({});
+    expect(outputNode.parameters.mode).toBe(schemaDefaults.mode);
+    expect(outputNode.parameters.zip).toBe(schemaDefaults.zip);
+    expect(outputNode.parameters.autoDownload).toBe(schemaDefaults.autoDownload);
   });
 });

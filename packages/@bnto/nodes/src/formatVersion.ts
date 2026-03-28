@@ -13,8 +13,10 @@
  * runs on an engine that supports "1.0.0" — minor/patch differences are forward-compatible.
  */
 
+import { CATALOG_FORMAT_VERSION } from "./generated/formatVersion";
+
 /** All format versions this engine supports (newest last). */
-export const SUPPORTED_FORMAT_VERSIONS = ["1.0.0"] as const;
+export const SUPPORTED_FORMAT_VERSIONS = [CATALOG_FORMAT_VERSION] as const;
 
 /** The current format version for new definitions — always the latest supported. */
 export const CURRENT_FORMAT_VERSION = SUPPORTED_FORMAT_VERSIONS[

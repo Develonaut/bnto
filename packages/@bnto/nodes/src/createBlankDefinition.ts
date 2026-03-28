@@ -11,8 +11,11 @@
 
 import type { Definition } from "./definition";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
+import { inputParamsSchema } from "./schemas/input";
+import { outputParamsSchema } from "./schemas/output";
 
 function createInputNode(): Definition {
+  const defaults = inputParamsSchema.parse({});
   return {
     id: "input",
     type: "input",
@@ -21,11 +24,10 @@ function createInputNode(): Definition {
     position: { x: 0, y: 100 },
     metadata: {},
     parameters: {
-      mode: "file-upload",
+      ...defaults,
       accept: ["*/*"],
       extensions: [],
       label: "Any files",
-      multiple: true,
     },
     inputPorts: [],
     outputPorts: [{ id: "out-1", name: "files" }],
@@ -33,6 +35,7 @@ function createInputNode(): Definition {
 }
 
 function createOutputNode(): Definition {
+  const defaults = outputParamsSchema.parse({});
   return {
     id: "output",
     type: "output",
@@ -41,10 +44,8 @@ function createOutputNode(): Definition {
     position: { x: 400, y: 100 },
     metadata: {},
     parameters: {
-      mode: "download",
+      ...defaults,
       label: "Output Files",
-      zip: true,
-      autoDownload: true,
     },
     inputPorts: [{ id: "in-1", name: "files" }],
     outputPorts: [],

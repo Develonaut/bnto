@@ -1,7 +1,7 @@
 "use client";
 
 import type { Definition } from "@bnto/core";
-import { deriveAcceptedTypes } from "@bnto/core";
+import { deriveAcceptedTypes, NODE_TYPE_INFO } from "@bnto/core";
 import { FileUpload, FileUploadDropzone, toDropzoneAccept } from "@bnto/ui";
 import { DropzoneContent } from "./DropzoneContent";
 import { PlaceholderInputMode } from "./PlaceholderInputMode";
@@ -19,7 +19,7 @@ interface InputRendererProps {
  */
 export function InputRenderer({ definition, files, onFilesChange, disabled }: InputRendererProps) {
   const { accept, label } = deriveAcceptedTypes(definition);
-  const inputNode = definition.nodes?.find((n) => n.type === "input");
+  const inputNode = definition.nodes?.find((n) => n.type === NODE_TYPE_INFO.input.name);
   const mode = (inputNode?.parameters?.mode as string) ?? "file-upload";
 
   if (mode === "text") return <PlaceholderInputMode label="Text input mode coming soon" />;

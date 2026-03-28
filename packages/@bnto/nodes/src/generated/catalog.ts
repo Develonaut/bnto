@@ -44,7 +44,15 @@ export type NodeTypeName = (typeof NODE_TYPES)[keyof typeof NODE_TYPES];
 export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES) as NodeTypeName[];
 
 /** Node category for grouping in the UI and documentation. */
-export type NodeCategory = "control" | "data" | "file" | "image" | "io" | "network" | "spreadsheet" | "system";
+export type NodeCategory =
+  | "control"
+  | "data"
+  | "file"
+  | "image"
+  | "io"
+  | "network"
+  | "spreadsheet"
+  | "system";
 
 /** Metadata describing a node type's behavior and capabilities. */
 export interface NodeTypeInfo {
@@ -87,7 +95,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "folder-open",
   },
-  "group": {
+  group: {
     name: "group",
     label: "Group",
     description: "Container for child nodes. Orchestrates sequential or parallel execution.",
@@ -132,7 +140,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "image",
   },
-  "input": {
+  input: {
     name: "input",
     label: "Input",
     description: "Declares how data enters the recipe.",
@@ -141,7 +149,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "file-up",
   },
-  "loop": {
+  loop: {
     name: "loop",
     label: "Loop",
     description: "Iterate over arrays (forEach), repeat N times, or loop while condition.",
@@ -150,7 +158,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "repeat",
   },
-  "output": {
+  output: {
     name: "output",
     label: "Output",
     description: "Declares how results are delivered.",
@@ -159,7 +167,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "download",
   },
-  "parallel": {
+  parallel: {
     name: "parallel",
     label: "Parallel",
     description: "Execute tasks concurrently with configurable worker pool and error strategy.",
@@ -195,7 +203,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
     browserCapable: true,
     icon: "sheet",
   },
-  "transform": {
+  transform: {
     name: "transform",
     label: "Transform",
     description: "Transform data using expressions (single value) or field mappings.",
@@ -266,7 +274,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         label: "Case",
         description: "Transform the filename to a specific case",
         type: "enum" as const,
-        options: ["lower","upper","title"] as const,
+        options: ["lower", "upper", "title"] as const,
       },
       {
         name: "prefix",
@@ -283,7 +291,8 @@ export const PROCESSORS: readonly ProcessorDef[] = [
       {
         name: "pattern",
         label: "Pattern",
-        description: "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
+        description:
+          "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
         type: "string" as const,
         placeholder: "{{name}}-compressed.{{ext}}",
       },
@@ -295,13 +304,14 @@ export const PROCESSORS: readonly ProcessorDef[] = [
     name: "Compress Images",
     description: "Reduce image file size while maintaining quality",
     category: "image",
-    accepts: ["image/jpeg","image/png","image/webp"] as const,
+    accepts: ["image/jpeg", "image/png", "image/webp"] as const,
     platforms: ["browser"] as const,
     parameters: [
       {
         name: "quality",
         label: "Quality",
-        description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+        description:
+          "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
@@ -314,7 +324,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
     name: "Convert Image Format",
     description: "Convert images between JPEG, PNG, and WebP formats",
     category: "image",
-    accepts: ["image/jpeg","image/png","image/webp"] as const,
+    accepts: ["image/jpeg", "image/png", "image/webp"] as const,
     platforms: ["browser"] as const,
     parameters: [
       {
@@ -322,14 +332,15 @@ export const PROCESSORS: readonly ProcessorDef[] = [
         label: "Output Format",
         description: "The target image format to convert to",
         type: "enum" as const,
-        options: ["jpeg","png","webp"] as const,
+        options: ["jpeg", "png", "webp"] as const,
         default: "jpeg",
         constraints: { required: true },
       },
       {
         name: "quality",
         label: "Quality",
-        description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+        description:
+          "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
@@ -342,7 +353,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
     name: "Resize Images",
     description: "Change image dimensions while maintaining quality",
     category: "image",
-    accepts: ["image/jpeg","image/png","image/webp"] as const,
+    accepts: ["image/jpeg", "image/png", "image/webp"] as const,
     platforms: ["browser"] as const,
     parameters: [
       {
@@ -369,7 +380,8 @@ export const PROCESSORS: readonly ProcessorDef[] = [
       {
         name: "quality",
         label: "Quality",
-        description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+        description:
+          "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
         type: "number" as const,
         default: 80,
         constraints: { min: 1, max: 100, required: false },
@@ -420,7 +432,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
       {
         name: "columns",
         label: "Column Mapping",
-        description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
+        description: 'Map of old column names to new names (e.g., {"Name": "full_name"})',
         type: "object" as const,
       },
     ],
@@ -431,14 +443,10 @@ export const PROCESSORS: readonly ProcessorDef[] = [
 // --- Lookup helpers ---
 
 /** Map keyed by nodeType for O(1) lookup. */
-export const PROCESSOR_MAP = new Map<string, ProcessorDef>(
-  PROCESSORS.map((p) => [p.nodeType, p]),
-);
+export const PROCESSOR_MAP = new Map<string, ProcessorDef>(PROCESSORS.map((p) => [p.nodeType, p]));
 
 /** Get the engine defaults for a node type. */
-export function getProcessorDefaults(
-  nodeType: string,
-): Record<string, unknown> {
+export function getProcessorDefaults(nodeType: string): Record<string, unknown> {
   const proc = PROCESSOR_MAP.get(nodeType);
   if (!proc) return {};
   const defaults: Record<string, unknown> = {};
@@ -462,9 +470,17 @@ export function getParamConstraints(
 }
 
 /** Get the accepted MIME types for a node type. */
-export function getProcessorAccepts(
-  nodeType: string,
-): readonly string[] {
+export function getProcessorAccepts(nodeType: string): readonly string[] {
   const proc = PROCESSOR_MAP.get(nodeType);
   return proc?.accepts ?? [];
 }
+
+// =============================================================================
+// Iteration Modes — extracted from definition JSON Schema
+// =============================================================================
+
+/** Valid iteration modes from the engine's definition schema. */
+export const ITERATION_MODES = ["auto", "explicit"] as const;
+
+/** Union type of valid iteration mode strings. */
+export type IterationModeValue = (typeof ITERATION_MODES)[number];

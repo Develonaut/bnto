@@ -115,6 +115,7 @@ export {
   IMAGE_FORMATS,
   GROUP_MODES,
   ERROR_STRATEGIES,
+  ITERATION_MODES,
 } from "./catalog";
 
 // ── Predefined recipes (individual named exports) ───────────────────────
