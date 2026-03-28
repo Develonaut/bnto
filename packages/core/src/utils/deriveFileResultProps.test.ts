@@ -43,26 +43,26 @@ describe("deriveFileResultProps", () => {
     expect(result.savings).toBe("-50%");
   });
 
-  it("omits savings when file got larger", () => {
+  it("shows size increase when file got larger", () => {
     const result = deriveFileResultProps(
       mockResult({
         blobSize: 1500,
         metadata: { originalSize: 1000 },
       }),
     );
-    expect(result.originalSize).toBeDefined();
-    expect(result.savings).toBeUndefined();
+    expect(result.originalSize).toBe("1 KB");
+    expect(result.savings).toBe("+50%");
   });
 
-  it("omits originalSize when same as output", () => {
+  it("shows 0% when same size", () => {
     const result = deriveFileResultProps(
       mockResult({
         blobSize: 1000,
         metadata: { originalSize: 1000 },
       }),
     );
-    expect(result.originalSize).toBeUndefined();
-    expect(result.savings).toBeUndefined();
+    expect(result.originalSize).toBe("1 KB");
+    expect(result.savings).toBe("0%");
   });
 
   it("omits originalSize when not provided", () => {

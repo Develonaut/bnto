@@ -32,5 +32,9 @@ export function createBlank(): Partial<EditorState> {
     undoStack: [],
     redoStack: [],
     expandedContainerIds: new Set(),
+    selectedNodeId: null,
+    panels: { config: false, palette: false, run: false, help: false },
+    insertAfterNodeId: null,
+    insertIntoContainerId: null,
   };
 }

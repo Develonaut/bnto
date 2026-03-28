@@ -13,8 +13,6 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
  * default mode"
  */
 
-test.use({ reducedMotion: "reduce" });
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -294,8 +292,8 @@ test.describe("Mid-session auth loss @auth", () => {
     // Navigation to a protected route forces the proxy to check auth.
     await page.goto("/executions");
 
-    // Should redirect to /signin since JWT is gone
-    await page.waitForURL("/signin", { timeout: 10000 });
+    // Should redirect to /signin with returnTo since JWT is gone
+    await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
   });
 
   test("clearing JWT while on public page — SessionProvider detects loss", async ({ page }) => {
@@ -314,7 +312,7 @@ test.describe("Mid-session auth loss @auth", () => {
     // useConvexAuth() transitions to unauthenticated → onSessionLost fires.
     // This may take a moment as the Convex client detects the invalid token.
     // Wait for the redirect OR for the nav to show unauthenticated state.
-    await page.waitForURL("/signin", { timeout: 15000 }).catch(() => {
+    await page.waitForURL("**/signin**", { timeout: 15000 }).catch(() => {
       // If no redirect (public page doesn't trigger proxy check),
       // at minimum the UI should reflect unauthenticated state
     });
@@ -324,8 +322,8 @@ test.describe("Mid-session auth loss @auth", () => {
     // the nav should show "Sign In" instead of the user menu dropdown.
     const url = page.url();
     if (url.includes("/signin")) {
-      // Redirect happened — SessionProvider detected loss
-      await expect(page).toHaveURL("/signin");
+      // Redirect happened — SessionProvider detected loss (may include returnTo)
+      expect(url).toContain("/signin");
     } else {
       // Still on public page — verify nav shows unauthenticated state.
       // The user menu should no longer be visible (replaced by sign-in link).
@@ -366,9 +364,9 @@ test.describe("Auth round-trip verification @auth", () => {
     const storeAfter = await page.evaluate(() => localStorage.getItem("bnto-auth"));
     expect(JSON.parse(storeAfter!).state.hasAccount).toBe(true);
 
-    // Protected route should reject
+    // Protected route should reject — redirects with returnTo
     await page.goto("/executions");
-    await page.waitForURL("/signin", { timeout: 10000 });
+    await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
 
     // 6. Sign back in
     await signIn(page, email);

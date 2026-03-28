@@ -54,6 +54,9 @@ export type { ExecutionState } from "./hooks/useExecutionState";
 export { useFileResultProps } from "./hooks/useFileResultProps";
 export type { FileResultDisplayProps } from "./hooks/useFileResultProps";
 
+// ── File transfer (module-scoped SPA navigation bridge) ─────────────────
+export { stashFilesForTransfer, claimTransferredFiles } from "./fileTransfer";
+
 // ── Utils (pure functions) ────────────────────────────────────────────────
 export { computeTotalSaved } from "./utils/computeTotalSaved";
 export { deriveFileResultProps } from "./utils/deriveFileResultProps";
@@ -68,6 +71,7 @@ export { useShallow } from "zustand/react/shallow";
 // ── Pipeline types (execution-oriented definition for WASM) ───────────────
 export type { PipelineDefinition, PipelineNode } from "./types/pipeline";
 export { definitionToPipeline } from "./transforms/definitionToPipeline";
+export { applyConfigToDefinition } from "./transforms/applyConfigToDefinition";
 
 // ── Pipeline events (structured progress from Rust executor) ─────────────
 export type {

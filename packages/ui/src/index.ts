@@ -6,6 +6,7 @@ export { createCn } from "./utils/createCn";
 export { resolveResponsive } from "./utils/responsive";
 export { toDropzoneAccept } from "./utils/toDropzoneAccept";
 export { formatFileSize } from "./utils/formatFileSize";
+export { formatTimeAgo } from "./utils/formatTimeAgo";
 export type { Breakpoints, ResponsiveProp } from "./utils/responsive";
 export { type Align, alignMap } from "./utils/alignMap";
 export { type Justify, justifyMap } from "./utils/justifyMap";
@@ -23,6 +24,8 @@ export type { UseDialogReturn } from "./hooks/useDialog";
 export { useKeyDown } from "./hooks/useKeyDown";
 export { useMounted } from "./hooks/useMounted";
 export { usePrevious } from "./hooks/usePrevious";
+export { useWindowVirtualizer } from "./hooks/useWindowVirtualizer";
+export type { VirtualItem } from "./hooks/useWindowVirtualizer";
 
 /* Layout */
 export { AppShell, AppShellHeader, AppShellMain, AppShellContent } from "./layout/AppShell";
@@ -237,6 +240,15 @@ export {
   RecipeCardDescription,
   RecipeCardTags,
 } from "./blocks/RecipeCard";
+
+/* Navigation */
+export {
+  Stepper,
+  StepperList,
+  StepperStep,
+  StepperContent,
+  StepperIndicator,
+} from "./navigation/Stepper";
 
 /* Animation */
 export {

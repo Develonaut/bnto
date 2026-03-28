@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { EditorProvider, EditorCanvas, EditorToolbar, EditorRightToolbar } from "@bnto/editor";
 import { Stack, Text } from "@bnto/ui";
+import { claimTransferredFiles } from "@bnto/core";
 
 import { EditorBetaDialog } from "./_components/EditorBetaDialog";
 import { EditorLoadingSkeleton } from "./_components/EditorLoadingSkeleton";
@@ -15,7 +18,11 @@ import { useEditorRecipe } from "./_components/useEditorRecipe";
  * provides the Suspense boundary for useSearchParams().
  */
 export default function EditorPage() {
+  const searchParams = useSearchParams();
+  const recipeId = searchParams.get("recipe");
   const { definition, cloudId, isLoading, notFound } = useEditorRecipe();
+
+  const initialFiles = useMemo(() => (recipeId ? claimTransferredFiles(recipeId) : []), [recipeId]);
 
   if (isLoading) return <EditorLoadingSkeleton />;
 
@@ -30,7 +37,7 @@ export default function EditorPage() {
   return (
     <>
       <EditorBetaDialog />
-      <EditorProvider definition={definition} cloudId={cloudId}>
+      <EditorProvider definition={definition} cloudId={cloudId} initialFiles={initialFiles}>
         <EditorCanvas>
           <EditorToolbar />
           <EditorRightToolbar />

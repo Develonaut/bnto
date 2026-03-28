@@ -39,12 +39,15 @@ test.describe("editor build & configure @browser", () => {
     const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards).toHaveCount(3);
 
-    // Select the processing node
+    // Select the processing node and wait for config panel
     await selectNode(page, "Compress");
+    await ensureConfigPanelOpen(page);
 
-    // Click delete button in the config panel
+    // Click delete button — force: true because an extended hit-area
+    // span (-m-4 p-4) overlaps the button in the config panel header
     const deleteBtn = page.getByTestId("config-node-delete");
-    await deleteBtn.click();
+    await deleteBtn.waitFor({ timeout: 5_000 });
+    await deleteBtn.click({ force: true });
 
     // Should be back to 2 I/O nodes
     await expect(nodeCards).toHaveCount(2);
@@ -107,7 +110,10 @@ test.describe("editor build & configure @browser", () => {
 
     // Delete the processing node via config panel
     await selectNode(page, "Compress");
-    await page.getByTestId("config-node-delete").click();
+    await ensureConfigPanelOpen(page);
+    const deleteBtn = page.getByTestId("config-node-delete");
+    await deleteBtn.waitFor({ timeout: 5_000 });
+    await deleteBtn.click({ force: true });
     await expect(nodeCards).toHaveCount(2);
 
     // Undo via keyboard shortcut (Cmd+Z on macOS / Ctrl+Z on Linux)

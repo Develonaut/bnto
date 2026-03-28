@@ -29,6 +29,7 @@ app/
 `proxy.ts` runs on the server before HTML is sent. Lightweight cookie-presence check (not full session validation -- Convex validates at the data layer).
 
 Two rules:
+
 - **Auth on `/signin`** -> redirect to `/` (skipped when signout signal cookie is set)
 - **Unauth on private route** -> redirect to `/signin`
 - Everything else -> pass through
@@ -65,8 +66,9 @@ Any user visits /compress-images
 
 ```
 Unauth user visits /workflows
-  -> proxy.ts: no session cookie + /workflows is private -> redirect to /signin
-  -> User never sees /workflows at all
+  -> proxy.ts: no session cookie + /workflows is private -> redirect to /signin?returnTo=%2Fworkflows
+  -> User signs in -> useSignInForm reads returnTo -> router.replace("/workflows")
+  -> User lands on /workflows
 ```
 
 ### Auth user on /signin
@@ -75,6 +77,10 @@ Unauth user visits /workflows
 Auth user visits /signin directly
   -> proxy.ts: session cookie present + no signout signal -> redirect to /
   -> User never sees /signin
+
+Auth user visits /signin?returnTo=/editor
+  -> proxy.ts: session cookie present + no signout signal -> redirect to /editor
+  -> User lands on the returnTo destination
 ```
 
 ### Mid-session auth loss
@@ -83,7 +89,8 @@ Auth user visits /signin directly
 User's session expires while browsing /settings
   -> SessionProvider detects auth -> unauth transition
   -> fires onSessionLost callback
-  -> Providers handler calls router.replace("/signin")
+  -> Providers handler calls router.replace("/signin?returnTo=%2Fsettings")
+  -> User signs back in -> lands on /settings
 ```
 
 ### Sign-out (instant, no await)
@@ -104,25 +111,25 @@ User clicks Sign Out
 
 ## Key Files
 
-| File | Responsibility |
-|---|---|
-| `proxy.ts` | Route protection -- runs before render. Cookie-presence check. |
-| `app/(app)/layout.tsx` | AppShell wrapper (always renders header, no auth logic) |
-| `app/(app)/_components/AppShell.tsx` | Header + main layout shell |
-| `app/(app)/_components/NavUser.tsx` | Auth-aware: dropdown (auth) or "Sign in" link (unauth) |
-| `app/[bnto]/layout.tsx` | SSR-safe tool page layout with simplified header |
-| `app/providers/index.tsx` | Wires `onSessionLost` -> router redirect to /signin |
-| `core/providers/SessionProvider.tsx` | Detects auth -> unauth transition, fires `onSessionLost` |
-| `lib/routes.ts` | `isAuthPath()`, `isProtectedPath()`, route definitions |
-| `lib/bntoRegistry.ts` | `isValidBntoSlug()`, `getBntoBySlug()`, all predefined slugs |
-| `core/lib/signoutSignal.ts` | Sets the `bnto-signout` signal cookie |
-| `core/constants.ts` | `SIGNOUT_COOKIE` constant shared between core and proxy |
+| File                                 | Responsibility                                                           |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| `proxy.ts`                           | Route protection -- runs before render. Cookie-presence check.           |
+| `app/(app)/layout.tsx`               | AppShell wrapper (always renders header, no auth logic)                  |
+| `app/(app)/_components/AppShell.tsx` | Header + main layout shell                                               |
+| `app/(app)/_components/NavUser.tsx`  | Auth-aware: dropdown (auth) or "Sign in" link (unauth)                   |
+| `app/[bnto]/layout.tsx`              | SSR-safe tool page layout with simplified header                         |
+| `app/providers/index.tsx`            | Wires `onSessionLost` -> router redirect to /signin                      |
+| `core/providers/SessionProvider.tsx` | Detects auth -> unauth transition, fires `onSessionLost`                 |
+| `lib/routes.ts`                      | `isAuthPath()`, `isProtectedPath()`, `safeReturnTo()`, route definitions |
+| `lib/bntoRegistry.ts`                | `isValidBntoSlug()`, `getBntoBySlug()`, all predefined slugs             |
+| `core/lib/signoutSignal.ts`          | Sets the `bnto-signout` signal cookie                                    |
+| `core/constants.ts`                  | `SIGNOUT_COOKIE` constant shared between core and proxy                  |
 
 ## Rules
 
-### No returnTo redirects
+### returnTo redirects
 
-We don't redirect unauth users to `/signin?returnTo=...`. If you're not signed in, you land on `/signin`. After signing in, you land on `/`.
+When the proxy redirects an unauthenticated user to `/signin`, it appends `?returnTo=/original-path` so the user returns to their intended destination after signing in. The `safeReturnTo()` validator in `lib/routes.ts` prevents open redirects — only relative internal paths are accepted. Auth paths (`/signin`, `/signup`) are rejected to prevent loops. When a session expires mid-browse, the `onSessionLost` handler in `Providers` preserves the current pathname in the same way.
 
 ### No auth checks in individual pages
 
@@ -150,7 +157,7 @@ Single source of truth in `lib/routes.ts`:
 
 ```typescript
 // lib/routes.ts
-export const AUTH_PATHS = ["/signin", "/signup"];      // redirect away if authenticated
+export const AUTH_PATHS = ["/signin", "/signup"]; // redirect away if authenticated
 export const PROTECTED_PATHS = ["/workflows", "/executions", "/settings"]; // require auth
 ```
 

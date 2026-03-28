@@ -1,9 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { toDropzoneAccept } from "@bnto/ui";
 import { useEditor } from "../../context";
 import { useRunHandlers, useRunDownloads } from "./useRunHandlers";
+
+function deriveStep(phase: string, fileCount: number) {
+  if (phase === "idle") return fileCount === 0 ? "dropzone" : "staging";
+  return phase;
+}
+
+function deriveAccept(fileAccept: string | undefined) {
+  const label = fileAccept && fileAccept !== "*/*" ? fileAccept : "all files";
+  const dropzone = fileAccept ? toDropzoneAccept(fileAccept) : undefined;
+  return { acceptLabel: label, dropzoneAccept: dropzone };
+}
 
 function useRunTab() {
   const editor = useEditor();
@@ -12,13 +23,11 @@ function useRunTab() {
 
   const { setFiles, removeFile, handleBack } = useRunHandlers(inputFiles, phase);
   const { handleClear, handleDownloadAll, handleDownload } = useRunDownloads();
-
-  const acceptLabel = fileAccept && fileAccept !== "*/*" ? fileAccept : "all files";
-  const dropzoneAccept = useMemo(
-    () => (fileAccept ? toDropzoneAccept(fileAccept) : undefined),
-    [fileAccept],
+  const handleRun = useCallback(
+    () => editor.execution.runExecution(inputFiles),
+    [editor, inputFiles],
   );
-  const showDropzone = phase === "idle" && inputFiles.length === 0;
+  const { acceptLabel, dropzoneAccept } = useMemo(() => deriveAccept(fileAccept), [fileAccept]);
 
   return {
     inputFiles,
@@ -29,12 +38,13 @@ function useRunTab() {
     setFiles,
     removeFile,
     handleBack,
+    handleRun,
     handleClear,
     handleDownloadAll,
     handleDownload,
     acceptLabel,
     dropzoneAccept,
-    showDropzone,
+    step: deriveStep(phase, inputFiles.length),
   };
 }
 

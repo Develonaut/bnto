@@ -91,16 +91,20 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("redirects to /signin on private route /executions", async () => {
+    it("redirects to /signin with returnTo on private route /executions", async () => {
       const response = await callProxy(createRequest("/executions"));
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/signin");
+      expect(location.searchParams.get("returnTo")).toBe("/executions");
     });
 
-    it("redirects to /signin on private route /settings", async () => {
+    it("redirects to /signin with returnTo on private route /settings", async () => {
       const response = await callProxy(createRequest("/settings"));
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/signin");
+      expect(location.searchParams.get("returnTo")).toBe("/settings");
     });
 
     it("passes through on unknown routes (404 at page level)", async () => {
@@ -108,10 +112,12 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("redirects to /signin on protected sub-route", async () => {
+    it("redirects to /signin with returnTo on protected sub-route", async () => {
       const response = await callProxy(createRequest("/settings/account"));
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/signin");
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/signin");
+      expect(location.searchParams.get("returnTo")).toBe("/settings/account");
     });
   });
 
@@ -138,9 +144,14 @@ describe("proxy", () => {
 
     it("redirects from /signin to / (already authenticated)", async () => {
       const response = await callProxy(createRequest("/signin", AUTH_COOKIES));
-      // Proxy redirects authenticated users away from /signin to /
       expect(response.status).toBe(307);
-      expect(response.headers.get("location")).toContain("/");
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/");
+    });
+
+    it("redirects from /signin to returnTo destination when authenticated", async () => {
+      const response = await callProxy(createRequest("/signin?returnTo=%2Feditor", AUTH_COOKIES));
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/editor");
     });
   });
 });

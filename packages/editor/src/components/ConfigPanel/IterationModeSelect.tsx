@@ -24,16 +24,18 @@ function IterationModeSelect({ value, onChange }: IterationModeSelectProps) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label>File Iteration</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="auto">Auto</SelectItem>
-          <SelectItem value="explicit">Explicit</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex items-center justify-between gap-2">
+        <Label>File Iteration</Label>
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto">Auto</SelectItem>
+            <SelectItem value="explicit">Explicit</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       <Text size="xs" color="muted">
         {description}
       </Text>

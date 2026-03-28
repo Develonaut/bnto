@@ -12,8 +12,6 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
  * Emails use @test.bnto.dev domain — cleaned up by global teardown.
  */
 
-test.use({ reducedMotion: "reduce" });
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -284,9 +282,15 @@ test.describe("Auth form behavior @auth", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Proxy route protection @auth", () => {
-  test("unauthenticated user redirected from protected route to /signin", async ({ page }) => {
+  test("unauthenticated user redirected from protected route to /signin with returnTo", async ({
+    page,
+  }) => {
     await page.goto("/executions");
-    await page.waitForURL("/signin", { timeout: 10000 });
+    await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
+
+    // Verify returnTo param preserves original path
+    const url = new URL(page.url());
+    expect(url.searchParams.get("returnTo")).toBe("/executions");
 
     // Fresh context → signup mode
     const authHeading = page.getByTestId("auth-heading");
@@ -314,9 +318,9 @@ test.describe("Proxy route protection @auth", () => {
     // Wait for session cookie to clear server-side
     await page.waitForTimeout(2000);
 
-    // Protected route should now redirect to /signin
+    // Protected route should now redirect to /signin with returnTo
     await page.goto("/executions");
-    await page.waitForURL("/signin", { timeout: 10000 });
+    await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
   });
 
   test("navbar Sign In navigates to /signin", async ({ page }) => {

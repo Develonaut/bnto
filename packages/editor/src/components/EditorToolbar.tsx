@@ -56,27 +56,10 @@ function useToolbarState() {
   };
 }
 
-/** Properties + Help action buttons on the right side of the toolbar. */
-function ToolbarActions({
-  toggleConfig,
-  openHelp,
-}: {
-  toggleConfig: () => void;
-  openHelp: () => void;
-}) {
+/** Help action button on the right side of the toolbar. */
+function ToolbarActions({ openHelp }: { openHelp: () => void }) {
   return (
     <>
-      <ToolbarDivider />
-      <ToolbarGroup>
-        <Button
-          icon={<SlidersHorizontalIcon />}
-          variant="ghost"
-          elevation="sm"
-          onClick={toggleConfig}
-          aria-label="Properties"
-          data-testid="toolbar-properties"
-        />
-      </ToolbarGroup>
       <ToolbarDivider />
       <ToolbarGroup>
         <Button
@@ -92,7 +75,7 @@ function ToolbarActions({
   );
 }
 
-/** Toolbar button strip (file, run, config, help). */
+/** Toolbar button strip (file, run + config, help). */
 function ToolbarStrip({
   toggleConfig,
   openHelp,
@@ -113,8 +96,16 @@ function ToolbarStrip({
       <ToolbarGroup>
         <RunButton />
         <RunPanel />
+        <Button
+          icon={<SlidersHorizontalIcon />}
+          variant="ghost"
+          elevation="sm"
+          onClick={toggleConfig}
+          aria-label="Properties"
+          data-testid="toolbar-properties"
+        />
       </ToolbarGroup>
-      <ToolbarActions toggleConfig={toggleConfig} openHelp={openHelp} />
+      <ToolbarActions openHelp={openHelp} />
     </Toolbar>
   );
 }

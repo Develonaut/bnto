@@ -31,7 +31,7 @@ test.describe("editor entry & navigation @browser", () => {
   test("EN2: predefined recipe loads correct nodes", async ({ page }) => {
     await navigateToEditor(page, "compress-images");
 
-    // compress-images has: Input, Compress, Output (auto-iteration group)
+    // compress-images (auto-iteration): Input, Compress Images, Output
     const nodeCards = page.getByTestId("node-card");
     await expect(nodeCards.filter({ hasText: "Input" })).toHaveCount(1);
     await expect(nodeCards.filter({ hasText: "Output" })).toHaveCount(1);

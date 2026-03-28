@@ -1,10 +1,20 @@
 "use client";
 
-import { Divider, FileUpload, FileUploadDropzone } from "@bnto/ui";
+import {
+  Divider,
+  FileUpload,
+  FileUploadDropzone,
+  Stepper,
+  StepperContent,
+  StepperList,
+  StepperStep,
+} from "@bnto/ui";
 import { DropzoneContent } from "../DropzoneContent";
 import { RunHeader } from "./RunHeader";
 import { RunFileList } from "./RunFileList";
 import { useRunTab } from "./useRunTab";
+
+const noop = () => {};
 
 function RunTabDropzone({ acceptLabel }: { acceptLabel: string }) {
   return (
@@ -26,6 +36,7 @@ function RunTabContent(props: ReturnType<typeof useRunTab>) {
         fileProgress={props.fileProgress}
         errors={props.errors}
         onBack={props.handleBack}
+        onRun={props.handleRun}
         onClear={props.handleClear}
         onDownloadAll={props.handleDownloadAll}
       />
@@ -35,6 +46,7 @@ function RunTabContent(props: ReturnType<typeof useRunTab>) {
           phase={props.phase}
           inputFiles={props.inputFiles}
           results={props.results}
+          errors={props.errors}
           fileProgress={props.fileProgress}
           onRemove={props.removeFile}
           onDownload={props.handleDownload}
@@ -55,11 +67,30 @@ function RunTab() {
         multiple
         className="flex h-full flex-col gap-0"
       >
-        {tab.showDropzone ? (
-          <RunTabDropzone acceptLabel={tab.acceptLabel} />
-        ) : (
-          <RunTabContent {...tab} />
-        )}
+        <Stepper value={tab.step} onValueChange={noop} className="flex h-full flex-col">
+          <StepperList>
+            <StepperStep value="dropzone" label="Drop" />
+            <StepperStep value="staging" label="Files" />
+            <StepperStep value="running" label="Running" />
+            <StepperStep value="completed" label="Done" />
+            <StepperStep value="failed" label="Failed" />
+          </StepperList>
+          <StepperContent value="dropzone">
+            <RunTabDropzone acceptLabel={tab.acceptLabel} />
+          </StepperContent>
+          <StepperContent value="staging">
+            <RunTabContent {...tab} />
+          </StepperContent>
+          <StepperContent value="running">
+            <RunTabContent {...tab} />
+          </StepperContent>
+          <StepperContent value="completed">
+            <RunTabContent {...tab} />
+          </StepperContent>
+          <StepperContent value="failed">
+            <RunTabContent {...tab} />
+          </StepperContent>
+        </Stepper>
       </FileUpload>
     </div>
   );

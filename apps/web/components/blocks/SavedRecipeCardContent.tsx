@@ -7,9 +7,9 @@ import {
   RecipeCardTitle,
   Row,
   Text,
+  formatTimeAgo,
 } from "@bnto/ui";
 import { StatusBadge } from "@/components/blocks/StatusBadge";
-import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 interface SavedRecipeCardContentProps {
   recipe: RecipeListItem;

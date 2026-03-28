@@ -4,14 +4,13 @@ import { test, expect } from "../fixtures";
  * Site navigation journey — verifies every public route on the site loads
  * without errors and confirms navbar/footer navigation works end-to-end.
  *
- * Desktop: all 11 public routes + navbar + footer + 404
+ * Desktop: all public routes + navbar + footer + 404
  * Mobile: representative subset + mobile menu + 404
  */
 
-test.use({ reducedMotion: "reduce" });
-
 const PUBLIC_ROUTES = [
   { path: "/", name: "home" },
+  { path: "/explore", name: "explore" },
   { path: "/compress-images", name: "compress-images" },
   { path: "/resize-images", name: "resize-images" },
   { path: "/convert-image-format", name: "convert-image-format" },
@@ -37,18 +36,17 @@ test.describe("Site navigation — desktop @browser", () => {
     });
   }
 
-  test("navbar: Explore dropdown opens and navigates to tool page", async ({ page }) => {
+  test("navbar: Explore link navigates to explore page and recipe", async ({ page }) => {
     await page.goto("/");
 
-    // Open Explore dropdown (categorized recipe links)
-    await page.getByTestId("explore-button").click();
+    // Click Explore nav link — navigates to /explore
+    await page.getByTestId("nav-link-explore").click();
+    await expect(page).toHaveURL("/explore");
 
-    // Find the Compress Images link in the explore dropdown
-    const compressLink = page.getByTestId("explore-link-compress-images");
-    await expect(compressLink).toBeVisible();
-
-    // Navigate to tool page via dropdown
-    await compressLink.click();
+    // Click a recipe card to navigate to its tool page
+    const firstRecipeLink = page.locator('a[href="/compress-images"]').first();
+    await expect(firstRecipeLink).toBeVisible();
+    await firstRecipeLink.click();
     await expect(page).toHaveURL("/compress-images");
   });
 
@@ -97,9 +95,10 @@ test.describe("Site navigation — desktop @browser", () => {
 test.describe("Site navigation — mobile @browser", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  // Representative subset — home, one tool, plus static pages
+  // Representative subset — home, explore, one tool, plus static pages
   const MOBILE_ROUTES = [
     { path: "/", name: "home" },
+    { path: "/explore", name: "explore" },
     { path: "/compress-images", name: "compress-images" },
     { path: "/pricing", name: "pricing" },
     { path: "/faq", name: "faq" },
@@ -115,7 +114,7 @@ test.describe("Site navigation — mobile @browser", () => {
     });
   }
 
-  test("mobile menu: opens, shows recipes, and navigates", async ({ page }) => {
+  test("mobile menu: opens and navigates to explore page", async ({ page }) => {
     await page.goto("/");
 
     // Open mobile menu via hamburger button
@@ -124,9 +123,9 @@ test.describe("Site navigation — mobile @browser", () => {
     // Wait for Sheet dialog to be visible
     await expect(page.getByTestId("mobile-nav-dialog")).toBeVisible();
 
-    // Navigate to a tool page via mobile menu
-    await page.getByTestId("mobile-link-compress-images").click();
-    await expect(page).toHaveURL("/compress-images");
+    // Navigate to explore page via mobile menu
+    await page.getByTestId("mobile-link-explore").click();
+    await expect(page).toHaveURL("/explore");
   });
 
   test("mobile menu: Pricing and FAQ links navigate", async ({ page }) => {
