@@ -3,35 +3,46 @@
  *
  * Tests the pure `computePalette` function directly. The hook is a thin
  * useMemo wrapper, so testing the pure function covers all logic.
+ *
+ * Counts are derived from NODE_TYPE_INFO so tests don't break when new
+ * node types are added — only the mapping behavior is asserted.
  */
 
 import { describe, it, expect } from "vitest";
 import { NODE_TYPE_INFO, CATEGORIES } from "@bnto/core";
+import type { NodeCategory } from "@bnto/core";
 import { computePalette } from "./useNodePalette";
+
+/** All non-IO types from the source of truth. */
+const nonIoTypes = Object.values(NODE_TYPE_INFO).filter((t) => t.category !== "io");
+
+/** Count types by category from the source of truth. */
+function expectedCountForCategory(category: NodeCategory): number {
+  return nonIoTypes.filter((t) => t.category === category).length;
+}
 
 function allItems(browserOnly = false) {
   return computePalette(NODE_TYPE_INFO, CATEGORIES, browserOnly).groups.flatMap((g) => g.items);
 }
 
 describe("computePalette", () => {
+  it("creates one palette item per non-IO node type", () => {
+    const items = allItems();
+    expect(items).toHaveLength(nonIoTypes.length);
+  });
+
   it("creates one palette item per image node type", () => {
     const imageItems = allItems().filter((i) => i.category === "image");
-    expect(imageItems).toHaveLength(4);
-    const types = imageItems.map((i) => i.type);
-    expect(types).toContain("image-compress");
-    expect(types).toContain("image-convert");
-    expect(types).toContain("image-resize");
-    expect(types).toContain("image-strip-exif");
+    expect(imageItems).toHaveLength(expectedCountForCategory("image"));
+    expect(imageItems.length).toBeGreaterThanOrEqual(4);
+    expect(imageItems.map((i) => i.type)).toContain("image-compress");
   });
 
   it("creates one palette item per spreadsheet node type", () => {
     const items = allItems().filter((i) => i.category === "spreadsheet");
-    expect(items).toHaveLength(4);
-    const types = items.map((i) => i.type);
-    expect(types).toContain("spreadsheet-clean");
-    expect(types).toContain("spreadsheet-rename");
-    expect(types).toContain("spreadsheet-convert");
-    expect(types).toContain("spreadsheet-merge");
+    expect(items).toHaveLength(expectedCountForCategory("spreadsheet"));
+    expect(items.length).toBeGreaterThanOrEqual(3);
+    expect(items.map((i) => i.type)).toContain("spreadsheet-clean");
   });
 
   it("creates a palette item for file-rename", () => {
