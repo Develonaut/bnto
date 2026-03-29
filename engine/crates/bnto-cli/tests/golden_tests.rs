@@ -9,7 +9,8 @@ mod helpers;
 
 use golden_helpers::assert_golden;
 use helpers::{
-    fixture_csv, fixture_image, run_custom_recipe_ok, run_explicit_recipe_ok, run_recipe_ok,
+    fixture_csv, fixture_image, fixture_overlay, run_custom_recipe_ok, run_explicit_recipe_ok,
+    run_explicit_recipe_ok_multi, run_recipe_ok, run_recipe_ok_multi,
 };
 
 // --- Image Recipes ---
@@ -82,6 +83,15 @@ fn golden_standardize_csv() {
 fn golden_csv_to_json() {
     let (out, _) = run_recipe_ok("csv-to-json", &fixture_csv("simple.csv"));
     assert_golden("csv-to-json", &out);
+}
+
+#[test]
+fn golden_merge_csv() {
+    let (out, _) = run_recipe_ok_multi(
+        "merge-csv",
+        &[fixture_csv("simple.csv"), fixture_csv("numeric-values.csv")],
+    );
+    assert_golden("merge-csv", &out);
 }
 
 #[test]
@@ -196,6 +206,15 @@ fn golden_standardize_csv_explicit() {
 fn golden_strip_exif_explicit() {
     let (out, _) = run_explicit_recipe_ok("strip-exif", &fixture_image("small.jpg"));
     assert_golden("strip-exif", &out);
+}
+
+#[test]
+fn golden_merge_csv_explicit() {
+    let (out, _) = run_explicit_recipe_ok_multi(
+        "merge-csv",
+        &[fixture_csv("simple.csv"), fixture_csv("numeric-values.csv")],
+    );
+    assert_golden("merge-csv", &out);
 }
 
 #[test]

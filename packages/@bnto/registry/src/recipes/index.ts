@@ -10,6 +10,7 @@ export { csvToJson } from "./csvToJson";
 export { compressImages } from "./compressImages";
 export { convertImageFormat } from "./convertImageFormat";
 export { generateThumbnails } from "./generateThumbnails";
+export { mergeCsv } from "./mergeCsv";
 export { optimizeImagesForWeb } from "./optimizeImagesForWeb";
 export { renameCsvColumns } from "./renameCsvColumns";
 export { renameFiles } from "./renameFiles";

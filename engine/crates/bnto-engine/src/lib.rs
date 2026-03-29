@@ -234,6 +234,37 @@ mod tests {
     }
 
     #[test]
+    fn test_generated_merge_csv_recipe() {
+        let json = include_str!(
+            "../../../../packages/@bnto/registry/src/recipes/generated/merge-csv.bnto.json"
+        );
+        let csv_a = b"name,age\nAlice,30\n";
+        let csv_b = b"name,age\nBob,25\n";
+        let files = vec![
+            PipelineFile {
+                name: "a.csv".to_string(),
+                data: csv_a.to_vec(),
+                mime_type: "text/csv".to_string(),
+                metadata: serde_json::Map::new(),
+            },
+            PipelineFile {
+                name: "b.csv".to_string(),
+                data: csv_b.to_vec(),
+                mime_type: "text/csv".to_string(),
+                metadata: serde_json::Map::new(),
+            },
+        ];
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(json, files, &reporter).expect("merge-csv recipe");
+
+        assert_eq!(result.files.len(), 1);
+        let output = String::from_utf8_lossy(&result.files[0].data);
+        assert!(output.contains("Alice"));
+        assert!(output.contains("Bob"));
+    }
+
+    #[test]
     fn test_generated_strip_exif_recipe() {
         let json = include_str!(
             "../../../../packages/@bnto/registry/src/recipes/generated/strip-exif.bnto.json"
@@ -331,6 +362,9 @@ mod tests {
             ),
             include_str!(
                 "../../../../packages/@bnto/registry/src/recipes/generated/watermark-images.bnto.json"
+            ),
+            include_str!(
+                "../../../../packages/@bnto/registry/src/recipes/generated/merge-csv.bnto.json"
             ),
         ];
 
