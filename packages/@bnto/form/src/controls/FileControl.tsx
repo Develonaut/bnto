@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useRef } from "react";
-import { Button } from "@bnto/ui";
+import { useCallback, useRef, useState } from "react";
+import { Button, Input, Row, UploadIcon, XIcon } from "@bnto/ui";
 import type { ControlProps } from "./types";
 
 /** Read a File as a base64-encoded data URI string. */
@@ -16,12 +16,14 @@ function readAsBase64(file: File): Promise<string> {
 
 function FileControl({ id, fieldConfig, value, onChange }: ControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState("");
   const accept = fieldConfig?.accept?.join(",") ?? "image/*";
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
+      setFileName(file.name);
       onChange(await readAsBase64(file));
     },
     [onChange],
@@ -29,6 +31,7 @@ function FileControl({ id, fieldConfig, value, onChange }: ControlProps) {
 
   const handleClear = useCallback(() => {
     onChange("");
+    setFileName("");
     if (inputRef.current) inputRef.current.value = "";
   }, [onChange]);
 
@@ -47,16 +50,37 @@ function FileControl({ id, fieldConfig, value, onChange }: ControlProps) {
         onChange={handleFileChange}
         className="hidden"
       />
-      <div className="flex items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={handleChoose}>
-          {hasValue ? "Replace" : "Choose file"}
-        </Button>
-        {hasValue && (
-          <Button type="button" variant="ghost" size="sm" onClick={handleClear}>
-            Remove
+      <Row className="gap-2">
+        <Input
+          readOnly
+          value={fileName}
+          placeholder="No file chosen"
+          wrapperClassName="min-w-0 flex-1"
+          onClick={handleChoose}
+          className="cursor-pointer"
+        />
+        {hasValue ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleClear}
+            aria-label="Remove file"
+          >
+            <XIcon />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={handleChoose}
+            aria-label="Choose file"
+          >
+            <UploadIcon />
           </Button>
         )}
-      </div>
+      </Row>
       {isImage && (
         <img
           src={value as string}
