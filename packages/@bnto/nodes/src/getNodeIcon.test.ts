@@ -81,6 +81,10 @@ describe("getNodeIcon", () => {
     expect(getNodeIcon("spreadsheet-rename")).toBe("sheet");
   });
 
+  it("returns correct icon for image-watermark", () => {
+    expect(getNodeIcon("image-watermark")).toBe("stamp");
+  });
+
   it("returns correct icons for other processing nodes", () => {
     expect(getNodeIcon("transform")).toBe("arrow-left-right");
     expect(getNodeIcon("edit-fields")).toBe("pen-line");

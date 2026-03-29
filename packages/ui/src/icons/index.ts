@@ -99,6 +99,7 @@ export {
   Box as BoxIcon,
   ArrowLeftRight as ArrowLeftRightIcon,
   Sheet as SheetIcon,
+  Stamp as StampIcon,
   Terminal as TerminalIcon,
   CircleAlert as CircleAlertIcon,
   CircleHelp as CircleHelpIcon,
