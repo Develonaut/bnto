@@ -1,6 +1,6 @@
 # Bento Grid Editor — Unified Recipe View
 
-**Status:** Proposed
+**Status:** In Progress (Phase 2 — Bento Grid Layout)
 **Last Updated:** March 29, 2026
 **Supersedes:** Schema-driven config plan (folded into Phase 1 of this work)
 
@@ -406,24 +406,25 @@ Update this section as work progresses. Check off completed items, note blockers
 
 ### Phase 1: Schema-Driven Config
 
-- [ ] Tests written (`extractProcessingNodes.test.ts`, `deriveDefaults.test.ts`)
-- [ ] `extractProcessingNodes` utility implemented
-- [ ] `useRecipeConfig` hook implemented
-- [ ] `RecipeConfigSection` rewritten to use SchemaForm
-- [ ] Defaults derived from definition (not `DEFAULT_CONFIGS`)
-- [ ] Hand-written config files deleted (15 files)
-- [ ] `task ui:test` passes clean
-- [ ] Committed to `feat/bento-grid-editor`
+- [x] Tests written (`extractProcessingNodes.test.ts`, `deriveDefaults.test.ts`) — 11 tests green
+- [x] `extractProcessingNodes` utility implemented
+- [ ] `useRecipeConfig` hook implemented — deferred; config flows through `useBentoRecipeFlow` instead
+- [ ] `RecipeConfigSection` rewritten to use SchemaForm — deferred; `NodeConfigCard` uses `SchemaForm` directly
+- [x] Defaults derived from definition (not `DEFAULT_CONFIGS`) — `deriveDefaults()` utility
+- [ ] Hand-written config files deleted (15 files) — deferred to Phase 4 cleanup
+- [x] `task ui:test` passes clean
+- [x] Committed to `feat/bento-grid-editor`
 
 ### Phase 2: Bento Grid Layout (Run Mode)
 
 - [ ] Compartment render tests written
-- [ ] `RecipeGrid` component created (Surface + Grid)
-- [ ] Compartment cards created (6 cards)
-- [ ] Wired to `useRecipeFlow` / execution state
-- [ ] Run page renders as bento grid
+- [x] `RecipeGrid` component created (Surface + Grid)
+- [x] Compartment cards created (6 cards: RecipeInfoCard, InputCard, PipelineCard, NodeConfigCard, ToolbarCard, OutputCard)
+- [x] Wired to `useBentoRecipeFlow` hook (replaces `useRecipeFlow` for bento path)
+- [x] Run page renders as bento grid (behind `NEXT_PUBLIC_BENTO_GRID=1` env flag)
 - [ ] Springable loading works per-compartment
-- [ ] `task ui:test` passes clean
+- [x] `task ui:build` passes clean
+- [x] `task ui:test` passes clean (102 tests)
 - [ ] Committed
 
 ### Phase 3: Edit Mode
@@ -448,7 +449,15 @@ Update this section as work progresses. Check off completed items, note blockers
 
 ### Decisions Made During Implementation
 
-<!-- Record any design decisions, tradeoffs, or deviations from the plan here -->
+1. **Parallel build with env flag instead of in-place replacement.** `NEXT_PUBLIC_BENTO_GRID=1` in `.env.local` toggles between old `RecipeShell` and new `BentoRecipeShell` at the server component level (`page.tsx`). Both paths are completely independent — no shared mutable state.
+
+2. **`useBentoRecipeFlow` instead of extending `useRecipeFlow`.** The existing `useRecipeFlow` depends on `DEFAULT_CONFIGS`, `BntoConfigMap`, `RecipeFlowStore`, cloud execution, and phase mapping — all of which are being replaced. A clean new hook that uses `deriveDefaults()` for parameters and `instance.run()` directly for execution is simpler and avoids tangling.
+
+3. **`NodeConfigCard` uses `SchemaForm` directly** instead of through a separate `useRecipeConfig` hook. The card component calls `getNodeSchema()`, `getNodeParamFields()`, and `getVisibleParams()` inline — matching the pattern from `@bnto/editor`'s `createUseNode.ts`. No intermediate hook needed since the card is the only consumer.
+
+4. **Definition defaults via `definitionToPipeline(definition, parameters)`.** Parameters from `deriveDefaults()` are merged into the pipeline at execution time via the existing `definitionToPipeline` transform. This reuses the existing merge logic that the old `runRecipeAction` also uses.
+
+5. **Container size upgraded to `lg`** for bento grid path. The 6-column grid needs more horizontal space than the old centered `md` container.
 
 ---
 

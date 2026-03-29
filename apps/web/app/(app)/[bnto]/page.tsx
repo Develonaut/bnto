@@ -1,20 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, Heading } from "@bnto/ui";
+import { AppShellContent, Container } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
+import { RecipeHeader } from "./_components/RecipeHeader";
 import { RecipeShell } from "./_components/RecipeShell";
+import { BentoRecipeShell } from "./_components/bento/BentoRecipeShell";
 
-/** Only slugs from generateStaticParams are valid — everything else is 404
- * at the routing level (no component code runs for unknown slugs). */
+const useBentoGrid = process.env.NEXT_PUBLIC_BENTO_GRID === "1";
+
 export const dynamicParams = false;
 
-/** Pre-render all registered slugs at build time. */
 export function generateStaticParams() {
   return BNTO_REGISTRY.map((bnto) => ({ bnto: bnto.slug }));
 }
 
-/** Per-slug metadata -- resolved at build time for static pages. */
 export async function generateMetadata({
   params,
 }: {
@@ -26,10 +26,7 @@ export async function generateMetadata({
   return {
     title: { absolute: entry.title },
     description: entry.description,
-    openGraph: {
-      title: entry.title,
-      description: entry.description,
-    },
+    openGraph: { title: entry.title, description: entry.description },
   };
 }
 
@@ -42,21 +39,18 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
     <>
       <BntoJsonLd entry={entry} />
       <AppShellContent>
-        <Container size="md" className="space-y-6 text-center">
-          {/* Interactive recipe flow — PhaseIndicator is at the top, then
-              static header content, then the file upload / execution flow */}
-          <RecipeShell key={slug} entry={entry}>
-            {/* Static header — server-rendered, zero JS.
-                Passed as children so it renders between PhaseIndicator
-                and the interactive flow inside RecipeShell. */}
-            <Heading level={1} data-testid="recipe-heading">
-              {entry.h1}
-            </Heading>
-            <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
-              {entry.description}
-            </p>
-          </RecipeShell>
-        </Container>
+        {useBentoGrid ? (
+          <Container size="lg" className="space-y-6">
+            <RecipeHeader entry={entry} />
+            <BentoRecipeShell key={slug} entry={entry} />
+          </Container>
+        ) : (
+          <Container size="md" className="space-y-6 text-center">
+            <RecipeShell key={slug} entry={entry}>
+              <RecipeHeader entry={entry} />
+            </RecipeShell>
+          </Container>
+        )}
       </AppShellContent>
     </>
   );
