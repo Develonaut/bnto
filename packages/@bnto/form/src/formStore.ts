@@ -11,6 +11,7 @@ import { createStore } from "zustand/vanilla";
 interface FormState {
   values: Record<string, unknown>;
   onChange: (name: string, value: unknown) => void;
+  files: File[];
 }
 
 type FormStore = ReturnType<typeof createFormStore>;
@@ -18,8 +19,9 @@ type FormStore = ReturnType<typeof createFormStore>;
 function createFormStore(
   values: Record<string, unknown>,
   onChange: (name: string, value: unknown) => void,
+  files: File[] = [],
 ) {
-  return createStore<FormState>(() => ({ values, onChange }));
+  return createStore<FormState>(() => ({ values, onChange, files }));
 }
 
 export { createFormStore };

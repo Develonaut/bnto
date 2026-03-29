@@ -17,15 +17,17 @@ const FormStoreContext = createContext<FormStore | null>(null);
 interface FormStoreProviderProps {
   values: Record<string, unknown>;
   onChange: (name: string, value: unknown) => void;
+  /** Optional source files (e.g. uploaded images) for controls that show previews. */
+  files?: File[];
   children: ReactNode;
 }
 
-function FormStoreProvider({ values, onChange, children }: FormStoreProviderProps) {
-  const storeRef = useRef(createFormStore(values, onChange));
+function FormStoreProvider({ values, onChange, files = [], children }: FormStoreProviderProps) {
+  const storeRef = useRef(createFormStore(values, onChange, files));
 
   // Sync values into store on every render so child controls
   // reading sibling values via useFormValue() always see fresh data.
-  storeRef.current.setState({ values, onChange });
+  storeRef.current.setState({ values, onChange, files });
 
   return <FormStoreContext.Provider value={storeRef.current}>{children}</FormStoreContext.Provider>;
 }
@@ -54,4 +56,10 @@ function useFormOnChange(): (name: string, value: unknown) => void {
   return useStore(store, (s) => s.onChange);
 }
 
-export { FormStoreProvider, useFormValue, useFormValues, useFormOnChange };
+/** Read the source files passed to the form (e.g. uploaded images for preview). */
+function useFormFiles(): File[] {
+  const store = useFormStore();
+  return useStore(store, (s) => s.files);
+}
+
+export { FormStoreProvider, useFormValue, useFormValues, useFormOnChange, useFormFiles };

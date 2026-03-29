@@ -3,14 +3,13 @@
 /**
  * WatermarkPreviewControl — position grid with live watermark preview.
  *
- * The preview image floats over the grid at the selected position,
- * sized as a percentage of the container width (mirroring the engine's
- * "percentage of source image width" semantics). Opacity tracks the sibling
- * opacity param. When no watermark is uploaded, renders a plain position grid.
+ * Shows the first uploaded source image as background, with the watermark
+ * overlay positioned at the selected grid position. This gives users a
+ * realistic preview of how the watermark will look on their actual image.
  */
 
-import { useCallback, useMemo } from "react";
-import { useFormOnChange, useFormValue } from "../FormStoreContext";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFormFiles, useFormOnChange, useFormValue } from "../FormStoreContext";
 import type { ControlProps } from "./types";
 
 const GRID: readonly string[][] = [
@@ -45,10 +44,28 @@ function formatLabel(pos: string) {
 }
 
 function dotClassName(isSelected: boolean, hasImage: boolean) {
-  if (isSelected && hasImage)
-    return "relative z-10 size-4 rounded-full transition-colors bg-transparent";
-  if (isSelected) return "relative z-10 size-4 rounded-full transition-colors bg-primary";
-  return "relative z-10 size-4 rounded-full transition-colors bg-[var(--surface-muted-wall)] hover:bg-muted-foreground/50";
+  const base = "relative z-10 size-4 rounded-full border border-white/40 transition-colors";
+  if (isSelected && hasImage) return `${base} bg-transparent`;
+  if (isSelected) return `${base} bg-primary`;
+  return `${base} bg-[var(--surface-muted-wall)] hover:bg-muted-foreground/50`;
+}
+
+/** Create a stable object URL for the first image file. */
+function useSourcePreview(files: File[]): string | undefined {
+  const firstImage = useMemo(() => files.find((f) => f.type.startsWith("image/")), [files]);
+  const [url, setUrl] = useState<string>();
+
+  useEffect(() => {
+    if (!firstImage) {
+      setUrl(undefined);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(firstImage);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [firstImage]);
+
+  return url;
 }
 
 function useWatermarkSiblings() {
@@ -64,6 +81,8 @@ function WatermarkPreviewControl({ id, value, onChange }: ControlProps) {
   const current = typeof value === "string" ? value : "bottom-right";
   const { imgSrc, size, opacity, offsetX, offsetY } = useWatermarkSiblings();
   const formOnChange = useFormOnChange();
+  const files = useFormFiles();
+  const backgroundUrl = useSourcePreview(files);
   const anchor = POS_ANCHOR[current] ?? POS_ANCHOR["bottom-right"];
 
   const handleClick = useCallback(
@@ -84,41 +103,76 @@ function WatermarkPreviewControl({ id, value, onChange }: ControlProps) {
       className="sticky top-0 z-30 flex flex-col gap-2 bg-[var(--card)] pb-2"
       data-testid={`control-watermark-preview-${id}`}
     >
-      <div
-        role="radiogroup"
-        aria-label="Position"
-        className="relative aspect-square w-full overflow-hidden rounded-md border border-[var(--surface-muted-wall)] bg-input p-3"
+      <PreviewGrid
+        backgroundUrl={backgroundUrl}
+        hasImage={!!imgSrc}
+        current={current}
+        onClick={handleClick}
       >
-        <div className="relative grid h-full w-full grid-cols-3 place-items-center">
-          {GRID.flat().map((pos) => (
-            <button
-              key={pos}
-              type="button"
-              role="radio"
-              aria-checked={pos === current}
-              aria-label={formatLabel(pos)}
-              data-pos={pos}
-              onClick={handleClick}
-              className={dotClassName(pos === current, !!imgSrc)}
-            />
-          ))}
-          {imgSrc && (
-            <img
-              src={imgSrc}
-              alt=""
-              className="pointer-events-none absolute z-20"
-              style={{
-                width: `${size}%`,
-                opacity: opacity / 100,
-                top: gridPercent(anchor.row),
-                left: gridPercent(anchor.col),
-                transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
-              }}
-            />
-          )}
-        </div>
-      </div>
+        {imgSrc && (
+          <img
+            src={imgSrc}
+            alt=""
+            className="pointer-events-none absolute z-20"
+            style={{
+              width: `${size}%`,
+              opacity: opacity / 100,
+              top: gridPercent(anchor.row),
+              left: gridPercent(anchor.col),
+              transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
+            }}
+          />
+        )}
+      </PreviewGrid>
       <span className="text-center text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+/** The position grid container with optional source image background. */
+function PreviewGrid({
+  backgroundUrl,
+  hasImage,
+  current,
+  onClick,
+  children,
+}: {
+  backgroundUrl: string | undefined;
+  hasImage: boolean;
+  current: string;
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Position"
+      className="relative aspect-square w-full overflow-hidden rounded-md border border-[var(--surface-muted-wall)] bg-input"
+      style={
+        backgroundUrl
+          ? {
+              backgroundImage: `url(${backgroundUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : undefined
+      }
+    >
+      <div className="relative grid h-full w-full grid-cols-3 place-items-center">
+        {GRID.flat().map((pos) => (
+          <button
+            key={pos}
+            type="button"
+            role="radio"
+            aria-checked={pos === current}
+            aria-label={formatLabel(pos)}
+            data-pos={pos}
+            onClick={onClick}
+            className={dotClassName(pos === current, hasImage)}
+          />
+        ))}
+        {children}
+      </div>
     </div>
   );
 }

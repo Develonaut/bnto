@@ -32,9 +32,11 @@ interface SchemaFormProps {
   visibleParams: string[];
   /** Called when any parameter value changes. */
   onChange: (name: string, value: unknown) => void;
+  /** Optional source files for controls that show previews. */
+  files?: File[];
 }
 
-function SchemaForm({ schema, fields, values, visibleParams, onChange }: SchemaFormProps) {
+function SchemaForm({ schema, fields, values, visibleParams, onChange, files }: SchemaFormProps) {
   const entries = useMemo(
     () => buildFormEntries(schema, visibleParams, fields),
     [schema, fields, visibleParams],
@@ -49,7 +51,7 @@ function SchemaForm({ schema, fields, values, visibleParams, onChange }: SchemaF
   }
 
   return (
-    <FormStoreProvider values={values} onChange={onChange}>
+    <FormStoreProvider values={values} onChange={onChange} files={files}>
       <Stack gap={FIELD_GAP}>
         {entries.map((entry) => (
           <FormEntryRenderer

@@ -5,6 +5,7 @@ import { Badge, Divider, Heading, Text } from "@bnto/ui";
 import { isIoNodeType } from "@bnto/core";
 import { SchemaForm } from "@bnto/form";
 import type { useEditorNode } from "../../hooks/useEditorNode";
+import { useEditor } from "../../context";
 
 /**
  * NodeConfigContent — the config panel body when a node is selected.
@@ -81,6 +82,9 @@ function NodeConfigFormContent({
   visibleParams: ReturnType<typeof useEditorNode>["visibleParams"];
   onChange: (paramName: string, value: unknown) => void;
 }) {
+  const editor = useEditor();
+  const { inputFiles } = editor.execution.useExecution();
+
   if (!schemaDef) {
     return (
       <Text size="xs" color="muted">
@@ -95,6 +99,7 @@ function NodeConfigFormContent({
       values={values}
       visibleParams={visibleParams}
       onChange={onChange}
+      files={inputFiles}
     />
   );
 }
