@@ -397,3 +397,89 @@ Remove everything that's been replaced.
 | **Loss of drag-to-position**            | Nodes have no meaningful x/y position in linear pipelines. Vertical order = execution order. Drag-to-reorder in the list is the right interaction                                          |
 | **SEO regression**                      | `[bnto]/page.tsx` stays as a server component with SSG. The grid is a client component inside it. Same metadata, same JSON-LD                                                              |
 | **Scope creep**                         | Phases are shippable independently. Phase 1 (schema config) and Phase 2 (grid run mode) ship value on their own                                                                            |
+
+---
+
+## Progress Tracker
+
+Update this section as work progresses. Check off completed items, note blockers, record decisions made during implementation.
+
+### Phase 1: Schema-Driven Config
+
+- [ ] Tests written (`extractProcessingNodes.test.ts`, `deriveDefaults.test.ts`)
+- [ ] `extractProcessingNodes` utility implemented
+- [ ] `useRecipeConfig` hook implemented
+- [ ] `RecipeConfigSection` rewritten to use SchemaForm
+- [ ] Defaults derived from definition (not `DEFAULT_CONFIGS`)
+- [ ] Hand-written config files deleted (15 files)
+- [ ] `task ui:test` passes clean
+- [ ] Committed to `feat/bento-grid-editor`
+
+### Phase 2: Bento Grid Layout (Run Mode)
+
+- [ ] Compartment render tests written
+- [ ] `RecipeGrid` component created (Surface + Grid)
+- [ ] Compartment cards created (6 cards)
+- [ ] Wired to `useRecipeFlow` / execution state
+- [ ] Run page renders as bento grid
+- [ ] Springable loading works per-compartment
+- [ ] `task ui:test` passes clean
+- [ ] Committed
+
+### Phase 3: Edit Mode
+
+- [ ] Mode toggle tests written
+- [ ] `mode="edit"` affordances added to each compartment
+- [ ] Pipeline card: select, reorder, add, delete
+- [ ] Store unified (EditorStore drives both modes)
+- [ ] `/editor` redirects to recipe URL with `?mode=edit`
+- [ ] Committed
+
+### Phase 4: Cleanup
+
+- [ ] ReactFlow custom nodes deleted
+- [ ] Canvas shell deleted
+- [ ] Rendering pipeline hooks deleted
+- [ ] `@xyflow/react` removed from dependencies
+- [ ] Old run page components deleted
+- [ ] `BentoNode` type decoupled from ReactFlow
+- [ ] All tests updated/passing
+- [ ] `task check` passes clean
+
+### Decisions Made During Implementation
+
+<!-- Record any design decisions, tradeoffs, or deviations from the plan here -->
+
+---
+
+## Resume Prompt
+
+Use this prompt to pick up work on this effort in a new conversation:
+
+```
+I'm working on the Bento Grid Editor — a unified recipe view that replaces both
+the ReactFlow canvas editor and the hand-written run page with a single bento
+grid layout. The full strategy is in `.claude/strategy/bento-grid-editor.md`.
+
+Branch: `feat/bento-grid-editor`
+PR: https://github.com/Develonaut/bnto/pull/298
+
+Before doing anything:
+1. Read `.claude/strategy/bento-grid-editor.md` — this is the source of truth
+2. Check the Progress Tracker section to see what's done and what's next
+3. Check the Decisions Made section for any runtime decisions
+4. Run `git log --oneline -10` on the branch to see recent commits
+5. Run `task ui:test` to confirm the current state is green
+
+Then pick up the next unchecked item in the Progress Tracker. TDD-first: write
+the test, watch it fail, implement, watch it pass. Update the Progress Tracker
+after each completed item. Commit frequently.
+
+Key files to understand:
+- `packages/@bnto/form/src/SchemaForm.tsx` — the config UI engine (stays)
+- `packages/editor/src/store/types.ts` — editor state shape (stays)
+- `packages/editor/src/actions/` — 31 pure action functions (stay)
+- `apps/web/app/(app)/[bnto]/` — current run page (being replaced)
+- `packages/editor/src/components/nodes/` — ReactFlow nodes (being deleted)
+- `packages/ui/src/` — Grid, GridItem, Surface, Card (composing with these)
+```
