@@ -111,7 +111,10 @@ pub fn run_recipe_ok_multi(slug: &str, fixtures: &[String]) -> (tempfile::TempDi
 }
 
 /// Run an explicit recipe with multiple input files and assert it succeeds.
-pub fn run_explicit_recipe_ok_multi(slug: &str, fixtures: &[String]) -> (tempfile::TempDir, String) {
+pub fn run_explicit_recipe_ok_multi(
+    slug: &str,
+    fixtures: &[String],
+) -> (tempfile::TempDir, String) {
     let out = temp_output_dir();
     let mut cmd = Command::new(bnto_bin());
     cmd.args(["run", &explicit_recipe_path(slug)]);
