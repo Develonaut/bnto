@@ -24,69 +24,147 @@ The outer container is a `<Surface elevation="none" border="dashed">` — litera
 
 ## Layout
 
-### The Grid
+### Column Philosophy
+
+The grid has a clear semantic division across its three column pairs:
+
+| Columns          | Identity        | Content                                      |
+| ---------------- | --------------- | -------------------------------------------- |
+| **Left (1-2)**   | Recipe-level    | Recipe info, global actions (import/export)  |
+| **Middle (3-4)** | Execution/IO    | Run: Input + Output. Edit: Pipeline list     |
+| **Right (5-6)**  | Config/controls | Action buttons (mode, run), NodeConfig panel |
+
+### The Grid (6×6)
+
+Fixed positions (same in both modes):
 
 ```
-+------------------------------------------------------------------+
-|  Surface elevation="none" border="dashed" rounded="2xl"          |
-|                                                                  |
-|  +----------------+  +----------------+  +---------------------+ |
-|  |                |  |                |  |                     | |
-|  | Recipe Info    |  |    Input       |  |  Node Config        | |
-|  | (title, desc)  |  |  (drop zone)  |  |  (SchemaForm)       | |
-|  |                |  |                |  |                     | |
-|  +----------------+  +----------------+  |                     | |
-|  +----------------+  +----------------+  |                     | |
-|  |                |  |                |  |                     | |
-|  |  Toolbar       |  |   Pipeline     |  |                     | |
-|  |  (run, code,   |  |   (node list)  |  |                     | |
-|  |   settings)    |  |                |  |                     | |
-|  |                |  +----------------+  |                     | |
-|  +----------------+  +----------------+  +---------------------+ |
-|                       |    Output      |                         |
-|                       |  (download)    |                         |
-|                       +----------------+                         |
-+------------------------------------------------------------------+
+     Col 1     Col 2     Col 3-4          Col 5     Col 6
+    ┌─────────────────┐  ┌────────────┐  ┌──────┐  ┌──────┐
+R1  │                 │  │            │  │  ⇄   │  │  ▶   │
+R2  │                 │  │            │  │ Mode │  │ Run  │
+R3  │   RecipeInfo    │  │  (varies   │  └──────┘  └──────┘
+R4  │    (2×5)        │  │   by mode) │  ┌─────────────────┐
+R5  │                 │  │            │  │                 │
+    ├──────┐  ┌───────┤  │            │  │   NodeConfig    │
+R6  │  ⬆  │  │  ⬇   │  │            │  │    (2×5)        │
+    │ Imp  │  │ Exp   │  │            │  │                 │
+    │ 1×1  │  │ 1×1   │  │            │  │                 │
+    └──────┘  └───────┘  └────────────┘  └─────────────────┘
 ```
+
+**Run mode** — middle column is Input (2×3) + Output (2×3):
+
+```
+     Col 1     Col 2     Col 3-4          Col 5     Col 6
+    ┌─────────────────┐  ┌────────────┐  ┌──────┐  ┌──────┐
+R1  │                 │  │            │  │  ⇄   │  │  ▶   │
+R2  │                 │  │   Input    │  │ Mode │  │ Run  │
+R3  │   RecipeInfo    │  │  (2×3)     │  └──────┘  └──────┘
+R4  │    (2×5)        │  │  drop zone │  ┌─────────────────┐
+R5  │                 │  ├────────────┤  │                 │
+    ├──────┐  ┌───────┤  │   Output   │  │   NodeConfig    │
+R6  │ Imp  │  │ Exp   │  │  (2×3)     │  │    (2×5)        │
+    │ 1×1  │  │ 1×1   │  │  files +   │  │                 │
+    └──────┘  └───────┘  │  stats     │  │                 │
+                         └────────────┘  └─────────────────┘
+```
+
+**Edit mode** — middle column is Pipeline list (2×5 or 2×6) with contextual actions:
+
+```
+     Col 1     Col 2     Col 3-4          Col 5     Col 6
+    ┌─────────────────┐  ┌────────────┐  ┌──────┐  ┌──────┐
+R1  │                 │  │ Pipeline   │  │  ⇄   │  │  ▶   │
+R2  │                 │  │  (2×5)     │  │ Mode │  │ Test │
+R3  │   RecipeInfo    │  │            │  └──────┘  └──────┘
+R4  │    (2×5)        │  │ ○ Input    │  ┌─────────────────┐
+R5  │  [editable]     │  │ ● Resize ◀├──│                 │
+    ├──────┐  ┌───────┤  │ ○ Compress │  │   NodeConfig    │
+R6  │ Imp  │  │ Exp   │  │ ○ Output   │  │    (2×5)        │
+    │ 1×1  │  │ 1×1   │  ├────────────┤  │  for selected   │
+    └──────┘  └───────┘  │[+Add][🗑]  │  │  node           │
+                         │  (2×1)     │  │                 │
+                         └────────────┘  └─────────────────┘
+```
+
+The contextual actions row (2×1) below the pipeline list holds add/delete buttons based on the current selection. TBD whether this sits above or below the list — will be determined visually during implementation.
 
 Built with existing primitives:
 
 ```tsx
 <Surface elevation="none" border="dashed" rounded="2xl">
   <Grid cols={6} rows={6} gap="md" animated>
-    <GridItem colSpan={2} rowSpan={3}>
-      <RecipeInfoCard /> {/* title, description, tags */}
+    {/* Left column — recipe-level */}
+    <GridItem colSpan={2} rowSpan={5}>
+      <RecipeInfoCard />
     </GridItem>
-    <GridItem colSpan={2} rowSpan={2} colStart={3}>
-      <InputCard /> {/* drop zone / file upload */}
+    <GridItem colSpan={1} rowStart={6}>
+      <ImportCell />
     </GridItem>
-    <GridItem colSpan={2} rowSpan={6} colStart={5}>
-      <NodeConfigCard /> {/* SchemaForm for selected node */}
+    <GridItem colSpan={1} colStart={2} rowStart={6}>
+      <ExportCell />
     </GridItem>
-    <GridItem colSpan={2} rowSpan={3} rowStart={4}>
-      <ToolbarCard /> {/* run, code view, settings */}
+
+    {/* Middle column — varies by mode */}
+    {mode === "run" ? (
+      <>
+        <GridItem colSpan={2} rowSpan={3} colStart={3}>
+          <InputCard />
+        </GridItem>
+        <GridItem colSpan={2} rowSpan={3} colStart={3} rowStart={4}>
+          <OutputCard />
+        </GridItem>
+      </>
+    ) : (
+      <GridItem colSpan={2} rowSpan={6} colStart={3}>
+        <PipelineCard /> {/* List + ListItem, selectable */}
+      </GridItem>
+    )}
+
+    {/* Right column — config/controls */}
+    <GridItem colSpan={1} colStart={5}>
+      <ModeSwitchCell />
     </GridItem>
-    <GridItem colSpan={2} rowSpan={3} colStart={3} rowStart={3}>
-      <PipelineCard /> {/* ordered node list */}
+    <GridItem colSpan={1} colStart={6}>
+      <RunCell />
     </GridItem>
-    <GridItem colSpan={2} colStart={3} rowStart={6}>
-      <OutputCard /> {/* download results */}
+    <GridItem colSpan={2} rowSpan={5} colStart={5} rowStart={2}>
+      <NodeConfigCard />
     </GridItem>
   </Grid>
 </Surface>
 ```
 
+### Grid Position Reference
+
+| Component               | Cols | Rows | Size | Fixed?                      |
+| ----------------------- | ---- | ---- | ---- | --------------------------- |
+| RecipeInfo              | 1-2  | 1-5  | 2×5  | Always                      |
+| Import                  | 1    | 6    | 1×1  | Always                      |
+| Export                  | 2    | 6    | 1×1  | Always                      |
+| Mode Switch             | 5    | 1    | 1×1  | Always                      |
+| Run/Test                | 6    | 1    | 1×1  | Always                      |
+| NodeConfig              | 5-6  | 2-6  | 2×5  | Always                      |
+| Input (run)             | 3-4  | 1-3  | 2×3  | Run only                    |
+| Output (run)            | 3-4  | 4-6  | 2×3  | Run only                    |
+| Pipeline (edit)         | 3-4  | 1-5  | 2×5  | Edit only                   |
+| Pipeline Actions (edit) | 3-4  | 6    | 2×1  | Edit only (TBD above/below) |
+
 ### Compartment Behavior by Mode
 
-| Compartment         | Run Mode                                                                                         | Edit Mode                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| **Recipe Info**     | Title + description (read-only). SEO heading server-rendered                                     | Title + description (editable). Slug, category                                       |
-| **Input**           | Active drop zone. File list with delete. Accept types shown                                      | File type constraints. Accept config                                                 |
-| **Pipeline**        | Execution progress per node (spinners, checkmarks). Collapsed to summary for single-node recipes | Ordered node list. Click to select → config panel. Drag to reorder. Add from palette |
-| **Node Config**     | Processing node params via SchemaForm. Presets, sliders, selects                                 | Same + delete node button, advanced params, conditional visibility                   |
-| **Toolbar**         | Run button, progress bar, download all                                                           | Run + code view toggle + recipe settings + help                                      |
-| **Output**          | Download individual results, download all                                                        | Output format config, download                                                       |
-| **Recipe Settings** | Hidden                                                                                           | Iteration mode (auto/explicit), pipeline settings                                    |
+| Compartment                           | Run Mode                                                     | Edit Mode                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **RecipeInfo** (2×5)                  | Title + description (read-only). SEO heading server-rendered | Title + description (editable). Slug, category                                                |
+| **Input** (2×3, run only)             | Active drop zone. File list with delete. Accept types shown  | Folded into Pipeline list as selectable node                                                  |
+| **Pipeline** (2×5, edit only)         | Not shown — middle column is I/O                             | List/ListItem with all nodes (including I/O). Click to select → config panel. Drag to reorder |
+| **Output** (2×3, run only)            | Download results, file stats                                 | Folded into Pipeline list as selectable node                                                  |
+| **NodeConfig** (2×5)                  | SchemaForm for first/only processing node                    | SchemaForm for _selected_ node. Delete button, advanced params                                |
+| **Mode Switch** (1×1)                 | Toggle to edit mode                                          | Toggle to run mode                                                                            |
+| **Run/Test** (1×1)                    | Run execution                                                | Test execution                                                                                |
+| **Import** (1×1)                      | Import recipe (.bnto.json)                                   | Import recipe (.bnto.json)                                                                    |
+| **Export** (1×1)                      | Export recipe                                                | Export recipe                                                                                 |
+| **Pipeline Actions** (2×1, edit only) | Not shown                                                    | Contextual add/delete based on pipeline selection                                             |
 
 ### Springable Loading
 
@@ -415,23 +493,49 @@ Update this section as work progresses. Check off completed items, note blockers
 - [x] `task ui:test` passes clean
 - [x] Committed to `feat/bento-grid-editor`
 
-### Phase 2: Bento Grid Layout (Run Mode)
+### Phase 2: Bento Grid Layout (Run + Edit)
 
-- [ ] Compartment render tests written
-- [x] `RecipeGrid` component created (Surface + Grid)
-- [x] Compartment cards created (6 cards: RecipeInfoCard, InputCard, PipelineCard, NodeConfigCard, ToolbarCard, OutputCard)
-- [x] Wired to `useBentoRecipeFlow` hook (replaces `useRecipeFlow` for bento path)
+Grid restructured from original 6-card layout to column-philosophy layout with 1×1 action cells.
+
+**Grid restructure:**
+
+- [x] Initial `RecipeGrid` + 6 cards created (first pass — being refactored)
+- [x] Wired to `useBentoRecipeFlow` hook
 - [x] Run page renders as bento grid (behind `NEXT_PUBLIC_BENTO_GRID=1` env flag)
+- [ ] Refactor `RecipeGrid` to new layout (RecipeInfo 2×5, NodeConfig 2×5, four 1×1 action cells)
+- [ ] Break `ToolbarCard` into 1×1 action cells (`ModeSwitchCell`, `RunCell`, `ImportCell`, `ExportCell`)
+- [ ] `RecipeGridLeft`/`RecipeGridRight` replaced with mode-driven middle column
+- [ ] `mode` state (`"run" | "edit"`) with toggle driving middle column swap
+
+**Run mode (middle column = I/O):**
+
+- [ ] `InputCard` as 2×3 (drop zone, file list)
+- [ ] `OutputCard` as 2×3 (download results, file stats)
+- [ ] No pipeline list in run mode — middle is purely I/O
+
+**Edit mode (middle column = Pipeline list):**
+
+- [ ] `PipelineCard` as 2×5 using `List`/`ListItem` with `selectable`/`selected` props
+- [ ] All nodes (including I/O) as selectable ListItems
+- [ ] Clicking a node drives `NodeConfigCard` to show that node's SchemaForm
+- [ ] Selected node state tracked in hook
+- [ ] Contextual actions row (2×1) for add/delete — TBD above or below pipeline
+
+**Shared (both modes):**
+
+- [ ] `RecipeInfoCard` 2×5 — read-only in run, editable in edit
+- [ ] `NodeConfigCard` 2×5 — first processing node in run, selected node in edit
 - [ ] Springable loading works per-compartment
-- [x] `task ui:build` passes clean
-- [x] `task ui:test` passes clean (102 tests)
+- [ ] `task ui:build` passes clean
+- [ ] `task ui:test` passes clean
 - [ ] Committed
 
-### Phase 3: Edit Mode
+### Phase 3: Edit Mode Polish
 
-- [ ] Mode toggle tests written
-- [ ] `mode="edit"` affordances added to each compartment
-- [ ] Pipeline card: select, reorder, add, delete
+- [ ] Pipeline card: drag to reorder nodes
+- [ ] Pipeline card: add from node palette
+- [ ] Pipeline card: delete node (contextual action)
+- [ ] RecipeInfo editable fields (title, description, slug, category)
 - [ ] Store unified (EditorStore drives both modes)
 - [ ] `/editor` redirects to recipe URL with `?mode=edit`
 - [ ] Committed
@@ -459,13 +563,23 @@ Update this section as work progresses. Check off completed items, note blockers
 
 5. **Container size upgraded to `lg`** for bento grid path. The 6-column grid needs more horizontal space than the old centered `md` container.
 
+6. **Column philosophy: left = recipe, middle = execution/IO, right = config/controls.** The three column pairs have distinct semantic roles. Left (cols 1-2) holds recipe-level identity and global actions. Middle (cols 3-4) holds execution I/O in run mode and the pipeline list in edit mode. Right (cols 5-6) holds config controls and action buttons.
+
+7. **Action buttons as 1×1 grid cells, not a toolbar card.** Instead of one ToolbarCard containing multiple buttons, each action is its own bento compartment. Mode Switch and Run/Test are 1×1 cells in the top-right corner. Import and Export are 1×1 cells in the bottom-left corner. This extends the bento metaphor to the smallest level.
+
+8. **Middle column is the only thing that changes between modes.** Run mode shows Input (2×3) + Output (2×3). Edit mode shows Pipeline list (2×5) + contextual actions (2×1). Everything else (RecipeInfo, NodeConfig, action cells) stays fixed.
+
+9. **Pipeline uses List/ListItem with selectable/selected props.** Instead of rendering nodes as individual cards in a flex-wrap layout, the pipeline is a single card containing a `<List>` of `<ListItem>` components from `@bnto/ui`. Selection is built-in via the `selected` prop (muted background + solid border). Clicking a node selects it and drives the NodeConfig panel on the right.
+
+10. **Input and Output are separate cards in run mode, ListItems in edit mode.** In run mode, Input has a drop zone and Output has download buttons — fundamentally different UIs that deserve their own grid compartments. In edit mode, they fold into the Pipeline list as selectable nodes whose config appears in the NodeConfig panel when selected.
+
 ---
 
 ## Resume Prompt
 
 Use this prompt to pick up work on this effort in a new conversation:
 
-```
+````
 I'm working on the Bento Grid Editor — a unified recipe view that replaces both
 the ReactFlow canvas editor and the hand-written run page with a single bento
 grid layout. The full strategy is in `.claude/strategy/bento-grid-editor.md`.
@@ -473,10 +587,11 @@ grid layout. The full strategy is in `.claude/strategy/bento-grid-editor.md`.
 Branch: `feat/bento-grid-editor`
 PR: https://github.com/Develonaut/bnto/pull/298
 
-Before doing anything:
+## Before doing anything:
+
 1. Read `.claude/strategy/bento-grid-editor.md` — this is the source of truth
 2. Check the Progress Tracker section to see what's done and what's next
-3. Check the Decisions Made section for any runtime decisions
+3. Check the Decisions Made section (10 decisions so far) for runtime decisions
 4. Run `git log --oneline -10` on the branch to see recent commits
 5. Run `task ui:test` to confirm the current state is green
 
@@ -484,11 +599,99 @@ Then pick up the next unchecked item in the Progress Tracker. TDD-first: write
 the test, watch it fail, implement, watch it pass. Update the Progress Tracker
 after each completed item. Commit frequently.
 
-Key files to understand:
+## Grid Layout (the core design)
+
+The grid is 6 columns × 6 rows. Three column pairs have distinct semantic roles:
+
+- **Left (cols 1-2)**: Recipe-level — info + global actions (import/export)
+- **Middle (cols 3-4)**: Execution/IO — this is the ONLY column that changes between modes
+- **Right (cols 5-6)**: Config/controls — action buttons + NodeConfig panel
+
+### Run Mode
+
+```
+     Col 1     Col 2     Col 3-4          Col 5     Col 6
+    ┌─────────────────┐  ┌────────────┐  ┌──────┐  ┌──────┐
+R1  │                 │  │            │  │  ⇄   │  │  ▶   │
+R2  │                 │  │   Input    │  │ Mode │  │ Run  │
+R3  │   RecipeInfo    │  │  (2×3)     │  └──────┘  └──────┘
+R4  │    (2×5)        │  │  drop zone │  ┌─────────────────┐
+R5  │                 │  ├────────────┤  │                 │
+    ├──────┐  ┌───────┤  │   Output   │  │   NodeConfig    │
+R6  │ Imp  │  │ Exp   │  │  (2×3)     │  │    (2×5)        │
+    │ 1×1  │  │ 1×1   │  │  files +   │  │                 │
+    └──────┘  └───────┘  │  stats     │  │                 │
+                         └────────────┘  └─────────────────┘
+```
+
+User drops files in top-middle → tweaks config on right → hits Run (1×1) →
+output appears in bottom-middle. Vertical flow: in → configure → out.
+
+### Edit Mode
+
+```
+     Col 1     Col 2     Col 3-4          Col 5     Col 6
+    ┌─────────────────┐  ┌────────────┐  ┌──────┐  ┌──────┐
+R1  │                 │  │ Pipeline   │  │  ⇄   │  │  ▶   │
+R2  │                 │  │  (2×5)     │  │ Mode │  │ Test │
+R3  │   RecipeInfo    │  │            │  └──────┘  └──────┘
+R4  │    (2×5)        │  │ ○ Input    │  ┌─────────────────┐
+R5  │  [editable]     │  │ ● Resize ◀├──│                 │
+    ├──────┐  ┌───────┤  │ ○ Compress │  │   NodeConfig    │
+R6  │ Imp  │  │ Exp   │  │ ○ Output   │  │    (2×5)        │
+    │ 1×1  │  │ 1×1   │  ├────────────┤  │  for selected   │
+    └──────┘  └───────┘  │[+Add][🗑]  │  │  node           │
+                         │  (2×1)     │  │                 │
+                         └────────────┘  └─────────────────┘
+```
+
+Pipeline is a List/ListItem (from @bnto/ui) with selectable/selected props.
+Clicking a node selects it → NodeConfig shows that node's SchemaForm.
+Contextual add/delete row (2×1) sits below the pipeline list (TBD above/below).
+
+### Grid Position Reference
+
+| Component              | Cols | Rows | Size | Fixed?                      |
+| ---------------------- | ---- | ---- | ---- | --------------------------- |
+| RecipeInfo             | 1-2  | 1-5  | 2×5  | Always                      |
+| Import                 | 1    | 6    | 1×1  | Always                      |
+| Export                 | 2    | 6    | 1×1  | Always                      |
+| Mode Switch            | 5    | 1    | 1×1  | Always                      |
+| Run/Test               | 6    | 1    | 1×1  | Always                      |
+| NodeConfig             | 5-6  | 2-6  | 2×5  | Always                      |
+| Input (run)            | 3-4  | 1-3  | 2×3  | Run only                    |
+| Output (run)           | 3-4  | 4-6  | 2×3  | Run only                    |
+| Pipeline (edit)        | 3-4  | 1-5  | 2×5  | Edit only                   |
+| Pipeline Actions (edit)| 3-4  | 6    | 2×1  | Edit only (TBD above/below) |
+
+## Key files to understand:
+
 - `packages/@bnto/form/src/SchemaForm.tsx` — the config UI engine (stays)
 - `packages/editor/src/store/types.ts` — editor state shape (stays)
 - `packages/editor/src/actions/` — 31 pure action functions (stay)
 - `apps/web/app/(app)/[bnto]/` — current run page (being replaced)
-- `packages/editor/src/components/nodes/` — ReactFlow nodes (being deleted)
-- `packages/ui/src/` — Grid, GridItem, Surface, Card (composing with these)
+- `apps/web/app/(app)/[bnto]/_components/bento/` — bento grid components (in progress)
+- `apps/web/app/(app)/[bnto]/_hooks/` — bento hooks (useBentoRecipeFlow, etc.)
+- `packages/editor/src/components/nodes/` — ReactFlow nodes (being deleted in Phase 4)
+- `packages/ui/src/` — Grid, GridItem, Surface, Card, List, ListItem (composing with these)
+- `apps/web/app/(dev)/motorway/GridShowcase.tsx` — Grid layout examples for reference
+
+## Hook composition:
+
 ```
+useBentoRecipeFlow (master)
+├── useRecipeDefinition  →  definition, accept config
+├── useBentoParameters   →  files, params, processing nodes
+└── useBentoExecution    →  run, reset, download, phase
+```
+
+## Key design decisions:
+
+1. Feature flag: `NEXT_PUBLIC_BENTO_GRID=1` toggles bento vs legacy
+2. Action buttons are 1×1 grid cells, not a toolbar card
+3. Middle column is the ONLY thing that changes between run/edit modes
+4. Pipeline uses List/ListItem with selectable/selected (not flex-wrap cards)
+5. Input/Output are separate cards in run mode, ListItems in edit mode
+
+See Decisions Made section in the strategy doc for all 10 decisions.
+````
