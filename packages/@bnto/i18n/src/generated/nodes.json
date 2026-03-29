@@ -61,6 +61,10 @@
       "label": "CSV to JSON",
       "description": "Convert CSV data to JSON format with configurable delimiters."
     },
+    "spreadsheetMerge": {
+      "label": "Merge CSV",
+      "description": "Combine multiple CSV files into one with header reconciliation and deduplication."
+    },
     "spreadsheetRename": {
       "label": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file."
@@ -160,6 +164,16 @@
       "pretty": {
         "label": "Pretty Print",
         "description": "Format output JSON with indentation"
+      }
+    },
+    "spreadsheetMerge": {
+      "headerHandling": {
+        "label": "Header Handling",
+        "description": "How to reconcile headers across files"
+      },
+      "deduplicate": {
+        "label": "Remove Duplicates",
+        "description": "Remove duplicate rows across all files"
       }
     },
     "spreadsheetRename": {

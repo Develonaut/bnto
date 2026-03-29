@@ -94,6 +94,44 @@ pub fn run_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
     (out, stderr)
 }
 
+/// Run a recipe with multiple input files and assert it succeeds.
+pub fn run_recipe_ok_multi(slug: &str, fixtures: &[String]) -> (tempfile::TempDir, String) {
+    let out = temp_output_dir();
+    let mut cmd = Command::new(bnto_bin());
+    cmd.args(["run", &recipe_path(slug)]);
+    for f in fixtures {
+        cmd.arg(f);
+    }
+    cmd.args(["-o", out.path().to_str().unwrap()]);
+
+    let output = cmd.output().unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(output.status.success(), "[multi/{slug}] stderr: {stderr}");
+    (out, stderr)
+}
+
+/// Run an explicit recipe with multiple input files and assert it succeeds.
+pub fn run_explicit_recipe_ok_multi(
+    slug: &str,
+    fixtures: &[String],
+) -> (tempfile::TempDir, String) {
+    let out = temp_output_dir();
+    let mut cmd = Command::new(bnto_bin());
+    cmd.args(["run", &explicit_recipe_path(slug)]);
+    for f in fixtures {
+        cmd.arg(f);
+    }
+    cmd.args(["-o", out.path().to_str().unwrap()]);
+
+    let output = cmd.output().unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(
+        output.status.success(),
+        "[explicit-multi/{slug}] stderr: {stderr}"
+    );
+    (out, stderr)
+}
+
 /// List output files in a temp directory.
 pub fn output_files(dir: &tempfile::TempDir) -> Vec<std::fs::DirEntry> {
     std::fs::read_dir(dir.path())
