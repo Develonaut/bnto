@@ -40,12 +40,3 @@ export function removeRecipe(id: string) {
     id: id as Id<"recipes">,
   });
 }
-
-// ---------------------------------------------------------------------------
-// Actions (imperative one-shot calls)
-// ---------------------------------------------------------------------------
-
-/** Fetch all recipes for the authenticated user from cloud. */
-export function fetchCloudRecipes() {
-  return getConvexClient().action(api.recipes.pullAll, {});
-}

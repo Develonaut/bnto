@@ -149,9 +149,11 @@ describe("proxy", () => {
     });
 
     it("redirects from /signin to returnTo destination when authenticated", async () => {
-      const response = await callProxy(createRequest("/signin?returnTo=%2Feditor", AUTH_COOKIES));
+      const response = await callProxy(
+        createRequest("/signin?returnTo=%2Fmy-recipes", AUTH_COOKIES),
+      );
       expect(response.status).toBe(307);
-      expect(new URL(response.headers.get("location")!).pathname).toBe("/editor");
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/my-recipes");
     });
   });
 });

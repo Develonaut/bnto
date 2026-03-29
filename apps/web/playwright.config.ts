@@ -8,25 +8,19 @@ import { defineConfig, devices } from "@playwright/test";
  * 2. Isolated (agents): set E2E_PORT=4001 — starts own Next.js on that port
  * 3. Default: port 4000 — reuses your local `task dev`
  *
- * Three-stage execution for stability:
+ * Two-stage execution for stability:
  *   - "browser" project: pages, browser journeys, telemetry — fully parallel
  *   - "auth" project: auth lifecycle + behavior tests — serial (--workers=1)
- *   - "editor" project: editor component + journey tests — serial (--workers=1)
  *
  * Auth tests hit Convex for real sign-ups/sign-ins and manipulate cookies.
  * Under parallel load the dev server gets overwhelmed (ERR_CONNECTION_REFUSED)
  * and auth operations time out. Serial execution is both faster (no retries)
  * and 100% reliable.
  *
- * ReactFlow continuously re-renders, so parallel editor tests lose DOM references
- * between Playwright's element resolution and click dispatch. Serial execution
- * eliminates the CPU contention that triggers this.
- *
  * Usage:
- *   task e2e              # all three stages
+ *   task e2e              # both stages
  *   task e2e:browser      # parallel tests only
  *   task e2e:auth         # auth tests only (serial)
- *   task e2e:editor       # editor tests only (serial)
  */
 
 const remoteUrl = process.env.PLAYWRIGHT_BASE_URL;
@@ -59,19 +53,13 @@ export default defineConfig({
     {
       name: "browser",
       testDir: "./e2e",
-      testIgnore: ["**/editor/**", "**/auth/**"],
+      testIgnore: ["**/auth/**"],
       use: { ...devices["Desktop Chrome"] },
     },
     {
       name: "auth",
       testDir: "./e2e",
       testMatch: ["**/auth/**"],
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
-      name: "editor",
-      testDir: "./e2e",
-      testMatch: ["**/editor/**"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],

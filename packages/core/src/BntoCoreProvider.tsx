@@ -5,7 +5,6 @@ import { ConvexAuthNextjsProvider } from "@bnto/auth";
 import { getConvexClient, getQueryClient } from "./client";
 import { SessionProvider } from "./providers/SessionProvider";
 import { useHistorySync } from "./hooks/useHistorySync";
-import { useRecipeSync } from "./hooks/useRecipeSync";
 
 interface BntoCoreProviderProps {
   children: React.ReactNode;
@@ -18,10 +17,9 @@ interface BntoCoreProviderProps {
   onSessionLost?: () => void;
 }
 
-/** Syncs local data to cloud on auth transitions (history + recipes). */
+/** Syncs local data to cloud on auth transitions (history). */
 function SyncProvider({ children }: { children: React.ReactNode }) {
   useHistorySync();
-  useRecipeSync();
   return <>{children}</>;
 }
 

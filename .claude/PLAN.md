@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 28, 2026 (groomed — Sprint 7 nearly complete, side quest audit, Sprint 8 defined for Tier 3 recipes, Desktop renumbered to Sprint 9-10)
+**Last Updated:** March 29, 2026 (pivot — editor frozen at v1, My Recipes → Favorites, Sprint 8.5 added, editor backlog deferred)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -29,8 +29,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, save/My Recipes, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
+- **Editor frozen (March 2026):** Editor v1 is complete and accessible at `/editor`. No further sprint investment. Deeper editor features (code editor, expression input, edit/run mode) deferred to post-revenue. The product focus shifts to curated recipe catalog + favorites.
+- **My Recipes → Favorites:** "My Recipes" redefined as favorited predefined/community recipes, not user-created custom recipes. Lightweight engagement hook that drives account creation.
+- **Community recipes:** Contributors submit `.bnto.json` via GitHub PRs. Maintainer curates. Accepted recipes auto-propagate via the Sprint 7 discovery infrastructure.
 - **Sprint 6 (Quality & Cleanup) complete.** Error boundaries, dead code removal, Server Component audit, auto-save, Button simplification, triage batch — all done.
-- **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents).
+- **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents), all editor-specific backlog items.
 - **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
 - **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
@@ -91,19 +94,20 @@ Pricing, revenue projections, and "ready to charge" criteria live in private bus
 
 **Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
 
-| Sprint       | What Ships                                   | Revenue Implication                                                                                                              |
-| ------------ | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Sprint 2B    | Browser execution (M1 MVP)                   | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine.                                       |
-| Sprint 2C    | Launch readiness (content + domain)          | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible.                      |
-| Sprint 2D    | Recipe page UX overhaul                      | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page.                                        |
-| Sprint H     | Housekeeping                                 | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint.                                         |
-| Sprint 3     | Platform features (accounts, history)        | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented.                                       |
-| Sprint 4     | Recipe editor (headless + visual)            | Power users self-identify. Create/customize recipes = highest-intent Pro signal. Free editor fosters community recipe ecosystem. |
-| Sprint 4D-4G | Package extraction + versioning + validation | Clean architecture. Zod schemas. Packages ready for desktop (M3).                                                                |
-| Sprint 5     | Editor v1 (config controls, save, polish)    | **M2 completion.** Editor gives users a reason to create accounts. Save custom recipes = highest-intent Pro signal.              |
-| Sprint 8     | Tier 3 near-term recipes                     | **SEO expansion.** 4 new browser recipes targeting 82K+ combined monthly searches. Product catalog grows.                        |
-| Sprint 9-10  | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                |
-| Sprint 11    | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                   |
+| Sprint       | What Ships                                   | Revenue Implication                                                                                             |
+| ------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Sprint 2B    | Browser execution (M1 MVP)                   | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine.                      |
+| Sprint 2C    | Launch readiness (content + domain)          | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible.     |
+| Sprint 2D    | Recipe page UX overhaul                      | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page.                       |
+| Sprint H     | Housekeeping                                 | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint.                        |
+| Sprint 3     | Platform features (accounts, history)        | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented.                      |
+| Sprint 4     | Recipe editor (headless + visual)            | Editor shipped as v1. **Now frozen** — power-user feature, not primary experience.                              |
+| Sprint 4D-4G | Package extraction + versioning + validation | Clean architecture. Zod schemas. Packages ready for desktop (M3).                                               |
+| Sprint 5     | Editor v1 (config controls, save, polish)    | **M2 completion.** Editor complete. Investment paused — revisit post-revenue.                                   |
+| Sprint 8     | Tier 3 near-term recipes                     | **SEO expansion.** New browser recipes targeting high-volume search queries. Product catalog grows.             |
+| Sprint 8.5   | Editor freeze + favorites + schema config    | **Simplification.** Disconnect editor routes, My Recipes = favorites, schema-driven recipe config. Lean client. |
+| Sprint 9-10  | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                               |
+| Sprint 11    | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.  |
 
 ---
 
@@ -209,9 +213,11 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**M2 is delivered. Sprint 6 (Quality & Cleanup) is complete. Sprint 7 (Explore & Discovery) is nearly complete** — `/explore` page built, recipe model unified, 5 tasks remain (navbar link, SEO verification, E2E tests, README auto-gen). Direction: **close Sprint 7 → Sprint 8 (Tier 3 Near-Term Recipes)** → then Desktop (Sprint 9-10). See `bntos.md` for the full tier breakdown.
+**M2 is delivered. Editor frozen at v1.** Sprint 7 complete. Sprint 8 (Tier 3 Recipes) in progress. Direction: **Sprint 8.5a (disconnect editor) → Sprint 8.5b (favorites + My Recipes) → Sprint 8.5c (schema-driven config)** → then Desktop (M3) or Monetization (M5).
 
-**Next up:** Close Sprint 7 (5 remaining tasks) → Sprint 8 (Tier 3 Recipes — engine operations + recipe fixtures + SEO pages).
+**The pivot:** Editor investment is paused. The product focus is curated recipes + favorites. "My Recipes" becomes a favorites view (bookmarked predefined/community recipes). The editor package (`@bnto/editor`) stays as-is — the web app disconnects editor-specific routes, simplifies My Recipes (remove localStorage sync/auto-save complexity), and trims the client surface area. Community recipes come via GitHub PRs.
+
+**Next up:** Sprint 8.5b (favorites + simplify My Recipes) — immediate. Sprint 8.5a (disconnect editor) is complete.
 
 ---
 
@@ -341,13 +347,15 @@ Design doc: `strategy/unified-recipe-model.md`
 
 ## Tabled Sprints
 
-### Edit Mode ↔ Run Mode — TABLED
+### All Editor Sprints — FROZEN (March 2026 Pivot)
 
-**Tabled (March 2026).** Mini Motorways-inspired edit/run mode switch. Same canvas for editing and running — pause to edit, unpause to watch traffic flow. Requires Sprint 5 execution integration (done). Deferred until v1 editor ships. See `.claude/decisions/editor-ux-direction.md` for the full design.
+**Editor investment paused.** The following are frozen at their current state. The `@bnto/editor` package is complete at v1 and architecturally isolated. These items resume only if post-revenue demand signals indicate users want custom recipe creation.
 
-### Sprint 5B Waves 2-4: LayerPanel Polish + Processing Node Accents — TABLED
-
-**Tabled (March 2026).** Category color pips on processing nodes, selected state ring, LayerPanel I/O distinction + selected highlights. Wave 1 (I/O visual hierarchy) shipped. Remaining waves need more design iteration. Existing Pressable pressed state handles selection well enough for v1.
+- **Edit Mode / Run Mode** — Mini Motorways edit/run switch. See `.claude/decisions/editor-ux-direction.md`.
+- **Sprint 5B Waves 2-4** — LayerPanel polish, processing node accents. Cosmetic.
+- **Code Editor (CM6)** — Schema-aware JSON editor. Power-user luxury.
+- **Expression Input** — Pill tokens, variable picker. Needed for Tier 4+ nodes.
+- **All editor triage items** — Consolidated in backlog under "Deferred: Editor Investment."
 
 ---
 
@@ -385,6 +393,142 @@ Design doc: `strategy/unified-recipe-model.md`
 - [ ] `apps/web` — **SEO pages for Tier 3 recipes**: Add to `bntoRegistry.ts`, verify `generateStaticParams`, `generateMetadata`, JSON-LD, sitemap inclusion. Each recipe gets a root-level slug page
 - [ ] `apps/web` — **E2E tests**: Playwright tests for each new recipe — upload file, configure, execute, verify output (magic bytes, file sizes). Programmatic assertions, not screenshots
 - [ ] `apps/web` — **Lighthouse audit**: Verify new pages pass accessibility, SEO, best-practices thresholds
+
+---
+
+## Sprint 8.5: Editor Freeze — Disconnect, Favorites, Schema-Driven Flow
+
+**Goal:** Simplify the web app in three phases. Disconnect editor routes, build favorites, then make recipe config schema-driven. The `@bnto/editor` package stays intact (frozen at v1) but the web app's surface area shrinks.
+
+**Why now:** The editor integration adds complexity to the client (localStorage sync, auto-save, recipe creation flow, editor routes) that isn't serving the MVP goal. Stripping it back makes the codebase leaner and the product simpler.
+
+**Persona ownership:**
+
+| Package         | Persona                                 |
+| --------------- | --------------------------------------- |
+| `apps/web`      | `/frontend-engineer` + `/nextjs-expert` |
+| `@bnto/core`    | `/core-architect`                       |
+| `@bnto/backend` | `/backend-engineer`                     |
+
+### Sprint 8.5a: Disconnect Editor + Slash Dead Code
+
+Pure deletion + reference cleanup. Low risk. All changes ship together.
+
+#### Delete entirely
+
+- [x] `apps/web/app/editor/` (entire directory — page, layout, loading, \_components/)
+- [x] `apps/web/components/blocks/NewRecipeNavButton.tsx`
+- [x] `apps/web/components/blocks/NewRecipeMobileButton.tsx` (if exists)
+- [x] `apps/web/app/(app)/[bnto]/_components/OpenInEditorLink.tsx`
+- [x] `apps/web/e2e/journeys/editor/` (entire directory)
+- [x] `apps/web/e2e/editor/` (entire directory)
+- [x] `apps/web/e2e/helpers/editor.ts`
+- [x] `apps/web/e2e/helpers/editor-save.ts`
+- [x] `apps/web/e2e/helpers/editor-execution.ts` (if exists)
+- [x] `packages/core/src/stores/recipesStore.ts`
+- [x] `packages/core/src/stores/mergeCloudRecipes.ts` + test
+- [x] `packages/core/src/hooks/useRecipeSync.ts`
+- [x] `packages/core/src/hooks/useRecipes.ts` (store-backed version)
+- [x] `packages/core/src/hooks/useRemoveRecipe.ts`
+- [x] `packages/core/src/transforms/cloudRecipeToUserRecipe.ts` + test
+- [x] `packages/core/src/transforms/recipeToListItem.ts` + test
+- [x] `packages/core/src/fileTransfer.ts`
+
+#### Modify (web app)
+
+- [x] `apps/web/components/blocks/DesktopNav.tsx` — remove NewRecipeNavButton import + JSX
+- [x] `apps/web/components/blocks/MobileNavMenu/MobileNavActions.tsx` — remove NewRecipeMobileButton
+- [x] `apps/web/app/(app)/[bnto]/_components/RecipeShell.tsx` — remove OpenInEditorLink
+- [x] `apps/web/lib/routes.ts` — remove `editor` from ROUTES, delete `editorUrl()`
+- [x] `apps/web/next.config.ts` — remove `@bnto/editor` from transpilePackages
+- [x] `apps/web/components/blocks/RecipeMarquee.tsx` — remove CtaCard linking to /editor
+- [x] `apps/web/components/blocks/HeroPitchPoints.tsx` — reword editor reference
+- [x] `apps/web/components/blocks/PricingTiers.tsx` — reword editor feature line
+- [x] `apps/web/components/blocks/FAQAccordion.tsx` — reword editor FAQ answer
+- [x] `apps/web/playwright.config.ts` — remove editor project block
+- [x] `Taskfile.yml` — remove `e2e:editor` task, update `e2e` task
+
+#### Modify (core)
+
+- [x] `packages/core/src/BntoCoreProvider.tsx` — remove useRecipeSync from SyncProvider
+- [x] `packages/core/src/clients/recipeClient.ts` — gut to keep only `run()`, query options, cache invalidation
+- [x] `packages/core/src/reactCore.ts` — remove useRecipes, useRemoveRecipe
+- [x] `packages/core/src/index.ts` — remove UserRecipe, RecipeListItem, fileTransfer exports
+- [x] `packages/core/src/types/recipe.ts` — remove UserRecipe and RecipeListItem
+- [x] `packages/core/src/adapters/convex/recipeAdapter.ts` — remove fetchCloudRecipes
+
+#### Modify (My Recipes — temporary placeholder)
+
+- [x] `apps/web/app/(app)/my-recipes/page.tsx` — placeholder until Sprint 8.5b
+- [x] Delete `apps/web/app/(app)/my-recipes/_components/` (entire directory)
+
+#### Critical preservation
+
+- `core.recipes.run()` → executionService path stays intact (tool pages use it)
+- `recipeService.ts` stays (query options)
+- `recipeAdapter.ts` keeps getRecipesQuery, getRecipeQuery
+
+#### Verify
+
+- `task ui:build` + `task ui:test`
+- Tool pages execute end-to-end
+- `/editor` 404s
+- Knip clean (no dead imports)
+
+### Sprint 8.5b: Favorites + Simplify My Recipes
+
+New Convex-backed favorites. My Recipes = favorited recipes.
+
+#### Convex backend
+
+- [ ] `packages/@bnto/backend/convex/schema.ts` — add `favorites` table (userId, recipeSlug, favoritedAt) with indexes by_user, by_user_slug
+- [ ] `packages/@bnto/backend/convex/favorites.ts` — list, toggle, isFavorited (all auth-gated)
+
+#### Core layer
+
+- [ ] `packages/core/src/adapters/convex/favoritesAdapter.ts` — convexQuery wrappers
+- [ ] `packages/core/src/services/favoritesService.ts` — query options + invalidation
+- [ ] `packages/core/src/clients/favoritesClient.ts` — public API
+- [ ] Add `core.favorites` domain to core.ts / reactCore.ts
+- [ ] Hooks: useFavorites, useToggleFavorite, useIsFavorited
+
+#### UI
+
+- [ ] `apps/web/components/blocks/FavoriteButton.tsx` — heart toggle (prompts sign-in if unauthed)
+- [ ] Add FavoriteButton to RecipeShell.tsx (tool pages) and explore cards
+- [ ] Rebuild my-recipes page with FavoritesGrid, FavoriteRecipeCard, EmptyFavorites
+- [ ] `apps/web/lib/routes.ts` — add /my-recipes to PROTECTED_PATHS
+
+#### Tests
+
+- [ ] Convex unit tests for favorites functions
+- [ ] E2E: favorite → My Recipes → unfavorite
+
+### Sprint 8.5c: Schema-Driven Recipe Config
+
+Replace ~600 LOC of hardcoded per-recipe config with dynamic schema-driven config via `@bnto/form`.
+
+#### Create
+
+- [ ] `apps/web/app/(app)/[bnto]/_components/DynamicRecipeConfig.tsx` — reads recipe definition, finds processing nodes, looks up generated schemas, renders SchemaForm per node
+
+#### Delete (after DynamicRecipeConfig works)
+
+- [ ] All files in `[bnto]/_components/configs/` (CompressImagesConfig, ResizeImagesConfig, etc.)
+- [ ] `configs/registry.tsx`, `configs/types.ts`
+
+#### Modify
+
+- [ ] RecipeShell.tsx — use DynamicRecipeConfig instead of registry-based lazy loader
+- [ ] recipeFlowStore / useRecipeFlow — config state becomes generic `Record<string, Record<string, unknown>>`
+- [ ] Execution path — apply generic config to definition before engine call
+
+#### Verify
+
+- [ ] Every recipe renders correct controls dynamically
+- [ ] Defaults match previous hardcoded values
+- [ ] Execution output identical
+- [ ] New recipes (strip-exif, merge-csv, csv-to-json) get config UI for free
 
 ---
 
@@ -637,32 +781,6 @@ Referral links with Pro trial or extended history as reward. Open question: exac
 - [ ] `@bnto/core` — Referral service/hooks
 - [ ] `apps/web` — Referral link generation UI + landing page `?ref=CODE` capture
 
-### UX: Expression Input — Pill Tokens & Variable Picker
-
-**Priority: Medium.** Template expression fields (rename patterns, loop items, break conditions) are plain `<Input>` elements with placeholder hints. Users write `{{name}}-compressed.{{ext}}` with zero editor assistance. This is fine for Tier 1-2 recipes (structured controls handle everything), but becomes a usability cliff when `transform`, `http-request`, and `ai` nodes ship.
-
-**Strategy doc:** [expression-input-ux.md](strategy/expression-input-ux.md) — full competitor analysis (Zapier, Make.com, n8n, Apple Shortcuts, Power Automate, Retool), recommended approach, engine changes, phased rollout.
-
-**Phased delivery:**
-
-**Phase 1 (current — no work needed):** Tier 1-3 recipes use structured controls exclusively. Template fields are hidden or pre-filled. Users never write expressions.
-
-**Phase 2 (when Tier 4 nodes ship — transform, http-request):**
-
-- [ ] `engine` — Add `template_variables: Option<Vec<TemplateVariable>>` to `ParameterDef` in `metadata.rs`. Each variable declares name, label, description, source, example value. Populate in processors that have template params (file-system rename pattern, loop items)
-- [ ] `packages/@bnto/nodes` — Update codegen (`generate-from-catalog.ts`) to propagate `templateVariables` into `NodeSchemaDefinition` params
-- [ ] `packages/editor` — **ExpressionInput component**: Rich text input that renders `{{var}}` as visual pill tokens. Backspace selects/deletes pills. Underlying value stays a template string
-- [ ] `packages/editor` — **Variable picker popover**: Grouped by source (file metadata, upstream outputs, loop context). Search/filter. Inserts pill at cursor
-- [ ] `packages/editor` — **SchemaField dispatch**: If `templateVariables` is set on a param, render `ExpressionInput` instead of `TextControl`
-- [ ] `packages/editor` — **Fixed/Expression toggle**: Per-field toggle (n8n-style) that switches between structured control and expression input. Trailing icon on SchemaField
-- [ ] `apps/web` — E2E: Verify pill token rendering, variable picker insertion, Fixed/Expression toggle
-
-**Phase 3 (when ai nodes ship — Tier 5):**
-
-- [ ] `packages/editor` — Expression validation feedback (red underline for unknown variables, type mismatches)
-- [ ] `packages/editor` — Autocomplete for function names and variable paths (beyond pill insertion)
-- [ ] `packages/editor` — Function reference tab in variable picker (document available template functions)
-
 ---
 
 ### Performance: WASM Bundle Size & Processing Benchmarks
@@ -735,15 +853,35 @@ The engine supports recursive `Definition.Nodes`. The web app must preserve this
 
 Files: `packages/*/src/**/*.test.ts`, `apps/web/e2e/**/*.spec.ts`
 
-### Triage: Editor Store Performance Pass
+_(Editor Store Performance Pass consolidated under "Deferred: Editor Investment" section above.)_
 
-**Priority: Triage.** Audit React context usage vs store selectors across `@bnto/editor`. Ensure components use direct store subscriptions (`useStore` + selector) instead of React context for state reads. General cleanup: memoize selectors, remove unnecessary re-renders, verify slice granularity.
+### Deferred: Editor Investment (Post-Revenue) — FROZEN
 
-Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `packages/editor/src/context.ts`
+**All editor-specific items are deferred (March 2026 pivot).** The editor package (`@bnto/editor`) is frozen at v1. These items only become relevant if post-revenue demand signals indicate users want custom recipe creation. The editor infrastructure is built and will be there when needed.
 
-### Deep Backlog: Code Editor (CodeMirror 6) — Post-M5
+**Code Editor (CodeMirror 6):** Tabled indefinitely. CM6 schema-aware `.bnto.json` editor. Design doc: [code-editor.md](.claude/strategy/code-editor.md).
 
-**Tabled indefinitely (March 2026).** Schema-aware `.bnto.json` code editor for power users — CM6 over Monaco (60x smaller), slash commands, JSON Schema validation, store sync with visual canvas. The visual editor is the product; code editor is a power-user luxury. Design doc: [code-editor.md](.claude/strategy/code-editor.md). May revisit post-M5 if demand emerges.
+**Expression Input (Pill Tokens & Variable Picker):** Phase 2-3 of expression-input-ux.md. Only relevant when Tier 4+ nodes (transform, http-request, ai) ship and users need template expressions.
+
+**Edit Mode / Run Mode:** Mini Motorways-inspired pause/play. Same canvas for editing and execution. Deferred until editor investment resumes.
+
+**LayerPanel Polish (Sprint 5B W2-4):** Category color pips, selected state ring, I/O distinction. Cosmetic editor improvements — not needed while editor is frozen.
+
+**Editor Store Performance Pass:** React context vs store selector audit. Optimization work on frozen code.
+
+**Palette → Primitive Node Type UX:** Node palette lists types instead of operations. Requires active editor development.
+
+**Audit and remove useEditorStoreApi:** Migrate to client/service API. Internal editor refactor — not needed while frozen.
+
+**DialogBody adoption in editor dialogs:** OpenRecipeDialog, HelpDialog. Internal editor polish.
+
+**useDialog hook adoption:** Standardize dialog state in editor. Internal editor polish.
+
+**Dumb components pass (editor):** Extract logic from heavy editor component files. Internal refactor.
+
+**E2E tests for editor keyboard shortcuts:** Playwright tests for the 7 editor shortcuts. Not needed while editor is frozen.
+
+**Revisit skipped auth E2E tests in editor-save.spec.ts:** SV1/SV3 save/load tests. Blocked on auth test helpers + editor investment resuming.
 
 ### Triage: Thin Rust comment density
 
@@ -761,12 +899,6 @@ Files: new `packages/ui/src/interaction/FeatureGate/`, `apps/web/` consumers
 
 ---
 
-### Triage: Palette → primitive node type → mode/operation selection UX
-
-**Priority: Triage.** Evaluate a flow where the node palette lists primitive node types (e.g. "Image") instead of operations (e.g. "Compress"). After choosing a type, the user picks the mode/operation, which loads the correct config. The config panel would have a mode selector at the top so users can switch operations without removing/re-adding the node. Trade-offs: simpler palette (fewer items) vs. extra click to reach config; explicit mode control vs. current direct-to-operation approach.
-
-Files: `packages/editor/src/components/EditorToolbar.tsx` (palette), `packages/editor/src/components/ConfigPanel/`
-
 ---
 
 ### Triage: Surface-aware typography and icon color system
@@ -779,17 +911,7 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 
 ---
 
-### Triage: Audit and remove useEditorStoreApi — migrate to client/service API
-
-**Priority: Triage.** Audit all uses of `useEditorStoreApi`, `storeApi.setState`, `storeApi.getState`, and `storeApi.subscribe` in `packages/editor/src/hooks/` and `packages/editor/src/components/`. Migrate each to use the proper `editor.definition.*`, `editor.nodes.*`, etc. client/service methods. Once all consumers are ported, remove the `useEditorStoreApi` export from `context.ts`.
-
-### Triage: Adopt DialogBody in all existing editor dialogs
-
-**Priority: Triage.** OpenRecipeDialog, HelpDialog, and any other dialogs that compose `DialogHeader`/`DialogFooter` without `DialogBody` should be updated to use the standard `DialogHeader`/`DialogBody`/`DialogFooter` composition for consistent spacing. `RecipeDialog` already follows the pattern — backport to the rest.
-
-### Triage: Adopt useDialog hook across all dialog use cases
-
-**Priority: Triage.** `useDialog` has been added to `@bnto/ui` (standardized open/close state for dialogs). Adopt it in all existing dialog consumers — OpenRecipeDialog, HelpDialog, and any other components that manually manage dialog open/close with `useState`. Replace manual `useState(false)` + `setOpen` patterns with the standardized `useDialog()` hook for consistent props and state management.
+_(Editor-specific triage items consolidated under "Deferred: Editor Investment" section above.)_
 
 ---
 
@@ -839,15 +961,7 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 
 ---
 
-### Triage: Revisit skipped auth E2E tests in editor-save.spec.ts
-
-**Priority: Triage.** Two tests in `e2e/journeys/editor/editor-save.spec.ts` are unconditionally skipped — SV1 (save recipe) and SV3 (load saved recipe). They require auth infrastructure (signed-in user + Convex) and the Save menu item was removed from the toolbar. Revisit when auth test helpers exist and Save is re-introduced. `editor-save.spec.ts:70`
-
 ---
-
-### Triage: Dumb components pass — extract logic from heavy component files
-
-**Priority: Triage.** Components like `packages/editor/src/components/NodePaletteDialog/NodePaletteDialogRoot.tsx` carry too much inline logic. Audit for opportunities to 1) extract reusable utils/patterns and 2) keep components dumb (data in, render out).
 
 ---
 
@@ -862,10 +976,6 @@ Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `pac
 **Priority: Triage.** Wrapper components (e.g. SavedRecipeCard) redefine props like `loading`, `href`, `className` that already exist on the underlying primitive (Card, RecipeCard). Audit all wrapper components to use `Pick<ComponentProps<typeof Base>, ...>` or `extends` instead of manual redefinition. Flagged on PR #212 SavedRecipeCard.tsx.
 
 ---
-
-### Triage: E2E tests for editor keyboard shortcuts
-
-**Priority: Triage.** The 7 editor shortcuts (undo, redo, delete, run, export, escape, help) have unit test coverage for guard logic but zero E2E tests using `page.keyboard.press()`. The existing undo test uses the toolbar button, not the keyboard. Add Playwright tests that verify actual keyboard presses trigger expected actions.
 
 ---
 
@@ -897,11 +1007,9 @@ Files: `app/(auth)/`, `packages/@bnto/auth/`
 
 **Priority: Triage.** After PR #225 is merged and deployed, run curl checks against `bnto.io/ingest/*` endpoints, confirm trailing slash behavior on `/ingest/e/`, and verify events appear in PostHog Live Events. Can only be tested in production.
 
-### Triage: Sync recipes on my-recipes page mount
+### ~~Triage: Sync recipes on my-recipes page mount~~ — SUPERSEDED
 
-**Priority: Triage.** On mount of the my-recipes page, kick off `core.recipes.syncToCloud()` so previously unsynced local recipes get pushed to the cloud. Users should see non-synced recipes transition to synced status in real time.
-
-Files: `apps/web/app/(app)/my-recipes/`, `packages/core/src/clients/recipeClient.ts` (`syncToCloud`)
+**Superseded by Sprint 8.5 pivot.** My Recipes is being redefined as favorites (bookmarked predefined recipes). The localStorage sync/auto-save/syncToCloud infrastructure is being removed.
 
 ### Triage: Code-driven feature flag definitions for self-hosters and contributors
 
@@ -915,11 +1023,9 @@ Files: `.claude/rules/feature-flags.md` (open source consideration section), `.c
 
 Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version field), `engine/crates/bnto-core/` (engine-side validation)
 
-### Triage: Remove DevTab and all dev-only execution controls
+### Triage: Remove DevTab and all dev-only execution controls — ABSORBED into Sprint 8.5
 
-**Priority: Triage.** Rip out DevTab, DevNodeControls, devMockData, and the node-progress E2E spec (~500 lines of dead code). Also remove `setNodeStatus`, `setNodeProgress`, and `forceExecutionState` from ExecutionService interface and implementation — these are dev-only methods with no production consumers.
-
-Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
+**Absorbed into Sprint 8.5 Wave 3 (slash dead code).** DevTab, DevNodeControls, devMockData, node-progress E2E spec will be removed as part of the editor disconnection cleanup.
 
 ## Reference
 

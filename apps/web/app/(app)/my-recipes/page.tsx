@@ -1,19 +1,19 @@
-import { AppShellContent, Stack } from "@bnto/ui";
-
-import { MyRecipesTabs } from "./_components/MyRecipesTabs";
+import { AppShellContent, Heading, Stack, Text } from "@bnto/ui";
 
 /**
- * My Recipes dashboard — server component.
+ * My Recipes — placeholder until Sprint 8.5b (Favorites).
  *
- * The interactive content (heading + filter + grid) lives in MyRecipesTabs,
- * which is the client boundary. The filter dropdown needs client state,
- * so the heading moved into the client component to compose with the filter.
+ * Will be rebuilt as a favorites-backed page: favorited recipes
+ * resolved via the registry, rendered as cards linking to /{slug}.
  */
 export default function MyRecipesPage() {
   return (
     <AppShellContent>
-      <Stack className="gap-8">
-        <MyRecipesTabs />
+      <Stack className="gap-4">
+        <Heading level={1}>My Recipes</Heading>
+        <Text color="muted">
+          Favorites are coming soon. Browse available recipes on the Explore page.
+        </Text>
       </Stack>
     </AppShellContent>
   );

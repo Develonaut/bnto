@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { RecipeListItem } from "@bnto/core";
 
 import {
   Button,
@@ -24,61 +23,8 @@ import {
   Stagger,
   Text,
 } from "@bnto/ui";
-import { SavedRecipeCard } from "@/components/blocks/SavedRecipeCard";
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
-import { editorUrl } from "@/lib/routes";
-
-/* ── Mock recipe data ──────────────────────────────────────── */
-
-const NOW = Date.now();
-const HOUR = 3_600_000;
-const DAY = 86_400_000;
-
-const MOCK_RECIPES: Array<{
-  recipe: RecipeListItem;
-  lastStatus?: "pending" | "running" | "completed" | "failed";
-}> = [
-  {
-    recipe: {
-      id: "1",
-      name: "Compress & Resize",
-      nodeCount: 3,
-      nodeTypes: ["compress", "resize"],
-      updatedAt: NOW - 2 * HOUR,
-    },
-    lastStatus: "completed",
-  },
-  {
-    recipe: {
-      id: "2",
-      name: "Clean CSV Pipeline",
-      nodeCount: 5,
-      nodeTypes: ["clean-csv"],
-      updatedAt: NOW - 3 * DAY,
-    },
-    lastStatus: "failed",
-  },
-  {
-    recipe: {
-      id: "3",
-      name: "Batch Rename",
-      nodeCount: 2,
-      nodeTypes: ["rename"],
-      updatedAt: NOW - 15 * DAY,
-    },
-    lastStatus: "running",
-  },
-  {
-    recipe: {
-      id: "4",
-      name: "Image Format Converter",
-      nodeCount: 4,
-      nodeTypes: ["convert"],
-      updatedAt: NOW - 45 * DAY,
-    },
-  },
-];
 
 /* ── Showcase ────────────────────────────────────────────────── */
 
@@ -98,34 +44,6 @@ export function RecipeCardShowcase() {
             : "Cards are loaded with real content."}
         </Text>
       </Row>
-
-      {/* SavedRecipeCard — domain wrapper pattern */}
-      <Stack gap="sm">
-        <div>
-          <Heading level={3} size="xs">
-            SavedRecipeCard
-          </Heading>
-          <Text size="sm" color="muted">
-            Domain wrapper that composes RecipeCard sub-components with saved recipe data.
-          </Text>
-        </div>
-        <Stagger asChild>
-          <Grid cols={4} gap="md" animated>
-            {MOCK_RECIPES.map((item, i) => (
-              <GridItem key={item.recipe.id}>
-                <ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
-                  <SavedRecipeCard
-                    recipe={item.recipe}
-                    lastStatus={item.lastStatus}
-                    href={editorUrl(item.recipe.id)}
-                    loading={loading}
-                  />
-                </ScaleIn>
-              </GridItem>
-            ))}
-          </Grid>
-        </Stagger>
-      </Stack>
 
       {/* CardActions — nested controls in clickable cards */}
       <Stack gap="sm">
