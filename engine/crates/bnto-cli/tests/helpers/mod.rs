@@ -35,6 +35,29 @@ pub fn recipe_path(slug: &str) -> String {
         .to_string()
 }
 
+/// Path to a custom recipe fixture (e.g., recipes with embedded test data).
+pub fn custom_fixture_path(slug: &str) -> String {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("tests/fixtures/{slug}.bnto.json"))
+        .to_string_lossy()
+        .to_string()
+}
+
+/// Run a custom fixture recipe and assert it succeeds.
+pub fn run_custom_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_fixture_path(slug)])
+        .arg(fixture)
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(output.status.success(), "[custom/{slug}] stderr: {stderr}");
+    (out, stderr)
+}
+
 /// Path to an explicit (loop-container) recipe fixture.
 pub fn explicit_recipe_path(slug: &str) -> String {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))

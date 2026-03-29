@@ -14,6 +14,7 @@ import { imageCompressNodeType } from "./imageCompress";
 import { imageConvertNodeType } from "./imageConvert";
 import { imageResizeNodeType } from "./imageResize";
 import { imageStripExifNodeType } from "./imageStripExif";
+import { imageWatermarkNodeType } from "./imageWatermark";
 import { inputNodeType } from "./input";
 import { loopNodeType } from "./loop";
 import { outputNodeType } from "./output";
@@ -38,6 +39,7 @@ export const NODE_TYPES = {
   imageConvert: "image-convert",
   imageResize: "image-resize",
   imageStripExif: "image-strip-exif",
+  imageWatermark: "image-watermark",
   input: "input",
   loop: "loop",
   output: "output",
@@ -66,6 +68,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "image-convert": imageConvertNodeType,
   "image-resize": imageResizeNodeType,
   "image-strip-exif": imageStripExifNodeType,
+  "image-watermark": imageWatermarkNodeType,
   "input": inputNodeType,
   "loop": loopNodeType,
   "output": outputNodeType,

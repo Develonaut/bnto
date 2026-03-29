@@ -20,6 +20,7 @@ import {
   resizeImages,
   standardizeCsv,
   stripExif,
+  watermarkImages,
 } from "./recipes/index";
 
 /**
@@ -41,6 +42,7 @@ export const RECIPES: readonly Recipe[] = [
   compressAndRename,
   standardizeCsv,
   stripExif,
+  watermarkImages,
 ];
 
 // Re-export all recipes for direct access
@@ -57,4 +59,5 @@ export {
   resizeImages,
   standardizeCsv,
   stripExif,
+  watermarkImages,
 };

@@ -23,6 +23,7 @@ describe("NODE_TYPES", () => {
     expect(NODE_TYPES.imageCompress).toBe("image-compress");
     expect(NODE_TYPES.imageResize).toBe("image-resize");
     expect(NODE_TYPES.imageConvert).toBe("image-convert");
+    expect(NODE_TYPES.imageWatermark).toBe("image-watermark");
     expect(NODE_TYPES.input).toBe("input");
     expect(NODE_TYPES.loop).toBe("loop");
     expect(NODE_TYPES.output).toBe("output");

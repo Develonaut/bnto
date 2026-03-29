@@ -14,6 +14,7 @@ import { imageResizeParamsSchema } from "./schemas/imageResize";
 import { IMAGE_FORMATS, imageConvertFields } from "./schemas/imageConvert";
 import { spreadsheetCleanParamsSchema } from "./schemas/spreadsheetClean";
 import { fileRenameParamsSchema } from "./schemas/fileRename";
+import { imageWatermarkParamsSchema } from "./schemas/imageWatermark";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { CATALOG_FORMAT_VERSION } from "./generated/formatVersion";
 import { PROCESSORS, PROCESSOR_MAP, getProcessorDefaults } from "./generated/catalog";
@@ -75,6 +76,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("image-resize")).toBe(true);
     expect(PROCESSOR_MAP.has("image-convert")).toBe(true);
     expect(PROCESSOR_MAP.has("image-strip-exif")).toBe(true);
+    expect(PROCESSOR_MAP.has("image-watermark")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-clean")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-convert")).toBe(true);
@@ -122,6 +124,16 @@ describe("engine defaults flow through to schemas", () => {
     for (const opt of caseParam?.options ?? []) {
       expect(() => fileRenameParamsSchema.shape.case.parse(opt)).not.toThrow();
     }
+  });
+
+  it("image-watermark position and size defaults match engine", () => {
+    const engineDefaults = getProcessorDefaults("image-watermark");
+    const zodPosition = imageWatermarkParamsSchema.shape.position.parse(undefined);
+    const zodSize = imageWatermarkParamsSchema.shape.size.parse(undefined);
+    const zodOpacity = imageWatermarkParamsSchema.shape.opacity.parse(undefined);
+    expect(zodPosition).toBe(engineDefaults.position);
+    expect(zodSize).toBe(engineDefaults.size);
+    expect(zodOpacity).toBe(engineDefaults.opacity);
   });
 
   it("image-convert format options match IMAGE_FORMATS", () => {

@@ -14,6 +14,8 @@ export { imageResizeParamsSchema, imageResizeNodeSchema } from "./imageResize";
 export type { ImageResizeParams } from "./imageResize";
 export { imageStripExifParamsSchema, imageStripExifNodeSchema } from "./imageStripExif";
 export type { ImageStripExifParams } from "./imageStripExif";
+export { imageWatermarkParamsSchema, imageWatermarkNodeSchema } from "./imageWatermark";
+export type { ImageWatermarkParams } from "./imageWatermark";
 export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spreadsheetClean";
 export type { SpreadsheetCleanParams } from "./spreadsheetClean";
 export { spreadsheetConvertParamsSchema, spreadsheetConvertNodeSchema } from "./spreadsheetConvert";

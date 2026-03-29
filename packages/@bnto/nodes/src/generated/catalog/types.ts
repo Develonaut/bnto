@@ -14,6 +14,7 @@ export type NodeTypeName =
   | "image-convert"
   | "image-resize"
   | "image-strip-exif"
+  | "image-watermark"
   | "input"
   | "loop"
   | "output"
@@ -46,7 +47,7 @@ export interface NodeTypeInfo {
   icon: string;
 }
 
-export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
+export type ParamType = "number" | "string" | "boolean" | "enum" | "object" | "file";
 
 export interface ProcessorParam {
   readonly name: string;

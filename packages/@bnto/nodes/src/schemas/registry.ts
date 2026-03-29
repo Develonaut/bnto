@@ -23,6 +23,7 @@ import { imageCompressFields } from "./imageCompress";
 import { imageConvertFields } from "./imageConvert";
 import { imageResizeFields } from "./imageResize";
 import { imageStripExifFields } from "./imageStripExif";
+import { imageWatermarkFields } from "./imageWatermark";
 import { inputNodeSchema, inputFields } from "./input";
 import { loopNodeSchema, loopFields } from "./loop";
 import { outputNodeSchema, outputFields } from "./output";
@@ -51,6 +52,7 @@ const HAND_WRITTEN_FIELDS: Partial<Record<string, NodeParamFields>> = {
   "image-convert": imageConvertFields,
   "image-resize": imageResizeFields,
   "image-strip-exif": imageStripExifFields,
+  "image-watermark": imageWatermarkFields,
   input: inputFields,
   loop: loopFields,
   output: outputFields,

@@ -135,6 +135,9 @@ sha2 = "0.10"
 # Used for find/replace patterns in filenames (e.g., "IMG_(\d+)" → "photo_$1").
 regex = "1"
 
+# base64: Base64 encoding/decoding for file parameters (e.g., watermark images).
+base64 = "0.22"
+
 # png: Low-level PNG encoder/decoder. We use this directly when writing
 # indexed (8-bit palette) PNGs after color quantization. The higher-level
 # `image` crate always writes truecolor PNGs — to write a palette-based

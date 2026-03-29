@@ -8,7 +8,9 @@ mod golden_helpers;
 mod helpers;
 
 use golden_helpers::assert_golden;
-use helpers::{fixture_csv, fixture_image, run_explicit_recipe_ok, run_recipe_ok};
+use helpers::{
+    fixture_csv, fixture_image, run_custom_recipe_ok, run_explicit_recipe_ok, run_recipe_ok,
+};
 
 // --- Image Recipes ---
 
@@ -88,6 +90,36 @@ fn golden_strip_exif() {
     assert_golden("strip-exif", &out);
 }
 
+#[test]
+fn golden_watermark_images() {
+    let (out, _) = run_custom_recipe_ok("watermark-images", &fixture_image("small.jpg"));
+    assert_golden("watermark-images", &out);
+}
+
+#[test]
+fn golden_watermark_images_medium() {
+    let (out, _) = run_custom_recipe_ok("watermark-images", &fixture_image("medium.jpg"));
+    assert_golden("watermark-images-medium", &out);
+}
+
+#[test]
+fn golden_watermark_images_png() {
+    let (out, _) = run_custom_recipe_ok("watermark-images", &fixture_image("small.png"));
+    assert_golden("watermark-images-png", &out);
+}
+
+#[test]
+fn golden_watermark_top_left() {
+    let (out, _) = run_custom_recipe_ok("watermark-top-left", &fixture_image("small.jpg"));
+    assert_golden("watermark-top-left", &out);
+}
+
+#[test]
+fn golden_watermark_center_large() {
+    let (out, _) = run_custom_recipe_ok("watermark-center-large", &fixture_image("small.jpg"));
+    assert_golden("watermark-center-large", &out);
+}
+
 // --- Explicit (loop-container) equivalence tests ---
 //
 // These use preserved explicit recipe fixtures with loop containers.
@@ -164,4 +196,10 @@ fn golden_strip_exif_explicit() {
 fn golden_csv_to_json_explicit() {
     let (out, _) = run_explicit_recipe_ok("csv-to-json", &fixture_csv("simple.csv"));
     assert_golden("csv-to-json", &out);
+}
+
+#[test]
+fn golden_watermark_images_explicit() {
+    let (out, _) = run_explicit_recipe_ok("watermark-images", &fixture_image("small.jpg"));
+    assert_golden("watermark-images", &out);
 }

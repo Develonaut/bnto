@@ -103,6 +103,9 @@ serde_json = { workspace = true }
 # They compile cleanly to wasm32-unknown-unknown.
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 
+# Base64 decoding for file parameters (watermark image bytes arrive as base64).
+base64 = { workspace = true }
+
 # =============================================================================
 # PNG Quantization — Lossy Color Reduction for Dramatically Smaller PNGs
 # =============================================================================

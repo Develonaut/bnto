@@ -16,3 +16,4 @@ export { renameFiles } from "./renameFiles";
 export { resizeImages } from "./resizeImages";
 export { standardizeCsv } from "./standardizeCsv";
 export { stripExif } from "./stripExif";
+export { watermarkImages } from "./watermarkImages";

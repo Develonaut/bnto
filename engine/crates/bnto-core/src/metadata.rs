@@ -109,6 +109,12 @@ pub enum ParameterType {
     },
     /// A structured object (key-value map). Used for column rename mappings.
     Object,
+    /// A file upload parameter (base64-encoded bytes). The `accept` field
+    /// lists allowed MIME types for the file picker.
+    File {
+        /// Allowed MIME types for the file picker (e.g., `["image/png", "image/jpeg"]`).
+        accept: Vec<std::string::String>,
+    },
 }
 
 // --- Constraints ---
@@ -250,7 +256,7 @@ macro_rules! node_type {
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(18);
+    let mut types = Vec::with_capacity(19);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -367,6 +373,15 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "image"
+        ),
+        node_type!(
+            "image-watermark",
+            "Watermark",
+            "Overlay a watermark image onto source images.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "stamp"
         ),
     ]
 }
@@ -549,7 +564,7 @@ mod tests {
     fn test_all_node_types_returns_18_entries() {
         // The engine defines all 18 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 18, "Should have exactly 18 node types");
+        assert_eq!(types.len(), 19, "Should have exactly 19 node types");
     }
 
     #[test]
@@ -569,7 +584,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 18, "All node type names should be unique");
+        assert_eq!(names.len(), 19, "All node type names should be unique");
     }
 
     #[test]
@@ -665,6 +680,16 @@ mod tests {
         let json = serde_json::to_string(&param).unwrap();
         assert!(json.contains(r#""type":"enum""#));
         assert!(json.contains(r#""options":["jpeg","png","webp"]"#));
+    }
+
+    #[test]
+    fn test_parameter_type_file_serialization() {
+        let param = ParameterType::File {
+            accept: vec!["image/png".to_string(), "image/jpeg".to_string()],
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""type":"file""#));
+        assert!(json.contains(r#""accept":["image/png","image/jpeg"]"#));
     }
 
     #[test]

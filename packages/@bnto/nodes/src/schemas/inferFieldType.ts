@@ -67,6 +67,8 @@ type NodeParamControl =
   | "number"
   | "text"
   | "textarea"
+  | "file"
+  | "positionGrid"
   | "tagPicker"
   | "keyValue";
 
@@ -141,8 +143,13 @@ function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
   return typeName === "ZodString" || typeName === "ZodUnknown";
 }
 
-function inferEnum(innerDef: ZodDef, required: boolean): NodeParamFieldInfo {
-  return { type: "enum", control: "select", required, enumValues: innerDef.values };
+function inferEnum(
+  innerDef: ZodDef,
+  required: boolean,
+  fieldConfig?: NodeParamField,
+): NodeParamFieldInfo {
+  const control = fieldConfig?.control === "positionGrid" ? "positionGrid" : "select";
+  return { type: "enum", control, required, enumValues: innerDef.values };
 }
 
 function inferNumber(inner: z.ZodTypeAny, required: boolean): NodeParamFieldInfo {
@@ -152,6 +159,7 @@ function inferNumber(inner: z.ZodTypeAny, required: boolean): NodeParamFieldInfo
 }
 
 function inferString(required: boolean, fieldConfig?: NodeParamField): NodeParamFieldInfo {
+  if (fieldConfig?.control === "file") return { type: "string", control: "file", required };
   const control = fieldConfig?.control === "textarea" ? "textarea" : "text";
   return { type: "string", control, required };
 }
@@ -173,7 +181,7 @@ function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: NodeParamField): N
   const innerDef = zodDef(inner);
   const typeName = innerDef.typeName;
 
-  if (typeName === "ZodEnum") return inferEnum(innerDef, required);
+  if (typeName === "ZodEnum") return inferEnum(innerDef, required, fieldConfig);
   if (typeName === "ZodNumber") return inferNumber(inner, required);
   if (typeName === "ZodBoolean") return { type: "boolean", control: "switch", required };
   if (typeName === "ZodArray" && isStringArray(inner))

@@ -33,6 +33,10 @@
       "label": "Strip EXIF",
       "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)."
     },
+    "imageWatermark": {
+      "label": "Watermark",
+      "description": "Overlay a watermark image onto source images."
+    },
     "input": {
       "label": "Input",
       "description": "Declares how data enters the recipe."
@@ -60,6 +64,10 @@
     "spreadsheetConvert": {
       "label": "CSV to JSON",
       "description": "Convert CSV data to JSON format with configurable delimiters."
+    },
+    "spreadsheetMerge": {
+      "label": "Merge CSV",
+      "description": "Combine multiple CSV files into one with header reconciliation and deduplication."
     },
     "spreadsheetRename": {
       "label": "Rename CSV Columns",
@@ -138,6 +146,36 @@
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
       }
     },
+    "imageWatermark": {
+      "watermark": {
+        "label": "Watermark Image",
+        "description": "The watermark image to overlay (base64-encoded)."
+      },
+      "position": {
+        "label": "Position",
+        "description": "Where to place the watermark on the image."
+      },
+      "size": {
+        "label": "Size",
+        "description": "Watermark width as a percentage of the source image width."
+      },
+      "opacity": {
+        "label": "Opacity",
+        "description": "Watermark transparency (0 = invisible, 100 = fully opaque)."
+      },
+      "offsetX": {
+        "label": "Offset X",
+        "description": "Horizontal offset from the edge in pixels."
+      },
+      "offsetY": {
+        "label": "Offset Y",
+        "description": "Vertical offset from the edge in pixels."
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
     "spreadsheetClean": {
       "trimWhitespace": {
         "label": "Trim Whitespace",
@@ -160,6 +198,16 @@
       "pretty": {
         "label": "Pretty Print",
         "description": "Format output JSON with indentation"
+      }
+    },
+    "spreadsheetMerge": {
+      "headerHandling": {
+        "label": "Header Handling",
+        "description": "How to reconcile headers across files"
+      },
+      "deduplicate": {
+        "label": "Remove Duplicates",
+        "description": "Remove duplicate rows across all files"
       }
     },
     "spreadsheetRename": {

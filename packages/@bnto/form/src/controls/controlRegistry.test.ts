@@ -10,6 +10,8 @@ const ALL_CONTROLS: NodeParamControl[] = [
   "number",
   "text",
   "textarea",
+  "file",
+  "positionGrid",
   "tagPicker",
   "keyValue",
 ];

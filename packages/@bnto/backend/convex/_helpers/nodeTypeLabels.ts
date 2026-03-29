@@ -17,9 +17,11 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "image-convert": "Convert Image Format",
   "image-resize": "Resize Images",
   "image-strip-exif": "Strip EXIF",
+  "image-watermark": "Watermark",
   "shell-command": "Shell Command",
   "spreadsheet-clean": "Clean CSV",
   "spreadsheet-convert": "CSV to JSON",
+  "spreadsheet-merge": "Merge CSV",
   "spreadsheet-rename": "Rename CSV Columns",
   transform: "Transform",
 };

@@ -12,6 +12,7 @@ import { imageCompressNodeSchema } from "./schemas/imageCompress";
 import { imageConvertNodeSchema } from "./schemas/imageConvert";
 import { imageResizeNodeSchema } from "./schemas/imageResize";
 import { imageStripExifNodeSchema } from "./schemas/imageStripExif";
+import { imageWatermarkNodeSchema } from "./schemas/imageWatermark";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
@@ -27,6 +28,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "image-convert": imageConvertNodeSchema,
   "image-resize": imageResizeNodeSchema,
   "image-strip-exif": imageStripExifNodeSchema,
+  "image-watermark": imageWatermarkNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
@@ -43,6 +45,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "image-convert": {},
   "image-resize": {},
   "image-strip-exif": {},
+  "image-watermark": {},
   "spreadsheet-clean": {},
   "spreadsheet-convert": {},
   "spreadsheet-merge": {},

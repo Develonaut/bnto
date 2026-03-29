@@ -34,7 +34,7 @@ describe("computePalette", () => {
   it("creates one palette item per image node type", () => {
     const imageItems = allItems().filter((i) => i.category === "image");
     expect(imageItems).toHaveLength(expectedCountForCategory("image"));
-    expect(imageItems.length).toBeGreaterThanOrEqual(4);
+    expect(imageItems.length).toBeGreaterThanOrEqual(5);
     expect(imageItems.map((i) => i.type)).toContain("image-compress");
   });
 

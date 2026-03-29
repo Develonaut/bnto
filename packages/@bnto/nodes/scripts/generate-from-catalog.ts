@@ -336,7 +336,7 @@ export interface NodeTypeInfo {
   icon: string;
 }
 
-export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
+export type ParamType = "number" | "string" | "boolean" | "enum" | "object" | "file";
 
 export interface ProcessorParam {
   readonly name: string;
@@ -503,6 +503,10 @@ function generateZodField(param: RawParameter): string {
     }
     case "object": {
       zodChain = "z.record(z.string())";
+      break;
+    }
+    case "file": {
+      zodChain = "z.string()";
       break;
     }
     default: {
