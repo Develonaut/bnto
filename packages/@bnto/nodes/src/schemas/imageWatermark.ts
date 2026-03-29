@@ -20,24 +20,10 @@ export const imageWatermarkFields: NodeParamFields = {
     accept: ["image/jpeg", "image/png", "image/webp"],
   },
   position: {
-    control: "positionGrid",
+    control: "watermarkPreview",
   },
-  size: {
-    suffix: "%",
-    presets: [
-      { value: 10, label: "Small" },
-      { value: 25, label: "Medium" },
-      { value: 50, label: "Large" },
-    ],
-  },
-  opacity: {
-    suffix: "%",
-    presets: [
-      { value: 30, label: "Subtle" },
-      { value: 80, label: "Visible" },
-      { value: 100, label: "Opaque" },
-    ],
-  },
+  size: { suffix: "%" },
+  opacity: { suffix: "%" },
   offsetX: { suffix: "px", label: "Horizontal Offset" },
   offsetY: { suffix: "px", label: "Vertical Offset" },
   quality: {

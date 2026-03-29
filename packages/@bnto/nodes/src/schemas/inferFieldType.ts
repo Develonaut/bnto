@@ -69,6 +69,7 @@ type NodeParamControl =
   | "textarea"
   | "file"
   | "positionGrid"
+  | "watermarkPreview"
   | "tagPicker"
   | "keyValue";
 
@@ -148,6 +149,8 @@ function inferEnum(
   required: boolean,
   fieldConfig?: NodeParamField,
 ): NodeParamFieldInfo {
+  if (fieldConfig?.control === "watermarkPreview")
+    return { type: "enum", control: "watermarkPreview", required, enumValues: innerDef.values };
   const control = fieldConfig?.control === "positionGrid" ? "positionGrid" : "select";
   return { type: "enum", control, required, enumValues: innerDef.values };
 }

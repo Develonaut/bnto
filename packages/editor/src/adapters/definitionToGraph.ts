@@ -58,14 +58,28 @@ function mapDefinitionChild(node: Definition, slot: (typeof SLOTS)[number]): Ben
   };
 }
 
+/** Node types whose file-based params should not survive persistence reload. */
+const FILE_PARAM_KEYS: Partial<Record<string, string[]>> = {
+  "image-watermark": ["watermark"],
+};
+
 /** Build the NodeConfig for a single definition child. */
 function buildConfig(node: Definition): NodeConfigs[string] {
   const displayName = node.metadata?.customData?.displayName;
+  const fileKeys = FILE_PARAM_KEYS[node.type];
+  const parameters = fileKeys
+    ? Object.fromEntries(
+        Object.entries(node.parameters).filter(
+          ([k, v]) => !fileKeys.includes(k) || v === "" || v === undefined,
+        ),
+      )
+    : node.parameters;
+
   return {
     nodeType: node.type,
     name: node.name,
     ...(displayName ? { displayName } : {}),
-    parameters: node.parameters,
+    parameters,
   };
 }
 

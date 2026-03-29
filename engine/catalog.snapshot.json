@@ -529,7 +529,7 @@
           "default": 25,
           "constraints": {
             "min": 1.0,
-            "max": 100.0,
+            "max": 500.0,
             "required": false
           },
           "surfaceable": true
@@ -552,13 +552,13 @@
         {
           "name": "offsetX",
           "label": "Offset X",
-          "description": "Horizontal offset from the edge in pixels.",
+          "description": "Horizontal pixel offset from the position. Positive = right, negative = left.",
           "paramType": {
             "type": "number"
           },
-          "default": 10,
+          "default": 0,
           "constraints": {
-            "min": 0.0,
+            "min": -500.0,
             "max": 500.0,
             "required": false
           },
@@ -567,13 +567,13 @@
         {
           "name": "offsetY",
           "label": "Offset Y",
-          "description": "Vertical offset from the edge in pixels.",
+          "description": "Vertical pixel offset from the position. Positive = down, negative = up.",
           "paramType": {
             "type": "number"
           },
-          "default": 10,
+          "default": 0,
           "constraints": {
-            "min": 0.0,
+            "min": -500.0,
             "max": 500.0,
             "required": false
           },

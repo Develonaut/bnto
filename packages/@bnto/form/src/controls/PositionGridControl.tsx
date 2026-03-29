@@ -43,7 +43,7 @@ function PositionGridControl({ id, value, onChange }: ControlProps) {
       <div
         role="radiogroup"
         aria-label="Position"
-        className="grid aspect-square w-full grid-cols-3 place-items-center rounded-md border border-border bg-muted/50 p-3"
+        className="grid aspect-square w-full grid-cols-3 place-items-center rounded-md border border-[var(--surface-muted-wall)] bg-input p-3"
       >
         {GRID.map((row) =>
           row.map((pos) => {
@@ -58,7 +58,9 @@ function PositionGridControl({ id, value, onChange }: ControlProps) {
                 data-pos={pos}
                 onClick={handleClick}
                 className={`size-4 rounded-full transition-colors ${
-                  isSelected ? "bg-primary" : "bg-border hover:bg-muted-foreground/50"
+                  isSelected
+                    ? "bg-primary"
+                    : "bg-[var(--surface-muted-wall)] hover:bg-muted-foreground/50"
                 }`}
               />
             );

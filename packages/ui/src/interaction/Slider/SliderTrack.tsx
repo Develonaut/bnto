@@ -32,7 +32,7 @@ export function SliderTrack({
       className="relative flex w-full touch-none items-center select-none data-[disabled]:opacity-50"
       {...props}
     >
-      <SliderPrimitive.Track className="bg-input border border-border relative h-4 w-full grow overflow-hidden rounded-full">
+      <SliderPrimitive.Track className="bg-input border border-[var(--surface-muted-wall)] relative h-4 w-full grow overflow-hidden rounded-full">
         <SliderPrimitive.Range className="bg-primary absolute h-full" />
       </SliderPrimitive.Track>
       {Array.from({ length: state.resolved.length }, (_, i) => (

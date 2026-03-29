@@ -36,7 +36,7 @@ export const imageWatermarkProcessor: ProcessorDef = {
     description: "Watermark width as a percentage of the source image width.",
     type: "number" as const,
     default: 25,
-    constraints: { min: 1, max: 100, required: false },
+    constraints: { min: 1, max: 500, required: false },
   },
   {
     name: "opacity",
@@ -49,18 +49,18 @@ export const imageWatermarkProcessor: ProcessorDef = {
   {
     name: "offsetX",
     label: "Offset X",
-    description: "Horizontal offset from the edge in pixels.",
+    description: "Horizontal pixel offset from the position. Positive = right, negative = left.",
     type: "number" as const,
-    default: 10,
-    constraints: { min: 0, max: 500, required: false },
+    default: 0,
+    constraints: { min: -500, max: 500, required: false },
   },
   {
     name: "offsetY",
     label: "Offset Y",
-    description: "Vertical offset from the edge in pixels.",
+    description: "Vertical pixel offset from the position. Positive = down, negative = up.",
     type: "number" as const,
-    default: 10,
-    constraints: { min: 0, max: 500, required: false },
+    default: 0,
+    constraints: { min: -500, max: 500, required: false },
   },
   {
     name: "quality",

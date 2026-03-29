@@ -165,11 +165,11 @@
       },
       "offsetX": {
         "label": "Offset X",
-        "description": "Horizontal offset from the edge in pixels."
+        "description": "Horizontal pixel offset from the position. Positive = right, negative = left."
       },
       "offsetY": {
         "label": "Offset Y",
-        "description": "Vertical offset from the edge in pixels."
+        "description": "Vertical pixel offset from the position. Positive = down, negative = up."
       },
       "quality": {
         "label": "Quality",

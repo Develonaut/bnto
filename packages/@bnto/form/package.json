@@ -21,7 +21,8 @@
   },
   "dependencies": {
     "@bnto/core": "workspace:*",
-    "@bnto/ui": "workspace:*"
+    "@bnto/ui": "workspace:*",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@types/node": "catalog:",

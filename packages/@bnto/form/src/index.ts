@@ -11,3 +11,4 @@ export type { FormEntry, SingleEntry, GroupEntry } from "./buildFormEntries";
 export { getFieldLayout } from "./fieldLayout";
 export type { FieldLayout } from "./fieldLayout";
 export { partitionGroupFields } from "./partitionGroupFields";
+export { useFormValue, useFormValues, useFormOnChange } from "./FormStoreContext";

@@ -99,7 +99,7 @@ export interface NodeParamField {
    * isn't enough to determine the right control (e.g., a z.string() that
    * should render as a textarea instead of a single-line input).
    */
-  control?: "textarea" | "file" | "positionGrid";
+  control?: "textarea" | "file" | "positionGrid" | "watermarkPreview";
 
   /**
    * Accepted MIME types for file controls.

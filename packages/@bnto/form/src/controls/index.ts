@@ -17,6 +17,7 @@ import { TextareaControl } from "./TextareaControl";
 import { TagPickerControl } from "./TagPickerControl";
 import { FileControl } from "./FileControl";
 import { PositionGridControl } from "./PositionGridControl";
+import { WatermarkPreviewControl } from "./WatermarkPreviewControl";
 import { KeyValueEditorControl } from "./KeyValueEditorControl";
 
 /**
@@ -32,8 +33,9 @@ import { KeyValueEditorControl } from "./KeyValueEditorControl";
  * | textarea   | TextareaControl       | Multiline text (strings w/ hint)     |
  * | tagPicker  | TagPickerControl      | Multi-select combobox (string arrays)|
  * | file         | FileControl           | File picker (base64 string)          |
- * | positionGrid | PositionGridControl   | 3x3 visual grid (position enums)     |
- * | keyValue     | KeyValueEditorControl | Key→value pairs (records)            |
+ * | positionGrid     | PositionGridControl      | 3x3 visual grid (position enums)     |
+ * | watermarkPreview | WatermarkPreviewControl  | Position grid + live preview         |
+ * | keyValue         | KeyValueEditorControl    | Key→value pairs (records)            |
  */
 export const CONTROL_REGISTRY: Record<NodeParamControl, ComponentType<ControlProps>> = {
   select: SelectControl,
@@ -44,6 +46,7 @@ export const CONTROL_REGISTRY: Record<NodeParamControl, ComponentType<ControlPro
   textarea: TextareaControl,
   file: FileControl,
   positionGrid: PositionGridControl,
+  watermarkPreview: WatermarkPreviewControl,
   tagPicker: TagPickerControl,
   keyValue: KeyValueEditorControl,
 };

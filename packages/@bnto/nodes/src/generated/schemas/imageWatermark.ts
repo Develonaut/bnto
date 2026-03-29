@@ -11,10 +11,10 @@ import type { NodeSchema } from "../../schemas/types";
 export const imageWatermarkParamsSchema = z.object({
     watermark: z.string(),
     position: z.enum(["top-left","top-center","top-right","middle-left","center","middle-right","bottom-left","bottom-center","bottom-right"] as const).optional().default("bottom-right"),
-    size: z.number().min(1).max(100).optional().default(25),
+    size: z.number().min(1).max(500).optional().default(25),
     opacity: z.number().min(0).max(100).optional().default(80),
-    offsetX: z.number().min(0).max(500).optional().default(10),
-    offsetY: z.number().min(0).max(500).optional().default(10),
+    offsetX: z.number().min(-500).max(500).optional().default(0),
+    offsetY: z.number().min(-500).max(500).optional().default(0),
     quality: z.number().min(1).max(100).optional().default(80),
 });
 
@@ -45,11 +45,11 @@ export const imageWatermarkNodeSchema: NodeSchema = {
     },
     offsetX: {
       label: "Offset X",
-      description: "Horizontal offset from the edge in pixels.",
+      description: "Horizontal pixel offset from the position. Positive = right, negative = left.",
     },
     offsetY: {
       label: "Offset Y",
-      description: "Vertical offset from the edge in pixels.",
+      description: "Vertical pixel offset from the position. Positive = down, negative = up.",
     },
     quality: {
       label: "Quality",

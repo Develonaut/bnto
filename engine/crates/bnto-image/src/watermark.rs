@@ -24,8 +24,8 @@ use crate::orientation::decode_with_orientation;
 
 const DEFAULT_SIZE: u64 = 25;
 const DEFAULT_OPACITY: u64 = 80;
-const DEFAULT_OFFSET_X: u64 = 10;
-const DEFAULT_OFFSET_Y: u64 = 10;
+const DEFAULT_OFFSET_X: i64 = 0;
+const DEFAULT_OFFSET_Y: i64 = 0;
 const DEFAULT_POSITION: &str = "bottom-right";
 
 const POSITIONS: &[&str] = &[
@@ -87,7 +87,7 @@ impl WatermarkImages {
             .get("size")
             .and_then(|v| v.as_u64())
             .unwrap_or(DEFAULT_SIZE)
-            .clamp(1, 100)
+            .clamp(1, 500)
     }
 
     fn get_opacity(params: &serde_json::Map<String, serde_json::Value>) -> u64 {
@@ -98,20 +98,20 @@ impl WatermarkImages {
             .clamp(0, 100)
     }
 
-    fn get_offset_x(params: &serde_json::Map<String, serde_json::Value>) -> u64 {
+    fn get_offset_x(params: &serde_json::Map<String, serde_json::Value>) -> i64 {
         params
             .get("offsetX")
-            .and_then(|v| v.as_u64())
+            .and_then(|v| v.as_i64())
             .unwrap_or(DEFAULT_OFFSET_X)
-            .clamp(0, 500)
+            .clamp(-500, 500)
     }
 
-    fn get_offset_y(params: &serde_json::Map<String, serde_json::Value>) -> u64 {
+    fn get_offset_y(params: &serde_json::Map<String, serde_json::Value>) -> i64 {
         params
             .get("offsetY")
-            .and_then(|v| v.as_u64())
+            .and_then(|v| v.as_i64())
             .unwrap_or(DEFAULT_OFFSET_Y)
-            .clamp(0, 500)
+            .clamp(-500, 500)
     }
 
     fn get_quality(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
@@ -146,33 +146,38 @@ impl WatermarkImages {
     }
 
     /// Calculate top-left (x, y) for placing the watermark on the source image.
+    ///
+    /// Each position anchors the watermark's center on that point of the source
+    /// image. Offsets shift from there: positive = right/down, negative = left/up.
     fn calculate_position(
         position: &str,
         src_w: u32,
         src_h: u32,
         wm_w: u32,
         wm_h: u32,
-        offset_x: u64,
-        offset_y: u64,
+        offset_x: i64,
+        offset_y: i64,
     ) -> (i64, i64) {
-        let ox = offset_x as i64;
-        let oy = offset_y as i64;
         let sw = src_w as i64;
         let sh = src_h as i64;
         let ww = wm_w as i64;
         let wh = wm_h as i64;
 
-        match position {
-            "top-left" => (ox, oy),
-            "top-center" => ((sw - ww) / 2, oy),
-            "top-right" => (sw - ww - ox, oy),
-            "middle-left" => (ox, (sh - wh) / 2),
-            "center" => ((sw - ww) / 2, (sh - wh) / 2),
-            "middle-right" => (sw - ww - ox, (sh - wh) / 2),
-            "bottom-left" => (ox, sh - wh - oy),
-            "bottom-center" => ((sw - ww) / 2, sh - wh - oy),
-            _ => (sw - ww - ox, sh - wh - oy), // bottom-right default
-        }
+        // Anchor point = where the watermark's center should land (before offsets).
+        let (ax, ay) = match position {
+            "top-left" => (0, 0),
+            "top-center" => (sw / 2, 0),
+            "top-right" => (sw, 0),
+            "middle-left" => (0, sh / 2),
+            "center" => (sw / 2, sh / 2),
+            "middle-right" => (sw, sh / 2),
+            "bottom-left" => (0, sh),
+            "bottom-center" => (sw / 2, sh),
+            _ => (sw, sh), // bottom-right default
+        };
+
+        // Place watermark so its center is on the anchor, then shift by offsets.
+        (ax - ww / 2 + offset_x, ay - wh / 2 + offset_y)
     }
 
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
@@ -237,7 +242,7 @@ impl NodeProcessor for WatermarkImages {
                     default: Some(serde_json::Value::Number(DEFAULT_SIZE.into())),
                     constraints: Some(Constraints {
                         min: Some(1.0),
-                        max: Some(100.0),
+                        max: Some(500.0),
                         required: false,
                     }),
                     ..Default::default()
@@ -259,11 +264,11 @@ impl NodeProcessor for WatermarkImages {
                 ParameterDef {
                     name: "offsetX".to_string(),
                     label: "Offset X".to_string(),
-                    description: "Horizontal offset from the edge in pixels.".to_string(),
+                    description: "Horizontal pixel offset from the position. Positive = right, negative = left.".to_string(),
                     param_type: ParameterType::Number,
                     default: Some(serde_json::Value::Number(DEFAULT_OFFSET_X.into())),
                     constraints: Some(Constraints {
-                        min: Some(0.0),
+                        min: Some(-500.0),
                         max: Some(500.0),
                         required: false,
                     }),
@@ -272,11 +277,11 @@ impl NodeProcessor for WatermarkImages {
                 ParameterDef {
                     name: "offsetY".to_string(),
                     label: "Offset Y".to_string(),
-                    description: "Vertical offset from the edge in pixels.".to_string(),
+                    description: "Vertical pixel offset from the position. Positive = down, negative = up.".to_string(),
                     param_type: ParameterType::Number,
                     default: Some(serde_json::Value::Number(DEFAULT_OFFSET_Y.into())),
                     constraints: Some(Constraints {
-                        min: Some(0.0),
+                        min: Some(-500.0),
                         max: Some(500.0),
                         required: false,
                     }),
@@ -389,9 +394,9 @@ impl NodeProcessor for WatermarkImages {
 
         // Validate numeric ranges
         if let Some(size) = params.get("size").and_then(|v| v.as_u64())
-            && !(1..=100).contains(&size)
+            && !(1..=500).contains(&size)
         {
-            errors.push("size must be between 1 and 100".to_string());
+            errors.push("size must be between 1 and 500".to_string());
         }
 
         if let Some(opacity) = params.get("opacity").and_then(|v| v.as_u64())
