@@ -120,6 +120,12 @@ fn golden_watermark_center_large() {
     assert_golden("watermark-center-large", &out);
 }
 
+#[test]
+fn golden_watermark_low_opacity() {
+    let (out, _) = run_custom_recipe_ok("watermark-low-opacity", &fixture_image("small.jpg"));
+    assert_golden("watermark-low-opacity", &out);
+}
+
 // --- Explicit (loop-container) equivalence tests ---
 //
 // These use preserved explicit recipe fixtures with loop containers.
