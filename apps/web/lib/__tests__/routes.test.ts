@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   AUTH_PATHS,
-  editorUrl,
   isAuthPath,
   isProtectedPath,
   PROTECTED_PATHS,
@@ -18,12 +17,6 @@ describe("ROUTES", () => {
     expect(ROUTES.myRecipes).toBe("/my-recipes");
     expect(ROUTES.executions).toBe("/executions");
     expect(ROUTES.settings).toBe("/settings");
-  });
-});
-
-describe("editorUrl", () => {
-  it("returns /editor?recipe={id}", () => {
-    expect(editorUrl("abc-123")).toBe("/editor?recipe=abc-123");
   });
 });
 
@@ -99,8 +92,7 @@ describe("isProtectedPath", () => {
 
 describe("safeReturnTo", () => {
   it("returns the path for valid internal paths", () => {
-    expect(safeReturnTo("/editor")).toBe("/editor");
-    expect(safeReturnTo("/editor?recipe=abc")).toBe("/editor?recipe=abc");
+    expect(safeReturnTo("/my-recipes")).toBe("/my-recipes");
     expect(safeReturnTo("/settings")).toBe("/settings");
   });
 

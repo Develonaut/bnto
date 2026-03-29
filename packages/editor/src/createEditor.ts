@@ -15,7 +15,6 @@
  *   const def = editor.definition.exportAsDefinition();
  */
 
-import { core } from "@bnto/core";
 import type { Definition } from "@bnto/core";
 import type { EditorState } from "./store/types";
 import type { EditorInstance } from "./editorTypes";
@@ -30,7 +29,6 @@ import { createDefinitionClient } from "./clients/definitionClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createHistoryClient } from "./clients/historyClient";
 import { createPanelClient } from "./clients/panelClient";
-import { rfNodesToDefinition } from "./adapters/rfNodesToDefinition";
 import { debounce } from "./draft/debounce";
 
 const PERSIST_DELAY_MS = 1000;
@@ -47,16 +45,18 @@ function createClients(storeApi: EditorStoreApi) {
   return { nodes, definition, execution, history, panels };
 }
 
-/** Subscribe to store changes and auto-persist dirty state to core. */
+/**
+ * Subscribe to store changes and auto-persist dirty state.
+ *
+ * Note: recipe persistence is disabled — the editor is frozen (v1) and
+ * the store-backed save path has been removed from @bnto/core. The
+ * subscription skeleton is kept so the editor package stays compilable
+ * and can be re-wired when persistence returns.
+ */
 function subscribeAutoPersist(storeApi: EditorStoreApi) {
   const persistDebounced = debounce(PERSIST_DELAY_MS);
-  const unsubscribe = storeApi.subscribe((state) => {
-    if (!state.isDirty) return;
-    persistDebounced.schedule(() => {
-      const s = storeApi.getState();
-      const exported = rfNodesToDefinition(s.nodes, s.recipeMetadata, s.configs, s.definition);
-      core.recipes.save(exported, s.recipeMetadata);
-    });
+  const unsubscribe = storeApi.subscribe((_state) => {
+    // Persistence disabled — editor is frozen.
   });
   return { persistDebounced, unsubscribe };
 }

@@ -1,8 +1,6 @@
 import {
-  PlusIcon,
   RecipeCard,
   RecipeCardContent,
-  RecipeCardDescription,
   RecipeCardHeader,
   RecipeCardIcon,
   RecipeCardCategory,
@@ -35,7 +33,6 @@ export function RecipeMarquee() {
         {col2.map((entry) => (
           <MarqueeRecipeCard key={entry.slug} slug={entry.slug} />
         ))}
-        <CtaCard />
       </Marquee>
 
       {/* Top + bottom gradient fade */}
@@ -60,23 +57,6 @@ function MarqueeRecipeCard({ slug }: { slug: string }) {
       <RecipeCardContent>
         <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
         <RecipeCardTags tags={entry.features} limit={3} />
-      </RecipeCardContent>
-    </RecipeCard>
-  );
-}
-
-/* ── CTA card ─────────────────────────────────────────────────── */
-
-function CtaCard() {
-  return (
-    <RecipeCard href="/editor" color="primary" className="w-64">
-      <RecipeCardHeader>
-        <RecipeCardIcon icon={PlusIcon} onSurface />
-        <RecipeCardCategory onSurface>Custom</RecipeCardCategory>
-      </RecipeCardHeader>
-      <RecipeCardContent>
-        <RecipeCardTitle>Create your own</RecipeCardTitle>
-        <RecipeCardDescription onSurface>Compose your own multi-step recipes</RecipeCardDescription>
       </RecipeCardContent>
     </RecipeCard>
   );

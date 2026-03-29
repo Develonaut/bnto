@@ -4,7 +4,7 @@ const FREE_FEATURES = [
   "Unlimited image compression, resizing, and conversion",
   "Unlimited CSV cleaning and column renaming",
   "Unlimited batch file renaming",
-  "Visual recipe editor — build custom multi-step recipes",
+  "Multi-step recipes — chain processing nodes together",
   "Process multiple files at once",
   "No account required",
   "Files never leave your browser",
