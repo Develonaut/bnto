@@ -52,4 +52,16 @@ describe("BntoConfigMap defaults", () => {
   it("rename-csv-columns has an empty config", () => {
     expect(DEFAULT_CONFIGS["rename-csv-columns"]).toEqual({});
   });
+
+  it("watermark-images defaults to bottom-right at 25% size and 80% opacity", () => {
+    expect(DEFAULT_CONFIGS["watermark-images"]).toEqual({
+      watermark: "",
+      position: "bottom-right",
+      size: 25,
+      opacity: 80,
+      offsetX: 0,
+      offsetY: 0,
+      quality: 80,
+    });
+  });
 });

@@ -10,10 +10,10 @@
 
 ## Parameters
 
-| Parameter      | Type    | Default    | Range             | Description                            |
-| -------------- | ------- | ---------- | ----------------- | -------------------------------------- |
-| headerHandling | enum    | first-file | first-file, union | How to reconcile headers across files  |
-| deduplicate    | boolean | false      | —                 | Remove duplicate rows across all files |
+| Parameter | Type | Default | Range | Description |
+|-----------|------|---------|-------|-------------|
+| headerHandling | enum | first-file | first-file, union | How to reconcile headers across files |
+| deduplicate | boolean | false | — | Remove duplicate rows across all files |
 
 ## Configuration Example
 
@@ -21,12 +21,12 @@
 {
   "type": "spreadsheet-merge",
   "parameters": {
-    "headerHandling": "first-file",
-    "deduplicate": false
+      "headerHandling": "first-file",
+      "deduplicate": false
   }
 }
 ```
 
 ---
 
-_Auto-generated from engine catalog v1.0.0. Run `task nodes:generate` to regenerate._
+*Auto-generated from engine catalog v1.0.0. Run `task nodes:generate` to regenerate.*

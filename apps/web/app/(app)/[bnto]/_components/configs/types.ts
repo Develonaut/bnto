@@ -42,6 +42,16 @@ export interface GenerateThumbnailsConfig {
   prefix: string;
 }
 
+export interface WatermarkImagesConfig {
+  watermark: string;
+  position: string;
+  size: number;
+  opacity: number;
+  offsetX: number;
+  offsetY: number;
+  quality: number;
+}
+
 /**
  * Column mapping is blocked until array-level transforms ship.
  * Config is empty for now — UI shows a placeholder.
@@ -58,6 +68,7 @@ export type BntoConfigMap = {
   "rename-csv-columns": RenameCsvColumnsConfig;
   "optimize-images-for-web": OptimizeImagesForWebConfig;
   "generate-thumbnails": GenerateThumbnailsConfig;
+  "watermark-images": WatermarkImagesConfig;
 };
 
 export type BntoSlug = keyof BntoConfigMap;
@@ -76,4 +87,13 @@ export const DEFAULT_CONFIGS: BntoConfigMap = {
   "rename-csv-columns": {},
   "optimize-images-for-web": { width: 800, format: "webp", quality: 80 },
   "generate-thumbnails": { width: 150, format: "webp", prefix: "thumb_" },
+  "watermark-images": {
+    watermark: "",
+    position: "bottom-right",
+    size: 25,
+    opacity: 80,
+    offsetX: 0,
+    offsetY: 0,
+    quality: 80,
+  },
 };

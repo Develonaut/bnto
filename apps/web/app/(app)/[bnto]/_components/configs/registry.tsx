@@ -42,4 +42,9 @@ export const CONFIG_REGISTRY: Partial<Record<BntoSlug, LazyExoticComponent<Compo
       default: m.GenerateThumbnailsConfig,
     })),
   ),
+  "watermark-images": lazy(() =>
+    import("./WatermarkImagesConfig").then((m) => ({
+      default: m.WatermarkImagesConfig,
+    })),
+  ),
 };

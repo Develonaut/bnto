@@ -8,7 +8,7 @@
  * with Zustand selector granularity (re-render only when THAT value changes).
  */
 
-import { createContext, useContext, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
 import { createFormStore, type FormStore } from "./formStore";
 
@@ -25,9 +25,11 @@ interface FormStoreProviderProps {
 function FormStoreProvider({ values, onChange, files = [], children }: FormStoreProviderProps) {
   const storeRef = useRef(createFormStore(values, onChange, files));
 
-  // Sync values into store on every render so child controls
-  // reading sibling values via useFormValue() always see fresh data.
-  storeRef.current.setState({ values, onChange, files });
+  // Sync incoming props into the store via useEffect to avoid
+  // triggering Zustand subscriber re-renders during this component's render.
+  useEffect(() => {
+    storeRef.current.setState({ values, onChange, files });
+  }, [values, onChange, files]);
 
   return <FormStoreContext.Provider value={storeRef.current}>{children}</FormStoreContext.Provider>;
 }

@@ -23,5 +23,5 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-convert": "CSV to JSON",
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-rename": "Rename CSV Columns",
-  transform: "Transform",
+  "transform": "Transform",
 };

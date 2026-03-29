@@ -6,35 +6,27 @@
  * Shows the first uploaded source image as background, with the watermark
  * overlay positioned at the selected grid position. This gives users a
  * realistic preview of how the watermark will look on their actual image.
+ *
+ * The outer container is always square. When a source image is uploaded,
+ * the image is letterboxed (contain) inside the square, and the grid dots
+ * + watermark overlay are constrained to the image area so positioning
+ * accurately represents the output.
+ *
+ * IMPORTANT: The anchor positions (0%, 50%, 100%) must match the Rust engine's
+ * `calculate_position()` in watermark.rs. Both use edge/center anchors — NOT
+ * grid cell centers. See watermarkAnchors.test.ts for the contract test.
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormFiles, useFormOnChange, useFormValue } from "../FormStoreContext";
 import type { ControlProps } from "./types";
+import { ANCHOR_PERCENT, imageAreaStyle } from "./watermarkLayout";
 
 const GRID: readonly string[][] = [
   ["top-left", "top-center", "top-right"],
   ["middle-left", "center", "middle-right"],
   ["bottom-left", "bottom-center", "bottom-right"],
 ];
-
-const POS_ANCHOR: Record<string, { row: number; col: number }> = {
-  "top-left": { row: 0, col: 0 },
-  "top-center": { row: 0, col: 1 },
-  "top-right": { row: 0, col: 2 },
-  "middle-left": { row: 1, col: 0 },
-  center: { row: 1, col: 1 },
-  "middle-right": { row: 1, col: 2 },
-  "bottom-left": { row: 2, col: 0 },
-  "bottom-center": { row: 2, col: 1 },
-  "bottom-right": { row: 2, col: 2 },
-};
-
-/** Convert grid row/col (0-2) to percentage of content area. */
-function gridPercent(index: number): string {
-  const fraction = (2 * index + 1) / 6;
-  return `${(fraction * 100).toFixed(2)}%`;
-}
 
 function formatLabel(pos: string) {
   return pos
@@ -50,22 +42,29 @@ function dotClassName(isSelected: boolean, hasImage: boolean) {
   return `${base} bg-[var(--surface-muted-wall)] hover:bg-muted-foreground/50`;
 }
 
-/** Create a stable object URL for the first image file. */
-function useSourcePreview(files: File[]): string | undefined {
+/** Create a stable object URL + natural aspect ratio for the first image file. */
+function useSourcePreview(files: File[]): { url?: string; ratio?: number } {
   const firstImage = useMemo(() => files.find((f) => f.type.startsWith("image/")), [files]);
   const [url, setUrl] = useState<string>();
+  const [ratio, setRatio] = useState<number>();
 
   useEffect(() => {
     if (!firstImage) {
       setUrl(undefined);
+      setRatio(undefined);
       return;
     }
     const objectUrl = URL.createObjectURL(firstImage);
     setUrl(objectUrl);
+
+    const img = new Image();
+    img.onload = () => setRatio(img.naturalWidth / img.naturalHeight);
+    img.src = objectUrl;
+
     return () => URL.revokeObjectURL(objectUrl);
   }, [firstImage]);
 
-  return url;
+  return { url, ratio };
 }
 
 function useWatermarkSiblings() {
@@ -82,8 +81,8 @@ function WatermarkPreviewControl({ id, value, onChange }: ControlProps) {
   const { imgSrc, size, opacity, offsetX, offsetY } = useWatermarkSiblings();
   const formOnChange = useFormOnChange();
   const files = useFormFiles();
-  const backgroundUrl = useSourcePreview(files);
-  const anchor = POS_ANCHOR[current] ?? POS_ANCHOR["bottom-right"];
+  const { url: backgroundUrl, ratio: imageRatio } = useSourcePreview(files);
+  const anchor = ANCHOR_PERCENT[current] ?? ANCHOR_PERCENT["bottom-right"];
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -105,6 +104,7 @@ function WatermarkPreviewControl({ id, value, onChange }: ControlProps) {
     >
       <PreviewGrid
         backgroundUrl={backgroundUrl}
+        imageRatio={imageRatio}
         hasImage={!!imgSrc}
         current={current}
         onClick={handleClick}
@@ -117,8 +117,8 @@ function WatermarkPreviewControl({ id, value, onChange }: ControlProps) {
             style={{
               width: `${size}%`,
               opacity: opacity / 100,
-              top: gridPercent(anchor.row),
-              left: gridPercent(anchor.col),
+              top: `${anchor.y}%`,
+              left: `${anchor.x}%`,
               transform: `translate(calc(-50% + ${offsetX}px), calc(-50% + ${offsetY}px))`,
             }}
           />
@@ -132,33 +132,38 @@ function WatermarkPreviewControl({ id, value, onChange }: ControlProps) {
 /** The position grid container with optional source image background. */
 function PreviewGrid({
   backgroundUrl,
+  imageRatio,
   hasImage,
   current,
   onClick,
   children,
 }: {
   backgroundUrl: string | undefined;
+  imageRatio: number | undefined;
   hasImage: boolean;
   current: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   children: React.ReactNode;
 }) {
+  const areaStyle = useMemo(() => imageAreaStyle(imageRatio), [imageRatio]);
+
   return (
     <div
       role="radiogroup"
       aria-label="Position"
       className="relative aspect-square w-full overflow-hidden rounded-md border border-[var(--surface-muted-wall)] bg-input"
-      style={
-        backgroundUrl
-          ? {
-              backgroundImage: `url(${backgroundUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-          : undefined
-      }
     >
-      <div className="relative grid h-full w-full grid-cols-3 place-items-center">
+      {backgroundUrl && (
+        <img
+          src={backgroundUrl}
+          alt=""
+          className="pointer-events-none absolute inset-0 m-auto h-full w-full object-contain"
+        />
+      )}
+      <div
+        className="absolute grid grid-cols-3 grid-rows-3 place-items-center"
+        style={areaStyle}
+      >
         {GRID.flat().map((pos) => (
           <button
             key={pos}
