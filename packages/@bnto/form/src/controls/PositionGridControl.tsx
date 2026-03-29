@@ -39,11 +39,11 @@ function PositionGridControl({ id, value, onChange }: ControlProps) {
   const label = useMemo(() => formatLabel(current), [current]);
 
   return (
-    <div className="flex items-center gap-3" data-testid={`control-position-grid-${id}`}>
+    <div className="flex flex-col gap-2" data-testid={`control-position-grid-${id}`}>
       <div
         role="radiogroup"
         aria-label="Position"
-        className="grid grid-cols-3 gap-1.5 rounded-md border border-border bg-muted/50 p-2"
+        className="grid aspect-square w-full grid-cols-3 place-items-center rounded-md border border-border bg-muted/50 p-3"
       >
         {GRID.map((row) =>
           row.map((pos) => {
@@ -57,7 +57,7 @@ function PositionGridControl({ id, value, onChange }: ControlProps) {
                 aria-label={formatLabel(pos)}
                 data-pos={pos}
                 onClick={handleClick}
-                className={`size-3 rounded-full transition-colors ${
+                className={`size-4 rounded-full transition-colors ${
                   isSelected ? "bg-primary" : "bg-border hover:bg-muted-foreground/50"
                 }`}
               />
@@ -65,7 +65,7 @@ function PositionGridControl({ id, value, onChange }: ControlProps) {
           }),
         )}
       </div>
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-center text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }
