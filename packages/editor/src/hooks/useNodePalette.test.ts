@@ -41,7 +41,7 @@ describe("computePalette", () => {
   it("creates one palette item per spreadsheet node type", () => {
     const items = allItems().filter((i) => i.category === "spreadsheet");
     expect(items).toHaveLength(expectedCountForCategory("spreadsheet"));
-    expect(items.length).toBeGreaterThanOrEqual(3);
+    expect(items.length).toBeGreaterThanOrEqual(4);
     expect(items.map((i) => i.type)).toContain("spreadsheet-clean");
   });
 

@@ -1,6 +1,6 @@
-# CSV to JSON Node
+# Merge CSV Node
 
-> Convert CSV data to JSON format with configurable delimiters.
+> Combine multiple CSV files into one with header reconciliation and deduplication.
 
 **Category:** spreadsheet | **Platforms:** browser | **Container:** no
 
@@ -12,17 +12,17 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| delimiter | enum | comma | comma, semicolon, tab, pipe | Column separator character |
-| pretty | boolean | false | — | Format output JSON with indentation |
+| headerHandling | enum | first-file | first-file, union | How to reconcile headers across files |
+| deduplicate | boolean | false | — | Remove duplicate rows across all files |
 
 ## Configuration Example
 
 ```json
 {
-  "type": "spreadsheet-convert",
+  "type": "spreadsheet-merge",
   "parameters": {
-      "delimiter": "comma",
-      "pretty": false
+      "headerHandling": "first-file",
+      "deduplicate": false
   }
 }
 ```
