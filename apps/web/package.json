@@ -13,7 +13,6 @@
   "dependencies": {
     "@bnto/auth": "workspace:*",
     "@bnto/core": "workspace:*",
-    "@bnto/editor": "workspace:*",
     "@bnto/form": "workspace:*",
     "@bnto/i18n": "workspace:*",
     "@bnto/registry": "workspace:*",

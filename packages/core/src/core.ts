@@ -53,7 +53,7 @@ const downloadService = createDownloadService();
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 // Auth client first — other clients depend on it for imperative auth checks.
 const authClient = createAuthClient();
-const recipeClient = createRecipeClient(recipeService, executionService, authClient);
+const recipeClient = createRecipeClient(recipeService, executionService);
 const executionClient = createExecutionClient(
   executionService,
   browserExecutionService,

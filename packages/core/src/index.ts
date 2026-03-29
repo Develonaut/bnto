@@ -10,8 +10,6 @@ export { TelemetryProvider } from "./providers/TelemetryProvider";
 // ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {
   Recipe,
-  UserRecipe,
-  RecipeListItem,
   Execution,
   ExecutionLog,
   NodeProgress,
@@ -53,9 +51,6 @@ export type { ExecutionInstance } from "./services/executionInstance";
 export type { ExecutionState } from "./hooks/useExecutionState";
 export { useFileResultProps } from "./hooks/useFileResultProps";
 export type { FileResultDisplayProps } from "./hooks/useFileResultProps";
-
-// ── File transfer (module-scoped SPA navigation bridge) ─────────────────
-export { stashFilesForTransfer, claimTransferredFiles } from "./fileTransfer";
 
 // ── Utils (pure functions) ────────────────────────────────────────────────
 export { computeTotalSaved } from "./utils/computeTotalSaved";

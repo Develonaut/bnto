@@ -19,7 +19,7 @@ const FAQS = [
   {
     question: "Can I build my own recipes?",
     answer:
-      "Yes. The visual recipe editor lets you compose nodes into multi-step pipelines — chain a resize into a format conversion into a compression, all in one recipe. Save your recipes and reuse them anytime.",
+      "Custom recipe composition is coming soon. Today you can use any of the curated recipes — each one chains nodes into a multi-step pipeline that runs entirely in your browser.",
   },
   {
     question: "Is bnto open source?",
@@ -34,7 +34,7 @@ const FAQS = [
   {
     question: "Do I need an account?",
     answer:
-      "No. Drop your files and run any recipe immediately. Create an account if you want to save custom recipes or access execution history.",
+      "No. Drop your files and run any recipe immediately. Create an account if you want to save favorites or access execution history.",
   },
   {
     question: "Can I process multiple files at once?",

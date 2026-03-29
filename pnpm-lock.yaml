@@ -131,9 +131,6 @@ importers:
       '@bnto/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@bnto/editor':
-        specifier: workspace:*
-        version: link:../../packages/editor
       '@bnto/form':
         specifier: workspace:*
         version: link:../../packages/@bnto/form
