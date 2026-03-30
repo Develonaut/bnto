@@ -5,9 +5,8 @@ import { useStore } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { core } from "@bnto/core";
 import { createRecipeFlowStore } from "../_stores/recipeFlowStore";
+import { buildPerNodeDefaults } from "../_utils/buildPerNodeDefaults";
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
-import { DEFAULT_CONFIGS } from "../_components/configs/types";
 import type { RunPhase } from "../_components/RunButton";
 import { toBrowserPhase, toCloudPhase } from "../_components/phaseMapping";
 import { useRecipeDefinition } from "./useRecipeDefinition";
@@ -34,7 +33,7 @@ function assembleFlowResult({
     ...defn,
     ...storeState,
     ...actions,
-    config: storeState.config as BntoConfigMap[BntoSlug],
+    config: storeState.config,
     browserExec: browser.exec,
     cloudExecution: cloud.execution,
     uploadProgress: cloud.uploadProgress,
@@ -72,9 +71,11 @@ export function useRecipeFlow({ entry }: { entry: BntoEntry }) {
 
 /** Page-scoped store — files, config, cloud state. */
 function useRecipeFlowStore(slug: string) {
-  const [store] = useState(() =>
-    createRecipeFlowStore((DEFAULT_CONFIGS[slug as BntoSlug] ?? {}) as Record<string, unknown>),
-  );
+  const [store] = useState(() => {
+    const recipe = core.registry.getRecipeBySlug(slug);
+    const defaults = recipe ? buildPerNodeDefaults(recipe.definition) : {};
+    return createRecipeFlowStore(defaults);
+  });
   const state = useStore(
     store,
     useShallow((s) => ({

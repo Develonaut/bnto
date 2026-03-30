@@ -4,7 +4,7 @@ import type { ExecutionInstance, Definition } from "@bnto/core";
 interface RunRecipeParams {
   slug: string;
   files: File[];
-  config: Record<string, unknown>;
+  config: Record<string, Record<string, unknown>>;
   isBrowserPath: boolean;
   browserInstance: ExecutionInstance;
   definition: Definition | undefined;

@@ -115,10 +115,9 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
-    // Change target format to PNG
-    const formatSelect = page.getByTestId("format-select");
-    await formatSelect.click();
-    await page.getByTestId("format-option-png").click();
+    // Change target format to PNG via the schema-driven select
+    await page.getByTestId("control-select-param-format").click();
+    await page.getByTestId("select-option-png").click();
 
     await runAndComplete(page);
 

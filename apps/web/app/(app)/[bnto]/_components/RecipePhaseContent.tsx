@@ -1,16 +1,14 @@
 "use client";
 
-import type { BntoEntry } from "@/lib/bntoRegistry";
 import { Stack } from "@bnto/ui";
 import type { useRecipeFlow } from "../_hooks/useRecipeFlow";
-import { RecipeConfigSection } from "./RecipeConfigSection";
+import { DynamicRecipeConfig } from "./DynamicRecipeConfig";
 import { RecipeToolbar } from "./RecipeToolbar";
 import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeFileGrid } from "./RecipeFileGrid";
 import { ToolbarProgress } from "./ToolbarProgress";
 
 interface RecipePhaseContentProps {
-  entry: BntoEntry;
   activePhase: 2 | 3;
   flow: ReturnType<typeof useRecipeFlow>;
   onBack: () => void;
@@ -24,7 +22,7 @@ interface RecipePhaseContentProps {
  * into the layout shown after files are selected.
  */
 export function RecipePhaseContent(props: RecipePhaseContentProps) {
-  const { entry, activePhase, flow, onBack, onDeleteFile } = props;
+  const { activePhase, flow, onBack, onDeleteFile } = props;
 
   return (
     <Stack className="gap-4 text-left">
@@ -36,7 +34,7 @@ export function RecipePhaseContent(props: RecipePhaseContentProps) {
         onBack={onBack}
         onRun={flow.handleRun}
         onDownloadAll={flow.downloadAll}
-        centerContent={deriveCenterContent(entry, activePhase, flow)}
+        centerContent={deriveCenterContent(activePhase, flow)}
       />
       <PhaseThreeCloudResults activePhase={activePhase} flow={flow} />
       <RecipeFileGrid
@@ -52,13 +50,15 @@ export function RecipePhaseContent(props: RecipePhaseContentProps) {
 }
 
 /** Derive the toolbar center content based on the active phase. */
-function deriveCenterContent(
-  entry: BntoEntry,
-  activePhase: 2 | 3,
-  flow: ReturnType<typeof useRecipeFlow>,
-) {
-  if (activePhase === 2) {
-    return <RecipeConfigSection slug={entry.slug} config={flow.config} onChange={flow.setConfig} />;
+function deriveCenterContent(activePhase: 2 | 3, flow: ReturnType<typeof useRecipeFlow>) {
+  if (activePhase === 2 && flow.definition) {
+    return (
+      <DynamicRecipeConfig
+        definition={flow.definition}
+        config={flow.config}
+        onChange={flow.setNodeParam}
+      />
+    );
   }
   if (flow.isBrowserPath) {
     return <ToolbarProgress execution={flow.browserExec} />;
