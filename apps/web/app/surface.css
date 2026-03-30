@@ -46,10 +46,13 @@
   --face-sink-y: round(nearest, calc(var(--elevation-y) * -0.33), 1px);
 
   /* Face color computation — driven by color variant's --variant-bg/--variant-fg.
-   * Default falls back to card surface colors for elements without a color variant.
-   * [data-muted] overrides --face-bg/--face-fg with color-mix() blends. */
-  --face-bg: var(--variant-bg, var(--card));
-  --face-fg: var(--variant-fg, var(--card-foreground));
+   * Default uses card surface colors. Variant classes (.surface-primary, etc.)
+   * override these. Explicit assignment prevents CSS inheritance from a parent
+   * Surface's variant leaking into nested children. */
+  --variant-bg: var(--card);
+  --variant-fg: var(--card-foreground);
+  --face-bg: var(--variant-bg);
+  --face-fg: var(--variant-fg);
 
   position: relative;
   transform-style: preserve-3d;
@@ -255,7 +258,7 @@
  * ────────────────────────────────────────────────────────────────── */
 
 .surface[data-muted] {
-  --face-bg: color-mix(in oklch, var(--variant-bg, var(--card)) 60%, var(--muted));
+  --face-bg: color-mix(in oklch, var(--variant-bg) 60%, var(--muted));
   --face-fg: var(--muted-foreground);
 }
 
@@ -533,8 +536,8 @@
 :is(.group:hover, .group:focus-within, .group:has([data-state="open"])) .pressable[data-dormant] {
   pointer-events: auto;
   transform: translate(var(--face-rest-x), var(--face-rest-y));
-  --face-bg: var(--variant-bg, var(--card));
-  --face-fg: var(--variant-fg, var(--card-foreground));
+  --face-bg: var(--variant-bg);
+  --face-fg: var(--variant-fg);
   border-color: var(--surface-wall);
 }
 

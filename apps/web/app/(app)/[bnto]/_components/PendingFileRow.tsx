@@ -39,7 +39,7 @@ export function PendingFileRow({ file, isProcessing, isExecuting, onDelete }: Pe
       {!isExecuting && (
         <FileListActions>
           <Button
-            variant="outline"
+            variant="destructive"
             size="icon"
             elevation="sm"
             onClick={onDelete}

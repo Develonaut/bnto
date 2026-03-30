@@ -1,69 +1,41 @@
 "use client";
 
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { Stack } from "@bnto/ui";
+import { Surface } from "@bnto/ui";
 import type { useRecipeFlow } from "../_hooks/useRecipeFlow";
-import { RecipeConfigSection } from "./RecipeConfigSection";
-import { RecipeToolbar } from "./RecipeToolbar";
 import { RecipeResultsSection } from "./RecipeResultsSection";
 import { RecipeFileGrid } from "./RecipeFileGrid";
-import { ToolbarProgress } from "./ToolbarProgress";
 
 interface RecipePhaseContentProps {
   entry: BntoEntry;
   activePhase: 2 | 3;
   flow: ReturnType<typeof useRecipeFlow>;
-  onBack: () => void;
   onDeleteFile: (index: number) => () => void;
 }
 
 /**
- * Phases 2-3 content block.
+ * Phases 2-3 file list content.
  *
- * Composes toolbar, error cards, cloud results, and file grid
- * into the layout shown after files are selected.
+ * Scrollable file grid with optional cloud results section.
  */
 export function RecipePhaseContent(props: RecipePhaseContentProps) {
-  const { entry, activePhase, flow, onBack, onDeleteFile } = props;
+  const { activePhase, flow, onDeleteFile } = props;
 
   return (
-    <Stack className="gap-4 text-left">
-      <RecipeToolbar
-        activePhase={activePhase}
-        resolvedPhase={flow.resolvedPhase}
-        isProcessing={flow.isProcessing}
-        fileCount={flow.files.length}
-        onBack={onBack}
-        onRun={flow.handleRun}
-        onDownloadAll={flow.downloadAll}
-        centerContent={deriveCenterContent(entry, activePhase, flow)}
-      />
-      <PhaseThreeCloudResults activePhase={activePhase} flow={flow} />
-      <RecipeFileGrid
-        files={flow.files}
-        activePhase={activePhase}
-        isBrowserPath={flow.isBrowserPath}
-        browserExec={flow.browserExec}
-        onDeleteFile={onDeleteFile}
-        onDownload={flow.downloadResult}
-      />
-    </Stack>
+    <Surface elevation="sm" className="h-full">
+      <div className="h-full overflow-y-auto p-4">
+        <PhaseThreeCloudResults activePhase={activePhase} flow={flow} />
+        <RecipeFileGrid
+          files={flow.files}
+          activePhase={activePhase}
+          isBrowserPath={flow.isBrowserPath}
+          browserExec={flow.browserExec}
+          onDeleteFile={onDeleteFile}
+          onDownload={flow.downloadResult}
+        />
+      </div>
+    </Surface>
   );
-}
-
-/** Derive the toolbar center content based on the active phase. */
-function deriveCenterContent(
-  entry: BntoEntry,
-  activePhase: 2 | 3,
-  flow: ReturnType<typeof useRecipeFlow>,
-) {
-  if (activePhase === 2) {
-    return <RecipeConfigSection slug={entry.slug} config={flow.config} onChange={flow.setConfig} />;
-  }
-  if (flow.isBrowserPath) {
-    return <ToolbarProgress execution={flow.browserExec} />;
-  }
-  return;
 }
 
 /** Cloud results section for Phase 3. */

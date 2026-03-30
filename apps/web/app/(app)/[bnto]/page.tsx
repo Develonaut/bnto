@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, Heading } from "@bnto/ui";
+import { Heading } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { RecipeShell } from "./_components/RecipeShell";
@@ -41,23 +41,20 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
   return (
     <>
       <BntoJsonLd entry={entry} />
-      <AppShellContent>
-        <Container size="md" className="space-y-6 text-center">
-          {/* Interactive recipe flow — PhaseIndicator is at the top, then
-              static header content, then the file upload / execution flow */}
-          <RecipeShell key={slug} entry={entry}>
-            {/* Static header — server-rendered, zero JS.
-                Passed as children so it renders between PhaseIndicator
-                and the interactive flow inside RecipeShell. */}
+      <div className="min-h-[80svh] flex-1 py-12">
+        <div className="mx-auto grid min-h-[70svh] max-w-[1800px] grid-cols-1 items-center gap-10 px-6 lg:grid-cols-[2fr_3fr] lg:gap-16 lg:pl-[max(2rem,calc((100vw-1220px)/2))] lg:pr-24">
+          {/* Left column — static header, server-rendered */}
+          <div className="space-y-3 text-left">
             <Heading level={1} data-testid="recipe-heading">
               {entry.h1}
             </Heading>
-            <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
-              {entry.description}
-            </p>
-          </RecipeShell>
-        </Container>
-      </AppShellContent>
+            <p className="text-muted-foreground leading-snug text-balance">{entry.description}</p>
+          </div>
+
+          {/* Right column — interactive recipe flow */}
+          <RecipeShell key={slug} entry={entry} />
+        </div>
+      </div>
     </>
   );
 }

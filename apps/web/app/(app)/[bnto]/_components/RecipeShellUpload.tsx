@@ -27,6 +27,7 @@ export function RecipeShellUpload({
       accept={flow.dropzoneAccept}
       multiple
       disabled={flow.isProcessing}
+      className="h-full [&>*]:flex-1"
     >
       <UploadPhases
         flow={flow}
@@ -45,22 +46,10 @@ function UploadPhases({ flow, entry, onClearFiles, onDeleteFile }: RecipeShellUp
         <RecipeDropzone acceptLabel={flow.acceptLabel} />
       </StepperContent>
       <StepperContent value="2">
-        <RecipePhaseContent
-          entry={entry}
-          activePhase={2}
-          flow={flow}
-          onBack={onClearFiles}
-          onDeleteFile={onDeleteFile}
-        />
+        <RecipePhaseContent entry={entry} activePhase={2} flow={flow} onDeleteFile={onDeleteFile} />
       </StepperContent>
       <StepperContent value="3">
-        <RecipePhaseContent
-          entry={entry}
-          activePhase={3}
-          flow={flow}
-          onBack={flow.handleResetExecution}
-          onDeleteFile={onDeleteFile}
-        />
+        <RecipePhaseContent entry={entry} activePhase={3} flow={flow} onDeleteFile={onDeleteFile} />
       </StepperContent>
     </>
   );

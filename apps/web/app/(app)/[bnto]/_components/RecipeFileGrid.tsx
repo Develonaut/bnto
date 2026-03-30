@@ -24,13 +24,7 @@ export function RecipeFileGrid(props: RecipeFileGridProps) {
 
   return (
     <BouncyStagger asChild>
-      <Grid
-        cols={1}
-        gap="sm"
-        role="list"
-        aria-label="Selected files"
-        className={gridColsClass(files.length)}
-      >
+      <Grid cols={1} gap="sm" role="list" aria-label="Selected files">
         {files.map((file, i) => (
           <RecipeFileGridItem
             key={`${file.name}-${file.size}-${file.lastModified}`}
@@ -46,11 +40,4 @@ export function RecipeFileGrid(props: RecipeFileGridProps) {
       </Grid>
     </BouncyStagger>
   );
-}
-
-/** Derive responsive grid column classes from file count. */
-function gridColsClass(count: number) {
-  if (count >= 3) return "md:grid-cols-2 lg:grid-cols-3";
-  if (count === 2) return "md:grid-cols-2";
-  return;
 }

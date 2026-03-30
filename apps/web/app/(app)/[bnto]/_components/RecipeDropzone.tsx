@@ -15,8 +15,8 @@ interface RecipeDropzoneProps {
  */
 export function RecipeDropzone({ acceptLabel }: RecipeDropzoneProps) {
   return (
-    <SlideUp>
-      <FileUploadDropzone className="gap-3 px-4 py-8 sm:px-6 sm:py-10">
+    <SlideUp className="h-full">
+      <FileUploadDropzone disableAnimation className="h-full gap-3 px-4 py-8 sm:px-6 sm:py-10">
         <DropzoneContent label={acceptLabel} />
       </FileUploadDropzone>
     </SlideUp>
