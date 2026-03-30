@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** March 29, 2026
+**Last Updated:** March 30, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -44,11 +44,11 @@ M2: Platform Features                ← DELIVERED (March 2026)
     Convex-backed. Editor shipped with schema-driven config, save/My Recipes,
     keyboard shortcuts. Packages extracted: @bnto/ui, @bnto/editor.
 
-    PIVOT (March 2026): Editor frozen at v1. Investment shifts to recipe
-    catalog expansion + curated experience. "My Recipes" redefined as
-    favorites (bookmark predefined/community recipes) — not custom creation.
-    Editor remains accessible at /editor as a power-user feature but receives
-    no further sprint investment until post-revenue demand signals emerge.
+    PIVOT (March 2026): Editor persistence stripped (Sprint 8.5a). Editor
+    reconnecting as lightweight open+export tool with sessionStorage only
+    (Sprint 8.5d) — no save to Convex, no localStorage, no My Recipes.
+    Favorites/user preferences tabled to post-MVP. Deep editor features
+    (code editor, expression input, edit/run mode) deferred to post-revenue.
     Community recipes via GitHub PRs, curated by maintainer.
 
 M3: Desktop App
@@ -70,7 +70,7 @@ M5: Monetization
     not artificial run limits on browser-native operations.
 ```
 
-**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. The M3 desktop decision is made: Tauri (Rust-native). Next up: recipe catalog expansion (Sprint 8), favorites MVP (Sprint 8.5), then Desktop (M3) or Monetization (M5).
+**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. The M3 desktop decision is made: Tauri (Rust-native). Next up: schema-driven recipe config (Sprint 8.5c), reconnect editor lightweight (Sprint 8.5d), finish Tier 3 recipes (Sprint 8), then Desktop (M3) or Monetization (M5).
 
 ---
 
@@ -178,8 +178,8 @@ This is the only principle you need. Everything else follows from it.
 ### Three Layers
 
 1. **Nodes** — Browser nodes (image, csv, file, transform) are free, unlimited. Server nodes (ai, shell-command, video) are Pro, usage-based. Desktop: everything free (BYOK).
-2. **Recipes** — Predefined + community-curated recipes are always free. Favorites let users bookmark recipes they use regularly. Custom recipe creation (editor) exists but is not the primary experience — it's a power-user feature.
-3. **Platform features** — Persistence, history, team sharing, API access = Pro. Favorites = free (natural account creation hook).
+2. **Recipes** — Predefined + community-curated recipes are always free. Editor is a lightweight open+export tool (no persistence). Custom recipe creation is a power-user feature, not the primary experience.
+3. **Platform features** — Persistence, history, team sharing, API access = Pro. Favorites (tabled) will be the free account creation hook when implemented.
 
 ### Pricing
 
@@ -193,7 +193,7 @@ This is the only principle you need. Everything else follows from it.
 
 - Browser execution costs us $0. Capping it is artificial and hostile.
 - Pro tier sells real value: persistence, collaboration, premium compute.
-- Favorites create a natural sign-up moment (free account to bookmark recipes).
+- Favorites (tabled) will create a natural sign-up moment when implemented.
 - Desktop remains free forever (trust commitment in `core-principles.md`).
 
 ---
@@ -202,16 +202,14 @@ This is the only principle you need. Everything else follows from it.
 
 Users convert when they want something the browser can't provide alone. These are natural upgrade hooks — not artificial limits.
 
-| Hook             | Trigger                                        | What They're Buying                          | Tier |
-| ---------------- | ---------------------------------------------- | -------------------------------------------- | ---- |
-| **Favorites**    | "I want to bookmark this recipe for next time" | Personalized recipe collection               | Free |
-| **History**      | "I need my execution history for audit"        | Execution log retention (30-day Pro)         | Pro  |
-| **Server nodes** | "I need AI to classify these images"           | Server-side compute (usage-based)            | Pro  |
-| **Team**         | "My team needs shared recipes"                 | Collaboration (up to 5 members, no per-seat) | Pro  |
+| Hook             | Trigger                                        | What They're Buying                          | Tier | Status  |
+| ---------------- | ---------------------------------------------- | -------------------------------------------- | ---- | ------- |
+| **Favorites**    | "I want to bookmark this recipe for next time" | Personalized recipe collection               | Free | Tabled  |
+| **History**      | "I need my execution history for audit"        | Execution log retention (30-day Pro)         | Pro  | Planned |
+| **Server nodes** | "I need AI to classify these images"           | Server-side compute (usage-based)            | Pro  | M4      |
+| **Team**         | "My team needs shared recipes"                 | Collaboration (up to 5 members, no per-seat) | Pro  | M5      |
 
-**Favorites is the first conversion hook.** User runs a recipe, loves it, wants to find it again easily. "Favorite this recipe" requires a free account — lightest possible commitment. Once signed in, history and Pro hooks are available.
-
-**No account required for browser execution:** Users run browser recipes instantly — no signup, no account, no friction. Zero backend until they choose to engage. When they sign up, favorites and history become available.
+**No account required for browser execution:** Users run browser recipes instantly — no signup, no account, no friction. Zero backend until they choose to engage. Favorites (tabled) will become the first conversion hook when implemented — "bookmark this recipe" requires a free account.
 
 ---
 
@@ -232,25 +230,25 @@ Users convert when they want something the browser can't provide alone. These ar
 
 ## Architecture Decisions
 
-| Decision                             | Status                  | Rationale                                                                                                                                             |
-| ------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rust WASM for browser nodes**      | Delivered (M1 complete) | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle.                                               |
-| **JS adapters as fallback**          | Not needed              | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                                      |
-| **Go engine deleted**                | Archived (March 2026)   | Removed in Sprint 6. Rust is the unified engine for all targets. Source preserved in git history.                                                     |
-| **`@bnto/nodes` is engine-agnostic** | Approved                | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                                       |
-| **Railway deprioritized**            | Backlog (M4)            | Only needed for premium server-side bntos.                                                                                                            |
-| **R2 deprioritized**                 | Backlog (M4)            | Not needed for browser execution. File transit only for cloud path.                                                                                   |
-| **No-account browser execution**     | Approved                | Zero backend friction. Convex logs when accounts exist.                                                                                               |
-| **Convex execution logging**         | Approved                | Records who ran what. Ties to history when user signs up.                                                                                             |
-| **Web Workers mandatory**            | Approved                | All WASM processing off main thread. Progress via postMessage.                                                                                        |
-| **Zip + individual downloads**       | Approved                | Both options for multi-file result retrieval.                                                                                                         |
-| **`@bnto/ui` extracted**             | Delivered (March 2026)  | Motorway design system as independent package. Primitives, layout, animation, surface system.                                                         |
-| **`@bnto/editor` extracted**         | Delivered (March 2026)  | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                                                              |
-| **Smart Iteration**                  | Delivered (March 2026)  | `settings.iteration: "auto"\|"explicit"` on Definition. Auto wraps per-file processors in implicit loops. 20 golden tests prove equivalence.          |
-| **Editor frozen at v1**              | Decided (March 2026)    | Editor shipped but investment paused. Curated recipes + favorites is the MVP path. Editor remains at `/editor` for power users. Revisit post-revenue. |
-| **My Recipes = Favorites**           | Decided (March 2026)    | "My Recipes" shows favorited predefined/community recipes, not user-created. Lighter scope, natural sign-up hook.                                     |
-| **Community recipes via GitHub**     | Decided (March 2026)    | Contributors submit `.bnto.json` PRs. Maintainer curates. No publishing platform needed for MVP.                                                      |
-| **Code Editor (CM6) tabled**         | Deep backlog            | Power-user luxury. Visual editor is the product. May revisit post-M5.                                                                                 |
+| Decision                             | Status                   | Rationale                                                                                                                                        |
+| ------------------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Rust WASM for browser nodes**      | Delivered (M1 complete)  | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle.                                          |
+| **JS adapters as fallback**          | Not needed               | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                                 |
+| **Go engine deleted**                | Archived (March 2026)    | Removed in Sprint 6. Rust is the unified engine for all targets. Source preserved in git history.                                                |
+| **`@bnto/nodes` is engine-agnostic** | Approved                 | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                                  |
+| **Railway deprioritized**            | Backlog (M4)             | Only needed for premium server-side bntos.                                                                                                       |
+| **R2 deprioritized**                 | Backlog (M4)             | Not needed for browser execution. File transit only for cloud path.                                                                              |
+| **No-account browser execution**     | Approved                 | Zero backend friction. Convex logs when accounts exist.                                                                                          |
+| **Convex execution logging**         | Approved                 | Records who ran what. Ties to history when user signs up.                                                                                        |
+| **Web Workers mandatory**            | Approved                 | All WASM processing off main thread. Progress via postMessage.                                                                                   |
+| **Zip + individual downloads**       | Approved                 | Both options for multi-file result retrieval.                                                                                                    |
+| **`@bnto/ui` extracted**             | Delivered (March 2026)   | Motorway design system as independent package. Primitives, layout, animation, surface system.                                                    |
+| **`@bnto/editor` extracted**         | Delivered (March 2026)   | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                                                         |
+| **Smart Iteration**                  | Delivered (March 2026)   | `settings.iteration: "auto"\|"explicit"` on Definition. Auto wraps per-file processors in implicit loops. 20 golden tests prove equivalence.     |
+| **Editor lightweight (open+export)** | In progress (March 2026) | Editor persistence stripped (8.5a). Reconnecting as open+export tool with sessionStorage (8.5d). No save, no My Recipes. Deep features deferred. |
+| **Favorites tabled**                 | Tabled (March 2026)      | User preferences deferred to post-MVP. Revisit when engagement data signals demand.                                                              |
+| **Community recipes via GitHub**     | Decided (March 2026)     | Contributors submit `.bnto.json` PRs. Maintainer curates. No publishing platform needed for MVP.                                                 |
+| **Code Editor (CM6) tabled**         | Deep backlog             | Power-user luxury. Visual editor is the product. May revisit post-M5.                                                                            |
 
 ### Engine Decision: Rust Won (Feb 2026)
 
