@@ -21,13 +21,7 @@ export function RecipeStepperResultList() {
 
   return (
     <BouncyStagger asChild>
-      <Grid
-        cols={1}
-        gap="sm"
-        role="list"
-        aria-label="Selected files"
-        className={gridColsClass(files.length)}
-      >
+      <Grid cols={1} gap="sm" role="list" aria-label="Selected files">
         {files.map((file, i) => {
           const result = step === 3 ? execution.results[i] : undefined;
           const isFileProcessing =
@@ -51,10 +45,3 @@ export function RecipeStepperResultList() {
     </BouncyStagger>
   );
 }
-
-/** Derive responsive grid column classes from file count. */
-const gridColsClass = (count: number) => {
-  if (count >= 3) return "md:grid-cols-2 lg:grid-cols-3";
-  if (count === 2) return "md:grid-cols-2";
-  return;
-};

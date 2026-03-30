@@ -1,6 +1,12 @@
 import path from "path";
 import { test, expect } from "../../fixtures";
-import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
+import {
+  IMAGE_FIXTURES_DIR,
+  navigateToRecipe,
+  uploadFiles,
+  runAndComplete,
+  runAndCaptureAutoDownload,
+} from "../../helpers";
 
 /**
  * Browser execution journey — rename-files
@@ -31,7 +37,7 @@ test.describe("rename-files — browser execution @browser", () => {
     expect(download.suggestedFilename()).toContain("renamed");
   });
 
-  test("batch: rename multiple files with Download All", async ({ page }) => {
+  test("batch: rename multiple files auto-download as ZIP", async ({ page }) => {
     await navigateToRecipe(page, "rename-files", "Rename Files Online Free");
 
     await uploadFiles(page, [
@@ -40,9 +46,9 @@ test.describe("rename-files — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.webp"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("rename-files-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(3);
-    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 });

@@ -92,14 +92,14 @@ export const DialogContent = forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content ref={ref} asChild {...props}>
       {/* Centering wrapper — fixed fullscreen, z-modal above overlay,
-            pointer-events-none so clicks outside dismiss via overlay. */}
+            pointer-events-none so clicks outside the popup dismiss via overlay. */}
       <div className="fixed inset-0 z-modal flex items-center justify-center pointer-events-none">
         <Popup
           elevation="lg"
           className={cn("pointer-events-auto relative p-8", className)}
           style={{ width: "100%", maxWidth: DIALOG_MAX_WIDTH[size], ...style }}
         >
-          {children}
+          <div className="flex max-h-[calc(70vh-4rem)] flex-col">{children}</div>
         </Popup>
       </div>
     </DialogPrimitive.Content>
@@ -122,8 +122,15 @@ DialogHeader.displayName = "Dialog.Header";
 
 /* ── Body ──────────────────────────────────────────────────── */
 
-export const DialogBody = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<"div">>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("py-4", className)} {...props} />,
+type DialogBodyProps = ComponentPropsWithoutRef<"div"> & {
+  /** When true, removes default padding so the consumer controls it. Useful for edge-flush scrollbars. */
+  disablePadding?: boolean;
+};
+
+export const DialogBody = forwardRef<HTMLDivElement, DialogBodyProps>(
+  ({ className, disablePadding, ...props }, ref) => (
+    <div ref={ref} className={cn(disablePadding ? "" : "py-4", className)} {...props} />
+  ),
 );
 DialogBody.displayName = "Dialog.Body";
 

@@ -4,7 +4,7 @@ import { useCallback, useMemo } from "react";
 import type { Definition, NodeTypeName } from "@bnto/core";
 import { getNodeSchema, getNodeParamFields, getVisibleParams, NODE_TYPE_INFO } from "@bnto/core";
 import { SchemaForm } from "@bnto/form";
-import { FadeIn, Heading, Stack } from "@bnto/ui";
+import { Divider, FadeIn, Heading, Stack } from "@bnto/ui";
 import type { ProcessingNode } from "../_utils/extractProcessingNodes";
 import { extractProcessingNodes } from "../_utils/extractProcessingNodes";
 
@@ -29,14 +29,16 @@ export function DynamicRecipeConfig({ definition, config, onChange }: DynamicRec
   return (
     <FadeIn>
       <Stack gap="lg">
-        {nodes.map((node) => (
-          <NodeSection
-            key={node.id}
-            node={node}
-            values={config[node.id] ?? {}}
-            showHeader={nodes.length > 1}
-            onChange={onChange}
-          />
+        {nodes.map((node, i) => (
+          <div key={node.id}>
+            {i > 0 && <Divider className="mb-4" />}
+            <NodeSection
+              node={node}
+              values={config[node.id] ?? {}}
+              showHeader={nodes.length > 1}
+              onChange={onChange}
+            />
+          </div>
         ))}
       </Stack>
     </FadeIn>

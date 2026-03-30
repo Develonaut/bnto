@@ -172,9 +172,6 @@
 @utility z-sticky {
   z-index: 100;
 }
-@utility z-dropdown {
-  z-index: 200;
-}
 @utility z-modal {
   z-index: 300;
 }

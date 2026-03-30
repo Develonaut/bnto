@@ -116,29 +116,50 @@ export async function downloadAndVerify(
 }
 
 /**
- * Click "Download All" (last matching button), verify ZIP magic bytes.
- * Returns the downloaded file buffer.
+ * Run the recipe and capture the auto-download that fires on completion.
+ * Returns the download and its file buffer. Verifies ZIP magic bytes for
+ * batch results (multi-file runs auto-download as ZIP).
  */
-export async function downloadAllAsZip(page: Page) {
-  const downloadAllBtn = page.getByTestId("download-all-button", ":visible");
-  await expect(downloadAllBtn).toBeVisible();
+export async function runAndCaptureAutoDownload(
+  page: Page,
+  options?: { timeout?: number; expectZip?: boolean },
+) {
+  const { timeout = 30_000, expectZip = true } = options ?? {};
 
-  const downloadPromise = page.waitForEvent("download");
-  await downloadAllBtn.click();
+  const downloadPromise = page.waitForEvent("download", { timeout });
+  await runAndComplete(page, { timeout });
   const download = await downloadPromise;
 
   const downloadPath = await download.path();
   expect(downloadPath).toBeTruthy();
 
   const buffer = fs.readFileSync(downloadPath!);
-  expect(buffer.length).toBeGreaterThan(100);
+  expect(buffer.length).toBeGreaterThan(0);
 
-  // Verify ZIP magic bytes
-  for (let i = 0; i < MAGIC.ZIP.length; i++) {
-    expect(buffer[i]).toBe(MAGIC.ZIP[i]);
+  if (expectZip) {
+    for (let i = 0; i < MAGIC.ZIP.length; i++) {
+      expect(buffer[i]).toBe(MAGIC.ZIP[i]);
+    }
   }
 
   return { buffer, download };
+}
+
+/**
+ * Open the config dialog by clicking the config (sliders) button.
+ * Waits for the dialog content to be visible before returning.
+ */
+export async function openConfigDialog(page: Page) {
+  await page.getByTestId("config-button").click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+}
+
+/**
+ * Close the config dialog by pressing Escape.
+ */
+export async function closeConfigDialog(page: Page) {
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 }
 
 /**

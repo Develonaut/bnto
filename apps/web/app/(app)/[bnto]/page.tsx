@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, StepperContent } from "@bnto/ui";
+import { AppShellContent, Container, Divider, StepperContent } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoHero } from "./_components/BntoHero";
@@ -10,11 +10,10 @@ import {
   RecipeStepperDropzone,
   RecipeStepperToolbar,
   RecipeStepperBackButton,
-  RecipeStepperConfig,
+  RecipeStepperConfigButton,
   RecipeStepperBanner,
   RecipeStepperActions,
   RunRecipeButton,
-  DownloadAllButton,
   RecipeStepperResultList,
 } from "./_components/RecipeStepper";
 
@@ -65,11 +64,13 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 <RecipeStepperActions className="shrink-0">
                   <RecipeStepperBackButton />
                 </RecipeStepperActions>
-                <RecipeStepperConfig />
+                <RecipeStepperBanner />
                 <RecipeStepperActions className="ml-auto shrink-0">
+                  <RecipeStepperConfigButton />
                   <RunRecipeButton />
                 </RecipeStepperActions>
               </RecipeStepperToolbar>
+              <Divider />
               <RecipeStepperResultList />
             </StepperContent>
 
@@ -80,10 +81,11 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 </RecipeStepperActions>
                 <RecipeStepperBanner />
                 <RecipeStepperActions className="ml-auto shrink-0">
-                  <DownloadAllButton />
+                  <RecipeStepperConfigButton />
                   <RunRecipeButton />
                 </RecipeStepperActions>
               </RecipeStepperToolbar>
+              <Divider />
               <RecipeStepperResultList />
             </StepperContent>
           </RecipeStepper>

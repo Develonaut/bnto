@@ -7,6 +7,7 @@ import {
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
+  runAndCaptureAutoDownload,
 } from "../../helpers";
 
 /**
@@ -35,7 +36,7 @@ test.describe("resize-images — browser execution @browser", () => {
     });
   });
 
-  test("batch: resize two images with Download All", async ({ page }) => {
+  test("batch: resize two images auto-download as ZIP", async ({ page }) => {
     await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
 
     await uploadFiles(page, [
@@ -43,9 +44,9 @@ test.describe("resize-images — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("resize-images-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 });

@@ -7,7 +7,7 @@ import {
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
-  downloadAllAsZip,
+  runAndCaptureAutoDownload,
 } from "../../helpers";
 
 /**
@@ -40,7 +40,7 @@ test.describe("strip-exif — browser execution @browser", () => {
     expect(buffer.length).toBeGreaterThan(0);
   });
 
-  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
+  test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
 
     await uploadFiles(page, [
@@ -48,11 +48,9 @@ test.describe("strip-exif — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("strip-exif-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-
-    const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe("strip-exif-results.zip");
   });
 });

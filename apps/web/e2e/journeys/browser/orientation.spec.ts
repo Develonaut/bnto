@@ -7,6 +7,8 @@ import {
   navigateToRecipe,
   uploadFiles,
   runAndComplete,
+  openConfigDialog,
+  closeConfigDialog,
 } from "../../helpers";
 
 /**
@@ -115,9 +117,11 @@ test.describe("EXIF orientation — all image bntos @browser", () => {
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
-    // Change target format to PNG via the schema-driven select
+    // Open config dialog and change target format to PNG
+    await openConfigDialog(page);
     await page.getByTestId("control-select-param-format").click();
     await page.getByTestId("select-option-png").click();
+    await closeConfigDialog(page);
 
     await runAndComplete(page);
 

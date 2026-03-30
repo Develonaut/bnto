@@ -7,7 +7,7 @@ import {
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
-  downloadAllAsZip,
+  runAndCaptureAutoDownload,
   assertWebPBytes,
 } from "../../helpers";
 
@@ -42,7 +42,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     expect(buffer.length).toBeGreaterThan(0);
   });
 
-  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
+  test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [
@@ -50,12 +50,10 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("generate-thumbnails-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-
-    const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe("generate-thumbnails-results.zip");
   });
 
   test("back button resets from completed to configure step", async ({ page }) => {
