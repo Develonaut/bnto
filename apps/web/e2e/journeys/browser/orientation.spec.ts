@@ -9,6 +9,7 @@ import {
   runAndComplete,
   openConfigDialog,
   closeConfigDialog,
+  getJpegDimensions,
 } from "../../helpers";
 
 /**
@@ -24,33 +25,6 @@ import {
  *   - EXIF orientation: 6 (rotate 90° CW)
  *   - After correction: 800x1200 (portrait — how the user saw it)
  */
-
-/**
- * Extract image dimensions from a JPEG file by parsing SOF markers.
- *
- * JPEG stores dimensions in Start Of Frame (SOF) markers:
- *   FF C0 (baseline), FF C1 (extended), FF C2 (progressive)
- *
- * SOF marker structure:
- *   FF Cx            — marker (2 bytes)
- *   LL LL            — segment length (2 bytes)
- *   PP               — precision (1 byte)
- *   HH HH            — height (2 bytes, big-endian)
- *   WW WW            — width (2 bytes, big-endian)
- */
-function getJpegDimensions(data: Buffer): { width: number; height: number } {
-  for (let i = 0; i < data.length - 9; i++) {
-    if (
-      data[i] === 0xff &&
-      (data[i + 1] === 0xc0 || data[i + 1] === 0xc1 || data[i + 1] === 0xc2)
-    ) {
-      const height = data.readUInt16BE(i + 5);
-      const width = data.readUInt16BE(i + 7);
-      return { width, height };
-    }
-  }
-  throw new Error("No SOF marker found in JPEG data");
-}
 
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 

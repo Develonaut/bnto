@@ -37,7 +37,7 @@ test.describe("csv-to-json — browser execution @browser", () => {
     const parsed = JSON.parse(downloadedFile);
     expect(Array.isArray(parsed)).toBe(true);
 
-    // Should have 5 data rows (simple.csv has 5 rows + header)
+    // Row count must match input — simple.csv has 5 data rows
     expect(parsed).toHaveLength(5);
 
     // Each row should be an object with CSV header keys
@@ -49,6 +49,10 @@ test.describe("csv-to-json — browser execution @browser", () => {
     // Values are strings (by design — no type coercion)
     expect(first.name).toBe("Alice");
     expect(typeof first.age).toBe("string");
+
+    // Verify all names from input CSV are present in output
+    const names = parsed.map((r: Record<string, string>) => r.name);
+    expect(names).toEqual(["Alice", "Bob", "Charlie", "Diana", "Eve"]);
   });
 
   test("CSV with empty cells: missing values become empty strings", async ({ page }) => {

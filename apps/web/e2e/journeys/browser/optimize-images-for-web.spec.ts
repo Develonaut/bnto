@@ -9,6 +9,7 @@ import {
   downloadAndVerify,
   runAndCaptureAutoDownload,
   assertWebPBytes,
+  getWebPDimensions,
 } from "../../helpers";
 
 /**
@@ -22,10 +23,11 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("optimize-images-for-web — browser execution @browser", () => {
-  test("single JPEG: resize + convert + compress lifecycle", async ({ page }) => {
+  test("single JPEG: resize + convert + compress, verify WebP output", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
-    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
+    // large.jpg is 1200x800, pipeline resizes to 800px width → converts to WebP → compresses
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.jpg")]);
 
     await runAndComplete(page);
 
@@ -40,7 +42,13 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     });
 
     assertWebPBytes(buffer);
-    expect(buffer.length).toBeGreaterThan(0);
+
+    // Verify dimensions — default resize width is 800px, input was 1200px wide
+    const dims = getWebPDimensions(buffer);
+    expect(dims.width).toBe(800);
+    // Aspect ratio preserved: 1200x800 → 800x533
+    expect(dims.height).toBeGreaterThan(0);
+    expect(dims.height).toBeLessThan(800);
   });
 
   test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {

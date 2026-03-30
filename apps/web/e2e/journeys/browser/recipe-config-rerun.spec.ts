@@ -12,6 +12,10 @@ import {
   openConfigDialog,
   closeConfigDialog,
   assertWebPBytes,
+  getJpegDimensions,
+  getWebPDimensions,
+  assertExifStripped,
+  parseCsvOutput,
 } from "../../helpers";
 
 /**
@@ -168,9 +172,10 @@ test.describe("resize-images — config & rerun @browser", () => {
     await expect(page.getByTestId("output-file")).toHaveCount(1);
   });
 
-  test("run → rerun produces valid output each time", async ({ page }) => {
+  test("run → rerun produces valid resized output each time", async ({ page }) => {
     await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
 
+    // medium.jpg is 400x400 — default resize width is 200
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "medium.jpg")]);
 
     // First run
@@ -188,6 +193,11 @@ test.describe("resize-images — config & rerun @browser", () => {
     for (let i = 0; i < MAGIC.JPEG.length; i++) {
       expect(buffer[i]).toBe(MAGIC.JPEG[i]);
     }
+
+    // Verify dimensions — default resize width is 200px
+    const dims = getJpegDimensions(buffer);
+    expect(dims.width).toBe(200);
+    expect(dims.height).toBe(200);
   });
 });
 
@@ -242,7 +252,7 @@ test.describe("rename-files — config & rerun @browser", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("clean-csv — config & rerun @browser", () => {
-  test("run with defaults, back, run again", async ({ page }) => {
+  test("run with defaults: verify cleaned output, back, run again", async ({ page }) => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
     await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
@@ -251,10 +261,24 @@ test.describe("clean-csv — config & rerun @browser", () => {
     await runAndComplete(page);
     await expect(page.getByTestId("output-file")).toHaveCount(1);
 
-    // Download and verify output is cleaned
+    // Download and verify output is actually cleaned
     const buffer1 = await downloadAndVerify(page, { filenamePattern: /\.csv$/i });
-    const csv1 = buffer1.toString("utf-8");
-    expect(csv1).toContain("name");
+    const { headers, rows } = parseCsvOutput(buffer1);
+
+    // Headers preserved
+    expect(headers).toEqual(["name", "age", "city"]);
+
+    // Whitespace trimmed — no leading/trailing spaces
+    for (const row of rows) {
+      for (const cell of row) {
+        expect(cell).toBe(cell.trim());
+      }
+    }
+
+    // Empty rows removed — no rows where all cells are empty
+    for (const row of rows) {
+      expect(row.every((c) => c === "")).toBe(false);
+    }
 
     // Back to configure
     await page.getByTestId("back-button").click();
@@ -282,7 +306,7 @@ test.describe("clean-csv — config & rerun @browser", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("generate-thumbnails — config & rerun @browser", () => {
-  test("run → change config → rerun produces different output", async ({ page }) => {
+  test("run → verify thumbnail dimensions → rerun produces valid output", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
@@ -295,9 +319,14 @@ test.describe("generate-thumbnails — config & rerun @browser", () => {
     });
     assertWebPBytes(buffer1);
 
+    // Verify thumbnail dimensions — small.jpg is 100x100, resize target is 150px
+    // Since input is smaller than target, output width clamps to input width
+    const dims1 = getWebPDimensions(buffer1);
+    expect(dims1.width).toBeLessThanOrEqual(150);
+    expect(dims1.width).toBeGreaterThan(0);
+
     // Open config dialog on results step — should show multi-node config
     await openConfigDialog(page);
-    // Multi-node recipe shows section headers — dialog should have content
     await expect(page.getByRole("dialog")).toBeVisible();
     await closeConfigDialog(page);
 
@@ -308,6 +337,7 @@ test.describe("generate-thumbnails — config & rerun @browser", () => {
     const buffer2 = fs.readFileSync((await download.path())!);
 
     // Still valid image output
+    assertWebPBytes(buffer2);
     expect(buffer2.length).toBeGreaterThan(0);
   });
 
@@ -380,14 +410,21 @@ test.describe("optimize-images-for-web — config & rerun @browser", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("strip-exif — config & rerun @browser", () => {
-  test("run → rerun → back → run full cycle", async ({ page }) => {
+  test("run → verify EXIF stripped → rerun → back → run full cycle", async ({ page }) => {
     await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
 
-    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg")]);
 
     // First run
     await runAndComplete(page);
     await expect(page.getByTestId("output-file")).toHaveCount(1);
+
+    // Download and verify EXIF was actually stripped
+    const buffer1 = await downloadAndVerify(page, {
+      filenamePattern: /\.jpe?g$/i,
+      magicBytes: MAGIC.JPEG,
+    });
+    assertExifStripped(buffer1);
 
     // Rerun
     const dl = page.waitForEvent("download");
@@ -452,10 +489,13 @@ test.describe("csv-to-json — config & rerun @browser", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("compress-and-rename — config & rerun @browser", () => {
-  test("run produces compressed and renamed output, rerun works", async ({ page }) => {
+  test("run produces compressed and renamed output, verify both nodes ran", async ({ page }) => {
+    const inputPath = path.join(IMAGE_FIXTURES_DIR, "large.jpg");
+    const inputSize = fs.statSync(inputPath).size;
+
     await navigateToRecipe(page, "compress-and-rename", "Compress and Rename Online Free");
 
-    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
+    await uploadFiles(page, [inputPath]);
 
     await runAndComplete(page);
     await expect(page.getByTestId("output-file")).toHaveCount(1);
@@ -471,10 +511,19 @@ test.describe("compress-and-rename — config & rerun @browser", () => {
     const download = await dl;
     const buffer = fs.readFileSync((await download.path())!);
 
-    // Valid JPEG
+    // Valid JPEG — proves compress node ran
     for (let i = 0; i < MAGIC.JPEG.length; i++) {
       expect(buffer[i]).toBe(MAGIC.JPEG[i]);
     }
+
+    // Output filename differs from input — proves rename node ran
+    // compress-and-rename uses a pattern like "{{name}}-compressed-min"
+    const outputName = download.suggestedFilename();
+    expect(outputName).not.toBe("large.jpg");
+    expect(outputName).toContain("compressed");
+
+    // Output smaller than input — proves compress node actually compressed
+    expect(buffer.length).toBeLessThan(inputSize);
   });
 });
 
@@ -483,9 +532,10 @@ test.describe("compress-and-rename — config & rerun @browser", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("merge-csv — config & rerun @browser", () => {
-  test("merge two CSVs, config dialog accessible", async ({ page }) => {
+  test("merge two CSVs, verify combined rows from both files", async ({ page }) => {
     await navigateToRecipe(page, "merge-csv", "Merge CSV Online Free");
 
+    // simple.csv (5 rows) + messy.csv (has data rows including duplicates/whitespace)
     await uploadFiles(page, [
       path.join(CSV_FIXTURES_DIR, "simple.csv"),
       path.join(CSV_FIXTURES_DIR, "messy.csv"),
@@ -500,8 +550,18 @@ test.describe("merge-csv — config & rerun @browser", () => {
     await expect(page.getByTestId("output-file")).toHaveCount(1);
 
     const buffer = await downloadAndVerify(page, { filenamePattern: /\.csv$/i });
-    const csv = buffer.toString("utf-8");
-    expect(csv).toContain("name");
+    const { headers, rows } = parseCsvOutput(buffer);
+
+    // Headers from first file present
+    expect(headers).toContain("name");
+
+    // Combined rows from both files — at least 5 (simple.csv) + messy data rows
+    expect(rows.length).toBeGreaterThanOrEqual(5);
+
+    // Data from both files present
+    const allValues = rows.flat().join(",");
+    expect(allValues).toContain("Alice");
+    expect(allValues).toContain("Diana");
   });
 });
 
@@ -510,13 +570,27 @@ test.describe("merge-csv — config & rerun @browser", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("standardize-csv — config & rerun @browser", () => {
-  test("run → back → run full cycle", async ({ page }) => {
+  test("run → verify standardized output → back → run full cycle", async ({ page }) => {
     await navigateToRecipe(page, "standardize-csv", "Standardize CSV Online Free");
 
     await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
 
     await runAndComplete(page);
     await expect(page.getByTestId("output-file")).toHaveCount(1);
+
+    // Download and verify standardization ran
+    const buffer = await downloadAndVerify(page, { filenamePattern: /\.csv$/i });
+    const { headers, rows } = parseCsvOutput(buffer);
+
+    // Headers should still be present
+    expect(headers.length).toBeGreaterThan(0);
+
+    // Whitespace should be trimmed (clean step)
+    for (const row of rows) {
+      for (const cell of row) {
+        expect(cell).toBe(cell.trim());
+      }
+    }
 
     // Config on results step
     await openConfigDialog(page);

@@ -3,6 +3,16 @@ import fs from "fs";
 import type { Page } from "@playwright/test";
 import { expect } from "./fixtures";
 
+// Re-export verification helpers from focused files
+export {
+  getJpegDimensions,
+  getPngDimensions,
+  getWebPDimensions,
+  getImageDimensions,
+} from "./helpers/imageDimensions";
+export { parseCsvOutput } from "./helpers/parseCsv";
+export { assertExifStripped, assertContentPreserved } from "./helpers/contentAssertions";
+
 // ---------------------------------------------------------------------------
 // Fixture directories
 // ---------------------------------------------------------------------------
