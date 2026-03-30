@@ -58,7 +58,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     expect(download.suggestedFilename()).toBe("generate-thumbnails-results.zip");
   });
 
-  test("back button resets from completed to configure phase", async ({ page }) => {
+  test("back button resets from completed to configure step", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
@@ -69,6 +69,6 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     await backButton.click();
 
     await expect(page.getByTestId("run-button")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

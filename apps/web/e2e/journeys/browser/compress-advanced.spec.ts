@@ -101,7 +101,7 @@ test.describe("compress-images — batch processing @browser", () => {
       observer.observe(document.body, {
         subtree: true,
         attributes: true,
-        attributeFilter: ["data-overall-percent", "data-status", "data-phase"],
+        attributeFilter: ["data-overall-percent", "data-status", "data-step"],
       });
       (window as any).__progressObserver = observer;
     });

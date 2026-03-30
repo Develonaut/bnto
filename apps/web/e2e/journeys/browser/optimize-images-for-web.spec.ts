@@ -59,7 +59,7 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     expect(download.suggestedFilename()).toBe("optimize-images-for-web-results.zip");
   });
 
-  test("back button resets from completed to configure phase", async ({ page }) => {
+  test("back button resets from completed to configure step", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
@@ -70,6 +70,6 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     await backButton.click();
 
     await expect(page.getByTestId("run-button")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

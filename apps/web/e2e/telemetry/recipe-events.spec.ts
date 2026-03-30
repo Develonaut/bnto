@@ -46,7 +46,7 @@ test.describe("recipe telemetry events @browser", () => {
     const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
+    await expect(runButton).toHaveAttribute("data-step", "completed", {
       timeout: 30000,
     });
 

@@ -14,7 +14,7 @@ import {
 /**
  * Browser execution journey — compress-images
  *
- * 4-phase E2E tests for the compress-images bnto running 100% client-side
+ * 4-step E2E tests for the compress-images bnto running 100% client-side
  * via Rust→WASM. No backend required — files never leave the browser.
  *
  * Verified programmatically: magic bytes, file sizes, data attributes.
@@ -69,11 +69,11 @@ test.describe("compress-images — browser execution @browser", () => {
 
     const runButton = await runAndComplete(page);
 
-    // Back button resets execution — returns to Phase 2 (configure) with files retained
+    // Back button resets execution — returns to Step 2 (configure) with files retained
     const backButton = page.getByTestId("back-button");
     await backButton.click();
 
     await expect(page.getByTestId("run-button")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

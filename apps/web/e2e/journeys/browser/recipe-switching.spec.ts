@@ -19,7 +19,7 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("recipe switching — state isolation @browser", () => {
-  test("navigating after completion starts fresh (no stale phase)", async ({ page }) => {
+  test("navigating after completion starts fresh (no stale step)", async ({ page }) => {
     // --- Recipe A: compress-images → run to completion ---
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
@@ -36,11 +36,11 @@ test.describe("recipe switching — state isolation @browser", () => {
     // No output files from recipe A should be visible
     await expect(page.getByTestId("output-file")).toHaveCount(0);
 
-    // Run button must not show completed phase if visible
+    // Run button must not show completed step if visible
     const runButtonB = page.getByTestId("run-button");
     const runButtonCount = await runButtonB.count();
     if (runButtonCount > 0) {
-      await expect(runButtonB.first()).not.toHaveAttribute("data-phase", "completed");
+      await expect(runButtonB.first()).not.toHaveAttribute("data-step", "completed");
     }
   });
 
@@ -83,7 +83,7 @@ test.describe("recipe switching — state isolation @browser", () => {
     await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
 
     const runButtonB = page.getByTestId("run-button", ":visible");
-    await expect(runButtonB).toHaveAttribute("data-phase", "idle");
+    await expect(runButtonB).toHaveAttribute("data-step", "idle");
 
     await runAndComplete(page);
 

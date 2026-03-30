@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, StepperIndicator } from "@bnto/ui";
+import { AppShellContent, Container, StepperContent, StepperIndicator } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoHero } from "./_components/BntoHero";
-import { BntoToolbar } from "./_components/BntoToolbar";
 import { SessionMarker } from "./_components/SessionMarker";
 import {
-  RecipeFlow,
-  RecipeFlowStepper,
-  RecipeFlowFileUpload,
-  RecipeFlowDropzone,
-  RecipeFilesGrid,
-} from "./_components/RecipeFlow";
+  RecipeStepper,
+  RecipeStepperDropzone,
+  RecipeStepperToolbar,
+  RecipeStepperBackButton,
+  RecipeStepperConfig,
+  RecipeStepperBanner,
+  RecipeStepperActions,
+  RunRecipeButton,
+  DownloadAllButton,
+  RecipeStepperResultList,
+} from "./_components/RecipeStepper";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404. */
 export const dynamicParams = false;
@@ -48,18 +52,42 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
       <BntoJsonLd entry={entry} />
       <AppShellContent>
         <Container size="md" className="space-y-6 text-center">
-          <RecipeFlow key={slug} entry={entry}>
-            <RecipeFlowStepper>
-              <RecipeFlowFileUpload>
-                <SessionMarker />
-                <StepperIndicator />
-                <BntoHero h1={entry.h1} description={entry.description} />
-                <RecipeFlowDropzone />
-                <BntoToolbar />
-                <RecipeFilesGrid />
-              </RecipeFlowFileUpload>
-            </RecipeFlowStepper>
-          </RecipeFlow>
+          <RecipeStepper key={slug} entry={entry}>
+            <SessionMarker />
+            <StepperIndicator />
+            <BntoHero h1={entry.h1} description={entry.description} />
+
+            <StepperContent value="1">
+              <RecipeStepperDropzone />
+            </StepperContent>
+
+            <StepperContent value="2">
+              <RecipeStepperToolbar>
+                <RecipeStepperActions className="shrink-0">
+                  <RecipeStepperBackButton />
+                </RecipeStepperActions>
+                <RecipeStepperConfig />
+                <RecipeStepperActions className="ml-auto shrink-0">
+                  <RunRecipeButton />
+                </RecipeStepperActions>
+              </RecipeStepperToolbar>
+              <RecipeStepperResultList />
+            </StepperContent>
+
+            <StepperContent value="3">
+              <RecipeStepperToolbar>
+                <RecipeStepperActions className="shrink-0">
+                  <RecipeStepperBackButton />
+                </RecipeStepperActions>
+                <RecipeStepperBanner />
+                <RecipeStepperActions className="ml-auto shrink-0">
+                  <DownloadAllButton />
+                  <RunRecipeButton />
+                </RecipeStepperActions>
+              </RecipeStepperToolbar>
+              <RecipeStepperResultList />
+            </StepperContent>
+          </RecipeStepper>
         </Container>
       </AppShellContent>
     </>

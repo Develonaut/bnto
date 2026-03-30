@@ -51,19 +51,19 @@ export async function uploadFiles(page: Page, filePaths: string[]) {
 }
 
 /**
- * Click the Run button and wait for the execution to reach a terminal phase.
+ * Click the Run button and wait for the execution to reach a terminal step.
  * Returns the run button locator.
  */
 export async function runAndComplete(
   page: Page,
-  options?: { timeout?: number; expectPhase?: string },
+  options?: { timeout?: number; expectStep?: string },
 ) {
-  const { timeout = 30_000, expectPhase = "completed" } = options ?? {};
+  const { timeout = 30_000, expectStep = "completed" } = options ?? {};
 
   const runButton = page.getByTestId("run-button", ":visible");
   await runButton.click();
 
-  await expect(runButton).toHaveAttribute("data-phase", expectPhase, {
+  await expect(runButton).toHaveAttribute("data-step", expectStep, {
     timeout,
   });
 
