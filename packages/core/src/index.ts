@@ -163,6 +163,7 @@ export {
   getConditionallyRequired,
   getNodeSchema,
   getNodeParamFields,
+  getProcessorDefaults,
 } from "@bnto/registry";
 
 // Recipe lookup
