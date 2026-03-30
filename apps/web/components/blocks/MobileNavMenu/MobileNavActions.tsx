@@ -9,14 +9,6 @@ interface MobileNavActionsProps {
 export function MobileNavActions({ onClose }: MobileNavActionsProps) {
   return (
     <Row className="gap-4">
-      <Button
-        variant="outline"
-        href="/my-recipes"
-        onClick={onClose}
-        data-testid="mobile-link-my-recipes"
-      >
-        My Recipes
-      </Button>
       <Button variant="outline" href="/explore" onClick={onClose} data-testid="mobile-link-explore">
         Explore
       </Button>

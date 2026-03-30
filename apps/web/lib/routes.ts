@@ -16,7 +16,6 @@ export const ROUTES = {
   signin: "/signin",
   signup: "/signup",
   waitlist: "/waitlist",
-  myRecipes: "/my-recipes",
   executions: "/executions",
   settings: "/settings",
 } as const satisfies Record<string, string>;

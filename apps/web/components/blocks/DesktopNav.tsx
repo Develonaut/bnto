@@ -1,7 +1,7 @@
 /**
  * Desktop navigation links — page buttons + Explore link.
  *
- * Order: My Recipes | Explore | Pricing | FAQ
+ * Order: Explore | Pricing | FAQ
  * Hidden below the `lg` breakpoint via the parent's `hidden lg:flex`.
  */
 
@@ -11,9 +11,6 @@ import { PAGE_LINKS } from "./nav";
 export function DesktopNav() {
   return (
     <div className="hidden items-center gap-2 lg:flex">
-      <NavButton href="/my-recipes" data-testid="nav-link-my-recipes">
-        My Recipes
-      </NavButton>
       <NavButton href="/explore" data-testid="nav-link-explore">
         Explore
       </NavButton>

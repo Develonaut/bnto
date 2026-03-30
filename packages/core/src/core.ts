@@ -6,19 +6,17 @@
  * Wires services into clients. This is the base layer that reactCore.ts
  * enhances with React hooks for the final public `core` export.
  *
- * 7 domains: recipes, executions, user, auth, telemetry, registry, flags.
+ * 6 domains: executions, user, auth, telemetry, registry, flags.
  *
  * Dependency flow:
  *   core.ts -> clients -> services -> adapters -> @bnto/backend
  */
 
-import { createRecipeService } from "./services/recipeService";
 import { createExecutionService } from "./services/executionService";
 import { createHistoryService } from "./services/historyService";
 import { createUserService } from "./services/userService";
 import { createAnalyticsService } from "./services/analyticsService";
 import { createBrowserExecutionService } from "./services/browserExecutionService";
-import { createRecipeClient } from "./clients/recipeClient";
 import { createExecutionClient } from "./clients/executionClient";
 import { createUserClient } from "./clients/userClient";
 import { createAuthClient } from "./clients/authClient";
@@ -34,7 +32,6 @@ import { createUploadService } from "./services/uploadService";
 import { createDownloadService } from "./services/downloadService";
 
 // ── Services (single-domain, internal) ────────────────────────────────────
-const recipeService = createRecipeService();
 const executionService = createExecutionService();
 const historyService = createHistoryService();
 const userService = createUserService();
@@ -53,7 +50,6 @@ const downloadService = createDownloadService();
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 // Auth client first — other clients depend on it for imperative auth checks.
 const authClient = createAuthClient();
-const recipeClient = createRecipeClient(recipeService, executionService);
 const executionClient = createExecutionClient(
   executionService,
   browserExecutionService,
@@ -67,7 +63,6 @@ const flagsClient = createFlagsClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
-  recipes: recipeClient,
   executions: executionClient,
   user: userClient,
   auth: authClient,
