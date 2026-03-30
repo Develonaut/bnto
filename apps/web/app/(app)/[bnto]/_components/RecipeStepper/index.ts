@@ -1,4 +1,5 @@
 export { RecipeStepper } from "./RecipeStepper";
+export { RecipeStepperIndicator } from "./RecipeStepperIndicator";
 export { RecipeStepperDropzone } from "./RecipeStepperDropzone";
 export { RecipeStepperToolbar } from "./RecipeStepperToolbar";
 export { RecipeStepperBackButton } from "./RecipeStepperBackButton";

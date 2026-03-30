@@ -22,22 +22,22 @@ export function RecipeStepperRoot({ children }: { children: ReactNode }) {
     <Stepper
       value={String(step)}
       onValueChange={noop}
-      className="space-y-6"
       data-testid="bnto-shell"
       data-session="ready"
     >
+      <StepperList>
+        <StepperStep value="1" label="Files" />
+        <StepperStep value="2" label="Configure" />
+        <StepperStep value="3" label="Results" />
+      </StepperList>
       <FileUpload
         value={files}
         onValueChange={actions.setFiles}
         accept={defn.dropzoneAccept}
         multiple
         disabled={isProcessing}
+        className="gap-6"
       >
-        <StepperList>
-          <StepperStep value="1" label="Files" />
-          <StepperStep value="2" label="Configure" />
-          <StepperStep value="3" label="Results" />
-        </StepperList>
         {children}
       </FileUpload>
     </Stepper>

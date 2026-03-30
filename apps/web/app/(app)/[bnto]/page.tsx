@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, StepperContent, StepperIndicator } from "@bnto/ui";
+import { AppShellContent, Container, StepperContent } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoHero } from "./_components/BntoHero";
 import {
   RecipeStepper,
+  RecipeStepperIndicator,
   RecipeStepperDropzone,
   RecipeStepperToolbar,
   RecipeStepperBackButton,
@@ -52,7 +53,7 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
       <AppShellContent>
         <Container size="md" className="space-y-6 text-center">
           <RecipeStepper key={slug} entry={entry}>
-            <StepperIndicator />
+            <RecipeStepperIndicator />
             <BntoHero h1={entry.h1} description={entry.description} />
 
             <StepperContent value="1">
