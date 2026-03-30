@@ -488,15 +488,15 @@ Replace ~600 LOC of hardcoded per-recipe config with dynamic schema-driven confi
 
 #### Wave 1 (parallel — build + modify)
 
-- [ ] `apps/web` — **DynamicRecipeConfig component**: Create `[bnto]/_components/DynamicRecipeConfig.tsx`. Reads recipe definition, walks processing nodes, looks up each node's `NodeSchemaDefinition` from `@bnto/form`, renders `SchemaForm` per processing node. Multi-node recipes (optimize-images-for-web) render multiple config sections.
-- [ ] `apps/web` — **Update recipeFlowStore config shape**: Config state becomes `Record<nodeId, Record<string, unknown>>` (per-node configs). `setConfig` action accepts nodeId + partial params. Default config populated from schema defaults on mount.
-- [ ] `apps/web` — **Wire execution path**: Before engine call, merge per-node config back into definition's node parameters. Pure function: `applyConfigToDefinition(definition, configs) → Definition`.
+- [x] `apps/web` — **DynamicRecipeConfig component**: Create `[bnto]/_components/DynamicRecipeConfig.tsx`. Reads recipe definition, walks processing nodes, looks up each node's `NodeSchemaDefinition` from `@bnto/form`, renders `SchemaForm` per processing node. Multi-node recipes (optimize-images-for-web) render multiple config sections.
+- [x] `apps/web` — **Update recipeFlowStore config shape**: Config state becomes `Record<nodeId, Record<string, unknown>>` (per-node configs). `setConfig` action accepts nodeId + partial params. Default config populated from schema defaults on mount.
+- [x] `apps/web` — **Wire execution path**: Before engine call, merge per-node config back into definition's node parameters. Pure function: `applyConfigToDefinition(definition, configs) → Definition`.
 
 #### Wave 2 (sequential — swap + delete + verify)
 
-- [ ] `apps/web` — **Replace config registry**: RecipeShell/RecipeConfigSection uses DynamicRecipeConfig instead of the lazy-loaded registry. Delete all files in `[bnto]/_components/configs/` (CompressImagesConfig, ResizeImagesConfig, ConvertFormatConfig, RenameFilesConfig, CleanCsvConfig, RenameCsvColumnsConfig, OptimizeImagesForWebConfig, GenerateThumbnailsConfig, FormatSelect, RenamePatternPreview, registry.tsx, types.ts, useConfigChange.ts, formatOptions.ts + test).
-- [ ] `apps/web` — **Verify all recipes**: Every recipe renders correct controls dynamically. Defaults match previous hardcoded values. Execution output identical. New recipes (strip-exif, merge-csv, csv-to-json) get config UI for free.
-- [ ] `apps/web` — **E2E verification**: Run existing recipe execution E2E tests. Verify config controls render and produce correct output.
+- [x] `apps/web` — **Replace config registry**: RecipeShell/RecipeConfigSection uses DynamicRecipeConfig instead of the lazy-loaded registry. Delete all files in `[bnto]/_components/configs/` (CompressImagesConfig, ResizeImagesConfig, ConvertFormatConfig, RenameFilesConfig, CleanCsvConfig, RenameCsvColumnsConfig, OptimizeImagesForWebConfig, GenerateThumbnailsConfig, FormatSelect, RenamePatternPreview, registry.tsx, types.ts, useConfigChange.ts, formatOptions.ts + test).
+- [x] `apps/web` — **Verify all recipes**: Every recipe renders correct controls dynamically. Defaults match previous hardcoded values. Execution output identical. New recipes (strip-exif, merge-csv, csv-to-json) get config UI for free.
+- [x] `apps/web` — **E2E verification**: Run existing recipe execution E2E tests. Verify config controls render and produce correct output.
 
 ### Sprint 8.5d: Reconnect Editor (Open + Export Only)
 

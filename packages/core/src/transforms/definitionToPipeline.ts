@@ -3,7 +3,7 @@
  * PipelineDefinition (execution-oriented format for the WASM executor).
  *
  * Recursively walks the Definition tree, stripping editor metadata
- * (position, ports, edges) and optionally merging user config overrides
+ * (position, ports, edges) and optionally merging per-node config
  * into leaf processing nodes.
  */
 
@@ -19,15 +19,15 @@ import type { PipelineDefinition, PipelineNode } from "../types/pipeline";
  * Convert a Definition tree into a PipelineDefinition.
  *
  * @param definition - Root definition node (recipe or editor output)
- * @param configOverrides - Optional user config to merge into leaf processing nodes
+ * @param perNodeConfig - Optional per-node config keyed by node ID
  */
 export function definitionToPipeline(
   definition: Definition,
-  configOverrides?: Record<string, unknown>,
+  perNodeConfig?: Record<string, Record<string, unknown>>,
 ): PipelineDefinition {
   const children = definition.nodes ?? [];
   return {
-    nodes: children.map((child) => convertNode(child, configOverrides)),
+    nodes: children.map((child) => convertNode(child, perNodeConfig)),
   };
 }
 
@@ -35,19 +35,23 @@ export function definitionToPipeline(
 // Internal — recursive conversion
 // ---------------------------------------------------------------------------
 
-function convertNode(node: Definition, configOverrides?: Record<string, unknown>): PipelineNode {
+function convertNode(
+  node: Definition,
+  perNodeConfig?: Record<string, Record<string, unknown>>,
+): PipelineNode {
   const isContainer = isContainerNodeType(node.type);
   const isIO = isIoNodeType(node.type);
 
+  const nodeOverrides = perNodeConfig?.[node.id];
   const params =
-    !isIO && !isContainer && configOverrides
-      ? { ...node.parameters, ...configOverrides }
+    !isIO && !isContainer && nodeOverrides
+      ? { ...node.parameters, ...nodeOverrides }
       : node.parameters;
 
   const result: PipelineNode = { id: node.id, type: node.type, params };
 
   if (isContainer && node.nodes && node.nodes.length > 0) {
-    result.children = node.nodes.map((child) => convertNode(child, configOverrides));
+    result.children = node.nodes.map((child) => convertNode(child, perNodeConfig));
   }
 
   return result;

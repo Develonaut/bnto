@@ -2,143 +2,24 @@ import { describe, it, expect } from "vitest";
 import { applyConfigToDefinition } from "./applyConfigToDefinition";
 import type { Definition } from "@bnto/registry";
 import { getRecipeBySlug } from "@bnto/registry";
-
-const SIMPLE_DEF: Definition = {
-  id: "root",
-  type: "group",
-  version: "1.0.0",
-  name: "Test",
-  position: { x: 0, y: 0 },
-  metadata: {},
-  parameters: {},
-  inputPorts: [],
-  outputPorts: [],
-  nodes: [
-    {
-      id: "input",
-      type: "input",
-      version: "1.0.0",
-      name: "Input",
-      position: { x: 0, y: 0 },
-      metadata: {},
-      parameters: { mode: "file-upload" },
-      inputPorts: [],
-      outputPorts: [{ id: "out-1", name: "files" }],
-    },
-    {
-      id: "compress",
-      type: "image-compress",
-      version: "1.0.0",
-      name: "Compress",
-      position: { x: 200, y: 0 },
-      metadata: {},
-      parameters: { quality: 80 },
-      inputPorts: [{ id: "in-1", name: "files" }],
-      outputPorts: [{ id: "out-1", name: "files" }],
-    },
-    {
-      id: "output",
-      type: "output",
-      version: "1.0.0",
-      name: "Output",
-      position: { x: 400, y: 0 },
-      metadata: {},
-      parameters: { mode: "download" },
-      inputPorts: [{ id: "in-1", name: "files" }],
-      outputPorts: [],
-    },
-  ],
-};
-
-const NESTED_DEF: Definition = {
-  id: "root",
-  type: "group",
-  version: "1.0.0",
-  name: "Rename Files",
-  position: { x: 0, y: 0 },
-  metadata: {},
-  parameters: {},
-  inputPorts: [],
-  outputPorts: [],
-  nodes: [
-    {
-      id: "input",
-      type: "input",
-      version: "1.0.0",
-      name: "Input",
-      position: { x: 0, y: 0 },
-      metadata: {},
-      parameters: {},
-      inputPorts: [],
-      outputPorts: [],
-    },
-    {
-      id: "batch-rename",
-      type: "group",
-      version: "1.0.0",
-      name: "Batch Rename",
-      position: { x: 200, y: 0 },
-      metadata: {},
-      parameters: {},
-      inputPorts: [],
-      outputPorts: [],
-      nodes: [
-        {
-          id: "rename-loop",
-          type: "loop",
-          version: "1.0.0",
-          name: "Loop",
-          position: { x: 0, y: 0 },
-          metadata: {},
-          parameters: { mode: "forEach" },
-          inputPorts: [],
-          outputPorts: [],
-          nodes: [
-            {
-              id: "rename-file",
-              type: "file-rename",
-              version: "1.0.0",
-              name: "Rename File",
-              position: { x: 0, y: 0 },
-              metadata: {},
-              parameters: { prefix: "default-" },
-              inputPorts: [],
-              outputPorts: [],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "output",
-      type: "output",
-      version: "1.0.0",
-      name: "Output",
-      position: { x: 400, y: 0 },
-      metadata: {},
-      parameters: {},
-      inputPorts: [],
-      outputPorts: [],
-    },
-  ],
-};
+import { SIMPLE_DEF, NESTED_DEF, MULTI_NODE_DEF } from "./__fixtures__/testDefinitions";
 
 describe("applyConfigToDefinition", () => {
-  it("merges config into leaf processing nodes", () => {
-    const result = applyConfigToDefinition(SIMPLE_DEF, { quality: 50 });
+  it("merges per-node config into matching leaf processing node", () => {
+    const result = applyConfigToDefinition(SIMPLE_DEF, { compress: { quality: 50 } });
 
     expect(result.nodes![1]!.parameters).toEqual({ quality: 50 });
   });
 
   it("does NOT merge config into I/O nodes", () => {
-    const result = applyConfigToDefinition(SIMPLE_DEF, { quality: 50 });
+    const result = applyConfigToDefinition(SIMPLE_DEF, { compress: { quality: 50 } });
 
     expect(result.nodes![0]!.parameters).toEqual({ mode: "file-upload" });
     expect(result.nodes![2]!.parameters).toEqual({ mode: "download" });
   });
 
   it("preserves full Definition shape (ports, metadata, position)", () => {
-    const result = applyConfigToDefinition(SIMPLE_DEF, { quality: 50 });
+    const result = applyConfigToDefinition(SIMPLE_DEF, { compress: { quality: 50 } });
 
     const compress = result.nodes![1]!;
     expect(compress.position).toEqual({ x: 200, y: 0 });
@@ -147,17 +28,38 @@ describe("applyConfigToDefinition", () => {
   });
 
   it("recurses into container children", () => {
-    const result = applyConfigToDefinition(NESTED_DEF, { prefix: "custom-" });
+    const result = applyConfigToDefinition(NESTED_DEF, {
+      "rename-file": { prefix: "custom-" },
+    });
 
     const renameFile = result.nodes![1]!.nodes![0]!.nodes![0]!;
     expect(renameFile.parameters).toEqual({ prefix: "custom-" });
   });
 
   it("does NOT merge config into container nodes themselves", () => {
-    const result = applyConfigToDefinition(NESTED_DEF, { prefix: "custom-" });
+    const result = applyConfigToDefinition(NESTED_DEF, {
+      "rename-file": { prefix: "custom-" },
+    });
 
     expect(result.nodes![1]!.parameters).toEqual({});
     expect(result.nodes![1]!.nodes![0]!.parameters).toEqual({ mode: "forEach" });
+  });
+
+  it("applies per-node config only to the matching node (no cross-contamination)", () => {
+    const result = applyConfigToDefinition(MULTI_NODE_DEF, {
+      resize: { width: 800 },
+    });
+
+    expect(result.nodes![1]!.parameters).toEqual({ width: 800 });
+    expect(result.nodes![2]!.parameters).toEqual({ quality: 80 });
+  });
+
+  it("leaves unmatched processing nodes untouched", () => {
+    const result = applyConfigToDefinition(SIMPLE_DEF, {
+      "nonexistent-node": { foo: "bar" },
+    });
+
+    expect(result.nodes![1]!.parameters).toEqual({ quality: 80 });
   });
 
   it("returns original definition when config is empty", () => {
@@ -179,7 +81,7 @@ describe("applyConfigToDefinition", () => {
       outputPorts: [],
     };
 
-    const result = applyConfigToDefinition(emptyDef, { quality: 50 });
+    const result = applyConfigToDefinition(emptyDef, { compress: { quality: 50 } });
     expect(result).toBe(emptyDef);
   });
 
@@ -187,9 +89,14 @@ describe("applyConfigToDefinition", () => {
     const recipe = getRecipeBySlug("compress-images");
     expect(recipe).toBeDefined();
 
-    const result = applyConfigToDefinition(recipe!.definition, { quality: 60 });
-    const compressNode = result.nodes!.find((n) => n.type === "image-compress");
+    const compressNode = recipe!.definition.nodes!.find((n) => n.type === "image-compress");
     expect(compressNode).toBeDefined();
-    expect(compressNode!.parameters).toHaveProperty("quality", 60);
+
+    const result = applyConfigToDefinition(recipe!.definition, {
+      [compressNode!.id]: { quality: 60 },
+    });
+    const resultNode = result.nodes!.find((n) => n.type === "image-compress");
+    expect(resultNode).toBeDefined();
+    expect(resultNode!.parameters).toHaveProperty("quality", 60);
   });
 });
