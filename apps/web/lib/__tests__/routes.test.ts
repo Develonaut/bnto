@@ -14,7 +14,6 @@ describe("ROUTES", () => {
     expect(ROUTES.signin).toBe("/signin");
     expect(ROUTES.signup).toBe("/signup");
     expect(ROUTES.waitlist).toBe("/waitlist");
-    expect(ROUTES.myRecipes).toBe("/my-recipes");
     expect(ROUTES.executions).toBe("/executions");
     expect(ROUTES.settings).toBe("/settings");
   });
@@ -44,7 +43,6 @@ describe("PROTECTED_PATHS", () => {
     expect(protectedSet.has("/")).toBe(false);
     expect(protectedSet.has("/signin")).toBe(false);
     expect(protectedSet.has("/waitlist")).toBe(false);
-    expect(protectedSet.has("/my-recipes")).toBe(false);
   });
 });
 
@@ -57,7 +55,6 @@ describe("isAuthPath", () => {
   it("returns false for non-auth paths", () => {
     expect(isAuthPath("/")).toBe(false);
     expect(isAuthPath("/waitlist")).toBe(false);
-    expect(isAuthPath("/my-recipes")).toBe(false);
     expect(isAuthPath("/settings")).toBe(false);
   });
 
@@ -92,8 +89,8 @@ describe("isProtectedPath", () => {
 
 describe("safeReturnTo", () => {
   it("returns the path for valid internal paths", () => {
-    expect(safeReturnTo("/my-recipes")).toBe("/my-recipes");
     expect(safeReturnTo("/settings")).toBe("/settings");
+    expect(safeReturnTo("/executions")).toBe("/executions");
   });
 
   it("falls back to / for null or empty", () => {

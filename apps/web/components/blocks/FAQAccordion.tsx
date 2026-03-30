@@ -29,12 +29,11 @@ const FAQS = [
   {
     question: "Will bnto always be free?",
     answer:
-      "All browser-based recipes are free and unlimited — no signup, no caps. A Pro tier is planned for features that require server-side processing (AI, video, shell commands), persistence, and team collaboration.",
+      "All browser-based recipes are free and unlimited — no signup, no caps. A Pro tier is planned for recipes that need server-side processing, like AI, video, and shell commands.",
   },
   {
     question: "Do I need an account?",
-    answer:
-      "No. Drop your files and run any recipe immediately. Create an account if you want to save favorites or access execution history.",
+    answer: "No. Drop your files and run any recipe immediately — no account needed.",
   },
   {
     question: "Can I process multiple files at once?",

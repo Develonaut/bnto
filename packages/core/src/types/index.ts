@@ -1,5 +1,3 @@
-export type { Recipe, RecipeListItem } from "./recipe";
-
 export type {
   Execution,
   ExecutionLog,
@@ -13,8 +11,6 @@ export type {
 export type { LocalHistoryEntry } from "./localHistory";
 
 export type { User } from "./user";
-
-export type { UsageAnalytics, SlugAggregate } from "./analytics";
 
 export type {
   UploadFileInput,

@@ -6,33 +6,7 @@
 // Only adapters know about Convex — transforms just accept plain objects.
 // ---------------------------------------------------------------------------
 
-import type { Definition } from "@bnto/registry";
 import type { NodeProgress, OutputFile, RunResult } from "./execution";
-
-// ── Recipe ─────────────────────────────────────────────────────────────────
-
-/** Raw recipe document as returned by the Convex adapter. */
-export interface RawRecipeDoc {
-  _id: string;
-  userId: string;
-  name: string;
-  definition: Definition;
-  version: number;
-  /** Definition format version (semver) — tracks which format spec the definition uses. */
-  formatVersion?: string;
-  isPublic: boolean;
-  createdAt: number;
-  updatedAt: number;
-}
-
-/** Projected recipe fields returned by list queries. */
-export interface RawRecipeListProjection {
-  _id: string;
-  name: string;
-  nodeCount: number;
-  nodeTypes?: string[];
-  updatedAt: number;
-}
 
 // ── Execution ───────────────────────────────────────────────────────────────
 
