@@ -4,7 +4,6 @@ import {
   IMAGE_FIXTURES_DIR,
   CSV_FIXTURES_DIR,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
 } from "../../helpers";
@@ -33,9 +32,6 @@ test.describe("recipe switching — state isolation @browser", () => {
 
     // --- Navigate to Recipe B: clean-csv ---
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
-
-    // Recipe B must start at Phase 1 (idle) — no stale completed state
-    await assertBrowserExecution(page);
 
     // No output files from recipe A should be visible
     await expect(page.getByTestId("output-file")).toHaveCount(0);
@@ -112,7 +108,6 @@ test.describe("recipe switching — state isolation @browser", () => {
     // Now navigate rapidly through all 3 recipes
     for (const recipe of recipes) {
       await navigateToRecipe(page, recipe.slug, recipe.h1);
-      await assertBrowserExecution(page);
       await expect(page.getByTestId("output-file")).toHaveCount(0);
     }
   });

@@ -2,12 +2,7 @@
 
 import { createContext, useContext } from "react";
 import { createStoreContext } from "@bnto/core";
-import type {
-  ExecutionInstance,
-  BrowserFileResult,
-  FileUploadProgress,
-  Definition,
-} from "@bnto/core";
+import type { ExecutionInstance, Definition } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import type { RecipeFlowState } from "./recipeFlowStore";
 import type { RecipeFlowActions } from "./recipeFlowActions";
@@ -17,7 +12,6 @@ import type { RecipeFlowActions } from "./recipeFlowActions";
 // ---------------------------------------------------------------------------
 
 export interface RecipeDefn {
-  isBrowserPath: boolean;
   definition: Definition | undefined;
   acceptLabel: string;
   dropzoneAccept: Record<string, string[]> | undefined;
@@ -34,23 +28,11 @@ const { Provider: RecipeFlowStoreProvider, useStore: useRecipeFlowStore } =
 // Companion context for non-store values (actions, instance, metadata)
 // ---------------------------------------------------------------------------
 
-/** Lazy accessors for mutable cloud refs — read at call time, no stale captures. */
-export interface RecipeFlowCloudRefs {
-  getBrowserResults(): BrowserFileResult[];
-  getUploadFn(): ((files: File[]) => Promise<{ sessionId: string }>) | null;
-  getStartCloudExecFn():
-    | ((args: { slug: string; definition: Definition; sessionId: string }) => Promise<unknown>)
-    | null;
-  getResetUploadFn(): (() => void) | null;
-  getUploadProgress(): { files: FileUploadProgress[] };
-}
-
 interface RecipeFlowRefs {
   actions: RecipeFlowActions;
   instance: ExecutionInstance;
   defn: RecipeDefn;
   entry: BntoEntry;
-  cloudRefs: RecipeFlowCloudRefs;
 }
 
 const RecipeFlowRefsContext = createContext<RecipeFlowRefs | null>(null);
@@ -78,10 +60,6 @@ function useRecipeFlowDefn() {
   return useRecipeFlowRefs().defn;
 }
 
-function useRecipeFlowCloudRefs() {
-  return useRecipeFlowRefs().cloudRefs;
-}
-
 export {
   RecipeFlowStoreProvider,
   RecipeFlowRefsContext,
@@ -89,5 +67,4 @@ export {
   useRecipeFlowActions,
   useRecipeFlowInstance,
   useRecipeFlowDefn,
-  useRecipeFlowCloudRefs,
 };

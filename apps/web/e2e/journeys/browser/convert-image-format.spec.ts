@@ -4,7 +4,6 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
@@ -22,11 +21,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("convert-image-format — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("JPEG → WebP: convert, download, verify WebP magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 

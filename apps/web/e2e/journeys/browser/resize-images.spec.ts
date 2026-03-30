@@ -4,7 +4,6 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
@@ -20,11 +19,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("resize-images — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single JPEG: resize, download, verify valid image", async ({ page }) => {
     await navigateToRecipe(page, "resize-images", "Resize Images Online Free");
 

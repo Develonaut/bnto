@@ -2,12 +2,12 @@
  * Imperative action factory for the recipe flow.
  *
  * All actions read state at call time via store.getState().
- * Cloud function refs are read lazily via the `refs` accessor so
+ * Browser results are read lazily via the `refs` accessor so
  * this file has ZERO imports from the context layer (no cycle).
  */
 
 import { core, definitionToPipeline } from "@bnto/core";
-import type { BrowserFileResult, ExecutionInstance, Definition } from "@bnto/core";
+import type { BrowserFileResult, ExecutionInstance } from "@bnto/core";
 import type { StoreApi } from "zustand";
 import type { RecipeFlowState } from "./recipeFlowStore";
 
@@ -26,24 +26,17 @@ export interface RecipeFlowActions {
   resetExecution(): void;
 }
 
-/** Lazy accessors for mutable module refs — avoids circular imports. */
+/** Lazy accessor for browser results — avoids stale captures. */
 export interface RecipeFlowRefs {
   getBrowserResults(): BrowserFileResult[];
-  getUploadFn(): ((files: File[]) => Promise<{ sessionId: string }>) | null;
-  getStartCloudExecFn():
-    | ((args: { slug: string; definition: Definition; sessionId: string }) => Promise<unknown>)
-    | null;
-  getResetUploadFn(): (() => void) | null;
 }
 
 /** Captures all factory arguments for inner helpers. */
 interface ActionContext {
   store: StoreApi<RecipeFlowState>;
-  browserInstance: ExecutionInstance;
+  instance: ExecutionInstance;
   refs: RecipeFlowRefs;
   slug: string;
-  isBrowserPath: boolean;
-  definition: Definition | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -52,13 +45,11 @@ interface ActionContext {
 
 export function createRecipeFlowActions(
   store: StoreApi<RecipeFlowState>,
-  browserInstance: ExecutionInstance,
+  instance: ExecutionInstance,
   refs: RecipeFlowRefs,
   slug: string,
-  isBrowserPath: boolean,
-  definition: Definition | undefined,
 ): RecipeFlowActions {
-  const ctx: ActionContext = { store, browserInstance, refs, slug, isBrowserPath, definition };
+  const ctx: ActionContext = { store, instance, refs, slug };
   return {
     run: () => runAction(ctx),
     back: () => backAction(ctx),
@@ -106,12 +97,7 @@ function downloadAllAction(ctx: ActionContext) {
 }
 
 function resetExecutionAction(ctx: ActionContext) {
-  if (ctx.isBrowserPath) {
-    ctx.browserInstance.reset();
-  } else {
-    ctx.store.setState({ executionId: null, cloudPhase: "idle" as const, clientError: null });
-    ctx.refs.getResetUploadFn()?.();
-  }
+  ctx.instance.reset();
 }
 
 function backAction(ctx: ActionContext) {
@@ -122,86 +108,30 @@ function backAction(ctx: ActionContext) {
 async function runAction(ctx: ActionContext) {
   const { files, config } = ctx.store.getState();
   if (files.length === 0) return;
-  const runCtx = buildRunContext(ctx.slug, files, ctx.isBrowserPath);
-  core.telemetry.capture("recipe_run_started", runCtx.props);
-  if (ctx.isBrowserPath) {
-    await runBrowserPath(ctx.browserInstance, ctx.slug, files, config, runCtx);
-  } else {
-    await runCloudPath(ctx.store, ctx.refs, ctx.slug, files, ctx.definition, runCtx);
-  }
-}
 
-// ---------------------------------------------------------------------------
-// Run context + execution paths
-// ---------------------------------------------------------------------------
-
-interface RunContext {
-  props: Record<string, unknown>;
-  startTime: number;
-}
-
-function buildRunContext(slug: string, files: File[], isBrowserPath: boolean): RunContext {
-  return {
-    props: {
-      slug,
-      fileCount: files.length,
-      totalBytes: files.reduce((sum, f) => sum + f.size, 0),
-      executionPath: isBrowserPath ? "browser" : "cloud",
-    },
-    startTime: Date.now(),
+  const props = {
+    slug: ctx.slug,
+    fileCount: files.length,
+    totalBytes: files.reduce((sum, f) => sum + f.size, 0),
   };
-}
+  const startTime = Date.now();
+  core.telemetry.capture("recipe_run_started", props);
 
-async function runBrowserPath(
-  instance: ExecutionInstance,
-  slug: string,
-  files: File[],
-  config: Record<string, Record<string, unknown>>,
-  ctx: RunContext,
-) {
-  const recipe = core.registry.getRecipeBySlug(slug);
-  if (!recipe) throw new Error(`No browser implementation for slug "${slug}"`);
+  const recipe = core.registry.getRecipeBySlug(ctx.slug);
+  if (!recipe) throw new Error(`No implementation for slug "${ctx.slug}"`);
 
   const pipeline = definitionToPipeline(recipe.definition, config);
-  const result = await instance.run(pipeline, files);
-  const durationMs = Date.now() - ctx.startTime;
+  const result = await ctx.instance.run(pipeline, files);
+  const durationMs = Date.now() - startTime;
 
   if (result.status === "completed" && result.results.length > 0) {
-    captureCompleted(ctx.props, durationMs, result.results);
+    captureCompleted(props, durationMs, result.results);
     core.executions.downloadAllResults(
       result.results as Parameters<typeof core.executions.downloadAllResults>[0],
-      slug,
+      ctx.slug,
     );
   } else if (result.status === "failed") {
-    captureFailed(ctx.props, durationMs, result.error ?? "unknown");
-  }
-}
-
-async function runCloudPath(
-  store: StoreApi<RecipeFlowState>,
-  refs: RecipeFlowRefs,
-  slug: string,
-  files: File[],
-  definition: Definition | undefined,
-  ctx: RunContext,
-) {
-  if (!definition) return;
-  const upload = refs.getUploadFn();
-  const startCloudExec = refs.getStartCloudExecFn();
-  if (!upload || !startCloudExec) return;
-
-  try {
-    store.getState().startUpload();
-    const session = await upload(files);
-    const id = await startCloudExec({ slug, definition, sessionId: session.sessionId });
-    store.getState().startExecution(String(id));
-  } catch (e) {
-    captureFailed(
-      ctx.props,
-      Date.now() - ctx.startTime,
-      e instanceof Error ? e.message : "unknown",
-    );
-    store.getState().failCloud(e instanceof Error ? e.message : "Something went wrong");
+    captureFailed(props, durationMs, result.error ?? "unknown");
   }
 }
 

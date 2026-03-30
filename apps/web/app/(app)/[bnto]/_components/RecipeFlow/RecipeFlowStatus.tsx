@@ -17,7 +17,7 @@ const STATUS_CLASS =
 export function RecipeFlowStatus() {
   const step = useRecipeFlowStore((s) => s.activeStep);
   const config = useRecipeFlowStore((s) => s.config);
-  const { isBrowserPath, definition } = useRecipeFlowDefn();
+  const { definition } = useRecipeFlowDefn();
   const actions = useRecipeFlowActions();
   const instance = useRecipeFlowInstance();
   const browserExec = core.executions.useExecutionState(instance);
@@ -34,7 +34,7 @@ export function RecipeFlowStatus() {
     );
   }
 
-  if (step === 3 && isBrowserPath) {
+  if (step === 3) {
     return (
       <div className={STATUS_CLASS}>
         <ToolbarProgress execution={browserExec} />

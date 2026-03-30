@@ -2,14 +2,13 @@
 
 import type { ReactNode } from "react";
 import { Stepper, StepperList, StepperStep } from "@bnto/ui";
-import { useRecipeFlowStore, useRecipeFlowDefn } from "../../_stores/recipeFlowContext";
+import { useRecipeFlowStore } from "../../_stores/recipeFlowContext";
 
 const noop = () => {};
 
 /** Stepper wrapper — reads active step from the recipe flow store. */
 export function RecipeFlowStepper({ children }: { children: ReactNode }) {
   const step = useRecipeFlowStore((s) => s.activeStep);
-  const defn = useRecipeFlowDefn();
 
   return (
     <Stepper
@@ -18,7 +17,6 @@ export function RecipeFlowStepper({ children }: { children: ReactNode }) {
       className="space-y-6"
       data-testid="bnto-shell"
       data-session="ready"
-      data-execution-mode={defn.isBrowserPath ? "browser" : "cloud"}
     >
       <StepperList>
         <StepperStep value="1" label="Files" />

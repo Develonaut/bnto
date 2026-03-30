@@ -1,12 +1,6 @@
 import path from "path";
 import { test, expect } from "../../fixtures";
-import {
-  IMAGE_FIXTURES_DIR,
-  navigateToRecipe,
-  assertBrowserExecution,
-  uploadFiles,
-  runAndComplete,
-} from "../../helpers";
+import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
 /**
  * Browser execution journey — rename-files
@@ -19,11 +13,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("rename-files — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "rename-files", "Rename Files Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single file: rename with default pattern, download", async ({ page }) => {
     await navigateToRecipe(page, "rename-files", "Rename Files Online Free");
 

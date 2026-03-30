@@ -36,14 +36,6 @@ export async function navigateToRecipe(page: Page, slug: string, _h1?: string) {
 }
 
 /**
- * Assert that the bnto-shell has data-execution-mode="browser".
- */
-export async function assertBrowserExecution(page: Page) {
-  const shell = page.getByTestId("bnto-shell");
-  await expect(shell).toHaveAttribute("data-execution-mode", "browser");
-}
-
-/**
  * Upload files via the file input, wait for the run button to be visible.
  * Returns the run button locator.
  */

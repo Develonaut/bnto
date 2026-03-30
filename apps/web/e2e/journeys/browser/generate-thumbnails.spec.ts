@@ -4,7 +4,6 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
@@ -22,11 +21,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("generate-thumbnails — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single JPEG: resize + convert + rename lifecycle", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 

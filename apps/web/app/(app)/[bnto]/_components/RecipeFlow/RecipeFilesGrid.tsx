@@ -5,7 +5,6 @@ import { core } from "@bnto/core";
 import { StepperContent } from "@bnto/ui";
 import {
   useRecipeFlowStore,
-  useRecipeFlowDefn,
   useRecipeFlowInstance,
   useRecipeFlowActions,
 } from "../../_stores/recipeFlowContext";
@@ -15,7 +14,6 @@ import { RecipeFileGrid } from "../RecipeFileGrid";
 export function RecipeFilesGrid() {
   const step = useRecipeFlowStore((s) => s.activeStep);
   const files = useRecipeFlowStore((s) => s.files);
-  const { isBrowserPath } = useRecipeFlowDefn();
   const instance = useRecipeFlowInstance();
   const browserExec = core.executions.useExecutionState(instance);
   const actions = useRecipeFlowActions();
@@ -28,7 +26,6 @@ export function RecipeFilesGrid() {
       <RecipeFileGrid
         files={files}
         activeStep={step}
-        isBrowserPath={isBrowserPath}
         browserExec={browserExec}
         onDeleteFile={handleDeleteFile}
         onDownload={actions.downloadResult}

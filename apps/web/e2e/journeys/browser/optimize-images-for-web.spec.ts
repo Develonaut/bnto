@@ -4,7 +4,6 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
@@ -23,11 +22,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("optimize-images-for-web — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single JPEG: resize + convert + compress lifecycle", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 

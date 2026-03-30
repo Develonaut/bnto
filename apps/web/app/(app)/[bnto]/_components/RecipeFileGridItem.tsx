@@ -7,7 +7,6 @@ interface RecipeFileGridItemProps {
   file: File;
   index: number;
   activeStep: 1 | 2 | 3;
-  isBrowserPath: boolean;
   browserExec: BrowserExecution;
   onDelete: () => void;
   onDownload: (result: BrowserFileResult) => void;
@@ -18,15 +17,13 @@ export function RecipeFileGridItem({
   file,
   index,
   activeStep,
-  isBrowserPath,
   browserExec,
   onDelete,
   onDownload,
 }: RecipeFileGridItemProps) {
-  const result = activeStep === 3 && isBrowserPath ? browserExec.results[index] : undefined;
+  const result = activeStep === 3 ? browserExec.results[index] : undefined;
   const isFileProcessing =
     activeStep === 3 &&
-    isBrowserPath &&
     browserExec.status === "processing" &&
     browserExec.fileProgress?.fileIndex === index;
 

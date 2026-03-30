@@ -58,7 +58,6 @@ test.describe("recipe telemetry events @browser", () => {
     expect(started[0].properties).toMatchObject({
       slug: "compress-images",
       fileCount: 1,
-      executionPath: "browser",
     });
     expect(started[0].properties?.totalBytes).toBeGreaterThan(0);
 
@@ -67,7 +66,6 @@ test.describe("recipe telemetry events @browser", () => {
     expect(completed[0].properties).toMatchObject({
       slug: "compress-images",
       fileCount: 1,
-      executionPath: "browser",
       outputFileCount: 1,
     });
     expect(completed[0].properties?.durationMs).toBeGreaterThan(0);

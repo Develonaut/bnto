@@ -1,13 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
-import {
-  CSV_FIXTURES_DIR,
-  navigateToRecipe,
-  assertBrowserExecution,
-  uploadFiles,
-  runAndComplete,
-} from "../../helpers";
+import { CSV_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
 /**
  * Browser execution journey — merge-csv
@@ -19,11 +13,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("merge-csv — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "merge-csv", "Merge CSV Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("merge two CSVs: combined rows in output", async ({ page }) => {
     await navigateToRecipe(page, "merge-csv", "Merge CSV Online Free");
 

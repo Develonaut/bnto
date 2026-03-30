@@ -7,7 +7,6 @@ import { useRecipeDefinition } from "./useRecipeDefinition";
 export function useRecipeDefnFromSlug(slug: string): RecipeDefn {
   const hook = useRecipeDefinition(slug);
   return {
-    isBrowserPath: hook.isBrowserPath,
     definition: hook.definition,
     acceptLabel: hook.acceptLabel,
     dropzoneAccept: hook.dropzoneAccept,

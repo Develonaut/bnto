@@ -16,11 +16,7 @@ interface RecipeFlow {
   files: File[];
   /** Per-node config keyed by node ID (e.g., { "compress-image": { quality: 80 } }). */
   config: Record<string, Record<string, unknown>>;
-  /** Cloud execution ID (null when idle or on the browser path). */
-  executionId: string | null;
-  /** Current phase in the cloud execution lifecycle. */
-  cloudPhase: "idle" | "uploading" | "running" | "completed" | "failed";
-  /** Client-side error (validation failure, upload error, etc.). */
+  /** Client-side error (validation failure, etc.). */
   clientError: string | null;
 
   // Derived fields — synced by the provider via useLayoutEffect.
@@ -28,7 +24,7 @@ interface RecipeFlow {
   activeStep: 1 | 2 | 3;
   /** Unified execution phase for RunButton display. */
   resolvedPhase: RunPhase;
-  /** True when uploading or running (disables back, file changes). */
+  /** True when running (disables back, file changes). */
   isProcessing: boolean;
 }
 
@@ -41,12 +37,6 @@ interface RecipeFlowState extends RecipeFlow {
   setFiles: (files: File[]) => void;
   /** Update a single param on a single node's config slice. */
   setNodeParam: (nodeId: string, paramName: string, value: unknown) => void;
-  /** Cloud path: files are being uploaded to R2. */
-  startUpload: () => void;
-  /** Cloud path: upload done, execution record created. */
-  startExecution: (id: string) => void;
-  /** Cloud or client error — sets phase to failed with message. */
-  failCloud: (error: string) => void;
   /** Sync derived phase fields from provider. */
   setDerivedStep: (active: 1 | 2 | 3, resolved: RunPhase) => void;
   /** Reset to initial state with new default config. */
@@ -61,8 +51,6 @@ function createInitialState(defaultConfig: Record<string, Record<string, unknown
   return {
     files: [],
     config: structuredClone(defaultConfig),
-    executionId: null,
-    cloudPhase: "idle",
     clientError: null,
     activeStep: 1,
     resolvedPhase: "idle",
@@ -79,7 +67,7 @@ function createInitialState(defaultConfig: Record<string, Record<string, unknown
  *
  * Each [bnto] page mount creates its own store instance via this factory.
  * The store tracks user progress through the recipe execution flow:
- * files -> config -> upload -> run -> results.
+ * files -> config -> run -> results.
  *
  * @param defaultConfig - Per-node default config (e.g., { "compress-image": { quality: 80 } }).
  */
@@ -96,17 +84,11 @@ function createRecipeFlowStore(defaultConfig: Record<string, Record<string, unkn
         config: { ...s.config, [nodeId]: { ...s.config[nodeId], [paramName]: value } },
       })),
 
-    startUpload: () => set({ cloudPhase: "uploading", clientError: null }),
-
-    startExecution: (id) => set({ executionId: id, cloudPhase: "running" }),
-
-    failCloud: (error) => set({ cloudPhase: "failed", clientError: error }),
-
     setDerivedStep: (active, resolved) =>
       set({
         activeStep: active,
         resolvedPhase: resolved,
-        isProcessing: resolved === "uploading" || resolved === "running",
+        isProcessing: resolved === "running",
       }),
 
     reset: (cfg) => set(createInitialState(cfg ?? defaultConfig)),

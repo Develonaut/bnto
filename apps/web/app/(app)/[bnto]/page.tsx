@@ -11,7 +11,6 @@ import {
   RecipeFlowStepper,
   RecipeFlowFileUpload,
   RecipeFlowDropzone,
-  RecipeFlowResults,
   RecipeFilesGrid,
 } from "./_components/RecipeFlow";
 
@@ -57,7 +56,6 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 <BntoHero h1={entry.h1} description={entry.description} />
                 <RecipeFlowDropzone />
                 <BntoToolbar />
-                <RecipeFlowResults />
                 <RecipeFilesGrid />
               </RecipeFlowFileUpload>
             </RecipeFlowStepper>

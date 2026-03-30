@@ -1,13 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
-import {
-  CSV_FIXTURES_DIR,
-  navigateToRecipe,
-  assertBrowserExecution,
-  uploadFiles,
-  runAndComplete,
-} from "../../helpers";
+import { CSV_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
 /**
  * Browser execution journey — csv-to-json
@@ -19,11 +13,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("csv-to-json — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "csv-to-json", "CSV to JSON Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("simple CSV: convert to JSON array, download, verify valid JSON", async ({ page }) => {
     await navigateToRecipe(page, "csv-to-json", "CSV to JSON Online Free");
 

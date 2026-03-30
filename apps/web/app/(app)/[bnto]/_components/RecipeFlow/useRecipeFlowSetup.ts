@@ -1,25 +1,23 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { core, getRecipeBySlug } from "@bnto/core";
-import type { ExecutionInstance } from "@bnto/core";
+import type { ExecutionInstance, BrowserFileResult } from "@bnto/core";
 import type { StoreApi } from "zustand/vanilla";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 import { createRecipeFlowStore } from "../../_stores/recipeFlowStore";
 import type { RecipeFlowState } from "../../_stores/recipeFlowStore";
 import { createRecipeFlowActions } from "../../_stores/recipeFlowActions";
-import { createMutableCloudRefs } from "../../_stores/createMutableCloudRefs";
-import type { MutableCloudRefs } from "../../_stores/createMutableCloudRefs";
-import type { RecipeDefn } from "../../_stores/recipeFlowContext";
+import type { RecipeFlowRefs } from "../../_stores/recipeFlowActions";
 import { buildPerNodeDefaults } from "../../_utils/buildPerNodeDefaults";
 
 interface RecipeFlowSetup {
   storeApi: StoreApi<RecipeFlowState>;
   instance: ExecutionInstance;
-  cloudRefs: MutableCloudRefs;
+  resultsRef: React.RefObject<BrowserFileResult[]>;
 }
 
-/** Create store + instance + cloud refs once per mount (StrictMode-safe). */
+/** Create store + instance once per mount (StrictMode-safe). */
 export function useRecipeFlowSetup(entry: BntoEntry): RecipeFlowSetup {
   const [storeApi] = useState(() => {
     const recipe = getRecipeBySlug(entry.slug);
@@ -27,31 +25,22 @@ export function useRecipeFlowSetup(entry: BntoEntry): RecipeFlowSetup {
     return createRecipeFlowStore(defaults);
   });
   const [instance] = useState(() => core.executions.createExecution());
-  const [cloudRefs] = useState(() => createMutableCloudRefs());
+  const resultsRef = useRef<BrowserFileResult[]>([]);
 
   useEffect(() => () => instance.reset(), [instance]);
 
-  return { storeApi, instance, cloudRefs };
+  return { storeApi, instance, resultsRef };
 }
 
 /** Create actions once — stable for the lifetime of the provider. */
 export function useRecipeFlowActions(
   storeApi: StoreApi<RecipeFlowState>,
   instance: ExecutionInstance,
-  cloudRefs: MutableCloudRefs,
+  refs: RecipeFlowRefs,
   entry: BntoEntry,
-  defn: RecipeDefn,
 ) {
   return useMemo(
-    () =>
-      createRecipeFlowActions(
-        storeApi,
-        instance,
-        cloudRefs,
-        entry.slug,
-        defn.isBrowserPath,
-        defn.definition,
-      ),
-    [storeApi, instance, cloudRefs, entry.slug, defn.isBrowserPath, defn.definition],
+    () => createRecipeFlowActions(storeApi, instance, refs, entry.slug),
+    [storeApi, instance, refs, entry.slug],
   );
 }

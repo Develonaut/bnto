@@ -5,7 +5,6 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
@@ -24,11 +23,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("compress-images — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single JPEG: full lifecycle", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
@@ -81,20 +75,5 @@ test.describe("compress-images — browser execution @browser", () => {
 
     await expect(page.getByTestId("run-button")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
-  });
-
-  test("all Tier 1 bntos detect browser execution mode", async ({ page }) => {
-    const tier1Slugs = [
-      { slug: "resize-images", h1: "Resize Images Online Free" },
-      { slug: "convert-image-format", h1: "Convert Image Format Online Free" },
-      { slug: "rename-files", h1: "Rename Files Online Free" },
-      { slug: "clean-csv", h1: "Clean CSV Online Free" },
-      { slug: "rename-csv-columns", h1: "Rename CSV Columns Online Free" },
-    ];
-
-    for (const { slug, h1 } of tier1Slugs) {
-      await navigateToRecipe(page, slug, h1);
-      await assertBrowserExecution(page);
-    }
   });
 });

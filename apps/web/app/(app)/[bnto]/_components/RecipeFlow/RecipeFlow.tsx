@@ -1,11 +1,12 @@
 "use client";
 
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useMemo, useEffect } from "react";
+import { core } from "@bnto/core";
 import type { BntoEntry } from "@/lib/bntoRegistry";
+import type { RecipeFlowRefs } from "../../_stores/recipeFlowActions";
 import { RecipeFlowStoreProvider, RecipeFlowRefsContext } from "../../_stores/recipeFlowContext";
 import { useRecipeDefnFromSlug } from "../../_hooks/useRecipeDefnFromSlug";
 import { useRecipeFlowSetup, useRecipeFlowActions } from "./useRecipeFlowSetup";
-import { useSyncCloud } from "./useSyncCloud";
 import { useSyncDerivedStep } from "./useSyncDerivedStep";
 
 interface RecipeFlowProps {
@@ -22,15 +23,25 @@ interface RecipeFlowProps {
  */
 export function RecipeFlow({ entry, children }: RecipeFlowProps) {
   const defn = useRecipeDefnFromSlug(entry.slug);
-  const { storeApi, instance, cloudRefs } = useRecipeFlowSetup(entry);
-  const actions = useRecipeFlowActions(storeApi, instance, cloudRefs, entry, defn);
+  const { storeApi, instance, resultsRef } = useRecipeFlowSetup(entry);
 
-  useSyncCloud(storeApi, cloudRefs, instance);
-  useSyncDerivedStep(storeApi, instance, defn);
+  const refs: RecipeFlowRefs = useMemo(
+    () => ({ getBrowserResults: () => resultsRef.current }),
+    [resultsRef],
+  );
+  const actions = useRecipeFlowActions(storeApi, instance, refs, entry);
+
+  // Sync browser results into the mutable ref for lazy action access.
+  const browserExec = core.executions.useExecutionState(instance);
+  useEffect(() => {
+    resultsRef.current = browserExec.results;
+  }, [browserExec.results, resultsRef]);
+
+  useSyncDerivedStep(storeApi, instance);
 
   const refsValue = useMemo(
-    () => ({ actions, instance, defn, entry, cloudRefs }),
-    [actions, instance, defn, entry, cloudRefs],
+    () => ({ actions, instance, defn, entry }),
+    [actions, instance, defn, entry],
   );
 
   return (

@@ -8,5 +8,4 @@ export { RecipeFlowStatus } from "./RecipeFlowStatus";
 export { RecipeFlowActions } from "./RecipeFlowActions";
 export { RunRecipeButton } from "./RunRecipeButton";
 export { ToolbarDownloadButton } from "./ToolbarDownloadButton";
-export { RecipeFlowResults } from "./RecipeFlowResults";
 export { RecipeFilesGrid } from "./RecipeFilesGrid";

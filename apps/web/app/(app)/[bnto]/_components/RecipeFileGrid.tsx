@@ -7,7 +7,6 @@ import { RecipeFileGridItem } from "./RecipeFileGridItem";
 interface RecipeFileGridProps {
   files: File[];
   activeStep: 1 | 2 | 3;
-  isBrowserPath: boolean;
   browserExec: BrowserExecution;
   onDeleteFile: (index: number) => () => void;
   onDownload: (result: BrowserFileResult) => void;
@@ -20,7 +19,7 @@ interface RecipeFileGridProps {
  * 2 files = 2 cols on md+, 3+ files = 2 cols on md / 3 cols on lg.
  */
 export function RecipeFileGrid(props: RecipeFileGridProps) {
-  const { files, activeStep, isBrowserPath, browserExec, onDeleteFile, onDownload } = props;
+  const { files, activeStep, browserExec, onDeleteFile, onDownload } = props;
 
   return (
     <BouncyStagger asChild>
@@ -37,7 +36,6 @@ export function RecipeFileGrid(props: RecipeFileGridProps) {
             file={file}
             index={i}
             activeStep={activeStep}
-            isBrowserPath={isBrowserPath}
             browserExec={browserExec}
             onDelete={onDeleteFile(i)}
             onDownload={onDownload}

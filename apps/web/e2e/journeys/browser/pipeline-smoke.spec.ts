@@ -6,7 +6,6 @@ import {
   CSV_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
 } from "../../helpers";
@@ -71,7 +70,6 @@ test.describe("pipeline smoke — all 6 bntos @browser", () => {
   for (const recipe of RECIPES) {
     test(`${recipe.slug}: upload → run → download`, async ({ page }) => {
       await navigateToRecipe(page, recipe.slug, recipe.h1);
-      await assertBrowserExecution(page);
 
       await uploadFiles(page, [recipe.fixture]);
       await runAndComplete(page);

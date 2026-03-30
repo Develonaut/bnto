@@ -4,7 +4,6 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
@@ -21,11 +20,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("strip-exif — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single JPEG: strip EXIF, download, verify valid image", async ({ page }) => {
     await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
 

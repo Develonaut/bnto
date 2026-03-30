@@ -3,7 +3,7 @@
 import { cn, Button, LoaderIcon, PlayIcon } from "@bnto/ui";
 import { RerunButton } from "./RerunButton";
 
-export type RunPhase = "idle" | "uploading" | "running" | "completed" | "failed";
+export type RunPhase = "idle" | "running" | "completed" | "failed";
 
 interface RunButtonProps {
   phase: RunPhase;
@@ -13,7 +13,7 @@ interface RunButtonProps {
 }
 
 /**
- * Primary CTA that triggers the upload -> execution flow.
+ * Primary CTA that triggers the execution flow.
  *
  * Icon-only button -- contextual icon based on the current execution phase.
  * Disabled when no files are selected or an operation is in progress.
@@ -23,7 +23,7 @@ export function RunButton({ phase, hasFiles, onRun, className }: RunButtonProps)
     return <RerunButton phase={phase} onRun={onRun} className={className} />;
   }
 
-  const isProcessing = phase === "uploading" || phase === "running";
+  const isProcessing = phase === "running";
 
   return (
     <Button
@@ -46,8 +46,6 @@ export function RunButton({ phase, hasFiles, onRun, className }: RunButtonProps)
 
 const getLabel = (phase: RunPhase, hasFiles: boolean): string => {
   switch (phase) {
-    case "uploading":
-      return "Uploading";
     case "running":
       return "Processing";
     default:
