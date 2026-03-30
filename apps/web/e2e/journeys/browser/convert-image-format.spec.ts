@@ -48,10 +48,9 @@ test.describe("convert-image-format — browser execution @browser", () => {
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.png")]);
 
-    // Change target format to JPEG via the select dropdown
-    const formatSelect = page.getByTestId("format-select");
-    await formatSelect.click();
-    await page.getByTestId("format-option-jpeg").click();
+    // Change target format to JPEG via the schema-driven select
+    await page.getByTestId("control-select-param-format").click();
+    await page.getByTestId("select-option-jpeg").click();
 
     await runAndComplete(page);
 

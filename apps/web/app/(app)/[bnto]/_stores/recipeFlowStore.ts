@@ -16,8 +16,8 @@ import { createEnhancedStore } from "@bnto/core";
 interface RecipeFlow {
   /** Input files selected by the user (from drag-drop or file picker). */
   files: File[];
-  /** Per-recipe config (shape varies by slug — e.g., { quality: 80 }). */
-  config: Record<string, unknown>;
+  /** Per-node config keyed by node ID (e.g., { "compress-image": { quality: 80 } }). */
+  config: Record<string, Record<string, unknown>>;
   /** Cloud execution ID (null when idle or on the browser path). */
   executionId: string | null;
   /** Current phase in the cloud execution lifecycle. */
@@ -33,8 +33,8 @@ interface RecipeFlow {
 interface RecipeFlowState extends RecipeFlow {
   /** Replace the file list. Clears any prior client error. */
   setFiles: (files: File[]) => void;
-  /** Update recipe config (e.g., quality slider changed). */
-  setConfig: (config: Record<string, unknown>) => void;
+  /** Update a single param on a single node's config slice. */
+  setNodeParam: (nodeId: string, paramName: string, value: unknown) => void;
   /** Cloud path: files are being uploaded to R2. */
   startUpload: () => void;
   /** Cloud path: upload done, execution record created. */
@@ -49,10 +49,10 @@ interface RecipeFlowState extends RecipeFlow {
 // Initial state factory — captures default config at creation time
 // ---------------------------------------------------------------------------
 
-function createInitialState(defaultConfig: Record<string, unknown>): RecipeFlow {
+function createInitialState(defaultConfig: Record<string, Record<string, unknown>>): RecipeFlow {
   return {
     files: [],
-    config: { ...defaultConfig },
+    config: structuredClone(defaultConfig),
     executionId: null,
     cloudPhase: "idle",
     clientError: null,
@@ -70,10 +70,9 @@ function createInitialState(defaultConfig: Record<string, unknown>): RecipeFlow 
  * The store tracks user progress through the recipe execution flow:
  * files -> config -> upload -> run -> results.
  *
- * @param defaultConfig - Default config for the recipe slug (e.g., { quality: 80 }).
- *                        Caller provides this from their config registry.
+ * @param defaultConfig - Per-node default config (e.g., { "compress-image": { quality: 80 } }).
  */
-export function createRecipeFlowStore(defaultConfig: Record<string, unknown> = {}) {
+export function createRecipeFlowStore(defaultConfig: Record<string, Record<string, unknown>> = {}) {
   const initial = createInitialState(defaultConfig);
 
   return createEnhancedStore<RecipeFlowState>()((set) => ({
@@ -81,7 +80,10 @@ export function createRecipeFlowStore(defaultConfig: Record<string, unknown> = {
 
     setFiles: (files) => set({ files, clientError: null }),
 
-    setConfig: (config) => set({ config }),
+    setNodeParam: (nodeId, paramName, value) =>
+      set((s) => ({
+        config: { ...s.config, [nodeId]: { ...s.config[nodeId], [paramName]: value } },
+      })),
 
     startUpload: () => set({ cloudPhase: "uploading", clientError: null }),
 

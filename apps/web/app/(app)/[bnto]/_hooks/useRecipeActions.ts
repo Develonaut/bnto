@@ -3,7 +3,6 @@
 import { useCallback } from "react";
 import { core } from "@bnto/core";
 import type { BrowserFileResult, Definition, ExecutionInstance } from "@bnto/core";
-import type { BntoConfigMap, BntoSlug } from "../_components/configs/types";
 import type { RecipeFlowState } from "../_stores/recipeFlowStore";
 import { runRecipeAction } from "./runRecipeAction";
 
@@ -65,13 +64,13 @@ function useFileActions(slug: string, store: RecipeFlowStore) {
     [store, slug],
   );
 
-  const setConfig = useCallback(
-    (newConfig: BntoConfigMap[BntoSlug]) =>
-      store.getState().setConfig(newConfig as Record<string, unknown>),
+  const setNodeParam = useCallback(
+    (nodeId: string, paramName: string, value: unknown) =>
+      store.getState().setNodeParam(nodeId, paramName, value),
     [store],
   );
 
-  return { setFiles, setConfig };
+  return { setFiles, setNodeParam };
 }
 
 /** Download result callbacks. */

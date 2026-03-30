@@ -34,7 +34,6 @@ export function RecipeShell({ entry, children }: { entry: BntoEntry; children?: 
       {children}
       <RecipeShellUpload
         flow={flow}
-        entry={entry}
         onClearFiles={handleClearFiles}
         onDeleteFile={handleDeleteFile}
       />
