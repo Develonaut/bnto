@@ -6,7 +6,7 @@
  * Merges imperative clients from core.ts with React hooks for the final
  * public API. Consumers import `core` from this module (via index.ts).
  *
- * 7 domains: recipes, executions, user, auth, telemetry, registry, flags.
+ * 6 domains: executions, user, auth, telemetry, registry, flags.
  *
  * Usage:
  *   import { core } from "@bnto/core";
@@ -15,24 +15,13 @@
 
 import { core as baseCore } from "./core";
 
-// Recipe hooks
-import { useRecipe } from "./hooks/useRecipe";
-import { useRunRecipe } from "./hooks/useRunRecipe";
-
 // Execution hooks
 import { useExecution } from "./hooks/useExecution";
-import { useExecutions } from "./hooks/useExecutions";
-import { useExecutionHistory } from "./hooks/useExecutionHistory";
-import { useExecutionLogs } from "./hooks/useExecutionLogs";
 import { useRunPredefined } from "./hooks/useRunPredefined";
 import { useExecutionState } from "./hooks/useExecutionState";
 
 // User hooks
 import { useCurrentUser } from "./hooks/useCurrentUser";
-
-// User hooks (analytics)
-import { useUsageAnalytics } from "./hooks/useUsageAnalytics";
-import { useSlugAggregates } from "./hooks/useSlugAggregates";
 
 // Auth hooks
 import { useReady } from "./hooks/useReady";
@@ -59,18 +48,9 @@ import { useUploadFiles } from "./hooks/useUploadFiles";
 import { useDownloadFiles } from "./hooks/useDownloadFiles";
 
 export const core = {
-  recipes: {
-    ...baseCore.recipes,
-    useRecipe,
-    useRunRecipe,
-  },
-
   executions: {
     ...baseCore.executions,
     useExecution,
-    useExecutions,
-    useExecutionHistory,
-    useExecutionLogs,
     useRunPredefined,
     useExecutionState,
   },
@@ -78,8 +58,6 @@ export const core = {
   user: {
     ...baseCore.user,
     useCurrentUser,
-    useUsageAnalytics,
-    useSlugAggregates,
   },
 
   auth: {

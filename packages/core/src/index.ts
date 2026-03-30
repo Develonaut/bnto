@@ -9,7 +9,6 @@ export { TelemetryProvider } from "./providers/TelemetryProvider";
 
 // ── Types (transport-agnostic) ────────────────────────────────────────────
 export type {
-  Recipe,
   Execution,
   ExecutionLog,
   NodeProgress,
@@ -18,8 +17,6 @@ export type {
   StartExecutionInput,
   StartPredefinedInput,
   User,
-  UsageAnalytics,
-  SlugAggregate,
   UploadFileInput,
   PresignedUploadUrl,
   UploadSession,
@@ -93,7 +90,7 @@ export type { StringKey } from "@bnto/i18n";
 // ── Node system (re-exported from @bnto/registry for consumers) ──────────
 
 // Types
-export type { RegistryData } from "@bnto/registry";
+export type { RegistryData, Recipe } from "@bnto/registry";
 export type {
   Definition,
   Position,

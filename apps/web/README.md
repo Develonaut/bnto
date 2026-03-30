@@ -4,7 +4,7 @@ Next.js web application — the primary frontend for bnto.
 
 ## Overview
 
-The web app is a Next.js App Router application deployed on Vercel. It composes UI from `@bnto/ui`, data access from `@bnto/core`, and the recipe editor from `@bnto/editor`. Static tool pages are SEO-optimized with per-slug metadata and JSON-LD.
+The web app is a Next.js App Router application deployed on Vercel. It composes UI from `@bnto/ui` and data access from `@bnto/core`. Static tool pages are SEO-optimized with per-slug metadata and JSON-LD.
 
 ## Directory Structure
 
@@ -17,13 +17,11 @@ app/
 │   ├── layout.tsx          # App shell (header + main)
 │   ├── page.tsx            # Home page (/)
 │   ├── [bnto]/             # Dynamic tool pages (/compress-images, /clean-csv, etc.)
-│   ├── my-recipes/         # User saved recipes
 │   ├── pricing/            # Pricing page
 │   └── privacy/            # Privacy policy
 ├── (auth)/                 # Auth flows
 │   └── signin/             # Sign-in page
-├── (dev)/                  # Dev-only routes (component showcase)
-└── editor/                 # Recipe editor
+└── (dev)/                  # Dev-only routes (component showcase)
 components/
 ├── blocks/                 # Business components (Navbar, Footer, RecipeGrid)
 ├── ThemeProvider.tsx        # next-themes wrapper
@@ -47,8 +45,7 @@ proxy.ts                    # Auth middleware (route protection)
 | -------------------------------------- | ---------------------------------- | ------------- |
 | `/`                                    | Home — tool grid gallery           | Public        |
 | `/compress-images`, `/clean-csv`, etc. | Tool pages — SEO-optimized, static | Public        |
-| `/editor`                              | Visual recipe editor               | Public        |
-| `/my-recipes`                          | User saved recipes                 | Protected     |
+| `/explore`                             | Recipe & node browser              | Public        |
 | `/signin`                              | Sign-in page                       | Auth redirect |
 | `/pricing`                             | Pricing info                       | Public        |
 | `/motorway`                            | Component showcase (dev only)      | Public        |

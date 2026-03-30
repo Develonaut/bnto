@@ -13,13 +13,10 @@ const FREE_FEATURES = [
 
 const PRO_FEATURES = [
   "Everything in Free",
-  "Save recipes to your account",
-  "30-day execution history",
-  "AI-powered processing",
-  "Server-side video and shell nodes",
-  "Team sharing (up to 5 members)",
-  "Cloud drive export",
-  "API access",
+  "AI-powered processing (Claude, GPT)",
+  "Server-side video and audio nodes",
+  "Shell command execution (ffmpeg, ImageMagick)",
+  "Extended execution history",
 ];
 
 export function PricingTiers() {
@@ -36,7 +33,7 @@ export function PricingTiers() {
       <PricingTierCard
         name="Pro"
         price="TBD"
-        subtitle="Save, collaborate, and run premium nodes."
+        subtitle="Server-powered processing for what browsers can't do."
         features={PRO_FEATURES}
         badge="Coming soon"
         ctaLabel="Coming soon"
