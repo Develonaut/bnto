@@ -44,7 +44,7 @@ export function RecipeMarquee() {
 
 /* ── Card for marquee ──────────────────────────────────────────── */
 
-function MarqueeRecipeCard({ slug }: { slug: string }) {
+export function MarqueeRecipeCard({ slug }: { slug: string }) {
   const entry = BNTO_REGISTRY.find((e) => e.slug === slug);
   if (!entry) return null;
 

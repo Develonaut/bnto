@@ -1,5 +1,5 @@
 /**
- * Phase Mapping — Translates execution status into UI display phases.
+ * Step Mapping — Translates execution status into UI display steps.
  *
  * WHY THIS EXISTS:
  * Bnto has a browser execution path (WASM) with cloud execution planned (M4).
@@ -12,12 +12,12 @@
  * (On Time, Boarding, Departed, Delayed) regardless of airline.
  *
  * BROWSER PATH:
- *   browserExec.status → toBrowserPhase() → RunPhase
+ *   browserExec.status → toBrowserStep() → RunPhase
  *   Statuses: "idle" | "processing" | "completed" | "failed"
  *   Simple 1:1 mapping (processing → running, everything else passes through).
  *
  * CLOUD PATH:
- *   localPhase + cloudExecution.status → toCloudPhase() → RunPhase
+ *   localPhase + cloudExecution.status → toCloudStep() → RunPhase
  *   More complex because the cloud path has TWO sources of truth:
  *     1. localPhase — what the client knows (e.g., "I started uploading")
  *     2. executionStatus — what the server reports (e.g., "running", "completed")
@@ -37,7 +37,7 @@ import type { RunPhase } from "./RunButton";
  * @param status - The browser execution status from useBrowserExecution()
  * @returns The RunPhase the button should display
  */
-export function toBrowserPhase(status: string): RunPhase {
+export function toBrowserStep(status: string): RunPhase {
   switch (status) {
     // "processing" is what our store calls it; "running" is what the UI shows
     case "processing":
@@ -85,7 +85,7 @@ export function toBrowserPhase(status: string): RunPhase {
  *   if we haven't created the execution yet or haven't received data)
  * @returns The RunPhase the button should display
  */
-export function toCloudPhase(localPhase: RunPhase, executionStatus: string | undefined): RunPhase {
+export function toCloudStep(localPhase: RunPhase, executionStatus: string | undefined): RunPhase {
   // Client is still uploading files to R2 — server doesn't know yet
   if (localPhase === "uploading") return "uploading";
 
@@ -108,13 +108,13 @@ export function toCloudPhase(localPhase: RunPhase, executionStatus: string | und
 }
 
 /**
- * Map the unified RunPhase + file count to the 3-step PhaseIndicator.
+ * Map the unified RunPhase + file count to the 3-step stepper position.
  *
- * Phase 1 = no files yet (upload prompt)
- * Phase 2 = files selected (configure)
- * Phase 3 = execution in progress or complete
+ * Step 1 = no files yet (upload prompt)
+ * Step 2 = files selected (configure)
+ * Step 3 = execution in progress or complete
  */
-export function deriveActivePhase(resolvedPhase: RunPhase, fileCount: number): 1 | 2 | 3 {
+export function deriveActiveStep(resolvedPhase: RunPhase, fileCount: number): 1 | 2 | 3 {
   switch (resolvedPhase) {
     case "uploading":
     case "running":

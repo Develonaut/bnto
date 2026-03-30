@@ -79,7 +79,7 @@ test.describe("compress-images — browser execution @browser", () => {
     const backButton = page.getByTestId("back-button");
     await backButton.click();
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 

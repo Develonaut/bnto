@@ -53,7 +53,7 @@ export function PendingFileRow({ file, isProcessing, isExecuting, onDelete }: Pe
   );
 }
 
-function PendingFileContent({ file, isProcessing }: { file: File; isProcessing: boolean }) {
+export function PendingFileContent({ file, isProcessing }: { file: File; isProcessing: boolean }) {
   return (
     <FileListContent>
       <FileListName>{file.name}</FileListName>

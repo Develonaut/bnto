@@ -6,7 +6,7 @@ import { RecipeFileGridItem } from "./RecipeFileGridItem";
 
 interface RecipeFileGridProps {
   files: File[];
-  activePhase: 1 | 2 | 3;
+  activeStep: 1 | 2 | 3;
   isBrowserPath: boolean;
   browserExec: BrowserExecution;
   onDeleteFile: (index: number) => () => void;
@@ -14,13 +14,13 @@ interface RecipeFileGridProps {
 }
 
 /**
- * Persistent file grid shown in Phases 2 and 3.
+ * Persistent file grid shown in Steps 2 and 3.
  *
  * Columns adapt to file count: 1 file = full width,
  * 2 files = 2 cols on md+, 3+ files = 2 cols on md / 3 cols on lg.
  */
 export function RecipeFileGrid(props: RecipeFileGridProps) {
-  const { files, activePhase, isBrowserPath, browserExec, onDeleteFile, onDownload } = props;
+  const { files, activeStep, isBrowserPath, browserExec, onDeleteFile, onDownload } = props;
 
   return (
     <BouncyStagger asChild>
@@ -36,7 +36,7 @@ export function RecipeFileGrid(props: RecipeFileGridProps) {
             key={`${file.name}-${file.size}-${file.lastModified}`}
             file={file}
             index={i}
-            activePhase={activePhase}
+            activeStep={activeStep}
             isBrowserPath={isBrowserPath}
             browserExec={browserExec}
             onDelete={onDeleteFile(i)}
@@ -49,8 +49,8 @@ export function RecipeFileGrid(props: RecipeFileGridProps) {
 }
 
 /** Derive responsive grid column classes from file count. */
-function gridColsClass(count: number) {
+const gridColsClass = (count: number) => {
   if (count >= 3) return "md:grid-cols-2 lg:grid-cols-3";
   if (count === 2) return "md:grid-cols-2";
   return;
-}
+};

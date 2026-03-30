@@ -96,11 +96,16 @@ const eslintConfig = defineConfig([
       "jsx-a11y/tabindex-no-positive": "warn",
     },
   },
-  // --- JSX cleanliness — no inline functions in JSX props ---
+  // --- JSX / component file enforcement ---
   {
     files: ["**/*.tsx"],
     plugins: { react },
     rules: {
+      // JSX composition needs more room than pure logic — 60 lines vs 30
+      "max-lines-per-function": [
+        "error",
+        { max: 60, skipBlankLines: true, skipComments: true, IIFEs: true },
+      ],
       "react/jsx-no-bind": [
         "error",
         {
@@ -109,6 +114,15 @@ const eslintConfig = defineConfig([
           allowArrowFunctions: false,
           allowFunctions: false,
           allowBind: false,
+        },
+      ],
+      // Bento Box: one exported function per .tsx file — no private functions
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Program > FunctionDeclaration",
+          message:
+            "Non-exported functions are not allowed in component files. Extract to its own file.",
         },
       ],
     },
@@ -128,6 +142,7 @@ const eslintConfig = defineConfig([
       "max-lines-per-function": "off",
       "max-lines": "off",
       "react/jsx-no-bind": "off",
+      "no-restricted-syntax": "off",
     },
   },
   // Test files naturally have long describe blocks

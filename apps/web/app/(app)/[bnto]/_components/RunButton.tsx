@@ -44,7 +44,7 @@ export function RunButton({ phase, hasFiles, onRun, className }: RunButtonProps)
   );
 }
 
-function getLabel(phase: RunPhase, hasFiles: boolean): string {
+const getLabel = (phase: RunPhase, hasFiles: boolean): string => {
   switch (phase) {
     case "uploading":
       return "Uploading";
@@ -53,4 +53,4 @@ function getLabel(phase: RunPhase, hasFiles: boolean): string {
     default:
       return hasFiles ? "Run" : "Select files to run";
   }
-}
+};

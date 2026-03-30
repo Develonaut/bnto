@@ -41,7 +41,7 @@ export function UploadFileRow({ file }: UploadFileRowProps) {
   );
 }
 
-function UploadFileStatusIcon({ status }: { status: FileUploadProgress["status"] }) {
+export function UploadFileStatusIcon({ status }: { status: FileUploadProgress["status"] }) {
   switch (status) {
     case "pending":
       return <LoaderIcon className="size-4 shrink-0 text-muted-foreground" />;
@@ -56,7 +56,7 @@ function UploadFileStatusIcon({ status }: { status: FileUploadProgress["status"]
   }
 }
 
-function getUploadPercent(file: FileUploadProgress): number {
+const getUploadPercent = (file: FileUploadProgress): number => {
   if (file.total === 0) return 0;
   return Math.round((file.loaded / file.total) * 100);
-}
+};

@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import type { StoreApi } from "zustand/vanilla";
 import { createRecipeFlowStore } from "./recipeFlowStore";
+import type { RecipeFlowState } from "./recipeFlowStore";
 
 const DEFAULT_CONFIG = { "compress-image": { quality: 80 } };
 
@@ -8,7 +10,7 @@ function mockFile(name: string, size = 1024): File {
 }
 
 describe("recipeFlowStore", () => {
-  let store: ReturnType<typeof createRecipeFlowStore>;
+  let store: StoreApi<RecipeFlowState>;
 
   beforeEach(() => {
     store = createRecipeFlowStore(DEFAULT_CONFIG);
@@ -22,6 +24,9 @@ describe("recipeFlowStore", () => {
       expect(state.executionId).toBeNull();
       expect(state.cloudPhase).toBe("idle");
       expect(state.clientError).toBeNull();
+      expect(state.activeStep).toBe(1);
+      expect(state.resolvedPhase).toBe("idle");
+      expect(state.isProcessing).toBe(false);
     });
 
     it("creates independent config copies from defaults", () => {
@@ -36,9 +41,9 @@ describe("recipeFlowStore", () => {
       expect(shared).toEqual({ "compress-image": { quality: 80 } });
     });
 
-    it("defaults to empty config when no defaults provided", () => {
-      const bare = createRecipeFlowStore();
-      expect(bare.getState().config).toEqual({});
+    it("defaults to empty config when reset with empty object", () => {
+      store.getState().reset({});
+      expect(store.getState().config).toEqual({});
     });
   });
 
@@ -186,13 +191,14 @@ describe("recipeFlowStore", () => {
   });
 
   describe("reset", () => {
-    it("returns to initial state with default config", () => {
+    it("returns to initial state with given config", () => {
       store.getState().setFiles([mockFile("a.jpg"), mockFile("b.jpg")]);
       store.getState().setNodeParam("compress-image", "quality", 30);
       store.getState().startUpload();
       store.getState().startExecution("exec-5");
+      store.getState().setDerivedStep(3, "running");
 
-      store.getState().reset();
+      store.getState().reset(DEFAULT_CONFIG);
       const state = store.getState();
 
       expect(state.files).toEqual([]);
@@ -200,11 +206,14 @@ describe("recipeFlowStore", () => {
       expect(state.executionId).toBeNull();
       expect(state.cloudPhase).toBe("idle");
       expect(state.clientError).toBeNull();
+      expect(state.activeStep).toBe(1);
+      expect(state.resolvedPhase).toBe("idle");
+      expect(state.isProcessing).toBe(false);
     });
 
     it("clears error state", () => {
       store.getState().failCloud("something broke");
-      store.getState().reset();
+      store.getState().reset(DEFAULT_CONFIG);
 
       expect(store.getState().clientError).toBeNull();
       expect(store.getState().cloudPhase).toBe("idle");
@@ -218,12 +227,34 @@ describe("recipeFlowStore", () => {
     });
 
     it("can be called multiple times safely", () => {
-      store.getState().reset();
-      store.getState().reset();
-      store.getState().reset();
+      store.getState().reset(DEFAULT_CONFIG);
+      store.getState().reset(DEFAULT_CONFIG);
+      store.getState().reset(DEFAULT_CONFIG);
 
       expect(store.getState().cloudPhase).toBe("idle");
       expect(store.getState().files).toEqual([]);
+    });
+  });
+
+  describe("setDerivedStep", () => {
+    it("sets activeStep, resolvedPhase, and isProcessing", () => {
+      store.getState().setDerivedStep(3, "running");
+
+      expect(store.getState().activeStep).toBe(3);
+      expect(store.getState().resolvedPhase).toBe("running");
+      expect(store.getState().isProcessing).toBe(true);
+    });
+
+    it("marks isProcessing false for non-processing phases", () => {
+      store.getState().setDerivedStep(2, "idle");
+
+      expect(store.getState().isProcessing).toBe(false);
+    });
+
+    it("marks isProcessing true for uploading", () => {
+      store.getState().setDerivedStep(3, "uploading");
+
+      expect(store.getState().isProcessing).toBe(true);
     });
   });
 
@@ -240,6 +271,16 @@ describe("recipeFlowStore", () => {
       store.getState().reset();
       expect(store.getState().cloudPhase).toBe("idle");
       expect(store.getState().config).toEqual({ "compress-image": { quality: 80 } });
+    });
+  });
+
+  describe("factory isolation", () => {
+    it("different factory calls produce independent stores", () => {
+      const store2 = createRecipeFlowStore({ format: { value: "webp" } });
+
+      store.getState().setFiles([mockFile("a.jpg")]);
+      expect(store2.getState().files).toEqual([]);
+      expect(store2.getState().config).toEqual({ format: { value: "webp" } });
     });
   });
 });

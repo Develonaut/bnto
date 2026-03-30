@@ -12,7 +12,7 @@ interface ToolbarProgressProps {
   execution: BrowserExecution;
 }
 
-function ProgressWrapper({
+export function ProgressWrapper({
   status,
   children,
   ...rest
@@ -25,7 +25,7 @@ function ProgressWrapper({
 }
 
 /** Resolve the banner component for the current execution status. */
-function resolveBanner(execution: BrowserExecution) {
+const resolveBanner = (execution: BrowserExecution) => {
   if (execution.status === "failed") {
     return {
       status: "failed",
@@ -53,7 +53,7 @@ function resolveBanner(execution: BrowserExecution) {
     };
   }
   return { status: "idle", banner: <IdleToolbarBanner /> };
-}
+};
 
 /**
  * Persistent progress/status banner for the recipe toolbar.

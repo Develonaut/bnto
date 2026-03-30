@@ -6,7 +6,7 @@ import { FileCard } from "./FileCard";
 interface RecipeFileGridItemProps {
   file: File;
   index: number;
-  activePhase: 1 | 2 | 3;
+  activeStep: 1 | 2 | 3;
   isBrowserPath: boolean;
   browserExec: BrowserExecution;
   onDelete: () => void;
@@ -17,15 +17,15 @@ interface RecipeFileGridItemProps {
 export function RecipeFileGridItem({
   file,
   index,
-  activePhase,
+  activeStep,
   isBrowserPath,
   browserExec,
   onDelete,
   onDownload,
 }: RecipeFileGridItemProps) {
-  const result = activePhase === 3 && isBrowserPath ? browserExec.results[index] : undefined;
+  const result = activeStep === 3 && isBrowserPath ? browserExec.results[index] : undefined;
   const isFileProcessing =
-    activePhase === 3 &&
+    activeStep === 3 &&
     isBrowserPath &&
     browserExec.status === "processing" &&
     browserExec.fileProgress?.fileIndex === index;
@@ -35,7 +35,7 @@ export function RecipeFileGridItem({
       file={file}
       result={result}
       isProcessing={isFileProcessing}
-      isExecuting={activePhase === 3}
+      isExecuting={activeStep === 3}
       onDelete={onDelete}
       onDownload={onDownload}
     />

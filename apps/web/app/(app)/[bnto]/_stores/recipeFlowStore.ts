@@ -1,4 +1,5 @@
 import { createEnhancedStore } from "@bnto/core";
+import type { RunPhase } from "../_components/RunButton";
 
 // ---------------------------------------------------------------------------
 // Recipe flow types — page-scoped state for recipe (tool) page lifecycle.
@@ -9,9 +10,6 @@ import { createEnhancedStore } from "@bnto/core";
  *
  * Tracks the user's progress through a single recipe execution:
  * files selected -> config adjusted -> execution in progress -> results.
- *
- * Page-scoped: a new instance is created per [bnto] page mount.
- * Not a global singleton — each tool page owns its own flow state.
  */
 interface RecipeFlow {
   /** Input files selected by the user (from drag-drop or file picker). */
@@ -24,6 +22,14 @@ interface RecipeFlow {
   cloudPhase: "idle" | "uploading" | "running" | "completed" | "failed";
   /** Client-side error (validation failure, upload error, etc.). */
   clientError: string | null;
+
+  // Derived fields — synced by the provider via useLayoutEffect.
+  /** 3-step phase indicator (1 = files, 2 = configure, 3 = results). */
+  activeStep: 1 | 2 | 3;
+  /** Unified execution phase for RunButton display. */
+  resolvedPhase: RunPhase;
+  /** True when uploading or running (disables back, file changes). */
+  isProcessing: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -41,12 +47,14 @@ interface RecipeFlowState extends RecipeFlow {
   startExecution: (id: string) => void;
   /** Cloud or client error — sets phase to failed with message. */
   failCloud: (error: string) => void;
-  /** Reset to initial state (default config for the slug). */
-  reset: () => void;
+  /** Sync derived phase fields from provider. */
+  setDerivedStep: (active: 1 | 2 | 3, resolved: RunPhase) => void;
+  /** Reset to initial state with new default config. */
+  reset: (defaultConfig?: Record<string, Record<string, unknown>>) => void;
 }
 
 // ---------------------------------------------------------------------------
-// Initial state factory — captures default config at creation time
+// Initial state
 // ---------------------------------------------------------------------------
 
 function createInitialState(defaultConfig: Record<string, Record<string, unknown>>): RecipeFlow {
@@ -56,11 +64,14 @@ function createInitialState(defaultConfig: Record<string, Record<string, unknown
     executionId: null,
     cloudPhase: "idle",
     clientError: null,
+    activeStep: 1,
+    resolvedPhase: "idle",
+    isProcessing: false,
   };
 }
 
 // ---------------------------------------------------------------------------
-// Store factory
+// Factory — creates a fresh store instance per provider mount
 // ---------------------------------------------------------------------------
 
 /**
@@ -72,7 +83,7 @@ function createInitialState(defaultConfig: Record<string, Record<string, unknown
  *
  * @param defaultConfig - Per-node default config (e.g., { "compress-image": { quality: 80 } }).
  */
-export function createRecipeFlowStore(defaultConfig: Record<string, Record<string, unknown>> = {}) {
+function createRecipeFlowStore(defaultConfig: Record<string, Record<string, unknown>> = {}) {
   const initial = createInitialState(defaultConfig);
 
   return createEnhancedStore<RecipeFlowState>()((set) => ({
@@ -91,8 +102,16 @@ export function createRecipeFlowStore(defaultConfig: Record<string, Record<strin
 
     failCloud: (error) => set({ cloudPhase: "failed", clientError: error }),
 
-    reset: () => set(createInitialState(defaultConfig)),
+    setDerivedStep: (active, resolved) =>
+      set({
+        activeStep: active,
+        resolvedPhase: resolved,
+        isProcessing: resolved === "uploading" || resolved === "running",
+      }),
+
+    reset: (cfg) => set(createInitialState(cfg ?? defaultConfig)),
   }));
 }
 
+export { createRecipeFlowStore };
 export type { RecipeFlowState };

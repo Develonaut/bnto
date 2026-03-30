@@ -35,7 +35,7 @@ export function CompletedFileMeta({
   );
 }
 
-function SizeDisplay({
+export function SizeDisplay({
   originalSize,
   savings,
   outputSize,

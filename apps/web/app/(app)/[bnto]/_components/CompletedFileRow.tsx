@@ -46,7 +46,7 @@ export function CompletedFileRow({
   );
 }
 
-function DownloadButton({ filename, onClick }: { filename: string; onClick: () => void }) {
+export function DownloadButton({ filename, onClick }: { filename: string; onClick: () => void }) {
   return (
     <Button
       variant="outline"

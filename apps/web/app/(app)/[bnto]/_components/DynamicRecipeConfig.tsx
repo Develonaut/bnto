@@ -50,7 +50,7 @@ interface NodeSectionProps {
   onChange: (nodeId: string, paramName: string, value: unknown) => void;
 }
 
-function NodeSection({ node, values, showHeader, onChange }: NodeSectionProps) {
+export function NodeSection({ node, values, showHeader, onChange }: NodeSectionProps) {
   const schema = getNodeSchema(node.type);
   const handleChange = useCallback(
     (name: string, value: unknown) => onChange(node.id, name, value),

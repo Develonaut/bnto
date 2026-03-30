@@ -29,18 +29,16 @@ const RECIPE_ICONS: Record<string, LucideIcon> = Object.fromEntries(
 /** Repeating size pattern — adjacent cards in the same column rarely share a size. */
 const SIZE_PATTERN: CardSize[] = ["lg", "sm", "md", "sm", "lg", "md", "md", "lg", "sm"];
 
-function getCardSize(index: number) {
-  return SIZE_PATTERN[index % SIZE_PATTERN.length];
-}
+const getCardSize = (index: number) => SIZE_PATTERN[index % SIZE_PATTERN.length];
 
 /** Distribute items round-robin into N columns. */
-function distributeToColumns<T>(items: readonly T[], columnCount: number): T[][] {
+const distributeToColumns = <T,>(items: readonly T[], columnCount: number): T[][] => {
   const columns: T[][] = Array.from({ length: columnCount }, () => []);
   for (let i = 0; i < items.length; i++) {
     columns[i % columnCount].push(items[i]);
   }
   return columns;
-}
+};
 
 export function ExploreRecipeGrid() {
   const searchParams = useSearchParams();
@@ -65,7 +63,7 @@ export function ExploreRecipeGrid() {
   );
 }
 
-function MasonryColumn({
+export function MasonryColumn({
   recipes,
   colIndex,
   columnCount,

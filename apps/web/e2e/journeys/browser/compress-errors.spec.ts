@@ -23,7 +23,7 @@ test.describe("compress-images — error handling @browser", () => {
       buffer: Buffer.from("This is plain text, not a JPEG image."),
     });
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
 
     const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
@@ -41,7 +41,7 @@ test.describe("compress-images — error handling @browser", () => {
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
     const backButton = page.getByTestId("back-button");
     await backButton.click();
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 
@@ -59,7 +59,7 @@ test.describe("compress-images — error handling @browser", () => {
       ]),
     });
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
 
     const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
@@ -76,7 +76,7 @@ test.describe("compress-images — error handling @browser", () => {
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
     const backButton = page.getByTestId("back-button");
     await backButton.click();
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
     await expect(runButton).toHaveAttribute("data-phase", "idle");
   });
 });

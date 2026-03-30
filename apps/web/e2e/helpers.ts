@@ -44,16 +44,15 @@ export async function assertBrowserExecution(page: Page) {
 }
 
 /**
- * Upload files via the file input, wait for the file count text and run button.
+ * Upload files via the file input, wait for the run button to be visible.
  * Returns the run button locator.
  */
 export async function uploadFiles(page: Page, filePaths: string[]) {
   const fileInput = page.getByTestId("file-input");
   await fileInput.setInputFiles(filePaths);
 
-  await expect(page.getByTestId("file-count")).toBeVisible();
-
-  const runButton = page.getByTestId("run-button", ":visible");
+  const runButton = page.getByTestId("run-button");
+  await expect(runButton).toBeVisible();
   await expect(runButton).toBeEnabled();
 
   return runButton;

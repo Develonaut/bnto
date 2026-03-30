@@ -18,23 +18,17 @@ import { THEME_STORE_KEY, useThemeStore } from "@/lib/stores/themeStore";
 const FOUC_SCRIPT = `try{var t=JSON.parse(localStorage.getItem("${THEME_STORE_KEY}"));if(t&&t.state&&t.state.lightAngle!=null){document.documentElement.style.setProperty("--light-angle",t.state.lightAngle+"deg")}}catch(e){}`;
 
 /** Syncs the Zustand theme store (light angle) to a CSS variable on :root. */
-function ThemeStoreSync() {
+export function ThemeStoreSync() {
   const lightAngle = useThemeStore((s) => s.lightAngle);
 
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--light-angle",
-      `${lightAngle}deg`,
-    );
+    document.documentElement.style.setProperty("--light-angle", `${lightAngle}deg`);
   }, [lightAngle]);
 
   return null;
 }
 
-export function ThemeProvider({
-  children,
-  ...props
-}: ComponentProps<typeof NextThemesProvider>) {
+export function ThemeProvider({ children, ...props }: ComponentProps<typeof NextThemesProvider>) {
   return (
     <NextThemesProvider {...props}>
       <script dangerouslySetInnerHTML={{ __html: FOUC_SCRIPT }} />

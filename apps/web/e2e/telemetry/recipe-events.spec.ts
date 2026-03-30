@@ -30,7 +30,7 @@ test.describe("recipe telemetry events @browser", () => {
     // --- files_added ---
     const fileInput = page.getByTestId("file-input");
     await fileInput.setInputFiles([path.join(FIXTURES_DIR, "small.jpg")]);
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
 
     await waitForTelemetryEvent(page, "files_added");
     let events = await getTelemetryEvents(page);
