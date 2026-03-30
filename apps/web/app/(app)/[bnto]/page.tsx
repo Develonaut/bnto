@@ -4,7 +4,6 @@ import { AppShellContent, Container, StepperContent, StepperIndicator } from "@b
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoHero } from "./_components/BntoHero";
-import { SessionMarker } from "./_components/SessionMarker";
 import {
   RecipeStepper,
   RecipeStepperDropzone,
@@ -53,7 +52,6 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
       <AppShellContent>
         <Container size="md" className="space-y-6 text-center">
           <RecipeStepper key={slug} entry={entry}>
-            <SessionMarker />
             <StepperIndicator />
             <BntoHero h1={entry.h1} description={entry.description} />
 
