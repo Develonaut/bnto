@@ -553,10 +553,10 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 3 (parallel — auto-persist + export + E2E)
 
-- [ ] `apps/web` — **sessionStorage auto-persist**: Editor changes write back to sessionStorage on debounced interval (~2s). `EditorProvider` wires a store subscription that calls `saveSessionRecipe(id, capturedDefinition)`. Refresh reloads seamlessly.
-- [ ] `apps/web` — **Export/download verification**: Verify File menu Export downloads `.bnto.json`. This should work as-is from `@bnto/editor` — just verify the flow end-to-end.
-- [ ] `apps/web` — **E2E tests**: Restore editor E2E config in `playwright.config.ts` + `Taskfile.yml`. Write new lightweight specs: open blank editor, open from template, add/configure nodes, export `.bnto.json`, verify refresh persistence. No save/persistence tests.
-- [ ] `apps/web` — **Verify**: `task ui:build` + `task ui:test` + `task e2e` clean. `/editor` renders. Tool page "Open in Editor" works. Export works. Refresh preserves state.
+- [x] `apps/web` — **sessionStorage auto-persist**: Zustand `persist` middleware in `recipesStore` writes to sessionStorage automatically. Refresh reloads seamlessly. _(PR #305)_
+- [x] `apps/web` — **Export/download verification**: File menu Export downloads `.bnto.json`. E2E test `XP1` verifies valid JSON output. Drift checks in custom recipe specs verify structural fidelity. _(PR #305)_
+- [x] `apps/web` — **E2E tests**: Restored editor E2E config in `playwright.config.ts` + `Taskfile.yml`. 7 spec files: entry, build, custom recipes (drift checks), predefined, features (export + auto-download), from-scratch, stale recipe resilience. _(PR #305)_
+- [x] `apps/web` — **Verify**: Quality gate passed. `/editor` renders. Tool page "Open in Editor" works. Export works. Refresh preserves state. _(PR #305)_
 
 ---
 
