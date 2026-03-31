@@ -30,7 +30,7 @@ test.describe("recipe telemetry events @browser", () => {
     // --- files_added ---
     const fileInput = page.getByTestId("file-input");
     await fileInput.setInputFiles([path.join(FIXTURES_DIR, "small.jpg")]);
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
 
     await waitForTelemetryEvent(page, "files_added");
     let events = await getTelemetryEvents(page);
@@ -46,7 +46,7 @@ test.describe("recipe telemetry events @browser", () => {
     const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
+    await expect(runButton).toHaveAttribute("data-step", "completed", {
       timeout: 30000,
     });
 
@@ -58,7 +58,6 @@ test.describe("recipe telemetry events @browser", () => {
     expect(started[0].properties).toMatchObject({
       slug: "compress-images",
       fileCount: 1,
-      executionPath: "browser",
     });
     expect(started[0].properties?.totalBytes).toBeGreaterThan(0);
 
@@ -67,7 +66,6 @@ test.describe("recipe telemetry events @browser", () => {
     expect(completed[0].properties).toMatchObject({
       slug: "compress-images",
       fileCount: 1,
-      executionPath: "browser",
       outputFileCount: 1,
     });
     expect(completed[0].properties?.durationMs).toBeGreaterThan(0);

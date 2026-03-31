@@ -9,6 +9,7 @@ import {
   DialogClose,
   DialogDescription,
 } from "./Dialog";
+import { Divider } from "../surface/Divider";
 
 type DialogSize = ComponentProps<typeof DialogContent>["size"];
 
@@ -53,6 +54,7 @@ function DialogShell({
           <DialogClose />
         </DialogHeader>
         <DialogDescription className="sr-only">{description}</DialogDescription>
+        <Divider className="mt-4" />
         {children}
       </DialogContent>
     </Dialog>

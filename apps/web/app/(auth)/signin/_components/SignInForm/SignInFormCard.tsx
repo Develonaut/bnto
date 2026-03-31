@@ -17,7 +17,7 @@ interface SignInFormCardProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-function FormError({ error }: { error: string }) {
+export function FormError({ error }: { error: string }) {
   if (!error) return null;
   return (
     <p className="text-sm text-destructive" role="alert" data-testid="auth-error">

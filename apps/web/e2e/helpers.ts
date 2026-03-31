@@ -3,6 +3,16 @@ import fs from "fs";
 import type { Page } from "@playwright/test";
 import { expect } from "./fixtures";
 
+// Re-export verification helpers from focused files
+export {
+  getJpegDimensions,
+  getPngDimensions,
+  getWebPDimensions,
+  getImageDimensions,
+} from "./helpers/imageDimensions";
+export { parseCsvOutput } from "./helpers/parseCsv";
+export { assertExifStripped, assertContentPreserved } from "./helpers/contentAssertions";
+
 // ---------------------------------------------------------------------------
 // Fixture directories
 // ---------------------------------------------------------------------------
@@ -36,43 +46,34 @@ export async function navigateToRecipe(page: Page, slug: string, _h1?: string) {
 }
 
 /**
- * Assert that the bnto-shell has data-execution-mode="browser".
- */
-export async function assertBrowserExecution(page: Page) {
-  const shell = page.getByTestId("bnto-shell");
-  await expect(shell).toHaveAttribute("data-execution-mode", "browser");
-}
-
-/**
- * Upload files via the file input, wait for the file count text and run button.
+ * Upload files via the file input, wait for the run button to be visible.
  * Returns the run button locator.
  */
 export async function uploadFiles(page: Page, filePaths: string[]) {
   const fileInput = page.getByTestId("file-input");
   await fileInput.setInputFiles(filePaths);
 
-  await expect(page.getByTestId("file-count")).toBeVisible();
-
-  const runButton = page.getByTestId("run-button", ":visible");
+  const runButton = page.getByTestId("run-button");
+  await expect(runButton).toBeVisible();
   await expect(runButton).toBeEnabled();
 
   return runButton;
 }
 
 /**
- * Click the Run button and wait for the execution to reach a terminal phase.
+ * Click the Run button and wait for the execution to reach a terminal step.
  * Returns the run button locator.
  */
 export async function runAndComplete(
   page: Page,
-  options?: { timeout?: number; expectPhase?: string },
+  options?: { timeout?: number; expectStep?: string },
 ) {
-  const { timeout = 30_000, expectPhase = "completed" } = options ?? {};
+  const { timeout = 30_000, expectStep = "completed" } = options ?? {};
 
   const runButton = page.getByTestId("run-button", ":visible");
   await runButton.click();
 
-  await expect(runButton).toHaveAttribute("data-phase", expectPhase, {
+  await expect(runButton).toHaveAttribute("data-step", expectStep, {
     timeout,
   });
 
@@ -125,29 +126,50 @@ export async function downloadAndVerify(
 }
 
 /**
- * Click "Download All" (last matching button), verify ZIP magic bytes.
- * Returns the downloaded file buffer.
+ * Run the recipe and capture the auto-download that fires on completion.
+ * Returns the download and its file buffer. Verifies ZIP magic bytes for
+ * batch results (multi-file runs auto-download as ZIP).
  */
-export async function downloadAllAsZip(page: Page) {
-  const downloadAllBtn = page.getByTestId("download-all-button", ":visible");
-  await expect(downloadAllBtn).toBeVisible();
+export async function runAndCaptureAutoDownload(
+  page: Page,
+  options?: { timeout?: number; expectZip?: boolean },
+) {
+  const { timeout = 30_000, expectZip = true } = options ?? {};
 
-  const downloadPromise = page.waitForEvent("download");
-  await downloadAllBtn.click();
+  const downloadPromise = page.waitForEvent("download", { timeout });
+  await runAndComplete(page, { timeout });
   const download = await downloadPromise;
 
   const downloadPath = await download.path();
   expect(downloadPath).toBeTruthy();
 
   const buffer = fs.readFileSync(downloadPath!);
-  expect(buffer.length).toBeGreaterThan(100);
+  expect(buffer.length).toBeGreaterThan(0);
 
-  // Verify ZIP magic bytes
-  for (let i = 0; i < MAGIC.ZIP.length; i++) {
-    expect(buffer[i]).toBe(MAGIC.ZIP[i]);
+  if (expectZip) {
+    for (let i = 0; i < MAGIC.ZIP.length; i++) {
+      expect(buffer[i]).toBe(MAGIC.ZIP[i]);
+    }
   }
 
   return { buffer, download };
+}
+
+/**
+ * Open the config dialog by clicking the config (sliders) button.
+ * Waits for the dialog content to be visible before returning.
+ */
+export async function openConfigDialog(page: Page) {
+  await page.getByTestId("config-button").click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+}
+
+/**
+ * Close the config dialog by pressing Escape.
+ */
+export async function closeConfigDialog(page: Page) {
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 }
 
 /**

@@ -1,35 +1,38 @@
 import path from "path";
+import fs from "fs";
 import { test, expect } from "../../fixtures";
 import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
-  downloadAllAsZip,
+  runAndCaptureAutoDownload,
+  assertExifStripped,
+  getJpegDimensions,
 } from "../../helpers";
 
 /**
  * Browser execution journey — strip-exif
  *
  * Tests EXIF metadata stripping running 100% client-side via Rust→WASM.
- * Verified programmatically: magic bytes, file sizes, data attributes.
+ * Verified programmatically: magic bytes, EXIF absence, dimension preservation.
  */
 
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("strip-exif — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
-    await assertBrowserExecution(page);
-  });
+  test("single JPEG: strip EXIF, verify metadata removed and dimensions preserved", async ({
+    page,
+  }) => {
+    // portrait-rotated.jpg has substantial EXIF data (orientation, camera metadata)
+    const inputPath = path.join(IMAGE_FIXTURES_DIR, "portrait-rotated.jpg");
+    const inputSize = fs.statSync(inputPath).size;
 
-  test("single JPEG: strip EXIF, download, verify valid image", async ({ page }) => {
     await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
 
-    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
+    await uploadFiles(page, [inputPath]);
 
     await runAndComplete(page);
 
@@ -37,16 +40,25 @@ test.describe("strip-exif — browser execution @browser", () => {
     await expect(outputFile).toHaveCount(1);
     await expect(outputFile.getByTestId("download-button")).toBeVisible();
 
-    // Verify download produces valid JPEG (format preserved after EXIF strip)
     const buffer = await downloadAndVerify(page, {
       filenamePattern: /\.jpe?g$/i,
       magicBytes: MAGIC.JPEG,
     });
 
-    expect(buffer.length).toBeGreaterThan(0);
+    // EXIF APP1 markers must be absent — proves the strip actually ran
+    assertExifStripped(buffer);
+
+    // Dimensions preserved — image wasn't corrupted by stripping
+    // portrait-rotated.jpg: after EXIF orientation correction = 800x1200
+    const dims = getJpegDimensions(buffer);
+    expect(dims.width).toBe(800);
+    expect(dims.height).toBe(1200);
+
+    // Output should be smaller than input (EXIF data removed)
+    expect(buffer.length).toBeLessThan(inputSize);
   });
 
-  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
+  test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "strip-exif", "Strip EXIF Online Free");
 
     await uploadFiles(page, [
@@ -54,11 +66,9 @@ test.describe("strip-exif — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("strip-exif-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-
-    const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe("strip-exif-results.zip");
   });
 });

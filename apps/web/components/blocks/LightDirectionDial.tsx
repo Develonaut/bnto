@@ -7,7 +7,7 @@ interface LightDirectionDialProps {
   setLightAngle: (angle: number) => void;
 }
 
-function angleToCardinal(deg: number): string {
+const angleToCardinal = (deg: number): string => {
   if (deg <= 141) return "NW";
   if (deg <= 158) return "NNW";
   if (deg <= 170) return "N";
@@ -15,9 +15,9 @@ function angleToCardinal(deg: number): string {
   if (deg <= 202) return "NNE";
   if (deg <= 219) return "NE";
   return "NE";
-}
+};
 
-function LightThumb({ isDragging }: { isDragging: boolean }) {
+export function LightThumb({ isDragging }: { isDragging: boolean }) {
   return (
     <Button
       variant="warning"

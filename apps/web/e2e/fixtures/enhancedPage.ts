@@ -4,7 +4,7 @@ import type { Locator, Page } from "@playwright/test";
  * Playwright selector methods that are deprecated in favor of getByTestId().
  *
  * Standard:  page.getByTestId("run-button")
- * Enhanced:  page.getByTestId("run-button", ":visible", '[data-phase="completed"]')
+ * Enhanced:  page.getByTestId("run-button", ":visible", '[data-step="completed"]')
  * Prefix:    page.getByTestId("control-slider*")  -- startsWith match
  * Deprecated: page.getByRole("button", { name: "Run" })
  *
@@ -59,7 +59,7 @@ function enhanceLocator(locator: Locator): Locator {
  * Enhance Playwright's page object with two features:
  *
  * 1. **Enhanced getByTestId** -- hijacks the native `getByTestId` to support
- *    modifier args (`:visible`, `[data-phase="..."]`) and prefix matching
+ *    modifier args (`:visible`, `[data-step="..."]`) and prefix matching
  *    (trailing `*`). Builds a CSS selector under the hood and calls
  *    `page.locator()`. Returned locators are also enhanced so chained
  *    `.getByTestId()` calls support the same syntax.
@@ -75,7 +75,7 @@ export function setupEnhancedPage(page: Page): void {
   //
   //   page.getByTestId("run-button")                            -> [data-testid="run-button"]
   //   page.getByTestId("run-button", ":visible")                -> [data-testid="run-button"]:visible
-  //   page.getByTestId("run-button", '[data-phase="completed"]') -> [data-testid="run-button"][data-phase="completed"]
+  //   page.getByTestId("run-button", '[data-step="completed"]') -> [data-testid="run-button"][data-step="completed"]
   //   page.getByTestId("control-slider*")                       -> [data-testid^="control-slider"]
   //
   // Under the hood it builds a CSS selector and calls page.locator().

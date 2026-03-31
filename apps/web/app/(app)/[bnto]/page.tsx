@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, Heading } from "@bnto/ui";
+import { AppShellContent, Container, Divider, StepperContent } from "@bnto/ui";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
-import { RecipeShell } from "./_components/RecipeShell";
+import { BntoHero } from "./_components/BntoHero";
+import {
+  RecipeStepper,
+  RecipeStepperIndicator,
+  RecipeStepperDropzone,
+  RecipeStepperToolbar,
+  RecipeStepperBackButton,
+  RecipeStepperConfigButton,
+  RecipeStepperBanner,
+  RecipeStepperActions,
+  RunRecipeButton,
+  RecipeStepperResultList,
+} from "./_components/RecipeStepper";
 
-/** Only slugs from generateStaticParams are valid — everything else is 404
- * at the routing level (no component code runs for unknown slugs). */
+/** Only slugs from generateStaticParams are valid — everything else is 404. */
 export const dynamicParams = false;
 
 /** Pre-render all registered slugs at build time. */
@@ -26,10 +37,7 @@ export async function generateMetadata({
   return {
     title: { absolute: entry.title },
     description: entry.description,
-    openGraph: {
-      title: entry.title,
-      description: entry.description,
-    },
+    openGraph: { title: entry.title, description: entry.description },
   };
 }
 
@@ -43,19 +51,44 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
       <BntoJsonLd entry={entry} />
       <AppShellContent>
         <Container size="md" className="space-y-6 text-center">
-          {/* Interactive recipe flow — PhaseIndicator is at the top, then
-              static header content, then the file upload / execution flow */}
-          <RecipeShell key={slug} entry={entry}>
-            {/* Static header — server-rendered, zero JS.
-                Passed as children so it renders between PhaseIndicator
-                and the interactive flow inside RecipeShell. */}
-            <Heading level={1} data-testid="recipe-heading">
-              {entry.h1}
-            </Heading>
-            <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
-              {entry.description}
-            </p>
-          </RecipeShell>
+          <RecipeStepper key={slug} entry={entry}>
+            <RecipeStepperIndicator />
+            <BntoHero h1={entry.h1} description={entry.description} />
+
+            <StepperContent value="1">
+              <RecipeStepperDropzone />
+            </StepperContent>
+
+            <StepperContent value="2">
+              <RecipeStepperToolbar>
+                <RecipeStepperActions className="shrink-0">
+                  <RecipeStepperBackButton />
+                </RecipeStepperActions>
+                <RecipeStepperBanner />
+                <RecipeStepperActions className="ml-auto shrink-0">
+                  <RecipeStepperConfigButton />
+                  <RunRecipeButton />
+                </RecipeStepperActions>
+              </RecipeStepperToolbar>
+              <Divider />
+              <RecipeStepperResultList />
+            </StepperContent>
+
+            <StepperContent value="3">
+              <RecipeStepperToolbar>
+                <RecipeStepperActions className="shrink-0">
+                  <RecipeStepperBackButton />
+                </RecipeStepperActions>
+                <RecipeStepperBanner />
+                <RecipeStepperActions className="ml-auto shrink-0">
+                  <RecipeStepperConfigButton />
+                  <RunRecipeButton />
+                </RecipeStepperActions>
+              </RecipeStepperToolbar>
+              <Divider />
+              <RecipeStepperResultList />
+            </StepperContent>
+          </RecipeStepper>
         </Container>
       </AppShellContent>
     </>

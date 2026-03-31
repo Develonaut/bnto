@@ -64,7 +64,7 @@ export function SelectContent({
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
         data-slot="select-content"
-        className="z-dropdown max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) outline-hidden"
+        className="z-modal max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) outline-hidden"
         position={position}
         align={align}
         sideOffset={POPUP_OFFSET_PX[offset]}

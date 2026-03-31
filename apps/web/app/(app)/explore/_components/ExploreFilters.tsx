@@ -45,7 +45,7 @@ export function ExploreFilters() {
   );
 }
 
-function CategoryBarCard({
+export function CategoryBarCard({
   cat,
   active,
   onSelect,

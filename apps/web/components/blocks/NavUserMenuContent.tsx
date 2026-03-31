@@ -23,7 +23,7 @@ export function NavUserMenuContent({
   return <NavUserProfile user={user} onSignOut={onSignOut} />;
 }
 
-function NavUserSkeleton() {
+export function NavUserSkeleton() {
   return (
     <div className="px-3 py-2">
       <Skeleton className="h-4 w-24" />
@@ -32,7 +32,7 @@ function NavUserSkeleton() {
   );
 }
 
-function NavUserSignIn() {
+export function NavUserSignIn() {
   return (
     <MenuItem asChild data-testid="nav-sign-in">
       <Link href="/signin">
@@ -43,7 +43,13 @@ function NavUserSignIn() {
   );
 }
 
-function NavUserProfile({ user, onSignOut }: { user: AuthUser | null; onSignOut: () => void }) {
+export function NavUserProfile({
+  user,
+  onSignOut,
+}: {
+  user: AuthUser | null;
+  onSignOut: () => void;
+}) {
   return (
     <>
       <div className="px-3 py-2">

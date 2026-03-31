@@ -1,11 +1,13 @@
 import path from "path";
+import fs from "fs";
 import { test, expect } from "../../fixtures";
 import {
   IMAGE_FIXTURES_DIR,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
+  runAndCaptureAutoDownload,
+  assertContentPreserved,
 } from "../../helpers";
 
 /**
@@ -19,30 +21,32 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("rename-files — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "rename-files", "Rename Files Online Free");
-    await assertBrowserExecution(page);
-  });
+  test("single file: rename with default pattern, verify content preserved", async ({ page }) => {
+    const inputPath = path.join(IMAGE_FIXTURES_DIR, "small.jpg");
 
-  test("single file: rename with default pattern, download", async ({ page }) => {
     await navigateToRecipe(page, "rename-files", "Rename Files Online Free");
 
-    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
+    await uploadFiles(page, [inputPath]);
 
     await runAndComplete(page);
 
     const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
-    // Verify download filename includes "renamed-"
+    // Verify download filename includes "renamed"
     const downloadPromise = page.waitForEvent("download");
     await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename()).toContain("renamed");
+
+    // File content must be byte-identical to input — rename is content-preserving
+    const downloadPath = await download.path();
+    const outputBuffer = fs.readFileSync(downloadPath!);
+    assertContentPreserved(inputPath, outputBuffer);
   });
 
-  test("batch: rename multiple files with Download All", async ({ page }) => {
+  test("batch: rename multiple files auto-download as ZIP", async ({ page }) => {
     await navigateToRecipe(page, "rename-files", "Rename Files Online Free");
 
     await uploadFiles(page, [
@@ -51,9 +55,9 @@ test.describe("rename-files — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.webp"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("rename-files-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(3);
-    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 });

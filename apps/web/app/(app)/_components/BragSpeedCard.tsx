@@ -9,7 +9,7 @@ import {
   ZapIcon,
 } from "@bnto/ui";
 
-function SpeedCounter() {
+export function SpeedCounter() {
   return (
     <Row className="gap-3">
       <IconBadge variant="primary" size="md" shape="square">

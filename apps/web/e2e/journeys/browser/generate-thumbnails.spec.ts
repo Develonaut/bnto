@@ -4,12 +4,12 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
-  downloadAllAsZip,
+  runAndCaptureAutoDownload,
   assertWebPBytes,
+  getWebPDimensions,
 } from "../../helpers";
 
 /**
@@ -22,12 +22,7 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("generate-thumbnails — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
-    await assertBrowserExecution(page);
-  });
-
-  test("single JPEG: resize + convert + rename lifecycle", async ({ page }) => {
+  test("single JPEG: resize + convert + rename lifecycle, verify dimensions", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
@@ -45,10 +40,16 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     });
 
     assertWebPBytes(buffer);
-    expect(buffer.length).toBeGreaterThan(0);
+
+    // Verify thumbnail dimensions — default resize is 150px width
+    // small.jpg is 100x100, so resized width clamps to 100 (smaller than target)
+    const dims = getWebPDimensions(buffer);
+    expect(dims.width).toBeLessThanOrEqual(150);
+    expect(dims.width).toBeGreaterThan(0);
+    expect(dims.height).toBeGreaterThan(0);
   });
 
-  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
+  test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [
@@ -56,15 +57,13 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("generate-thumbnails-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-
-    const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe("generate-thumbnails-results.zip");
   });
 
-  test("back button resets from completed to configure phase", async ({ page }) => {
+  test("back button resets from completed to configure step", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
@@ -74,7 +73,7 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     const backButton = page.getByTestId("back-button");
     await backButton.click();
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(page.getByTestId("run-button")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

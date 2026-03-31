@@ -53,7 +53,7 @@ export function FileListContent({
   className,
   children,
 }: PropsWithChildren<{ className?: string }>) {
-  return <div className={cn("flex min-w-0 flex-1 flex-col", className)}>{children}</div>;
+  return <div className={cn("flex min-w-0 flex-1 flex-col text-left", className)}>{children}</div>;
 }
 
 /* ── FileListName ─────────────────────────────────────────────── */

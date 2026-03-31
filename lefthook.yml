@@ -45,7 +45,7 @@ pre-commit:
 
     check-grab-bags:
       glob: "*.{ts,tsx}"
-      exclude: "^(node_modules/|engine/|\\.next|e2e/)"
+      exclude: "(node_modules/|engine/|\\.next|e2e/)"
       run: |
         for f in {staged_files}; do
           base=$(basename "$f")

@@ -4,9 +4,9 @@ import { test, expect } from "../../fixtures";
 import {
   CSV_FIXTURES_DIR,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
+  parseCsvOutput,
 } from "../../helpers";
 
 /**
@@ -14,17 +14,18 @@ import {
  *
  * Tests CSV cleaning running 100% client-side via Rust→WASM.
  * Default config: trim whitespace + remove empty rows (duplicates off).
+ *
+ * messy.csv has:
+ *   - 1 header row
+ *   - 5 data rows (Alice, Bob, Charlie, Alice duplicate, Bob duplicate, Diana)
+ *   - 2 empty rows (lines 4 and 8)
+ *   - Whitespace padding on Alice, Charlie, Bob (second)
  */
 
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("clean-csv — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
-    await assertBrowserExecution(page);
-  });
-
-  test("messy CSV: clean, download, verify output is valid CSV", async ({ page }) => {
+  test("messy CSV: verify empty rows removed and whitespace trimmed", async ({ page }) => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
     await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "messy.csv")]);
@@ -34,7 +35,6 @@ test.describe("clean-csv — browser execution @browser", () => {
     const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
-    // Download and verify output is valid CSV text
     const downloadPromise = page.waitForEvent("download");
     await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
@@ -44,25 +44,36 @@ test.describe("clean-csv — browser execution @browser", () => {
     const downloadPath = await download.path();
     const downloadedFile = fs.readFileSync(downloadPath!, "utf-8");
 
-    // Output should contain CSV content — at minimum a header row
-    expect(downloadedFile).toContain("name");
-    expect(downloadedFile).toContain("age");
-    expect(downloadedFile).toContain("city");
+    const { headers, rows } = parseCsvOutput(downloadedFile);
 
-    // Should not contain empty lines (empty rows removed)
-    const lines = downloadedFile.split("\n").filter((l) => l.trim() !== "");
-    expect(lines.length).toBeGreaterThan(1);
+    // Headers preserved
+    expect(headers).toEqual(["name", "age", "city"]);
 
-    // Whitespace should be trimmed — no leading/trailing spaces in cells
-    for (const line of lines) {
-      const cells = line.split(",");
-      for (const cell of cells) {
+    // messy.csv has 2 empty rows + 2 duplicate rows (Alice, Bob appear twice)
+    // Default config: trim + remove empty + remove duplicates = 4 unique data rows
+    expect(rows.length).toBe(4);
+
+    // No empty rows in output
+    for (const row of rows) {
+      const allEmpty = row.every((cell) => cell === "");
+      expect(allEmpty).toBe(false);
+    }
+
+    // Whitespace trimmed — no leading/trailing spaces
+    for (const row of rows) {
+      for (const cell of row) {
         expect(cell).toBe(cell.trim());
       }
     }
+
+    // Core data present
+    const names = rows.map((r) => r[0]);
+    expect(names).toContain("Alice");
+    expect(names).toContain("Bob");
+    expect(names).toContain("Diana");
   });
 
-  test("simple CSV: passes through cleanly", async ({ page }) => {
+  test("simple CSV: passes through cleanly, all 5 rows preserved", async ({ page }) => {
     await navigateToRecipe(page, "clean-csv", "Clean CSV Online Free");
 
     await uploadFiles(page, [path.join(CSV_FIXTURES_DIR, "simple.csv")]);
@@ -72,7 +83,6 @@ test.describe("clean-csv — browser execution @browser", () => {
     const outputFile = page.getByTestId("output-file");
     await expect(outputFile).toHaveCount(1);
 
-    // Download and verify all original data rows are preserved
     const downloadPromise = page.waitForEvent("download");
     await outputFile.getByTestId("download-button").click();
     const download = await downloadPromise;
@@ -80,10 +90,13 @@ test.describe("clean-csv — browser execution @browser", () => {
     const downloadPath = await download.path();
     const output = fs.readFileSync(downloadPath!, "utf-8");
 
-    expect(output).toContain("Alice");
-    expect(output).toContain("Bob");
-    expect(output).toContain("Charlie");
-    expect(output).toContain("Diana");
-    expect(output).toContain("Eve");
+    const { headers, rows } = parseCsvOutput(output);
+
+    // simple.csv has 5 data rows — all should survive cleaning
+    expect(headers).toContain("name");
+    expect(rows).toHaveLength(5);
+
+    const names = rows.map((r) => r[0]);
+    expect(names).toEqual(["Alice", "Bob", "Charlie", "Diana", "Eve"]);
   });
 });
