@@ -138,7 +138,7 @@ mod tests {
             "image-resize",
             "image-convert",
             "image-strip-exif",
-            "image-watermark",
+            "image-overlay",
             "spreadsheet-clean",
             "spreadsheet-rename",
             "spreadsheet-convert",

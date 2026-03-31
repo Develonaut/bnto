@@ -6,26 +6,27 @@
 
 import type { ProcessorDef } from "../types";
 
-/** Processor definition for image-watermark. */
-export const imageWatermarkProcessor: ProcessorDef = {
-  nodeType: "image-watermark",
-  name: "Watermark Images",
-  description: "Overlay a watermark image onto source images.",
+/** Processor definition for image-overlay. */
+export const imageOverlayProcessor: ProcessorDef = {
+  nodeType: "image-overlay",
+  name: "Overlay Image",
+  description: "Overlay an image onto source images at a configurable position, size, and opacity.",
   category: "image",
   accepts: ["image/jpeg","image/png","image/webp"] as const,
   platforms: ["browser"] as const,
   parameters: [
   {
-    name: "watermark",
-    label: "Watermark Image",
-    description: "The watermark image to overlay (base64-encoded).",
+    name: "overlay",
+    label: "Overlay Image",
+    description: "The image to overlay (base64-encoded).",
     type: "file" as const,
+    accept: ["image/png","image/jpeg","image/webp"],
     constraints: { required: true },
   },
   {
     name: "position",
     label: "Position",
-    description: "Where to place the watermark on the image.",
+    description: "Where to place the overlay on the image.",
     type: "enum" as const,
     options: ["top-left","top-center","top-right","middle-left","center","middle-right","bottom-left","bottom-center","bottom-right"] as const,
     default: "bottom-right",
@@ -33,7 +34,7 @@ export const imageWatermarkProcessor: ProcessorDef = {
   {
     name: "size",
     label: "Size",
-    description: "Watermark width as a percentage of the source image width.",
+    description: "Overlay width as a percentage of the source image width.",
     type: "number" as const,
     default: 25,
     constraints: { min: 1, max: 500, required: false },
@@ -41,7 +42,7 @@ export const imageWatermarkProcessor: ProcessorDef = {
   {
     name: "opacity",
     label: "Opacity",
-    description: "Watermark transparency (0 = invisible, 100 = fully opaque).",
+    description: "Overlay transparency (0 = invisible, 100 = fully opaque).",
     type: "number" as const,
     default: 80,
     constraints: { min: 0, max: 100, required: false },

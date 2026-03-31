@@ -36,8 +36,8 @@ pub fn create_default_registry() -> NodeRegistry {
     registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
     registry.register("spreadsheet-merge", Box::new(bnto_csv::MergeCsv::new()));
     registry.register(
-        "image-watermark",
-        Box::new(bnto_image::WatermarkImages::new()),
+        "image-overlay",
+        Box::new(bnto_image::OverlayImage::new()),
     );
 
     registry
@@ -83,7 +83,7 @@ mod tests {
             "image-resize",
             "image-convert",
             "image-strip-exif",
-            "image-watermark",
+            "image-overlay",
             "spreadsheet-clean",
             "spreadsheet-rename",
             "spreadsheet-convert",
@@ -286,26 +286,29 @@ mod tests {
 
     #[test]
     fn test_generated_watermark_images_recipe() {
-        // Load the recipe fixture and inject a real watermark image
-        let mut json_value: serde_json::Value = serde_json::from_str(include_str!(
+        // The generated recipe has an empty overlay param — inject a real one.
+        let mut def: serde_json::Value = serde_json::from_str(include_str!(
             "../../../../packages/@bnto/registry/src/recipes/generated/watermark-images.bnto.json"
         ))
-        .expect("parse recipe");
+        .unwrap();
 
-        // Inject base64 watermark into the processor node's parameters
-        let watermark_b64 = format!(
+        // Base64-encode the test overlay image
+        let overlay_bytes =
+            include_bytes!("../../../../test-fixtures/images/overlays/overlay-logo.png");
+        let overlay_b64 = format!(
             "data:image/png;base64,{}",
-            base64::engine::general_purpose::STANDARD
-                .encode(include_bytes!("../../../../test-fixtures/watermark.png"))
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, overlay_bytes)
         );
-        let nodes = json_value["nodes"].as_array_mut().unwrap();
+
+        // Set the overlay param on the overlay node
+        let nodes = def["nodes"].as_array_mut().unwrap();
         for node in nodes.iter_mut() {
-            if node["type"] == "image-watermark" {
-                node["parameters"]["watermark"] = serde_json::Value::String(watermark_b64.clone());
+            if node["type"] == "image-overlay" {
+                node["parameters"]["overlay"] = serde_json::Value::String(overlay_b64.clone());
             }
         }
 
-        let json = serde_json::to_string(&json_value).unwrap();
+        let json = serde_json::to_string(&def).unwrap();
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),

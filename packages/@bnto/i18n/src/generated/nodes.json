@@ -25,6 +25,10 @@
       "label": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats."
     },
+    "imageOverlay": {
+      "label": "Overlay Image",
+      "description": "Overlay an image onto source images at a configurable position, size, and opacity."
+    },
     "imageResize": {
       "label": "Resize Images",
       "description": "Change image dimensions while maintaining quality."
@@ -32,10 +36,6 @@
     "imageStripExif": {
       "label": "Strip EXIF",
       "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)."
-    },
-    "imageWatermark": {
-      "label": "Watermark",
-      "description": "Overlay a watermark image onto source images."
     },
     "input": {
       "label": "Input",
@@ -122,6 +122,36 @@
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
       }
     },
+    "imageOverlay": {
+      "overlay": {
+        "label": "Overlay Image",
+        "description": "The image to overlay (base64-encoded)."
+      },
+      "position": {
+        "label": "Position",
+        "description": "Where to place the overlay on the image."
+      },
+      "size": {
+        "label": "Size",
+        "description": "Overlay width as a percentage of the source image width."
+      },
+      "opacity": {
+        "label": "Opacity",
+        "description": "Overlay transparency (0 = invisible, 100 = fully opaque)."
+      },
+      "offsetX": {
+        "label": "Offset X",
+        "description": "Horizontal pixel offset from the position. Positive = right, negative = left."
+      },
+      "offsetY": {
+        "label": "Offset Y",
+        "description": "Vertical pixel offset from the position. Positive = down, negative = up."
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
     "imageResize": {
       "width": {
         "label": "Width",
@@ -141,36 +171,6 @@
       }
     },
     "imageStripExif": {
-      "quality": {
-        "label": "Quality",
-        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
-      }
-    },
-    "imageWatermark": {
-      "watermark": {
-        "label": "Watermark Image",
-        "description": "The watermark image to overlay (base64-encoded)."
-      },
-      "position": {
-        "label": "Position",
-        "description": "Where to place the watermark on the image."
-      },
-      "size": {
-        "label": "Size",
-        "description": "Watermark width as a percentage of the source image width."
-      },
-      "opacity": {
-        "label": "Opacity",
-        "description": "Watermark transparency (0 = invisible, 100 = fully opaque)."
-      },
-      "offsetX": {
-        "label": "Offset X",
-        "description": "Horizontal pixel offset from the position. Positive = right, negative = left."
-      },
-      "offsetY": {
-        "label": "Offset Y",
-        "description": "Vertical pixel offset from the position. Positive = down, negative = up."
-      },
       "quality": {
         "label": "Quality",
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."

@@ -80,7 +80,7 @@ interface RawParameter {
   name: string;
   label: string;
   description: string;
-  paramType: { type: string; options?: string[] };
+  paramType: { type: string; options?: string[]; accept?: string[] };
   default?: unknown;
   constraints?: { min?: number; max?: number; required?: boolean };
   placeholder?: string;
@@ -231,6 +231,10 @@ function generateParamLiteral(p: RawParameter): string {
     lines.push(`  type: ${JSON.stringify(p.paramType.type)} as const,`);
   }
 
+  if (p.paramType.accept) {
+    lines.push(`  accept: ${JSON.stringify(p.paramType.accept)},`);
+  }
+
   if (p.default !== undefined) {
     lines.push(`  default: ${serializeValue(p.default)},`);
   }
@@ -351,6 +355,8 @@ export interface ProcessorParam {
     readonly required?: boolean;
   };
   readonly placeholder?: string;
+  /** Accepted MIME types for file-type parameters. */
+  readonly accept?: readonly string[];
   /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
   readonly surfaceable?: boolean;
 }
@@ -506,6 +512,7 @@ function generateZodField(param: RawParameter): string {
       break;
     }
     case "file": {
+      // File params are base64-encoded strings
       zodChain = "z.string()";
       break;
     }

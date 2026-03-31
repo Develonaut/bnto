@@ -23,4 +23,4 @@ bnto-image = { path = "../bnto-image" }
 serde_json = { workspace = true }
 
 [dev-dependencies]
-base64 = { workspace = true }
+base64 = "0.22"

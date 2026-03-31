@@ -51,6 +51,66 @@ fn golden_compress_and_rename() {
     assert_golden("compress-and-rename", &out);
 }
 
+#[test]
+fn golden_watermark_images() {
+    let (out, _) = run_custom_recipe_ok("watermark-images", &fixture_image("small.jpg"));
+    assert_golden("watermark-images", &out);
+}
+
+#[test]
+fn golden_watermark_landscape_center() {
+    let (out, _) = run_custom_recipe_ok(
+        "watermark-landscape-center",
+        &fixture_overlay("landscape-16x9.jpg"),
+    );
+    assert_golden("watermark-landscape-center", &out);
+}
+
+#[test]
+fn golden_watermark_portrait_top_left() {
+    let (out, _) = run_custom_recipe_ok(
+        "watermark-portrait-top-left",
+        &fixture_overlay("portrait-3x4.jpg"),
+    );
+    assert_golden("watermark-portrait-top-left", &out);
+}
+
+#[test]
+fn golden_watermark_square_bottom_right() {
+    let (out, _) = run_custom_recipe_ok(
+        "watermark-square-bottom-right",
+        &fixture_overlay("square-1x1.jpg"),
+    );
+    assert_golden("watermark-square-bottom-right", &out);
+}
+
+#[test]
+fn golden_overlay_landscape() {
+    let (out, _) = run_custom_recipe_ok(
+        "overlay-landscape",
+        &fixture_overlay("landscape-16x9.jpg"),
+    );
+    assert_golden("overlay-landscape", &out);
+}
+
+#[test]
+fn golden_overlay_portrait() {
+    let (out, _) = run_custom_recipe_ok(
+        "overlay-portrait",
+        &fixture_overlay("portrait-3x4.jpg"),
+    );
+    assert_golden("overlay-portrait", &out);
+}
+
+#[test]
+fn golden_overlay_square() {
+    let (out, _) = run_custom_recipe_ok(
+        "overlay-square",
+        &fixture_overlay("square-1x1.jpg"),
+    );
+    assert_golden("overlay-square", &out);
+}
+
 // --- File Recipes ---
 
 #[test]
@@ -98,12 +158,6 @@ fn golden_merge_csv() {
 fn golden_strip_exif() {
     let (out, _) = run_recipe_ok("strip-exif", &fixture_image("small.jpg"));
     assert_golden("strip-exif", &out);
-}
-
-#[test]
-fn golden_watermark_images() {
-    let (out, _) = run_custom_recipe_ok("watermark-images", &fixture_image("small.jpg"));
-    assert_golden("watermark-images", &out);
 }
 
 #[test]
@@ -227,4 +281,58 @@ fn golden_csv_to_json_explicit() {
 fn golden_watermark_images_explicit() {
     let (out, _) = run_explicit_recipe_ok("watermark-images", &fixture_image("small.jpg"));
     assert_golden("watermark-images", &out);
+}
+
+#[test]
+fn golden_watermark_landscape_center_explicit() {
+    let (out, _) = run_explicit_recipe_ok(
+        "watermark-landscape-center",
+        &fixture_overlay("landscape-16x9.jpg"),
+    );
+    assert_golden("watermark-landscape-center", &out);
+}
+
+#[test]
+fn golden_watermark_portrait_top_left_explicit() {
+    let (out, _) = run_explicit_recipe_ok(
+        "watermark-portrait-top-left",
+        &fixture_overlay("portrait-3x4.jpg"),
+    );
+    assert_golden("watermark-portrait-top-left", &out);
+}
+
+#[test]
+fn golden_watermark_square_bottom_right_explicit() {
+    let (out, _) = run_explicit_recipe_ok(
+        "watermark-square-bottom-right",
+        &fixture_overlay("square-1x1.jpg"),
+    );
+    assert_golden("watermark-square-bottom-right", &out);
+}
+
+#[test]
+fn golden_overlay_landscape_explicit() {
+    let (out, _) = run_explicit_recipe_ok(
+        "overlay-landscape",
+        &fixture_overlay("landscape-16x9.jpg"),
+    );
+    assert_golden("overlay-landscape", &out);
+}
+
+#[test]
+fn golden_overlay_portrait_explicit() {
+    let (out, _) = run_explicit_recipe_ok(
+        "overlay-portrait",
+        &fixture_overlay("portrait-3x4.jpg"),
+    );
+    assert_golden("overlay-portrait", &out);
+}
+
+#[test]
+fn golden_overlay_square_explicit() {
+    let (out, _) = run_explicit_recipe_ok(
+        "overlay-square",
+        &fixture_overlay("square-1x1.jpg"),
+    );
+    assert_golden("overlay-square", &out);
 }

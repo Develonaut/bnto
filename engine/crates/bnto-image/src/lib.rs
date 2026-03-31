@@ -15,7 +15,7 @@ pub mod quantize;
 pub mod resize;
 pub mod strip_exif;
 pub mod wasm_bridge;
-pub mod watermark;
+pub mod overlay;
 
 #[cfg(test)]
 mod test_utils;
@@ -28,4 +28,4 @@ pub use convert::ConvertImageFormat;
 pub use format::ImageFormat;
 pub use resize::ResizeImages;
 pub use strip_exif::StripExif;
-pub use watermark::WatermarkImages;
+pub use overlay::OverlayImage;

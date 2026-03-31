@@ -62,11 +62,7 @@ mod tests {
         let registry = bnto_engine::create_default_registry();
         let catalog = registry.catalog();
 
-        assert_eq!(
-            catalog.len(),
-            10,
-            "Catalog should have exactly 10 processors"
-        );
+        assert_eq!(catalog.len(), 10, "Catalog should have exactly 10 processors");
     }
 
     #[test]
@@ -87,7 +83,7 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
-            "image-watermark",
+            "image-overlay",
         ];
 
         for key in &expected {

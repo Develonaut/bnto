@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and overlays a watermark onto each one."
+    "description": "Accepts image files and overlays an image onto each one."
   },
   "parameters": {},
   "inputPorts": [],
@@ -43,10 +43,10 @@
       ]
     },
     {
-      "id": "watermark-image",
-      "type": "image-watermark",
+      "id": "overlay",
+      "type": "image-overlay",
       "version": "1.0.0",
-      "name": "Watermark",
+      "name": "Overlay",
       "position": {
         "x": 250,
         "y": 100
@@ -56,10 +56,10 @@
         "position": "bottom-right",
         "size": 25,
         "opacity": 80,
-        "offsetX": 10,
-        "offsetY": 10,
+        "offsetX": 0,
+        "offsetY": 0,
         "quality": 80,
-        "watermark": ""
+        "overlay": ""
       },
       "inputPorts": [],
       "outputPorts": []
@@ -93,11 +93,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "watermark-image"
+      "target": "overlay"
     },
     {
       "id": "e2",
-      "source": "watermark-image",
+      "source": "overlay",
       "target": "output"
     }
   ]

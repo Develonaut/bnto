@@ -1,4 +1,4 @@
-/** Watermark Images recipe — overlay a watermark onto source images. */
+/** Watermark Images recipe — overlay a logo or watermark onto images. */
 
 import type { Recipe } from "../recipe";
 import { CURRENT_FORMAT_VERSION, getProcessorDefaults } from "@bnto/nodes";
@@ -12,11 +12,11 @@ const IMAGE_INPUT = {
 } as const;
 
 export const watermarkImages: Recipe = {
-  id: "f92e1c3a-8b7d-4e5f-a106-3d9c8b2e7f4a",
+  id: "b7d2a3f1-8e4c-4d6b-9a1f-2c5e7b8d3f4a",
   slug: "watermark-images",
   name: "Watermark Images",
   description:
-    "Add a watermark to your images instantly in the browser. Choose position, size, and opacity. No upload, no signup.",
+    "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
   category: "image",
   accept: {
     mimeTypes: ["image/jpeg", "image/png", "image/webp"],
@@ -24,7 +24,7 @@ export const watermarkImages: Recipe = {
     label: "JPEG, PNG, or WebP images",
     mimePrefix: "image/",
   },
-  features: ["PNG", "JPEG", "WebP", "Custom position", "No upload", "Browser-based"],
+  features: ["PNG", "JPEG", "WebP", "Configurable position", "Adjustable opacity", "Browser-based"],
   definition: {
     id: "watermark-images",
     type: "group",
@@ -32,7 +32,7 @@ export const watermarkImages: Recipe = {
     name: "Watermark Images",
     position: { x: 0, y: 0 },
     metadata: {
-      description: "Accepts image files and overlays a watermark onto each one.",
+      description: "Accepts image files and overlays an image onto each one.",
     },
     parameters: {},
     inputPorts: [],
@@ -41,15 +41,15 @@ export const watermarkImages: Recipe = {
     nodes: [
       defaultInputNode(IMAGE_INPUT),
       {
-        id: "watermark-image",
-        type: "image-watermark",
+        id: "overlay",
+        type: "image-overlay",
         version: CURRENT_FORMAT_VERSION,
-        name: "Watermark",
+        name: "Overlay",
         position: { x: 250, y: 100 },
         metadata: {},
         parameters: {
-          ...getProcessorDefaults("image-watermark"),
-          watermark: "",
+          ...getProcessorDefaults("image-overlay"),
+          overlay: "",
         },
         inputPorts: [],
         outputPorts: [],
@@ -57,8 +57,8 @@ export const watermarkImages: Recipe = {
       defaultOutputNode({ label: "Watermarked Images" }),
     ],
     edges: [
-      { id: "e1", source: "input", target: "watermark-image" },
-      { id: "e2", source: "watermark-image", target: "output" },
+      { id: "e1", source: "input", target: "overlay" },
+      { id: "e2", source: "overlay", target: "output" },
     ],
   },
 };

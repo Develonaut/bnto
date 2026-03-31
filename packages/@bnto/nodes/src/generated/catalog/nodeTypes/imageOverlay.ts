@@ -6,11 +6,11 @@
 
 import type { NodeTypeInfo } from "../types";
 
-/** Node type info for image-watermark. */
-export const imageWatermarkNodeType: NodeTypeInfo = {
-  name: "image-watermark",
-  label: "Watermark",
-  description: "Overlay a watermark image onto source images.",
+/** Node type info for image-overlay. */
+export const imageOverlayNodeType: NodeTypeInfo = {
+  name: "image-overlay",
+  label: "Overlay Image",
+  description: "Overlay an image onto source images at a configurable position, size, and opacity.",
   category: "image",
   isContainer: false,
   browserCapable: true,

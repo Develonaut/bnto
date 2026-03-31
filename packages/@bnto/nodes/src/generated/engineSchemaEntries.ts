@@ -10,9 +10,9 @@ import type { NodeParamFields } from "../schemas/types";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
 import { imageConvertNodeSchema } from "./schemas/imageConvert";
+import { imageOverlayNodeSchema } from "./schemas/imageOverlay";
 import { imageResizeNodeSchema } from "./schemas/imageResize";
 import { imageStripExifNodeSchema } from "./schemas/imageStripExif";
-import { imageWatermarkNodeSchema } from "./schemas/imageWatermark";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
@@ -26,9 +26,9 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-rename": fileRenameNodeSchema,
   "image-compress": imageCompressNodeSchema,
   "image-convert": imageConvertNodeSchema,
+  "image-overlay": imageOverlayNodeSchema,
   "image-resize": imageResizeNodeSchema,
   "image-strip-exif": imageStripExifNodeSchema,
-  "image-watermark": imageWatermarkNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
@@ -43,9 +43,9 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "file-rename": {},
   "image-compress": {},
   "image-convert": {},
+  "image-overlay": {},
   "image-resize": {},
   "image-strip-exif": {},
-  "image-watermark": {},
   "spreadsheet-clean": {},
   "spreadsheet-convert": {},
   "spreadsheet-merge": {},

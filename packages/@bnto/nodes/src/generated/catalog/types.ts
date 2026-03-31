@@ -12,9 +12,9 @@ export type NodeTypeName =
   | "http-request"
   | "image-compress"
   | "image-convert"
+  | "image-overlay"
   | "image-resize"
   | "image-strip-exif"
-  | "image-watermark"
   | "input"
   | "loop"
   | "output"
@@ -62,6 +62,8 @@ export interface ProcessorParam {
     readonly required?: boolean;
   };
   readonly placeholder?: string;
+  /** Accepted MIME types for file-type parameters. */
+  readonly accept?: readonly string[];
   /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
   readonly surfaceable?: boolean;
 }

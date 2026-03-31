@@ -80,6 +80,8 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-clean")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-convert")).toBe(true);
+    expect(PROCESSOR_MAP.has("spreadsheet-merge")).toBe(true);
+    expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
   });
 

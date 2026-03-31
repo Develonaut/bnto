@@ -7,9 +7,9 @@
 import { z } from "zod";
 import type { NodeSchema } from "../../schemas/types";
 
-/** Zod schema for image-watermark node parameters. */
-export const imageWatermarkParamsSchema = z.object({
-    watermark: z.string(),
+/** Zod schema for image-overlay node parameters. */
+export const imageOverlayParamsSchema = z.object({
+    overlay: z.string(),
     position: z.enum(["top-left","top-center","top-right","middle-left","center","middle-right","bottom-left","bottom-center","bottom-right"] as const).optional().default("bottom-right"),
     size: z.number().min(1).max(500).optional().default(25),
     opacity: z.number().min(0).max(100).optional().default(80),
@@ -18,30 +18,30 @@ export const imageWatermarkParamsSchema = z.object({
     quality: z.number().min(1).max(100).optional().default(80),
 });
 
-/** Inferred TypeScript type for image-watermark node parameters. */
-export type ImageWatermarkParams = z.infer<typeof imageWatermarkParamsSchema>;
+/** Inferred TypeScript type for image-overlay node parameters. */
+export type ImageOverlayParams = z.infer<typeof imageOverlayParamsSchema>;
 
-/** Full schema definition for the image-watermark node type. */
-export const imageWatermarkNodeSchema: NodeSchema = {
-  nodeType: "image-watermark",
+/** Full schema definition for the image-overlay node type. */
+export const imageOverlayNodeSchema: NodeSchema = {
+  nodeType: "image-overlay",
   schemaVersion: 1,
-  schema: imageWatermarkParamsSchema,
+  schema: imageOverlayParamsSchema,
   params: {
-    watermark: {
-      label: "Watermark Image",
-      description: "The watermark image to overlay (base64-encoded).",
+    overlay: {
+      label: "Overlay Image",
+      description: "The image to overlay (base64-encoded).",
     },
     position: {
       label: "Position",
-      description: "Where to place the watermark on the image.",
+      description: "Where to place the overlay on the image.",
     },
     size: {
       label: "Size",
-      description: "Watermark width as a percentage of the source image width.",
+      description: "Overlay width as a percentage of the source image width.",
     },
     opacity: {
       label: "Opacity",
-      description: "Watermark transparency (0 = invisible, 100 = fully opaque).",
+      description: "Overlay transparency (0 = invisible, 100 = fully opaque).",
     },
     offsetX: {
       label: "Offset X",

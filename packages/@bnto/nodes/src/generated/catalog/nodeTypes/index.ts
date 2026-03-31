@@ -12,9 +12,9 @@ import { groupNodeType } from "./group";
 import { httpRequestNodeType } from "./httpRequest";
 import { imageCompressNodeType } from "./imageCompress";
 import { imageConvertNodeType } from "./imageConvert";
+import { imageOverlayNodeType } from "./imageOverlay";
 import { imageResizeNodeType } from "./imageResize";
 import { imageStripExifNodeType } from "./imageStripExif";
-import { imageWatermarkNodeType } from "./imageWatermark";
 import { inputNodeType } from "./input";
 import { loopNodeType } from "./loop";
 import { outputNodeType } from "./output";
@@ -37,9 +37,9 @@ export const NODE_TYPES = {
   httpRequest: "http-request",
   imageCompress: "image-compress",
   imageConvert: "image-convert",
+  imageOverlay: "image-overlay",
   imageResize: "image-resize",
   imageStripExif: "image-strip-exif",
-  imageWatermark: "image-watermark",
   input: "input",
   loop: "loop",
   output: "output",
@@ -66,9 +66,9 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "http-request": httpRequestNodeType,
   "image-compress": imageCompressNodeType,
   "image-convert": imageConvertNodeType,
+  "image-overlay": imageOverlayNodeType,
   "image-resize": imageResizeNodeType,
   "image-strip-exif": imageStripExifNodeType,
-  "image-watermark": imageWatermarkNodeType,
   "input": inputNodeType,
   "loop": loopNodeType,
   "output": outputNodeType,
