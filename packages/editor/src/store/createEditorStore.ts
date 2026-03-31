@@ -24,8 +24,8 @@ import { createContainerActions } from "./storeContainerActions";
 import { createExecutionActions } from "./storeExecutionActions";
 import { createUtilityActions } from "./storeUtilityActions";
 
-function createEditorStore(definition?: Definition, cloudId?: string) {
-  const initial = resolveInitialState(definition, cloudId);
+function createEditorStore(definition?: Definition) {
+  const initial = resolveInitialState(definition);
 
   const store = createEnhancedStore<EditorStore>()((set, get) => ({
     ...buildInitialState(initial),

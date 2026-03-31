@@ -30,19 +30,11 @@ function toSlug(name: string): string {
 
 function metadataFromBlank(): RecipeMetadata {
   const def = createBlankDefinition();
-  return { id: def.id, name: def.name, slug: toSlug(def.name), cloudId: null };
+  return { id: def.id, name: def.name, slug: toSlug(def.name) };
 }
 
-function metadataFromDefinition(
-  def: { id: string; name: string },
-  cloudId?: string,
-): RecipeMetadata {
-  return {
-    id: def.id,
-    name: def.name,
-    slug: toSlug(def.name),
-    cloudId: cloudId ?? null,
-  };
+function metadataFromDefinition(def: { id: string; name: string }): RecipeMetadata {
+  return { id: def.id, name: def.name, slug: toSlug(def.name) };
 }
 
 // ---------------------------------------------------------------------------
@@ -61,12 +53,12 @@ function findPrimaryNodeId(configs: NodeConfigs): string | null {
 // Resolve initial state from definition or blank
 // ---------------------------------------------------------------------------
 
-function resolveInitialState(definition?: Definition, cloudId?: string) {
+function resolveInitialState(definition?: Definition) {
   if (definition) {
     const { nodes, configs } = definitionToGraph(definition);
     return {
       definition,
-      metadata: metadataFromDefinition(definition, cloudId),
+      metadata: metadataFromDefinition(definition),
       nodes,
       configs,
       selectedNodeId: findPrimaryNodeId(configs),

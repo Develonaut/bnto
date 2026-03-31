@@ -12,7 +12,6 @@ import {
   FileUpIcon,
   MenuSeparator,
   PenLineIcon,
-  CloudIcon,
   CloudOffIcon,
   Heading,
   Text,
@@ -36,7 +35,6 @@ interface FileMenuItemsProps {
   canDownload: boolean;
   recipeName: string;
   statusText: string;
-  isCloud: boolean;
 }
 
 /** Track sync status with relative timestamp. */
@@ -66,7 +64,6 @@ function FileMenuItems({
   canDownload,
   recipeName,
   statusText,
-  isCloud,
 }: FileMenuItemsProps) {
   return (
     <MenuContent side="top" className="w-52 p-1">
@@ -75,11 +72,7 @@ function FileMenuItems({
           {recipeName}
         </Heading>
         <Row className="mt-1 gap-1 items-center">
-          {isCloud ? (
-            <CloudIcon className="size-3 text-muted-foreground" />
-          ) : (
-            <CloudOffIcon className="size-3 text-muted-foreground" />
-          )}
+          <CloudOffIcon className="size-3 text-muted-foreground" />
           <Text size="xs" color="muted">
             {statusText}
           </Text>
@@ -110,7 +103,6 @@ function FileMenuButton({ onRename, onImport }: FileMenuButtonProps) {
   const canDownload = validationErrors.length === 0 && nodes.length > 0;
   const handleNew = useCallback(() => editor.definition.createBlank(), [editor]);
   const download = useCallback(() => downloadDefinition(editor.definition), [editor]);
-  const isCloud = recipeMetadata.cloudId !== null;
   const statusText = useSyncStatus(isDirty);
 
   return (
@@ -130,7 +122,6 @@ function FileMenuButton({ onRename, onImport }: FileMenuButtonProps) {
         canDownload={canDownload}
         recipeName={recipeMetadata.name}
         statusText={statusText}
-        isCloud={isCloud}
       />
     </Menu>
   );

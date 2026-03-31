@@ -55,7 +55,6 @@ describe("createDefinitionService", () => {
       id: "custom",
       name: "Custom",
       slug: "custom",
-      cloudId: null,
     });
     expect(storeApi.getState().recipeMetadata.name).toBe("Custom");
   });

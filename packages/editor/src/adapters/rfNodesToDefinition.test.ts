@@ -14,7 +14,7 @@ function metaOf(def: Definition): RecipeMetadata {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-  return { id: def.id, name: def.name, slug: slug || "untitled", cloudId: null };
+  return { id: def.id, name: def.name, slug: slug || "untitled" };
 }
 
 describe("rfNodesToDefinition", () => {

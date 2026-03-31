@@ -1,4 +1,5 @@
 import { Button, Row } from "@bnto/ui";
+import { NewRecipeMobileButton } from "../NewRecipeMobileButton";
 import { PAGE_LINKS } from "../nav";
 import { MobileNavGitHubButton } from "./MobileNavGitHubButton";
 
@@ -9,6 +10,7 @@ interface MobileNavActionsProps {
 export function MobileNavActions({ onClose }: MobileNavActionsProps) {
   return (
     <Row className="gap-4">
+      <NewRecipeMobileButton onClick={onClose} />
       <Button variant="outline" href="/explore" onClick={onClose} data-testid="mobile-link-explore">
         Explore
       </Button>

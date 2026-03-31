@@ -48,7 +48,6 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
       id: "root",
       name: "Test Recipe",
       slug: "test-recipe",
-      cloudId: null,
     },
     isDirty: false,
     validationErrors: [],

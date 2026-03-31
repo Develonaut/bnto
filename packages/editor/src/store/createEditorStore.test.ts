@@ -146,7 +146,6 @@ describe("createEditorStore", () => {
         id: "new-id",
         name: "New Name",
         slug: "new-name",
-        cloudId: null,
       });
       expect(state(store).recipeMetadata.name).toBe("New Name");
       expect(state(store).isDirty).toBe(true);
