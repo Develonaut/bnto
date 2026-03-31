@@ -15,7 +15,7 @@ interface FooterSection {
 }
 
 /** Recipe categories from the registry + static company links. */
-function buildFooterSections(): FooterSection[] {
+const buildFooterSections = (): FooterSection[] => {
   const recipeSections: FooterSection[] = RECIPE_CATEGORIES.map((cat) => ({
     title: cat.title,
     links: cat.links.map((link) => ({ name: link.label, href: link.url })),
@@ -31,15 +31,14 @@ function buildFooterSections(): FooterSection[] {
   };
 
   return [...recipeSections, companySection];
-}
+};
 
 const FOOTER_SECTIONS = buildFooterSections();
 
-function externalProps(link: FooterLink) {
-  return link.external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {};
-}
+const externalProps = (link: FooterLink) =>
+  link.external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {};
 
-function FooterSectionColumn({ section }: { section: FooterSection }) {
+export function FooterSectionColumn({ section }: { section: FooterSection }) {
   return (
     <div>
       <Text

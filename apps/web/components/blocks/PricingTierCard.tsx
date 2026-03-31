@@ -14,7 +14,7 @@ interface PricingTierCardProps {
   highlight?: boolean;
 }
 
-function FeatureList({ features }: { features: string[] }) {
+export function FeatureList({ features }: { features: string[] }) {
   return (
     <Stack className="gap-3">
       {features.map((feature) => (

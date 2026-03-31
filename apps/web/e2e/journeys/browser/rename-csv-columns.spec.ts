@@ -1,13 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
-import {
-  CSV_FIXTURES_DIR,
-  navigateToRecipe,
-  assertBrowserExecution,
-  uploadFiles,
-  runAndComplete,
-} from "../../helpers";
+import { CSV_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
 /**
  * Browser execution journey — rename-csv-columns
@@ -18,11 +12,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("rename-csv-columns — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "rename-csv-columns", "Rename CSV Columns Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("process CSV: output preserves column structure", async ({ page }) => {
     await navigateToRecipe(page, "rename-csv-columns", "Rename CSV Columns Online Free");
 

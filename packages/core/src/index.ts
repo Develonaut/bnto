@@ -56,6 +56,8 @@ export type { FileResultDisplay } from "./utils/deriveFileResultProps";
 
 // ── Store factories (for app-layer orchestration) ─────────────────────────
 export { createEnhancedStore } from "./stores/createEnhancedStore";
+export { createStoreContext } from "./stores/CreateStoreContext";
+export type { StoreContext } from "./stores/CreateStoreContext";
 
 // ── Store utilities (for app-layer selectors) ────────────────────────────
 export { useShallow } from "zustand/react/shallow";

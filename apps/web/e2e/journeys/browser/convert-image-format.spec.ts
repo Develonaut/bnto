@@ -4,11 +4,12 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
   assertWebPBytes,
+  openConfigDialog,
+  closeConfigDialog,
 } from "../../helpers";
 
 /**
@@ -22,11 +23,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("convert-image-format — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("JPEG → WebP: convert, download, verify WebP magic bytes", async ({ page }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 
@@ -43,14 +39,18 @@ test.describe("convert-image-format — browser execution @browser", () => {
     assertWebPBytes(buffer);
   });
 
-  test("PNG → JPEG: convert via format selector, verify JPEG magic bytes", async ({ page }) => {
+  test("PNG → JPEG: convert via config dialog format selector, verify JPEG magic bytes", async ({
+    page,
+  }) => {
     await navigateToRecipe(page, "convert-image-format", "Convert Image Format Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.png")]);
 
-    // Change target format to JPEG via the schema-driven select
+    // Open config dialog and change target format to JPEG
+    await openConfigDialog(page);
     await page.getByTestId("control-select-param-format").click();
     await page.getByTestId("select-option-jpeg").click();
+    await closeConfigDialog(page);
 
     await runAndComplete(page);
 

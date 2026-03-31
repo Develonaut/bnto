@@ -2,7 +2,7 @@ import { Heading, Stack, Text } from "@bnto/ui";
 
 import { PricingTiers } from "./PricingTiers";
 
-function PricingHeader() {
+export function PricingHeader() {
   return (
     <Stack gap="md">
       <Heading level={2}>Simple pricing.</Heading>

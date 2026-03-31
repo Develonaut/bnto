@@ -34,7 +34,7 @@ interface AuthGateActionProps {
  * Wraps an interactive element. Authenticated users click through normally.
  * Unauthenticated users see a conversion prompt.
  */
-function AuthGateAction({
+export function AuthGateAction({
   children,
   title = "Sign up to continue",
   description = "Create a free account to unlock this feature.",

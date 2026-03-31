@@ -2,7 +2,15 @@ import path from "path";
 import fs from "fs";
 import type { Page } from "@playwright/test";
 import { test, expect } from "../../fixtures";
-import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
+import {
+  IMAGE_FIXTURES_DIR,
+  navigateToRecipe,
+  uploadFiles,
+  runAndComplete,
+  openConfigDialog,
+  closeConfigDialog,
+  runAndCaptureAutoDownload,
+} from "../../helpers";
 
 /**
  * Advanced compress-images tests: compression presets and batch processing.
@@ -16,12 +24,15 @@ import { IMAGE_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } fro
 const PRESET_LABELS = ["Draft", "Balanced", "Maximum"] as const;
 
 /**
- * Select a compression preset by clicking its label button.
+ * Select a compression preset by opening the config dialog, clicking
+ * the preset label, and closing the dialog.
  * Presets: 0=Draft(60), 1=Balanced(80), 2=Maximum(100).
  */
 async function selectPreset(page: Page, presetIndex: number) {
+  await openConfigDialog(page);
   const label = PRESET_LABELS[presetIndex];
   await page.getByTestId("slider-preset", `[data-preset-label="${label}"]`).click();
+  await closeConfigDialog(page);
 }
 
 /**
@@ -57,7 +68,7 @@ test.describe("compress-images — configuration @browser", () => {
 });
 
 test.describe("compress-images — batch processing @browser", () => {
-  test("5 mixed-codec files: all compress and show Download All", async ({ page }) => {
+  test("5 mixed-codec files: all compress and auto-download as ZIP", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     const batchFiles = ["small.jpg", "small.png", "small.webp", "medium.jpg", "medium.png"];
@@ -67,12 +78,11 @@ test.describe("compress-images — batch processing @browser", () => {
       batchFiles.map((f) => path.join(IMAGE_FIXTURES_DIR, f)),
     );
 
-    await runAndComplete(page, { timeout: 60000 });
+    const { download } = await runAndCaptureAutoDownload(page, { timeout: 60000 });
+    expect(download.suggestedFilename()).toBe("compress-images-results.zip");
 
     const outputFiles = page.getByTestId("output-file");
     await expect(outputFiles).toHaveCount(5);
-
-    await expect(page.getByTestId("download-all-button", ":visible")).toBeVisible();
   });
 
   test("multi-file progress is monotonic (never decreases)", async ({ page }) => {
@@ -101,7 +111,7 @@ test.describe("compress-images — batch processing @browser", () => {
       observer.observe(document.body, {
         subtree: true,
         attributes: true,
-        attributeFilter: ["data-overall-percent", "data-status", "data-phase"],
+        attributeFilter: ["data-overall-percent", "data-status", "data-step"],
       });
       (window as any).__progressObserver = observer;
     });

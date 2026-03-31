@@ -30,7 +30,7 @@ export const PopupContentInner = forwardRef<
       sideOffset={POPUP_OFFSET_PX[offset]}
       collisionBoundary={boundary ?? undefined}
       collisionPadding={boundaryPadding}
-      className="z-dropdown outline-hidden"
+      className="z-modal outline-hidden"
       {...props}
     >
       <Popup side={side} elevation={elevation} className={className}>

@@ -4,12 +4,12 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
-  downloadAllAsZip,
+  runAndCaptureAutoDownload,
   assertWebPBytes,
+  getWebPDimensions,
 } from "../../helpers";
 
 /**
@@ -23,15 +23,11 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("optimize-images-for-web — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
-    await assertBrowserExecution(page);
-  });
-
-  test("single JPEG: resize + convert + compress lifecycle", async ({ page }) => {
+  test("single JPEG: resize + convert + compress, verify WebP output", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
-    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
+    // large.jpg is 1200x800, pipeline resizes to 800px width → converts to WebP → compresses
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "large.jpg")]);
 
     await runAndComplete(page);
 
@@ -46,10 +42,16 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     });
 
     assertWebPBytes(buffer);
-    expect(buffer.length).toBeGreaterThan(0);
+
+    // Verify dimensions — default resize width is 800px, input was 1200px wide
+    const dims = getWebPDimensions(buffer);
+    expect(dims.width).toBe(800);
+    // Aspect ratio preserved: 1200x800 → 800x533
+    expect(dims.height).toBeGreaterThan(0);
+    expect(dims.height).toBeLessThan(800);
   });
 
-  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
+  test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
     await uploadFiles(page, [
@@ -57,15 +59,13 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("optimize-images-for-web-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-
-    const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe("optimize-images-for-web-results.zip");
   });
 
-  test("back button resets from completed to configure phase", async ({ page }) => {
+  test("back button resets from completed to configure step", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 
     await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "small.jpg")]);
@@ -75,7 +75,7 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     const backButton = page.getByTestId("back-button");
     await backButton.click();
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(page.getByTestId("run-button")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

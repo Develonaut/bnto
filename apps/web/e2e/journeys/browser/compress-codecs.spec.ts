@@ -53,7 +53,7 @@ test.describe("compress-images — codec coverage @browser", () => {
     await expect(progressEl).toBeVisible({ timeout: 10000 });
 
     // Wait for completion
-    await expect(runButton).toHaveAttribute("data-phase", "completed", {
+    await expect(runButton).toHaveAttribute("data-step", "completed", {
       timeout: 60000,
     });
 

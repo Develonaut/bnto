@@ -13,7 +13,7 @@ import {
  *
  * Five automatic behaviors:
  *
- * 1. **Enhanced getByTestId** -- supports modifier args (`:visible`, `[data-phase="..."]`).
+ * 1. **Enhanced getByTestId** -- supports modifier args (`:visible`, `[data-step="..."]`).
  *    Other locator methods emit a deprecation warning once per method per test.
  *
  * 2. **Console/page error capture** -- logs errors with `[e2e errors]` prefix.

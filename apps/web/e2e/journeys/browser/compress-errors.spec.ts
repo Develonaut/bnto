@@ -23,13 +23,13 @@ test.describe("compress-images — error handling @browser", () => {
       buffer: Buffer.from("This is plain text, not a JPEG image."),
     });
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
 
     const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
-    // Should transition to failed phase
-    await expect(runButton).toHaveAttribute("data-phase", "failed", {
+    // Should transition to failed step
+    await expect(runButton).toHaveAttribute("data-step", "failed", {
       timeout: 30000,
     });
 
@@ -37,12 +37,12 @@ test.describe("compress-images — error handling @browser", () => {
     const toolbarProgress = page.getByTestId("toolbar-progress");
     await expect(toolbarProgress).toHaveAttribute("data-status", "failed");
 
-    // Page should still be functional — back button resets to configure phase
+    // Page should still be functional — back button resets to configure step
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
     const backButton = page.getByTestId("back-button");
     await backButton.click();
-    await expect(page.getByTestId("file-count")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(page.getByTestId("run-button")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 
   test("corrupt image: error card with Try Again", async ({ page }) => {
@@ -59,12 +59,12 @@ test.describe("compress-images — error handling @browser", () => {
       ]),
     });
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
+    await expect(page.getByTestId("run-button")).toBeVisible();
 
     const runButton = page.getByTestId("run-button", ":visible");
     await runButton.click();
 
-    await expect(runButton).toHaveAttribute("data-phase", "failed", {
+    await expect(runButton).toHaveAttribute("data-step", "failed", {
       timeout: 30000,
     });
 
@@ -72,11 +72,11 @@ test.describe("compress-images — error handling @browser", () => {
     const toolbarProgress = page.getByTestId("toolbar-progress");
     await expect(toolbarProgress).toHaveAttribute("data-status", "failed");
 
-    // Back button resets to configure phase, ready to try different files
+    // Back button resets to configure step, ready to try different files
     await expect(runButton).toHaveAttribute("aria-label", "Try again");
     const backButton = page.getByTestId("back-button");
     await backButton.click();
-    await expect(page.getByTestId("file-count")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
+    await expect(page.getByTestId("run-button")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

@@ -8,7 +8,7 @@ import { CircleUserIcon, Menu, MenuTrigger, MenuContent, Stack } from "@bnto/ui"
 
 import { NavUserMenuContent } from "./NavUserMenuContent";
 
-function NavUserTrigger() {
+export function NavUserTrigger() {
   return (
     <MenuTrigger
       variant="primary"

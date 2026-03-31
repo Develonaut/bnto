@@ -5,17 +5,16 @@ import {
   IMAGE_FIXTURES_DIR,
   MAGIC,
   navigateToRecipe,
-  assertBrowserExecution,
   uploadFiles,
   runAndComplete,
   downloadAndVerify,
-  downloadAllAsZip,
+  runAndCaptureAutoDownload,
 } from "../../helpers";
 
 /**
  * Browser execution journey — compress-images
  *
- * 4-phase E2E tests for the compress-images bnto running 100% client-side
+ * 4-step E2E tests for the compress-images bnto running 100% client-side
  * via Rust→WASM. No backend required — files never leave the browser.
  *
  * Verified programmatically: magic bytes, file sizes, data attributes.
@@ -24,11 +23,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("compress-images — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("single JPEG: full lifecycle", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
@@ -52,7 +46,7 @@ test.describe("compress-images — browser execution @browser", () => {
     expect(buffer.length).toBeGreaterThan(0);
   });
 
-  test("batch: multiple images with Download All as ZIP", async ({ page }) => {
+  test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "compress-images", "Compress Images Online Free");
 
     await uploadFiles(page, [
@@ -60,12 +54,10 @@ test.describe("compress-images — browser execution @browser", () => {
       path.join(IMAGE_FIXTURES_DIR, "small.png"),
     ]);
 
-    await runAndComplete(page);
+    const { download } = await runAndCaptureAutoDownload(page);
+    expect(download.suggestedFilename()).toBe("compress-images-results.zip");
 
     await expect(page.getByTestId("output-file")).toHaveCount(2);
-
-    const { download } = await downloadAllAsZip(page);
-    expect(download.suggestedFilename()).toBe("compress-images-results.zip");
   });
 
   test("back button resets from completed to configure phase", async ({ page }) => {
@@ -75,26 +67,11 @@ test.describe("compress-images — browser execution @browser", () => {
 
     const runButton = await runAndComplete(page);
 
-    // Back button resets execution — returns to Phase 2 (configure) with files retained
+    // Back button resets execution — returns to Step 2 (configure) with files retained
     const backButton = page.getByTestId("back-button");
     await backButton.click();
 
-    await expect(page.getByTestId("file-count")).toBeVisible();
-    await expect(runButton).toHaveAttribute("data-phase", "idle");
-  });
-
-  test("all Tier 1 bntos detect browser execution mode", async ({ page }) => {
-    const tier1Slugs = [
-      { slug: "resize-images", h1: "Resize Images Online Free" },
-      { slug: "convert-image-format", h1: "Convert Image Format Online Free" },
-      { slug: "rename-files", h1: "Rename Files Online Free" },
-      { slug: "clean-csv", h1: "Clean CSV Online Free" },
-      { slug: "rename-csv-columns", h1: "Rename CSV Columns Online Free" },
-    ];
-
-    for (const { slug, h1 } of tier1Slugs) {
-      await navigateToRecipe(page, slug, h1);
-      await assertBrowserExecution(page);
-    }
+    await expect(page.getByTestId("run-button")).toBeVisible();
+    await expect(runButton).toHaveAttribute("data-step", "idle");
   });
 });

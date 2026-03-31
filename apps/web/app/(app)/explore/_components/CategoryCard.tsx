@@ -42,7 +42,7 @@ export function CategoryCard({
   );
 }
 
-function CategoryIcon({
+export function CategoryIcon({
   Icon,
   active,
   dimmed,
@@ -69,7 +69,7 @@ function CategoryIcon({
   );
 }
 
-function CategoryLabel({
+export function CategoryLabel({
   label,
   count,
   dimmed,

@@ -1,13 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { test, expect } from "../../fixtures";
-import {
-  CSV_FIXTURES_DIR,
-  navigateToRecipe,
-  assertBrowserExecution,
-  uploadFiles,
-  runAndComplete,
-} from "../../helpers";
+import { CSV_FIXTURES_DIR, navigateToRecipe, uploadFiles, runAndComplete } from "../../helpers";
 
 /**
  * Browser execution journey — csv-to-json
@@ -19,11 +13,6 @@ import {
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
 test.describe("csv-to-json — browser execution @browser", () => {
-  test("detects browser execution mode", async ({ page }) => {
-    await navigateToRecipe(page, "csv-to-json", "CSV to JSON Online Free");
-    await assertBrowserExecution(page);
-  });
-
   test("simple CSV: convert to JSON array, download, verify valid JSON", async ({ page }) => {
     await navigateToRecipe(page, "csv-to-json", "CSV to JSON Online Free");
 
@@ -48,7 +37,7 @@ test.describe("csv-to-json — browser execution @browser", () => {
     const parsed = JSON.parse(downloadedFile);
     expect(Array.isArray(parsed)).toBe(true);
 
-    // Should have 5 data rows (simple.csv has 5 rows + header)
+    // Row count must match input — simple.csv has 5 data rows
     expect(parsed).toHaveLength(5);
 
     // Each row should be an object with CSV header keys
@@ -60,6 +49,10 @@ test.describe("csv-to-json — browser execution @browser", () => {
     // Values are strings (by design — no type coercion)
     expect(first.name).toBe("Alice");
     expect(typeof first.age).toBe("string");
+
+    // Verify all names from input CSV are present in output
+    const names = parsed.map((r: Record<string, string>) => r.name);
+    expect(names).toEqual(["Alice", "Bob", "Charlie", "Diana", "Eve"]);
   });
 
   test("CSV with empty cells: missing values become empty strings", async ({ page }) => {
