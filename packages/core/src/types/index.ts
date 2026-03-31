@@ -35,3 +35,5 @@ export type {
 export type { TelemetryConfig, TelemetryProperties, TelemetryUserTraits } from "./telemetry";
 
 export type { FlagResult, FlagSubscriber } from "./flags";
+
+export type { UserRecipe } from "./recipe";

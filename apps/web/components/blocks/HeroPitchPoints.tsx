@@ -20,7 +20,7 @@ interface PitchPoint {
 const PITCH_POINTS: PitchPoint[] = [
   { icon: ZapIcon, label: `${BNTO_REGISTRY.length} free recipes, no limits, no signup` },
   { icon: ShieldCheckIcon, label: "Runs in your browser. Files never leave your device" },
-  { icon: BlocksIcon, label: "Compose multi-step recipes from reusable nodes" },
+  { icon: BlocksIcon, label: "Build custom recipes with the visual editor" },
   { icon: GlobeIcon, label: "Open source (MIT). Inspect every line" },
 ];
 

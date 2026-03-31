@@ -13,6 +13,7 @@
 export const ROUTES = {
   home: "/",
   explore: "/explore",
+  editor: "/editor",
   signin: "/signin",
   signup: "/signup",
   waitlist: "/waitlist",
@@ -32,6 +33,11 @@ export const AUTH_PATHS = [ROUTES.signin, ROUTES.signup] as const;
  * Unauthenticated users are redirected to /signin.
  */
 export const PROTECTED_PATHS = [ROUTES.executions, ROUTES.settings] as const;
+
+/** Returns the editor URL for a saved recipe. */
+export function editorUrl(recipeId: string): string {
+  return `/editor?recipe=${recipeId}`;
+}
 
 /**
  * Validates a returnTo path is safe to redirect to (internal, relative path).

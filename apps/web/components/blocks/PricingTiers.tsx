@@ -4,7 +4,7 @@ const FREE_FEATURES = [
   "Unlimited image compression, resizing, and conversion",
   "Unlimited CSV cleaning and column renaming",
   "Unlimited batch file renaming",
-  "Multi-step recipes — chain processing nodes together",
+  "Visual recipe editor — build custom multi-step recipes",
   "Process multiple files at once",
   "No account required",
   "Files never leave your browser",
@@ -13,10 +13,10 @@ const FREE_FEATURES = [
 
 const PRO_FEATURES = [
   "Everything in Free",
+  "Save and manage recipes in the cloud",
   "AI-powered processing (Claude, GPT)",
   "Server-side video and audio nodes",
   "Shell command execution (ffmpeg, ImageMagick)",
-  "Extended execution history",
 ];
 
 export function PricingTiers() {
