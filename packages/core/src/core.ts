@@ -6,7 +6,7 @@
  * Wires services into clients. This is the base layer that reactCore.ts
  * enhances with React hooks for the final public `core` export.
  *
- * 6 domains: executions, user, auth, telemetry, registry, flags.
+ * 7 domains: recipes, executions, user, auth, telemetry, registry, flags.
  *
  * Dependency flow:
  *   core.ts -> clients -> services -> adapters -> @bnto/backend
@@ -18,6 +18,7 @@ import { createUserService } from "./services/userService";
 import { createAnalyticsService } from "./services/analyticsService";
 import { createBrowserExecutionService } from "./services/browserExecutionService";
 import { createExecutionClient } from "./clients/executionClient";
+import { createRecipeClient } from "./clients/recipeClient";
 import { createUserClient } from "./clients/userClient";
 import { createAuthClient } from "./clients/authClient";
 import { createTelemetryClient } from "./clients/telemetryClient";
@@ -50,6 +51,7 @@ const downloadService = createDownloadService();
 // ── Clients (cross-domain, public API) ────────────────────────────────────
 // Auth client first — other clients depend on it for imperative auth checks.
 const authClient = createAuthClient();
+const recipeClient = createRecipeClient();
 const executionClient = createExecutionClient(
   executionService,
   browserExecutionService,
@@ -63,6 +65,7 @@ const flagsClient = createFlagsClient();
 
 // ── Core Singleton ────────────────────────────────────────────────────────
 export const core = {
+  recipes: recipeClient,
   executions: executionClient,
   user: userClient,
   auth: authClient,

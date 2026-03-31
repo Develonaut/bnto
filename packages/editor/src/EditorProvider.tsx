@@ -17,13 +17,12 @@ import { registerEditorDebug } from "./debug/registerEditorDebug";
 
 interface EditorProviderProps {
   definition?: Definition;
-  cloudId?: string;
   initialFiles?: File[];
   children: ReactNode;
 }
 
-function EditorProvider({ definition, cloudId, initialFiles, children }: EditorProviderProps) {
-  const [ctx] = useState<EditorContextValue>(() => createReactEditor(definition, cloudId));
+function EditorProvider({ definition, initialFiles, children }: EditorProviderProps) {
+  const [ctx] = useState<EditorContextValue>(() => createReactEditor(definition));
 
   useEffect(() => {
     return registerEditorDebug(ctx.storeApi, ctx.instance);

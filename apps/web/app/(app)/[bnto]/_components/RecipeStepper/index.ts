@@ -4,6 +4,7 @@ export { RecipeStepperDropzone } from "./RecipeStepperDropzone";
 export { RecipeStepperToolbar } from "./RecipeStepperToolbar";
 export { RecipeStepperBackButton } from "./RecipeStepperBackButton";
 export { RecipeStepperConfigButton } from "./RecipeStepperConfigDialog";
+export { RecipeStepperEditButton } from "./RecipeStepperEditButton";
 export { RecipeStepperBanner } from "./RecipeStepperBanner";
 export { RecipeStepperActions } from "./RecipeStepperActions";
 export { RunRecipeButton } from "./RunButton";

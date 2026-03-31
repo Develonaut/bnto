@@ -11,6 +11,7 @@ import {
   RecipeStepperToolbar,
   RecipeStepperBackButton,
   RecipeStepperConfigButton,
+  RecipeStepperEditButton,
   RecipeStepperBanner,
   RecipeStepperActions,
   RunRecipeButton,
@@ -66,6 +67,7 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 </RecipeStepperActions>
                 <RecipeStepperBanner />
                 <RecipeStepperActions className="ml-auto shrink-0">
+                  <RecipeStepperEditButton slug={slug} />
                   <RecipeStepperConfigButton />
                   <RunRecipeButton />
                 </RecipeStepperActions>
@@ -81,6 +83,7 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 </RecipeStepperActions>
                 <RecipeStepperBanner />
                 <RecipeStepperActions className="ml-auto shrink-0">
+                  <RecipeStepperEditButton slug={slug} />
                   <RecipeStepperConfigButton />
                   <RunRecipeButton />
                 </RecipeStepperActions>

@@ -88,7 +88,7 @@ function makeExpandedState(): EditorState {
       child1: { nodeType: "image-compress", name: "Compress Images", parameters: { quality: 95 } },
     },
     definition: makeDefinition(),
-    recipeMetadata: { id: "root", name: "Root", slug: "root", cloudId: null },
+    recipeMetadata: { id: "root", name: "Root", slug: "root" },
     isDirty: false,
     validationErrors: [],
     executionState: {},

@@ -18,7 +18,6 @@ function blankState(overrides?: Partial<EditorState>): EditorState {
       id: "test",
       name: "Test",
       slug: "test",
-      cloudId: null,
     },
     isDirty: false,
     validationErrors: [],

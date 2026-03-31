@@ -37,6 +37,9 @@ export type {
   FlagSubscriber,
 } from "./types";
 
+// ── Recipe types ───────────────────────────────────────────────────────────
+export type { UserRecipe } from "./types/recipe";
+
 // ── Auth types ────────────────────────────────────────────────────────────
 export type { AuthUser, AuthState, AuthStatus } from "./types/auth";
 
@@ -48,6 +51,9 @@ export type { ExecutionInstance } from "./services/executionInstance";
 export type { ExecutionState } from "./hooks/useExecutionState";
 export { useFileResultProps } from "./hooks/useFileResultProps";
 export type { FileResultDisplayProps } from "./hooks/useFileResultProps";
+
+// ── File transfer (module-scoped SPA navigation bridge) ─────────────────
+export { stashFilesForTransfer, claimTransferredFiles } from "./fileTransfer";
 
 // ── Utils (pure functions) ────────────────────────────────────────────────
 export { computeTotalSaved } from "./utils/computeTotalSaved";

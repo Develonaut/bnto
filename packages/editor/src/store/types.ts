@@ -60,8 +60,6 @@ interface RecipeMetadata {
   id: string;
   name: string;
   slug: string;
-  /** Convex document _id. Null if not yet saved to cloud. */
-  cloudId: string | null;
 }
 
 // ---------------------------------------------------------------------------

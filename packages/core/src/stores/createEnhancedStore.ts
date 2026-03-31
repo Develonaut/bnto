@@ -36,8 +36,8 @@ import type { PersistOptions } from "zustand/middleware";
 // ---------------------------------------------------------------------------
 
 interface EnhancedStoreOptions<T> {
-  /** Enable localStorage persistence. Pass `{ name: "store-key" }` to opt in. */
-  persist?: Pick<PersistOptions<T>, "name" | "partialize" | "version" | "migrate">;
+  /** Enable persistence. Pass `{ name: "store-key" }` to opt in. Defaults to localStorage. */
+  persist?: Pick<PersistOptions<T>, "name" | "partialize" | "version" | "migrate" | "storage">;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,7 +56,10 @@ export function createEnhancedStore<T>(options?: EnhancedStoreOptions<T>) {
     if (options?.persist) {
       // persist wraps immer — order matters: persist(immer(initializer))
       return createStore<T>()(
-        persist(immer(initializer) as StateCreator<T, [["zustand/persist", unknown]]>, options.persist),
+        persist(
+          immer(initializer) as StateCreator<T, [["zustand/persist", unknown]]>,
+          options.persist,
+        ),
       );
     }
     return createStore<T>()(immer(initializer));

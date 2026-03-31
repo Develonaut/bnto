@@ -21,7 +21,8 @@ app/
 │   └── privacy/            # Privacy policy
 ├── (auth)/                 # Auth flows
 │   └── signin/             # Sign-in page
-└── (dev)/                  # Dev-only routes (component showcase)
+├── (dev)/                  # Dev-only routes (component showcase)
+└── editor/                 # Recipe editor (beta)
 components/
 ├── blocks/                 # Business components (Navbar, Footer, RecipeGrid)
 ├── ThemeProvider.tsx        # next-themes wrapper
@@ -45,6 +46,7 @@ proxy.ts                    # Auth middleware (route protection)
 | -------------------------------------- | ---------------------------------- | ------------- |
 | `/`                                    | Home — tool grid gallery           | Public        |
 | `/compress-images`, `/clean-csv`, etc. | Tool pages — SEO-optimized, static | Public        |
+| `/editor`                              | Visual recipe editor (beta)        | Public        |
 | `/explore`                             | Recipe & node browser              | Public        |
 | `/signin`                              | Sign-in page                       | Auth redirect |
 | `/pricing`                             | Pricing info                       | Public        |

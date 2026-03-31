@@ -97,7 +97,7 @@ function buildRootDefinition(
   children: Definition[],
   definition: Definition | null,
 ): Definition {
-  const { cloudId: _, slug: __, ...rootMeta } = metadata;
+  const { slug: _, ...rootMeta } = metadata;
   return {
     ...rootMeta,
     ...resolveRootTypeAndVersion(definition),

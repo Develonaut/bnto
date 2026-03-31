@@ -72,7 +72,7 @@ function makeState(overrides?: Partial<EditorState>): EditorState {
       loop1: { nodeType: "loop", name: "Loop", parameters: {} },
     },
     definition: makeDefinition(),
-    recipeMetadata: { id: "root", name: "Root", slug: "root", cloudId: null },
+    recipeMetadata: { id: "root", name: "Root", slug: "root" },
     isDirty: false,
     validationErrors: [],
     executionState: {},
