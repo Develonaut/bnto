@@ -109,16 +109,16 @@ First multi-node predefined recipes. Each runs a pipeline of 3 operations inside
 
 ## Tier 3: Near-Term Recipes
 
-All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Requires Tier 2 (Explore & Discovery) to be complete first so new recipes automatically appear across all surfaces.
+All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Tier 2 (Explore & Discovery) is complete — new recipes automatically appear across all surfaces.
 
-| Recipe                 | Slug                | Persona   | Node Types             | Blocker                            |
-| ---------------------- | ------------------- | --------- | ---------------------- | ---------------------------------- |
-| PDF to Images          | `/pdf-to-images`    | Casual    | `pdf`                  | pdf.js + Canvas (JS)               |
-| Batch Watermark Images | `/watermark-images` | Casual    | `image`                | Rust `image` composite             |
-| Convert CSV to JSON    | `/csv-to-json`      | Developer | `csv`, `transform`     | Rust `csv`+`serde_json`            |
-| Strip EXIF Data        | `/strip-exif`       | Both      | `image`                | Rust `image` metadata strip        |
-| Merge CSVs             | `/merge-csv`        | Both      | `csv`                  | Rust `csv` concat+dedupe           |
-| Fetch & Save URL       | `/fetch-url`        | Developer | `http-request`, `file` | Hybrid — CORS limits browser reach |
+| Recipe                 | Slug                | Persona   | Node Types             | Status                        |
+| ---------------------- | ------------------- | --------- | ---------------------- | ----------------------------- |
+| Strip EXIF Data        | `/strip-exif`       | Both      | `image`                | Delivered (PR #292)           |
+| Convert CSV to JSON    | `/csv-to-json`      | Developer | `csv`, `transform`     | Delivered (PR #294)           |
+| Merge CSVs             | `/merge-csv`        | Both      | `csv`                  | Delivered (PRs #295, #296)    |
+| Batch Watermark Images | `/watermark-images` | Casual    | `image`                | Delivered (PRs #308, #309)    |
+| PDF to Images          | `/pdf-to-images`    | Casual    | `pdf`                  | Blocked: pdf.js + Canvas (JS) |
+| Fetch & Save URL       | `/fetch-url`        | Developer | `http-request`, `file` | Blocked: Hybrid — CORS limits |
 
 ---
 

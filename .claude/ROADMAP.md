@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** March 30, 2026
+**Last Updated:** April 1, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -70,7 +70,7 @@ M5: Monetization
     not artificial run limits on browser-native operations.
 ```
 
-**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. The M3 desktop decision is made: Tauri (Rust-native). Next up: schema-driven recipe config (Sprint 8.5c), reconnect editor lightweight (Sprint 8.5d), finish Tier 3 recipes (Sprint 8), then Desktop (M3) or Monetization (M5).
+**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. The M3 desktop decision is made: Tauri (Rust-native). Sprint 8.5 (schema-driven config + editor reconnect) and Sprint 8 Waves 1-2 (4 Tier 3 engine operations + recipes) complete. v0.2.0 released. Next up: Sprint 8 Wave 3 (SEO pages for Tier 3 recipes), then Desktop (M3) or Monetization (M5).
 
 ---
 
@@ -149,7 +149,7 @@ Requires server-side execution. These are the Pro tier differentiators.
 
 ## Shared Node Registry — DELIVERED
 
-`@bnto/nodes` is the engine-agnostic foundation — single source of truth for node definitions, schemas, recipes, and validation. **Built and shipping since Sprint 2B.** 12 node types, Zod parameter schemas, 8 predefined recipes, codegen from Rust engine catalog (`catalog.snapshot.json` → `generate-from-catalog.ts`).
+`@bnto/nodes` is the engine-agnostic foundation — single source of truth for node definitions, schemas, recipes, and validation. **Built and shipping since Sprint 2B.** Zod parameter schemas, codegen from Rust engine catalog (`catalog.snapshot.json` → `generate-from-catalog.ts`). Node type and recipe counts are derived from the engine catalog — see test assertions in `nodeTypes.test.ts` and `recipesCatalog.test.ts` for current numbers.
 
 ```
 packages/@bnto/nodes/
@@ -249,6 +249,9 @@ Users convert when they want something the browser can't provide alone. These ar
 | **Favorites tabled**                 | Tabled (March 2026)      | User preferences deferred to post-MVP. Revisit when engagement data signals demand.                                                              |
 | **Community recipes via GitHub**     | Decided (March 2026)     | Contributors submit `.bnto.json` PRs. Maintainer curates. No publishing platform needed for MVP.                                                 |
 | **Code Editor (CM6) tabled**         | Deep backlog             | Power-user luxury. Visual editor is the product. May revisit post-M5.                                                                            |
+| **Schema-driven recipe config**      | Delivered (March 2026)   | DynamicRecipeConfig replaces handcoded per-recipe components. Adding a recipe = automatic config UI.                                             |
+| **Image overlay/watermark**          | Delivered (April 2026)   | `image-overlay` operation in `bnto-image`. Text watermark with position/opacity/scale/color. 10+ golden tests.                                   |
+| **v0.2.0 released**                  | Shipped (April 2026)     | 14 recipes, schema-driven config, editor reconnect, 4 Tier 3 operations.                                                                         |
 
 ### Engine Decision: Rust Won (Feb 2026)
 

@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** March 30, 2026 (groomed — favorites tabled, 8.5c promoted, 8.5d added to reconnect editor as lightweight open+export tool)
+**Last Updated:** April 1, 2026 (groomed — v0.2.0 released, Sprint 8 W1-2 complete, Sprint 8.5c/8.5d complete, Sprint 8 W3 is active work)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,8 +27,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
+- **v0.2.0 released (April 2026):** 14 predefined recipes (6 Tier 1 + 2 Tier 1B + 4 Tier 2 compositions + 4 Tier 3), schema-driven config on all tool pages, editor reconnected as lightweight open+export tool
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
+- **Sprint 8 Waves 1-2 complete (April 2026):** 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, image-overlay/watermark) + recipe fixtures + golden tests + codegen
+- **Sprint 8.5 complete (March-April 2026):** Schema-driven recipe config (8.5c) + editor reconnected lightweight (8.5d) with sessionStorage persistence
 - **Editor reconnected lightweight (March 2026):** Editor routes restored in Sprint 8.5d as a lightweight open+export tool. `core.recipes` domain re-added with sessionStorage persistence (no Convex, no localStorage). Users can import/export `.bnto.json` files. Cloud-based recipe saving planned for Pro tier (accounts). Deeper editor features (code editor, expression input, edit/run mode) deferred to post-revenue.
 - **Community recipes:** Contributors submit `.bnto.json` via GitHub PRs. Maintainer curates. Accepted recipes auto-propagate via the Sprint 7 discovery infrastructure.
 - **Sprint 6 (Quality & Cleanup) complete.** Error boundaries, dead code removal, Server Component audit, auto-save, Button simplification, triage batch — all done.
@@ -47,7 +50,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] @bnto/core: Layered singleton (clients → services → adapters), React Query + Convex adapter, 38+ hooks
 - [x] @bnto/auth: `@convex-dev/auth` integration, password auth
 - [x] @bnto/backend: Convex schema (users, workflows, executions, executionLogs), auth, crons, analytics fields
-- [x] @bnto/nodes: Engine-agnostic node definitions, Zod schemas, recipes, validation (10 node types)
+- [x] @bnto/nodes: Engine-agnostic node definitions, Zod schemas, recipes, validation (node/recipe counts derived from engine catalog — see test assertions)
 - [x] @bnto/ui: Extracted Motorway design system — primitives, layout, typography, feedback, surface, interaction, overlay, animation components
 - [x] @bnto/editor: Extracted editor package — EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy
@@ -61,7 +64,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Sprint 3 pre-work: Anonymous→password userId preservation, FIXME cleanup, Knip audit, naming audit, codebase standards review, schema analytics fields
 - [x] GitHub Actions CI: Rust (fmt + clippy + unit + WASM) + TypeScript (build + lint + test) + CI Gate
 - [x] convexQuery skip guards: All adapter functions use `"skip"` for falsy IDs (PR #23)
-- [x] Format versioning + Zod node validation (Sprint 4G): `.bnto.json` format version constant, schema versioning, Zod parameter schemas for all 15 node types, schema-driven config panel with registry-based controls
+- [x] Format versioning + Zod node validation (Sprint 4G): `.bnto.json` format version constant, schema versioning, Zod parameter schemas for all node types, schema-driven config panel with registry-based controls
 - [x] Editor production route (Sprint 5 W1-W2): `/editor` route, recipe loading by ID (`?recipe={id}`), compartment node redesign (icons + category colors), "Open in Editor" clone-on-click nav integration
 - [x] Pipeline executor extraction (Sprint 4H): Runtime-agnostic `executePipeline()` in `@bnto/core`, `NodeRunner` contract, `processFiles()` removed from browser adapter, comprehensive TDD test suite
 - [x] Editor API layer (Sprint 5D): `createEditor()` factory, 5 domain clients (nodes, definition, execution, history, panels), 5 services, React binding layer (`EditorProvider`, `useEditor`, domain hooks), full component migration, deprecated hooks deleted
@@ -82,6 +85,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] `@bnto/i18n` package: Centralized string management — `t()` dot-path resolver, `useT()` hook, `en.json` app strings + auto-generated `nodes.json` from engine catalog. Type-safe `StringKey` derived from JSON (PR #282)
 - [x] Engine catalog codegen: Downstream TS values (format version, node metadata) derived from Rust engine catalog snapshot — single source of truth (PR #289)
 - [x] Recipe flattening: Predefined recipes simplified to `settings.iteration: "auto"` — removed explicit loop/group nesting, engine handles per-file iteration implicitly (PR #278)
+- [x] Sprint 8.5c (Schema-Driven Config): DynamicRecipeConfig replaces ~600 LOC of handcoded per-recipe config components. Any recipe gets config controls for free via `@bnto/form` SchemaForm (PRs #302, #303)
+- [x] Sprint 8.5d (Reconnect Editor Lightweight): Editor restored as open+export tool with sessionStorage persistence. No save, no My Recipes. Beta dialog, import/export, E2E test suite (PR #305)
+- [x] Tier 3 engine operations: strip-exif (PR #292), merge-csv (PRs #295, #296), csv-to-json (PR #294), image-overlay/watermark (PR #308) — all with recipe fixtures, golden tests, codegen
+- [x] Watermark preview controls: Engine-parity positioning (9 positions), opacity, scale, color, live canvas preview (PR #309)
+- [x] Release v0.2.0 (April 2026): 14 predefined recipes, schema-driven config, editor reconnect, 4 Tier 3 operations
 - [x] Editor UX polish (Sprint 7): Config panel tabs + sync status (PR #283), unified toolbar layout (PR #284), carry flow config into editor (PR #285), unified run button (PR #286), carry dropped files into editor (PR #287), fix editor reset + returnTo redirects (PR #288)
 - [x] Quality tooling: Knip dead-code detection in lefthook (PR #270), ESLint complexity rules promoted to error (PR #271), ESLint extended to all packages (PR #273), non-null assertions replaced (PR #274), SEO/README/copy improvements (PR #275), cloud→local recipe hydration (PR #276), footer links from registry (PR #277)
 
@@ -212,11 +220,11 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**M2 is delivered.** Sprint 7 complete. Sprint 8 Wave 1 partially done (3/4 engine operations). Direction: **Sprint 8.5c (schema-driven config) → Sprint 8.5d (reconnect editor lightweight) → Sprint 8 Waves 2-3 (finish Tier 3 recipes)** → then Desktop (M3) or Monetization (M5).
+**Sprint 8 Waves 1-2 complete.** All 4 Tier 3 engine operations shipped (strip-exif, merge-csv, csv-to-json, watermark/image-overlay). Recipe fixtures, golden tests, and codegen all done. Schema-driven config (8.5c) and editor reconnect (8.5d) both complete. **v0.2.0 released.**
 
-**The focus:** Make tool pages fully usable with dynamic config (8.5c), then bring the editor back as a lightweight open+export tool with no persistence (8.5d). Favorites/My Recipes tabled — user preferences are out of MVP scope. The `@bnto/editor` package is intact; the web app just needs a thin route + sessionStorage layer to reconnect it.
+**Sprint 8 Wave 3 is the active work:** SEO pages, E2E tests, and Lighthouse audit for the 4 Tier 3 recipes (`/strip-exif`, `/merge-csv`, `/csv-to-json`, `/watermark-images`). These recipes already appear on `/explore` and the home grid via `core.registry` — Wave 3 adds the dedicated SEO landing pages with metadata, JSON-LD, and sitemap entries.
 
-**Next up:** Sprint 8.5c (schema-driven recipe config) — immediate. Sprint 8.5a (disconnect editor) is complete.
+**After Sprint 8:** Desktop (M3) or Monetization (M5). Product Hunt launch candidate after Wave 3 ships (catalog feels substantial).
 
 ---
 
@@ -289,9 +297,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ---
 
-## Active Sprint
+## Completed Sprint
 
-### Sprint 7: Explore & Discovery Infrastructure (Tier 2)
+### Sprint 7: Explore & Discovery Infrastructure (Tier 2) — COMPLETE
 
 **Goal:** Unify how recipes and nodes are listed across all surfaces, then build a dedicated Explore page. When this sprint is done, adding a recipe to `@bnto/nodes` automatically appears on every surface (home, Explore page, editor palette, sitemap, README). This is a prerequisite for Tier 3 recipe expansion.
 
@@ -359,7 +367,9 @@ Design doc: `strategy/unified-recipe-model.md`
 
 ---
 
-## Sprint 8: Tier 3 Near-Term Recipes
+## Active Sprint
+
+### Sprint 8: Tier 3 Near-Term Recipes
 
 **Goal:** Expand the recipe catalog with high-SEO-value recipes that run 100% client-side. Each recipe needs: Rust engine operation, `@bnto/nodes` recipe fixture, SEO page with metadata + JSON-LD, E2E verification. This is the first product expansion since M1.
 
@@ -377,19 +387,19 @@ Design doc: `strategy/unified-recipe-model.md`
 
 #### Wave 1 (parallel — engine operations)
 
-- [ ] `engine` — **`bnto-image`: composite/watermark operation** — overlay image onto source. Needed for `/watermark-images` (Tier 3, 30K+ monthly searches). Reference: Go `image.go` composite logic
+- [x] `engine` — **`bnto-image`: image-overlay/watermark operation** — overlay text or image onto source. Needed for `/watermark-images` (Tier 3, 30K+ monthly searches). Position, opacity, scale, color params. Golden tests for multiple orientations and positions (PR #308, #309)
 - [x] `engine` — **`bnto-image`: EXIF metadata strip** — strip all EXIF data from images. Needed for `/strip-exif` (Tier 3, 15K+ monthly searches)
 - [x] `engine` — **`bnto-csv`: merge operation** — concatenate + deduplicate multiple CSVs. Needed for `/merge-csv` (Tier 3, 12K+ monthly searches)
 - [x] `engine` — **`bnto-csv`: CSV-to-JSON conversion** — transform CSV rows to JSON objects. Needed for `/csv-to-json` (Tier 3, 25K+ monthly searches)
 
-#### Wave 2 (parallel — recipes + codegen) — blocked on Sprint 8.5c (schema-driven config)
+#### Wave 2 (parallel — recipes + codegen)
 
-- [ ] `@bnto/nodes` — **Recipe fixture + codegen for watermark-images**: Create `.bnto.json` definition, run `task wasm:codegen` to regenerate TypeScript. Verify Zod schemas for watermark params
-- [ ] `engine` — **CLI golden tests for watermark-images**: Add golden test fixture (byte-exact output verification)
+- [x] `@bnto/nodes` — **Recipe fixture + codegen for watermark-images**: `.bnto.json` definition created, codegen propagated, Zod schemas verified (PRs #308, #309)
+- [x] `engine` — **CLI golden tests for watermark-images**: 10+ golden test fixtures covering orientations, positions, opacity, scale (PRs #308, #309)
 - [x] `@bnto/nodes` — **Recipe fixtures for strip-exif, merge-csv, csv-to-json**: `.bnto.json` definitions created, codegen propagated (PRs #294, #296)
 - [x] `engine` — **CLI golden tests for strip-exif, merge-csv, csv-to-json**: Golden test fixtures with byte-exact verification (PRs #294, #296)
 
-#### Wave 3 (parallel — SEO pages + E2E) — after Sprint 8.5c (config UI is now automatic)
+#### Wave 3 (parallel — SEO pages + E2E)
 
 - [ ] `apps/web` — **SEO pages for Tier 3 recipes**: Add to `bntoRegistry.ts`, verify `generateStaticParams`, `generateMetadata`, JSON-LD, sitemap inclusion. Each recipe gets a root-level slug page. Config UI renders automatically via schema-driven system (Sprint 8.5c)
 - [ ] `apps/web` — **E2E tests**: Playwright tests for each new recipe — upload file, configure, execute, verify output (magic bytes, file sizes). Programmatic assertions, not screenshots
