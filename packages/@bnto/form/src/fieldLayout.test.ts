@@ -35,6 +35,18 @@ describe("getFieldLayout", () => {
     expect(getFieldLayout("keyValue")).toBe("column");
   });
 
+  it("returns 'column' for file", () => {
+    expect(getFieldLayout("file")).toBe("column");
+  });
+
+  it("returns 'column' for positionGrid", () => {
+    expect(getFieldLayout("positionGrid")).toBe("column");
+  });
+
+  it("returns 'self-labeled' for watermarkPreview", () => {
+    expect(getFieldLayout("watermarkPreview")).toBe("self-labeled");
+  });
+
   it("covers all NodeParamControl values", () => {
     const allControls: NodeParamControl[] = [
       "select",
@@ -45,6 +57,9 @@ describe("getFieldLayout", () => {
       "textarea",
       "tagPicker",
       "keyValue",
+      "file",
+      "positionGrid",
+      "watermarkPreview",
     ];
     for (const control of allControls) {
       const layout = getFieldLayout(control);

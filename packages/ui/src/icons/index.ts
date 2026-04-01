@@ -104,6 +104,7 @@ export {
   CircleHelp as CircleHelpIcon,
   Crop as CropIcon,
   ListChecks as ListChecksIcon,
+  Stamp as StampIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

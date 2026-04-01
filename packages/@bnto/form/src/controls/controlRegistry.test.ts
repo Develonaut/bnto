@@ -12,6 +12,9 @@ const ALL_CONTROLS: NodeParamControl[] = [
   "textarea",
   "tagPicker",
   "keyValue",
+  "file",
+  "positionGrid",
+  "watermarkPreview",
 ];
 
 describe("CONTROL_REGISTRY", () => {

@@ -12,6 +12,7 @@ import {
   RepeatIcon,
   GitForkIcon,
   BoxIcon,
+  StampIcon,
   // I/O contextual icons (from getNodeIcon)
   FileUpIcon,
   TextCursorInputIcon,
@@ -39,6 +40,7 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   repeat: RepeatIcon,
   "git-fork": GitForkIcon,
   box: BoxIcon,
+  stamp: StampIcon,
   // I/O contextual icons (from getNodeIcon)
   "file-up": FileUpIcon,
   "text-cursor-input": TextCursorInputIcon,
