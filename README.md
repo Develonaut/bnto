@@ -36,21 +36,22 @@ Recipes are what bnto calls its tools. Each one is a pipeline of nodes that proc
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
-| Recipe                  | What it does                                                                                                | Try it                                                                     |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                 | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
-| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                 | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
-| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
-| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                 | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
-| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                  | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
-| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
-| CSV to JSON             | Convert CSV files to JSON format with configurable delimiters. Free, no signup.                             | [bnto.io/csv-to-json](https://bnto.io/csv-to-json)                         |
-| Merge CSV               | Combine multiple CSV files into one with header reconciliation. Free, no signup.                            | [bnto.io/merge-csv](https://bnto.io/merge-csv)                             |
-| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                         | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
-| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                        | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
-| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup. | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
-| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                             | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
-| Strip EXIF              | Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.                    | [bnto.io/strip-exif](https://bnto.io/strip-exif)                           |
+| Recipe                  | What it does                                                                                                                                  | Try it                                                                     |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                                                   | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
+| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                                                   | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
+| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                                                  | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
+| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                                                   | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
+| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                                                    | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
+| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                                                  | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
+| CSV to JSON             | Convert CSV files to JSON format with configurable delimiters. Free, no signup.                                                               | [bnto.io/csv-to-json](https://bnto.io/csv-to-json)                         |
+| Merge CSV               | Combine multiple CSV files into one with header reconciliation. Free, no signup.                                                              | [bnto.io/merge-csv](https://bnto.io/merge-csv)                             |
+| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                                                           | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
+| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                                                          | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
+| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.                                   | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
+| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                                                               | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
+| Strip EXIF              | Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.                                                      | [bnto.io/strip-exif](https://bnto.io/strip-exif)                           |
+| Watermark Images        | Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine. | [bnto.io/watermark-images](https://bnto.io/watermark-images)               |
 
 <!-- END AUTO-GENERATED RECIPES TABLE -->
 

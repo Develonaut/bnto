@@ -14,6 +14,7 @@ import { imageResizeParamsSchema } from "./schemas/imageResize";
 import { IMAGE_FORMATS, imageConvertFields } from "./schemas/imageConvert";
 import { spreadsheetCleanParamsSchema } from "./schemas/spreadsheetClean";
 import { fileRenameParamsSchema } from "./schemas/fileRename";
+import { imageOverlayParamsSchema } from "./generated/schemas/imageOverlay";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { CATALOG_FORMAT_VERSION } from "./generated/formatVersion";
 import { PROCESSORS, PROCESSOR_MAP, getProcessorDefaults } from "./generated/catalog";
@@ -78,6 +79,8 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-clean")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-convert")).toBe(true);
+    expect(PROCESSOR_MAP.has("spreadsheet-merge")).toBe(true);
+    expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
   });
 
@@ -122,6 +125,16 @@ describe("engine defaults flow through to schemas", () => {
     for (const opt of caseParam?.options ?? []) {
       expect(() => fileRenameParamsSchema.shape.case.parse(opt)).not.toThrow();
     }
+  });
+
+  it("image-overlay position and size defaults match engine", () => {
+    const engineDefaults = getProcessorDefaults("image-overlay");
+    const zodPosition = imageOverlayParamsSchema.shape.position.parse(undefined);
+    const zodSize = imageOverlayParamsSchema.shape.size.parse(undefined);
+    const zodOpacity = imageOverlayParamsSchema.shape.opacity.parse(undefined);
+    expect(zodPosition).toBe(engineDefaults.position);
+    expect(zodSize).toBe(engineDefaults.size);
+    expect(zodOpacity).toBe(engineDefaults.opacity);
   });
 
   it("image-convert format options match IMAGE_FORMATS", () => {

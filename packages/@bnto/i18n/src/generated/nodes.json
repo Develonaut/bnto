@@ -25,6 +25,10 @@
       "label": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats."
     },
+    "imageOverlay": {
+      "label": "Overlay Image",
+      "description": "Overlay an image onto source images at a configurable position, size, and opacity."
+    },
     "imageResize": {
       "label": "Resize Images",
       "description": "Change image dimensions while maintaining quality."
@@ -112,6 +116,36 @@
       "format": {
         "label": "Output Format",
         "description": "The target image format to convert to"
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
+    "imageOverlay": {
+      "overlay": {
+        "label": "Overlay Image",
+        "description": "The image to overlay (base64-encoded)."
+      },
+      "position": {
+        "label": "Position",
+        "description": "Where to place the overlay on the image."
+      },
+      "size": {
+        "label": "Size",
+        "description": "Overlay width as a percentage of the source image width."
+      },
+      "opacity": {
+        "label": "Opacity",
+        "description": "Overlay transparency (0 = invisible, 100 = fully opaque)."
+      },
+      "offsetX": {
+        "label": "Offset X",
+        "description": "Horizontal pixel offset from the position. Positive = right, negative = left."
+      },
+      "offsetY": {
+        "label": "Offset Y",
+        "description": "Vertical pixel offset from the position. Positive = down, negative = up."
       },
       "quality": {
         "label": "Quality",

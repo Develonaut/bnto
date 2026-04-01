@@ -68,6 +68,17 @@
       "icon": "image"
     },
     {
+      "name": "image-overlay",
+      "label": "Overlay Image",
+      "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
+      "category": "image",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "stamp"
+    },
+    {
       "name": "image-resize",
       "label": "Resize Images",
       "description": "Change image dimensions while maintaining quality.",
@@ -335,6 +346,136 @@
           "default": "jpeg",
           "constraints": {
             "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "image-overlay",
+      "name": "Overlay Image",
+      "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
+      "category": "image",
+      "accepts": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
+        {
+          "name": "overlay",
+          "label": "Overlay Image",
+          "description": "The image to overlay (base64-encoded).",
+          "paramType": {
+            "type": "file",
+            "accept": [
+              "image/png",
+              "image/jpeg",
+              "image/webp"
+            ]
+          },
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "position",
+          "label": "Position",
+          "description": "Where to place the overlay on the image.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              "top-left",
+              "top-center",
+              "top-right",
+              "middle-left",
+              "center",
+              "middle-right",
+              "bottom-left",
+              "bottom-center",
+              "bottom-right"
+            ]
+          },
+          "default": "bottom-right",
+          "surfaceable": true
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "description": "Overlay width as a percentage of the source image width.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 25,
+          "constraints": {
+            "min": 1.0,
+            "max": 500.0,
+            "required": false
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "opacity",
+          "label": "Opacity",
+          "description": "Overlay transparency (0 = invisible, 100 = fully opaque).",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 0.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "offsetX",
+          "label": "Offset X",
+          "description": "Horizontal pixel offset from the position. Positive = right, negative = left.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": -500.0,
+            "max": 500.0,
+            "required": false
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "offsetY",
+          "label": "Offset Y",
+          "description": "Vertical pixel offset from the position. Positive = down, negative = up.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": -500.0,
+            "max": 500.0,
+            "required": false
           },
           "surfaceable": true
         },

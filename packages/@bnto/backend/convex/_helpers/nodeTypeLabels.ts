@@ -15,6 +15,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "http-request": "HTTP Request",
   "image-compress": "Compress Images",
   "image-convert": "Convert Image Format",
+  "image-overlay": "Overlay Image",
   "image-resize": "Resize Images",
   "image-strip-exif": "Strip EXIF",
   "shell-command": "Shell Command",
