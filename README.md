@@ -36,28 +36,28 @@ Recipes are what bnto calls its tools. Each one is a pipeline of nodes that proc
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
-| Recipe                  | What it does                                                                                                                                  | Try it                                                                     |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                                                   | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
-| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                                                   | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
-| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                                                  | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
-| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                                                   | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
-| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                                                    | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
-| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                                                  | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
-| CSV to JSON             | Convert CSV files to JSON format with configurable delimiters. Free, no signup.                                                               | [bnto.io/csv-to-json](https://bnto.io/csv-to-json)                         |
-| Merge CSV               | Combine multiple CSV files into one with header reconciliation. Free, no signup.                                                              | [bnto.io/merge-csv](https://bnto.io/merge-csv)                             |
-| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                                                           | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
-| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                                                          | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
-| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.                                   | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
-| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                                                               | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
-| Strip EXIF              | Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.                                                      | [bnto.io/strip-exif](https://bnto.io/strip-exif)                           |
-| Watermark Images        | Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine. | [bnto.io/watermark-images](https://bnto.io/watermark-images)               |
+| Recipe                  | What it does                                                                                                                                 | Try it                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                                                  | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
+| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                                                  | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
+| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                                                 | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
+| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                                                  | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
+| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                                                   | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
+| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                                                 | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
+| CSV to JSON             | Convert CSV files to JSON format with configurable delimiters. Free, no signup.                                                              | [bnto.io/csv-to-json](https://bnto.io/csv-to-json)                         |
+| Merge CSV               | Combine multiple CSV files into one with header reconciliation. Free, no signup.                                                             | [bnto.io/merge-csv](https://bnto.io/merge-csv)                             |
+| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                                                          | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
+| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                                                         | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
+| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.                                  | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
+| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                                                              | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
+| Strip EXIF              | Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.                                                     | [bnto.io/strip-exif](https://bnto.io/strip-exif)                           |
+| Watermark Images        | Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser. Files never leave your machine. | [bnto.io/watermark-images](https://bnto.io/watermark-images)               |
 
 <!-- END AUTO-GENERATED RECIPES TABLE -->
 
 ### Visual Recipe Editor
 
-Don't see what you need? Build it. The visual editor lets you compose nodes into multi-step recipes — chain a resize into a format conversion into a compression, all in one run. Save your recipes and reuse them.
+Don't see what you need? Build it. The visual editor lets you compose nodes into multi-step recipes. Chain a resize into a format conversion into a compression, all in one run. Save your recipes and reuse them.
 
 Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
@@ -65,7 +65,7 @@ Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
 ## How It Works
 
-Pick a recipe, drop your files, get results. Processing happens in your browser using a Rust engine compiled to WebAssembly — no server round-trips.
+Pick a recipe, drop your files, get results. Processing happens in your browser using a Rust engine compiled to WebAssembly. No server round-trips.
 
 ```
 You drop files
@@ -80,13 +80,13 @@ Your files never touch a server. The browser IS the server.
 
 ## The Bento Box
 
-bnto is named after the bento box (弁当) — a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
+bnto is named after the bento box (弁当), a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
 
 That idea runs through everything:
 
-- **Nodes** are compartments — each does one thing well (compress, resize, rename)
-- **Recipes** are boxes — portable, organized, complete
-- **Boxes compose** — a recipe can contain other recipes. One node or twenty, the mental model never changes
+- **Nodes** are compartments. Each does one thing well (compress, resize, rename)
+- **Recipes** are boxes. Portable, organized, complete
+- **Boxes compose.** A recipe can contain other recipes. One node or twenty, the mental model never changes
 
 ---
 
@@ -96,7 +96,7 @@ bnto starts with file tools in the browser, but the engine is designed to grow.
 
 **Today:** 10 predefined recipes running client-side via Rust/WASM. A visual editor for building custom recipes. Free, unlimited, no account required.
 
-**Next:** A desktop app (Tauri) with full local execution — including nodes the browser can't run. Shell commands (`ffmpeg`, `yt-dlp`, `imagemagick`), filesystem operations, and BYOK AI. Same recipes, same engine, running natively.
+**Next:** A desktop app (Tauri) with full local execution, including nodes the browser can't run. Shell commands (`ffmpeg`, `yt-dlp`, `imagemagick`), filesystem operations, and BYOK AI. Same recipes, same engine, running natively.
 
 **Later:** Cloud execution for server-side nodes (AI inference, video processing, unrestricted HTTP). Pro tier for persistence, collaboration, and premium compute.
 
@@ -111,7 +111,7 @@ One Rust engine powering browser (WASM), desktop (native), CLI, and cloud. Recip
 - Node.js 18+
 - [pnpm](https://pnpm.io)
 - [Task](https://taskfile.dev)
-- Rust toolchain (for engine work — install via [rustup](https://rustup.rs))
+- Rust toolchain (for engine work, install via [rustup](https://rustup.rs))
 
 ### Setup
 
@@ -147,7 +147,7 @@ task check              # Full check (lint + test + build)
 
 ### Architecture
 
-bnto follows the **Bento Box Principle** — every file, function, and package does one thing well.
+bnto follows the **Bento Box Principle**: every file, function, and package does one thing well.
 
 The browser is the execution engine. Rust compiles to a single WASM binary that runs inside a Web Worker. The web app loads the WASM module, sends files in, and gets results back.
 
@@ -163,7 +163,7 @@ Browser (WASM execution)
   └── Convex Cloud (auth, data persistence)
 ```
 
-`@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly — they use core hooks that swap backends depending on runtime (browser, desktop, or cloud).
+`@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly. They use core hooks that swap backends depending on runtime (browser, desktop, or cloud).
 
 ### Repository Structure
 
@@ -172,15 +172,15 @@ bnto/
 ├── apps/
 │   └── web/                     # Next.js on Vercel (bnto.io)
 ├── packages/
-│   ├── core/                    # @bnto/core — Transport-agnostic API
-│   ├── ui/                      # @bnto/ui — Motorway design system
-│   ├── editor/                  # @bnto/editor — Visual recipe editor
+│   ├── core/                    # @bnto/core - Transport-agnostic API
+│   ├── ui/                      # @bnto/ui - Motorway design system
+│   ├── editor/                  # @bnto/editor - Visual recipe editor
 │   └── @bnto/
-│       ├── auth/                # @bnto/auth — Cloud auth
-│       ├── backend/             # @bnto/backend — Convex schema + functions
-│       ├── form/                # @bnto/form — Schema-driven config forms
-│       ├── nodes/               # @bnto/nodes — Engine-generated node catalog
-│       └── registry/            # @bnto/registry — Recipe curation + discovery
+│       ├── auth/                # @bnto/auth - Cloud auth
+│       ├── backend/             # @bnto/backend - Convex schema + functions
+│       ├── form/                # @bnto/form - Schema-driven config forms
+│       ├── nodes/               # @bnto/nodes - Engine-generated node catalog
+│       └── registry/            # @bnto/registry - Recipe curation + discovery
 └── engine/                      # Rust WASM engine
     └── crates/
         ├── bnto-core/           # Core types, traits, progress reporting
@@ -204,7 +204,7 @@ Contributions are welcome. To get started:
 4. Run `task dev` to start the development servers
 5. Run `task check` before submitting a pull request
 
-Follow the existing code patterns and the [Bento Box Principle](.claude/rules/code-standards.md) — small, focused files and functions with clear boundaries.
+Follow the existing code patterns and the [Bento Box Principle](.claude/rules/code-standards.md): small, focused files and functions with clear boundaries.
 
 ---
 
@@ -216,4 +216,4 @@ If bnto saves you time, consider buying me a coffee.
 
 ## License
 
-[MIT](LICENSE) — Copyright 2024-2026 [Develonaut](https://github.com/Develonaut)
+[MIT](LICENSE) - Copyright 2024-2026 [Develonaut](https://github.com/Develonaut)

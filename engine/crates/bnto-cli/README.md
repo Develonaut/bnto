@@ -1,6 +1,6 @@
 # bnto-cli
 
-CLI for running `.bnto.json` recipes — compress images, clean CSVs, rename files.
+CLI for running `.bnto.json` recipes. Compress images, clean CSVs, rename files.
 
 ## Overview
 

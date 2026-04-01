@@ -1,6 +1,6 @@
 # bnto-csv
 
-CSV processing nodes — clean and rename columns.
+CSV processing nodes. Clean and rename columns.
 
 ## Overview
 

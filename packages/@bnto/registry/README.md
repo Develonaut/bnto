@@ -1,15 +1,15 @@
 # @bnto/registry
 
-Public facade for the entire node system — re-exports all types, constants, helpers, and validation from `@bnto/nodes`, plus recipe definitions, curation functions, and recipe validation.
+Public facade for the entire node system. Re-exports all types, constants, helpers, and validation from `@bnto/nodes`, plus recipe definitions, curation functions, and recipe validation.
 
 ## What This Package Does
 
-- **Node system facade:** Re-exports everything from `@bnto/nodes` that consumers need. `@bnto/nodes` is internal — only this package imports from it
+- **Node system facade:** Re-exports everything from `@bnto/nodes` that consumers need. `@bnto/nodes` is internal, only this package imports from it
 - **Recipe system:** Owns all predefined recipe definitions, the `Recipe` type, and recipe-level validation (`validateRecipe`)
 - **Recipe utilities:** `definitionToRecipe()` (wraps definitions into recipes), `deriveAcceptSpec()` (extracts file acceptance from input nodes)
 - **Curation functions:** Stateless lookups over the recipe catalog (by slug, by category) and engine-generated node metadata
 - **Codegen:** Script to generate `.bnto.json` fixture files from TypeScript recipe definitions (consumed by Rust engine tests, CLI tests, and E2E drift checks)
-- No React, no Zustand, no state — purely stateless functions and re-exports
+- No React, no Zustand, no state. Purely stateless functions and re-exports
 
 ## Dependency Chain
 
@@ -23,7 +23,7 @@ Public facade for the entire node system — re-exports all types, constants, he
 
 ```
 src/
-├── index.ts                # Barrel — all re-exports + curation functions
+├── index.ts                # Barrel: all re-exports + curation functions
 ├── types.ts                # RegistryData interface + type re-exports
 ├── recipe.ts               # Recipe + AcceptSpec type definitions
 ├── recipesCatalog.ts       # RECIPES constant array + getRecipeBySlug()

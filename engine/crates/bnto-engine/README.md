@@ -1,6 +1,6 @@
 # bnto-engine
 
-Shared engine layer — registry creation and pipeline convenience for all consumers.
+Shared engine layer. Registry creation and pipeline convenience for all consumers.
 
 ## Overview
 

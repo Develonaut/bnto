@@ -16,11 +16,11 @@ import { ExploreJsonLd } from "./_components/ExploreJsonLd";
 export const metadata: Metadata = {
   title: "Explore Recipes",
   description:
-    "Browse free browser-based recipes — compress images, clean CSVs, rename files, and more. No signup, no upload.",
+    "Browse free browser-based recipes. Compress images, clean CSVs, rename files, and more. No signup, no upload.",
   openGraph: {
-    title: "Explore Recipes — bnto",
+    title: "Explore Recipes - bnto",
     description:
-      "Browse free browser-based recipes — compress images, clean CSVs, rename files, and more.",
+      "Browse free browser-based recipes. Compress images, clean CSVs, rename files, and more.",
   },
 };
 

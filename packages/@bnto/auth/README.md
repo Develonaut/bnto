@@ -1,10 +1,10 @@
 # @bnto/auth
 
-Auth client — the abstraction boundary for authentication.
+Auth client. The abstraction boundary for authentication.
 
 ## Overview
 
-`@bnto/auth` wraps the authentication provider (currently `@convex-dev/auth`) so that consumers never import auth infrastructure directly. If the auth provider changes, only this package needs updating.
+`@bnto/auth` wraps the authentication provider (currently `@convex-dev/auth`) so consumers never import auth infrastructure directly. If the auth provider changes, only this package needs updating.
 
 Consumed by `@bnto/core` internals. App code accesses auth through `core.auth.*`.
 
@@ -27,10 +27,10 @@ src/
 
 **Client (from `@bnto/auth`):**
 
-- `ConvexAuthNextjsProvider` — auth provider component
-- `useAuthActions` — sign in/out actions
-- `useAuthToken` — current auth token
-- `useSession`, `useSignIn`, `useSignOut`, `useSignUp` — auth hooks
+- `ConvexAuthNextjsProvider` - auth provider component
+- `useAuthActions` - sign in/out actions
+- `useAuthToken` - current auth token
+- `useSession`, `useSignIn`, `useSignOut`, `useSignUp` - auth hooks
 
 **Server (from `@bnto/auth/server`):**
 

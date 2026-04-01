@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  * Run `task nodes:generate` to regenerate after engine changes.
  * Engine catalog v1.0.0
  */
@@ -9,9 +9,9 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-clean node parameters. */
 export const spreadsheetCleanParamsSchema = z.object({
-    trimWhitespace: z.boolean().optional().default(true),
-    removeEmptyRows: z.boolean().optional().default(true),
-    removeDuplicates: z.boolean().optional().default(true),
+  trimWhitespace: z.boolean().optional().default(true),
+  removeEmptyRows: z.boolean().optional().default(true),
+  removeDuplicates: z.boolean().optional().default(true),
 });
 
 /** Inferred TypeScript type for spreadsheet-clean node parameters. */

@@ -1,19 +1,19 @@
 # @bnto/core
 
-Transport-agnostic API layer for bnto — the single interface between UI and all backends.
+Transport-agnostic API layer for bnto. The single interface between UI and all backends.
 
 ## Overview
 
-`@bnto/core` is the abstraction boundary. UI components import hooks and methods from `core`, never from Convex, Zustand, WASM, or any other infrastructure directly. Core detects the runtime (browser vs desktop) and routes requests to the correct backend adapter transparently.
+`@bnto/core` is the abstraction boundary. UI components import hooks and methods from `core`, never from Convex, Zustand, WASM, or any other infrastructure directly. Core detects the runtime (browser vs. desktop) and routes requests to the correct backend adapter transparently.
 
-Consumed by `apps/web/` (and eventually `apps/desktop/`). No UI code — just data, state, and infrastructure.
+Consumed by `apps/web/` (and eventually `apps/desktop/`). No UI code, just data, state, and infrastructure.
 
 ## Directory Structure
 
 ```
 src/
-├── core.ts                    # Singleton — wires services into clients
-├── reactCore.ts               # React binding — merges hooks onto imperative clients
+├── core.ts                    # Singleton: wires services into clients
+├── reactCore.ts               # React binding: merges hooks onto imperative clients
 ├── clients/                   # Public API (6 domain clients)
 │   ├── authClient.ts          # Session state + auth actions
 │   ├── executionClient.ts     # Unified execution (browser WASM + cloud)
@@ -21,8 +21,8 @@ src/
 │   ├── registryClient.ts      # Predefined recipes + node type metadata
 │   ├── telemetryClient.ts     # Product event tracking (PostHog)
 │   └── userClient.ts          # Profile + usage stats
-├── queries/                   # Read-path — query option construction + select transforms
-├── services/                  # Write-path — mutations, cache invalidation, lifecycle
+├── queries/                   # Read-path: query option construction + select transforms
+├── services/                  # Write-path: mutations, cache invalidation, lifecycle
 ├── adapters/
 │   ├── convex/                # Convex bridge (web data layer)
 │   ├── browser/               # WASM engine, Web Worker, file downloads
@@ -40,24 +40,24 @@ src/
 
 All access goes through the `core` singleton:
 
-| Domain            | Responsibility                                             | Example                                |
-| ----------------- | ---------------------------------------------------------- | -------------------------------------- |
-| `core.recipes`    | Recipe definitions — list, get, save, remove, run          | `core.recipes.useRecipes()`            |
-| `core.executions` | Execution lifecycle — create, run pipeline, track progress | `core.executions.createExecution()`    |
-| `core.user`       | Profile + usage stats                                      | `core.user.useCurrentUser()`           |
-| `core.auth`       | Session state + auth actions                               | `core.auth.useIsAuthenticated()`       |
-| `core.telemetry`  | Product event tracking                                     | `core.telemetry.capture("recipe_run")` |
-| `core.registry`   | Predefined recipes + node type metadata                    | `core.registry.useRecipes()`           |
-| `core.flags`      | Feature flags + A/B testing                                | `core.flags.useFlag("pro-save")`       |
+| Domain            | Responsibility                                            | Example                                |
+| ----------------- | --------------------------------------------------------- | -------------------------------------- |
+| `core.recipes`    | Recipe definitions: list, get, save, remove, run          | `core.recipes.useRecipes()`            |
+| `core.executions` | Execution lifecycle: create, run pipeline, track progress | `core.executions.createExecution()`    |
+| `core.user`       | Profile + usage stats                                     | `core.user.useCurrentUser()`           |
+| `core.auth`       | Session state + auth actions                              | `core.auth.useIsAuthenticated()`       |
+| `core.telemetry`  | Product event tracking                                    | `core.telemetry.capture("recipe_run")` |
+| `core.registry`   | Predefined recipes + node type metadata                   | `core.registry.useRecipes()`           |
+| `core.flags`      | Feature flags + A/B testing                               | `core.flags.useFlag("pro-save")`       |
 
 ## Key Concepts
 
-- **Clients** — public API, one per domain. Compose queries + services. Handle cross-domain side effects
-- **Queries** — pure read-path. Query option construction with `select` transforms. No side effects
-- **Services** — single-domain write-path. Mutations, cache invalidation, infrastructure lifecycle. Services never call other services
-- **Adapters** — backend-specific bridge. The only layer that imports `@bnto/backend`. Swappable per runtime
-- **Registry** — `@bnto/registry` is the node system facade. Core re-exports all node types, constants, and functions from registry so consumers import everything from `@bnto/core`
-- **Stores** — Zustand, opaque to consumers. Accessed via `core.<domain>.use*State()` hooks, never raw `useStore()`
+- **Clients** - public API, one per domain. Compose queries + services. Handle cross-domain side effects
+- **Queries** - pure read-path. Query option construction with `select` transforms. No side effects
+- **Services** - single-domain write-path. Mutations, cache invalidation, infrastructure lifecycle. Services never call other services
+- **Adapters** - backend-specific bridge. The only layer that imports `@bnto/backend`. Swappable per runtime
+- **Registry** - `@bnto/registry` is the node system facade. Core re-exports all node types, constants, and functions from registry so consumers import everything from `@bnto/core`
+- **Stores** - Zustand, opaque to consumers. Accessed via `core.<domain>.use*State()` hooks, never raw `useStore()`
 
 ## Development
 
@@ -108,7 +108,7 @@ const state = core.executions.useExecutionState(instance);
 ```
 UI Components
     ↓
-core.{domain} (clients — public API)
+core.{domain} (clients, public API)
     ↓
 queries (read) + services (write)
     ↓

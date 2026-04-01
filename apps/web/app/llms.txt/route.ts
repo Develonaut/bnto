@@ -11,7 +11,7 @@ function generateLlmsTxt() {
   return [
     "# bnto",
     "",
-    "> Free tools that run in your browser — compress images, clean CSVs, rename files, convert formats, and build custom recipes. Powered by Rust & WebAssembly. No signup, no upload. Open source.",
+    "> Free tools that run in your browser. Compress images, clean CSVs, rename files, convert formats, and build custom recipes. Powered by Rust & WebAssembly. No signup, no upload. Open source.",
     "",
     "## Recipes",
     "",

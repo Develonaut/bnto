@@ -1,6 +1,6 @@
 # @bnto/editor
 
-Visual recipe editor — the editing experience for `.bnto.json` definitions.
+Visual recipe editor - the editing experience for `.bnto.json` definitions.
 
 ## Overview
 
@@ -68,11 +68,11 @@ src/
 
 ## Key Concepts
 
-- **Actions are pure functions** — take `EditorState`, return `Partial<EditorState>`. No React, no store. Testable with plain objects
-- **Hooks are thin wrappers** — get state from store, call action, apply result. ~5 lines each
-- **Configs live separate from nodes** — `node.data` holds visual-only fields (label, icon). Domain fields (operation, params) live in `configs[nodeId]`
-- **Containers expand into the graph** — container children live in `definition` (the nested tree). On expand, they're materialized into `store.nodes` and `store.configs`
-- **Synthetic nodes** — `placeholder`, `containerGroup`, `addDivider` nodes are injected by the rendering pipeline and filtered from ReactFlow change handlers
+- **Actions are pure functions** - take `EditorState`, return `Partial<EditorState>`. No React, no store. Testable with plain objects
+- **Hooks are thin wrappers** - get state from store, call action, apply result. ~5 lines each
+- **Configs live separate from nodes** - `node.data` holds visual-only fields (label, icon). Domain fields (operation, params) live in `configs[nodeId]`
+- **Containers expand into the graph** - container children live in `definition` (the nested tree). On expand, they're materialized into `store.nodes` and `store.configs`
+- **Synthetic nodes** - `placeholder`, `containerGroup`, `addDivider` nodes are injected by the rendering pipeline and filtered from ReactFlow change handlers
 
 ## Entry Point
 

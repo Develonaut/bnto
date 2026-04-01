@@ -16,12 +16,12 @@ describe("t()", () => {
   });
 
   it("returns the key itself for missing paths", () => {
-    // @ts-expect-error — intentionally testing invalid key
+    // @ts-expect-error - intentionally testing invalid key
     expect(t("nonexistent.key")).toBe("nonexistent.key");
   });
 
   it("returns the key for partially valid paths", () => {
-    // @ts-expect-error — intentionally testing partial path
+    // @ts-expect-error - intentionally testing partial path
     expect(t("site.nonexistent")).toBe("site.nonexistent");
   });
 

@@ -1,6 +1,6 @@
 # @bnto/form
 
-Schema-driven form system — auto-generates UI controls from node schemas.
+Schema-driven form system. Auto-generates UI controls from node schemas.
 
 ## What This Package Does
 

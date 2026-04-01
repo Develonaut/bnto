@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  *
  * Convex can't import from @bnto/nodes (bundling constraint), so this
  * file is generated alongside the main catalog. Run `task nodes:generate`
@@ -23,5 +23,5 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-convert": "CSV to JSON",
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-rename": "Rename CSV Columns",
-  "transform": "Transform",
+  transform: "Transform",
 };

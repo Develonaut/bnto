@@ -2,7 +2,7 @@
   "name": "@bnto/ui",
   "version": "0.0.1",
   "private": true,
-  "description": "Motorway — the bnto design system",
+  "description": "Motorway - the bnto design system",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"

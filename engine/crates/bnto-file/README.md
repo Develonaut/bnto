@@ -1,10 +1,10 @@
 # bnto-file
 
-File operation nodes — filename transformation.
+File operation nodes. Filename transformation.
 
 ## Overview
 
-`bnto-file` provides a `NodeProcessor` for renaming files. It transforms filenames only — file content passes through unchanged. Uses regex for pattern matching. Runs in the browser via WASM or natively for desktop/CLI.
+`bnto-file` provides a `NodeProcessor` for renaming files. It transforms filenames only; file content passes through unchanged. Uses regex for pattern matching. Runs in the browser via WASM or natively for desktop/CLI.
 
 ## Processors
 

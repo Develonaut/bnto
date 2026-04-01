@@ -1,6 +1,6 @@
 # @bnto/ui
 
-Motorway — the bnto design system.
+Motorway - the bnto design system.
 
 ## Overview
 
@@ -30,10 +30,10 @@ src/
 
 ## Key Concepts
 
-- **`createCn()`** — variant-to-class resolver wrapping `tailwind-variants`. Use instead of raw `tv()` so the underlying library can be swapped
-- **`cn()`** — static class merge (clsx + tailwind-merge). For non-variant class composition
-- **Flat named exports** — all compound components use prefixed exports (`CardHeader`, `DialogContent`), never `Object.assign` dot-notation
-- **Animation components** — `ScaleIn`, `FadeIn`, `SlideUp`, `Stagger` etc. are the public API for motion. Never apply `motion-safe:animate-*` classes directly
+- **`createCn()`** - variant-to-class resolver wrapping `tailwind-variants`. Use instead of raw `tv()` so the underlying library can be swapped
+- **`cn()`** - static class merge (clsx + tailwind-merge). For non-variant class composition
+- **Flat named exports** - all compound components use prefixed exports (`CardHeader`, `DialogContent`), never `Object.assign` dot-notation
+- **Animation components** - `ScaleIn`, `FadeIn`, `SlideUp`, `Stagger` etc. are the public API for motion. Never apply `motion-safe:animate-*` classes directly
 
 ## Component Categories
 
