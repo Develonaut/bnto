@@ -11,12 +11,12 @@ import {
   RecipeStepperToolbar,
   RecipeStepperBackButton,
   RecipeStepperConfigButton,
-  RecipeStepperEditButton,
   RecipeStepperBanner,
   RecipeStepperActions,
   RunRecipeButton,
   RecipeStepperResultList,
 } from "./_components/RecipeStepper";
+import { OpenInEditorLink } from "./_components/OpenInEditorLink";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404. */
 export const dynamicParams = false;
@@ -55,6 +55,9 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
           <RecipeStepper key={slug} entry={entry}>
             <RecipeStepperIndicator />
             <BntoHero h1={entry.h1} description={entry.description} />
+            <div>
+              <OpenInEditorLink slug={slug} />
+            </div>
 
             <StepperContent value="1">
               <RecipeStepperDropzone />
@@ -67,7 +70,6 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 </RecipeStepperActions>
                 <RecipeStepperBanner />
                 <RecipeStepperActions className="ml-auto shrink-0">
-                  <RecipeStepperEditButton slug={slug} />
                   <RecipeStepperConfigButton />
                   <RunRecipeButton />
                 </RecipeStepperActions>
@@ -83,7 +85,6 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 </RecipeStepperActions>
                 <RecipeStepperBanner />
                 <RecipeStepperActions className="ml-auto shrink-0">
-                  <RecipeStepperEditButton slug={slug} />
                   <RecipeStepperConfigButton />
                   <RunRecipeButton />
                 </RecipeStepperActions>

@@ -2,13 +2,13 @@
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Button, PenLineIcon } from "@bnto/ui";
+import { Badge, Button, PenLineIcon } from "@bnto/ui";
 import { core, applyConfigToDefinition, stashFilesForTransfer } from "@bnto/core";
 import { editorUrl } from "@/lib/routes";
-import { useRecipeStepperStore } from "../../_stores/recipeStepperContext";
+import { useRecipeStepperStore } from "../_stores/recipeStepperContext";
 
-/** Icon button that opens the current recipe in the editor. */
-export function RecipeStepperEditButton({ slug }: { slug: string }) {
+/** Standalone "Open in Editor" button — creates a personal recipe and navigates. */
+export function OpenInEditorLink({ slug }: { slug: string }) {
   const router = useRouter();
   const config = useRecipeStepperStore((s) => s.config);
   const files = useRecipeStepperStore((s) => s.files);
@@ -28,13 +28,14 @@ export function RecipeStepperEditButton({ slug }: { slug: string }) {
 
   return (
     <Button
-      variant="secondary"
-      size="icon"
       onClick={handleClick}
-      aria-label="Edit in editor"
+      variant="outline"
+      elevation="sm"
       data-testid="edit-in-editor-button"
     >
-      <PenLineIcon className="size-4" />
+      <PenLineIcon className="size-3.5" />
+      Open in Editor
+      <Badge variant="secondary">Beta</Badge>
     </Button>
   );
 }
