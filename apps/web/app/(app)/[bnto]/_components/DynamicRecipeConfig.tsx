@@ -12,6 +12,8 @@ interface DynamicRecipeConfigProps {
   definition: Definition;
   config: Record<string, Record<string, unknown>>;
   onChange: (nodeId: string, paramName: string, value: unknown) => void;
+  /** Input files for preview controls (source images for watermark preview). */
+  files?: File[];
 }
 
 /**
@@ -21,7 +23,12 @@ interface DynamicRecipeConfigProps {
  * for each. Single-node recipes show no header; multi-node recipes show a
  * section heading per node.
  */
-export function DynamicRecipeConfig({ definition, config, onChange }: DynamicRecipeConfigProps) {
+export function DynamicRecipeConfig({
+  definition,
+  config,
+  onChange,
+  files,
+}: DynamicRecipeConfigProps) {
   const nodes = useMemo(() => extractProcessingNodes(definition), [definition]);
 
   if (nodes.length === 0) return null;
@@ -37,6 +44,7 @@ export function DynamicRecipeConfig({ definition, config, onChange }: DynamicRec
               values={config[node.id] ?? {}}
               showHeader={nodes.length > 1}
               onChange={onChange}
+              files={files}
             />
           </div>
         ))}
@@ -50,9 +58,10 @@ interface NodeSectionProps {
   values: Record<string, unknown>;
   showHeader: boolean;
   onChange: (nodeId: string, paramName: string, value: unknown) => void;
+  files?: File[];
 }
 
-export function NodeSection({ node, values, showHeader, onChange }: NodeSectionProps) {
+export function NodeSection({ node, values, showHeader, onChange, files }: NodeSectionProps) {
   const schema = getNodeSchema(node.type);
   const handleChange = useCallback(
     (name: string, value: unknown) => onChange(node.id, name, value),
@@ -73,6 +82,7 @@ export function NodeSection({ node, values, showHeader, onChange }: NodeSectionP
         values={values}
         visibleParams={getVisibleParams(node.type, values)}
         onChange={handleChange}
+        files={files}
       />
     </div>
   );

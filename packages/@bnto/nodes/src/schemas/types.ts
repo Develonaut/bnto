@@ -99,7 +99,13 @@ export interface NodeParamField {
    * isn't enough to determine the right control (e.g., a z.string() that
    * should render as a textarea instead of a single-line input).
    */
-  control?: "textarea";
+  control?: "number" | "textarea" | "file" | "positionGrid" | "watermarkPreview";
+
+  /**
+   * Accepted MIME types for file controls. Only relevant when
+   * `control` is `"file"`. Passed through to the file input's accept attribute.
+   */
+  accept?: string[];
 
   /**
    * Conditional visibility — parameter is shown only when

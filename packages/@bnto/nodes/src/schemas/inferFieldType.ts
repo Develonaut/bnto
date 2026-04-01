@@ -13,11 +13,15 @@
  * | `z.boolean()`             | —                 | switch     | Switch           |
  * | `z.number()`              | min AND max       | slider     | Slider           |
  * | `z.number()`              | unbounded / one   | number     | Input[num]       |
+ * | `z.number()`              | fieldConfig.control=number           | number           | Input[num] (override) |
  * | `z.string()`              | fieldConfig.control=textarea | textarea | Textarea     |
  * | `z.string()`              | —                 | text       | Input[text]      |
  * | `z.array(z.string())`     | —                 | tagPicker  | Combobox         |
  * | `z.record(z.string())`    | —                 | keyValue   | KeyValueEditor   |
  * | `z.record(z.unknown())`   | —                 | keyValue   | KeyValueEditor   |
+ * | `z.string()`              | fieldConfig.control=file             | file             | FileControl          |
+ * | `z.enum()`                | fieldConfig.control=positionGrid     | positionGrid     | PositionGridControl  |
+ * | `z.string()`              | fieldConfig.control=watermarkPreview | watermarkPreview | WatermarkPreview     |
  *
  * This mapping is the single source of truth for which UI control renders
  * for each Zod type. The `SchemaForm` component in `@bnto/editor` consumes
@@ -51,14 +55,17 @@ function zodDef(zodType: z.ZodTypeAny): ZodDef {
 /**
  * UI control type — maps directly to a `@bnto/ui` component.
  *
- * - select:    `<Select>` dropdown (for enums)
- * - switch:    `<Switch>` toggle (for booleans)
- * - slider:    `<Slider>` range (for bounded numbers with both min AND max)
- * - number:    `<Input type="number">` (for unbounded numbers)
- * - text:      `<Input type="text">` (for strings, fallback)
- * - textarea:  `<Textarea>` multiline (for strings with fieldConfig.control = "textarea")
- * - tagPicker: `<Combobox>` multi-select (for z.array(z.string()))
- * - keyValue:  `<KeyValueEditor>` key→value pairs (for z.record())
+ * - select:           `<Select>` dropdown (for enums)
+ * - switch:           `<Switch>` toggle (for booleans)
+ * - slider:           `<Slider>` range (for bounded numbers with both min AND max)
+ * - number:           `<Input type="number">` (for unbounded numbers)
+ * - text:             `<Input type="text">` (for strings, fallback)
+ * - textarea:         `<Textarea>` multiline (for strings with fieldConfig.control = "textarea")
+ * - tagPicker:        `<Combobox>` multi-select (for z.array(z.string()))
+ * - keyValue:         `<KeyValueEditor>` key→value pairs (for z.record())
+ * - file:             `<FileControl>` file picker → base64 data URI (for file params)
+ * - positionGrid:     `<PositionGridControl>` 3×3 clickable grid (for 9-position enums)
+ * - watermarkPreview: `<WatermarkPreviewControl>` live composite preview
  */
 type NodeParamControl =
   | "select"
@@ -68,7 +75,10 @@ type NodeParamControl =
   | "text"
   | "textarea"
   | "tagPicker"
-  | "keyValue";
+  | "keyValue"
+  | "file"
+  | "positionGrid"
+  | "watermarkPreview";
 
 interface NodeParamFieldInfo {
   /** Effective type for rendering the correct form control. */
@@ -141,17 +151,30 @@ function isKeyValueRecord(zodType: z.ZodTypeAny): boolean {
   return typeName === "ZodString" || typeName === "ZodUnknown";
 }
 
-function inferEnum(innerDef: ZodDef, required: boolean): NodeParamFieldInfo {
-  return { type: "enum", control: "select", required, enumValues: innerDef.values };
+function inferEnum(
+  innerDef: ZodDef,
+  required: boolean,
+  fieldConfig?: NodeParamField,
+): NodeParamFieldInfo {
+  const control = fieldConfig?.control ?? "select";
+  return { type: "enum", control, required, enumValues: innerDef.values };
 }
 
-function inferNumber(inner: z.ZodTypeAny, required: boolean): NodeParamFieldInfo {
+function inferNumber(
+  inner: z.ZodTypeAny,
+  required: boolean,
+  fieldConfig?: NodeParamField,
+): NodeParamFieldInfo {
   const { min, max } = extractNumberChecks(inner);
   const isBounded = min !== undefined && max !== undefined;
-  return { type: "number", control: isBounded ? "slider" : "number", required, min, max };
+  const control = fieldConfig?.control ?? (isBounded ? "slider" : "number");
+  return { type: "number", control, required, min, max };
 }
 
 function inferString(required: boolean, fieldConfig?: NodeParamField): NodeParamFieldInfo {
+  if (fieldConfig?.control === "file") return { type: "string", control: "file", required };
+  if (fieldConfig?.control === "watermarkPreview")
+    return { type: "string", control: "watermarkPreview", required };
   const control = fieldConfig?.control === "textarea" ? "textarea" : "text";
   return { type: "string", control, required };
 }
@@ -173,8 +196,8 @@ function inferFieldType(zodField: z.ZodTypeAny, fieldConfig?: NodeParamField): N
   const innerDef = zodDef(inner);
   const typeName = innerDef.typeName;
 
-  if (typeName === "ZodEnum") return inferEnum(innerDef, required);
-  if (typeName === "ZodNumber") return inferNumber(inner, required);
+  if (typeName === "ZodEnum") return inferEnum(innerDef, required, fieldConfig);
+  if (typeName === "ZodNumber") return inferNumber(inner, required, fieldConfig);
   if (typeName === "ZodBoolean") return { type: "boolean", control: "switch", required };
   if (typeName === "ZodArray" && isStringArray(inner))
     return { type: "array", control: "tagPicker", required };

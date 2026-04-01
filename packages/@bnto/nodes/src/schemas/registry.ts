@@ -21,6 +21,7 @@ import { fileRenameFields } from "./fileRename";
 import { groupNodeSchema, groupFields } from "./group";
 import { imageCompressFields } from "./imageCompress";
 import { imageConvertFields } from "./imageConvert";
+import { imageOverlayFields } from "./imageOverlay";
 import { imageResizeFields } from "./imageResize";
 import { imageStripExifFields } from "./imageStripExif";
 import { inputNodeSchema, inputFields } from "./input";
@@ -49,6 +50,7 @@ const HAND_WRITTEN_FIELDS: Partial<Record<string, NodeParamFields>> = {
   group: groupFields,
   "image-compress": imageCompressFields,
   "image-convert": imageConvertFields,
+  "image-overlay": imageOverlayFields,
   "image-resize": imageResizeFields,
   "image-strip-exif": imageStripExifFields,
   input: inputFields,

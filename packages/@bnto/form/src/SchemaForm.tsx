@@ -5,9 +5,12 @@ import type { NodeParamFields, NodeSchema } from "@bnto/core";
 import { Stack, Text } from "@bnto/ui";
 import { buildFormEntries } from "./buildFormEntries";
 import { FormEntryRenderer } from "./FormEntryRenderer";
+import { FormStoreProvider } from "./FormStoreContext";
 
 /** Field-to-field gap: "md" (16px) gives fields breathing room now that descriptions are tooltips. */
 const FIELD_GAP = "md" as const;
+
+const EMPTY_FILES: File[] = [];
 
 /**
  * SchemaForm — auto-generates a form from a NodeSchema.
@@ -31,9 +34,11 @@ interface SchemaFormProps {
   visibleParams: string[];
   /** Called when any parameter value changes. */
   onChange: (name: string, value: unknown) => void;
+  /** Input files for preview controls (e.g., source images for watermark preview). */
+  files?: File[];
 }
 
-function SchemaForm({ schema, fields, values, visibleParams, onChange }: SchemaFormProps) {
+function SchemaForm({ schema, fields, values, visibleParams, onChange, files }: SchemaFormProps) {
   const entries = useMemo(
     () => buildFormEntries(schema, visibleParams, fields),
     [schema, fields, visibleParams],
@@ -48,16 +53,18 @@ function SchemaForm({ schema, fields, values, visibleParams, onChange }: SchemaF
   }
 
   return (
-    <Stack gap={FIELD_GAP}>
-      {entries.map((entry) => (
-        <FormEntryRenderer
-          key={entry.kind === "group" ? entry.groupName : entry.paramName}
-          entry={entry}
-          values={values}
-          onChange={onChange}
-        />
-      ))}
-    </Stack>
+    <FormStoreProvider values={values} files={files ?? EMPTY_FILES} onChange={onChange}>
+      <Stack gap={FIELD_GAP}>
+        {entries.map((entry) => (
+          <FormEntryRenderer
+            key={entry.kind === "group" ? entry.groupName : entry.paramName}
+            entry={entry}
+            values={values}
+            onChange={onChange}
+          />
+        ))}
+      </Stack>
+    </FormStoreProvider>
   );
 }
 
