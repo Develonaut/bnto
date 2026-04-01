@@ -10,6 +10,7 @@ import type { NodeParamFields } from "../schemas/types";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
 import { imageConvertNodeSchema } from "./schemas/imageConvert";
+import { imageOverlayNodeSchema } from "./schemas/imageOverlay";
 import { imageResizeNodeSchema } from "./schemas/imageResize";
 import { imageStripExifNodeSchema } from "./schemas/imageStripExif";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
@@ -25,6 +26,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-rename": fileRenameNodeSchema,
   "image-compress": imageCompressNodeSchema,
   "image-convert": imageConvertNodeSchema,
+  "image-overlay": imageOverlayNodeSchema,
   "image-resize": imageResizeNodeSchema,
   "image-strip-exif": imageStripExifNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
@@ -41,6 +43,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "file-rename": {},
   "image-compress": {},
   "image-convert": {},
+  "image-overlay": {},
   "image-resize": {},
   "image-strip-exif": {},
   "spreadsheet-clean": {},

@@ -12,6 +12,7 @@ import { groupNodeType } from "./group";
 import { httpRequestNodeType } from "./httpRequest";
 import { imageCompressNodeType } from "./imageCompress";
 import { imageConvertNodeType } from "./imageConvert";
+import { imageOverlayNodeType } from "./imageOverlay";
 import { imageResizeNodeType } from "./imageResize";
 import { imageStripExifNodeType } from "./imageStripExif";
 import { inputNodeType } from "./input";
@@ -36,6 +37,7 @@ export const NODE_TYPES = {
   httpRequest: "http-request",
   imageCompress: "image-compress",
   imageConvert: "image-convert",
+  imageOverlay: "image-overlay",
   imageResize: "image-resize",
   imageStripExif: "image-strip-exif",
   input: "input",
@@ -60,20 +62,21 @@ export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": editFieldsNodeType,
   "file-rename": fileRenameNodeType,
-  "group": groupNodeType,
+  group: groupNodeType,
   "http-request": httpRequestNodeType,
   "image-compress": imageCompressNodeType,
   "image-convert": imageConvertNodeType,
+  "image-overlay": imageOverlayNodeType,
   "image-resize": imageResizeNodeType,
   "image-strip-exif": imageStripExifNodeType,
-  "input": inputNodeType,
-  "loop": loopNodeType,
-  "output": outputNodeType,
-  "parallel": parallelNodeType,
+  input: inputNodeType,
+  loop: loopNodeType,
+  output: outputNodeType,
+  parallel: parallelNodeType,
   "shell-command": shellCommandNodeType,
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
   "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
-  "transform": transformNodeType,
+  transform: transformNodeType,
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;

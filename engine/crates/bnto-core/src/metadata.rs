@@ -109,6 +109,12 @@ pub enum ParameterType {
     },
     /// A structured object (key-value map). Used for column rename mappings.
     Object,
+    /// A file upload parameter (base64-encoded). Used for overlay images, etc.
+    /// The `accept` field lists allowed MIME types for the file picker.
+    File {
+        /// Accepted MIME types (e.g., `["image/png", "image/jpeg"]`).
+        accept: Vec<std::string::String>,
+    },
 }
 
 // --- Constraints ---
@@ -245,12 +251,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 16 registered node types.
+/// Return metadata for all 19 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(18);
+    let mut types = Vec::with_capacity(19);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -367,6 +373,15 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "image"
+        ),
+        node_type!(
+            "image-overlay",
+            "Overlay Image",
+            "Overlay an image onto source images at a configurable position, size, and opacity.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "stamp"
         ),
     ]
 }
@@ -546,10 +561,10 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_18_entries() {
-        // The engine defines all 18 node types.
+    fn test_all_node_types_returns_19_entries() {
+        // The engine defines all 19 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 18, "Should have exactly 18 node types");
+        assert_eq!(types.len(), 19, "Should have exactly 19 node types");
     }
 
     #[test]
@@ -569,7 +584,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 18, "All node type names should be unique");
+        assert_eq!(names.len(), 19, "All node type names should be unique");
     }
 
     #[test]

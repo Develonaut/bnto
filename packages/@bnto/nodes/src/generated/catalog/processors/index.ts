@@ -9,6 +9,7 @@ import type { ProcessorDef } from "../types";
 import { fileRenameProcessor } from "./fileRename";
 import { imageCompressProcessor } from "./imageCompress";
 import { imageConvertProcessor } from "./imageConvert";
+import { imageOverlayProcessor } from "./imageOverlay";
 import { imageResizeProcessor } from "./imageResize";
 import { imageStripExifProcessor } from "./imageStripExif";
 import { spreadsheetCleanProcessor } from "./spreadsheetClean";
@@ -20,6 +21,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   fileRenameProcessor,
   imageCompressProcessor,
   imageConvertProcessor,
+  imageOverlayProcessor,
   imageResizeProcessor,
   imageStripExifProcessor,
   spreadsheetCleanProcessor,

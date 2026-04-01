@@ -35,6 +35,10 @@ pub fn create_default_registry() -> NodeRegistry {
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
     registry.register("spreadsheet-merge", Box::new(bnto_csv::MergeCsv::new()));
+    registry.register(
+        "image-overlay",
+        Box::new(bnto_image::OverlayImage::new()),
+    );
 
     registry
 }
@@ -71,13 +75,14 @@ mod tests {
     #[test]
     fn test_default_registry_has_all_processors() {
         let registry = create_default_registry();
-        assert_eq!(registry.len(), 9);
+        assert_eq!(registry.len(), 10);
 
         let expected = [
             "image-compress",
             "image-resize",
             "image-convert",
             "image-strip-exif",
+            "image-overlay",
             "spreadsheet-clean",
             "spreadsheet-rename",
             "spreadsheet-convert",
@@ -279,6 +284,46 @@ mod tests {
     }
 
     #[test]
+    fn test_generated_watermark_images_recipe() {
+        // The generated recipe has an empty overlay param — inject a real one.
+        let mut def: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../packages/@bnto/registry/src/recipes/generated/watermark-images.bnto.json"
+        ))
+        .unwrap();
+
+        // Base64-encode the test overlay image
+        let overlay_bytes =
+            include_bytes!("../../../../test-fixtures/images/overlays/overlay-logo.png");
+        let overlay_b64 = format!(
+            "data:image/png;base64,{}",
+            base64::Engine::encode(&base64::engine::general_purpose::STANDARD, overlay_bytes)
+        );
+
+        // Set the overlay param on the overlay node
+        let nodes = def["nodes"].as_array_mut().unwrap();
+        for node in nodes.iter_mut() {
+            if node["type"] == "image-overlay" {
+                node["parameters"]["overlay"] = serde_json::Value::String(overlay_b64.clone());
+            }
+        }
+
+        let json = serde_json::to_string(&def).unwrap();
+        let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
+        let files = vec![PipelineFile {
+            name: "photo.jpg".to_string(),
+            data: test_image.to_vec(),
+            mime_type: "image/jpeg".to_string(),
+            metadata: serde_json::Map::new(),
+        }];
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(&json, files, &reporter).expect("watermark-images recipe");
+
+        assert_eq!(result.files.len(), 1);
+        assert!(!result.files[0].data.is_empty());
+    }
+
+    #[test]
     fn test_all_generated_recipes_parse() {
         let recipes = [
             include_str!(
@@ -316,6 +361,9 @@ mod tests {
             ),
             include_str!(
                 "../../../../packages/@bnto/registry/src/recipes/generated/strip-exif.bnto.json"
+            ),
+            include_str!(
+                "../../../../packages/@bnto/registry/src/recipes/generated/watermark-images.bnto.json"
             ),
             include_str!(
                 "../../../../packages/@bnto/registry/src/recipes/generated/merge-csv.bnto.json"

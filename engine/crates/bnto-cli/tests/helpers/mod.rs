@@ -35,6 +35,32 @@ pub fn recipe_path(slug: &str) -> String {
         .to_string()
 }
 
+/// Path to a custom recipe fixture (for recipes that need param injection, e.g. overlay).
+pub fn custom_recipe_path(slug: &str) -> String {
+    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("tests/fixtures/{slug}.bnto.json"))
+        .to_string_lossy()
+        .to_string()
+}
+
+/// Run a custom recipe fixture and assert it succeeds.
+pub fn run_custom_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path(slug)])
+        .arg(fixture)
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(
+        output.status.success(),
+        "[custom/{slug}] stderr: {stderr}"
+    );
+    (out, stderr)
+}
+
 /// Path to an explicit (loop-container) recipe fixture.
 pub fn explicit_recipe_path(slug: &str) -> String {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -64,6 +90,14 @@ pub fn run_explicit_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, 
 pub fn fixture_image(name: &str) -> String {
     repo_root()
         .join(format!("test-fixtures/images/{name}"))
+        .to_string_lossy()
+        .to_string()
+}
+
+/// Path to an overlay test fixture image (test-fixtures/images/overlays/).
+pub fn fixture_overlay(name: &str) -> String {
+    repo_root()
+        .join(format!("test-fixtures/images/overlays/{name}"))
         .to_string_lossy()
         .to_string()
 }

@@ -12,6 +12,7 @@ export type NodeTypeName =
   | "http-request"
   | "image-compress"
   | "image-convert"
+  | "image-overlay"
   | "image-resize"
   | "image-strip-exif"
   | "input"
@@ -26,7 +27,15 @@ export type NodeTypeName =
   | "transform";
 
 /** Node category for grouping in the UI and documentation. */
-export type NodeCategory = "control" | "data" | "file" | "image" | "io" | "network" | "spreadsheet" | "system";
+export type NodeCategory =
+  | "control"
+  | "data"
+  | "file"
+  | "image"
+  | "io"
+  | "network"
+  | "spreadsheet"
+  | "system";
 
 /** Metadata describing a node type's behavior and capabilities. */
 export interface NodeTypeInfo {
@@ -46,7 +55,7 @@ export interface NodeTypeInfo {
   icon: string;
 }
 
-export type ParamType = "number" | "string" | "boolean" | "enum" | "object";
+export type ParamType = "number" | "string" | "boolean" | "enum" | "object" | "file";
 
 export interface ProcessorParam {
   readonly name: string;
@@ -61,6 +70,8 @@ export interface ProcessorParam {
     readonly required?: boolean;
   };
   readonly placeholder?: string;
+  /** Accepted MIME types for file-type parameters. */
+  readonly accept?: readonly string[];
   /** Whether this param is eligible for surfacing in container config panels. Defaults to true. */
   readonly surfaceable?: boolean;
 }
