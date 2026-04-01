@@ -86,10 +86,10 @@ function ConfigPanelRoot() {
             <TabsTrigger value="node">Node</TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="recipe">
+        <TabsContent value="recipe" className="flex-1 min-h-0 flex flex-col overflow-hidden">
           <RecipeSettingsPanel />
         </TabsContent>
-        <TabsContent value="node">
+        <TabsContent value="node" className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {hasNodeContent ? (
             <NodeConfigContent
               configNodeId={configNodeId}
