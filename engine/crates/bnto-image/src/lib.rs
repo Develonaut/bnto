@@ -11,11 +11,11 @@ pub mod convert;
 pub mod encode;
 pub mod format;
 pub mod orientation;
+pub mod overlay;
 pub mod quantize;
 pub mod resize;
 pub mod strip_exif;
 pub mod wasm_bridge;
-pub mod overlay;
 
 #[cfg(test)]
 mod test_utils;
@@ -26,6 +26,6 @@ mod test_utils;
 pub use compress::CompressImages;
 pub use convert::ConvertImageFormat;
 pub use format::ImageFormat;
+pub use overlay::OverlayImage;
 pub use resize::ResizeImages;
 pub use strip_exif::StripExif;
-pub use overlay::OverlayImage;

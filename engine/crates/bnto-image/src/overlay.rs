@@ -59,9 +59,7 @@ impl OverlayImage {
         let b64 = params
             .get("overlay")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| {
-                BntoError::InvalidInput("overlay parameter is required".to_string())
-            })?;
+            .ok_or_else(|| BntoError::InvalidInput("overlay parameter is required".to_string()))?;
 
         // Strip optional data URI prefix (e.g., "data:image/png;base64,")
         let raw = if let Some(idx) = b64.find(",") {
@@ -568,10 +566,7 @@ mod tests {
         let wm = overlay_base64();
 
         let mut params_tl = serde_json::Map::new();
-        params_tl.insert(
-            "overlay".to_string(),
-            serde_json::Value::String(wm.clone()),
-        );
+        params_tl.insert("overlay".to_string(), serde_json::Value::String(wm.clone()));
         params_tl.insert(
             "position".to_string(),
             serde_json::Value::String("top-left".to_string()),
@@ -614,10 +609,7 @@ mod tests {
         let wm = overlay_base64();
 
         let mut params_full = serde_json::Map::new();
-        params_full.insert(
-            "overlay".to_string(),
-            serde_json::Value::String(wm.clone()),
-        );
+        params_full.insert("overlay".to_string(), serde_json::Value::String(wm.clone()));
         params_full.insert(
             "opacity".to_string(),
             serde_json::Value::Number(100u64.into()),
@@ -660,10 +652,7 @@ mod tests {
         let wm = overlay_base64();
 
         let mut params_small = serde_json::Map::new();
-        params_small.insert(
-            "overlay".to_string(),
-            serde_json::Value::String(wm.clone()),
-        );
+        params_small.insert("overlay".to_string(), serde_json::Value::String(wm.clone()));
         params_small.insert("size".to_string(), serde_json::Value::Number(10u64.into()));
 
         let mut params_large = serde_json::Map::new();
@@ -700,10 +689,7 @@ mod tests {
         let wm = overlay_base64();
 
         let mut params_a = serde_json::Map::new();
-        params_a.insert(
-            "overlay".to_string(),
-            serde_json::Value::String(wm.clone()),
-        );
+        params_a.insert("overlay".to_string(), serde_json::Value::String(wm.clone()));
         params_a.insert(
             "offsetX".to_string(),
             serde_json::Value::Number(5u64.into()),

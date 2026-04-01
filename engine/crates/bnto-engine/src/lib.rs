@@ -35,10 +35,7 @@ pub fn create_default_registry() -> NodeRegistry {
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
     registry.register("spreadsheet-merge", Box::new(bnto_csv::MergeCsv::new()));
-    registry.register(
-        "image-overlay",
-        Box::new(bnto_image::OverlayImage::new()),
-    );
+    registry.register("image-overlay", Box::new(bnto_image::OverlayImage::new()));
 
     registry
 }

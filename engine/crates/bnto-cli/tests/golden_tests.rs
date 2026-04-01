@@ -86,28 +86,20 @@ fn golden_watermark_square_bottom_right() {
 
 #[test]
 fn golden_overlay_landscape() {
-    let (out, _) = run_custom_recipe_ok(
-        "overlay-landscape",
-        &fixture_overlay("landscape-16x9.jpg"),
-    );
+    let (out, _) =
+        run_custom_recipe_ok("overlay-landscape", &fixture_overlay("landscape-16x9.jpg"));
     assert_golden("overlay-landscape", &out);
 }
 
 #[test]
 fn golden_overlay_portrait() {
-    let (out, _) = run_custom_recipe_ok(
-        "overlay-portrait",
-        &fixture_overlay("portrait-3x4.jpg"),
-    );
+    let (out, _) = run_custom_recipe_ok("overlay-portrait", &fixture_overlay("portrait-3x4.jpg"));
     assert_golden("overlay-portrait", &out);
 }
 
 #[test]
 fn golden_overlay_square() {
-    let (out, _) = run_custom_recipe_ok(
-        "overlay-square",
-        &fixture_overlay("square-1x1.jpg"),
-    );
+    let (out, _) = run_custom_recipe_ok("overlay-square", &fixture_overlay("square-1x1.jpg"));
     assert_golden("overlay-square", &out);
 }
 
@@ -312,27 +304,19 @@ fn golden_watermark_square_bottom_right_explicit() {
 
 #[test]
 fn golden_overlay_landscape_explicit() {
-    let (out, _) = run_explicit_recipe_ok(
-        "overlay-landscape",
-        &fixture_overlay("landscape-16x9.jpg"),
-    );
+    let (out, _) =
+        run_explicit_recipe_ok("overlay-landscape", &fixture_overlay("landscape-16x9.jpg"));
     assert_golden("overlay-landscape", &out);
 }
 
 #[test]
 fn golden_overlay_portrait_explicit() {
-    let (out, _) = run_explicit_recipe_ok(
-        "overlay-portrait",
-        &fixture_overlay("portrait-3x4.jpg"),
-    );
+    let (out, _) = run_explicit_recipe_ok("overlay-portrait", &fixture_overlay("portrait-3x4.jpg"));
     assert_golden("overlay-portrait", &out);
 }
 
 #[test]
 fn golden_overlay_square_explicit() {
-    let (out, _) = run_explicit_recipe_ok(
-        "overlay-square",
-        &fixture_overlay("square-1x1.jpg"),
-    );
+    let (out, _) = run_explicit_recipe_ok("overlay-square", &fixture_overlay("square-1x1.jpg"));
     assert_golden("overlay-square", &out);
 }

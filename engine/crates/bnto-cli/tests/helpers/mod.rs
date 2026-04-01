@@ -54,10 +54,7 @@ pub fn run_custom_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, St
         .unwrap();
 
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-    assert!(
-        output.status.success(),
-        "[custom/{slug}] stderr: {stderr}"
-    );
+    assert!(output.status.success(), "[custom/{slug}] stderr: {stderr}");
     (out, stderr)
 }
 
