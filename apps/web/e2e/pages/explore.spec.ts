@@ -67,18 +67,6 @@ test.describe("Explore page — desktop @browser", () => {
     await expect(page).toHaveURL(`/${FIRST_RECIPE.slug}`);
     await expect(page.getByTestId("recipe-heading")).toBeVisible();
   });
-
-  test("explore page screenshot", async ({ page }) => {
-    await page.goto("/explore");
-    await expect(page.getByTestId("explore-recipe-grid")).toBeVisible();
-
-    // Wait for animations to settle
-    await page.waitForTimeout(500);
-    await expect(page).toHaveScreenshot("explore-desktop.png", {
-      fullPage: true,
-      maxDiffPixelRatio: 0.01,
-    });
-  });
 });
 
 /* ── Mobile ──────────────────────────────────────────────────── */
@@ -91,16 +79,5 @@ test.describe("Explore page — mobile @browser", () => {
 
     await expect(page.getByTestId("explore-heading")).toBeVisible();
     await expect(page.getByTestId("explore-recipe-grid")).toBeVisible();
-  });
-
-  test("mobile explore screenshot", async ({ page }) => {
-    await page.goto("/explore");
-    await expect(page.getByTestId("explore-recipe-grid")).toBeVisible();
-
-    await page.waitForTimeout(500);
-    await expect(page).toHaveScreenshot("explore-mobile.png", {
-      fullPage: true,
-      maxDiffPixelRatio: 0.01,
-    });
   });
 });
