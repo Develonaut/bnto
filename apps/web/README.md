@@ -1,6 +1,6 @@
 # @bnto/web
 
-Next.js web application — the primary frontend for bnto.
+Next.js web application. The primary frontend for bnto.
 
 ## Overview
 
@@ -44,8 +44,8 @@ proxy.ts                    # Auth middleware (route protection)
 
 | Route                                  | Description                        | Auth          |
 | -------------------------------------- | ---------------------------------- | ------------- |
-| `/`                                    | Home — tool grid gallery           | Public        |
-| `/compress-images`, `/clean-csv`, etc. | Tool pages — SEO-optimized, static | Public        |
+| `/`                                    | Home - tool grid gallery           | Public        |
+| `/compress-images`, `/clean-csv`, etc. | Tool pages - SEO-optimized, static | Public        |
 | `/editor`                              | Visual recipe editor (beta)        | Public        |
 | `/explore`                             | Recipe & node browser              | Public        |
 | `/signin`                              | Sign-in page                       | Auth redirect |

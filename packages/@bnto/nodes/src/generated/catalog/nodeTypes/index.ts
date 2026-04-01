@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  * Run `task nodes:generate` to regenerate after engine changes.
  * Engine catalog v1.0.0
  */
@@ -62,21 +62,21 @@ export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": editFieldsNodeType,
   "file-rename": fileRenameNodeType,
-  "group": groupNodeType,
+  group: groupNodeType,
   "http-request": httpRequestNodeType,
   "image-compress": imageCompressNodeType,
   "image-convert": imageConvertNodeType,
   "image-overlay": imageOverlayNodeType,
   "image-resize": imageResizeNodeType,
   "image-strip-exif": imageStripExifNodeType,
-  "input": inputNodeType,
-  "loop": loopNodeType,
-  "output": outputNodeType,
-  "parallel": parallelNodeType,
+  input: inputNodeType,
+  loop: loopNodeType,
+  output: outputNodeType,
+  parallel: parallelNodeType,
   "shell-command": shellCommandNodeType,
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
   "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
-  "transform": transformNodeType,
+  transform: transformNodeType,
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;

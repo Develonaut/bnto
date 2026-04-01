@@ -1,6 +1,6 @@
 # bnto-image
 
-Image processing nodes — compress, resize, and convert images in the browser via WASM.
+Image processing nodes. Compress, resize, and convert images in the browser via WASM.
 
 ## Overview
 
@@ -39,9 +39,9 @@ tests/
 
 ## Key Dependencies
 
-- `image` (0.25) — pure Rust codecs for JPEG, PNG, WebP (no rayon — WASM incompatible)
-- `quantizr` (1.4) — PNG quantization via median cut algorithm
-- `png` (0.18) — low-level PNG encoder for indexed color output
+- `image` (0.25) - pure Rust codecs for JPEG, PNG, WebP (no rayon, WASM incompatible)
+- `quantizr` (1.4) - PNG quantization via median cut algorithm
+- `png` (0.18) - low-level PNG encoder for indexed color output
 
 ## Development
 

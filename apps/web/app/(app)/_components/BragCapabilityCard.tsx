@@ -22,14 +22,14 @@ const CAPABILITIES: Capability[] = [
   {
     icon: ShieldCheckIcon,
     variant: "secondary",
-    label: "Runs locally — files never leave your device",
+    label: "Runs locally. Files never leave your device",
   },
-  { icon: RepeatIcon, variant: "accent", label: "No daily limits — process unlimited files" },
-  { icon: GlobeIcon, variant: "success", label: "No signup required — just drop files and go" },
+  { icon: RepeatIcon, variant: "accent", label: "No daily limits. Process unlimited files" },
+  { icon: GlobeIcon, variant: "success", label: "No signup required. Just drop files and go" },
   {
     icon: CheckIcon,
     variant: "primary",
-    label: "Free forever — browser recipes cost us nothing to run",
+    label: "Free forever. Browser recipes cost us nothing to run",
   },
 ];
 

@@ -2,7 +2,7 @@
   "name": "@bnto/editor",
   "version": "0.0.1",
   "private": true,
-  "description": "Recipe editor — visual canvas, store, adapters, and hooks",
+  "description": "Recipe editor - visual canvas, store, adapters, and hooks",
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",

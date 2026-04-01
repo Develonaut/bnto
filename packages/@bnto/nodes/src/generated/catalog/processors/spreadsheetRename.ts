@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  * Run `task nodes:generate` to regenerate after engine changes.
  * Engine catalog v1.0.0
  */
@@ -15,12 +15,12 @@ export const spreadsheetRenameProcessor: ProcessorDef = {
   accepts: ["text/csv"] as const,
   platforms: ["browser"] as const,
   parameters: [
-  {
-    name: "columns",
-    label: "Column Mapping",
-    description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
-    type: "object" as const,
-  },
+    {
+      name: "columns",
+      label: "Column Mapping",
+      description: 'Map of old column names to new names (e.g., {"Name": "full_name"})',
+      type: "object" as const,
+    },
   ],
   inputCardinality: "perFile" as const,
 };

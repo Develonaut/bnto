@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  * Run `task nodes:generate` to regenerate after engine changes.
  * Engine catalog v1.0.0
  */
@@ -19,7 +19,7 @@ import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
 
 /**
- * Engine-backed schema entries — auto-assembled from generated per-type files.
+ * Engine-backed schema entries - auto-assembled from generated per-type files.
  * Merged with hand-written schemas in schemas/registry.ts.
  */
 export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {

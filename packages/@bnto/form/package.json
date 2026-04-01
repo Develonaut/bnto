@@ -2,7 +2,7 @@
   "name": "@bnto/form",
   "version": "0.0.1",
   "private": true,
-  "description": "Schema-driven form system — auto-generates UI controls from node schemas",
+  "description": "Schema-driven form system - auto-generates UI controls from node schemas",
   "type": "module",
   "exports": {
     ".": {

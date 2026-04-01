@@ -1,12 +1,12 @@
 # @bnto/nodes
 
-Engine-agnostic node definitions — the TypeScript mirror of what the Rust engine knows.
+Engine-agnostic node definitions. The TypeScript mirror of what the Rust engine knows.
 
 ## Overview
 
 `@bnto/nodes` bridges the Rust engine and TypeScript consumers. Most of its code is **generated** from the engine's self-describing catalog. Hand-written code is limited to type interfaces, predefined recipe compositions, and schema helpers.
 
-Consumed by `@bnto/core`, `@bnto/editor`, and `apps/web/`. Never imports from those packages — it's a leaf dependency.
+Consumed by `@bnto/core`, `@bnto/editor`, and `apps/web/`. Never imports from those packages. It's a leaf dependency.
 
 ## Directory Structure
 
@@ -68,11 +68,11 @@ The engine's `NodeRegistry` iterates all registered processors, serializes their
 
 ## Key Types
 
-- **`Definition`** — recursive tree structure representing a `.bnto.json` recipe. Nodes contain children (for containers), edges, and metadata
-- **`Recipe`** — a `Definition` plus display metadata (name, slug, description, accept spec, SEO)
-- **`NodeTypeName`** — union of all engine-backed node type strings (e.g. `"image-compress"`, `"spreadsheet-clean"`, `"file-rename"`)
-- **`NODE_TYPE_INFO`** — per-type metadata: label, category, isContainer, icon
-- **`PROCESSORS`** — flat list of all processor metadata (type + parameters)
+- **`Definition`** - recursive tree structure representing a `.bnto.json` recipe. Nodes contain children (for containers), edges, and metadata
+- **`Recipe`** - a `Definition` plus display metadata (name, slug, description, accept spec, SEO)
+- **`NodeTypeName`** - union of all engine-backed node type strings (e.g. `"image-compress"`, `"spreadsheet-clean"`, `"file-rename"`)
+- **`NODE_TYPE_INFO`** - per-type metadata: label, category, isContainer, icon
+- **`PROCESSORS`** - flat list of all processor metadata (type + parameters)
 
 ## Predefined Recipes
 
@@ -116,5 +116,5 @@ const recipe = getRecipeBySlug("compress-images");
 const info = NODE_TYPE_INFO["image-compress"]; // { label, category, isContainer, icon }
 
 // Type guards
-isContainerNodeType("loop"); // true — reads from generated NODE_TYPE_INFO
+isContainerNodeType("loop"); // true - reads from generated NODE_TYPE_INFO
 ```

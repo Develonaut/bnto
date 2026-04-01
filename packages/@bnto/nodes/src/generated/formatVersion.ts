@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  *
  * The catalog format version, extracted from the engine catalog.
  * Run `task nodes:generate` to regenerate after engine changes.

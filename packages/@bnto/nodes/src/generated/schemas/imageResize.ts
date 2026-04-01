@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  * Run `task nodes:generate` to regenerate after engine changes.
  * Engine catalog v1.0.0
  */
@@ -9,10 +9,10 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for image-resize node parameters. */
 export const imageResizeParamsSchema = z.object({
-    width: z.number().min(1).optional(),
-    height: z.number().min(1).optional(),
-    maintainAspect: z.boolean().optional().default(true),
-    quality: z.number().min(1).max(100).optional().default(80),
+  width: z.number().min(1).optional(),
+  height: z.number().min(1).optional(),
+  maintainAspect: z.boolean().optional().default(true),
+  quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-resize node parameters. */
@@ -38,7 +38,8 @@ export const imageResizeNodeSchema: NodeSchema = {
     },
     quality: {
       label: "Quality",
-      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description:
+        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };

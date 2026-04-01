@@ -1,10 +1,10 @@
 # bnto-core
 
-Foundation crate for the bnto engine — types, traits, pipeline executor, and node registry.
+Foundation crate for the bnto engine. Types, traits, pipeline executor, and node registry.
 
 ## Overview
 
-`bnto-core` defines the contracts that all node crates implement and the executor that runs pipelines. It has **no WASM dependencies** — it compiles to native Rust for tests and CLI, or links into the `bnto-wasm` cdylib for browser execution.
+`bnto-core` defines the contracts that all node crates implement and the executor that runs pipelines. It has **no WASM dependencies**. It compiles to native Rust for tests and CLI, or links into the `bnto-wasm` cdylib for browser execution.
 
 Every other engine crate depends on `bnto-core`.
 
@@ -12,13 +12,13 @@ Every other engine crate depends on `bnto-core`.
 
 ```
 src/
-├── lib.rs                # Public API — re-exports all modules
+├── lib.rs                # Public API: re-exports all modules
 ├── errors.rs             # BntoError enum (thiserror)
 ├── events.rs             # PipelineEvent tagged union for progress reporting
 ├── metadata.rs           # NodeMetadata, ParameterDef, Constraints, NodeCategory
 ├── processor.rs          # NodeProcessor trait, NodeInput, NodeOutput
 ├── progress.rs           # ProgressReporter (target-agnostic closures)
-├── registry.rs           # NodeRegistry — compound key dispatch
+├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 └── executor/
@@ -41,8 +41,8 @@ pub trait NodeProcessor: Send + Sync {
 }
 ```
 
-- `metadata()` — self-describes the processor: type, operation, accepted formats, parameters with constraints
-- `process()` — transforms input bytes into output bytes. Stateless — all config comes via the params map in `NodeInput`
+- `metadata()` - self-describes the processor: type, operation, accepted formats, parameters with constraints
+- `process()` - transforms input bytes into output bytes. Stateless; all config comes via the params map in `NodeInput`
 
 ### NodeRegistry
 
@@ -79,7 +79,7 @@ Structured progress events consumed by the JS layer:
 Self-describing parameter metadata used by the TypeScript codegen to generate UI controls:
 
 - Name, type, default value, constraints (min/max/step/options)
-- Conditional visibility (`visible_when` — show param only when another param has a specific value)
+- Conditional visibility (`visible_when` - show param only when another param has a specific value)
 - Surfaceability flag (whether the param appears in the config panel)
 
 ## Development
@@ -99,10 +99,10 @@ task wasm:lint
 
 Extensive executor tests in `src/executor/tests/` (13 modules, 45+ test functions):
 
-- `basic.rs` — simple pipeline execution
-- `containers.rs` — loop/group/parallel node semantics
-- `errors.rs` — error propagation and recovery
-- `metadata.rs` — processor self-description
-- `progress.rs` — event emission ordering
-- `recipes.rs` — full recipe integration tests
-- `sub_pipelines.rs` — nested pipeline execution
+- `basic.rs` - simple pipeline execution
+- `containers.rs` - loop/group/parallel node semantics
+- `errors.rs` - error propagation and recovery
+- `metadata.rs` - processor self-description
+- `progress.rs` - event emission ordering
+- `recipes.rs` - full recipe integration tests
+- `sub_pipelines.rs` - nested pipeline execution

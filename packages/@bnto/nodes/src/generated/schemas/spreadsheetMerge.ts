@@ -1,5 +1,5 @@
 /**
- * AUTO-GENERATED from engine/catalog.snapshot.json — DO NOT EDIT.
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
  * Run `task nodes:generate` to regenerate after engine changes.
  * Engine catalog v1.0.0
  */
@@ -9,8 +9,11 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-merge node parameters. */
 export const spreadsheetMergeParamsSchema = z.object({
-    headerHandling: z.enum(["first-file","union"] as const).optional().default("first-file"),
-    deduplicate: z.boolean().optional().default(false),
+  headerHandling: z
+    .enum(["first-file", "union"] as const)
+    .optional()
+    .default("first-file"),
+  deduplicate: z.boolean().optional().default(false),
 });
 
 /** Inferred TypeScript type for spreadsheet-merge node parameters. */

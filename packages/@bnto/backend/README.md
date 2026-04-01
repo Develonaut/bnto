@@ -1,12 +1,12 @@
 # @bnto/backend
 
-Convex data layer — schema, server functions, and business logic.
+Convex data layer. Schema, server functions, and business logic.
 
 ## Overview
 
 `@bnto/backend` is the data layer for bnto's cloud features. It defines the database schema, server-side queries, mutations, and actions using Convex. Named by role (not technology) so internals can be swapped without changing consumers.
 
-Consumed by `@bnto/core` adapters only — app code never imports from this package directly.
+Consumed by `@bnto/core` adapters only. App code never imports from this package directly.
 
 ## Directory Structure
 

@@ -1,6 +1,6 @@
 # bnto-wasm
 
-Unified WebAssembly entry point — the single binary loaded by the browser.
+Unified WebAssembly entry point. The single binary loaded by the browser.
 
 ## Overview
 
@@ -10,9 +10,9 @@ Unified WebAssembly entry point — the single binary loaded by the browser.
 
 ```
 src/
-├── lib.rs          # Public API — setup(), version(), re-exports all node crates
-├── execute.rs      # execute_pipeline() — WASM bridge for full pipeline execution
-└── catalog.rs      # node_catalog() — serialized registry metadata for codegen
+├── lib.rs          # Public API: setup(), version(), re-exports all node crates
+├── execute.rs      # execute_pipeline() - WASM bridge for full pipeline execution
+└── catalog.rs      # node_catalog() - serialized registry metadata for codegen
 benches/
 ├── pipeline_bench.rs   # Criterion pipeline benchmarks (native only)
 └── recipe_bench.rs     # Criterion recipe benchmarks (native only)
@@ -37,10 +37,10 @@ The JS layer (`@bnto/core` browser adapter) calls `execute_pipeline()` with a se
 
 ## Why One Binary
 
-- **Single shared heap** — no cross-crate WASM boundary overhead
-- **Smaller total size** — shared dependencies (serde, image codecs) deduplicate
-- **Simpler loading** — one fetch, one instantiation, one Web Worker
-- **Atomic versioning** — the binary version matches all node capabilities
+- **Single shared heap** - no cross-crate WASM boundary overhead
+- **Smaller total size** - shared dependencies (serde, image codecs) deduplicate
+- **Simpler loading** - one fetch, one instantiation, one Web Worker
+- **Atomic versioning** - the binary version matches all node capabilities
 
 ## Build Output
 
@@ -69,6 +69,6 @@ task wasm:bench         # Criterion benchmarks (native only)
 
 Integration tests verify the full pipeline path through the WASM boundary:
 
-- **Recipe tests** — execute predefined recipes end-to-end, verify output bytes
-- **Event tests** — verify progress event ordering and completeness
-- **Data tests** — validate output file formats (magic bytes, dimensions, metadata)
+- **Recipe tests** - execute predefined recipes end-to-end, verify output bytes
+- **Event tests** - verify progress event ordering and completeness
+- **Data tests** - validate output file formats (magic bytes, dimensions, metadata)
