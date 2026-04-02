@@ -7,9 +7,11 @@
 
 ## Vision
 
-Bnto is a composable pipeline tool for developers — compress images, clean CSVs, rename files, download videos, call APIs — from your terminal. Recipes are portable `.bnto.json` files that run everywhere: CLI, browser, desktop.
+Bnto is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes. Run them anywhere.
 
-**Primary surface: CLI.** The Rust engine is the product. The browser is a bonus showcase — every browser-capable recipe also runs at bnto.io for free.
+The power is in the composition: any workflow you can describe as a sequence of steps, bnto can automate. And because the engine compiles to every target, a recipe you build today works in your terminal, your browser, on your desktop, and on a server — without changes.
+
+**The architecture makes this possible:** One Rust engine, multiple compilation targets. Write a node once. The engine handles execution, progress, error handling, and platform differences. Browser nodes compile to WASM. CLI nodes get full system access. Server nodes get managed infrastructure. The recipe doesn't care — it just describes the workflow.
 
 **Execution targets:**
 
@@ -20,7 +22,7 @@ Bnto is a composable pipeline tool for developers — compress images, clean CSV
 | **Desktop** (Tauri)     | Backlog (M4)   | $0          | Free forever       |
 | **Cloud** (server-side) | Backlog (M4)   | ~$5/mo base | Pro tier           |
 
-**The insight:** The engine is the stable API. CLI and browser execution cost nothing. Desktop and cloud are future distribution targets. Revenue strategy is tabled — focus is on making the engine powerful and fun.
+**The insight:** The engine is the stable API. Nodes are the building blocks. Recipes are the workflows. Targets are just compilation modes. Revenue strategy is tabled — focus is on making the engine powerful and fun.
 
 ---
 
@@ -77,14 +79,16 @@ M5: Monetization
 
 ## Engine-First Development
 
+**A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. Browser-capable nodes compile to WASM and work at bnto.io. CLI-only nodes get full system access. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
+
 **The CLI is the primary development surface.** New node types are built and tested via `bnto run` before any browser/web work. The development workflow:
 
 1. Build the processor in Rust (TDD-first, golden tests)
 2. Test via `bnto run <recipe> [files...]`
 3. Prove it works end-to-end in the CLI
-4. Decide where it surfaces (browser WASM, web UI, desktop)
+4. The engine's `platforms` metadata determines where it surfaces — browser, desktop, server, or all of the above
 
-**What prompted this shift:** The next interesting recipe (download-video-from-url via yt-dlp) requires external dependencies and can't run in a browser. Instead of building around browser limitations, we lean into what makes the engine powerful — local execution, composability, and the Rust CLI.
+**Extensibility is the point.** The 14 predefined recipes are a starting point. The real value is that anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
 
 **Dependency system:** Node types can declare external dependencies (`yt-dlp`, `ffmpeg`, `imagemagick`). The engine checks them before pipeline execution. `bnto doctor` reports missing dependencies with install hints.
 

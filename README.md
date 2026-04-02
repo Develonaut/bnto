@@ -6,20 +6,20 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-**A composable pipeline tool for developers.** Compress images, clean CSVs, rename files, download videos, call APIs — from your terminal or browser. Powered by a Rust engine that compiles to native binaries and WebAssembly.
+**Workflow automation through composable parts.** Build a node for anything — image processing, data transforms, API calls, video downloads, shell commands — then chain nodes into recipes that automate your workflow. One Rust engine that compiles to native binaries, WebAssembly, and (soon) desktop and server. Write a recipe once, run it anywhere.
 
 ```bash
-# Compress all JPEGs in the current directory
+# Run a predefined recipe
 bnto run compress-images *.jpg
 
-# Clean up a messy CSV
-bnto run clean-csv data.csv
-
-# Chain tools into multi-step recipes
+# Chain nodes into multi-step workflows
 bnto run optimize-images-for-web photos/
+
+# Any workflow you can describe, bnto can run
+bnto run my-custom-pipeline data/
 ```
 
-Recipes are portable `.bnto.json` files that run everywhere — CLI, browser, desktop.
+Recipes are portable `.bnto.json` files — composable pipelines that run everywhere: CLI, browser, desktop, server.
 
 > **Also runs in your browser:** [bnto.io](https://bnto.io) — same engine, compiled to WebAssembly. Files never leave your machine.
 
@@ -27,7 +27,9 @@ Recipes are portable `.bnto.json` files that run everywhere — CLI, browser, de
 
 ## Recipes
 
-Recipes are what bnto calls its tools. Each one is a pipeline of nodes that process your files. Predefined recipes work out of the box.
+A recipe is a pipeline of nodes. Each node does one thing — compress, resize, rename, convert, download, call an API — and you chain them together into a workflow. Need something that doesn't exist? Build a node for it, and the engine takes care of running it everywhere.
+
+14 predefined recipes work out of the box:
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
@@ -50,9 +52,9 @@ Recipes are what bnto calls its tools. Each one is a pipeline of nodes that proc
 
 <!-- END AUTO-GENERATED RECIPES TABLE -->
 
-### Visual Recipe Editor
+### Build Your Own
 
-Don't see what you need? Build it. The visual editor lets you compose nodes into multi-step recipes. Chain a resize into a format conversion into a compression, all in one run.
+Don't see what you need? Build it. Compose nodes into custom recipes using the visual editor or write `.bnto.json` by hand. Any node you create automatically works on every target the engine supports — browser, CLI, desktop, server.
 
 Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
@@ -93,7 +95,7 @@ Your files never touch a server. The browser IS the server.
 
 ### The `.bnto.json` Format
 
-Recipes are portable JSON files that describe a pipeline:
+A recipe is a portable JSON file that describes a pipeline of nodes:
 
 ```json
 {
@@ -111,19 +113,20 @@ Recipes are portable JSON files that describe a pipeline:
 }
 ```
 
-The same `.bnto.json` runs in the CLI, browser, and (future) desktop. Recipes are composable — chain nodes into multi-step pipelines.
+The same `.bnto.json` runs in the CLI, browser, desktop, and server. Nodes are the building blocks — each one encapsulates a single capability. Recipes compose them into workflows. The engine handles execution, progress reporting, and error handling across every target.
 
 ---
 
 ## The Bento Box
 
-bnto is named after the bento box, a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
+bnto is named after the bento box — a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
 
-That idea runs through everything:
+That idea is the architecture:
 
-- **Nodes** are compartments. Each does one thing well (compress, resize, rename)
-- **Recipes** are boxes. Portable, organized, complete
-- **Boxes compose.** A recipe can contain other recipes. One node or twenty, the mental model never changes
+- **Nodes** are compartments. Each encapsulates one capability — compress an image, call an API, run a shell command, download a video. Build a node for anything you want to automate.
+- **Recipes** are boxes. Compose nodes into multi-step workflows. Portable, shareable, version-controlled `.bnto.json` files.
+- **The engine** is the tray. One Rust codebase compiles to every target: native CLI binary, WebAssembly for the browser, native desktop app, server-side execution. A node you write today runs everywhere the engine runs — without changes.
+- **Boxes compose.** A recipe can contain other recipes. One node or twenty, the mental model never changes.
 
 ---
 
@@ -131,11 +134,11 @@ That idea runs through everything:
 
 **Today:** 14 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Free, unlimited, no account required.
 
-**Next:** Engine expansion — dependency system for external tools (yt-dlp, ffmpeg), video download node type, TUI for interactive recipe execution, and CLI polish. The CLI becomes the primary development surface.
+**Next:** Engine expansion — dependency system for external tools (yt-dlp, ffmpeg), new node types (video, shell, HTTP), TUI for interactive recipe execution. The node catalog grows; every addition is automatically available on every target.
 
-**Later:** Desktop app (Tauri) for native local execution. Cloud execution for server-side nodes (AI inference, video processing). Pro tier for persistence and collaboration.
+**Later:** Desktop app (Tauri) for native local execution. Cloud execution for server-side nodes (AI inference, video processing). Community-contributed node types and recipes.
 
-One Rust engine powering CLI, browser (WASM), desktop (native), and cloud. Recipes are portable `.bnto.json` files that work everywhere.
+**The vision:** Any workflow you can describe as a sequence of steps, bnto can automate. Build the node, compose the recipe, run it anywhere. One Rust engine powering CLI, browser, desktop, and cloud — with recipes as portable `.bnto.json` files that work on every target.
 
 ---
 
@@ -188,21 +191,21 @@ task check              # Full check (lint + test + build)
 
 bnto follows the **Bento Box Principle**: every file, function, and package does one thing well.
 
-The Rust engine is the core. It compiles to a native CLI binary for local execution and to a WASM binary for browser execution.
+The Rust engine is the core — a single codebase that compiles to every execution target. Write a node once, and it runs everywhere the engine runs.
 
 ```
-Rust Engine
+Rust Engine (single codebase, multiple targets)
   │
   ├── Native CLI (bnto run, bnto list, bnto doctor)
-  │     ├── bnto-image (compress, resize, convert, overlay)
-  │     ├── bnto-csv (clean, rename columns, merge, csv-to-json)
-  │     └── bnto-file (rename, strip-exif)
-  │
-  ├── WASM (browser, via Web Worker)
-  │     └── Same crates, compiled to wasm32-unknown-unknown
-  │
-  ├── Next.js app (bnto.io, Vercel)
-  └── Convex Cloud (auth, data persistence)
+  ├── WASM (browser, via Web Worker — same crates, same code)
+  ├── Desktop (Tauri, planned — native Rust, no WASM overhead)
+  └── Server (cloud execution, planned — same engine, managed infra)
+
+Node Crates (each domain gets its own crate)
+  ├── bnto-image (compress, resize, convert, overlay, strip-exif)
+  ├── bnto-csv (clean, rename columns, merge, csv-to-json)
+  ├── bnto-file (rename)
+  └── bnto-video (planned — download via yt-dlp, transcode via ffmpeg)
 ```
 
 `@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly. They use core hooks that swap backends depending on runtime (browser, desktop, or cloud).

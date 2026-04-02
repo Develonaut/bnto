@@ -8,9 +8,11 @@
 
 ## Context
 
-Bnto has reached a fork after v0.2.0 (14 recipes, schema-driven config, editor reconnect). The founder's energy is in the CLI/Rust/TUI space, not more browser/React work. The current web recipes are a delivered asset — they work, they're indexed, they serve users. But the next interesting work is in the engine.
+Bnto is workflow automation through composable parts. Each node is a capability — compress an image, call an API, run a shell command. Recipes compose nodes into multi-step pipelines. The Rust engine runs them everywhere: CLI, browser (WASM), desktop (Tauri), server.
 
-**The pivot:** Re-orient bnto as a CLI/TUI tool for developers. The web/browser recipes are a bonus showcase, not the primary product. Desktop (Tauri) deprioritized in favor of enriching the engine and CLI directly.
+After v0.2.0 (14 recipes, schema-driven config, editor reconnect), the next phase is making the engine more powerful. The 14 browser recipes are a delivered asset. The real opportunity is in expanding what nodes can do — external tool integration, system access, new domains (video, HTTP, shell) — and proving that the "build a node, run it anywhere" architecture works for capabilities that go beyond browser-safe file transforms.
+
+**The focus:** Enrich the engine and node catalog. Every new node type is automatically available on every target the engine supports. The browser recipes are a bonus showcase; the engine is the product.
 
 ---
 
@@ -229,12 +231,13 @@ Enhance the existing CLI to be a first-class developer tool.
 
 ## Development Workflow
 
-The engine-first development workflow for new capabilities:
+Building a new capability means building a node. The node is a self-contained unit — it declares its parameters, its platform support, and its dependencies. The engine and codegen pipeline handle everything else: making it available in the CLI, browser editor, recipe palette, and documentation.
 
 ```
 1. Define processor in Rust (TDD-first)
      └─ engine/crates/bnto-{crate}/src/{processor}.rs
      └─ Unit tests, golden tests, parameter contract
+     └─ Declare platforms (browser, cli, server, desktop)
 
 2. Register in engine
      └─ bnto-engine/src/lib.rs — create_default_registry()
@@ -246,15 +249,16 @@ The engine-first development workflow for new capabilities:
 
 4. Codegen to TypeScript
      └─ task wasm:codegen
-     └─ Verify platforms array propagates correctly
+     └─ Node automatically appears in editor palette, config UI, docs
 
-5. Decide surface
+5. Available everywhere
      └─ Browser-capable? → Appears on bnto.io automatically
      └─ CLI-only? → Appears in `bnto list`, TUI, not browser
      └─ Server? → Future Pro tier
+     └─ The node composes with every other node in the system
 ```
 
-This workflow ensures every capability is engine-tested before any UI work happens.
+This is the core value proposition: build one node, get it on every target, composable with everything else. The engine is the multiplier.
 
 ---
 
