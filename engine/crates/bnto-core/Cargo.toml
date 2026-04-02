@@ -1,101 +1,32 @@
-# =============================================================================
-# bnto-core — The Foundation WASM Crate
-# =============================================================================
-#
-# WHAT IS THIS CRATE?
-# This is the "foundation" crate for the Bnto WASM engine. It provides:
-#   1. Shared types and error definitions used by all node crates
-#   2. The node execution interface (trait) that every node type implements
-#   3. A simple orchestrator that runs nodes and reports progress
-#   4. Utilities for working with files and data across the Rust ↔ JS boundary
-#
-# Think of this as the "engine framework" that node crates plug into.
-# The image crate, CSV crate, etc. will all depend on this crate.
-#
-# WHY IS IT SEPARATE FROM THE NODE CRATES?
-# Separation of concerns (Bento Box Principle!). This crate defines
-# the contracts (interfaces). Node crates implement them. The web app
-# only needs to import the crates it uses — if someone only needs
-# image processing, they don't have to download CSV code too.
+# bnto-core — Foundation crate for the Bnto engine.
+# Shared types, error definitions, NodeProcessor trait, pipeline orchestrator,
+# and progress reporting. All node crates depend on this.
 
 [package]
-# The crate's name — used in `use bnto_core::...` imports and as the
-# package identifier on crates.io (if we ever publish).
 name = "bnto-core"
-
-# Version follows Semantic Versioning (semver): MAJOR.MINOR.PATCH
-# 0.1.0 means "first development release, expect breaking changes"
 version = "0.1.0"
-
-# The Rust "edition" is like a language version. Each edition enables
-# new syntax and features while keeping old code compatible.
-# 2024 is the latest edition, released with Rust 1.85.
 edition = "2024"
-
-# A short description shown on crates.io and in cargo search results.
 description = "Core WASM engine library for Bnto — shared types, traits, and orchestration"
-
-# The license. Same as the rest of the bnto repo.
 license = "MIT"
+repository = "https://github.com/Develonaut/bnto"
+homepage = "https://bnto.io"
+readme = "README.md"
+keywords = ["wasm", "workflow", "pipeline", "automation", "engine"]
+categories = ["wasm"]
 
-# WASM-PACK METADATA
-# wasm-pack reads settings from [package.metadata.wasm-pack.*].
-# These control the post-compilation optimization step.
-[package.metadata.wasm-pack.profile.release]
 # wasm-opt flags — must match ALL features Rust enables by default.
 # Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
 # See bnto-wasm/Cargo.toml for full explanation.
+[package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
 
-# =============================================================================
-# Library Configuration
-# =============================================================================
-
 [lib]
-# "rlib" = Rust Library. Other crates in the workspace (bnto-image, bnto-wasm)
-# depend on this crate and `use` its types, traits, and error definitions.
-#
-# Previously this was ["cdylib", "rlib"] — the cdylib responsibility has moved
-# to the bnto-wasm entry point crate. Only ONE crate in the workspace should
-# be cdylib (produces the .wasm file). All others are rlib.
 crate-type = ["rlib"]
 
-# =============================================================================
-# Dependencies
-# =============================================================================
-#
-# `{ workspace = true }` means "use the version defined in the root
-# Cargo.toml's [workspace.dependencies]". This keeps all our crates
-# on the same version. Same idea as pnpm's catalog feature.
-
 [dependencies]
-# Error handling — see workspace Cargo.toml for details.
-# `thiserror` generates `Display` and `std::error::Error` implementations
-# from the `#[error("...")]` attributes on our BntoError enum variants.
 thiserror = { workspace = true }
-
-# Serialization — converting Rust structs to/from JSON.
-# `serde` provides the Serialize/Deserialize traits.
-# `serde_json` provides JSON parsing and serialization (Map, Value, etc.).
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# NOTE: WASM-specific dependencies (wasm-bindgen, js-sys, web-sys) were
-# intentionally REMOVED from bnto-core. They now live only in the crates
-# that actually touch the JS boundary:
-#   - bnto-wasm (the cdylib entry point)
-#   - Each node crate's wasm_bridge.rs (which imports them directly)
-#
-# This keeps bnto-core target-agnostic — it works in WASM, native CLI,
-# desktop (Tauri), or anywhere else. The ProgressReporter uses a plain
-# Rust closure instead of js_sys::Function, and the BntoError → JsValue
-# conversion lives in bnto-wasm where it belongs.
-
-# =============================================================================
-# Dev Dependencies (only used during testing, not in the final WASM binary)
-# =============================================================================
-
 [dev-dependencies]
-# WASM integration test harness — runs Rust tests inside a WASM runtime.
-# Only used by `cargo test --target wasm32-unknown-unknown`.
 wasm-bindgen-test = { workspace = true }
