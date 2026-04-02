@@ -220,11 +220,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**Sprint 8 Waves 1-2 complete.** All 4 Tier 3 engine operations shipped (strip-exif, merge-csv, csv-to-json, watermark/image-overlay). Recipe fixtures, golden tests, and codegen all done. Schema-driven config (8.5c) and editor reconnect (8.5d) both complete. **v0.2.0 released.**
+**Sprint 8 complete.** All 3 waves delivered. 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, watermark/image-overlay), recipe fixtures, golden tests, codegen, SEO pages, E2E tests, and Lighthouse audit all done. Schema-driven config (8.5c) and editor reconnect (8.5d) both complete. **v0.2.0 released.**
 
-**Sprint 8 Wave 3 is the active work:** SEO pages, E2E tests, and Lighthouse audit for the 4 Tier 3 recipes (`/strip-exif`, `/merge-csv`, `/csv-to-json`, `/watermark-images`). These recipes already appear on `/explore` and the home grid via `core.registry` — Wave 3 adds the dedicated SEO landing pages with metadata, JSON-LD, and sitemap entries.
-
-**After Sprint 8:** Desktop (M3) or Monetization (M5). Product Hunt launch candidate after Wave 3 ships (catalog feels substantial).
+**After Sprint 8:** Desktop (M3) or Monetization (M5). Product Hunt launch candidate — catalog is substantial (14 recipes across 3 categories).
 
 ---
 
@@ -401,9 +399,9 @@ Design doc: `strategy/unified-recipe-model.md`
 
 #### Wave 3 (parallel — SEO pages + E2E)
 
-- [ ] `apps/web` — **SEO pages for Tier 3 recipes**: Add to `bntoRegistry.ts`, verify `generateStaticParams`, `generateMetadata`, JSON-LD, sitemap inclusion. Each recipe gets a root-level slug page. Config UI renders automatically via schema-driven system (Sprint 8.5c)
-- [ ] `apps/web` — **E2E tests**: Playwright tests for each new recipe — upload file, configure, execute, verify output (magic bytes, file sizes). Programmatic assertions, not screenshots
-- [ ] `apps/web` — **Lighthouse audit**: Verify new pages pass accessibility, SEO, best-practices thresholds
+- [x] `apps/web` — **SEO pages for Tier 3 recipes**: Verified — all 4 Tier 3 recipes auto-propagate via `getAllRecipes()` → `BNTO_REGISTRY`. `generateStaticParams`, `generateMetadata`, JSON-LD, sitemap all working. Added NAV_DESCRIPTIONS for strip-exif, merge-csv, csv-to-json, watermark-images
+- [x] `apps/web` — **E2E tests**: Verified — all 4 Tier 3 recipes have comprehensive E2E specs (11 tests total: strip-exif 2, merge-csv 1, csv-to-json 2, watermark-images 6). Programmatic assertions with magic bytes, content validation, pixel diffs. All pass
+- [x] `apps/web` — **Lighthouse audit**: All 18 public pages pass accessibility, SEO, best-practices thresholds. 4 Tier 3 pages verified clean
 
 ---
 

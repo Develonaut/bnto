@@ -33,8 +33,12 @@ const NAV_DESCRIPTIONS: Record<string, string> = {
   "compress-images": "Shrink PNG, JPEG, and WebP without losing quality",
   "resize-images": "Scale images to exact dimensions or percentages",
   "convert-image-format": "Switch between PNG, JPEG, WebP, and GIF",
+  "strip-exif": "Remove EXIF metadata from images",
+  "watermark-images": "Add a logo or watermark to images",
   "clean-csv": "Remove empty rows, trim whitespace, deduplicate",
   "rename-csv-columns": "Rename column headers in bulk",
+  "csv-to-json": "Convert CSV files to JSON format",
+  "merge-csv": "Combine multiple CSVs into one",
   "rename-files": "Batch rename files with patterns",
 };
 
