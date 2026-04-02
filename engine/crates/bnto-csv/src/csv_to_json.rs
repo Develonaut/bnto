@@ -42,6 +42,7 @@ impl NodeProcessor for CsvToJson {
             platforms: vec!["browser".to_string()],
             parameters: build_convert_parameters(),
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         }
     }
 

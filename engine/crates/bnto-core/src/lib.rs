@@ -62,8 +62,8 @@ pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
 pub use metadata::{
-    Constraints, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo, ParamCondition,
-    ParamConditionEntry, ParameterDef, ParameterType, all_node_types,
+    Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo,
+    ParamCondition, ParamConditionEntry, ParameterDef, ParameterType, all_node_types,
 };
 pub use pipeline::{
     IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,

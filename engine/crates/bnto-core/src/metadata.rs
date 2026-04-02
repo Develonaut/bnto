@@ -4,7 +4,8 @@
 // registry collects all metadata into a catalog exported via `node_catalog()`
 // WASM function, making the engine the single source of truth for node defs.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::fmt;
 
 // --- ParamCondition — Conditional Visibility / Requirement Rules ---
 //
@@ -474,6 +475,45 @@ fn system_node_types() -> Vec<NodeTypeInfo> {
     )]
 }
 
+// --- Dependency — External Binary Dependencies ---
+
+/// An external binary dependency required by a node processor.
+///
+/// Describes what the current processor implementation needs at runtime.
+/// This is an implementation detail of the processor, not a contract of
+/// the node type. When a processor swaps its underlying tool (e.g.,
+/// replacing yt-dlp with a native Rust library), its `requires` list
+/// changes accordingly. The `NodeProcessor` trait is the stable
+/// abstraction — consumers never see or depend on `Dependency` values.
+///
+/// Version constraints use comparison operators only (`>=`, `<`, `<=`,
+/// `>`, `=`), comma-separated for AND logic. This works for both semver
+/// (`>=1.0.0`) and calver (`>=2024.01.01`). Avoid `^`/`~` operators
+/// which assume semver semantics.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct Dependency {
+    /// Binary name to find on PATH (e.g., "yt-dlp", "ffmpeg").
+    pub binary: String,
+    /// Version constraint using comparison operators (e.g., ">=2023.01.01").
+    /// Empty string means any version is acceptable.
+    pub version_constraint: String,
+    /// Human-readable install hint (e.g., "brew install yt-dlp").
+    pub install_hint: String,
+    /// Project homepage URL.
+    pub homepage: String,
+}
+
+impl fmt::Display for Dependency {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.version_constraint.is_empty() {
+            write!(f, "{}", self.binary)
+        } else {
+            write!(f, "{} ({})", self.binary, self.version_constraint)
+        }
+    }
+}
+
 // --- NodeMetadata ---
 
 /// Complete self-description of a processor. Return type of
@@ -500,6 +540,9 @@ pub struct NodeMetadata {
     /// Defaults to `PerFile`. Used by the auto-iteration executor.
     #[serde(default)]
     pub input_cardinality: InputCardinality,
+    /// External binary dependencies. Empty for browser-only processors.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: Vec<Dependency>,
 }
 
 #[cfg(test)]
@@ -534,6 +577,7 @@ mod tests {
             platforms: vec!["browser".to_string()],
             parameters: vec![],
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         };
         let json = serde_json::to_string(&metadata).unwrap();
         assert!(json.contains(r#""inputCardinality":"perFile""#));
@@ -553,6 +597,7 @@ mod tests {
             platforms: vec!["browser".to_string()],
             parameters: vec![],
             input_cardinality: InputCardinality::Batch,
+            requires: vec![],
         };
         let json = serde_json::to_string(&metadata).unwrap();
         assert!(json.contains(r#""inputCardinality":"batch""#));
@@ -802,6 +847,7 @@ mod tests {
             platforms: vec!["browser".to_string()],
             parameters: vec![],
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         };
         let json = serde_json::to_string(&metadata).unwrap();
         // Should use camelCase field names.
@@ -839,6 +885,7 @@ mod tests {
                 ..Default::default()
             }],
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         };
 
         // Serialize to JSON string.
@@ -922,5 +969,126 @@ mod tests {
         assert!(json.contains(r#""placeholder":"e.g. 800""#));
         // "requiredWhen" should be omitted (it's None).
         assert!(!json.contains("requiredWhen"));
+    }
+
+    // --- Dependency Tests ---
+
+    #[test]
+    fn test_dependency_serializes_camel_case() {
+        let dep = Dependency {
+            binary: "yt-dlp".to_string(),
+            version_constraint: ">=2023.01.01".to_string(),
+            install_hint: "brew install yt-dlp".to_string(),
+            homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
+        };
+        let json = serde_json::to_string(&dep).unwrap();
+        assert!(json.contains(r#""binary":"yt-dlp""#));
+        assert!(json.contains(r#""versionConstraint":">=2023.01.01""#));
+        assert!(json.contains(r#""installHint":"brew install yt-dlp""#));
+        assert!(json.contains(r#""homepage":"https://github.com/yt-dlp/yt-dlp""#));
+        // Must NOT contain snake_case keys.
+        assert!(!json.contains("version_constraint"));
+        assert!(!json.contains("install_hint"));
+    }
+
+    #[test]
+    fn test_dependency_display_with_constraint() {
+        let dep = Dependency {
+            binary: "yt-dlp".to_string(),
+            version_constraint: ">= 2023.01.01".to_string(),
+            install_hint: String::new(),
+            homepage: String::new(),
+        };
+        assert_eq!(format!("{dep}"), "yt-dlp (>= 2023.01.01)");
+    }
+
+    #[test]
+    fn test_dependency_display_without_constraint() {
+        let dep = Dependency {
+            binary: "ffmpeg".to_string(),
+            version_constraint: String::new(),
+            install_hint: String::new(),
+            homepage: String::new(),
+        };
+        assert_eq!(format!("{dep}"), "ffmpeg");
+    }
+
+    #[test]
+    fn test_dependency_equality() {
+        let a = Dependency {
+            binary: "yt-dlp".to_string(),
+            version_constraint: ">=2023.01.01".to_string(),
+            install_hint: "brew install yt-dlp".to_string(),
+            homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
+        };
+        let b = a.clone();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_metadata_requires_empty_skipped_in_serialization() {
+        // When requires is empty, skip_serializing_if omits it from JSON.
+        let metadata = NodeMetadata {
+            node_type: "image-compress".to_string(),
+            name: "Compress".to_string(),
+            description: String::new(),
+            category: NodeCategory::Image,
+            accepts: vec![],
+            platforms: vec!["browser".to_string()],
+            parameters: vec![],
+            input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
+        };
+        let json = serde_json::to_string(&metadata).unwrap();
+        assert!(
+            !json.contains("requires"),
+            "empty requires should be omitted"
+        );
+    }
+
+    #[test]
+    fn test_metadata_requires_present_when_populated() {
+        let metadata = NodeMetadata {
+            node_type: "video-download".to_string(),
+            name: "Download Video".to_string(),
+            description: String::new(),
+            category: NodeCategory::Network,
+            accepts: vec![],
+            platforms: vec!["server".to_string()],
+            parameters: vec![],
+            input_cardinality: InputCardinality::PerFile,
+            requires: vec![Dependency {
+                binary: "yt-dlp".to_string(),
+                version_constraint: ">=2023.01.01".to_string(),
+                install_hint: "brew install yt-dlp".to_string(),
+                homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
+            }],
+        };
+        let json = serde_json::to_string(&metadata).unwrap();
+        assert!(json.contains(r#""requires""#));
+        assert!(json.contains(r#""binary":"yt-dlp""#));
+        assert!(json.contains(r#""versionConstraint":">=2023.01.01""#));
+    }
+
+    #[test]
+    fn test_metadata_requires_defaults_on_deserialization() {
+        // When the requires field is absent in JSON, serde(default) gives vec![].
+        let dep = Dependency {
+            binary: "ffmpeg".to_string(),
+            version_constraint: String::new(),
+            install_hint: String::new(),
+            homepage: String::new(),
+        };
+        // Round-trip: serialize then deserialize.
+        let json = serde_json::to_string(&dep).unwrap();
+        let parsed: Dependency = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed, dep);
+
+        // Also verify that a JSON object missing versionConstraint gets
+        // deserialized correctly (camelCase mapping works both ways).
+        let json_with_all = r#"{"binary":"curl","versionConstraint":">=7.0","installHint":"apt install curl","homepage":"https://curl.se"}"#;
+        let parsed: Dependency = serde_json::from_str(json_with_all).unwrap();
+        assert_eq!(parsed.binary, "curl");
+        assert_eq!(parsed.version_constraint, ">=7.0");
     }
 }
