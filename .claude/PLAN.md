@@ -1122,6 +1122,10 @@ Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version fi
 
 Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
 
+### Triage: Redesign homepage as developer-facing landing page
+
+**Priority: Triage.** Rework bnto.io homepage from a recipe gallery into a developer-facing landing page for the tool/engine (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, and getting started (`cargo install bnto`). Recipe pages stay as the SEO showcase; homepage becomes the pitch for the tool itself.
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
