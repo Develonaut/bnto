@@ -1,5 +1,6 @@
 // Mock processors and shared test helpers for executor tests.
 use super::*;
+use crate::context::{NoopContext, ProcessContext};
 use crate::events::RecordingReporter;
 use crate::processor::{NodeOutput, OutputFile};
 
@@ -19,6 +20,7 @@ impl crate::processor::NodeProcessor for EchoProcessor {
         &self,
         input: NodeInput,
         _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
@@ -45,6 +47,7 @@ impl crate::processor::NodeProcessor for UpperCaseProcessor {
         &self,
         input: NodeInput,
         _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
@@ -71,6 +74,7 @@ impl crate::processor::NodeProcessor for FailProcessor {
         &self,
         _input: NodeInput,
         _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         Err(BntoError::ProcessingFailed(
             "intentional test failure".to_string(),
@@ -90,6 +94,7 @@ impl crate::processor::NodeProcessor for SlowProcessor {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(25, "Quarter done");
         progress.report(50, "Half done");
@@ -121,6 +126,7 @@ impl crate::processor::NodeProcessor for DoubleProcessor {
         &self,
         input: NodeInput,
         _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let mime = input
             .mime_type
@@ -156,6 +162,7 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
         &self,
         input: NodeInput,
         _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let original_size = input.data.len() as u64;
         let compressed_data = vec![0u8; input.data.len() / 2];

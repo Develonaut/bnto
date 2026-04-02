@@ -3,6 +3,7 @@
 
 use wasm_bindgen::prelude::*;
 
+use bnto_core::NoopContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
@@ -171,7 +172,7 @@ pub fn clean_csv_combined(
     // `process()` returns `Result<NodeOutput, BntoError>`.
     // We need to convert the error to a JsValue for the WASM boundary.
     let output = processor
-        .process(input, &progress)
+        .process(input, &progress, &NoopContext)
         .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Return combined result with both metadata and bytes ---
@@ -246,7 +247,7 @@ pub fn rename_csv_columns_combined(
 
     // --- Step 4: Run the rename operation (ONCE!) ---
     let output = processor
-        .process(input, &progress)
+        .process(input, &progress, &NoopContext)
         .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Return combined result with both metadata and bytes ---

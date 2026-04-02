@@ -3,6 +3,7 @@
 
 use wasm_bindgen::prelude::*;
 
+use bnto_core::NoopContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
@@ -205,7 +206,7 @@ pub fn compress_image_combined(
     //
     // `.map_err(|e| ...)` transforms the error type if it's Err.
     let output = processor
-        .process(input, &progress)
+        .process(input, &progress, &NoopContext)
         .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Return combined result with both metadata and bytes ---
@@ -281,7 +282,7 @@ pub fn resize_image_combined(
 
     // --- Step 4: Run the resize (ONCE!) ---
     let output = processor
-        .process(input, &progress)
+        .process(input, &progress, &NoopContext)
         .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Return combined result with both metadata and bytes ---
@@ -353,7 +354,7 @@ pub fn convert_image_format_combined(
 
     // --- Step 4: Run the conversion (ONCE!) ---
     let output = processor
-        .process(input, &progress)
+        .process(input, &progress, &NoopContext)
         .map_err(bnto_err_to_js)?;
 
     // --- Step 5: Return combined result with both metadata and bytes ---

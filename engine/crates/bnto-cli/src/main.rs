@@ -3,6 +3,7 @@
 // Usage: bnto run <recipe.bnto.json> <file1> [file2 ...]
 //        bnto run --recipe compress-images <file1> [file2 ...]
 
+mod context;
 mod io;
 mod progress;
 
@@ -108,8 +109,16 @@ fn run_recipe(recipe_path: &str, input_paths: &[String], output_dir: &str) {
         if count == 1 { "" } else { "s" }
     );
 
+    let ctx = match context::NativeContext::current_dir() {
+        Ok(ctx) => ctx,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            process::exit(1);
+        }
+    };
+
     let reporter = progress::stderr_reporter();
-    match bnto_engine::run_pipeline(&definition_json, files, &reporter) {
+    match bnto_engine::run_pipeline(&definition_json, files, &reporter, &ctx) {
         Ok(result) => write_output(&result, output_dir),
         Err(e) => {
             eprintln!("Pipeline failed: {e}");

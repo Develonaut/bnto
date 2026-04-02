@@ -2,7 +2,9 @@
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 
-use bnto_core::{PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline};
+use bnto_core::{
+    NoopContext, PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline,
+};
 
 // --- Test fixtures ---
 static SMALL_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
@@ -61,7 +63,15 @@ fn bench_recipes(c: &mut Criterion) {
     c.bench_function("recipe/compress-images/1-file", |b| {
         b.iter(|| {
             let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
-            execute_pipeline(&compress_recipe, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &compress_recipe,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 
@@ -74,7 +84,15 @@ fn bench_recipes(c: &mut Criterion) {
                 let files: Vec<PipelineFile> = (0..count)
                     .map(|i| file(&format!("photo_{}.jpg", i), SMALL_JPEG, "image/jpeg"))
                     .collect();
-                execute_pipeline(&compress_recipe, files, &registry, &reporter, fake_now).unwrap();
+                execute_pipeline(
+                    &compress_recipe,
+                    files,
+                    &registry,
+                    &reporter,
+                    &NoopContext,
+                    fake_now,
+                )
+                .unwrap();
             })
         });
     }
@@ -99,7 +117,15 @@ fn bench_recipes(c: &mut Criterion) {
     c.bench_function("recipe/clean-csv/1-file", |b| {
         b.iter(|| {
             let files = vec![file("data.csv", MESSY_CSV, "text/csv")];
-            execute_pipeline(&clean_recipe, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &clean_recipe,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 
@@ -126,7 +152,15 @@ fn bench_recipes(c: &mut Criterion) {
     c.bench_function("recipe/rename-files/1-file", |b| {
         b.iter(|| {
             let files = vec![file("document.txt", b"hello world", "text/plain")];
-            execute_pipeline(&rename_recipe, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &rename_recipe,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 }
@@ -154,13 +188,29 @@ fn bench_png_compression(c: &mut Criterion) {
     c.bench_function("node/image-compress/png/large", |b| {
         b.iter(|| {
             let files = vec![file("photo.png", LARGE_PNG, "image/png")];
-            execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap()
+            execute_pipeline(
+                &compress_def,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap()
         })
     });
 
     // One-shot: Print output size for regression tracking.
     let files = vec![file("photo.png", LARGE_PNG, "image/png")];
-    let result = execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap();
+    let result = execute_pipeline(
+        &compress_def,
+        files,
+        &registry,
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap();
     if let Some(output_file) = result.files.first() {
         let input_kb = LARGE_PNG.len() / 1024;
         let output_kb = output_file.data.len() / 1024;

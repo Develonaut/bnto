@@ -7,6 +7,7 @@
 // Transformation order: find/replace -> case -> prefix -> suffix -> pattern.
 // Pattern has "final say" — it overrides everything using template variables.
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -57,6 +58,7 @@ impl NodeProcessor for RenameFiles {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         if input.filename.is_empty() {
             return Err(BntoError::InvalidInput(
@@ -343,6 +345,7 @@ fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
     use bnto_core::processor::NodeInput;
     use bnto_core::progress::ProgressReporter;
 
@@ -445,7 +448,7 @@ mod tests {
         let params = string_param("pattern", "{{name}}-compressed.{{ext}}");
         let input = make_input(b"file data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "photo-compressed.jpg");
     }
@@ -457,7 +460,7 @@ mod tests {
         let params = string_params(&[("pattern", "file-{{index}}.{{ext}}"), ("index", "5")]);
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "file-5.jpg");
     }
@@ -470,7 +473,7 @@ mod tests {
         let params = string_param("pattern", "file-{{index}}.{{ext}}");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "file-1.jpg");
     }
@@ -483,7 +486,7 @@ mod tests {
         let params = string_param("pattern", "{{date}}-{{name}}.{{ext}}");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "2026-02-25-photo.jpg");
     }
@@ -499,7 +502,7 @@ mod tests {
         let params = string_param("prefix", "new-");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "new-photo.jpg");
     }
@@ -511,7 +514,7 @@ mod tests {
         let params = string_param("suffix", "-final");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "photo-final.jpg");
     }
@@ -523,7 +526,7 @@ mod tests {
         let params = string_params(&[("prefix", "v2-"), ("suffix", "-edited")]);
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "v2-photo-edited.jpg");
     }
@@ -539,7 +542,7 @@ mod tests {
         let params = string_params(&[("find", "old"), ("replace", "new")]);
         let input = make_input(b"data", "old-photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "new-photo.jpg");
     }
@@ -554,7 +557,7 @@ mod tests {
         let params = string_params(&[("find", r"IMG_(\d+)"), ("replace", "photo_$1")]);
         let input = make_input(b"data", "IMG_1234.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "photo_1234.jpg");
     }
@@ -568,7 +571,7 @@ mod tests {
         let params = string_params(&[("find", "[invalid"), ("replace", "fixed")]);
         let input = make_input(b"data", "file-[invalid-name.txt", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "file-fixed-name.txt");
     }
@@ -584,7 +587,7 @@ mod tests {
         let params = string_param("case", "lower");
         let input = make_input(b"data", "PHOTO.JPG", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         // Note: case transforms the STEM only, not the extension.
         // The extension comes from the original filename's extension.
@@ -598,7 +601,7 @@ mod tests {
         let params = string_param("case", "upper");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "PHOTO.jpg");
     }
@@ -610,7 +613,7 @@ mod tests {
         let params = string_param("case", "title");
         let input = make_input(b"data", "hello world.txt", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "Hello world.txt");
     }
@@ -626,7 +629,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(b"data", "photo.jpg", empty_params());
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "photo.jpg");
     }
@@ -640,7 +643,7 @@ mod tests {
         let params = string_param("prefix", "renamed-");
         let input = make_input(original_data, "file.txt", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].data, original_data);
     }
@@ -652,7 +655,7 @@ mod tests {
         let params = string_param("prefix", "new-");
         let input = make_input(b"data", "README", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         // No extension, so no dot appended.
         assert_eq!(output.files[0].filename, "new-README");
@@ -666,7 +669,7 @@ mod tests {
         let params = string_param("prefix", "backup-");
         let input = make_input(b"data", "archive.tar.gz", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "backup-archive.tar.gz");
     }
@@ -677,7 +680,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(b"data", "", empty_params());
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err());
         if let Err(e) = result {
@@ -705,7 +708,7 @@ mod tests {
         let params = string_params(&[("prefix", "v2-"), ("suffix", "-edited"), ("case", "lower")]);
         let input = make_input(b"data", "Photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "v2-photo-edited.jpg");
     }
@@ -722,7 +725,7 @@ mod tests {
         let params = string_params(&[("find", "IMG"), ("replace", "photo"), ("case", "upper")]);
         let input = make_input(b"data", "IMG_1234.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "PHOTO_1234.jpg");
     }
@@ -738,7 +741,7 @@ mod tests {
         let params = string_param("prefix", "new-");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         let original = output.metadata.get("originalFilename").unwrap();
         assert_eq!(original.as_str().unwrap(), "photo.jpg");
@@ -751,7 +754,7 @@ mod tests {
         let params = string_param("prefix", "new-");
         let input = make_input(b"data", "photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         let new_name = output.metadata.get("newFilename").unwrap();
         assert_eq!(new_name.as_str().unwrap(), "new-photo.jpg");
@@ -764,7 +767,7 @@ mod tests {
         let params = string_params(&[("prefix", "new-"), ("case", "lower")]);
         let input = make_input(b"data", "Photo.jpg", params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         let transforms = output.metadata.get("transformsApplied").unwrap();
         let transforms_arr = transforms.as_array().unwrap();

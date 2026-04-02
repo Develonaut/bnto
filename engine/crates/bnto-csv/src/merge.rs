@@ -4,6 +4,7 @@
 // output CSV. Supports header reconciliation (first-file vs union) and
 // optional deduplication of rows across files.
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -52,6 +53,7 @@ impl NodeProcessor for MergeCsv {
         &self,
         input: NodeInput,
         _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
@@ -68,6 +70,7 @@ impl NodeProcessor for MergeCsv {
         &self,
         input: BatchInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         if input.files.is_empty() {
             return Err(BntoError::InvalidInput(
@@ -365,6 +368,7 @@ fn build_merge_metadata(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
     use bnto_core::processor::BatchFile;
 
     // --- Test Helpers ---
@@ -465,7 +469,9 @@ mod tests {
             ("b.csv", "name,age\nCharlie,35\nDiana,28\n"),
         ]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -484,7 +490,9 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "name,age\nAlice,30\n")]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -502,7 +510,9 @@ mod tests {
             ("c.csv", "id\n5\n"),
         ]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -520,7 +530,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let result = processor.process_batch(input, &progress);
+        let result = processor.process_batch(input, &progress, &NoopContext);
         assert!(result.is_err());
     }
 
@@ -530,7 +540,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "")]);
 
-        let result = processor.process_batch(input, &progress);
+        let result = processor.process_batch(input, &progress, &NoopContext);
         assert!(result.is_err());
     }
 
@@ -547,7 +557,9 @@ mod tests {
             ("b.csv", "nombre,edad\nCarlos,40\n"),
         ]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
 
         // Headers should be from first file
@@ -572,7 +584,9 @@ mod tests {
             params,
         );
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
 
         // Union headers: name, age, city
@@ -603,7 +617,9 @@ mod tests {
             params,
         );
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -623,7 +639,9 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "name\nAlice\n"), ("b.csv", "name\nAlice\n")]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -644,13 +662,17 @@ mod tests {
 
         // First-file mode
         let input1 = make_batch_input(files.clone());
-        let out1 = processor.process_batch(input1, &progress).unwrap();
+        let out1 = processor
+            .process_batch(input1, &progress, &NoopContext)
+            .unwrap();
 
         // Union mode
         let mut params = serde_json::Map::new();
         params.insert("headerHandling".to_string(), serde_json::json!("union"));
         let input2 = make_batch_with_params(files, params);
-        let out2 = processor.process_batch(input2, &progress).unwrap();
+        let out2 = processor
+            .process_batch(input2, &progress, &NoopContext)
+            .unwrap();
 
         // Outputs should differ — union has more columns
         assert_ne!(out1.files[0].data, out2.files[0].data);
@@ -665,13 +687,17 @@ mod tests {
 
         // Without dedup
         let input1 = make_batch_input(files.clone());
-        let out1 = processor.process_batch(input1, &progress).unwrap();
+        let out1 = processor
+            .process_batch(input1, &progress, &NoopContext)
+            .unwrap();
 
         // With dedup
         let mut params = serde_json::Map::new();
         params.insert("deduplicate".to_string(), serde_json::json!(true));
         let input2 = make_batch_with_params(files, params);
-        let out2 = processor.process_batch(input2, &progress).unwrap();
+        let out2 = processor
+            .process_batch(input2, &progress, &NoopContext)
+            .unwrap();
 
         assert_ne!(
             count_data_rows(&output_csv_text(&out1)),
@@ -690,7 +716,9 @@ mod tests {
             ("b.csv", "name\nCharlie\n"),
         ]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
 
         assert_eq!(
             output
@@ -740,7 +768,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let result = processor.process_batch(input, &progress);
+        let result = processor.process_batch(input, &progress, &NoopContext);
         assert!(result.is_err());
         if let Err(e) = result {
             assert!(e.to_string().contains("UTF-8"));
@@ -759,7 +787,9 @@ mod tests {
             ("b.csv", "name,age,city\nBob,25,NYC\n"),
         ]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -775,7 +805,9 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "id\n1\n2\n"), ("b.csv", "id\n3\n4\n")]);
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
 
         let mut reader = csv::ReaderBuilder::new()
@@ -813,7 +845,9 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -849,7 +883,9 @@ mod tests {
             params,
         };
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 

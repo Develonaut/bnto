@@ -6,7 +6,7 @@
 
 use bnto_core::{
     BntoError, NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, PipelineResult,
-    execute_pipeline,
+    ProcessContext, execute_pipeline,
 };
 
 /// Create a registry pre-loaded with all browser-capable node processors.
@@ -49,6 +49,7 @@ pub fn run_pipeline(
     definition_json: &str,
     files: Vec<PipelineFile>,
     reporter: &PipelineReporter,
+    ctx: &dyn ProcessContext,
 ) -> Result<PipelineResult, BntoError> {
     let definition: PipelineDefinition = serde_json::from_str(definition_json)
         .map_err(|e| BntoError::InvalidInput(format!("Failed to parse definition: {e}")))?;
@@ -62,12 +63,13 @@ pub fn run_pipeline(
             .as_millis() as u64
     };
 
-    execute_pipeline(&definition, files, &registry, reporter, now_ms)
+    execute_pipeline(&definition, files, &registry, reporter, ctx, now_ms)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
 
     #[test]
     fn test_default_registry_has_all_processors() {
@@ -99,7 +101,7 @@ mod tests {
     #[test]
     fn test_run_pipeline_rejects_invalid_json() {
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline("not valid json", vec![], &reporter);
+        let result = run_pipeline("not valid json", vec![], &reporter, &NoopContext);
         assert!(result.is_err());
     }
 
@@ -122,7 +124,8 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("Pipeline should succeed");
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("Pipeline should succeed");
 
         assert_eq!(result.files.len(), 1);
         assert!(!result.files[0].data.is_empty());
@@ -142,7 +145,8 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("compress-images recipe");
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("compress-images recipe");
 
         assert_eq!(result.files.len(), 1);
         assert!(!result.files[0].data.is_empty());
@@ -162,7 +166,8 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("resize-images recipe");
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("resize-images recipe");
 
         assert_eq!(result.files.len(), 1);
     }
@@ -181,7 +186,7 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("clean-csv recipe");
+        let result = run_pipeline(json, files, &reporter, &NoopContext).expect("clean-csv recipe");
 
         assert_eq!(result.files.len(), 1);
     }
@@ -199,7 +204,8 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("rename-files recipe");
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("rename-files recipe");
 
         assert_eq!(result.files.len(), 1);
         assert!(
@@ -223,7 +229,8 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("csv-to-json recipe");
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("csv-to-json recipe");
 
         assert_eq!(result.files.len(), 1);
         assert!(result.files[0].name.ends_with(".json"));
@@ -252,7 +259,7 @@ mod tests {
         ];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("merge-csv recipe");
+        let result = run_pipeline(json, files, &reporter, &NoopContext).expect("merge-csv recipe");
 
         assert_eq!(result.files.len(), 1);
         let output = String::from_utf8_lossy(&result.files[0].data);
@@ -274,7 +281,7 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(json, files, &reporter).expect("strip-exif recipe");
+        let result = run_pipeline(json, files, &reporter, &NoopContext).expect("strip-exif recipe");
 
         assert_eq!(result.files.len(), 1);
         assert!(!result.files[0].data.is_empty());
@@ -314,7 +321,8 @@ mod tests {
         }];
 
         let reporter = PipelineReporter::new_noop();
-        let result = run_pipeline(&json, files, &reporter).expect("watermark-images recipe");
+        let result =
+            run_pipeline(&json, files, &reporter, &NoopContext).expect("watermark-images recipe");
 
         assert_eq!(result.files.len(), 1);
         assert!(!result.files[0].data.is_empty());

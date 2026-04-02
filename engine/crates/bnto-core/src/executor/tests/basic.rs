@@ -10,7 +10,8 @@ fn test_empty_definition_no_files() {
     let registry = mock_registry();
     let reporter = PipelineReporter::new_noop();
 
-    let result = execute_pipeline(&def, vec![], &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert!(result.files.is_empty());
 }
@@ -29,7 +30,8 @@ fn test_io_only_pipeline_is_passthrough() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "test.txt");
@@ -51,7 +53,8 @@ fn test_single_node_single_file() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello world")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].data, b"hello world");
@@ -76,7 +79,8 @@ fn test_single_node_multiple_files() {
         make_file("b.txt", b"bbb"),
         make_file("c.txt", b"ccc"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 3);
     assert_eq!(result.files[0].data, b"aaa");
@@ -100,7 +104,8 @@ fn test_two_sequential_nodes() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "TEST.TXT");
@@ -121,7 +126,8 @@ fn test_double_processor_increases_file_count() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "test.txt-a");
@@ -142,7 +148,8 @@ fn test_empty_files_array() {
     let registry = mock_registry();
     let reporter = PipelineReporter::new_noop();
 
-    let result = execute_pipeline(&def, vec![], &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
     assert!(result.files.is_empty());
 }
 
@@ -164,6 +171,7 @@ fn test_100_files_batch() {
         .map(|i| make_file(&format!("file-{}.txt", i), b"data"))
         .collect();
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
     assert_eq!(result.files.len(), 100);
 }
