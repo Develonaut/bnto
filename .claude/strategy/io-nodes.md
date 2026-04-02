@@ -46,7 +46,7 @@ Declares how data enters the recipe. The execution environment (browser UI, CLI,
 ```typescript
 // Node type: "input"
 // Category: "io"
-// browserCapable: true
+// platforms: ["browser"]
 // isContainer: false
 
 parameters: {
@@ -92,7 +92,7 @@ Declares how results are delivered. The execution environment reads this node to
 ```typescript
 // Node type: "output"
 // Category: "io"
-// browserCapable: true
+// platforms: ["browser"]
 // isContainer: false
 
 parameters: {

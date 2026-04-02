@@ -26,8 +26,8 @@ interface PaletteItem {
   category: NodeCategory;
   /** Lucide icon name. */
   icon: string;
-  /** Whether this node is available in the browser. */
-  browserCapable: boolean;
+  /** Execution platforms this node supports. */
+  platforms: readonly string[];
   /** Whether this node is a container (group, loop, parallel). */
   isContainer: boolean;
 }
@@ -59,7 +59,7 @@ function toItem(info: NodeTypeInfo): PaletteItem {
     description: info.description,
     category: info.category,
     icon: info.icon,
-    browserCapable: info.browserCapable,
+    platforms: info.platforms,
     isContainer: info.isContainer,
   };
 }
@@ -88,7 +88,7 @@ function computePalette(
     .filter((t) => t.category !== "io")
     .map(toItem);
 
-  const browserItems = allItems.filter((t) => t.browserCapable);
+  const browserItems = allItems.filter((t) => t.platforms.includes("browser"));
   const displayItems = browserOnly ? browserItems : allItems;
   const groups = groupByCategory(displayItems, categories);
 

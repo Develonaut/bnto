@@ -13,6 +13,6 @@ export const spreadsheetConvertNodeType: NodeTypeInfo = {
   description: "Convert CSV data to JSON format with configurable delimiters.",
   category: "spreadsheet",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "sheet",
 };

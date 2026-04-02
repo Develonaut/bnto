@@ -13,6 +13,6 @@ export const spreadsheetRenameNodeType: NodeTypeInfo = {
   description: "Rename column headers in a CSV file.",
   category: "spreadsheet",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "sheet",
 };

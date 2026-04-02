@@ -17,7 +17,9 @@ export function createRegistryClient() {
     getNodeTypes: () => registryStore.getState().nodeTypes,
 
     getBrowserNodeTypes: (): NodeTypeInfo[] =>
-      Object.values(registryStore.getState().nodeTypes).filter((t) => t.browserCapable),
+      Object.values(registryStore.getState().nodeTypes).filter((t) =>
+        t.platforms.includes("browser"),
+      ),
 
     getCategories: () => registryStore.getState().categories,
 

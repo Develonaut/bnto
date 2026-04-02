@@ -13,6 +13,6 @@ export const loopNodeType: NodeTypeInfo = {
   description: "Iterate over arrays (forEach), repeat N times, or loop while condition.",
   category: "control",
   isContainer: true,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "repeat",
 };

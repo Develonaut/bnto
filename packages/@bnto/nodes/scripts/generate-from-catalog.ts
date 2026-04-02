@@ -152,7 +152,6 @@ function cleanStaleFiles(dir: string, expectedFiles: Set<string>): void {
 // =============================================================================
 
 function generateNodeTypeFile(t: RawNodeType): string {
-  const browserCapable = t.platforms.includes("browser");
   return `${HEADER}
 
 import type { NodeTypeInfo } from "../types";
@@ -164,7 +163,7 @@ export const ${toCamelCase(t.name)}NodeType: NodeTypeInfo = {
   description: ${JSON.stringify(t.description)},
   category: ${JSON.stringify(t.category)},
   isContainer: ${t.isContainer},
-  browserCapable: ${browserCapable},
+  platforms: ${JSON.stringify(t.platforms)} as const,
   icon: ${JSON.stringify(t.icon)},
 };
 `;
@@ -334,8 +333,8 @@ export interface NodeTypeInfo {
   category: NodeCategory;
   /** Whether this node can contain child nodes (group, loop). */
   isContainer: boolean;
-  /** Whether this node type is available for browser execution. */
-  browserCapable: boolean;
+  /** Execution platforms this node type supports (e.g. "browser", "server", "cli"). */
+  platforms: readonly string[];
   /** Lucide icon name for visual consumers. */
   icon: string;
 }

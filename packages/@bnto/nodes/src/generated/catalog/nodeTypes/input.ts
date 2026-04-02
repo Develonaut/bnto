@@ -13,6 +13,6 @@ export const inputNodeType: NodeTypeInfo = {
   description: "Declares how data enters the recipe.",
   category: "io",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "file-up",
 };

@@ -13,6 +13,6 @@ export const groupNodeType: NodeTypeInfo = {
   description: "Container for child nodes. Orchestrates sequential or parallel execution.",
   category: "control",
   isContainer: true,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "box",
 };

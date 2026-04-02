@@ -1,24 +1,28 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** April 1, 2026
+**Last Updated:** April 2, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
 
 ## Vision
 
-Bnto is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script.
+Bnto is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes. Run them anywhere.
 
-**Four execution targets, one product:**
+The power is in the composition: any workflow you can describe as a sequence of steps, bnto can automate. And because the engine compiles to every target, a recipe you build today works in your terminal, your browser, on your desktop, and on a server — without changes.
 
-| Target                                 | When          | Cost to Us  | Cost to User       |
-| -------------------------------------- | ------------- | ----------- | ------------------ |
-| **Browser** (Rust→WASM)                | M1 (now)      | $0          | Free forever       |
-| **Cloud** (Go or Rust, per M1 outcome) | M4 (premium)  | ~$5/mo base | Pro tier           |
-| **Desktop** (Tauri, Rust-native)       | M3            | $0          | Free forever       |
-| **CLI** (Go binary)                    | Already built | $0          | Free forever (OSS) |
+**The architecture makes this possible:** One Rust engine, multiple compilation targets. Write a node once. The engine handles execution, progress, error handling, and platform differences. Browser nodes compile to WASM. CLI nodes get full system access. Server nodes get managed infrastructure. The recipe doesn't care — it just describes the workflow.
 
-**The insight:** Browser execution for Tier 1 bntos costs us nothing and gives users unlimited free runs. Cloud execution becomes a premium feature for things the browser can't do (AI, shell commands, video). This inverts the old model where cloud execution was the default and free runs were artificially capped.
+**Execution targets:**
+
+| Target                  | Status         | Cost to Us  | Cost to User       |
+| ----------------------- | -------------- | ----------- | ------------------ |
+| **CLI** (Rust native)   | Primary (now)  | $0          | Free forever (OSS) |
+| **Browser** (Rust→WASM) | Delivered (M1) | $0          | Free forever       |
+| **Desktop** (Tauri)     | Backlog (M4)   | $0          | Free forever       |
+| **Cloud** (server-side) | Backlog (M4)   | ~$5/mo base | Pro tier           |
+
+**The insight:** The engine is the stable API. Nodes are the building blocks. Recipes are the workflows. Targets are just compilation modes. Revenue strategy is tabled — focus is on making the engine powerful and fun.
 
 ---
 
@@ -51,26 +55,44 @@ M2: Platform Features                ← DELIVERED (March 2026)
     (code editor, expression input, edit/run mode) deferred to post-revenue.
     Community recipes via GitHub PRs, curated by maintainer.
 
-M3: Desktop App
-    Desktop app with local execution. Free forever, unlimited.
-    Full node support including shell-command and BYOK AI.
+M3: Engine Expansion
+    Dependency management for external tools (yt-dlp, ffmpeg).
+    New node types: video, shell, HTTP. ProcessContext for controlled
+    system access. TUI for interactive recipe execution. CLI polish.
 
-    Rust succeeded in M1 → Desktop = Tauri (Rust-native).
-    One codebase for browser + desktop + CLI.
-    Go engine deleted (Sprint 6, March 2026). Rust is the unified engine.
+    The CLI is the primary development surface. New capabilities are
+    built and tested via `bnto run` before any browser/web work.
 
-M4: Premium Server-Side Bntos
-    Server-side Rust engine for things browsers can't do:
-    AI inference, shell commands, video processing, large
-    file operations. Technology TBD (compiled service vs container).
+M4: Distribution
+    Desktop app (Tauri, Rust-native). Server-side execution for premium
+    recipes. Package manager install (`brew install bnto`).
+    Technology for cloud execution TBD.
 
 M5: Monetization
-    Stripe. Pro tier. Revenue.
-    Charges for real value (AI, collaboration, history) —
-    not artificial run limits on browser-native operations.
+    Tabled. Focus is on making the engine powerful and fun.
+    Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. The M3 desktop decision is made: Tauri (Rust-native). Sprint 8.5 (schema-driven config + editor reconnect) and Sprint 8 Waves 1-2 (4 Tier 3 engine operations + recipes) complete. v0.2.0 released. Next up: Sprint 8 Wave 3 (SEO pages for Tier 3 recipes), then Desktop (M3) or Monetization (M5).
+**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. M3 is next: engine expansion (dependency system, video node, TUI, CLI polish). Desktop (M4) deprioritized in favor of enriching the engine directly.
+
+---
+
+## Engine-First Development
+
+**A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. Browser-capable nodes compile to WASM and work at bnto.io. CLI-only nodes get full system access. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
+
+**The CLI is the primary development surface.** New node types are built and tested via `bnto run` before any browser/web work. The development workflow:
+
+1. Build the processor in Rust (TDD-first, golden tests)
+2. Test via `bnto run <recipe> [files...]`
+3. Prove it works end-to-end in the CLI
+4. The engine's `platforms` metadata determines where it surfaces — browser, desktop, server, or all of the above
+
+**Extensibility is the point.** The 14 predefined recipes are a starting point. The real value is that anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
+
+**Dependency system:** Node types can declare external dependencies (`yt-dlp`, `ffmpeg`, `imagemagick`). The engine checks them before pipeline execution. `bnto doctor` reports missing dependencies with install hints.
+
+**ProcessContext:** A trait giving processors controlled system access (run commands, temp files, env vars). Pure WASM processors don't use it. CLI/desktop processors get a real implementation.
 
 ---
 
@@ -125,25 +147,23 @@ Every bnto falls into one of three execution categories:
 Runs entirely in the user's browser. Files never leave the machine. No account needed.
 
 - All Tier 1 bntos (compress, resize, convert, clean CSV, rename CSV columns, rename files)
-- Most Tier 2 bntos (strip EXIF, optimize SVG, CSV↔JSON, validate JSON, merge CSV)
+- Most Tier 2 bntos (strip EXIF, optimize SVG, CSV to JSON, validate JSON, merge CSV)
 
-### Hybrid (browser + optional cloud)
+### CLI/Desktop (free, unlimited)
 
-Works in browser with limitations. Cloud unlocks the full experience.
+Runs locally via the CLI or desktop app. Full system access. No browser limitations.
 
-- `http-request` — CORS limits which APIs are reachable from browser
-- Large file operations — browser memory limits (~2GB practical max)
-- Chained workflows — complex multi-step pipelines may benefit from server orchestration
+- All browser-capable recipes (same engine, native binary)
+- External dependency recipes (video download via yt-dlp, shell commands via ffmpeg)
+- Filesystem operations (directory traversal, batch rename with real paths)
 
-### Server-Only (premium)
+### Server-Only (premium, future)
 
 Requires server-side execution. These are the Pro tier differentiators.
 
-- `shell-command` — impossible in browser (ffmpeg, imagemagick, etc.)
 - AI nodes — API keys shouldn't be exposed client-side; needs server proxy
-- Video processing — ffmpeg WASM exists but is impractically large
+- Video processing at scale — ffmpeg WASM exists but is impractically large
 - Advanced PDF operations — server-side libraries are more capable
-- Filesystem operations — real path access, directory traversal
 
 ---
 
@@ -159,57 +179,19 @@ packages/@bnto/nodes/
 └── validators/       # Definition validation (works in browser, CLI, desktop)
 ```
 
-**Consumed by:** Rust WASM engine (browser), web app config UI (schema-driven `SchemaForm` + `CONTROL_REGISTRY`), `@bnto/editor` (node CRUD, adapters), `@bnto/core` (execution pipeline). Future: desktop (Tauri), CLI.
+**Consumed by:** Rust WASM engine (browser), web app config UI (schema-driven `SchemaForm` + `CONTROL_REGISTRY`), `@bnto/editor` (node CRUD, adapters), `@bnto/core` (execution pipeline), CLI.
 
 ---
 
 ## Monetization Model
 
-> **Single source of truth:** [pricing-model.md](strategy/pricing-model.md) defines the complete free vs premium framework — three layers (nodes, recipes, platform features), terminology, and the full feature matrix. This section is the strategic summary.
+**Tabled.** Focus is on making the engine powerful and fun. Revenue strategy revisited when the tool has community traction.
 
-### The Dividing Line
+The previous pricing model (browser free, server Pro) is preserved as a reference in [pricing-model.md](strategy/pricing-model.md). The core principle remains:
 
-> **Nodes that can run in your browser are free. Nodes that need a server cost money.**
->
-> The node _definitions_ are always available to everyone (they're in `@bnto/nodes`, MIT licensed). The _execution_ of server nodes is what costs money.
+> **Nodes that can run locally are free. Nodes that need a managed server cost money.**
 
-This is the only principle you need. Everything else follows from it.
-
-### Three Layers
-
-1. **Nodes** — Browser nodes (image, csv, file, transform) are free, unlimited. Server nodes (ai, shell-command, video) are Pro, usage-based. Desktop: everything free (BYOK).
-2. **Recipes** — Predefined + community-curated recipes are always free. Editor is a lightweight open+export tool (no persistence). Custom recipe creation is a power-user feature, not the primary experience.
-3. **Platform features** — Persistence, history, team sharing, API access = Pro. Favorites (tabled) will be the free account creation hook when implemented.
-
-### Pricing
-
-| Tier               | Price           | What You Get                                                                                         |
-| ------------------ | --------------- | ---------------------------------------------------------------------------------------------------- |
-| **Free (Browser)** | $0 forever      | All browser-capable recipes, unlimited runs, recipe editor, export. Files never leave your machine.  |
-| **Free (Desktop)** | $0 forever      | Everything — all nodes including AI (BYOK) and shell-command. Unlimited.                             |
-| **Pro (Web)**      | $8/mo or $69/yr | Save recipes, execution history, team sharing, server-side compute, API access, priority processing. |
-
-**Why this works:**
-
-- Browser execution costs us $0. Capping it is artificial and hostile.
-- Pro tier sells real value: persistence, collaboration, premium compute.
-- Favorites (tabled) will create a natural sign-up moment when implemented.
-- Desktop remains free forever (trust commitment in `core-principles.md`).
-
----
-
-## Conversion Funnel
-
-Users convert when they want something the browser can't provide alone. These are natural upgrade hooks — not artificial limits.
-
-| Hook             | Trigger                                        | What They're Buying                          | Tier | Status  |
-| ---------------- | ---------------------------------------------- | -------------------------------------------- | ---- | ------- |
-| **Favorites**    | "I want to bookmark this recipe for next time" | Personalized recipe collection               | Free | Tabled  |
-| **History**      | "I need my execution history for audit"        | Execution log retention (30-day Pro)         | Pro  | Planned |
-| **Server nodes** | "I need AI to classify these images"           | Server-side compute (usage-based)            | Pro  | M4      |
-| **Team**         | "My team needs shared recipes"                 | Collaboration (up to 5 members, no per-seat) | Pro  | M5      |
-
-**No account required for browser execution:** Users run browser recipes instantly — no signup, no account, no friction. Zero backend until they choose to engage. Favorites (tabled) will become the first conversion hook when implemented — "bookmark this recipe" requires a free account.
+But monetization work is explicitly paused. No Stripe, no Pro tier, no feature gates until the engine has proven value and community adoption.
 
 ---
 
@@ -224,8 +206,6 @@ Users convert when they want something the browser can't provide alone. These ar
 
 **Why GitHub, not a platform:** Building recipe publishing, moderation, and discovery infrastructure is premature. GitHub PRs give us version control, review workflow, CI validation, and community contribution — all for free. Accepted recipes flow through the existing codegen pipeline and appear on every surface automatically.
 
-**Future (post-revenue):** If demand signals emerge for self-serve recipe creation and sharing, the editor infrastructure is already built (`@bnto/editor` is extracted and functional). The question is when, not whether.
-
 ---
 
 ## Architecture Decisions
@@ -236,22 +216,19 @@ Users convert when they want something the browser can't provide alone. These ar
 | **JS adapters as fallback**          | Not needed               | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                                 |
 | **Go engine deleted**                | Archived (March 2026)    | Removed in Sprint 6. Rust is the unified engine for all targets. Source preserved in git history.                                                |
 | **`@bnto/nodes` is engine-agnostic** | Approved                 | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                                  |
-| **Railway deprioritized**            | Backlog (M4)             | Only needed for premium server-side bntos.                                                                                                       |
-| **R2 deprioritized**                 | Backlog (M4)             | Not needed for browser execution. File transit only for cloud path.                                                                              |
+| **CLI-first development**            | Decided (April 2026)     | New capabilities built and tested via CLI before browser/web. Engine is the product.                                                             |
+| **Desktop deprioritized**            | Decided (April 2026)     | Tauri plan intact but deferred to M4. Engine expansion (M3) is more interesting and impactful.                                                   |
+| **Monetization tabled**              | Decided (April 2026)     | No Stripe, no Pro tier until community traction. Focus on engine power and fun.                                                                  |
 | **No-account browser execution**     | Approved                 | Zero backend friction. Convex logs when accounts exist.                                                                                          |
-| **Convex execution logging**         | Approved                 | Records who ran what. Ties to history when user signs up.                                                                                        |
 | **Web Workers mandatory**            | Approved                 | All WASM processing off main thread. Progress via postMessage.                                                                                   |
-| **Zip + individual downloads**       | Approved                 | Both options for multi-file result retrieval.                                                                                                    |
 | **`@bnto/ui` extracted**             | Delivered (March 2026)   | Motorway design system as independent package. Primitives, layout, animation, surface system.                                                    |
 | **`@bnto/editor` extracted**         | Delivered (March 2026)   | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                                                         |
 | **Smart Iteration**                  | Delivered (March 2026)   | `settings.iteration: "auto"\|"explicit"` on Definition. Auto wraps per-file processors in implicit loops. 20 golden tests prove equivalence.     |
 | **Editor lightweight (open+export)** | In progress (March 2026) | Editor persistence stripped (8.5a). Reconnecting as open+export tool with sessionStorage (8.5d). No save, no My Recipes. Deep features deferred. |
-| **Favorites tabled**                 | Tabled (March 2026)      | User preferences deferred to post-MVP. Revisit when engagement data signals demand.                                                              |
-| **Community recipes via GitHub**     | Decided (March 2026)     | Contributors submit `.bnto.json` PRs. Maintainer curates. No publishing platform needed for MVP.                                                 |
-| **Code Editor (CM6) tabled**         | Deep backlog             | Power-user luxury. Visual editor is the product. May revisit post-M5.                                                                            |
 | **Schema-driven recipe config**      | Delivered (March 2026)   | DynamicRecipeConfig replaces handcoded per-recipe components. Adding a recipe = automatic config UI.                                             |
 | **Image overlay/watermark**          | Delivered (April 2026)   | `image-overlay` operation in `bnto-image`. Text watermark with position/opacity/scale/color. 10+ golden tests.                                   |
 | **v0.2.0 released**                  | Shipped (April 2026)     | 14 recipes, schema-driven config, editor reconnect, 4 Tier 3 operations.                                                                         |
+| **`platforms` passthrough**          | Shipped (April 2026)     | Full `platforms: string[]` from engine catalog instead of lossy `browserCapable: boolean`. Enables correct CLI/server/browser filtering.         |
 
 ### Engine Decision: Rust Won (Feb 2026)
 
@@ -270,7 +247,7 @@ Users convert when they want something the browser can't provide alone. These ar
 **What this means going forward:**
 
 - Rust is the engine for all targets (browser WASM, desktop native, CLI, cloud)
-- Desktop (M3) uses Tauri (Rust-native) — one codebase, one language
+- Desktop (M4) uses Tauri (Rust-native) — one codebase, one language
 - Go engine deleted (Sprint 6, March 2026) — source preserved in git history
 - The unified engine vision is real: one Rust codebase powering every execution target
 
@@ -286,7 +263,8 @@ Users convert when they want something the browser can't provide alone. These ar
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | **ROADMAP.md** (this file)                                       | Milestones, strategic direction, big decisions, "why"                                                  |
 | **PLAN.md**                                                      | Sprint tasks, waves, what's claimed/done/next                                                          |
-| **pricing-model.md**                                             | Single source of truth: free vs premium, three layers, terminology, feature matrix                     |
+| **engine-expansion.md**                                          | Engine expansion strategy: dependency system, ProcessContext, TUI, node taxonomy                       |
+| **pricing-model.md**                                             | Reference: free vs premium model (tabled, preserved for future use)                                    |
 | **cloud-desktop-strategy.md**                                    | Detailed architecture, tech decisions, data model, deployment topology                                 |
 | **architecture.md**                                              | Rules: layered architecture, data flow, execution model                                                |
 | **bntos.md**                                                     | Recipe registry: slugs, tiers, fixtures, node requirements                                             |
@@ -307,4 +285,4 @@ From `core-principles.md`:
 
 ---
 
-_This document is the strategic layer. For sprint-level task tracking, see [PLAN.md](PLAN.md). For detailed architecture, see [strategy/cloud-desktop-strategy.md](strategy/cloud-desktop-strategy.md)._
+_This document is the strategic layer. For sprint-level task tracking, see [PLAN.md](PLAN.md). For engine expansion strategy, see [strategy/engine-expansion.md](strategy/engine-expansion.md). For detailed architecture, see [strategy/cloud-desktop-strategy.md](strategy/cloud-desktop-strategy.md)._

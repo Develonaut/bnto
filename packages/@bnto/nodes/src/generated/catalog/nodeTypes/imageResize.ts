@@ -13,6 +13,6 @@ export const imageResizeNodeType: NodeTypeInfo = {
   description: "Change image dimensions while maintaining quality.",
   category: "image",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "image",
 };

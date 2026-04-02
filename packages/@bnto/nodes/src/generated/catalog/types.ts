@@ -49,8 +49,8 @@ export interface NodeTypeInfo {
   category: NodeCategory;
   /** Whether this node can contain child nodes (group, loop). */
   isContainer: boolean;
-  /** Whether this node type is available for browser execution. */
-  browserCapable: boolean;
+  /** Execution platforms this node type supports (e.g. "browser", "server", "cli"). */
+  platforms: readonly string[];
   /** Lucide icon name for visual consumers. */
   icon: string;
 }

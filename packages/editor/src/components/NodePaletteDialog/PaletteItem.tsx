@@ -18,7 +18,7 @@ interface PaletteItemProps {
   description: string;
   icon: string;
   variant: CompartmentVariant;
-  browserCapable: boolean;
+  platforms: readonly string[];
   disabled: boolean;
   onAdd: (type: string) => void;
   testId: string;
@@ -30,7 +30,7 @@ function PaletteItem({
   description,
   icon,
   variant,
-  browserCapable,
+  platforms,
   disabled,
   onAdd,
   testId,
@@ -47,7 +47,7 @@ function PaletteItem({
       className="flex items-start gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
     >
       <PaletteItemIcon icon={Icon} variant={variant} />
-      <PaletteItemContent label={label} description={description} browserCapable={browserCapable} />
+      <PaletteItemContent label={label} description={description} platforms={platforms} />
     </button>
   );
 }
@@ -70,11 +70,11 @@ function PaletteItemIcon({
 function PaletteItemContent({
   label,
   description,
-  browserCapable,
+  platforms,
 }: {
   label: string;
   description: string;
-  browserCapable: boolean;
+  platforms: readonly string[];
 }) {
   return (
     <div className="min-w-0 flex-1">
@@ -82,7 +82,7 @@ function PaletteItemContent({
         <Text size="sm" weight="medium" className="truncate">
           {label}
         </Text>
-        {!browserCapable && (
+        {!platforms.includes("browser") && (
           <Badge variant="outline" className="shrink-0 text-[10px]">
             Pro
           </Badge>

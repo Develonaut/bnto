@@ -13,6 +13,6 @@ export const editFieldsNodeType: NodeTypeInfo = {
   description: "Set field values from static values or template expressions.",
   category: "data",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "pen-line",
 };

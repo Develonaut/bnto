@@ -44,9 +44,9 @@
 
 ## Quick Context
 
-**Bnto** is the one place small teams go to get things done — compress images, clean a CSV, rename files, call an API — without the overhead of a platform or the fragility of a script. Simple by default, powerful when you need it.
+**Bnto** is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes that automate your workflow. One Rust engine compiles to every target: CLI, browser (WASM), desktop (Tauri), server. Write a recipe once, run it anywhere.
 
-Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M1 (Browser Execution) is delivered** — all 6 Tier 1 recipes run 100% client-side via Rust→WASM. Files never leave the user's machine. The dividing line: **browser nodes are free, server nodes are Pro.** See [ROADMAP.md](.claude/ROADMAP.md) and [pricing-model.md](.claude/strategy/pricing-model.md).
+Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M1 (Browser Execution) is delivered** — 14 recipes run via CLI and browser (Rust→WASM). Files never leave the user's machine. The dividing line: **nodes that run locally are free, nodes that need a managed server are Pro.** See [ROADMAP.md](.claude/ROADMAP.md) and [pricing-model.md](.claude/strategy/pricing-model.md).
 
 - **Rust WASM Engine (M1, delivered)**: `engine/` — Rust→WASM via `wasm-pack`, all browser execution
 - **Web**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth`

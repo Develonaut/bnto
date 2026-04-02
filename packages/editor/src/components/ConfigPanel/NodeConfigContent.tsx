@@ -100,8 +100,8 @@ function NodeConfigFormContent({
 }
 
 /** Platform capability badge. */
-function CapabilityBadge({ browserCapable }: { browserCapable: boolean }) {
-  return browserCapable ? (
+function CapabilityBadge({ platforms }: { platforms: readonly string[] }) {
+  return platforms.includes("browser") ? (
     <Badge variant="secondary" className="text-xs">
       Browser
     </Badge>
@@ -113,13 +113,13 @@ function CapabilityBadge({ browserCapable }: { browserCapable: boolean }) {
 }
 
 /** Category + capability badge row. */
-function NodeBadges({ category, browserCapable }: { category: string; browserCapable: boolean }) {
+function NodeBadges({ category, platforms }: { category: string; platforms: readonly string[] }) {
   return (
     <div className="mt-2 flex items-center gap-1.5">
       <Badge variant="secondary" className="text-xs">
         {category}
       </Badge>
-      <CapabilityBadge browserCapable={browserCapable} />
+      <CapabilityBadge platforms={platforms} />
     </div>
   );
 }
@@ -147,7 +147,7 @@ function NodeConfigHeader({
           {typeInfo.description}
         </Text>
       )}
-      <NodeBadges category={typeInfo.category} browserCapable={typeInfo.browserCapable} />
+      <NodeBadges category={typeInfo.category} platforms={typeInfo.platforms} />
     </div>
   );
 }

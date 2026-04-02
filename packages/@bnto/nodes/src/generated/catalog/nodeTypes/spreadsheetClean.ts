@@ -13,6 +13,6 @@ export const spreadsheetCleanNodeType: NodeTypeInfo = {
   description: "Remove empty rows, trim whitespace, and deduplicate CSV data.",
   category: "spreadsheet",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "sheet",
 };

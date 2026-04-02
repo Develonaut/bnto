@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 1, 2026 (groomed — v0.2.0 released, Sprint 8 W1-2 complete, Sprint 8.5c/8.5d complete, Sprint 8 W3 is active work)
+**Last Updated:** April 2, 2026 (groomed — backlog audit: Popup primitive done, multi-step orchestration done, Convex cleanup mutations done, SEO unit tests done; stale items rewritten)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -113,8 +113,9 @@ Pricing, revenue projections, and "ready to charge" criteria live in private bus
 | Sprint 5     | Editor v1 (config controls, save, polish)    | **M2 completion.** Editor complete. Investment paused — revisit post-revenue.                                                                 |
 | Sprint 8     | Tier 3 near-term recipes                     | **SEO expansion.** New browser recipes targeting high-volume search queries. Product catalog grows.                                           |
 | Sprint 8.5   | Schema config + lightweight editor reconnect | **Simplification.** Schema-driven recipe config (any recipe gets controls for free), editor reconnected as open+export tool (no persistence). |
-| Sprint 9-10  | Desktop app                                  | Top-of-funnel. Word of mouth begins. Free forever — trust signal.                                                                             |
-| Sprint 11    | Stripe + Pro tier                            | **First revenue possible.** Pro: $8/month for persistence, collaboration, server-side AI, priority processing.                                |
+| Sprint 9     | Engine expansion (CLI, TUI, video)           | **Engine-first pivot.** Dependency system, video node, TUI, CLI polish. New capabilities tested via CLI first.                                |
+| Sprint 10-11 | Desktop + server (deferred)                  | Distribution targets. Deferred to backlog. Desktop (Tauri) and server-side execution.                                                         |
+| Sprint 12    | Stripe + Pro tier (tabled)                   | **Tabled.** Revenue strategy revisited when community traction emerges.                                                                       |
 
 ---
 
@@ -222,7 +223,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Sprint 8 complete.** All 3 waves delivered. 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, watermark/image-overlay), recipe fixtures, golden tests, codegen, SEO pages, E2E tests, and Lighthouse audit all done. Schema-driven config (8.5c) and editor reconnect (8.5d) both complete. **v0.2.0 released.**
 
-**After Sprint 8:** Desktop (M3) or Monetization (M5). Product Hunt launch candidate — catalog is substantial (14 recipes across 3 categories).
+**After Sprint 8:** Engine expansion (M3). CLI-first development — dependency system, video node type, TUI, CLI polish. Desktop and monetization deferred. See [engine-expansion.md](strategy/engine-expansion.md) for the full strategy.
 
 ---
 
@@ -568,74 +569,75 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ---
 
-## Phase 2: Desktop App (Local Execution)
+## Phase 2: Engine Expansion (CLI-First)
 
-**Goal:** Free desktop app. Same React frontend, local engine execution. Free forever, unlimited runs. No account needed. Trust signal and top-of-funnel growth driver.
+**Goal:** Make the bnto CLI a powerful, standalone tool. Add dependency management, new node types, and TUI. The CLI is the primary development surface — new capabilities are built and tested here before any browser/web work.
 
-**Desktop tech: Tauri (Rust-native).** M1 Rust evaluation passed — one codebase for browser WASM + desktop native + CLI.
+**Why this over Desktop:** The next interesting recipe (download-video via yt-dlp) requires external dependencies and can't run in a browser. Instead of building a desktop wrapper (Tauri), we invest in what makes the engine powerful — local execution, composability, and the Rust CLI. Desktop is deferred to M4.
 
-**Sprint numbering:** Desktop Bootstrap = Sprint 9, Local Execution = Sprint 10.
+**Strategy doc:** [engine-expansion.md](strategy/engine-expansion.md)
 
-### Sprint 9: Desktop Bootstrap
+### Sprint 9: Engine Expansion
 
 **Persona ownership:**
-| Package | Persona |
-| -------------- | -------------------- |
-| `apps/desktop` | `/frontend-engineer` |
-| `@bnto/core` | `/core-architect` |
+
+| Package  | Persona        |
+| -------- | -------------- |
 | `engine` | `/rust-expert` |
 
-#### Wave 1 (parallel — setup)
+#### Wave 1 (parallel — dependency system + ProcessContext)
 
-- [ ] `apps/desktop` — `/frontend-engineer` — Bootstrap Tauri desktop project
-- [ ] `@bnto/core` — `/core-architect` — Implement desktop adapter (Tauri IPC bindings)
-- [ ] `engine` — `/rust-expert` — Expose engine functions for desktop bindings (RunWorkflow, ValidateWorkflow, etc.)
+- [ ] `engine/crates/bnto-core` — `/rust-expert` — Add `requires: Vec<Dependency>` to `NodeMetadata` (binary name, version constraint, install hint, homepage)
+- [ ] `engine/crates/bnto-core` — `/rust-expert` — `ProcessContext` trait: controlled system access (run commands, temp files, env vars). `NoopContext` for browser, `NativeContext` for CLI
+- [ ] `engine/crates/bnto-engine` — `/rust-expert` — Dependency checker: verify all required binaries before pipeline start. Clear error with install hints on missing deps
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto doctor` command: check all dependencies, report missing with install hints
 
-#### Wave 2 (parallel — integration)
+#### Wave 2 (parallel — video node type)
 
-- [ ] `apps/desktop` — `/frontend-engineer` — Wire up native ↔ React bindings
-- [ ] `@bnto/core` — `/core-architect` — Runtime detection routes to desktop adapter in native webview
-- [ ] `apps/desktop` — `/frontend-engineer` — Local file browser for selecting .bnto.json files
+- [ ] `engine/crates/bnto-video` — `/rust-expert` — New crate: `video-download` processor wrapping yt-dlp. Purpose-built typed params: URL, format, quality, output format
+- [ ] `engine/crates/bnto-video` — `/rust-expert` — Register in `bnto-engine`, add `NodeTypeInfo` (category: "video", platforms: ["cli", "server", "desktop"])
+- [ ] `engine/crates/bnto-video` — `/rust-expert` — Golden tests with test fixtures. Recipe: `download-video.bnto.json`
+- [ ] Codegen — Run `task wasm:codegen` + `task recipes:generate`. Verify new video category + node type propagates through TypeScript
 
-#### Wave 3 (sequential — verify)
+#### Wave 3 (parallel — TUI)
 
-- [ ] `apps/desktop` — `/frontend-engineer` — Verify workflow list, edit, and save work via native bindings
-- [ ] `apps/desktop` — `/frontend-engineer` — Verify runtime detection correctly identifies desktop environment
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Interactive TUI mode (`bnto tui`). Recipe browser, file picker, progress display, results. Framework: `ratatui` + `crossterm`
 
----
+#### Wave 4 (parallel — CLI polish)
 
-### Sprint 10: Local Execution
-
-**Persona ownership:** Same as Sprint 9 — `/frontend-engineer` (desktop UI), `/core-architect` (adapter), `/rust-expert` (engine).
-
-#### Wave 1 (parallel — execution)
-
-- [ ] `apps/desktop` — `/frontend-engineer` — Execute workflows via Tauri bindings (all node types)
-- [ ] `@bnto/core` — `/core-architect` — Execution progress streaming via Tauri adapter
-- [ ] `apps/web` — `/frontend-engineer` — Execution progress component (reusable — node status, duration, logs)
-
-#### Wave 2 (parallel — features)
-
-- [ ] `apps/desktop` — `/frontend-engineer` — Execution results view (output data, logs, duration)
-- [ ] `apps/desktop` — `/rust-expert` — shell-command node support (full local execution, no restrictions)
-- [ ] `apps/desktop` — `/frontend-engineer` — Error handling and cancellation support
-
-#### Wave 3 (sequential — build + distribute)
-
-- [ ] `apps/desktop` — `/frontend-engineer` — Integration tests for local execution
-- [ ] `apps/desktop` — `/frontend-engineer` — macOS build (.app bundle, code signing)
-- [ ] `apps/desktop` — `/frontend-engineer` — Windows build (.exe)
-- [ ] `apps/desktop` — `/frontend-engineer` — Linux build (AppImage)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto list` command: list available recipes with descriptions and categories
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto info <recipe>` command: show recipe details, required dependencies, node types
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Enhanced `bnto run`: progress bars per file, colored output, timing summary
+- [ ] `README.md` — Update to pitch CLI usage front and center
 
 ---
 
-## Phase 3: Monetization + Polish
+### Backlog: Distribution (Desktop + Server)
 
-**Goal:** Wire up payments, enforce quotas, make the product feel complete.
+**Deferred from Phase 2.** Desktop (Tauri) and server-side execution moved to backlog. The Tauri plan is intact but deprioritized in favor of engine expansion.
 
-**"Ready to charge" gate:** Before Sprint 11, confirm: real users running browser bntos, conversion hooks built and tested (Save, History, Premium), people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
+#### Desktop App (Sprint 10, deferred)
 
-### Sprint 11: Stripe + Pro Tier (M5)
+- [ ] `apps/desktop` — Bootstrap Tauri desktop project
+- [ ] `@bnto/core` — Desktop adapter (Tauri IPC bindings)
+- [ ] `engine` — Expose engine functions for desktop bindings
+- [ ] `apps/desktop` — Wire native ↔ React bindings, local file browser
+- [ ] `apps/desktop` — macOS/Windows/Linux builds
+
+#### Server-Side Execution (Sprint 11, deferred)
+
+- [ ] Cloud execution infrastructure (technology TBD)
+- [ ] Server-only node types (AI inference, video processing at scale)
+
+---
+
+## Phase 3: Monetization + Polish — TABLED
+
+**Tabled (April 2026).** Monetization is explicitly paused. Focus is on engine power and fun. Revenue strategy revisited when the tool has community traction. The plan below is preserved for when this becomes relevant.
+
+**"Ready to charge" gate:** Before starting, confirm: real users running bntos, conversion hooks built and tested, people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
+
+### Sprint 12: Stripe + Pro Tier (M5) — TABLED
 
 **Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
 
@@ -709,14 +711,13 @@ Full scope when ready:
 - [ ] Review landing page + README for launch readiness
 - [ ] Submit and engage on launch day
 
-### UX: Unified Popup/FloatingSurface Primitive
+### UX: Unified Popup/FloatingSurface Primitive — COMPLETE
 
-**Priority: Medium.** Dialog.Content, Menu.Content, and AccountGate all repeat the same floating surface pattern: `Card elevation="lg"` + `Animate.ScaleIn from={0.6} easing="spring-bouncier"` + pointer-events/z-index management. Extract a shared composition primitive so consumers compose it instead of duplicating the Card/animation/z-index logic.
+**Delivered.** `Popup` primitive in `@bnto/ui` (`packages/ui/src/overlay/Popup.tsx`) — wraps `Card elevation="lg"` + `ScaleIn from={0.6} easing="spring-bouncier"` + z-index/pointer-events. `PopupContent` and `PopupTrigger` compose with Radix. Dialog, Menu, and AuthGate all delegate to Popup.
 
-- [ ] `apps/web` — Frontend engineer investigation: audit Dialog, Menu, AccountGate for shared patterns (animation, elevation, overlay, dismiss)
-- [ ] `apps/web` — Design the primitive API — how does it compose with Radix primitives that need `asChild`? Should it handle overlays or just the floating card?
-- [ ] `apps/web` — Implement `Popup` (or `FloatingSurface`) primitive in `components/ui/`
-- [ ] `apps/web` — Migrate Dialog.Content, Menu.Content, and AccountGate to use the shared primitive
+- [x] `packages/ui` — Audit + design: shared floating surface patterns identified across Dialog, Menu, AuthGate
+- [x] `packages/ui` — Implement `Popup` + `PopupContent` + `PopupTrigger` in `overlay/`
+- [x] `packages/ui` — Dialog.Content uses `<Popup>`, Menu uses `<PopupContent>`, AuthGate uses both via composition
 
 ### UX: Standardize Forms with React Hook Form + Zod
 
@@ -746,16 +747,19 @@ Full scope when ready:
 
 ### Engine: Unmigrated Node Operations (Rust WASM)
 
-**Priority: Medium.** Tier 3 recipe blockers promoted to **Sprint 8**. Remaining items below.
+**Priority: Medium.** Multi-step orchestration delivered (Smart Iteration + Rust PipelineExecutor). Remaining items are Tier 4+ prerequisites.
 
-**Orchestration (multi-step recipe support):**
+**Orchestration (multi-step recipe support) — DELIVERED:**
 
-- [ ] `@bnto/core` or `engine` — **Multi-step recipe orchestration**: Design how the browser adapter handles recipes with multiple processing nodes (group/loop pattern from Go). Currently the Web Worker processes one file through one node type. Multi-step requires either JS-side orchestration or WASM-side pipeline support. See `go-engine-migration.md` § Orchestration Nodes
-- [ ] `engine` — **Expression evaluation in browser**: Choose a JS expression evaluator to replace `expr-lang/expr` for `transform` node and `loop` while/break conditions. Candidates: `expr-eval`, `filtrex`, custom safe evaluator
+- [x] `engine` — **Multi-step recipe orchestration**: Rust `PipelineExecutor` handles full graph walking with topological ordering. Smart Iteration (`settings.iteration: "auto"`) wraps contiguous processor sequences in implicit per-file loops. Proven by Tier 1B recipes (`optimize-images-for-web`, `generate-thumbnails`) and 20+ golden equivalence tests.
+
+**Remaining (Tier 4+ prerequisites):**
+
+- [ ] `engine` — **Expression evaluation in browser**: Choose a JS expression evaluator to replace `expr-lang/expr` for `transform` node and `loop` while/break conditions. Candidates: `expr-eval`, `filtrex`, custom safe evaluator. Not needed until Tier 4 nodes ship. See [expression-input-ux.md](strategy/expression-input-ux.md).
 
 **Excel support:**
 
-- [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Go used `excelize/v2`. Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
+- [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
 
 ### Engine: `pdf` Browser Node — Future (Tier 3)
 
@@ -767,10 +771,10 @@ Full scope when ready:
 
 ### Infra: Clean Up Convex Dev Environment (Better Auth Remnants)
 
-Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifacts. Write a one-off cleanup mutation.
+Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifacts. Cleanup mutations written; stale execution cleanup automated via hourly cron.
 
-- [ ] `@bnto/backend` — Audit tables, write cleanup mutation (orphaned auth records, test users, stale executions)
-- [ ] `@bnto/backend` — Run against dev, verify table health
+- [x] `@bnto/backend` — Audit tables, write cleanup mutation: `_dev_cleanup.ts` (`cleanTestAccounts` — cascade deletes auth sessions, accounts, recipes, executions, logs, events, rate limits; preserves predefined test accounts). `cleanup_stale.ts` (`markStaleAsFailed` + `cleanupStaleExecutions` — marks pending/running >2h as failed, cleans R2). Hourly cron wired in `crons.ts`.
+- [ ] `@bnto/backend` — Run `cleanTestAccounts` against dev, verify table health
 - [ ] `@bnto/backend` — (If needed) Run against production
 
 ### Infra: Configure R2 Lifecycle Rules — M4 (cloud execution)
@@ -794,8 +798,8 @@ Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifac
 
 **Priority: Medium.** Graduate SEO validation from slow E2E to unit tests (metadata, registry↔sitemap sync). Keep thin E2E for noindex/redirect/404. Lighthouse CI already delivered.
 
-- [ ] `apps/web` — Move metadata validation to unit tests (`bntoRegistry.test.ts`)
-- [ ] `apps/web` — Slim E2E to redirects + 404 + noindex only
+- [x] `apps/web` — Move metadata validation to unit tests (`bntoRegistry.test.ts`): comprehensive unit tests exist — validates all bntos present, slug format, no reserved-path collisions, required metadata fields (title, description, h1, fixture, features), title format (`-- bnto` suffix), unique slugs, BNTO_REGISTRY↔getAllRecipes() parity
+- [ ] `apps/web` — Slim E2E to redirects + 404 + noindex only (seo-metadata.spec.ts still includes 200+ metadata assertions that duplicate the unit tests)
 
 ### Testing: Sprint 3 Deferred E2E Tests
 
@@ -1117,6 +1121,10 @@ Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version fi
 **Priority: Triage.** Rip out DevTab, DevNodeControls, devMockData, and the node-progress E2E spec (~500 lines of dead code). Also remove `setNodeStatus`, `setNodeProgress`, and `forceExecutionState` from ExecutionService interface and implementation — these are dev-only methods with no production consumers.
 
 Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
+
+### Triage: Redesign homepage as developer-facing landing page
+
+**Priority: Triage.** Rework bnto.io homepage from a recipe gallery into a developer-facing landing page for the tool/engine (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, and getting started (`cargo install bnto`). Recipe pages stay as the SEO showcase; homepage becomes the pitch for the tool itself.
 
 ## Reference
 

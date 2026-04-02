@@ -13,6 +13,6 @@ export const imageStripExifNodeType: NodeTypeInfo = {
   description: "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
   category: "image",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "image",
 };

@@ -67,7 +67,7 @@ The engine is the single source of truth. TypeScript types are generated, not ha
 After codegen, verify the new node landed in every generated artifact:
 
 - [ ] **`NODE_TYPES`** — new camelCase key exists in `packages/@bnto/nodes/src/generated/catalog.ts`
-- [ ] **`NODE_TYPE_INFO`** — new entry with label, description, category, icon, browserCapable
+- [ ] **`NODE_TYPE_INFO`** — new entry with label, description, category, icon, platforms
 - [ ] **`PROCESSORS`** — new processor entry with parameters and accepts
 - [ ] **`PROCESSOR_MAP`** — `PROCESSOR_MAP.has("your-type-key")` is true
 - [ ] **Zod schema** — new schema file in `packages/@bnto/nodes/src/schemas/` (auto-generated)
