@@ -43,6 +43,7 @@ impl NodeProcessor for MergeCsv {
             platforms: vec!["browser".to_string()],
             parameters: build_merge_parameters(),
             input_cardinality: InputCardinality::Batch,
+            requires: vec![],
         }
     }
 

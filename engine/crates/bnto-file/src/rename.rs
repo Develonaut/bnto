@@ -49,6 +49,7 @@ impl NodeProcessor for RenameFiles {
             platforms: vec!["browser".to_string()],
             parameters: build_rename_parameters(),
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         }
     }
 

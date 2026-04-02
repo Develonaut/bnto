@@ -5,7 +5,7 @@
  */
 
 /** Valid iteration modes from the engine's definition schema. */
-export const ITERATION_MODES = ["auto", "explicit"] as const;
+export const ITERATION_MODES = ["auto","explicit"] as const;
 
 /** Union type of valid iteration mode strings. */
 export type IterationModeValue = (typeof ITERATION_MODES)[number];

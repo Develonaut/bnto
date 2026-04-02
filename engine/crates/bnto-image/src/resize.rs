@@ -180,6 +180,7 @@ impl NodeProcessor for ResizeImages {
             platforms: vec!["browser".to_string()],
             parameters: resize_param_defs(),
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         }
     }
 

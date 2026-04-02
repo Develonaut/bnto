@@ -49,6 +49,7 @@ impl NodeProcessor for RenameCsvColumns {
                 ..Default::default()
             }],
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         }
     }
 

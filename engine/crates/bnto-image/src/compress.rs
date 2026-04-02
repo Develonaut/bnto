@@ -145,6 +145,7 @@ impl NodeProcessor for CompressImages {
             platforms: vec!["browser".to_string()],
             parameters: vec![quality_param_def()],
             input_cardinality: InputCardinality::PerFile,
+            requires: vec![],
         }
     }
 

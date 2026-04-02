@@ -290,6 +290,7 @@ impl NodeProcessor for OverlayImage {
                 },
                 crate::common::quality_param_def(),
             ],
+            requires: vec![],
         }
     }
 
