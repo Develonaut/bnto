@@ -20,7 +20,7 @@ fn test_single_node_emits_correct_event_sequence() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"hello")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -54,7 +54,7 @@ fn test_multi_node_events_in_order() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"hello")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -106,7 +106,7 @@ fn test_file_progress_includes_correct_indices() {
         make_file("b.txt", b"bbb"),
         make_file("c.txt", b"ccc"),
     ];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
     let progress_events: Vec<&PipelineEvent> = events
@@ -159,7 +159,7 @@ fn test_loop_container_reports_global_file_count() {
         make_file("c.png", b"ccc"),
         make_file("d.png", b"ddd"),
     ];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -226,7 +226,7 @@ fn test_nested_group_loop_reports_global_file_count() {
         make_file("img2.jpg", b"222"),
         make_file("img3.jpg", b"333"),
     ];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
     let progress_starts: Vec<&PipelineEvent> = events

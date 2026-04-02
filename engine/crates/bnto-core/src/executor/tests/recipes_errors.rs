@@ -25,7 +25,8 @@ fn test_recipe_with_only_io_nodes_passthrough() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].data, b"hello");
@@ -37,7 +38,8 @@ fn test_recipe_empty_files_no_error() {
     let registry = recipe_registry();
     let reporter = PipelineReporter::new_noop();
 
-    let result = execute_pipeline(&def, vec![], &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
     assert!(result.files.is_empty());
 }
 
@@ -65,7 +67,8 @@ fn test_recipe_container_io_children_skipped() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("photo.jpg", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // I/O nodes inside loop are skipped, only the processor runs.
     assert_eq!(result.files.len(), 1);
@@ -93,7 +96,7 @@ fn test_recipe_unregistered_operation_inside_loop() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("data.csv", b"csv-data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
 
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
@@ -133,7 +136,7 @@ fn test_recipe_failure_inside_nested_container() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
 
     assert!(result.is_err());
 

@@ -7,7 +7,8 @@
 use wasm_bindgen::prelude::*;
 
 use bnto_core::{
-    PipelineEvent, PipelineFile, PipelineReporter, execute_pipeline as core_execute_pipeline,
+    NoopContext, PipelineEvent, PipelineFile, PipelineReporter,
+    execute_pipeline as core_execute_pipeline,
 };
 
 /// Convert a single `PipelineFileResult` to a JS object with name, data, mimeType, metadata.
@@ -83,7 +84,9 @@ pub fn execute_pipeline(
     // WASM has no std::time::Instant — use browser's Date.now().
     let now_ms = || js_sys::Date::now() as u64;
 
-    let result = core_execute_pipeline(&definition, files, &registry, &reporter, now_ms)
+    // Browser execution always uses NoopContext — no system access.
+    let noop_ctx = NoopContext;
+    let result = core_execute_pipeline(&definition, files, &registry, &reporter, &noop_ctx, now_ms)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
     convert_results_to_js(&result)

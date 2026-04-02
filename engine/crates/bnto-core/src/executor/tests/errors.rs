@@ -19,7 +19,7 @@ fn test_unknown_node_type_returns_error() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
 
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
@@ -46,7 +46,7 @@ fn test_processor_failure_emits_node_failed() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
 
     assert!(result.is_err());
 
@@ -82,7 +82,7 @@ fn test_error_mid_pipeline_stops_execution() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now);
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
 
     assert!(result.is_err());
 

@@ -15,21 +15,21 @@ export const spreadsheetConvertProcessor: ProcessorDef = {
   accepts: ["text/csv"] as const,
   platforms: ["browser"] as const,
   parameters: [
-    {
-      name: "delimiter",
-      label: "Delimiter",
-      description: "Column separator character",
-      type: "enum" as const,
-      options: ["comma", "semicolon", "tab", "pipe"] as const,
-      default: "comma",
-    },
-    {
-      name: "pretty",
-      label: "Pretty Print",
-      description: "Format output JSON with indentation",
-      type: "boolean" as const,
-      default: false,
-    },
+  {
+    name: "delimiter",
+    label: "Delimiter",
+    description: "Column separator character",
+    type: "enum" as const,
+    options: ["comma","semicolon","tab","pipe"] as const,
+    default: "comma",
+  },
+  {
+    name: "pretty",
+    label: "Pretty Print",
+    description: "Format output JSON with indentation",
+    type: "boolean" as const,
+    default: false,
+  },
   ],
   inputCardinality: "perFile" as const,
 };

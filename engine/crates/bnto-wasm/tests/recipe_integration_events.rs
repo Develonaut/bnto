@@ -4,7 +4,7 @@ mod common;
 
 use std::sync::{Arc, Mutex};
 
-use bnto_core::{PipelineEvent, PipelineReporter, execute_pipeline};
+use bnto_core::{NoopContext, PipelineEvent, PipelineReporter, execute_pipeline};
 use common::{SMALL_JPEG, fake_now, file, parse, real_registry};
 
 #[test]
@@ -39,7 +39,7 @@ fn compress_recipe_emits_expected_events() {
     });
 
     let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("compress pipeline should succeed");
 
     let collected = events.lock().unwrap();

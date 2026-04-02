@@ -39,7 +39,8 @@ fn test_group_containing_group_containing_loop() {
         make_file("b.jpg", b"bbb"),
         make_file("c.jpg", b"ccc"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Files pass through all 3 container levels to the processor.
     assert_eq!(result.files.len(), 3);
@@ -67,7 +68,8 @@ fn test_multiple_processors_inside_loop() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Each file goes through echo then uppercase inside the loop.
     assert_eq!(result.files.len(), 2);
@@ -102,7 +104,8 @@ fn test_sequential_loops_in_pipeline() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("file.txt", b"data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Passes through loop1 (echo, unchanged) then loop2 (uppercase).
     assert_eq!(result.files.len(), 1);
@@ -146,7 +149,8 @@ fn test_four_levels_deep_nesting() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("deep.txt", b"deep")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "DEEP.TXT");

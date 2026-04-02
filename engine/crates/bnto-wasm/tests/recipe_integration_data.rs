@@ -2,7 +2,7 @@
 
 mod common;
 
-use bnto_core::{PipelineReporter, execute_pipeline};
+use bnto_core::{NoopContext, PipelineReporter, execute_pipeline};
 use common::{MESSY_CSV, SIMPLE_CSV, fake_now, file, parse, real_registry};
 
 // --- Clean CSV -- full recipe integration ---
@@ -33,7 +33,7 @@ fn clean_csv_recipe_produces_cleaned_output() {
     let reporter = PipelineReporter::new_noop();
     let files = vec![file("data.csv", MESSY_CSV, "text/csv")];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("clean CSV pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);
@@ -80,7 +80,7 @@ fn rename_csv_columns_recipe_produces_output() {
     let reporter = PipelineReporter::new_noop();
     let files = vec![file("data.csv", SIMPLE_CSV, "text/csv")];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("rename columns pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);
@@ -127,7 +127,7 @@ fn rename_files_recipe_applies_prefix() {
         file("readme.md", b"# Title", "text/markdown"),
     ];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("rename files pipeline should succeed");
 
     assert_eq!(result.files.len(), 2, "should output 2 renamed files");

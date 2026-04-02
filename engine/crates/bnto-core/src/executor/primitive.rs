@@ -84,7 +84,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     // No-op per-file reporter — pipeline-level FileProgress events are
     // emitted here directly with correct global indices.
     let noop_reporter = ProgressReporter::new(|_, _| {});
-    let output = processor.process(input, &noop_reporter)?;
+    let output = processor.process(input, &noop_reporter, ctx.process_ctx)?;
 
     emit_file_progress(
         ctx,
@@ -168,7 +168,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
     };
 
     let noop_reporter = ProgressReporter::new(|_, _| {});
-    let output = processor.process_batch(batch_input, &noop_reporter)?;
+    let output = processor.process_batch(batch_input, &noop_reporter, ctx.process_ctx)?;
 
     emit_file_progress(
         ctx,

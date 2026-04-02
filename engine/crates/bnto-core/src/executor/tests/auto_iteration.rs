@@ -23,7 +23,8 @@ fn test_explicit_mode_flat_pipeline_unchanged() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
@@ -46,7 +47,8 @@ fn test_no_settings_defaults_to_explicit_behavior() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
@@ -76,7 +78,8 @@ fn test_auto_single_processor_per_file() {
         make_file("b.txt", b"bbb"),
         make_file("c.txt", b"ccc"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 3);
     assert_eq!(result.files[0].name, "A.TXT");
@@ -107,7 +110,8 @@ fn test_auto_multi_processor_per_file_pipeline() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Both files are uppercased, output order matches input order.
     assert_eq!(result.files.len(), 2);
@@ -140,7 +144,8 @@ fn test_auto_mode_preserves_explicit_containers() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
@@ -182,9 +187,24 @@ fn test_auto_matches_explicit_loop_single_processor() {
     let files_a = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
     let files_b = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
 
-    let auto_result = execute_pipeline(&auto_def, files_a, &registry, &reporter, fake_now).unwrap();
-    let explicit_result =
-        execute_pipeline(&explicit_def, files_b, &registry, &reporter, fake_now).unwrap();
+    let auto_result = execute_pipeline(
+        &auto_def,
+        files_a,
+        &registry,
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap();
+    let explicit_result = execute_pipeline(
+        &explicit_def,
+        files_b,
+        &registry,
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap();
 
     assert_eq!(auto_result.files.len(), explicit_result.files.len());
     for (auto_file, explicit_file) in auto_result.files.iter().zip(explicit_result.files.iter()) {
@@ -238,9 +258,24 @@ fn test_auto_matches_explicit_loop_multi_processor() {
         make_file("c.txt", b"ccc"),
     ];
 
-    let auto_result = execute_pipeline(&auto_def, files_a, &registry, &reporter, fake_now).unwrap();
-    let explicit_result =
-        execute_pipeline(&explicit_def, files_b, &registry, &reporter, fake_now).unwrap();
+    let auto_result = execute_pipeline(
+        &auto_def,
+        files_a,
+        &registry,
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap();
+    let explicit_result = execute_pipeline(
+        &explicit_def,
+        files_b,
+        &registry,
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap();
 
     assert_eq!(auto_result.files.len(), explicit_result.files.len());
     for (auto_file, explicit_file) in auto_result.files.iter().zip(explicit_result.files.iter()) {
@@ -270,7 +305,7 @@ fn test_auto_mode_progress_events_correct() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -323,7 +358,8 @@ fn test_auto_mode_empty_files() {
     let registry = mock_registry();
     let reporter = PipelineReporter::new_noop();
 
-    let result = execute_pipeline(&def, vec![], &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
     assert!(result.files.is_empty());
 }
 
@@ -342,7 +378,8 @@ fn test_auto_mode_io_only_passthrough() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "test.txt");
@@ -373,7 +410,8 @@ fn test_auto_mode_mixed_primitive_and_container() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Files uppercased, then looped (per-file echo), then echoed per-file
     assert_eq!(result.files.len(), 2);

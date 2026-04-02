@@ -95,6 +95,7 @@ impl Default for NodeRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::context::ProcessContext;
     use crate::errors::BntoError;
     use crate::processor::{NodeInput, NodeOutput, OutputFile};
     use crate::progress::ProgressReporter;
@@ -124,6 +125,7 @@ mod tests {
             &self,
             input: NodeInput,
             _progress: &ProgressReporter,
+            _ctx: &dyn ProcessContext,
         ) -> Result<NodeOutput, BntoError> {
             Ok(NodeOutput {
                 files: vec![OutputFile {

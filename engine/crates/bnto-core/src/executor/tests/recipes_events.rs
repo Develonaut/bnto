@@ -10,7 +10,7 @@ fn test_recipe_compress_images_event_sequence() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("a.jpg", b"aaa"), make_file("b.jpg", b"bbb")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -74,7 +74,7 @@ fn test_recipe_clean_csv_event_sequence() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("data.csv", b"csv-content")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -212,7 +212,14 @@ fn test_all_six_recipes_execute_with_mocks() {
     for (i, json) in recipes.iter().enumerate() {
         let def = parse_def(json);
         let reporter = PipelineReporter::new_noop();
-        let result = execute_pipeline(&def, files.clone(), &registry, &reporter, fake_now);
+        let result = execute_pipeline(
+            &def,
+            files.clone(),
+            &registry,
+            &reporter,
+            &NoopContext,
+            fake_now,
+        );
         assert!(
             result.is_ok(),
             "Recipe {} failed to execute: {:?}",

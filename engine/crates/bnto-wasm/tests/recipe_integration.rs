@@ -2,7 +2,7 @@
 
 mod common;
 
-use bnto_core::{PipelineReporter, execute_pipeline};
+use bnto_core::{NoopContext, PipelineReporter, execute_pipeline};
 use common::{SMALL_JPEG, SMALL_PNG, fake_now, file, parse, real_registry};
 
 // --- Compress Images -- full recipe integration ---
@@ -34,7 +34,7 @@ fn compress_images_recipe_produces_smaller_output() {
     let input_size = SMALL_JPEG.len();
     let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("compress pipeline should succeed");
 
     assert_eq!(result.files.len(), 1, "should output 1 file");
@@ -83,7 +83,7 @@ fn compress_images_recipe_handles_batch() {
         file("b.png", SMALL_PNG, "image/png"),
     ];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("batch compress should succeed");
 
     assert_eq!(result.files.len(), 2, "batch should output 2 files");
@@ -125,7 +125,7 @@ fn compress_images_metadata_includes_size_stats() {
     let input_size = SMALL_JPEG.len() as u64;
     let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("compress pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);
@@ -180,7 +180,7 @@ fn resize_images_recipe_produces_output() {
     let reporter = PipelineReporter::new_noop();
     let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("resize pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);
@@ -216,7 +216,7 @@ fn convert_image_format_recipe_produces_png() {
     let reporter = PipelineReporter::new_noop();
     let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
 
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now)
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now)
         .expect("convert pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);

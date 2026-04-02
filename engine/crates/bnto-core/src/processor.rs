@@ -2,6 +2,7 @@
 // NodeProcessor Trait — The Contract Every Node Type Must Implement
 // =============================================================================
 
+use crate::context::ProcessContext;
 use crate::errors::BntoError;
 use crate::metadata::{NodeCategory, NodeMetadata};
 use crate::progress::ProgressReporter;
@@ -99,6 +100,7 @@ pub trait NodeProcessor {
     ///   - `&self` — reference to the node processor instance
     ///   - `input` — the file data, filename, MIME type, and config params
     ///   - `progress` — callback to report progress to the UI (0-100%)
+    ///   - `ctx` — system access boundary (commands, temp files, env vars)
     ///
     /// Returns:
     ///   - `Ok(NodeOutput)` — processing succeeded, here are the results
@@ -107,6 +109,7 @@ pub trait NodeProcessor {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError>;
 
     /// Validate the input parameters before processing.
@@ -132,6 +135,7 @@ pub trait NodeProcessor {
         &self,
         input: BatchInput,
         progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let total = input.files.len();
         let mut all_files = Vec::new();
@@ -147,7 +151,7 @@ pub trait NodeProcessor {
                 mime_type: file.mime_type,
                 params: input.params.clone(),
             };
-            let output = self.process(single_input, progress)?;
+            let output = self.process(single_input, progress, ctx)?;
             all_files.extend(output.files);
             // Merge metadata from the last file processed.
             combined_metadata = output.metadata;
@@ -189,6 +193,7 @@ pub trait NodeProcessor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::context::NoopContext;
 
     // --- Test helpers ---
     // We create a simple mock processor to test the trait contract.
@@ -206,6 +211,7 @@ mod tests {
             &self,
             input: NodeInput,
             _progress: &ProgressReporter,
+            _ctx: &dyn ProcessContext,
         ) -> Result<NodeOutput, BntoError> {
             // Just echo the input data back as output.
             Ok(NodeOutput {
@@ -233,6 +239,7 @@ mod tests {
             &self,
             _input: NodeInput,
             _progress: &ProgressReporter,
+            _ctx: &dyn ProcessContext,
         ) -> Result<NodeOutput, BntoError> {
             Err(BntoError::ProcessingFailed(
                 "intentional test failure".to_string(),
@@ -264,7 +271,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_test_input(b"hello world", "test.txt");
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].data, b"hello world");
@@ -277,7 +284,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_test_input(b"data", "test.txt");
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_err());
 
         if let Err(e) = result {
@@ -317,7 +324,9 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
 
         // Default batch falls back to per-file: 2 inputs → 2 outputs.
         assert_eq!(output.files.len(), 2);
@@ -336,7 +345,9 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let output = processor.process_batch(input, &progress).unwrap();
+        let output = processor
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
         assert_eq!(output.files.len(), 0);
     }
 
@@ -353,7 +364,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let result = processor.process_batch(input, &progress);
+        let result = processor.process_batch(input, &progress, &NoopContext);
         assert!(result.is_err());
     }
 }

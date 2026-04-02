@@ -19,7 +19,8 @@ fn test_processor_metadata_appears_in_final_result() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("photo.jpg", &[0u8; 100])];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     let metadata = &result.files[0].metadata;
@@ -55,7 +56,8 @@ fn test_metadata_preserved_through_loop_container() {
         make_file("a.jpg", &[0u8; 200]),
         make_file("b.jpg", &[0u8; 400]),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].metadata["originalSize"], 200);
@@ -84,7 +86,8 @@ fn test_metadata_preserved_through_group_container() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("photo.jpg", &[0u8; 300])];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].metadata["originalSize"], 300);
@@ -110,7 +113,8 @@ fn test_metadata_from_last_processor_wins_in_chain() {
 
     // 100 bytes -> first outputs 50 -> second outputs 25.
     let files = vec![make_file("photo.jpg", &[0u8; 100])];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     let metadata = &result.files[0].metadata;
@@ -135,7 +139,8 @@ fn test_echo_processor_preserves_empty_metadata() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert!(
