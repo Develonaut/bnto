@@ -13,6 +13,6 @@ export const imageConvertNodeType: NodeTypeInfo = {
   description: "Convert images between JPEG, PNG, and WebP formats.",
   category: "image",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "image",
 };

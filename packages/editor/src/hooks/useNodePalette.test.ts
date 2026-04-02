@@ -79,10 +79,10 @@ describe("computePalette", () => {
     expect(ioItems).toHaveLength(0);
   });
 
-  it("preserves category and browserCapable from NodeTypeInfo", () => {
+  it("preserves category and platforms from NodeTypeInfo", () => {
     const compress = allItems().find((i) => i.type === "image-compress");
     expect(compress!.category).toBe("image");
-    expect(compress!.browserCapable).toBe(true);
+    expect(compress!.platforms).toContain("browser");
   });
 
   it("groups items by category in CATEGORIES display order", () => {
@@ -94,7 +94,7 @@ describe("computePalette", () => {
 
   it("browserOnly filters to browser-capable items only", () => {
     const items = allItems(true);
-    expect(items.every((i) => i.browserCapable)).toBe(true);
+    expect(items.every((i) => i.platforms.includes("browser"))).toBe(true);
     expect(items.find((i) => i.type === "http-request")).toBeUndefined();
   });
 });

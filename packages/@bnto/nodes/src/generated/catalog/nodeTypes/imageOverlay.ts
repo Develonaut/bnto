@@ -13,6 +13,6 @@ export const imageOverlayNodeType: NodeTypeInfo = {
   description: "Overlay an image onto source images at a configurable position, size, and opacity.",
   category: "image",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "stamp",
 };

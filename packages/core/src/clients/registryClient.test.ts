@@ -55,7 +55,7 @@ describe("registryClient", () => {
         expect(info.label).toBeTruthy();
         expect(info.category).toBeTruthy();
         expect(typeof info.isContainer).toBe("boolean");
-        expect(typeof info.browserCapable).toBe("boolean");
+        expect(Array.isArray(info.platforms)).toBe(true);
       }
     });
   });
@@ -64,7 +64,7 @@ describe("registryClient", () => {
     it("excludes server-only node types", () => {
       const browserTypes = client.getBrowserNodeTypes();
       for (const info of browserTypes) {
-        expect(info.browserCapable).toBe(true);
+        expect(info.platforms).toContain("browser");
       }
     });
 

@@ -13,6 +13,6 @@ export const shellCommandNodeType: NodeTypeInfo = {
   description: "Execute shell commands with stall detection, retry, and streaming output.",
   category: "system",
   isContainer: false,
-  browserCapable: false,
+  platforms: ["server"] as const,
   icon: "terminal",
 };

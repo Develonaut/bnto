@@ -13,6 +13,6 @@ export const outputNodeType: NodeTypeInfo = {
   description: "Declares how results are delivered.",
   category: "io",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "download",
 };

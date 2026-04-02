@@ -13,6 +13,6 @@ export const fileRenameNodeType: NodeTypeInfo = {
   description: "Transform filenames using patterns, find/replace, and case rules.",
   category: "file",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "folder-open",
 };

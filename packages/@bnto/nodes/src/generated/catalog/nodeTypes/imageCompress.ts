@@ -13,6 +13,6 @@ export const imageCompressNodeType: NodeTypeInfo = {
   description: "Reduce image file size while maintaining quality.",
   category: "image",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "image",
 };

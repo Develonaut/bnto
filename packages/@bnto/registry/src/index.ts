@@ -60,6 +60,7 @@ export { validateRecipe } from "./validateRecipe";
 
 // ── Classification ──────────────────────────────────────────────────────
 export { isNodeType, isIoNodeType, isContainerNodeType } from "./classification";
+export { isRecipeBrowserCapable } from "./isRecipeBrowserCapable";
 
 // ── Node metadata ──────────────────────────────────────────────────────
 export { getNodeTypeInfo, getNodeIcon, getNodeSublabel } from "./nodeMetadata";

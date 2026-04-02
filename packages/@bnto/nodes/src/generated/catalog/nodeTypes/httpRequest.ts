@@ -13,6 +13,6 @@ export const httpRequestNodeType: NodeTypeInfo = {
   description: "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
   category: "network",
   isContainer: false,
-  browserCapable: false,
+  platforms: ["server"] as const,
   icon: "globe",
 };

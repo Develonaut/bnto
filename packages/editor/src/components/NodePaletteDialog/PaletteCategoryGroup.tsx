@@ -38,8 +38,8 @@ function PaletteCategoryGroup({ group, isFull, onAdd }: PaletteCategoryGroupProp
               description={item.description}
               icon={item.icon}
               variant={variant}
-              browserCapable={item.browserCapable}
-              disabled={isFull || !item.browserCapable}
+              platforms={item.platforms}
+              disabled={isFull || !item.platforms.includes("browser")}
               onAdd={handleAdd}
               testId={`palette-item-${item.type}`}
             />

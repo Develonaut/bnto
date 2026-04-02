@@ -13,6 +13,6 @@ export const spreadsheetMergeNodeType: NodeTypeInfo = {
   description: "Combine multiple CSV files into one with header reconciliation and deduplication.",
   category: "spreadsheet",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "sheet",
 };

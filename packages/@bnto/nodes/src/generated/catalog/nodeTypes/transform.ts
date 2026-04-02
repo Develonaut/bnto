@@ -13,6 +13,6 @@ export const transformNodeType: NodeTypeInfo = {
   description: "Transform data using expressions (single value) or field mappings.",
   category: "data",
   isContainer: false,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "arrow-left-right",
 };

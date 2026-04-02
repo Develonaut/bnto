@@ -13,6 +13,6 @@ export const parallelNodeType: NodeTypeInfo = {
   description: "Execute tasks concurrently with configurable worker pool and error strategy.",
   category: "control",
   isContainer: true,
-  browserCapable: true,
+  platforms: ["browser"] as const,
   icon: "git-fork",
 };

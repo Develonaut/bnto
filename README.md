@@ -6,33 +6,28 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-**Free tools that run in your browser. Your files never leave your machine.**
+**A composable pipeline tool for developers.** Compress images, clean CSVs, rename files, download videos, call APIs — from your terminal or browser. Powered by a Rust engine that compiles to native binaries and WebAssembly.
 
-bnto (like "bento") is a collection of instant, composable tools powered by Rust compiled to WebAssembly. Compress images, clean CSVs, rename files, convert formats, or build your own multi-step recipes with a visual editor. No uploads, no accounts, no limits.
+```bash
+# Compress all JPEGs in the current directory
+bnto run compress-images *.jpg
 
-> **Try it now:** [bnto.io](https://bnto.io)
+# Clean up a messy CSV
+bnto run clean-csv data.csv
 
----
+# Chain tools into multi-step recipes
+bnto run optimize-images-for-web photos/
+```
 
-## Why bnto?
+Recipes are portable `.bnto.json` files that run everywhere — CLI, browser, desktop.
 
-|                          | bnto                       | TinyPNG           | Squoosh                 | CloudConvert       |
-| ------------------------ | -------------------------- | ----------------- | ----------------------- | ------------------ |
-| **Free**                 | Unlimited, forever         | 20 images/mo      | Unlimited (1 at a time) | Limited credits    |
-| **Private**              | Files stay in your browser | Uploads to server | Browser-based           | Uploads to server  |
-| **Batch processing**     | Unlimited files            | 20 max            | One at a time           | Per-conversion fee |
-| **Composable**           | Chain tools into recipes   | Single tool       | Single tool             | Single tool        |
-| **Visual recipe editor** | Yes                        | No                | No                      | No                 |
-| **Offline**              | Yes, once loaded           | No                | Yes                     | No                 |
-| **Open source**          | MIT licensed               | No                | Yes                     | No                 |
-
-bnto replaces the five bookmarks small teams cobble together for everyday tasks. One place for compressing, converting, renaming, cleaning. Same interface, composable.
+> **Also runs in your browser:** [bnto.io](https://bnto.io) — same engine, compiled to WebAssembly. Files never leave your machine.
 
 ---
 
 ## Recipes
 
-Recipes are what bnto calls its tools. Each one is a pipeline of nodes that process your files. Predefined recipes work out of the box. The visual editor lets you build your own.
+Recipes are what bnto calls its tools. Each one is a pipeline of nodes that process your files. Predefined recipes work out of the box.
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
@@ -57,7 +52,7 @@ Recipes are what bnto calls its tools. Each one is a pipeline of nodes that proc
 
 ### Visual Recipe Editor
 
-Don't see what you need? Build it. The visual editor lets you compose nodes into multi-step recipes. Chain a resize into a format conversion into a compression, all in one run. Save your recipes and reuse them.
+Don't see what you need? Build it. The visual editor lets you compose nodes into multi-step recipes. Chain a resize into a format conversion into a compression, all in one run.
 
 Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
@@ -65,7 +60,27 @@ Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
 ## How It Works
 
-Pick a recipe, drop your files, get results. Processing happens in your browser using a Rust engine compiled to WebAssembly. No server round-trips.
+### CLI
+
+```bash
+# Install
+cargo install bnto
+
+# Run a recipe
+bnto run compress-images photos/*.jpg
+
+# List available recipes
+bnto list
+
+# Check recipe details
+bnto info compress-images
+```
+
+The CLI runs recipes using the native Rust engine. No WASM, no browser — direct native execution with full system access.
+
+### Browser
+
+Pick a recipe at [bnto.io](https://bnto.io), drop your files, get results. Processing happens entirely in your browser using the same Rust engine compiled to WebAssembly. No server round-trips.
 
 ```
 You drop files
@@ -76,11 +91,33 @@ You drop files
 
 Your files never touch a server. The browser IS the server.
 
+### The `.bnto.json` Format
+
+Recipes are portable JSON files that describe a pipeline:
+
+```json
+{
+  "formatVersion": "1",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "accept": ["image/jpeg", "image/png"] }
+    },
+    { "id": "compress", "type": "image-compress", "parameters": { "quality": 80 } },
+    { "id": "output", "type": "output", "parameters": { "mode": "download" } }
+  ],
+  "settings": { "iteration": "auto" }
+}
+```
+
+The same `.bnto.json` runs in the CLI, browser, and (future) desktop. Recipes are composable — chain nodes into multi-step pipelines.
+
 ---
 
 ## The Bento Box
 
-bnto is named after the bento box (弁当), a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
+bnto is named after the bento box, a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
 
 That idea runs through everything:
 
@@ -92,15 +129,13 @@ That idea runs through everything:
 
 ## Where This Is Going
 
-bnto starts with file tools in the browser, but the engine is designed to grow.
+**Today:** 14 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Free, unlimited, no account required.
 
-**Today:** 10 predefined recipes running client-side via Rust/WASM. A visual editor for building custom recipes. Free, unlimited, no account required.
+**Next:** Engine expansion — dependency system for external tools (yt-dlp, ffmpeg), video download node type, TUI for interactive recipe execution, and CLI polish. The CLI becomes the primary development surface.
 
-**Next:** A desktop app (Tauri) with full local execution, including nodes the browser can't run. Shell commands (`ffmpeg`, `yt-dlp`, `imagemagick`), filesystem operations, and BYOK AI. Same recipes, same engine, running natively.
+**Later:** Desktop app (Tauri) for native local execution. Cloud execution for server-side nodes (AI inference, video processing). Pro tier for persistence and collaboration.
 
-**Later:** Cloud execution for server-side nodes (AI inference, video processing, unrestricted HTTP). Pro tier for persistence, collaboration, and premium compute.
-
-One Rust engine powering browser (WASM), desktop (native), CLI, and cloud. Recipes are portable `.bnto.json` files that work everywhere.
+One Rust engine powering CLI, browser (WASM), desktop (native), and cloud. Recipes are portable `.bnto.json` files that work everywhere.
 
 ---
 
@@ -127,11 +162,15 @@ pnpm install
 # Development
 task dev                # Start web + Convex dev servers (Next.js on port 4000)
 
-# Rust WASM engine
+# Rust engine
 task wasm:build         # Build WASM crates (release, web target)
 task wasm:test          # Run Rust unit + WASM integration tests
 task wasm:lint          # Run clippy
 task wasm:fmt           # Format Rust code
+
+# Native CLI
+task cli:build          # Build native CLI binary
+task cli:test           # Run CLI unit + integration + golden tests
 
 # Frontend
 task ui:build           # Build all TS packages
@@ -149,17 +188,20 @@ task check              # Full check (lint + test + build)
 
 bnto follows the **Bento Box Principle**: every file, function, and package does one thing well.
 
-The browser is the execution engine. Rust compiles to a single WASM binary that runs inside a Web Worker. The web app loads the WASM module, sends files in, and gets results back.
+The Rust engine is the core. It compiles to a native CLI binary for local execution and to a WASM binary for browser execution.
 
 ```
-Browser (WASM execution)
+Rust Engine
   │
-  ├── Web Worker loads bnto_wasm.wasm
-  │     ├── bnto-image (compress, resize, convert)
-  │     ├── bnto-csv (clean, rename columns)
-  │     └── bnto-file (rename)
+  ├── Native CLI (bnto run, bnto list, bnto doctor)
+  │     ├── bnto-image (compress, resize, convert, overlay)
+  │     ├── bnto-csv (clean, rename columns, merge, csv-to-json)
+  │     └── bnto-file (rename, strip-exif)
   │
-  ├── Next.js app (Vercel)
+  ├── WASM (browser, via Web Worker)
+  │     └── Same crates, compiled to wasm32-unknown-unknown
+  │
+  ├── Next.js app (bnto.io, Vercel)
   └── Convex Cloud (auth, data persistence)
 ```
 
@@ -181,13 +223,13 @@ bnto/
 │       ├── form/                # @bnto/form - Schema-driven config forms
 │       ├── nodes/               # @bnto/nodes - Engine-generated node catalog
 │       └── registry/            # @bnto/registry - Recipe curation + discovery
-└── engine/                      # Rust WASM engine
+└── engine/                      # Rust engine (WASM + native CLI)
     └── crates/
         ├── bnto-core/           # Core types, traits, progress reporting
         ├── bnto-engine/         # Pipeline executor + node registry
-        ├── bnto-image/          # Image compression/resize/convert
-        ├── bnto-csv/            # CSV clean/rename columns
-        ├── bnto-file/           # File rename
+        ├── bnto-image/          # Image compression/resize/convert/overlay
+        ├── bnto-csv/            # CSV clean/rename columns/merge/convert
+        ├── bnto-file/           # File rename, EXIF strip
         ├── bnto-cli/            # Native CLI binary
         └── bnto-wasm/           # cdylib entry point (single WASM binary)
 ```

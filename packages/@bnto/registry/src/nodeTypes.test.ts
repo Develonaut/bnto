@@ -15,7 +15,7 @@ describe("nodeTypes", () => {
         expect(info.label).toBeTruthy();
         expect(info.category).toBeTruthy();
         expect(typeof info.isContainer).toBe("boolean");
-        expect(typeof info.browserCapable).toBe("boolean");
+        expect(Array.isArray(info.platforms)).toBe(true);
       }
     });
   });
@@ -23,7 +23,7 @@ describe("nodeTypes", () => {
   describe("getBrowserNodeTypes", () => {
     it("returns only browser-capable types", () => {
       for (const info of getBrowserNodeTypes()) {
-        expect(info.browserCapable).toBe(true);
+        expect(info.platforms).toContain("browser");
       }
     });
 

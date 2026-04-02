@@ -4,5 +4,5 @@ import { NODE_TYPE_INFO } from "@bnto/nodes";
 import type { NodeTypeInfo } from "@bnto/nodes";
 
 export function getBrowserNodeTypes(): NodeTypeInfo[] {
-  return Object.values(NODE_TYPE_INFO).filter((t) => t.browserCapable);
+  return Object.values(NODE_TYPE_INFO).filter((t) => t.platforms.includes("browser"));
 }

@@ -61,7 +61,7 @@ describe("NODE_TYPE_INFO", () => {
       expect(info.description).toBeTruthy();
       expect(info.category).toBeTruthy();
       expect(typeof info.isContainer).toBe("boolean");
-      expect(typeof info.browserCapable).toBe("boolean");
+      expect(Array.isArray(info.platforms)).toBe(true);
       expect(info.icon).toBeTruthy();
     }
   });
@@ -73,7 +73,9 @@ describe("NODE_TYPE_INFO", () => {
   });
 
   it("server-only types are http-request and shell-command", () => {
-    const serverOnly = Object.values(NODE_TYPE_INFO).filter((i) => !i.browserCapable);
+    const serverOnly = Object.values(NODE_TYPE_INFO).filter(
+      (i) => !i.platforms.includes("browser"),
+    );
     const names = serverOnly.map((s) => s.name).sort();
     expect(names).toEqual(["http-request", "shell-command"]);
   });
@@ -91,8 +93,8 @@ describe("IO node types", () => {
   });
 
   it("input and output are browser-capable", () => {
-    expect(NODE_TYPE_INFO["input"].browserCapable).toBe(true);
-    expect(NODE_TYPE_INFO["output"].browserCapable).toBe(true);
+    expect(NODE_TYPE_INFO["input"].platforms).toContain("browser");
+    expect(NODE_TYPE_INFO["output"].platforms).toContain("browser");
   });
 
   it("input and output are NOT containers", () => {
