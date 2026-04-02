@@ -15,12 +15,12 @@ export const spreadsheetRenameProcessor: ProcessorDef = {
   accepts: ["text/csv"] as const,
   platforms: ["browser"] as const,
   parameters: [
-    {
-      name: "columns",
-      label: "Column Mapping",
-      description: 'Map of old column names to new names (e.g., {"Name": "full_name"})',
-      type: "object" as const,
-    },
+  {
+    name: "columns",
+    label: "Column Mapping",
+    description: "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
+    type: "object" as const,
+  },
   ],
   inputCardinality: "perFile" as const,
 };

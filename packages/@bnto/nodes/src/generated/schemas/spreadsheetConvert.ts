@@ -9,11 +9,8 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-convert node parameters. */
 export const spreadsheetConvertParamsSchema = z.object({
-  delimiter: z
-    .enum(["comma", "semicolon", "tab", "pipe"] as const)
-    .optional()
-    .default("comma"),
-  pretty: z.boolean().optional().default(false),
+    delimiter: z.enum(["comma","semicolon","tab","pipe"] as const).optional().default("comma"),
+    pretty: z.boolean().optional().default(false),
 });
 
 /** Inferred TypeScript type for spreadsheet-convert node parameters. */

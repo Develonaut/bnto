@@ -10,9 +10,9 @@
 
 ## Parameters
 
-| Parameter | Type   | Default | Range | Description                                                        |
-| --------- | ------ | ------- | ----- | ------------------------------------------------------------------ |
-| columns   | object | -       | -     | Map of old column names to new names (e.g., {"Name": "full_name"}) |
+| Parameter | Type | Default | Range | Description |
+|-----------|------|---------|-------|-------------|
+| columns | object | - | - | Map of old column names to new names (e.g., {"Name": "full_name"}) |
 
 ## Configuration Example
 
@@ -25,4 +25,4 @@
 
 ---
 
-_Auto-generated from engine catalog v1.0.0. Run `task nodes:generate` to regenerate._
+*Auto-generated from engine catalog v1.0.0. Run `task nodes:generate` to regenerate.*

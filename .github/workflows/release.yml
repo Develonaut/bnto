@@ -370,11 +370,43 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
-  # ── Job 8: Create GitHub Release (after production deploys) ──
+  # ── Job 8: Publish to crates.io (stable only) ──
+  cargo-publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: [release-gate]
+    if: needs.release-gate.result == 'success' && !contains(github.ref_name, '-')
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Publish crates (dependency order)
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo publish -p bnto-core
+          sleep 15
+          cargo publish -p bnto-csv
+          cargo publish -p bnto-file
+          cargo publish -p bnto-image
+          sleep 15
+          cargo publish -p bnto-engine
+          sleep 15
+          cargo publish -p bnto-cli
+
+  # ── Job 9: Create GitHub Release (after production deploys) ──
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [release-gate, deploy-preview, deploy-production, convex-deploy]
+    needs: [release-gate, deploy-preview, deploy-production, convex-deploy, cargo-publish]
     if: |
       always() &&
       needs.release-gate.result == 'success' &&
@@ -397,6 +429,7 @@ jobs:
 
             - Vercel: ${{ needs.deploy-production.result == 'success' && 'Production deployed' || 'Skipped (pre-release)' }}
             - Convex: ${{ needs.convex-deploy.result == 'success' && 'Production deployed' || 'Skipped (pre-release)' }}
+            - crates.io: ${{ needs.cargo-publish.result == 'success' && 'Published' || 'Skipped (pre-release)' }}
             - Preview URL: ${{ needs.deploy-preview.outputs.preview-url }}
 
             ## Verification
