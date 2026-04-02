@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-image"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Image processing node for Bnto WASM engine — compress, resize, convert"
 license = "MIT"
@@ -24,7 +24,7 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.0" }
+bnto-core = { path = "../bnto-core", version = "0.1.1" }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
