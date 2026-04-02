@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Core WASM engine library for Bnto — shared types, traits, and orchestration"
 license = "MIT"
