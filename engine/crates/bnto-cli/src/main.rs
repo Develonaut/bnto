@@ -39,6 +39,9 @@ enum Command {
 
     /// List available built-in recipes.
     List,
+
+    /// Check that all external dependencies are installed.
+    Doctor,
 }
 
 fn main() {
@@ -51,6 +54,7 @@ fn main() {
             output,
         } => run_recipe(&recipe, &files, &output),
         Command::List => list_recipes(),
+        Command::Doctor => run_doctor(),
     }
 }
 
@@ -137,4 +141,45 @@ fn list_recipes() {
         println!("  {:<25} {}", entry.node_type, entry.description);
     }
     println!("\nUse a .bnto.json recipe file to compose processors into pipelines.");
+}
+
+fn run_doctor() {
+    let registry = bnto_engine::create_default_registry();
+    let deps = bnto_engine::deps::collect_all_dependencies(&registry);
+
+    if deps.is_empty() {
+        println!("All processors are self-contained. No external dependencies required.");
+        return;
+    }
+
+    let ctx = match context::NativeContext::current_dir() {
+        Ok(ctx) => ctx,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            process::exit(1);
+        }
+    };
+
+    let statuses = bnto_engine::deps::check_dependencies(&deps, &ctx);
+    let mut has_missing = false;
+
+    println!("Checking external dependencies...\n");
+    for status in &statuses {
+        let icon = if status.found { "ok" } else { "MISSING" };
+        println!("  [{icon}] {}", status.dependency.binary);
+        if !status.found {
+            has_missing = true;
+            println!("         Install: {}", status.dependency.install_hint);
+            if !status.dependency.homepage.is_empty() {
+                println!("         Homepage: {}", status.dependency.homepage);
+            }
+        }
+    }
+
+    if has_missing {
+        println!("\nSome dependencies are missing. Install them to use all processors.");
+        process::exit(1);
+    } else {
+        println!("\nAll dependencies satisfied.");
+    }
 }
