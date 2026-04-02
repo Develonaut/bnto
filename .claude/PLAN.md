@@ -1126,6 +1126,10 @@ Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-pr
 
 **Priority: Triage.** Rework bnto.io homepage from a recipe gallery into a developer-facing landing page for the tool/engine (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, and getting started (`cargo install bnto`). Recipe pages stay as the SEO showcase; homepage becomes the pitch for the tool itself.
 
+### Triage: Secret/environment variable management for recipes
+
+**Priority: Triage.** Recipes will need to reference secrets (API keys, auth tokens, env vars) without embedding them in `.bnto.json`. No recipe needs this yet, but HTTP, AI, and shell nodes will. Design needed: how recipes reference variables, how secrets resolve per target (CLI reads env/dotfiles, server reads vault, browser prompts user), how the editor surfaces variable placeholders without exposing values.
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
