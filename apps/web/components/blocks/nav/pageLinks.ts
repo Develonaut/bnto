@@ -7,7 +7,4 @@ export interface PageLink {
   href: string;
 }
 
-export const PAGE_LINKS: PageLink[] = [
-  { label: "Pricing", href: "/pricing" },
-  { label: "FAQ", href: "/faq" },
-];
+export const PAGE_LINKS: PageLink[] = [{ label: "FAQ", href: "/faq" }];

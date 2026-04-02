@@ -2,9 +2,8 @@ import { Button, GithubIcon, ToolbarGroup } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/links";
 import { MobileNav } from "./MobileNav";
 import { NavThemeMenu } from "./NavThemeMenu";
-import { NavUser } from "./NavUser";
 
-/** Right-side navbar actions — mobile nav, GitHub, theme toggle, user menu. */
+/** Right-side navbar actions — mobile nav, GitHub, theme toggle. */
 export function NavbarActions() {
   return (
     <ToolbarGroup className="min-w-0 flex-1 justify-end gap-2">
@@ -22,7 +21,6 @@ export function NavbarActions() {
         <span className="sr-only">GitHub</span>
       </Button>
       <NavThemeMenu />
-      <NavUser />
     </ToolbarGroup>
   );
 }

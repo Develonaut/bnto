@@ -24,7 +24,6 @@ const buildFooterSections = (): FooterSection[] => {
   const companySection: FooterSection = {
     title: "Company",
     links: [
-      { name: "Pricing", href: "/pricing" },
       { name: "Privacy", href: "/privacy" },
       { name: "GitHub", href: GITHUB_URL, external: true },
     ],

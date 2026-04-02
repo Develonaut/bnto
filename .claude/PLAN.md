@@ -1130,6 +1130,10 @@ Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-pr
 
 **Priority: Triage.** Recipes will need to reference secrets (API keys, auth tokens, env vars) without embedding them in `.bnto.json`. No recipe needs this yet, but HTTP, AI, and shell nodes will. Design needed: how recipes reference variables, how secrets resolve per target (CLI reads env/dotfiles, server reads vault, browser prompts user), how the editor surfaces variable placeholders without exposing values.
 
+### Triage: Publish bnto CLI to crates.io (prerequisite for homepage rework)
+
+**Priority: Triage.** Publish `bnto-core`, `bnto-engine`, and `bnto-cli` to crates.io so `cargo install bnto` works. Crate names are available. Requires: (1) convert path deps to crates.io-compatible deps for the publish chain, (2) add crates.io metadata to all published crates, (3) add `cargo publish` job to `release.yml` on stable tags, (4) configure `CARGO_REGISTRY_TOKEN` secret. **Must land before homepage rework advertises CLI install.** Phase 2: Homebrew tap via `cargo-dist` for non-Rust users.
+
 ## Reference
 
 | Document                                                         | Purpose                                                                                                           |
