@@ -4,6 +4,8 @@
 // so consumers don't duplicate registration logic. Both bnto-wasm (browser)
 // and bnto-cli (native binary) depend on this crate.
 
+pub mod deps;
+
 use bnto_core::{
     BntoError, NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, PipelineResult,
     ProcessContext, execute_pipeline,
@@ -55,6 +57,9 @@ pub fn run_pipeline(
         .map_err(|e| BntoError::InvalidInput(format!("Failed to parse definition: {e}")))?;
 
     let registry = create_default_registry();
+
+    // Pre-flight: fail fast if required external tools are missing.
+    deps::check_pipeline_dependencies(&definition, &registry, ctx)?;
 
     let now_ms = || {
         std::time::SystemTime::now()

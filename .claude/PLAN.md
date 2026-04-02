@@ -587,10 +587,10 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 1 (parallel — dependency system + ProcessContext)
 
-- [ ] `engine/crates/bnto-core` — `/rust-expert` — Add `requires: Vec<Dependency>` to `NodeMetadata` (binary name, version constraint, install hint, homepage)
-- [ ] `engine/crates/bnto-core` — `/rust-expert` — `ProcessContext` trait: controlled system access (run commands, temp files, env vars). `NoopContext` for browser, `NativeContext` for CLI
-- [ ] `engine/crates/bnto-engine` — `/rust-expert` — Dependency checker: verify all required binaries before pipeline start. Clear error with install hints on missing deps
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto doctor` command: check all dependencies, report missing with install hints
+- [x] `engine/crates/bnto-core` — `/rust-expert` — Add `requires: Vec<Dependency>` to `NodeMetadata` (binary name, version constraint, install hint, homepage) _(PR #315)_
+- [x] `engine/crates/bnto-core` — `/rust-expert` — `ProcessContext` trait: controlled system access (run commands, temp files, env vars). `NoopContext` for browser, `NativeContext` for CLI _(PR #318)_
+- [x] `engine/crates/bnto-engine` — `/rust-expert` — Dependency checker: verify all required binaries before pipeline start. Clear error with install hints on missing deps _(PR #320)_
+- [x] `engine/crates/bnto-cli` — `/rust-expert` — `bnto doctor` command: check all dependencies, report missing with install hints _(PR #320)_
 
 #### Wave 2 (parallel — video node type)
 
