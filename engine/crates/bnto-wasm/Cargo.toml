@@ -24,10 +24,11 @@
 
 [package]
 name = "bnto-wasm"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Unified WASM entry point for Bnto — loads all node processors into one module"
 license = "MIT"
+publish = false
 
 # wasm-opt flags — must match ALL features Rust enables by default.
 # Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown:

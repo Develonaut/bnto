@@ -2,7 +2,9 @@
 
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use bnto_core::{PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline};
+use bnto_core::{
+    NoopContext, PipelineDefinition, PipelineFile, PipelineReporter, execute_pipeline,
+};
 
 // --- Test fixtures ---
 static SMALL_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.jpg");
@@ -50,7 +52,15 @@ fn bench_individual_nodes(c: &mut Criterion) {
     c.bench_function("node/image-compress/jpeg", |b| {
         b.iter(|| {
             let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
-            execute_pipeline(&compress_def, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &compress_def,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 
@@ -67,7 +77,15 @@ fn bench_individual_nodes(c: &mut Criterion) {
     c.bench_function("node/image:resize/jpeg", |b| {
         b.iter(|| {
             let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
-            execute_pipeline(&resize_def, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &resize_def,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 
@@ -84,7 +102,15 @@ fn bench_individual_nodes(c: &mut Criterion) {
     c.bench_function("node/image:convert/jpeg_to_png", |b| {
         b.iter(|| {
             let files = vec![file("photo.jpg", SMALL_JPEG, "image/jpeg")];
-            execute_pipeline(&convert_def, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &convert_def,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 
@@ -101,7 +127,15 @@ fn bench_individual_nodes(c: &mut Criterion) {
     c.bench_function("node/spreadsheet-clean/csv", |b| {
         b.iter(|| {
             let files = vec![file("data.csv", MESSY_CSV, "text/csv")];
-            execute_pipeline(&clean_def, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &clean_def,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 
@@ -118,7 +152,15 @@ fn bench_individual_nodes(c: &mut Criterion) {
     c.bench_function("node/file-rename/txt", |b| {
         b.iter(|| {
             let files = vec![file("document.txt", b"hello world", "text/plain")];
-            execute_pipeline(&rename_def, files, &registry, &reporter, fake_now).unwrap();
+            execute_pipeline(
+                &rename_def,
+                files,
+                &registry,
+                &reporter,
+                &NoopContext,
+                fake_now,
+            )
+            .unwrap();
         })
     });
 }

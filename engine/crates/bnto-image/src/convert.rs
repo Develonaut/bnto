@@ -3,6 +3,7 @@
 // WebP output is lossless-only (Rust `image` crate limitation).
 // Lossy WebP planned via jSquash JS fallback.
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -107,6 +108,7 @@ impl NodeProcessor for ConvertImageFormat {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let target_format = extract_target_format(&input)?;
         let input_format = detect_input_format(&input)?;
@@ -285,6 +287,7 @@ fn format_param_def() -> bnto_core::metadata::ParameterDef {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
 
     // =========================================================================
     // Test Helpers
@@ -568,7 +571,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_ok(), "JPEG → PNG should succeed");
 
         let output = result.unwrap();
@@ -609,7 +612,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_PNG, "screenshot.png", format_params("jpeg"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_ok(), "PNG → JPEG should succeed");
 
         let output = result.unwrap();
@@ -632,7 +635,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", format_params("webp"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_ok(), "JPEG → WebP should succeed");
 
         let output = result.unwrap();
@@ -660,7 +663,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_WEBP, "image.webp", format_params("png"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_ok(), "WebP → PNG should succeed");
 
         let output = result.unwrap();
@@ -681,7 +684,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", format_params("jpeg"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_ok(), "JPEG → JPEG should succeed");
 
         let output = result.unwrap();
@@ -701,7 +704,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", serde_json::Map::new());
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_err(), "Missing format should return an error");
 
         if let Err(e) = result {
@@ -720,7 +723,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "photo.jpg", format_params("gif"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_err(), "Invalid format should return an error");
 
         // Use pattern matching instead of `.unwrap_err()` because
@@ -743,12 +746,16 @@ mod tests {
 
         // Low quality (50).
         let input_low = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 50));
-        let output_low = processor.process(input_low, &progress).unwrap();
+        let output_low = processor
+            .process(input_low, &progress, &NoopContext)
+            .unwrap();
         let size_low = output_low.files[0].data.len();
 
         // High quality (100).
         let input_high = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 100));
-        let output_high = processor.process(input_high, &progress).unwrap();
+        let output_high = processor
+            .process(input_high, &progress, &NoopContext)
+            .unwrap();
         let size_high = output_high.files[0].data.len();
 
         // Higher quality should produce a larger (or equal) file.
@@ -765,7 +772,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(b"this is not an image", "corrupt.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_err(), "Corrupt image data should return an error");
     }
 
@@ -802,8 +809,12 @@ mod tests {
         let input_q30 = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 30));
         let input_q90 = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 90));
 
-        let output_q30 = processor.process(input_q30, &progress).unwrap();
-        let output_q90 = processor.process(input_q90, &progress).unwrap();
+        let output_q30 = processor
+            .process(input_q30, &progress, &NoopContext)
+            .unwrap();
+        let output_q90 = processor
+            .process(input_q90, &progress, &NoopContext)
+            .unwrap();
 
         let size_q30 = output_q30.files[0].data.len();
         let size_q90 = output_q90.files[0].data.len();
@@ -837,7 +848,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "portrait.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_data = &result.files[0].data;
 
         // Decode the PNG output and check dimensions.
@@ -856,7 +867,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "portrait.jpg", format_params("webp"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_data = &result.files[0].data;
 
         let output_img = decode_with_orientation(output_data).unwrap();
@@ -873,7 +884,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&jpeg, "landscape.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_data = &result.files[0].data;
 
         let output_img = decode_with_orientation(output_data).unwrap();
@@ -898,7 +909,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "flipped-h.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 60, "Flip H preserves width");
         assert_eq!(output_img.height(), 40, "Flip H preserves height");
@@ -914,7 +925,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "flipped-v.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 60, "Flip V preserves width");
         assert_eq!(output_img.height(), 40, "Flip V preserves height");
@@ -931,7 +942,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "rot270-flip-h.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270+FlipH swaps to 60 tall");
@@ -948,7 +959,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "rot90-flip-h.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 40, "Rot90+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot90+FlipH swaps to 60 tall");
@@ -964,7 +975,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "rot270.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");
@@ -980,7 +991,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_input(&exif_jpeg, "rot180.jpg", format_params("png"));
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 60, "Rot180 preserves width");
         assert_eq!(output_img.height(), 40, "Rot180 preserves height");

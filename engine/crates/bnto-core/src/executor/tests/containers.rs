@@ -24,7 +24,8 @@ fn test_loop_node_runs_children_per_file() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
@@ -51,7 +52,8 @@ fn test_group_node_runs_children_on_full_batch() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "A.TXT");
@@ -83,7 +85,8 @@ fn test_nested_loop_inside_group() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
     assert_eq!(result.files[0].name, "a.txt");
@@ -104,7 +107,8 @@ fn test_container_with_no_children_is_passthrough() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "test.txt");

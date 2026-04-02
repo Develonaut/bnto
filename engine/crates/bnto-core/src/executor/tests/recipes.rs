@@ -170,7 +170,8 @@ fn test_recipe_compress_images_single_file() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("photo.jpg", b"jpeg-data")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Loop runs once (1 file), EchoProcessor passes it through.
     assert_eq!(result.files.len(), 1);
@@ -191,7 +192,8 @@ fn test_recipe_compress_images_multiple_files() {
         make_file("photo4.jpg", b"data4"),
         make_file("photo5.png", b"data5"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Loop runs 5 times (once per file).
     assert_eq!(result.files.len(), 5);
@@ -233,7 +235,8 @@ fn test_recipe_resize_images() {
         make_file("b.jpg", b"img-b"),
         make_file("c.jpg", b"img-c"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 3);
 }
@@ -271,7 +274,8 @@ fn test_recipe_convert_image_format() {
         make_file("photo.jpg", b"jpeg"),
         make_file("icon.png", b"png"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 2);
 }
@@ -285,7 +289,8 @@ fn test_recipe_clean_csv_single_file() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("data.csv", b"name,age\nAlice,30\n")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Flat pipeline: one processor node, file passes through.
     assert_eq!(result.files.len(), 1);
@@ -316,7 +321,8 @@ fn test_recipe_rename_csv_columns() {
     let reporter = PipelineReporter::new_noop();
 
     let files = vec![make_file("data.csv", b"old_name\nvalue\n")];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
 }
@@ -335,7 +341,8 @@ fn test_recipe_rename_files() {
         make_file("photo.jpg", b"img-data"),
         make_file("data.csv", b"csv-data"),
     ];
-    let result = execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     // Loop runs 4 times, UpperCaseProcessor uppercases filenames.
     assert_eq!(result.files.len(), 4);

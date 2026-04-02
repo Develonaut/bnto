@@ -5,6 +5,7 @@
 // Orientation is applied before stripping so the output is visually correct.
 
 use bnto_core::DEFAULT_QUALITY;
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -78,6 +79,7 @@ impl NodeProcessor for StripExif {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let format = ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
             BntoError::UnsupportedFormat(format!(
@@ -142,6 +144,7 @@ impl NodeProcessor for StripExif {
 mod tests {
     use super::*;
     use crate::test_utils::{create_test_jpeg, inject_exif_orientation};
+    use bnto_core::NoopContext;
 
     fn make_input(data: Vec<u8>, filename: &str) -> NodeInput {
         NodeInput {
@@ -195,7 +198,9 @@ mod tests {
 
         let processor = StripExif::new();
         let input = make_input(exif_jpeg, "photo.jpg");
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].filename, "photo-stripped.jpg");
@@ -212,7 +217,9 @@ mod tests {
 
         let processor = StripExif::new();
         let input = make_input(exif_jpeg, "photo.jpg");
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         // The re-encoded JPEG should NOT contain an APP1 (EXIF) marker.
         // APP1 marker = FF E1. Scan the output for it after the SOI (FF D8).
@@ -235,7 +242,9 @@ mod tests {
 
         let processor = StripExif::new();
         let input = make_input(exif_jpeg, "portrait.jpg");
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         // Decode the output to verify orientation was applied
         let result_img = image::load_from_memory(&output.files[0].data).unwrap();
@@ -255,7 +264,9 @@ mod tests {
 
         let processor = StripExif::new();
         let input = make_input(png_data.to_vec(), "screenshot.png");
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].filename, "screenshot-stripped.png");
@@ -272,7 +283,9 @@ mod tests {
 
         let processor = StripExif::new();
         let input = make_input(webp_data.to_vec(), "image.webp");
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].filename, "image-stripped.webp");
@@ -291,12 +304,14 @@ mod tests {
             .process(
                 make_input_with_quality(jpeg.clone(), "test.jpg", 20),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
         let high = processor
             .process(
                 make_input_with_quality(jpeg, "test.jpg", 95),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
 
@@ -315,7 +330,9 @@ mod tests {
         let jpeg = create_test_jpeg(60, 40);
         let processor = StripExif::new();
         let input = make_input(jpeg, "photo.jpg");
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         assert!(output.metadata.contains_key("originalSize"));
         assert!(output.metadata.contains_key("strippedSize"));
@@ -384,7 +401,7 @@ mod tests {
     fn test_rejects_unsupported_format() {
         let processor = StripExif::new();
         let input = make_input(b"not an image".to_vec(), "file.bmp");
-        let result = processor.process(input, &noop_progress());
+        let result = processor.process(input, &noop_progress(), &NoopContext);
         assert!(result.is_err());
     }
 }

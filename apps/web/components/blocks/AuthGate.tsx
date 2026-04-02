@@ -1,13 +1,4 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { core } from "@bnto/core";
-
-import { useControlled } from "@/hooks/useControlled";
-
-import { AuthGateDialogPrompt } from "./AuthGateDialogPrompt";
-import { AuthGateMenuPrompt } from "./AuthGateMenuPrompt";
-import { useGateHandlers } from "./useGateHandlers";
 
 /* ── Shared props ─────────────────────────────────────────────── */
 
@@ -31,38 +22,12 @@ interface AuthGateActionProps {
 /* ── AuthGate.Action ──────────────────────────────────────────── */
 
 /**
- * Wraps an interactive element. Authenticated users click through normally.
- * Unauthenticated users see a conversion prompt.
+ * Auth gates disabled — open-source-first, no conversion prompts.
+ * Keeping the component so consumers don't need to change their imports.
+ * Re-enable when premium features (visual editor, cloud execution) justify auth.
  */
-export function AuthGateAction({
-  children,
-  title = "Sign up to continue",
-  description = "Create a free account to unlock this feature.",
-  variant = "menu",
-  open: controlledOpen,
-  onOpenChange,
-}: AuthGateActionProps) {
-  const { isAuthenticated, isLoading } = core.auth.useAuth();
-  const isGated = !isLoading && !isAuthenticated;
-  const [open, setOpen] = useControlled(controlledOpen, false, onOpenChange);
-  const { handleGateClick, handleGateKeyDown } = useGateHandlers(setOpen);
-
-  if (!isGated) return <>{children}</>;
-
-  const Prompt = variant === "dialog" ? AuthGateDialogPrompt : AuthGateMenuPrompt;
-
-  return (
-    <Prompt
-      open={open}
-      setOpen={setOpen}
-      handleGateClick={handleGateClick}
-      handleGateKeyDown={handleGateKeyDown}
-      title={title}
-      description={description}
-    >
-      {children}
-    </Prompt>
-  );
+export function AuthGateAction({ children }: AuthGateActionProps) {
+  return <>{children}</>;
 }
 
 export { AuthGateAction as AuthGate };

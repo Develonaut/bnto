@@ -28,7 +28,7 @@ fn test_container_node_event_nesting() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -104,7 +104,7 @@ fn test_pipeline_started_excludes_io_nodes() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"data")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 

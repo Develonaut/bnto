@@ -7,6 +7,7 @@
 
 use std::io::Cursor;
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -154,6 +155,7 @@ impl NodeProcessor for CompressImages {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let format = ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
             BntoError::UnsupportedFormat(format!(
@@ -289,6 +291,7 @@ fn insert_compression_ratio(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
     use bnto_core::processor::NodeInput;
     use bnto_core::progress::ProgressReporter;
 
@@ -412,7 +415,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(TEST_JPEG, "photo.jpg");
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
 
@@ -443,7 +446,7 @@ mod tests {
         let input = make_input(TEST_MEDIUM_JPEG, "photo.jpg");
         let original_size = TEST_MEDIUM_JPEG.len();
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let compressed_size = output.files[0].data.len();
 
         assert!(
@@ -462,8 +465,12 @@ mod tests {
         let input_q20 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 20);
         let input_q80 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 80);
 
-        let output_q20 = processor.process(input_q20, &noop_progress()).unwrap();
-        let output_q80 = processor.process(input_q80, &noop_progress()).unwrap();
+        let output_q20 = processor
+            .process(input_q20, &noop_progress(), &NoopContext)
+            .unwrap();
+        let output_q80 = processor
+            .process(input_q80, &noop_progress(), &NoopContext)
+            .unwrap();
 
         assert!(
             output_q20.files[0].data.len() < output_q80.files[0].data.len(),
@@ -480,7 +487,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input_with_quality(TEST_JPEG, "photo.jpg", 0);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         assert_eq!(output.files.len(), 1);
     }
 
@@ -494,7 +501,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(TEST_PNG, "screenshot.png");
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
 
@@ -515,7 +522,7 @@ mod tests {
         let input = make_input(TEST_MEDIUM_PNG, "screenshot.png");
         let original_size = TEST_MEDIUM_PNG.len();
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let compressed_size = output.files[0].data.len();
 
         assert!(
@@ -545,8 +552,12 @@ mod tests {
         let input_q80 = make_input_with_quality(TEST_MEDIUM_PNG, "screenshot.png", 80);
         let input_q20 = make_input_with_quality(TEST_MEDIUM_PNG, "screenshot.png", 20);
 
-        let output_q80 = processor.process(input_q80, &noop_progress()).unwrap();
-        let output_q20 = processor.process(input_q20, &noop_progress()).unwrap();
+        let output_q80 = processor
+            .process(input_q80, &noop_progress(), &NoopContext)
+            .unwrap();
+        let output_q20 = processor
+            .process(input_q20, &noop_progress(), &NoopContext)
+            .unwrap();
 
         let size_q80 = output_q80.files[0].data.len();
         let size_q20 = output_q20.files[0].data.len();
@@ -574,7 +585,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(TEST_WEBP, "image.webp");
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
 
@@ -596,7 +607,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input_with_quality(TEST_WEBP, "image.webp", 80);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         assert_eq!(output.files.len(), 1);
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
@@ -615,7 +626,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(TEST_JPEG, "photo.jpg");
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert!(
             output.metadata.contains_key("originalSize"),
@@ -743,7 +754,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(b"not an image at all", "document.pdf");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -769,7 +780,7 @@ mod tests {
         corrupt_data.extend_from_slice(b"this is not real JPEG data!!!!");
 
         let input = make_input(&corrupt_data, "corrupt.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Should return an error for corrupt JPEG");
     }
@@ -783,7 +794,7 @@ mod tests {
         corrupt_data.extend_from_slice(b"this is not real PNG data!!!!");
 
         let input = make_input(&corrupt_data, "corrupt.png");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Should return an error for corrupt PNG");
     }
@@ -794,7 +805,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(b"", "empty.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Should return an error for empty data");
     }
@@ -809,7 +820,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(b"", "noextension");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Zero-byte file should return an error");
 
@@ -828,7 +839,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(b"", "empty.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Zero-byte JPEG should fail at decoding");
 
@@ -850,7 +861,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(&[0x42], "one_byte.dat");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Single-byte file should return an error");
     }
@@ -861,7 +872,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(&[0x42], "tiny.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -876,7 +887,7 @@ mod tests {
 
         let data = vec![0xFF, 0xD8, 0xFF, 0xE0];
         let input = make_input(&data, "truncated.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -901,7 +912,7 @@ mod tests {
         let mut data = vec![0xFF, 0xD8, 0xFF, 0xE0];
         data.extend_from_slice(&[0x00, 0x10, 0x4A, 0x46, 0x49, 0x46]);
         let input = make_input(&data, "truncated10.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -916,7 +927,7 @@ mod tests {
 
         let data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
         let input = make_input(&data, "truncated.png");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -944,7 +955,7 @@ mod tests {
         data.extend_from_slice(&[0x00, 0x00, 0x00, 0x01]);
 
         let input = make_input(&data, "truncated20.png");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -961,7 +972,7 @@ mod tests {
             b'R', b'I', b'F', b'F', 0x04, 0x00, 0x00, 0x00, b'W', b'E', b'B', b'P',
         ];
         let input = make_input(&data, "truncated.webp");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -989,7 +1000,7 @@ mod tests {
         data.extend_from_slice(b"this is not a VP8 bitstream!!!!");
 
         let input = make_input(&data, "corrupt.webp");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Corrupt WebP should return an error");
     }
@@ -1005,7 +1016,7 @@ mod tests {
         }
 
         let input = make_input(&data, "corrupt_body.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1024,7 +1035,7 @@ mod tests {
         data.extend_from_slice(&[0x00; 20]);
 
         let input = make_input(&data, "corrupt_chunks.png");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1039,7 +1050,7 @@ mod tests {
 
         let data = b"This is just a plain text file, not a JPEG image at all";
         let input = make_input(data, "not_really.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1063,7 +1074,7 @@ mod tests {
 
         let data = b"Not a PNG, just text pretending to be one.";
         let input = make_input(data, "fake.png");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1078,7 +1089,7 @@ mod tests {
 
         let data = b"Not a WebP file, just a pretender.";
         let input = make_input(data, "fake.webp");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1092,7 +1103,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(&[0x01, 0x02, 0x03, 0x04, 0x05], "mystery.dat");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1114,7 +1125,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(&[0x00; 50], "zeros.bin");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "All-zeros file should return an error");
 
@@ -1133,7 +1144,7 @@ mod tests {
         let progress = noop_progress();
 
         let input = make_input(&[0xFF; 20], "allones.jpg");
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(
             result.is_err(),
@@ -1268,7 +1279,7 @@ mod tests {
         let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
 
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("Quality 1 should produce valid output, not an error");
 
         assert_eq!(output.files.len(), 1);
@@ -1293,7 +1304,7 @@ mod tests {
         let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
 
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("Quality 100 should produce valid output, not an error");
 
         assert_eq!(output.files.len(), 1);
@@ -1316,8 +1327,12 @@ mod tests {
         let input_q1 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 1);
         let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
 
-        let output_q1 = processor.process(input_q1, &noop_progress()).unwrap();
-        let output_q100 = processor.process(input_q100, &noop_progress()).unwrap();
+        let output_q1 = processor
+            .process(input_q1, &noop_progress(), &NoopContext)
+            .unwrap();
+        let output_q100 = processor
+            .process(input_q100, &noop_progress(), &NoopContext)
+            .unwrap();
 
         let size_q1 = output_q1.files[0].data.len();
         let size_q100 = output_q100.files[0].data.len();
@@ -1338,17 +1353,20 @@ mod tests {
         let input_q50 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 50);
         let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
 
-        let size_q1 = processor.process(input_q1, &noop_progress()).unwrap().files[0]
+        let size_q1 = processor
+            .process(input_q1, &noop_progress(), &NoopContext)
+            .unwrap()
+            .files[0]
             .data
             .len();
         let size_q50 = processor
-            .process(input_q50, &noop_progress())
+            .process(input_q50, &noop_progress(), &NoopContext)
             .unwrap()
             .files[0]
             .data
             .len();
         let size_q100 = processor
-            .process(input_q100, &noop_progress())
+            .process(input_q100, &noop_progress(), &NoopContext)
             .unwrap()
             .files[0]
             .data
@@ -1440,7 +1458,7 @@ mod tests {
 
         let input = make_input(&jpeg_bytes, "tiny.jpg");
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("1x1 JPEG should compress without error");
 
         assert_eq!(output.files.len(), 1);
@@ -1474,7 +1492,7 @@ mod tests {
 
         let input = make_input(&png_bytes, "tiny.png");
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("1x1 PNG should compress without error");
 
         assert_eq!(output.files.len(), 1);
@@ -1504,7 +1522,7 @@ mod tests {
 
         let input = make_input(&webp_bytes, "tiny.webp");
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("1x1 WebP should compress without error");
 
         assert_eq!(output.files.len(), 1);
@@ -1530,7 +1548,7 @@ mod tests {
         let input = make_input_with_quality(&jpeg_bytes, "tiny_q1.jpg", 1);
 
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("1x1 JPEG at quality 1 should produce valid output");
 
         assert_eq!(output.files.len(), 1);
@@ -1550,7 +1568,7 @@ mod tests {
         let input = make_input_with_quality(&jpeg_bytes, "tiny_q100.jpg", 100);
 
         let output = processor
-            .process(input, &progress)
+            .process(input, &progress, &NoopContext)
             .expect("1x1 JPEG at quality 100 should produce valid output");
 
         assert_eq!(output.files.len(), 1);
@@ -1576,7 +1594,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "portrait.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_data = &result.files[0].data;
 
         let output_img = decode_with_orientation(output_data).unwrap();
@@ -1602,7 +1620,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "flipped.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_data = &result.files[0].data;
 
         let output_img = decode_with_orientation(output_data).unwrap();
@@ -1618,7 +1636,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&jpeg, "landscape.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_data = &result.files[0].data;
 
         let output_img = decode_with_orientation(output_data).unwrap();
@@ -1639,7 +1657,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "flipped-h.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 60, "Flip H preserves width");
         assert_eq!(output_img.height(), 40, "Flip H preserves height");
@@ -1654,7 +1672,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "flipped-v.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 60, "Flip V preserves width");
         assert_eq!(output_img.height(), 40, "Flip V preserves height");
@@ -1669,7 +1687,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "rot270-flip-h.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270+FlipH swaps to 60 tall");
@@ -1684,7 +1702,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "rot90-flip-h.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 40, "Rot90+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot90+FlipH swaps to 60 tall");
@@ -1699,7 +1717,7 @@ mod tests {
         let progress = noop_progress();
         let input = make_input(&exif_jpeg, "rot270.jpg");
 
-        let result = processor.process(input, &progress).unwrap();
+        let result = processor.process(input, &progress, &NoopContext).unwrap();
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");

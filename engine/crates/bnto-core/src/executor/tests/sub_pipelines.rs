@@ -27,7 +27,7 @@ fn test_single_file_full_event_sequence() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("photo.jpg", b"image-data")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -155,7 +155,7 @@ fn test_multi_file_progress_tracking() {
         make_file("b.jpg", b"bbb"),
         make_file("c.jpg", b"ccc"),
     ];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 

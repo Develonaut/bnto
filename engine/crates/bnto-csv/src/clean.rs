@@ -3,6 +3,7 @@
 // Each cleaning operation (trim, remove empties, deduplicate) is controlled
 // by a boolean parameter so users can enable/disable them individually.
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -51,6 +52,7 @@ impl NodeProcessor for CleanCsv {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Parsing CSV...");
         let config = CleanConfig::from_params(&input.params);
@@ -340,6 +342,7 @@ fn generate_output_filename(original: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
 
     // =========================================================================
     // Test Helpers
@@ -419,7 +422,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         // Should have one output file.
         assert_eq!(output.files.len(), 1);
@@ -449,7 +452,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -480,7 +483,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
 
         // After trimming, cells should have no leading/trailing whitespace.
@@ -506,7 +509,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -535,7 +538,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
 
         // The header should be trimmed.
@@ -559,7 +562,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
 
         // Both rows should be present.
@@ -583,7 +586,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
 
         // The output should have the header but zero data rows.
@@ -613,7 +616,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Empty input should return an error");
 
@@ -646,7 +649,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Non-UTF8 input should return an error");
 
@@ -673,7 +676,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -727,7 +730,7 @@ mod tests {
         );
         let input = make_csv_input_with_params(csv, params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -758,7 +761,7 @@ mod tests {
         params.insert("trimWhitespace".to_string(), serde_json::Value::Bool(false));
         let input = make_csv_input_with_params(csv, params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
 
         // The whitespace should still be there.
@@ -791,7 +794,7 @@ mod tests {
         );
         let input = make_csv_input_with_params(csv, params);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -818,7 +821,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(&csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let text = output_csv_text(&output);
         let rows = count_data_rows(&text);
 
@@ -870,7 +873,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         assert_eq!(output.files[0].filename, "employees-cleaned.csv");
     }
 
@@ -885,7 +888,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         // All metadata fields should be present.
         assert!(output.metadata.contains_key("originalRows"));

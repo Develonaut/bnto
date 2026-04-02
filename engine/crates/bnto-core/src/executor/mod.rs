@@ -12,6 +12,7 @@ mod auto_iteration;
 mod container;
 mod primitive;
 
+use crate::context::ProcessContext;
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, PipelineReporter};
 use crate::pipeline::{
@@ -34,6 +35,8 @@ type PipelineNodeRef<'a> = &'a PipelineNode;
 struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     registry: &'a NodeRegistry,
     reporter: &'a PipelineReporter,
+    /// System access boundary for processors (commands, temp files, env vars).
+    process_ctx: &'a dyn ProcessContext,
     /// Original input file count — used in progress events so the UI
     /// reports global position even inside loop container iterations.
     pipeline_total_files: usize,
@@ -84,6 +87,7 @@ pub fn execute_pipeline(
     files: Vec<PipelineFile>,
     registry: &NodeRegistry,
     reporter: &PipelineReporter,
+    process_ctx: &dyn ProcessContext,
     now_ms: impl Fn() -> u64 + Copy,
 ) -> Result<PipelineResult, BntoError> {
     let start_ms = now_ms();
@@ -91,6 +95,7 @@ pub fn execute_pipeline(
     let ctx = PipelineContext {
         registry,
         reporter,
+        process_ctx,
         pipeline_total_files: files.len(),
         now_ms,
     };

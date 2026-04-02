@@ -10,6 +10,10 @@
 // --- Public Modules ---
 // These are the building blocks that node crates and the web app will use.
 
+/// Controlled system access for processors that need external tools.
+/// Browser gets `NoopContext`, CLI gets `NativeContext`, desktop gets `SandboxedContext`.
+pub mod context;
+
 /// Error types for the WASM engine.
 /// Every error that can happen during node execution is defined here.
 pub mod errors;
@@ -52,6 +56,7 @@ pub mod registry;
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
+pub use context::{NoopContext, ProcessContext};
 pub use definition_schema::definition_json_schema;
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};

@@ -50,14 +50,10 @@ test.describe("Site navigation — desktop @browser", () => {
     await expect(page).toHaveURL("/compress-images");
   });
 
-  test("navbar: Pricing and FAQ links navigate correctly", async ({ page }) => {
+  test("navbar: FAQ link navigates correctly", async ({ page }) => {
     await page.goto("/");
 
-    // Navigate to Pricing via navbar
-    await page.getByTestId("nav-link-pricing").click();
-    await expect(page).toHaveURL("/pricing");
-
-    // Navigate to FAQ
+    // Navigate to FAQ via navbar
     await page.getByTestId("nav-link-faq").click();
     await expect(page).toHaveURL("/faq");
 
@@ -73,12 +69,11 @@ test.describe("Site navigation — desktop @browser", () => {
     // Verify key footer links exist
     await expect(page.getByTestId("footer-link-compress-images")).toBeVisible();
     await expect(page.getByTestId("footer-link-clean-csv")).toBeVisible();
-    await expect(page.getByTestId("footer-link-pricing")).toBeVisible();
     await expect(page.getByTestId("footer-link-privacy")).toBeVisible();
 
     // Navigate via footer link
-    await page.getByTestId("footer-link-pricing").click();
-    await expect(page).toHaveURL("/pricing");
+    await page.getByTestId("footer-link-privacy").click();
+    await expect(page).toHaveURL("/privacy");
   });
 
   test("404: unknown route shows not-found page", async ({ page }) => {
@@ -128,16 +123,16 @@ test.describe("Site navigation — mobile @browser", () => {
     await expect(page).toHaveURL("/explore");
   });
 
-  test("mobile menu: Pricing and FAQ links navigate", async ({ page }) => {
+  test("mobile menu: FAQ link navigates", async ({ page }) => {
     await page.goto("/");
 
     // Open mobile menu via hamburger button
     await page.getByTestId("mobile-menu-button").click();
     await expect(page.getByTestId("mobile-nav-dialog")).toBeVisible();
 
-    // Navigate to Pricing via mobile menu
-    await page.getByTestId("mobile-link-pricing").click();
-    await expect(page).toHaveURL("/pricing");
+    // Navigate to FAQ via mobile menu
+    await page.getByTestId("mobile-link-faq").click();
+    await expect(page).toHaveURL("/faq");
   });
 
   test("404: not-found page on mobile", async ({ page }) => {

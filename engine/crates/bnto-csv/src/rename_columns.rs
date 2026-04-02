@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -59,6 +60,7 @@ impl NodeProcessor for RenameCsvColumns {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Starting column rename...");
         let csv_text = parse_utf8(&input.data)?;
@@ -268,6 +270,7 @@ fn build_output_filename(input_filename: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
 
     // --- Test Helpers ---
 
@@ -310,7 +313,7 @@ mod tests {
             r#"{"columns": {"name": "full_name"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // The header "name" should be renamed to "full_name".
@@ -331,7 +334,7 @@ mod tests {
             r#"{"columns": {"first_name": "given_name", "last_name": "surname"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Both columns should be renamed; "email" stays the same.
@@ -352,7 +355,7 @@ mod tests {
             r#"{"columns": {"nonexistent": "something"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Headers should be unchanged because "nonexistent" isn't in the CSV.
@@ -372,7 +375,7 @@ mod tests {
 
         let input = make_csv_input("name,age\nAlice,30\n", "{}");
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         assert!(csv_out.starts_with("name,age\n"));
@@ -391,7 +394,7 @@ mod tests {
 
         let input = make_csv_input("name,age\nAlice,30\n", r#"{"columns": {}}"#);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         assert!(csv_out.starts_with("name,age\n"));
@@ -410,7 +413,7 @@ mod tests {
             r#"{"columns": {"a": "x", "b": "y", "c": "z"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         assert!(csv_out.starts_with("x,y,z\n"));
@@ -433,7 +436,7 @@ mod tests {
         let csv_input = "name,value,notes\nAlice,\"100,000\",\"has, commas\"\nBob,200,simple\n";
         let input = make_csv_input(csv_input, r#"{"columns": {"name": "person"}}"#);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Header renamed.
@@ -454,7 +457,7 @@ mod tests {
             r#"{"columns": {"m_col": "middle"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Order: z_col, a_col, middle (only m_col renamed, position preserved).
@@ -473,7 +476,7 @@ mod tests {
             r#"{"columns": {"a": "first"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Header renamed.
@@ -492,7 +495,7 @@ mod tests {
 
         let input = make_csv_input("name,age\n", r#"{"columns": {"name": "full_name"}}"#);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         assert!(csv_out.starts_with("full_name,age"));
@@ -517,7 +520,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
 
         // Should be an error, not a panic.
         assert!(result.is_err());
@@ -552,7 +555,7 @@ mod tests {
             r#"{"columns": {"id": "identifier", "name": "label"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Header renamed.
@@ -604,7 +607,7 @@ mod tests {
             r#"{"columns": {"name": "full_name", "missing": "nope"}}"#,
         );
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         // The "mapping" metadata should only include "name" → "full_name",
         // NOT "missing" → "nope" (because "missing" doesn't exist in the CSV).
@@ -626,7 +629,7 @@ mod tests {
 
         let input = make_csv_input("name,age\nAlice,30\n", r#"{"columns": "not an object"}"#);
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
         let csv_out = output_to_string(&output);
 
         // Should pass through unchanged.
@@ -653,7 +656,7 @@ mod tests {
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input("name\nAlice\n", "{}");
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].mime_type, "text/csv");
     }
@@ -666,7 +669,7 @@ mod tests {
         let mut input = make_csv_input("name\nAlice\n", "{}");
         input.filename = "my_data.csv".to_string();
 
-        let output = processor.process(input, &progress).unwrap();
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "my_data-renamed.csv");
     }

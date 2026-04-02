@@ -20,7 +20,7 @@ fn test_multi_node_multi_file_progress() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("x.txt", b"hello"), make_file("y.txt", b"world")];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -106,7 +106,7 @@ fn test_node_completed_fields_are_correct() {
         make_file("4.txt", b"four"),
         make_file("5.txt", b"five"),
     ];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 
@@ -145,7 +145,7 @@ fn test_error_events_contain_useful_information() {
     let reporter = recorder.reporter();
 
     let files = vec![make_file("test.txt", b"hello")];
-    let _ = execute_pipeline(&def, files, &registry, &reporter, fake_now);
+    let _ = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
 
     let events = recorder.events();
 
@@ -200,7 +200,7 @@ fn test_empty_files_emit_pipeline_events() {
     let reporter = recorder.reporter();
 
     let files: Vec<PipelineFile> = vec![];
-    execute_pipeline(&def, files, &registry, &reporter, fake_now).unwrap();
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     let events = recorder.events();
 

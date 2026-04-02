@@ -10,6 +10,7 @@ use image::imageops::{self, FilterType};
 use image::{DynamicImage, GenericImageView, RgbaImage};
 
 use bnto_core::DEFAULT_QUALITY;
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::metadata::{
     Constraints, InputCardinality, NodeCategory, NodeMetadata, ParameterDef, ParameterType,
@@ -298,6 +299,7 @@ impl NodeProcessor for OverlayImage {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Decoding source image...");
 
@@ -420,6 +422,7 @@ impl NodeProcessor for OverlayImage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
     use image::{DynamicImage, Rgba, RgbaImage};
     use std::io::Cursor;
 
@@ -545,7 +548,7 @@ mod tests {
         let input = make_input(&source, "photo.jpg");
 
         let output = processor
-            .process(input, &noop_progress())
+            .process(input, &noop_progress(), &NoopContext)
             .expect("Should process successfully");
 
         assert_eq!(output.files.len(), 1);
@@ -584,12 +587,14 @@ mod tests {
             .process(
                 make_input_with_params(&source, "photo.jpg", params_tl),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
         let out_br = processor
             .process(
                 make_input_with_params(&source, "photo.jpg", params_br),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
 
@@ -627,12 +632,14 @@ mod tests {
             .process(
                 make_input_with_params(&source, "photo.jpg", params_full),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
         let out_half = processor
             .process(
                 make_input_with_params(&source, "photo.jpg", params_half),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
 
@@ -664,12 +671,14 @@ mod tests {
             .process(
                 make_input_with_params(&source, "photo.jpg", params_small),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
         let out_large = processor
             .process(
                 make_input_with_params(&source, "photo.jpg", params_large),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
 
@@ -707,12 +716,14 @@ mod tests {
             .process(
                 make_input_with_params(&source, "photo.jpg", params_a),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
         let out_b = processor
             .process(
                 make_input_with_params(&source, "photo.jpg", params_b),
                 &noop_progress(),
+                &NoopContext,
             )
             .unwrap();
 
@@ -739,6 +750,7 @@ mod tests {
         let result = processor.process(
             make_input_with_params(&source, "photo.jpg", params),
             &noop_progress(),
+            &NoopContext,
         );
 
         let err = match result {
@@ -775,7 +787,9 @@ mod tests {
         let source = create_test_jpeg(200, 150);
         let input = make_input(&source, "photo.jpg");
 
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
 
         assert!(output.metadata.contains_key("originalSize"));
         assert!(output.metadata.contains_key("outputSize"));
@@ -803,7 +817,9 @@ mod tests {
         let mut input = make_input(&buf, "test.png");
         input.mime_type = Some("image/png".to_string());
 
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
             Some(ImageFormat::Png),
@@ -826,7 +842,9 @@ mod tests {
         let mut input = make_input(&buf, "test.webp");
         input.mime_type = Some("image/webp".to_string());
 
-        let output = processor.process(input, &noop_progress()).unwrap();
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
         assert_eq!(
             ImageFormat::from_magic_bytes(&output.files[0].data),
             Some(ImageFormat::WebP),
@@ -848,7 +866,7 @@ mod tests {
         params.insert("overlay".to_string(), serde_json::Value::String(data_uri));
 
         let input = make_input_with_params(&source, "photo.jpg", params);
-        let output = processor.process(input, &noop_progress());
+        let output = processor.process(input, &noop_progress(), &NoopContext);
         assert!(output.is_ok(), "Should handle data URI prefix");
     }
 

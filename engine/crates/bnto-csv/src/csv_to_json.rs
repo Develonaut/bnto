@@ -4,6 +4,7 @@
 // strings (no type coercion). Supports configurable delimiter and optional
 // pretty-printing.
 
+use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -49,6 +50,7 @@ impl NodeProcessor for CsvToJson {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Parsing CSV...");
         let config = ConvertConfig::from_params(&input.params);
@@ -289,6 +291,7 @@ fn generate_output_filename(original: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::NoopContext;
 
     // --- Test Helpers ---
 
@@ -329,13 +332,15 @@ mod tests {
     fn process_ok(input: NodeInput) -> NodeOutput {
         let processor = CsvToJson::new();
         let progress = ProgressReporter::new_noop();
-        processor.process(input, &progress).expect("should succeed")
+        processor
+            .process(input, &progress, &NoopContext)
+            .expect("should succeed")
     }
 
     fn process_err(input: NodeInput) -> BntoError {
         let processor = CsvToJson::new();
         let progress = ProgressReporter::new_noop();
-        let result = processor.process(input, &progress);
+        let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_err(), "expected an error");
         match result {
             Err(e) => e,
