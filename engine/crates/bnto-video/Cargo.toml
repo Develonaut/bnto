@@ -1,0 +1,24 @@
+# bnto-video — Video operation node crate.
+# Provides video-download processor wrapping yt-dlp via an adapter layer.
+# CLI/desktop only — browser (WASM) has no shell access.
+
+[package]
+name = "bnto-video"
+version = "0.1.1"
+edition = "2024"
+description = "Video operation nodes for Bnto engine — download videos via yt-dlp"
+license = "MIT"
+repository = "https://github.com/Develonaut/bnto"
+homepage = "https://bnto.io"
+readme = "README.md"
+keywords = ["video", "download", "yt-dlp", "cli", "automation"]
+categories = ["multimedia::video"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+bnto-core = { path = "../bnto-core", version = "0.1.1" }
+serde_json = { workspace = true }
+
+[dev-dependencies]

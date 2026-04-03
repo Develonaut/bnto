@@ -21,8 +21,8 @@ import { NODE_TYPE_NAMES } from "../generated/catalog";
 
 describe("NODE_SCHEMAS", () => {
   it("has a schema for every node type that has one", () => {
-    // All types with schemas = total types minus unimplemented (http-request, shell-command)
-    const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
+    // Types without browser processors — no schemas generated
+    const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command", "video-download"]);
     const expected = NODE_TYPE_NAMES.filter((n: string) => !TYPES_WITHOUT_SCHEMAS.has(n)).length;
     expect(Object.keys(NODE_SCHEMAS)).toHaveLength(expected);
   });

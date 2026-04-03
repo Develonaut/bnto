@@ -151,8 +151,8 @@ describe("engine defaults flow through to schemas", () => {
 // =============================================================================
 
 describe("schema registry completeness", () => {
-  // http-request and shell-command have no processors yet
-  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
+  // Types without browser processors — no schemas generated
+  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command", "video-download"]);
 
   it("every node type in NODE_TYPE_NAMES has a NODE_SCHEMAS entry (except unimplemented types)", () => {
     for (const name of NODE_TYPE_NAMES) {

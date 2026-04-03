@@ -25,6 +25,7 @@ import { spreadsheetConvertNodeType } from "./spreadsheetConvert";
 import { spreadsheetMergeNodeType } from "./spreadsheetMerge";
 import { spreadsheetRenameNodeType } from "./spreadsheetRename";
 import { transformNodeType } from "./transform";
+import { videoDownloadNodeType } from "./videoDownload";
 
 /**
  * All registered node type names.
@@ -50,6 +51,7 @@ export const NODE_TYPES = {
   spreadsheetMerge: "spreadsheet-merge",
   spreadsheetRename: "spreadsheet-rename",
   transform: "transform",
+  videoDownload: "video-download",
 } as const;
 
 /** All node type names as a readonly array. */
@@ -62,21 +64,22 @@ export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": editFieldsNodeType,
   "file-rename": fileRenameNodeType,
-  "group": groupNodeType,
+  group: groupNodeType,
   "http-request": httpRequestNodeType,
   "image-compress": imageCompressNodeType,
   "image-convert": imageConvertNodeType,
   "image-overlay": imageOverlayNodeType,
   "image-resize": imageResizeNodeType,
   "image-strip-exif": imageStripExifNodeType,
-  "input": inputNodeType,
-  "loop": loopNodeType,
-  "output": outputNodeType,
-  "parallel": parallelNodeType,
+  input: inputNodeType,
+  loop: loopNodeType,
+  output: outputNodeType,
+  parallel: parallelNodeType,
   "shell-command": shellCommandNodeType,
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
   "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
-  "transform": transformNodeType,
+  transform: transformNodeType,
+  "video-download": videoDownloadNodeType,
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;

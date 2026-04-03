@@ -76,6 +76,10 @@
     "transform": {
       "label": "Transform",
       "description": "Transform data using expressions (single value) or field mappings."
+    },
+    "videoDownload": {
+      "label": "Download Video",
+      "description": "Download video from URLs using yt-dlp (CLI/desktop only)."
     }
   },
   "params": {
@@ -225,6 +229,7 @@
     "image": "Image",
     "io": "Io",
     "system": "System",
-    "spreadsheet": "Spreadsheet"
+    "spreadsheet": "Spreadsheet",
+    "video": "Video"
   }
 }

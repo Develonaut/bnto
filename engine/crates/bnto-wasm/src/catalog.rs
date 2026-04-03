@@ -138,7 +138,7 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 19);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 20);
         assert!(parsed["processors"].is_array());
         assert_eq!(parsed["processors"].as_array().unwrap().len(), 10);
         // The definitionSchema should be present as a JSON object.

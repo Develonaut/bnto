@@ -132,7 +132,7 @@ fn run_recipe(recipe_path: &str, input_paths: &[String], output_dir: &str) {
 }
 
 fn list_recipes() {
-    let registry = bnto_engine::create_default_registry();
+    let registry = bnto_engine::create_native_registry();
     let mut catalog = registry.catalog();
     catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
@@ -144,7 +144,7 @@ fn list_recipes() {
 }
 
 fn run_doctor() {
-    let registry = bnto_engine::create_default_registry();
+    let registry = bnto_engine::create_native_registry();
     let deps = bnto_engine::deps::collect_all_dependencies(&registry);
 
     if deps.is_empty() {

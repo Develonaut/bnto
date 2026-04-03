@@ -9,6 +9,7 @@ export { compressAndRename } from "./compressAndRename";
 export { csvToJson } from "./csvToJson";
 export { compressImages } from "./compressImages";
 export { convertImageFormat } from "./convertImageFormat";
+export { downloadVideo } from "./downloadVideo";
 export { generateThumbnails } from "./generateThumbnails";
 export { mergeCsv } from "./mergeCsv";
 export { optimizeImagesForWeb } from "./optimizeImagesForWeb";

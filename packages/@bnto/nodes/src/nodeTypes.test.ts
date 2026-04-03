@@ -77,7 +77,7 @@ describe("NODE_TYPE_INFO", () => {
       (i) => !i.platforms.includes("browser"),
     );
     const names = serverOnly.map((s) => s.name).sort();
-    expect(names).toEqual(["http-request", "shell-command"]);
+    expect(names).toEqual(["http-request", "shell-command", "video-download"]);
   });
 });
 

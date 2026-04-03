@@ -82,6 +82,8 @@ pub enum NodeCategory {
     Control,
     /// System operations (future) — shell commands, environment
     System,
+    /// Video operations — download, transcode (CLI/desktop only)
+    Video,
     /// Input/output nodes — file input, file output
     Io,
 }
@@ -251,12 +253,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 19 registered node types.
+/// Return metadata for all 20 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(19);
+    let mut types = Vec::with_capacity(20);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -265,6 +267,7 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
     types.extend(network_node_types());
     types.extend(spreadsheet_node_types());
     types.extend(system_node_types());
+    types.extend(video_node_types());
     types.sort_by(|a, b| a.name.cmp(&b.name));
     types
 }
@@ -474,6 +477,18 @@ fn system_node_types() -> Vec<NodeTypeInfo> {
     )]
 }
 
+fn video_node_types() -> Vec<NodeTypeInfo> {
+    vec![node_type!(
+        "video-download",
+        "Download Video",
+        "Download video from URLs using yt-dlp (CLI/desktop only).",
+        NodeCategory::Video,
+        false,
+        "server",
+        "video"
+    )]
+}
+
 // --- Dependency ---
 
 /// An external binary that a processor requires at runtime.
@@ -589,10 +604,10 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_19_entries() {
-        // The engine defines all 19 node types.
+    fn test_all_node_types_returns_20_entries() {
+        // The engine defines all 20 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 19, "Should have exactly 19 node types");
+        assert_eq!(types.len(), 20, "Should have exactly 20 node types");
     }
 
     #[test]
@@ -612,7 +627,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 19, "All node type names should be unique");
+        assert_eq!(names.len(), 20, "All node type names should be unique");
     }
 
     #[test]
@@ -651,7 +666,10 @@ mod tests {
             .map(|t| t.name.as_str())
             .collect();
         server_only.sort();
-        assert_eq!(server_only, vec!["http-request", "shell-command"]);
+        assert_eq!(
+            server_only,
+            vec!["http-request", "shell-command", "video-download"]
+        );
     }
 
     #[test]
@@ -690,6 +708,9 @@ mod tests {
 
         let json = serde_json::to_string(&NodeCategory::Io).unwrap();
         assert_eq!(json, r#""io""#);
+
+        let json = serde_json::to_string(&NodeCategory::Video).unwrap();
+        assert_eq!(json, r#""video""#);
     }
 
     #[test]
