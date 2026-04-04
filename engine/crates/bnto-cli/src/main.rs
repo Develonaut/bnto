@@ -1,17 +1,17 @@
 // bnto CLI — run .bnto.json recipes from the command line.
 //
 // Usage: bnto run <recipe.bnto.json> <file1> [file2 ...]
-//        bnto run --recipe compress-images <file1> [file2 ...]
+//        bnto run <recipe.bnto.json> <url>  (for url-mode recipes)
+//        bnto run <recipe.bnto.json> <file1> --param quality=50
 
 mod context;
+mod input;
 mod io;
 mod progress;
 
 use std::process;
 
 use clap::{Parser, Subcommand};
-
-use bnto_core::PipelineFile;
 
 /// bnto — run recipes from the command line.
 #[derive(Parser)]
@@ -23,18 +23,21 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Execute a recipe against input files.
+    /// Execute a recipe against input files or a URL.
     Run {
         /// Path to a .bnto.json recipe file.
         recipe: String,
 
-        /// Input files to process.
-        #[arg(required = true)]
-        files: Vec<String>,
+        /// Input files, URL, or text (depends on recipe input mode).
+        inputs: Vec<String>,
 
         /// Output directory (default: current directory).
         #[arg(short, long, default_value = ".")]
         output: String,
+
+        /// Override a node parameter. Format: key=value or nodeId:key=value
+        #[arg(short = 'p', long = "param")]
+        param: Vec<String>,
     },
 
     /// List available built-in recipes.
@@ -50,9 +53,10 @@ fn main() {
     match cli.command {
         Command::Run {
             recipe,
-            files,
+            inputs,
             output,
-        } => run_recipe(&recipe, &files, &output),
+            param,
+        } => run_recipe(&recipe, &inputs, &output, &param),
         Command::List => list_recipes(),
         Command::Doctor => run_doctor(),
     }
@@ -69,26 +73,6 @@ fn read_recipe(path: &str) -> String {
     }
 }
 
-/// Load input files, skipping any that fail. Exits if none are valid.
-fn load_input_files(paths: &[String]) -> Vec<PipelineFile> {
-    let files: Vec<PipelineFile> = paths
-        .iter()
-        .filter_map(|path| match io::read_pipeline_file(path) {
-            Ok(f) => Some(f),
-            Err(e) => {
-                eprintln!("Warning: skipping {path}: {e}");
-                None
-            }
-        })
-        .collect();
-
-    if files.is_empty() {
-        eprintln!("Error: no valid input files");
-        process::exit(1);
-    }
-    files
-}
-
 /// Write pipeline results to disk, exit on failure.
 fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
     if let Err(e) = io::write_results(result, output_dir) {
@@ -103,15 +87,27 @@ fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
     );
 }
 
-fn run_recipe(recipe_path: &str, input_paths: &[String], output_dir: &str) {
-    let definition_json = read_recipe(recipe_path);
-    let files = load_input_files(input_paths);
+fn run_recipe(recipe_path: &str, inputs: &[String], output_dir: &str, param_overrides: &[String]) {
+    let raw_json = read_recipe(recipe_path);
 
-    let count = files.len();
-    eprintln!(
-        "Running {recipe_path} with {count} file{}...",
-        if count == 1 { "" } else { "s" }
-    );
+    let prepared = match input::prepare_inputs(&raw_json, inputs, param_overrides) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("Error: {e}");
+            process::exit(1);
+        }
+    };
+
+    let label = input::mode_label(&raw_json);
+    if prepared.files.is_empty() {
+        eprintln!("Running {recipe_path} with {label}...");
+    } else {
+        let count = prepared.files.len();
+        eprintln!(
+            "Running {recipe_path} with {count} file{}...",
+            if count == 1 { "" } else { "s" }
+        );
+    }
 
     let ctx = match context::NativeContext::current_dir() {
         Ok(ctx) => ctx,
@@ -122,7 +118,7 @@ fn run_recipe(recipe_path: &str, input_paths: &[String], output_dir: &str) {
     };
 
     let reporter = progress::stderr_reporter();
-    match bnto_engine::run_pipeline(&definition_json, files, &reporter, &ctx) {
+    match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
         Ok(result) => write_output(&result, output_dir),
         Err(e) => {
             eprintln!("Pipeline failed: {e}");
