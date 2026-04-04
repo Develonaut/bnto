@@ -12,9 +12,23 @@ interface InputNodeOptions {
   label: string;
   /** Whether to accept multiple files. Defaults to true. */
   multiple?: boolean;
+  /** Input mode: "file-upload" (default), "url", or "text". */
+  mode?: "file-upload" | "url" | "text";
+  /** Placeholder text for the input field. */
+  placeholder?: string;
 }
 
 function defaultInputNode(options: InputNodeOptions): Definition {
+  const params: Record<string, unknown> = {
+    mode: options.mode ?? "file-upload",
+    accept: [...options.accept],
+    extensions: [...options.extensions],
+    label: options.label,
+    multiple: options.multiple ?? true,
+  };
+  if (options.placeholder) {
+    params.placeholder = options.placeholder;
+  }
   return {
     id: "input",
     type: "input",
@@ -22,13 +36,7 @@ function defaultInputNode(options: InputNodeOptions): Definition {
     name: "Input",
     position: { x: 0, y: 100 },
     metadata: {},
-    parameters: {
-      mode: "file-upload",
-      accept: [...options.accept],
-      extensions: [...options.extensions],
-      label: options.label,
-      multiple: options.multiple ?? true,
-    },
+    parameters: params,
     inputPorts: [],
     outputPorts: [{ id: "out-1", name: "files" }],
   };

@@ -54,7 +54,7 @@ impl NodeProcessor for VideoDownload {
                 "desktop".to_string(),
             ],
             parameters: vec![url_param(), format_param(), quality_param()],
-            input_cardinality: InputCardinality::PerFile,
+            input_cardinality: InputCardinality::Source,
             requires: vec![
                 Dependency {
                     binary: "yt-dlp".to_string(),
