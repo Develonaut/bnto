@@ -37,7 +37,7 @@ pub struct PipelineSettings {
 // =============================================================================
 
 /// The top-level pipeline definition that the executor receives.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PipelineDefinition {
     /// The ordered list of nodes in this pipeline.
     /// Nodes execute sequentially — output from node N feeds into node N+1.
@@ -61,7 +61,7 @@ impl PipelineDefinition {
 }
 
 /// A single node in the pipeline.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineNode {
     /// The unique identifier for this node (e.g., "node-abc123").
@@ -767,6 +767,87 @@ mod tests {
         let settings = def.settings.as_ref().unwrap();
         assert_eq!(settings.iteration, IterationMode::Explicit);
         assert_eq!(def.resolved_iteration(), IterationMode::Explicit);
+    }
+
+    // --- Serialization Round-Trip Tests ---
+    // Verify PipelineDefinition and PipelineNode serialize and deserialize back.
+
+    #[test]
+    fn test_definition_round_trip_serialization() {
+        let json = r#"{
+            "nodes": [
+                { "id": "n1", "type": "input" },
+                { "id": "n2", "type": "image-compress", "params": { "quality": 80 } },
+                { "id": "n3", "type": "output" }
+            ],
+            "settings": { "iteration": "auto" }
+        }"#;
+
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        let round_tripped: PipelineDefinition = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(round_tripped.nodes.len(), def.nodes.len());
+        for (orig, rt) in def.nodes.iter().zip(round_tripped.nodes.iter()) {
+            assert_eq!(orig.id, rt.id);
+            assert_eq!(orig.node_type, rt.node_type);
+        }
+        assert_eq!(round_tripped.resolved_iteration(), def.resolved_iteration());
+    }
+
+    #[test]
+    fn test_definition_serialization_preserves_params() {
+        let json = r#"{
+            "nodes": [
+                {
+                    "id": "n1",
+                    "type": "image-compress",
+                    "params": { "quality": 80, "preserveExif": true, "name": "test" }
+                }
+            ]
+        }"#;
+
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        let round_tripped: PipelineDefinition = serde_json::from_str(&serialized).unwrap();
+
+        let params = &round_tripped.nodes[0].params;
+        assert_eq!(params["quality"], 80);
+        assert_eq!(params["preserveExif"], true);
+        assert_eq!(params["name"], "test");
+    }
+
+    #[test]
+    fn test_definition_serialization_preserves_children() {
+        let json = r#"{
+            "nodes": [
+                {
+                    "id": "group-1",
+                    "type": "group",
+                    "children": [
+                        {
+                            "id": "loop-1",
+                            "type": "loop",
+                            "children": [
+                                { "id": "proc-1", "type": "image-compress", "params": { "quality": 50 } }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }"#;
+
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        let round_tripped: PipelineDefinition = serde_json::from_str(&serialized).unwrap();
+
+        let group = &round_tripped.nodes[0];
+        assert_eq!(group.node_type, "group");
+        let loop_node = &group.children.as_ref().unwrap()[0];
+        assert_eq!(loop_node.node_type, "loop");
+        let proc_node = &loop_node.children.as_ref().unwrap()[0];
+        assert_eq!(proc_node.node_type, "image-compress");
+        assert_eq!(proc_node.params["quality"], 50);
     }
 
     #[test]

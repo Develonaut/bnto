@@ -114,6 +114,7 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
 
     match cardinality {
         InputCardinality::Batch => process_batch(ctx, processor, node, files, file_offset),
+        InputCardinality::Source => process_source(ctx, processor, node, file_offset),
         InputCardinality::PerFile => {
             let mut output_files: Vec<PipelineFile> = Vec::with_capacity(local_file_count);
             for (file_index, file) in files.into_iter().enumerate() {
@@ -133,6 +134,42 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
             })
         }
     }
+}
+
+/// Run a source processor once with empty input data.
+/// Source processors generate output from params alone — no input files.
+fn process_source<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    processor: &dyn crate::processor::NodeProcessor,
+    node: PipelineNodeRef,
+    file_offset: usize,
+) -> Result<NodeExecutionResult, BntoError> {
+    emit_file_progress(
+        ctx,
+        &node.id,
+        file_offset,
+        0,
+        "Generating output...".to_string(),
+    );
+
+    let input = NodeInput {
+        data: Vec::new(),
+        filename: String::new(),
+        mime_type: None,
+        params: node.params.clone(),
+    };
+
+    let noop_reporter = ProgressReporter::new(|_, _| {});
+    let output = processor.process(input, &noop_reporter, ctx.process_ctx)?;
+
+    emit_file_progress(ctx, &node.id, file_offset, 100, "Complete".to_string());
+
+    let mut output_files = Vec::new();
+    collect_output(output, &mut output_files);
+    Ok(NodeExecutionResult {
+        files_processed: 0,
+        output_files,
+    })
 }
 
 /// Process all files at once through a batch processor.

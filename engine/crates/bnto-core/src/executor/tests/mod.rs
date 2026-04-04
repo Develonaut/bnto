@@ -149,6 +149,51 @@ impl crate::processor::NodeProcessor for DoubleProcessor {
     }
 }
 
+/// Source processor — generates output from params, ignores input data.
+/// Returns a single file whose name comes from the "url" param (or "generated.bin").
+struct SourceProcessor;
+
+impl crate::processor::NodeProcessor for SourceProcessor {
+    fn name(&self) -> &str {
+        "source"
+    }
+
+    fn metadata(&self) -> crate::metadata::NodeMetadata {
+        crate::metadata::NodeMetadata {
+            node_type: "test-source".to_string(),
+            name: "Source".to_string(),
+            description: "Generates output from params".to_string(),
+            category: crate::metadata::NodeCategory::Network,
+            accepts: vec![],
+            platforms: vec!["server".to_string()],
+            parameters: vec![],
+            input_cardinality: crate::metadata::InputCardinality::Source,
+            requires: vec![],
+        }
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        let url = input
+            .params
+            .get("url")
+            .and_then(|v| v.as_str())
+            .unwrap_or("generated.bin");
+        Ok(NodeOutput {
+            files: vec![OutputFile {
+                data: format!("downloaded-from:{}", url).into_bytes(),
+                filename: format!("{}.mp4", url.rsplit('/').next().unwrap_or("output")),
+                mime_type: "video/mp4".to_string(),
+            }],
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
 /// Simulates compression: halves data size and attaches size metadata.
 /// Used to verify metadata survives through the pipeline.
 struct MetadataProcessor;
@@ -220,6 +265,7 @@ fn mock_registry() -> NodeRegistry {
     registry.register("test-slow", Box::new(SlowProcessor));
     registry.register("test-double", Box::new(DoubleProcessor));
     registry.register("test-metadata", Box::new(MetadataProcessor));
+    registry.register("test-source", Box::new(SourceProcessor));
     registry
 }
 
