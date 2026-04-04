@@ -55,10 +55,7 @@ impl ProcessContext for NativeContext {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos();
-        let path = dir.join(format!("bnto-{id}{suffix}"));
-        std::fs::File::create(&path)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to create temp file: {e}")))?;
-        Ok(path)
+        Ok(dir.join(format!("bnto-{id}{suffix}")))
     }
 
     fn env_var(&self, key: &str) -> Option<String> {
@@ -98,9 +95,7 @@ mod tests {
         assert!(result.is_ok());
         let path = result.unwrap();
         assert!(path.to_string_lossy().ends_with(".txt"));
-        assert!(path.exists());
-        // Clean up
-        let _ = std::fs::remove_file(&path);
+        assert!(!path.exists()); // path is reserved, not pre-created
     }
 
     #[test]

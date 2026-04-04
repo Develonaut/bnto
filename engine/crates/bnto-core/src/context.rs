@@ -15,7 +15,8 @@ pub trait ProcessContext: Send + Sync {
     /// Run an external command, capturing stdout.
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError>;
 
-    /// Create a temporary file, returning its path.
+    /// Return a unique temporary file path. The file is NOT pre-created —
+    /// the caller (or external tool) is responsible for writing to it.
     fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError>;
 
     /// Read an environment variable.
