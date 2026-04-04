@@ -15,7 +15,7 @@ export const downloadVideo: Recipe = {
   accept: {
     mimeTypes: [],
     extensions: [],
-    label: "No file input required",
+    label: "Video URL",
   },
   features: ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
   definition: {
@@ -35,7 +35,9 @@ export const downloadVideo: Recipe = {
       defaultInputNode({
         accept: [],
         extensions: [],
-        label: "No file input required",
+        label: "Video URL",
+        mode: "url",
+        placeholder: "https://youtube.com/watch?v=...",
       }),
       {
         id: "video-download",

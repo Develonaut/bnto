@@ -28,11 +28,12 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "file-upload",
+        "mode": "url",
         "accept": [],
         "extensions": [],
-        "label": "No file input required",
-        "multiple": true
+        "label": "Video URL",
+        "multiple": true,
+        "placeholder": "https://youtube.com/watch?v=..."
       },
       "inputPorts": [],
       "outputPorts": [

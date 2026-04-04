@@ -55,6 +55,109 @@ fn test_missing_input_file() {
     assert!(stderr.contains("no valid input files"));
 }
 
+// --- URL Mode ---
+
+#[test]
+fn test_url_mode_no_input_shows_error() {
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("download-video")])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("requires a URL"),
+        "Expected URL-specific error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_url_mode_non_url_input_shows_error() {
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("download-video")])
+        .arg("not-a-url.mp4")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Expected a URL"),
+        "Expected URL validation error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_url_mode_valid_url_reaches_processor() {
+    // Passes a valid URL. The processor will fail because yt-dlp
+    // likely isn't installed in CI, but the error should come from
+    // the processor — NOT from URL validation or input routing.
+    // This proves the full path: CLI → input routing → engine.
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("download-video")])
+        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // The status message should say "URL input", proving mode detection worked
+    assert!(
+        stderr.contains("URL input"),
+        "Expected 'URL input' status message, got: {stderr}"
+    );
+
+    // If yt-dlp is installed, the command succeeds (actual download).
+    // If yt-dlp is NOT installed, it fails with a processor error.
+    // Either way, we must NOT see input validation errors.
+    assert!(
+        !stderr.contains("Expected a URL"),
+        "URL should have passed validation"
+    );
+    assert!(
+        !stderr.contains("requires a URL"),
+        "URL was provided but routing failed"
+    );
+}
+
+#[test]
+fn test_url_mode_param_override() {
+    // Combines URL input with --param override.
+    // Like the valid URL test, the processor may fail without yt-dlp,
+    // but we verify the input routing doesn't reject the combination.
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("download-video")])
+        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
+        .args(["--param", "format=webm"])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // Must not fail on input routing or param injection
+    assert!(
+        !stderr.contains("Expected a URL"),
+        "URL should have passed validation"
+    );
+    assert!(
+        !stderr.contains("Invalid --param"),
+        "Param override should be valid"
+    );
+    assert!(
+        stderr.contains("URL input"),
+        "Expected 'URL input' status message, got: {stderr}"
+    );
+}
+
 // --- Multiple Files ---
 
 #[test]

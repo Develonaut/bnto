@@ -26,7 +26,7 @@ export interface PipelineSettings {
 // =============================================================================
 
 /** How a processor expects to receive input files. */
-export type InputCardinality = "perFile" | "batch";
+export type InputCardinality = "perFile" | "batch" | "source";
 
 /**
  * A single node in a bnto recipe definition.
