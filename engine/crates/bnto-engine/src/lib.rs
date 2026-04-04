@@ -42,6 +42,27 @@ pub fn create_default_registry() -> NodeRegistry {
     registry
 }
 
+/// Create the full registry with native-only processors added.
+///
+/// Starts from the browser-safe default registry and conditionally adds
+/// CLI/server/desktop processors (like video-download) when compiled with
+/// the `native` feature. WASM builds never enable `native`, so the browser
+/// catalog stays clean.
+pub fn create_native_registry() -> NodeRegistry {
+    #[allow(unused_mut)]
+    let mut registry = create_default_registry();
+
+    #[cfg(feature = "native")]
+    {
+        registry.register(
+            "video-download",
+            Box::new(bnto_video::VideoDownload::with_ytdlp()),
+        );
+    }
+
+    registry
+}
+
 /// Run a pipeline from a JSON definition string and a list of files.
 ///
 /// Convenience wrapper that parses JSON, creates the default registry,
@@ -56,7 +77,7 @@ pub fn run_pipeline(
     let definition: PipelineDefinition = serde_json::from_str(definition_json)
         .map_err(|e| BntoError::InvalidInput(format!("Failed to parse definition: {e}")))?;
 
-    let registry = create_default_registry();
+    let registry = create_native_registry();
 
     // Pre-flight: fail fast if required external tools are missing.
     deps::check_pipeline_dependencies(&definition, &registry, ctx)?;
@@ -101,6 +122,19 @@ mod tests {
                 "Missing processor for {node_type}",
             );
         }
+    }
+
+    #[test]
+    #[cfg(feature = "native")]
+    fn test_native_registry_has_video_download() {
+        let registry = create_native_registry();
+        // Native registry = default (10) + video-download (1) = 11
+        assert_eq!(registry.len(), 11);
+        let params = serde_json::Map::new();
+        assert!(
+            registry.resolve("video-download", &params).is_some(),
+            "Native registry should include video-download",
+        );
     }
 
     #[test]
@@ -377,6 +411,9 @@ mod tests {
             ),
             include_str!(
                 "../../../../packages/@bnto/registry/src/recipes/generated/merge-csv.bnto.json"
+            ),
+            include_str!(
+                "../../../../packages/@bnto/registry/src/recipes/generated/download-video.bnto.json"
             ),
         ];
 

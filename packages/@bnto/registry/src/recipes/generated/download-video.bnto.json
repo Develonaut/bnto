@@ -1,0 +1,100 @@
+{
+  "id": "download-video",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Download Video",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Downloads video or audio from a URL via yt-dlp."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": [],
+        "extensions": [],
+        "label": "No file input required",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "video-download",
+      "type": "video-download",
+      "version": "1.0.0",
+      "name": "Download Video",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "url": "",
+        "format": "mp4",
+        "quality": "best"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "download",
+        "label": "Downloaded Video",
+        "zip": true,
+        "autoDownload": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "video-download"
+    },
+    {
+      "id": "e2",
+      "source": "video-download",
+      "target": "output"
+    }
+  ]
+}

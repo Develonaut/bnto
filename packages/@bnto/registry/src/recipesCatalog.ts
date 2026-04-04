@@ -13,6 +13,7 @@ import {
   compressImages,
   convertImageFormat,
   csvToJson,
+  downloadVideo,
   generateThumbnails,
   mergeCsv,
   optimizeImagesForWeb,
@@ -45,6 +46,7 @@ export const RECIPES: readonly Recipe[] = [
   standardizeCsv,
   stripExif,
   watermarkImages,
+  downloadVideo,
 ];
 
 // Re-export all recipes for direct access
@@ -54,6 +56,7 @@ export {
   compressImages,
   convertImageFormat,
   csvToJson,
+  downloadVideo,
   generateThumbnails,
   mergeCsv,
   optimizeImagesForWeb,

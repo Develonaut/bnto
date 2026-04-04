@@ -62,6 +62,11 @@ export const CATEGORIES: readonly CategoryInfo[] = [
     label: "System",
     description: "Shell commands and system-level operations.",
   },
+  {
+    name: "video",
+    label: "Video",
+    description: "Video operations — download, transcode (CLI/desktop only).",
+  },
 ] as const;
 
 /** Returns category info by name, or undefined if not found. */

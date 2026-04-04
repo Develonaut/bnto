@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [dependencies]
 bnto-core = { path = "../bnto-core", version = "0.1.1" }
-bnto-engine = { path = "../bnto-engine", version = "0.1.1" }
+bnto-engine = { path = "../bnto-engine", version = "0.1.1", features = ["native"] }
 clap = { workspace = true }
 serde_json = { workspace = true }
 

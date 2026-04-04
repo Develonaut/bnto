@@ -24,10 +24,20 @@ export type NodeTypeName =
   | "spreadsheet-convert"
   | "spreadsheet-merge"
   | "spreadsheet-rename"
-  | "transform";
+  | "transform"
+  | "video-download";
 
 /** Node category for grouping in the UI and documentation. */
-export type NodeCategory = "control" | "data" | "file" | "image" | "io" | "network" | "spreadsheet" | "system";
+export type NodeCategory =
+  | "control"
+  | "data"
+  | "file"
+  | "image"
+  | "io"
+  | "network"
+  | "spreadsheet"
+  | "system"
+  | "video";
 
 /** Metadata describing a node type's behavior and capabilities. */
 export interface NodeTypeInfo {
