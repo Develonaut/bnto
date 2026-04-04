@@ -467,8 +467,7 @@ mod tests {
     #[test]
     fn test_parse_override_value_with_equals() {
         // Value containing = sign
-        let (node_id, key, value) =
-            parse_override("expr=a=b", Some("transform")).unwrap();
+        let (node_id, key, value) = parse_override("expr=a=b", Some("transform")).unwrap();
         assert_eq!(node_id, "transform");
         assert_eq!(key, "expr");
         assert_eq!(value, "a=b");
