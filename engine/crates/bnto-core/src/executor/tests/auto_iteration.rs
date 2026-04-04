@@ -4,6 +4,113 @@ use super::*;
 // Auto-Iteration Tests
 // =========================================================================
 
+// --- Source Node Tests ---
+
+#[test]
+fn test_source_node_executes_once_with_no_files() {
+    // Source processor runs once with empty data, params populated.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/video" } },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    // No input files — source processor generates its own output
+    let result =
+        execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(result.files.len(), 1);
+    assert_eq!(result.files[0].name, "video.mp4");
+    assert!(
+        String::from_utf8_lossy(&result.files[0].data)
+            .contains("downloaded-from:https://example.com/video")
+    );
+}
+
+#[test]
+fn test_source_node_ignores_input_files() {
+    // Even if files are passed to the pipeline, a Source processor runs
+    // once with empty input data and ignores the files.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/vid" } },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    // Source processor only runs once, producing 1 file regardless of input count
+    assert_eq!(result.files.len(), 1);
+    assert_eq!(result.files[0].name, "vid.mp4");
+}
+
+#[test]
+fn test_auto_iteration_source_breaks_sequence() {
+    // In auto mode, a source node breaks per-file sequences.
+    // Nodes before source get per-file iteration, source runs once,
+    // nodes after source get the source output as their input.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "upper", "type": "test-uppercase" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/v" } },
+            { "id": "echo", "type": "test-echo" },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    // Source breaks the sequence: uppercase runs per-file on inputs (but output
+    // is discarded by source), source generates 1 file, echo echoes it.
+    assert_eq!(result.files.len(), 1);
+    assert_eq!(result.files[0].name, "v.mp4");
+}
+
+#[test]
+fn test_auto_iteration_source_runs_with_empty_files() {
+    // Source node in auto mode runs with no files and produces output.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/output" } },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    let result =
+        execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(result.files.len(), 1);
+    assert_eq!(result.files[0].name, "output.mp4");
+}
+
 // --- Backward Compatibility ---
 
 #[test]

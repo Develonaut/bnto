@@ -46,6 +46,14 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
                 total_processed += processed;
                 current_files = output;
             }
+            Run::Source { index } => {
+                // Source nodes run once with no input files — dispatch as a
+                // single-node chain (primitive executor handles empty-input).
+                let source_node = &nodes[*index..*index + 1];
+                let (output, processed) = run_node_chain(ctx, source_node, vec![], 0)?;
+                total_processed += processed;
+                current_files = output;
+            }
         }
     }
 
@@ -61,6 +69,8 @@ enum Run {
     Container { index: usize },
     /// A batch processor — receives all files at once. Breaks per-file sequences.
     Batch { index: usize },
+    /// A source processor — runs once with no input files. Breaks per-file sequences.
+    Source { index: usize },
 }
 
 /// Check if a primitive node has batch cardinality by consulting the registry.
@@ -69,6 +79,15 @@ fn is_batch_node(node: &PipelineNode, registry: &NodeRegistry) -> bool {
     registry
         .resolve(&node.node_type, params)
         .map(|p| p.metadata().input_cardinality == InputCardinality::Batch)
+        .unwrap_or(false)
+}
+
+/// Check if a primitive node has source cardinality by consulting the registry.
+fn is_source_node(node: &PipelineNode, registry: &NodeRegistry) -> bool {
+    let params = &node.params;
+    registry
+        .resolve(&node.node_type, params)
+        .map(|p| p.metadata().input_cardinality == InputCardinality::Source)
         .unwrap_or(false)
 }
 
@@ -97,6 +116,15 @@ fn partition_into_runs(nodes: &[&PipelineNode], registry: &NodeRegistry) -> Vec<
                 });
             }
             runs.push(Run::Batch { index: i });
+        } else if is_source_node(node, registry) {
+            // Source nodes break per-file sequences — they run once with no input
+            if let Some(start) = seq_start.take() {
+                runs.push(Run::PerFileSequence {
+                    start,
+                    len: i - start,
+                });
+            }
+            runs.push(Run::Source { index: i });
         } else if seq_start.is_none() {
             seq_start = Some(i);
         }

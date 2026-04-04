@@ -59,6 +59,9 @@ pub enum InputCardinality {
     /// Needs the full batch of files at once (e.g., zip, concat, merge).
     /// Acts as an iteration barrier in auto mode.
     Batch,
+    /// Processor generates output from its parameters — no input files.
+    /// Runs exactly once, ignoring the file pipeline.
+    Source,
 }
 
 // --- NodeCategory ---
@@ -562,6 +565,9 @@ mod tests {
 
         let batch = serde_json::to_string(&InputCardinality::Batch).unwrap();
         assert_eq!(batch, r#""batch""#);
+
+        let source = serde_json::to_string(&InputCardinality::Source).unwrap();
+        assert_eq!(source, r#""source""#);
     }
 
     #[test]
