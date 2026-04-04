@@ -179,31 +179,30 @@ fn apply_param_overrides(
 }
 
 /// Parse a `--param` value into (node_id, key, value).
+///
+/// Split on `=` first to isolate the value (which may contain colons,
+/// e.g. URLs like `https://...`), then check whether the key portion
+/// contains a `:` for the qualified `nodeId:key` format.
 fn parse_override(
     entry: &str,
     default_node_id: Option<&str>,
 ) -> Result<(String, String, String), String> {
-    // Check for nodeId:key=value format
-    if let Some((prefix, kv)) = entry.split_once(':') {
-        if let Some((key, value)) = kv.split_once('=') {
-            return Ok((prefix.to_string(), key.to_string(), value.to_string()));
-        }
+    let Some((full_key, value)) = entry.split_once('=') else {
         return Err(format!(
             "Invalid --param format: {entry}. Expected key=value or nodeId:key=value"
         ));
-    }
+    };
 
-    // Simple key=value — use default processing node
-    if let Some((key, value)) = entry.split_once('=') {
+    if let Some((node_id, key)) = full_key.split_once(':') {
+        // Qualified: nodeId:key=value
+        Ok((node_id.to_string(), key.to_string(), value.to_string()))
+    } else {
+        // Simple: key=value — use default processing node
         let node_id = default_node_id
             .ok_or("No processing node found to apply --param override")?
             .to_string();
-        return Ok((node_id, key.to_string(), value.to_string()));
+        Ok((node_id, full_key.to_string(), value.to_string()))
     }
-
-    Err(format!(
-        "Invalid --param format: {entry}. Expected key=value or nodeId:key=value"
-    ))
 }
 
 /// Parse a param value string into a serde_json::Value.
@@ -441,6 +440,38 @@ mod tests {
         )
         .unwrap();
         assert_eq!(def.nodes[1].params["url"], "https://example.com");
+    }
+
+    // --- parse_override edge cases ---
+
+    #[test]
+    fn test_parse_override_simple_url_value() {
+        // Simple key=value where value contains colons (URL)
+        let (node_id, key, value) =
+            parse_override("url=https://youtube.com/watch?v=abc", Some("download")).unwrap();
+        assert_eq!(node_id, "download");
+        assert_eq!(key, "url");
+        assert_eq!(value, "https://youtube.com/watch?v=abc");
+    }
+
+    #[test]
+    fn test_parse_override_qualified_url_value() {
+        // Qualified nodeId:key=value where value contains colons
+        let (node_id, key, value) =
+            parse_override("download:url=https://youtube.com/watch?v=abc", None).unwrap();
+        assert_eq!(node_id, "download");
+        assert_eq!(key, "url");
+        assert_eq!(value, "https://youtube.com/watch?v=abc");
+    }
+
+    #[test]
+    fn test_parse_override_value_with_equals() {
+        // Value containing = sign
+        let (node_id, key, value) =
+            parse_override("expr=a=b", Some("transform")).unwrap();
+        assert_eq!(node_id, "transform");
+        assert_eq!(key, "expr");
+        assert_eq!(value, "a=b");
     }
 
     // --- parse_param_value tests ---
