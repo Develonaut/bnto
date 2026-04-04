@@ -44,6 +44,7 @@ impl VideoDownloader for YtDlpAdapter {
             &output_str,
             "--no-playlist",
             "--no-warnings",
+            "--force-overwrites",
         ];
 
         if config.format != "best" {
