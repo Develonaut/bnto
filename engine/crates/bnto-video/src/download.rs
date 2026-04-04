@@ -440,4 +440,32 @@ mod tests {
         let errors = p.validate(&params);
         assert!(errors.is_empty());
     }
+
+    #[test]
+    fn test_validate_m3u8_url() {
+        let mock = MockVideoDownloader::ok(vec![1], "v.mp4", "video/mp4");
+        let p = make_processor(mock);
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "url".to_string(),
+            serde_json::json!("https://example.com/stream/master.m3u8"),
+        );
+        let errors = p.validate(&params);
+        assert!(errors.is_empty(), "m3u8 URLs should pass validation");
+    }
+
+    #[test]
+    fn test_m3u8_url_download() {
+        let video_data = vec![0x00, 0x00, 0x00, 0x1c, 0x66, 0x74, 0x79, 0x70];
+        let mock = MockVideoDownloader::ok(video_data.clone(), "video.mp4", "video/mp4");
+        let p = make_processor(mock);
+        let progress = ProgressReporter::new_noop();
+        let input = make_input("https://example.com/live/master.m3u8", "mp4", "best");
+
+        let output = p.process(input, &progress, &MockContext).unwrap();
+
+        assert_eq!(output.files.len(), 1);
+        assert_eq!(output.files[0].data, video_data);
+        assert_eq!(output.files[0].mime_type, "video/mp4");
+    }
 }
