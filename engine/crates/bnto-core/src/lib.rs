@@ -66,8 +66,8 @@ pub use metadata::{
     ParamCondition, ParamConditionEntry, ParameterDef, ParameterType, all_node_types,
 };
 pub use pipeline::{
-    IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
-    PipelineResult, PipelineSettings,
+    InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
+    PipelineResult, PipelineSettings, first_processing_node_id, resolve_input_mode,
 };
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;

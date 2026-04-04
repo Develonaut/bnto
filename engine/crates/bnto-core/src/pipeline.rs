@@ -151,6 +151,79 @@ pub struct PipelineResult {
 }
 
 // =============================================================================
+// InputMode — How data enters the recipe
+// =============================================================================
+
+/// How the recipe expects to receive its input data.
+/// Read from the input node's `mode` parameter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum InputMode {
+    /// User uploads files (default). CLI reads file paths from disk.
+    #[default]
+    FileUpload,
+    /// User provides a URL. CLI accepts a URL string.
+    Url,
+    /// User provides text content. CLI accepts a text string.
+    Text,
+}
+
+/// Walk the definition to find the input node and read its `mode` param.
+/// Returns `FileUpload` if no input node or no mode param is found.
+pub fn resolve_input_mode(def: &PipelineDefinition) -> InputMode {
+    find_input_mode_in_nodes(&def.nodes)
+}
+
+fn find_input_mode_in_nodes(nodes: &[PipelineNode]) -> InputMode {
+    for node in nodes {
+        if node.node_type == "input" {
+            return match node.params.get("mode").and_then(|v| v.as_str()) {
+                Some("url") => InputMode::Url,
+                Some("text") => InputMode::Text,
+                _ => InputMode::FileUpload,
+            };
+        }
+        // Recurse into container children
+        if let Some(children) = &node.children {
+            let mode = find_input_mode_in_nodes(children);
+            if mode != InputMode::FileUpload {
+                return mode;
+            }
+            // Check if we found an input node with default mode
+            if children.iter().any(|c| c.node_type == "input") {
+                return InputMode::FileUpload;
+            }
+        }
+    }
+    InputMode::FileUpload
+}
+
+/// Walk the definition to find the first processing node (not I/O, not container).
+/// Used by the CLI to know where to inject params like URL.
+pub fn first_processing_node_id(def: &PipelineDefinition) -> Option<String> {
+    find_first_processing_in_nodes(&def.nodes)
+}
+
+fn find_first_processing_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
+    for node in nodes {
+        if is_io_node(&node.node_type) {
+            continue;
+        }
+        if is_container_node(&node.node_type) {
+            // Look inside container children for a processing node
+            if let Some(children) = &node.children
+                && let Some(id) = find_first_processing_in_nodes(children)
+            {
+                return Some(id);
+            }
+            continue;
+        }
+        // Found a processing node
+        return Some(node.id.clone());
+    }
+    None
+}
+
+// =============================================================================
 // Helper: Check if a node type is an I/O marker
 // =============================================================================
 
@@ -173,6 +246,10 @@ pub fn is_container_node(node_type: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn parse_definition(json: &str) -> PipelineDefinition {
+        serde_json::from_str(json).unwrap()
+    }
 
     // --- Deserialization Tests ---
     // Verify we can parse the same JSON shape that the TypeScript side produces.
@@ -887,5 +964,156 @@ mod tests {
         assert!(!is_container_node("image-compress"));
         assert!(!is_container_node("input"));
         assert!(!is_container_node("output"));
+    }
+
+    // --- InputMode Resolution Tests ---
+
+    #[test]
+    fn test_resolve_input_mode_file_upload() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": { "mode": "file-upload" } },
+                    { "id": "proc", "type": "image-compress", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::FileUpload);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_url() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": { "mode": "url" } },
+                    { "id": "proc", "type": "video-download", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::Url);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_text() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": { "mode": "text" } },
+                    { "id": "proc", "type": "text-transform", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::Text);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_missing_defaults() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "proc", "type": "image-compress", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::FileUpload);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_no_input_node() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "proc", "type": "image-compress", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::FileUpload);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_nested() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    {
+                        "id": "group-1",
+                        "type": "group",
+                        "params": {},
+                        "children": [
+                            { "id": "in", "type": "input", "params": { "mode": "url" } },
+                            { "id": "proc", "type": "video-download", "params": {} }
+                        ]
+                    },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::Url);
+    }
+
+    // --- first_processing_node_id Tests ---
+
+    #[test]
+    fn test_first_processing_node_id_simple() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "compress", "type": "image-compress", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(first_processing_node_id(&def), Some("compress".to_string()));
+    }
+
+    #[test]
+    fn test_first_processing_node_id_none() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(first_processing_node_id(&def), None);
+    }
+
+    #[test]
+    fn test_first_processing_node_id_nested() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    {
+                        "id": "loop-1",
+                        "type": "loop",
+                        "params": {},
+                        "children": [
+                            { "id": "resize", "type": "image-resize", "params": {} },
+                            { "id": "compress", "type": "image-compress", "params": {} }
+                        ]
+                    },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(first_processing_node_id(&def), Some("resize".to_string()));
     }
 }
