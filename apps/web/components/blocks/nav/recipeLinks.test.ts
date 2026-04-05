@@ -35,4 +35,9 @@ describe("RECIPES (buildRecipeCategories)", () => {
     const urls = imageCategory!.links.map((l) => l.url);
     expect(urls).toContain("/compress-images");
   });
+
+  it("does not contain non-browser recipes like download-video", () => {
+    const allUrls = RECIPES.flatMap((c) => c.links.map((l) => l.url));
+    expect(allUrls).not.toContain("/download-video");
+  });
 });

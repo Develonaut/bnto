@@ -1,23 +1,34 @@
-import { getAllRecipes } from "@bnto/registry";
+import { getBrowserRecipes, getAllRecipes, isRecipeBrowserCapable } from "@bnto/registry";
 import { BASE_URL } from "@/lib/constants";
 
 export const dynamic = "force-static";
 
 function generateLlmsTxt() {
-  const tools = getAllRecipes()
+  const browserTools = getBrowserRecipes()
     .map((r) => `- [${r.name}](${BASE_URL}/${r.slug}): ${r.description}`)
     .join("\n");
 
-  return [
+  const cliTools = getAllRecipes()
+    .filter((r) => !isRecipeBrowserCapable(r))
+    .map((r) => `- [${r.name}](${BASE_URL}/${r.slug}): ${r.description} (CLI only)`)
+    .join("\n");
+
+  const sections = [
     "# bnto",
     "",
     "> Free tools that run in your browser. Compress images, clean CSVs, rename files, convert formats, and build custom recipes. Powered by Rust & WebAssembly. No signup, no upload. Open source.",
     "",
-    "## Recipes",
+    "## Browser Recipes",
     "",
-    tools,
-    "",
-  ].join("\n");
+    browserTools,
+  ];
+
+  if (cliTools) {
+    sections.push("", "## CLI-Only Recipes", "", cliTools);
+  }
+
+  sections.push("");
+  return sections.join("\n");
 }
 
 export function GET() {

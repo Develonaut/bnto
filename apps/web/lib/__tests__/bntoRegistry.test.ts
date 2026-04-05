@@ -15,6 +15,11 @@ describe("BNTO_REGISTRY", () => {
     expect(slugs).toContain("rename-csv-columns");
   });
 
+  it("includes CLI-only recipes like download-video (for SEO)", () => {
+    const slugs = BNTO_REGISTRY.map((b) => b.slug);
+    expect(slugs).toContain("download-video");
+  });
+
   it("all slugs are lowercase-hyphen format", () => {
     for (const entry of BNTO_REGISTRY) {
       expect(entry.slug).toMatch(/^[a-z][a-z0-9-]+[a-z0-9]$/);

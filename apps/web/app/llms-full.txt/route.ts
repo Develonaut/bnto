@@ -1,37 +1,50 @@
-import { getAllRecipes } from "@bnto/registry";
+import { getBrowserRecipes, getAllRecipes, isRecipeBrowserCapable } from "@bnto/registry";
+import type { Recipe } from "@bnto/registry";
 import { BASE_URL } from "@/lib/constants";
 
 export const dynamic = "force-static";
 
-function formatAccepts(r: ReturnType<typeof getAllRecipes>[number]) {
+function formatAccepts(r: Recipe) {
   return r.accept.extensions.map((e) => e.replace(".", "").toUpperCase()).join(", ");
 }
 
+function formatRecipe(r: Recipe, platform: string) {
+  return [
+    `### ${r.name}`,
+    `- URL: ${BASE_URL}/${r.slug}`,
+    `- Description: ${r.description}`,
+    `- Category: ${r.category}`,
+    `- Accepts: ${formatAccepts(r) || "URL input"}`,
+    `- Features: ${r.features.join(", ")}`,
+    `- Platform: ${platform}`,
+    "- Cost: Free",
+  ].join("\n");
+}
+
 function generateLlmsFullTxt() {
-  const sections = getAllRecipes()
-    .map((r) =>
-      [
-        `### ${r.name}`,
-        `- URL: ${BASE_URL}/${r.slug}`,
-        `- Description: ${r.description}`,
-        `- Category: ${r.category}`,
-        `- Accepts: ${formatAccepts(r)}`,
-        `- Features: ${r.features.join(", ")}`,
-        "- Cost: Free",
-      ].join("\n"),
-    )
+  const browserSections = getBrowserRecipes()
+    .map((r) => formatRecipe(r, "Browser"))
     .join("\n\n");
 
-  return [
+  const cliRecipes = getAllRecipes().filter((r) => !isRecipeBrowserCapable(r));
+  const cliSections = cliRecipes.map((r) => formatRecipe(r, "CLI only")).join("\n\n");
+
+  const parts = [
     "# bnto",
     "",
     "> Free tools that run in your browser. Compress images, clean CSVs, rename files, convert formats, and build custom recipes. Powered by Rust & WebAssembly. No signup, no upload. Open source.",
     "",
-    "## Recipes",
+    "## Browser Recipes",
     "",
-    sections,
-    "",
-  ].join("\n");
+    browserSections,
+  ];
+
+  if (cliSections) {
+    parts.push("", "## CLI-Only Recipes", "", cliSections);
+  }
+
+  parts.push("");
+  return parts.join("\n");
 }
 
 export function GET() {

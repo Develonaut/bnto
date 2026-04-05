@@ -9,6 +9,7 @@ import {
   RecipeCardTitle,
   RecipeCardTags,
 } from "@bnto/ui";
+import { getRecipeBySlug, isRecipeBrowserCapable } from "@bnto/registry";
 
 import { getBntoIcon } from "@/lib/bntoIcons";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
@@ -51,11 +52,18 @@ export function MarqueeRecipeCard({ slug }: { slug: string }) {
   const entry = BNTO_REGISTRY.find((e) => e.slug === slug);
   if (!entry) return null;
 
+  const recipe = getRecipeBySlug(slug);
+  const browserCapable = recipe ? isRecipeBrowserCapable(recipe) : true;
+
   return (
-    <RecipeCard href={`/${entry.slug}`} className="w-64">
+    <RecipeCard
+      href={browserCapable ? `/${entry.slug}` : undefined}
+      disabled={!browserCapable}
+      className="w-64"
+    >
       <RecipeCardHeader>
         <RecipeCardIcon icon={getBntoIcon(entry.slug)} />
-        <RecipeCardCategory>{entry.features[0]}</RecipeCardCategory>
+        <RecipeCardCategory>{browserCapable ? entry.features[0] : "CLI Only"}</RecipeCardCategory>
       </RecipeCardHeader>
       <RecipeCardContent>
         <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
