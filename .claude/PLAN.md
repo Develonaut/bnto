@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 2, 2026 (groomed — backlog audit: Popup primitive done, multi-step orchestration done, Convex cleanup mutations done, SEO unit tests done; stale items rewritten)
+**Last Updated:** April 4, 2026 (groomed — Sprint 9 W1-W2 complete, video node shipped, CLI polish prioritized over TUI, TUI deferred to own sprint)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,17 +27,19 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **v0.2.0 released (April 2026):** 14 predefined recipes (6 Tier 1 + 2 Tier 1B + 4 Tier 2 compositions + 4 Tier 3), schema-driven config on all tool pages, editor reconnected as lightweight open+export tool
+- **v0.5.0 released (April 2026):** 15 predefined recipes (6 Tier 1 + 2 Tier 1B + 4 Tier 3 + 1 CLI-only video + 2 Tier 1B compositions). Sprint 9 W1-W2 complete: dependency system, ProcessContext, video node (yt-dlp), `bnto doctor`, `--param` CLI flag, extra args pass-through
+- **v0.2.0 released (April 2026):** 14 predefined recipes, schema-driven config on all tool pages, editor reconnected as lightweight open+export tool
 - **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
 - **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
-- **Sprint 8 Waves 1-2 complete (April 2026):** 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, image-overlay/watermark) + recipe fixtures + golden tests + codegen
+- **Sprint 9 Waves 1-2 complete (April 2026):** Dependency system (`requires` on NodeMetadata), `ProcessContext` trait (NativeContext/NoopContext), `bnto doctor` command, `bnto-video` crate (video-download via yt-dlp), `InputMode` enum, `InputCardinality::Source`, `--param` CLI flag, extra args pass-through, H.264 codec preference, video title as filename
+- **Sprint 8 complete (April 2026):** 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, image-overlay/watermark) + recipe fixtures + golden tests + codegen + SEO pages + E2E
 - **Sprint 8.5 complete (March-April 2026):** Schema-driven recipe config (8.5c) + editor reconnected lightweight (8.5d) with sessionStorage persistence
-- **Editor reconnected lightweight (March 2026):** Editor routes restored in Sprint 8.5d as a lightweight open+export tool. `core.recipes` domain re-added with sessionStorage persistence (no Convex, no localStorage). Users can import/export `.bnto.json` files. Cloud-based recipe saving planned for Pro tier (accounts). Deeper editor features (code editor, expression input, edit/run mode) deferred to post-revenue.
+- **Open-source-first positioning (April 2026):** Stripped pricing page, auth surfaces, Pro references. Monetization tabled until community traction.
+- **crates.io preparation (April 2026):** All engine crates prepared for publish (v0.1.1). `cargo install bnto` path scaffolded but not yet live.
 - **Community recipes:** Contributors submit `.bnto.json` via GitHub PRs. Maintainer curates. Accepted recipes auto-propagate via the Sprint 7 discovery infrastructure.
-- **Sprint 6 (Quality & Cleanup) complete.** Error boundaries, dead code removal, Server Component audit, auto-save, Button simplification, triage batch — all done.
-- **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents), Favorites/My Recipes, all editor-specific backlog items.
+- **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents), Favorites/My Recipes, TUI (deferred to own sprint after CLI polish)
 - **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
-- **WASM engine:** 5 Rust crates, single cdylib, 1.6MB raw / 606KB gzipped
+- **WASM engine:** 6 Rust crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), single cdylib (bnto-wasm), CLI binary (bnto-cli). 1.6MB raw / 606KB gzipped
 - **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
 - **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), tag-triggered release pipeline (CI gate → Vercel preview → E2E → Lighthouse → auto-deploy Vercel + Convex to production on stable tags → GitHub Release), PostHog telemetry wired
 - **Packages:** `@bnto/core` (7 domains: recipes, executions, user, auth, telemetry, registry, flags), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/registry`, `@bnto/ui`, `@bnto/editor`, `@bnto/form`, `@bnto/i18n`
@@ -55,7 +57,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] @bnto/editor: Extracted editor package — EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy
 - [x] Playwright E2E: 27+ screenshots, user journey tests, execution flow tests, site navigation (desktop + mobile)
-- [x] Rust WASM engine: 5 crates, single cdylib, Web Worker wrapper, progress reporting, 44+ unit tests
+- [x] Rust WASM engine: 6 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), single cdylib (bnto-wasm), CLI binary (bnto-cli), Web Worker wrapper, progress reporting
 - [x] Browser execution: All 6 Tier 1 bntos client-side via WASM, ZIP download, auto-download
 - [x] Cloud execution infrastructure: R2 file transit, presigned URLs — ready for M4
 - [x] Recipe page overhaul (Sprint 2D): RecipeShell, PhaseIndicator, FileCard, RecipeConfigSection, useRecipeFlow
@@ -92,6 +94,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Release v0.2.0 (April 2026): 14 predefined recipes, schema-driven config, editor reconnect, 4 Tier 3 operations
 - [x] Editor UX polish (Sprint 7): Config panel tabs + sync status (PR #283), unified toolbar layout (PR #284), carry flow config into editor (PR #285), unified run button (PR #286), carry dropped files into editor (PR #287), fix editor reset + returnTo redirects (PR #288)
 - [x] Quality tooling: Knip dead-code detection in lefthook (PR #270), ESLint complexity rules promoted to error (PR #271), ESLint extended to all packages (PR #273), non-null assertions replaced (PR #274), SEO/README/copy improvements (PR #275), cloud→local recipe hydration (PR #276), footer links from registry (PR #277)
+- [x] Sprint 9 W1 — Dependency system: `requires: Vec<Dependency>` on `NodeMetadata`, `ProcessContext` trait (`NativeContext`/`NoopContext`), dependency checker, `bnto doctor` command (PRs #315, #318, #320)
+- [x] Sprint 9 W2 — Video node: `bnto-video` crate, `video-download` processor wrapping yt-dlp, `InputMode::Url`/`InputCardinality::Source`, `--param` CLI flag, H.264 codec preference, video title as filename, extra args pass-through, m3u8/HLS support, download verification tests (PRs #321-#329)
+- [x] Open-source-first pivot: Stripped pricing page, auth surfaces, Pro references. Monetization tabled until community traction (PR #317)
+- [x] crates.io preparation: All 6 engine crates prepared for publish at v0.1.1. `cargo install bnto` scaffolded (PRs #316, #319)
+- [x] Release v0.5.0 (April 2026): 15 predefined recipes, video-download node, extra args pass-through, dependency system
 
 ---
 
@@ -571,7 +578,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ## Phase 2: Engine Expansion (CLI-First)
 
-**Goal:** Make the bnto CLI a powerful, standalone tool. Add dependency management, new node types, and TUI. The CLI is the primary development surface — new capabilities are built and tested here before any browser/web work.
+**Goal:** Make the bnto CLI a powerful, standalone tool. Dependency management shipped, video node shipped. Next: CLI polish (list, info, progress), then codegen to propagate video node through TypeScript. TUI deferred to Sprint 10 (its own sprint with proper breakdown).
 
 **Why this over Desktop:** The next interesting recipe (download-video via yt-dlp) requires external dependencies and can't run in a browser. Instead of building a desktop wrapper (Tauri), we invest in what makes the engine powerful — local execution, composability, and the Rust CLI. Desktop is deferred to M4.
 
@@ -594,21 +601,34 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 2 (parallel — video node type)
 
-- [ ] `engine/crates/bnto-video` — `/rust-expert` — New crate: `video-download` processor wrapping yt-dlp. Purpose-built typed params: URL, format, quality, output format
-- [ ] `engine/crates/bnto-video` — `/rust-expert` — Register in `bnto-engine`, add `NodeTypeInfo` (category: "video", platforms: ["cli", "server", "desktop"])
-- [ ] `engine/crates/bnto-video` — `/rust-expert` — Golden tests with test fixtures. Recipe: `download-video.bnto.json`
+- [x] `engine/crates/bnto-video` — `/rust-expert` — New crate: `video-download` processor wrapping yt-dlp. Purpose-built typed params: URL, format, quality, output format _(PRs #321-#329)_
+- [x] `engine/crates/bnto-video` — `/rust-expert` — Register in `bnto-engine`, add `NodeTypeInfo` (category: "video", platforms: ["cli", "server", "desktop"]) _(PR #321)_
+- [x] `engine/crates/bnto-video` — `/rust-expert` — Golden tests with test fixtures. Recipe: `download-video.bnto.json` _(PR #321)_
 - [ ] Codegen — Run `task wasm:codegen` + `task recipes:generate`. Verify new video category + node type propagates through TypeScript
 
-#### Wave 3 (parallel — TUI)
-
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Interactive TUI mode (`bnto tui`). Recipe browser, file picker, progress display, results. Framework: `ratatui` + `crossterm`
-
-#### Wave 4 (parallel — CLI polish)
+#### Wave 3 (parallel — CLI polish)
 
 - [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto list` command: list available recipes with descriptions and categories
 - [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto info <recipe>` command: show recipe details, required dependencies, node types
 - [ ] `engine/crates/bnto-cli` — `/rust-expert` — Enhanced `bnto run`: progress bars per file, colored output, timing summary
 - [ ] `README.md` — Update to pitch CLI usage front and center
+
+---
+
+### Sprint 10: TUI — DEFERRED
+
+**Deferred (April 2026).** TUI is its own application — recipe browser, file picker, progress display, results panel, navigation. Needs proper sprint breakdown with multiple waves. Revisit after CLI is bomb-proof (Sprint 9 W3 complete, backlog items addressed).
+
+**Framework:** `ratatui` + `crossterm`
+
+**Scope (needs breakdown when activated):**
+
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Interactive TUI mode (`bnto tui`). Recipe browser with categories and search
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — File picker (browse filesystem, multi-select, drag semantics)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Progress display (per-file progress bars, node status)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Results panel (output files, sizes, timing, open/copy)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Navigation (tab between panels, keyboard shortcuts, help overlay)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Recipe config editing (param overrides in TUI before execution)
 
 ---
 
