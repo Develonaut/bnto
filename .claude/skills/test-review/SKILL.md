@@ -101,30 +101,30 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 - [ ] **Over-mocking internal packages** — if `engine` can call `registry` directly in tests, let it. Mock only external I/O (network, filesystem writes to real paths)
 - [ ] **Table-driven tests with complex per-row setup** — if each row needs a different setup function, use separate subtests. Tables are for functions with many input/output pairs, not for orchestrating different scenarios
 - [ ] **Testing unexported functions** — test through the public API. If you can't test behavior through the public API, the design needs refactoring
-- [ ] **Ignoring the race detector** — every `go test` must run with `-race`
+- [ ] **Ignoring clippy warnings** — all Rust code must pass `cargo clippy` clean
 
 **High-value patterns to verify:**
 
-- [ ] Every node type in `engine/pkg/node/library/` has both unit tests (isolated `Execute()`) and integration tests (fixture workflow)
-- [ ] Fixture files in `engine/tests/fixtures/workflows/` cover the recipe catalog — every recipe in `engine/pkg/menu/data/` should have a matching fixture test
-- [ ] Golden tests exist for output formats that external consumers depend on (progress messages, execution results)
-- [ ] Error paths tested — malformed input, missing files, invalid config, cancelled context
+- [ ] Every node processor in `engine/crates/bnto-{crate}/src/` has unit tests (isolated `process()`) and parameterized tests (different param values produce different outputs)
+- [ ] Recipe fixtures in `engine/recipes/` all parse and run via `run_pipeline()` — covered by `test_all_generated_recipes_parse()` and individual `test_generated_{slug}_recipe()` tests
+- [ ] Golden tests exist for every recipe — byte-exact output verification in `engine/crates/bnto-cli/tests/golden/`
+- [ ] Error paths tested — malformed input, missing files, invalid config, unsupported formats
 
-### Layer 2: Go API (`archive/api-go/`)
+### Layer 2: CLI (`engine/crates/bnto-cli/`)
 
-**Source:** Go community (httptest patterns), Speedscale, Martin Fowler
+**Source:** Rust CLI testing patterns, `assert_cmd`, golden file testing
 
-| What to test                                   | Value        | Pattern                                               | Example               |
-| ---------------------------------------------- | ------------ | ----------------------------------------------------- | --------------------- |
-| Handler request/response contract              | **Critical** | `httptest.NewRecorder` + table-driven for auth states | `handler_test.go`     |
-| Auth enforcement — missing/invalid/valid token | **Critical** | Three subtests per endpoint                           | `handler_test.go`     |
-| R2 upload/download flow                        | **High**     | Integration with mock R2 or real temp dir             | `run_transit_test.go` |
-| CORS headers                                   | **Medium**   | Assert headers present on response                    | `contract_test.go`    |
-| Error response shape                           | **Medium**   | Assert JSON error body matches contract               | —                     |
+| What to test                      | Value        | Pattern                                                   | Example           |
+| --------------------------------- | ------------ | --------------------------------------------------------- | ----------------- |
+| Recipe execution end-to-end       | **Critical** | Golden tests — byte-exact output verification             | `golden_tests.rs` |
+| Auto vs explicit iteration parity | **Critical** | Same golden output from auto and explicit loop containers | `golden_tests.rs` |
+| CLI argument parsing              | **High**     | `assert_cmd` with various arg combinations                | `cli_tests.rs`    |
+| Error messages for invalid input  | **Medium**   | Assert clean error output, no panics                      | `cli_tests.rs`    |
+| File path handling                | **Medium**   | Paths with spaces, unicode, relative paths                | —                 |
 
 **Anti-patterns to flag:**
 
-- [ ] **Testing the HTTP framework** — don't test that `http.StatusOK` equals 200 or that Go can parse JSON
+- [ ] **Testing the arg parser framework** — don't test that clap can parse flags
 - [ ] **Starting a real server with `ListenAndServe`** — use `httptest.NewServer` or `httptest.NewRecorder` instead
 - [ ] **Testing internal handler logic separately from HTTP** — the handler IS the integration. Test it through HTTP
 
@@ -350,8 +350,8 @@ Specific anti-pattern instances from the checklists above:
 ### Test Health by Layer
 
 ```
-Go Engine:        X tests | Y fixtures | Coverage: STRONG / ADEQUATE / WEAK
-Go API:           X tests | Coverage: STRONG / ADEQUATE / WEAK
+Rust Engine:      X tests | Y fixtures | Coverage: STRONG / ADEQUATE / WEAK
+CLI:              X tests | Y golden   | Coverage: STRONG / ADEQUATE / WEAK
 Convex Backend:   X tests | Coverage: STRONG / ADEQUATE / WEAK
 Core API:         X tests | Coverage: STRONG / ADEQUATE / WEAK
 Web App:          X tests | Coverage: STRONG / ADEQUATE / WEAK

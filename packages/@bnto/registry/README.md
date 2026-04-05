@@ -8,8 +8,11 @@ Public facade for the entire node system. Re-exports all types, constants, helpe
 - **Recipe system:** Owns all predefined recipe definitions, the `Recipe` type, and recipe-level validation (`validateRecipe`)
 - **Recipe utilities:** `definitionToRecipe()` (wraps definitions into recipes), `deriveAcceptSpec()` (extracts file acceptance from input nodes)
 - **Curation functions:** Stateless lookups over the recipe catalog (by slug, by category) and engine-generated node metadata
-- **Codegen:** Script to generate `.bnto.json` fixture files from TypeScript recipe definitions (consumed by Rust engine tests, CLI tests, and E2E drift checks)
 - No React, no Zustand, no state. Purely stateless functions and re-exports
+
+## Recipe Source of Truth
+
+Authoritative recipe definitions live in the **engine** (`engine/recipes/*.bnto.json`). The engine embeds them at compile time via `include_str!()`. TypeScript recipe metadata is generated from the engine's catalog snapshot via the codegen pipeline (`task wasm:codegen`).
 
 ## Dependency Chain
 
@@ -39,7 +42,7 @@ src/
 ├── nodeTypes.ts            # getAllNodeTypes(), getBrowserNodeTypes()
 ├── categories.ts           # getAllCategories()
 ├── processors.ts           # getAllProcessors()
-└── recipes/                # Predefined recipe definitions
+└── recipes/                # Predefined recipe definitions (TypeScript)
     ├── index.ts            # Barrel export for all recipes
     ├── compressImages.ts   # Tier 1 single-op recipes
     ├── resizeImages.ts
@@ -52,12 +55,7 @@ src/
     ├── compressAndRename.ts      # Tier 2 multi-node compositions
     ├── standardizeCsv.ts
     ├── defaultInputNode.ts       # Shared recipe building blocks
-    ├── defaultOutputNode.ts
-    └── generated/                # .bnto.json fixtures (codegen output)
-        ├── compress-images.bnto.json
-        └── ...
-scripts/
-└── generate-recipe-fixtures.ts   # TS recipes → JSON fixtures (task recipes:generate)
+    └── defaultOutputNode.ts
 ```
 
 ## API
@@ -89,17 +87,14 @@ import { isIoNodeType, isContainerNodeType, validateDefinition } from "@bnto/reg
 
 ## Consumers
 
-| Consumer         | Usage                                                                  |
-| ---------------- | ---------------------------------------------------------------------- |
-| `@bnto/core`     | Re-exports for runtime consumers + wraps in Zustand store              |
-| `apps/web` (SSG) | Build-time routes, metadata, llms.txt (no React context available)     |
-| `bnto-engine`    | Rust crate consumes generated `.bnto.json` fixtures via `include_str!` |
-| `bnto-cli`       | CLI integration tests load fixtures from `recipes/generated/`          |
+| Consumer         | Usage                                                              |
+| ---------------- | ------------------------------------------------------------------ |
+| `@bnto/core`     | Re-exports for runtime consumers + wraps in Zustand store          |
+| `apps/web` (SSG) | Build-time routes, metadata, llms.txt (no React context available) |
 
 ## Development
 
 ```bash
 pnpm test          # Run tests
 pnpm build         # Type-check (tsc --noEmit)
-task recipes:generate  # Regenerate .bnto.json fixtures from TS definitions
 ```

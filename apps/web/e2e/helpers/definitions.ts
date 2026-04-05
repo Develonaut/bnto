@@ -1,9 +1,8 @@
 /**
  * Definition fixture helpers — drift prevention for custom recipe journeys.
  *
- * Compares exported editor JSON against reference definition fixtures
- * in @bnto/registry/src/recipes/generated/. Both use the same .bnto.json
- * Definition format — same schema as engine recipe fixtures.
+ * Compares exported editor JSON against authoritative recipe definitions
+ * in engine/recipes/. Both use the same .bnto.json Definition format.
  */
 
 import path from "path";
@@ -11,13 +10,10 @@ import fs from "fs";
 import { expect } from "../fixtures";
 
 // ---------------------------------------------------------------------------
-// Reference fixture directory
+// Reference fixture directory — engine owns the authoritative recipe files
 // ---------------------------------------------------------------------------
 
-export const DEFINITIONS_DIR = path.resolve(
-  __dirname,
-  "../../../../packages/@bnto/registry/src/recipes/generated",
-);
+export const DEFINITIONS_DIR = path.resolve(__dirname, "../../../../engine/recipes");
 
 // ---------------------------------------------------------------------------
 // Types

@@ -96,6 +96,9 @@ jobs:
       - name: "Build: @bnto/form"
         run: pnpm --filter @bnto/form run build
 
+      - name: "Build: @bnto/ui"
+        run: pnpm --filter @bnto/ui run build
+
       - name: "Build: @bnto/editor"
         run: pnpm --filter @bnto/editor run build
 
@@ -152,6 +155,9 @@ jobs:
 
       - name: "Test: @bnto/form"
         run: pnpm --filter @bnto/form run test
+
+      - name: "Test: @bnto/ui"
+        run: pnpm --filter @bnto/ui run test
 
       - name: "Test: @bnto/editor"
         run: pnpm --filter @bnto/editor run test

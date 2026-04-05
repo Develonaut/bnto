@@ -115,25 +115,6 @@ export { HelpDialog } from "./components/HelpDialog";
 export { InputRenderer } from "./components/InputRenderer";
 export { OutputRenderer } from "./components/OutputRenderer";
 
-// --- Archive: Conveyor ---
-
-export {
-  ConveyorCanvas,
-  StationNode,
-  ConveyorEdge,
-  BeltPiece,
-  PieceShape,
-  VARIANT_PIECE_MAP,
-  SALMON_CLIP,
-} from "./components/archive/conveyor";
-export type {
-  StationData,
-  StationNodeType,
-  ConveyorEdgeData,
-  ConveyorEdgeType,
-  PieceType,
-} from "./components/archive/conveyor";
-
 // --- Adapters ---
 
 export { definitionToGraph } from "./adapters/definitionToGraph";

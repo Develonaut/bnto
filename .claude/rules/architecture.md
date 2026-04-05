@@ -3,14 +3,17 @@
 ## Layered Architecture
 
 ```
-Apps (web/desktop) -> @bnto/core -> Engine (Rust WASM)
+Consumers (CLI / web / desktop) -> Engine (Rust)
+Web-specific: Apps (web) -> @bnto/core -> Engine (Rust→WASM)
 ```
 
 Each layer only depends on layers below it. Never skip layers.
 
-> **Co-location note:** UI components and editor features are currently co-located in `apps/web/`. They will be extracted into `@bnto/ui` and `@bnto/editor` packages when the desktop app creates a real second consumer. Engine, core API, and data layer logic stays in `@bnto/core`.
+**The CLI is the primary consumer.** It links the engine directly as a native Rust binary — no adapters, no TypeScript, no WASM boundary. The web app is a secondary consumer that accesses the engine through the `@bnto/core` adapter layer (Rust→WASM). Desktop (Tauri, future) will link the engine natively like the CLI.
 
-**The key insight:** `@bnto/core` is the transport-agnostic API layer. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Tauri bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
+> **Package extraction (March 2026):** UI components and editor features were extracted from `apps/web/` into `@bnto/ui` and `@bnto/editor` packages. Page-level components remain in `apps/web/`. Engine, core API, and data layer logic stays in `@bnto/core`.
+
+**The web insight:** `@bnto/core` is the transport-agnostic API layer for web consumers. UI components have ZERO knowledge of whether they're talking to Convex (cloud) or Tauri bindings (desktop). Core exposes React hooks that internally detect the runtime environment and route requests to the correct backend.
 
 **Package naming convention:** Internal packages are named by **role**, not by technology. This ensures any technology can be swapped by rewriting the package internals without changing consumers.
 
@@ -29,7 +32,7 @@ Each layer only depends on layers below it. Never skip layers.
 - **Single-entity queries** -> React Query via `@convex-dev/react-query` bridge (caching, deduplication for self-fetching components)
 - **External APIs** (future community recipes, marketplace) -> React Query for HTTP caching
 
-**Desktop shares the web frontend:** Tauri renders the same React app in a system webview. `@bnto/core` detects the runtime and swaps the transport adapter internally. Desktop uses local filesystem directly (no R2). Engine runs as native Rust (same codebase as WASM, compiled for desktop).
+**Desktop (future):** Tauri renders the same React app in a system webview. Links the engine natively (like CLI). `@bnto/core` detects the runtime and swaps the transport adapter.
 
 ## API Abstraction
 
@@ -81,9 +84,9 @@ Apps (apps/web, apps/desktop)
 
 ## Cost-First Architecture
 
-**The user's browser is a powerful computer. Use it.**
+**Local execution is free execution.** The CLI runs on the user's machine at zero cost to us. The browser runs WASM at zero cost to us. Only managed server execution costs money.
 
-- Client-side processing where possible (file validation, preview generation)
+- Local processing first (CLI, browser WASM, desktop native)
 - No always-on compute services. Backend and hosting are serverless/on-demand
 - Every architectural decision should be tested against: "Does this cost $0? If not, can we make it cost $0?"
 
@@ -129,17 +132,26 @@ Apps (apps/web, apps/desktop)
 - **Currently:** `@convex-dev/auth`. Named by role so internals can be swapped.
 - Consumed by `@bnto/core` internals, NEVER by app code directly
 
+### `engine/crates/bnto-cli/` -- Native CLI binary (`bnto`)
+
+- **Primary consumer.** Links `bnto-engine` directly as a Rust dependency
+- Commands: `bnto run <recipe> [files...]`, `bnto list`, `bnto info <recipe>`, `bnto doctor`
+- Full system access via `ProcessContext` (run commands, temp files, env vars)
+- Golden tests as the primary determinism check for output correctness
+- Published to crates.io (`cargo install bnto-cli`)
+
 ### `apps/web/` -- Next.js application (Vercel)
 
-- Landing page (public, static/SSG routes)
-- Authenticated app routes (dashboard, workflows, executions)
+- Landing page, docs, and predefined recipe pages for SEO
+- Browser-based recipe execution (Rust→WASM, files never leave the machine)
+- Recipe editor (open + export, sessionStorage only)
 - Page composition -- imports from `@bnto/core` for data, `@bnto/ui` for components, `@bnto/editor` for recipe editing
 
-### `apps/desktop/` -- Tauri application (M3, planned)
+### `apps/desktop/` -- Tauri application (M4, backlog)
 
 - Same React frontend rendered in system webview
+- Links engine natively (like CLI) for full system access
 - `@bnto/core` detects Tauri runtime and swaps transport adapter
-- Engine runs as native Rust binary (no network, no cloud)
 
 ## Node System Layers
 
@@ -151,7 +163,7 @@ The node system spans three layers: Engine (Rust), `@bnto/nodes` (TypeScript), a
 
 **The Rust engine owns pipeline execution.** The `bnto-core` crate contains the `PipelineExecutor` -- it handles graph walking, topological ordering, container node semantics (loop/group), per-file iteration, `NodeProcessor` dispatch, and structured progress events. JS / `@bnto/core` is a thin adapter: convert browser types (File to bytes, Definition to WASM struct), make a single WASM call (`run_pipeline`), and relay progress events to the UI.
 
-This design ensures identical execution across all consumers -- browser (WASM), CLI (native), desktop (Tauri), server. See [engine-execution.md](../strategy/engine-execution.md) for the full architecture.
+This design ensures identical execution across all consumers -- CLI (native), browser (WASM), desktop (Tauri), server. See [engine-execution.md](../strategy/engine-execution.md) for the full architecture.
 
 **Async & long-running node support:** The engine must support nodes that take 2-30+ seconds (AI API calls, large HTTP requests, complex transforms). This is a prerequisite for the `ai` node type (see [bntos.md Tier 4](../strategy/bntos.md#tier-4-ai-powered-nodes-backlog--requires-async-execution)) but also benefits `http-request` and any future external API integration.
 
@@ -169,39 +181,68 @@ This design ensures identical execution across all consumers -- browser (WASM), 
 
 ## Data Flow
 
-### Abstraction Layer (how code sees it)
+### Engine Consumers
 
-Components never know which backend they're talking to. `@bnto/core` detects the runtime and swaps adapters transparently.
+The Rust engine is the core. Consumers access it through different paths depending on the target:
 
 ```
-+--------------------------------------------------------------+
-|                    Apps (same React code)                      |
-|  +--------------+  +--------------+  +--------------+         |
-|  |  Next.js Web |  | Tauri Desktop|  |   CLI        |         |
-|  |  (Vercel)    |  | (webview)    |  |   (Terminal) |         |
-|  +------+-------+  +------+-------+  +------+-------+         |
-|         |                  |                  |                |
-|         +--------+---------+                  |                |
-|                  v                            |                |
-|  +---------------------------------------+    |                |
-|  |         @bnto/core                    |    |                |
-|  |  +-------------+ +-------------+     |    |                |
-|  |  |   Zustand    | | React Query |     |    |                |
-|  |  |(client state)| |(server state)|    |    |                |
-|  |  +-------------+ +------+------+     |    |                |
-|  |          +---------------+            |    |                |
-|  |          v               v            |    |                |
-|  |  +------------+  +------------+       |    |                |
-|  |  |  Convex    |  |   Tauri    |       |    |                |
-|  |  |  adapter   |  |   adapter  |       |    |                |
-|  |  +-----+------+  +-----+------+       |    |                |
-|  +--------+---------------+----------+    |                |
-|           v               v               v                |
-|    +----------+    +----------+    +----------+             |
-|    | Convex   |    | Rust     |    | Rust     |             |
-|    | (cloud)  |    | (native) |    |  (CLI)   |             |
-|    +----------+    +----------+    +----------+             |
-+--------------------------------------------------------------+
+                          +---------------------+
+                          |    Rust Engine       |
+                          |  (bnto-engine crate) |
+                          +-----+-------+-------+
+                                |       |
+               +----------------+       +----------------+
+               v                                         v
+    +---------------------+                   +---------------------+
+    |    CLI (primary)    |                   |    WASM (browser)   |
+    |   bnto-cli crate    |                   |   bnto-wasm crate   |
+    |   Links engine      |                   |   wasm-pack build   |
+    |   directly as Rust  |                   +----------+----------+
+    +---------------------+                              |
+                                                         v
+                                              +---------------------+
+                                              |    @bnto/core       |
+                                              |  (TypeScript API)   |
+                                              |  Web Worker + WASM  |
+                                              +----------+----------+
+                                                         |
+                                              +----------+----------+
+                                              |    Next.js Web      |
+                                              |    (apps/web)       |
+                                              +---------------------+
+```
+
+**CLI** links `bnto-engine` as a native Rust dependency — zero overhead, full system access, no WASM boundary. This is the primary development and execution path.
+
+**Browser** compiles `bnto-engine` to WASM via `bnto-wasm` (single cdylib). `@bnto/core` provides the TypeScript adapter layer (Web Worker, progress relay, file conversion). The web app is a secondary consumer.
+
+**Desktop** (future, Tauri) will link `bnto-engine` natively like the CLI, running inside a system webview with the same React frontend.
+
+### Web Abstraction Layer
+
+For the web consumer, `@bnto/core` provides transport-agnostic adapters so UI components never know which backend they're talking to:
+
+```
++--------------------------------------------------+
+|               Next.js Web (apps/web)              |
+|                       |                           |
+|                       v                           |
+|              @bnto/core                           |
+|    +-------------+ +-------------+                |
+|    |   Zustand    | | React Query |                |
+|    |(client state)| |(server state)|               |
+|    +------+------+ +------+------+                |
+|           v               v                       |
+|    +------------+  +------------+                 |
+|    |  Convex    |  |  Browser   |                 |
+|    |  adapter   |  |  adapter   |                 |
+|    +-----+------+  +-----+------+                 |
+|          v               v                        |
+|    +----------+    +----------+                   |
+|    | Convex   |    | WASM     |                   |
+|    | (cloud)  |    | (engine) |                   |
+|    +----------+    +----------+                   |
++--------------------------------------------------+
 ```
 
 ### Cloud Execution (M4)

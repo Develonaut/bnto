@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "mdx", "ts", "tsx"],
-  // Standalone output for Docker (Railway). Vercel ignores this — it uses its own adapter.
+  // Standalone output for containerized deploys (Tauri, self-hosted). Vercel ignores this — it uses its own adapter.
   output: "standalone",
   outputFileTracingRoot: resolve(__dirname, "../../"),
   transpilePackages: [

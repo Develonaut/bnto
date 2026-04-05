@@ -1,7 +1,9 @@
-# Pricing Model — Operational Rules
+# Pricing Model — Reference (TABLED)
 
-**Last Updated:** March 3, 2026
-**Status:** Active — operational rules for agents writing code
+**Last Updated:** April 5, 2026
+**Status:** TABLED — monetization paused as of April 2026. This document is preserved as a reference for when revenue strategy is revisited. No Stripe, no Pro tier, no feature gates until the engine has proven value and community adoption. See [ROADMAP.md](../ROADMAP.md) for current strategic direction.
+
+**Previous status:** Active operational rules (March 2026)
 **Full strategy:** `pricing-strategy.md` in private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) — business rationale, conversion psychology, revenue projections
 **Feature tiers & conversion funnel:** `feature-funnel.md` in private business docs — surface-by-surface breakdown, concrete limits, AccountGate placement
 
@@ -9,9 +11,9 @@
 
 ## The Dividing Line
 
-> **Nodes that can run in your browser are free. Nodes that need a server cost money.**
+> **Nodes that run locally are free. Nodes that need a managed server cost money.**
 >
-> The node _definitions_ are always available to everyone (they're in `@bnto/nodes`, MIT licensed). The _execution_ of server nodes is what costs money.
+> The node _definitions_ are always available to everyone (they're in `@bnto/nodes`, MIT licensed). The _execution_ of server nodes is what would cost money when monetization is reactivated. "Locally" means CLI, browser (WASM), and desktop — all cost $0 to us.
 
 ---
 
@@ -19,16 +21,16 @@
 
 Use these terms consistently across all code, docs, and UI copy.
 
-| Term                  | Definition                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------ |
-| **Node**              | An atomic processing unit. One operation: compress, resize, rename, transform, etc.  |
-| **Node type**         | A category of node: `image`, `csv`, `file`, `transform`, `ai`, `shell-command`, etc. |
-| **Recipe**            | A `.bnto.json` composition of one or more nodes into a pipeline.                     |
-| **Predefined recipe** | A recipe curated by bnto, shipped with the product, with its own SEO page.           |
-| **Custom recipe**     | A recipe created by a user in the recipe editor.                                     |
-| **Browser node**      | A node that executes 100% client-side (Rust WASM or JS). Cost to bnto: $0.           |
-| **Server node**       | A node that requires server-side execution (Railway). Cost to bnto: real CPU time.   |
-| **Execution**         | A single run of a recipe against input files.                                        |
+| Term                  | Definition                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| **Node**              | An atomic processing unit. One operation: compress, resize, rename, transform, etc.        |
+| **Node type**         | A category of node: `image`, `csv`, `file`, `transform`, `ai`, `shell-command`, etc.       |
+| **Recipe**            | A `.bnto.json` composition of one or more nodes into a pipeline.                           |
+| **Predefined recipe** | A recipe curated by bnto, shipped with the product, with its own SEO page.                 |
+| **Custom recipe**     | A recipe created by a user in the recipe editor.                                           |
+| **Local node**        | A node that executes locally (CLI native, browser WASM, desktop native). Cost to bnto: $0. |
+| **Server node**       | A node that requires managed server-side execution. Cost to bnto: real CPU time.           |
+| **Execution**         | A single run of a recipe against input files.                                              |
 
 **Deprecated terms:** "flow," "workflow," "predefined Bnto" (as a vague catch-all). Use "recipe" for the `.bnto.json` composition. Use "node" for the atomic unit. Use "execution" for a run.
 
@@ -36,10 +38,10 @@ Use these terms consistently across all code, docs, and UI copy.
 
 ## Node Classification
 
-| Category          | Node Types                                                    | Execution                    | User Access              |
-| ----------------- | ------------------------------------------------------------- | ---------------------------- | ------------------------ |
-| **Browser nodes** | `image`, `csv`, `file`, `transform`, `archive`, `pdf`         | Client-side (Rust WASM / JS) | Free, unlimited, forever |
-| **Server nodes**  | `ai`, `shell-command`, `video`, `http-request` (unrestricted) | Server-side (Railway)        | Pro tier, usage-based    |
+| Category         | Node Types                                                     | Execution                         | User Access              |
+| ---------------- | -------------------------------------------------------------- | --------------------------------- | ------------------------ |
+| **Local nodes**  | `image`, `csv`, `file`, `video`, `transform`, `archive`, `pdf` | Local (CLI native / browser WASM) | Free, unlimited, forever |
+| **Server nodes** | `ai`, `shell-command`, `http-request` (unrestricted)           | Server-side (M4, technology TBD)  | Pro tier, usage-based    |
 
 **On desktop, everything is free** — including AI (BYOK) and shell-command.
 

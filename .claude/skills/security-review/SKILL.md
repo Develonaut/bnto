@@ -5,7 +5,7 @@ description: Security posture review across codebase, cloud services, and attack
 
 # Security Review
 
-Comprehensive security audit of the bnto project across all surfaces: codebase, Go API, Convex functions, cloud infrastructure (Cloudflare, Railway, Vercel), GitHub repo, and client-side attack vectors.
+Comprehensive security audit of the bnto project across all surfaces: codebase, Rust engine (CLI + WASM), Convex functions, cloud infrastructure (Vercel, Convex), GitHub repo, and client-side attack vectors.
 
 **The repo is PUBLIC.** Every file, every commit, every `.claude/` document is visible to anyone. All checks below must be evaluated with that in mind — infrastructure identifiers, business strategy details, internal notes, and git history are all exposed.
 
@@ -21,7 +21,7 @@ Before reviewing anything, read these files to understand the architecture and k
 .claude/rules/auth-routing.md              # Auth routing model (proxy, middleware, cookies)
 .claude/environment-variables.md           # All env vars, where they're configured
 .claude/rules/convex.md                    # Convex function standards
-.claude/rules/code-standards.md             # Code standards (includes Go conventions)
+.claude/rules/code-standards.md             # Code standards
 ```
 
 **Read ALL of these files now.** The audit sections below reference these documents. You need the full picture before scanning.
@@ -39,7 +39,7 @@ Before reviewing anything, read these files to understand the architecture and k
 | `packages/core/`                                  | `/core-architect`    |
 | `packages/@bnto/backend/`, `packages/@bnto/auth/` | `/backend-engineer`  |
 
-**Invoke `/security-engineer` and all matching domain persona skills now.** The security persona gives you the adversarial mindset and cross-cutting awareness. The domain personas give you package-specific patterns, gotchas, and quality standards — e.g., Rust `unsafe` blocks, Go context propagation and error wrapping, React XSS vectors, Convex auth enforcement patterns. A full security audit requires both perspectives.
+**Invoke `/security-engineer` and all matching domain persona skills now.** The security persona gives you the adversarial mindset and cross-cutting awareness. The domain personas give you package-specific patterns, gotchas, and quality standards — e.g., Rust `unsafe` blocks, React XSS vectors, Convex auth enforcement patterns. A full security audit requires both perspectives.
 
 ---
 
@@ -53,11 +53,11 @@ Search for patterns that indicate hardcoded secrets:
 
 ```
 # API keys, tokens, passwords
-!grep -rn "sk[-_]" --include="*.ts" --include="*.go" --include="*.json" --exclude-dir=node_modules --exclude-dir=.next
-!grep -rn "secret.*=.*['\"]" --include="*.ts" --include="*.go" --include="*.env*" --exclude-dir=node_modules
-!grep -rn "password.*=.*['\"]" --include="*.ts" --include="*.go" --exclude-dir=node_modules
-!grep -rn "Bearer " --include="*.ts" --include="*.go" --exclude-dir=node_modules
-!grep -rn "authorization.*:" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated
+!grep -rn "sk[-_]" --include="*.ts" --include="*.rs" --include="*.json" --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=target
+!grep -rn "secret.*=.*['\"]" --include="*.ts" --include="*.rs" --include="*.env*" --exclude-dir=node_modules --exclude-dir=target
+!grep -rn "password.*=.*['\"]" --include="*.ts" --include="*.rs" --exclude-dir=node_modules --exclude-dir=target
+!grep -rn "Bearer " --include="*.ts" --include="*.rs" --exclude-dir=node_modules --exclude-dir=target
+!grep -rn "authorization.*:" --include="*.ts" --include="*.rs" --exclude-dir=node_modules --exclude-dir=_generated --exclude-dir=target
 ```
 
 ### 1b: Environment files committed to git
@@ -88,55 +88,37 @@ Check `.claude/environment-variables.md` and other docs for actual secret values
 
 - Variable names, deployment names, project IDs = **OK** (public identifiers)
 - Actual secret values, access keys, tokens = **CRITICAL**
-- Cloudflare tunnel credentials should be in `~/.cloudflared/` only, never in repo
+- No infrastructure credentials or tokens committed to the repo
 
 ---
 
-## Section 2: Go API Security
+## Section 2: CLI & Engine Security
 
-The Go API (`archive/api-go/`) is the cloud execution endpoint on Railway. It receives workflow definitions and executes them.
+The Rust engine powers both the CLI (`bnto-cli`) and browser execution (WASM). The CLI has full filesystem access — it's the highest-privilege execution target.
 
-### 2a: Authentication & authorization
+### 2a: Recipe definition trust
 
-Read `archive/api-go/internal/server/server.go` and all handler files in `archive/api-go/internal/handler/`.
+Read `engine/crates/bnto-engine/src/` for definition parsing:
 
-Check:
+- [ ] **Recipe definitions are validated before execution** — schema validation, known node types, valid connections
+- [ ] **Malformed `.bnto.json` files produce clean errors** — no panics on untrusted input
+- [ ] **No `unwrap()` on values derived from recipe definitions** — use `?` or `expect()` with descriptive messages
 
-- [ ] **Do endpoints require authentication?** Currently, the Go API has no auth layer — Convex actions call it server-to-server. Is this acceptable? Document the trust model
-- [ ] **Is the Go API publicly accessible?** If Railway exposes it to the internet, anyone can POST workflow definitions. Check if Railway has network restrictions or if auth middleware is needed
-- [ ] **Rate limiting** — is there any? Without it, the public endpoint is vulnerable to DoS via expensive workflow executions
+### 2b: CLI filesystem security
 
-### 2b: CORS configuration
+Read `engine/crates/bnto-cli/src/`:
 
-Read the `cors()` middleware in `server.go`:
+- [ ] **File paths from CLI args are sanitized** — no path traversal via `../` in output directories
+- [ ] **Output files don't escape the working directory** — verify output paths are resolved relative to CWD
+- [ ] **Filenames from input files are sanitized before use in output** — prevent directory traversal via crafted filenames
+- [ ] **No shell command injection** — if any node type executes external commands, arguments must be passed as arrays, not interpolated into shell strings
 
-- [ ] **`Access-Control-Allow-Origin: *`** — is this intentional? Document whether the Go API is only called server-to-server (Convex actions) or also from browsers
-- [ ] If server-to-server only, CORS headers are unnecessary (they only affect browsers). Consider removing them or restricting to specific origins
-- [ ] If browser access is needed, restrict to `https://bnto.io`, `https://*.vercel.app`, `http://localhost:3000`
+### 2c: Engine error handling
 
-### 2c: Input validation
-
-Read all handler files (`run.go`, `validate.go`, `workflow.go`, `execution.go`):
-
-- [ ] **Request body size limits** — is `http.MaxBytesReader` used? Without it, an attacker can send a multi-GB JSON body to exhaust memory
-- [ ] **JSON decoding** — is `DisallowUnknownFields()` set? (Check `decodeBody` in `response.go`)
-- [ ] **Timeout enforcement** — can a caller set an arbitrarily long timeout? What's the max?
-- [ ] **Workflow definition validation** — are definitions validated before execution? Does the engine reject unknown node types, malformed configs?
-
-### 2d: Execution sandboxing
-
-Read `run.go` for the execution flow:
-
-- [ ] **Temp directory cleanup** — are temp dirs always cleaned up (even on panic)?
-- [ ] **Environment variable isolation** — the `envMu` mutex serializes executions using env vars. Is this safe? Could a race condition leak one execution's file paths to another?
-- [ ] **File path traversal** — when downloading from R2, could a malicious session ID or filename cause path traversal? (e.g., `../../etc/passwd`)
-- [ ] **Resource limits** — is there a max execution time? Max memory? Max output file size?
-- [ ] **Shell command injection** — if the engine has a shell/command node type, are commands sanitized?
-
-### 2e: Error information disclosure
-
-- [ ] **Do error responses leak internal paths, stack traces, or implementation details?** Check all `writeError` calls
-- [ ] **Are Go panics caught?** An unrecovered panic returns a bare 500 with no body, which is fine. But does the Railway log include the full stack trace?
+- [ ] **No `unsafe` blocks** without explicit justification and safety comments
+- [ ] **Panic hook configured for WASM** — `console_error_panic_hook` for debuggable stack traces
+- [ ] **Error types are domain-specific** — `thiserror` derive on enum variants, not string errors
+- [ ] **No secret or path information leaked in error messages** — errors visible to users in both CLI output and browser console
 
 ---
 
@@ -267,32 +249,11 @@ Check:
 - [ ] **No preview deployment leaks** — preview deployments on PRs could expose the app to unreviewed code. Are preview deployments restricted?
 - [ ] **Build logs** — Vercel build logs could contain env var values if they're echoed. Are logs public?
 
-### 5c: Railway
-
-- [ ] **Network access** — is the Go API endpoint publicly accessible or restricted to Convex's IP range?
-- [ ] **Environment variables** — R2 credentials are set as Railway variables (not in code). Verified
-- [ ] **Health check** — `/health` endpoint exists and is configured in `railway.toml`
-- [ ] **Restart policy** — `ON_FAILURE` with max retries prevents infinite crash loops
-
-### 5d: Cloudflare R2
-
-- [ ] **R2 API tokens** — scoped to bnto buckets only (Object Read & Write), not account-wide
-- [ ] **Bucket access** — are buckets public or private? They should be private (presigned URLs only)
-- [ ] **Separate dev/prod buckets** — `bnto-transit-dev` vs `bnto-transit`. Verified in env docs
-- [ ] **Object lifecycle** — 1-hour TTL on transit objects. Is this enforced via R2 lifecycle rules or just application-level cleanup?
-- [ ] **CORS on R2 bucket** — browser uploads via presigned URLs need CORS configured on the bucket. Is it restricted to `bnto.io` and `localhost`?
-
-### 5e: Convex deployment
+### 5c: Convex deployment
 
 - [ ] **Dev vs prod deployments** — separate, with separate env vars
 - [ ] **Convex dashboard access** — who has access? Is 2FA enabled?
 - [ ] **No sensitive data in Convex function logs** — check if error messages or execution results leak PII
-
-### 5f: Cloudflare tunnel (dev only)
-
-- [ ] **Tunnel credentials** — in `~/.cloudflared/` only, never in repo
-- [ ] **Tunnel URL** — `api-dev.bnto.io` points to localhost. Is this URL accessible when the tunnel is down? (Should 502)
-- [ ] **Not used in production** — prod uses Railway directly
 
 ---
 
@@ -302,15 +263,14 @@ Check:
 
 ```
 !cd apps/web && pnpm audit --audit-level=high 2>/dev/null | head -30
-!cd /Users/ryan/Code/bnto && govulncheck ./engine/... 2>/dev/null || echo "govulncheck not installed — run: go install golang.org/x/vuln/cmd/govulncheck@latest"
-!cd /Users/ryan/Code/bnto && govulncheck ./archive/api-go/... 2>/dev/null || echo "govulncheck not installed"
+!cd /Users/ryan/Code/bnto/engine && cargo audit 2>/dev/null || echo "cargo-audit not installed — run: cargo install cargo-audit"
 ```
 
 ### 6b: Dependency review
 
 - [ ] **No unnecessary dependencies** — compare `package.json` deps against actual imports
-- [ ] **Go dependencies minimal** — check `archive/engine-go/go.mod` and `archive/api-go/go.mod`
-- [ ] **Lock files committed** — `pnpm-lock.yaml` and `go.sum` should be in git
+- [ ] **Rust dependencies minimal** — check `engine/Cargo.toml` workspace deps
+- [ ] **Lock files committed** — `pnpm-lock.yaml` and `Cargo.lock` should be in git
 
 ### 6c: Supply chain
 
@@ -326,9 +286,9 @@ The repo IS public. Every check below applies NOW, not as a future consideration
 ### 7a: Sensitive content in code
 
 ```
-!grep -rn "TODO.*secret\|TODO.*credential\|TODO.*password\|TODO.*token\|TODO.*key" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated
-!grep -rn "HACK\|FIXME\|XXX" --include="*.ts" --include="*.go" --exclude-dir=node_modules --exclude-dir=_generated | head -20
-!grep -rn "competitor\|pricing\|revenue\|valuation" --include="*.ts" --include="*.go" --include="*.md" --exclude-dir=node_modules --exclude-dir=_generated | head -20
+!grep -rn "TODO.*secret\|TODO.*credential\|TODO.*password\|TODO.*token\|TODO.*key" --include="*.ts" --include="*.rs" --exclude-dir=node_modules --exclude-dir=_generated --exclude-dir=target
+!grep -rn "HACK\|FIXME\|XXX" --include="*.ts" --include="*.rs" --exclude-dir=node_modules --exclude-dir=_generated --exclude-dir=target | head -20
+!grep -rn "competitor\|pricing\|revenue\|valuation" --include="*.ts" --include="*.rs" --include="*.md" --exclude-dir=node_modules --exclude-dir=_generated --exclude-dir=target | head -20
 ```
 
 ### 7b: Test fixtures
@@ -355,9 +315,8 @@ After completing all checks, produce a summary table:
 | Surface               | Risk Level | Key Findings                                  |
 |-----------------------|------------|-----------------------------------------------|
 | Secret Management     | ...        | ...                                           |
-| Go API Auth           | ...        | ...                                           |
-| Go API Input          | ...        | ...                                           |
-| Go API Execution      | ...        | ...                                           |
+| CLI Security          | ...        | ...                                           |
+| Engine Error Handling  | ...        | ...                                           |
 | Convex Auth           | ...        | ...                                           |
 | Convex Input          | ...        | ...                                           |
 | Convex Uploads        | ...        | ...                                           |
@@ -366,8 +325,6 @@ After completing all checks, produce a summary table:
 | Web App Auth          | ...        | ...                                           |
 | GitHub Repo           | ...        | ...                                           |
 | Vercel                | ...        | ...                                           |
-| Railway               | ...        | ...                                           |
-| Cloudflare R2         | ...        | ...                                           |
 | Convex Deployment     | ...        | ...                                           |
 | Dependencies          | ...        | ...                                           |
 | Open Source Readiness  | ...        | ...                                           |

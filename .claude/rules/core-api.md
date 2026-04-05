@@ -9,7 +9,7 @@ clients (public API)  ->  queries (read-path)  +  services (write-path)  ->  ada
 - **Clients** -- Domain-namespaced public API. `core.recipes`, `core.executions`, `core.auth`. Compose queries, services, and each other. Handle cross-domain side effects. Receive services via constructor injection
 - **Queries** -- Pure read-path functions. Query option construction with `select` transforms. One file per domain (e.g., `queries/executionQueries.ts`). No side effects, no state mutation
 - **Services** -- Single-domain write-path logic. Mutations, cache invalidation, infrastructure lifecycle (e.g., lazy engine init). **Services do NOT call other services.** Cross-domain orchestration lives in clients only
-- **Adapters** -- Backend-specific bridge. Currently Convex (web) + browser (WASM engine, Web Worker), Tauri adapter planned (desktop). The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
+- **Adapters** -- Backend-specific bridge. Currently Convex (web data) and browser (WASM engine via Web Worker). Note: Desktop (Tauri) and CLI link the engine natively — they do not use `@bnto/core`. This package serves web consumers only. The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
 
 **Node system re-exports:** Core re-exports all node system types, constants, and functions from `@bnto/registry` (which in turn re-exports from `@bnto/nodes`). This allows the editor and apps to import everything from `@bnto/core` — one import source for all runtime needs. See [architecture.md](architecture.md#import-boundary-rules).
 
@@ -126,7 +126,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 
 The execution API accepts a **self-describing definition**. It doesn't know or care where the definition came from (predefined, custom, marketplace). The definition contains its own metadata (slug, name, nodes).
 
-**Engine owns pipeline execution.** `core.executions.runPipeline()` converts browser types (File to bytes, Definition to WASM struct) and delegates to a single WASM call (`run_pipeline`). The Rust engine handles graph walking, file iteration, container semantics, and progress events internally. The JS-side `executePipeline.ts` orchestrator (which loops over files and calls per-file WASM functions) is **deprecated** in favor of the Rust executor. See [engine-execution.md](../strategy/engine-execution.md).
+**Engine owns pipeline execution.** The Rust engine handles graph walking, file iteration, container semantics, and progress events internally. In the browser, `core.executions.runPipeline()` converts browser types (File to bytes, Definition to WASM struct) and delegates to a single WASM call. The CLI calls the same engine natively. See [engine-execution.md](../strategy/engine-execution.md).
 
 ```typescript
 // GOOD -- execution is definition-agnostic
@@ -142,15 +142,15 @@ core.executions.startPredefined({ slug: "compress-images", definition, sessionId
 
 The `core` singleton exposes exactly 7 top-level domains:
 
-| Domain            | Responsibility                                                | Key methods                                                                                    |
-| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `core.recipes`    | Recipe definitions (predefined or user-created)               | `listQueryOptions()`, `save()`, `remove()`, `run()`                                            |
-| `core.executions` | Unified execution -- delegates to engine via single WASM call | `createExecution()`, `useExecutionState()`, `isCapable()`, `downloadResult()`, `runPipeline()` |
-| `core.user`       | Profile + usage stats (absorbed analytics)                    | `meQueryOptions()`, `usageQueryOptions()`, `useCurrentUser()`                                  |
-| `core.auth`       | Session state + auth actions (absorbed session)               | `useReady()`, `useIsAuthenticated()`, `useAuth()`, `useSignOut()`                              |
-| `core.telemetry`  | Product event tracking (PostHog)                              | `capture()`, `identify()`, `reset()`                                                           |
-| `core.registry`   | Predefined recipes + node type metadata (read-only)           | `getRecipes()`, `getNodeTypes()`, `getCategories()`, `useRecipes()`, `useNodeTypes()`          |
-| `core.flags`      | Feature flags + A/B testing (PostHog)                         | `isEnabled()`, `getVariant()`, `getResult()`, `useFlag()`, `useVariant()`, `useFlagResult()`   |
+| Domain            | Responsibility                                                                                                  | Key methods                                                                                    |
+| ----------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `core.recipes`    | Recipe definitions (predefined or user-created)                                                                 | `listQueryOptions()`, `save()`, `remove()`, `run()`                                            |
+| `core.executions` | Execution control -- converts API types to engine input, delegates to engine (WASM for web, native for desktop) | `createExecution()`, `useExecutionState()`, `isCapable()`, `downloadResult()`, `runPipeline()` |
+| `core.user`       | Profile + usage stats (absorbed analytics)                                                                      | `meQueryOptions()`, `usageQueryOptions()`, `useCurrentUser()`                                  |
+| `core.auth`       | Session state + auth actions (absorbed session)                                                                 | `useReady()`, `useIsAuthenticated()`, `useAuth()`, `useSignOut()`                              |
+| `core.telemetry`  | Product event tracking (PostHog)                                                                                | `capture()`, `identify()`, `reset()`                                                           |
+| `core.registry`   | Predefined recipes + node type metadata (read-only)                                                             | `getRecipes()`, `getNodeTypes()`, `getCategories()`, `useRecipes()`, `useNodeTypes()`          |
+| `core.flags`      | Feature flags + A/B testing (PostHog)                                                                           | `isEnabled()`, `getVariant()`, `getResult()`, `useFlag()`, `useVariant()`, `useFlagResult()`   |
 
 **Removed from public API:** `core.wasm` (→ executions), `core.recipe` (→ app layer), `core.analytics` (→ user), `core.session` (→ auth)
 

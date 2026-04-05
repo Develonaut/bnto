@@ -33,13 +33,13 @@ Engine ParameterDef (placeholder: "{{name}}-compressed.{{ext}}")
 
 ### Template syntax patterns in the codebase
 
-| Pattern | Example | Where used |
-|---------|---------|------------|
-| **Variable substitution** | `{{name}}`, `{{ext}}`, `{{index}}`, `{{date}}` | File rename pattern |
-| **Context references** | `{{.INPUT_DIR}}`, `{{.OUTPUT_DIR}}`, `{{.item}}` | Go engine path templates |
-| **Function calls** | `{{index . "list-files" "files"}}` | Loop item source |
-| **Compound templates** | `{{.OUTPUT_DIR}}/renamed-{{basename .item}}` | Multi-expression paths |
-| **Expr conditions** | `counter < 10`, `item.status == 'done'` | Loop break conditions |
+| Pattern                   | Example                                          | Where used               |
+| ------------------------- | ------------------------------------------------ | ------------------------ |
+| **Variable substitution** | `{{name}}`, `{{ext}}`, `{{index}}`, `{{date}}`   | File rename pattern      |
+| **Context references**    | `{{.INPUT_DIR}}`, `{{.OUTPUT_DIR}}`, `{{.item}}` | Go engine path templates |
+| **Function calls**        | `{{index . "list-files" "files"}}`               | Loop item source         |
+| **Compound templates**    | `{{.OUTPUT_DIR}}/renamed-{{basename .item}}`     | Multi-expression paths   |
+| **Expr conditions**       | `counter < 10`, `item.status == 'done'`          | Loop break conditions    |
 
 Today, users see these as opaque strings. There's no way to know what variables are available without reading documentation or the placeholder text.
 
@@ -61,13 +61,13 @@ pub template_variables: Option<Vec<TemplateVariable>>,
 
 Where `TemplateVariable` would declare:
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `name` | `String` | Variable name (`name`, `ext`, `index`) |
-| `label` | `String` | Human-readable label ("Original filename") |
-| `description` | `String` | What this variable contains |
-| `source` | `VariableSource` | Where it comes from (file metadata, upstream node output, loop context) |
-| `example` | `Option<String>` | Example value ("photo-001") |
+| Field         | Type             | Purpose                                                                 |
+| ------------- | ---------------- | ----------------------------------------------------------------------- |
+| `name`        | `String`         | Variable name (`name`, `ext`, `index`)                                  |
+| `label`       | `String`         | Human-readable label ("Original filename")                              |
+| `description` | `String`         | What this variable contains                                             |
+| `source`      | `VariableSource` | Where it comes from (file metadata, upstream node output, loop context) |
+| `example`     | `Option<String>` | Example value ("photo-001")                                             |
 
 This metadata would flow through the same codegen pipeline as everything else: engine `metadata()` impl → `catalog.snapshot.json` → `generate-from-catalog.ts` → TypeScript types. The editor reads from generated types, never hardcodes variable lists.
 
@@ -81,19 +81,19 @@ Every major workflow/automation tool has solved expression inputs. The solutions
 
 ### Pill Token Pattern (mainstream tools)
 
-| Tool | Input UX | Variable Discovery | Progressive Disclosure |
-|------|----------|-------------------|----------------------|
-| **Zapier** | Pill tokens inline in text field. Click a pill to insert `{{step.field}}`. Pills are color-coded by source step. | Data picker panel — tree view of upstream step outputs. Search + filter. | Fields are simple text by default. "Use a Custom Value" reveals the token picker. |
-| **Make.com** | Color-coded pill bubbles inside a rich text input. Each pill shows the source module name + field path. Drag-and-drop from mapping panel. | Right-side mapping panel always visible during field editing. Shows all available modules and their outputs as a navigable tree. | Toggle between "Map" mode (pills + expressions) and plain text. Simple fields start as plain text. |
-| **Apple Shortcuts** | Magic Variables — tappable pill tokens with icons. Variables auto-suggested from upstream actions. Long-press to drill into fields. | Inline suggestions bar above keyboard. "Select Magic Variable" view shows all available variables with previews of their current values. | Actions show structured controls by default. Variables only appear when the user taps into a field that accepts them. |
-| **Power Automate** | `/` shortcut opens dynamic content picker with type filtering. Tokens insert as labeled pills. Expression editor for complex formulas. | Dynamic content panel — grouped by trigger/action, searchable, shows data type. Expression tab for functions (`concat()`, `if()`, etc.). | Simple fields stay simple. "Add dynamic content" button or `/` shortcut reveals the picker only when needed. |
+| Tool                | Input UX                                                                                                                                  | Variable Discovery                                                                                                                       | Progressive Disclosure                                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Zapier**          | Pill tokens inline in text field. Click a pill to insert `{{step.field}}`. Pills are color-coded by source step.                          | Data picker panel — tree view of upstream step outputs. Search + filter.                                                                 | Fields are simple text by default. "Use a Custom Value" reveals the token picker.                                     |
+| **Make.com**        | Color-coded pill bubbles inside a rich text input. Each pill shows the source module name + field path. Drag-and-drop from mapping panel. | Right-side mapping panel always visible during field editing. Shows all available modules and their outputs as a navigable tree.         | Toggle between "Map" mode (pills + expressions) and plain text. Simple fields start as plain text.                    |
+| **Apple Shortcuts** | Magic Variables — tappable pill tokens with icons. Variables auto-suggested from upstream actions. Long-press to drill into fields.       | Inline suggestions bar above keyboard. "Select Magic Variable" view shows all available variables with previews of their current values. | Actions show structured controls by default. Variables only appear when the user taps into a field that accepts them. |
+| **Power Automate**  | `/` shortcut opens dynamic content picker with type filtering. Tokens insert as labeled pills. Expression editor for complex formulas.    | Dynamic content panel — grouped by trigger/action, searchable, shows data type. Expression tab for functions (`concat()`, `if()`, etc.). | Simple fields stay simple. "Add dynamic content" button or `/` shortcut reveals the picker only when needed.          |
 
 ### Code Editor Pattern (developer tools)
 
-| Tool | Input UX | Variable Discovery | Progressive Disclosure |
-|------|----------|-------------------|----------------------|
-| **n8n** | Fixed/Expression toggle per field. Fixed = structured control (dropdown, number). Expression = Monaco-like code editor with syntax highlighting. | Expression editor shows available variables as completions. `$json`, `$node["name"].json`, `$input` etc. | Every field has a small toggle icon. Most users stay in Fixed mode. Expression mode is explicitly opt-in. |
-| **Retool** | Every input is a code-aware text field with `{{ }}` syntax highlighting. Autocomplete powered by the app's data model. | Autocomplete dropdown with all available variables, queries, and functions. IDE-style documentation popover. | No progressive disclosure — every field is always expression-capable. Assumes developer audience. |
+| Tool       | Input UX                                                                                                                                         | Variable Discovery                                                                                           | Progressive Disclosure                                                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| **n8n**    | Fixed/Expression toggle per field. Fixed = structured control (dropdown, number). Expression = Monaco-like code editor with syntax highlighting. | Expression editor shows available variables as completions. `$json`, `$node["name"].json`, `$input` etc.     | Every field has a small toggle icon. Most users stay in Fixed mode. Expression mode is explicitly opt-in. |
+| **Retool** | Every input is a code-aware text field with `{{ }}` syntax highlighting. Autocomplete powered by the app's data model.                           | Autocomplete dropdown with all available variables, queries, and functions. IDE-style documentation popover. | No progressive disclosure — every field is always expression-capable. Assumes developer audience.         |
 
 ### Key Patterns
 
@@ -202,12 +202,12 @@ This follows the established pattern: engine declares capabilities, codegen brid
 
 ### Variable sources
 
-| Source | Description | Available when |
-|--------|-------------|---------------|
-| `FileMetadata` | Properties of the current input file (name, ext, size, index) | Always — every recipe processes files |
-| `UpstreamOutput` | Output fields from a previous node in the pipeline | Node has upstream connections |
-| `LoopContext` | Loop iteration variables (item, index, counter) | Parameter belongs to a node inside a loop container |
-| `Global` | Recipe-level variables (INPUT_DIR, OUTPUT_DIR) | Always (Go engine path conventions) |
+| Source           | Description                                                   | Available when                                      |
+| ---------------- | ------------------------------------------------------------- | --------------------------------------------------- |
+| `FileMetadata`   | Properties of the current input file (name, ext, size, index) | Always — every recipe processes files               |
+| `UpstreamOutput` | Output fields from a previous node in the pipeline            | Node has upstream connections                       |
+| `LoopContext`    | Loop iteration variables (item, index, counter)               | Parameter belongs to a node inside a loop container |
+| `Global`         | Recipe-level variables (INPUT_DIR, OUTPUT_DIR)                | Always (Go engine path conventions)                 |
 
 ---
 
@@ -224,6 +224,7 @@ This follows the established pattern: engine declares capabilities, codegen brid
 **Tier 3 recipes** (watermark images, strip metadata, API calls). Users need to reference upstream outputs — "use the filename from the compress step as the watermark text." This is the inflection point where plain text inputs fail.
 
 **Build:**
+
 - `TemplateVariable` struct in engine `ParameterDef`
 - `ExpressionInput` component (pill token rendering + variable picker popover)
 - `SchemaField` dispatch: if `template_variables` is set, render `ExpressionInput` instead of `TextControl`
@@ -234,6 +235,7 @@ This follows the established pattern: engine declares capabilities, codegen brid
 **Tier 4 recipes** (AI-powered transforms, conditional routing, dynamic configs). Users need conditional expressions, function calls, and complex variable references.
 
 **Build:**
+
 - Expression language documentation integrated into variable picker (function reference tab)
 - Expression validation feedback (red underline for unknown variables, type mismatches)
 - Autocomplete for function names and variable paths (beyond simple pill insertion)
@@ -247,7 +249,7 @@ This follows the established pattern: engine declares capabilities, codegen brid
 
 2. **How do pills serialize?** The underlying value stays a template string (`{{name}}-compressed.{{ext}}`). Pills are a rendering concern — parse on mount, serialize on change. No data model change needed.
 
-3. **What about the Go engine's template syntax?** The Go engine uses `{{.INPUT_DIR}}` (dot prefix) and function calls (`{{index . "node" "field"}}`). The Rust WASM engine bypasses templates entirely — files are `ArrayBuffer` blobs. When cloud execution (M4) ships, the expression input needs to handle both syntaxes. For now, this is a future consideration.
+3. **What about template syntax?** The legacy Go engine used `{{.INPUT_DIR}}` (dot prefix) and function calls (`{{index . "node" "field"}}`). The Rust engine bypasses templates entirely — files are byte buffers passed directly between nodes. Template syntax is not needed in the current architecture. If cloud execution (M4) reintroduces server-side path references, the expression input may need to handle a template syntax — but this is a future consideration.
 
 4. **Should the variable picker show live values?** Apple Shortcuts shows the current value of each magic variable. This requires execution state — the variable picker would need to know what files are loaded and what upstream nodes have produced. Useful but complex. Defer to Phase 3.
 

@@ -7,30 +7,30 @@ Three layers own different concerns of the node system. This document is the dec
 | Layer                | Role                                                                                            | Analogy                                        |
 | -------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | **Engine (Rust)**    | Source of truth. Defines what nodes CAN do, executes them, reports progress                     | The factory floor                              |
-| **@bnto/nodes (TS)** | Generated mirror + recipe compositions. Ingests engine metadata into JS-land                    | The parts catalog (printed from factory specs) |
+| **@bnto/nodes (TS)** | Generated mirror of engine metadata. Types, schemas, recipe data in JS-land                     | The parts catalog (printed from factory specs) |
 | **Editor**           | Visual state + user interaction. Renders configs, manages undo/redo, converts to/from ReactFlow | The workbench                                  |
 
 ## Decision Matrix
 
-| Question                                                                  | Answer                                                                  |
-| ------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Does it define what a node type IS? (params, constraints, capabilities)   | **Engine** — `ParameterDef` in `metadata.rs`                            |
-| Does it execute node logic? (compress, resize, rename)                    | **Engine** — `NodeProcessor` trait impl                                 |
-| Does it validate a Definition structure? (required fields, edge validity) | **Engine** — `definition_json_schema()` generates the schema            |
-| Does it need to be available in TypeScript?                               | **@bnto/nodes** — but as a GENERATED file from engine, not hand-written |
-| Is it a predefined recipe composition? (which nodes, how they connect)    | **@bnto/nodes** — `recipes/` (hand-written, references generated types) |
-| Is it a pure type/interface shared across TS consumers?                   | **@bnto/nodes** — `definition.ts`, `recipe.ts` (hand-written)           |
-| Does it classify node types? (isContainer, isIoNode)                      | **@bnto/nodes** — reads from generated `NODE_TYPE_INFO`                 |
-| Does it manage visual state? (selection, position, undo)                  | **Editor** — store + actions                                            |
-| Does it bridge Definition ↔ ReactFlow?                                    | **Editor** — adapters                                                   |
-| Does it render UI for node configuration?                                 | **Editor** — ConfigPanel, SchemaForm                                    |
+| Question                                                                  | Answer                                                                                     |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Does it define what a node type IS? (params, constraints, capabilities)   | **Engine** — `ParameterDef` in `metadata.rs`                                               |
+| Does it execute node logic? (compress, resize, rename)                    | **Engine** — `NodeProcessor` trait impl                                                    |
+| Does it validate a Definition structure? (required fields, edge validity) | **Engine** — `definition_json_schema()` generates the schema                               |
+| Does it need to be available in TypeScript?                               | **@bnto/nodes** — but as a GENERATED file from engine, not hand-written                    |
+| Is it a predefined recipe composition? (which nodes, how they connect)    | **Engine** — `engine/recipes/*.bnto.json` (source of truth, embedded via `include_str!()`) |
+| Is it a pure type/interface shared across TS consumers?                   | **@bnto/nodes** — `definition.ts`, `recipe.ts` (hand-written)                              |
+| Does it classify node types? (isContainer, isIoNode)                      | **@bnto/nodes** — reads from generated `NODE_TYPE_INFO`                                    |
+| Does it manage visual state? (selection, position, undo)                  | **Editor** — store + actions                                                               |
+| Does it bridge Definition ↔ ReactFlow?                                    | **Editor** — adapters                                                                      |
+| Does it render UI for node configuration?                                 | **Editor** — ConfigPanel, SchemaForm                                                       |
 
 ## The Golden Rule
 
 > **If it describes what a node CAN do → Engine.**
 > **If it makes engine knowledge available in TypeScript → @bnto/nodes (generated).**
 > **If it's about the visual editing experience → Editor.**
-> **@bnto/nodes should be mostly generated code + types + recipe compositions. Minimize hand-written logic.**
+> **@bnto/nodes should be mostly generated code + types. Minimize hand-written logic. Recipes are engine-owned (`engine/recipes/`).**
 
 **Import boundary:** `@bnto/nodes` is consumed ONLY by `@bnto/registry`. Editor and core never import from `@bnto/nodes` directly — they import from `@bnto/core` (which re-exports from `@bnto/registry`, which re-exports from `@bnto/nodes`). See [architecture.md](architecture.md#import-boundary-rules).
 
@@ -62,7 +62,7 @@ For detailed patterns on creating and extending Rust node processors — paramet
 
 - `definition.ts` — `Definition`, `Edge`, `Port`, `Metadata` interfaces
 - `recipe.ts` — `Recipe`, `AcceptSpec`
-- `recipes/` — predefined recipe compositions (reference generated types/defaults)
+- `generated/recipes.ts` — predefined recipe metadata (generated from engine catalog snapshot)
 - `isContainerNodeType.ts`, `isIoNodeType.ts` — helpers that READ from generated `NODE_TYPE_INFO`
 - `validate.ts` — structural validation (future: migrate to engine-generated JSON Schema via ajv)
 

@@ -82,8 +82,8 @@ If the current sprint contains tasks that belong to a future milestone, flag the
 
 For any execution-related work in the plan:
 
-- Does it use the browser adapter path (Rust WASM) for Tier 1 bntos? Or does it route through Railway/R2 unnecessarily?
-- Is Railway/R2 infrastructure being built before M4? Flag — it's backlogged until premium server-side bntos
+- Does it use the local execution path (CLI native or browser WASM) for Tier 1 bntos? Or does it route through cloud unnecessarily?
+- Is cloud infrastructure being built before M4? Flag — it's backlogged until premium server-side bntos
 
 ### 3c. Bnto Classification Check
 
@@ -91,7 +91,7 @@ Cross-reference any new bnto being added against the classification in `ROADMAP.
 
 - **Browser-only** -> Must use browser adapter, no cloud dependency
 - **Hybrid** -> Browser primary, cloud optional enhancement
-- **Server-only** -> Railway + R2, Pro tier only
+- **Server-only** -> Cloud execution (M4, technology TBD), Pro tier only
 
 If a bnto is misclassified or the plan builds cloud infrastructure for a browser-capable bnto, flag it.
 
@@ -127,9 +127,9 @@ Flag any plan task that violates these.
 Rust won the M1 evaluation. The unified engine vision is confirmed:
 
 - Rust is the engine for all targets (browser WASM, desktop Tauri native, CLI, cloud)
-- Go engine is legacy (CLI keeps working, no new development)
-- Desktop (M3) = Tauri (Rust-native), not Wails
-- Check that no plan tasks assume Go for new features or Wails for desktop
+- Go engine is deleted (archived Sprint 6, March 2026)
+- Desktop (M4, backlog) = Tauri (Rust-native)
+- Check that no plan tasks assume Go for new features
 
 ---
 
@@ -137,8 +137,8 @@ Rust won the M1 evaluation. The unified engine vision is confirmed:
 
 Cross-reference the plan against architecture docs:
 
-1. **Layered architecture** — Apps -> `@bnto/core` -> Engine (Rust WASM for browser, Tauri for desktop). No layer skipping
-2. **Co-location** — UI co-located in `apps/web/` until desktop creates a second consumer
+1. **Layered architecture** — CLI links engine directly. Web: Apps -> `@bnto/core` -> Engine (Rust WASM). No layer skipping
+2. **CLI-first** — CLI is the primary consumer. Web is SEO/landing page + browser execution. Desktop and cloud are M4 backlog
 3. **Transport-agnostic** — `@bnto/core` swaps adapters (Convex for web, Tauri IPC for desktop). Components never know which
 4. **Cost check** — Does anything in the plan introduce paid services? Flag it
 5. **SEO readiness** — Every predefined bnto needs a URL with metadata, JSON-LD, sitemap entry
@@ -204,7 +204,7 @@ List every proposed edit as a specific action:
 - "Split task Y into two: Y1 (backend) and Y2 (core)"
 - "Add new task to Sprint 3 Wave 1: [description]"
 - "Move task Z from current sprint to backlog (belongs to M4, not M2)"
-- "Rewrite task W — description assumes Go engine, should now say: [new description]"
+- "Rewrite task W — description assumes stale infrastructure, should now say: [new description]"
 
 ### Suggested Changes to ROADMAP.md
 
@@ -236,8 +236,8 @@ If approved:
 - **ROADMAP.md is the strategic north star.** If PLAN.md conflicts with ROADMAP.md, the plan needs updating — not the roadmap (unless the user explicitly changes strategy)
 - **Be honest about scope.** If we're behind, say so. If a sprint is too ambitious, say so. The user needs accurate signal, not optimism
 - **Protect MVP scope.** M2 is platform features. Everything else is M3+. Defer ruthlessly
-- **Browser-first is the strategy.** If something can run in the browser, it should. Railway/R2 is for premium server-side bntos only
-- **Rust is the engine.** All new engine work is Rust. Go is legacy. Desktop is Tauri, not Wails
+- **CLI-first is the strategy.** CLI is the primary consumer. Web is SEO + browser execution. Local execution is free execution
+- **Rust is the engine.** All new engine work is Rust. CLI links engine natively. Browser gets WASM. Desktop (M4) gets Tauri
 - **Respect the architecture.** Don't suggest shortcuts that violate layered architecture or cost-first principles
 - **Keep tasks agent-sized.** Every task should be completable by one agent in one session, touching one package. If it's bigger, break it up
 - **Update, don't rewrite.** Refine the plan incrementally. Agents may be mid-task — don't reorganize sprints they're actively working on

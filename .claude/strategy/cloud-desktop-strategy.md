@@ -1,10 +1,12 @@
 # Bnto Cloud + Desktop Strategy
 
 **Date:** 2026-02-06
-**Updated:** 2026-03-28
-**Status:** Reference Document — Go references removed, cloud execution tech marked TBD
+**Updated:** 2026-04-05
+**Status:** Reference Document — pre-dates CLI-first paradigm shift (April 2026). Cloud and desktop are backlog (M4). CLI is the primary consumer.
 **For current strategy:** See `ROADMAP.md` (source of truth for milestones, direction, and technology decisions)
 
+> **April 2026 Note:** CLI is now the primary development surface. Desktop (Tauri) and cloud execution are deferred to M4. This document is preserved as architecture reference but the consumer priority order is now: CLI → browser → desktop → cloud.
+>
 > **March 2026 Trim:** This document was condensed from 687 lines. Stale sections (Wails, Better Auth, Go-as-primary, MVP phases) removed — git history preserves them. Remaining content: architecture overview, cloud execution topology, and cost analysis.
 
 ---
@@ -14,7 +16,10 @@
 Every layer only knows the layer below. `@bnto/core` is the transport-agnostic API — UI components have zero knowledge of the backend.
 
 ```
-Apps (web/desktop/CLI)
+CLI (primary)
+  → Engine (Rust native, direct linking)
+
+Apps (web/desktop)
   → @bnto/core (hooks, types, adapters)
     → Engine (Rust WASM for browser, Tauri native for desktop, TBD for cloud)
 ```

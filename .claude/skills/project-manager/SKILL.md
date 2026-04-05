@@ -45,7 +45,7 @@ The roadmap defines milestones. The plan implements them. Your job is to keep th
 | **M1: Browser Execution**   | Rust WASM, all Tier 1 recipes client-side | Delivered |
 | **M2: Platform Features**   | Persistence, history, accounts, Convex    | Active    |
 | **M3: Desktop App**         | Tauri, local execution                    | Future    |
-| **M4: Premium Server-Side** | Railway Go API, server nodes              | Future    |
+| **M4: Premium Server-Side** | Server-side execution (technology TBD)    | Future    |
 | **M5: Monetization**        | Stripe, Pro tier, quota enforcement       | Future    |
 
 If the current sprint contains tasks that belong to a future milestone, flag for deferral. If it's missing tasks critical to the active milestone, flag the gap.
@@ -54,7 +54,7 @@ If the current sprint contains tasks that belong to a future milestone, flag for
 
 The dividing line: **nodes that run in the browser are free. Nodes that need a server cost money.** Check that:
 
-- Browser-capable recipes use the browser adapter (Rust WASM), not Railway/R2
+- Local-capable recipes use local execution (CLI native or browser WASM), not cloud
 - Server infrastructure isn't being built before M4
 - No artificial run caps on browser execution
 

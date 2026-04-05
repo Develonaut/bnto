@@ -1,7 +1,7 @@
 # Input & Output Nodes — Architecture Reference
 
 **Created:** March 4, 2026
-**Status:** Proposed — Sprint 4C
+**Status:** Proposed — deferred (backlog)
 **Related:** [editor-architecture.md](editor-architecture.md), [bntos.md](bntos.md), [visual-editor.md](visual-editor.md)
 
 ---
@@ -30,7 +30,7 @@ BrowserExecutionResults
 1. **Per-slug UI hardcoding.** 6 config components (`CompressImagesConfig`, `ResizeImagesConfig`, etc.) + `BntoConfigMap` type + defaults map + switch router. Every new recipe needs a new component.
 2. **Recipe portability.** A shared `.bnto.json` loses all I/O context. Community recipes, CLI, desktop — none can derive what widget to show.
 3. **Editor blindness.** The editor has no way to know what a recipe expects. Custom recipes created in the editor can't render appropriate I/O controls.
-4. **Dual I/O contracts.** Go engine uses `{{.INPUT_DIR}}`/`{{.OUTPUT_DIR}}` template variables. Rust WASM bypasses templates entirely — files are `ArrayBuffer` blobs. The recipe doesn't describe either.
+4. **Dual I/O contracts.** The legacy Go engine used `{{.INPUT_DIR}}`/`{{.OUTPUT_DIR}}` template variables. The Rust engine (CLI + WASM) receives files directly — no template system. The recipe doesn't describe either contract.
 5. **AcceptSpec duplication.** `Recipe.accept` (MIME types, extensions) lives in recipe metadata, disconnected from the node graph. It's a workaround for the missing input node.
 
 ---
@@ -210,17 +210,17 @@ The `AcceptSpec` on `Recipe` (`accept.mimeTypes`, `accept.extensions`, `accept.l
 
 ## Engine Impact
 
-### Rust WASM (`engine/crates/`)
+### Rust Engine (`engine/crates/`)
 
 Input/output nodes are **pass-through** in the Rust engine. They don't process data — they're declarations read by the environment. The Rust `NodeProcessor` trait doesn't need `InputProcessor` or `OutputProcessor` implementations.
 
-The browser adapter in `@bnto/core` reads the input node to configure the file drop zone and reads the output node to configure result presentation. The WASM engine processes the middle nodes (image, csv, file, etc.) as it does today.
+Each consumer reads I/O nodes differently:
 
-**No Rust code changes needed.** The engine processes the same node types it always has. I/O nodes are metadata consumed by the environment, not by the engine.
+- **CLI** reads the input node to know what file types to accept from CLI arguments
+- **Browser** adapter in `@bnto/core` reads the input node to configure the file drop zone
+- Both read the output node to configure result presentation
 
-### Go engine (`archive/engine-go/`)
-
-When cloud execution (M4) uses I/O nodes, the Go engine would read the input node to know what files to expect from R2 and the output node to know what to write back. This is future work — the Go engine is archived.
+**No Rust engine code changes needed.** The engine processes the same node types it always has. I/O nodes are metadata consumed by the environment, not by the engine.
 
 ---
 

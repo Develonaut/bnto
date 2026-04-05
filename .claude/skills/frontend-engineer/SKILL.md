@@ -110,11 +110,11 @@ Your primary testing tool is **user journey E2E tests** — not one-off tests fo
 
 **User journeys are defined in `.claude/journeys/`** — test matrices that describe the flows that matter. Every E2E spec maps to a journey. When you build or change UI, you add coverage to the relevant journey spec (or create one if a new journey is needed), not a throwaway component test.
 
-**Your integration test boundary is the user journey.** Below that:
+**Your integration test boundary is the user journey.** The web app is a secondary consumer of the engine (the CLI is primary). Below your test boundary:
 
-- `@bnto/core` integration tests prove the API contract — adapters, transforms, services. That's the core architect's job, not yours
-- Engine unit tests prove node logic works. That's the Rust expert's job, not yours
-- When your E2E journey tests pass, you've proven the feature works from the user's perspective — and you're trusting the tested layers below you
+- `@bnto/core` integration tests prove the web API contract — adapters, transforms, services. That's the core architect's job, not yours
+- Engine unit tests + CLI golden tests prove node logic works. That's the Rust expert's job, not yours
+- When your E2E journey tests pass, you've proven the feature works from the web user's perspective — and you're trusting the tested layers below you
 
 **When you need more granular coverage** (beyond what a journey captures), drop down to:
 
