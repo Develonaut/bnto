@@ -322,6 +322,12 @@ function generateCatalogTypes(): string {
   const sorted = [...catalog.nodeTypes].sort((a, b) => a.name.localeCompare(b.name));
   const nameUnion = sorted.map((t) => `  | ${JSON.stringify(t.name)}`).join("\n");
 
+  // Derive inputCardinality union from actual snapshot values
+  const cardinalities = [
+    ...new Set(catalog.processors.map((p) => p.inputCardinality ?? "perFile")),
+  ].sort();
+  const cardinalityUnion = cardinalities.map((c) => `"${c}"`).join(" | ");
+
   return `${HEADER}
 
 /** Union of all valid node type name strings. */
@@ -378,7 +384,7 @@ export interface ProcessorDef {
   readonly accepts: readonly string[];
   readonly platforms: readonly string[];
   readonly parameters: readonly ProcessorParam[];
-  readonly inputCardinality: "perFile" | "batch";
+  readonly inputCardinality: ${cardinalityUnion};
 }
 `;
 }

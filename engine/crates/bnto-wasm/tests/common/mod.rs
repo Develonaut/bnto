@@ -15,9 +15,9 @@ pub static MESSY_CSV: &[u8] = include_bytes!("../../../../../test-fixtures/csv/m
 /// A simple clean CSV for column rename testing.
 pub static SIMPLE_CSV: &[u8] = include_bytes!("../../../../../test-fixtures/csv/simple.csv");
 
-/// Build the production registry with all 6 real processors.
+/// Build the browser-safe registry with all WASM-capable processors.
 pub fn real_registry() -> bnto_core::NodeRegistry {
-    bnto_engine::create_default_registry()
+    bnto_engine::create_browser_registry()
 }
 
 /// Parse a JSON string into a PipelineDefinition.

@@ -17,6 +17,7 @@ import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
+import { videoDownloadNodeSchema } from "./schemas/videoDownload";
 
 /**
  * Engine-backed schema entries - auto-assembled from generated per-type files.
@@ -33,6 +34,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
   "spreadsheet-rename": spreadsheetRenameNodeSchema,
+  "video-download": videoDownloadNodeSchema,
 };
 
 /**
@@ -50,4 +52,5 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "spreadsheet-convert": {},
   "spreadsheet-merge": {},
   "spreadsheet-rename": {},
+  "video-download": {},
 };

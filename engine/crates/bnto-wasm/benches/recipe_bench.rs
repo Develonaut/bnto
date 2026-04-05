@@ -14,7 +14,7 @@ static MESSY_CSV: &[u8] = include_bytes!("../../../../test-fixtures/csv/messy.cs
 // --- Helpers ---
 
 fn real_registry() -> bnto_core::NodeRegistry {
-    bnto_engine::create_default_registry()
+    bnto_engine::create_browser_registry()
 }
 
 fn parse(json: &str) -> PipelineDefinition {
