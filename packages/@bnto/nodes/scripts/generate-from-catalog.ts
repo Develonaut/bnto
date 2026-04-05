@@ -40,6 +40,7 @@ const CONVEX_LABELS_OUTPUT = resolve(
   "packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts",
 );
 const I18N_STRINGS_OUTPUT = resolve(ROOT, "packages/@bnto/i18n/src/generated/nodes.json");
+const RECIPES_OUTPUT = resolve(GENERATED_DIR, "recipes.ts");
 
 // Legacy files to clean up
 const LEGACY_CATALOG = resolve(GENERATED_DIR, "catalog.ts");
@@ -53,6 +54,15 @@ interface CatalogEnvelope {
   nodeTypes: RawNodeType[];
   processors: RawProcessor[];
   definitionSchema?: Record<string, unknown>;
+  recipes?: RawRecipe[];
+}
+
+interface RawRecipe {
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  definition: Record<string, unknown>;
 }
 
 interface RawNodeType {
@@ -857,6 +867,49 @@ function generateI18nStringsFile(): string {
 }
 
 // =============================================================================
+// Phase 5: Generated recipes (from engine built-in recipes)
+// =============================================================================
+
+function generateRecipesFile(): string | null {
+  const recipes = catalog.recipes;
+  if (!recipes || recipes.length === 0) return null;
+
+  const entries = recipes
+    .map(
+      (r) => `  {
+    slug: ${JSON.stringify(r.slug)},
+    name: ${JSON.stringify(r.name)},
+    description: ${JSON.stringify(r.description)},
+    category: ${JSON.stringify(r.category)},
+    definition: ${JSON.stringify(r.definition, null, 4)
+      .split("\n")
+      .map((line, i) => (i === 0 ? line : "    " + line))
+      .join("\n")},
+  }`,
+    )
+    .join(",\n");
+
+  return `${HEADER}
+
+import type { Definition } from "../definition";
+
+/** A generated recipe from the engine's built-in catalog. */
+export interface GeneratedRecipe {
+  readonly slug: string;
+  readonly name: string;
+  readonly description: string;
+  readonly category: string;
+  readonly definition: Definition;
+}
+
+/** All engine-owned built-in recipes. */
+export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
+${entries},
+] as const;
+`;
+}
+
+// =============================================================================
 // Assemble and write
 // =============================================================================
 
@@ -936,6 +989,12 @@ mkdirSync(dirname(I18N_STRINGS_OUTPUT), { recursive: true });
 write(I18N_STRINGS_OUTPUT, generateI18nStringsFile());
 generateAllNodeReadmes();
 
+// --- recipes.ts (engine built-in recipes) ---
+const recipesContent = generateRecipesFile();
+if (recipesContent) {
+  write(RECIPES_OUTPUT, recipesContent);
+}
+
 // --- Clean up legacy monolithic files ---
 for (const legacy of [LEGACY_CATALOG, LEGACY_SCHEMAS, LEGACY_NODE_TYPES]) {
   try {
@@ -963,3 +1022,6 @@ console.log(
   `  ${CONVEX_LABELS_OUTPUT} - ${catalog.nodeTypes.filter((t) => !t.isContainer && t.category !== "io").length} labels`,
 );
 console.log(`  ${I18N_STRINGS_OUTPUT} - i18n strings`);
+if (catalog.recipes?.length) {
+  console.log(`  recipes.ts - ${catalog.recipes.length} built-in recipes`);
+}

@@ -120,17 +120,5 @@ export {
   ITERATION_MODES,
 } from "./catalog";
 
-// ── Predefined recipes (individual named exports) ───────────────────────
-export {
-  RECIPES,
-  cleanCsv,
-  compressAndRename,
-  compressImages,
-  convertImageFormat,
-  generateThumbnails,
-  optimizeImagesForWeb,
-  renameCsvColumns,
-  renameFiles,
-  resizeImages,
-  standardizeCsv,
-} from "./recipesCatalog";
+// ── Predefined recipes ───────────────────────────────────────────────────
+export { RECIPES } from "./recipesCatalog";

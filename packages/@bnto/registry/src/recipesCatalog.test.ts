@@ -1,28 +1,31 @@
 /**
- * Recipe catalog completeness tests — ensures every recipe file
- * is registered in the RECIPES array and slugs are unique.
+ * Recipe catalog completeness tests — ensures all engine recipes
+ * are represented in the RECIPES array with valid structure.
  */
 
 import { describe, expect, it } from "vitest";
-import { ITERATION_MODES, CURRENT_FORMAT_VERSION, validateDefinition } from "@bnto/nodes";
+import {
+  ITERATION_MODES,
+  CURRENT_FORMAT_VERSION,
+  validateDefinition,
+  GENERATED_RECIPES,
+} from "@bnto/nodes";
 import { RECIPES } from "./recipesCatalog";
-import * as recipeExports from "./recipes/index";
 
 describe("recipe catalog completeness", () => {
-  it("every recipe export is included in RECIPES", () => {
-    const exportedRecipes = Object.values(recipeExports);
-    for (const recipe of exportedRecipes) {
-      const found = RECIPES.find((r) => r.slug === recipe.slug);
-      expect(found, `Recipe "${recipe.slug}" is exported but not in RECIPES array`).toBeDefined();
+  it("every engine recipe is included in RECIPES", () => {
+    for (const generated of GENERATED_RECIPES) {
+      const found = RECIPES.find((r) => r.slug === generated.slug);
+      expect(found, `Engine recipe "${generated.slug}" is not in RECIPES array`).toBeDefined();
     }
   });
 
-  it("every RECIPES entry is exported from recipes/index", () => {
-    const exportedSlugs = new Set(Object.values(recipeExports).map((r) => r.slug));
+  it("every RECIPES entry maps to an engine recipe", () => {
+    const engineSlugs = new Set(GENERATED_RECIPES.map((r) => r.slug));
     for (const recipe of RECIPES) {
       expect(
-        exportedSlugs.has(recipe.slug),
-        `Recipe "${recipe.slug}" is in RECIPES but not exported from recipes/index`,
+        engineSlugs.has(recipe.slug),
+        `Recipe "${recipe.slug}" is in RECIPES but not in engine`,
       ).toBe(true);
     }
   });
@@ -32,8 +35,8 @@ describe("recipe catalog completeness", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("has at least one recipe", () => {
-    expect(RECIPES.length).toBeGreaterThan(0);
+  it("has exactly 15 recipes", () => {
+    expect(RECIPES.length).toBe(15);
   });
 });
 

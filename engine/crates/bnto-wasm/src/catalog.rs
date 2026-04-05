@@ -6,7 +6,7 @@ use wasm_bindgen::prelude::*;
 
 use serde::Serialize;
 
-/// Top-level catalog envelope with version, node types, processors, and schema.
+/// Top-level catalog envelope with version, node types, processors, schema, and recipes.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct CatalogEnvelope {
@@ -14,6 +14,17 @@ struct CatalogEnvelope {
     node_types: Vec<bnto_core::NodeTypeInfo>,
     processors: Vec<bnto_core::NodeMetadata>,
     definition_schema: serde_json::Value,
+    recipes: Vec<RecipeEntry>,
+}
+
+/// A recipe entry in the catalog snapshot.
+#[derive(Serialize)]
+struct RecipeEntry {
+    slug: String,
+    name: String,
+    description: String,
+    category: String,
+    definition: serde_json::Value,
 }
 
 /// Return a pretty-printed JSON string of the engine's full catalog.
@@ -25,11 +36,24 @@ pub fn node_catalog() -> Result<String, JsValue> {
     // Sort by node type for deterministic output across builds.
     catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
+    let recipes: Vec<RecipeEntry> = bnto_engine::recipes::builtin_recipes()
+        .into_iter()
+        .map(|r| RecipeEntry {
+            slug: r.slug,
+            name: r.name,
+            description: r.description,
+            category: r.category,
+            definition: serde_json::from_str(r.definition_json)
+                .expect("built-in recipe JSON must be valid"),
+        })
+        .collect();
+
     let envelope = CatalogEnvelope {
         version: bnto_core::FORMAT_VERSION.to_string(),
         node_types: bnto_core::all_node_types(),
         processors: catalog,
         definition_schema: bnto_core::definition_json_schema(),
+        recipes,
     };
 
     serde_json::to_string_pretty(&envelope)
@@ -39,6 +63,21 @@ pub fn node_catalog() -> Result<String, JsValue> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Build recipe entries from engine's built-in recipes (shared by tests).
+    fn build_test_recipes() -> Vec<RecipeEntry> {
+        bnto_engine::recipes::builtin_recipes()
+            .into_iter()
+            .map(|r| RecipeEntry {
+                slug: r.slug,
+                name: r.name,
+                description: r.description,
+                category: r.category,
+                definition: serde_json::from_str(r.definition_json)
+                    .expect("built-in recipe JSON must be valid"),
+            })
+            .collect()
+    }
 
     #[test]
     fn test_catalog_envelope_has_correct_version() {
@@ -51,6 +90,7 @@ mod tests {
             node_types: bnto_core::all_node_types(),
             processors: catalog,
             definition_schema: bnto_core::definition_json_schema(),
+            recipes: vec![],
         };
 
         assert_eq!(envelope.version, bnto_core::FORMAT_VERSION);
@@ -123,11 +163,14 @@ mod tests {
         let mut catalog = registry.catalog();
         catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
+        let recipes = build_test_recipes();
+
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
             node_types: bnto_core::all_node_types(),
             processors: catalog,
             definition_schema: bnto_core::definition_json_schema(),
+            recipes,
         };
 
         let json = serde_json::to_string_pretty(&envelope).unwrap();
@@ -151,6 +194,13 @@ mod tests {
             parsed["definitionSchema"]["$ref"], "#/$defs/Definition",
             "definitionSchema should reference $defs/Definition"
         );
+        // Verify recipes section.
+        assert!(parsed["recipes"].is_array());
+        assert_eq!(
+            parsed["recipes"].as_array().unwrap().len(),
+            15,
+            "Catalog should include all 15 built-in recipes"
+        );
     }
 
     /// Generate the catalog snapshot file at `engine/catalog.snapshot.json`.
@@ -167,11 +217,14 @@ mod tests {
         let mut catalog = registry.catalog();
         catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
+        let recipes = build_test_recipes();
+
         let envelope = CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
             node_types: bnto_core::all_node_types(),
             processors: catalog,
             definition_schema: bnto_core::definition_json_schema(),
+            recipes,
         };
 
         let json = serde_json::to_string_pretty(&envelope).unwrap();

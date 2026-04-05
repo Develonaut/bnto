@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { compressImages, optimizeImagesForWeb, cleanCsv } from "@bnto/registry";
+import { getRecipeBySlug } from "@bnto/registry";
+
+const compressImages = getRecipeBySlug("compress-images")!;
+const optimizeImagesForWeb = getRecipeBySlug("optimize-images-for-web")!;
+const cleanCsv = getRecipeBySlug("clean-csv")!;
 import type { Definition } from "@bnto/core";
 import { extractProcessingNodes } from "./extractProcessingNodes";
 
