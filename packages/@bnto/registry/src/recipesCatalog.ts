@@ -33,6 +33,38 @@ const RECIPE_IDS: Record<string, string> = {
 };
 
 /**
+ * Web-facing marketing descriptions for SEO and display.
+ * Engine descriptions are terse ("Accepts image files and compresses each one.").
+ * These are user-facing copy — not in the engine.
+ */
+const WEB_DESCRIPTIONS: Record<string, string> = {
+  "compress-images":
+    "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
+  "resize-images": "Resize images to exact dimensions or percentages. Free, no signup required.",
+  "convert-image-format":
+    "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
+  "rename-files": "Batch rename files with patterns. Free, no signup required.",
+  "clean-csv": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+  "rename-csv-columns": "Rename CSV column headers in bulk. Free, no signup required.",
+  "csv-to-json": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
+  "merge-csv": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
+  "optimize-images-for-web":
+    "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
+  "generate-thumbnails":
+    "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
+  "compress-and-rename":
+    "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
+  "standardize-csv":
+    "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
+  "strip-exif":
+    "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
+  "watermark-images":
+    "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
+  "download-video":
+    "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+};
+
+/**
  * Web-only feature tags for JSON-LD and display.
  * These are not in the engine — they're marketing/SEO metadata.
  */
@@ -97,7 +129,7 @@ export const RECIPES: readonly Recipe[] = DISPLAY_ORDER.map((slug) => {
     id: RECIPE_IDS[slug] ?? slug,
     slug: generated.slug,
     name: generated.name,
-    description: generated.description,
+    description: WEB_DESCRIPTIONS[slug] ?? generated.description,
     category: generated.category,
     definition: generated.definition,
     accept: deriveAcceptSpec(generated.definition) ?? {
