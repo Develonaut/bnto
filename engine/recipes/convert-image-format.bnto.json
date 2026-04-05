@@ -1,14 +1,15 @@
 {
-  "id": "watermark-images",
+  "id": "convert-image-format",
   "type": "group",
   "version": "1.0.0",
-  "name": "Watermark Images",
+  "name": "Convert Image Format",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and overlays an image onto each one."
+    "description": "Accepts image files and converts each to a target format.",
+    "category": "image"
   },
   "parameters": {},
   "inputPorts": [],
@@ -29,9 +30,9 @@
       "metadata": {},
       "parameters": {
         "mode": "file-upload",
-        "accept": ["image/jpeg", "image/png", "image/webp"],
-        "extensions": [".jpg", ".jpeg", ".png", ".webp"],
-        "label": "JPEG, PNG, or WebP images",
+        "accept": ["image/jpeg", "image/png", "image/webp", "image/gif"],
+        "extensions": [".jpg", ".jpeg", ".png", ".webp", ".gif"],
+        "label": "JPEG, PNG, WebP, or GIF images",
         "multiple": true
       },
       "inputPorts": [],
@@ -43,23 +44,18 @@
       ]
     },
     {
-      "id": "overlay",
-      "type": "image-overlay",
+      "id": "convert-image",
+      "type": "image-convert",
       "version": "1.0.0",
-      "name": "Overlay",
+      "name": "Convert",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "position": "bottom-right",
-        "size": 25,
-        "opacity": 80,
-        "offsetX": 0,
-        "offsetY": 0,
-        "quality": 80,
-        "overlay": ""
+        "format": "webp",
+        "quality": 80
       },
       "inputPorts": [],
       "outputPorts": []
@@ -76,7 +72,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Watermarked Images",
+        "label": "Converted Images",
         "zip": true,
         "autoDownload": true
       },
@@ -93,11 +89,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "overlay"
+      "target": "convert-image"
     },
     {
       "id": "e2",
-      "source": "overlay",
+      "source": "convert-image",
       "target": "output"
     }
   ]

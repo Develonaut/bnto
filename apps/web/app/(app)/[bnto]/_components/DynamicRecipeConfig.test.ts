@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { compressImages, optimizeImagesForWeb } from "@bnto/registry";
+import { getRecipeBySlug } from "@bnto/registry";
+
+const compressImages = getRecipeBySlug("compress-images")!;
+const optimizeImagesForWeb = getRecipeBySlug("optimize-images-for-web")!;
 import { getNodeSchema, getNodeParamFields, getVisibleParams } from "@bnto/core";
 import { extractProcessingNodes } from "../_utils/extractProcessingNodes";
 

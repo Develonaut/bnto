@@ -1,14 +1,15 @@
 {
-  "id": "convert-image-format",
+  "id": "rename-csv-columns",
   "type": "group",
   "version": "1.0.0",
-  "name": "Convert Image Format",
+  "name": "Rename CSV Columns",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and converts each to a target format."
+    "description": "Accepts a CSV file and renames its column headers.",
+    "category": "spreadsheet"
   },
   "parameters": {},
   "inputPorts": [],
@@ -29,10 +30,10 @@
       "metadata": {},
       "parameters": {
         "mode": "file-upload",
-        "accept": ["image/jpeg", "image/png", "image/webp", "image/gif"],
-        "extensions": [".jpg", ".jpeg", ".png", ".webp", ".gif"],
-        "label": "JPEG, PNG, WebP, or GIF images",
-        "multiple": true
+        "accept": ["text/csv"],
+        "extensions": [".csv"],
+        "label": "CSV files",
+        "multiple": false
       },
       "inputPorts": [],
       "outputPorts": [
@@ -43,21 +44,30 @@
       ]
     },
     {
-      "id": "convert-image",
-      "type": "image-convert",
+      "id": "rename-columns",
+      "type": "spreadsheet-rename",
       "version": "1.0.0",
-      "name": "Convert",
+      "name": "Rename",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "format": "webp",
-        "quality": 80
+        "columns": {}
       },
-      "inputPorts": [],
-      "outputPorts": []
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
     },
     {
       "id": "output",
@@ -71,8 +81,8 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Converted Images",
-        "zip": true,
+        "label": "Renamed CSV",
+        "zip": false,
         "autoDownload": true
       },
       "inputPorts": [
@@ -88,11 +98,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "convert-image"
+      "target": "rename-columns"
     },
     {
       "id": "e2",
-      "source": "convert-image",
+      "source": "rename-columns",
       "target": "output"
     }
   ]

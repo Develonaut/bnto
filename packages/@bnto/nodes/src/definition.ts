@@ -102,6 +102,9 @@ export interface Metadata {
   /** ISO 8601 last-updated timestamp. */
   updatedAt?: string;
 
+  /** Recipe category (e.g. "image", "spreadsheet", "file", "video"). */
+  category?: string;
+
   /** User-defined tags. */
   tags?: string[];
 

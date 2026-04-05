@@ -1,14 +1,15 @@
 {
-  "id": "clean-csv",
+  "id": "csv-to-json",
   "type": "group",
   "version": "1.0.0",
-  "name": "Clean CSV",
+  "name": "CSV to JSON",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file and cleans it."
+    "description": "Accepts a CSV file and converts it to JSON.",
+    "category": "spreadsheet"
   },
   "parameters": {},
   "inputPorts": [],
@@ -43,19 +44,18 @@
       ]
     },
     {
-      "id": "clean",
-      "type": "spreadsheet-clean",
+      "id": "convert",
+      "type": "spreadsheet-convert",
       "version": "1.0.0",
-      "name": "Clean",
+      "name": "Convert to JSON",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "trimWhitespace": true,
-        "removeEmptyRows": true,
-        "removeDuplicates": true
+        "delimiter": "comma",
+        "pretty": false
       },
       "inputPorts": [
         {
@@ -82,7 +82,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Cleaned CSV",
+        "label": "JSON file",
         "zip": false,
         "autoDownload": true
       },
@@ -99,11 +99,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "clean"
+      "target": "convert"
     },
     {
       "id": "e2",
-      "source": "clean",
+      "source": "convert",
       "target": "output"
     }
   ]

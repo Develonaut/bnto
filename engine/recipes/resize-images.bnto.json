@@ -1,14 +1,15 @@
 {
-  "id": "compress-images",
+  "id": "resize-images",
   "type": "group",
   "version": "1.0.0",
-  "name": "Compress Images",
+  "name": "Resize Images",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and compresses each one."
+    "description": "Accepts image files and resizes each one.",
+    "category": "image"
   },
   "parameters": {},
   "inputPorts": [],
@@ -43,17 +44,19 @@
       ]
     },
     {
-      "id": "compress-image",
-      "type": "image-compress",
+      "id": "resize-image",
+      "type": "image-resize",
       "version": "1.0.0",
-      "name": "Compress",
+      "name": "Resize",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "quality": 80
+        "maintainAspect": true,
+        "quality": 80,
+        "width": 200
       },
       "inputPorts": [],
       "outputPorts": []
@@ -70,7 +73,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Compressed Images",
+        "label": "Resized Images",
         "zip": true,
         "autoDownload": true
       },
@@ -87,11 +90,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "compress-image"
+      "target": "resize-image"
     },
     {
       "id": "e2",
-      "source": "compress-image",
+      "source": "resize-image",
       "target": "output"
     }
   ]

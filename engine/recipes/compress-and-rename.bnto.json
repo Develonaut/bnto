@@ -1,14 +1,15 @@
 {
-  "id": "optimize-images-for-web",
+  "id": "compress-and-rename",
   "type": "group",
   "version": "1.0.0",
-  "name": "Optimize Images for Web",
+  "name": "Compress & Rename",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files, resizes, converts to WebP, and compresses each one."
+    "description": "Accepts image files, compresses each one, and renames with a suffix.",
+    "category": "image"
   },
   "parameters": {},
   "inputPorts": [],
@@ -43,52 +44,33 @@
       ]
     },
     {
-      "id": "resize",
-      "type": "image-resize",
+      "id": "compress",
+      "type": "image-compress",
       "version": "1.0.0",
-      "name": "Resize",
+      "name": "Compress",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "maintainAspect": true,
-        "quality": 80,
-        "width": 800
+        "quality": 80
       },
       "inputPorts": [],
       "outputPorts": []
     },
     {
-      "id": "convert",
-      "type": "image-convert",
+      "id": "rename",
+      "type": "file-rename",
       "version": "1.0.0",
-      "name": "Convert",
+      "name": "Rename",
       "position": {
         "x": 500,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "format": "webp",
-        "quality": 80
-      },
-      "inputPorts": [],
-      "outputPorts": []
-    },
-    {
-      "id": "compress",
-      "type": "image-compress",
-      "version": "1.0.0",
-      "name": "Compress",
-      "position": {
-        "x": 750,
-        "y": 100
-      },
-      "metadata": {},
-      "parameters": {
-        "quality": 80
+        "suffix": "-min"
       },
       "inputPorts": [],
       "outputPorts": []
@@ -99,13 +81,13 @@
       "version": "1.0.0",
       "name": "Output",
       "position": {
-        "x": 1000,
+        "x": 750,
         "y": 100
       },
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Optimized Images",
+        "label": "Compressed & Renamed",
         "zip": true,
         "autoDownload": true
       },
@@ -122,21 +104,16 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "resize"
-    },
-    {
-      "id": "e2",
-      "source": "resize",
-      "target": "convert"
-    },
-    {
-      "id": "e3",
-      "source": "convert",
       "target": "compress"
     },
     {
-      "id": "e4",
+      "id": "e2",
       "source": "compress",
+      "target": "rename"
+    },
+    {
+      "id": "e3",
+      "source": "rename",
       "target": "output"
     }
   ]

@@ -1,14 +1,15 @@
 {
-  "id": "compress-and-rename",
+  "id": "strip-exif",
   "type": "group",
   "version": "1.0.0",
-  "name": "Compress & Rename",
+  "name": "Strip EXIF",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files, compresses each one, and renames with a suffix."
+    "description": "Accepts image files and strips EXIF metadata from each one.",
+    "category": "image"
   },
   "parameters": {},
   "inputPorts": [],
@@ -43,10 +44,10 @@
       ]
     },
     {
-      "id": "compress",
-      "type": "image-compress",
+      "id": "strip-exif-node",
+      "type": "image-strip-exif",
       "version": "1.0.0",
-      "name": "Compress",
+      "name": "Strip EXIF",
       "position": {
         "x": 250,
         "y": 100
@@ -59,34 +60,18 @@
       "outputPorts": []
     },
     {
-      "id": "rename",
-      "type": "file-rename",
+      "id": "output",
+      "type": "output",
       "version": "1.0.0",
-      "name": "Rename",
+      "name": "Output",
       "position": {
         "x": 500,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "suffix": "-min"
-      },
-      "inputPorts": [],
-      "outputPorts": []
-    },
-    {
-      "id": "output",
-      "type": "output",
-      "version": "1.0.0",
-      "name": "Output",
-      "position": {
-        "x": 750,
-        "y": 100
-      },
-      "metadata": {},
-      "parameters": {
         "mode": "download",
-        "label": "Compressed & Renamed",
+        "label": "Cleaned Images",
         "zip": true,
         "autoDownload": true
       },
@@ -103,16 +88,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "compress"
+      "target": "strip-exif-node"
     },
     {
       "id": "e2",
-      "source": "compress",
-      "target": "rename"
-    },
-    {
-      "id": "e3",
-      "source": "rename",
+      "source": "strip-exif-node",
       "target": "output"
     }
   ]

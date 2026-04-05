@@ -1,14 +1,15 @@
 {
-  "id": "rename-csv-columns",
+  "id": "clean-csv",
   "type": "group",
   "version": "1.0.0",
-  "name": "Rename CSV Columns",
+  "name": "Clean CSV",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file and renames its column headers."
+    "description": "Accepts a CSV file and cleans it.",
+    "category": "spreadsheet"
   },
   "parameters": {},
   "inputPorts": [],
@@ -43,17 +44,19 @@
       ]
     },
     {
-      "id": "rename-columns",
-      "type": "spreadsheet-rename",
+      "id": "clean",
+      "type": "spreadsheet-clean",
       "version": "1.0.0",
-      "name": "Rename",
+      "name": "Clean",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "columns": {}
+        "trimWhitespace": true,
+        "removeEmptyRows": true,
+        "removeDuplicates": true
       },
       "inputPorts": [
         {
@@ -80,7 +83,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "Renamed CSV",
+        "label": "Cleaned CSV",
         "zip": false,
         "autoDownload": true
       },
@@ -97,11 +100,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "rename-columns"
+      "target": "clean"
     },
     {
       "id": "e2",
-      "source": "rename-columns",
+      "source": "clean",
       "target": "output"
     }
   ]

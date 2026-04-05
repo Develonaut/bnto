@@ -1,14 +1,15 @@
 {
-  "id": "csv-to-json",
+  "id": "merge-csv",
   "type": "group",
   "version": "1.0.0",
-  "name": "CSV to JSON",
+  "name": "Merge CSV",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file and converts it to JSON."
+    "description": "Accepts multiple CSV files and merges them into one.",
+    "category": "spreadsheet"
   },
   "parameters": {},
   "inputPorts": [],
@@ -32,7 +33,7 @@
         "accept": ["text/csv"],
         "extensions": [".csv"],
         "label": "CSV files",
-        "multiple": false
+        "multiple": true
       },
       "inputPorts": [],
       "outputPorts": [
@@ -43,18 +44,18 @@
       ]
     },
     {
-      "id": "convert",
-      "type": "spreadsheet-convert",
+      "id": "merge",
+      "type": "spreadsheet-merge",
       "version": "1.0.0",
-      "name": "Convert to JSON",
+      "name": "Merge",
       "position": {
         "x": 250,
         "y": 100
       },
       "metadata": {},
       "parameters": {
-        "delimiter": "comma",
-        "pretty": false
+        "headerHandling": "first-file",
+        "deduplicate": false
       },
       "inputPorts": [
         {
@@ -81,7 +82,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
-        "label": "JSON file",
+        "label": "Merged CSV",
         "zip": false,
         "autoDownload": true
       },
@@ -98,11 +99,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "convert"
+      "target": "merge"
     },
     {
       "id": "e2",
-      "source": "convert",
+      "source": "merge",
       "target": "output"
     }
   ]

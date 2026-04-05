@@ -120,3 +120,7 @@ export type {
 
 // Definition JSON Schema (generated from engine — validates .bnto.json files)
 export { DEFINITION_JSON_SCHEMA } from "./generated/definitionSchema";
+
+// Generated recipes (from engine built-in recipe catalog)
+export { GENERATED_RECIPES } from "./generated/recipes";
+export type { GeneratedRecipe } from "./generated/recipes";

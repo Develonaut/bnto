@@ -10,7 +10,9 @@ import {
   validateDefinition,
 } from "@bnto/nodes";
 import { definitionToRecipe } from "./definitionToRecipe";
-import { compressImages } from "./recipesCatalog";
+import { getRecipeBySlug } from "./getRecipeBySlug";
+
+const compressImages = getRecipeBySlug("compress-images")!;
 
 describe("round-trip: full editor lifecycle", () => {
   it("create → add → configure → move → export", () => {
