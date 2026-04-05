@@ -240,7 +240,7 @@ Building a new capability means building a node. The node is a self-contained un
      └─ Declare platforms (browser, cli, server, desktop)
 
 2. Register in engine
-     └─ bnto-engine/src/lib.rs — create_default_registry()
+     └─ bnto-engine/src/lib.rs — create_browser_registry() / create_registry()
      └─ bnto-core/src/metadata.rs — NodeTypeInfo
 
 3. Test via CLI

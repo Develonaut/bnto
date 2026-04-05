@@ -73,7 +73,7 @@ pub fn execute_pipeline(
         .map_err(|e| JsValue::from_str(&format!("Failed to parse pipeline definition: {}", e)))?;
 
     let files = extract_files(files_js)?;
-    let registry = bnto_engine::create_default_registry();
+    let registry = bnto_engine::create_browser_registry();
 
     let reporter = PipelineReporter::new(move |event: PipelineEvent| {
         if let Ok(json) = serde_json::to_string(&event) {
@@ -133,7 +133,7 @@ fn extract_single_file(file_obj: &JsValue, index: u32) -> Result<PipelineFile, J
 mod tests {
     #[test]
     fn test_shared_registry_has_all_processors() {
-        let registry = bnto_engine::create_default_registry();
+        let registry = bnto_engine::create_browser_registry();
         assert_eq!(registry.len(), 10);
 
         let types = [

@@ -604,7 +604,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto-video` — `/rust-expert` — New crate: `video-download` processor wrapping yt-dlp. Purpose-built typed params: URL, format, quality, output format _(PRs #321-#329)_
 - [x] `engine/crates/bnto-video` — `/rust-expert` — Register in `bnto-engine`, add `NodeTypeInfo` (category: "video", platforms: ["cli", "server", "desktop"]) _(PR #321)_
 - [x] `engine/crates/bnto-video` — `/rust-expert` — Golden tests with test fixtures. Recipe: `download-video.bnto.json` _(PR #321)_
-- [ ] Codegen — Run `task wasm:codegen`. Verify new video category + node type propagates through TypeScript
+- [x] Codegen — Run `task wasm:codegen`. Verify new video category + node type propagates through TypeScript _(PR #336)_
 
 #### Wave 3 (parallel — CLI polish)
 

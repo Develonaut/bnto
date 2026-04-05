@@ -38,8 +38,8 @@ Write failing tests BEFORE implementing the processor.
 
 ### Phase 2: Engine Registration
 
-- [ ] **Register in `bnto-engine`** — add `registry.register("type-name", Box::new(...))` in `create_default_registry()` (`engine/crates/bnto-engine/src/lib.rs`)
-- [ ] **Update registry test count** — `test_default_registry_has_all_processors()` asserts exact count (e.g., 6 → 7)
+- [ ] **Register in `bnto-engine`** — add `registry.register("type-name", Box::new(...))` in `create_browser_registry()` (`engine/crates/bnto-engine/src/lib.rs`). If the processor is native-only, add it in `create_registry()` behind `#[cfg(feature = "native")]` instead
+- [ ] **Update registry test count** — `test_browser_registry_has_all_processors()` asserts exact count (e.g., 10 → 11)
 - [ ] **Add to expected list** — the `expected` array in the same test must include the new type key
 - [ ] **Add `NodeTypeInfo`** — add entry to the correct category function in `engine/crates/bnto-core/src/metadata.rs` (e.g., `image_node_types()`)
 - [ ] **Update node type count** — `test_all_node_types_returns_N_entries()` asserts exact count (e.g., 15 → 16)
@@ -225,16 +225,16 @@ When adding a processor or recipe, these exact-count assertions MUST be updated.
 
 ### Rust (engine)
 
-| File                                           | Test function                                 | What it counts                          |
-| ---------------------------------------------- | --------------------------------------------- | --------------------------------------- |
-| `engine/crates/bnto-engine/src/lib.rs`         | `test_default_registry_has_all_processors()`  | Processor count + expected key list     |
-| `engine/crates/bnto-engine/src/lib.rs`         | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list    |
-| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned) |
-| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_unique_names()`          | Same count (uniqueness check)           |
-| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog         |
-| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts     |
-| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_contains_expected_node_types()` | Expected type key list                  |
-| `engine/crates/bnto-cli/tests/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)        |
+| File                                           | Test function                                 | What it counts                              |
+| ---------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
+| `engine/crates/bnto-engine/src/lib.rs`         | `test_browser_registry_has_all_processors()`  | Browser processor count + expected key list |
+| `engine/crates/bnto-engine/src/lib.rs`         | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list        |
+| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned)     |
+| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_unique_names()`          | Same count (uniqueness check)               |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog             |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts         |
+| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_contains_expected_node_types()` | Expected type key list                      |
+| `engine/crates/bnto-cli/tests/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)            |
 
 ### TypeScript (packages)
 

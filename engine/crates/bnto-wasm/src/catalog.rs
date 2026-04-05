@@ -30,7 +30,7 @@ struct RecipeEntry {
 /// Return a pretty-printed JSON string of the engine's full catalog.
 #[wasm_bindgen]
 pub fn node_catalog() -> Result<String, JsValue> {
-    let registry = bnto_engine::create_default_registry();
+    let registry = bnto_engine::create_browser_registry();
     let mut catalog = registry.catalog();
 
     // Sort by node type for deterministic output across builds.
@@ -82,7 +82,7 @@ mod tests {
     #[test]
     fn test_catalog_envelope_has_correct_version() {
         // The catalog version should match bnto-core's FORMAT_VERSION.
-        let registry = bnto_engine::create_default_registry();
+        let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         let envelope = CatalogEnvelope {
@@ -97,22 +97,22 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_ten_processors() {
-        // The default registry has 10 processors, so the catalog should too.
-        let registry = bnto_engine::create_default_registry();
+    fn test_catalog_has_all_eleven_processors() {
+        // The native registry has 11 processors (10 browser + video-download).
+        let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            10,
-            "Catalog should have exactly 10 processors"
+            11,
+            "Catalog should have exactly 11 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 7 expected node type keys are present.
-        let registry = bnto_engine::create_default_registry();
+        // Verify all 11 expected processor type keys are present.
+        let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         let keys: Vec<&str> = catalog.iter().map(|m| m.node_type.as_str()).collect();
@@ -128,6 +128,7 @@ mod tests {
             "spreadsheet-merge",
             "file-rename",
             "image-overlay",
+            "video-download",
         ];
 
         for key in &expected {
@@ -141,25 +142,35 @@ mod tests {
     }
 
     #[test]
-    fn test_all_processors_support_browser_platform() {
-        // Every processor in the default registry should include "browser"
-        // in its platforms list (all 6 current processors run via WASM).
-        let registry = bnto_engine::create_default_registry();
+    fn test_browser_processors_support_browser_platform() {
+        // All processors except video-download should include "browser".
+        // video-download is server/CLI-only (needs yt-dlp + filesystem).
+        let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
+        let non_browser = ["video-download"];
+
         for entry in &catalog {
-            assert!(
-                entry.platforms.contains(&"browser".to_string()),
-                "{} should include 'browser' platform",
-                entry.node_type
-            );
+            if non_browser.contains(&entry.node_type.as_str()) {
+                assert!(
+                    !entry.platforms.contains(&"browser".to_string()),
+                    "{} should NOT include 'browser' platform",
+                    entry.node_type
+                );
+            } else {
+                assert!(
+                    entry.platforms.contains(&"browser".to_string()),
+                    "{} should include 'browser' platform",
+                    entry.node_type
+                );
+            }
         }
     }
 
     #[test]
     fn test_catalog_serializes_to_valid_json() {
         // The full catalog should serialize to valid, parseable JSON.
-        let registry = bnto_engine::create_default_registry();
+        let registry = bnto_engine::create_registry();
         let mut catalog = registry.catalog();
         catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
@@ -183,7 +194,7 @@ mod tests {
         assert!(parsed["nodeTypes"].is_array());
         assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 20);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 10);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 11);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),
@@ -208,12 +219,17 @@ mod tests {
     /// Run with: `cargo test --package bnto-wasm generate_catalog_snapshot -- --nocapture`
     /// Or via: `task wasm:snapshot`
     ///
+    /// Uses the native registry so ALL processors (including CLI-only ones
+    /// like video-download) appear in the snapshot. TypeScript codegen gets
+    /// the full schema/params even for processors that can't run in-browser
+    /// yet — ready for when they can.
+    ///
     /// This is an "ignored" test — it only runs when explicitly requested.
     /// It writes to a file, which isn't something normal tests should do.
     #[test]
     #[ignore]
     fn generate_catalog_snapshot() {
-        let registry = bnto_engine::create_default_registry();
+        let registry = bnto_engine::create_registry();
         let mut catalog = registry.catalog();
         catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
@@ -245,11 +261,11 @@ mod tests {
     #[test]
     fn test_catalog_sort_order_is_deterministic() {
         // Running catalog() twice should produce the same sorted order.
-        let registry = bnto_engine::create_default_registry();
+        let registry = bnto_engine::create_registry();
         let mut catalog1 = registry.catalog();
         catalog1.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
-        let registry2 = bnto_engine::create_default_registry();
+        let registry2 = bnto_engine::create_registry();
         let mut catalog2 = registry2.catalog();
         catalog2.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 

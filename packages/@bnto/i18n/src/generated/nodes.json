@@ -219,6 +219,26 @@
         "label": "Column Mapping",
         "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
       }
+    },
+    "videoDownload": {
+      "url": {
+        "label": "URL",
+        "description": "Video URL to download (YouTube, m3u8/HLS, or direct link).",
+        "placeholder": "https://youtube.com/watch?v=..."
+      },
+      "format": {
+        "label": "Format",
+        "description": "Output format for the downloaded video or audio."
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Maximum video quality. 'best' downloads the highest available."
+      },
+      "args": {
+        "label": "Extra Arguments",
+        "description": "Raw yt-dlp arguments, space-separated. Appended after built-in flags.",
+        "placeholder": "--cookies-from-browser chrome"
+      }
     }
   },
   "categories": {

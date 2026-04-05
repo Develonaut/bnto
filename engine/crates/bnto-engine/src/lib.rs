@@ -1,6 +1,6 @@
 // bnto-engine — shared engine layer for CLI + WASM consumers.
 //
-// Provides the default processor registry and a convenience `run_pipeline()`
+// Provides the processor registry and a convenience `run_pipeline()`
 // so consumers don't duplicate registration logic. Both bnto-wasm (browser)
 // and bnto-cli (native binary) depend on this crate.
 
@@ -12,12 +12,11 @@ use bnto_core::{
     ProcessContext, execute_pipeline,
 };
 
-/// Create a registry pre-loaded with all browser-capable node processors.
+/// Create a registry with only browser-capable (WASM-safe) processors.
 ///
-/// Maps flat node type keys (e.g., "image-compress") to Rust processor instances.
-/// This is the single source of truth for which processors are available —
-/// both WASM and CLI consumers call this instead of duplicating registrations.
-pub fn create_default_registry() -> NodeRegistry {
+/// Used by the `node_catalog()` WASM export and browser execution path.
+/// For the full registry (including CLI-only processors), use `create_registry()`.
+pub fn create_browser_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
 
     registry.register(
@@ -43,15 +42,14 @@ pub fn create_default_registry() -> NodeRegistry {
     registry
 }
 
-/// Create the full registry with native-only processors added.
+/// Create the full processor registry — all node types across all targets.
 ///
-/// Starts from the browser-safe default registry and conditionally adds
-/// CLI/server/desktop processors (like video-download) when compiled with
-/// the `native` feature. WASM builds never enable `native`, so the browser
-/// catalog stays clean.
-pub fn create_native_registry() -> NodeRegistry {
+/// Starts from the browser-safe registry and adds CLI/server/desktop
+/// processors (like video-download) when compiled with the `native` feature.
+/// This is the canonical registry — CLI, tests, and codegen use this.
+pub fn create_registry() -> NodeRegistry {
     #[allow(unused_mut)]
-    let mut registry = create_default_registry();
+    let mut registry = create_browser_registry();
 
     #[cfg(feature = "native")]
     {
@@ -66,7 +64,7 @@ pub fn create_native_registry() -> NodeRegistry {
 
 /// Run a pipeline from a JSON definition string and a list of files.
 ///
-/// Convenience wrapper that parses JSON, creates the default registry,
+/// Convenience wrapper that parses JSON, creates the full registry,
 /// and executes the pipeline. Suited for CLI and integration tests
 /// where the full WASM bridge isn't needed.
 pub fn run_pipeline(
@@ -78,7 +76,7 @@ pub fn run_pipeline(
     let definition: PipelineDefinition = serde_json::from_str(definition_json)
         .map_err(|e| BntoError::InvalidInput(format!("Failed to parse definition: {e}")))?;
 
-    let registry = create_native_registry();
+    let registry = create_registry();
 
     // Pre-flight: fail fast if required external tools are missing.
     deps::check_pipeline_dependencies(&definition, &registry, ctx)?;
@@ -99,8 +97,8 @@ mod tests {
     use bnto_core::NoopContext;
 
     #[test]
-    fn test_default_registry_has_all_processors() {
-        let registry = create_default_registry();
+    fn test_browser_registry_has_all_processors() {
+        let registry = create_browser_registry();
         assert_eq!(registry.len(), 10);
 
         let expected = [
@@ -127,9 +125,9 @@ mod tests {
 
     #[test]
     #[cfg(feature = "native")]
-    fn test_native_registry_has_video_download() {
-        let registry = create_native_registry();
-        // Native registry = default (10) + video-download (1) = 11
+    fn test_full_registry_has_video_download() {
+        let registry = create_registry();
+        // Full registry = browser (10) + video-download (1) = 11
         assert_eq!(registry.len(), 11);
         let params = serde_json::Map::new();
         assert!(

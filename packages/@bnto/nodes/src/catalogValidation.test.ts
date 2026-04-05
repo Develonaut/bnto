@@ -82,11 +82,18 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-merge")).toBe(true);
     expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
+    expect(PROCESSOR_MAP.has("video-download")).toBe(true);
   });
 
-  it("every processor includes browser in platforms", () => {
+  it("browser processors include browser in platforms", () => {
+    // Non-browser processors (CLI/server/desktop only) are expected
+    const NON_BROWSER_TYPES = new Set(["video-download"]);
     for (const proc of PROCESSORS) {
-      expect(proc.platforms).toContain("browser");
+      if (NON_BROWSER_TYPES.has(proc.nodeType)) {
+        expect(proc.platforms).not.toContain("browser");
+      } else {
+        expect(proc.platforms).toContain("browser");
+      }
     }
   });
 });
@@ -151,8 +158,8 @@ describe("engine defaults flow through to schemas", () => {
 // =============================================================================
 
 describe("schema registry completeness", () => {
-  // Types without browser processors — no schemas generated
-  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command", "video-download"]);
+  // Types without engine processors — no schemas generated
+  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
 
   it("every node type in NODE_TYPE_NAMES has a NODE_SCHEMAS entry (except unimplemented types)", () => {
     for (const name of NODE_TYPE_NAMES) {
