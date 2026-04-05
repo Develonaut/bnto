@@ -53,7 +53,7 @@ impl NodeProcessor for VideoDownload {
                 "server".to_string(),
                 "desktop".to_string(),
             ],
-            parameters: vec![url_param(), format_param(), quality_param()],
+            parameters: vec![url_param(), format_param(), quality_param(), args_param()],
             input_cardinality: InputCardinality::Source,
             requires: vec![
                 Dependency {
@@ -116,12 +116,19 @@ impl NodeProcessor for VideoDownload {
             .and_then(|v| v.as_str())
             .unwrap_or(DEFAULT_QUALITY);
 
+        let extra_args = input
+            .params
+            .get("args")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
         progress.report(10, "Starting download...");
 
         let config = DownloadConfig {
             url,
             format,
             quality,
+            extra_args,
         };
 
         let result = self.adapter.download(&config, ctx)?;
@@ -206,6 +213,20 @@ fn quality_param() -> ParameterDef {
     }
 }
 
+fn args_param() -> ParameterDef {
+    ParameterDef {
+        name: "args".to_string(),
+        label: "Extra Arguments".to_string(),
+        description: "Raw yt-dlp arguments, space-separated. Appended after built-in flags."
+            .to_string(),
+        param_type: ParameterType::String,
+        default: Some(serde_json::json!("")),
+        placeholder: Some("--cookies-from-browser chrome".to_string()),
+        surfaceable: false,
+        ..Default::default()
+    }
+}
+
 // --- Tests ---
 
 #[cfg(test)]
@@ -213,6 +234,7 @@ mod tests {
     use super::*;
     use crate::adapters::DownloadResult;
     use std::path::{Path, PathBuf};
+    use std::sync::Mutex;
 
     /// Mock adapter that returns canned video data without invoking yt-dlp.
     struct MockVideoDownloader {
@@ -252,6 +274,44 @@ mod tests {
                 Err(e) => Err(BntoError::ProcessingFailed(e.to_string())),
             }
         }
+    }
+
+    use std::sync::Arc;
+
+    /// Shared state for capturing what the processor passes to the adapter.
+    type CapturedArgs = Arc<Mutex<Option<String>>>;
+
+    /// Capturing mock that records the DownloadConfig.extra_args it received.
+    struct CapturingDownloader {
+        captured: CapturedArgs,
+    }
+
+    impl CapturingDownloader {
+        fn new(captured: CapturedArgs) -> Self {
+            Self { captured }
+        }
+    }
+
+    impl VideoDownloader for CapturingDownloader {
+        fn download(
+            &self,
+            config: &DownloadConfig,
+            _ctx: &dyn ProcessContext,
+        ) -> Result<DownloadResult, BntoError> {
+            *self.captured.lock().unwrap() = Some(config.extra_args.to_string());
+            Ok(DownloadResult {
+                data: vec![1],
+                filename: "v.mp4".to_string(),
+                mime_type: "video/mp4".to_string(),
+            })
+        }
+    }
+
+    /// Create a processor with a capturing adapter, returning the shared state handle.
+    fn make_capturing_processor() -> (VideoDownload, CapturedArgs) {
+        let captured: CapturedArgs = Arc::new(Mutex::new(None));
+        let adapter = CapturingDownloader::new(Arc::clone(&captured));
+        (VideoDownload::new(Box::new(adapter)), captured)
     }
 
     /// Mock ProcessContext for unit tests — no real system access.
@@ -309,12 +369,20 @@ mod tests {
     }
 
     #[test]
-    fn test_metadata_has_three_params() {
+    fn test_metadata_has_four_params() {
         let p = make_processor(MockVideoDownloader::ok(vec![], "v.mp4", "video/mp4"));
         let m = p.metadata();
-        assert_eq!(m.parameters.len(), 3);
+        assert_eq!(m.parameters.len(), 4);
         let names: Vec<&str> = m.parameters.iter().map(|p| p.name.as_str()).collect();
-        assert_eq!(names, vec!["url", "format", "quality"]);
+        assert_eq!(names, vec!["url", "format", "quality", "args"]);
+    }
+
+    #[test]
+    fn test_args_param_not_surfaceable() {
+        let p = make_processor(MockVideoDownloader::ok(vec![], "v.mp4", "video/mp4"));
+        let m = p.metadata();
+        let args = m.parameters.iter().find(|p| p.name == "args").unwrap();
+        assert!(!args.surfaceable);
     }
 
     #[test]
@@ -467,5 +535,91 @@ mod tests {
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].data, video_data);
         assert_eq!(output.files[0].mime_type, "video/mp4");
+    }
+
+    // --- Extra args (capturing mock verifies DownloadConfig.extra_args) ---
+
+    fn make_input_with_args(url: &str, format: &str, quality: &str, args: &str) -> NodeInput {
+        let mut params = serde_json::Map::new();
+        params.insert("url".to_string(), serde_json::json!(url));
+        params.insert("format".to_string(), serde_json::json!(format));
+        params.insert("quality".to_string(), serde_json::json!(quality));
+        params.insert("args".to_string(), serde_json::json!(args));
+        NodeInput {
+            data: vec![],
+            filename: String::new(),
+            mime_type: None,
+            params,
+        }
+    }
+
+    #[test]
+    fn test_args_passed_to_adapter() {
+        let (processor, captured) = make_capturing_processor();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input_with_args(
+            "https://example.com/v",
+            "mp4",
+            "best",
+            "--verbose --geo-bypass",
+        );
+
+        processor.process(input, &progress, &MockContext).unwrap();
+
+        let value = captured.lock().unwrap().clone().unwrap();
+        assert_eq!(value, "--verbose --geo-bypass");
+    }
+
+    #[test]
+    fn test_args_defaults_to_empty_when_absent() {
+        let (processor, captured) = make_capturing_processor();
+        let progress = ProgressReporter::new_noop();
+
+        // Only url — no args param provided.
+        let mut params = serde_json::Map::new();
+        params.insert("url".to_string(), serde_json::json!("https://example.com/v"));
+        let input = NodeInput {
+            data: vec![],
+            filename: String::new(),
+            mime_type: None,
+            params,
+        };
+
+        processor.process(input, &progress, &MockContext).unwrap();
+
+        let value = captured.lock().unwrap().clone().unwrap();
+        assert_eq!(value, "", "args should default to empty string");
+    }
+
+    #[test]
+    fn test_args_whitespace_only_passed_verbatim() {
+        let (processor, captured) = make_capturing_processor();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input_with_args("https://example.com/v", "mp4", "best", "   ");
+
+        processor.process(input, &progress, &MockContext).unwrap();
+
+        let value = captured.lock().unwrap().clone().unwrap();
+        assert_eq!(value, "   ", "processor passes raw string to adapter");
+    }
+
+    #[test]
+    fn test_args_complex_flags() {
+        let (processor, captured) = make_capturing_processor();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input_with_args(
+            "https://example.com/v",
+            "mp4",
+            "best",
+            "--cookies-from-browser chrome --proxy http://proxy:8080 -f bestvideo+bestaudio",
+        );
+
+        processor.process(input, &progress, &MockContext).unwrap();
+
+        let value = captured.lock().unwrap().clone().unwrap();
+        assert_eq!(
+            value,
+            "--cookies-from-browser chrome --proxy http://proxy:8080 -f bestvideo+bestaudio"
+        );
     }
 }

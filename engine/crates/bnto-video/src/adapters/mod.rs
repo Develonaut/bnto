@@ -36,6 +36,8 @@ pub struct DownloadConfig<'a> {
     pub format: &'a str,
     /// Maximum video quality (e.g., "1080", "720", "best").
     pub quality: &'a str,
+    /// Raw yt-dlp arguments, space-separated. Appended after built-in flags.
+    pub extra_args: &'a str,
 }
 
 /// Abstraction boundary for video downloading.

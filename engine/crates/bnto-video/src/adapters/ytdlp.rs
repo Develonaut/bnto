@@ -56,6 +56,10 @@ impl VideoDownloader for YtDlpAdapter {
             args.extend_from_slice(&["-S", &format_sort]);
         }
 
+        // Append user-provided extra args (last-wins for yt-dlp flags).
+        let extra_parts: Vec<&str> = config.extra_args.split_whitespace().collect();
+        args.extend_from_slice(&extra_parts);
+
         ctx.run_command("yt-dlp", &args)?;
 
         // Read the downloaded file.
@@ -314,5 +318,181 @@ mod tests {
         assert_eq!(format_to_mime("webm"), "video/webm");
         assert_eq!(format_to_mime("mp3"), "audio/mpeg");
         assert_eq!(format_to_mime("unknown"), "video/mp4");
+    }
+
+    // --- Extra args splitting (unit) ---
+
+    #[test]
+    fn test_extra_args_empty_is_noop() {
+        let parts: Vec<&str> = "".split_whitespace().collect();
+        assert!(parts.is_empty());
+    }
+
+    #[test]
+    fn test_extra_args_single_flag() {
+        let parts: Vec<&str> = "--verbose".split_whitespace().collect();
+        assert_eq!(parts, vec!["--verbose"]);
+    }
+
+    #[test]
+    fn test_extra_args_multiple_flags() {
+        let parts: Vec<&str> = "--geo-bypass --proxy http://proxy:8080"
+            .split_whitespace()
+            .collect();
+        assert_eq!(parts, vec!["--geo-bypass", "--proxy", "http://proxy:8080"]);
+    }
+
+    #[test]
+    fn test_extra_args_excess_whitespace() {
+        let parts: Vec<&str> = "  --verbose   --no-warnings  "
+            .split_whitespace()
+            .collect();
+        assert_eq!(parts, vec!["--verbose", "--no-warnings"]);
+    }
+
+    // --- Extra args integration (SpyContext captures the full command line) ---
+
+    use std::path::{Path, PathBuf};
+    use std::sync::Mutex;
+
+    /// ProcessContext that records the args passed to run_command.
+    struct SpyContext {
+        captured_args: Mutex<Vec<Vec<String>>>,
+    }
+
+    impl SpyContext {
+        fn new() -> Self {
+            Self {
+                captured_args: Mutex::new(Vec::new()),
+            }
+        }
+
+        /// Return args from the first run_command call (the download invocation).
+        fn first_call_args(&self) -> Vec<String> {
+            self.captured_args.lock().unwrap()[0].clone()
+        }
+    }
+
+    impl ProcessContext for SpyContext {
+        fn run_command(&self, _cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            self.captured_args
+                .lock()
+                .unwrap()
+                .push(args.iter().map(|s| s.to_string()).collect());
+            // Return non-empty output to simulate yt-dlp --print title
+            Ok(b"Spy Title".to_vec())
+        }
+        fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
+            // Create a real temp file with fake video data so fs::read succeeds.
+            let path = std::env::temp_dir().join(format!("spy_test{suffix}"));
+            std::fs::write(&path, b"fake video data").unwrap();
+            Ok(path)
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&Path, BntoError> {
+            Err(BntoError::ProcessingFailed("no work dir".to_string()))
+        }
+    }
+
+    #[test]
+    fn test_extra_args_appended_to_command() {
+        let adapter = YtDlpAdapter::new();
+        let spy = SpyContext::new();
+        let config = DownloadConfig {
+            url: "https://example.com/video",
+            format: "mp4",
+            quality: "best",
+            extra_args: "--verbose --geo-bypass",
+        };
+
+        let _ = adapter.download(&config, &spy);
+
+        let args = spy.first_call_args();
+        // Extra args should appear at the tail, after all built-in flags.
+        assert!(args.contains(&"--verbose".to_string()), "args: {args:?}");
+        assert!(args.contains(&"--geo-bypass".to_string()), "args: {args:?}");
+        // They must be AFTER the built-in -S flag.
+        let s_pos = args.iter().position(|a| a == "-S").unwrap();
+        let verbose_pos = args.iter().position(|a| a == "--verbose").unwrap();
+        assert!(
+            verbose_pos > s_pos,
+            "extra args should be after built-in -S: {args:?}"
+        );
+    }
+
+    #[test]
+    fn test_extra_args_empty_no_extra_tokens() {
+        let adapter = YtDlpAdapter::new();
+        let spy = SpyContext::new();
+        let config = DownloadConfig {
+            url: "https://example.com/video",
+            format: "mp4",
+            quality: "best",
+            extra_args: "",
+        };
+
+        let _ = adapter.download(&config, &spy);
+
+        let args = spy.first_call_args();
+        // With empty extra_args, the last arg should be the format sort value,
+        // not any extra tokens.
+        let last = args.last().unwrap();
+        assert_eq!(last, "vcodec:h264,acodec:m4a", "args: {args:?}");
+    }
+
+    #[test]
+    fn test_extra_args_override_format_sort() {
+        // User passes their own -S flag — it appears after ours (last-wins).
+        let adapter = YtDlpAdapter::new();
+        let spy = SpyContext::new();
+        let config = DownloadConfig {
+            url: "https://example.com/video",
+            format: "mp4",
+            quality: "best",
+            extra_args: "-S vcodec:vp9",
+        };
+
+        let _ = adapter.download(&config, &spy);
+
+        let args = spy.first_call_args();
+        // There should be two -S flags: ours and the user's.
+        let s_positions: Vec<usize> = args
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| *a == "-S")
+            .map(|(i, _)| i)
+            .collect();
+        assert_eq!(s_positions.len(), 2, "expected two -S flags: {args:?}");
+        // User's -S should come last (higher index).
+        let user_s_val = &args[s_positions[1] + 1];
+        assert_eq!(user_s_val, "vcodec:vp9", "args: {args:?}");
+    }
+
+    #[test]
+    fn test_extra_args_with_tabs_and_mixed_whitespace() {
+        let adapter = YtDlpAdapter::new();
+        let spy = SpyContext::new();
+        let config = DownloadConfig {
+            url: "https://example.com/video",
+            format: "webm",
+            quality: "best",
+            extra_args: "--verbose\t\t--no-check-certificates   --socket-timeout\t30",
+        };
+
+        let _ = adapter.download(&config, &spy);
+
+        let args = spy.first_call_args();
+        assert!(args.contains(&"--verbose".to_string()), "args: {args:?}");
+        assert!(
+            args.contains(&"--no-check-certificates".to_string()),
+            "args: {args:?}"
+        );
+        assert!(
+            args.contains(&"--socket-timeout".to_string()),
+            "args: {args:?}"
+        );
+        assert!(args.contains(&"30".to_string()), "args: {args:?}");
     }
 }
