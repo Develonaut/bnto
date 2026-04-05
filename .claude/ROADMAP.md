@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** April 2, 2026
+**Last Updated:** April 4, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -55,10 +55,11 @@ M2: Platform Features                ← DELIVERED (March 2026)
     (code editor, expression input, edit/run mode) deferred to post-revenue.
     Community recipes via GitHub PRs, curated by maintainer.
 
-M3: Engine Expansion
-    Dependency management for external tools (yt-dlp, ffmpeg).
-    New node types: video, shell, HTTP. ProcessContext for controlled
-    system access. TUI for interactive recipe execution. CLI polish.
+M3: Engine Expansion                 ← IN PROGRESS (April 2026)
+    Dependency management DELIVERED. Video node DELIVERED (yt-dlp).
+    ProcessContext DELIVERED. Next: CLI polish (list, info, progress),
+    codegen for video node. TUI deferred to own sprint after CLI is
+    bomb-proof.
 
     The CLI is the primary development surface. New capabilities are
     built and tested via `bnto run` before any browser/web work.
@@ -73,7 +74,7 @@ M5: Monetization
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. M3 is next: engine expansion (dependency system, video node, TUI, CLI polish). Desktop (M4) deprioritized in favor of enriching the engine directly.
+**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. M3 in progress: dependency system and video node shipped (v0.5.0). Next: CLI polish, then codegen. TUI deferred to own sprint. Desktop (M4) deprioritized in favor of enriching the engine directly.
 
 ---
 
@@ -88,7 +89,7 @@ M5: Monetization
 3. Prove it works end-to-end in the CLI
 4. The engine's `platforms` metadata determines where it surfaces — browser, desktop, server, or all of the above
 
-**Extensibility is the point.** The 14 predefined recipes are a starting point. The real value is that anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
+**Extensibility is the point.** The 15 predefined recipes are a starting point. The real value is that anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
 
 **Dependency system:** Node types can declare external dependencies (`yt-dlp`, `ffmpeg`, `imagemagick`). The engine checks them before pipeline execution. `bnto doctor` reports missing dependencies with install hints.
 
@@ -229,6 +230,9 @@ But monetization work is explicitly paused. No Stripe, no Pro tier, no feature g
 | **Image overlay/watermark**          | Delivered (April 2026)   | `image-overlay` operation in `bnto-image`. Text watermark with position/opacity/scale/color. 10+ golden tests.                                   |
 | **v0.2.0 released**                  | Shipped (April 2026)     | 14 recipes, schema-driven config, editor reconnect, 4 Tier 3 operations.                                                                         |
 | **`platforms` passthrough**          | Shipped (April 2026)     | Full `platforms: string[]` from engine catalog instead of lossy `browserCapable: boolean`. Enables correct CLI/server/browser filtering.         |
+| **v0.5.0 released**                  | Shipped (April 2026)     | 15 recipes, video-download node, extra args pass-through, dependency system, H.264 codec preference, ProcessContext trait.                       |
+| **TUI deferred to own sprint**       | Decided (April 2026)     | TUI is a full application (editor, navigation, recipe browser). Needs proper sprint breakdown. CLI polish comes first — make it bomb-proof.      |
+| **Open-source-first pivot**          | Decided (April 2026)     | Stripped pricing, auth surfaces, Pro references. Monetization tabled. crates.io preparation (v0.1.1).                                            |
 
 ### Engine Decision: Rust Won (Feb 2026)
 
