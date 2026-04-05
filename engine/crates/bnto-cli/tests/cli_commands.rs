@@ -93,11 +93,10 @@ fn test_url_mode_non_url_input_shows_error() {
 }
 
 #[test]
-fn test_url_mode_valid_url_reaches_processor() {
-    // Passes a valid URL. The processor will fail because yt-dlp
-    // likely isn't installed in CI, but the error should come from
-    // the processor — NOT from URL validation or input routing.
-    // This proves the full path: CLI → input routing → engine.
+fn test_youtube_download() {
+    // End-to-end download: YouTube → yt-dlp → output file.
+    // "Me at the Zoo" (jNQXAC9IVRw) — first YouTube video, always available, ~465KB.
+    // Requires yt-dlp + ffmpeg installed. Skips gracefully if missing.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
         .args(["run", &recipe_path("download-video")])
@@ -108,30 +107,31 @@ fn test_url_mode_valid_url_reaches_processor() {
 
     let stderr = String::from_utf8_lossy(&output.stderr);
 
-    // The status message should say "URL input", proving mode detection worked
+    // Must route through URL mode
     assert!(
         stderr.contains("URL input"),
         "Expected 'URL input' status message, got: {stderr}"
     );
 
-    // If yt-dlp is installed, the command succeeds (actual download).
-    // If yt-dlp is NOT installed, it fails with a processor error.
-    // Either way, we must NOT see input validation errors.
-    assert!(
-        !stderr.contains("Expected a URL"),
-        "URL should have passed validation"
-    );
-    assert!(
-        !stderr.contains("requires a URL"),
-        "URL was provided but routing failed"
-    );
+    if output.status.success() {
+        // Download succeeded — verify output file exists with content
+        let files = output_files(&out);
+        assert!(!files.is_empty(), "Expected at least one output file");
+        let size = files[0].metadata().unwrap().len();
+        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
+    } else {
+        // yt-dlp not installed — error must come from processor, not routing
+        assert!(
+            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
+            "Should fail due to yt-dlp, not routing: {stderr}"
+        );
+    }
 }
 
 #[test]
-fn test_url_mode_param_override() {
-    // Combines URL input with --param override.
-    // Like the valid URL test, the processor may fail without yt-dlp,
-    // but we verify the input routing doesn't reject the combination.
+fn test_youtube_download_with_param_override() {
+    // Downloads with --param format=webm override.
+    // Verifies param injection works alongside URL input.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
         .args(["run", &recipe_path("download-video")])
@@ -143,19 +143,74 @@ fn test_url_mode_param_override() {
 
     let stderr = String::from_utf8_lossy(&output.stderr);
 
-    // Must not fail on input routing or param injection
     assert!(
-        !stderr.contains("Expected a URL"),
-        "URL should have passed validation"
+        stderr.contains("URL input"),
+        "Expected 'URL input' status message, got: {stderr}"
     );
     assert!(
         !stderr.contains("Invalid --param"),
         "Param override should be valid"
     );
+
+    if output.status.success() {
+        let files = output_files(&out);
+        assert!(!files.is_empty(), "Expected at least one output file");
+        let size = files[0].metadata().unwrap().len();
+        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
+    } else {
+        assert!(
+            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
+            "Should fail due to yt-dlp, not routing: {stderr}"
+        );
+    }
+}
+
+// --- m3u8 / HLS URL ---
+
+#[test]
+fn test_m3u8_url_routes_correctly() {
+    // Verifies m3u8 (HLS) URLs route through URL mode without
+    // validation errors. Routing is fast — no download needed.
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("download-video")])
+        .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+
     assert!(
         stderr.contains("URL input"),
-        "Expected 'URL input' status message, got: {stderr}"
+        "m3u8 URL should route through URL mode, got: {stderr}"
     );
+    assert!(
+        !stderr.contains("Expected a URL"),
+        "m3u8 URL should pass validation"
+    );
+}
+
+#[test]
+#[ignore] // HLS streams are large (~466MB). Run manually: cargo test -p bnto-cli -- --ignored
+fn test_m3u8_download() {
+    // End-to-end download: m3u8 (HLS) → yt-dlp → output file.
+    // Big Buck Bunny via Mux test stream. Requires yt-dlp + ffmpeg.
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("download-video")])
+        .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "m3u8 download failed: {stderr}");
+
+    let files = output_files(&out);
+    assert!(!files.is_empty(), "Expected at least one output file");
+    let size = files[0].metadata().unwrap().len();
+    assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
 }
 
 // --- Multiple Files ---
