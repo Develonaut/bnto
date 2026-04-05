@@ -27,10 +27,8 @@ fn repo_root() -> std::path::PathBuf {
 }
 
 pub fn recipe_path(slug: &str) -> String {
-    repo_root()
-        .join(format!(
-            "packages/@bnto/registry/src/recipes/generated/{slug}.bnto.json"
-        ))
+    engine_root()
+        .join(format!("recipes/{slug}.bnto.json"))
         .to_string_lossy()
         .to_string()
 }

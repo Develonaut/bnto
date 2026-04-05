@@ -5,6 +5,7 @@
 // and bnto-cli (native binary) depend on this crate.
 
 pub mod deps;
+pub mod recipes;
 
 use bnto_core::{
     BntoError, NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, PipelineResult,
@@ -173,7 +174,7 @@ mod tests {
     #[test]
     fn test_generated_compress_images_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/compress-images.bnto.json"
+            "../../../recipes/compress-images.bnto.json"
         );
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
@@ -194,7 +195,7 @@ mod tests {
     #[test]
     fn test_generated_resize_images_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/resize-images.bnto.json"
+            "../../../recipes/resize-images.bnto.json"
         );
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
@@ -214,7 +215,7 @@ mod tests {
     #[test]
     fn test_generated_clean_csv_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/clean-csv.bnto.json"
+            "../../../recipes/clean-csv.bnto.json"
         );
         let csv_data = include_bytes!("../../../../test-fixtures/csv/messy.csv");
         let files = vec![PipelineFile {
@@ -233,7 +234,7 @@ mod tests {
     #[test]
     fn test_generated_rename_files_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/rename-files.bnto.json"
+            "../../../recipes/rename-files.bnto.json"
         );
         let files = vec![PipelineFile {
             name: "document.txt".to_string(),
@@ -257,7 +258,7 @@ mod tests {
     #[test]
     fn test_generated_csv_to_json_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/csv-to-json.bnto.json"
+            "../../../recipes/csv-to-json.bnto.json"
         );
         let csv_data = include_bytes!("../../../../test-fixtures/csv/simple.csv");
         let files = vec![PipelineFile {
@@ -278,7 +279,7 @@ mod tests {
     #[test]
     fn test_generated_merge_csv_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/merge-csv.bnto.json"
+            "../../../recipes/merge-csv.bnto.json"
         );
         let csv_a = b"name,age\nAlice,30\n";
         let csv_b = b"name,age\nBob,25\n";
@@ -309,7 +310,7 @@ mod tests {
     #[test]
     fn test_generated_strip_exif_recipe() {
         let json = include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/strip-exif.bnto.json"
+            "../../../recipes/strip-exif.bnto.json"
         );
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
@@ -330,7 +331,7 @@ mod tests {
     fn test_generated_watermark_images_recipe() {
         // The generated recipe has an empty overlay param — inject a real one.
         let mut def: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../packages/@bnto/registry/src/recipes/generated/watermark-images.bnto.json"
+            "../../../recipes/watermark-images.bnto.json"
         ))
         .unwrap();
 
@@ -371,49 +372,49 @@ mod tests {
     fn test_all_generated_recipes_parse() {
         let recipes = [
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/compress-images.bnto.json"
+                "../../../recipes/compress-images.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/resize-images.bnto.json"
+                "../../../recipes/resize-images.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/convert-image-format.bnto.json"
+                "../../../recipes/convert-image-format.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/rename-files.bnto.json"
+                "../../../recipes/rename-files.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/clean-csv.bnto.json"
+                "../../../recipes/clean-csv.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/rename-csv-columns.bnto.json"
+                "../../../recipes/rename-csv-columns.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/optimize-images-for-web.bnto.json"
+                "../../../recipes/optimize-images-for-web.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/generate-thumbnails.bnto.json"
+                "../../../recipes/generate-thumbnails.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/compress-and-rename.bnto.json"
+                "../../../recipes/compress-and-rename.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/standardize-csv.bnto.json"
+                "../../../recipes/standardize-csv.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/csv-to-json.bnto.json"
+                "../../../recipes/csv-to-json.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/strip-exif.bnto.json"
+                "../../../recipes/strip-exif.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/watermark-images.bnto.json"
+                "../../../recipes/watermark-images.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/merge-csv.bnto.json"
+                "../../../recipes/merge-csv.bnto.json"
             ),
             include_str!(
-                "../../../../packages/@bnto/registry/src/recipes/generated/download-video.bnto.json"
+                "../../../recipes/download-video.bnto.json"
             ),
         ];
 
