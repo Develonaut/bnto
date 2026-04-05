@@ -577,7 +577,10 @@ mod tests {
 
         // Only url — no args param provided.
         let mut params = serde_json::Map::new();
-        params.insert("url".to_string(), serde_json::json!("https://example.com/v"));
+        params.insert(
+            "url".to_string(),
+            serde_json::json!("https://example.com/v"),
+        );
         let input = NodeInput {
             data: vec![],
             filename: String::new(),

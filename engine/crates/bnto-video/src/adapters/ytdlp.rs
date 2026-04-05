@@ -101,11 +101,7 @@ fn fetch_title(url: &str, ctx: &dyn ProcessContext) -> Option<String> {
         .run_command("yt-dlp", &["--print", "title", "--no-warnings", url])
         .ok()?;
     let title = String::from_utf8_lossy(&output).trim().to_string();
-    if title.is_empty() {
-        None
-    } else {
-        Some(title)
-    }
+    if title.is_empty() { None } else { Some(title) }
 }
 
 /// Sanitize a video title for use as a filename.
@@ -344,9 +340,7 @@ mod tests {
 
     #[test]
     fn test_extra_args_excess_whitespace() {
-        let parts: Vec<&str> = "  --verbose   --no-warnings  "
-            .split_whitespace()
-            .collect();
+        let parts: Vec<&str> = "  --verbose   --no-warnings  ".split_whitespace().collect();
         assert_eq!(parts, vec!["--verbose", "--no-warnings"]);
     }
 

@@ -317,7 +317,10 @@ fn test_youtube_download_with_multiple_extra_args() {
     let output = Command::new(bnto_bin())
         .args(["run", &recipe_path("download-video")])
         .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
-        .args(["--param", "args=--no-check-certificates --socket-timeout 30"])
+        .args([
+            "--param",
+            "args=--no-check-certificates --socket-timeout 30",
+        ])
         .args(["-o", out.path().to_str().unwrap()])
         .output()
         .unwrap();
