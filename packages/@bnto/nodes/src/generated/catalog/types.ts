@@ -28,16 +28,7 @@ export type NodeTypeName =
   | "video-download";
 
 /** Node category for grouping in the UI and documentation. */
-export type NodeCategory =
-  | "control"
-  | "data"
-  | "file"
-  | "image"
-  | "io"
-  | "network"
-  | "spreadsheet"
-  | "system"
-  | "video";
+export type NodeCategory = "control" | "data" | "file" | "image" | "io" | "network" | "spreadsheet" | "system" | "video";
 
 /** Metadata describing a node type's behavior and capabilities. */
 export interface NodeTypeInfo {

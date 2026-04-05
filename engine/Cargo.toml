@@ -32,6 +32,8 @@ regex = "1"
 # The `image` crate always writes truecolor — we need `png` directly for palette-based output.
 png = "0.18"
 base64 = "0.22"
+colored = "3"
+indicatif = "0.17"
 
 # --- Build Profiles ---
 

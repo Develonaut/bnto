@@ -608,10 +608,10 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 3 (parallel — CLI polish)
 
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto list` command: list available recipes with descriptions and categories
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto info <recipe>` command: show recipe details, required dependencies, node types
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Enhanced `bnto run`: progress bars per file, colored output, timing summary
-- [ ] `README.md` — Update to pitch CLI usage front and center
+- [x] `engine/crates/bnto-cli` — `/rust-expert` — `bnto list` command: list available recipes with descriptions and categories
+- [x] `engine/crates/bnto-cli` — `/rust-expert` — `bnto info <recipe>` command: show recipe details, required dependencies, node types
+- [x] `engine/crates/bnto-cli` — `/rust-expert` — Enhanced `bnto run`: progress bars per file, colored output, timing summary
+- [x] `README.md` — Update to pitch CLI usage front and center
 
 ---
 
