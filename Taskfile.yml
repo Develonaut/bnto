@@ -136,23 +136,23 @@ tasks:
       # Only the cdylib entry point crate (bnto-wasm) gets wasm-pack built.
       # Node crates (bnto-image, etc.) are rlib — they compile into the
       # entry point's .wasm binary, not as separate modules.
-      - /Users/ryan/.cargo/bin/wasm-pack build --target web --release crates/bnto-wasm
+      - wasm-pack build --target web --release crates/bnto-wasm
 
   wasm:build:dev:
     desc: Build WASM entry point in dev mode (faster, larger binary, better errors)
     dir: ./engine
     cmds:
-      - /Users/ryan/.cargo/bin/wasm-pack build --target web --dev crates/bnto-wasm
+      - wasm-pack build --target web --dev crates/bnto-wasm
 
   wasm:test:
     desc: Run Rust unit tests (native) + WASM integration tests (Node.js)
     dir: ./engine
     cmds:
       - cargo test --workspace
-      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-wasm
-      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-csv
-      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-file
-      - /Users/ryan/.cargo/bin/wasm-pack test --node crates/bnto-image
+      - wasm-pack test --node crates/bnto-wasm
+      - wasm-pack test --node crates/bnto-csv
+      - wasm-pack test --node crates/bnto-file
+      - wasm-pack test --node crates/bnto-image
 
   wasm:test:unit:
     desc: Run Rust unit tests only (native, fast)

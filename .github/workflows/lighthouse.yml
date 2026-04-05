@@ -34,6 +34,9 @@ jobs:
       - name: "Build: @bnto/nodes"
         run: pnpm --filter @bnto/nodes run build
 
+      - name: "Build: @bnto/registry"
+        run: pnpm --filter @bnto/registry run build
+
       - name: "Build: @bnto/auth"
         run: pnpm --filter @bnto/auth run build
 
@@ -42,6 +45,15 @@ jobs:
 
       - name: "Build: @bnto/core"
         run: pnpm --filter @bnto/core run build
+
+      - name: "Build: @bnto/ui"
+        run: pnpm --filter @bnto/ui run build
+
+      - name: "Build: @bnto/form"
+        run: pnpm --filter @bnto/form run build
+
+      - name: "Build: @bnto/editor"
+        run: pnpm --filter @bnto/editor run build
 
       - name: "Build: @bnto/web"
         run: pnpm --filter @bnto/web run build

@@ -33,8 +33,8 @@ Lighthouse CI also runs as a GitHub Actions workflow (`lighthouse.yml`) on every
 
 For EACH file you modified, verify against the Bento Box Principle (`code-standards.md`):
 
-- [ ] **Layered Architecture**: Apps -> `@bnto/core` -> Engine (Rust WASM). No layer skipping. UI and editor co-located in `apps/web/`.
-- [ ] **API Abstraction**: No direct Convex queries/mutations in components. No direct Wails bindings in components. All data access via `@bnto/core`.
+- [ ] **Layered Architecture**: CLI links engine directly. Web: Apps -> `@bnto/core` -> Engine (Rust WASM). No layer skipping.
+- [ ] **API Abstraction**: No direct Convex queries/mutations in components. All data access via `@bnto/core`.
 - [ ] **Component complexity**: Logic inline is fine. Extract a hook only when the component earns it (~20+ lines of logic, reuse needed, or testability). No mandatory hooks for simple components.
 - [ ] **Pure Functions -> Logic Hooks -> Components**: Business rules in pure functions (no React). Logic hooks compose them reactively -- extract when complex or shared, not for every component.
 - [ ] **One Export Per File**: Every exported component, hook, or function in its own file. No `hooks.ts` grab bags, no `utils.ts` grab bags, no multi-component files. Folder + barrel export for related pieces. Only exception: shadcn primitives.

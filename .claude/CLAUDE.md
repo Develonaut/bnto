@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** March 14, 2026
+**Last Updated:** April 5, 2026
 
 ---
 
@@ -46,13 +46,14 @@
 
 **Bnto** is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes that automate your workflow. One Rust engine compiles to every target: CLI, browser (WASM), desktop (Tauri), server. Write a recipe once, run it anywhere.
 
-Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M1 (Browser Execution) is delivered** — 14 recipes run via CLI and browser (Rust→WASM). Files never leave the user's machine. The dividing line: **nodes that run locally are free, nodes that need a managed server are Pro.** See [ROADMAP.md](.claude/ROADMAP.md) and [pricing-model.md](.claude/strategy/pricing-model.md).
+Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **15 recipes ship today** — running via CLI (native Rust) and browser (Rust→WASM). The CLI is the primary development surface. The dividing line: **nodes that run locally are free, nodes that need a managed server cost money** (monetization tabled). See [ROADMAP.md](.claude/ROADMAP.md).
 
-- **Rust WASM Engine (M1, delivered)**: `engine/` — Rust→WASM via `wasm-pack`, all browser execution
-- **Web**: Next.js on Vercel + Convex Cloud + `@convex-dev/auth`
-- **Cloud (M4, planned)**: Server-side execution for premium recipes (technology TBD)
-- **Desktop (M3)**: Tauri (Rust-native) — free local execution
-- **Shared Packages**: `@bnto/core` (transport-agnostic API), `@bnto/registry` (node system facade + curation), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-generated catalog, internal to registry)
+- **CLI** (primary): `engine/crates/bnto-cli/` — native Rust binary, full system access, published to crates.io
+- **Rust Engine**: `engine/` — shared engine crate powering CLI (native) and browser (WASM)
+- **Web**: Next.js on Vercel + Convex Cloud — landing page, docs, predefined recipe pages for SEO, browser execution
+- **Desktop** (M4, backlog): Tauri (Rust-native) — links engine natively like CLI
+- **Cloud** (M4, backlog): Server-side execution for premium recipes (technology TBD)
+- **Shared Packages**: `@bnto/core` (transport-agnostic web API), `@bnto/registry` (node system facade + curation), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-generated catalog, internal to registry)
 - **Open Source**: MIT licensed
 
 ---
@@ -61,10 +62,10 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **M
 
 These are enforced in detail by the [rules/](.claude/rules/) files. This section is the quick reference.
 
-1. **Layered Architecture:** `Apps → @bnto/core → Engine (Rust WASM)`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
+1. **Layered Architecture:** CLI links engine directly. Web: `Apps → @bnto/core → Engine (Rust→WASM)`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
 2. **API Abstraction:** UI code NEVER calls Convex, Tauri, or Go directly. Always through `@bnto/core` hooks.
 3. **Bento Box Principle:** One thing per file/function/package. Files < 250 lines, functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
-4. **Co-location:** UI components live in `apps/web` until a second consumer (desktop) exists. When extracted, UI becomes `@bnto/ui` (officially named **Motorway** — the Mini Motorways design system).
+4. **Co-location:** `@bnto/ui` (Motorway design system) and `@bnto/editor` extracted as packages (March 2026). Page-level components remain in `apps/web`.
 5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Tauri) and swaps adapters. Components never know which backend they're talking to.
 
 ---
@@ -121,7 +122,6 @@ task cli:build          # Build native CLI binary (release)
 task cli:test           # Run CLI unit + integration + golden tests
 task cli:golden         # Run golden tests only (byte-exact output verification)
 task cli:golden:bless   # Regenerate golden files from current CLI output
-task recipes:generate   # Generate recipe JSON fixtures from TypeScript recipes
 
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
@@ -169,15 +169,17 @@ bnto/
 │       ├── backend/             # @bnto/backend — Convex schema + functions
 │       ├── nodes/               # @bnto/nodes — Engine-agnostic node definitions
 │       └── registry/            # @bnto/registry — Curation + discovery layer
-├── engine/                      # Rust engine (WASM + native CLI)
+├── engine/                      # Rust engine (CLI + WASM + native)
+│   ├── recipes/                 # Authoritative .bnto.json recipe definitions (15 files)
 │   ├── crates/
 │   │   ├── bnto-core/           # Core library (types, traits, progress)
 │   │   ├── bnto-image/          # Image compression/resize/convert
 │   │   ├── bnto-csv/            # CSV clean/rename columns
 │   │   ├── bnto-file/           # File rename
-│   │   ├── bnto-engine/         # Shared registry + pipeline runner
+│   │   ├── bnto-video/          # Video download (yt-dlp, native-only)
+│   │   ├── bnto-engine/         # Shared registry + pipeline runner + recipe catalog
 │   │   ├── bnto-wasm/           # cdylib entry point (WASM binary)
-│   │   └── bnto-cli/            # Native CLI binary (`bnto`)
+│   │   └── bnto-cli/            # Native CLI binary (`bnto`) — primary consumer
 ├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```
@@ -208,7 +210,7 @@ bnto/
 3. **Modularity is our bread and butter** — Think small, build small, compose big
 4. **Abstraction is the goal** — "Did we make this easier?" If no, go back
 5. **Config as code** — The repo is the source of truth. Dashboards override, never gatekeep
-6. **Engine is the stable API** — Rust WASM for browser, Tauri native for desktop
+6. **Engine is the stable API** — CLI (native Rust), browser (WASM), desktop (Tauri native)
 7. **Open source core** — Cloud sells convenience, not proprietary features
 
 See [core-principles.md](.claude/strategy/core-principles.md) for the full treatment.
@@ -268,7 +270,7 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Next.js Expert     | `apps/web/` — App Router optimization, server/client boundaries, caching, streaming, bundle size, Core Web Vitals | `/nextjs-expert`      |
 | ReactFlow Expert   | Visual editor canvas — `@xyflow/react`, graph state, custom nodes/edges, headless-first                           | `/reactflow-expert`   |
 | Code Editor Expert | JSON code editor — CodeMirror 6, slash commands, schema-aware editing, headless-first                             | `/code-editor-expert` |
-| Rust Expert        | `engine/` — WASM, node crates, execution engine                                                                   | `/rust-expert`        |
+| Rust Expert        | `engine/` — CLI, WASM, node crates, execution engine                                                              | `/rust-expert`        |
 | Core Architect     | `packages/core/` — transport-agnostic API, clients, services, adapters                                            | `/core-architect`     |
 | Backend Engineer   | `packages/@bnto/backend/`, `packages/@bnto/auth/` — Convex, schema, auth                                          | `/backend-engineer`   |
 | Security Engineer  | Cross-cutting — trust boundaries, attack surfaces, defense-in-depth                                               | `/security-engineer`  |

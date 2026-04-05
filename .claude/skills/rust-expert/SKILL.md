@@ -22,18 +22,18 @@ You are a senior Rust engineer who owns the execution engine — the brain of Bn
 | WASM entry point (cdylib) | `engine/crates/bnto-wasm/`  |
 | Shared test fixtures      | `test-fixtures/`            |
 
-**The unified engine vision:** Rust won the M1 evaluation. All 6 Tier 1 nodes were built in Rust, compiled to WASM. The result: one language powers everything. The Go engine (~33K LOC in `archive/engine-go/`) is now legacy — the CLI keeps working but gets no new development. All new node types, all new features, all future execution targets are Rust.
+**The unified engine vision:** Rust won the M1 evaluation. All Tier 1 nodes were built in Rust. The result: one language powers everything — CLI (native), browser (WASM), desktop (Tauri, future), cloud (future). The Go engine was archived in Sprint 6 (March 2026). All new node types, all new features, all execution targets are Rust.
 
 ### Four Execution Targets, One Codebase
 
-| Target      | Compilation                         | Status                   |
-| ----------- | ----------------------------------- | ------------------------ |
-| **Browser** | Rust -> WASM via `wasm-pack`        | Delivered (M1)           |
-| **Desktop** | Rust -> native via Tauri            | Future (M3)              |
-| **CLI**     | Rust -> native binary               | Future (replaces Go CLI) |
-| **Cloud**   | Rust -> compiled service on Railway | Future (M4, premium)     |
+| Target      | Compilation                  | Status                       |
+| ----------- | ---------------------------- | ---------------------------- |
+| **CLI**     | Rust -> native binary        | Delivered — primary consumer |
+| **Browser** | Rust -> WASM via `wasm-pack` | Delivered (M1)               |
+| **Desktop** | Rust -> native via Tauri     | Future (M4, backlog)         |
+| **Cloud**   | Rust -> compiled service     | Future (M4, technology TBD)  |
 
-The core node logic (`bnto-core`, `bnto-image`, `bnto-csv`, `bnto-file`) is **target-agnostic**. Only the entry point crate differs per target — `bnto-wasm` (cdylib) for browser, a future `bnto-cli` for native, etc. This is why all node crates are `rlib` only.
+The core node logic (`bnto-core`, `bnto-image`, `bnto-csv`, `bnto-file`, `bnto-video`) is **target-agnostic**. Only the entry point crate differs per target — `bnto-cli` for native CLI, `bnto-wasm` (cdylib) for browser. This is why all node crates are `rlib` only.
 
 **Architecture constraint:** Only `bnto-wasm` is `cdylib` (produces the `.wasm` file). All other crates are `rlib` only. This is non-negotiable — separate cdylib crates get separate JS heaps and can't share objects. One WASM binary, one download, one shared heap.
 

@@ -12,25 +12,25 @@ You are a senior backend engineer who owns the Convex data layer — schema desi
 
 ## Your Domain
 
-| Area | Path |
-|---|---|
-| Convex schema | `packages/@bnto/backend/convex/schema.ts` |
-| Auth (providers, callbacks) | `packages/@bnto/backend/convex/auth.ts` |
-| Auth config | `packages/@bnto/backend/convex/auth.config.ts` |
-| Executions (start, poll, complete) | `packages/@bnto/backend/convex/executions.ts` |
-| Execution events (analytics) | `packages/@bnto/backend/convex/execution_events.ts` |
-| Execution analytics (aggregates) | `packages/@bnto/backend/convex/execution_analytics.ts` |
-| Users (profile, usage) | `packages/@bnto/backend/convex/users.ts` |
-| Workflows (CRUD) | `packages/@bnto/backend/convex/workflows.ts` |
-| Execution logs | `packages/@bnto/backend/convex/executionLogs.ts` |
-| Uploads & downloads (R2 presigned) | `packages/@bnto/backend/convex/uploads.ts`, `downloads.ts` |
-| R2 cleanup (scheduled) | `packages/@bnto/backend/convex/cleanup.ts`, `cleanup_stale.ts` |
-| Cron jobs | `packages/@bnto/backend/convex/crons.ts` |
-| HTTP routes | `packages/@bnto/backend/convex/http.ts` |
-| Helpers | `packages/@bnto/backend/convex/_helpers/` |
-| Auth client package | `packages/@bnto/auth/` |
-| Tests | `packages/@bnto/backend/convex/*.test.ts` |
-| Test helpers | `packages/@bnto/backend/convex/_test_helpers.ts` |
+| Area                               | Path                                                           |
+| ---------------------------------- | -------------------------------------------------------------- |
+| Convex schema                      | `packages/@bnto/backend/convex/schema.ts`                      |
+| Auth (providers, callbacks)        | `packages/@bnto/backend/convex/auth.ts`                        |
+| Auth config                        | `packages/@bnto/backend/convex/auth.config.ts`                 |
+| Executions (start, poll, complete) | `packages/@bnto/backend/convex/executions.ts`                  |
+| Execution events (analytics)       | `packages/@bnto/backend/convex/execution_events.ts`            |
+| Execution analytics (aggregates)   | `packages/@bnto/backend/convex/execution_analytics.ts`         |
+| Users (profile, usage)             | `packages/@bnto/backend/convex/users.ts`                       |
+| Workflows (CRUD)                   | `packages/@bnto/backend/convex/workflows.ts`                   |
+| Execution logs                     | `packages/@bnto/backend/convex/executionLogs.ts`               |
+| Uploads & downloads (R2 presigned) | `packages/@bnto/backend/convex/uploads.ts`, `downloads.ts`     |
+| R2 cleanup (scheduled)             | `packages/@bnto/backend/convex/cleanup.ts`, `cleanup_stale.ts` |
+| Cron jobs                          | `packages/@bnto/backend/convex/crons.ts`                       |
+| HTTP routes                        | `packages/@bnto/backend/convex/http.ts`                        |
+| Helpers                            | `packages/@bnto/backend/convex/_helpers/`                      |
+| Auth client package                | `packages/@bnto/auth/`                                         |
+| Tests                              | `packages/@bnto/backend/convex/*.test.ts`                      |
+| Test helpers                       | `packages/@bnto/backend/convex/_test_helpers.ts`               |
 
 ---
 
@@ -60,6 +60,7 @@ The schema is the contract. Every table, field, and index is intentional:
 ```
 
 **Design principles:**
+
 - **Auth table overrides** — `users` extends `authTables` with app-specific fields (`plan`, `totalRuns`, `lastRunAt`). Auth-managed fields are set by the `createOrUpdateUser` callback; app fields are set in the same callback on creation
 - **Indexes before queries** — every `.withIndex()` call must have a matching index in `schema.ts`. If you write a query, define the index first
 - **`v.optional()` for backward compatibility** — when adding fields to existing tables with documents, make them optional to avoid schema validation failures on deploy
@@ -71,48 +72,40 @@ The auth system uses `@convex-dev/auth` v0.0.90 with the Password provider. Auth
 
 ### Function Visibility
 
-| Decorator | Who can call it | Use case |
-|---|---|---|
-| `query` | Any client (browser, SDK) | Read operations, real-time subscriptions |
-| `mutation` | Any client | Write operations that need auth |
-| `internalQuery` | Only other Convex functions | Server-side data lookups |
+| Decorator          | Who can call it             | Use case                                          |
+| ------------------ | --------------------------- | ------------------------------------------------- |
+| `query`            | Any client (browser, SDK)   | Read operations, real-time subscriptions          |
+| `mutation`         | Any client                  | Write operations that need auth                   |
+| `internalQuery`    | Only other Convex functions | Server-side data lookups                          |
 | `internalMutation` | Only other Convex functions | Server-side writes (progress updates, completion) |
-| `internalAction` | Only other Convex functions | External API calls (Go API, R2) |
+| `internalAction`   | Only other Convex functions | External API calls, long-running operations       |
 
 **Rule:** If a function doesn't need to be called by a client, make it `internal*`. Every exported `query`/`mutation` is a public endpoint.
 
 ### Execution Lifecycle
 
-The full execution flow for cloud (Go API) runs:
+The execution flow for browser (WASM) runs entirely client-side via `@bnto/core`:
 
 ```
-Client calls executions.start (mutation)
-  → Auth check
-  → Increment totalRuns
-  → Insert execution doc (status: "pending")
-  → Insert executionEvent (status: "started")
-  → Schedule executeWorkflow (internalAction)
+Client calls core.executions.createExecution()
+  → Creates execution instance with Zustand store
+  → Browser adapter initializes WASM engine lazily
 
-executeWorkflow (internalAction)
-  → POST to Go API /api/run
-  → Poll GET /api/executions/{id} every 2s (max 15 min)
-  → On each poll: updateProgress (internalMutation)
-  → On complete: complete (internalMutation) + scheduleR2Cleanup
-  → On fail: fail (internalMutation) + scheduleR2Cleanup
+instance.run(definition, files)
+  → WASM engine runs pipeline (all processing in-browser)
+  → Progress events fire via structured callbacks
+  → On complete: results available for download
+  → On fail: error surfaced to UI
 ```
 
 **Key patterns:**
-- **Mutations are transactional**, actions are not. The auth check + insert happens atomically in the mutation. The external API call and polling happen in the action
-- **`ctx.scheduler.runAfter(0, ...)`** queues work for immediate execution in the background. The mutation returns the executionId to the client immediately
-- **Progress updates via `internalMutation`** — the polling action writes progress to Convex, which triggers real-time subscription updates in the browser
 
-### R2 Cleanup (Scheduled Functions)
+- **Browser execution is local** — files never leave the user's machine. No server round-trip
+- **Convex tracks execution history** — `executions.start` mutation records the run (auth check, increment totalRuns, insert execution doc)
+- **`ctx.scheduler.runAfter(0, ...)`** queues work for immediate background execution. The mutation returns the executionId to the client immediately
+- **Progress updates** — the WASM engine reports structured progress events that the UI consumes in real-time
 
-Three-layer defense-in-depth for file transit cleanup:
-
-1. **Go API** — deletes input files immediately after download (best-effort, won't fail execution)
-2. **Convex scheduler** — `scheduleR2Cleanup()` schedules `cleanup.deleteByPrefix` after execution completes. Inputs: immediate. Outputs: 2-hour delay for user downloads
-3. **R2 lifecycle rules** — Cloudflare dashboard rules auto-delete objects past TTL (1-day minimum granularity)
+> **Cloud execution (M4, backlog):** Server-side execution architecture is TBD. When implemented, it will use `internalAction` for external API calls with progress polling via `internalMutation`. File transit cleanup will be handled by the cloud provider.
 
 ### Testing with `convex-test`
 
@@ -130,11 +123,13 @@ test("rejects unauthenticated caller", async () => {
 ```
 
 **What to test:**
+
 - **Auth enforcement** — every mutation rejects unauthenticated callers and wrong-user access
 - **Execution lifecycle** — pending -> running -> completed/failed state transitions
 - **Event recording** — executionEvents created with correct slug, timestamp, duration
 
 **What NOT to test:**
+
 - Convex framework behavior (validators already work, don't test that `v.string()` rejects numbers)
 - React Query integration (that's the core architect's domain)
 - UI rendering (that's the frontend engineer's domain)
@@ -143,17 +138,17 @@ test("rejects unauthenticated caller", async () => {
 
 ## Gotchas You Watch For
 
-| Gotcha | Prevention |
-|---|---|
-| **Schema migration on existing data** | New required fields break deploy. Use `v.optional()` first, backfill, then tighten. See relaxation dance in gotchas.md |
-| **No hyphens in filenames** | Convex rejects `my-helper.ts`. Use underscores: `my_helper.ts` |
-| **Exported mutation = public endpoint** | Every `export const foo = mutation(...)` is callable by any client. Use `internalMutation` for server-only operations |
-| **`createOrUpdateUser` has no auth context** | The `store` mutation runs without `ctx.auth`. User creation happens in the callback, not in an authenticated context |
-| **Action mutations aren't transactional** | Multiple `ctx.runMutation()` calls from an action are separate transactions. If the second fails, the first already committed. Design for partial failure |
-| **`.filter()` on `_id` is a table scan** | Use `ctx.db.get(id)` for direct lookups. This is the #1 performance mistake |
-| **N+1 queries in loops** | Deduplicate IDs -> batch `Promise.all(ids.map(id => ctx.db.get(id)))` -> Map -> join |
-| **`.collect()` on unbounded tables** | Execution logs, events grow forever. Always `.take(n)` or use pagination |
-| **JWT subject format** | `identity.subject` is `"userId|sessionId"`, not just userId. Always split on `\|` |
+| Gotcha                                       | Prevention                                                                                                                                                |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| **Schema migration on existing data**        | New required fields break deploy. Use `v.optional()` first, backfill, then tighten. See relaxation dance in gotchas.md                                    |
+| **No hyphens in filenames**                  | Convex rejects `my-helper.ts`. Use underscores: `my_helper.ts`                                                                                            |
+| **Exported mutation = public endpoint**      | Every `export const foo = mutation(...)` is callable by any client. Use `internalMutation` for server-only operations                                     |
+| **`createOrUpdateUser` has no auth context** | The `store` mutation runs without `ctx.auth`. User creation happens in the callback, not in an authenticated context                                      |
+| **Action mutations aren't transactional**    | Multiple `ctx.runMutation()` calls from an action are separate transactions. If the second fails, the first already committed. Design for partial failure |
+| **`.filter()` on `_id` is a table scan**     | Use `ctx.db.get(id)` for direct lookups. This is the #1 performance mistake                                                                               |
+| **N+1 queries in loops**                     | Deduplicate IDs -> batch `Promise.all(ids.map(id => ctx.db.get(id)))` -> Map -> join                                                                      |
+| **`.collect()` on unbounded tables**         | Execution logs, events grow forever. Always `.take(n)` or use pagination                                                                                  |
+| **JWT subject format**                       | `identity.subject` is `"userId                                                                                                                            | sessionId"`, not just userId. Always split on `\|` |
 
 ---
 
@@ -171,11 +166,11 @@ test("rejects unauthenticated caller", async () => {
 
 ## References
 
-| Document | What it covers |
-|---|---|
-| `.claude/rules/convex.md` | Query patterns, validators, auth checks, N+1 prevention, `.withIndex()` |
-| `.claude/rules/auth-routing.md` | Two-layer auth model, proxy + data layer, signout flow |
-| `.claude/rules/architecture.md` | Execution model, R2 transit, service topology |
-| `.claude/rules/security.md` | Security audit checklist — auth enforcement, input validation |
-| `.claude/rules/gotchas.md` | Schema migration dance, Convex filename restrictions |
-| `.claude/strategy/pricing-model.md` | Browser free, server Pro. Pricing model |
+| Document                            | What it covers                                                          |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| `.claude/rules/convex.md`           | Query patterns, validators, auth checks, N+1 prevention, `.withIndex()` |
+| `.claude/rules/auth-routing.md`     | Two-layer auth model, proxy + data layer, signout flow                  |
+| `.claude/rules/architecture.md`     | Execution model, R2 transit, service topology                           |
+| `.claude/rules/security.md`         | Security audit checklist — auth enforcement, input validation           |
+| `.claude/rules/gotchas.md`          | Schema migration dance, Convex filename restrictions                    |
+| `.claude/strategy/pricing-model.md` | Browser free, server Pro. Pricing model                                 |

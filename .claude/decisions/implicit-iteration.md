@@ -33,7 +33,7 @@ If any of this logic lives inside a runtime adapter (browser worker wrapper, CLI
 
 ## Full Codebase Audit — What Lives Where Today
 
-### ✅ Correct: Rust WASM Engine (`bnto-core/src/processor.rs`)
+### ✅ Correct: Rust Engine (`bnto-core/src/processor.rs`)
 
 `NodeProcessor::process()` takes exactly one `NodeInput`, returns one `NodeOutput`. Atomic, correct, single-file, always. Never changes. The existing unit tests in `processor.rs` confirm this with `EchoProcessor` and `FailProcessor` mock impls — exactly the pattern `executePipeline.test.ts` must follow.
 

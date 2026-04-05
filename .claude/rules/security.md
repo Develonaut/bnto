@@ -59,7 +59,7 @@ Each item maps to a testable assertion — unit tests now, e2e when auth flows a
 
 **Test approach:** Unit tests with `convex-test` — pass invalid input shapes, verify rejection.
 
-### Engine Validation (Rust WASM)
+### Engine Validation (Rust)
 
 - [ ] Recipe definitions are validated before execution (schema, node types, connections)
 - [ ] Malformed `.bnto.json` files produce clear error messages, not panics

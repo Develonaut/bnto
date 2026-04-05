@@ -10,52 +10,54 @@ The technical registry of predefined recipes, node types, and implementation sta
 
 ## Node Classification
 
-> **The dividing line:** Nodes that can run in your browser are free. Nodes that need a server cost money. Node _definitions_ are always available to everyone (`@bnto/nodes`, MIT licensed). The _execution_ of server nodes is what costs money.
+> **The dividing line:** Nodes that run locally are free. Nodes that need a managed server cost money (monetization tabled). Node _definitions_ are always available to everyone (`@bnto/nodes`, MIT licensed).
 
-### Browser Nodes (free, unlimited)
+### Local Nodes (free, unlimited)
 
-These execute 100% client-side via Rust WASM or JS. Cost to bnto: $0. No account needed.
+These execute locally — CLI (native Rust), browser (WASM), desktop (native). Cost to bnto: $0.
 
-| Node Type   | Crate / Library                       | What It Does                                                |
-| ----------- | ------------------------------------- | ----------------------------------------------------------- |
-| `image`     | Rust `image`, `mozjpeg-sys`, `oxipng` | Compress, resize, convert, strip EXIF, watermark            |
-| `csv`       | Rust `csv` + `serde`                  | Clean, rename columns, merge, sort, filter, convert to JSON |
-| `file`      | Rust `bnto-file`                      | Rename (pattern/regex), zip, unzip                          |
-| `transform` | Rust / JS                             | Expression evaluation, field mapping, data transforms       |
-| `pdf`       | JS `pdf.js` + Canvas                  | PDF to images, PDF to text                                  |
-| `archive`   | JS (JSZip) or Rust                    | Zip/unzip operations                                        |
+| Node Type   | Crate / Library                       | CLI | Browser | What It Does                                                |
+| ----------- | ------------------------------------- | --- | ------- | ----------------------------------------------------------- |
+| `image`     | Rust `image`, `mozjpeg-sys`, `oxipng` | Yes | Yes     | Compress, resize, convert, strip EXIF, watermark            |
+| `csv`       | Rust `csv` + `serde`                  | Yes | Yes     | Clean, rename columns, merge, sort, filter, convert to JSON |
+| `file`      | Rust `bnto-file`                      | Yes | Yes     | Rename (pattern/regex), zip, unzip                          |
+| `video`     | Rust `bnto-video` (yt-dlp)            | Yes | No      | Download video/audio from URLs                              |
+| `transform` | Rust / JS                             | Yes | Yes     | Expression evaluation, field mapping, data transforms       |
+| `pdf`       | JS `pdf.js` + Canvas                  | TBD | TBD     | PDF to images, PDF to text                                  |
+| `archive`   | JS (JSZip) or Rust                    | TBD | TBD     | Zip/unzip operations                                        |
 
-### Server Nodes (Pro tier, usage-based)
+### Server-Only Nodes (Pro tier, future — monetization tabled)
 
-These require server-side execution on Railway. Real CPU cost per execution. On desktop, these are free (BYOK for AI, local binaries for shell-command).
+These would require managed server-side execution. On CLI/desktop, users can run these locally (BYOK for AI, local binaries for shell-command).
 
-| Node Type                     | Why Server-Only                                               | Pro Gate                          |
-| ----------------------------- | ------------------------------------------------------------- | --------------------------------- |
-| `ai`                          | API keys shouldn't be exposed client-side; needs server proxy | Usage-based (real inference cost) |
-| `shell-command`               | Impossible in browser (ffmpeg, imagemagick, etc.)             | Usage-based (Railway CPU)         |
-| `video`                       | ffmpeg WASM impractically large (~25MB)                       | Usage-based (heavy CPU)           |
-| `http-request` (unrestricted) | CORS limits browser reach; server bypasses                    | Usage-based                       |
+| Node Type                     | Why Server for Browser                                        | CLI/Desktop Alternative         |
+| ----------------------------- | ------------------------------------------------------------- | ------------------------------- |
+| `ai`                          | API keys shouldn't be exposed client-side; needs server proxy | BYOK — user supplies their key  |
+| `shell-command`               | Impossible in browser sandbox                                 | Full system access via CLI      |
+| `http-request` (unrestricted) | CORS limits browser reach; server bypasses                    | No CORS in CLI — works directly |
 
-### Hybrid Nodes
+### Browser Limitations
 
-Work in browser with limitations. Cloud unlocks the full experience.
+Some nodes work in CLI but have limitations in the browser:
 
-| Node Type                  | Browser Limitation                | Cloud Unlock                    |
-| -------------------------- | --------------------------------- | ------------------------------- |
-| `http-request` (CORS-safe) | Only CORS-friendly APIs reachable | Server-side fetch bypasses CORS |
-| Large file operations      | Browser memory ~2GB practical max | Server handles larger files     |
+| Concern               | Browser Limitation                | CLI/Desktop             |
+| --------------------- | --------------------------------- | ----------------------- |
+| External dependencies | Cannot run yt-dlp, ffmpeg, etc.   | Full system access      |
+| CORS                  | Only CORS-friendly APIs reachable | No CORS restrictions    |
+| Memory                | ~2GB practical max                | System memory available |
+| Filesystem            | No direct file access             | Full filesystem access  |
 
 ---
 
 ## Recipe Classification
 
-Every predefined recipe falls into one of three execution categories:
+Every predefined recipe falls into one of these execution categories:
 
-| Category         | Execution                          | Cost to Us   | User Access                        |
-| ---------------- | ---------------------------------- | ------------ | ---------------------------------- |
-| **Browser-only** | 100% client-side (Rust WASM or JS) | $0           | Free, unlimited                    |
-| **Hybrid**       | Browser primary, cloud optional    | $0 base      | Free (browser), Pro (cloud unlock) |
-| **Server-only**  | Railway + R2                       | Compute cost | Pro tier, usage-based              |
+| Category        | Execution                                    | Cost to Us   | User Access       |
+| --------------- | -------------------------------------------- | ------------ | ----------------- |
+| **Local**       | CLI (native) + browser (WASM) + desktop      | $0           | Free, unlimited   |
+| **CLI-only**    | CLI/desktop only (external deps like yt-dlp) | $0           | Free, unlimited   |
+| **Server-only** | Managed server (future)                      | Compute cost | Pro tier (tabled) |
 
 ---
 
@@ -176,12 +178,12 @@ AI nodes bring non-deterministic processing into recipes — classification, sum
 
 ## Node Types Needed
 
-| Node Type | Needed For                 | Priority | Classification | Notes                                             |
-| --------- | -------------------------- | -------- | -------------- | ------------------------------------------------- |
-| `pdf`     | PDF to Images, PDF to Text | High     | Browser node   | pdf.js (JS) for browser; `pdfcpu` (Go) for server |
-| `archive` | Zip/Unzip                  | Medium   | Browser node   | JSZip (JS) for browser; Go stdlib for server      |
+| Node Type | Needed For                 | Priority | Classification | Notes                                            |
+| --------- | -------------------------- | -------- | -------------- | ------------------------------------------------ |
+| `pdf`     | PDF to Images, PDF to Text | High     | Local node     | pdf.js (JS) for browser; Rust crate for CLI      |
+| `archive` | Zip/Unzip                  | Medium   | Local node     | JSZip (JS) for browser; Rust `zip` crate for CLI |
 
-Before building a new node type: verify the task isn't achievable with existing browser nodes. For server-only tasks, check if `shell-command` + a pre-installed binary in the Railway container works first.
+Before building a new node type: verify the task isn't achievable with existing nodes. For CLI-only tasks (system access, network, native binaries), implement in Rust with `#[cfg(not(target_arch = "wasm32"))]` guards so the node is available natively but excluded from the WASM build.
 
 ---
 

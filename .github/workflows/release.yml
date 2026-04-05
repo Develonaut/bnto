@@ -95,17 +95,35 @@ jobs:
       - name: "Build: @bnto/form"
         run: pnpm --filter @bnto/form run build
 
+      - name: "Build: @bnto/ui"
+        run: pnpm --filter @bnto/ui run build
+
       - name: "Build: @bnto/editor"
         run: pnpm --filter @bnto/editor run build
 
       - name: "Build: @bnto/web"
         run: pnpm --filter @bnto/web run build
 
-      - name: "Lint: @bnto/core"
-        run: pnpm --filter @bnto/core run lint
+      - name: "Lint: @bnto/nodes"
+        run: pnpm --filter @bnto/nodes run lint
 
       - name: "Lint: @bnto/registry"
         run: pnpm --filter @bnto/registry run lint
+
+      - name: "Lint: @bnto/auth"
+        run: pnpm --filter @bnto/auth run lint
+
+      - name: "Lint: @bnto/core"
+        run: pnpm --filter @bnto/core run lint
+
+      - name: "Lint: @bnto/form"
+        run: pnpm --filter @bnto/form run lint
+
+      - name: "Lint: @bnto/ui"
+        run: pnpm --filter @bnto/ui run lint
+
+      - name: "Lint: @bnto/editor"
+        run: pnpm --filter @bnto/editor run lint
 
       - name: "Lint: @bnto/backend"
         run: pnpm --filter @bnto/backend run lint
@@ -127,6 +145,9 @@ jobs:
 
       - name: "Test: @bnto/form"
         run: pnpm --filter @bnto/form run test
+
+      - name: "Test: @bnto/ui"
+        run: pnpm --filter @bnto/ui run test
 
       - name: "Test: @bnto/editor"
         run: pnpm --filter @bnto/editor run test

@@ -89,13 +89,12 @@ The generated catalog changes will break exact-count assertions in TypeScript te
 
 Every processor needs at least one recipe that exercises it. See [Checklist: Adding a New Recipe](#checklist-adding-a-new-recipe) below for the full recipe pipeline.
 
-- [ ] **Create TypeScript recipe** — `packages/@bnto/registry/src/recipes/{featureName}.ts`
-- [ ] **Register in catalog** — add to `RECIPES` array in `packages/@bnto/registry/src/recipesCatalog.ts`
-- [ ] **Export from barrel** — add to `packages/@bnto/registry/src/recipes/index.ts`
-- [ ] **Generate JSON fixture** — `task recipes:generate`
-- [ ] **Commit the fixture** — generated `.bnto.json` files are committed to git
+- [ ] **Create recipe definition** — `engine/recipes/{slug}.bnto.json` (engine is the source of truth for recipes)
+- [ ] **Add to `builtin_recipes()`** — add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`
+- [ ] **Register web overlay** — add to `RECIPE_IDS`, `WEB_DESCRIPTIONS`, `WEB_FEATURES`, `DISPLAY_ORDER` in `packages/@bnto/registry/src/recipesCatalog.ts`
+- [ ] **Regenerate TypeScript** — `task wasm:codegen` (snapshot → generate TS from engine catalog)
 - [ ] **Add engine integration test** — `test_generated_{slug}_recipe()` in `bnto-engine/src/lib.rs`
-- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include the new recipe's `include_str!(...)`
+- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include the new recipe's `include_str!()`
 
 ### Phase 5: Golden Tests (byte-exact output verification)
 
@@ -143,25 +142,26 @@ Only when the new processor creates a user-facing recipe at a new URL. See [Chec
 
 A recipe is a predefined pipeline composition that maps to a public URL. Adding a recipe touches TypeScript, codegen, engine tests, SEO, sitemap, and LLM discovery. Every surface is tested — but those tests have exact-count assertions or explicit lists that must include your new addition.
 
-### Step 1: Define the Recipe
+### Step 1: Define the Recipe (Engine-Owned)
 
-- [ ] **Create recipe file** — `packages/@bnto/registry/src/recipes/{featureName}.ts`
-  - Import `CURRENT_FORMAT_VERSION`, `getProcessorDefaults()`, `defaultInputNode()`, `defaultOutputNode()`
-  - Export a `Recipe` constant with: `id` (UUID), `slug`, `name`, `description`, `category`, `accept`, `features`, `definition`
-  - The `definition` contains the node graph: nodes array, edges, settings with iteration mode
-- [ ] **Export from barrel** — add to `packages/@bnto/registry/src/recipes/index.ts`
-- [ ] **Register in catalog** — add to `RECIPES` array in `packages/@bnto/registry/src/recipesCatalog.ts` (order = display order on home page)
+Recipes are defined as `.bnto.json` files in `engine/recipes/`. The engine is the source of truth.
 
-### Step 2: Generate Fixtures
+- [ ] **Create recipe definition** — `engine/recipes/{slug}.bnto.json`
+  - Must include: `id` (slug), `type: "group"`, `version`, `name`, `metadata` (with `description` and `category`), `nodes[]`, `edges[]`, `settings` with iteration mode
+  - The `definition` contains the full node graph: input node, processor nodes, output node, edges connecting them
+- [ ] **Add to `builtin_recipes()`** — add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`
+- [ ] **Register web overlay** — add to `RECIPE_IDS`, `WEB_DESCRIPTIONS`, `WEB_FEATURES`, `DISPLAY_ORDER` in `packages/@bnto/registry/src/recipesCatalog.ts`
 
-- [ ] **Generate JSON fixture** — `task recipes:generate` produces `packages/@bnto/registry/src/recipes/generated/{slug}.bnto.json`
-- [ ] **Verify fixture exists** — check the generated file was created and contains the correct definition structure
-- [ ] **Commit the fixture** — generated `.bnto.json` files are committed to git (source of truth for engine tests)
+### Step 2: Codegen Pipeline
+
+- [ ] **Regenerate TypeScript** — `task wasm:codegen` (build → snapshot → generate TS from engine catalog including recipes)
+- [ ] **Verify generated recipe** — check `GENERATED_RECIPES` in `packages/@bnto/nodes/src/generated/recipes.ts` includes the new recipe
+- [ ] **TypeScript builds** — `task ui:build`
 
 ### Step 3: Engine Integration Tests
 
 - [ ] **Add integration test** — `test_generated_{slug}_recipe()` in `engine/crates/bnto-engine/src/lib.rs` that runs the fixture through `run_pipeline()`
-- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include `include_str!("../../../../packages/@bnto/registry/src/recipes/generated/{slug}.bnto.json")`
+- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include `include_str!("../../../recipes/{slug}.bnto.json")`
 - [ ] **Engine tests pass** — `task wasm:test`
 
 ### Step 4: Golden Tests
@@ -282,30 +282,35 @@ Engine (Rust)
               └─► Explore grid (via getAllRecipes)
 ```
 
-And how a recipe flows from definition through every consumer surface:
+And how a recipe flows from the engine through every consumer surface:
 
 ```
-Recipe Definition (TypeScript)
-  └─ packages/@bnto/registry/src/recipes/{name}.ts
-  └─ packages/@bnto/registry/src/recipesCatalog.ts → RECIPES array
+Recipe Definition (Engine-Owned)
+  └─ engine/recipes/{slug}.bnto.json              ← Source of truth
+  └─ engine/crates/bnto-engine/src/recipes.rs     ← builtin_recipes() via include_str!()
         │
-        ├─► task recipes:generate → .bnto.json fixtures
-        │     ├─► engine integration tests (include_str!)
-        │     ├─► CLI golden tests (recipe_path())
-        │     └─► explicit fixtures (hand-maintained)
+        ├─► engine integration tests (include_str! in lib.rs)
+        ├─► CLI golden tests (recipe_path() → engine/recipes/)
+        ├─► explicit fixtures (hand-maintained in bnto-cli/tests/fixtures/explicit/)
         │
-        ├─► getAllRecipes() → runtime consumers
-        │     ├─► apps/web/lib/bntoRegistry.ts → BNTO_REGISTRY
-        │     │     ├─► [bnto]/page.tsx → generateStaticParams + generateMetadata
-        │     │     ├─► buildBntoSitemapEntries.ts → sitemap.xml
-        │     │     └─► BntoJsonLd → structured data
-        │     ├─► llms.txt route → AI discovery
-        │     ├─► llms-full.txt route → detailed AI discovery
-        │     ├─► recipeLinks.ts → nav dropdown
-        │     ├─► ExploreRecipeGrid.tsx → home/explore grid
-        │     └─► RecipeMarquee.tsx → landing page marquee
+        ├─► task wasm:codegen → catalog.snapshot.json → generate TS
+        │     └─► @bnto/nodes/src/generated/recipes.ts → GENERATED_RECIPES
         │
-        └─► task readme:generate → README.md recipe table
+        └─► recipesCatalog.ts overlays web metadata (descriptions, features, IDs)
+              └─► RECIPES array (web-facing)
+                    │
+                    ├─► getAllRecipes() → runtime consumers
+                    │     ├─► apps/web/lib/bntoRegistry.ts → BNTO_REGISTRY
+                    │     │     ├─► [bnto]/page.tsx → generateStaticParams + generateMetadata
+                    │     │     ├─► buildBntoSitemapEntries.ts → sitemap.xml
+                    │     │     └─► BntoJsonLd → structured data
+                    │     ├─► llms.txt route → AI discovery
+                    │     ├─► llms-full.txt route → detailed AI discovery
+                    │     ├─► recipeLinks.ts → nav dropdown
+                    │     ├─► ExploreRecipeGrid.tsx → home/explore grid
+                    │     └─► RecipeMarquee.tsx → landing page marquee
+                    │
+                    └─► task readme:generate → README.md recipe table
 ```
 
 ---
@@ -317,12 +322,13 @@ Recipe Definition (TypeScript)
 cargo test -p bnto-{crate}                   # Unit tests
 
 # 2. Register + codegen
-task wasm:codegen                            # build → copy → snapshot → generate TS
+task wasm:codegen                            # build → snapshot → generate TS
 
-# 3. Recipe fixtures
-# ... create packages/@bnto/registry/src/recipes/{name}.ts
-# ... add to recipesCatalog.ts + recipes/index.ts
-task recipes:generate                        # Generate .bnto.json fixture
+# 3. Recipe definition (engine-owned)
+# ... create engine/recipes/{slug}.bnto.json
+# ... add include_str!() to engine/crates/bnto-engine/src/recipes.rs
+# ... add web overlay to packages/@bnto/registry/src/recipesCatalog.ts
+task wasm:codegen                            # Regenerate TS from engine catalog
 
 # 4. Golden tests
 task cli:golden:bless                        # Generate golden files (first time)
@@ -411,17 +417,17 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 
 ## Common Violations
 
-| Violation                                                               | Fix                                                               |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode         |
-| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                         |
-| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)  |
-| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values        |
-| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests        |
-| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion      |
-| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed |
-| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                 |
-| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this        |
-| Recipe not exported from barrel                                         | Add to `recipes/index.ts` — catalog test catches this             |
-| README table stale                                                      | Run `task readme:generate` after adding/changing recipes          |
-| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts` |
+| Violation                                                               | Fix                                                                |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode          |
+| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                          |
+| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)   |
+| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values         |
+| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests         |
+| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion       |
+| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed  |
+| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                  |
+| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this         |
+| Recipe not in `builtin_recipes()`                                       | Add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs` |
+| README table stale                                                      | Run `task readme:generate` after adding/changing recipes           |
+| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`  |

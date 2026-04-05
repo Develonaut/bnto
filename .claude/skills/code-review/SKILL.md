@@ -85,7 +85,7 @@ For EACH changed file, run it through every applicable standard below. Produce a
 
 ### 2a. Architecture & Layers ([architecture.md](../../rules/architecture.md))
 
-- [ ] **Layer discipline**: `apps/web` -> `@bnto/core` -> Rust WASM Engine. No layer skipping
+- [ ] **Layer discipline**: CLI links engine directly. Web: `apps/web` -> `@bnto/core` -> Rust Engine (WASM). No layer skipping
 - [ ] **API abstraction**: No direct Convex queries/mutations in components. All data via `@bnto/core` hooks
 - [ ] **Package boundaries**: `@bnto/backend`, `@bnto/auth` consumed only by `@bnto/core` internals
 - [ ] **Import discipline**: UI from local `@/components/`, data from `@bnto/core`. Types flow down
@@ -156,7 +156,7 @@ Skip if no styling/animation changes.
 
 - [ ] **Tailwind dynamic classes**: No template literals or string concatenation for class names
 - [ ] **Tailwind monorepo**: Classes in shared packages need `@source` in `globals.css`
-- [ ] **Transport-agnostic**: Components never call Convex or Wails directly
+- [ ] **Transport-agnostic**: Components never call Convex or backend APIs directly
 
 ### 2i. Rust Code ([engine-node-patterns.md](../../rules/engine-node-patterns.md))
 

@@ -263,7 +263,7 @@ Write the code to make your tests pass. Follow the rules in `CLAUDE.md` and `.cl
 
 - **TypeScript:** infer types, no `any`, no gratuitous `as` assertions, types flow down from core
 - **Import discipline:** UI from local `@/components/`, data from `@bnto/core`, never skip layers. Third-party UI deps should be wrapped locally
-- **Transport-agnostic API:** Components NEVER call Convex or Wails directly. All data access via `@bnto/core` hooks
+- **Transport-agnostic API:** Components NEVER call Convex or backend APIs directly. All data access via `@bnto/core` hooks
 - Match existing patterns — look at sibling files for naming, structure, and style
 
 #### UI Reference: shadcn-blocks
