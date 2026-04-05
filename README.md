@@ -29,7 +29,7 @@ Recipes are portable `.bnto.json` files — composable pipelines that run everyw
 
 A recipe is a pipeline of nodes. Each node does one thing — compress, resize, rename, convert, download, call an API — and you chain them together into a workflow. Need something that doesn't exist? Build a node for it, and the engine takes care of running it everywhere.
 
-14 predefined recipes work out of the box:
+15 predefined recipes work out of the box:
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
@@ -66,19 +66,25 @@ Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
 ```bash
 # Install
-cargo install bnto
+cargo install bnto-cli
 
-# Run a recipe
+# Compress all JPEGs in a directory
 bnto run compress-images photos/*.jpg
 
-# List available recipes
+# Download a video
+bnto run download-video https://www.youtube.com/watch?v=dQw4w9WgXcQ
+
+# Browse available recipes
 bnto list
 
-# Check recipe details
-bnto info compress-images
+# Show recipe details and dependencies
+bnto info download-video
+
+# Check external tool availability
+bnto doctor
 ```
 
-The CLI runs recipes using the native Rust engine. No WASM, no browser — direct native execution with full system access.
+The CLI runs recipes using the native Rust engine — direct native execution with full system access. Progress bars, colored output, and timing summaries keep you informed.
 
 ### Browser
 
@@ -132,9 +138,9 @@ That idea is the architecture:
 
 ## Where This Is Going
 
-**Today:** 14 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Free, unlimited, no account required.
+**Today:** 15 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, file operations — all from one tool. Free, unlimited, no account required.
 
-**Next:** Engine expansion — dependency system for external tools (yt-dlp, ffmpeg), new node types (video, shell, HTTP), TUI for interactive recipe execution. The node catalog grows; every addition is automatically available on every target.
+**Next:** New node types (shell commands, HTTP requests), TUI for interactive recipe execution, more video operations. The node catalog grows; every addition is automatically available on every target.
 
 **Later:** Desktop app (Tauri) for native local execution. Cloud execution for server-side nodes (AI inference, video processing). Community-contributed node types and recipes.
 
@@ -205,7 +211,7 @@ Node Crates (each domain gets its own crate)
   ├── bnto-image (compress, resize, convert, overlay, strip-exif)
   ├── bnto-csv (clean, rename columns, merge, csv-to-json)
   ├── bnto-file (rename)
-  └── bnto-video (planned — download via yt-dlp, transcode via ffmpeg)
+  └── bnto-video (download via yt-dlp, native-only)
 ```
 
 `@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly. They use core hooks that swap backends depending on runtime (browser, desktop, or cloud).
@@ -233,6 +239,7 @@ bnto/
         ├── bnto-image/          # Image compression/resize/convert/overlay
         ├── bnto-csv/            # CSV clean/rename columns/merge/convert
         ├── bnto-file/           # File rename, EXIF strip
+        ├── bnto-video/          # Video download (yt-dlp, native-only)
         ├── bnto-cli/            # Native CLI binary
         └── bnto-wasm/           # cdylib entry point (single WASM binary)
 ```

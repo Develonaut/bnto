@@ -21,9 +21,72 @@ fn test_list_command() {
     let output = Command::new(bnto_bin()).arg("list").output().unwrap();
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("image-compress"));
-    assert!(stdout.contains("file-rename"));
-    assert!(stdout.contains("spreadsheet-clean"));
+    // New output lists recipe slugs grouped by category, not processor type names.
+    assert!(
+        stdout.contains("compress-images"),
+        "Should list compress-images recipe, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("rename-files"),
+        "Should list rename-files recipe, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("clean-csv"),
+        "Should list clean-csv recipe, got: {stdout}"
+    );
+    // Verify category headers are present.
+    assert!(
+        stdout.contains("image"),
+        "Should have image category, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_info_command() {
+    let output = Command::new(bnto_bin())
+        .args(["info", "compress-images"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Compress Images"),
+        "Should show recipe name, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("image"),
+        "Should show category, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("image-compress"),
+        "Should show processor node type, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_info_unknown_recipe() {
+    let output = Command::new(bnto_bin())
+        .args(["info", "nonexistent-recipe"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Unknown recipe"),
+        "Should show unknown recipe error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_doctor_command() {
+    let output = Command::new(bnto_bin()).arg("doctor").output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    // Doctor should run without crashing. It may pass or fail depending
+    // on whether external tools (yt-dlp, ffmpeg) are installed.
+    assert!(
+        stdout.contains("ok") || stdout.contains("MISSING") || stdout.contains("self-contained"),
+        "Doctor should report dependency status, got: {stdout}"
+    );
 }
 
 // --- Error Cases ---
