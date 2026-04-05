@@ -37,6 +37,7 @@ export { getRecipeBySlug } from "./getRecipeBySlug";
 export { getRecipesByCategory } from "./getRecipesByCategory";
 export { getAllNodeTypes } from "./getAllNodeTypes";
 export { getBrowserNodeTypes } from "./getBrowserNodeTypes";
+export { getBrowserRecipes } from "./getBrowserRecipes";
 export { getAllCategories } from "./categories";
 export { getAllProcessors } from "./processors";
 

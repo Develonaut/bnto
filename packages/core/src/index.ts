@@ -149,6 +149,7 @@ export {
   getNodeIcon,
   getNodeSublabel,
   getNodeTypeInfo,
+  getCategoryInfo,
 } from "@bnto/registry";
 
 // Definition CRUD
@@ -175,4 +176,7 @@ export {
 } from "@bnto/registry";
 
 // Recipe lookup
-export { getRecipeBySlug, getAllRecipes } from "@bnto/registry";
+export { getRecipeBySlug, getAllRecipes, getBrowserRecipes } from "@bnto/registry";
+
+// Recipe classification
+export { isRecipeBrowserCapable } from "@bnto/registry";

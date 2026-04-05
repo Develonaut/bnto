@@ -6,6 +6,7 @@
  */
 
 import type { Recipe } from "@bnto/core";
+import { getCategoryInfo, isRecipeBrowserCapable } from "@bnto/core";
 import type { LucideIcon } from "@bnto/ui";
 import {
   RecipeCard,
@@ -15,7 +16,6 @@ import {
   RecipeCardTags,
   RecipeCardTitle,
 } from "@bnto/ui";
-import { getCategoryInfo } from "@bnto/registry";
 
 type CardSize = "sm" | "md" | "lg";
 
@@ -33,10 +33,17 @@ interface ExploreRecipeCardProps {
 }
 
 export function ExploreRecipeCard({ recipe, icon: Icon, size = "md" }: ExploreRecipeCardProps) {
-  const categoryLabel = getCategoryInfo(recipe.category)?.label ?? recipe.category;
+  const browserCapable = isRecipeBrowserCapable(recipe);
+  const categoryLabel = browserCapable
+    ? (getCategoryInfo(recipe.category)?.label ?? recipe.category)
+    : "CLI Only";
 
   return (
-    <RecipeCard href={`/${recipe.slug}`} className="h-auto">
+    <RecipeCard
+      href={browserCapable ? `/${recipe.slug}` : undefined}
+      disabled={!browserCapable}
+      className="h-auto"
+    >
       <div
         data-testid={`explore-recipe-${recipe.slug}`}
         className={`flex items-center justify-center rounded-t-lg bg-muted ${HERO_HEIGHT[size]}`}

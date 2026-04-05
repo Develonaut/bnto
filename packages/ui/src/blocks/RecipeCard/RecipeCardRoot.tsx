@@ -28,6 +28,8 @@ type RecipeCardRootProps = PropsWithChildren<{
   loading?: boolean;
   /** Compact horizontal row layout for lists/dialogs. */
   compact?: boolean;
+  /** Non-interactive display — grayed out, no link/button behavior. */
+  disabled?: boolean;
 }>;
 
 export function RecipeCardRoot({
@@ -37,11 +39,20 @@ export function RecipeCardRoot({
   color,
   loading,
   compact,
+  disabled,
   children,
 }: RecipeCardRootProps) {
   const baseCn = compact
     ? "flex flex-1 flex-row items-center gap-3 p-3"
     : "flex h-full flex-col justify-between p-5";
+
+  if (disabled) {
+    return (
+      <Card loading={loading} color={color} className={cn(baseCn, "cursor-default", className)}>
+        <div className="opacity-50 grayscale">{children}</div>
+      </Card>
+    );
+  }
 
   const cardCn = cn("pressable", baseCn, className);
 

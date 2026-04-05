@@ -5,7 +5,7 @@
  * Both Navbar (desktop) and MobileNavMenu (mobile) consume these.
  */
 
-import { getAllRecipes } from "@bnto/registry";
+import { getBrowserRecipes } from "@bnto/registry";
 
 export interface RecipeLink {
   label: string;
@@ -48,7 +48,7 @@ export const RECIPES: RecipeCategory[] = buildRecipeCategories();
 function buildRecipeCategories(): RecipeCategory[] {
   const grouped = new Map<string, RecipeLink[]>();
 
-  for (const recipe of getAllRecipes()) {
+  for (const recipe of getBrowserRecipes()) {
     const links = grouped.get(recipe.category) ?? [];
     links.push({
       label: recipe.name,
