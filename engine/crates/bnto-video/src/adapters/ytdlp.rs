@@ -37,7 +37,6 @@ impl VideoDownloader for YtDlpAdapter {
         let output_str = output_path.to_string_lossy().to_string();
 
         // Build and run the yt-dlp command.
-        let format_sort;
         let mut args: Vec<&str> = vec![
             config.url,
             "-o",
@@ -50,8 +49,10 @@ impl VideoDownloader for YtDlpAdapter {
             args.extend_from_slice(&["--merge-output-format", config.format]);
         }
 
-        if config.quality != "best" {
-            format_sort = format_sort_arg(config.quality);
+        // Build the -S (format sort) argument for codec + quality preferences.
+        // yt-dlp accepts comma-separated sort fields in a single -S flag.
+        let format_sort = build_format_sort(config.format, config.quality);
+        if !format_sort.is_empty() {
             args.extend_from_slice(&["-S", &format_sort]);
         }
 
@@ -74,8 +75,11 @@ impl VideoDownloader for YtDlpAdapter {
             ));
         }
 
-        // Derive filename from URL (last path segment, or fallback).
-        let filename = url_to_filename(config.url, config.format);
+        // Get the video title from yt-dlp for a human-readable filename.
+        // Falls back to URL-derived name or "video.{format}" if title extraction fails.
+        let filename = fetch_title(config.url, ctx)
+            .map(|title| format!("{}.{}", sanitize_filename(&title), config.format))
+            .unwrap_or_else(|| url_to_filename(config.url, config.format));
         let mime_type = format_to_mime(config.format).to_string();
 
         Ok(DownloadResult {
@@ -86,10 +90,60 @@ impl VideoDownloader for YtDlpAdapter {
     }
 }
 
-/// Build the yt-dlp -S (sort) argument for quality capping.
-/// e.g., "res:1080" limits to 1080p or below.
-fn format_sort_arg(quality: &str) -> String {
-    format!("res:{quality}")
+/// Fetch the video title from yt-dlp without downloading.
+/// Returns None if the title can't be extracted (network error, unsupported URL, etc.).
+fn fetch_title(url: &str, ctx: &dyn ProcessContext) -> Option<String> {
+    let output = ctx
+        .run_command("yt-dlp", &["--print", "title", "--no-warnings", url])
+        .ok()?;
+    let title = String::from_utf8_lossy(&output).trim().to_string();
+    if title.is_empty() {
+        None
+    } else {
+        Some(title)
+    }
+}
+
+/// Sanitize a video title for use as a filename.
+/// Removes filesystem-unsafe characters and trims to a reasonable length.
+fn sanitize_filename(title: &str) -> String {
+    let sanitized: String = title
+        .chars()
+        .map(|c| match c {
+            '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|' | '\0' => '_',
+            _ => c,
+        })
+        .collect();
+
+    // Trim whitespace and dots from edges (Windows/macOS safety).
+    let trimmed = sanitized.trim().trim_matches('.').trim();
+
+    // Cap at 200 chars to avoid filesystem limits.
+    if trimmed.len() > 200 {
+        trimmed[..200].trim_end().to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
+
+/// Build the yt-dlp -S (sort) argument combining codec and quality preferences.
+/// MP4/best formats prefer H.264+AAC for universal playback (QuickTime, mobile, web).
+/// Without codec preference, yt-dlp picks VP9/AV1 which many players can't decode.
+fn build_format_sort(format: &str, quality: &str) -> String {
+    let mut parts = Vec::new();
+
+    // Prefer H.264 video + AAC audio for MP4-family formats.
+    if format == "mp4" || format == "best" {
+        parts.push("vcodec:h264".to_string());
+        parts.push("acodec:m4a".to_string());
+    }
+
+    // Cap resolution when quality isn't "best".
+    if quality != "best" {
+        parts.push(format!("res:{quality}"));
+    }
+
+    parts.join(",")
 }
 
 /// Extract a reasonable filename from a URL, falling back to "video.{format}".
@@ -136,9 +190,31 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_format_sort_arg() {
-        assert_eq!(format_sort_arg("1080"), "res:1080");
-        assert_eq!(format_sort_arg("720"), "res:720");
+    fn test_build_format_sort_mp4_best() {
+        assert_eq!(build_format_sort("mp4", "best"), "vcodec:h264,acodec:m4a");
+    }
+
+    #[test]
+    fn test_build_format_sort_mp4_with_quality() {
+        assert_eq!(
+            build_format_sort("mp4", "720"),
+            "vcodec:h264,acodec:m4a,res:720"
+        );
+    }
+
+    #[test]
+    fn test_build_format_sort_webm_best() {
+        assert_eq!(build_format_sort("webm", "best"), "");
+    }
+
+    #[test]
+    fn test_build_format_sort_webm_with_quality() {
+        assert_eq!(build_format_sort("webm", "1080"), "res:1080");
+    }
+
+    #[test]
+    fn test_build_format_sort_best_format() {
+        assert_eq!(build_format_sort("best", "best"), "vcodec:h264,acodec:m4a");
     }
 
     #[test]
@@ -200,6 +276,36 @@ mod tests {
             url_to_filename("https://example.com/manifest.mpd", "webm"),
             "video.webm"
         );
+    }
+
+    #[test]
+    fn test_sanitize_filename_basic() {
+        assert_eq!(sanitize_filename("Me at the zoo"), "Me at the zoo");
+    }
+
+    #[test]
+    fn test_sanitize_filename_special_chars() {
+        assert_eq!(
+            sanitize_filename("Video: The Best? Yes/No"),
+            "Video_ The Best_ Yes_No"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_filename_dots_trimmed() {
+        assert_eq!(sanitize_filename("...title..."), "title");
+    }
+
+    #[test]
+    fn test_sanitize_filename_long_title_truncated() {
+        let long = "a".repeat(300);
+        let result = sanitize_filename(&long);
+        assert!(result.len() <= 200);
+    }
+
+    #[test]
+    fn test_sanitize_filename_empty_after_sanitize() {
+        assert_eq!(sanitize_filename("..."), "");
     }
 
     #[test]
