@@ -4,42 +4,42 @@ const FAQS = [
   {
     question: "Where are my files processed?",
     answer:
-      "Everything runs in your browser using Rust compiled to WebAssembly — your files are processed on your device and never uploaded anywhere. Future premium recipes may use server-side processing for things browsers can't do, like AI or video.",
+      "On your machine. The CLI runs natively on your system. The browser version uses Rust compiled to WebAssembly. Either way, your files are processed locally and never uploaded anywhere.",
   },
   {
     question: "Is it really free?",
     answer:
-      "Yes. Every recipe that runs in your browser is free, unlimited, forever. No signup, no watermarks, no quality reduction, no daily caps. We will never put limits on browser-based recipes.",
+      "Yes. Every recipe is free, unlimited, forever. No signup, no watermarks, no quality reduction, no daily caps. The engine runs on your machine, so it costs nothing to operate.",
   },
   {
     question: "What file types are supported?",
     answer:
-      "Images: JPEG, PNG, WebP, GIF, AVIF, BMP, and TIFF for compression, resizing, and format conversion. Data: CSV files for cleaning and column renaming. Files: any file type for batch renaming. More node types are coming.",
+      "Images: JPEG, PNG, WebP, GIF, AVIF, BMP, and TIFF for compression, resizing, and format conversion. Data: CSV files for cleaning and column renaming. Files: any file type for batch renaming. Video: download via yt-dlp (CLI only). More node types are coming.",
   },
   {
     question: "Can I build my own recipes?",
     answer:
-      "Yes. The visual recipe editor lets you compose nodes into multi-step pipelines — chain a resize into a format conversion into a compression, all in one recipe. Export your recipes as .bnto.json files to reuse them anytime.",
+      "Yes. Recipes are .bnto.json files that compose nodes into multi-step pipelines. Chain a resize into a format conversion into a compression, all in one recipe. Share them as files or contribute them to the repo.",
   },
   {
     question: "Is bnto open source?",
     answer:
-      "Yes. The entire engine and web app are MIT licensed. You can inspect the source code, verify how recipes work, or contribute.",
+      "Yes. The entire engine, CLI, and web app are MIT licensed. You can inspect the source code, verify how recipes work, fork it, or contribute.",
   },
   {
     question: "Will bnto always be free?",
     answer:
-      "All browser-based recipes are free and unlimited — no signup, no caps. A Pro tier is planned for recipes that need server-side processing, like AI, video, and shell commands.",
+      "All recipes are free and unlimited. The engine runs on your machine. Managed cloud execution for server-side features may come later, but the core engine and CLI will always be free and open source.",
   },
   {
-    question: "Do I need an account?",
+    question: "How do I install it?",
     answer:
-      "No. Drop your files and run any recipe immediately — no account needed. In the future, creating an account will let you save and manage your recipes in the cloud.",
+      "Run cargo install bnto to install the CLI. Or use the browser version on this site, no install needed.",
   },
   {
     question: "Can I process multiple files at once?",
     answer:
-      "Yes. Drop as many files as you want. bnto processes them all in a single batch. Results download as a ZIP when there are multiple output files.",
+      "Yes. Pass multiple files to bnto run or drop them in the browser. bnto processes them all in a single batch.",
   },
 ] as const;
 

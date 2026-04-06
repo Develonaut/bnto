@@ -7,11 +7,11 @@ import nodeStrings from "../generated/nodes.json";
 describe("t()", () => {
   it("resolves top-level namespace keys", () => {
     expect(t("site.title")).toBe("bnto");
-    expect(t("site.trustLine")).toBe("Free, instant, runs in your browser.");
+    expect(t("site.trustLine")).toBe("Free. Open source. Runs on your machine.");
   });
 
   it("resolves deeply nested keys", () => {
-    expect(t("hero.heading")).toBe("Pick a recipe. Drop your files.");
+    expect(t("hero.heading")).toBe("Pack your workflow.");
     expect(t("errors.timeout")).toContain("took too long");
   });
 

@@ -66,7 +66,7 @@ Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
 ```bash
 # Install
-cargo install bnto-cli
+cargo install bnto
 
 # Compress all JPEGs in a directory
 bnto run compress-images photos/*.jpg

@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import {
   BlocksIcon,
   GlobeIcon,
-  ShieldCheckIcon,
+  TerminalIcon,
   ZapIcon,
   IconBadge,
   Row,
@@ -18,10 +18,10 @@ interface PitchPoint {
 }
 
 const PITCH_POINTS: PitchPoint[] = [
-  { icon: ZapIcon, label: `${BNTO_REGISTRY.length} free recipes, no limits, no signup` },
-  { icon: ShieldCheckIcon, label: "Runs in your browser. Files never leave your device" },
-  { icon: BlocksIcon, label: "Build custom recipes with the visual editor" },
-  { icon: GlobeIcon, label: "Open source (MIT). Inspect every line" },
+  { icon: BlocksIcon, label: "Composable nodes. Build any workflow by chaining nodes together" },
+  { icon: TerminalIcon, label: `${BNTO_REGISTRY.length} recipes included. One command: bnto run` },
+  { icon: ZapIcon, label: "Runs on your machine. Files never leave your device" },
+  { icon: GlobeIcon, label: "Open source (MIT). Extend it, fork it, contribute" },
 ];
 
 export function HeroPitchPoints() {
