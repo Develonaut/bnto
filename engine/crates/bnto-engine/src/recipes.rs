@@ -15,21 +15,21 @@ pub struct BuiltinRecipe {
 
 /// All built-in recipe definition strings, embedded at compile time.
 const RECIPE_DEFINITIONS: &[&str] = &[
-    include_str!("../../../recipes/compress-images.bnto.json"),
-    include_str!("../../../recipes/resize-images.bnto.json"),
-    include_str!("../../../recipes/convert-image-format.bnto.json"),
-    include_str!("../../../recipes/rename-files.bnto.json"),
-    include_str!("../../../recipes/clean-csv.bnto.json"),
-    include_str!("../../../recipes/rename-csv-columns.bnto.json"),
-    include_str!("../../../recipes/csv-to-json.bnto.json"),
-    include_str!("../../../recipes/merge-csv.bnto.json"),
-    include_str!("../../../recipes/optimize-images-for-web.bnto.json"),
-    include_str!("../../../recipes/generate-thumbnails.bnto.json"),
-    include_str!("../../../recipes/compress-and-rename.bnto.json"),
-    include_str!("../../../recipes/standardize-csv.bnto.json"),
-    include_str!("../../../recipes/strip-exif.bnto.json"),
-    include_str!("../../../recipes/watermark-images.bnto.json"),
-    include_str!("../../../recipes/download-video.bnto.json"),
+    include_str!("../recipes/compress-images.bnto.json"),
+    include_str!("../recipes/resize-images.bnto.json"),
+    include_str!("../recipes/convert-image-format.bnto.json"),
+    include_str!("../recipes/rename-files.bnto.json"),
+    include_str!("../recipes/clean-csv.bnto.json"),
+    include_str!("../recipes/rename-csv-columns.bnto.json"),
+    include_str!("../recipes/csv-to-json.bnto.json"),
+    include_str!("../recipes/merge-csv.bnto.json"),
+    include_str!("../recipes/optimize-images-for-web.bnto.json"),
+    include_str!("../recipes/generate-thumbnails.bnto.json"),
+    include_str!("../recipes/compress-and-rename.bnto.json"),
+    include_str!("../recipes/standardize-csv.bnto.json"),
+    include_str!("../recipes/strip-exif.bnto.json"),
+    include_str!("../recipes/watermark-images.bnto.json"),
+    include_str!("../recipes/download-video.bnto.json"),
 ];
 
 /// Returns all built-in recipes, embedded at compile time.

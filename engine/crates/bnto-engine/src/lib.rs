@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn test_generated_compress_images_recipe() {
-        let json = include_str!("../../../recipes/compress-images.bnto.json");
+        let json = include_str!("../recipes/compress-images.bnto.json");
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
@@ -190,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_generated_resize_images_recipe() {
-        let json = include_str!("../../../recipes/resize-images.bnto.json");
+        let json = include_str!("../recipes/resize-images.bnto.json");
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
@@ -208,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_generated_clean_csv_recipe() {
-        let json = include_str!("../../../recipes/clean-csv.bnto.json");
+        let json = include_str!("../recipes/clean-csv.bnto.json");
         let csv_data = include_bytes!("../../../../test-fixtures/csv/messy.csv");
         let files = vec![PipelineFile {
             name: "data.csv".to_string(),
@@ -225,7 +225,7 @@ mod tests {
 
     #[test]
     fn test_generated_rename_files_recipe() {
-        let json = include_str!("../../../recipes/rename-files.bnto.json");
+        let json = include_str!("../recipes/rename-files.bnto.json");
         let files = vec![PipelineFile {
             name: "document.txt".to_string(),
             data: b"hello world".to_vec(),
@@ -247,7 +247,7 @@ mod tests {
 
     #[test]
     fn test_generated_csv_to_json_recipe() {
-        let json = include_str!("../../../recipes/csv-to-json.bnto.json");
+        let json = include_str!("../recipes/csv-to-json.bnto.json");
         let csv_data = include_bytes!("../../../../test-fixtures/csv/simple.csv");
         let files = vec![PipelineFile {
             name: "data.csv".to_string(),
@@ -266,7 +266,7 @@ mod tests {
 
     #[test]
     fn test_generated_merge_csv_recipe() {
-        let json = include_str!("../../../recipes/merge-csv.bnto.json");
+        let json = include_str!("../recipes/merge-csv.bnto.json");
         let csv_a = b"name,age\nAlice,30\n";
         let csv_b = b"name,age\nBob,25\n";
         let files = vec![
@@ -295,7 +295,7 @@ mod tests {
 
     #[test]
     fn test_generated_strip_exif_recipe() {
-        let json = include_str!("../../../recipes/strip-exif.bnto.json");
+        let json = include_str!("../recipes/strip-exif.bnto.json");
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
@@ -315,7 +315,7 @@ mod tests {
     fn test_generated_watermark_images_recipe() {
         // The generated recipe has an empty overlay param — inject a real one.
         let mut def: serde_json::Value =
-            serde_json::from_str(include_str!("../../../recipes/watermark-images.bnto.json"))
+            serde_json::from_str(include_str!("../recipes/watermark-images.bnto.json"))
                 .unwrap();
 
         // Base64-encode the test overlay image
@@ -354,21 +354,21 @@ mod tests {
     #[test]
     fn test_all_generated_recipes_parse() {
         let recipes = [
-            include_str!("../../../recipes/compress-images.bnto.json"),
-            include_str!("../../../recipes/resize-images.bnto.json"),
-            include_str!("../../../recipes/convert-image-format.bnto.json"),
-            include_str!("../../../recipes/rename-files.bnto.json"),
-            include_str!("../../../recipes/clean-csv.bnto.json"),
-            include_str!("../../../recipes/rename-csv-columns.bnto.json"),
-            include_str!("../../../recipes/optimize-images-for-web.bnto.json"),
-            include_str!("../../../recipes/generate-thumbnails.bnto.json"),
-            include_str!("../../../recipes/compress-and-rename.bnto.json"),
-            include_str!("../../../recipes/standardize-csv.bnto.json"),
-            include_str!("../../../recipes/csv-to-json.bnto.json"),
-            include_str!("../../../recipes/strip-exif.bnto.json"),
-            include_str!("../../../recipes/watermark-images.bnto.json"),
-            include_str!("../../../recipes/merge-csv.bnto.json"),
-            include_str!("../../../recipes/download-video.bnto.json"),
+            include_str!("../recipes/compress-images.bnto.json"),
+            include_str!("../recipes/resize-images.bnto.json"),
+            include_str!("../recipes/convert-image-format.bnto.json"),
+            include_str!("../recipes/rename-files.bnto.json"),
+            include_str!("../recipes/clean-csv.bnto.json"),
+            include_str!("../recipes/rename-csv-columns.bnto.json"),
+            include_str!("../recipes/optimize-images-for-web.bnto.json"),
+            include_str!("../recipes/generate-thumbnails.bnto.json"),
+            include_str!("../recipes/compress-and-rename.bnto.json"),
+            include_str!("../recipes/standardize-csv.bnto.json"),
+            include_str!("../recipes/csv-to-json.bnto.json"),
+            include_str!("../recipes/strip-exif.bnto.json"),
+            include_str!("../recipes/watermark-images.bnto.json"),
+            include_str!("../recipes/merge-csv.bnto.json"),
+            include_str!("../recipes/download-video.bnto.json"),
         ];
 
         for (i, json) in recipes.iter().enumerate() {
