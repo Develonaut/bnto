@@ -42,15 +42,6 @@ jobs:
           CHANGED=$(git diff --name-only "$PREV_TAG"..HEAD)
           echo "$CHANGED"
 
-          # If workflow files changed, run everything (we're testing the pipeline itself)
-          if echo "$CHANGED" | grep -q '^\.github/'; then
-            echo "Workflow files changed — running full pipeline"
-            echo "engine=true" >> "$GITHUB_OUTPUT"
-            echo "web=true" >> "$GITHUB_OUTPUT"
-            echo "convex=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
           engine=$(echo "$CHANGED" | grep -q '^engine/' && echo true || echo false)
           web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/)' && echo true || echo false)
           convex=$(echo "$CHANGED" | grep -q '^packages/@bnto/backend/convex/' && echo true || echo false)
