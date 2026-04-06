@@ -1,31 +1,6 @@
-import {
-  AnimatedCounter,
-  Card,
-  ComparisonBar,
-  IconBadge,
-  Row,
-  Stack,
-  Text,
-  ZapIcon,
-} from "@bnto/ui";
+import { Card, ComparisonBar, Stack, Text } from "@bnto/ui";
 
-export function SpeedCounter() {
-  return (
-    <Row className="gap-3">
-      <IconBadge variant="primary" size="md" shape="square">
-        <ZapIcon className="size-4" />
-      </IconBadge>
-      <Row className="gap-1.5" align="baseline">
-        <AnimatedCounter
-          value={50}
-          active
-          className="font-display text-2xl font-bold tracking-tight"
-        />
-        <span className="text-muted-foreground text-sm font-medium">ms</span>
-      </Row>
-    </Row>
-  );
-}
+import { SpeedCounter } from "./SpeedCounter";
 
 export function BragSpeedCard() {
   return (
@@ -36,12 +11,12 @@ export function BragSpeedCard() {
           active
           height="h-2.5"
           items={[
-            { label: "bnto", value: 50, subtitle: "Local WASM" },
+            { label: "bnto", value: 50, subtitle: "Local processing" },
             { label: "Cloud upload", value: 8000, subtitle: "Upload, process, download" },
           ]}
         />
         <Text size="xs" color="muted">
-          Avg processing time — local vs cloud round-trip
+          Avg processing time, local vs cloud round-trip
         </Text>
       </Stack>
     </Card>

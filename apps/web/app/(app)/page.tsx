@@ -1,6 +1,7 @@
-import { AppShellContent, Divider } from "@bnto/ui";
+import { AppShellContent, Divider, Stack } from "@bnto/ui";
+import { HeroInstall } from "@/components/blocks/HeroInstall";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
-import { RecipeMarquee } from "@/components/blocks/RecipeMarquee";
+import { HeroTerminal } from "@/components/blocks/HeroTerminal";
 
 import { HowItWorksSection } from "./_components/HowItWorksSection";
 import { NoCatchSection } from "./_components/NoCatchSection";
@@ -10,13 +11,16 @@ import { NoCatchSection } from "./_components/NoCatchSection";
 export default function Home() {
   return (
     <AppShellContent>
-      {/* Hero — sidebar + recipe marquee */}
-      <div className="grid items-start gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
-        <HeroSidebar showCta={false} />
-        <RecipeMarquee />
+      {/* Hero — sidebar + install + terminal demo */}
+      <div className="grid items-center gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
+        <HeroSidebar />
+        <Stack className="gap-4">
+          <HeroInstall />
+          <HeroTerminal />
+        </Stack>
       </div>
 
-      <Divider label="Free. No signup." />
+      <Divider label="Composable by design." />
       <HowItWorksSection />
 
       <Divider label="Open source." />
