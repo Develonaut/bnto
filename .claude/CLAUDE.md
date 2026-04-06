@@ -12,6 +12,9 @@
 | ------------------------------ | ---------------------------------------------------------------------------------------------- |
 | Any code                       | [code-standards.md](.claude/rules/code-standards.md)                                           |
 | Any UI / styling work          | [rules/theming.md](.claude/rules/theming.md)                                                   |
+| Landing page / homepage        | [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md)                    |
+| Homepage sprint plan           | [homepage-sprint-plan.md](.claude/strategy/homepage-sprint-plan.md)                            |
+| Brand, messaging & mascots     | [brand-messaging-audit.md](.claude/strategy/brand-messaging-audit.md)                          |
 | Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)                        |
 | Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                                         |
 | Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                              |
@@ -240,25 +243,26 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ### Strategy & Reference (read on demand)
 
-| Document                                                                | Purpose                                                                                                           |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [ROADMAP.md](.claude/ROADMAP.md)                                        | Strategic roadmap — milestones, direction, big decisions                                                          |
-| [PLAN.md](.claude/PLAN.md)                                              | Build plan — sprints, waves, what's next                                                                          |
-| [pricing-model.md](.claude/strategy/pricing-model.md)                   | Free vs premium — nodes, recipes, features, terminology                                                           |
-| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md) | Hybrid Convex native + React Query, co-located queries, self-fetching components                                  |
-| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md) | Full architecture, tech decisions, phases                                                                         |
-| [core-principles.md](.claude/strategy/core-principles.md)               | TDD, Grain, Modularity, Abstraction                                                                               |
-| [design-language.md](.claude/strategy/design-language.md)               | Visual identity, brand personality                                                                                |
-| [editor-architecture.md](.claude/strategy/editor-architecture.md)       | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
-| [editor-api.md](.claude/strategy/editor-api.md)                         | Editor API layer — client → service → store abstraction, Sprint 5D                                                |
-| [visual-editor.md](.claude/strategy/visual-editor.md)                   | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| [io-nodes.md](.claude/strategy/io-nodes.md)                             | Input & output nodes — self-describing recipe I/O, generic renderers, migration                                   |
-| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)       | Editor user journey — stages, flows, success criteria, phased delivery                                            |
-| [code-editor.md](.claude/strategy/code-editor.md)                       | Code editor design — CM6, slash commands, JSON Schema                                                             |
-| [engine-execution.md](.claude/strategy/engine-execution.md)             | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
-| [expression-input-ux.md](.claude/strategy/expression-input-ux.md)       | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
-| Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)    | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
-| [skills/](.claude/skills/)                                              | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |
+| Document                                                                    | Purpose                                                                                                           |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [ROADMAP.md](.claude/ROADMAP.md)                                            | Strategic roadmap — milestones, direction, big decisions                                                          |
+| [PLAN.md](.claude/PLAN.md)                                                  | Build plan — sprints, waves, what's next                                                                          |
+| [pricing-model.md](.claude/strategy/pricing-model.md)                       | Free vs premium — nodes, recipes, features, terminology                                                           |
+| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)     | Hybrid Convex native + React Query, co-located queries, self-fetching components                                  |
+| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)     | Full architecture, tech decisions, phases                                                                         |
+| [core-principles.md](.claude/strategy/core-principles.md)                   | TDD, Grain, Modularity, Abstraction                                                                               |
+| [design-language.md](.claude/strategy/design-language.md)                   | Visual identity, brand personality                                                                                |
+| [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md) | Landing page creative direction — reference sites, hero concept, page sections                                    |
+| [editor-architecture.md](.claude/strategy/editor-architecture.md)           | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
+| [editor-api.md](.claude/strategy/editor-api.md)                             | Editor API layer — client → service → store abstraction, Sprint 5D                                                |
+| [visual-editor.md](.claude/strategy/visual-editor.md)                       | Bento box visual editor — compartment design, grid layout, execution state                                        |
+| [io-nodes.md](.claude/strategy/io-nodes.md)                                 | Input & output nodes — self-describing recipe I/O, generic renderers, migration                                   |
+| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)           | Editor user journey — stages, flows, success criteria, phased delivery                                            |
+| [code-editor.md](.claude/strategy/code-editor.md)                           | Code editor design — CM6, slash commands, JSON Schema                                                             |
+| [engine-execution.md](.claude/strategy/engine-execution.md)                 | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
+| [expression-input-ux.md](.claude/strategy/expression-input-ux.md)           | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
+| Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)        | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
+| [skills/](.claude/skills/)                                                  | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |
 
 ### Domain Expert Personas (invoke with `/persona-name`)
 
