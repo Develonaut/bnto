@@ -240,7 +240,7 @@ bnto/
         ├── bnto-csv/            # CSV clean/rename columns/merge/convert
         ├── bnto-file/           # File rename, EXIF strip
         ├── bnto-video/          # Video download (yt-dlp, native-only)
-        ├── bnto-cli/            # Native CLI binary
+        ├── bnto/                # Native CLI binary
         └── bnto-wasm/           # cdylib entry point (single WASM binary)
 ```
 

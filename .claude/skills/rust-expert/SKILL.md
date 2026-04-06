@@ -33,7 +33,7 @@ You are a senior Rust engineer who owns the execution engine — the brain of Bn
 | **Desktop** | Rust -> native via Tauri     | Future (M4, backlog)         |
 | **Cloud**   | Rust -> compiled service     | Future (M4, technology TBD)  |
 
-The core node logic (`bnto-core`, `bnto-image`, `bnto-csv`, `bnto-file`, `bnto-video`) is **target-agnostic**. Only the entry point crate differs per target — `bnto-cli` for native CLI, `bnto-wasm` (cdylib) for browser. This is why all node crates are `rlib` only.
+The core node logic (`bnto-core`, `bnto-image`, `bnto-csv`, `bnto-file`, `bnto-video`) is **target-agnostic**. Only the entry point crate differs per target — `bnto` for native CLI, `bnto-wasm` (cdylib) for browser. This is why all node crates are `rlib` only.
 
 **Architecture constraint:** Only `bnto-wasm` is `cdylib` (produces the `.wasm` file). All other crates are `rlib` only. This is non-negotiable — separate cdylib crates get separate JS heaps and can't share objects. One WASM binary, one download, one shared heap.
 
@@ -68,7 +68,7 @@ But you also remember that **Ryan is learning Rust**. Every `.rs` file you write
 ### Target-Agnostic Node Design
 
 - **Node crates (`bnto-image`, `bnto-csv`, `bnto-file`) have zero target-specific dependencies.** No `wasm-bindgen`, no `js-sys`, no `std::fs`. Pure Rust logic: bytes in, bytes out
-- **Entry point crates own the target boundary.** `bnto-wasm` bridges to JS. A future `bnto-cli` bridges to the filesystem. A future Tauri crate bridges to the desktop runtime
+- **Entry point crates own the target boundary.** `bnto-wasm` bridges to JS. `bnto` bridges to the filesystem. A future Tauri crate bridges to the desktop runtime
 - **Progress reporting is trait-based.** Node crates accept a progress callback trait, not a `js_sys::Function`. The WASM entry point implements the trait with JS callbacks; the CLI implements it with stderr; Tauri implements it with IPC
 - **Testing at the node level is target-free.** Unit tests in `bnto-image` run as native Rust (`cargo test`), not through WASM. This keeps the test loop fast
 

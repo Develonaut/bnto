@@ -100,7 +100,7 @@ Every processor needs at least one recipe that exercises it. See [Checklist: Add
 
 Golden tests prove deterministic output and catch silent regressions.
 
-- [ ] **Add golden test** — `engine/crates/bnto-cli/tests/golden_tests.rs`:
+- [ ] **Add golden test** — `engine/crates/bnto/tests/golden_tests.rs`:
   ```rust
   #[test]
   fn golden_{slug_underscored}() {
@@ -116,10 +116,10 @@ Golden tests prove deterministic output and catch silent regressions.
       assert_golden("{slug}", &out);  // same golden dir as auto version
   }
   ```
-- [ ] **Create explicit fixture** — `engine/crates/bnto-cli/tests/fixtures/explicit/{slug}.bnto.json` (recipe with explicit loop containers instead of auto iteration)
-- [ ] **Bless golden files** — `BLESS=1 cargo test -p bnto-cli -- golden` (or `task cli:golden:bless`)
+- [ ] **Create explicit fixture** — `engine/crates/bnto/tests/fixtures/explicit/{slug}.bnto.json` (recipe with explicit loop containers instead of auto iteration)
+- [ ] **Bless golden files** — `BLESS=1 cargo test -p bnto -- golden` (or `task cli:golden:bless`)
 - [ ] **Verify golden files** — `task cli:golden` (subsequent runs verify byte-exact match)
-- [ ] **Review golden diff** — `git diff engine/crates/bnto-cli/tests/golden/` before committing
+- [ ] **Review golden diff** — `git diff engine/crates/bnto/tests/golden/` before committing
 - [ ] **Commit golden files** — these are the source of truth for output correctness
 
 ### Phase 6: Quality Gate
@@ -166,12 +166,12 @@ Recipes are defined as `.bnto.json` files in `engine/recipes/`. The engine is th
 
 ### Step 4: Golden Tests
 
-- [ ] **Add golden test** — `golden_{slug_underscored}()` in `engine/crates/bnto-cli/tests/golden_tests.rs`
+- [ ] **Add golden test** — `golden_{slug_underscored}()` in `engine/crates/bnto/tests/golden_tests.rs`
 - [ ] **Add explicit equivalence test** — `golden_{slug_underscored}_explicit()` in the same file
-- [ ] **Create explicit fixture** — `engine/crates/bnto-cli/tests/fixtures/explicit/{slug}.bnto.json`
+- [ ] **Create explicit fixture** — `engine/crates/bnto/tests/fixtures/explicit/{slug}.bnto.json`
 - [ ] **Bless golden files** — `task cli:golden:bless`
 - [ ] **Verify golden files** — `task cli:golden`
-- [ ] **Commit golden files** — `engine/crates/bnto-cli/tests/golden/{slug}/`
+- [ ] **Commit golden files** — `engine/crates/bnto/tests/golden/{slug}/`
 
 ### Step 5: Verify Recipe Appears in All Surfaces
 
@@ -225,16 +225,16 @@ When adding a processor or recipe, these exact-count assertions MUST be updated.
 
 ### Rust (engine)
 
-| File                                           | Test function                                 | What it counts                              |
-| ---------------------------------------------- | --------------------------------------------- | ------------------------------------------- |
-| `engine/crates/bnto-engine/src/lib.rs`         | `test_browser_registry_has_all_processors()`  | Browser processor count + expected key list |
-| `engine/crates/bnto-engine/src/lib.rs`         | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list        |
-| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned)     |
-| `engine/crates/bnto-core/src/metadata.rs`      | `test_all_node_types_unique_names()`          | Same count (uniqueness check)               |
-| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog             |
-| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts         |
-| `engine/crates/bnto-wasm/src/catalog.rs`       | `test_catalog_contains_expected_node_types()` | Expected type key list                      |
-| `engine/crates/bnto-cli/tests/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)            |
+| File                                       | Test function                                 | What it counts                              |
+| ------------------------------------------ | --------------------------------------------- | ------------------------------------------- |
+| `engine/crates/bnto-engine/src/lib.rs`     | `test_browser_registry_has_all_processors()`  | Browser processor count + expected key list |
+| `engine/crates/bnto-engine/src/lib.rs`     | `test_all_generated_recipes_parse()`          | Recipe fixture `include_str!()` list        |
+| `engine/crates/bnto-core/src/metadata.rs`  | `test_all_node_types_returns_N_entries()`     | Total node types (processors + planned)     |
+| `engine/crates/bnto-core/src/metadata.rs`  | `test_all_node_types_unique_names()`          | Same count (uniqueness check)               |
+| `engine/crates/bnto-wasm/src/catalog.rs`   | `test_catalog_has_all_N_processors()`         | Processor count in WASM catalog             |
+| `engine/crates/bnto-wasm/src/catalog.rs`   | `test_catalog_serializes_to_valid_json()`     | Both processor and node type counts         |
+| `engine/crates/bnto-wasm/src/catalog.rs`   | `test_catalog_contains_expected_node_types()` | Expected type key list                      |
+| `engine/crates/bnto/tests/golden_tests.rs` | Individual golden test functions              | One per recipe (auto + explicit)            |
 
 ### TypeScript (packages)
 
@@ -291,7 +291,7 @@ Recipe Definition (Engine-Owned)
         │
         ├─► engine integration tests (include_str! in lib.rs)
         ├─► CLI golden tests (recipe_path() → engine/recipes/)
-        ├─► explicit fixtures (hand-maintained in bnto-cli/tests/fixtures/explicit/)
+        ├─► explicit fixtures (hand-maintained in bnto/tests/fixtures/explicit/)
         │
         ├─► task wasm:codegen → catalog.snapshot.json → generate TS
         │     └─► @bnto/nodes/src/generated/recipes.ts → GENERATED_RECIPES

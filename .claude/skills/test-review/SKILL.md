@@ -107,10 +107,10 @@ Not all tests are created equal. This matrix defines what's worth testing at eac
 
 - [ ] Every node processor in `engine/crates/bnto-{crate}/src/` has unit tests (isolated `process()`) and parameterized tests (different param values produce different outputs)
 - [ ] Recipe fixtures in `engine/recipes/` all parse and run via `run_pipeline()` — covered by `test_all_generated_recipes_parse()` and individual `test_generated_{slug}_recipe()` tests
-- [ ] Golden tests exist for every recipe — byte-exact output verification in `engine/crates/bnto-cli/tests/golden/`
+- [ ] Golden tests exist for every recipe — byte-exact output verification in `engine/crates/bnto/tests/golden/`
 - [ ] Error paths tested — malformed input, missing files, invalid config, unsupported formats
 
-### Layer 2: CLI (`engine/crates/bnto-cli/`)
+### Layer 2: CLI (`engine/crates/bnto/`)
 
 **Source:** Rust CLI testing patterns, `assert_cmd`, golden file testing
 

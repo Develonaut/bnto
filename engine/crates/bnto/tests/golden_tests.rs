@@ -1,8 +1,8 @@
 // Golden tests — byte-exact output verification for all predefined recipes.
 //
-// Run:        cargo test -p bnto-cli -- golden
-// Bless:      BLESS=1 cargo test -p bnto-cli -- golden
-// Then:       git diff engine/crates/bnto-cli/tests/golden/
+// Run:        cargo test -p bnto -- golden
+// Bless:      BLESS=1 cargo test -p bnto -- golden
+// Then:       git diff engine/crates/bnto/tests/golden/
 
 mod golden_helpers;
 mod helpers;

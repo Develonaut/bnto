@@ -48,7 +48,7 @@
 
 Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **15 recipes ship today** — running via CLI (native Rust) and browser (Rust→WASM). The CLI is the primary development surface. The dividing line: **nodes that run locally are free, nodes that need a managed server cost money** (monetization tabled). See [ROADMAP.md](.claude/ROADMAP.md).
 
-- **CLI** (primary): `engine/crates/bnto-cli/` — native Rust binary, full system access, published to crates.io
+- **CLI** (primary): `engine/crates/bnto/` — native Rust binary, full system access, published to crates.io
 - **Rust Engine**: `engine/` — shared engine crate powering CLI (native) and browser (WASM)
 - **Web**: Next.js on Vercel + Convex Cloud — landing page, docs, predefined recipe pages for SEO, browser execution
 - **Desktop** (M4, backlog): Tauri (Rust-native) — links engine natively like CLI
@@ -179,7 +179,7 @@ bnto/
 │   │   ├── bnto-video/          # Video download (yt-dlp, native-only)
 │   │   ├── bnto-engine/         # Shared registry + pipeline runner + recipe catalog
 │   │   ├── bnto-wasm/           # cdylib entry point (WASM binary)
-│   │   └── bnto-cli/            # Native CLI binary (`bnto`) — primary consumer
+│   │   └── bnto/                # Native CLI binary (`bnto`) — primary consumer
 ├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
 ```

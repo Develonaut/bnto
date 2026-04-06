@@ -9,7 +9,7 @@
 
 Bnto is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes. Run them anywhere.
 
-**The CLI is the product.** `cargo install bnto-cli` gets you started. Define recipes as `.bnto.json` files, run them with `bnto run`. The power is in composition: any workflow you can describe as a sequence of steps, bnto can automate. One Rust engine compiles to every target — your terminal today, your browser, your desktop, and a server tomorrow. The recipe doesn't care where it runs.
+**The CLI is the product.** `cargo install bnto` gets you started. Define recipes as `.bnto.json` files, run them with `bnto run`. The power is in composition: any workflow you can describe as a sequence of steps, bnto can automate. One Rust engine compiles to every target — your terminal today, your browser, your desktop, and a server tomorrow. The recipe doesn't care where it runs.
 
 **The architecture makes this possible:** One Rust engine, multiple compilation targets. Write a node once. The engine handles execution, progress, error handling, and platform differences. CLI nodes get full system access. Browser nodes compile to WASM. Server nodes get managed infrastructure.
 
@@ -25,7 +25,7 @@ Bnto is workflow automation through composable parts. Each node encapsulates a s
 
 **The insight:** The engine is the stable API. Nodes are the building blocks. Recipes are the workflows. Targets are just compilation modes. Revenue strategy is tabled — focus is on making the engine powerful and fun.
 
-**The web:** bnto.io is a landing page that directs to `cargo install bnto-cli`. SEO recipe pages showcase what bnto can do. Browser execution (Rust→WASM) is delivered and maintained but is not the primary experience — the CLI is.
+**The web:** bnto.io is a landing page that directs to `cargo install bnto`. SEO recipe pages showcase what bnto can do. Browser execution (Rust→WASM) is delivered and maintained but is not the primary experience — the CLI is.
 
 ---
 
@@ -77,7 +77,7 @@ M5: Monetization (tabled)
 
 **A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. CLI nodes get full system access. Browser-capable nodes compile to WASM and work at bnto.io. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
 
-**The CLI is the product.** `cargo install bnto-cli` gives you 15 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
+**The CLI is the product.** `cargo install bnto` gives you 15 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
 
 1. Build the processor in Rust (TDD-first, golden tests)
 2. Test via `bnto run <recipe> [files...]`
@@ -230,7 +230,7 @@ But monetization work is explicitly paused. No Stripe, no Pro tier, no feature g
 | **v0.5.0 released**                  | Shipped (April 2026)     | 15 recipes, video-download node, extra args pass-through, dependency system, H.264 codec preference, ProcessContext trait.                       |
 | **TUI deferred to own sprint**       | Decided (April 2026)     | TUI is a full application (editor, navigation, recipe browser). Needs proper sprint breakdown. CLI polish comes first — make it bomb-proof.      |
 | **CLI/TUI-first pivot**              | Decided (April 2026)     | CLI is the product. Web reduced to landing page. Editor frozen. Auth stripped. TUI (ratatui) is next UI surface. Frontend/premium work on hold.  |
-| **Open-source-first pivot**          | Decided (April 2026)     | Stripped pricing, auth surfaces, Pro references. Monetization tabled. Web → landing page for `cargo install bnto-cli`.                           |
+| **Open-source-first pivot**          | Decided (April 2026)     | Stripped pricing, auth surfaces, Pro references. Monetization tabled. Web → landing page for `cargo install bnto`.                               |
 
 ### Engine Decision: Rust Won (Feb 2026)
 

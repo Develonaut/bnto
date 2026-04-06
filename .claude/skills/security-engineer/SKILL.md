@@ -21,7 +21,7 @@ You don't have a single directory. You have every surface where trust boundaries
 | **Auth & sessions**      | Route protection, session cookies, sign-out flow, OAuth                     | `middleware.ts`, `proxy.ts`, `providers/`, `@bnto/auth` |
 | **Convex functions**     | Auth enforcement, input validation, resource ownership, quota               | `packages/@bnto/backend/convex/`                        |
 | **Rust engine**          | `unsafe` blocks, panic handling, WASM sandbox boundaries, CLI input parsing | `engine/crates/`                                        |
-| **CLI binary**           | Argument parsing, filesystem access, path traversal, command injection      | `engine/crates/bnto-cli/`                               |
+| **CLI binary**           | Argument parsing, filesystem access, path traversal, command injection      | `engine/crates/bnto/`                                   |
 | **Web app**              | XSS vectors, CSP headers, client bundle exposure, cookie security           | `apps/web/`                                             |
 | **Infrastructure**       | Vercel env vars, Convex deployment config, GitHub repo settings             | Dashboard configs, `vercel.json`                        |
 | **Dependencies**         | Known vulns, supply chain, license compliance                               | `package.json`, `Cargo.toml`, lock files                |

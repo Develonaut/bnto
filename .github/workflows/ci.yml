@@ -40,10 +40,10 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
 
       - name: Unit tests (native)
-        run: cargo test --workspace --exclude bnto-cli
+        run: cargo test --workspace --exclude bnto
 
       - name: CLI tests (unit + golden)
-        run: cargo test --package bnto-cli
+        run: cargo test --package bnto
 
       - name: WASM integration tests (bnto-wasm)
         run: wasm-pack test --node crates/bnto-wasm
