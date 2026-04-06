@@ -12,9 +12,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Detect what changed to skip irrelevant jobs ──
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      engine: ${{ steps.filter.outputs.engine }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            engine:
+              - 'engine/**'
+            web:
+              - 'apps/**'
+              - 'packages/**'
+              - 'pnpm-lock.yaml'
+              - 'package.json'
+              - 'tsconfig*.json'
+
+  # ── Rust CI (only when engine files changed) ──
   rust:
     name: Rust Engine (fmt + lint + test + WASM)
     runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.engine == 'true'
     defaults:
       run:
         working-directory: engine
@@ -57,9 +83,12 @@ jobs:
       - name: WASM integration tests (bnto-image)
         run: wasm-pack test --node crates/bnto-image
 
+  # ── TypeScript CI (only when web files changed) ──
   typescript:
     name: TypeScript (build + lint + test)
     runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.web == 'true'
     env:
       NEXT_PUBLIC_CONVEX_URL: https://zealous-canary-422.convex.cloud
       NEXT_PUBLIC_CONVEX_SITE_URL: https://zealous-canary-422.convex.site
@@ -165,23 +194,42 @@ jobs:
       - name: "Test: @bnto/web"
         run: pnpm --filter @bnto/web run test
 
-  # Gate job — single status check for branch protection
+  # Gate job — single status check for branch protection.
+  # Accepts skipped jobs when their surface didn't change.
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [rust, typescript]
+    needs: [detect-changes, rust, typescript]
     if: always()
     steps:
       - name: Check job results
         run: |
-          if [ "${{ needs.rust.result }}" != "success" ] || \
-             [ "${{ needs.typescript.result }}" != "success" ]; then
-            echo "One or more CI jobs failed:"
-            echo "  Rust Engine: ${{ needs.rust.result }}"
-            echo "  TypeScript:  ${{ needs.typescript.result }}"
+          rust="${{ needs.rust.result }}"
+          ts="${{ needs.typescript.result }}"
+          engine="${{ needs.detect-changes.outputs.engine }}"
+          web="${{ needs.detect-changes.outputs.web }}"
+
+          failed=0
+
+          # Rust is required when engine files changed
+          if [ "$engine" = "true" ] && [ "$rust" != "success" ]; then
+            echo "FAILED: Rust Engine = $rust (engine files changed)"
+            failed=1
+          fi
+
+          # TypeScript is required when web files changed
+          if [ "$web" = "true" ] && [ "$ts" != "success" ]; then
+            echo "FAILED: TypeScript = $ts (web files changed)"
+            failed=1
+          fi
+
+          if [ "$failed" = "1" ]; then
             exit 1
           fi
-          echo "All CI jobs passed."
+
+          echo "CI Gate passed."
+          echo "  Rust:       $rust (engine_changed: $engine)"
+          echo "  TypeScript: $ts (web_changed: $web)"
 
   # NOTE: Convex production deploy moved to release.yml (runs after release gate passes).
   # Convex functions only deploy to prod when a release tag is pushed and all checks pass.
