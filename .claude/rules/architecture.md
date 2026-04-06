@@ -132,13 +132,13 @@ Apps (apps/web, apps/desktop)
 - **Currently:** `@convex-dev/auth`. Named by role so internals can be swapped.
 - Consumed by `@bnto/core` internals, NEVER by app code directly
 
-### `engine/crates/bnto-cli/` -- Native CLI binary (`bnto`)
+### `engine/crates/bnto/` -- Native CLI binary (`bnto`)
 
 - **Primary consumer.** Links `bnto-engine` directly as a Rust dependency
 - Commands: `bnto run <recipe> [files...]`, `bnto list`, `bnto info <recipe>`, `bnto doctor`
 - Full system access via `ProcessContext` (run commands, temp files, env vars)
 - Golden tests as the primary determinism check for output correctness
-- Published to crates.io (`cargo install bnto-cli`)
+- Published to crates.io (`cargo install bnto`)
 
 ### `apps/web/` -- Next.js application (Vercel)
 
@@ -195,7 +195,7 @@ The Rust engine is the core. Consumers access it through different paths dependi
                v                                         v
     +---------------------+                   +---------------------+
     |    CLI (primary)    |                   |    WASM (browser)   |
-    |   bnto-cli crate    |                   |   bnto-wasm crate   |
+    |   bnto crate        |                   |   bnto-wasm crate   |
     |   Links engine      |                   |   wasm-pack build   |
     |   directly as Rust  |                   +----------+----------+
     +---------------------+                              |

@@ -45,30 +45,30 @@ tasks:
       - task: ui:lint
       - echo "=== all checks passed ==="
 
-  # CLI tasks (engine/crates/bnto-cli)
+  # CLI tasks (engine/crates/bnto)
   cli:build:
     desc: Build the native CLI binary (release)
     dir: ./engine
     cmds:
-      - cargo build --release --package bnto-cli
+      - cargo build --release --package bnto
 
   cli:test:
     desc: Run CLI unit + integration + golden tests
     dir: ./engine
     cmds:
-      - cargo test --package bnto-cli
+      - cargo test --package bnto
 
   cli:golden:
     desc: Run CLI golden tests only (byte-exact output verification)
     dir: ./engine
     cmds:
-      - cargo test --package bnto-cli -- golden
+      - cargo test --package bnto -- golden
 
   cli:golden:bless:
     desc: Regenerate golden files from current CLI output
     dir: ./engine
     cmds:
-      - BLESS=1 cargo test --package bnto-cli -- golden
+      - BLESS=1 cargo test --package bnto -- golden
 
   # README recipe table codegen (registry → README.md)
   readme:generate:

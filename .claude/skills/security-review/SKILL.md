@@ -94,7 +94,7 @@ Check `.claude/environment-variables.md` and other docs for actual secret values
 
 ## Section 2: CLI & Engine Security
 
-The Rust engine powers both the CLI (`bnto-cli`) and browser execution (WASM). The CLI has full filesystem access — it's the highest-privilege execution target.
+The Rust engine powers both the CLI (`bnto`) and browser execution (WASM). The CLI has full filesystem access — it's the highest-privilege execution target.
 
 ### 2a: Recipe definition trust
 
@@ -106,7 +106,7 @@ Read `engine/crates/bnto-engine/src/` for definition parsing:
 
 ### 2b: CLI filesystem security
 
-Read `engine/crates/bnto-cli/src/`:
+Read `engine/crates/bnto/src/`:
 
 - [ ] **File paths from CLI args are sanitized** — no path traversal via `../` in output directories
 - [ ] **Output files don't escape the working directory** — verify output paths are resolved relative to CWD

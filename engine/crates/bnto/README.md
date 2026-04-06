@@ -1,12 +1,16 @@
-# bnto-cli
+# bnto
 
 CLI for running `.bnto.json` recipes. Compress images, clean CSVs, rename files.
 
 ## Overview
 
-`bnto-cli` is the native command-line interface for the bnto engine. It uses `bnto-engine` for processor registration and pipeline execution, so the CLI runs the exact same node processors as the browser WASM build.
+`bnto` is the native command-line interface for the bnto engine. It uses `bnto-engine` for processor registration and pipeline execution, so the CLI runs the exact same node processors as the browser WASM build.
 
-Binary name: `bnto`
+## Install
+
+```bash
+cargo install bnto
+```
 
 ## Usage
 
@@ -37,7 +41,7 @@ tests/
 ## Development
 
 ```bash
-cargo build -p bnto-cli        # Build the binary
-cargo test -p bnto-cli         # Run integration tests
-./target/debug/bnto --help     # Run locally
+cargo build -p bnto        # Build the binary
+cargo test -p bnto         # Run integration tests
+./target/debug/bnto --help # Run locally
 ```

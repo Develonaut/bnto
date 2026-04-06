@@ -255,7 +255,7 @@ fn test_m3u8_url_routes_correctly() {
 }
 
 #[test]
-#[ignore] // HLS streams are large (~466MB). Run manually: cargo test -p bnto-cli -- --ignored
+#[ignore] // HLS streams are large (~466MB). Run manually: cargo test -p bnto -- --ignored
 fn test_m3u8_download() {
     // End-to-end download: m3u8 (HLS) → yt-dlp → output file.
     // Big Buck Bunny via Mux test stream. Requires yt-dlp + ffmpeg.

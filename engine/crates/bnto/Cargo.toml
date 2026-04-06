@@ -1,9 +1,9 @@
-# bnto-cli — Native CLI for running .bnto.json recipes.
+# bnto — Native CLI/TUI for running .bnto.json recipes.
 # Binary name: `bnto`
 # Uses bnto-engine for shared registry and pipeline execution.
 
 [package]
-name = "bnto-cli"
+name = "bnto"
 version = "0.1.1"
 edition = "2024"
 description = "CLI for running .bnto.json recipes — compress images, clean CSVs, rename files"

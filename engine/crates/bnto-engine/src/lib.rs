@@ -2,7 +2,7 @@
 //
 // Provides the processor registry and a convenience `run_pipeline()`
 // so consumers don't duplicate registration logic. Both bnto-wasm (browser)
-// and bnto-cli (native binary) depend on this crate.
+// and bnto (native CLI binary) depend on this crate.
 
 pub mod deps;
 pub mod recipes;

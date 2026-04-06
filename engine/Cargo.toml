@@ -2,7 +2,7 @@
 
 [workspace]
 members = [
-    "crates/bnto-cli",
+    "crates/bnto",
     "crates/bnto-core",
     "crates/bnto-csv",
     "crates/bnto-engine",

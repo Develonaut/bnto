@@ -1,6 +1,6 @@
 # bnto-engine — Shared engine layer for CLI + WASM consumers.
 # Provides `create_registry()` and `run_pipeline()` so both
-# bnto-wasm (browser) and bnto-cli (native) share the same processor
+# bnto-wasm (browser) and bnto (native CLI) share the same processor
 # wiring without duplicating registration code.
 
 [package]

@@ -32,7 +32,7 @@ The same `bnto-core` executor runs in every target. Only the I/O bridge differs.
 | Target          | Crate                   | I/O Bridge                | File Source                          |
 | --------------- | ----------------------- | ------------------------- | ------------------------------------ |
 | Browser (WASM)  | `bnto-wasm`             | `wasm-bindgen` JS interop | `File` -> `ArrayBuffer` -> `Vec<u8>` |
-| CLI (native)    | `bnto-cli` (planned)    | `std::fs`                 | Local filesystem paths               |
+| CLI (native)    | `bnto` (planned)        | `std::fs`                 | Local filesystem paths               |
 | Desktop (Tauri) | `bnto-tauri` (planned)  | Tauri commands            | Local filesystem via Tauri API       |
 | Server          | `bnto-server` (planned) | HTTP/gRPC                 | R2 presigned URLs -> bytes           |
 

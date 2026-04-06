@@ -27,10 +27,10 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**CLI is the product.** `cargo install bnto-cli` gets you 15 recipes. The web is a landing page.
+**CLI is the product.** `cargo install bnto` gets you 15 recipes. The web is a landing page.
 
 - **v0.5.0 released (April 2026):** 15 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor` commands. Published to crates.io
-- **Engine (Rust):** 7 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine, bnto-cli) + WASM entry point (bnto-wasm). CLI is the primary consumer, browser (WASM) is secondary
+- **Engine (Rust):** 7 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine, bnto) + WASM entry point (bnto-wasm). CLI is the primary consumer, browser (WASM) is secondary
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
 - **Next: TUI (Sprint 10)** — `bnto tui` via ratatui + crossterm (recipe browser, file picker, progress, results)
@@ -52,7 +52,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] @bnto/editor: Extracted editor package — EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy
 - [x] Playwright E2E: 27+ screenshots, user journey tests, execution flow tests, site navigation (desktop + mobile)
-- [x] Rust WASM engine: 6 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), single cdylib (bnto-wasm), CLI binary (bnto-cli), Web Worker wrapper, progress reporting
+- [x] Rust WASM engine: 6 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), single cdylib (bnto-wasm), CLI binary (bnto), Web Worker wrapper, progress reporting
 - [x] Browser execution: All 6 Tier 1 bntos client-side via WASM, ZIP download, auto-download
 - [x] Cloud execution infrastructure: R2 file transit, presigned URLs — ready for M4
 - [x] Recipe page overhaul (Sprint 2D): RecipeShell, PhaseIndicator, FileCard, RecipeConfigSection, useRecipeFlow
@@ -93,7 +93,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Sprint 9 W2 — Video node: `bnto-video` crate, `video-download` processor wrapping yt-dlp, `InputMode::Url`/`InputCardinality::Source`, `--param` CLI flag, H.264 codec preference, video title as filename, extra args pass-through, m3u8/HLS support, download verification tests (PRs #321-#329)
 - [x] Open-source-first pivot: Stripped pricing page, auth surfaces, Pro references. Monetization tabled until community traction (PR #317)
 - [x] crates.io preparation: All 6 engine crates prepared for publish at v0.1.1. `cargo install bnto` scaffolded (PRs #316, #319)
-- [x] crates.io published: All crates live on crates.io. `cargo publish` job in `release.yml` publishes in dependency order on stable tags. `cargo install bnto-cli` works
+- [x] crates.io published: All crates live on crates.io. `cargo publish` job in `release.yml` publishes in dependency order on stable tags. `cargo install bnto` works
 - [x] Release v0.5.0 (April 2026): 15 predefined recipes, video-download node, extra args pass-through, dependency system
 
 ---
@@ -575,7 +575,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto-core` — `/rust-expert` — Add `requires: Vec<Dependency>` to `NodeMetadata` (binary name, version constraint, install hint, homepage) _(PR #315)_
 - [x] `engine/crates/bnto-core` — `/rust-expert` — `ProcessContext` trait: controlled system access (run commands, temp files, env vars). `NoopContext` for browser, `NativeContext` for CLI _(PR #318)_
 - [x] `engine/crates/bnto-engine` — `/rust-expert` — Dependency checker: verify all required binaries before pipeline start. Clear error with install hints on missing deps _(PR #320)_
-- [x] `engine/crates/bnto-cli` — `/rust-expert` — `bnto doctor` command: check all dependencies, report missing with install hints _(PR #320)_
+- [x] `engine/crates/bnto` — `/rust-expert` — `bnto doctor` command: check all dependencies, report missing with install hints _(PR #320)_
 
 #### Wave 2 (parallel — video node type)
 
@@ -586,9 +586,9 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 3 (parallel — CLI polish)
 
-- [x] `engine/crates/bnto-cli` — `/rust-expert` — `bnto list` command: list available recipes with descriptions and categories
-- [x] `engine/crates/bnto-cli` — `/rust-expert` — `bnto info <recipe>` command: show recipe details, required dependencies, node types
-- [x] `engine/crates/bnto-cli` — `/rust-expert` — Enhanced `bnto run`: progress bars per file, colored output, timing summary
+- [x] `engine/crates/bnto` — `/rust-expert` — `bnto list` command: list available recipes with descriptions and categories
+- [x] `engine/crates/bnto` — `/rust-expert` — `bnto info <recipe>` command: show recipe details, required dependencies, node types
+- [x] `engine/crates/bnto` — `/rust-expert` — Enhanced `bnto run`: progress bars per file, colored output, timing summary
 - [x] `README.md` — Update to pitch CLI usage front and center
 
 ---
@@ -599,25 +599,25 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 **Framework:** `ratatui` + `crossterm`
 
-**Dependencies:** `ratatui`, `crossterm` added to `bnto-cli` Cargo.toml
+**Dependencies:** `ratatui`, `crossterm` added to `bnto` Cargo.toml
 
 #### Wave 1 (parallel — foundation)
 
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — TUI module scaffolding (`src/tui/`). App struct, event loop, terminal setup/teardown
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Recipe browser panel (list all recipes with categories, search/filter, selection)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Basic navigation (tab between panels, keyboard shortcuts, help overlay, quit)
+- [ ] `engine/crates/bnto` — `/rust-expert` — TUI module scaffolding (`src/tui/`). App struct, event loop, terminal setup/teardown
+- [ ] `engine/crates/bnto` — `/rust-expert` — Recipe browser panel (list all recipes with categories, search/filter, selection)
+- [ ] `engine/crates/bnto` — `/rust-expert` — Basic navigation (tab between panels, keyboard shortcuts, help overlay, quit)
 
 #### Wave 2 (parallel — execution flow)
 
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — File picker panel (browse filesystem, multi-select files for recipe input)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Progress display (per-file progress bars, node status, live update during execution)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Recipe config editing (param overrides in TUI before execution)
+- [ ] `engine/crates/bnto` — `/rust-expert` — File picker panel (browse filesystem, multi-select files for recipe input)
+- [ ] `engine/crates/bnto` — `/rust-expert` — Progress display (per-file progress bars, node status, live update during execution)
+- [ ] `engine/crates/bnto` — `/rust-expert` — Recipe config editing (param overrides in TUI before execution)
 
 #### Wave 3 (sequential — polish + test)
 
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Results panel (output files, sizes, timing, open-in-finder/copy-path)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Integration tests for TUI mode (headless terminal testing)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto tui` documentation + README update
+- [ ] `engine/crates/bnto` — `/rust-expert` — Results panel (output files, sizes, timing, open-in-finder/copy-path)
+- [ ] `engine/crates/bnto` — `/rust-expert` — Integration tests for TUI mode (headless terminal testing)
+- [ ] `engine/crates/bnto` — `/rust-expert` — `bnto tui` documentation + README update
 
 ---
 
@@ -786,7 +786,7 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 ### Triage: Redesign homepage as developer-facing landing page
 
-**Priority: Medium.** Rework bnto.io homepage from recipe gallery into developer-facing landing page (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, `cargo install bnto-cli`. Recipe pages stay as SEO showcase.
+**Priority: Medium.** Rework bnto.io homepage from recipe gallery into developer-facing landing page (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, `cargo install bnto`. Recipe pages stay as SEO showcase.
 
 ### Triage: Secret/environment variable management for recipes
 

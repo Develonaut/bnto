@@ -4,7 +4,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 
 ## Overview
 
-`bnto-engine` provides the processor registry and a `run_pipeline()` convenience function so both `bnto-wasm` (browser) and `bnto-cli` (native binary) share the same processor wiring without duplicating registration code.
+`bnto-engine` provides the processor registry and a `run_pipeline()` convenience function so both `bnto-wasm` (browser) and `bnto` (native binary) share the same processor wiring without duplicating registration code.
 
 ## Exports
 
