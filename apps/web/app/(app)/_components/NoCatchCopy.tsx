@@ -12,9 +12,9 @@ export function NoCatchCopy() {
         {"Free recipes that stay free.\nOpen source you can verify."}
       </Heading>
       <Text color="muted" leading="snug">
-        No signup. No watermarks. No daily caps. No &apos;20 free compressions per month.&apos; Your
-        browser does all the processing, so it costs us nothing to run. We&apos;ll never put a meter
-        on it. The engine is open source and MIT licensed. You can read every line.
+        No signup. No watermarks. No daily caps. The engine runs on your machine, so it costs
+        nothing to operate. MIT licensed. Inspect the source, fork it, contribute. Build nodes for
+        anything you want to automate.
       </Text>
       <div className="pt-2">
         <Button

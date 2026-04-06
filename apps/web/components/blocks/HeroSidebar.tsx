@@ -1,10 +1,9 @@
 import { Heading, Stack, Text } from "@bnto/ui";
 import { t } from "@bnto/i18n";
 
-import { HeroCTA } from "./HeroCTA";
 import { HeroPitchPoints } from "./HeroPitchPoints";
 
-export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
+export function HeroSidebar() {
   return (
     <Stack className="gap-6">
       <Text size="xs" color="muted" mono className="uppercase tracking-wider">
@@ -16,7 +15,6 @@ export function HeroSidebar({ showCta = true }: { showCta?: boolean } = {}) {
       <Text color="muted" leading="snug">
         {t("hero.subheading")}
       </Text>
-      {showCta && <HeroCTA />}
       <HeroPitchPoints />
     </Stack>
   );

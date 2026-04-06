@@ -1,7 +1,7 @@
 import { Heading, InView, Stack, Text } from "@bnto/ui";
 import { BragLayout } from "./BragLayout";
 
-/** "How it works" section — browser-first processing pitch + brag cards. */
+/** "How it works" section — engine architecture pitch + brag cards. */
 export function HowItWorksSection() {
   return (
     <InView>
@@ -11,13 +11,12 @@ export function HowItWorksSection() {
             How it works
           </Text>
           <Heading level={2} size="xl" className="whitespace-pre-line">
-            {"Your browser does the work.\nNot a server."}
+            {"Nodes are compartments.\nRecipes are the box."}
           </Heading>
           <Text color="muted" leading="snug">
-            Other tools upload your files to a server, process them remotely, and send the results
-            back. That takes time, and it means your files leave your device. bnto runs entirely in
-            your browser. Processing happens on your machine in milliseconds. Nothing is uploaded.
-            Nothing leaves.
+            Each node encapsulates one capability: compress an image, rename a file, clean a CSV,
+            download a video. Chain nodes into recipes that automate your workflow. Recipes are
+            portable .bnto.json files that run everywhere: CLI, browser, desktop.
           </Text>
         </Stack>
         <BragLayout />

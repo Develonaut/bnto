@@ -22,14 +22,14 @@ const CAPABILITIES: Capability[] = [
   {
     icon: ShieldCheckIcon,
     variant: "secondary",
-    label: "Runs locally. Files never leave your device",
+    label: "Runs on your machine. Files never leave your device",
   },
-  { icon: RepeatIcon, variant: "accent", label: "No daily limits. Process unlimited files" },
-  { icon: GlobeIcon, variant: "success", label: "No signup required. Just drop files and go" },
+  { icon: RepeatIcon, variant: "accent", label: "Portable .bnto.json recipes. Run anywhere" },
+  { icon: GlobeIcon, variant: "success", label: "Build a node for anything. Chain into recipes" },
   {
     icon: CheckIcon,
     variant: "primary",
-    label: "Free forever. Browser recipes cost us nothing to run",
+    label: "Free forever. Open source, MIT licensed",
   },
 ];
 
