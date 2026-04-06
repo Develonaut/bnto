@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 4, 2026 (groomed — Sprint 9 W1-W2 complete, video node shipped, CLI polish prioritized over TUI, TUI deferred to own sprint)
+**Last Updated:** April 5, 2026 (CLI/TUI-first pivot — rewrote current state, collapsed 23+ frozen backlog items, promoted Sprint 10 TUI)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,22 +27,17 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-- **v0.5.0 released (April 2026):** 15 predefined recipes (6 Tier 1 + 2 Tier 1B + 4 Tier 3 + 1 CLI-only video + 2 Tier 1B compositions). Sprint 9 W1-W2 complete: dependency system, ProcessContext, video node (yt-dlp), `bnto doctor`, `--param` CLI flag, extra args pass-through
-- **v0.2.0 released (April 2026):** 14 predefined recipes, schema-driven config on all tool pages, editor reconnected as lightweight open+export tool
-- **M1 delivered (Feb 2026):** All 6 Tier 1 bntos + 2 Tier 1B multi-node compositions run 100% client-side via Rust→WASM
-- **M2 delivered (March 2026):** Editor v1 shipped — schema-driven config controls, keyboard shortcuts, accessibility audit. Accounts, execution history, PostHog telemetry all live.
-- **Sprint 9 Waves 1-2 complete (April 2026):** Dependency system (`requires` on NodeMetadata), `ProcessContext` trait (NativeContext/NoopContext), `bnto doctor` command, `bnto-video` crate (video-download via yt-dlp), `InputMode` enum, `InputCardinality::Source`, `--param` CLI flag, extra args pass-through, H.264 codec preference, video title as filename
-- **Sprint 8 complete (April 2026):** 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, image-overlay/watermark) + recipe fixtures + golden tests + codegen + SEO pages + E2E
-- **Sprint 8.5 complete (March-April 2026):** Schema-driven recipe config (8.5c) + editor reconnected lightweight (8.5d) with sessionStorage persistence
-- **Open-source-first positioning (April 2026):** Stripped pricing page, auth surfaces, Pro references. Monetization tabled until community traction.
-- **crates.io preparation (April 2026):** All engine crates prepared for publish (v0.1.1). `cargo install bnto` path scaffolded but not yet live.
-- **Community recipes:** Contributors submit `.bnto.json` via GitHub PRs. Maintainer curates. Accepted recipes auto-propagate via the Sprint 7 discovery infrastructure.
-- **Tabled (deep backlog):** Code Editor (CM6), Edit/Run Mode, Sprint 5B W2-4 (LayerPanel polish, processing node accents), Favorites/My Recipes, TUI (deferred to own sprint after CLI polish)
-- **Cloud infrastructure:** R2 file transit — ready for M4 (server technology TBD)
-- **WASM engine:** 6 Rust crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), single cdylib (bnto-wasm), CLI binary (bnto-cli). 1.6MB raw / 606KB gzipped
-- **Auth:** `@convex-dev/auth`. Password auth, integration tests complete, E2E auth lifecycle verified (13/13 tests)
-- **Infra:** GitHub Actions CI (Rust + TypeScript + CI Gate), tag-triggered release pipeline (CI gate → Vercel preview → E2E → Lighthouse → auto-deploy Vercel + Convex to production on stable tags → GitHub Release), PostHog telemetry wired
-- **Packages:** `@bnto/core` (7 domains: recipes, executions, user, auth, telemetry, registry, flags), `@bnto/auth`, `@bnto/backend`, `@bnto/nodes`, `@bnto/registry`, `@bnto/ui`, `@bnto/editor`, `@bnto/form`, `@bnto/i18n`
+**CLI is the product.** `cargo install bnto-cli` gets you 15 recipes. The web is a landing page.
+
+- **v0.5.0 released (April 2026):** 15 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor` commands. Published to crates.io
+- **Engine (Rust):** 7 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine, bnto-cli) + WASM entry point (bnto-wasm). CLI is the primary consumer, browser (WASM) is secondary
+- **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
+- **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
+- **Next: TUI (Sprint 10)** — `bnto tui` via ratatui + crossterm (recipe browser, file picker, progress, results)
+- **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
+- **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
+- **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
+- **Frozen:** Editor (`@bnto/editor`), auth (`@bnto/auth`), premium features, frontend investment. Web packages maintained but not actively developed
 
 ---
 
@@ -98,31 +93,14 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Sprint 9 W2 — Video node: `bnto-video` crate, `video-download` processor wrapping yt-dlp, `InputMode::Url`/`InputCardinality::Source`, `--param` CLI flag, H.264 codec preference, video title as filename, extra args pass-through, m3u8/HLS support, download verification tests (PRs #321-#329)
 - [x] Open-source-first pivot: Stripped pricing page, auth surfaces, Pro references. Monetization tabled until community traction (PR #317)
 - [x] crates.io preparation: All 6 engine crates prepared for publish at v0.1.1. `cargo install bnto` scaffolded (PRs #316, #319)
+- [x] crates.io published: All crates live on crates.io. `cargo publish` job in `release.yml` publishes in dependency order on stable tags. `cargo install bnto-cli` works
 - [x] Release v0.5.0 (April 2026): 15 predefined recipes, video-download node, extra args pass-through, dependency system
 
 ---
 
 ## Revenue & Monetization Context
 
-Pricing, revenue projections, and "ready to charge" criteria live in private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) — see `pricing-strategy.md`, `seo-monetization.md`, and `feature-funnel.md`.
-
-**Monetization model (updated Feb 2026):** Browser execution is free unlimited. Pro sells real value — persistence, collaboration, premium compute. See ROADMAP.md for the full model.
-
-| Sprint       | What Ships                                   | Revenue Implication                                                                                                                           |
-| ------------ | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sprint 2B    | Browser execution (M1 MVP)                   | **All Tier 1 bntos run client-side.** Zero backend cost. Files never leave user's machine.                                                    |
-| Sprint 2C    | Launch readiness (content + domain)          | **bnto.io live and indexable.** Real content on every page. SEO crawling begins. First real users possible.                                   |
-| Sprint 2D    | Recipe page UX overhaul                      | **COMPLETE.** Progressive phase-driven flow. Motorway design language on every tool page.                                                     |
-| Sprint H     | Housekeeping                                 | **COMPLETE.** FileUpload rewrite, Rust test audit, EXIF coverage, Pressable, CI, ESLint.                                                      |
-| Sprint 3     | Platform features (accounts, history)        | Accounts exist. Conversion hooks scaffolded (Save, History). Usage analytics instrumented.                                                    |
-| Sprint 4     | Recipe editor (headless + visual)            | Editor shipped as v1. **Now frozen** — power-user feature, not primary experience.                                                            |
-| Sprint 4D-4G | Package extraction + versioning + validation | Clean architecture. Zod schemas. Packages ready for desktop (M3).                                                                             |
-| Sprint 5     | Editor v1 (config controls, save, polish)    | **M2 completion.** Editor complete. Investment paused — revisit post-revenue.                                                                 |
-| Sprint 8     | Tier 3 near-term recipes                     | **SEO expansion.** New browser recipes targeting high-volume search queries. Product catalog grows.                                           |
-| Sprint 8.5   | Schema config + lightweight editor reconnect | **Simplification.** Schema-driven recipe config (any recipe gets controls for free), editor reconnected as open+export tool (no persistence). |
-| Sprint 9     | Engine expansion (CLI, TUI, video)           | **Engine-first pivot.** Dependency system, video node, TUI, CLI polish. New capabilities tested via CLI first.                                |
-| Sprint 10-11 | Desktop + server (deferred)                  | Distribution targets. Deferred to backlog. Desktop (Tauri) and server-side execution.                                                         |
-| Sprint 12    | Stripe + Pro tier (tabled)                   | **Tabled.** Revenue strategy revisited when community traction emerges.                                                                       |
+**Tabled (April 2026).** Monetization is explicitly paused. The CLI is free, open-source (MIT), and the focus is on making the engine powerful and fun. Revenue strategy revisited when the tool has community traction. Private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) preserve the original pricing analysis for future reference.
 
 ---
 
@@ -228,13 +206,15 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**Sprint 8 complete.** All 3 waves delivered. 4 Tier 3 engine operations (strip-exif, merge-csv, csv-to-json, watermark/image-overlay), recipe fixtures, golden tests, codegen, SEO pages, E2E tests, and Lighthouse audit all done. Schema-driven config (8.5c) and editor reconnect (8.5d) both complete. **v0.2.0 released.**
+**Sprint 9 complete.** CLI is solid: 15 recipes, dependency system, video node, `bnto list/info/run/doctor`. v0.5.0 shipped to crates.io.
 
-**After Sprint 8:** Engine expansion (M3). CLI-first development — dependency system, video node type, TUI, CLI polish. Desktop and monetization deferred. See [engine-expansion.md](strategy/engine-expansion.md) for the full strategy.
+**Next up: TUI (Sprint 10).** `bnto tui` launches an interactive terminal UI via ratatui + crossterm — recipe browser, file picker, progress display, results panel. Same engine, richer interface. See Sprint 10 below.
+
+**After TUI:** More node types (Excel, PDF, shell), recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
 
 ---
 
-## Completed Sprint
+## Completed Sprints (recent)
 
 ### Sprint 6: Quality & Cleanup — COMPLETE
 
@@ -373,9 +353,7 @@ Design doc: `strategy/unified-recipe-model.md`
 
 ---
 
-## Active Sprint
-
-### Sprint 8: Tier 3 Near-Term Recipes
+### Sprint 8: Tier 3 Near-Term Recipes — COMPLETE
 
 **Goal:** Expand the recipe catalog with high-SEO-value recipes that run 100% client-side. Each recipe needs: Rust engine operation, `@bnto/nodes` recipe fixture, SEO page with metadata + JSON-LD, E2E verification. This is the first product expansion since M1.
 
@@ -615,39 +593,40 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ---
 
-### Sprint 10: TUI — DEFERRED
+### Sprint 10: TUI — NEXT
 
-**Deferred (April 2026).** TUI is its own application — recipe browser, file picker, progress display, results panel, navigation. Needs proper sprint breakdown with multiple waves. Revisit after CLI is bomb-proof (Sprint 9 W3 complete, backlog items addressed).
+**Next sprint.** `bnto tui` launches an interactive terminal UI — recipe browser, file picker, progress display, results panel. Same engine, richer interface than raw CLI.
 
 **Framework:** `ratatui` + `crossterm`
 
-**Scope (needs breakdown when activated):**
+**Dependencies:** `ratatui`, `crossterm` added to `bnto-cli` Cargo.toml
 
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Interactive TUI mode (`bnto tui`). Recipe browser with categories and search
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — File picker (browse filesystem, multi-select, drag semantics)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Progress display (per-file progress bars, node status)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Results panel (output files, sizes, timing, open/copy)
-- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Navigation (tab between panels, keyboard shortcuts, help overlay)
+#### Wave 1 (parallel — foundation)
+
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — TUI module scaffolding (`src/tui/`). App struct, event loop, terminal setup/teardown
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Recipe browser panel (list all recipes with categories, search/filter, selection)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Basic navigation (tab between panels, keyboard shortcuts, help overlay, quit)
+
+#### Wave 2 (parallel — execution flow)
+
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — File picker panel (browse filesystem, multi-select files for recipe input)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Progress display (per-file progress bars, node status, live update during execution)
 - [ ] `engine/crates/bnto-cli` — `/rust-expert` — Recipe config editing (param overrides in TUI before execution)
+
+#### Wave 3 (sequential — polish + test)
+
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Results panel (output files, sizes, timing, open-in-finder/copy-path)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — Integration tests for TUI mode (headless terminal testing)
+- [ ] `engine/crates/bnto-cli` — `/rust-expert` — `bnto tui` documentation + README update
 
 ---
 
-### Backlog: Distribution (Desktop + Server)
+### Deep Backlog: Distribution (Desktop + Server)
 
-**Deferred from Phase 2.** Desktop (Tauri) and server-side execution moved to backlog. The Tauri plan is intact but deprioritized in favor of engine expansion.
+**Deferred.** Desktop (Tauri) and server-side execution in deep backlog. Revisit after TUI ships and community traction emerges.
 
-#### Desktop App (Sprint 10, deferred)
-
-- [ ] `apps/desktop` — Bootstrap Tauri desktop project
-- [ ] `@bnto/core` — Desktop adapter (Tauri IPC bindings)
-- [ ] `engine` — Expose engine functions for desktop bindings
-- [ ] `apps/desktop` — Wire native ↔ React bindings, local file browser
-- [ ] `apps/desktop` — macOS/Windows/Linux builds
-
-#### Server-Side Execution (Sprint 11, deferred)
-
-- [ ] Cloud execution infrastructure (technology TBD)
-- [ ] Server-only node types (AI inference, video processing at scale)
+- Desktop app (Tauri) — links engine natively like CLI, system webview for React frontend
+- Server-side execution — cloud infrastructure for premium nodes (AI, shell, video at scale)
 
 ---
 
@@ -712,17 +691,6 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 ## Backlog
 
-### Tabled: Favorites + My Recipes
-
-**Tabled March 2026.** User preferences deferred to post-MVP. Revisit when engagement data signals demand.
-
-Full scope when ready:
-
-- `@bnto/backend` — `favorites` table (userId, recipeSlug, favoritedAt) with indexes, list/toggle/isFavorited mutations
-- `@bnto/core` — `core.favorites` domain (adapter, service, client, hooks: useFavorites, useToggleFavorite, useIsFavorited)
-- `apps/web` — FavoriteButton (heart toggle, prompts sign-in if unauthed), FavoritesGrid, My Recipes page rebuild, PROTECTED_PATHS update
-- E2E: favorite → My Recipes → unfavorite
-
 ### Growth: Product Hunt Launch
 
 **Priority: Backlog.** Launch bnto on Product Hunt when the product feels complete enough to show off. Ideal timing: after Sprint 8.5d (editor reconnected) + a few more Tier 3 recipes, so the catalog feels substantial and the editor provides a "wow" moment. Coordinate with a README polish pass and landing page review.
@@ -731,443 +699,134 @@ Full scope when ready:
 - [ ] Review landing page + README for launch readiness
 - [ ] Submit and engage on launch day
 
-### UX: Unified Popup/FloatingSurface Primitive — COMPLETE
+### Engine: File Count Limits & Performance Benchmarks
 
-**Delivered.** `Popup` primitive in `@bnto/ui` (`packages/ui/src/overlay/Popup.tsx`) — wraps `Card elevation="lg"` + `ScaleIn from={0.6} easing="spring-bouncier"` + z-index/pointer-events. `PopupContent` and `PopupTrigger` compose with Radix. Dialog, Menu, and AuthGate all delegate to Popup.
+**Priority: Low.** Stress-test file count limits per recipe in the CLI for performance. Document safe boundaries per recipe type.
 
-- [x] `packages/ui` — Audit + design: shared floating surface patterns identified across Dialog, Menu, AuthGate
-- [x] `packages/ui` — Implement `Popup` + `PopupContent` + `PopupTrigger` in `overlay/`
-- [x] `packages/ui` — Dialog.Content uses `<Popup>`, Menu uses `<PopupContent>`, AuthGate uses both via composition
+- [ ] `engine` — Benchmark file counts (50/100/200+ per recipe type), measure memory + processing time in CLI
+- [ ] `engine` — Document recommended limits per recipe, decide enforcement strategy
 
-### UX: Standardize Forms with React Hook Form + Zod
+### Engine: Future Node Operations
 
-**Priority: Medium.** React Hook Form + Zod for traditional forms (auth, settings). Decision doc: [decisions/form-library.md](decisions/form-library.md). Does NOT apply to recipe config (Zustand), NodeConfigPanel (`@bnto/nodes`), or code editor (CM6).
+**Priority: Medium.** Multi-step orchestration delivered. Remaining items are future node prerequisites.
 
-- [x] Evaluate form library — Decision: RHF + Zod
-- [ ] `packages/@bnto/form` — Create package with auth schemas, `useSignInForm`, `useSignUpForm`
-- [ ] `apps/web` — Refactor auth forms to use `@bnto/form` hooks
-- [ ] `apps/web` — Migrate future forms (settings/profile) as they're built
+- [ ] `engine` — **Expression evaluation**: Expression evaluator for `transform` node and `loop` conditions. Candidates: custom Rust evaluator, `expr-eval` (for browser). Not needed until Tier 4 nodes ship
+- [ ] `engine` — **Excel (.xlsx) read/write** in `bnto-csv`: Rust options `calamine` (read) + `rust_xlsxwriter` (write)
 
-### Infra: Shared Test Fixtures Package (`@bnto/test-fixtures`)
+### Engine: `pdf` Node — Future
 
-**Priority: Low.** Wrap `test-fixtures/` in a TS package with helpers. Currently served by direct file references.
+**Priority: Low.** PDF processing (split, merge, extract images, pdf-to-images). CLI-first via native Rust PDF libraries. Browser support TBD.
 
-- [ ] `packages/@bnto/test-fixtures` — Create package with TS helpers, add sample CSVs
-- [ ] `apps/web` — Update E2E tests to import from shared package
+- [ ] `engine` — Evaluate Rust PDF crates (`lopdf`, `pdf-extract`, `printpdf`)
+- [ ] `engine` — Implement `bnto-pdf` crate with initial processor(s)
+- [ ] `engine` — Recipe fixture `pdf-to-images.bnto.json` + golden tests
 
-### Security/Performance: File Count Limits & Abuse Guardrails Audit
+### Auth: All Auth Features — FROZEN (auth stripped)
 
-**Priority: Medium.** Stress-test file count limits per recipe for performance (WASM heap, ZIP generation) and abuse prevention. Document safe boundaries per recipe type.
+**Frozen until auth is re-enabled.** Auth surfaces stripped in open-source-first pivot (April 2026). The following items are blocked and will be revisited when auth returns:
 
-- [ ] `apps/web` + `engine` — Stress test file counts (50/100/200+ per recipe type), measure memory + processing time
-- [ ] `apps/web` — Document recommended limits per recipe, decide enforcement strategy (soft warning vs hard cap vs batching)
-- [ ] `apps/web` — UI performance audit at scale (FileCard grid, BouncyStagger, responsive layout)
-- [ ] `@bnto/core` — Profile `createZipBlob` memory limits for large batches
-- [ ] `.claude/strategy/` — Write `file-limits.md` with results and decisions
+- OAuth social providers, forgot password, AuthGate/ProGate components
+- Convex auth error handling, deferred E2E tests, conversion hook messaging
+- Execution activity feed, Vercel preview auth verification
 
-### Engine: Unmigrated Node Operations (Rust WASM)
+### Premium & Growth — FROZEN (monetization tabled)
 
-**Priority: Medium.** Multi-step orchestration delivered (Smart Iteration + Rust PipelineExecutor). Remaining items are Tier 4+ prerequisites.
+**Frozen (April 2026).** Monetization tabled. These items revisit when revenue strategy returns:
 
-**Orchestration (multi-step recipe support) — DELIVERED:**
+- Referral program (referral links, Pro trial rewards, `?ref=CODE` capture)
+- Cloud Drive export (Google Drive/OneDrive/Dropbox post-execution save — M5+)
+- Quota race condition (concurrent server-side quota enforcement — M4/M5)
+- Feature flag definitions for self-hosters (code-driven flag defaults vs PostHog-only)
+- Per-file format override (per-file config on convert-image-format FileCards)
 
-- [x] `engine` — **Multi-step recipe orchestration**: Rust `PipelineExecutor` handles full graph walking with topological ordering. Smart Iteration (`settings.iteration: "auto"`) wraps contiguous processor sequences in implicit per-file loops. Proven by Tier 1B recipes (`optimize-images-for-web`, `generate-thumbnails`) and 20+ golden equivalence tests.
+### Editor & Frontend — FROZEN (CLI/TUI-first pivot)
 
-**Remaining (Tier 4+ prerequisites):**
+**Frozen (April 2026).** Editor, frontend investment, and web UX work on hold. Focus is CLI/TUI. Revisit when/if the web editor is reactivated:
 
-- [ ] `engine` — **Expression evaluation in browser**: Choose a JS expression evaluator to replace `expr-lang/expr` for `transform` node and `loop` while/break conditions. Candidates: `expr-eval`, `filtrex`, custom safe evaluator. Not needed until Tier 4 nodes ship. See [expression-input-ux.md](strategy/expression-input-ux.md).
-
-**Excel support:**
-
-- [ ] `engine` — **`bnto-csv`: Excel (.xlsx) read/write** — Rust options: `calamine` (read) + `rust_xlsxwriter` (write). Lower priority than CSV operations
-
-### Engine: `pdf` Browser Node — Future (Tier 3)
-
-**Priority: Medium.** PDF to Images Bnto (Tier 3, 50K+ monthly searches). Browser-side via pdf.js + Canvas (JS), not Go engine. Rewrite of the Go `pdfcpu` approach for client-side execution.
-
-- [ ] `engine` or `apps/web` — Implement browser-side PDF → image conversion (pdf.js + Canvas)
-- [ ] `engine` — Unit tests for PDF → image conversion
-- [ ] `@bnto/nodes` — Add `pdf` node type definition, recipe fixture `pdf-to-images.bnto.json`
-
-### Infra: Clean Up Convex Dev Environment (Better Auth Remnants)
-
-Convex dev (`zealous-canary-422`) has stale Better Auth records and test artifacts. Cleanup mutations written; stale execution cleanup automated via hourly cron.
-
-- [x] `@bnto/backend` — Audit tables, write cleanup mutation: `_dev_cleanup.ts` (`cleanTestAccounts` — cascade deletes auth sessions, accounts, recipes, executions, logs, events, rate limits; preserves predefined test accounts). `cleanup_stale.ts` (`markStaleAsFailed` + `cleanupStaleExecutions` — marks pending/running >2h as failed, cleans R2). Hourly cron wired in `crons.ts`.
-- [ ] `@bnto/backend` — Run `cleanTestAccounts` against dev, verify table health
-- [ ] `@bnto/backend` — (If needed) Run against production
-
-### Infra: Configure R2 Lifecycle Rules — M4 (cloud execution)
-
-**Milestone: M4.** R2 is only used for cloud (server-side) execution. Not needed for M1 browser execution.
-
-| Bucket                              | Prefix        | Auto-delete after |
-| ----------------------------------- | ------------- | ----------------- |
-| `bnto-transit` + `bnto-transit-dev` | `uploads/`    | 1 hour            |
-| `bnto-transit` + `bnto-transit-dev` | `executions/` | 24 hours          |
-
-- [ ] `infra` — Configure R2 lifecycle rules in Cloudflare dashboard (prod + dev buckets)
-
-### Infra: Domain Setup — API Domain (M4)
-
-`bnto.io` delivered in Sprint 2C. API domain deferred to M4.
-
-- [ ] `infra` — (M4) Configure `api.bnto.io` for M4 cloud service (technology and hosting TBD)
-
-### Infra: Graduate SEO Validation from E2E to Unit Tests
-
-**Priority: Medium.** Graduate SEO validation from slow E2E to unit tests (metadata, registry↔sitemap sync). Keep thin E2E for noindex/redirect/404. Lighthouse CI already delivered.
-
-- [x] `apps/web` — Move metadata validation to unit tests (`bntoRegistry.test.ts`): comprehensive unit tests exist — validates all bntos present, slug format, no reserved-path collisions, required metadata fields (title, description, h1, fixture, features), title format (`-- bnto` suffix), unique slugs, BNTO_REGISTRY↔getAllRecipes() parity
-- [ ] `apps/web` — Slim E2E to redirects + 404 + noindex only (seo-metadata.spec.ts still includes 200+ metadata assertions that duplicate the unit tests)
-
-### Testing: Sprint 3 Deferred E2E Tests
-
-**Deferred from Sprint 3 Wave 3 (March 2026).** Platform features are built and working. Test coverage deferred until editor MVP ships.
-
-- [ ] `apps/web` — Playwright E2E: AuthGate conversion flow
-- [ ] `apps/web` — Playwright E2E: browser-local execution history
-- [ ] `@bnto/backend` — Unit tests for execution analytics queries
-
-### Testing: Concurrent Quota Race Condition — M4/M5 (server-side quotas)
-
-**Milestone: M4/M5 (Sprint 10+).** Quota enforcement only applies to server-side bntos. Browser bntos are free unlimited. This race condition matters when server-side execution has limits.
-
-- [ ] `@bnto/core` — Integration test: fire 2+ concurrent `startPredefined` calls for a user at limit-1 runs, verify at most 1 succeeds
-- [ ] `@bnto/backend` — If race confirmed, investigate Convex transaction isolation guarantees or atomic increment patterns
-
-### UX: Per-File Format Override for Convert Image Format
-
-**Priority: Medium.** Per-file format override on `convert-image-format` FileCards. Touches UI (inline Select), state (per-file config map in Zustand), and engine (per-file config passthrough).
-
-- [ ] `apps/web` — Per-file format override state + inline Select on FileCard
-- [ ] `@bnto/core` — Update `browserExecute` for per-file config overrides
-- [ ] `engine` — Verify Rust WASM supports per-file format params
-
-### Auth: Enable OAuth Social Providers
-
-Google and Discord OAuth configured in `convex/auth.ts` but commented out — need OAuth credentials.
-
-- [ ] `@bnto/backend` — Uncomment `socialProviders` in `convex/auth.ts`
-- [ ] `@bnto/backend` — Set Google and Discord OAuth credentials in Convex env vars
-- [ ] `apps/web` — Add Google and Discord sign-in buttons to `SignInForm`
-
-### Growth: Referral Program — M5+
-
-Referral links with Pro trial or extended history as reward. Open question: exact reward (Pro trial vs extended history vs early access).
-
-- [ ] `@bnto/backend` — `referrals` table + `applyReferral` mutation
-- [ ] `@bnto/core` — Referral service/hooks
-- [ ] `apps/web` — Referral link generation UI + landing page `?ref=CODE` capture
-
-### UX: Expression Input — Pill Tokens & Variable Picker
-
-**Priority: Medium.** Template expression fields (rename patterns, loop items, break conditions) are plain `<Input>` elements with placeholder hints. Users write `{{name}}-compressed.{{ext}}` with zero editor assistance. This is fine for Tier 1-2 recipes (structured controls handle everything), but becomes a usability cliff when `transform`, `http-request`, and `ai` nodes ship.
-
-**Strategy doc:** [expression-input-ux.md](strategy/expression-input-ux.md) — full competitor analysis (Zapier, Make.com, n8n, Apple Shortcuts, Power Automate, Retool), recommended approach, engine changes, phased rollout.
-
-**Phased delivery:**
-
-**Phase 1 (current — no work needed):** Tier 1-3 recipes use structured controls exclusively. Template fields are hidden or pre-filled. Users never write expressions.
-
-**Phase 2 (when Tier 4 nodes ship — transform, http-request):**
-
-- [ ] `engine` — Add `template_variables: Option<Vec<TemplateVariable>>` to `ParameterDef` in `metadata.rs`. Each variable declares name, label, description, source, example value. Populate in processors that have template params (file-system rename pattern, loop items)
-- [ ] `packages/@bnto/nodes` — Update codegen (`generate-from-catalog.ts`) to propagate `templateVariables` into `NodeSchemaDefinition` params
-- [ ] `packages/editor` — **ExpressionInput component**: Rich text input that renders `{{var}}` as visual pill tokens. Backspace selects/deletes pills. Underlying value stays a template string
-- [ ] `packages/editor` — **Variable picker popover**: Grouped by source (file metadata, upstream outputs, loop context). Search/filter. Inserts pill at cursor
-- [ ] `packages/editor` — **SchemaField dispatch**: If `templateVariables` is set on a param, render `ExpressionInput` instead of `TextControl`
-- [ ] `packages/editor` — **Fixed/Expression toggle**: Per-field toggle (n8n-style) that switches between structured control and expression input. Trailing icon on SchemaField
-- [ ] `apps/web` — E2E: Verify pill token rendering, variable picker insertion, Fixed/Expression toggle
-
-**Phase 3 (when ai nodes ship — Tier 5):**
-
-- [ ] `packages/editor` — Expression validation feedback (red underline for unknown variables, type mismatches)
-- [ ] `packages/editor` — Autocomplete for function names and variable paths (beyond pill insertion)
-- [ ] `packages/editor` — Function reference tab in variable picker (document available template functions)
+- Expression input (pill tokens, variable picker, fixed/expression toggle — Phases 2-3). Strategy: [expression-input-ux.md](strategy/expression-input-ux.md)
+- Editor store performance pass (periodic audit — no issues found April 2026)
+- Palette → primitive node type → mode/operation selection UX redesign
+- Surface-aware typography and icon color system (`@bnto/ui` primitives)
+- `useEditorStoreApi` usage audit (6 pipeline hooks — documented, intentional)
+- `useDialog` hook adoption across dialog consumers
+- Dumb components pass (extract logic from heavy editor component files)
+- Type inheritance audit for wrapper components
+- Editor keyboard shortcuts E2E (7 shortcuts have unit tests, no Playwright coverage)
+- Recursive workflow composability (config panels at any depth, recursive progress, drill-down)
+- Next.js Server Component audit follow-up (`my-recipes/page.tsx`, barrel imports, lazy loading)
+- E2E journey test consolidation (deduplicate overlapping specs, migrate to unit where appropriate)
+- Test naming & description unification pass (Vitest + Playwright naming conventions)
 
 ---
 
-### Performance: WASM Bundle Size & Processing Benchmarks
+### Engine: WASM Bundle Size Optimization
 
-**Deferred from Sprint 2B.** WASM bundle: 1.6MB raw / 606KB gzipped. ~20% above 500KB target. Not blocking M1.
+**Priority: Low.** WASM bundle: 1.6MB raw / 606KB gzipped. ~20% above 500KB target. Not blocking anything — CLI is primary. Profile per-crate contribution if browser perf becomes a concern.
 
-- [ ] `engine` — Profile bundle size per crate, evaluate code splitting vs single bundle
-- [ ] `apps/web` — Processing speed + memory benchmarks per node type
+### Infra: Web-Only — FROZEN (web in maintenance mode)
 
-### Performance: Next.js Server Component Audit (follow-up)
+**Frozen (April 2026).** Web infra items that only matter when web is actively developed:
 
-**Initial audit delivered in Sprint 6 W3.** Pushed client boundaries to leaves, lazy-loaded configs, extracted server-rendered static headers. Remaining follow-ups:
-
-- [ ] `apps/web` — Restructure `my-recipes/page.tsx` — Server Component page with client leaf islands (eliminate `ssr: false` anti-pattern)
-- [ ] `apps/web` — Audit remaining `dynamic({ ssr: false })` usage, replace with proper server/client composition
-- [ ] `apps/web` — Eliminate barrel imports in client components, lazy load heavy components
-
-### Infra: Vercel Preview Deployment Verification
-
-**Deferred from Sprint 2A Wave 5.** Verify auth flow end-to-end on Vercel preview deployment. Not blocking M1 browser execution.
-
-- [ ] `apps/web` — Verify auth flow on Vercel preview deployment (cookie behavior, proxy redirects, sign-in/sign-out)
-
-### Infra: Convex Preview Deployments for Release Verification
-
-**Priority: Low.** The release pipeline tests E2E against a Vercel preview + dev Convex, then promotes to production Vercel + prod Convex — that exact combination is never verified together. Convex supports [preview deployments](https://docs.convex.dev/production/hosting/preview-deployments) that could pair with Vercel previews for full-stack verification.
-
-- [ ] `infra` — Evaluate Convex preview deployments for the release pipeline
-- [ ] `infra` — Wire `npx convex deploy --preview-name <tag>` into `release.yml` before E2E step
-- [ ] `infra` — Pass preview Convex URL as `NEXT_PUBLIC_CONVEX_URL` to the Vercel preview build
-- [ ] `infra` — Clean up preview deployments after release (or let them auto-expire)
-
----
-
-### UX: Conversion Hook Messaging Audit — M2/M5
-
-**M2 (Sprint 3) for hook UX, M5 (Sprint 11) for Stripe.** Value-driven conversion hooks (Save, History, Premium Bntos, Team) — no "limit reached" messaging for browser bntos.
-
-- [ ] `@bnto/backend` — Separate browser (no limits) from server-side (quota) error paths
-- [ ] `apps/web` — Design conversion hook components with value-driven CTAs
-
-### UX: Execution Activity Feed — M2 (Sprint 3)
-
-**Updated from "Animated Run Counter."** With browser-first, there's no run limit to count down. Instead, show an activity feed / recent executions indicator that reinforces the value of signing up (persistence, history).
-
-- [ ] `apps/web` — Design activity indicator for bnto tool pages (recent executions, total runs)
-- [ ] `apps/web` — For anonymous users: "You've run 12 bntos this session. Sign up to save your history."
-- [ ] `apps/web` — For authenticated users: animated activity feed with execution count and last-run status
-
-### Premium: Cloud Drive Export (Post-MVP) — M5+
-
-Pro users auto-save results to Google Drive/OneDrive/Dropbox — removes the "download then upload" friction.
-
-- [ ] `apps/web` — "Save to..." post-execution UX
-- [ ] `apps/api` — OAuth integration for cloud drive providers
-- [ ] `@bnto/backend` — Store connected drive credentials (Pro only)
-
-### Recursive Workflow Composability (Web App)
-
-The engine supports recursive `Definition.Nodes`. The web app must preserve this composability. Guard rails (not new tasks — apply when building related features):
-
-- Config panels must work at any nesting depth
-- Execution progress must be recursive (group nodes show children's progress)
-- JSON editor must represent recursive structure faithfully
-- Visual editor (Sprint 4) must support drill-down into group nodes
-
-### Triage: Test Naming & Description Unification Pass
-
-**Priority: Triage.** Audit all test suites (Vitest unit + Playwright E2E) for naming consistency and organization. Ensure `describe` blocks, `test`/`it` statements, and test IDs follow a unified convention — clear action-oriented descriptions, consistent prefixing (e.g., FA1, PR1), and logical grouping. Remove duplicate or vague test names.
-
-Files: `packages/*/src/**/*.test.ts`, `apps/web/e2e/**/*.spec.ts`
-
-### Triage: Editor Store Performance Pass
-
-**Priority: Triage.** Audit React context usage vs store selectors across `@bnto/editor`. Ensure components use direct store subscriptions (`useStore` + selector) instead of React context for state reads. General cleanup: memoize selectors, remove unnecessary re-renders, verify slice granularity.
-
-Files: `packages/editor/src/components/`, `packages/editor/src/hooks/`, `packages/editor/src/context.ts`
-
-### Deep Backlog: Code Editor (CodeMirror 6) — Post-M5
-
-**Tabled indefinitely (March 2026).** Schema-aware `.bnto.json` code editor for power users — CM6 over Monaco (60x smaller), slash commands, JSON Schema validation, store sync with visual canvas. The visual editor is the product; code editor is a power-user luxury. Design doc: [code-editor.md](.claude/strategy/code-editor.md). May revisit post-M5 if demand emerges.
-
-### Triage: Thin Rust comment density
-
-**Priority: Triage.** Rust code is now readable without every-line explanations. Keep file-level header comments (purpose, how it fits) but remove most inline comments — only keep them for unorthodox patterns or genuinely complex logic. Update CLAUDE.md "Rust Code Standards" section to reflect the new lighter standard. Applies to all files in `engine/crates/`.
+- Convex preview deployments for release verification (pair preview Convex with preview Vercel)
+- SEO validation graduation (slim E2E to redirects + 404 only, metadata validated in unit tests)
+- Convex dev environment cleanup (run `cleanTestAccounts` against dev, verify table health)
+- Wire version into app build (`NEXT_PUBLIC_APP_VERSION` from git tag)
 
 ### Triage: iLovePNG recipe parity — next wave candidates
 
-**Priority: Triage.** When planning the next recipe wave, evaluate iLovePNG's offerings for feasibility in Rust WASM: Resize IMAGE, Crop IMAGE, Rotate IMAGE, Watermark IMAGE, Blur face, Upscale, Convert to/from JPG, HTML to IMAGE, Meme generator. Several (resize, crop, rotate, watermark) are likely doable with our existing `image` crate. Others (upscale, blur face, HTML to IMAGE) may need server-side or new deps.
+**Priority: Medium.** When planning the next recipe wave, evaluate iLovePNG's offerings for feasibility: Resize IMAGE, Crop IMAGE, Rotate IMAGE, Watermark IMAGE (done), Blur face, Upscale, Convert to/from JPG, HTML to IMAGE, Meme generator. Several (resize, crop, rotate) are doable with existing `image` crate.
 
-### Triage: AuthGate & ProGate badge/wrapper components
+### Triage: Engine documentation — auto-generated docs
 
-**Priority: Triage.** Create `<AuthGate>` and `<ProGate>` wrapper components with `variant="popup" | "dialog"` that intercept user interaction on gated features. When an unauthenticated (or non-Pro) user clicks a gated control, show a signup prompt (popup for soft nudge, dialog for hard gate). Include `<AuthGateBadge>` and `<ProGateBadge>` icon badges for visual indication. Share common gate logic between both via a base `<FeatureGate>` component. This is the mechanism for dangling the upgrade carrot to users.
-
-Files: new `packages/ui/src/interaction/FeatureGate/`, `apps/web/` consumers
-
----
-
-### Triage: Palette → primitive node type → mode/operation selection UX
-
-**Priority: Triage.** Evaluate a flow where the node palette lists primitive node types (e.g. "Image") instead of operations (e.g. "Compress"). After choosing a type, the user picks the mode/operation, which loads the correct config. The config panel would have a mode selector at the top so users can switch operations without removing/re-adding the node. Trade-offs: simpler palette (fewer items) vs. extra click to reach config; explicit mode control vs. current direct-to-operation approach.
-
-Files: `packages/editor/src/components/EditorToolbar.tsx` (palette), `packages/editor/src/components/ConfigPanel/`
-
----
-
-### Triage: Surface-aware typography and icon color system
-
-**Priority: Triage.** Research how design systems (shadcn/Radix, Chakra, Mantine, Ark UI) handle text/icon color when components sit on colored surfaces (e.g. a Card with `color="primary"`). Currently `Text`, `Heading`, `Badge`, and `IconBadge` use hardcoded color tokens (`text-muted-foreground`, `bg-primary/10 text-primary`) that don't adapt when the parent surface changes. This forces consumers to manually pass `onSurface` props to every sub-component.
-
-**Goal:** A systematic approach where typography and icon primitives automatically adapt to their parent surface color — either via CSS custom property inheritance, data attributes, or a lightweight variant system. Audit all `@bnto/ui` primitives and `@bnto/editor` node components for manual color overrides that this system would eliminate.
-
-Files: `packages/ui/src/typography/`, `packages/ui/src/blocks/RecipeCard/`, `packages/editor/src/components/nodes/Node/NodeIcon.tsx`, `apps/web/app/surface.css`
-
----
-
-### Triage: Audit and remove useEditorStoreApi — migrate to client/service API
-
-**Priority: Triage.** Audit all uses of `useEditorStoreApi`, `storeApi.setState`, `storeApi.getState`, and `storeApi.subscribe` in `packages/editor/src/hooks/` and `packages/editor/src/components/`. Migrate each to use the proper `editor.definition.*`, `editor.nodes.*`, etc. client/service methods. Once all consumers are ported, remove the `useEditorStoreApi` export from `context.ts`.
-
-### Triage: Adopt DialogBody in all existing editor dialogs
-
-**Priority: Triage.** OpenRecipeDialog, HelpDialog, and any other dialogs that compose `DialogHeader`/`DialogFooter` without `DialogBody` should be updated to use the standard `DialogHeader`/`DialogBody`/`DialogFooter` composition for consistent spacing. `RecipeDialog` already follows the pattern — backport to the rest.
-
-### Triage: Adopt useDialog hook across all dialog use cases
-
-**Priority: Triage.** `useDialog` has been added to `@bnto/ui` (standardized open/close state for dialogs). Adopt it in all existing dialog consumers — OpenRecipeDialog, HelpDialog, and any other components that manually manage dialog open/close with `useState`. Replace manual `useState(false)` + `setOpen` patterns with the standardized `useDialog()` hook for consistent props and state management.
-
----
-
-### Infra: Conventional Commits + Auto-Changelog
-
-**Priority: Medium.** Enforce `feat:`, `fix:`, `BREAKING CHANGE:` commit format. Auto-generate `CHANGELOG.md` from commit history on release tags. Enables semantic version bumping.
-
-- [ ] `infra` — Add `commitlint` + `@commitlint/config-conventional` to pre-commit hooks
-- [ ] `infra` — Add changelog generation step to `release.yml`
-- [ ] `infra` — Include changelog in GitHub Release body
-
-### Infra: Production Deploy Protection (GitHub Environments)
-
-**Priority: Medium.** Require manual approval in GitHub Actions before promoting a release to production. Uses GitHub's environment protection rules.
-
-- [ ] `infra` — Create `production` environment in GitHub repo settings with required reviewers
-- [ ] `infra` — Gate the promote-production job behind the `production` environment
-
-### Infra: Wire Version into App Build
-
-**Priority: Medium.** Wire `NEXT_PUBLIC_APP_VERSION` from the git tag into the Next.js build. Display in error boundary, footer, and dev tools. Enables user bug reports to include the deployed version.
-
-- [ ] `apps/web` — Add `NEXT_PUBLIC_APP_VERSION` env var, populated from `${{ github.ref_name }}` in release workflow
-- [ ] `apps/web` — Display version in error boundary report and footer (dev mode)
-
-### Chore: Upgrade Convex 1.31.7 → 1.33.1
-
-**Priority: Low.** Minor Convex JS SDK update. [Changelog](https://github.com/get-convex/convex-js/blob/main/CHANGELOG.md#changelog). Update `convex` in `packages/@bnto/backend/`, verify schema/function compatibility, run full test suite.
-
-- [ ] `packages/@bnto/backend` — Bump `convex` to `1.33.1`
-- [ ] Run `task check` — full quality gate (lint + test + build)
-
----
-
-### Infra: Upgrade GitHub Actions to Node.js 24
-
-**Priority: Low (deadline: June 2, 2026).** `actions/checkout@v4` runs on Node.js 20, which GitHub is deprecating. After June 2, 2026, actions will be forced to Node.js 24. Upgrade to `actions/checkout@v5` (or set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`) when v5 is available. Also audit other action dependencies (`actions/setup-node@v4`, `actions/upload-artifact@v4`, etc.).
-
-- [ ] `infra` — Upgrade `actions/checkout` to v5 in `ci.yml`, `release.yml`, `lighthouse.yml` when available
-- [ ] `infra` — Audit all GitHub Actions dependencies for Node.js 24 compatibility
-
----
-
-### Triage: Audit and consolidate E2E journey tests
-
-**Priority: Triage.** Review all journey E2E specs (`e2e/journeys/browser/`, `e2e/journeys/editor/`, `e2e/editor/`) for overlap and redundancy after recent development. Consolidate tests that cover the same flows, remove duplicated assertions, and ensure each spec is testing a distinct user journey rather than repeating similar steps across multiple files. Aim for clear, high-level journey tests that cover critical paths without excessive duplication. For example, if multiple specs test the auth flow, consider centralizing that in a single `auth.spec.ts` and referencing it from other journey tests. Evaluate any cases that are better suited as unit/integration tests rather than E2E, and migrate accordingly.
-
----
-
-### Triage: Revisit skipped auth E2E tests in editor-save.spec.ts
-
-**Priority: Triage.** Two tests in `e2e/journeys/editor/editor-save.spec.ts` are unconditionally skipped — SV1 (save recipe) and SV3 (load saved recipe). They require auth infrastructure (signed-in user + Convex) and the Save menu item was removed from the toolbar. Revisit when auth test helpers exist and Save is re-introduced. `editor-save.spec.ts:70`
-
----
-
-### Triage: Dumb components pass — extract logic from heavy component files
-
-**Priority: Triage.** Components like `packages/editor/src/components/NodePaletteDialog/NodePaletteDialogRoot.tsx` carry too much inline logic. Audit for opportunities to 1) extract reusable utils/patterns and 2) keep components dumb (data in, render out).
-
----
-
-### Triage: Engine documentation — auto-generated docs for Rust engine
-
-**Priority: Triage.** Set up auto-generated documentation for the Rust engine. Explore `cargo doc`, GitHub wiki integration, or a `docs/` directory at engine root that documents the engine architecture, crate responsibilities, and API surface. Goal: replace the tutorial-style comments removed in `chore/thin-rust-comments` with proper external documentation.
-
----
-
-### Triage: Type inheritance audit for wrapper components
-
-**Priority: Triage.** Wrapper components (e.g. SavedRecipeCard) redefine props like `loading`, `href`, `className` that already exist on the underlying primitive (Card, RecipeCard). Audit all wrapper components to use `Pick<ComponentProps<typeof Base>, ...>` or `extends` instead of manual redefinition. Flagged on PR #212 SavedRecipeCard.tsx.
-
----
-
-### Triage: E2E tests for editor keyboard shortcuts
-
-**Priority: Triage.** The 7 editor shortcuts (undo, redo, delete, run, export, escape, help) have unit test coverage for guard logic but zero E2E tests using `page.keyboard.press()`. The existing undo test uses the toolbar button, not the keyboard. Add Playwright tests that verify actual keyboard presses trigger expected actions.
-
----
-
-### Triage: Remove Lighthouse CI from normal PR pipeline
-
-**Priority: Low.** Lighthouse CI currently runs on every PR via `.github/workflows/lighthouse.yml`. It's valuable for release verification but adds latency to the normal dev loop without catching issues that change frequently. Move Lighthouse to release-only: keep it in `release.yml` (already there), remove the standalone `lighthouse.yml` workflow (or make it `workflow_dispatch` only so it can be triggered manually). The `task seo:audit` local command remains for on-demand developer use.
-
-### Triage: TS2353 errors on `reducedMotion` in custom Playwright fixtures
-
-**Priority: Triage.** Files using `test.use({ reducedMotion: "reduce" })` with the custom `test` from `e2e/fixtures.ts` produce TS2353 errors — `reducedMotion` isn't in the extended fixture type. Build passes because Turbopack doesn't typecheck `e2e/` files. Fix: remove per-file `test.use` calls (already set globally in `playwright.config.ts` via `contextOptions`) or widen the fixture type. Affected: `e2e/editor/node-progress.spec.ts`, `e2e/journeys/auth/auth-behavior.spec.ts`, `e2e/journeys/auth/auth-lifecycle.spec.ts`, `e2e/pages/site-navigation.spec.ts`.
-
-### Triage: E2E teardown cleanup fails in release pipeline (missing CONVEX_DEPLOYMENT)
-
-**Priority: Triage.** E2E teardown logs `cleanup failed — test accounts may persist` because `npx convex run _dev_cleanup:cleanTestAccounts` requires `CONVEX_DEPLOYMENT` which isn't set in the release pipeline runner. Either pass the env var to the E2E job or skip cleanup when running against a Vercel preview.
-
-Files: `apps/web/e2e/`, `.github/workflows/release.yml`
-
-### Triage: Investigate proper Convex auth error handling
-
-**Priority: Triage.** We're catching Convex auth errors broadly and risk missing real Convex errors (query failures, mutation errors, schema validation). Need to differentiate auth errors from operational errors so real issues aren't silently swallowed.
-
-### Triage: Add forgot password / password reset flow
-
-**Priority: Triage.** Users have no way to reset their password. Need a forgot password link on sign-in, email-based reset flow, and reset confirmation screen. Check what `@convex-dev/auth` provides out of the box.
-
-Files: `app/(auth)/`, `packages/@bnto/auth/`
-
-### Triage: Verify PostHog reverse proxy after production deploy
-
-**Priority: Triage.** After PR #225 is merged and deployed, run curl checks against `bnto.io/ingest/*` endpoints, confirm trailing slash behavior on `/ingest/e/`, and verify events appear in PostHog Live Events. Can only be tested in production.
-
-### Triage: Sync recipes on my-recipes page mount
-
-**Superseded by Sprint 8.5 pivot.** My Recipes page removed. Recipe persistence infrastructure stripped. Editor reconnects with sessionStorage only (Sprint 8.5d).
-
-### Triage: Code-driven feature flag definitions for self-hosters and contributors
-
-**Priority: Triage.** Current feature flags are dashboard-driven (PostHog UI only), which doesn't scale to self-hosters (no PostHog access) or open-source contributors (can't test flag-gated features). Evaluate defining flag keys, variants, and defaults in the repo with PostHog as a runtime override layer. Options: local defaults file, Vercel Flags SDK, Convex flags table.
-
-Files: `.claude/rules/feature-flags.md` (open source consideration section), `.claude/decisions/feature-flags.md`
+**Priority: Low.** Set up `cargo doc` or docs site for the Rust engine. Document crate responsibilities, API surface, architecture. `engine/crates/`.
 
 ### Triage: Definition/recipe version migration tool
 
-**Priority: Triage.** When breaking changes occur to node parameters (e.g., `compression`→`quality` unification with value inversion), users with existing `.bnto.json` recipes need a migration path. Build a versioned migration system that detects definition version, applies sequential transforms (v1→v2→v3), handles value conversions (not just renames), and reports what changed. Could be CLI (`bnto migrate`) and/or automatic migration on recipe load. The `version` field already exists in the `Definition` type.
-
-Files: `packages/@bnto/nodes/src/definition.ts` (Definition type with version field), `engine/crates/bnto-core/` (engine-side validation)
-
-### Triage: Remove DevTab and all dev-only execution controls
-
-**Priority: Triage.** Rip out DevTab, DevNodeControls, devMockData, and the node-progress E2E spec (~500 lines of dead code). Also remove `setNodeStatus`, `setNodeProgress`, and `forceExecutionState` from ExecutionService interface and implementation — these are dev-only methods with no production consumers.
-
-Files to delete: `DevTab.tsx`, `DevNodeControls.tsx`, `devMockData.ts`, `node-progress.spec.ts`. Files to modify: `RunPanelRoot.tsx`, `editorTypes.ts`, `executionService.ts`, `createEditorStore.test.ts`.
+**Priority: Medium.** `bnto migrate` CLI command for breaking changes to `.bnto.json` node parameters (e.g., `compression`→`quality`). Versioned migration system: detect version, apply sequential transforms, report changes. The `version` field already exists in `Definition`.
 
 ### Triage: Redesign homepage as developer-facing landing page
 
-**Priority: Triage.** Rework bnto.io homepage from a recipe gallery into a developer-facing landing page for the tool/engine (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, and getting started (`cargo install bnto`). Recipe pages stay as the SEO showcase; homepage becomes the pitch for the tool itself.
+**Priority: Medium.** Rework bnto.io homepage from recipe gallery into developer-facing landing page (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, `cargo install bnto-cli`. Recipe pages stay as SEO showcase.
 
 ### Triage: Secret/environment variable management for recipes
 
-**Priority: Triage.** Recipes will need to reference secrets (API keys, auth tokens, env vars) without embedding them in `.bnto.json`. No recipe needs this yet, but HTTP, AI, and shell nodes will. Design needed: how recipes reference variables, how secrets resolve per target (CLI reads env/dotfiles, server reads vault, browser prompts user), how the editor surfaces variable placeholders without exposing values.
+**Priority: Medium.** Recipes will need secrets (API keys, tokens, env vars) without embedding in `.bnto.json`. Design: how recipes reference variables, how secrets resolve per target (CLI reads env/dotfiles, server reads vault, browser prompts user).
 
-### Triage: Publish bnto CLI to crates.io (prerequisite for homepage rework)
+### Triage: E2E teardown cleanup fails in release pipeline
 
-**Priority: Triage.** Publish `bnto-core`, `bnto-engine`, and `bnto-cli` to crates.io so `cargo install bnto` works. Crate names are available. Requires: (1) convert path deps to crates.io-compatible deps for the publish chain, (2) add crates.io metadata to all published crates, (3) add `cargo publish` job to `release.yml` on stable tags, (4) configure `CARGO_REGISTRY_TOKEN` secret. **Must land before homepage rework advertises CLI install.** Phase 2: Homebrew tap via `cargo-dist` for non-Rust users.
+**Priority: Low.** E2E teardown logs `cleanup failed` because `CONVEX_DEPLOYMENT` isn't set in release pipeline. Either pass env var to E2E job or skip cleanup against Vercel preview.
+
+### Triage: Rename registry constructors
+
+**Priority: Low.** `create_default_registry()` → `create_browser_registry()`, `create_native_registry()` → `create_registry()`. The "full" registry should be the default name, the WASM-constrained one the exception.
+
+### Infra: Conventional Commits + Auto-Changelog
+
+**Priority: Low.** Enforce `feat:`, `fix:`, `BREAKING CHANGE:` commit format. Auto-generate `CHANGELOG.md` on release tags. Not blocking anything.
+
+### Infra: Production Deploy Protection (GitHub Environments)
+
+**Priority: Low.** Manual approval step via GitHub Environments for production deploys. Existing tag-based workflow already prevents accidental deploys.
+
+### Infra: Upgrade GitHub Actions to Node.js 24
+
+**Priority: Low (deadline: June 2, 2026).** Upgrade `actions/checkout` to v5 when available. Audit all actions for Node.js 24 compatibility.
+
+### Chore: Upgrade Convex 1.31.7 → 1.33.1
+
+**Priority: Low.** Minor Convex JS SDK update. Bump in `packages/@bnto/backend/`, run `task check`.
+
+---
 
 ## Reference
 
-| Document                                                         | Purpose                                                                                                           |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `.claude/journeys/`                                              | User journey test matrices — auth, engine, API, web app, editor                                                   |
-| `.claude/strategy/bntos.md`                                      | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers                                                    |
-| `.claude/strategy/editor-architecture.md`                        | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
-| `.claude/strategy/editor-user-journey.md`                        | Editor user journey — stages, flows, success criteria, phased delivery                                            |
-| `.claude/strategy/visual-editor.md`                              | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| `.claude/strategy/code-editor.md`                                | Code editor design — CM6, slash commands, JSON Schema                                                             |
-| `.claude/strategy/visual-editor.md`                              | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| `.claude/strategy/go-engine-migration.md`                        | HISTORICAL — Go node parameter inventory (engine deleted, git history preserves source)                           |
-| `.claude/strategy/cloud-desktop-strategy.md`                     | Architecture, cost analysis, cloud execution topology                                                             |
-| `.claude/strategy/core-principles.md`                            | Trust commitments, "For Claude Code" guidance                                                                     |
-| `.claude/rules/`                                                 | Auto-loaded rules (architecture, code-standards, components, etc.)                                                |
-| `.claude/skills/`                                                | Agent skills (pickup, project-manager, code-review, pre-commit)                                                   |
-| Private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
+| Document                                                         | Purpose                                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `.claude/strategy/bntos.md`                                      | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers                 |
+| `.claude/strategy/engine-execution.md`                           | Engine execution architecture — pipeline executor, progress events             |
+| `.claude/strategy/cloud-desktop-strategy.md`                     | Architecture, cost analysis, cloud execution topology                          |
+| `.claude/strategy/core-principles.md`                            | Trust commitments, key principles                                              |
+| `.claude/strategy/expression-input-ux.md`                        | Expression input UX (frozen — reference for future)                            |
+| `.claude/rules/`                                                 | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.)   |
+| `.claude/skills/`                                                | Agent skills (pickup, project-manager, code-review, pre-commit)                |
+| Private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) | Pricing strategy, revenue projections, SEO monetization (historical — on hold) |

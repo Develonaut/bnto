@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** April 4, 2026
+**Last Updated:** April 5, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -9,20 +9,23 @@
 
 Bnto is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes. Run them anywhere.
 
-The power is in the composition: any workflow you can describe as a sequence of steps, bnto can automate. And because the engine compiles to every target, a recipe you build today works in your terminal, your browser, on your desktop, and on a server — without changes.
+**The CLI is the product.** `cargo install bnto-cli` gets you started. Define recipes as `.bnto.json` files, run them with `bnto run`. The power is in composition: any workflow you can describe as a sequence of steps, bnto can automate. One Rust engine compiles to every target — your terminal today, your browser, your desktop, and a server tomorrow. The recipe doesn't care where it runs.
 
-**The architecture makes this possible:** One Rust engine, multiple compilation targets. Write a node once. The engine handles execution, progress, error handling, and platform differences. Browser nodes compile to WASM. CLI nodes get full system access. Server nodes get managed infrastructure. The recipe doesn't care — it just describes the workflow.
+**The architecture makes this possible:** One Rust engine, multiple compilation targets. Write a node once. The engine handles execution, progress, error handling, and platform differences. CLI nodes get full system access. Browser nodes compile to WASM. Server nodes get managed infrastructure.
 
 **Execution targets:**
 
-| Target                  | Status         | Cost to Us  | Cost to User       |
-| ----------------------- | -------------- | ----------- | ------------------ |
-| **CLI** (Rust native)   | Primary (now)  | $0          | Free forever (OSS) |
-| **Browser** (Rust→WASM) | Delivered (M1) | $0          | Free forever       |
-| **Desktop** (Tauri)     | Backlog (M4)   | $0          | Free forever       |
-| **Cloud** (server-side) | Backlog (M4)   | ~$5/mo base | Pro tier           |
+| Target                  | Status                 | Cost to Us  | Cost to User       |
+| ----------------------- | ---------------------- | ----------- | ------------------ |
+| **CLI** (Rust native)   | **Primary (now)**      | $0          | Free forever (OSS) |
+| **TUI** (ratatui)       | Next (Sprint 10)       | $0          | Free forever (OSS) |
+| **Browser** (Rust→WASM) | Delivered, maintenance | $0          | Free forever       |
+| **Desktop** (Tauri)     | Backlog (M4)           | $0          | Free forever       |
+| **Cloud** (server-side) | Backlog (M4)           | ~$5/mo base | Pro tier           |
 
 **The insight:** The engine is the stable API. Nodes are the building blocks. Recipes are the workflows. Targets are just compilation modes. Revenue strategy is tabled — focus is on making the engine powerful and fun.
+
+**The web:** bnto.io is a landing page that directs to `cargo install bnto-cli`. SEO recipe pages showcase what bnto can do. Browser execution (Rust→WASM) is delivered and maintained but is not the primary experience — the CLI is.
 
 ---
 
@@ -44,52 +47,46 @@ M1: Browser Execution (MVP)          ← DELIVERED (Feb 2026)
     generate-thumbnails — first multi-node predefined recipes.
 
 M2: Platform Features                ← DELIVERED (March 2026)
-    Save workflows, execution history, user accounts, recipe editor v1.
-    Convex-backed. Editor shipped with schema-driven config, save/My Recipes,
-    keyboard shortcuts. Packages extracted: @bnto/ui, @bnto/editor.
-
-    PIVOT (March 2026): Editor persistence stripped (Sprint 8.5a). Editor
-    reconnecting as lightweight open+export tool with sessionStorage only
-    (Sprint 8.5d) — no save to Convex, no localStorage, no My Recipes.
-    Favorites/user preferences tabled to post-MVP. Deep editor features
-    (code editor, expression input, edit/run mode) deferred to post-revenue.
+    Web platform features shipped: save workflows, execution history,
+    accounts, recipe editor v1. Then PIVOTED: auth stripped, editor
+    frozen as lightweight open+export tool, web reduced to landing page.
     Community recipes via GitHub PRs, curated by maintainer.
 
-M3: Engine Expansion                 ← IN PROGRESS (April 2026)
-    Dependency management DELIVERED. Video node DELIVERED (yt-dlp).
-    ProcessContext DELIVERED. Next: CLI polish (list, info, progress),
-    codegen for video node. TUI deferred to own sprint after CLI is
-    bomb-proof.
+M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
+    CLI is the product. Dependency system DELIVERED. Video node DELIVERED.
+    ProcessContext DELIVERED. CLI commands DELIVERED (list, info, run with
+    progress). v0.5.0 shipped to crates.io.
 
-    The CLI is the primary development surface. New capabilities are
-    built and tested via `bnto run` before any browser/web work.
+    Next: TUI (Sprint 10 — ratatui interactive mode), more node types,
+    recipe expansion.
 
-M4: Distribution
+M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
-    recipes. Package manager install (`brew install bnto`).
-    Technology for cloud execution TBD.
+    recipes. Technology for cloud execution TBD.
 
-M5: Monetization
+M5: Monetization (tabled)
     Tabled. Focus is on making the engine powerful and fun.
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** Milestones are sequential but overlap. M1 and M2 are delivered. M3 in progress: dependency system and video node shipped (v0.5.0). Next: CLI polish, then codegen. TUI deferred to own sprint. Desktop (M4) deprioritized in favor of enriching the engine directly.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. Next: TUI (Sprint 10), then more node types and recipes. Desktop (M4) and monetization (M5) are backlog.
 
 ---
 
-## Engine-First Development
+## CLI-First Development
 
-**A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. Browser-capable nodes compile to WASM and work at bnto.io. CLI-only nodes get full system access. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
+**A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. CLI nodes get full system access. Browser-capable nodes compile to WASM and work at bnto.io. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
 
-**The CLI is the primary development surface.** New node types are built and tested via `bnto run` before any browser/web work. The development workflow:
+**The CLI is the product.** `cargo install bnto-cli` gives you 15 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
 
 1. Build the processor in Rust (TDD-first, golden tests)
 2. Test via `bnto run <recipe> [files...]`
 3. Prove it works end-to-end in the CLI
 4. The engine's `platforms` metadata determines where it surfaces — browser, desktop, server, or all of the above
 
-**Extensibility is the point.** The 15 predefined recipes are a starting point. The real value is that anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
+**Extensibility is the point.** The 15 predefined recipes are a starting point. Anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
+
+**TUI is next.** After the CLI is solid, `bnto tui` will launch an interactive terminal UI (ratatui + crossterm) — recipe browser, file picker, progress display, results panel. Same engine, richer interface. See Sprint 10 in PLAN.md.
 
 **Dependency system:** Node types can declare external dependencies (`yt-dlp`, `ffmpeg`, `imagemagick`). The engine checks them before pipeline execution. `bnto doctor` reports missing dependencies with install hints.
 
@@ -97,9 +94,9 @@ M5: Monetization
 
 ---
 
-## Browser Execution: Tech Matrix
+## Browser Execution: Tech Matrix (delivered, maintenance)
 
-All Tier 1 bntos run 100% client-side via Rust→WASM. No server round-trip, no R2 file transit, no Railway.
+All Tier 1 bntos run 100% client-side via Rust→WASM. No server round-trip, no R2 file transit, no Railway. This work is complete — the browser is a secondary execution target behind the CLI.
 
 | Bnto                 | Slug                    | Rust Crate(s)                     | WASM Strategy            | Notes                                                              |
 | -------------------- | ----------------------- | --------------------------------- | ------------------------ | ------------------------------------------------------------------ |
@@ -180,7 +177,7 @@ packages/@bnto/nodes/
 └── validators/       # Definition validation (works in browser, CLI, desktop)
 ```
 
-**Consumed by:** Rust WASM engine (browser), web app config UI (schema-driven `SchemaForm` + `CONTROL_REGISTRY`), `@bnto/editor` (node CRUD, adapters), `@bnto/core` (execution pipeline), CLI.
+**Consumed by:** `@bnto/core` (execution pipeline + registry), Rust WASM engine (browser), `@bnto/editor` (node CRUD, adapters — frozen), web app config UI (schema-driven forms). The CLI consumes the Rust engine directly — `@bnto/nodes` is the TypeScript mirror.
 
 ---
 
@@ -232,7 +229,8 @@ But monetization work is explicitly paused. No Stripe, no Pro tier, no feature g
 | **`platforms` passthrough**          | Shipped (April 2026)     | Full `platforms: string[]` from engine catalog instead of lossy `browserCapable: boolean`. Enables correct CLI/server/browser filtering.         |
 | **v0.5.0 released**                  | Shipped (April 2026)     | 15 recipes, video-download node, extra args pass-through, dependency system, H.264 codec preference, ProcessContext trait.                       |
 | **TUI deferred to own sprint**       | Decided (April 2026)     | TUI is a full application (editor, navigation, recipe browser). Needs proper sprint breakdown. CLI polish comes first — make it bomb-proof.      |
-| **Open-source-first pivot**          | Decided (April 2026)     | Stripped pricing, auth surfaces, Pro references. Monetization tabled. crates.io preparation (v0.1.1).                                            |
+| **CLI/TUI-first pivot**              | Decided (April 2026)     | CLI is the product. Web reduced to landing page. Editor frozen. Auth stripped. TUI (ratatui) is next UI surface. Frontend/premium work on hold.  |
+| **Open-source-first pivot**          | Decided (April 2026)     | Stripped pricing, auth surfaces, Pro references. Monetization tabled. Web → landing page for `cargo install bnto-cli`.                           |
 
 ### Engine Decision: Rust Won (Feb 2026)
 
@@ -281,11 +279,12 @@ But monetization work is explicitly paused. No Stripe, no Pro tier, no feature g
 
 From `core-principles.md`:
 
-1. **Free tier never gets worse.** Browser execution is free forever. No artificial caps.
-2. **Desktop is free forever.** No "desktop Pro." Local execution is always unlimited.
-3. **MIT license stays MIT.** The engine is always open.
-4. **No dark patterns.** Upgrade hooks are natural (save, history, AI) — not artificial limits.
-5. **If bnto shuts down, the engine stays open.** No lock-in, ever.
+1. **CLI is the product.** The terminal experience comes first. Web showcases, it doesn't gate.
+2. **Free tier never gets worse.** CLI and browser execution are free forever. No artificial caps.
+3. **Desktop is free forever.** No "desktop Pro." Local execution is always unlimited.
+4. **MIT license stays MIT.** The engine is always open.
+5. **No dark patterns.** Upgrade hooks are natural — not artificial limits.
+6. **If bnto shuts down, the engine stays open.** No lock-in, ever.
 
 ---
 
