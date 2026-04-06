@@ -430,6 +430,7 @@ jobs:
           publish bnto-csv
           publish bnto-file
           publish bnto-image
+          publish bnto-video
           sleep 15
           publish bnto-engine
           sleep 15
