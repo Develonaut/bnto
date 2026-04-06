@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-file"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "File operation nodes for Bnto WASM engine — rename files"
 license = "MIT"
@@ -24,7 +24,7 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.1" }
+bnto-core = { path = "../bnto-core", version = "0.1.2" }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }

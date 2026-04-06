@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-video"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "Video operation nodes for Bnto engine — download videos via yt-dlp"
 license = "MIT"
@@ -18,7 +18,7 @@ categories = ["multimedia::video"]
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.1" }
+bnto-core = { path = "../bnto-core", version = "0.1.2" }
 serde_json = { workspace = true }
 
 [dev-dependencies]
