@@ -315,8 +315,7 @@ mod tests {
     fn test_generated_watermark_images_recipe() {
         // The generated recipe has an empty overlay param — inject a real one.
         let mut def: serde_json::Value =
-            serde_json::from_str(include_str!("../recipes/watermark-images.bnto.json"))
-                .unwrap();
+            serde_json::from_str(include_str!("../recipes/watermark-images.bnto.json")).unwrap();
 
         // Base64-encode the test overlay image
         let overlay_bytes =
