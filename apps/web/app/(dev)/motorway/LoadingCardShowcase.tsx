@@ -4,30 +4,23 @@ import { useState } from "react";
 import { Button, Card, Heading, Row, Skeleton, Stack, Text } from "@bnto/ui";
 
 export function LoadingCardShowcase() {
-  const [loading, setLoading] = useState(true);
+  const [dormant, setDormant] = useState(true);
 
   return (
     <Stack gap="md">
       <Row gap="sm" className="items-center">
-        <Button
-          variant={loading ? "secondary" : "outline"}
-          onClick={() => setLoading((l) => !l)}
-        >
-          {loading ? "Load Content" : "Reset to Loading"}
+        <Button variant={dormant ? "secondary" : "outline"} onClick={() => setDormant((d) => !d)}>
+          {dormant ? "Load Content" : "Reset to Dormant"}
         </Button>
         <Text size="sm" color="muted">
-          {'<Card loading={isLoading}>'} — bounciest spring by default
+          {"<Card dormant>"} — bounciest spring by default
         </Text>
       </Row>
 
       <div className="grid grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
-          <Card
-            key={i}
-            loading={loading}
-            className="flex h-48 flex-col justify-between p-5"
-          >
-            {loading ? (
+          <Card key={i} dormant={dormant} className="flex h-48 flex-col justify-between p-5">
+            {dormant ? (
               <Stack gap="sm">
                 <Skeleton className="h-5 w-2/3 rounded" />
                 <Skeleton className="h-3 w-full rounded" />
@@ -44,7 +37,7 @@ export function LoadingCardShowcase() {
               </Stack>
             )}
             <Text size="xs" color="muted" className="font-mono uppercase tracking-wider">
-              {loading ? "grounded" : "raised"}
+              {dormant ? "dormant" : "raised"}
             </Text>
           </Card>
         ))}

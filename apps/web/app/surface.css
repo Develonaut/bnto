@@ -268,9 +268,9 @@
  * .pressable inherits this foundation via :is() and adds interactive
  * states (hover, active, toggle, disabled) on top.
  *
- * [data-grounded]: flush with ground, muted appearance. Like
+ * [data-dormant]: flush with ground, muted appearance. Like
  * .pressable:disabled but without pointer-events: none. Use for
- * cards in a loading state that spring to life when content arrives.
+ * cards that spring to life when dormancy clears.
  *
  * CSS variables (shared with .pressable):
  *   --pressable-dur   — transition duration (default 150ms)
@@ -291,9 +291,9 @@
     opacity var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
 }
 
-/* Grounded — flush with ground, muted appearance.
+/* Dormant — flush with ground, muted appearance.
  * Non-interactive analog of .pressable:disabled. */
-.springable[data-grounded] {
+.springable[data-dormant] {
   --face-bg: var(--border);
   --face-fg: var(--muted-foreground);
   --surface-wall: var(--surface-muted-wall);
@@ -302,11 +302,11 @@
   transform: translate(0, 0);
 }
 
-.springable[data-grounded]::before {
+.springable[data-dormant]::before {
   transform: translate3d(0, 0, -1px);
 }
 
-.springable[data-grounded]::after {
+.springable[data-dormant]::after {
   transform: translate3d(0, 0, -2px);
 }
 

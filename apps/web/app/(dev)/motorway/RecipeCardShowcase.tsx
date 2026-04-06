@@ -96,7 +96,7 @@ export function RecipeCardShowcase() {
             {registrySlice.map((entry, i) => (
               <GridItem key={entry.slug}>
                 <ScaleIn index={i} from={0.85} easing="spring-bouncy" className="h-full">
-                  <RecipeCard href={`/${entry.slug}`} loading={loading}>
+                  <RecipeCard href={`/${entry.slug}`} dormant={loading}>
                     {loading ? (
                       <>
                         <RecipeCardHeader>

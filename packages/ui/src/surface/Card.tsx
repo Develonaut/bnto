@@ -3,7 +3,6 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "../utils/cn";
 
-import type { SpringMode } from "./Pressable";
 import { Surface } from "./Surface";
 import type { SurfaceBorder, SurfaceElevation, SurfaceVariant } from "./Surface";
 
@@ -13,36 +12,26 @@ export const Card = forwardRef<
     elevation?: SurfaceElevation;
     /** Color variant forwarded to Surface. Default uses card surface colors. */
     color?: SurfaceVariant;
-    /** Spring animation mode. Explicit value overrides `loading` default. */
-    spring?: SpringMode;
-    /** Flush with ground plane. Explicit value overrides `loading` default. */
-    grounded?: boolean;
     /** Border style. Default `"solid"`. */
     border?: SurfaceBorder;
-    /** Sugar for spring="bounciest" + grounded={loading}. */
-    loading?: boolean;
+    /** Flush with ground plane, muted appearance. Springs up when cleared. */
+    dormant?: boolean;
     /** Merge onto child element instead of wrapping in a div. */
     asChild?: boolean;
   }
->(
-  (
-    { className, elevation = "md", color, spring, grounded, border, loading, asChild, ...props },
-    ref,
-  ) => (
-    <Surface
-      ref={ref}
-      elevation={elevation}
-      variant={color}
-      spring={spring ?? (loading !== undefined ? "bounciest" : undefined)}
-      grounded={grounded ?? loading}
-      border={border}
-      asChild={asChild}
-      rounded="xl"
-      className={cn(color ? undefined : "bg-card text-card-foreground", className)}
-      {...props}
-    />
-  ),
-);
+>(({ className, elevation = "md", color, border, dormant, asChild, ...props }, ref) => (
+  <Surface
+    ref={ref}
+    elevation={elevation}
+    variant={color}
+    dormant={dormant}
+    border={border}
+    asChild={asChild}
+    rounded="xl"
+    className={cn(color ? undefined : "bg-card text-card-foreground", className)}
+    {...props}
+  />
+));
 Card.displayName = "Card";
 
 export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(

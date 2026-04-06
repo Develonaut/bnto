@@ -24,8 +24,8 @@ type RecipeCardRootProps = PropsWithChildren<{
   className?: string;
   /** Color variant forwarded to Card surface. */
   color?: SurfaceVariant;
-  /** Grounded loading state — card springs up when loading clears. */
-  loading?: boolean;
+  /** Dormant state — card springs up when dormancy clears. */
+  dormant?: boolean;
   /** Compact horizontal row layout for lists/dialogs. */
   compact?: boolean;
   /** Non-interactive display — grayed out, no link/button behavior. */
@@ -37,7 +37,7 @@ export function RecipeCardRoot({
   onClick,
   className,
   color,
-  loading,
+  dormant,
   compact,
   disabled,
   children,
@@ -48,7 +48,7 @@ export function RecipeCardRoot({
 
   if (disabled) {
     return (
-      <Card loading={loading} color={color} className={cn(baseCn, "cursor-default", className)}>
+      <Card dormant={dormant} color={color} className={cn(baseCn, "cursor-default", className)}>
         <div className="opacity-50 grayscale">{children}</div>
       </Card>
     );
@@ -58,7 +58,7 @@ export function RecipeCardRoot({
 
   if (href) {
     return (
-      <Card asChild loading={loading} color={color} className={cardCn}>
+      <Card asChild dormant={dormant} color={color} className={cardCn}>
         <Link href={href} className="group text-left">
           {children}
         </Link>
@@ -67,7 +67,7 @@ export function RecipeCardRoot({
   }
 
   return (
-    <Card asChild loading={loading} color={color} className={cardCn}>
+    <Card asChild dormant={dormant} color={color} className={cardCn}>
       <button type="button" onClick={onClick} className="group text-left">
         {children}
       </button>

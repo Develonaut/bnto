@@ -48,8 +48,8 @@ type SurfaceProps = ComponentProps<"div"> & {
   rounded?: SurfaceRounded;
   /** Spring animation mode. Adds `.springable` and configures the transition. */
   spring?: SpringMode;
-  /** Flush with the ground plane, muted appearance. Requires `spring`. */
-  grounded?: boolean;
+  /** Flush with the ground plane, muted appearance. Auto-enables `spring="bounciest"`. */
+  dormant?: boolean;
   /** Border style. Default `"solid"`. */
   border?: SurfaceBorder;
   /** Merge onto child element instead of wrapping in a `<div>`. */
@@ -81,19 +81,27 @@ export function Surface({
   elevation = "md",
   rounded = "lg",
   spring,
-  grounded,
+  dormant,
   border = "solid",
   asChild,
   className,
   style,
   ...props
 }: SurfaceProps) {
+  const resolvedSpring = spring ?? (dormant !== undefined ? "bounciest" : undefined);
   const Comp = asChild ? Slot : "div";
   return (
     <Comp
-      data-grounded={spring && grounded ? "" : undefined}
-      className={resolveSurfaceClassName(variant, elevation, rounded, spring, border, className)}
-      style={spring ? { ...SPRING_STYLES[spring], ...style } : style}
+      data-dormant={dormant ? "" : undefined}
+      className={resolveSurfaceClassName(
+        variant,
+        elevation,
+        rounded,
+        resolvedSpring,
+        border,
+        className,
+      )}
+      style={resolvedSpring ? { ...SPRING_STYLES[resolvedSpring], ...style } : style}
       {...props}
     />
   );

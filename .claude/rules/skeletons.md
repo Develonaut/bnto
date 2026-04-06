@@ -16,14 +16,14 @@ User navigates to page
 
 ## Shape Rules
 
-| Content type | Skeleton shape | Sizing |
-|---|---|---|
-| **Headings** | Single rectangle | Match heading font-size height, 40-60% container width |
-| **Body text** | 2-3 rectangles, last one shorter | Match line-height, 60-80% width, last line 40-60% |
-| **Avatars** | Circle | Exact avatar dimensions |
-| **Images/thumbnails** | Rectangle with `aspect-ratio` | Match expected aspect ratio and width |
-| **Cards** | Card outline with interior skeleton elements | Match card outer dimensions |
-| **Badges/tags** | Small rounded rectangles | Approximate badge dimensions |
+| Content type          | Skeleton shape                               | Sizing                                                 |
+| --------------------- | -------------------------------------------- | ------------------------------------------------------ |
+| **Headings**          | Single rectangle                             | Match heading font-size height, 40-60% container width |
+| **Body text**         | 2-3 rectangles, last one shorter             | Match line-height, 60-80% width, last line 40-60%      |
+| **Avatars**           | Circle                                       | Exact avatar dimensions                                |
+| **Images/thumbnails** | Rectangle with `aspect-ratio`                | Match expected aspect ratio and width                  |
+| **Cards**             | Card outline with interior skeleton elements | Match card outer dimensions                            |
+| **Badges/tags**       | Small rounded rectangles                     | Approximate badge dimensions                           |
 
 **Design for the median case.** If a description is typically 2-3 lines, show 2-3 skeleton lines. Don't try to match exact content length -- skeletons communicate structure, not content.
 
@@ -59,8 +59,17 @@ export function WorkflowTitle({ workflowId }: { workflowId: string }) {
 }
 
 // BAD -- different wrappers for skeleton vs loaded
-if (isLoading) return <div className="skeleton-wrapper"><Skeleton /></div>;
-return <div className="loaded-wrapper"><Content /></div>;
+if (isLoading)
+  return (
+    <div className="skeleton-wrapper">
+      <Skeleton />
+    </div>
+  );
+return (
+  <div className="loaded-wrapper">
+    <Content />
+  </div>
+);
 ```
 
 ## What to Skeleton (and What Not To)
@@ -95,12 +104,12 @@ className={cn("motion-safe:animate-pulse rounded-md bg-muted", className)}
 
 The hardest problem: content could be 1 line or 10 lines.
 
-| Strategy | When to use |
-|---|---|
+| Strategy                         | When to use                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------- |
 | **Median skeleton + min-height** | Descriptions, summaries -- show 2-3 skeleton lines, set `min-height` on container |
-| **Fixed skeleton + grow** | Workflow configs -- show 3-4 representative lines, container grows naturally |
-| **Aspect-ratio** | Images, previews -- known ratio, use `aspect-ratio` CSS |
-| **Count-based** | Lists, grids -- show enough skeleton items to fill the viewport (3-6 cards) |
+| **Fixed skeleton + grow**        | Workflow configs -- show 3-4 representative lines, container grows naturally      |
+| **Aspect-ratio**                 | Images, previews -- known ratio, use `aspect-ratio` CSS                           |
+| **Count-based**                  | Lists, grids -- show enough skeleton items to fill the viewport (3-6 cards)       |
 
 **The min-height pattern:**
 
@@ -118,13 +127,13 @@ The hardest problem: content could be 1 line or 10 lines.
 </div>
 ```
 
-## Card `loading` Prop
+## Card `dormant` Prop
 
-When skeleton content lives inside a Card, always use `<Card loading>`. This triggers `spring="bounciest"` + `grounded={true}` — the card starts flush with the ground plane and springs up with a bouncy entrance when it mounts. Skeleton shapes go inside the Card composition (matching the loaded layout).
+When skeleton content lives inside a Card, always use `<Card dormant>`. This starts the card flush with the ground plane and springs it up with a bouncy entrance when dormancy clears. Skeleton shapes go inside the Card composition (matching the loaded layout).
 
 ```tsx
 // GOOD -- Card springs in on mount, skeleton content inside
-<Card loading elevation="sm" className="px-4 py-3">
+<Card dormant elevation="sm" className="px-4 py-3">
   <Stack className="gap-0.5">
     <Skeleton className="h-3.5 w-16" />
     <Skeleton className="h-7 w-12" />
@@ -137,23 +146,32 @@ When skeleton content lives inside a Card, always use `<Card loading>`. This tri
 </Card>
 ```
 
-**The rule:** Every `<Card>` that renders skeleton content MUST use the `loading` prop. This applies to both dedicated skeleton components and inline loading states. The RecipeCard compound component follows the same pattern: `<RecipeCard loading>`.
+**The rule:** Every `<Card>` that renders skeleton content MUST use the `dormant` prop. This applies to both dedicated skeleton components and inline loading states. The RecipeCard compound component follows the same pattern: `<RecipeCard dormant>`.
 
 ### Gotcha: Separate Render Branches, Not Prop Toggle
 
-The `loading` prop triggers a spring entrance animation **on mount**. It does NOT animate when toggled on an already-mounted Card. If the same Card instance stays mounted and only the `loading` prop changes, the spring class swaps happen without retriggering the CSS animation — the card just snaps to its new state.
+The `dormant` prop triggers a spring entrance animation **on mount**. It does NOT animate when toggled on an already-mounted Card. If the same Card instance stays mounted and only the `dormant` prop changes, the spring class swaps happen without retriggering the CSS animation — the card just snaps to its new state.
 
 **Always use separate render branches** for skeleton and loaded states so the loaded Card mounts fresh:
 
 ```tsx
 // GOOD -- separate branches, loaded Card mounts fresh with spring entrance
-if (isLoading) return <Card loading elevation="sm"><Skeleton /></Card>;
-return <Card elevation="sm"><RealContent /></Card>;
+if (isLoading)
+  return (
+    <Card dormant elevation="sm">
+      <Skeleton />
+    </Card>
+  );
+return (
+  <Card elevation="sm">
+    <RealContent />
+  </Card>
+);
 
-// BAD -- same Card instance, loading prop toggle doesn't retrigger animation
-<Card loading={isLoading} elevation="sm">
+// BAD -- same Card instance, dormant prop toggle doesn't retrigger animation
+<Card dormant={isLoading} elevation="sm">
   {isLoading ? <Skeleton /> : <RealContent />}
-</Card>
+</Card>;
 ```
 
 **Props must match between skeleton and loaded Cards** (same `elevation`, `className`, padding) so the transition feels like content "painting in" — not the container itself changing shape.
@@ -171,6 +189,7 @@ Skeletons are for **loading**. Empty states are for **no data**. These are diffe
 Every skeleton should have a paired visual regression test comparing the skeleton state to the loaded state.
 
 **Pattern:**
+
 1. Intercept data (WebSocket blocking)
 2. Screenshot the skeleton state
 3. Release data

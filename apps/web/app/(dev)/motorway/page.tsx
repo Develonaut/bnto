@@ -88,9 +88,9 @@ export default function MotorwayPage() {
             </ShowcaseSection>
 
             <ShowcaseSection
-              id="springable"
-              title="Springable Surfaces"
-              description="Configure spring mode and elevation independently. The spring foundation shared by all animated surfaces — pressable buttons and loading cards alike."
+              id="dormant"
+              title="Dormant Surfaces"
+              description="Surfaces start flush with the ground plane and spring to life. Use dormant on Cards for skeleton loading states or scroll-triggered reveals."
             >
               <SpringableShowcase />
             </ShowcaseSection>
@@ -223,7 +223,7 @@ export default function MotorwayPage() {
             <ShowcaseSection
               id="loading-card"
               title="Loading Cards"
-              description="Pass loading to Card for the common case. Springs up with bounciest when content arrives. Skeleton placeholders swap to real content in place."
+              description="Pass dormant to Card for the common case. Springs up with bounciest when content arrives. Skeleton placeholders swap to real content in place."
             >
               <LoadingCardShowcase />
             </ShowcaseSection>
