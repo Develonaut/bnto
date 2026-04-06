@@ -878,9 +878,10 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 5 — "What's in the box" section redesign:**
 
-- [ ] Three Motorways surface cards: Pick → Pack → Run, with `ScaleIn` stagger
-- [ ] Connecting flow indicators between cards
-- [ ] Section header: "What's in the box" + "Nodes are compartments. Recipes are the box."
+- [x] Three Motorways surface cards: Pick → Pack → Run, with dormant spring-in stagger
+- [x] Section header: "What's in the box" + "Nodes are compartments. Recipes are the box."
+- [x] Mascot integration (bento sushi SVG) with FadeIn animation
+- [ ] Connecting flow indicators between cards (deferred — current grid layout doesn't need them)
 
 **Piece 6 — Recipe showcase section ("House Specials"):**
 
@@ -958,6 +959,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Priority: Triage.** Add a `detect-changes` job to `release.yml` that diffs the current tag against the previous tag and sets output flags (`engine`/`web`/`convex`). Use these to conditionally skip irrelevant jobs — engine-only releases skip Vercel/E2E/Lighthouse, web-only releases skip crates.io publish. Cuts engine-only release time from ~8min to ~2min.
 
 `.github/workflows/release.yml`
+
+### Triage: Responsive GridItem props
+
+**Priority: Triage.** `GridItem` props (`colSpan`, `rowSpan`, `colStart`, `rowStart`) should accept `ResponsiveProp<T>` like the `Grid` `cols` prop does, so spans and positions can vary by breakpoint (mobile/tablet/desktop). Currently only `cols` is responsive — all placement props are static.
+
+`packages/ui/src/layout/Grid.tsx`
 
 ---
 
