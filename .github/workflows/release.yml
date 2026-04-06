@@ -14,9 +14,59 @@ concurrency:
   cancel-in-progress: false # Never cancel a release in progress
 
 jobs:
+  # ── Job 0: Detect what changed since the last tag ──
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      engine: ${{ steps.filter.outputs.engine }}
+      web: ${{ steps.filter.outputs.web }}
+      convex: ${{ steps.filter.outputs.convex }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for tag comparison
+
+      - name: Determine changed surfaces
+        id: filter
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${GITHUB_REF_NAME}$" | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found — running full pipeline"
+            echo "engine=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "convex=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Comparing $PREV_TAG..$GITHUB_REF_NAME"
+          CHANGED=$(git diff --name-only "$PREV_TAG"..HEAD)
+          echo "$CHANGED"
+
+          # If workflow files changed, run everything (we're testing the pipeline itself)
+          if echo "$CHANGED" | grep -q '^\.github/'; then
+            echo "Workflow files changed — running full pipeline"
+            echo "engine=true" >> "$GITHUB_OUTPUT"
+            echo "web=true" >> "$GITHUB_OUTPUT"
+            echo "convex=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          engine=$(echo "$CHANGED" | grep -q '^engine/' && echo true || echo false)
+          web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/)' && echo true || echo false)
+          convex=$(echo "$CHANGED" | grep -q '^packages/@bnto/backend/convex/' && echo true || echo false)
+
+          echo "engine=$engine" >> "$GITHUB_OUTPUT"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "convex=$convex" >> "$GITHUB_OUTPUT"
+
+          echo "### Change Detection" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Engine: $engine" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web: $web" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Convex: $convex" >> "$GITHUB_STEP_SUMMARY"
+
   # ── Job 1a: Rust CI (fmt + lint + unit + WASM) ──
   rust:
-    name: Rust Engine (fmt + lint + unit + WASM)
+    name: Rust Engine (fmt + lint + test + WASM)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -64,6 +114,8 @@ jobs:
   typescript:
     name: TypeScript (build + lint + test)
     runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.web == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -155,29 +207,38 @@ jobs:
       - name: "Test: @bnto/web"
         run: pnpm --filter @bnto/web run test
 
-  # ── Gate: all CI checks must pass ──
+  # ── Gate: all required CI checks must pass ──
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [rust, typescript]
+    needs: [detect-changes, rust, typescript]
     if: always()
     steps:
       - name: Check job results
         run: |
-          if [ "${{ needs.rust.result }}" != "success" ] || \
-             [ "${{ needs.typescript.result }}" != "success" ]; then
-            echo "One or more CI jobs failed:"
-            echo "  Rust Engine: ${{ needs.rust.result }}"
-            echo "  TypeScript:  ${{ needs.typescript.result }}"
+          rust="${{ needs.rust.result }}"
+          ts="${{ needs.typescript.result }}"
+          web="${{ needs.detect-changes.outputs.web }}"
+
+          if [ "$rust" != "success" ]; then
+            echo "Rust CI failed: $rust"
             exit 1
           fi
-          echo "All CI jobs passed."
 
-  # ── Job 2: Deploy Vercel Preview ──
+          # TypeScript is only required when web files changed
+          if [ "$web" = "true" ] && [ "$ts" != "success" ]; then
+            echo "TypeScript CI failed: $ts"
+            exit 1
+          fi
+
+          echo "CI Gate passed (Rust: $rust, TypeScript: $ts, web_changed: $web)"
+
+  # ── Job 2: Deploy Vercel Preview (web changes only) ──
   deploy-preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
-    needs: [ci-gate]
+    needs: [detect-changes, ci-gate]
+    if: needs.detect-changes.outputs.web == 'true'
     outputs:
       preview-url: ${{ steps.deploy.outputs.url }}
     env:
@@ -229,11 +290,12 @@ jobs:
           echo "Preview not ready after 150 seconds"
           exit 1
 
-  # ── Job 3: E2E Tests against Preview ──
+  # ── Job 3: E2E Tests against Preview (web changes only) ──
   e2e-tests:
     name: E2E Tests (Preview)
     runs-on: ubuntu-latest
-    needs: [deploy-preview]
+    needs: [detect-changes, deploy-preview]
+    if: needs.detect-changes.outputs.web == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -274,11 +336,12 @@ jobs:
           path: apps/web/test-results/
           retention-days: 14
 
-  # ── Job 4: Lighthouse audit against Preview ──
+  # ── Job 4: Lighthouse audit against Preview (web changes only) ──
   lighthouse:
     name: Lighthouse (Preview)
     runs-on: ubuntu-latest
-    needs: [deploy-preview]
+    needs: [detect-changes, deploy-preview]
+    if: needs.detect-changes.outputs.web == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -309,33 +372,57 @@ jobs:
   release-gate:
     name: Release Gate
     runs-on: ubuntu-latest
-    needs: [ci-gate, deploy-preview, e2e-tests, lighthouse]
+    needs: [detect-changes, ci-gate, deploy-preview, e2e-tests, lighthouse]
     if: always()
     steps:
       - name: Check all jobs passed
         run: |
-          if [ "${{ needs.ci-gate.result }}" != "success" ] || \
-             [ "${{ needs.deploy-preview.result }}" != "success" ] || \
-             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
-             [ "${{ needs.lighthouse.result }}" != "success" ]; then
-            echo "Release gate FAILED:"
-            echo "  CI Gate:      ${{ needs.ci-gate.result }}"
-            echo "  Preview:      ${{ needs.deploy-preview.result }}"
-            echo "  E2E Tests:    ${{ needs.e2e-tests.result }}"
-            echo "  Lighthouse:   ${{ needs.lighthouse.result }}"
+          web="${{ needs.detect-changes.outputs.web }}"
+
+          # CI Gate is always required
+          if [ "${{ needs.ci-gate.result }}" != "success" ]; then
+            echo "FAILED: CI Gate = ${{ needs.ci-gate.result }}"
             exit 1
           fi
-          echo "All release checks passed."
 
-  # ── Job 6: Deploy to Production (Vercel) ──
-  # Separate build with production env vars from Vercel Dashboard.
-  # Preview uses dev Convex; production uses prod Convex.
-  # Env vars are managed in Vercel Dashboard (per-environment), not hardcoded.
+          # Web jobs are only required when web files changed
+          if [ "$web" = "true" ]; then
+            failed=0
+            for job in deploy-preview e2e-tests lighthouse; do
+              result="${{ needs[job].result }}"
+              # GitHub Actions doesn't support dynamic needs access, check each explicitly
+            done
+
+            if [ "${{ needs.deploy-preview.result }}" != "success" ]; then
+              echo "FAILED: Deploy Preview = ${{ needs.deploy-preview.result }}"
+              exit 1
+            fi
+            if [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+              echo "FAILED: E2E Tests = ${{ needs.e2e-tests.result }}"
+              exit 1
+            fi
+            if [ "${{ needs.lighthouse.result }}" != "success" ]; then
+              echo "FAILED: Lighthouse = ${{ needs.lighthouse.result }}"
+              exit 1
+            fi
+          fi
+
+          echo "Release gate passed."
+          echo "  CI Gate:    ${{ needs.ci-gate.result }}"
+          echo "  Preview:    ${{ needs.deploy-preview.result }}"
+          echo "  E2E Tests:  ${{ needs.e2e-tests.result }}"
+          echo "  Lighthouse: ${{ needs.lighthouse.result }}"
+          echo "  Web changed: $web"
+
+  # ── Job 6: Deploy to Production (Vercel, web changes only) ──
   deploy-production:
     name: Deploy to Production (Vercel)
     runs-on: ubuntu-latest
-    needs: [release-gate]
-    if: needs.release-gate.result == 'success' && !contains(github.ref_name, '-')
+    needs: [detect-changes, release-gate]
+    if: |
+      needs.release-gate.result == 'success' &&
+      needs.detect-changes.outputs.web == 'true' &&
+      !contains(github.ref_name, '-')
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -363,12 +450,15 @@ jobs:
       - name: Deploy to production
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-  # ── Job 7: Deploy Convex to Production (stable only, after Vercel) ──
+  # ── Job 7: Deploy Convex to Production (convex changes only) ──
   convex-deploy:
     name: Convex Deploy (prod)
     runs-on: ubuntu-latest
-    needs: [deploy-production]
-    if: needs.deploy-production.result == 'success'
+    needs: [detect-changes, release-gate]
+    if: |
+      needs.release-gate.result == 'success' &&
+      needs.detect-changes.outputs.convex == 'true' &&
+      !contains(github.ref_name, '-')
     defaults:
       run:
         working-directory: packages/@bnto/backend
@@ -391,12 +481,15 @@ jobs:
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
 
-  # ── Job 8: Publish to crates.io (stable only) ──
+  # ── Job 8: Publish to crates.io (engine changes only) ──
   cargo-publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
-    needs: [release-gate]
-    if: needs.release-gate.result == 'success' && !contains(github.ref_name, '-')
+    needs: [detect-changes, release-gate]
+    if: |
+      needs.release-gate.result == 'success' &&
+      needs.detect-changes.outputs.engine == 'true' &&
+      !contains(github.ref_name, '-')
     defaults:
       run:
         working-directory: engine
@@ -436,20 +529,36 @@ jobs:
           sleep 15
           publish bnto
 
-  # ── Job 9: Create GitHub Release (after production deploys) ──
+  # ── Job 9: Create GitHub Release ──
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [release-gate, deploy-preview, deploy-production, convex-deploy, cargo-publish]
+    needs: [detect-changes, release-gate, deploy-production, convex-deploy, cargo-publish]
     if: |
       always() &&
-      needs.release-gate.result == 'success' &&
-      (
-        (needs.deploy-production.result == 'success' && needs.convex-deploy.result == 'success') ||
-        (needs.deploy-production.result == 'skipped' && needs.convex-deploy.result == 'skipped')
-      )
+      needs.release-gate.result == 'success'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Summarize deploy results
+        id: summary
+        run: |
+          vercel="${{ needs.deploy-production.result }}"
+          convex="${{ needs.convex-deploy.result }}"
+          cargo="${{ needs.cargo-publish.result }}"
+
+          # Map results to human-readable status
+          status() {
+            case "$1" in
+              success) echo "Deployed" ;;
+              skipped) echo "Skipped (no changes)" ;;
+              *) echo "Skipped (pre-release)" ;;
+            esac
+          }
+
+          echo "vercel=$(status "$vercel")" >> "$GITHUB_OUTPUT"
+          echo "convex=$(status "$convex")" >> "$GITHUB_OUTPUT"
+          echo "cargo=$(status "$cargo")" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -461,16 +570,15 @@ jobs:
           body: |
             ## Deployed
 
-            - Vercel: ${{ needs.deploy-production.result == 'success' && 'Production deployed' || 'Skipped (pre-release)' }}
-            - Convex: ${{ needs.convex-deploy.result == 'success' && 'Production deployed' || 'Skipped (pre-release)' }}
-            - crates.io: ${{ needs.cargo-publish.result == 'success' && 'Published' || 'Skipped (pre-release)' }}
-            - Preview URL: ${{ needs.deploy-preview.outputs.preview-url }}
+            - Vercel: ${{ steps.summary.outputs.vercel }}
+            - Convex: ${{ steps.summary.outputs.convex }}
+            - crates.io: ${{ steps.summary.outputs.cargo }}
 
-            ## Verification
+            ## Surfaces
 
-            - CI Gate: Rust + TypeScript passed
-            - E2E: Playwright suite passed against preview
-            - Lighthouse: Audits passed
+            - Engine changed: ${{ needs.detect-changes.outputs.engine }}
+            - Web changed: ${{ needs.detect-changes.outputs.web }}
+            - Convex changed: ${{ needs.detect-changes.outputs.convex }}
 
             ---
             Auto-generated from tag `${{ github.ref_name }}`
