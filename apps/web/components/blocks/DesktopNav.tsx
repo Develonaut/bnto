@@ -1,30 +1,18 @@
 /**
- * Desktop navigation links — page buttons + Explore link.
+ * Desktop navigation links — Explore dropdown + Editor button.
  *
- * Order: [New Recipe (flagged)] | Explore | Pricing | FAQ
+ * Order: [Explore dropdown] | [Editor (beta)]
  * Hidden below the `lg` breakpoint via the parent's `hidden lg:flex`.
  */
 
+import { RecipesMenu } from "./RecipesMenu";
 import { NewRecipeNavButton } from "./NewRecipeNavButton";
-import { NavButton } from "./NavButton";
-import { PAGE_LINKS } from "./nav";
 
 export function DesktopNav() {
   return (
     <div className="hidden items-center gap-2 lg:flex">
+      <RecipesMenu />
       <NewRecipeNavButton />
-      <NavButton href="/explore" data-testid="nav-link-explore">
-        Explore
-      </NavButton>
-      {PAGE_LINKS.map((link) => (
-        <NavButton
-          key={link.href}
-          href={link.href}
-          data-testid={`nav-link-${link.href.replace("/", "")}`}
-        >
-          {link.label}
-        </NavButton>
-      ))}
     </div>
   );
 }

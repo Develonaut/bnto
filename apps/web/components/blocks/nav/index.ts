@@ -1,9 +1,6 @@
 /**
- * Navigation data — recipe links and page links for navbar components.
+ * Navigation data — recipe links for navbar components.
  */
 
-export { RECIPES } from "./recipeLinks";
+export { RECIPES, FEATURED_RECIPES } from "./recipeLinks";
 export type { RecipeLink, RecipeCategory } from "./recipeLinks";
-
-export { PAGE_LINKS } from "./pageLinks";
-export type { PageLink } from "./pageLinks";

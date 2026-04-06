@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * "Create" nav button with Beta badge.
+ * "Editor" nav button with Beta badge.
  *
  * Links to the recipe editor at /editor.
  */
@@ -12,7 +12,7 @@ import { NavButton } from "./NavButton";
 export function NewRecipeNavButton() {
   return (
     <NavButton href="/editor">
-      Create <Badge variant="secondary">Beta</Badge>
+      Editor <Badge variant="secondary">Beta</Badge>
     </NavButton>
   );
 }

@@ -1,24 +1,22 @@
-import { Button, GithubIcon, ToolbarGroup } from "@bnto/ui";
+import { Button, ToolbarGroup } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/links";
 import { MobileNav } from "./MobileNav";
 import { NavThemeMenu } from "./NavThemeMenu";
 
-/** Right-side navbar actions — mobile nav, GitHub, theme toggle. */
+/** Right-side navbar actions — mobile nav, Get Started CTA, theme toggle. */
 export function NavbarActions() {
   return (
     <ToolbarGroup className="min-w-0 flex-1 justify-end gap-2">
       <MobileNav />
       <Button
-        variant="outline"
-        size="icon"
+        variant="primary"
         elevation="sm"
         href={GITHUB_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="hidden lg:inline-flex"
       >
-        <GithubIcon />
-        <span className="sr-only">GitHub</span>
+        Get started
       </Button>
       <NavThemeMenu />
     </ToolbarGroup>

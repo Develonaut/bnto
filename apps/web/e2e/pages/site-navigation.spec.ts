@@ -36,25 +36,24 @@ test.describe("Site navigation — desktop @browser", () => {
     });
   }
 
-  test("navbar: Explore link navigates to explore page and recipe", async ({ page }) => {
+  test("navbar: Explore dropdown opens and recipe link navigates", async ({ page }) => {
     await page.goto("/");
 
-    // Click Explore nav link — navigates to /explore
-    await page.getByTestId("nav-link-explore").click();
-    await expect(page).toHaveURL("/explore");
+    // Open Explore dropdown
+    await page.getByTestId("explore-button").click();
+    await expect(page.getByTestId("explore-dropdown")).toBeVisible();
 
-    // Click a recipe card to navigate to its tool page
-    const firstRecipeLink = page.locator('a[href="/compress-images"]').first();
-    await expect(firstRecipeLink).toBeVisible();
-    await firstRecipeLink.click();
+    // Click a recipe link inside the dropdown
+    await page.getByTestId("explore-link-compress-images").click();
     await expect(page).toHaveURL("/compress-images");
   });
 
-  test("navbar: FAQ link navigates correctly", async ({ page }) => {
+  test("footer: FAQ link navigates correctly", async ({ page }) => {
     await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-    // Navigate to FAQ via navbar
-    await page.getByTestId("nav-link-faq").click();
+    // Navigate to FAQ via footer
+    await page.getByTestId("footer-link-faq").click();
     await expect(page).toHaveURL("/faq");
 
     // Navigate home via logo
@@ -70,6 +69,7 @@ test.describe("Site navigation — desktop @browser", () => {
     await expect(page.getByTestId("footer-link-compress-images")).toBeVisible();
     await expect(page.getByTestId("footer-link-clean-csv")).toBeVisible();
     await expect(page.getByTestId("footer-link-privacy")).toBeVisible();
+    await expect(page.getByTestId("footer-link-faq")).toBeVisible();
 
     // Navigate via footer link
     await page.getByTestId("footer-link-privacy").click();
@@ -123,15 +123,12 @@ test.describe("Site navigation — mobile @browser", () => {
     await expect(page).toHaveURL("/explore");
   });
 
-  test("mobile menu: FAQ link navigates", async ({ page }) => {
+  test("footer: FAQ link navigates on mobile", async ({ page }) => {
     await page.goto("/");
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-    // Open mobile menu via hamburger button
-    await page.getByTestId("mobile-menu-button").click();
-    await expect(page.getByTestId("mobile-nav-dialog")).toBeVisible();
-
-    // Navigate to FAQ via mobile menu
-    await page.getByTestId("mobile-link-faq").click();
+    // Navigate to FAQ via footer (FAQ removed from mobile menu, lives in footer)
+    await page.getByTestId("footer-link-faq").click();
     await expect(page).toHaveURL("/faq");
   });
 

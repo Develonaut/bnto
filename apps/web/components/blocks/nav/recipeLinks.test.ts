@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { RECIPES } from "./recipeLinks";
+import { RECIPES, FEATURED_RECIPES } from "./recipeLinks";
 
 describe("RECIPES (buildRecipeCategories)", () => {
   it("returns an array of categories", () => {
@@ -39,5 +39,44 @@ describe("RECIPES (buildRecipeCategories)", () => {
   it("does not contain non-browser recipes like download-video", () => {
     const allUrls = RECIPES.flatMap((c) => c.links.map((l) => l.url));
     expect(allUrls).not.toContain("/download-video");
+  });
+});
+
+describe("FEATURED_RECIPES", () => {
+  it("is a strict subset of RECIPES", () => {
+    const allUrls = new Set(RECIPES.flatMap((c) => c.links.map((l) => l.url)));
+    const featuredUrls = FEATURED_RECIPES.flatMap((c) => c.links.map((l) => l.url));
+    for (const url of featuredUrls) {
+      expect(allUrls.has(url)).toBe(true);
+    }
+  });
+
+  it("contains exactly 9 featured recipes", () => {
+    const count = FEATURED_RECIPES.reduce((sum, cat) => sum + cat.links.length, 0);
+    expect(count).toBe(9);
+  });
+
+  it("preserves category order: Image, Data, File", () => {
+    const titles = FEATURED_RECIPES.map((c) => c.title);
+    expect(titles).toEqual(["Image", "Data", "File"]);
+  });
+
+  it("features the right recipes per category", () => {
+    const byCategory = Object.fromEntries(
+      FEATURED_RECIPES.map((c) => [c.title, c.links.map((l) => l.url)]),
+    );
+    expect(byCategory["Image"]).toEqual(
+      expect.arrayContaining([
+        "/compress-images",
+        "/resize-images",
+        "/convert-image-format",
+        "/optimize-images-for-web",
+        "/watermark-images",
+      ]),
+    );
+    expect(byCategory["Data"]).toEqual(
+      expect.arrayContaining(["/clean-csv", "/csv-to-json", "/merge-csv"]),
+    );
+    expect(byCategory["File"]).toEqual(expect.arrayContaining(["/rename-files"]));
   });
 });
