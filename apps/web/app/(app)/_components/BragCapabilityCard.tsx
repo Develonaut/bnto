@@ -22,14 +22,18 @@ const CAPABILITIES: Capability[] = [
   {
     icon: ShieldCheckIcon,
     variant: "secondary",
-    label: "Runs on your machine. Files never leave your device",
+    label: "Your kitchen, your rules. Files never leave your machine.",
   },
-  { icon: RepeatIcon, variant: "accent", label: "Portable .bnto.json recipes. Run anywhere" },
-  { icon: GlobeIcon, variant: "success", label: "Build a node for anything. Chain into recipes" },
+  {
+    icon: RepeatIcon,
+    variant: "accent",
+    label: "Portable .bnto.json recipes. Pack once, run anywhere.",
+  },
+  { icon: GlobeIcon, variant: "success", label: "One node, one job. Chain them into anything." },
   {
     icon: CheckIcon,
     variant: "primary",
-    label: "Free forever. Open source, MIT licensed",
+    label: "Open kitchen. MIT licensed. Always free.",
   },
 ];
 

@@ -8,15 +8,13 @@ export function HowItWorksSection() {
       <div className="grid items-center gap-12 lg:grid-cols-[2fr_3fr] lg:gap-20">
         <Stack gap="md">
           <Text size="sm" mono color="muted" className="uppercase tracking-wider">
-            How it works
+            What&apos;s in the box
           </Text>
           <Heading level={2} size="xl" className="whitespace-pre-line">
-            {"Nodes are compartments.\nRecipes are the box."}
+            {"Pick your fillings.\nThe recipe packs the box."}
           </Heading>
           <Text color="muted" leading="snug">
-            Each node encapsulates one capability: compress an image, rename a file, clean a CSV,
-            download a video. Chain nodes into recipes that automate your workflow. Recipes are
-            portable .bnto.json files that run everywhere: CLI, browser, desktop.
+            One node, one job. Chain them together, run them anywhere.
           </Text>
         </Stack>
         <BragLayout />

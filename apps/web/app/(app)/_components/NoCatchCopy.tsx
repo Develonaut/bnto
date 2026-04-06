@@ -6,15 +6,14 @@ export function NoCatchCopy() {
   return (
     <Stack gap="md">
       <Text size="sm" mono color="muted" className="uppercase tracking-wider">
-        No catch
+        No mystery meat
       </Text>
       <Heading level={2} size="xl" className="whitespace-pre-line">
-        {"Free recipes that stay free.\nOpen source you can verify."}
+        {"No hidden ingredients.\nOpen source you can taste-test."}
       </Heading>
       <Text color="muted" leading="snug">
-        No signup. No watermarks. No daily caps. The engine runs on your machine, so it costs
-        nothing to operate. MIT licensed. Inspect the source, fork it, contribute. Build nodes for
-        anything you want to automate.
+        No signup. No watermarks. No daily caps. Your kitchen, your rules. MIT licensed. Peek behind
+        the counter anytime.
       </Text>
       <div className="pt-2">
         <Button

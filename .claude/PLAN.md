@@ -784,6 +784,15 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 **Priority: Medium.** `bnto migrate` CLI command for breaking changes to `.bnto.json` node parameters (e.g., `compression`→`quality`). Versioned migration system: detect version, apply sequential transforms, report changes. The `version` field already exists in `Definition`.
 
+### @bnto/i18n: Interpolation + Raw Text Migration
+
+**Priority: Low.** Add `{{variable}}` interpolation support to `t()` so dynamic values (recipe counts, etc.) can live in `en.json` instead of template literals in components. Then migrate all hardcoded `<Text>` strings in landing page components to `t()` calls.
+
+- [ ] `packages/@bnto/i18n` — Add optional `vars` parameter to `t()`: `t(key, { count: 15 })` replaces `{{count}}` in the resolved string
+- [ ] `packages/@bnto/i18n` — Unit tests for interpolation (single var, multiple vars, missing var, no vars)
+- [ ] `apps/web` — Migrate hardcoded strings in `HowItWorksSection`, `NoCatchCopy`, `BragCapabilityCard`, `HeroPitchPoints` to `t()` calls
+- [ ] `packages/@bnto/i18n` — Move dynamic recipe count strings to `en.json` with `{{count}}` placeholders
+
 ### @bnto/ui: `<SpringIn>` Entrance Animation Component
 
 **Priority: Medium. Enabler for homepage polish — should land before or alongside Piece 3 (hero animations).**
@@ -839,11 +848,11 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 1 — Copy polish (text-only, no component changes):**
 
-- [ ] Revise hero subheading — one sentence, lean into bento metaphor ("15 recipes included. Or pack your own.")
-- [ ] Revise section divider labels — "What's in the box", "Open kitchen"
-- [ ] Revise pitch points — add personality ("Pick your ingredients", "Your kitchen, your rules", "Open kitchen")
-- [ ] Revise footer tagline — "Pack. Run. Done."
-- [ ] Revise "How it works" body — shorter, punchier ("One node, one job. Chain them together, run them anywhere.")
+- [x] Revise hero subheading — one sentence, lean into bento metaphor ("15 recipes included. Or pack your own.")
+- [x] Revise section divider labels — "What's in the box", "Open kitchen"
+- [x] Revise pitch points — add personality ("Pick your ingredients", "Your kitchen, your rules", "Open kitchen")
+- [x] Revise footer tagline — "Pack. Run. Done."
+- [x] Revise "How it works" body — shorter, punchier ("One node, one job. Chain them together, run them anywhere.")
 
 **Piece 2 — Nav restructure:**
 

@@ -20,10 +20,10 @@ export default function Home() {
         </Stack>
       </div>
 
-      <Divider label="Composable by design." />
+      <Divider label="What's in the box" />
       <HowItWorksSection />
 
-      <Divider label="Open source." />
+      <Divider label="Open kitchen" />
       <NoCatchSection />
     </AppShellContent>
   );
