@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "bnto"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bnto-core",
  "bnto-engine",
@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -143,7 +143,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-csv"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bnto-core",
  "csv",
@@ -158,7 +158,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-engine"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "base64",
  "bnto-core",
@@ -171,7 +171,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-file"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bnto-core",
  "js-sys",
@@ -186,7 +186,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-image"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "base64",
  "bnto-core",
@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-video"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bnto-core",
  "serde_json",
