@@ -784,9 +784,137 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 **Priority: Medium.** `bnto migrate` CLI command for breaking changes to `.bnto.json` node parameters (e.g., `compression`→`quality`). Versioned migration system: detect version, apply sequential transforms, report changes. The `version` field already exists in `Definition`.
 
-### Triage: Redesign homepage as developer-facing landing page
+### @bnto/ui: `<SpringIn>` Entrance Animation Component
 
-**Priority: Medium.** Rework bnto.io homepage from recipe gallery into developer-facing landing page (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, `cargo install bnto`. Recipe pages stay as SEO showcase.
+**Priority: Medium. Enabler for homepage polish — should land before or alongside Piece 3 (hero animations).**
+
+The springable surface system (grounded → raised with bouncy spring) is the most satisfying animation in Motorways, but it's currently only available as a **state toggle** on `<Card loading>` / `<Surface grounded>`. You have to manage a boolean to trigger it. There's no way to use it as a one-shot entrance animation composable with `<Stagger>`.
+
+`<SpringIn>` would bridge this gap: a keyframe-based entrance animation where elements start grounded (flat, muted, no elevation) and spring up to their natural elevated state on mount — the "building materializing on the map" feeling, usable anywhere `<ScaleIn>` or `<SlideUp>` is used today.
+
+**The gap:**
+
+- `ScaleIn` = scale + opacity (2D, no depth change)
+- `SlideUp` = translate + opacity (2D, no depth change)
+- Springable surfaces = grounded → raised (3D elevation, but requires state toggle)
+- `SpringIn` (new) = grounded → raised as a one-shot keyframe entrance, composable with `Stagger`
+
+**Implementation approach:**
+
+- [ ] `packages/ui` — Create `@keyframes spring-in` in `animations.css`: starts with `translate(0, 0)` + muted colors + collapsed walls, ends at elevated rest position. Uses `--ease-spring-pressable` (the bounciest 3-oscillation curve)
+- [ ] `packages/ui` — Create `SpringIn` component in `packages/ui/src/animation/Animate/SpringIn.tsx` following the same pattern as `ScaleIn` (forwardRef, `asChild`, `index`, `easing`, `buildStyle`)
+- [ ] `packages/ui` — Add `spring` prop: `"bouncy" | "bouncier" | "bounciest"` (default `"bounciest"`) to control oscillation intensity
+- [ ] `packages/ui` — Add `elevation` prop: `"sm" | "md" | "lg"` (default `"md"`) to set the target height the element springs up to
+- [ ] `packages/ui` — Ensure composability with `<Stagger>` via `--stagger-index` delay
+- [ ] `packages/ui` — Respect `motion-safe:` prefix (reduced motion shows element at final state, no animation)
+- [ ] `packages/ui` — Add to animation component barrel export and update Motorway showcase page
+- [ ] `packages/ui` — Unit tests: renders, respects asChild, stagger index sets delay, reduced motion applies
+- [ ] `apps/web` — Add `SpringIn` demo to Motorway animation showcase tab
+
+**Usage vision:**
+
+```tsx
+// Cards spring up from the ground one by one
+<Stagger interval={80}>
+  {recipes.map((r, i) => (
+    <SpringIn key={r.id} index={i} elevation="md">
+      <Card elevation="md">{r.name}</Card>
+    </SpringIn>
+  ))}
+</Stagger>
+
+// Hero element springs up dramatically
+<SpringIn spring="bounciest" elevation="lg">
+  <Card elevation="lg">Hero content</Card>
+</SpringIn>
+```
+
+**Key decision:** The `<SpringIn>` component wraps the child (like `ScaleIn` wraps). It does NOT need the child to be a `<Surface>` — it applies its own keyframe animation. But when wrapping a `<Card>`, the card's elevation should match the `SpringIn` elevation for visual consistency (the card's resting shadow matches where the spring animation lands).
+
+---
+
+### Homepage & Site Polish — Motorways Standard
+
+**Priority: Medium.** Rework bnto.io homepage from recipe gallery into developer-facing landing page (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, `cargo install bnto`. Recipe pages stay as SEO showcase. Bring the landing page and site chrome up to the Motorways design system standard. Incremental — each piece is a standalone PR. The Motorways animation system (springs, stagger, surfaces, elevation) carries the visual identity. Cute food icons are a nice-to-have, not a blocker. Strategy docs: [homepage-sprint-plan.md](strategy/homepage-sprint-plan.md), [brand-messaging-audit.md](strategy/brand-messaging-audit.md), [landing-page-inspiration.md](strategy/landing-page-inspiration.md).
+
+**Piece 1 — Copy polish (text-only, no component changes):**
+
+- [ ] Revise hero subheading — one sentence, lean into bento metaphor ("15 recipes included. Or pack your own.")
+- [ ] Revise section divider labels — "What's in the box", "Open kitchen"
+- [ ] Revise pitch points — add personality ("Pick your ingredients", "Your kitchen, your rules", "Open kitchen")
+- [ ] Revise footer tagline — "Pack. Run. Done."
+- [ ] Revise "How it works" body — shorter, punchier ("One node, one job. Chain them together, run them anywhere.")
+
+**Piece 2 — Nav restructure:**
+
+- [ ] Rename "Create (beta)" → "Editor (beta)" in nav
+- [ ] Remove FAQ from top nav (keep in footer)
+- [ ] Build `ExploreDropdown` mega-menu — recipes grouped by category, sourced from `core.registry`
+- [ ] Add "Get started" CTA button + GitHub star link
+- [ ] Relocate theme toggle out of nav (footer or remove)
+
+**Piece 3 — Hero section animations:**
+
+- [ ] `SlideUp` on hero headline, `FadeIn` with delay on sub-headline
+- [ ] `ScaleIn` with `spring-bouncy` on CTA buttons (staggered)
+- [ ] `ScaleIn` on terminal mockup card
+- [ ] `Stagger` + `SlideUp` on pitch points
+- [ ] Scroll-trigger utility — `IntersectionObserver` adding animation classes on viewport entry
+
+**Piece 4 — Explore page spring animations:**
+
+- [ ] Wrap recipe cards in `Stagger` + `ScaleIn` with stagger index
+- [ ] Spring selection animation on category filter tabs
+- [ ] `FadeIn` on page header
+
+**Piece 5 — "What's in the box" section redesign:**
+
+- [ ] Three Motorways surface cards: Pick → Pack → Run, with `ScaleIn` stagger
+- [ ] Connecting flow indicators between cards
+- [ ] Section header: "What's in the box" + "Nodes are compartments. Recipes are the box."
+
+**Piece 6 — Recipe showcase section ("House Specials"):**
+
+- [ ] `RecipeShowcase` section — curated card grid, grouped by category with warm headers
+- [ ] `Stagger` + `ScaleIn` cascade per category group on scroll
+- [ ] "Browse all recipes →" link to `/explore`
+
+**Piece 7 — "Open Kitchen" section polish:**
+
+- [ ] Update copy ("No mystery meat", warmer messaging)
+- [ ] Wrap anti-pattern strikethrough list in `<Card>` with elevation
+- [ ] `SlideUp` stagger on strikethrough items, `ScaleIn` on GitHub CTA
+
+**Piece 8 — "Build Your Own" section (new):**
+
+- [ ] New section between "Open Kitchen" and Footer
+- [ ] `.bnto.json` code preview in a `<Card>` with syntax highlighting
+- [ ] "Open Editor (beta) →" CTA
+- [ ] `ScaleIn` on code card, `SlideUp` on copy
+
+**Piece 9 — Footer refresh:**
+
+- [ ] Update tagline to "Pack. Run. Done."
+- [ ] Add FAQ + Docs links to footer
+- [ ] Visual polish (spacing, separator, warmth)
+
+**Piece 10 — Recipe page animations:**
+
+- [ ] `SlideUp` on recipe page header, `ScaleIn` on file drop zone
+- [ ] `FadeIn` on config section, `SlideUp` stagger on feature tags
+
+**Piece 11 — Mascots & illustrations (Catalyst Labs kawaii sushi, purchase per-piece):**
+
+- [ ] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon" ~$6) — integrate into hero section (Piece 3)
+- [ ] Purchase 3 step characters (chopstick sushi, square bento, action pose ~$6 each) — integrate into "What's in the box" cards (Piece 5)
+- [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers (Piece 6)
+- [ ] Convert PNGs to SVG components, size variants (hero 200-300px, accent 100-150px, icon 40-60px, nav 24-32px)
+- [ ] Recolor to harmonize with bnto palette (terracotta, teal, golden on cream) if needed
+
+**Piece 12 — FAQ page polish (low priority):**
+
+- [ ] `ScaleIn` entrance on FAQ accordion items
+- [ ] Ensure discoverable from footer after nav removal
 
 ### Triage: Secret/environment variable management for recipes
 
@@ -815,6 +943,12 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 ### Chore: Upgrade Convex 1.31.7 → 1.33.1
 
 **Priority: Low.** Minor Convex JS SDK update. Bump in `packages/@bnto/backend/`, run `task check`.
+
+### Triage: Smart release pipeline with change detection
+
+**Priority: Triage.** Add a `detect-changes` job to `release.yml` that diffs the current tag against the previous tag and sets output flags (`engine`/`web`/`convex`). Use these to conditionally skip irrelevant jobs — engine-only releases skip Vercel/E2E/Lighthouse, web-only releases skip crates.io publish. Cuts engine-only release time from ~8min to ~2min.
+
+`.github/workflows/release.yml`
 
 ---
 
