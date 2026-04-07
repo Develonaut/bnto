@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import {
   RecipeCard,
   RecipeCardCategory,
@@ -11,9 +12,17 @@ import {
 import { getBntoIcon } from "@/lib/bntoIcons";
 import type { BntoEntry } from "@/lib/bntoRegistry";
 
-export function ShowcaseCard({ entry }: { entry: BntoEntry }) {
+import { hashDelay } from "./hashDelay";
+
+export function ShowcaseCard({ entry, dormant }: { entry: BntoEntry; dormant?: boolean }) {
   return (
-    <RecipeCard href={`/${entry.slug}`} className="w-80">
+    <RecipeCard
+      href={`/${entry.slug}`}
+      className="w-80"
+      elevation="lg"
+      dormant={dormant}
+      style={{ "--spring-delay": `${hashDelay(entry.slug)}ms` } as CSSProperties}
+    >
       <RecipeCardHeader>
         <RecipeCardIcon icon={getBntoIcon(entry.slug)} />
         <RecipeCardCategory>{entry.features[0]}</RecipeCardCategory>

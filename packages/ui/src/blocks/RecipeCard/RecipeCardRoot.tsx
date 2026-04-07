@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import type { CSSProperties, PropsWithChildren } from "react";
 
 import Link from "next/link";
 
@@ -7,7 +7,7 @@ import { BlocksIcon } from "../../icons";
 import { Row } from "../../layout/Row";
 import { Stack } from "../../layout/Stack";
 import { Card } from "../../surface/Card";
-import type { SurfaceVariant } from "../../surface/Surface";
+import type { SurfaceElevation, SurfaceVariant } from "../../surface/Surface";
 import { Badge } from "../../typography/Badge";
 import { Heading } from "../../typography/Heading";
 import { IconBadge } from "../../typography/IconBadge";
@@ -22,8 +22,11 @@ type RecipeCardRootProps = PropsWithChildren<{
   /** Click handler — renders as a button when no href is provided. */
   onClick?: () => void;
   className?: string;
+  style?: CSSProperties;
   /** Color variant forwarded to Card surface. */
   color?: SurfaceVariant;
+  /** Shadow elevation forwarded to Card surface. */
+  elevation?: SurfaceElevation;
   /** Dormant state — card springs up when dormancy clears. */
   dormant?: boolean;
   /** Compact horizontal row layout for lists/dialogs. */
@@ -36,7 +39,9 @@ export function RecipeCardRoot({
   href,
   onClick,
   className,
+  style,
   color,
+  elevation,
   dormant,
   compact,
   disabled,
@@ -48,7 +53,13 @@ export function RecipeCardRoot({
 
   if (disabled) {
     return (
-      <Card dormant={dormant} color={color} className={cn(baseCn, "cursor-default", className)}>
+      <Card
+        dormant={dormant}
+        color={color}
+        elevation={elevation}
+        style={style}
+        className={cn(baseCn, "cursor-default", className)}
+      >
         <div className="opacity-50 grayscale">{children}</div>
       </Card>
     );
@@ -58,7 +69,14 @@ export function RecipeCardRoot({
 
   if (href) {
     return (
-      <Card asChild dormant={dormant} color={color} className={cardCn}>
+      <Card
+        asChild
+        dormant={dormant}
+        color={color}
+        elevation={elevation}
+        style={style}
+        className={cardCn}
+      >
         <Link href={href} className="group text-left">
           {children}
         </Link>
@@ -67,7 +85,14 @@ export function RecipeCardRoot({
   }
 
   return (
-    <Card asChild dormant={dormant} color={color} className={cardCn}>
+    <Card
+      asChild
+      dormant={dormant}
+      color={color}
+      elevation={elevation}
+      style={style}
+      className={cardCn}
+    >
       <button type="button" onClick={onClick} className="group text-left">
         {children}
       </button>

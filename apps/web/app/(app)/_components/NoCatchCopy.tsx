@@ -1,4 +1,5 @@
-import { Button, GithubIcon, Heading, Stack, Text } from "@bnto/ui";
+import { ArrowRight } from "lucide-react";
+import { Button, Heading, Stack, Text } from "@bnto/ui";
 import { GITHUB_URL } from "@/lib/links";
 
 /** "No catch" copy block — heading, description, and GitHub CTA. */
@@ -17,14 +18,13 @@ export function NoCatchCopy() {
       </Text>
       <div className="pt-2">
         <Button
-          variant="outline"
-          href={GITHUB_URL}
+          variant="secondary"
+          href={`${GITHUB_URL}/tree/main/engine`}
           target="_blank"
           rel="noopener noreferrer"
-          elevation="sm"
         >
-          <GithubIcon className="size-4" />
-          View on GitHub
+          Browse the engine source
+          <ArrowRight className="size-4" />
         </Button>
       </div>
     </Stack>

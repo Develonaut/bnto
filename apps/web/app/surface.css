@@ -277,18 +277,25 @@
  *   --pressable-ease  — transition easing (default ease-out)
  * ────────────────────────────────────────────────────────────────── */
 
-/* Shared foundation — spring transition (resting transform inherited from .surface) */
+/* Shared foundation — spring transition (resting transform inherited from .surface)
+ * --spring-delay: optional per-element delay for staggered dormant reveals. */
 :is(.springable, .pressable) {
   will-change: transform;
-  transition: transform var(--pressable-dur, 150ms)
-    var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+  transition:
+    transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    background-color var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    color var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    border-color var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+  transition-delay: var(--spring-delay, 0ms);
 }
 
 :is(.springable, .pressable)::before,
 :is(.springable, .pressable)::after {
   transition:
     transform var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
+    background var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1)),
     opacity var(--pressable-dur, 150ms) var(--pressable-ease, cubic-bezier(0, 0, 0.58, 1));
+  transition-delay: var(--spring-delay, 0ms);
 }
 
 /* Dormant — flush with ground, muted appearance.

@@ -1,4 +1,4 @@
-import { CheckIcon, IconBadge, Row, SlideUp, Stack } from "@bnto/ui";
+import { CheckIcon, FadeIn, IconBadge, Row, Stack } from "@bnto/ui";
 
 const ANTI_PATTERNS = [
   "Signup required",
@@ -9,11 +9,26 @@ const ANTI_PATTERNS = [
   "\u201CUpgrade to continue\u201D",
 ];
 
-export function TrustAntiPatterns() {
+interface TrustAntiPatternsProps {
+  /** Extra delay in ms before the stagger cascade starts (e.g. to wait for a dormant card spring). */
+  baseDelay?: number;
+}
+
+export function TrustAntiPatterns({ baseDelay = 0 }: TrustAntiPatternsProps) {
   return (
     <Stack className="gap-3">
       {ANTI_PATTERNS.map((item, i) => (
-        <SlideUp key={item} index={i} distance={8} easing="spring-bouncy">
+        <FadeIn
+          key={item}
+          index={i}
+          style={
+            baseDelay > 0
+              ? {
+                  animationDelay: `calc(${baseDelay}ms + var(--stagger-index, 0) * var(--stagger-interval, 60ms))`,
+                }
+              : undefined
+          }
+        >
           <Row className="gap-3">
             <IconBadge variant="destructive" size="sm">
               <CheckIcon className="size-3.5" />
@@ -22,7 +37,7 @@ export function TrustAntiPatterns() {
               {item}
             </span>
           </Row>
-        </SlideUp>
+        </FadeIn>
       ))}
     </Stack>
   );

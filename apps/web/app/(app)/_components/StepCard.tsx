@@ -30,37 +30,39 @@ export function StepCard({
 
   return (
     <Card ref={ref} dormant={!inView} elevation="lg" className={`p-6 ${className ?? ""}`}>
-      {inView ? (
-        <Stack gap="sm" className="items-center text-center">
-          <div className="flex h-[200px] w-full items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element -- SVG mascot, next/image not needed */}
-            <img
-              src={mascot}
-              alt=""
-              className="w-auto shrink-0"
-              style={{ maxHeight: mascotHeight }}
-              aria-hidden
-            />
-          </div>
-          <Text size="xs" mono color="muted" className="uppercase tracking-wider">
-            Step {step}
-          </Text>
-          <Heading level={3} size="sm">
-            {title}
-          </Heading>
-          <Text color="muted" size="sm" leading="snug">
-            {description}
-          </Text>
-        </Stack>
-      ) : (
-        <Stack gap="sm" className="items-center">
-          <Skeleton className="size-[200px] rounded-full" />
-          <Skeleton className="h-3 w-12 rounded" />
-          <Skeleton className="h-5 w-2/3 rounded" />
-          <Skeleton className="h-4 w-full rounded" />
-          <Skeleton className="h-4 w-4/5 rounded" />
-        </Stack>
-      )}
+      <Stack gap="sm" className="h-[310px] items-center text-center">
+        {inView ? (
+          <>
+            <div className="flex h-[200px] w-full items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element -- SVG mascot, next/image not needed */}
+              <img
+                src={mascot}
+                alt=""
+                className="w-auto shrink-0"
+                style={{ maxHeight: mascotHeight }}
+                aria-hidden
+              />
+            </div>
+            <Text size="xs" mono color="muted" className="uppercase tracking-wider">
+              Step {step}
+            </Text>
+            <Heading level={3} size="sm">
+              {title}
+            </Heading>
+            <Text color="muted" size="sm" leading="snug">
+              {description}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Skeleton className="h-[200px] w-[200px] rounded-full" />
+            <Skeleton className="h-4 w-12 rounded" />
+            <Skeleton className="h-6 w-2/3 rounded" />
+            <Skeleton className="h-5 w-full rounded" />
+            <Skeleton className="h-5 w-4/5 rounded" />
+          </>
+        )}
+      </Stack>
     </Card>
   );
 }
