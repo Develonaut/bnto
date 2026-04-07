@@ -15,7 +15,7 @@ export function RecipeShowcase() {
         <FadeIn>
           {/* eslint-disable-next-line @next/next/no-img-element -- SVG mascot, next/image not needed */}
           <img
-            src="/mascots/sushi-friends.svg"
+            src="/mascots/octopus-chef.svg"
             alt=""
             width={280}
             height={280}

@@ -915,10 +915,11 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Piece 11 — Mascots & illustrations (Catalyst Labs kawaii sushi, purchase per-piece):**
 
 - [ ] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon" ~$6) — integrate into hero section (Piece 3)
-- [ ] Purchase 3 step characters (chopstick sushi, square bento, action pose ~$6 each) — integrate into "What's in the box" cards (Piece 5)
+- [x] Purchase 3 step characters — sushi-friends, penguin-chef, sushi-motorbike — integrated into "What's in the box" cards (Piece 5)
+- [x] Purchase octopus-chef — integrated as House Specials mascot (RecipeShowcase header)
 - [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers (Piece 6)
+- [x] Color-correct mascot outlines in Figma, export as SVGs
 - [ ] Convert PNGs to SVG components, size variants (hero 200-300px, accent 100-150px, icon 40-60px, nav 24-32px)
-- [ ] Recolor to harmonize with bnto palette (terracotta, teal, golden on cream) if needed
 
 **Piece 12 — FAQ page polish (low priority):**
 

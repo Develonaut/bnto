@@ -1,19 +1,17 @@
 "use client";
 
-import type { ComponentType } from "react";
-
-import { Card, Heading, IconBadge, Skeleton, Stack, Text } from "@bnto/ui";
+import { Card, Heading, Skeleton, Stack, Text } from "@bnto/ui";
 
 import { useStepInView } from "./useStepInView";
-
-type IconBadgeVariant = "primary" | "secondary" | "accent";
 
 interface StepCardProps {
   step: number;
   title: string;
   description: string;
-  icon: ComponentType<{ className?: string }>;
-  variant: IconBadgeVariant;
+  mascot: string;
+  /** Max height of the mascot image in px. Defaults to 200. */
+  mascotHeight?: number;
+  variant: "primary" | "secondary" | "accent";
   className?: string;
   /** Stagger delay in ms before the card springs in. */
   delay?: number;
@@ -23,8 +21,8 @@ export function StepCard({
   step,
   title,
   description,
-  icon: Icon,
-  variant,
+  mascot,
+  mascotHeight = 200,
   className,
   delay = 0,
 }: StepCardProps) {
@@ -33,10 +31,17 @@ export function StepCard({
   return (
     <Card ref={ref} dormant={!inView} elevation="lg" className={`p-6 ${className ?? ""}`}>
       {inView ? (
-        <Stack gap="sm">
-          <IconBadge variant={variant} size="md" shape="square">
-            <Icon className="size-4" />
-          </IconBadge>
+        <Stack gap="sm" className="items-center text-center">
+          <div className="flex h-[200px] w-full items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element -- SVG mascot, next/image not needed */}
+            <img
+              src={mascot}
+              alt=""
+              className="w-auto shrink-0"
+              style={{ maxHeight: mascotHeight }}
+              aria-hidden
+            />
+          </div>
           <Text size="xs" mono color="muted" className="uppercase tracking-wider">
             Step {step}
           </Text>
@@ -48,8 +53,8 @@ export function StepCard({
           </Text>
         </Stack>
       ) : (
-        <Stack gap="sm">
-          <Skeleton className="size-9 rounded-lg" />
+        <Stack gap="sm" className="items-center">
+          <Skeleton className="size-[200px] rounded-full" />
           <Skeleton className="h-3 w-12 rounded" />
           <Skeleton className="h-5 w-2/3 rounded" />
           <Skeleton className="h-4 w-full rounded" />
