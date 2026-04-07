@@ -885,8 +885,7 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 6 — Recipe showcase section ("House Specials"):**
 
-- [ ] `RecipeShowcase` section — curated card grid, grouped by category with warm headers
-- [ ] `Stagger` + `ScaleIn` cascade per category group on scroll
+- [x] `RecipeShowcase` section — horizontal marquee with RecipeCard compound components, mascot + body text header
 - [ ] "Browse all recipes →" link to `/explore`
 
 **Piece 7 — "Open Kitchen" section polish:**

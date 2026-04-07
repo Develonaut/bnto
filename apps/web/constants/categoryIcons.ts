@@ -3,7 +3,7 @@
  */
 
 import type { LucideIcon } from "@bnto/ui";
-import { BracesIcon, FileIcon, GlobeIcon, ImageIcon, SheetIcon } from "@bnto/ui";
+import { BracesIcon, FileIcon, FileVideoIcon, GlobeIcon, ImageIcon, SheetIcon } from "@bnto/ui";
 
 export const CATEGORY_ICON: Record<string, LucideIcon> = {
   image: ImageIcon,
@@ -11,4 +11,5 @@ export const CATEGORY_ICON: Record<string, LucideIcon> = {
   spreadsheet: SheetIcon,
   data: BracesIcon,
   network: GlobeIcon,
+  video: FileVideoIcon,
 };
