@@ -45,12 +45,12 @@ export function RecipeShowcase() {
 
       {/* Horizontal marquee — two rows, opposite directions */}
       <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
-        <Marquee pauseOnHover className="[--duration:35s] [--gap:1.5rem] [&_a]:h-[240px]">
+        <Marquee pauseOnHover className="[--duration:35s] [--gap:1.5rem] [&_a]:h-[220px]">
           {firstRow.map((entry) => (
             <ShowcaseCard key={entry.slug} entry={entry} />
           ))}
         </Marquee>
-        <Marquee reverse pauseOnHover className="[--duration:35s] [--gap:1.5rem] [&_a]:h-[240px]">
+        <Marquee reverse pauseOnHover className="[--duration:35s] [--gap:1.5rem] [&_a]:h-[220px]">
           {secondRow.map((entry) => (
             <ShowcaseCard key={entry.slug} entry={entry} />
           ))}
