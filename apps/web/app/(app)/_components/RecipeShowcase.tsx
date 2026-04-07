@@ -1,4 +1,5 @@
-import { FadeIn, Heading, SlideUp, Stack, Text } from "@bnto/ui";
+import { ArrowRight } from "lucide-react";
+import { Button, FadeIn, Heading, SlideUp, Stack, Text } from "@bnto/ui";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 
 import { Marquee } from "./Marquee";
@@ -34,6 +35,10 @@ export function RecipeShowcase() {
             <Text color="muted" leading="snug">
               Every recipe runs locally. Your files never leave your machine.
             </Text>
+            <Button variant="secondary" href="/explore" className="self-start">
+              Browse all recipes
+              <ArrowRight className="size-4" />
+            </Button>
           </Stack>
         </SlideUp>
       </div>
