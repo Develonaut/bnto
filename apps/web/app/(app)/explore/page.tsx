@@ -29,9 +29,13 @@ export default function ExplorePage() {
     <>
       <ExploreJsonLd />
       <AppShellContent gap="sm">
-        <ExploreHeader />
+        <div className="flex items-start justify-between gap-4">
+          <ExploreHeader />
+          <Suspense>
+            <ExploreFilters />
+          </Suspense>
+        </div>
         <Suspense>
-          <ExploreFilters />
           <ExploreRecipeGrid />
         </Suspense>
       </AppShellContent>
