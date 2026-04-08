@@ -1,6 +1,8 @@
 "use client";
 
-import { ScaleIn, Surface } from "@bnto/ui";
+import { Surface } from "@bnto/ui";
+
+import { useStepInView } from "@/app/(app)/_components/useStepInView";
 
 import { Terminal } from "./Terminal";
 
@@ -30,11 +32,11 @@ const DEMO_LINES = [
 
 /** Hero terminal — animated CLI demo showing install + run flow. */
 export function HeroTerminal() {
+  const [inView, ref] = useStepInView(0.3);
+
   return (
-    <ScaleIn from={0.95} easing="spring">
-      <Surface elevation="lg" rounded="xl">
-        <Terminal lines={DEMO_LINES} />
-      </Surface>
-    </ScaleIn>
+    <Surface ref={ref} dormant={!inView} elevation="lg" rounded="xl">
+      <Terminal lines={DEMO_LINES} />
+    </Surface>
   );
 }

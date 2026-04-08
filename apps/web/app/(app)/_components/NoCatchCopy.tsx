@@ -9,12 +9,12 @@ export function NoCatchCopy() {
       <Text size="sm" mono color="muted" className="uppercase tracking-wider">
         No mystery meat
       </Text>
-      <Heading level={2} size="xl" className="whitespace-pre-line">
-        {"No hidden ingredients.\nOpen source you can taste-test."}
+      <Heading level={2} size="xl">
+        Open source you can taste-test.
       </Heading>
       <Text color="muted" leading="snug">
-        No signup. No watermarks. No daily caps. Your kitchen, your rules. MIT licensed. Peek behind
-        the counter anytime.
+        No hidden ingredients. No signup. No watermarks. No daily caps. Your kitchen, your rules.
+        MIT licensed. Peek behind the counter anytime.
       </Text>
       <div className="pt-2">
         <Button
