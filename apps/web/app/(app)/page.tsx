@@ -1,5 +1,6 @@
 import { AppShellContent, Divider, Stack } from "@bnto/ui";
 import { HeroInstall } from "@/components/blocks/HeroInstall";
+import { HeroMascot } from "@/components/blocks/HeroMascot";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
 import { HeroTerminal } from "@/components/blocks/HeroTerminal";
 
@@ -18,7 +19,10 @@ export default function Home() {
         <HeroSidebar />
         <Stack className="gap-4">
           <HeroInstall />
-          <HeroTerminal />
+          <div className="relative">
+            <HeroTerminal />
+            <HeroMascot />
+          </div>
         </Stack>
       </div>
 
