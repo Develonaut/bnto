@@ -3,6 +3,7 @@ import { HeroInstall } from "@/components/blocks/HeroInstall";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
 import { HeroTerminal } from "@/components/blocks/HeroTerminal";
 
+import { BuildYourOwnSection } from "./_components/BuildYourOwnSection";
 import { HouseSpecialsSection } from "./_components/HouseSpecialsSection";
 import { NoCatchSection } from "./_components/NoCatchSection";
 import { WhatsInTheBoxSection } from "./_components/WhatsInTheBoxSection";
@@ -26,6 +27,9 @@ export default function Home() {
 
       <Divider label="House specials" />
       <HouseSpecialsSection />
+
+      <Divider label="Build your own" />
+      <BuildYourOwnSection />
 
       <Divider label="Open kitchen" />
       <NoCatchSection />
