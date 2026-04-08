@@ -23,5 +23,20 @@ const SPRING_STYLES: Record<SpringMode, CSSProperties> = {
   } as CSSProperties,
 };
 
-export { SPRING_STYLES };
+/** Entrance-only spring styles for `.springable` (Surface dormant reveals).
+ *  Uses `--spring-dur`/`--spring-ease` so the slow spring timing doesn't
+ *  cascade into child `.pressable` hover transitions. */
+const SPRING_ENTRANCE_STYLES: Record<SpringMode, CSSProperties> = {
+  bouncy: {},
+  bouncier: {
+    "--spring-ease": "var(--ease-spring-bouncier)",
+    "--spring-dur": "400ms",
+  } as CSSProperties,
+  bounciest: {
+    "--spring-ease": "var(--ease-spring-pressable)",
+    "--spring-dur": "550ms",
+  } as CSSProperties,
+};
+
+export { SPRING_STYLES, SPRING_ENTRANCE_STYLES };
 export type { SpringMode };

@@ -4,7 +4,7 @@ import { Slot } from "@radix-ui/react-slot";
 
 import { cn } from "../utils/cn";
 
-import { SPRING_STYLES } from "./Pressable";
+import { SPRING_ENTRANCE_STYLES } from "./Pressable";
 import type { SpringMode } from "./Pressable";
 
 type SurfaceVariant =
@@ -101,7 +101,7 @@ export function Surface({
         border,
         className,
       )}
-      style={resolvedSpring ? { ...SPRING_STYLES[resolvedSpring], ...style } : style}
+      style={resolvedSpring ? { ...SPRING_ENTRANCE_STYLES[resolvedSpring], ...style } : style}
       {...props}
     />
   );
