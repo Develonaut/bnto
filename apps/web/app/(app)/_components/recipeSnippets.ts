@@ -90,11 +90,6 @@ const SHOWCASE_SLUGS = [
   { slug: "compress-images", label: "Compress Images", mascot: "/mascots/salmon-chopstick.svg" },
   { slug: "csv-to-json", label: "CSV to JSON", mascot: "/mascots/sushi-onigiri.svg" },
   { slug: "rename-files", label: "Rename Files", mascot: "/mascots/sushi-shoyu.svg" },
-  {
-    slug: "optimize-images-for-web",
-    label: "Optimize for Web",
-    mascot: "/mascots/sushi-shoyu-alt.svg",
-  },
 ] as const;
 
 export const RECIPE_SNIPPETS: RecipeSnippet[] = SHOWCASE_SLUGS.map(({ slug, label, mascot }) => ({

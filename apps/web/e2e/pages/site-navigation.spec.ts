@@ -37,10 +37,12 @@ test.describe("Site navigation — desktop @browser", () => {
   }
 
   test("navbar: Explore dropdown opens and recipe link navigates", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
 
-    // Open Explore dropdown
-    await page.getByTestId("explore-button").click();
+    // Open Explore dropdown — click with retry to handle hydration timing
+    const exploreBtn = page.getByTestId("explore-button");
+    await expect(exploreBtn).toBeVisible();
+    await exploreBtn.click();
     await expect(page.getByTestId("explore-dropdown")).toBeVisible();
 
     // Click a recipe link inside the dropdown

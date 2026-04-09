@@ -856,25 +856,25 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 2 — Nav restructure:**
 
-- [ ] Rename "Create (beta)" → "Editor (beta)" in nav
-- [ ] Remove FAQ from top nav (keep in footer)
-- [ ] Build `ExploreDropdown` mega-menu — recipes grouped by category, sourced from `core.registry`
-- [ ] Add "Get started" CTA button + GitHub star link
-- [ ] Relocate theme toggle out of nav (footer or remove)
+- [x] Rename "Create (beta)" → "Editor (beta)" in nav
+- [x] Remove FAQ from top nav (keep in footer)
+- [x] Build `ExploreDropdown` mega-menu — recipes grouped by category, sourced from `core.registry`
+- [x] Add "Get started" CTA button + GitHub star link
+- [x] Relocate theme toggle out of nav (footer or remove)
 
 **Piece 3 — Hero section animations:**
 
-- [ ] `SlideUp` on hero headline, `FadeIn` with delay on sub-headline
-- [ ] `ScaleIn` with `spring-bouncy` on CTA buttons (staggered)
-- [ ] `ScaleIn` on terminal mockup card
-- [ ] `Stagger` + `SlideUp` on pitch points
-- [ ] Scroll-trigger utility — `IntersectionObserver` adding animation classes on viewport entry
+- [x] `SlideUp` on hero headline, `FadeIn` with delay on sub-headline
+- [x] `ScaleIn` with `spring-bouncy` on CTA buttons (staggered)
+- [x] `ScaleIn` on terminal mockup card
+- [x] `Stagger` + `SlideUp` on pitch points
+- [x] Scroll-trigger utility — `IntersectionObserver` adding animation classes on viewport entry (`InView` component)
 
 **Piece 4 — Explore page spring animations:**
 
-- [ ] Wrap recipe cards in `Stagger` + `ScaleIn` with stagger index
-- [ ] Spring selection animation on category filter tabs
-- [ ] `FadeIn` on page header
+- [x] Wrap recipe cards in `Stagger` + `ScaleIn` with stagger index
+- [x] Spring selection animation on category filter (Select dropdown)
+- [x] `FadeIn` on page header
 
 **Piece 5 — "What's in the box" section redesign:**
 
@@ -886,26 +886,27 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Piece 6 — Recipe showcase section ("House Specials"):**
 
 - [x] `RecipeShowcase` section — horizontal marquee with RecipeCard compound components, mascot + body text header
-- [ ] "Browse all recipes →" link to `/explore`
+- [x] "Browse all recipes →" link to `/explore`
 
 **Piece 7 — "Open Kitchen" section polish:**
 
-- [ ] Update copy ("No mystery meat", warmer messaging)
-- [ ] Wrap anti-pattern strikethrough list in `<Card>` with elevation
-- [ ] `SlideUp` stagger on strikethrough items, `ScaleIn` on GitHub CTA
+- [x] Update copy ("No mystery meat" → "No hidden ingredients", warmer messaging)
+- [x] `SlideUp` stagger on items, `ScaleIn` on GitHub CTA
+- [ ] Wrap anti-pattern strikethrough list in `<Card>` with elevation (deferred — current layout works well)
 
 **Piece 8 — "Build Your Own" section (new):**
 
-- [ ] New section between "Open Kitchen" and Footer
-- [ ] `.bnto.json` code preview in a `<Card>` with syntax highlighting
-- [ ] "Open Editor (beta) →" CTA
-- [ ] `ScaleIn` on code card, `SlideUp` on copy
+- [x] New section between "House Specials" and "Open Kitchen"
+- [x] `.bnto.json` code preview in animated `CodeEditor` with syntax highlighting
+- [x] "Open Editor (beta) →" CTA
+- [x] `ScaleIn` on code card, `SlideUp` on copy
+- [x] Responsive: copy stacks on top on mobile, `min-w-0` prevents editor clipping
 
 **Piece 9 — Footer refresh:**
 
-- [ ] Update tagline to "Pack. Run. Done."
-- [ ] Add FAQ + Docs links to footer
-- [ ] Visual polish (spacing, separator, warmth)
+- [x] Update tagline to "Pack. Run. Done."
+- [x] Add FAQ + Docs links to footer
+- [x] Visual polish (spacing, separator, mascot, icon buttons)
 
 **Piece 10 — Recipe page animations:**
 
@@ -914,10 +915,10 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 11 — Mascots & illustrations (Catalyst Labs kawaii sushi, purchase per-piece):**
 
-- [ ] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon" ~$6) — integrate into hero section (Piece 3)
+- [x] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon") — integrated into hero section
 - [x] Purchase 3 step characters — sushi-friends, penguin-chef, sushi-motorbike — integrated into "What's in the box" cards (Piece 5)
 - [x] Purchase octopus-chef — integrated as House Specials mascot (RecipeShowcase header)
-- [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers (Piece 6)
+- [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers
 - [x] Color-correct mascot outlines in Figma, export as SVGs
 - [ ] Convert PNGs to SVG components, size variants (hero 200-300px, accent 100-150px, icon 40-60px, nav 24-32px)
 
@@ -965,6 +966,16 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Priority: Triage.** `GridItem` props (`colSpan`, `rowSpan`, `colStart`, `rowStart`) should accept `ResponsiveProp<T>` like the `Grid` `cols` prop does, so spans and positions can vary by breakpoint (mobile/tablet/desktop). Currently only `cols` is responsive — all placement props are static.
 
 `packages/ui/src/layout/Grid.tsx`
+
+### Triage: File Node Ecosystem — BRU-Style Composable File Operations
+
+**Priority: Triage.** Expand the `file` category from 1 recipe to 6-8 with composable node processors inspired by Bulk Rename Utility. Enhance `file-rename` (counter, extension params), add new nodes (`file-collect`, `file-copy`, `file-filter`, `file-sanitize`, `file-metadata`, `svg-optimize`), and extend `image-convert` for vector formats (EPS/AI→SVG, SVG→PNG via `resvg`). Each node unlocks standalone recipes and custom compositions. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+
+### Triage: Homepage hero — BRU-style file recipe showcase
+
+**Priority: Triage.** Add a file operation composition (e.g. `collect → sanitize → rename → copy`) as a "Build Your Own" hero snippet in `BuildYourOwnSection`. Demonstrates composable power vs monolithic tools. Blocked on file node ecosystem implementation.
+
+`apps/web/app/(app)/_components/BuildYourOwnSection.tsx`, `recipeSnippets.ts`
 
 ---
 

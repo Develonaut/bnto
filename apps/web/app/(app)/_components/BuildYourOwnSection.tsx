@@ -16,15 +16,15 @@ export function BuildYourOwnSection() {
 
   return (
     <InView>
-      <div className="grid items-center gap-12 lg:grid-cols-[2fr_1fr] lg:gap-20">
+      <div className="grid items-center gap-12 lg:grid-cols-[1fr_2fr] lg:gap-20">
+        <SlideUp>
+          <BuildYourOwnCopy mascot={current.mascot} slug={current.id} />
+        </SlideUp>
         <BuildYourOwnEditor
           selectedId={selectedId}
           current={current}
           onSelectionChange={handleChange}
         />
-        <SlideUp>
-          <BuildYourOwnCopy mascot={current.mascot} slug={current.id} />
-        </SlideUp>
       </div>
     </InView>
   );
