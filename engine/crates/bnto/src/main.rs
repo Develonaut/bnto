@@ -1,6 +1,7 @@
 // bnto CLI — run .bnto.json recipes from the command line.
 //
-// Usage: bnto run <recipe> <file1> [file2 ...]
+// Usage: bnto                      (launches interactive TUI if terminal detected)
+//        bnto run <recipe> <file1> [file2 ...]
 //        bnto run <recipe> <url>  (for url-mode recipes)
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto list
@@ -8,12 +9,15 @@
 //        bnto doctor
 
 mod context;
+mod doctor;
 mod info;
 mod input;
 mod io;
 mod list;
 mod progress;
+mod tui;
 
+use std::io::IsTerminal;
 use std::process;
 
 use clap::{Parser, Subcommand};
@@ -24,7 +28,11 @@ use colored::Colorize;
 #[command(name = "bnto", version, about = "Run .bnto.json recipes")]
 struct Cli {
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
+
+    /// Disable interactive TUI even when running in a terminal.
+    #[arg(long)]
+    no_interactive: bool,
 }
 
 #[derive(Subcommand)]
@@ -57,21 +65,38 @@ enum Command {
 
     /// Check that all external dependencies are installed.
     Doctor,
+
+    /// Launch the interactive terminal UI.
+    Tui,
 }
 
 fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Run {
+        Some(Command::Run {
             recipe,
             inputs,
             output,
             param,
-        } => run_recipe(&recipe, &inputs, &output, &param),
-        Command::List => list_recipes(),
-        Command::Info { recipe } => show_info(&recipe),
-        Command::Doctor => run_doctor(),
+        }) => {
+            run_recipe(&recipe, &inputs, &output, &param);
+        }
+        Some(Command::List) => list_recipes(),
+        Some(Command::Info { recipe }) => show_info(&recipe),
+        Some(Command::Doctor) => doctor::run_doctor(),
+        Some(Command::Tui) => launch_tui(),
+        None if !cli.no_interactive && std::io::stdout().is_terminal() => launch_tui(),
+        None => {
+            Cli::parse_from(["bnto", "--help"]);
+        }
+    }
+}
+
+fn launch_tui() {
+    if let Err(e) = tui::launch_tui() {
+        eprintln!("{} {e}", "TUI error:".red());
+        process::exit(1);
     }
 }
 
@@ -135,7 +160,7 @@ fn print_run_banner(recipe_path: &str, raw_json: &str, prepared: &input::Prepare
 }
 
 /// Unwrap a Result or print the error to stderr and exit.
-fn unwrap_or_exit<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
+pub(crate) fn unwrap_or_exit<T, E: std::fmt::Display>(result: Result<T, E>) -> T {
     match result {
         Ok(v) => v,
         Err(e) => {
@@ -158,47 +183,6 @@ fn show_info(slug: &str) {
         process::exit(1);
     };
     info::print_recipe_info(slug, &recipe_info);
-}
-
-fn run_doctor() {
-    let registry = bnto_engine::create_registry();
-    let deps = bnto_engine::deps::collect_all_dependencies(&registry);
-    if deps.is_empty() {
-        println!("{} All processors are self-contained.", "ok".green().bold());
-        return;
-    }
-    let ctx = unwrap_or_exit(context::NativeContext::current_dir());
-    let statuses = bnto_engine::deps::check_dependencies(&deps, &ctx);
-    if print_dependency_statuses(&statuses) {
-        eprintln!(
-            "\n{}",
-            "Some dependencies are missing. Install them to use all processors.".yellow()
-        );
-        process::exit(1);
-    }
-    println!("\n{}", "All dependencies satisfied.".green());
-}
-
-/// Print each dependency status line. Returns true if any are missing.
-fn print_dependency_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool {
-    let mut has_missing = false;
-    println!("{}\n", "Checking external dependencies...".bold());
-    for status in statuses {
-        if status.found {
-            println!("  {} {}", "ok".green(), status.dependency.binary);
-        } else {
-            has_missing = true;
-            println!("  {} {}", "MISSING".red().bold(), status.dependency.binary);
-            println!(
-                "         Install: {}",
-                status.dependency.install_hint.cyan()
-            );
-            if !status.dependency.homepage.is_empty() {
-                println!("         Homepage: {}", status.dependency.homepage);
-            }
-        }
-    }
-    has_missing
 }
 
 /// Format milliseconds into a human-readable duration string.

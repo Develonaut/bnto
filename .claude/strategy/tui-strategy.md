@@ -442,6 +442,7 @@ These are real features that belong in later iterations, not Sprint 10:
 - **Drag-and-drop files** (terminal limitation)
 - **Responsive layout** (handle small terminals gracefully — later)
 - **Themes** (dark/light detection, custom palettes)
+- **Golden snapshot tests for rendering** (capture terminal frame output to string buffers, compare against committed golden files for visual regression)
 
 ---
 
