@@ -1,7 +1,7 @@
 # Engine Expansion Strategy
 
 **Created:** April 2, 2026
-**Status:** Proposed — Sprint 9 (M3)
+**Status:** Delivered — Sprint 9 (M3). v0.5.0 on crates.io
 **Related:** [ROADMAP.md](../ROADMAP.md), [PLAN.md](../PLAN.md), [engine-node-patterns.md](../rules/engine-node-patterns.md)
 
 ---
@@ -10,7 +10,7 @@
 
 Bnto is workflow automation through composable parts. Each node is a capability — compress an image, call an API, run a shell command. Recipes compose nodes into multi-step pipelines. The Rust engine runs them everywhere: CLI, browser (WASM), desktop (Tauri), server.
 
-After v0.2.0 (14 recipes, schema-driven config, editor reconnect), the next phase is making the engine more powerful. The 14 browser recipes are a delivered asset. The real opportunity is in expanding what nodes can do — external tool integration, system access, new domains (video, HTTP, shell) — and proving that the "build a node, run it anywhere" architecture works for capabilities that go beyond browser-safe file transforms.
+After v0.5.0 (15 recipes, dependency system, video-download node, ProcessContext), the next phase is making the engine more powerful. The 15 recipes are a delivered asset. The real opportunity is in expanding what nodes can do — external tool integration, system access, new domains (video, HTTP, shell) — and proving that the "build a node, run it anywhere" architecture works for capabilities that go beyond browser-safe file transforms.
 
 **The focus:** Enrich the engine and node catalog. Every new node type is automatically available on every target the engine supports. The browser recipes are a bonus showcase; the engine is the product.
 
@@ -264,9 +264,9 @@ This is the core value proposition: build one node, get it on every target, comp
 
 ## What Does NOT Change
 
-- The website stays as-is (no UI redesign)
-- All 14 browser recipes continue working
-- The editor stays as lightweight open+export
+- The website is a polished landing page (homepage redesign complete April 2026)
+- All 15 recipes continue working (browser + CLI)
+- The editor stays as lightweight open+export (frozen)
 - The `@bnto/ui` design system stays as-is
 - The `@bnto/nodes` codegen pipeline stays as-is (enhanced with `platforms`)
 - Private business docs stay as-is (revisit later)
