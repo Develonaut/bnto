@@ -1,6 +1,7 @@
 // bnto CLI — run .bnto.json recipes from the command line.
 //
-// Usage: bnto run <recipe> <file1> [file2 ...]
+// Usage: bnto                      (launches interactive TUI if terminal detected)
+//        bnto run <recipe> <file1> [file2 ...]
 //        bnto run <recipe> <url>  (for url-mode recipes)
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto list
@@ -13,7 +14,9 @@ mod input;
 mod io;
 mod list;
 mod progress;
+mod tui;
 
+use std::io::IsTerminal;
 use std::process;
 
 use clap::{Parser, Subcommand};
@@ -24,7 +27,11 @@ use colored::Colorize;
 #[command(name = "bnto", version, about = "Run .bnto.json recipes")]
 struct Cli {
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
+
+    /// Disable interactive TUI even when running in a terminal.
+    #[arg(long)]
+    no_interactive: bool,
 }
 
 #[derive(Subcommand)]
@@ -57,21 +64,39 @@ enum Command {
 
     /// Check that all external dependencies are installed.
     Doctor,
+
+    /// Launch the interactive terminal UI.
+    Tui,
 }
 
 fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Command::Run {
+        Some(Command::Run {
             recipe,
             inputs,
             output,
             param,
-        } => run_recipe(&recipe, &inputs, &output, &param),
-        Command::List => list_recipes(),
-        Command::Info { recipe } => show_info(&recipe),
-        Command::Doctor => run_doctor(),
+        }) => run_recipe(&recipe, &inputs, &output, &param),
+        Some(Command::List) => list_recipes(),
+        Some(Command::Info { recipe }) => show_info(&recipe),
+        Some(Command::Doctor) => run_doctor(),
+        Some(Command::Tui) => launch_tui(),
+        None => {
+            if !cli.no_interactive && std::io::stdout().is_terminal() {
+                launch_tui();
+            } else {
+                Cli::parse_from(["bnto", "--help"]);
+            }
+        }
+    }
+}
+
+fn launch_tui() {
+    if let Err(e) = tui::launch_tui() {
+        eprintln!("{} {e}", "TUI error:".red());
+        process::exit(1);
     }
 }
 
