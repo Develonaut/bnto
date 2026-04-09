@@ -33,7 +33,7 @@ export function RecipeShowcase() {
           <FadeIn>
             <Stack gap="md">
               <Text size="sm" mono color="muted" className="uppercase tracking-wider">
-                House specials
+                Ready to run
               </Text>
               <Heading level={2} size="xl" className="whitespace-pre-line">
                 {"15 recipes, ready to run.\nPick one or build your own."}

@@ -11,7 +11,7 @@ const STEPS = [
     mascotHeight: 180,
     variant: "primary" as const,
     title: "Pick a recipe",
-    description: "15 house specials included, or compose your own from any node.",
+    description: "Browse the house specials, or compose your own from any node.",
   },
   {
     step: 2,
@@ -35,7 +35,7 @@ export function StepFlow() {
       <SlideUp>
         <Stack gap="md" className="items-center text-center">
           <Text size="sm" mono color="muted" className="uppercase tracking-wider">
-            What&apos;s in the box
+            How it works
           </Text>
           <Heading level={2} size="xl" className="whitespace-pre-line">
             {"Nodes are compartments.\nRecipes are the box."}

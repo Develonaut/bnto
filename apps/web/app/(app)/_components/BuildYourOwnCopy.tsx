@@ -29,12 +29,7 @@ export function BuildYourOwnCopy({ mascot, slug }: BuildYourOwnCopyProps) {
       <div className="relative h-[280px] w-[280px]">
         <Image src={mascot} alt="" fill className="object-contain" aria-hidden />
       </div>
-      <Text
-        size="sm"
-        mono
-        color="muted"
-        className="uppercase tracking-wider lg:-mt-[50px] lg:text-right"
-      >
+      <Text size="sm" mono color="muted" className="uppercase tracking-wider">
         Config as code
       </Text>
       <Heading level={2} size="xl">
@@ -45,7 +40,7 @@ export function BuildYourOwnCopy({ mascot, slug }: BuildYourOwnCopyProps) {
         <Surface asChild elevation="none" variant="muted">
           <code className="font-mono text-foreground rounded-md px-1.5 py-0.5">.bnto.json</code>
         </Surface>
-        , run anywhere. CLI, browser, or desktop.
+        , run anywhere.
       </Text>
       <div className="pt-2">
         <Button variant="secondary" onClick={handleOpenEditor}>
