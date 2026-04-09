@@ -1,6 +1,6 @@
 # File Node Ecosystem — BRU-Style Composable File Operations
 
-**Last Updated:** April 8, 2026
+**Last Updated:** April 9, 2026
 **Status:** Backlog — strategy document for implementation planning
 **Inspiration:** Bulk Rename Utility, real-world design asset workflows
 
@@ -153,26 +153,27 @@ Extract file properties and inject them as template variables for downstream `fi
 
 **Crate:** `bnto-file` (extend existing crate). Image dimension extraction may delegate to `bnto-image`.
 
-### Phase 3: Extend `image-convert` for Vector Formats
+### Phase 3: SVG → Raster Conversion (extend `image-convert`)
 
-The existing `image-convert` processor handles raster formats (JPEG, PNG, WebP, AVIF, GIF, BMP, TIFF). Vector format conversion (EPS, AI, SVG, PDF) is a natural extension rather than a separate node.
+**Decision (April 9, 2026):** Vector operations live in a new `vector` node category — the counterpart to `image` (raster). Users think "I'm working with vector graphics" regardless of whether they're optimizing SVGs, converting EPS, or rasterizing logos. The category scales to future formats (AI, PDF→SVG) without renaming.
 
-**New format support:**
+**Crate:** New `bnto-vector` crate. Houses all vector format operations.
 
-| Conversion          | Method                               | Platform          |
-| ------------------- | ------------------------------------ | ----------------- |
-| SVG → PNG/JPEG/WebP | `resvg` (pure Rust SVG renderer)     | Browser + CLI     |
-| EPS → SVG           | Shell out to Inkscape or Ghostscript | CLI-only (native) |
-| AI → SVG            | Shell out to Inkscape                | CLI-only (native) |
-| PDF → SVG           | Shell out to Inkscape or `pdf2svg`   | CLI-only (native) |
+The existing `image-convert` processor handles raster formats (JPEG, PNG, WebP). SVG→raster conversion extends it to accept SVG input, rasterize via `resvg`, then encode to the target raster format through the existing pipeline.
 
-**Why extend `image-convert` rather than a new node:** Users already think of format conversion as one concept. "Convert EPS to SVG" and "Convert PNG to WebP" are the same mental operation. Splitting them into separate nodes adds cognitive overhead. The processor can detect raster vs vector paths internally.
+| Conversion          | Method                           | Platform      |
+| ------------------- | -------------------------------- | ------------- |
+| SVG → PNG/JPEG/WebP | `resvg` (pure Rust SVG renderer) | Browser + CLI |
 
-**Native dependency management:** Like `video-download` checks for `yt-dlp`, `image-convert` would check for Inkscape/Ghostscript availability via `bnto doctor` and provide clear error messages when tools are missing. Browser fallback: only SVG→raster works (via `resvg`), vector-to-vector conversions show "CLI only" in the browser UI.
+**New parameter:** `dpi` (default: 96, range: 72–300) controls rasterization resolution.
+
+**Why extend `image-convert`:** Users think of format conversion as one concept. "Convert SVG to PNG" and "Convert PNG to WebP" are the same mental operation. The processor detects SVG input internally and routes through `resvg` before the existing encode pipeline.
+
+**Dependencies:** `resvg`, `usvg`, `tiny-skia` — all pure Rust, WASM-compatible. Added to `bnto-vector/Cargo.toml`, consumed by `bnto-image` for the rasterization step.
 
 ### Phase 4: `svg-optimize` — SVG Cleanup/Minification
 
-Dedicated SVG optimization processor.
+Dedicated SVG optimization processor in the `vector` category. Fundamentally different from `compress-images` (raster re-encoding) — this is lossless XML structural cleanup.
 
 | Param             | Type    | Description                                                   |
 | ----------------- | ------- | ------------------------------------------------------------- |
@@ -182,6 +183,8 @@ Dedicated SVG optimization processor.
 | `collapse_groups` | boolean | Flatten unnecessary `<g>` wrappers (default: true)            |
 | `minify`          | boolean | Remove whitespace/indentation (default: true)                 |
 
+**Why NOT in `compress-images`:** Compress operates on pixel grids (lossy re-encoding with quality slider). SVG optimize operates on XML text (lossless structural cleanup). Different input types, different parameters, different libraries, different mental models. One thing per processor.
+
 **Implementation options:**
 
 - **Pure Rust (preferred):** `usvg` from the `linebender` project — parses SVGs into a simplified tree and re-serializes. Strips cruft, normalizes structure, collapses groups. Not as aggressive as SVGO but WASM-safe.
@@ -189,7 +192,21 @@ Dedicated SVG optimization processor.
 
 **Platform:** Browser (pure Rust) + CLI (Rust, with optional SVGO shell-out for deeper optimization).
 
-**Crate:** New `bnto-svg` crate.
+**Crate:** `bnto-vector` (same crate as Phase 3).
+
+### Phase 5: EPS → SVG Conversion (CLI-only)
+
+Vector-to-vector conversion requiring external system binaries. First processor to shell out to native tools for format conversion.
+
+| Conversion | Method                               | Platform          |
+| ---------- | ------------------------------------ | ----------------- |
+| EPS → SVG  | Shell out to Inkscape or Ghostscript | CLI-only (native) |
+| AI → SVG   | Shell out to Inkscape                | CLI-only (native) |
+| PDF → SVG  | Shell out to Inkscape or `pdf2svg`   | CLI-only (native) |
+
+**Native dependency management:** Like `video-download` checks for `yt-dlp`, vector conversion checks for Inkscape/Ghostscript availability via `bnto doctor` and provides clear error messages when tools are missing. Browser shows "CLI only" for these conversions.
+
+**Crate:** `bnto-vector` (same crate as Phases 3-4).
 
 ---
 
@@ -199,12 +216,13 @@ Dedicated SVG optimization processor.
 
 | Recipe                    | Slug                     | Nodes                                                             | Platform      | Category |
 | ------------------------- | ------------------------ | ----------------------------------------------------------------- | ------------- | -------- |
-| Optimize SVG              | `optimize-svg`           | `svg-optimize`                                                    | Browser + CLI | file     |
+| SVG to PNG                | `svg-to-png`             | `image-convert` (svg→png)                                         | Browser + CLI | vector   |
+| SVG to JPEG               | `svg-to-jpeg`            | `image-convert` (svg→jpeg)                                        | Browser + CLI | vector   |
+| Optimize SVG              | `optimize-svg`           | `svg-optimize`                                                    | Browser + CLI | vector   |
+| Convert EPS to SVG        | `convert-eps-to-svg`     | `vector-convert` (eps→svg)                                        | CLI           | vector   |
 | Batch Rename with Numbers | `number-files`           | `file-rename` (counter)                                           | Browser + CLI | file     |
 | Flatten Folder            | `flatten-folder`         | `file-collect` → `file-copy`                                      | CLI           | file     |
 | Collect and Rename        | `collect-and-rename`     | `file-collect` → `file-rename`                                    | CLI           | file     |
-| Convert EPS to SVG        | `convert-eps-to-svg`     | `image-convert` (eps→svg)                                         | CLI           | image    |
-| SVG to PNG                | `svg-to-png`             | `image-convert` (svg→png)                                         | Browser + CLI | image    |
 | Design Asset Pipeline     | `optimize-design-assets` | `file-collect` → `image-convert` → `svg-optimize` → `file-rename` | CLI           | file     |
 | Sanitize Filenames        | `sanitize-filenames`     | `file-sanitize`                                                   | Browser + CLI | file     |
 
@@ -223,17 +241,17 @@ These aren't shipped recipes but examples of what users can build in the editor:
 
 **Priority is driven by:** leverage (how many recipes does it unlock), effort (how much new code), and SEO value (does it create a new recipe page).
 
-| Priority | Work                                               | Effort                                            | Unlocks                                           |
-| -------- | -------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
-| 1        | Enhance `file-rename` (counter + extension)        | Small — extend existing processor                 | `number-files` recipe, better rename compositions |
-| 2        | `svg-optimize` node + `optimize-svg` recipe        | Medium — new crate (`bnto-svg`), pure Rust        | High-value standalone recipe, SEO page            |
-| 3        | `file-sanitize` node + `sanitize-filenames` recipe | Small — string manipulation in `bnto-file`        | Standalone recipe, useful building block          |
-| 4        | `file-filter` node                                 | Small — metadata checks in `bnto-file`            | Composition building block                        |
-| 5        | Extend `image-convert` for SVG→raster              | Medium — integrate `resvg`                        | `svg-to-png` recipe, browser-capable              |
-| 6        | `file-collect` node                                | Medium — filesystem traversal, input model change | Unlocks all CLI directory workflows               |
-| 7        | `file-copy` node                                   | Small — filesystem write in `bnto-file`           | Completes the collect→process→place pipeline      |
-| 8        | Extend `image-convert` for EPS/AI→SVG              | Medium — native dependency (Inkscape)             | `convert-eps-to-svg` recipe, CLI-only             |
-| 9        | `file-metadata` node                               | Medium — property extraction, cross-crate         | Advanced rename compositions                      |
+| Priority | Work                                               | Effort                                               | Unlocks                                           |
+| -------- | -------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------- |
+| 1        | SVG → raster (extend `image-convert`)              | Medium — `resvg` in `bnto-vector`, browser+CLI       | `svg-to-png`, `svg-to-jpeg` recipes, 2 SEO pages  |
+| 2        | `svg-optimize` node + `optimize-svg` recipe        | Medium — `usvg` in `bnto-vector`, browser+CLI        | High-value standalone recipe, SEO page            |
+| 3        | EPS/AI → SVG (CLI-only shell-out)                  | Medium — native dependency (Inkscape), `bnto-vector` | `convert-eps-to-svg` recipe, CLI-only             |
+| 4        | Enhance `file-rename` (counter + extension)        | Small — extend existing processor                    | `number-files` recipe, better rename compositions |
+| 5        | `file-sanitize` node + `sanitize-filenames` recipe | Small — string manipulation in `bnto-file`           | Standalone recipe, useful building block          |
+| 6        | `file-filter` node                                 | Small — metadata checks in `bnto-file`               | Composition building block                        |
+| 7        | `file-collect` node                                | Medium — filesystem traversal, input model change    | Unlocks all CLI directory workflows               |
+| 8        | `file-copy` node                                   | Small — filesystem write in `bnto-file`              | Completes the collect→process→place pipeline      |
+| 9        | `file-metadata` node                               | Medium — property extraction, cross-crate            | Advanced rename compositions                      |
 
 ---
 
@@ -251,31 +269,40 @@ Option 3 is preferred — it keeps the execution model uniform and requires the 
 
 ### Platform Matrix
 
-| Node                     | Browser                   | CLI                        | Desktop (future) |
-| ------------------------ | ------------------------- | -------------------------- | ---------------- |
-| `file-rename` (enhanced) | Yes                       | Yes                        | Yes              |
-| `svg-optimize`           | Yes (Rust)                | Yes (Rust + optional SVGO) | Yes              |
-| `file-sanitize`          | Yes                       | Yes                        | Yes              |
-| `file-filter`            | Yes                       | Yes                        | Yes              |
-| `file-collect`           | Limited (webkitdirectory) | Yes                        | Yes              |
-| `file-copy`              | No (download only)        | Yes                        | Yes              |
-| `file-metadata`          | Limited                   | Yes                        | Yes              |
-| `image-convert` (vector) | SVG→raster only           | Full (with Inkscape)       | Full             |
+| Node                     | Browser                   | CLI                        | Desktop (future) | Category |
+| ------------------------ | ------------------------- | -------------------------- | ---------------- | -------- |
+| `image-convert` (SVG in) | Yes (`resvg`)             | Yes (`resvg`)              | Yes              | vector   |
+| `svg-optimize`           | Yes (Rust)                | Yes (Rust + optional SVGO) | Yes              | vector   |
+| `vector-convert` (EPS+)  | No                        | Yes (Inkscape/Ghostscript) | Yes              | vector   |
+| `file-rename` (enhanced) | Yes                       | Yes                        | Yes              | file     |
+| `file-sanitize`          | Yes                       | Yes                        | Yes              | file     |
+| `file-filter`            | Yes                       | Yes                        | Yes              | file     |
+| `file-collect`           | Limited (webkitdirectory) | Yes                        | Yes              | file     |
+| `file-copy`              | No (download only)        | Yes                        | Yes              | file     |
+| `file-metadata`          | Limited                   | Yes                        | Yes              | file     |
 
 ### SEO Impact
 
 Each new recipe with a dedicated page is an SEO surface. Estimated new pages:
 
-- `/optimize-svg` — "optimize svg online free"
+- `/svg-to-png` — "convert svg to png free" (vector category, browser+CLI)
+- `/svg-to-jpeg` — "convert svg to jpeg free" (vector category, browser+CLI)
+- `/optimize-svg` — "optimize svg online free" (vector category, browser+CLI)
+- `/convert-eps-to-svg` — "convert eps to svg free" (vector category, CLI-only)
 - `/number-files` — "batch rename files with numbers"
 - `/flatten-folder` — "flatten folder structure"
 - `/sanitize-filenames` — "sanitize filenames batch"
-- `/convert-eps-to-svg` — "convert eps to svg free"
-- `/svg-to-png` — "convert svg to png free"
 
 All high-intent, tool-seeking queries with strong conversion potential.
 
 ---
+
+## Decisions
+
+1. **Vector category (April 9, 2026):** Vector operations use a `vector` node category — the counterpart to `image` (raster). Users think "I'm working with vector graphics" whether optimizing SVGs, converting EPS, or rasterizing logos. Scales to future formats without renaming.
+2. **Crate naming (April 9, 2026):** `bnto-vector` — matches the category name. Consistent naming engine-to-UI.
+3. **SVG optimize is NOT compress-images (April 9, 2026):** `compress-images` = lossy raster re-encoding (quality slider). `svg-optimize` = lossless XML structural cleanup. Different inputs, params, libraries, mental models. Separate processor.
+4. **Priority reorder (April 9, 2026):** Vector work (Phases 3-5) prioritized ahead of file operation nodes. SVG→raster first (highest SEO demand), SVG optimize second (builds on same deps), EPS→SVG third (CLI-only, introduces shell-out pattern).
 
 ## Open Questions
 

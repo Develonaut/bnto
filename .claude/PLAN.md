@@ -929,9 +929,40 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 `packages/ui/src/layout/Grid.tsx`
 
-### Triage: File Node Ecosystem — BRU-Style Composable File Operations
+### Engine: Vector Format Support — `bnto-vector` Crate (3 Phases)
 
-**Priority: Triage.** Expand the `file` category from 1 recipe to 6-8 with composable node processors inspired by Bulk Rename Utility. Enhance `file-rename` (counter, extension params), add new nodes (`file-collect`, `file-copy`, `file-filter`, `file-sanitize`, `file-metadata`, `svg-optimize`), and extend `image-convert` for vector formats (EPS/AI→SVG, SVG→PNG via `resvg`). Each node unlocks standalone recipes and custom compositions. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+**Priority: Medium.** New `vector` node category (counterpart to `image`/raster) with three incremental phases. Each phase is independently shippable. New `bnto-vector` crate houses all vector operations. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+
+**Phase 1 — SVG → Raster (extend `image-convert`):**
+
+- [ ] `engine/crates/bnto-vector` — New crate with `resvg` + `usvg` + `tiny-skia` dependencies
+- [ ] `engine/crates/bnto-image` — Extend `image-convert` to detect SVG input, rasterize via `resvg`, encode to PNG/JPEG/WebP
+- [ ] `engine/crates/bnto-image` — New `dpi` parameter (default 96, range 72–300) for rasterization resolution
+- [ ] `engine/crates/bnto-core` — Add `vector` category to `NodeTypeInfo` metadata
+- [ ] `engine/recipes/` — `svg-to-png.bnto.json`, `svg-to-jpeg.bnto.json`
+- [ ] Codegen + golden tests + test count updates
+- [ ] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
+
+**Phase 2 — SVG Optimization (`svg-optimize` processor):**
+
+- [ ] `engine/crates/bnto-vector` — `svg-optimize` processor using `usvg` (parse → simplify → re-serialize)
+- [ ] Params: `precision`, `remove_comments`, `remove_metadata`, `collapse_groups`, `minify`
+- [ ] `engine/recipes/` — `optimize-svg.bnto.json`
+- [ ] Codegen + golden tests + test count updates
+- [ ] **Delivers:** `/optimize-svg` recipe page (browser + CLI)
+
+**Phase 3 — EPS → SVG (CLI-only shell-out):**
+
+- [ ] `engine/crates/bnto-vector` — EPS/AI→SVG processor via Inkscape/Ghostscript shell-out
+- [ ] `#[cfg(feature = "native")]` only — no browser support
+- [ ] `bnto doctor` checks for Inkscape/Ghostscript availability
+- [ ] `engine/recipes/` — `convert-eps-to-svg.bnto.json`
+- [ ] Codegen + golden tests + test count updates
+- [ ] **Delivers:** `/convert-eps-to-svg` recipe page (CLI-only)
+
+### Backlog: File Node Ecosystem — BRU-Style Composable File Operations
+
+**Priority: Backlog (after vector work).** Expand the `file` category from 1 recipe to 6-8 with composable node processors inspired by Bulk Rename Utility. Enhance `file-rename` (counter, extension params), add new nodes (`file-collect`, `file-copy`, `file-filter`, `file-sanitize`, `file-metadata`). Each node unlocks standalone recipes and custom compositions. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
 
 ### Triage: Homepage hero — BRU-style file recipe showcase
 
