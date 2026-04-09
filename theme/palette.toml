@@ -1,0 +1,351 @@
+# Shared Motorway Palette — Single Source of Truth
+#
+# This file defines all semantic color tokens for the bnto design system.
+# A codegen script (scripts/generate-theme.ts) reads this TOML and produces:
+#   - apps/web/app/theme-colors.generated.css   (OKLCH values for web)
+#   - engine/crates/bnto/src/tui/palette.rs      (RGB values for terminal)
+#
+# DO NOT define shadows, surfaces, fonts, radius, or animations here.
+# Those are target-specific and live in theme.css / theme.rs respectively.
+
+[meta]
+version = "1.0.0"
+
+# ══════════════════════════════════════════════════════════════════════
+# Los Angeles (light) — default theme
+# Warm cream backgrounds, terracotta primary, salmon pink accent.
+# ══════════════════════════════════════════════════════════════════════
+
+[light.background]
+oklch = "0.9901 0.0161 95.2193"
+rgb = [255, 252, 240]
+
+[light.foreground]
+oklch = "0.2627 0.0206 28.5372"
+rgb = [46, 33, 31]
+
+[light.card]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[light.card_foreground]
+oklch = "0.2627 0.0206 28.5372"
+rgb = [46, 33, 31]
+
+[light.primary]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[light.primary_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[light.secondary]
+oklch = "0.91 0.05 189.39"
+rgb = [188, 237, 232]
+
+[light.secondary_foreground]
+oklch = "0.38 0.055 187.7"
+rgb = [23, 76, 72]
+
+[light.muted]
+oklch = "0.9487 0.0137 92.9849"
+rgb = [241, 238, 228]
+
+[light.muted_foreground]
+oklch = "0.5447 0.025 31.8671"
+rgb = [126, 107, 103]
+
+[light.accent]
+oklch = "0.75 0.15 20"
+rgb = [255, 131, 134]
+
+[light.accent_foreground]
+oklch = "0.2627 0.0206 28.5372"
+rgb = [46, 33, 31]
+
+[light.destructive]
+oklch = "0.6358 0.2088 25.4126"
+rgb = [239, 67, 67]
+
+[light.destructive_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[light.success]
+oklch = "0.69 0.14 150"
+rgb = [81, 179, 107]
+
+[light.success_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[light.warning]
+oklch = "0.84 0.1334 77"
+rgb = [251, 190, 93]
+
+[light.warning_foreground]
+oklch = "0.2627 0.0206 28.5372"
+rgb = [46, 33, 31]
+
+[light.border]
+oklch = "0.8966 0.0165 95.2423"
+rgb = [224, 221, 209]
+
+[light.input]
+oklch = "0.9331 0.0122 96.429"
+rgb = [235, 233, 224]
+
+[light.ring]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[light.focus_ring]
+oklch = "0.59 0.2 264"
+rgb = [61, 115, 242]
+
+[light.chart_1]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[light.chart_2]
+oklch = "0.7868 0.1103 223.0437"
+rgb = [94, 201, 237]
+
+[light.chart_3]
+oklch = "0.8887 0.1337 91.2263"
+rgb = [251, 215, 106]
+
+[light.chart_4]
+oklch = "0.7692 0.1554 157.4196"
+rgb = [71, 209, 140]
+
+[light.chart_5]
+oklch = "0.5401 0.102 34.6762"
+rgb = [161, 87, 69]
+
+# ══════════════════════════════════════════════════════════════════════
+# Tokyo (dark) — Mini Motorways Tokyo Night
+# Cool dark slate backgrounds, same terracotta primary, richer salmon accent.
+# ══════════════════════════════════════════════════════════════════════
+
+[tokyo.background]
+oklch = "0.31 0.027 265"
+rgb = [42, 48, 62]
+
+[tokyo.foreground]
+oklch = "0.9901 0.0161 95.2193"
+rgb = [255, 252, 240]
+
+[tokyo.card]
+oklch = "0.37 0.024 265"
+rgb = [57, 64, 77]
+
+[tokyo.card_foreground]
+oklch = "0.9901 0.0161 95.2193"
+rgb = [255, 252, 240]
+
+[tokyo.primary]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[tokyo.primary_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[tokyo.secondary]
+oklch = "0.38 0.05 188.3"
+rgb = [30, 75, 71]
+
+[tokyo.secondary_foreground]
+oklch = "0.88 0.045 189.32"
+rgb = [183, 226, 222]
+
+[tokyo.muted]
+oklch = "0.4 0.02 264"
+rgb = [66, 72, 83]
+
+[tokyo.muted_foreground]
+oklch = "0.64 0.019 264"
+rgb = [134, 140, 152]
+
+[tokyo.accent]
+oklch = "0.72 0.16 20"
+rgb = [248, 118, 122]
+
+[tokyo.accent_foreground]
+oklch = "0.31 0.027 265"
+rgb = [42, 48, 62]
+
+[tokyo.destructive]
+oklch = "0.5788 0.2215 27.7967"
+rgb = [223, 32, 32]
+
+[tokyo.destructive_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[tokyo.success]
+oklch = "0.62 0.13 150"
+rgb = [66, 156, 90]
+
+[tokyo.success_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[tokyo.warning]
+oklch = "0.78 0.13 77"
+rgb = [230, 172, 76]
+
+[tokyo.warning_foreground]
+oklch = "0.2627 0.0206 28.5372"
+rgb = [46, 33, 31]
+
+[tokyo.border]
+oklch = "0.43 0.019 262"
+rgb = [74, 80, 91]
+
+[tokyo.input]
+oklch = "0.4 0.02 264"
+rgb = [66, 72, 83]
+
+[tokyo.ring]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[tokyo.focus_ring]
+oklch = "0.65 0.2 264"
+rgb = [78, 134, 255]
+
+[tokyo.chart_1]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[tokyo.chart_2]
+oklch = "0.7868 0.1103 223.0437"
+rgb = [94, 201, 237]
+
+[tokyo.chart_3]
+oklch = "0.8887 0.1337 91.2263"
+rgb = [251, 215, 106]
+
+[tokyo.chart_4]
+oklch = "0.7692 0.1554 157.4196"
+rgb = [71, 209, 140]
+
+[tokyo.chart_5]
+oklch = "0.5401 0.102 34.6762"
+rgb = [161, 87, 69]
+
+# ══════════════════════════════════════════════════════════════════════
+# Munich (sunset) — Mini Motorways Munich golden hour
+# Rich amber background, deep navy foreground, coral accent.
+# ══════════════════════════════════════════════════════════════════════
+
+[munich.background]
+oklch = "0.82 0.15 78"
+rgb = [249, 183, 63]
+
+[munich.foreground]
+oklch = "0.25 0.04 260"
+rgb = [22, 34, 53]
+
+[munich.card]
+oklch = "0.97 0.03 80"
+rgb = [255, 243, 223]
+
+[munich.card_foreground]
+oklch = "0.25 0.04 260"
+rgb = [22, 34, 53]
+
+[munich.primary]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[munich.primary_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[munich.secondary]
+oklch = "0.4 0.06 258"
+rgb = [51, 72, 104]
+
+[munich.secondary_foreground]
+oklch = "0.9 0.04 80"
+rgb = [236, 220, 193]
+
+[munich.muted]
+oklch = "0.76 0.1 77"
+rgb = [213, 169, 101]
+
+[munich.muted_foreground]
+oklch = "0.4 0.05 50"
+rgb = [94, 64, 47]
+
+[munich.accent]
+oklch = "0.72 0.17 22"
+rgb = [253, 114, 115]
+
+[munich.accent_foreground]
+oklch = "0.25 0.04 260"
+rgb = [22, 34, 53]
+
+[munich.destructive]
+oklch = "0.6 0.21 25"
+rgb = [226, 52, 57]
+
+[munich.destructive_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[munich.success]
+oklch = "0.65 0.13 165"
+rgb = [30, 168, 123]
+
+[munich.success_foreground]
+oklch = "1 0 0"
+rgb = [255, 255, 255]
+
+[munich.warning]
+oklch = "0.72 0.15 55"
+rgb = [235, 136, 59]
+
+[munich.warning_foreground]
+oklch = "0.25 0.04 260"
+rgb = [22, 34, 53]
+
+[munich.border]
+oklch = "0.73 0.1 77"
+rgb = [203, 159, 92]
+
+[munich.input]
+oklch = "0.79 0.1 78"
+rgb = [222, 179, 110]
+
+[munich.ring]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[munich.focus_ring]
+oklch = "0.55 0.22 264"
+rgb = [43, 98, 239]
+
+[munich.chart_1]
+oklch = "0.6755 0.1791 35.2662"
+rgb = [240, 101, 66]
+
+[munich.chart_2]
+oklch = "0.7868 0.1103 223.0437"
+rgb = [94, 201, 237]
+
+[munich.chart_3]
+oklch = "0.8887 0.1337 91.2263"
+rgb = [251, 215, 106]
+
+[munich.chart_4]
+oklch = "0.7692 0.1554 157.4196"
+rgb = [71, 209, 140]
+
+[munich.chart_5]
+oklch = "0.5401 0.102 34.6762"
+rgb = [161, 87, 69]

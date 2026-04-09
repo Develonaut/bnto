@@ -5,6 +5,8 @@
 
 pub mod app;
 pub mod event;
+pub mod palette;
+mod render;
 pub mod screens;
 #[allow(dead_code)]
 pub mod theme;
@@ -13,32 +15,36 @@ pub mod widgets;
 use std::io;
 use std::time::Duration;
 
-use crossterm::event::{Event, KeyEvent};
+use crossterm::event::{Event, KeyCode, KeyEvent};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
-use crossterm::{execute, event as crossterm_event};
-use ratatui::backend::CrosstermBackend;
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph};
+use crossterm::{event as crossterm_event, execute};
 use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
+use ratatui::layout::{Constraint, Layout};
 
 use app::{AppMessage, AppModel, Screen, update};
-use theme::ROUNDED_BORDERS;
+use theme::ThemeVariant;
 
 /// Tick rate for the event loop (how often we check for input).
 const TICK_RATE: Duration = Duration::from_millis(50);
 
-/// Launch the interactive TUI.
-pub fn launch_tui() -> io::Result<()> {
+/// All available theme variants for the settings screen.
+const ALL_VARIANTS: [ThemeVariant; 3] = [
+    ThemeVariant::LosAngeles,
+    ThemeVariant::Tokyo,
+    ThemeVariant::Munich,
+];
+
+/// Launch the interactive TUI with the given theme variant.
+pub fn launch_tui(variant: ThemeVariant) -> io::Result<()> {
     install_panic_hook();
     let mut terminal = setup_terminal()?;
-    let result = run_loop(&mut terminal);
+    let result = run_loop(&mut terminal, variant);
     restore_terminal(&mut terminal)?;
     result
 }
 
 /// Install a panic hook that restores the terminal before printing the panic.
-/// Without this, a panic leaves the terminal in raw mode (unusable).
 fn install_panic_hook() {
     let original_hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |panic_info| {
@@ -53,18 +59,13 @@ fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stderr>>> {
     terminal::enable_raw_mode()?;
     let mut stderr = io::stderr();
     execute!(stderr, EnterAlternateScreen)?;
-
-    // Disable mouse capture and bracketed paste — keyboard only.
     execute!(stderr, crossterm_event::DisableMouseCapture)?;
-
     let backend = CrosstermBackend::new(io::stderr());
     Terminal::new(backend)
 }
 
 /// Leave alternate screen, disable raw mode, show cursor.
-fn restore_terminal(
-    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
-) -> io::Result<()> {
+fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io::Result<()> {
     terminal::disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()
@@ -73,11 +74,20 @@ fn restore_terminal(
 /// Main event loop — poll input, update state, render.
 fn run_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
+    variant: ThemeVariant,
 ) -> io::Result<()> {
-    let mut model = AppModel::new();
+    let mut model = AppModel::new(variant);
 
     loop {
-        terminal.draw(|frame| draw(frame, &model))?;
+        terminal.draw(|frame| {
+            let area = frame.area();
+            let theme = &model.theme;
+            let [content_area, help_area] =
+                Layout::vertical([Constraint::Min(1), Constraint::Length(1)]).areas(area);
+
+            render::draw_content(frame, &model, theme, content_area);
+            render::draw_help_bar(frame, &model, theme, help_area);
+        })?;
 
         if model.should_quit {
             break;
@@ -95,15 +105,16 @@ fn run_loop(
 
 /// Map a key event to an AppMessage based on the current screen.
 fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    // Global keys take precedence.
     if let Some(msg) = event::map_global_key(key) {
         return Some(msg);
     }
 
-    // Screen-specific keys (browser, detail, etc.) will be added
-    // in subsequent waves as each screen is implemented.
     match &model.screen {
-        Screen::Browser => None,
+        Screen::Browser => match key.code {
+            KeyCode::Char('s') => Some(AppMessage::OpenSettings),
+            _ => None,
+        },
+        Screen::Settings => handle_settings_key(model, key),
         Screen::Detail { .. } => None,
         Screen::Picker { .. } => None,
         Screen::Execution { .. } => None,
@@ -111,146 +122,90 @@ fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     }
 }
 
-/// Render the current screen to the terminal frame.
-fn draw(frame: &mut ratatui::Frame, model: &AppModel) {
-    let area = frame.area();
-
-    // Layout: main content + help bar at the bottom.
-    let [content_area, help_area] = Layout::vertical([
-        Constraint::Min(1),
-        Constraint::Length(1),
-    ])
-    .areas(area);
-
-    draw_content(frame, model, content_area);
-    draw_help_bar(frame, model, help_area);
-}
-
-/// Render the main content area based on the current screen.
-fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, area: Rect) {
-    // Each screen will render its own content in subsequent waves.
-    // For now, show a placeholder with the screen name.
-    let title = match &model.screen {
-        Screen::Browser => " bnto ",
-        Screen::Detail { .. } => " Recipe Detail ",
-        Screen::Picker { .. } => " File Picker ",
-        Screen::Execution { .. } => " Running ",
-        Screen::Results { .. } => " Results ",
-    };
-
-    let block = Block::bordered()
-        .title(title)
-        .title_style(theme::heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme::muted());
-
-    let label = match &model.screen {
-        Screen::Browser => "Select a recipe to get started.".to_string(),
-        Screen::Detail { slug } => format!("Configure {slug}"),
-        Screen::Picker { slug } => format!("Pick files for {slug}"),
-        Screen::Execution { slug } => format!("Running {slug}..."),
-        Screen::Results { slug } => format!("Results for {slug}"),
-    };
-
-    let content = Paragraph::new(label)
-        .style(theme::text())
-        .block(block);
-
-    frame.render_widget(content, area);
-}
-
-/// Render the bottom help bar with contextual key hints.
-fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, area: Rect) {
-    let hints = help_hints(&model.screen);
-    let spans: Vec<Span> = hints
+/// Handle key events on the Settings screen.
+fn handle_settings_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let current_idx = ALL_VARIANTS
         .iter()
-        .enumerate()
-        .flat_map(|(i, (key, desc))| {
-            let mut parts = vec![
-                Span::styled(*key, theme::key_hint()),
-                Span::styled(format!(" {desc}"), theme::key_desc()),
-            ];
-            if i < hints.len() - 1 {
-                parts.push(Span::raw("  "));
-            }
-            parts
-        })
-        .collect();
+        .position(|v| *v == model.theme_variant)
+        .unwrap_or(0);
 
-    let bar = Paragraph::new(Line::from(spans));
-    frame.render_widget(bar, area);
-}
-
-/// Contextual key hints for each screen.
-fn help_hints(screen: &Screen) -> Vec<(&'static str, &'static str)> {
-    match screen {
-        Screen::Browser => vec![
-            ("↑↓", "navigate"),
-            ("/", "search"),
-            ("Enter", "select"),
-            ("q", "quit"),
-        ],
-        Screen::Detail { .. } => vec![
-            ("↑↓", "navigate"),
-            ("Enter", "edit/confirm"),
-            ("Esc", "back"),
-            ("q", "quit"),
-        ],
-        Screen::Picker { .. } => vec![
-            ("↑↓", "navigate"),
-            ("Space", "select"),
-            ("Enter", "confirm"),
-            ("Esc", "back"),
-        ],
-        Screen::Execution { .. } => vec![("Esc", "cancel")],
-        Screen::Results { .. } => vec![
-            ("o", "open file"),
-            ("O", "open folder"),
-            ("r", "run another"),
-            ("q", "quit"),
-        ],
+    match key.code {
+        KeyCode::Up => {
+            let prev = if current_idx == 0 {
+                ALL_VARIANTS.len() - 1
+            } else {
+                current_idx - 1
+            };
+            Some(AppMessage::ThemeChanged(ALL_VARIANTS[prev]))
+        }
+        KeyCode::Down => {
+            let next = (current_idx + 1) % ALL_VARIANTS.len();
+            Some(AppMessage::ThemeChanged(ALL_VARIANTS[next]))
+        }
+        KeyCode::Enter => Some(AppMessage::Back),
+        _ => None,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use theme::Theme;
 
-    #[test]
-    fn help_hints_non_empty_for_all_screens() {
-        let screens = vec![
-            Screen::Browser,
-            Screen::Detail { slug: "test".into() },
-            Screen::Picker { slug: "test".into() },
-            Screen::Execution { slug: "test".into() },
-            Screen::Results { slug: "test".into() },
-        ];
-        for screen in screens {
-            assert!(
-                !help_hints(&screen).is_empty(),
-                "help_hints empty for {screen:?}"
-            );
-        }
+    fn default_model() -> AppModel {
+        AppModel::new(ThemeVariant::LosAngeles)
     }
 
     #[test]
     fn handle_key_q_quits_from_any_screen() {
-        let screens = vec![
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        for screen in [
             Screen::Browser,
-            Screen::Detail { slug: "test".into() },
-            Screen::Results { slug: "test".into() },
-        ];
-        let key = KeyEvent::new(
-            crossterm::event::KeyCode::Char('q'),
-            crossterm::event::KeyModifiers::NONE,
-        );
-        for screen in screens {
+            Screen::Detail { slug: "t".into() },
+            Screen::Results { slug: "t".into() },
+        ] {
             let model = AppModel {
                 screen,
                 should_quit: false,
+                theme: Theme::from_variant(ThemeVariant::LosAngeles),
+                theme_variant: ThemeVariant::LosAngeles,
             };
-            let msg = handle_key(&model, key);
-            assert_eq!(msg, Some(AppMessage::Quit));
+            assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
         }
+    }
+
+    #[test]
+    fn s_key_opens_settings_from_browser() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('s'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::OpenSettings));
+    }
+
+    #[test]
+    fn settings_arrow_keys_cycle_themes() {
+        let model = AppModel {
+            screen: Screen::Settings,
+            ..default_model()
+        };
+        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, down),
+            Some(AppMessage::ThemeChanged(ThemeVariant::Tokyo))
+        );
+        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, up),
+            Some(AppMessage::ThemeChanged(ThemeVariant::Munich))
+        );
+    }
+
+    #[test]
+    fn settings_enter_goes_back() {
+        let model = AppModel {
+            screen: Screen::Settings,
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Back));
     }
 }
