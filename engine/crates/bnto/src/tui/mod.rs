@@ -5,6 +5,7 @@
 
 pub mod app;
 pub mod event;
+pub mod screen;
 pub mod screens;
 #[allow(dead_code)]
 pub mod theme;
@@ -121,38 +122,22 @@ fn draw(frame: &mut ratatui::Frame, model: &AppModel) {
 
 /// Render the main content area based on the current screen.
 fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, area: Rect) {
-    // Each screen will render its own content in subsequent waves.
-    // For now, show a placeholder with the screen name.
-    let title = match &model.screen {
-        Screen::Browser => " bnto ",
-        Screen::Detail { .. } => " Recipe Detail ",
-        Screen::Picker { .. } => " File Picker ",
-        Screen::Execution { .. } => " Running ",
-        Screen::Results { .. } => " Results ",
-    };
-
     let block = Block::bordered()
-        .title(title)
+        .title(model.screen.title())
         .title_style(theme::heading())
         .border_set(ROUNDED_BORDERS)
         .border_style(theme::muted());
 
-    let label = match &model.screen {
-        Screen::Browser => "Select a recipe to get started.".to_string(),
-        Screen::Detail { slug } => format!("Configure {slug}"),
-        Screen::Picker { slug } => format!("Pick files for {slug}"),
-        Screen::Execution { slug } => format!("Running {slug}..."),
-        Screen::Results { slug } => format!("Results for {slug}"),
-    };
-
-    let content = Paragraph::new(label).style(theme::text()).block(block);
+    let content = Paragraph::new(model.screen.placeholder_label())
+        .style(theme::text())
+        .block(block);
 
     frame.render_widget(content, area);
 }
 
 /// Render the bottom help bar with contextual key hints.
 fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, area: Rect) {
-    let hints = help_hints(&model.screen);
+    let hints = model.screen.help_hints();
     let spans: Vec<Span> = hints
         .iter()
         .enumerate()
@@ -170,37 +155,6 @@ fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, area: Rect) {
 
     let bar = Paragraph::new(Line::from(spans));
     frame.render_widget(bar, area);
-}
-
-/// Contextual key hints for each screen.
-fn help_hints(screen: &Screen) -> Vec<(&'static str, &'static str)> {
-    match screen {
-        Screen::Browser => vec![
-            ("↑↓", "navigate"),
-            ("/", "search"),
-            ("Enter", "select"),
-            ("q", "quit"),
-        ],
-        Screen::Detail { .. } => vec![
-            ("↑↓", "navigate"),
-            ("Enter", "edit/confirm"),
-            ("Esc", "back"),
-            ("q", "quit"),
-        ],
-        Screen::Picker { .. } => vec![
-            ("↑↓", "navigate"),
-            ("Space", "select"),
-            ("Enter", "confirm"),
-            ("Esc", "back"),
-        ],
-        Screen::Execution { .. } => vec![("Esc", "cancel")],
-        Screen::Results { .. } => vec![
-            ("o", "open file"),
-            ("O", "open folder"),
-            ("r", "run another"),
-            ("q", "quit"),
-        ],
-    }
 }
 
 #[cfg(test)]
@@ -226,7 +180,7 @@ mod tests {
         ];
         for screen in screens {
             assert!(
-                !help_hints(&screen).is_empty(),
+                !screen.help_hints().is_empty(),
                 "help_hints empty for {screen:?}"
             );
         }

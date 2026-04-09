@@ -100,6 +100,14 @@ fn back_screen(current: &Screen) -> Screen {
 mod tests {
     use super::*;
 
+    /// Helper: create an AppModel on the given screen.
+    fn on(screen: Screen) -> AppModel {
+        AppModel {
+            screen,
+            should_quit: false,
+        }
+    }
+
     #[test]
     fn initial_state_is_browser() {
         let app = AppModel::new();
@@ -107,11 +115,12 @@ mod tests {
         assert!(!app.should_quit);
     }
 
+    // --- Forward navigation (happy path) ---
+
     #[test]
     fn recipe_selected_navigates_to_detail() {
-        let app = AppModel::new();
         let app = update(
-            app,
+            AppModel::new(),
             AppMessage::RecipeSelected {
                 slug: "compress-images".into(),
             },
@@ -126,122 +135,87 @@ mod tests {
 
     #[test]
     fn config_confirmed_navigates_to_picker() {
-        let app = AppModel {
-            screen: Screen::Detail {
-                slug: "resize-images".into(),
-            },
-            should_quit: false,
-        };
         let app = update(
-            app,
-            AppMessage::ConfigConfirmed {
-                slug: "resize-images".into(),
-            },
+            on(Screen::Detail { slug: "r".into() }),
+            AppMessage::ConfigConfirmed { slug: "r".into() },
         );
-        assert_eq!(
-            app.screen,
-            Screen::Picker {
-                slug: "resize-images".into()
-            }
-        );
+        assert_eq!(app.screen, Screen::Picker { slug: "r".into() });
     }
 
     #[test]
     fn files_selected_navigates_to_execution() {
-        let app = AppModel {
-            screen: Screen::Picker {
-                slug: "clean-csv".into(),
-            },
-            should_quit: false,
-        };
         let app = update(
-            app,
-            AppMessage::FilesSelected {
-                slug: "clean-csv".into(),
-            },
+            on(Screen::Picker { slug: "r".into() }),
+            AppMessage::FilesSelected { slug: "r".into() },
         );
-        assert_eq!(
-            app.screen,
-            Screen::Execution {
-                slug: "clean-csv".into()
-            }
-        );
+        assert_eq!(app.screen, Screen::Execution { slug: "r".into() });
     }
 
     #[test]
     fn execution_complete_navigates_to_results() {
-        let app = AppModel {
-            screen: Screen::Execution {
-                slug: "clean-csv".into(),
-            },
-            should_quit: false,
-        };
         let app = update(
-            app,
-            AppMessage::ExecutionComplete {
-                slug: "clean-csv".into(),
-            },
+            on(Screen::Execution { slug: "r".into() }),
+            AppMessage::ExecutionComplete { slug: "r".into() },
         );
-        assert_eq!(
-            app.screen,
-            Screen::Results {
-                slug: "clean-csv".into()
-            }
-        );
+        assert_eq!(app.screen, Screen::Results { slug: "r".into() });
     }
+
+    // --- Back navigation ---
 
     #[test]
     fn back_from_detail_goes_to_browser() {
-        let app = AppModel {
-            screen: Screen::Detail {
-                slug: "compress-images".into(),
-            },
-            should_quit: false,
-        };
-        let app = update(app, AppMessage::Back);
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(
+            update(on(Screen::Detail { slug: "r".into() }), AppMessage::Back).screen,
+            Screen::Browser
+        );
     }
 
     #[test]
     fn back_from_picker_goes_to_detail() {
-        let app = AppModel {
-            screen: Screen::Picker {
-                slug: "compress-images".into(),
-            },
-            should_quit: false,
-        };
-        let app = update(app, AppMessage::Back);
+        let app = update(on(Screen::Picker { slug: "r".into() }), AppMessage::Back);
+        assert_eq!(app.screen, Screen::Detail { slug: "r".into() });
+    }
+
+    #[test]
+    fn back_from_execution_goes_to_browser() {
         assert_eq!(
-            app.screen,
-            Screen::Detail {
-                slug: "compress-images".into()
-            }
+            update(on(Screen::Execution { slug: "r".into() }), AppMessage::Back).screen,
+            Screen::Browser
+        );
+    }
+
+    #[test]
+    fn back_from_results_goes_to_browser() {
+        assert_eq!(
+            update(on(Screen::Results { slug: "r".into() }), AppMessage::Back).screen,
+            Screen::Browser
         );
     }
 
     #[test]
     fn back_from_browser_stays_on_browser() {
-        let app = AppModel::new();
-        let app = update(app, AppMessage::Back);
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(
+            update(AppModel::new(), AppMessage::Back).screen,
+            Screen::Browser
+        );
     }
+
+    // --- Other actions ---
 
     #[test]
     fn run_another_goes_to_browser() {
-        let app = AppModel {
-            screen: Screen::Results {
-                slug: "clean-csv".into(),
-            },
-            should_quit: false,
-        };
-        let app = update(app, AppMessage::RunAnother);
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(
+            update(
+                on(Screen::Results { slug: "r".into() }),
+                AppMessage::RunAnother
+            )
+            .screen,
+            Screen::Browser
+        );
     }
 
     #[test]
     fn quit_sets_should_quit() {
-        let app = AppModel::new();
-        let app = update(app, AppMessage::Quit);
-        assert!(app.should_quit);
+        assert!(update(AppModel::new(), AppMessage::Quit).should_quit);
     }
 }

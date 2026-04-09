@@ -121,7 +121,7 @@ cargo test -p bnto           # Run all tests (unit + integration + golden)
 The TEA pattern makes most TUI logic testable as pure Rust:
 
 - **State transitions**: `update()` is a pure function tested with plain assertions
-- **Key mapping**: `translate_key()` maps crossterm events to app messages
+- **Key mapping**: `map_global_key()` maps crossterm events to app messages
 - **Screen hints**: Every screen produces non-empty help bar hints
 - **CLI commands**: Integration tests verify `--help`, `list`, `info`, `doctor`, `--no-interactive`
 - **Golden tests**: Byte-exact output comparison for all 15 built-in recipes
