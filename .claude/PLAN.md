@@ -37,6 +37,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
+- **Homepage complete (April 2026):** Developer-facing landing page with Motorways animations, kawaii sushi mascots, code editor section, recipe showcase marquee. Pieces 1-9 shipped
 - **Frozen:** Editor (`@bnto/editor`), auth (`@bnto/auth`), premium features, frontend investment. Web packages maintained but not actively developed
 
 ---
@@ -693,7 +694,7 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 ### Growth: Product Hunt Launch
 
-**Priority: Backlog.** Launch bnto on Product Hunt when the product feels complete enough to show off. Ideal timing: after Sprint 8.5d (editor reconnected) + a few more Tier 3 recipes, so the catalog feels substantial and the editor provides a "wow" moment. Coordinate with a README polish pass and landing page review.
+**Priority: Backlog.** Launch bnto on Product Hunt when the product feels complete enough to show off. Ideal timing: after TUI ships + a few more recipes. Homepage is polished and ready. Coordinate with a README polish pass.
 
 - [ ] Prepare Product Hunt listing (tagline, description, screenshots, maker comment)
 - [ ] Review landing page + README for launch readiness
@@ -790,12 +791,12 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 - [ ] `packages/@bnto/i18n` — Add optional `vars` parameter to `t()`: `t(key, { count: 15 })` replaces `{{count}}` in the resolved string
 - [ ] `packages/@bnto/i18n` — Unit tests for interpolation (single var, multiple vars, missing var, no vars)
-- [ ] `apps/web` — Migrate hardcoded strings in `HowItWorksSection`, `NoCatchCopy`, `BragCapabilityCard`, `HeroPitchPoints` to `t()` calls
+- [ ] `apps/web` — Migrate hardcoded strings in landing page section components to `t()` calls
 - [ ] `packages/@bnto/i18n` — Move dynamic recipe count strings to `en.json` with `{{count}}` placeholders
 
 ### @bnto/ui: `<SpringIn>` Entrance Animation Component
 
-**Priority: Medium. Enabler for homepage polish — should land before or alongside Piece 3 (hero animations).**
+**Priority: Low.** Homepage shipped using `Card dormant` prop + `ScaleIn`/`SlideUp` instead. `SpringIn` is a nice-to-have refinement for future card-heavy sections, not a blocker.
 
 The springable surface system (grounded → raised with bouncy spring) is the most satisfying animation in Motorways, but it's currently only available as a **state toggle** on `<Card loading>` / `<Surface grounded>`. You have to manage a boolean to trigger it. There's no way to use it as a one-shot entrance animation composable with `<Stagger>`.
 
@@ -842,9 +843,9 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ---
 
-### Homepage & Site Polish — Motorways Standard
+### Homepage & Site Polish — COMPLETE (April 2026)
 
-**Priority: Medium.** Rework bnto.io homepage from recipe gallery into developer-facing landing page (like Tauri, Deno, Bun). Pitch the composable automation engine, run-anywhere story, `cargo install bnto`. Recipe pages stay as SEO showcase. Bring the landing page and site chrome up to the Motorways design system standard. Incremental — each piece is a standalone PR. The Motorways animation system (springs, stagger, surfaces, elevation) carries the visual identity. Cute food icons are a nice-to-have, not a blocker. Strategy docs: [homepage-sprint-plan.md](strategy/homepage-sprint-plan.md), [brand-messaging-audit.md](strategy/brand-messaging-audit.md), [landing-page-inspiration.md](strategy/landing-page-inspiration.md).
+**Shipped.** Homepage redesigned from recipe gallery to developer-facing landing page. Pieces 1-9 delivered: copy polish, nav restructure, hero animations, explore page animations, "What's in the box" redesign with mascots, recipe showcase marquee, "Build Your Own" code editor section, "Open Kitchen" section, footer refresh. Kawaii sushi mascots integrated (5 purchased from Catalyst Labs). Strategy docs: [homepage-sprint-plan.md](strategy/homepage-sprint-plan.md), [brand-messaging-audit.md](strategy/brand-messaging-audit.md), [landing-page-inspiration.md](strategy/landing-page-inspiration.md).
 
 **Piece 1 — Copy polish (text-only, no component changes):**
 
@@ -876,56 +877,13 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 - [x] Spring selection animation on category filter (Select dropdown)
 - [x] `FadeIn` on page header
 
-**Piece 5 — "What's in the box" section redesign:**
+**Pieces 5-9 — all shipped** (section redesigns, recipe showcase, build your own, open kitchen, footer refresh)
 
-- [x] Three Motorways surface cards: Pick → Pack → Run, with dormant spring-in stagger
-- [x] Section header: "What's in the box" + "Nodes are compartments. Recipes are the box."
-- [x] Mascot integration (bento sushi SVG) with FadeIn animation
-- [ ] Connecting flow indicators between cards (deferred — current grid layout doesn't need them)
+**Remaining polish (low priority, deferred):**
 
-**Piece 6 — Recipe showcase section ("House Specials"):**
-
-- [x] `RecipeShowcase` section — horizontal marquee with RecipeCard compound components, mascot + body text header
-- [x] "Browse all recipes →" link to `/explore`
-
-**Piece 7 — "Open Kitchen" section polish:**
-
-- [x] Update copy ("No mystery meat" → "No hidden ingredients", warmer messaging)
-- [x] `SlideUp` stagger on items, `ScaleIn` on GitHub CTA
-- [ ] Wrap anti-pattern strikethrough list in `<Card>` with elevation (deferred — current layout works well)
-
-**Piece 8 — "Build Your Own" section (new):**
-
-- [x] New section between "House Specials" and "Open Kitchen"
-- [x] `.bnto.json` code preview in animated `CodeEditor` with syntax highlighting
-- [x] "Open Editor (beta) →" CTA
-- [x] `ScaleIn` on code card, `SlideUp` on copy
-- [x] Responsive: copy stacks on top on mobile, `min-w-0` prevents editor clipping
-
-**Piece 9 — Footer refresh:**
-
-- [x] Update tagline to "Pack. Run. Done."
-- [x] Add FAQ + Docs links to footer
-- [x] Visual polish (spacing, separator, mascot, icon buttons)
-
-**Piece 10 — Recipe page animations:**
-
-- [ ] `SlideUp` on recipe page header, `ScaleIn` on file drop zone
-- [ ] `FadeIn` on config section, `SlideUp` stagger on feature tags
-
-**Piece 11 — Mascots & illustrations (Catalyst Labs kawaii sushi, purchase per-piece):**
-
-- [x] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon") — integrated into hero section
-- [x] Purchase 3 step characters — sushi-friends, penguin-chef, sushi-motorbike — integrated into "What's in the box" cards (Piece 5)
-- [x] Purchase octopus-chef — integrated as House Specials mascot (RecipeShowcase header)
-- [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers
-- [x] Color-correct mascot outlines in Figma, export as SVGs
-- [ ] Convert PNGs to SVG components, size variants (hero 200-300px, accent 100-150px, icon 40-60px, nav 24-32px)
-
-**Piece 12 — FAQ page polish (low priority):**
-
-- [ ] `ScaleIn` entrance on FAQ accordion items
-- [ ] Ensure discoverable from footer after nav removal
+- [ ] Piece 10: Recipe page animations (`SlideUp` on header, `ScaleIn` on drop zone, `FadeIn` on config)
+- [ ] Piece 11 remaining: Purchase 3-4 category mascot characters, convert to SVG components with size variants
+- [ ] Piece 12: FAQ page `ScaleIn` entrance animations
 
 ### Triage: Secret/environment variable management for recipes
 
@@ -954,12 +912,6 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 ### Chore: Upgrade Convex 1.31.7 → 1.33.1
 
 **Priority: Low.** Minor Convex JS SDK update. Bump in `packages/@bnto/backend/`, run `task check`.
-
-### Triage: Smart release pipeline with change detection
-
-**Priority: Triage.** Add a `detect-changes` job to `release.yml` that diffs the current tag against the previous tag and sets output flags (`engine`/`web`/`convex`). Use these to conditionally skip irrelevant jobs — engine-only releases skip Vercel/E2E/Lighthouse, web-only releases skip crates.io publish. Cuts engine-only release time from ~8min to ~2min.
-
-`.github/workflows/release.yml`
 
 ### Triage: Responsive GridItem props
 

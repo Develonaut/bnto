@@ -290,23 +290,23 @@ Characters drop into sections as those sections are built. Nothing waits on illu
 
 ## Quick Reference: Impact vs Effort
 
-| Piece                             | Impact | Effort                     | Status   |
-| --------------------------------- | ------ | -------------------------- | -------- |
-| 1. Copy polish                    | High   | Low                        | **DONE** |
-| 2. Nav restructure                | High   | Medium                     | **DONE** |
-| **--- Section Rework ---**        |        |                            |          |
-| 3. "What's in the box" redesign   | High   | Medium                     |          |
-| 4. Recipe showcase                | Medium | Medium                     |          |
-| 5. "Open kitchen" polish          | Medium | Low                        |          |
-| 6. "Build your own" (new section) | Medium | Medium                     |          |
-| 7. Footer refresh                 | Low    | Low                        |          |
-| **--- Animation Pass ---**        |        |                            |          |
-| 8. Hero animations                | High   | Low                        |          |
-| 9. Explore page animations        | Medium | Low                        |          |
-| 10. Recipe page animations        | Medium | Low                        |          |
-| **--- Polish ---**                |        |                            |          |
-| 11. Mascots (Catalyst Labs)       | High   | Low (purchase + integrate) |          |
-| 12. FAQ polish                    | Low    | Low                        |          |
+| Piece                             | Impact | Effort                     | Status      |
+| --------------------------------- | ------ | -------------------------- | ----------- |
+| 1. Copy polish                    | High   | Low                        | **DONE**    |
+| 2. Nav restructure                | High   | Medium                     | **DONE**    |
+| **--- Section Rework ---**        |        |                            |             |
+| 3. "What's in the box" redesign   | High   | Medium                     | **DONE**    |
+| 4. Recipe showcase                | Medium | Medium                     | **DONE**    |
+| 5. "Open kitchen" polish          | Medium | Low                        | **DONE**    |
+| 6. "Build your own" (new section) | Medium | Medium                     | **DONE**    |
+| 7. Footer refresh                 | Low    | Low                        | **DONE**    |
+| **--- Animation Pass ---**        |        |                            |             |
+| 8. Hero animations                | High   | Low                        | **DONE**    |
+| 9. Explore page animations        | Medium | Low                        | **DONE**    |
+| 10. Recipe page animations        | Medium | Low                        | Deferred    |
+| **--- Polish ---**                |        |                            |             |
+| 11. Mascots (Catalyst Labs)       | High   | Low (purchase + integrate) | **Partial** |
+| 12. FAQ polish                    | Low    | Low                        | Deferred    |
 
 **Recommended order:** 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 12 → 11
 
