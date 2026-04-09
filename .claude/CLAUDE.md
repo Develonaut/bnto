@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** April 5, 2026
+**Last Updated:** April 9, 2026
 
 ---
 
@@ -17,29 +17,30 @@
 | Brand, messaging & mascots     | [brand-messaging-audit.md](.claude/strategy/brand-messaging-audit.md)                          |
 | Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)                        |
 | Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                                         |
-| Editor architecture            | [editor-architecture.md](.claude/strategy/editor-architecture.md)                              |
-| Editor API layer (Sprint 5D)   | [editor-api.md](.claude/strategy/editor-api.md)                                                |
-| Visual editor                  | [visual-editor.md](.claude/strategy/visual-editor.md)                                          |
-| Input/output nodes             | [io-nodes.md](.claude/strategy/io-nodes.md)                                                    |
+| Editor architecture (frozen)   | [editor-architecture.md](.claude/strategy/editor-architecture.md)                              |
+| Editor API layer (frozen)      | [editor-api.md](.claude/strategy/editor-api.md)                                                |
+| Visual editor (frozen)         | [visual-editor.md](.claude/strategy/visual-editor.md)                                          |
+| Input/output nodes (frozen)    | [io-nodes.md](.claude/strategy/io-nodes.md)                                                    |
 | Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)                             |
 | Adding a new engine node       | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)                               |
 | Adding a new recipe            | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md#checklist-adding-a-new-recipe) |
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                    |
+| Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                                    |
 | Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                                      |
-| Editor user journey            | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                              |
+| Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                              |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                               |
 | Implementation task            | [PLAN.md](.claude/PLAN.md)                                                                     |
 | Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                                          |
 | Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                                    |
 | Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                                                 |
 | SEO & URL strategy             | [rules/seo.md](.claude/rules/seo.md)                                                           |
-| Code editor (Sprint 4B)        | [code-editor.md](.claude/strategy/code-editor.md)                                              |
+| Code editor (frozen)           | [code-editor.md](.claude/strategy/code-editor.md)                                              |
 | Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)                        |
 | Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                                      |
 | `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md)                                                       |
 | Environment variables          | [environment-variables.md](.claude/environment-variables.md)                                   |
-| Expression input UX            | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)                              |
-| Config panel controls          | [config-controls.md](.claude/strategy/config-controls.md)                                      |
+| Expression input UX (frozen)   | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)                              |
+| Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                                      |
 | Feature flags & A/B testing    | [feature-flags.md](.claude/rules/feature-flags.md)                                             |
 | Releases & versioning          | [releases.md](.claude/rules/releases.md)                                                       |
 

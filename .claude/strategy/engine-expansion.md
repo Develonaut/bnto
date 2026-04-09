@@ -273,10 +273,10 @@ This is the core value proposition: build one node, get it on every target, comp
 
 ---
 
-## Open Questions
+## Resolved Decisions
 
-1. **Should `bnto-video` be a separate crate or part of an existing one?** Recommendation: separate crate (`engine/crates/bnto-video/`). Each domain gets its own crate.
+1. **`bnto-video` is a separate crate.** Shipped as `engine/crates/bnto-video/` — each domain gets its own crate. (Sprint 9, PRs #321-#329)
 
-2. **TUI framework choice?** `ratatui` is the standard. `crossterm` for terminal abstraction. Evaluate when we get there.
+2. **TUI framework: `ratatui` + `crossterm`.** Standard choice, well-documented, active maintenance. (Sprint 10, PLAN.md)
 
-3. **Should `ProcessContext` be on every `process()` call or only for nodes that declare dependencies?** Recommendation: every call (with `NoopContext` for browser). Simpler API surface, no conditional typing.
+3. **`ProcessContext` on every `process()` call.** All processors receive `&dyn ProcessContext`. Browser gets `NoopContext`, CLI gets `NativeContext`. Simpler API surface, no conditional typing. (Sprint 9, PR #318)

@@ -604,7 +604,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 1 (parallel — foundation)
 
-- [ ] `engine/crates/bnto` — `/rust-expert` — TUI module scaffolding (`src/tui/`). App struct, event loop, terminal setup/teardown
+- [ ] `engine/crates/bnto` — `/rust-expert` — TUI module scaffolding: add `ratatui` + `crossterm` to Cargo.toml, create `src/tui/` module with App struct, event loop, terminal setup/teardown
 - [ ] `engine/crates/bnto` — `/rust-expert` — Recipe browser panel (list all recipes with categories, search/filter, selection)
 - [ ] `engine/crates/bnto` — `/rust-expert` — Basic navigation (tab between panels, keyboard shortcuts, help overlay, quit)
 
@@ -619,6 +619,8 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [ ] `engine/crates/bnto` — `/rust-expert` — Results panel (output files, sizes, timing, open-in-finder/copy-path)
 - [ ] `engine/crates/bnto` — `/rust-expert` — Integration tests for TUI mode (headless terminal testing)
 - [ ] `engine/crates/bnto` — `/rust-expert` — `bnto tui` documentation + README update
+
+**After TUI:** File node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
 
 ---
 
@@ -893,10 +895,6 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Priority: Low.** E2E teardown logs `cleanup failed` because `CONVEX_DEPLOYMENT` isn't set in release pipeline. Either pass env var to E2E job or skip cleanup against Vercel preview.
 
-### Triage: Rename registry constructors
-
-**Priority: Low.** `create_default_registry()` → `create_browser_registry()`, `create_native_registry()` → `create_registry()`. The "full" registry should be the default name, the WASM-constrained one the exception.
-
 ### Infra: Conventional Commits + Auto-Changelog
 
 **Priority: Low.** Enforce `feat:`, `fix:`, `BREAKING CHANGE:` commit format. Auto-generate `CHANGELOG.md` on release tags. Not blocking anything.
@@ -933,13 +931,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ## Reference
 
-| Document                                                         | Purpose                                                                        |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `.claude/strategy/bntos.md`                                      | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers                 |
-| `.claude/strategy/engine-execution.md`                           | Engine execution architecture — pipeline executor, progress events             |
-| `.claude/strategy/cloud-desktop-strategy.md`                     | Architecture, cost analysis, cloud execution topology                          |
-| `.claude/strategy/core-principles.md`                            | Trust commitments, key principles                                              |
-| `.claude/strategy/expression-input-ux.md`                        | Expression input UX (frozen — reference for future)                            |
-| `.claude/rules/`                                                 | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.)   |
-| `.claude/skills/`                                                | Agent skills (pickup, project-manager, code-review, pre-commit)                |
-| Private business docs (`BNTO_PRIVATE_DOCS_PATH` in `.env.local`) | Pricing strategy, revenue projections, SEO monetization (historical — on hold) |
+| Document                               | Purpose                                                                      |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| [PLAN-HISTORY.md](PLAN-HISTORY.md)     | Completed sprint history (Phase 0 through Sprint 9, Homepage)                |
+| `.claude/strategy/engine-expansion.md` | Engine expansion strategy — dependency system, ProcessContext, TUI, taxonomy |
+| `.claude/strategy/engine-execution.md` | Engine execution architecture — pipeline executor, progress events           |
+| `.claude/strategy/bntos.md`            | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers               |
+| `.claude/strategy/core-principles.md`  | Trust commitments, key principles                                            |
+| `.claude/rules/`                       | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.) |
+| `.claude/skills/`                      | Agent skills (pickup, project-manager, code-review, pre-commit)              |
