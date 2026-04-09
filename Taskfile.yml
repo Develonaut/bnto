@@ -43,6 +43,8 @@ tasks:
       - task: ui:test
       - echo "=== typescript lint ==="
       - task: ui:lint
+      - echo "=== theme codegen check ==="
+      - task: theme:check
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -81,6 +83,17 @@ tasks:
     desc: Generate TypeScript node definitions from engine catalog snapshot
     cmds:
       - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
+
+  # Theme codegen (palette.toml → CSS + Rust)
+  theme:generate:
+    desc: Generate CSS + Rust palette from theme/palette.toml
+    cmds:
+      - npx tsx scripts/generate-theme.ts
+
+  theme:check:
+    desc: Verify generated theme files match palette.toml (CI)
+    cmds:
+      - npx tsx scripts/generate-theme.ts --check
 
   # E2E tests (three-stage: browser parallel, auth serial, editor serial)
   e2e:
