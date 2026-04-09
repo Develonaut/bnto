@@ -1,0 +1,286 @@
+# File Node Ecosystem — BRU-Style Composable File Operations
+
+**Last Updated:** April 8, 2026
+**Status:** Backlog — strategy document for implementation planning
+**Inspiration:** Bulk Rename Utility, real-world design asset workflows
+
+---
+
+## Problem
+
+Bnto's file category is thin — one processor (`file-rename`) and one recipe (`rename-files`). Meanwhile, the most common real-world pain points involve filesystem orchestration: finding files scattered across directories, reorganizing them, converting formats, and renaming in bulk. Tools like Bulk Rename Utility solve this with monolithic UIs. Bnto can solve it better with composable nodes.
+
+---
+
+## Vision
+
+A toolkit of small, focused file operation nodes that compose into powerful recipes. Instead of one tool with 20 panels (BRU), users chain 3-4 nodes to build exactly the workflow they need. Each node does one thing; the recipe composition gives BRU-level power with bnto's readability and reusability.
+
+**Target outcome:** The `file` category grows from 1 recipe to 6-8, with building blocks that unlock unlimited custom compositions via the editor.
+
+---
+
+## Current State
+
+### What `file-rename` Does Today
+
+6 parameters, applied in fixed order: `find/replace → case → prefix → suffix → pattern`
+
+| Param     | Type   | Description                                                       |
+| --------- | ------ | ----------------------------------------------------------------- |
+| `find`    | string | Regex or literal search pattern                                   |
+| `replace` | string | Replacement (supports capture groups)                             |
+| `case`    | enum   | `lower`, `upper`, `title` (stem only)                             |
+| `prefix`  | string | Prepend to stem                                                   |
+| `suffix`  | string | Append before extension                                           |
+| `pattern` | string | Template override: `{{name}}`, `{{ext}}`, `{{index}}`, `{{date}}` |
+
+**Platform:** Browser + CLI. Accepts any file type. Per-file processing.
+
+### Gaps vs. BRU
+
+| Capability                         | BRU | Bnto Today                 | Proposed Fix                           |
+| ---------------------------------- | --- | -------------------------- | -------------------------------------- |
+| Sequential numbering (001, 002...) | Yes | Static `{{index}}` only    | Add `counter` params to `file-rename`  |
+| Extension manipulation             | Yes | Locked to original         | Add `extension` param to `file-rename` |
+| Character sanitization             | Yes | One find/replace at a time | New `file-sanitize` node               |
+| File property-based naming         | Yes | Filename only              | New `file-metadata` node               |
+| Directory traversal                | Yes | Explicit file selection    | New `file-collect` node                |
+| File placement/output              | Yes | Download only              | New `file-copy` node                   |
+| Conditional branching              | Yes | None                       | New `file-filter` node                 |
+| Vector format conversion           | N/A | Image formats only         | Extend `image-convert`                 |
+
+---
+
+## Proposed Node Processors
+
+### Phase 1: Enhance `file-rename` (Low Effort, High Leverage)
+
+Enrich the existing processor — no new crates needed.
+
+**New parameters:**
+
+| Param           | Type    | Description                                              |
+| --------------- | ------- | -------------------------------------------------------- |
+| `counter_start` | integer | Starting number for sequential naming (default: 1)       |
+| `counter_pad`   | integer | Zero-pad width (default: 0, e.g. 3 → `001`, `002`)       |
+| `extension`     | string  | Replace extension (e.g. `"svg"` changes `.eps` → `.svg`) |
+
+**New template variables:** `{{counter}}` (auto-incrementing, respects `counter_start` and `counter_pad`)
+
+**Platform impact:** Browser + CLI (no new dependencies).
+
+**Recipes unlocked:**
+
+- Sequential batch rename: `photo-001.jpg`, `photo-002.jpg`
+- Extension normalization: `.JPEG` → `.jpg`
+
+### Phase 2: New File Operation Nodes
+
+#### `file-collect` — Directory Traversal + Glob Matching
+
+The "point at a folder" primitive. Accepts a directory path and glob pattern, outputs matched files into the pipeline.
+
+| Param       | Type    | Description                                                 |
+| ----------- | ------- | ----------------------------------------------------------- |
+| `pattern`   | string  | Glob pattern: `*.svg`, `**/*.eps`, `*.{svg,eps}`            |
+| `recursive` | boolean | Traverse subdirectories (default: true)                     |
+| `flatten`   | boolean | Strip directory structure from output names (default: true) |
+
+**Platform:** Native-only (CLI/desktop) — requires filesystem traversal. Browser variant could use `webkitdirectory` folder upload for drag-and-drop directory selection.
+
+**Crate:** `bnto-file` (extend existing crate).
+
+**Input cardinality:** Special — this is an _input source_ node, not a per-file processor. It produces files rather than consuming them. Architecturally similar to the `input` I/O node but with filesystem access.
+
+**Engine consideration:** Today's pipeline model is "files in → process → files out." `file-collect` inverts the input side: "directory path in → files discovered → pipeline continues." This may need the input node to accept a directory path parameter rather than explicit files. Needs design spike.
+
+#### `file-copy` — File Placement
+
+Place output files in a specific destination directory.
+
+| Param                | Type    | Description                                            |
+| -------------------- | ------- | ------------------------------------------------------ |
+| `destination`        | string  | Output directory path                                  |
+| `create_dirs`        | boolean | Create destination if missing (default: true)          |
+| `conflict`           | enum    | `skip`, `overwrite`, `rename` (default: `skip`)        |
+| `preserve_structure` | boolean | Maintain relative directory structure (default: false) |
+
+**Platform:** Native-only (CLI/desktop) — writes to filesystem.
+
+**Crate:** `bnto-file` (extend existing crate).
+
+#### `file-filter` — Conditional Pipeline Split
+
+Filter files by extension, name pattern, or size. Files that don't match are dropped from the pipeline.
+
+| Param          | Type    | Description                         |
+| -------------- | ------- | ----------------------------------- |
+| `extensions`   | string  | Comma-separated: `svg,eps,ai`       |
+| `name_pattern` | string  | Glob or regex for filename matching |
+| `min_size`     | integer | Minimum file size in bytes          |
+| `max_size`     | integer | Maximum file size in bytes          |
+
+**Platform:** Browser + CLI (operates on in-memory file metadata).
+
+**Crate:** `bnto-file` (extend existing crate).
+
+#### `file-sanitize` — Filename Cleanup
+
+Strip special characters, normalize unicode, slugify filenames.
+
+| Param        | Type    | Description                                                                              |
+| ------------ | ------- | ---------------------------------------------------------------------------------------- |
+| `mode`       | enum    | `slugify` (lowercase+hyphens), `strip` (remove special chars), `normalize` (unicode NFC) |
+| `separator`  | string  | Replacement character for spaces/special chars (default: `-`)                            |
+| `max_length` | integer | Truncate stem to N characters (default: 0 = no limit)                                    |
+
+**Platform:** Browser + CLI (pure string manipulation).
+
+**Crate:** `bnto-file` (extend existing crate).
+
+#### `file-metadata` — Property Extraction
+
+Extract file properties and inject them as template variables for downstream `file-rename` nodes.
+
+| Param     | Type  | Description                                                                          |
+| --------- | ----- | ------------------------------------------------------------------------------------ |
+| `extract` | array | Properties to extract: `size`, `created`, `modified`, `width`, `height`, `exif_date` |
+
+**Output:** Enriches the file's metadata map with extracted properties. Downstream `file-rename` pattern templates can reference them: `{{created_year}}`, `{{width}}x{{height}}`, `{{size_kb}}`.
+
+**Platform:** Browser (limited — no created/modified dates) + CLI (full access).
+
+**Crate:** `bnto-file` (extend existing crate). Image dimension extraction may delegate to `bnto-image`.
+
+### Phase 3: Extend `image-convert` for Vector Formats
+
+The existing `image-convert` processor handles raster formats (JPEG, PNG, WebP, AVIF, GIF, BMP, TIFF). Vector format conversion (EPS, AI, SVG, PDF) is a natural extension rather than a separate node.
+
+**New format support:**
+
+| Conversion          | Method                               | Platform          |
+| ------------------- | ------------------------------------ | ----------------- |
+| SVG → PNG/JPEG/WebP | `resvg` (pure Rust SVG renderer)     | Browser + CLI     |
+| EPS → SVG           | Shell out to Inkscape or Ghostscript | CLI-only (native) |
+| AI → SVG            | Shell out to Inkscape                | CLI-only (native) |
+| PDF → SVG           | Shell out to Inkscape or `pdf2svg`   | CLI-only (native) |
+
+**Why extend `image-convert` rather than a new node:** Users already think of format conversion as one concept. "Convert EPS to SVG" and "Convert PNG to WebP" are the same mental operation. Splitting them into separate nodes adds cognitive overhead. The processor can detect raster vs vector paths internally.
+
+**Native dependency management:** Like `video-download` checks for `yt-dlp`, `image-convert` would check for Inkscape/Ghostscript availability via `bnto doctor` and provide clear error messages when tools are missing. Browser fallback: only SVG→raster works (via `resvg`), vector-to-vector conversions show "CLI only" in the browser UI.
+
+### Phase 4: `svg-optimize` — SVG Cleanup/Minification
+
+Dedicated SVG optimization processor.
+
+| Param             | Type    | Description                                                   |
+| ----------------- | ------- | ------------------------------------------------------------- |
+| `precision`       | integer | Decimal precision for coordinates (default: 3)                |
+| `remove_comments` | boolean | Strip XML comments (default: true)                            |
+| `remove_metadata` | boolean | Strip editor metadata (Illustrator, Inkscape) (default: true) |
+| `collapse_groups` | boolean | Flatten unnecessary `<g>` wrappers (default: true)            |
+| `minify`          | boolean | Remove whitespace/indentation (default: true)                 |
+
+**Implementation options:**
+
+- **Pure Rust (preferred):** `usvg` from the `linebender` project — parses SVGs into a simplified tree and re-serializes. Strips cruft, normalizes structure, collapses groups. Not as aggressive as SVGO but WASM-safe.
+- **Shell-out (CLI enhancement):** If `svgo` is available, use it for maximum optimization. Fall back to Rust implementation.
+
+**Platform:** Browser (pure Rust) + CLI (Rust, with optional SVGO shell-out for deeper optimization).
+
+**Crate:** New `bnto-svg` crate.
+
+---
+
+## Proposed Recipes
+
+### Out-of-the-Box (ship with the nodes)
+
+| Recipe                    | Slug                     | Nodes                                                             | Platform      | Category |
+| ------------------------- | ------------------------ | ----------------------------------------------------------------- | ------------- | -------- |
+| Optimize SVG              | `optimize-svg`           | `svg-optimize`                                                    | Browser + CLI | file     |
+| Batch Rename with Numbers | `number-files`           | `file-rename` (counter)                                           | Browser + CLI | file     |
+| Flatten Folder            | `flatten-folder`         | `file-collect` → `file-copy`                                      | CLI           | file     |
+| Collect and Rename        | `collect-and-rename`     | `file-collect` → `file-rename`                                    | CLI           | file     |
+| Convert EPS to SVG        | `convert-eps-to-svg`     | `image-convert` (eps→svg)                                         | CLI           | image    |
+| SVG to PNG                | `svg-to-png`             | `image-convert` (svg→png)                                         | Browser + CLI | image    |
+| Design Asset Pipeline     | `optimize-design-assets` | `file-collect` → `image-convert` → `svg-optimize` → `file-rename` | CLI           | file     |
+| Sanitize Filenames        | `sanitize-filenames`     | `file-sanitize`                                                   | Browser + CLI | file     |
+
+### Custom Compositions (enabled by building blocks)
+
+These aren't shipped recipes but examples of what users can build in the editor:
+
+- **Organize photos by date:** `file-collect` → `file-metadata` → `file-rename(pattern={{year}}/{{month}}/{{name}}.{{ext}})` → `file-copy`
+- **Clean up downloads:** `file-collect(~/Downloads)` → `file-filter(extensions=png,jpg,svg)` → `file-sanitize(slugify)` → `file-copy(./sorted/)`
+- **Prepare icons for web:** `file-collect(**/*.svg)` → `svg-optimize` → `file-rename(prefix=icon-, case=lower)` → `file-copy(./public/icons/)`
+- **Extract and convert vectors:** `file-collect(**/*.eps)` → `image-convert(→svg)` → `svg-optimize` → `file-copy(./vectors/)`
+
+---
+
+## Implementation Order
+
+**Priority is driven by:** leverage (how many recipes does it unlock), effort (how much new code), and SEO value (does it create a new recipe page).
+
+| Priority | Work                                               | Effort                                            | Unlocks                                           |
+| -------- | -------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| 1        | Enhance `file-rename` (counter + extension)        | Small — extend existing processor                 | `number-files` recipe, better rename compositions |
+| 2        | `svg-optimize` node + `optimize-svg` recipe        | Medium — new crate (`bnto-svg`), pure Rust        | High-value standalone recipe, SEO page            |
+| 3        | `file-sanitize` node + `sanitize-filenames` recipe | Small — string manipulation in `bnto-file`        | Standalone recipe, useful building block          |
+| 4        | `file-filter` node                                 | Small — metadata checks in `bnto-file`            | Composition building block                        |
+| 5        | Extend `image-convert` for SVG→raster              | Medium — integrate `resvg`                        | `svg-to-png` recipe, browser-capable              |
+| 6        | `file-collect` node                                | Medium — filesystem traversal, input model change | Unlocks all CLI directory workflows               |
+| 7        | `file-copy` node                                   | Small — filesystem write in `bnto-file`           | Completes the collect→process→place pipeline      |
+| 8        | Extend `image-convert` for EPS/AI→SVG              | Medium — native dependency (Inkscape)             | `convert-eps-to-svg` recipe, CLI-only             |
+| 9        | `file-metadata` node                               | Medium — property extraction, cross-crate         | Advanced rename compositions                      |
+
+---
+
+## Architecture Notes
+
+### `file-collect` Input Model
+
+Today's execution model: user provides files → pipeline processes them. `file-collect` needs the inverse: pipeline discovers files from the filesystem. Options:
+
+1. **Input node variant** — `file-collect` replaces the `input` I/O node at the start of a recipe. The engine's `PipelineExecutor` recognizes it as a source node and calls its `collect()` method instead of expecting user-provided files.
+2. **Pre-pipeline step** — `file-collect` runs before the pipeline as a gather phase, feeding discovered files into the standard input. Simpler engine changes but less composable.
+3. **Standard processor with directory input** — The CLI accepts a directory path as "input" and `file-collect` processes it like any other node, outputting individual files. Most composable, least engine change.
+
+Option 3 is preferred — it keeps the execution model uniform and requires the least engine refactoring.
+
+### Platform Matrix
+
+| Node                     | Browser                   | CLI                        | Desktop (future) |
+| ------------------------ | ------------------------- | -------------------------- | ---------------- |
+| `file-rename` (enhanced) | Yes                       | Yes                        | Yes              |
+| `svg-optimize`           | Yes (Rust)                | Yes (Rust + optional SVGO) | Yes              |
+| `file-sanitize`          | Yes                       | Yes                        | Yes              |
+| `file-filter`            | Yes                       | Yes                        | Yes              |
+| `file-collect`           | Limited (webkitdirectory) | Yes                        | Yes              |
+| `file-copy`              | No (download only)        | Yes                        | Yes              |
+| `file-metadata`          | Limited                   | Yes                        | Yes              |
+| `image-convert` (vector) | SVG→raster only           | Full (with Inkscape)       | Full             |
+
+### SEO Impact
+
+Each new recipe with a dedicated page is an SEO surface. Estimated new pages:
+
+- `/optimize-svg` — "optimize svg online free"
+- `/number-files` — "batch rename files with numbers"
+- `/flatten-folder` — "flatten folder structure"
+- `/sanitize-filenames` — "sanitize filenames batch"
+- `/convert-eps-to-svg` — "convert eps to svg free"
+- `/svg-to-png` — "convert svg to png free"
+
+All high-intent, tool-seeking queries with strong conversion potential.
+
+---
+
+## Open Questions
+
+1. **`file-collect` execution model** — Which of the three options above? Needs a design spike with the engine architecture.
+2. **`resvg` WASM size** — Need to benchmark the size impact of adding `resvg` to the WASM binary for SVG→raster in browser.
+3. **SVGO integration** — Should the CLI prefer SVGO when available, or always use the Rust implementation for determinism? Golden tests need consistent output.
+4. **`file-metadata` scope** — How much property extraction is useful? EXIF is well-defined but filesystem metadata varies by OS.
+5. **`file-copy` in browser** — Browser can't write to filesystem. Should `file-copy` be hidden in browser recipes, or should it fall back to zip download with directory structure preserved?
