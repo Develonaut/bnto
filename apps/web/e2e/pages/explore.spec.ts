@@ -26,22 +26,23 @@ test.describe("Explore page — desktop @browser", () => {
     }
   });
 
-  test("category filters are visible", async ({ page }) => {
+  test("category filter dropdown is visible", async ({ page }) => {
     await page.goto("/explore");
 
-    // "All" category is always present
-    await expect(page.getByTestId("explore-category-all")).toBeVisible();
+    // Select-based category filter is present
+    const filter = page.getByTestId("explore-category-filter");
+    await expect(filter).toBeVisible();
 
-    // At least image and data categories exist
-    await expect(page.getByTestId("explore-category-image")).toBeVisible();
-    await expect(page.getByTestId("explore-category-data")).toBeVisible();
+    // Default value shows "All categories"
+    await expect(filter.getByText("All categories")).toBeVisible();
   });
 
-  test("clicking category filter updates URL and filters grid", async ({ page }) => {
+  test("selecting category filter updates URL and filters grid", async ({ page }) => {
     await page.goto("/explore");
 
-    // Click Image category
-    await page.getByTestId("explore-category-image").click();
+    // Open the category Select dropdown and pick "Image"
+    await page.getByTestId("explore-category-filter").getByRole("combobox").click();
+    await page.getByRole("option", { name: /Image/i }).click();
     await expect(page).toHaveURL(/[?&]category=image/);
 
     // Non-image recipes should be hidden
@@ -51,8 +52,9 @@ test.describe("Explore page — desktop @browser", () => {
     // Image recipes should still be visible
     await expect(page.getByTestId("explore-recipe-compress-images")).toBeVisible();
 
-    // Click All to reset
-    await page.getByTestId("explore-category-all").click();
+    // Select "All categories" to reset
+    await page.getByTestId("explore-category-filter").getByRole("combobox").click();
+    await page.getByRole("option", { name: /All categories/i }).click();
     await expect(csvRecipe).toBeVisible();
   });
 

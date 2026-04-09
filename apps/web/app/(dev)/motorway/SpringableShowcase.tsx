@@ -1,24 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 
 import { Button, Card, Heading, Row, Skeleton, Stack, Text } from "@bnto/ui";
 
 /* ── Shared OptionBar ──────────────────────────────────────────── */
 
 type Elevation = "sm" | "md" | "lg";
-type Spring = "bouncy" | "bouncier" | "bounciest";
 
 const ELEVATIONS: { value: Elevation; label: string }[] = [
   { value: "sm", label: "sm" },
   { value: "md", label: "md" },
   { value: "lg", label: "lg" },
-];
-
-const SPRINGS: { value: Spring; label: string; description: string }[] = [
-  { value: "bouncy", label: "bouncy", description: "150ms ease-out" },
-  { value: "bouncier", label: "bouncier", description: "400ms single bounce" },
-  { value: "bounciest", label: "bounciest (default)", description: "550ms rubber band" },
 ];
 
 function OptionBar<T extends string>({
@@ -50,42 +43,22 @@ function OptionBar<T extends string>({
   );
 }
 
-/* ── Spring + Elevation playground ─────────────────────────────── */
+/* ── Dormant + Elevation playground ────────────────────────────── */
 
-export function SpringableShowcase() {
+function DormantPlayground() {
   const [elevation, setElevation] = useState<Elevation>("md");
-  const [spring, setSpring] = useState<Spring>("bounciest");
-  const [grounded, setGrounded] = useState(true);
-
-  const springDesc = SPRINGS.find((s) => s.value === spring)?.description;
+  const [dormant, setDormant] = useState(true);
 
   return (
     <Stack gap="md">
-      <Stack gap="sm">
-        <OptionBar
-          label="elevation"
-          options={ELEVATIONS}
-          value={elevation}
-          onChange={setElevation}
-        />
-        <OptionBar
-          label="spring"
-          options={SPRINGS}
-          value={spring}
-          onChange={setSpring}
-        />
-      </Stack>
+      <OptionBar label="elevation" options={ELEVATIONS} value={elevation} onChange={setElevation} />
 
       <Row gap="sm" className="items-center">
-        <Button
-          variant={grounded ? "secondary" : "outline"}
-          onClick={() => setGrounded((g) => !g)}
-        >
-          {grounded ? "Load Content" : "Reset to Loading"}
+        <Button variant={dormant ? "secondary" : "outline"} onClick={() => setDormant((d) => !d)}>
+          {dormant ? "Load Content" : "Reset to Loading"}
         </Button>
         <Text size="sm" color="muted">
-          elevation-{elevation} + spring-{spring} ({springDesc})
-          {grounded ? " — grounded" : " — raised"}
+          elevation-{elevation} — {dormant ? "dormant" : "raised"}
         </Text>
       </Row>
 
@@ -94,11 +67,10 @@ export function SpringableShowcase() {
           <Card
             key={i}
             elevation={elevation}
-            spring={spring}
-            grounded={grounded}
+            dormant={dormant}
             className="flex h-48 flex-col justify-between p-5"
           >
-            {grounded ? (
+            {dormant ? (
               <Stack gap="sm">
                 <Skeleton className="h-5 w-2/3 rounded" />
                 <Skeleton className="h-3 w-full rounded" />
@@ -115,7 +87,7 @@ export function SpringableShowcase() {
               </Stack>
             )}
             <Text size="xs" color="muted" className="font-mono uppercase tracking-wider">
-              {grounded ? "grounded" : "raised"}
+              {dormant ? "dormant" : "raised"}
             </Text>
           </Card>
         ))}
@@ -124,3 +96,78 @@ export function SpringableShowcase() {
   );
 }
 
+/* ── Scroll-triggered — IntersectionObserver + dormant ────────── */
+
+function useInView(threshold = 0.3) {
+  const [inView, setInView] = useState(false);
+  const elRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el || inView) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold, rootMargin: "-10% 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [inView, threshold]);
+
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    elRef.current = node;
+  }, []);
+
+  return [inView, ref] as const;
+}
+
+function ScrollRevealCard({ index, elevation }: { index: number; elevation: "sm" | "md" | "lg" }) {
+  const [inView, ref] = useInView(0.6);
+
+  return (
+    <Card
+      ref={ref}
+      dormant={!inView}
+      elevation={elevation}
+      className="flex h-48 flex-col justify-between p-5"
+    >
+      <Stack gap="sm">
+        <Heading level={3} size="xs">
+          Card {index}
+        </Heading>
+        <Text size="sm" color="muted">
+          Sprung up when scrolled into view.
+        </Text>
+      </Stack>
+      <Text size="xs" color="muted" className="font-mono uppercase tracking-wider">
+        {inView ? "raised" : "dormant"}
+      </Text>
+    </Card>
+  );
+}
+
+/* ── Main showcase ────────────────────────────────────────────── */
+
+export function SpringableShowcase() {
+  return (
+    <Stack gap="lg">
+      <DormantPlayground />
+
+      {/* Scroll-triggered reveal */}
+      <Stack gap="sm">
+        <Text size="sm" color="muted">
+          Scroll down — cards spring up from dormancy when they enter the viewport.
+        </Text>
+        <div className="grid grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <ScrollRevealCard key={i} index={i} elevation="md" />
+          ))}
+        </div>
+      </Stack>
+    </Stack>
+  );
+}

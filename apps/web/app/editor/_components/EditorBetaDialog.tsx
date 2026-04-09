@@ -11,7 +11,7 @@ import { EditorBetaDialogContent } from "./EditorBetaDialogContent";
  * Persists dismissal in localStorage so it only shows once per browser.
  */
 export function EditorBetaDialog() {
-  const { dismissed, dismiss } = useDismissible("bnto-editor-beta-dismissed");
+  const { dismissed, dismiss } = useDismissible("bnto-editor-experimental-dismissed");
 
   const handleOpenChange = useCallback(
     (v: boolean) => {

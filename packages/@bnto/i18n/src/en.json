@@ -3,14 +3,14 @@
     "title": "bnto",
     "defaultTitle": "bnto - Automate tasks with recipes",
     "titleTemplate": "%s - bnto",
-    "description": "Task automation from simple to powerful. 15 built-in recipes for images, CSVs, files, and video. Chain nodes into custom pipelines. Run from the CLI or browser. Free, open source, MIT licensed.",
-    "tagline": "Task automation, from simple to powerful.",
+    "description": "Pack your workflow. 15 recipes for images, CSVs, files, and video. Chain nodes into custom pipelines. Run from the CLI or browser. Free, open source, MIT licensed.",
+    "tagline": "Pack. Run. Done.",
     "trustLine": "Free. Open source. Runs on your machine.",
     "licenseLine": "MIT Licensed. Free and open source."
   },
   "hero": {
     "heading": "Pack your workflow.",
-    "subheading": "Build a node for anything. Chain nodes into recipes that automate your workflow. 15 recipes work out of the box. Need something custom? Compose your own.",
+    "subheading": "15 recipes included. Or pack your own.",
     "ctaTitle": "Create your own",
     "ctaDescription": "Chain nodes into multi-step recipes.",
     "privacyTitle": "Runs on your machine",
@@ -19,14 +19,14 @@
     "ossDescription": "Inspect every line. Contribute on GitHub."
   },
   "howItWorks": {
-    "label": "How it works",
-    "heading": "Nodes are compartments.\nRecipes are the box.",
-    "description": "Each node encapsulates one capability: compress an image, rename a file, clean a CSV, download a video. Chain nodes into recipes that automate your workflow. Recipes are portable .bnto.json files that run everywhere: CLI, browser, desktop."
+    "label": "What's in the box",
+    "heading": "Pick your fillings.\nThe recipe packs the box.",
+    "description": "One node, one job. Chain them together, run them anywhere."
   },
   "noCatch": {
-    "label": "No catch",
-    "heading": "Free recipes that stay free.\nOpen source you can verify.",
-    "description": "No signup. No watermarks. No daily caps. The engine runs on your machine, so it costs nothing to operate. MIT licensed. Inspect the source, fork it, contribute. Build nodes for anything you want to automate.",
+    "label": "No mystery meat",
+    "heading": "No hidden ingredients.\nOpen source you can taste-test.",
+    "description": "No signup. No watermarks. No daily caps. Your kitchen, your rules. MIT licensed. Peek behind the counter anytime.",
     "cta": "View on GitHub"
   },
   "trust": {

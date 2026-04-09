@@ -1,14 +1,19 @@
 import type { LucideIcon } from "@bnto/ui";
 import {
   ArrowRightLeftIcon,
+  BracesIcon,
   Columns3Icon,
   CropIcon,
+  EyeOffIcon,
+  FileVideoIcon,
   LayersIcon,
   ListChecksIcon,
   Minimize2Icon,
   PenLineIcon,
   ScalingIcon,
   SparklesIcon,
+  StampIcon,
+  TableIcon,
   ZapIcon,
 } from "@bnto/ui";
 
@@ -23,6 +28,11 @@ const BNTO_ICONS: Record<string, LucideIcon> = {
   "generate-thumbnails": CropIcon,
   "compress-and-rename": LayersIcon,
   "standardize-csv": ListChecksIcon,
+  "strip-exif": EyeOffIcon,
+  "watermark-images": StampIcon,
+  "merge-csv": TableIcon,
+  "csv-to-json": BracesIcon,
+  "download-video": FileVideoIcon,
 };
 
 export function getBntoIcon(slug: string): LucideIcon {

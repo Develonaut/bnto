@@ -42,13 +42,30 @@ const NAV_DESCRIPTIONS: Record<string, string> = {
   "rename-files": "Batch rename files with patterns",
 };
 
-/** Recipes grouped by category, derived from the engine menu. */
+/** Slugs shown in the nav dropdown. The rest are discoverable via /explore. */
+const FEATURED_SLUGS = new Set([
+  "compress-images",
+  "resize-images",
+  "convert-image-format",
+  "optimize-images-for-web",
+  "watermark-images",
+  "clean-csv",
+  "csv-to-json",
+  "merge-csv",
+  "rename-files",
+]);
+
+/** All recipes grouped by category, derived from the engine registry. */
 export const RECIPES: RecipeCategory[] = buildRecipeCategories();
 
-function buildRecipeCategories(): RecipeCategory[] {
+/** Featured subset for the nav dropdown — curated for breadth, not volume. */
+export const FEATURED_RECIPES: RecipeCategory[] = buildRecipeCategories(FEATURED_SLUGS);
+
+function buildRecipeCategories(slugFilter?: Set<string>): RecipeCategory[] {
   const grouped = new Map<string, RecipeLink[]>();
 
   for (const recipe of getBrowserRecipes()) {
+    if (slugFilter && !slugFilter.has(recipe.slug)) continue;
     const links = grouped.get(recipe.category) ?? [];
     links.push({
       label: recipe.name,

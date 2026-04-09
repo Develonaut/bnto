@@ -18,10 +18,13 @@ interface PitchPoint {
 }
 
 const PITCH_POINTS: PitchPoint[] = [
-  { icon: BlocksIcon, label: "Composable nodes. Build any workflow by chaining nodes together" },
-  { icon: TerminalIcon, label: `${BNTO_REGISTRY.length} recipes included. One command: bnto run` },
-  { icon: ZapIcon, label: "Runs on your machine. Files never leave your device" },
-  { icon: GlobeIcon, label: "Open source (MIT). Extend it, fork it, contribute" },
+  {
+    icon: BlocksIcon,
+    label: "Pick your ingredients. Each node does one thing. Chain them into anything.",
+  },
+  { icon: TerminalIcon, label: `${BNTO_REGISTRY.length} house specials. One command: bnto run.` },
+  { icon: ZapIcon, label: "Your kitchen, your rules. Everything runs locally." },
+  { icon: GlobeIcon, label: "Open kitchen. MIT licensed. Fork it, read it, break it." },
 ];
 
 export function HeroPitchPoints() {

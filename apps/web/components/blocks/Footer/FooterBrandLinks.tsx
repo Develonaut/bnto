@@ -1,32 +1,31 @@
-import { ArrowUpRightIcon, Button, CoffeeIcon, GithubIcon, Stack } from "@bnto/ui";
+import { Beer } from "lucide-react";
+import { Button, GithubIcon, Row } from "@bnto/ui";
 import { BUYMEACOFFEE_URL, GITHUB_URL } from "@/lib/links";
 
-/** GitHub + Buy Me a Coffee links in the footer brand column. */
+/** GitHub + Buy Me a Beer icon buttons in the footer brand column. */
 export function FooterBrandLinks() {
   return (
-    <Stack gap="lg">
-      <a
+    <Row className="gap-2">
+      <Button
         href={GITHUB_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        aria-label="Open source — GitHub repository"
+        variant="outline"
+        size="icon"
+        aria-label="GitHub repository"
       >
         <GithubIcon className="size-4" />
-        Open source
-        <ArrowUpRightIcon className="size-3" />
-      </a>
+      </Button>
       <Button
         href={BUYMEACOFFEE_URL}
         target="_blank"
         rel="noopener noreferrer"
-        variant="outline"
-        className="w-fit"
-        aria-label="Support bnto — Buy Me a Coffee"
+        variant="warning"
+        size="icon"
+        aria-label="Buy me a beer"
       >
-        <CoffeeIcon className="size-4" />
-        Buy me a coffee
+        <Beer className="size-4" />
       </Button>
-    </Stack>
+    </Row>
   );
 }

@@ -784,6 +784,15 @@ Added `settings.iteration: "auto" | "explicit"` to the Definition. When `"auto"`
 
 **Priority: Medium.** `bnto migrate` CLI command for breaking changes to `.bnto.json` node parameters (e.g., `compression`→`quality`). Versioned migration system: detect version, apply sequential transforms, report changes. The `version` field already exists in `Definition`.
 
+### @bnto/i18n: Interpolation + Raw Text Migration
+
+**Priority: Low.** Add `{{variable}}` interpolation support to `t()` so dynamic values (recipe counts, etc.) can live in `en.json` instead of template literals in components. Then migrate all hardcoded `<Text>` strings in landing page components to `t()` calls.
+
+- [ ] `packages/@bnto/i18n` — Add optional `vars` parameter to `t()`: `t(key, { count: 15 })` replaces `{{count}}` in the resolved string
+- [ ] `packages/@bnto/i18n` — Unit tests for interpolation (single var, multiple vars, missing var, no vars)
+- [ ] `apps/web` — Migrate hardcoded strings in `HowItWorksSection`, `NoCatchCopy`, `BragCapabilityCard`, `HeroPitchPoints` to `t()` calls
+- [ ] `packages/@bnto/i18n` — Move dynamic recipe count strings to `en.json` with `{{count}}` placeholders
+
 ### @bnto/ui: `<SpringIn>` Entrance Animation Component
 
 **Priority: Medium. Enabler for homepage polish — should land before or alongside Piece 3 (hero animations).**
@@ -839,64 +848,65 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 1 — Copy polish (text-only, no component changes):**
 
-- [ ] Revise hero subheading — one sentence, lean into bento metaphor ("15 recipes included. Or pack your own.")
-- [ ] Revise section divider labels — "What's in the box", "Open kitchen"
-- [ ] Revise pitch points — add personality ("Pick your ingredients", "Your kitchen, your rules", "Open kitchen")
-- [ ] Revise footer tagline — "Pack. Run. Done."
-- [ ] Revise "How it works" body — shorter, punchier ("One node, one job. Chain them together, run them anywhere.")
+- [x] Revise hero subheading — one sentence, lean into bento metaphor ("15 recipes included. Or pack your own.")
+- [x] Revise section divider labels — "What's in the box", "Open kitchen"
+- [x] Revise pitch points — add personality ("Pick your ingredients", "Your kitchen, your rules", "Open kitchen")
+- [x] Revise footer tagline — "Pack. Run. Done."
+- [x] Revise "How it works" body — shorter, punchier ("One node, one job. Chain them together, run them anywhere.")
 
 **Piece 2 — Nav restructure:**
 
-- [ ] Rename "Create (beta)" → "Editor (beta)" in nav
-- [ ] Remove FAQ from top nav (keep in footer)
-- [ ] Build `ExploreDropdown` mega-menu — recipes grouped by category, sourced from `core.registry`
-- [ ] Add "Get started" CTA button + GitHub star link
-- [ ] Relocate theme toggle out of nav (footer or remove)
+- [x] Rename "Create (beta)" → "Editor (beta)" in nav
+- [x] Remove FAQ from top nav (keep in footer)
+- [x] Build `ExploreDropdown` mega-menu — recipes grouped by category, sourced from `core.registry`
+- [x] Add "Get started" CTA button + GitHub star link
+- [x] Relocate theme toggle out of nav (footer or remove)
 
 **Piece 3 — Hero section animations:**
 
-- [ ] `SlideUp` on hero headline, `FadeIn` with delay on sub-headline
-- [ ] `ScaleIn` with `spring-bouncy` on CTA buttons (staggered)
-- [ ] `ScaleIn` on terminal mockup card
-- [ ] `Stagger` + `SlideUp` on pitch points
-- [ ] Scroll-trigger utility — `IntersectionObserver` adding animation classes on viewport entry
+- [x] `SlideUp` on hero headline, `FadeIn` with delay on sub-headline
+- [x] `ScaleIn` with `spring-bouncy` on CTA buttons (staggered)
+- [x] `ScaleIn` on terminal mockup card
+- [x] `Stagger` + `SlideUp` on pitch points
+- [x] Scroll-trigger utility — `IntersectionObserver` adding animation classes on viewport entry (`InView` component)
 
 **Piece 4 — Explore page spring animations:**
 
-- [ ] Wrap recipe cards in `Stagger` + `ScaleIn` with stagger index
-- [ ] Spring selection animation on category filter tabs
-- [ ] `FadeIn` on page header
+- [x] Wrap recipe cards in `Stagger` + `ScaleIn` with stagger index
+- [x] Spring selection animation on category filter (Select dropdown)
+- [x] `FadeIn` on page header
 
 **Piece 5 — "What's in the box" section redesign:**
 
-- [ ] Three Motorways surface cards: Pick → Pack → Run, with `ScaleIn` stagger
-- [ ] Connecting flow indicators between cards
-- [ ] Section header: "What's in the box" + "Nodes are compartments. Recipes are the box."
+- [x] Three Motorways surface cards: Pick → Pack → Run, with dormant spring-in stagger
+- [x] Section header: "What's in the box" + "Nodes are compartments. Recipes are the box."
+- [x] Mascot integration (bento sushi SVG) with FadeIn animation
+- [ ] Connecting flow indicators between cards (deferred — current grid layout doesn't need them)
 
 **Piece 6 — Recipe showcase section ("House Specials"):**
 
-- [ ] `RecipeShowcase` section — curated card grid, grouped by category with warm headers
-- [ ] `Stagger` + `ScaleIn` cascade per category group on scroll
-- [ ] "Browse all recipes →" link to `/explore`
+- [x] `RecipeShowcase` section — horizontal marquee with RecipeCard compound components, mascot + body text header
+- [x] "Browse all recipes →" link to `/explore`
 
 **Piece 7 — "Open Kitchen" section polish:**
 
-- [ ] Update copy ("No mystery meat", warmer messaging)
-- [ ] Wrap anti-pattern strikethrough list in `<Card>` with elevation
-- [ ] `SlideUp` stagger on strikethrough items, `ScaleIn` on GitHub CTA
+- [x] Update copy ("No mystery meat" → "No hidden ingredients", warmer messaging)
+- [x] `SlideUp` stagger on items, `ScaleIn` on GitHub CTA
+- [ ] Wrap anti-pattern strikethrough list in `<Card>` with elevation (deferred — current layout works well)
 
 **Piece 8 — "Build Your Own" section (new):**
 
-- [ ] New section between "Open Kitchen" and Footer
-- [ ] `.bnto.json` code preview in a `<Card>` with syntax highlighting
-- [ ] "Open Editor (beta) →" CTA
-- [ ] `ScaleIn` on code card, `SlideUp` on copy
+- [x] New section between "House Specials" and "Open Kitchen"
+- [x] `.bnto.json` code preview in animated `CodeEditor` with syntax highlighting
+- [x] "Open Editor (beta) →" CTA
+- [x] `ScaleIn` on code card, `SlideUp` on copy
+- [x] Responsive: copy stacks on top on mobile, `min-w-0` prevents editor clipping
 
 **Piece 9 — Footer refresh:**
 
-- [ ] Update tagline to "Pack. Run. Done."
-- [ ] Add FAQ + Docs links to footer
-- [ ] Visual polish (spacing, separator, warmth)
+- [x] Update tagline to "Pack. Run. Done."
+- [x] Add FAQ + Docs links to footer
+- [x] Visual polish (spacing, separator, mascot, icon buttons)
 
 **Piece 10 — Recipe page animations:**
 
@@ -905,11 +915,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Piece 11 — Mascots & illustrations (Catalyst Labs kawaii sushi, purchase per-piece):**
 
-- [ ] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon" ~$6) — integrate into hero section (Piece 3)
-- [ ] Purchase 3 step characters (chopstick sushi, square bento, action pose ~$6 each) — integrate into "What's in the box" cards (Piece 5)
-- [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers (Piece 6)
+- [x] Purchase primary mascot ("Cute Sushi Salmon Roll Cartoon") — integrated into hero section
+- [x] Purchase 3 step characters — sushi-friends, penguin-chef, sushi-motorbike — integrated into "What's in the box" cards (Piece 5)
+- [x] Purchase octopus-chef — integrated as House Specials mascot (RecipeShowcase header)
+- [ ] Purchase 3-4 category characters (onigiri, octopus, maki roll ~$6 each) — integrate as category headers
+- [x] Color-correct mascot outlines in Figma, export as SVGs
 - [ ] Convert PNGs to SVG components, size variants (hero 200-300px, accent 100-150px, icon 40-60px, nav 24-32px)
-- [ ] Recolor to harmonize with bnto palette (terracotta, teal, golden on cream) if needed
 
 **Piece 12 — FAQ page polish (low priority):**
 
@@ -949,6 +960,22 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Priority: Triage.** Add a `detect-changes` job to `release.yml` that diffs the current tag against the previous tag and sets output flags (`engine`/`web`/`convex`). Use these to conditionally skip irrelevant jobs — engine-only releases skip Vercel/E2E/Lighthouse, web-only releases skip crates.io publish. Cuts engine-only release time from ~8min to ~2min.
 
 `.github/workflows/release.yml`
+
+### Triage: Responsive GridItem props
+
+**Priority: Triage.** `GridItem` props (`colSpan`, `rowSpan`, `colStart`, `rowStart`) should accept `ResponsiveProp<T>` like the `Grid` `cols` prop does, so spans and positions can vary by breakpoint (mobile/tablet/desktop). Currently only `cols` is responsive — all placement props are static.
+
+`packages/ui/src/layout/Grid.tsx`
+
+### Triage: File Node Ecosystem — BRU-Style Composable File Operations
+
+**Priority: Triage.** Expand the `file` category from 1 recipe to 6-8 with composable node processors inspired by Bulk Rename Utility. Enhance `file-rename` (counter, extension params), add new nodes (`file-collect`, `file-copy`, `file-filter`, `file-sanitize`, `file-metadata`, `svg-optimize`), and extend `image-convert` for vector formats (EPS/AI→SVG, SVG→PNG via `resvg`). Each node unlocks standalone recipes and custom compositions. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+
+### Triage: Homepage hero — BRU-style file recipe showcase
+
+**Priority: Triage.** Add a file operation composition (e.g. `collect → sanitize → rename → copy`) as a "Build Your Own" hero snippet in `BuildYourOwnSection`. Demonstrates composable power vs monolithic tools. Blocked on file node ecosystem implementation.
+
+`apps/web/app/(app)/_components/BuildYourOwnSection.tsx`, `recipeSnippets.ts`
 
 ---
 

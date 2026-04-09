@@ -1,10 +1,13 @@
 import { AppShellContent, Divider, Stack } from "@bnto/ui";
 import { HeroInstall } from "@/components/blocks/HeroInstall";
+import { HeroMascot } from "@/components/blocks/HeroMascot";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
 import { HeroTerminal } from "@/components/blocks/HeroTerminal";
 
-import { HowItWorksSection } from "./_components/HowItWorksSection";
+import { BuildYourOwnSection } from "./_components/BuildYourOwnSection";
+import { HouseSpecialsSection } from "./_components/HouseSpecialsSection";
 import { NoCatchSection } from "./_components/NoCatchSection";
+import { WhatsInTheBoxSection } from "./_components/WhatsInTheBoxSection";
 
 /* ── Home page ───────────────────────────────────────────────── */
 
@@ -16,14 +19,23 @@ export default function Home() {
         <HeroSidebar />
         <Stack className="gap-4">
           <HeroInstall />
-          <HeroTerminal />
+          <div className="relative">
+            <HeroTerminal />
+            <HeroMascot />
+          </div>
         </Stack>
       </div>
 
-      <Divider label="Composable by design." />
-      <HowItWorksSection />
+      <Divider label="What's in the box" />
+      <WhatsInTheBoxSection />
 
-      <Divider label="Open source." />
+      <Divider label="House specials" />
+      <HouseSpecialsSection />
+
+      <Divider label="Build your own" />
+      <BuildYourOwnSection />
+
+      <Divider label="Open kitchen" />
       <NoCatchSection />
     </AppShellContent>
   );

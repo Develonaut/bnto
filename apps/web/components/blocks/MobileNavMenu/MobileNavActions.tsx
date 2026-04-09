@@ -1,7 +1,6 @@
 import { Button, Row } from "@bnto/ui";
+import { GITHUB_URL } from "@/lib/links";
 import { NewRecipeMobileButton } from "../NewRecipeMobileButton";
-import { PAGE_LINKS } from "../nav";
-import { MobileNavGitHubButton } from "./MobileNavGitHubButton";
 
 interface MobileNavActionsProps {
   onClose: () => void;
@@ -10,22 +9,19 @@ interface MobileNavActionsProps {
 export function MobileNavActions({ onClose }: MobileNavActionsProps) {
   return (
     <Row className="gap-4">
-      <NewRecipeMobileButton onClick={onClose} />
       <Button variant="outline" href="/explore" onClick={onClose} data-testid="mobile-link-explore">
         Explore
       </Button>
-      {PAGE_LINKS.map((link) => (
-        <Button
-          key={link.href}
-          variant="outline"
-          href={link.href}
-          onClick={onClose}
-          data-testid={`mobile-link-${link.href.replace("/", "")}`}
-        >
-          {link.label}
-        </Button>
-      ))}
-      <MobileNavGitHubButton />
+      <NewRecipeMobileButton onClick={onClose} />
+      <Button
+        variant="primary"
+        href={GITHUB_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClose}
+      >
+        Get started
+      </Button>
     </Row>
   );
 }

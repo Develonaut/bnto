@@ -296,7 +296,7 @@ The Motorways design system is the best part of the entire product surface. It's
 │   "15 recipes ready to run. Zero setup."                     │
 │                                                              │
 │   ┌─────────┐ ┌─────────┐ ┌─────────┐                      │
-│   │ Compress│ │ Resize  │ │ Convert │  ... (spring stagger) │
+│   │ Compress│ │ Resize  │ │ Convert │  ... (dormant stagger) │
 │   │ Images  │ │ Images  │ │ Format  │                       │
 │   └─────────┘ └─────────┘ └─────────┘                      │
 │                                                              │
