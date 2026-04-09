@@ -13,6 +13,7 @@ mod input;
 mod io;
 mod list;
 mod progress;
+mod tui;
 
 use std::process;
 
@@ -57,6 +58,9 @@ enum Command {
 
     /// Check that all external dependencies are installed.
     Doctor,
+
+    /// Launch the interactive terminal UI.
+    Tui,
 }
 
 fn main() {
@@ -72,6 +76,14 @@ fn main() {
         Command::List => list_recipes(),
         Command::Info { recipe } => show_info(&recipe),
         Command::Doctor => run_doctor(),
+        Command::Tui => launch_tui(),
+    }
+}
+
+fn launch_tui() {
+    if let Err(e) = tui::launch_tui() {
+        eprintln!("{} {e}", "TUI error:".red());
+        process::exit(1);
     }
 }
 
