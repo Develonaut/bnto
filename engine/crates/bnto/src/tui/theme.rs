@@ -65,16 +65,12 @@ pub fn heading() -> Style {
 
 /// Category header — uppercase, bold, muted.
 pub fn category() -> Style {
-    Style::default()
-        .fg(TEXT_MUTED)
-        .add_modifier(Modifier::BOLD)
+    Style::default().fg(TEXT_MUTED).add_modifier(Modifier::BOLD)
 }
 
 /// Selected/highlighted item.
 pub fn selected() -> Style {
-    Style::default()
-        .fg(PRIMARY)
-        .add_modifier(Modifier::BOLD)
+    Style::default().fg(PRIMARY).add_modifier(Modifier::BOLD)
 }
 
 /// Success status text.
@@ -89,9 +85,7 @@ pub fn error() -> Style {
 
 /// Key hint in help bar (e.g., the "q" in "q quit").
 pub fn key_hint() -> Style {
-    Style::default()
-        .fg(ACCENT)
-        .add_modifier(Modifier::BOLD)
+    Style::default().fg(ACCENT).add_modifier(Modifier::BOLD)
 }
 
 /// Description text next to key hint.

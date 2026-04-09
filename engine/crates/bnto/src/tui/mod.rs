@@ -15,12 +15,12 @@ use std::time::Duration;
 
 use crossterm::event::{Event, KeyEvent};
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
-use crossterm::{execute, event as crossterm_event};
+use crossterm::{event as crossterm_event, execute};
+use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph};
-use ratatui::Terminal;
 
 use app::{AppMessage, AppModel, Screen, update};
 use theme::ROUNDED_BORDERS;
@@ -62,18 +62,14 @@ fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stderr>>> {
 }
 
 /// Leave alternate screen, disable raw mode, show cursor.
-fn restore_terminal(
-    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
-) -> io::Result<()> {
+fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io::Result<()> {
     terminal::disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()
 }
 
 /// Main event loop — poll input, update state, render.
-fn run_loop(
-    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
-) -> io::Result<()> {
+fn run_loop(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io::Result<()> {
     let mut model = AppModel::new();
 
     loop {
@@ -116,11 +112,8 @@ fn draw(frame: &mut ratatui::Frame, model: &AppModel) {
     let area = frame.area();
 
     // Layout: main content + help bar at the bottom.
-    let [content_area, help_area] = Layout::vertical([
-        Constraint::Min(1),
-        Constraint::Length(1),
-    ])
-    .areas(area);
+    let [content_area, help_area] =
+        Layout::vertical([Constraint::Min(1), Constraint::Length(1)]).areas(area);
 
     draw_content(frame, model, content_area);
     draw_help_bar(frame, model, help_area);
@@ -152,9 +145,7 @@ fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, area: Rect) {
         Screen::Results { slug } => format!("Results for {slug}"),
     };
 
-    let content = Paragraph::new(label)
-        .style(theme::text())
-        .block(block);
+    let content = Paragraph::new(label).style(theme::text()).block(block);
 
     frame.render_widget(content, area);
 }
@@ -220,10 +211,18 @@ mod tests {
     fn help_hints_non_empty_for_all_screens() {
         let screens = vec![
             Screen::Browser,
-            Screen::Detail { slug: "test".into() },
-            Screen::Picker { slug: "test".into() },
-            Screen::Execution { slug: "test".into() },
-            Screen::Results { slug: "test".into() },
+            Screen::Detail {
+                slug: "test".into(),
+            },
+            Screen::Picker {
+                slug: "test".into(),
+            },
+            Screen::Execution {
+                slug: "test".into(),
+            },
+            Screen::Results {
+                slug: "test".into(),
+            },
         ];
         for screen in screens {
             assert!(
@@ -237,8 +236,12 @@ mod tests {
     fn handle_key_q_quits_from_any_screen() {
         let screens = vec![
             Screen::Browser,
-            Screen::Detail { slug: "test".into() },
-            Screen::Results { slug: "test".into() },
+            Screen::Detail {
+                slug: "test".into(),
+            },
+            Screen::Results {
+                slug: "test".into(),
+            },
         ];
         let key = KeyEvent::new(
             crossterm::event::KeyCode::Char('q'),

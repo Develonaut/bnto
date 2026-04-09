@@ -46,7 +46,10 @@ mod tests {
 
     #[test]
     fn q_maps_to_quit() {
-        assert_eq!(map_global_key(key(KeyCode::Char('q'))), Some(AppMessage::Quit));
+        assert_eq!(
+            map_global_key(key(KeyCode::Char('q'))),
+            Some(AppMessage::Quit)
+        );
     }
 
     #[test]
