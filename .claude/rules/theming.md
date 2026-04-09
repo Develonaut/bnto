@@ -31,9 +31,7 @@ const fontMono = Geist_Mono({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${fontDisplay.variable} ${fontSans.variable} ${fontMono.variable} antialiased`}
-      >
+      <body className={`${fontDisplay.variable} ${fontSans.variable} ${fontMono.variable} antialiased`}>
         {children}
       </body>
     </html>
@@ -42,7 +40,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 **Rules:**
-
 - Use `font-display` for hero headings, page titles, brand wordmark, and display text — resolves to Geist
 - Use `font-sans` (resolves to Inter) for body text, labels, and general UI
 - Use `font-mono` (resolves to Geist Mono) for code/technical output — logs, `.bnto.json` previews, node type labels
@@ -54,40 +51,38 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 All colors use OKLCH. Reference by semantic token, never by raw value.
 
-**Source of truth:** `theme/palette.toml` defines all semantic color tokens for all 3 themes. Run `task theme:generate` to regenerate `apps/web/app/theme-colors.generated.css` (OKLCH) and `engine/crates/bnto/src/tui/palette.rs` (RGB). Never edit generated files directly — edit the TOML and regenerate.
-
 ### Light Mode
 
-| Token                    | Value                         | Use                                       |
-| ------------------------ | ----------------------------- | ----------------------------------------- |
-| `--background`           | `oklch(0.9899 0.0164 95.22)`  | Warm cream — page backgrounds             |
-| `--foreground`           | `oklch(0.2628 0.0204 31.40)`  | Warm dark brown — body text               |
-| `--card`                 | `oklch(1.0000 0 0)`           | Pure white — card surfaces                |
-| `--card-foreground`      | Same as foreground            | Text on cards                             |
-| `--primary`              | `oklch(0.6751 0.1788 35.19)`  | Terracotta — primary actions, CTAs        |
-| `--primary-foreground`   | `oklch(1.0000 0 0)`           | White — text on primary                   |
-| `--secondary`            | `oklch(0.8657 0.0705 189.39)` | Soft teal — secondary actions             |
-| `--secondary-foreground` | `oklch(0.4372 0.0600 187.70)` | Deep teal — text on secondary             |
-| `--muted`                | `oklch(0.9491 0.0133 95.19)`  | Warm off-white — muted surfaces           |
-| `--muted-foreground`     | `oklch(0.5452 0.0251 31.20)`  | Warm gray — secondary text, placeholders  |
-| `--accent`               | `oklch(0.8885 0.1338 91.06)`  | Warm golden — accent, highlights          |
-| `--accent-foreground`    | Same as foreground            | Text on accent                            |
-| `--destructive`          | `oklch(0.6356 0.2082 25.38)`  | Warm red — errors, destructive actions    |
-| `--border`               | `oklch(0.8976 0.0168 95.25)`  | Warm light — borders                      |
-| `--input`                | `oklch(0.9320 0.0111 95.17)`  | Slightly deeper cream — input backgrounds |
-| `--ring`                 | Same as primary               | Focus rings                               |
+| Token | Value | Use |
+|-------|-------|-----|
+| `--background` | `oklch(0.9899 0.0164 95.22)` | Warm cream — page backgrounds |
+| `--foreground` | `oklch(0.2628 0.0204 31.40)` | Warm dark brown — body text |
+| `--card` | `oklch(1.0000 0 0)` | Pure white — card surfaces |
+| `--card-foreground` | Same as foreground | Text on cards |
+| `--primary` | `oklch(0.6751 0.1788 35.19)` | Terracotta — primary actions, CTAs |
+| `--primary-foreground` | `oklch(1.0000 0 0)` | White — text on primary |
+| `--secondary` | `oklch(0.8657 0.0705 189.39)` | Soft teal — secondary actions |
+| `--secondary-foreground` | `oklch(0.4372 0.0600 187.70)` | Deep teal — text on secondary |
+| `--muted` | `oklch(0.9491 0.0133 95.19)` | Warm off-white — muted surfaces |
+| `--muted-foreground` | `oklch(0.5452 0.0251 31.20)` | Warm gray — secondary text, placeholders |
+| `--accent` | `oklch(0.8885 0.1338 91.06)` | Golden yellow — accent, highlights |
+| `--accent-foreground` | Same as foreground | Text on accent |
+| `--destructive` | `oklch(0.6356 0.2082 25.38)` | Warm red — errors, destructive actions |
+| `--border` | `oklch(0.8976 0.0168 95.25)` | Warm light — borders |
+| `--input` | `oklch(0.9320 0.0111 95.17)` | Slightly deeper cream — input backgrounds |
+| `--ring` | Same as primary | Focus rings |
 
 ### Dark Mode
 
 Dark mode uses a cool slate base (not black) — the warm palette carries through in primary, accent, and foreground.
 
-| Token          | Value                         | Note                         |
-| -------------- | ----------------------------- | ---------------------------- |
-| `--background` | `oklch(0.2612 0.0154 264.26)` | Cool dark slate              |
-| `--card`       | `oklch(0.3103 0.0197 264.23)` | Slightly lighter slate       |
-| `--primary`    | Same as light                 | Terracotta unchanged         |
-| `--accent`     | `oklch(0.8197 0.1575 88.39)`  | Warm golden, slightly richer |
-| `--muted`      | `oklch(0.3576 0.0238 264.21)` | Dark slate surface           |
+| Token | Value | Note |
+|-------|-------|------|
+| `--background` | `oklch(0.2612 0.0154 264.26)` | Cool dark slate |
+| `--card` | `oklch(0.3103 0.0197 264.23)` | Slightly lighter slate |
+| `--primary` | Same as light | Terracotta unchanged |
+| `--accent` | `oklch(0.8197 0.1575 88.39)` | Golden, slightly richer |
+| `--muted` | `oklch(0.3576 0.0238 264.21)` | Dark slate surface |
 
 ---
 
@@ -95,23 +90,23 @@ Dark mode uses a cool slate base (not black) — the warm palette carries throug
 
 ```tsx
 // Backgrounds
-className = "bg-background"; // Warm cream page base
-className = "bg-card"; // White card surface
-className = "bg-muted"; // Subtle section backgrounds
-className = "bg-primary"; // Terracotta CTA
-className = "bg-accent"; // Warm golden highlight
+className="bg-background"        // Warm cream page base
+className="bg-card"              // White card surface
+className="bg-muted"             // Subtle section backgrounds
+className="bg-primary"           // Terracotta CTA
+className="bg-accent"            // Golden highlight
 
 // Text
-className = "text-foreground"; // Body text
-className = "text-muted-foreground"; // Secondary / placeholder text
-className = "text-primary"; // Terracotta text links/labels
+className="text-foreground"      // Body text
+className="text-muted-foreground" // Secondary / placeholder text
+className="text-primary"         // Terracotta text links/labels
 
 // Borders
-className = "border-border"; // Standard border
-className = "ring-ring"; // Focus ring
+className="border-border"        // Standard border
+className="ring-ring"            // Focus ring
 
 // Inputs
-className = "bg-input"; // Input field background
+className="bg-input"             // Input field background
 ```
 
 ---
@@ -120,14 +115,14 @@ className = "bg-input"; // Input field background
 
 Base radius is `1.25rem` (20px) — generously rounded, warm and friendly.
 
-| Token            | Value                               | Use                                   |
-| ---------------- | ----------------------------------- | ------------------------------------- |
-| `rounded-sm`     | `calc(1.25rem - 4px)` = `~1rem`     | Tight elements — badges, tags         |
-| `rounded-md`     | `calc(1.25rem - 2px)` = `~1.125rem` | Inputs, small buttons                 |
-| `rounded-lg`     | `1.25rem`                           | Cards, panels, standard containers    |
-| `rounded-xl`     | `calc(1.25rem + 4px)` = `~1.5rem`   | Feature cards, hero elements          |
-| `rounded-[2rem]` | `2rem` (32px)                       | Pill navbar, gradient section corners |
-| `rounded-full`   | `9999px`                            | Pill buttons, badges, avatar circles  |
+| Token | Value | Use |
+|-------|-------|-----|
+| `rounded-sm` | `calc(1.25rem - 4px)` = `~1rem` | Tight elements — badges, tags |
+| `rounded-md` | `calc(1.25rem - 2px)` = `~1.125rem` | Inputs, small buttons |
+| `rounded-lg` | `1.25rem` | Cards, panels, standard containers |
+| `rounded-xl` | `calc(1.25rem + 4px)` = `~1.5rem` | Feature cards, hero elements |
+| `rounded-[2rem]` | `2rem` (32px) | Pill navbar, gradient section corners |
+| `rounded-full` | `9999px` | Pill buttons, badges, avatar circles |
 
 **Rule:** Default to `rounded-lg`. Go rounder (`rounded-xl`) for prominent surfaces, tighter (`rounded-sm`) for small inline elements. Use `rounded-[2rem]` for the pill navbar and section containers. Use `rounded-full` for pill-shaped buttons and badges. Never use `rounded-none` or sharp corners in brand UI.
 
@@ -138,11 +133,11 @@ Base radius is `1.25rem` (20px) — generously rounded, warm and friendly.
 Shadows use a warm-tinted base color (`hsl(10, 20%, 15%)`) in light mode — they never look cold or gray.
 
 ```tsx
-className = "shadow-sm"; // Subtle lift — inputs, small cards
-className = "shadow"; // Standard card elevation
-className = "shadow-md"; // Modals, dropdowns
-className = "shadow-lg"; // Popovers, overlays
-className = "shadow-xl"; // Featured elements, hero cards
+className="shadow-sm"   // Subtle lift — inputs, small cards
+className="shadow"      // Standard card elevation
+className="shadow-md"   // Modals, dropdowns
+className="shadow-lg"   // Popovers, overlays
+className="shadow-xl"   // Featured elements, hero cards
 ```
 
 Dark mode shadows use pure black at higher opacity — the system handles this automatically via CSS variables.
@@ -155,22 +150,22 @@ Geist is used for display/headings — clean, modern geometric sans-serif that p
 
 ```tsx
 // Display / Hero (Geist)
-className = "font-display text-4xl font-bold tracking-tight";
+className="font-display text-4xl font-bold tracking-tight"
 
 // Page headings (Geist)
-className = "font-display text-2xl font-semibold";
+className="font-display text-2xl font-semibold"
 
 // Section headings (Geist)
-className = "font-display text-lg font-semibold";
+className="font-display text-lg font-semibold"
 
 // Body (Inter — default, no font-display needed)
-className = "text-base"; // tracking-normal (0.02em) applied globally via body styles
+className="text-base"   // tracking-normal (0.02em) applied globally via body styles
 
 // Small / labels (Inter)
-className = "text-sm text-muted-foreground";
+className="text-sm text-muted-foreground"
 
 // Technical / metadata (Geist Mono)
-className = "text-xs font-mono tracking-wider text-muted-foreground uppercase";
+className="text-xs font-mono tracking-wider text-muted-foreground uppercase"
 ```
 
 **Letter spacing:** `0.02em` applied globally. Don't override unless intentional.
@@ -181,13 +176,13 @@ className = "text-xs font-mono tracking-wider text-muted-foreground uppercase";
 
 Five chart tokens for data visualization — all harmonious with the warm palette:
 
-| Token       | Color           | Character                |
-| ----------- | --------------- | ------------------------ |
-| `--chart-1` | Terracotta      | Primary data series      |
-| `--chart-2` | Soft blue       | Secondary series         |
-| `--chart-3` | Golden          | Tertiary / accent series |
-| `--chart-4` | Sage green      | Quaternary               |
-| `--chart-5` | Deep terracotta | Fifth series             |
+| Token | Color | Character |
+|-------|-------|-----------|
+| `--chart-1` | Terracotta | Primary data series |
+| `--chart-2` | Soft blue | Secondary series |
+| `--chart-3` | Golden | Tertiary / accent series |
+| `--chart-4` | Sage green | Quaternary |
+| `--chart-5` | Deep terracotta | Fifth series |
 
 ---
 
@@ -200,13 +195,13 @@ Dark mode is powered by `next-themes` with the `class` strategy. The `ThemeProvi
 ```tsx
 // Toggle button — add to any navbar
 import { ThemeToggle } from "@/components/theme-toggle";
-<ThemeToggle />;
+<ThemeToggle />
 
 // Provider — already wired in root layout, don't add again
 import { ThemeProvider } from "@/components/theme-provider";
 <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
   {children}
-</ThemeProvider>;
+</ThemeProvider>
 ```
 
 **SSR safety:** In server component layouts (like `[bnto]/layout.tsx`), use a client island to lazy-load ThemeToggle with `ssr: false`.
@@ -223,22 +218,6 @@ The `@theme inline` block maps CSS variables to Tailwind's color/shadow/radius s
 
 ---
 
-## TUI Palette (CLI Terminal UI)
-
-The TUI uses the same semantic color tokens from `theme/palette.toml`, compiled as RGB constants in `engine/crates/bnto/src/tui/palette.rs`. Three theme variants are available via `bnto tui --theme <variant>`:
-
-| Variant     | Flag                            | Character                |
-| ----------- | ------------------------------- | ------------------------ |
-| Los Angeles | `--theme los-angeles` (default) | Warm cream light theme   |
-| Tokyo       | `--theme tokyo`                 | Cool dark slate theme    |
-| Munich      | `--theme munich`                | Golden-hour sunset theme |
-
-Runtime theme switching is available via the Settings screen (`s` key from Browser).
-
-**Never edit `palette.rs` directly** — it's auto-generated. Edit `theme/palette.toml` and run `task theme:generate`.
-
----
-
 ## Rules for Claude Code
 
 - **Never hardcode a color value** — always use semantic tokens (`bg-primary`, `text-muted-foreground`, etc.)
@@ -250,4 +229,3 @@ Runtime theme switching is available via the Settings screen (`s` key from Brows
 - **Import ThemeToggle from `@/components/`** — never import `next-themes` directly in app code
 - **Shadows are warm** — use the shadow scale, don't write custom `box-shadow` values
 - **When in doubt, round more** — the brand is warm and friendly, not sharp
-- **Color source of truth is `theme/palette.toml`** — never edit `theme-colors.generated.css` or `palette.rs` directly. Run `task theme:generate` after editing the TOML

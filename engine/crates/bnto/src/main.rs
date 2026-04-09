@@ -13,7 +13,6 @@ mod input;
 mod io;
 mod list;
 mod progress;
-mod tui;
 
 use std::process;
 
@@ -58,13 +57,6 @@ enum Command {
 
     /// Check that all external dependencies are installed.
     Doctor,
-
-    /// Launch the interactive terminal UI.
-    Tui {
-        /// Color theme: los-angeles (default), tokyo (dark), munich (sunset).
-        #[arg(long, default_value = "los-angeles")]
-        theme: String,
-    },
 }
 
 fn main() {
@@ -80,21 +72,6 @@ fn main() {
         Command::List => list_recipes(),
         Command::Info { recipe } => show_info(&recipe),
         Command::Doctor => run_doctor(),
-        Command::Tui { theme } => launch_tui(&theme),
-    }
-}
-
-fn launch_tui(theme_str: &str) {
-    let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("{} {e}", "Error:".red());
-            process::exit(1);
-        }
-    };
-    if let Err(e) = tui::launch_tui(variant) {
-        eprintln!("{} {e}", "TUI error:".red());
-        process::exit(1);
     }
 }
 
