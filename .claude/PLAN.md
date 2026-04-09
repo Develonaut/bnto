@@ -30,7 +30,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 **CLI is the product.** `cargo install bnto` gets you 15 recipes. The web is a landing page.
 
 - **v0.5.0 released (April 2026):** 15 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor` commands. Published to crates.io
-- **Engine (Rust):** 7 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine, bnto) + WASM entry point (bnto-wasm). CLI is the primary consumer, browser (WASM) is secondary
+- **Engine (Rust):** Library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), WASM entry point (bnto-wasm), CLI binary (bnto). CLI is the primary consumer, browser (WASM) is secondary
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
 - **Next: TUI (Sprint 10)** — `bnto tui` via ratatui + crossterm (recipe browser, file picker, progress, results)
@@ -53,7 +53,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] @bnto/editor: Extracted editor package — EditorCanvas, EditorToolbar, LayerPanel, ConfigPanel, CompartmentNode, NodePaletteMenu, adapters, hooks, store, actions
 - [x] Web app: Auth flow, SEO infrastructure, middleware, landing pages (real content), privacy policy
 - [x] Playwright E2E: 27+ screenshots, user journey tests, execution flow tests, site navigation (desktop + mobile)
-- [x] Rust WASM engine: 6 crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), single cdylib (bnto-wasm), CLI binary (bnto), Web Worker wrapper, progress reporting
+- [x] Rust WASM engine: library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), cdylib entry point (bnto-wasm), CLI binary (bnto), Web Worker wrapper, progress reporting
 - [x] Browser execution: All 6 Tier 1 bntos client-side via WASM, ZIP download, auto-download
 - [x] Cloud execution infrastructure: R2 file transit, presigned URLs — ready for M4
 - [x] Recipe page overhaul (Sprint 2D): RecipeShell, PhaseIndicator, FileCard, RecipeConfigSection, useRecipeFlow

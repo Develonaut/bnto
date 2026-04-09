@@ -208,29 +208,29 @@ But monetization work is explicitly paused. No Stripe, no Pro tier, no feature g
 
 ## Architecture Decisions
 
-| Decision                             | Status                   | Rationale                                                                                                                                        |
-| ------------------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Rust WASM for browser nodes**      | Delivered (M1 complete)  | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle.                                          |
-| **JS adapters as fallback**          | Not needed               | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                                 |
-| **Go engine deleted**                | Archived (March 2026)    | Removed in Sprint 6. Rust is the unified engine for all targets. Source preserved in git history.                                                |
-| **`@bnto/nodes` is engine-agnostic** | Approved                 | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                                  |
-| **CLI-first development**            | Decided (April 2026)     | New capabilities built and tested via CLI before browser/web. Engine is the product.                                                             |
-| **Desktop deprioritized**            | Decided (April 2026)     | Tauri plan intact but deferred to M4. Engine expansion (M3) is more interesting and impactful.                                                   |
-| **Monetization tabled**              | Decided (April 2026)     | No Stripe, no Pro tier until community traction. Focus on engine power and fun.                                                                  |
-| **No-account browser execution**     | Approved                 | Zero backend friction. Convex logs when accounts exist.                                                                                          |
-| **Web Workers mandatory**            | Approved                 | All WASM processing off main thread. Progress via postMessage.                                                                                   |
-| **`@bnto/ui` extracted**             | Delivered (March 2026)   | Motorway design system as independent package. Primitives, layout, animation, surface system.                                                    |
-| **`@bnto/editor` extracted**         | Delivered (March 2026)   | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                                                         |
-| **Smart Iteration**                  | Delivered (March 2026)   | `settings.iteration: "auto"\|"explicit"` on Definition. Auto wraps per-file processors in implicit loops. 20 golden tests prove equivalence.     |
-| **Editor lightweight (open+export)** | In progress (March 2026) | Editor persistence stripped (8.5a). Reconnecting as open+export tool with sessionStorage (8.5d). No save, no My Recipes. Deep features deferred. |
-| **Schema-driven recipe config**      | Delivered (March 2026)   | DynamicRecipeConfig replaces handcoded per-recipe components. Adding a recipe = automatic config UI.                                             |
-| **Image overlay/watermark**          | Delivered (April 2026)   | `image-overlay` operation in `bnto-image`. Text watermark with position/opacity/scale/color. 10+ golden tests.                                   |
-| **v0.2.0 released**                  | Shipped (April 2026)     | 14 recipes, schema-driven config, editor reconnect, 4 Tier 3 operations.                                                                         |
-| **`platforms` passthrough**          | Shipped (April 2026)     | Full `platforms: string[]` from engine catalog instead of lossy `browserCapable: boolean`. Enables correct CLI/server/browser filtering.         |
-| **v0.5.0 released**                  | Shipped (April 2026)     | 15 recipes, video-download node, extra args pass-through, dependency system, H.264 codec preference, ProcessContext trait.                       |
-| **TUI deferred to own sprint**       | Decided (April 2026)     | TUI is a full application (editor, navigation, recipe browser). Needs proper sprint breakdown. CLI polish comes first — make it bomb-proof.      |
-| **CLI/TUI-first pivot**              | Decided (April 2026)     | CLI is the product. Web reduced to landing page. Editor frozen. Auth stripped. TUI (ratatui) is next UI surface. Frontend/premium work on hold.  |
-| **Open-source-first pivot**          | Decided (April 2026)     | Stripped pricing, auth surfaces, Pro references. Monetization tabled. Web → landing page for `cargo install bnto`.                               |
+| Decision                             | Status                  | Rationale                                                                                                                                       |
+| ------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rust WASM for browser nodes**      | Delivered (M1 complete) | All 6 Tier 1 nodes built in Rust, compiled to WASM. Unified engine vision proven. 606KB gzipped bundle.                                         |
+| **JS adapters as fallback**          | Not needed              | Rust succeeded. JS libraries available for Tier 2+ if specific nodes warrant it.                                                                |
+| **Go engine deleted**                | Archived (March 2026)   | Removed in Sprint 6. Rust is the unified engine for all targets. Source preserved in git history.                                               |
+| **`@bnto/nodes` is engine-agnostic** | Approved                | Schemas, recipes, validation in TS. Survives any engine choice. The safety net.                                                                 |
+| **CLI-first development**            | Decided (April 2026)    | New capabilities built and tested via CLI before browser/web. Engine is the product.                                                            |
+| **Desktop deprioritized**            | Decided (April 2026)    | Tauri plan intact but deferred to M4. Engine expansion (M3) is more interesting and impactful.                                                  |
+| **Monetization tabled**              | Decided (April 2026)    | No Stripe, no Pro tier until community traction. Focus on engine power and fun.                                                                 |
+| **No-account browser execution**     | Approved                | Zero backend friction. Convex logs when accounts exist.                                                                                         |
+| **Web Workers mandatory**            | Approved                | All WASM processing off main thread. Progress via postMessage.                                                                                  |
+| **`@bnto/ui` extracted**             | Delivered (March 2026)  | Motorway design system as independent package. Primitives, layout, animation, surface system.                                                   |
+| **`@bnto/editor` extracted**         | Delivered (March 2026)  | Headless-first editor package. ReactFlow canvas, schema-driven config, editor API layer.                                                        |
+| **Smart Iteration**                  | Delivered (March 2026)  | `settings.iteration: "auto"\|"explicit"` on Definition. Auto wraps per-file processors in implicit loops. 20 golden tests prove equivalence.    |
+| **Editor lightweight (open+export)** | Delivered (March 2026)  | Editor persistence stripped (8.5a). Reconnected as open+export tool with sessionStorage (8.5d). No save, no My Recipes. Deep features deferred. |
+| **Schema-driven recipe config**      | Delivered (March 2026)  | DynamicRecipeConfig replaces handcoded per-recipe components. Adding a recipe = automatic config UI.                                            |
+| **Image overlay/watermark**          | Delivered (April 2026)  | `image-overlay` operation in `bnto-image`. Text watermark with position/opacity/scale/color. 10+ golden tests.                                  |
+| **v0.2.0 released**                  | Shipped (April 2026)    | 14 recipes, schema-driven config, editor reconnect, 4 Tier 3 operations.                                                                        |
+| **`platforms` passthrough**          | Shipped (April 2026)    | Full `platforms: string[]` from engine catalog instead of lossy `browserCapable: boolean`. Enables correct CLI/server/browser filtering.        |
+| **v0.5.0 released**                  | Shipped (April 2026)    | 15 recipes, video-download node, extra args pass-through, dependency system, H.264 codec preference, ProcessContext trait.                      |
+| **TUI deferred to own sprint**       | Decided (April 2026)    | TUI is a full application (editor, navigation, recipe browser). Needs proper sprint breakdown. CLI polish comes first — make it bomb-proof.     |
+| **CLI/TUI-first pivot**              | Decided (April 2026)    | CLI is the product. Web reduced to landing page. Editor frozen. Auth stripped. TUI (ratatui) is next UI surface. Frontend/premium work on hold. |
+| **Open-source-first pivot**          | Decided (April 2026)    | Stripped pricing, auth surfaces, Pro references. Monetization tabled. Web → landing page for `cargo install bnto`.                              |
 
 ### Engine Decision: Rust Won (Feb 2026)
 
