@@ -42,76 +42,32 @@
  * Everything else (colors, fonts, radius) is identical to the base theme.
  */
 
+/* ── Color tokens (generated from theme/palette.toml) ────────────────── */
+@import "./theme-colors.generated.css";
+
 :root {
-  /* ── Backgrounds & Text ─────────────────────────────────────── */
-  --background: oklch(0.9901 0.0161 95.2193);
-  --foreground: oklch(0.2627 0.0206 28.5372);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2627 0.0206 28.5372);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2627 0.0206 28.5372);
+  /* ── Popover & Sidebar aliases (derived from base tokens) ──────────── */
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 
-  /* ── Primary: Terracotta ───────────────────────────────────── */
-  --primary: oklch(0.6755 0.1791 35.2662);
-  --primary-foreground: oklch(1 0 0);
-
-  /* ── Secondary: Soft teal ──────────────────────────────────── */
-  --secondary: oklch(0.91 0.05 189.39);
-  --secondary-foreground: oklch(0.38 0.055 187.7);
-
-  /* ── Muted ─────────────────────────────────────────────────── */
-  --muted: oklch(0.9487 0.0137 92.9849);
-  --muted-foreground: oklch(0.5447 0.025 31.8671);
-
-  /* ── Accent: Salmon pink (Mini Motorways Moscow/Beijing) ───── */
-  --accent: oklch(0.75 0.15 20);
-  --accent-foreground: oklch(0.2627 0.0206 28.5372);
-
-  /* ── Destructive ───────────────────────────────────────────── */
-  --destructive: oklch(0.6358 0.2088 25.4126);
-  --destructive-foreground: oklch(1 0 0);
-
-  /* ── Success: Sage green (Mini Motorways terrain) ─────────── */
-  --success: oklch(0.69 0.14 150);
-  --success-foreground: oklch(1 0 0);
-
-  /* ── Warning: Warm golden-amber (Mini Motorways Munich) ───── */
-  --warning: oklch(0.84 0.1334 77);
-  --warning-foreground: oklch(0.2627 0.0206 28.5372);
-
-  /* ── Borders & Inputs ──────────────────────────────────────── */
-  --border: oklch(0.8966 0.0165 95.2423);
-  --input: oklch(0.9331 0.0122 96.429);
-  --ring: oklch(0.6755 0.1791 35.2662);
-  --focus-ring: oklch(0.59 0.2 264);
-
-  /* ── Charts ────────────────────────────────────────────────── */
-  --chart-1: oklch(0.6755 0.1791 35.2662);
-  --chart-2: oklch(0.7868 0.1103 223.0437);
-  --chart-3: oklch(0.8887 0.1337 91.2263);
-  --chart-4: oklch(0.7692 0.1554 157.4196);
-  --chart-5: oklch(0.5401 0.102 34.6762);
-
-  /* ── Sidebar ───────────────────────────────────────────────── */
-  --sidebar: oklch(0.9901 0.0161 95.2193);
-  --sidebar-foreground: oklch(0.2627 0.0206 28.5372);
-  --sidebar-primary: oklch(0.6755 0.1791 35.2662);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.75 0.15 20);
-  --sidebar-accent-foreground: oklch(0.2627 0.0206 28.5372);
-  --sidebar-border: oklch(0.8966 0.0165 95.2423);
-  --sidebar-ring: oklch(0.6755 0.1791 35.2662);
-
-  /* ── Typography ────────────────────────────────────────────── */
+  /* ── Typography ────────────────────────────────────────────────────── */
   --font-display: "Geist", ui-sans-serif, sans-serif, system-ui;
   --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
   --font-serif: Georgia, serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
-  /* ── Radius ────────────────────────────────────────────────── */
+  /* ── Radius ────────────────────────────────────────────────────────── */
   --radius: 1.25rem;
 
-  /* ── Isometric Cast Shadows (light mode) ────────────────────── */
+  /* ── Isometric Cast Shadows (light mode) ───────────────────────────── */
   /*
    * Mini Motorways-style hard-edged directional shadows.
    *
@@ -148,11 +104,11 @@
   --shadow-xl: 10px 10px 0 0 oklch(0.52 0.02 95 / 0.3);
   --shadow-2xl: 14px 14px 0 0 oklch(0.5 0.02 95 / 0.32);
 
-  /* ── Surface (wall + ground shadow defaults) ────────────────────── */
+  /* ── Surface (wall + ground shadow defaults) ───────────────────────── */
   --surface-wall: oklch(0.82 0.02 95);
   --surface-shadow: oklch(0.6 0.02 95 / 0.2);
 
-  /* ── Surface color variant tokens ──────────────────────────────── */
+  /* ── Surface color variant tokens ──────────────────────────────────── */
   --surface-primary-wall: oklch(0.5 0.15 35);
   --surface-primary-shadow: oklch(0.5 0.1 35 / 0.25);
   --surface-secondary-wall: oklch(0.7 0.05 189);
@@ -170,18 +126,18 @@
   --surface-outline-wall: oklch(0.82 0.02 95 / 0.3);
   --surface-outline-shadow: oklch(0.6 0.02 95 / 0.15);
 
-  /* ── Animation Durations ───────────────────────────────────── */
+  /* ── Animation Durations ───────────────────────────────────────────── */
   --duration-instant: 75ms;
   --duration-fast: 150ms;
   --duration-normal: 300ms;
   --duration-slow: 700ms;
   --duration-slower: 1200ms;
 
-  /* ── Easings: Transitions (smooth deceleration) ──────────── */
+  /* ── Easings: Transitions (smooth deceleration) ────────────────────── */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
-  /* ── Easings: Springs (elastic entrances) ────────────────── */
+  /* ── Easings: Springs (elastic entrances) ──────────────────────────── */
   --ease-spring: linear(
     0,
     0.001 0.44%,
@@ -245,7 +201,7 @@
     0.9991 99.94%
   );
 
-  /* ── Easing: Pressable Spring (elastic release) ─────────────
+  /* ── Easing: Pressable Spring (elastic release) ────────────────────
    * Tuned for button hover/active/release transitions.
    * Three visible oscillations — like a rubber building snapping
    * back into place on the Mini Motorways map.
@@ -255,7 +211,7 @@
    *   Trough 1 (~216ms): −9.5% undershoot — visible wobble
    *   Peak 2 (~324ms):  +4.5% overshoot — subtle second bounce
    *   Settled (~432ms):  rest
-   * ────────────────────────────────────────────────────────── */
+   * ────────────────────────────────────────────────────────────────── */
   --ease-spring-pressable: linear(
     0,
     0.05 2%,
@@ -339,99 +295,37 @@
     1.0008 99.97%
   );
 
-  /* ── Light Direction (CSS gradient convention: 135° = SE) ──── */
+  /* ── Light Direction (CSS gradient convention: 135° = SE) ──────────── */
   --light-angle: 135deg;
 
-  /* ── Tracking ──────────────────────────────────────────────── */
+  /* ── Tracking ──────────────────────────────────────────────────────── */
   --tracking-normal: -0.01em;
   --spacing: 0.25rem;
 }
 
 .tokyo {
-  /* ── Backgrounds & Text (Tokyo Night gray ramp) ───────────────
-   *
-   * Derived from Mini Motorways Tokyo Night map swatches:
-   *   #1d2331 (0.26) → sidebar / deepest
-   *   #2b313f (0.31) → background (main page)
-   *   ~#3a4150 (0.37) → card / elevated surface
-   *   #484f59 (0.43) → borders
-   *   #858b97 (0.64) → muted text
-   *
-   * Surface walls sit BETWEEN card and background (0.34) so
-   * the 3D building sides are visible against the ground.
-   * ────────────────────────────────────────────────────────────── */
-  --background: oklch(0.31 0.027 265);
-  --foreground: oklch(0.9901 0.0161 95.2193);
-  --card: oklch(0.37 0.024 265);
-  --card-foreground: oklch(0.9901 0.0161 95.2193);
-  --popover: oklch(0.37 0.024 265);
-  --popover-foreground: oklch(0.9901 0.0161 95.2193);
-
-  /* ── Primary: Terracotta ───────────────────────────────────── */
-  --primary: oklch(0.6755 0.1791 35.2662);
-  --primary-foreground: oklch(1 0 0);
-
-  /* ── Secondary: Dark teal ──────────────────────────────────── */
-  --secondary: oklch(0.38 0.05 188.3);
-  --secondary-foreground: oklch(0.88 0.045 189.32);
-
-  /* ── Muted ─────────────────────────────────────────────────── */
-  --muted: oklch(0.4 0.02 264);
-  --muted-foreground: oklch(0.64 0.019 264);
-
-  /* ── Accent: Salmon pink (richer for dark) ─────────────────── */
-  --accent: oklch(0.72 0.16 20);
-  --accent-foreground: oklch(0.31 0.027 265);
-
-  /* ── Destructive ───────────────────────────────────────────── */
-  --destructive: oklch(0.5788 0.2215 27.7967);
-  --destructive-foreground: oklch(1 0 0);
-
-  /* ── Success: Sage green (deeper for dark bg) ────────────── */
-  --success: oklch(0.62 0.13 150);
-  --success-foreground: oklch(1 0 0);
-
-  /* ── Warning: Warm golden-amber (deeper for dark bg) ───────── */
-  --warning: oklch(0.78 0.13 77);
-  --warning-foreground: oklch(0.2627 0.0206 28.5372);
-
-  /* ── Borders & Inputs ──────────────────────────────────────── */
-  --border: oklch(0.43 0.019 262);
-  --input: oklch(0.4 0.02 264);
-  --ring: oklch(0.6755 0.1791 35.2662);
-  --focus-ring: oklch(0.65 0.2 264);
-
-  /* ── Charts ────────────────────────────────────────────────── */
-  --chart-1: oklch(0.6755 0.1791 35.2662);
-  --chart-2: oklch(0.7868 0.1103 223.0437);
-  --chart-3: oklch(0.8887 0.1337 91.2263);
-  --chart-4: oklch(0.7692 0.1554 157.4196);
-  --chart-5: oklch(0.5401 0.102 34.6762);
-
-  /* ── Sidebar ───────────────────────────────────────────────── */
+  /* ── Popover & Sidebar aliases (dark mode) ─────────────────────────── */
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
   --sidebar: oklch(0.26 0.028 265);
-  --sidebar-foreground: oklch(0.9901 0.0161 95.2193);
-  --sidebar-primary: oklch(0.6755 0.1791 35.2662);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.72 0.16 20);
-  --sidebar-accent-foreground: oklch(0.31 0.027 265);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: oklch(0.34 0.024 265);
-  --sidebar-ring: oklch(0.6755 0.1791 35.2662);
+  --sidebar-ring: var(--ring);
 
-  /* ── Typography ────────────────────────────────────────────── */
+  /* ── Typography ────────────────────────────────────────────────────── */
   --font-display: "Geist", ui-sans-serif, sans-serif, system-ui;
   --font-sans: "Inter", ui-sans-serif, sans-serif, system-ui;
   --font-serif: Georgia, serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
-  /* ── Radius ────────────────────────────────────────────────── */
+  /* ── Radius ────────────────────────────────────────────────────────── */
   --radius: 1.25rem;
 
-  /* ── Isometric Cast Shadows (dark mode — Tokyo Night) ────────── */
-  /*
-   * Same 45-degree angle, zero blur. Near-black, higher opacity
-   * to read against the deeper background.
-   */
+  /* ── Isometric Cast Shadows (dark mode — Tokyo Night) ──────────────── */
   --shadow-x: 4px;
   --shadow-y: 4px;
   --shadow-blur: 0px;
@@ -448,16 +342,11 @@
   --shadow-xl: 10px 10px 0 0 oklch(0.05 0.01 265 / 0.55);
   --shadow-2xl: 14px 14px 0 0 oklch(0.04 0.01 265 / 0.6);
 
-  /* ── Surface (dark mode) ───────────────────────────────────────── */
-  /*
-   * Walls darker than background (0.31) so the 1px border reads
-   * clearly against card faces (0.37+). The 3D side pseudo-element
-   * also benefits — darker walls = more visible building sides.
-   */
+  /* ── Surface (dark mode) ───────────────────────────────────────────── */
   --surface-wall: oklch(0.28 0.023 265);
   --surface-shadow: oklch(0.18 0.01 265 / 0.35);
 
-  /* ── Surface color variant tokens (dark) ───────────────────────── */
+  /* ── Surface color variant tokens (dark) ───────────────────────────── */
   --surface-primary-wall: oklch(0.45 0.14 35);
   --surface-primary-shadow: oklch(0.22 0.08 35 / 0.4);
   --surface-secondary-wall: oklch(0.3 0.04 188);
@@ -476,7 +365,7 @@
   --surface-outline-shadow: oklch(0.18 0.01 264 / 0.3);
 }
 
-/* ── Sunset Theme (Mini Motorways Munich) ────────────────────────
+/* ── Sunset Theme (Mini Motorways Munich) ────────────────────────────
  *
  * Golden-hour palette inspired by the Munich map:
  * rich amber background, deep navy foreground (road color),
@@ -484,50 +373,18 @@
  *
  * Positioned between light and dark as the "sunset" stop
  * in the day→sunset→night timeline.
- * ────────────────────────────────────────────────────────────── */
+ * ──────────────────────────────────────────────────────────────────── */
 .munich {
-  /* ── Backgrounds & Text ─────────────────────────────────────── */
-  --background: oklch(0.82 0.15 78);
-  --foreground: oklch(0.25 0.04 260);
-  --card: oklch(0.97 0.03 80);
-  --card-foreground: oklch(0.25 0.04 260);
-  --popover: oklch(0.97 0.03 80);
-  --popover-foreground: oklch(0.25 0.04 260);
-
-  /* ── Secondary: Deep navy blue (Munich road color) ──────────── */
-  --secondary: oklch(0.4 0.06 258);
-  --secondary-foreground: oklch(0.9 0.04 80);
-
-  /* ── Muted ─────────────────────────────────────────────────── */
-  --muted: oklch(0.76 0.1 77);
-  --muted-foreground: oklch(0.4 0.05 50);
-
-  /* ── Accent: Warm coral ────────────────────────────────────── */
-  --accent: oklch(0.72 0.17 22);
-  --accent-foreground: oklch(0.25 0.04 260);
-
-  /* ── Destructive ───────────────────────────────────────────── */
-  --destructive: oklch(0.6 0.21 25);
-
-  /* ── Success: Teal-green (Munich water) ─────────────────────── */
-  --success: oklch(0.65 0.13 165);
-
-  /* ── Warning: Deep amber (contrast on golden bg) ───────────── */
-  --warning: oklch(0.72 0.15 55);
-
-  /* ── Borders & Inputs ──────────────────────────────────────── */
-  --border: oklch(0.73 0.1 77);
-  --input: oklch(0.79 0.1 78);
-  --focus-ring: oklch(0.55 0.22 264);
-
-  /* ── Sidebar ───────────────────────────────────────────────── */
+  /* ── Popover & Sidebar aliases (sunset mode) ───────────────────────── */
+  --popover: var(--card);
+  --popover-foreground: var(--card-foreground);
   --sidebar: oklch(0.78 0.14 77);
-  --sidebar-foreground: oklch(0.25 0.04 260);
-  --sidebar-accent: oklch(0.72 0.17 22);
-  --sidebar-accent-foreground: oklch(0.25 0.04 260);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: oklch(0.7 0.1 77);
 
-  /* ── Isometric Cast Shadows (sunset — warm amber) ──────────── */
+  /* ── Isometric Cast Shadows (sunset — warm amber) ──────────────────── */
   --shadow-color: oklch(0.35 0.08 55);
   --shadow-opacity: 0.4;
 
@@ -540,7 +397,7 @@
   --shadow-xl: 10px 10px 0 0 oklch(0.37 0.06 60 / 0.35);
   --shadow-2xl: 14px 14px 0 0 oklch(0.34 0.06 60 / 0.38);
 
-  /* ── Surface (sunset) ────────────────────────────────────────── */
+  /* ── Surface (sunset) ──────────────────────────────────────────────── */
   --surface-wall: oklch(0.65 0.1 72);
   --surface-shadow: oklch(0.4 0.06 55 / 0.3);
   --surface-primary-wall: oklch(0.48 0.15 35);

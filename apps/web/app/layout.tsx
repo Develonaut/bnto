@@ -5,6 +5,7 @@ import { ConvexAuthNextjsServerProvider } from "@bnto/auth/server";
 import { AppShell } from "@bnto/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { t } from "@bnto/i18n";
+import { BASE_URL } from "@/lib/constants";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -25,6 +26,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: {
     default: t("site.defaultTitle"),
     template: t("site.titleTemplate"),
