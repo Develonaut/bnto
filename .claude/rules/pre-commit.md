@@ -188,6 +188,46 @@ Present a summary to the user before committing:
 - **Always squash merge PRs.** No merge commits, no rebase merges.
 - **Ask the user before pushing** if you're unsure. A request to "commit" does not imply "push." A request to "commit and push" authorizes both.
 
+### PR Sizing — Single-Concern PRs (MANDATORY)
+
+**Every PR must represent a single, coherent concern.** A PR that bundles unrelated changes is harder to review, harder to revert, and harder to bisect when something breaks. This is not a suggestion — it's a hard gate.
+
+**Before creating a PR, ask:** "Can I describe this PR in one sentence without using 'and'?" If not, it's too big.
+
+#### Guidelines
+
+| Metric            | Guideline                              | Action if exceeded                                         |
+| ----------------- | -------------------------------------- | ---------------------------------------------------------- |
+| **Files changed** | ~15 files                              | Split into separate PRs unless all files serve one concern |
+| **Lines changed** | ~400 lines (excluding generated files) | Split by concern — extraction, feature, test, config       |
+| **Concerns**      | Exactly 1                              | Separate PRs for separate concerns — always                |
+
+These are guidelines, not hard limits. A single-concern refactor touching 25 files is fine. A 10-file PR that mixes a feature, a config change, and an unrelated cleanup is not.
+
+#### What counts as separate concerns
+
+- **Feature + infrastructure** — TUI app shell vs shared palette codegen = 2 PRs
+- **Code + unrelated assets** — OG image swap vs theme generation = 2 PRs
+- **Refactor + new feature** — extracting a module vs adding behavior to it = 2 PRs
+- **Bug fix + cleanup** — fixing the bug vs reformatting nearby code = 2 PRs
+
+#### What can stay together
+
+- **Feature + its tests** — always ship together
+- **Codegen source + generated output** — palette.toml + generated CSS/Rust = 1 PR
+- **Tightly coupled cross-package changes** — engine processor + TypeScript codegen + recipe definition = 1 PR (they're one concern: "add a node type")
+
+#### Planning for PR sizing
+
+**Think about PR boundaries before writing code, not after.** When picking up a task or plan:
+
+1. Identify the distinct concerns in the work
+2. Plan the branch/PR split upfront — one branch per concern
+3. Note dependencies between PRs (PR 2 depends on PR 1)
+4. If the user explicitly says "ship it all together," that overrides this rule
+
+**When in doubt, split.** Two small PRs that each take 5 minutes to review are better than one large PR that takes 30 minutes and gets rubber-stamped.
+
 ### Convex Production Deploy (release-gated)
 
 **Convex production deploys happen during the release pipeline, not on merge to `main`.** The `convex-deploy` job in `.github/workflows/release.yml` runs `npx convex deploy --yes` against the production deployment (`gregarious-donkey-712`) after the release gate passes (stable tags only — skipped for beta/rc pre-releases).
