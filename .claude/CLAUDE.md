@@ -26,6 +26,7 @@
 | Adding a new recipe            | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md#checklist-adding-a-new-recipe) |
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                    |
 | Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                                    |
+| TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                                            |
 | Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                                      |
 | Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                              |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                               |
@@ -261,6 +262,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)           | Editor user journey — stages, flows, success criteria, phased delivery                                            |
 | [code-editor.md](.claude/strategy/code-editor.md)                           | Code editor design — CM6, slash commands, JSON Schema                                                             |
 | [engine-execution.md](.claude/strategy/engine-execution.md)                 | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
+| [tui-strategy.md](.claude/strategy/tui-strategy.md)                         | TUI design — TEA architecture, Motorway design language, 5-system breakdown, TDD approach                         |
 | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)           | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
 | Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)        | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
 | [skills/](.claude/skills/)                                                  | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |

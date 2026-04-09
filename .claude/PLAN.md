@@ -596,29 +596,41 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ### Sprint 10: TUI — NEXT
 
-**Next sprint.** `bnto tui` launches an interactive terminal UI — recipe browser, file picker, progress display, results panel. Same engine, richer interface than raw CLI.
+**Next sprint.** `bnto tui` launches an interactive terminal UI — recipe browser, file picker, execution progress, results summary. Same engine, richer interface than raw CLI.
+
+**Strategy doc:** [tui-strategy.md](strategy/tui-strategy.md)
+
+**Architecture:** Elm Architecture (TEA) — pure `update()` functions for all state logic, testable with `cargo test`. 5 screen systems, each in its own module. See strategy doc for full decomposition.
 
 **Framework:** `ratatui` + `crossterm`
 
-**Dependencies:** `ratatui`, `crossterm` added to `bnto` Cargo.toml
+**Persona ownership:**
 
-#### Wave 1 (parallel — foundation)
+| Package              | Persona        |
+| -------------------- | -------------- |
+| `engine/crates/bnto` | `/rust-expert` |
 
-- [ ] `engine/crates/bnto` — `/rust-expert` — TUI module scaffolding: add `ratatui` + `crossterm` to Cargo.toml, create `src/tui/` module with App struct, event loop, terminal setup/teardown
-- [ ] `engine/crates/bnto` — `/rust-expert` — Recipe browser panel (list all recipes with categories, search/filter, selection)
-- [ ] `engine/crates/bnto` — `/rust-expert` — Basic navigation (tab between panels, keyboard shortcuts, help overlay, quit)
+#### Wave 1 (parallel — shell + theme + browser)
 
-#### Wave 2 (parallel — execution flow)
+- [ ] `engine/crates/bnto` — **TUI app shell**: Add `ratatui` + `crossterm` to Cargo.toml. Create `src/tui/` module: `mod.rs` (public `launch_tui()` entry point), `app.rs` (screen router state machine), `event.rs` (crossterm event loop → Message dispatch), `theme.rs` (color palette, border styles, layout constants). Terminal setup/teardown with panic hook. `bnto tui` subcommand in clap. Unit tests for screen transitions (~5 tests)
+- [ ] `engine/crates/bnto` — **Recipe browser screen** (`screens/browser.rs`): `BrowserModel` + `update()` + `view()`. List all recipes from `builtin_recipes()` grouped by category. Substring search filtering. `j/k` cursor navigation (wraps at boundaries). `Enter` to select. Contextual help bar widget. Unit tests for search, filter, cursor, category selection (~10 tests)
+- [ ] `engine/crates/bnto` — **Shared widgets**: `widgets/help_bar.rs` (contextual key hints footer), `widgets/search_input.rs` (text input with cursor), `widgets/status_line.rs` (bottom bar — recipe count, version). Each < 100 lines. Unit tests for search input state (~4 tests)
 
-- [ ] `engine/crates/bnto` — `/rust-expert` — File picker panel (browse filesystem, multi-select files for recipe input)
-- [ ] `engine/crates/bnto` — `/rust-expert` — Progress display (per-file progress bars, node status, live update during execution)
-- [ ] `engine/crates/bnto` — `/rust-expert` — Recipe config editing (param overrides in TUI before execution)
+#### Wave 2 (parallel — detail + picker)
 
-#### Wave 3 (sequential — polish + test)
+- [ ] `engine/crates/bnto` — **Recipe detail screen** (`screens/detail.rs`): `DetailModel` + `update()` + `view()`. Show recipe description, node list, editable parameter overrides from `metadata()`. `j/k` to focus params, `Enter` to edit, `Esc` to cancel edit, `Enter` to confirm and proceed to file picker. Unit tests for param editing, defaults, commit/cancel (~8 tests)
+- [ ] `engine/crates/bnto` — **File picker screen** (`screens/picker.rs`): `PickerModel` + `update()` + `view()`. Browse filesystem, directories first then files alphabetically. Filter by recipe's accept extensions. `Space` to toggle multi-select. `Enter` to open dir / confirm selection. `Backspace` for parent dir. `widgets/file_list.rs` shared widget. Unit tests for navigation, selection, filtering, sort (~10 tests)
 
-- [ ] `engine/crates/bnto` — `/rust-expert` — Results panel (output files, sizes, timing, open-in-finder/copy-path)
-- [ ] `engine/crates/bnto` — `/rust-expert` — Integration tests for TUI mode (headless terminal testing)
-- [ ] `engine/crates/bnto` — `/rust-expert` — `bnto tui` documentation + README update
+#### Wave 3 (parallel — execution + results)
+
+- [ ] `engine/crates/bnto` — **Execution screen** (`screens/execution.rs`): `ExecutionModel` + `update()` + `view()`. Receive `ProgressEvent` from engine's `run_pipeline()`. Per-file progress bars, per-node status indicators, elapsed timer. `Esc` to cancel. Auto-transition to results on completion. `widgets/progress_bar.rs` shared widget. Unit tests for progress events, status transitions, cancel (~8 tests)
+- [ ] `engine/crates/bnto` — **Results screen** (`screens/results.rs`): `ResultsModel` + `update()` + `view()`. Output file list with sizes, total timing, compression savings. `o` to open file, `O` to open output folder, `r` to run another recipe (back to browser), `q` to quit. Unit tests for formatting, savings calculation (~6 tests)
+
+#### Wave 4 (sequential — integration + docs)
+
+- [ ] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
+- [ ] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
+- [ ] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
 **After TUI:** File node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
 
