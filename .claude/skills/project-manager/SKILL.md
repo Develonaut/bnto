@@ -12,17 +12,19 @@ You are the strategic voice of Bnto. You own the roadmap, the build plan, and th
 
 ## Your Domain
 
-| Area                        | Path                                               |
-| --------------------------- | -------------------------------------------------- |
-| Strategic roadmap           | `.claude/ROADMAP.md`                               |
-| Build plan (sprints, tasks) | `.claude/PLAN.md`                                  |
-| Pricing model               | `.claude/strategy/pricing-model.md`                |
-| Architecture overview       | `.claude/strategy/cloud-desktop-strategy.md`       |
-| Repo structure              | `.claude/CLAUDE.md` (Repository Structure section) |
-| Predefined recipes          | `.claude/strategy/bntos.md`                        |
-| Core principles             | `.claude/strategy/core-principles.md`              |
-| Design language             | `.claude/strategy/design-language.md`              |
-| All rules                   | `.claude/rules/`                                   |
+| Area                       | Path                                               |
+| -------------------------- | -------------------------------------------------- |
+| Strategic roadmap          | `.claude/ROADMAP.md`                               |
+| Build plan (active sprint) | `.claude/PLAN.md`                                  |
+| Sprint history (completed) | `.claude/PLAN-HISTORY.md`                          |
+| Backlog & deferred work    | `.claude/PLAN-BACKLOG.md`                          |
+| Pricing model              | `.claude/strategy/pricing-model.md`                |
+| Architecture overview      | `.claude/strategy/cloud-desktop-strategy.md`       |
+| Repo structure             | `.claude/CLAUDE.md` (Repository Structure section) |
+| Predefined recipes         | `.claude/strategy/bntos.md`                        |
+| Core principles            | `.claude/strategy/core-principles.md`              |
+| Design language            | `.claude/strategy/design-language.md`              |
+| All rules                  | `.claude/rules/`                                   |
 
 ---
 
@@ -128,7 +130,9 @@ Every task must be completable by one agent in one session, touching one package
 | Document                                     | What it covers                                                             |
 | -------------------------------------------- | -------------------------------------------------------------------------- |
 | `.claude/ROADMAP.md`                         | Milestones, browser-first strategy, bnto classification, conversion funnel |
-| `.claude/PLAN.md`                            | Sprints, waves, task status, current state                                 |
+| `.claude/PLAN.md`                            | Active sprint, current state, what's next                                  |
+| `.claude/PLAN-HISTORY.md`                    | Completed sprint history (Phase 0 through Sprint 9, Homepage)              |
+| `.claude/PLAN-BACKLOG.md`                    | Backlog, tabled sprints, frozen items                                      |
 | `.claude/strategy/pricing-model.md`          | Three-layer pricing, free vs Pro gate, conversion hooks                    |
 | `.claude/strategy/core-principles.md`        | Trust commitments, four core principles                                    |
 | `.claude/strategy/bntos.md`                  | Predefined recipe registry, tiers, SEO slugs                               |

@@ -6,12 +6,12 @@ args: "<description of the issue or idea>"
 
 # Backlog — Quick Add
 
-Append a triage item to `PLAN.md` without breaking flow. This is for observations, bugs, and ideas that come up while working — capture them fast, triage later during `/groom`.
+Append a triage item to `PLAN-BACKLOG.md` without breaking flow. This is for observations, bugs, and ideas that come up while working — capture them fast, triage later during `/groom`.
 
 ## Instructions
 
 1. Take the user's description (passed as args or from the preceding message)
-2. Write a concise backlog entry at the end of the `## Backlog` section in `.claude/PLAN.md`, just before `## Reference`
+2. Write a concise backlog entry at the end of the `## Backlog` section in `.claude/PLAN-BACKLOG.md`, just before `## Reference`
 3. Use this format:
 
 ```markdown

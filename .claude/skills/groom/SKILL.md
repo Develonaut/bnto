@@ -23,7 +23,9 @@ Read all of these before making any judgments:
 
 **Execution state:**
 
-- `.claude/PLAN.md` — the build plan (current state, what's built, sprint tasks)
+- `.claude/PLAN.md` — active build plan (current state, active sprint tasks)
+- `.claude/PLAN-HISTORY.md` — completed sprint history (Phase 0 through Sprint 9, Homepage)
+- `.claude/PLAN-BACKLOG.md` — backlog, tabled sprints, frozen items
 
 **Vision & strategy:**
 
@@ -147,7 +149,7 @@ Cross-reference the plan against architecture docs:
 
 ## Step 5: Prioritize Backlog
 
-Use `ROADMAP.md` to prioritize backlog items:
+Read `.claude/PLAN-BACKLOG.md` for the full backlog. Use `ROADMAP.md` to prioritize backlog items:
 
 1. **Supports active milestone?** -> High priority, consider promoting to current sprint
 2. **Supports next milestone?** -> Medium priority, keep in backlog but sequence it
@@ -224,7 +226,9 @@ Present your report, then ask: "Want me to apply these changes to the plan files
 
 If approved:
 
-- Update `PLAN.md` with the agreed changes
+- Update `PLAN.md` with active sprint changes
+- Update `PLAN-BACKLOG.md` with backlog additions, promotions, or removals
+- Update `PLAN-HISTORY.md` if completed sprint entries need correction
 - Update `ROADMAP.md` if strategic changes were approved
 - Update other strategy/architecture docs if redistribution is needed
 - Update the decision log with today's date and a summary of what changed

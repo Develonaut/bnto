@@ -246,7 +246,9 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | Document                                                                    | Purpose                                                                                                           |
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | [ROADMAP.md](.claude/ROADMAP.md)                                            | Strategic roadmap — milestones, direction, big decisions                                                          |
-| [PLAN.md](.claude/PLAN.md)                                                  | Build plan — sprints, waves, what's next                                                                          |
+| [PLAN.md](.claude/PLAN.md)                                                  | Build plan — active sprint, current state, what's next                                                            |
+| [PLAN-HISTORY.md](.claude/PLAN-HISTORY.md)                                  | Completed sprint history (Phase 0 through Sprint 9, Homepage)                                                     |
+| [PLAN-BACKLOG.md](.claude/PLAN-BACKLOG.md)                                  | Backlog, tabled sprints, frozen items                                                                             |
 | [pricing-model.md](.claude/strategy/pricing-model.md)                       | Free vs premium — nodes, recipes, features, terminology                                                           |
 | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)     | Hybrid Convex native + React Query, co-located queries, self-fetching components                                  |
 | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)     | Full architecture, tech decisions, phases                                                                         |
@@ -282,6 +284,6 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 | Workflow Expert    | Recipe design, competitive analysis, multi-node compositions, custom recipe journey tests                         | `/workflow-expert`    |
 | Technical Writer   | Package READMEs — accuracy audits, structural documentation, staleness prevention                                 | `/technical-writer`   |
 
-| Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
+| Project Manager | `.claude/PLAN.md`, `.claude/PLAN-BACKLOG.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 
 The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review. The `/code-review` and `/pre-commit` skills invoke `/technical-writer` when changes affect package structure or public API.
