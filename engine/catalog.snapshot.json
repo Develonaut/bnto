@@ -211,6 +211,17 @@
       "icon": "arrow-left-right"
     },
     {
+      "name": "vector-rasterize",
+      "label": "SVG to Image",
+      "description": "Convert SVG files to raster images (PNG, JPEG, WebP).",
+      "category": "vector",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "image"
+    },
+    {
       "name": "video-download",
       "label": "Download Video",
       "description": "Download video from URLs using yt-dlp (CLI/desktop only).",
@@ -752,6 +763,54 @@
           "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
           "paramType": {
             "type": "object"
+          },
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "vector-rasterize",
+      "name": "SVG to Image",
+      "description": "Convert SVG files to raster images (PNG, JPEG, WebP)",
+      "category": "vector",
+      "accepts": [
+        "image/svg+xml"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
+        {
+          "name": "format",
+          "label": "Output Format",
+          "description": "The target raster format to convert SVG to",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              "png",
+              "jpeg",
+              "webp"
+            ]
+          },
+          "default": "png",
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
           },
           "surfaceable": true
         }
@@ -2932,6 +2991,226 @@
             "parameters": {
               "autoDownload": true,
               "label": "Downloaded Video",
+              "mode": "download",
+              "zip": true
+            },
+            "position": {
+              "x": 500,
+              "y": 100
+            },
+            "type": "output",
+            "version": "1.0.0"
+          }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "settings": {
+          "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "slug": "svg-to-png",
+      "name": "SVG to PNG",
+      "description": "Accepts SVG vector files and converts each to a PNG raster image.",
+      "category": "vector",
+      "definition": {
+        "edges": [
+          {
+            "id": "e1",
+            "source": "input",
+            "target": "rasterize"
+          },
+          {
+            "id": "e2",
+            "source": "rasterize",
+            "target": "output"
+          }
+        ],
+        "id": "svg-to-png",
+        "inputPorts": [],
+        "metadata": {
+          "category": "vector",
+          "description": "Accepts SVG vector files and converts each to a PNG raster image."
+        },
+        "name": "SVG to PNG",
+        "nodes": [
+          {
+            "id": "input",
+            "inputPorts": [],
+            "metadata": {},
+            "name": "Input",
+            "outputPorts": [
+              {
+                "id": "out-1",
+                "name": "files"
+              }
+            ],
+            "parameters": {
+              "accept": [
+                "image/svg+xml"
+              ],
+              "extensions": [
+                ".svg"
+              ],
+              "label": "SVG files",
+              "mode": "file-upload",
+              "multiple": true
+            },
+            "position": {
+              "x": 0,
+              "y": 100
+            },
+            "type": "input",
+            "version": "1.0.0"
+          },
+          {
+            "id": "rasterize",
+            "inputPorts": [],
+            "metadata": {},
+            "name": "Rasterize",
+            "outputPorts": [],
+            "parameters": {
+              "format": "png",
+              "quality": 80
+            },
+            "position": {
+              "x": 250,
+              "y": 100
+            },
+            "type": "vector-rasterize",
+            "version": "1.0.0"
+          },
+          {
+            "id": "output",
+            "inputPorts": [
+              {
+                "id": "in-1",
+                "name": "files"
+              }
+            ],
+            "metadata": {},
+            "name": "Output",
+            "outputPorts": [],
+            "parameters": {
+              "autoDownload": true,
+              "label": "PNG Images",
+              "mode": "download",
+              "zip": true
+            },
+            "position": {
+              "x": 500,
+              "y": 100
+            },
+            "type": "output",
+            "version": "1.0.0"
+          }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "settings": {
+          "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "slug": "svg-to-jpeg",
+      "name": "SVG to JPEG",
+      "description": "Accepts SVG vector files and converts each to a JPEG raster image.",
+      "category": "vector",
+      "definition": {
+        "edges": [
+          {
+            "id": "e1",
+            "source": "input",
+            "target": "rasterize"
+          },
+          {
+            "id": "e2",
+            "source": "rasterize",
+            "target": "output"
+          }
+        ],
+        "id": "svg-to-jpeg",
+        "inputPorts": [],
+        "metadata": {
+          "category": "vector",
+          "description": "Accepts SVG vector files and converts each to a JPEG raster image."
+        },
+        "name": "SVG to JPEG",
+        "nodes": [
+          {
+            "id": "input",
+            "inputPorts": [],
+            "metadata": {},
+            "name": "Input",
+            "outputPorts": [
+              {
+                "id": "out-1",
+                "name": "files"
+              }
+            ],
+            "parameters": {
+              "accept": [
+                "image/svg+xml"
+              ],
+              "extensions": [
+                ".svg"
+              ],
+              "label": "SVG files",
+              "mode": "file-upload",
+              "multiple": true
+            },
+            "position": {
+              "x": 0,
+              "y": 100
+            },
+            "type": "input",
+            "version": "1.0.0"
+          },
+          {
+            "id": "rasterize",
+            "inputPorts": [],
+            "metadata": {},
+            "name": "Rasterize",
+            "outputPorts": [],
+            "parameters": {
+              "format": "jpeg",
+              "quality": 80
+            },
+            "position": {
+              "x": 250,
+              "y": 100
+            },
+            "type": "vector-rasterize",
+            "version": "1.0.0"
+          },
+          {
+            "id": "output",
+            "inputPorts": [
+              {
+                "id": "in-1",
+                "name": "files"
+              }
+            ],
+            "metadata": {},
+            "name": "Output",
+            "outputPorts": [],
+            "parameters": {
+              "autoDownload": true,
+              "label": "JPEG Images",
               "mode": "download",
               "zip": true
             },

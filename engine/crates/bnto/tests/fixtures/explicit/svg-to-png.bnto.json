@@ -1,0 +1,120 @@
+{
+  "id": "svg-to-png",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "SVG to PNG",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Accepts SVG vector files and converts each to a PNG raster image."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["image/svg+xml"],
+        "extensions": [".svg"],
+        "label": "SVG files",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "rasterize-loop",
+      "type": "loop",
+      "version": "1.0.0",
+      "name": "For Each",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "forEach"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "rasterize",
+          "type": "vector-rasterize",
+          "version": "1.0.0",
+          "name": "Rasterize",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "metadata": {},
+          "parameters": {
+            "format": "png",
+            "quality": 80
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "download",
+        "label": "PNG Images",
+        "zip": true,
+        "autoDownload": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "rasterize-loop"
+    },
+    {
+      "id": "e2",
+      "source": "rasterize-loop",
+      "target": "output"
+    }
+  ]
+}

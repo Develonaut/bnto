@@ -24,9 +24,9 @@ describe("RECIPES (buildRecipeCategories)", () => {
     }
   });
 
-  it("categories are ordered: Image, Data, File", () => {
+  it("categories are ordered: Image, Data, File, Vector", () => {
     const titles = RECIPES.map((c) => c.title);
-    expect(titles).toEqual(["Image", "Data", "File"]);
+    expect(titles).toEqual(["Image", "Data", "File", "Vector"]);
   });
 
   it("contains compress-images in the Image category", () => {
@@ -51,14 +51,14 @@ describe("FEATURED_RECIPES", () => {
     }
   });
 
-  it("contains exactly 9 featured recipes", () => {
+  it("contains exactly 11 featured recipes", () => {
     const count = FEATURED_RECIPES.reduce((sum, cat) => sum + cat.links.length, 0);
-    expect(count).toBe(9);
+    expect(count).toBe(11);
   });
 
-  it("preserves category order: Image, Data, File", () => {
+  it("preserves category order: Image, Data, File, Vector", () => {
     const titles = FEATURED_RECIPES.map((c) => c.title);
-    expect(titles).toEqual(["Image", "Data", "File"]);
+    expect(titles).toEqual(["Image", "Data", "File", "Vector"]);
   });
 
   it("features the right recipes per category", () => {

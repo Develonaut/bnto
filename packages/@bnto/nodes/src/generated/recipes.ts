@@ -1898,4 +1898,224 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         "version": "1.0.0"
     },
   },
+  {
+    slug: "svg-to-png",
+    name: "SVG to PNG",
+    description: "Accepts SVG vector files and converts each to a PNG raster image.",
+    category: "vector",
+    definition: {
+        "edges": [
+            {
+                "id": "e1",
+                "source": "input",
+                "target": "rasterize"
+            },
+            {
+                "id": "e2",
+                "source": "rasterize",
+                "target": "output"
+            }
+        ],
+        "id": "svg-to-png",
+        "inputPorts": [],
+        "metadata": {
+            "category": "vector",
+            "description": "Accepts SVG vector files and converts each to a PNG raster image."
+        },
+        "name": "SVG to PNG",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/svg+xml"
+                    ],
+                    "extensions": [
+                        ".svg"
+                    ],
+                    "label": "SVG files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rasterize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rasterize",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "png",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "vector-rasterize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "PNG Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
+    },
+  },
+  {
+    slug: "svg-to-jpeg",
+    name: "SVG to JPEG",
+    description: "Accepts SVG vector files and converts each to a JPEG raster image.",
+    category: "vector",
+    definition: {
+        "edges": [
+            {
+                "id": "e1",
+                "source": "input",
+                "target": "rasterize"
+            },
+            {
+                "id": "e2",
+                "source": "rasterize",
+                "target": "output"
+            }
+        ],
+        "id": "svg-to-jpeg",
+        "inputPorts": [],
+        "metadata": {
+            "category": "vector",
+            "description": "Accepts SVG vector files and converts each to a JPEG raster image."
+        },
+        "name": "SVG to JPEG",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/svg+xml"
+                    ],
+                    "extensions": [
+                        ".svg"
+                    ],
+                    "label": "SVG files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rasterize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rasterize",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "jpeg",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "vector-rasterize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "JPEG Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
+    },
+  },
 ] as const;

@@ -23,10 +23,11 @@ const CATEGORY_TITLES: Record<string, string> = {
   image: "Image",
   spreadsheet: "Data",
   file: "File",
+  vector: "Vector",
 };
 
 /** Ordered list of categories — controls the section order in the nav. */
-const CATEGORY_ORDER = ["image", "spreadsheet", "file"];
+const CATEGORY_ORDER = ["image", "spreadsheet", "file", "vector"];
 
 /** Short nav descriptions that override the longer SEO-oriented menu copy. */
 const NAV_DESCRIPTIONS: Record<string, string> = {
@@ -40,6 +41,8 @@ const NAV_DESCRIPTIONS: Record<string, string> = {
   "csv-to-json": "Convert CSV files to JSON format",
   "merge-csv": "Combine multiple CSVs into one",
   "rename-files": "Batch rename files with patterns",
+  "svg-to-png": "Convert SVG vector files to PNG images",
+  "svg-to-jpeg": "Convert SVG vector files to JPEG images",
 };
 
 /** Slugs shown in the nav dropdown. The rest are discoverable via /explore. */
@@ -53,6 +56,8 @@ const FEATURED_SLUGS = new Set([
   "csv-to-json",
   "merge-csv",
   "rename-files",
+  "svg-to-png",
+  "svg-to-jpeg",
 ]);
 
 /** All recipes grouped by category, derived from the engine registry. */

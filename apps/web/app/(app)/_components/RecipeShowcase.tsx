@@ -36,7 +36,7 @@ export function RecipeShowcase() {
                 Ready to run
               </Text>
               <Heading level={2} size="xl" className="whitespace-pre-line">
-                {"15 recipes, ready to run.\nPick one or build your own."}
+                {`${BNTO_REGISTRY.length} recipes, ready to run.\nPick one or build your own.`}
               </Heading>
               <Text color="muted" leading="snug">
                 Every recipe runs locally. Your files never leave your machine.

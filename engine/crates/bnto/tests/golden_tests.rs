@@ -103,6 +103,20 @@ fn golden_overlay_square() {
     assert_golden("overlay-square", &out);
 }
 
+// --- Vector Recipes ---
+
+#[test]
+fn golden_svg_to_png() {
+    let (out, _) = run_recipe_ok("svg-to-png", &fixture_image("small.svg"));
+    assert_golden("svg-to-png", &out);
+}
+
+#[test]
+fn golden_svg_to_jpeg() {
+    let (out, _) = run_recipe_ok("svg-to-jpeg", &fixture_image("small.svg"));
+    assert_golden("svg-to-jpeg", &out);
+}
+
 // --- File Recipes ---
 
 #[test]
@@ -319,4 +333,16 @@ fn golden_overlay_portrait_explicit() {
 fn golden_overlay_square_explicit() {
     let (out, _) = run_explicit_recipe_ok("overlay-square", &fixture_overlay("square-1x1.jpg"));
     assert_golden("overlay-square", &out);
+}
+
+#[test]
+fn golden_svg_to_png_explicit() {
+    let (out, _) = run_explicit_recipe_ok("svg-to-png", &fixture_image("small.svg"));
+    assert_golden("svg-to-png", &out);
+}
+
+#[test]
+fn golden_svg_to_jpeg_explicit() {
+    let (out, _) = run_explicit_recipe_ok("svg-to-jpeg", &fixture_image("small.svg"));
+    assert_golden("svg-to-jpeg", &out);
 }

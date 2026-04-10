@@ -376,7 +376,7 @@ mod tests {
     #[test]
     fn new_loads_all_builtin_recipes() {
         let m = BrowserModel::new();
-        assert_eq!(m.recipes.len(), 15);
-        assert_eq!(m.filtered.len(), 15);
+        assert_eq!(m.recipes.len(), 17);
+        assert_eq!(m.filtered.len(), 17);
     }
 }

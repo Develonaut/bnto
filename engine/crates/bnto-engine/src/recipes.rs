@@ -30,6 +30,8 @@ const RECIPE_DEFINITIONS: &[&str] = &[
     include_str!("../recipes/strip-exif.bnto.json"),
     include_str!("../recipes/watermark-images.bnto.json"),
     include_str!("../recipes/download-video.bnto.json"),
+    include_str!("../recipes/svg-to-png.bnto.json"),
+    include_str!("../recipes/svg-to-jpeg.bnto.json"),
 ];
 
 /// Returns all built-in recipes, embedded at compile time.
@@ -68,7 +70,7 @@ mod tests {
 
     #[test]
     fn test_builtin_recipes_count() {
-        assert_eq!(builtin_recipes().len(), 15);
+        assert_eq!(builtin_recipes().len(), 17);
     }
 
     #[test]
@@ -125,6 +127,9 @@ mod tests {
         let mut categories: Vec<&str> = recipes.iter().map(|r| r.category.as_str()).collect();
         categories.sort();
         categories.dedup();
-        assert_eq!(categories, ["file", "image", "spreadsheet", "video"]);
+        assert_eq!(
+            categories,
+            ["file", "image", "spreadsheet", "vector", "video"]
+        );
     }
 }

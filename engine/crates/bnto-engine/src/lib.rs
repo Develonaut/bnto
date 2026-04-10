@@ -47,6 +47,10 @@ pub fn create_browser_registry() -> NodeRegistry {
         Box::new(bnto_spreadsheet::MergeSpreadsheets::new()),
     );
     registry.register("image-overlay", Box::new(bnto_image::OverlayImage::new()));
+    registry.register(
+        "vector-rasterize",
+        Box::new(bnto_vector::VectorRasterize::new()),
+    );
 
     registry
 }
@@ -108,7 +112,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 10);
+        assert_eq!(registry.len(), 11);
 
         let expected = [
             "image-compress",
@@ -121,6 +125,7 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
+            "vector-rasterize",
         ];
 
         let params = serde_json::Map::new();
@@ -136,8 +141,8 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_video_download() {
         let registry = create_registry();
-        // Full registry = browser (10) + video-download (1) = 11
-        assert_eq!(registry.len(), 11);
+        // Full registry = browser (11) + video-download (1) = 12
+        assert_eq!(registry.len(), 12);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("video-download", &params).is_some(),
@@ -375,6 +380,7 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
+            "vector-rasterize",
         ];
         let params = serde_json::Map::new();
         for key in &expected_keys {
@@ -389,6 +395,47 @@ mod tests {
                 key
             );
         }
+    }
+
+    #[test]
+    fn test_generated_svg_to_png_recipe() {
+        let json = include_str!("../recipes/svg-to-png.bnto.json");
+        let test_svg = include_bytes!("../../../../test-fixtures/images/small.svg");
+        let files = vec![PipelineFile {
+            name: "icon.svg".to_string(),
+            data: test_svg.to_vec(),
+            mime_type: "image/svg+xml".to_string(),
+            metadata: serde_json::Map::new(),
+        }];
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(json, files, &reporter, &NoopContext).expect("svg-to-png recipe");
+
+        assert_eq!(result.files.len(), 1);
+        assert!(result.files[0].name.ends_with(".png"));
+        // PNG magic bytes
+        assert!(result.files[0].data.starts_with(&[0x89, 0x50, 0x4E, 0x47]));
+    }
+
+    #[test]
+    fn test_generated_svg_to_jpeg_recipe() {
+        let json = include_str!("../recipes/svg-to-jpeg.bnto.json");
+        let test_svg = include_bytes!("../../../../test-fixtures/images/small.svg");
+        let files = vec![PipelineFile {
+            name: "icon.svg".to_string(),
+            data: test_svg.to_vec(),
+            mime_type: "image/svg+xml".to_string(),
+            metadata: serde_json::Map::new(),
+        }];
+
+        let reporter = PipelineReporter::new_noop();
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("svg-to-jpeg recipe");
+
+        assert_eq!(result.files.len(), 1);
+        assert!(result.files[0].name.ends_with(".jpg"));
+        // JPEG magic bytes
+        assert!(result.files[0].data.starts_with(&[0xFF, 0xD8, 0xFF]));
     }
 
     #[test]
@@ -409,6 +456,8 @@ mod tests {
             include_str!("../recipes/watermark-images.bnto.json"),
             include_str!("../recipes/merge-csv.bnto.json"),
             include_str!("../recipes/download-video.bnto.json"),
+            include_str!("../recipes/svg-to-png.bnto.json"),
+            include_str!("../recipes/svg-to-jpeg.bnto.json"),
         ];
 
         for (i, json) in recipes.iter().enumerate() {

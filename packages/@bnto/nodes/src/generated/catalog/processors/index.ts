@@ -16,6 +16,7 @@ import { spreadsheetCleanProcessor } from "./spreadsheetClean";
 import { spreadsheetConvertProcessor } from "./spreadsheetConvert";
 import { spreadsheetMergeProcessor } from "./spreadsheetMerge";
 import { spreadsheetRenameProcessor } from "./spreadsheetRename";
+import { vectorRasterizeProcessor } from "./vectorRasterize";
 import { videoDownloadProcessor } from "./videoDownload";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
@@ -29,5 +30,6 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   spreadsheetConvertProcessor,
   spreadsheetMergeProcessor,
   spreadsheetRenameProcessor,
+  vectorRasterizeProcessor,
   videoDownloadProcessor,
 ] as const;
