@@ -3,6 +3,8 @@
 // Pure state + pure transitions. No I/O, no terminal access.
 // All screen navigation logic is testable with `cargo test`.
 
+use super::theme::{Theme, ThemeVariant};
+
 /// Which screen the TUI is currently showing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Screen {
@@ -11,6 +13,7 @@ pub enum Screen {
     Picker { slug: String },
     Execution { slug: String },
     Results { slug: String },
+    Settings,
 }
 
 /// Top-level app state.
@@ -18,6 +21,8 @@ pub enum Screen {
 pub struct AppModel {
     pub screen: Screen,
     pub should_quit: bool,
+    pub theme: Theme,
+    pub theme_variant: ThemeVariant,
 }
 
 /// Messages that drive screen transitions.
@@ -36,16 +41,22 @@ pub enum AppMessage {
     Back,
     /// User wants to run another recipe (from results).
     RunAnother,
+    /// Open the settings screen.
+    OpenSettings,
+    /// User selected a new theme in settings.
+    ThemeChanged(ThemeVariant),
     /// Quit the application.
     Quit,
 }
 
 impl AppModel {
     /// Create a new app starting on the recipe browser.
-    pub fn new() -> Self {
+    pub fn new(variant: ThemeVariant) -> Self {
         Self {
             screen: Screen::Browser,
             should_quit: false,
+            theme: Theme::from_variant(variant),
+            theme_variant: variant,
         }
     }
 }
@@ -78,6 +89,15 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             screen: Screen::Browser,
             ..model
         },
+        AppMessage::OpenSettings => AppModel {
+            screen: Screen::Settings,
+            ..model
+        },
+        AppMessage::ThemeChanged(variant) => AppModel {
+            theme: Theme::from_variant(variant),
+            theme_variant: variant,
+            ..model
+        },
         AppMessage::Quit => AppModel {
             should_quit: true,
             ..model
@@ -93,6 +113,7 @@ fn back_screen(current: &Screen) -> Screen {
         Screen::Picker { slug } => Screen::Detail { slug: slug.clone() },
         Screen::Execution { .. } => Screen::Browser,
         Screen::Results { .. } => Screen::Browser,
+        Screen::Settings => Screen::Browser,
     }
 }
 
@@ -100,17 +121,25 @@ fn back_screen(current: &Screen) -> Screen {
 mod tests {
     use super::*;
 
-    /// Helper: create an AppModel on the given screen.
-    fn on(screen: Screen) -> AppModel {
-        AppModel {
-            screen,
-            should_quit: false,
-        }
+    fn default_model() -> AppModel {
+        AppModel::new(ThemeVariant::LosAngeles)
+    }
+
+    /// Apply a message to a model on the given screen, return the resulting screen.
+    fn transition(screen: Screen, msg: AppMessage) -> Screen {
+        update(
+            AppModel {
+                screen,
+                ..default_model()
+            },
+            msg,
+        )
+        .screen
     }
 
     #[test]
     fn initial_state_is_browser() {
-        let app = AppModel::new();
+        let app = default_model();
         assert_eq!(app.screen, Screen::Browser);
         assert!(!app.should_quit);
     }
@@ -118,84 +147,65 @@ mod tests {
     // --- Forward navigation (happy path) ---
 
     #[test]
-    fn recipe_selected_navigates_to_detail() {
-        let app = update(
-            AppModel::new(),
-            AppMessage::RecipeSelected {
-                slug: "compress-images".into(),
-            },
+    fn forward_navigation_follows_happy_path() {
+        let s = "t".to_string();
+        assert_eq!(
+            transition(
+                Screen::Browser,
+                AppMessage::RecipeSelected { slug: s.clone() }
+            ),
+            Screen::Detail { slug: s.clone() }
         );
         assert_eq!(
-            app.screen,
+            transition(
+                Screen::Detail { slug: s.clone() },
+                AppMessage::ConfigConfirmed { slug: s.clone() }
+            ),
+            Screen::Picker { slug: s.clone() }
+        );
+        assert_eq!(
+            transition(
+                Screen::Picker { slug: s.clone() },
+                AppMessage::FilesSelected { slug: s.clone() }
+            ),
+            Screen::Execution { slug: s.clone() }
+        );
+        assert_eq!(
+            transition(
+                Screen::Execution { slug: s.clone() },
+                AppMessage::ExecutionComplete { slug: s.clone() }
+            ),
+            Screen::Results { slug: s }
+        );
+    }
+
+    #[test]
+    fn back_navigation() {
+        let s = "t".to_string();
+        assert_eq!(
+            transition(Screen::Browser, AppMessage::Back),
+            Screen::Browser
+        );
+        assert_eq!(
+            transition(Screen::Detail { slug: s.clone() }, AppMessage::Back),
+            Screen::Browser
+        );
+        assert_eq!(
+            transition(Screen::Picker { slug: s }, AppMessage::Back),
             Screen::Detail {
-                slug: "compress-images".into()
+                slug: "t".to_string()
             }
         );
-    }
-
-    #[test]
-    fn config_confirmed_navigates_to_picker() {
-        let app = update(
-            on(Screen::Detail { slug: "r".into() }),
-            AppMessage::ConfigConfirmed { slug: "r".into() },
-        );
-        assert_eq!(app.screen, Screen::Picker { slug: "r".into() });
-    }
-
-    #[test]
-    fn files_selected_navigates_to_execution() {
-        let app = update(
-            on(Screen::Picker { slug: "r".into() }),
-            AppMessage::FilesSelected { slug: "r".into() },
-        );
-        assert_eq!(app.screen, Screen::Execution { slug: "r".into() });
-    }
-
-    #[test]
-    fn execution_complete_navigates_to_results() {
-        let app = update(
-            on(Screen::Execution { slug: "r".into() }),
-            AppMessage::ExecutionComplete { slug: "r".into() },
-        );
-        assert_eq!(app.screen, Screen::Results { slug: "r".into() });
-    }
-
-    // --- Back navigation ---
-
-    #[test]
-    fn back_from_detail_goes_to_browser() {
         assert_eq!(
-            update(on(Screen::Detail { slug: "r".into() }), AppMessage::Back).screen,
+            transition(Screen::Execution { slug: "r".into() }, AppMessage::Back),
             Screen::Browser
         );
-    }
-
-    #[test]
-    fn back_from_picker_goes_to_detail() {
-        let app = update(on(Screen::Picker { slug: "r".into() }), AppMessage::Back);
-        assert_eq!(app.screen, Screen::Detail { slug: "r".into() });
-    }
-
-    #[test]
-    fn back_from_execution_goes_to_browser() {
         assert_eq!(
-            update(on(Screen::Execution { slug: "r".into() }), AppMessage::Back).screen,
+            transition(Screen::Results { slug: "r".into() }, AppMessage::Back),
             Screen::Browser
         );
-    }
-
-    #[test]
-    fn back_from_results_goes_to_browser() {
         assert_eq!(
-            update(on(Screen::Results { slug: "r".into() }), AppMessage::Back).screen,
-            Screen::Browser
-        );
-    }
-
-    #[test]
-    fn back_from_browser_stays_on_browser() {
-        assert_eq!(
-            update(AppModel::new(), AppMessage::Back).screen,
+            transition(Screen::Settings, AppMessage::Back),
             Screen::Browser
         );
     }
@@ -204,18 +214,38 @@ mod tests {
 
     #[test]
     fn run_another_goes_to_browser() {
+        let s = transition(Screen::Results { slug: "t".into() }, AppMessage::RunAnother);
+        assert_eq!(s, Screen::Browser);
+    }
+
+    #[test]
+    fn quit_sets_should_quit() {
+        let app = update(default_model(), AppMessage::Quit);
+        assert!(app.should_quit);
+    }
+
+    #[test]
+    fn settings_navigation() {
         assert_eq!(
-            update(
-                on(Screen::Results { slug: "r".into() }),
-                AppMessage::RunAnother
-            )
-            .screen,
+            transition(Screen::Browser, AppMessage::OpenSettings),
+            Screen::Settings
+        );
+        assert_eq!(
+            transition(Screen::Settings, AppMessage::Back),
             Screen::Browser
         );
     }
 
     #[test]
-    fn quit_sets_should_quit() {
-        assert!(update(AppModel::new(), AppMessage::Quit).should_quit);
+    fn theme_changed_swaps_theme_without_changing_screen() {
+        let app = update(
+            AppModel {
+                screen: Screen::Settings,
+                ..default_model()
+            },
+            AppMessage::ThemeChanged(ThemeVariant::Tokyo),
+        );
+        assert_eq!(app.screen, Screen::Settings);
+        assert_eq!(app.theme_variant, ThemeVariant::Tokyo);
     }
 }

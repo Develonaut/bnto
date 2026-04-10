@@ -13,6 +13,7 @@ impl Screen {
             Self::Picker { .. } => " File Picker ",
             Self::Execution { .. } => " Running ",
             Self::Results { .. } => " Results ",
+            Self::Settings => " Settings ",
         }
     }
 
@@ -24,6 +25,7 @@ impl Screen {
             Self::Picker { slug } => format!("Pick files for {slug}"),
             Self::Execution { slug } => format!("Running {slug}..."),
             Self::Results { slug } => format!("Results for {slug}"),
+            Self::Settings => "Settings".to_string(),
         }
     }
 
@@ -34,6 +36,7 @@ impl Screen {
                 ("↑↓", "navigate"),
                 ("/", "search"),
                 ("Enter", "select"),
+                ("s", "settings"),
                 ("q", "quit"),
             ],
             Self::Detail { .. } => vec![
@@ -55,6 +58,7 @@ impl Screen {
                 ("r", "run another"),
                 ("q", "quit"),
             ],
+            Self::Settings => vec![("↑↓", "navigate"), ("Enter", "confirm"), ("Esc", "back")],
         }
     }
 }

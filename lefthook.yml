@@ -11,6 +11,11 @@ pre-commit:
       glob: "engine/**/*.rs"
       priority: 2
       run: cd engine && cargo fmt
+
+    theme-codegen:
+      glob: "theme/palette.toml"
+      priority: 1
+      run: task theme:generate && git add apps/web/app/theme-colors.generated.css engine/crates/bnto/src/tui/palette.rs
       stage_fixed: true
 
     rust-test:
