@@ -4,7 +4,7 @@
 #
 # WHAT IS THIS CRATE?
 # This is the SINGLE crate that produces the .wasm file loaded by the browser.
-# It re-exports functions from all node crates (bnto-image, future bnto-csv, etc.)
+# It re-exports functions from all node crates (bnto-image, bnto-spreadsheet, etc.)
 # through one unified JavaScript interface.
 #
 # WHY A SINGLE ENTRY POINT?
@@ -56,7 +56,7 @@ bnto-core = { path = "../bnto-core" }
 bnto-engine = { path = "../bnto-engine" }
 
 # Node crates — still needed for wasm_bridge re-exports (direct WASM bindings)
-bnto-csv = { path = "../bnto-csv" }
+bnto-spreadsheet = { path = "../bnto-spreadsheet" }
 bnto-file = { path = "../bnto-file" }
 bnto-image = { path = "../bnto-image" }
 

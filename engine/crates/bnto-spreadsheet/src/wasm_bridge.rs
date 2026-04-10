@@ -1,4 +1,4 @@
-// WASM bridge for CSV processing — `#[wasm_bindgen]` exports that convert
+// WASM bridge for spreadsheet processing — `#[wasm_bindgen]` exports that convert
 // between JS types (JsValue, Uint8Array) and Rust types for the Web Worker.
 
 use wasm_bindgen::prelude::*;
@@ -8,8 +8,8 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
-use crate::clean::CleanCsv;
-use crate::rename_columns::RenameCsvColumns;
+use crate::clean::CleanSpreadsheet;
+use crate::rename::RenameColumns;
 
 // Helper: convert BntoError to JsValue at the WASM boundary.
 // Each node crate has its own copy because Rust's orphan rule prevents
@@ -30,7 +30,7 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 //
 // HOW THE RESULT OBJECT LOOKS IN JAVASCRIPT:
 // ```js
-// const result = clean_csv_combined(data, filename, params, progressCb);
+// const result = clean_spreadsheet_combined(data, filename, params, progressCb);
 // // result = {
 // //   metadata: '{"originalRows":100,"cleanedRows":85,...}',
 // //   data: Uint8Array([...]),       // the raw cleaned CSV bytes
@@ -93,7 +93,7 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
 }
 
 // =============================================================================
-// Clean CSV — Combined (Single Process Call)
+// Clean Spreadsheet — Combined (Single Process Call)
 // =============================================================================
 //
 // NOTE: setup() and version() are provided by the bnto-wasm entry point crate.
@@ -124,7 +124,7 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
 ///   }
 ///   ```
 #[wasm_bindgen]
-pub fn clean_csv_combined(
+pub fn clean_spreadsheet_combined(
     data: &[u8],
     filename: &str,
     params_json: &str,
@@ -153,7 +153,7 @@ pub fn clean_csv_combined(
     };
 
     // --- Step 3: Create the processor and progress reporter ---
-    let processor = CleanCsv::new();
+    let processor = CleanSpreadsheet::new();
     // Wrap the JS callback in a Rust closure so ProgressReporter stays
     // target-agnostic (no js_sys dependency in bnto-core).
     //
@@ -183,7 +183,7 @@ pub fn clean_csv_combined(
 }
 
 // =============================================================================
-// Rename CSV Columns — Combined (Single Process Call)
+// Rename Spreadsheet Columns — Combined (Single Process Call)
 // =============================================================================
 
 /// Rename columns in a CSV file and return BOTH metadata and bytes in one call.
@@ -211,7 +211,7 @@ pub fn clean_csv_combined(
 ///   }
 ///   ```
 #[wasm_bindgen]
-pub fn rename_csv_columns_combined(
+pub fn rename_spreadsheet_columns_combined(
     data: &[u8],
     filename: &str,
     params_json: &str,
@@ -223,7 +223,7 @@ pub fn rename_csv_columns_combined(
 
     // --- Step 2: Build the NodeInput ---
     //
-    // NOTE: Unlike clean_csv, rename_csv_columns sets mime_type to
+    // NOTE: Unlike clean_spreadsheet, rename_spreadsheet_columns sets mime_type to
     // "text/csv" explicitly. This ensures the output metadata correctly
     // reflects the CSV content type.
     let input = NodeInput {
@@ -234,7 +234,7 @@ pub fn rename_csv_columns_combined(
     };
 
     // --- Step 3: Create the processor and progress reporter ---
-    let processor = RenameCsvColumns::new();
+    let processor = RenameColumns::new();
     // Wrap the JS callback in a Rust closure so ProgressReporter stays
     // target-agnostic (no js_sys dependency in bnto-core).
     let progress = ProgressReporter::new(move |percent, message| {

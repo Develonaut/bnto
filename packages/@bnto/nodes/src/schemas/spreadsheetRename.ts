@@ -5,7 +5,7 @@
  * This file adds UI presentation metadata for the editor.
  *
  * To change parameters, edit the processor `metadata()` in
- * `engine/crates/bnto-csv/src/`, then run `task nodes:generate`.
+ * `engine/crates/bnto-spreadsheet/src/`, then run `task nodes:generate`.
  */
 
 import type { NodeParamFields } from "./types";

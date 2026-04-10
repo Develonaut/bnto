@@ -8,16 +8,16 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-/// The rename-csv-columns node processor. Stateless — config comes from `NodeInput.params`.
-pub struct RenameCsvColumns;
+/// The spreadsheet-rename node processor. Stateless — config comes from `NodeInput.params`.
+pub struct RenameColumns;
 
-impl RenameCsvColumns {
+impl RenameColumns {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for RenameCsvColumns {
+impl Default for RenameColumns {
     fn default() -> Self {
         Self::new()
     }
@@ -25,7 +25,7 @@ impl Default for RenameCsvColumns {
 
 // --- NodeProcessor Implementation ---
 
-impl NodeProcessor for RenameCsvColumns {
+impl NodeProcessor for RenameColumns {
     fn name(&self) -> &str {
         "spreadsheet-rename"
     }
@@ -305,7 +305,7 @@ mod tests {
     #[test]
     fn test_rename_one_column() {
         // Rename a single column and verify the rest are unchanged.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -326,7 +326,7 @@ mod tests {
     #[test]
     fn test_rename_multiple_columns() {
         // Rename multiple columns at once.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -347,7 +347,7 @@ mod tests {
     fn test_rename_nonexistent_column_ignored() {
         // If the mapping references a column that doesn't exist in the CSV,
         // it should be silently ignored — no error.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -370,7 +370,7 @@ mod tests {
     #[test]
     fn test_no_columns_param_passthrough() {
         // If no "columns" param is provided, the CSV should pass through unchanged.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input("name,age\nAlice,30\n", "{}");
@@ -389,7 +389,7 @@ mod tests {
     #[test]
     fn test_empty_mapping_passthrough() {
         // An empty columns mapping should also pass through unchanged.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input("name,age\nAlice,30\n", r#"{"columns": {}}"#);
@@ -405,7 +405,7 @@ mod tests {
     #[test]
     fn test_all_columns_renamed() {
         // Rename every column in the CSV.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -430,7 +430,7 @@ mod tests {
     fn test_data_rows_preserved_unchanged() {
         // Verify that data rows are byte-for-byte preserved (no trimming,
         // no quoting changes, no reordering).
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let csv_input = "name,value,notes\nAlice,\"100,000\",\"has, commas\"\nBob,200,simple\n";
@@ -449,7 +449,7 @@ mod tests {
     #[test]
     fn test_column_order_preserved() {
         // Columns should stay in the same order — only names change.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -468,7 +468,7 @@ mod tests {
     fn test_variable_length_rows_handled() {
         // Some CSVs have ragged rows (not all rows have the same number of fields).
         // Our processor should handle this gracefully with flexible(true).
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -490,7 +490,7 @@ mod tests {
     #[test]
     fn test_headers_only_csv() {
         // A CSV with headers but no data rows. The headers should be renamed.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input("name,age\n", r#"{"columns": {"name": "full_name"}}"#);
@@ -508,7 +508,7 @@ mod tests {
     #[test]
     fn test_non_utf8_input_returns_error() {
         // Non-UTF8 input should return a clear error, not a panic.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         // Create invalid UTF-8 bytes (0xFF 0xFE is not valid UTF-8).
@@ -541,7 +541,7 @@ mod tests {
         // A large CSV (1000+ rows) should process correctly with only
         // the header row changed. This tests performance and correctness
         // at scale.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         // Build a CSV with 1000 data rows.
@@ -599,7 +599,7 @@ mod tests {
     fn test_metadata_includes_applied_mapping() {
         // The metadata should include the mapping that was actually applied
         // (only columns that existed in the CSV).
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input(
@@ -624,7 +624,7 @@ mod tests {
     #[test]
     fn test_columns_param_not_object_passthrough() {
         // If "columns" is a string instead of an object, treat it as no mapping.
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input("name,age\nAlice,30\n", r#"{"columns": "not an object"}"#);
@@ -638,21 +638,21 @@ mod tests {
 
     #[test]
     fn test_processor_name() {
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         assert_eq!(processor.name(), "spreadsheet-rename");
     }
 
     #[test]
     fn test_default_creates_same_as_new() {
         // Verify that Default and new() produce equivalent processors.
-        let p1 = RenameCsvColumns::new();
-        let p2 = RenameCsvColumns;
+        let p1 = RenameColumns::new();
+        let p2 = RenameColumns;
         assert_eq!(p1.name(), p2.name());
     }
 
     #[test]
     fn test_output_mime_type_is_csv() {
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_csv_input("name\nAlice\n", "{}");
@@ -663,7 +663,7 @@ mod tests {
 
     #[test]
     fn test_output_filename_has_renamed_suffix() {
-        let processor = RenameCsvColumns::new();
+        let processor = RenameColumns::new();
         let progress = ProgressReporter::new_noop();
 
         let mut input = make_csv_input("name\nAlice\n", "{}");

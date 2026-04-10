@@ -28,15 +28,24 @@ pub fn create_browser_registry() -> NodeRegistry {
         "image-convert",
         Box::new(bnto_image::ConvertImageFormat::new()),
     );
-    registry.register("spreadsheet-clean", Box::new(bnto_csv::CleanCsv::new()));
+    registry.register(
+        "spreadsheet-clean",
+        Box::new(bnto_spreadsheet::CleanSpreadsheet::new()),
+    );
     registry.register(
         "spreadsheet-rename",
-        Box::new(bnto_csv::RenameCsvColumns::new()),
+        Box::new(bnto_spreadsheet::RenameColumns::new()),
     );
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
-    registry.register("spreadsheet-convert", Box::new(bnto_csv::CsvToJson::new()));
-    registry.register("spreadsheet-merge", Box::new(bnto_csv::MergeCsv::new()));
+    registry.register(
+        "spreadsheet-convert",
+        Box::new(bnto_spreadsheet::ConvertFormat::new()),
+    );
+    registry.register(
+        "spreadsheet-merge",
+        Box::new(bnto_spreadsheet::MergeSpreadsheets::new()),
+    );
     registry.register("image-overlay", Box::new(bnto_image::OverlayImage::new()));
 
     registry

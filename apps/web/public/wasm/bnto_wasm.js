@@ -30,7 +30,7 @@
  * @param {Function} progress_callback
  * @returns {any}
  */
-export function clean_csv_combined(data, filename, params_json, progress_callback) {
+export function clean_spreadsheet_combined(data, filename, params_json, progress_callback) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export);
@@ -39,7 +39,7 @@ export function clean_csv_combined(data, filename, params_json, progress_callbac
         const len1 = WASM_VECTOR_LEN;
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
         const len2 = WASM_VECTOR_LEN;
-        wasm.clean_csv_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        wasm.clean_spreadsheet_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
@@ -254,59 +254,6 @@ export function node_catalog() {
 }
 
 /**
- * Rename columns in a CSV file and return BOTH metadata and bytes in one call.
- *
- * The CSV is processed exactly ONCE, and the result contains everything
- * the Web Worker needs — no double processing.
- *
- * ARGUMENTS (from JavaScript):
- *   - `data` (Uint8Array): The raw CSV file bytes
- *   - `filename` (string): The original filename (e.g., "data.csv")
- *   - `params_json` (string): JSON string with rename config
- *     (e.g., '{"columns": {"First Name": "first_name"}}').
- *     Pass '{}' for no renames (passthrough).
- *   - `progress_callback` (Function): Called with (percent: number, message: string)
- *     to report progress. The Web Worker forwards this to the main thread.
- *
- * RETURNS:
- *   A JavaScript object with four properties:
- *   ```js
- *   {
- *     metadata: '{"columnsRenamed":2,"totalColumns":5,...}',  // JSON string
- *     data: Uint8Array([...]),                                // raw modified CSV bytes
- *     filename: "data-renamed.csv",                           // output filename
- *     mimeType: "text/csv"                                    // MIME type
- *   }
- *   ```
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {any}
- */
-export function rename_csv_columns_combined(data, filename, params_json, progress_callback) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export);
-        const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len1 = WASM_VECTOR_LEN;
-        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-        const len2 = WASM_VECTOR_LEN;
-        wasm.rename_csv_columns_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
-        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-        if (r2) {
-            throw takeObject(r1);
-        }
-        return takeObject(r0);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-}
-
-/**
  * Rename a single file and return BOTH metadata and bytes in one call.
  *
  * The file is processed exactly ONCE, and the result contains everything
@@ -346,6 +293,59 @@ export function rename_file_combined(data, filename, params_json, progress_callb
         const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
         const len2 = WASM_VECTOR_LEN;
         wasm.rename_file_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
+        var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
+        var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
+        var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
+        if (r2) {
+            throw takeObject(r1);
+        }
+        return takeObject(r0);
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+ * Rename columns in a CSV file and return BOTH metadata and bytes in one call.
+ *
+ * The CSV is processed exactly ONCE, and the result contains everything
+ * the Web Worker needs — no double processing.
+ *
+ * ARGUMENTS (from JavaScript):
+ *   - `data` (Uint8Array): The raw CSV file bytes
+ *   - `filename` (string): The original filename (e.g., "data.csv")
+ *   - `params_json` (string): JSON string with rename config
+ *     (e.g., '{"columns": {"First Name": "first_name"}}').
+ *     Pass '{}' for no renames (passthrough).
+ *   - `progress_callback` (Function): Called with (percent: number, message: string)
+ *     to report progress. The Web Worker forwards this to the main thread.
+ *
+ * RETURNS:
+ *   A JavaScript object with four properties:
+ *   ```js
+ *   {
+ *     metadata: '{"columnsRenamed":2,"totalColumns":5,...}',  // JSON string
+ *     data: Uint8Array([...]),                                // raw modified CSV bytes
+ *     filename: "data-renamed.csv",                           // output filename
+ *     mimeType: "text/csv"                                    // MIME type
+ *   }
+ *   ```
+ * @param {Uint8Array} data
+ * @param {string} filename
+ * @param {string} params_json
+ * @param {Function} progress_callback
+ * @returns {any}
+ */
+export function rename_spreadsheet_columns_combined(data, filename, params_json, progress_callback) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
+        const len2 = WASM_VECTOR_LEN;
+        wasm.rename_spreadsheet_columns_combined(retptr, ptr0, len0, ptr1, len1, ptr2, len2, addHeapObject(progress_callback));
         var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
         var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
         var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);

@@ -12,7 +12,9 @@ Adding a node processor is a foundational change that ripples through the entire
 
 Write failing tests BEFORE implementing the processor.
 
-- [ ] **Create processor file** — `engine/crates/bnto-{crate}/src/{processor_name}.rs`
+- [ ] **Crate name = category** — the crate directory and `Cargo.toml` package name must match the node category (e.g., `bnto-image` for `image-*` processors, `bnto-spreadsheet` for `spreadsheet-*` processors)
+- [ ] **File name = operation** — each processor file is named after the operation part of the registry key (e.g., `compress.rs` for `image-compress`, `clean.rs` for `spreadsheet-clean`)
+- [ ] **Create processor file** — `engine/crates/bnto-{category}/src/{operation}.rs`
 - [ ] **Implement `NodeProcessor` trait** — `name()`, `metadata()`, `process()`, `validate()`
 - [ ] **`metadata()` complete** — all parameters have types, defaults, constraints, descriptions
 - [ ] **`metadata().input_cardinality`** — declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../strategy/smart-iteration.md)
@@ -434,3 +436,5 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 | Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`     |
 | `name()` doesn't match registry key                                     | Align to return the registry key (category-first: `"image-compress"`) |
 | Crate README missing processors                                         | Update the Processors table when adding/removing processors           |
+| Crate name doesn't match category                                       | Rename crate to match (e.g., `bnto-csv` → `bnto-spreadsheet`)         |
+| Processor file name doesn't match operation                             | Rename file to match (e.g., `csv_to_json.rs` → `convert.rs`)          |

@@ -169,7 +169,7 @@ tasks:
     cmds:
       - cargo test --workspace
       - wasm-pack test --node crates/bnto-wasm
-      - wasm-pack test --node crates/bnto-csv
+      - wasm-pack test --node crates/bnto-spreadsheet
       - wasm-pack test --node crates/bnto-file
       - wasm-pack test --node crates/bnto-image
 

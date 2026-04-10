@@ -1,6 +1,6 @@
-// WASM Integration Tests -- CSV cleaning via the combined WASM function.
+// WASM Integration Tests -- spreadsheet cleaning via the combined WASM function.
 //
-// Tests the JS <-> Rust boundary for clean_csv_combined(). Native unit
+// Tests the JS <-> Rust boundary for clean_spreadsheet_combined(). Native unit
 // tests in clean.rs verify pure Rust logic; these catch serialization
 // and type-conversion bugs across WASM.
 
@@ -8,7 +8,7 @@ mod common;
 
 use wasm_bindgen_test::*;
 
-use bnto_csv::wasm_bridge::*;
+use bnto_spreadsheet::wasm_bridge::*;
 use common::{
     CSV_WITH_DUPLICATES, CSV_WITH_EMPTY_ROWS, HEADERS_ONLY_CSV, MESSY_CSV, SIMPLE_CSV,
     extract_bytes, extract_filename, extract_metadata, extract_mime_type, init_panic_hook,
@@ -26,10 +26,10 @@ fn test_clean_simple_csv_combined_metadata_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = clean_csv_combined(SIMPLE_CSV, "simple.csv", "{}", callback);
+    let result = clean_spreadsheet_combined(SIMPLE_CSV, "simple.csv", "{}", callback);
     assert!(
         result.is_ok(),
-        "clean_csv_combined should succeed for simple CSV"
+        "clean_spreadsheet_combined should succeed for simple CSV"
     );
 
     let result_obj = result.unwrap();
@@ -66,10 +66,10 @@ fn test_clean_simple_csv_combined_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = clean_csv_combined(SIMPLE_CSV, "simple.csv", "{}", callback);
+    let result = clean_spreadsheet_combined(SIMPLE_CSV, "simple.csv", "{}", callback);
     assert!(
         result.is_ok(),
-        "clean_csv_combined should succeed for simple CSV"
+        "clean_spreadsheet_combined should succeed for simple CSV"
     );
 
     let result_obj = result.unwrap();
@@ -91,8 +91,8 @@ fn test_empty_rows_removed_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = clean_csv_combined(CSV_WITH_EMPTY_ROWS, "data.csv", "{}", callback);
-    assert!(result.is_ok(), "clean_csv_combined should succeed");
+    let result = clean_spreadsheet_combined(CSV_WITH_EMPTY_ROWS, "data.csv", "{}", callback);
+    assert!(result.is_ok(), "clean_spreadsheet_combined should succeed");
 
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
@@ -112,8 +112,8 @@ fn test_duplicates_removed_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = clean_csv_combined(CSV_WITH_DUPLICATES, "data.csv", "{}", callback);
-    assert!(result.is_ok(), "clean_csv_combined should succeed");
+    let result = clean_spreadsheet_combined(CSV_WITH_DUPLICATES, "data.csv", "{}", callback);
+    assert!(result.is_ok(), "clean_spreadsheet_combined should succeed");
 
     let result_obj = result.unwrap();
     let json_str = extract_metadata(&result_obj);
@@ -134,10 +134,10 @@ fn test_clean_messy_csv_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = clean_csv_combined(MESSY_CSV, "messy.csv", "{}", callback);
+    let result = clean_spreadsheet_combined(MESSY_CSV, "messy.csv", "{}", callback);
     assert!(
         result.is_ok(),
-        "clean_csv_combined should succeed for messy CSV"
+        "clean_spreadsheet_combined should succeed for messy CSV"
     );
 
     let result_obj = result.unwrap();
@@ -159,10 +159,10 @@ fn test_headers_only_csv_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = clean_csv_combined(HEADERS_ONLY_CSV, "empty.csv", "{}", callback);
+    let result = clean_spreadsheet_combined(HEADERS_ONLY_CSV, "empty.csv", "{}", callback);
     assert!(
         result.is_ok(),
-        "clean_csv_combined should succeed for headers-only CSV"
+        "clean_spreadsheet_combined should succeed for headers-only CSV"
     );
 
     let result_obj = result.unwrap();
@@ -179,7 +179,7 @@ fn test_headers_only_csv_combined_via_wasm() {
 fn test_empty_input_returns_js_error() {
     init_panic_hook();
     let callback = noop_callback();
-    let result = clean_csv_combined(b"", "empty.csv", "{}", callback);
+    let result = clean_spreadsheet_combined(b"", "empty.csv", "{}", callback);
     assert!(result.is_err(), "Should return an error for empty input");
 }
 
@@ -188,7 +188,7 @@ fn test_non_utf8_input_returns_js_error() {
     init_panic_hook();
     let callback = noop_callback();
     let bad_bytes: &[u8] = &[0xFF, 0xFE, 0x00, 0x41];
-    let result = clean_csv_combined(bad_bytes, "binary.csv", "{}", callback);
+    let result = clean_spreadsheet_combined(bad_bytes, "binary.csv", "{}", callback);
     assert!(result.is_err(), "Should return an error for non-UTF8 input");
 }
 
@@ -196,7 +196,7 @@ fn test_non_utf8_input_returns_js_error() {
 fn test_invalid_params_json_uses_defaults() {
     init_panic_hook();
     let callback = noop_callback();
-    let result = clean_csv_combined(
+    let result = clean_spreadsheet_combined(
         SIMPLE_CSV,
         "data.csv",
         "this is not valid json!!!",
@@ -217,8 +217,8 @@ fn test_progress_callback_fires_combined() {
     init_panic_hook();
     let (callback, calls) = recording_callback();
 
-    let result = clean_csv_combined(SIMPLE_CSV, "data.csv", "{}", callback);
-    assert!(result.is_ok(), "clean_csv_combined should succeed");
+    let result = clean_spreadsheet_combined(SIMPLE_CSV, "data.csv", "{}", callback);
+    assert!(result.is_ok(), "clean_spreadsheet_combined should succeed");
 
     assert!(
         calls.length() > 0,

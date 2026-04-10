@@ -4,7 +4,7 @@
 members = [
     "crates/bnto",
     "crates/bnto-core",
-    "crates/bnto-csv",
+    "crates/bnto-spreadsheet",
     "crates/bnto-engine",
     "crates/bnto-file",
     "crates/bnto-image",

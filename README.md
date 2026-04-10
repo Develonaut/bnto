@@ -209,7 +209,7 @@ Rust Engine (single codebase, multiple targets)
 
 Node Crates (each domain gets its own crate)
   ├── bnto-image (compress, resize, convert, overlay, strip-exif)
-  ├── bnto-csv (clean, rename columns, merge, csv-to-json)
+  ├── bnto-spreadsheet (clean, rename columns, merge, csv-to-json)
   ├── bnto-file (rename)
   └── bnto-video (download via yt-dlp, native-only)
 ```
@@ -237,7 +237,7 @@ bnto/
         ├── bnto-core/           # Core types, traits, progress reporting
         ├── bnto-engine/         # Pipeline executor + node registry
         ├── bnto-image/          # Image compression/resize/convert/overlay
-        ├── bnto-csv/            # CSV clean/rename columns/merge/convert
+        ├── bnto-spreadsheet/    # Spreadsheet clean/rename/merge/convert
         ├── bnto-file/           # File rename, EXIF strip
         ├── bnto-video/          # Video download (yt-dlp, native-only)
         ├── bnto/                # Native CLI binary
