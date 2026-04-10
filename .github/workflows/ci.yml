@@ -74,8 +74,8 @@ jobs:
       - name: WASM integration tests (bnto-wasm)
         run: wasm-pack test --node crates/bnto-wasm
 
-      - name: WASM integration tests (bnto-csv)
-        run: wasm-pack test --node crates/bnto-csv
+      - name: WASM integration tests (bnto-spreadsheet)
+        run: wasm-pack test --node crates/bnto-spreadsheet
 
       - name: WASM integration tests (bnto-file)
         run: wasm-pack test --node crates/bnto-file

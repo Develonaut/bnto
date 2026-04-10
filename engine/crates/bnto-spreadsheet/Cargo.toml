@@ -1,17 +1,17 @@
-# bnto-csv — CSV processing node crate.
-# Provides clean-csv and rename-columns processors.
+# bnto-spreadsheet — Spreadsheet processing node crate.
+# Provides clean, convert, merge, and rename processors for CSV files.
 # Compiles to WASM for browser execution and native for CLI.
 
 [package]
-name = "bnto-csv"
+name = "bnto-spreadsheet"
 version = "0.1.2"
 edition = "2024"
-description = "CSV processing nodes for Bnto WASM engine — clean, rename columns"
+description = "Spreadsheet processing nodes for Bnto engine — clean, convert, merge, rename"
 license = "MIT"
 repository = "https://github.com/Develonaut/bnto"
 homepage = "https://bnto.io"
 readme = "README.md"
-keywords = ["wasm", "csv", "data", "cleaning", "browser"]
+keywords = ["wasm", "csv", "spreadsheet", "data", "browser"]
 categories = ["wasm", "parser-implementations"]
 
 # wasm-opt flags — must match ALL features Rust enables by default.

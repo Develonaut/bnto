@@ -4,7 +4,7 @@ Unified WebAssembly entry point. The single binary loaded by the browser.
 
 ## Overview
 
-`bnto-wasm` is the only `cdylib` in the workspace. It links all node crates (`bnto-image`, `bnto-csv`, `bnto-file`) and `bnto-core` into one `.wasm` binary with a shared heap. The browser loads this binary in a Web Worker via `wasm-bindgen`.
+`bnto-wasm` is the only `cdylib` in the workspace. It links all node crates (`bnto-image`, `bnto-spreadsheet`, `bnto-file`) and `bnto-core` into one `.wasm` binary with a shared heap. The browser loads this binary in a Web Worker via `wasm-bindgen`.
 
 ## Directory Structure
 

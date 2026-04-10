@@ -19,7 +19,7 @@ engine/
 └── crates/
     ├── bnto-core/            # Foundation: types, traits, pipeline executor, registry
     ├── bnto-image/           # Image nodes: compress, resize, convert
-    ├── bnto-csv/             # CSV nodes: clean, rename columns
+    ├── bnto-spreadsheet/    # Spreadsheet nodes: clean, convert, merge, rename
     ├── bnto-file/            # File nodes: rename
     └── bnto-wasm/            # Unified cdylib entry point (produces the .wasm binary)
 ```
@@ -29,7 +29,7 @@ engine/
 ```
 bnto-wasm (cdylib, the only crate that produces .wasm)
     ├── bnto-image (rlib)
-    ├── bnto-csv   (rlib)
+    ├── bnto-spreadsheet (rlib)
     ├── bnto-file  (rlib)
     └── bnto-core  (rlib, foundation for all above)
 ```

@@ -44,7 +44,7 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 /// Build a JavaScript object containing both metadata JSON and raw bytes
 /// from a single `NodeOutput`.
 ///
-/// This is the same helper pattern used in bnto-image and bnto-csv. Each
+/// This is the same helper pattern used in bnto-image and bnto-spreadsheet. Each
 /// node crate has its own copy because:
 ///   1. It avoids adding js_sys as a dependency to bnto-core (which must
 ///      stay target-agnostic — no WASM-specific code)

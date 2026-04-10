@@ -1,7 +1,7 @@
-// WASM Integration Tests -- rename CSV columns via combined WASM function.
+// WASM Integration Tests -- rename spreadsheet columns via combined WASM function.
 //
-// Tests the JS <-> Rust boundary for rename_csv_columns_combined().
-// Native unit tests in rename_columns.rs verify pure Rust logic; these
+// Tests the JS <-> Rust boundary for rename_spreadsheet_columns_combined().
+// Native unit tests in rename.rs verify pure Rust logic; these
 // catch serialization and type-conversion bugs across WASM.
 
 mod common;
@@ -9,7 +9,7 @@ mod common;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_test::*;
 
-use bnto_csv::wasm_bridge::*;
+use bnto_spreadsheet::wasm_bridge::*;
 use common::{
     MANY_COLUMNS_CSV, MINIMAL_CSV, SIMPLE_CSV, extract_bytes, extract_filename, extract_metadata,
     extract_mime_type, init_panic_hook, noop_callback, recording_callback,
@@ -26,7 +26,7 @@ fn test_rename_columns_combined_metadata_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"name": "full_name"}}"#,
@@ -34,7 +34,7 @@ fn test_rename_columns_combined_metadata_via_wasm() {
     );
     assert!(
         result.is_ok(),
-        "rename_csv_columns_combined should succeed: {:?}",
+        "rename_spreadsheet_columns_combined should succeed: {:?}",
         result.err()
     );
 
@@ -64,7 +64,7 @@ fn test_rename_columns_combined_bytes_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"name": "full_name"}}"#,
@@ -72,7 +72,7 @@ fn test_rename_columns_combined_bytes_via_wasm() {
     );
     assert!(
         result.is_ok(),
-        "rename_csv_columns_combined should succeed: {:?}",
+        "rename_spreadsheet_columns_combined should succeed: {:?}",
         result.err()
     );
 
@@ -105,7 +105,7 @@ fn test_data_preserved_after_rename_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         SIMPLE_CSV,
         "simple.csv",
         r#"{"columns": {"name": "full_name", "email": "email_address"}}"#,
@@ -137,7 +137,7 @@ fn test_many_columns_rename_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         MANY_COLUMNS_CSV,
         "many-columns.csv",
         r#"{"columns": {"first_name": "given_name", "last_name": "surname", "department": "team"}}"#,
@@ -185,7 +185,7 @@ fn test_missing_columns_ignored_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"nonexistent_column": "something_else"}}"#,
@@ -210,7 +210,7 @@ fn test_invalid_params_json_passthrough_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         "this is not valid json at all!!!",
@@ -235,7 +235,7 @@ fn test_non_utf8_returns_js_error_combined_via_wasm() {
     init_panic_hook();
     let callback = noop_callback();
     let bad_bytes: &[u8] = &[0xFF, 0xFE, 0x00, 0x61];
-    let result = rename_csv_columns_combined(bad_bytes, "bad.csv", "{}", callback);
+    let result = rename_spreadsheet_columns_combined(bad_bytes, "bad.csv", "{}", callback);
     assert!(result.is_err(), "Should return an error for non-UTF8 input");
 }
 
@@ -248,7 +248,7 @@ fn test_progress_callback_fires_combined_via_wasm() {
     init_panic_hook();
     let (callback, calls) = recording_callback();
 
-    let result = rename_csv_columns_combined(
+    let result = rename_spreadsheet_columns_combined(
         MINIMAL_CSV,
         "test.csv",
         r#"{"columns": {"name": "full_name"}}"#,

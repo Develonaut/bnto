@@ -16,19 +16,19 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 
 ## Registered Processors
 
-| Node Type             | Crate        | Processor            |
-| --------------------- | ------------ | -------------------- |
-| `image-compress`      | `bnto-image` | `CompressImages`     |
-| `image-resize`        | `bnto-image` | `ResizeImages`       |
-| `image-convert`       | `bnto-image` | `ConvertImageFormat` |
-| `spreadsheet-clean`   | `bnto-csv`   | `CleanCsv`           |
-| `spreadsheet-rename`  | `bnto-csv`   | `RenameCsvColumns`   |
-| `spreadsheet-convert` | `bnto-csv`   | `CsvToJson`          |
-| `spreadsheet-merge`   | `bnto-csv`   | `MergeCsv`           |
-| `file-rename`         | `bnto-file`  | `RenameFiles`        |
-| `image-strip-exif`    | `bnto-image` | `StripExif`          |
-| `image-overlay`       | `bnto-image` | `OverlayImage`       |
-| `video-download`      | `bnto-video` | `VideoDownload`      |
+| Node Type             | Crate              | Processor            |
+| --------------------- | ------------------ | -------------------- |
+| `image-compress`      | `bnto-image`       | `CompressImages`     |
+| `image-resize`        | `bnto-image`       | `ResizeImages`       |
+| `image-convert`       | `bnto-image`       | `ConvertImageFormat` |
+| `spreadsheet-clean`   | `bnto-spreadsheet` | `CleanSpreadsheet`   |
+| `spreadsheet-rename`  | `bnto-spreadsheet` | `RenameColumns`      |
+| `spreadsheet-convert` | `bnto-spreadsheet` | `ConvertFormat`      |
+| `spreadsheet-merge`   | `bnto-spreadsheet` | `MergeSpreadsheets`  |
+| `file-rename`         | `bnto-file`        | `RenameFiles`        |
+| `image-strip-exif`    | `bnto-image`       | `StripExif`          |
+| `image-overlay`       | `bnto-image`       | `OverlayImage`       |
+| `video-download`      | `bnto-video`       | `VideoDownload`      |
 
 ## Development
 

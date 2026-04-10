@@ -10,15 +10,15 @@ use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 /// The spreadsheet-convert node processor. Stateless — config comes from `NodeInput.params`.
-pub struct CsvToJson;
+pub struct ConvertFormat;
 
-impl CsvToJson {
+impl ConvertFormat {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for CsvToJson {
+impl Default for ConvertFormat {
     fn default() -> Self {
         Self::new()
     }
@@ -26,7 +26,7 @@ impl Default for CsvToJson {
 
 // --- NodeProcessor Implementation ---
 
-impl NodeProcessor for CsvToJson {
+impl NodeProcessor for ConvertFormat {
     fn name(&self) -> &str {
         "spreadsheet-convert"
     }
@@ -330,7 +330,7 @@ mod tests {
     }
 
     fn process_ok(input: NodeInput) -> NodeOutput {
-        let processor = CsvToJson::new();
+        let processor = ConvertFormat::new();
         let progress = ProgressReporter::new_noop();
         processor
             .process(input, &progress, &NoopContext)
@@ -338,7 +338,7 @@ mod tests {
     }
 
     fn process_err(input: NodeInput) -> BntoError {
-        let processor = CsvToJson::new();
+        let processor = ConvertFormat::new();
         let progress = ProgressReporter::new_noop();
         let result = processor.process(input, &progress, &NoopContext);
         assert!(result.is_err(), "expected an error");
@@ -352,24 +352,24 @@ mod tests {
 
     #[test]
     fn test_name() {
-        assert_eq!(CsvToJson::new().name(), "spreadsheet-convert");
+        assert_eq!(ConvertFormat::new().name(), "spreadsheet-convert");
     }
 
     #[test]
     fn test_default() {
         #[allow(clippy::default_constructed_unit_structs)]
-        let _p = CsvToJson::default();
+        let _p = ConvertFormat::default();
     }
 
     #[test]
     fn test_metadata_node_type() {
-        let meta = CsvToJson::new().metadata();
+        let meta = ConvertFormat::new().metadata();
         assert_eq!(meta.node_type, "spreadsheet-convert");
     }
 
     #[test]
     fn test_metadata_has_delimiter_and_pretty_params() {
-        let meta = CsvToJson::new().metadata();
+        let meta = ConvertFormat::new().metadata();
         let names: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
         assert!(names.contains(&"delimiter"));
         assert!(names.contains(&"pretty"));

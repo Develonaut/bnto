@@ -9,16 +9,16 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-/// The merge-csv node processor. Stateless — config comes from params.
-pub struct MergeCsv;
+/// The spreadsheet-merge node processor. Stateless — config comes from params.
+pub struct MergeSpreadsheets;
 
-impl MergeCsv {
+impl MergeSpreadsheets {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for MergeCsv {
+impl Default for MergeSpreadsheets {
     fn default() -> Self {
         Self::new()
     }
@@ -26,7 +26,7 @@ impl Default for MergeCsv {
 
 // --- NodeProcessor Implementation ---
 
-impl NodeProcessor for MergeCsv {
+impl NodeProcessor for MergeSpreadsheets {
     fn name(&self) -> &str {
         "spreadsheet-merge"
     }
@@ -421,13 +421,13 @@ mod tests {
 
     #[test]
     fn test_name_returns_merge_csv() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         assert_eq!(processor.name(), "spreadsheet-merge");
     }
 
     #[test]
     fn test_metadata_has_batch_cardinality() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let meta = processor.metadata();
         assert_eq!(
             meta.input_cardinality,
@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn test_metadata_has_two_parameters() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let meta = processor.metadata();
         assert_eq!(meta.parameters.len(), 2);
         let names: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
@@ -449,12 +449,12 @@ mod tests {
     #[test]
     fn test_default_creates_same_as_new() {
         #[allow(clippy::default_constructed_unit_structs)]
-        let _processor = MergeCsv::default();
+        let _processor = MergeSpreadsheets::default();
     }
 
     #[test]
     fn test_validate_passes_with_no_params() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let errors = processor.validate(&serde_json::Map::new());
         assert!(errors.is_empty());
     }
@@ -463,7 +463,7 @@ mod tests {
 
     #[test]
     fn test_merge_two_files_same_headers() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![
             ("a.csv", "name,age\nAlice,30\nBob,25\n"),
@@ -487,7 +487,7 @@ mod tests {
 
     #[test]
     fn test_merge_single_file() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "name,age\nAlice,30\n")]);
 
@@ -503,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_merge_three_files() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![
             ("a.csv", "id\n1\n2\n"),
@@ -524,7 +524,7 @@ mod tests {
 
     #[test]
     fn test_merge_empty_batch_returns_error() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = BatchInput {
             files: vec![],
@@ -537,7 +537,7 @@ mod tests {
 
     #[test]
     fn test_merge_empty_file_returns_error() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "")]);
 
@@ -549,7 +549,7 @@ mod tests {
 
     #[test]
     fn test_first_file_headers_columns_matched_by_position() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         // Second file has different header names — with first-file mode,
         // rows map by column position, headers come from first file.
@@ -573,7 +573,7 @@ mod tests {
 
     #[test]
     fn test_union_headers_includes_all_columns() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let mut params = serde_json::Map::new();
         params.insert("headerHandling".to_string(), serde_json::json!("union"));
@@ -606,7 +606,7 @@ mod tests {
 
     #[test]
     fn test_deduplicate_removes_cross_file_duplicates() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let mut params = serde_json::Map::new();
         params.insert("deduplicate".to_string(), serde_json::json!(true));
@@ -636,7 +636,7 @@ mod tests {
 
     #[test]
     fn test_deduplicate_false_keeps_duplicates() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "name\nAlice\n"), ("b.csv", "name\nAlice\n")]);
 
@@ -653,7 +653,7 @@ mod tests {
 
     #[test]
     fn test_different_header_handling_produces_different_output() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
 
         let files = vec![
@@ -681,7 +681,7 @@ mod tests {
 
     #[test]
     fn test_different_deduplicate_produces_different_output() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
 
         let files = vec![("a.csv", "name\nAlice\n"), ("b.csv", "name\nAlice\n")];
@@ -710,7 +710,7 @@ mod tests {
 
     #[test]
     fn test_output_metadata_fields() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![
             ("a.csv", "name\nAlice\nBob\n"),
@@ -758,7 +758,7 @@ mod tests {
 
     #[test]
     fn test_non_utf8_file_returns_error() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = BatchInput {
             files: vec![BatchFile {
@@ -780,7 +780,7 @@ mod tests {
 
     #[test]
     fn test_merge_files_with_varying_column_counts() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         // First file has 2 cols, second has 3 — first-file mode uses 2 cols
         let input = make_batch_input(vec![
@@ -802,7 +802,7 @@ mod tests {
 
     #[test]
     fn test_merge_preserves_row_order() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let input = make_batch_input(vec![("a.csv", "id\n1\n2\n"), ("b.csv", "id\n3\n4\n")]);
 
@@ -825,7 +825,7 @@ mod tests {
 
     #[test]
     fn test_merge_with_test_fixtures() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let csv1 = include_bytes!("../../../../test-fixtures/csv/simple.csv");
         let csv2 = include_bytes!("../../../../test-fixtures/csv/simple.csv");
@@ -861,7 +861,7 @@ mod tests {
 
     #[test]
     fn test_merge_with_dedup_and_fixtures() {
-        let processor = MergeCsv::new();
+        let processor = MergeSpreadsheets::new();
         let progress = ProgressReporter::new_noop();
         let csv_data = include_bytes!("../../../../test-fixtures/csv/simple.csv");
 

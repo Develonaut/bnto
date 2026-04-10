@@ -8,16 +8,16 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-/// The clean-csv node processor. Stateless — config comes from `NodeInput.params`.
-pub struct CleanCsv;
+/// The spreadsheet-clean node processor. Stateless — config comes from `NodeInput.params`.
+pub struct CleanSpreadsheet;
 
-impl CleanCsv {
+impl CleanSpreadsheet {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for CleanCsv {
+impl Default for CleanSpreadsheet {
     fn default() -> Self {
         Self::new()
     }
@@ -25,7 +25,7 @@ impl Default for CleanCsv {
 
 // --- NodeProcessor Implementation ---
 
-impl NodeProcessor for CleanCsv {
+impl NodeProcessor for CleanSpreadsheet {
     fn name(&self) -> &str {
         "spreadsheet-clean"
     }
@@ -398,7 +398,7 @@ mod tests {
     #[test]
     fn test_name_returns_clean_csv() {
         // Verify the node processor reports the correct name.
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         assert_eq!(processor.name(), "spreadsheet-clean");
     }
 
@@ -408,9 +408,9 @@ mod tests {
         // Clippy warns against `.default()` on a unit struct, but we want
         // to test that Default IS implemented, so we allow it.
         #[allow(clippy::default_constructed_unit_structs)]
-        let _processor = CleanCsv::default();
+        let _processor = CleanSpreadsheet::default();
         // If we get here without panic, the test passes.
-        // CleanCsv is a unit struct, so there's nothing else to check.
+        // CleanSpreadsheet is a unit struct, so there's nothing else to check.
     }
 
     #[test]
@@ -418,7 +418,7 @@ mod tests {
         // A clean CSV with no issues should pass through with all rows intact.
         // Only formatting differences (like trailing newline) should change.
         let csv = "name,age,city\nAlice,30,NYC\nBob,25,LA\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -448,7 +448,7 @@ mod tests {
     fn test_remove_empty_rows() {
         // CSV with empty rows (all cells blank) — they should be removed.
         let csv = "name,age\nAlice,30\n,,\nBob,25\n,,\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -479,7 +479,7 @@ mod tests {
     fn test_trim_whitespace_from_cells() {
         // CSV with extra whitespace around cell values.
         let csv = "name,age\n  Alice  , 30 \n Bob ,25\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -505,7 +505,7 @@ mod tests {
     fn test_remove_duplicate_rows() {
         // CSV with exact duplicate rows — only the first occurrence should remain.
         let csv = "name,age\nAlice,30\nBob,25\nAlice,30\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -534,7 +534,7 @@ mod tests {
     fn test_preserves_header_row() {
         // The header row should always be present in the output, trimmed.
         let csv = " name , age \nAlice,30\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -558,7 +558,7 @@ mod tests {
         // Some rows have fewer columns than the header — they should be
         // padded with empty strings to match the header width.
         let csv = "name,age,city\nAlice,30\nBob,25,LA\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -582,7 +582,7 @@ mod tests {
     fn test_headers_only_csv() {
         // A CSV with only headers and no data rows.
         let csv = "name,age,city\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -612,7 +612,7 @@ mod tests {
     fn test_empty_input_returns_error() {
         // Completely empty input (no bytes) should return an error.
         let csv = "";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -640,7 +640,7 @@ mod tests {
         // 0xFF 0xFE is a common byte sequence in files that aren't
         // UTF-8 (it's a UTF-16 BOM). Our parser expects UTF-8 only.
         let bad_bytes = vec![0xFF, 0xFE, 0x00, 0x41]; // Not valid UTF-8
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
             data: bad_bytes,
@@ -672,7 +672,7 @@ mod tests {
     fn test_combined_trim_remove_empty_deduplicate() {
         // A messy CSV that needs all three cleaning operations.
         let csv = "name,age\n  Alice  , 30 \n,,\nBob,25\n  Alice  , 30 \n,,\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
@@ -720,7 +720,7 @@ mod tests {
     fn test_remove_duplicates_false_preserves_duplicates() {
         // When removeDuplicates is false, duplicate rows should be kept.
         let csv = "name,age\nAlice,30\nBob,25\nAlice,30\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
 
         let mut params = serde_json::Map::new();
@@ -754,7 +754,7 @@ mod tests {
     fn test_trim_whitespace_false_preserves_whitespace() {
         // When trimWhitespace is false, whitespace should be preserved.
         let csv = "name,age\n  Alice  , 30 \nBob,25\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
 
         let mut params = serde_json::Map::new();
@@ -784,7 +784,7 @@ mod tests {
     fn test_remove_empty_rows_false_preserves_empty_rows() {
         // When removeEmptyRows is false, empty rows should be kept.
         let csv = "name,age\nAlice,30\n,,\nBob,25\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
 
         let mut params = serde_json::Map::new();
@@ -817,7 +817,7 @@ mod tests {
             csv.push_str(&format!("{i},item_{i},{}\n", i * 10));
         }
 
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(&csv);
 
@@ -864,7 +864,7 @@ mod tests {
     fn test_output_filename_in_result() {
         // Verify the output file has the correct cleaned filename.
         let csv = "name\nAlice\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
             data: csv.as_bytes().to_vec(),
@@ -884,7 +884,7 @@ mod tests {
     #[test]
     fn test_metadata_contains_all_fields() {
         let csv = "name,age\nAlice,30\nBob,25\n";
-        let processor = CleanCsv::new();
+        let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = make_csv_input(csv);
 
