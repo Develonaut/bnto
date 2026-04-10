@@ -9,12 +9,13 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
+use bnto_encode::ImageFormat;
+
 use crate::common::{
     MAX_QUALITY, MIN_QUALITY, format_param_def, image_accepts_with_svg, quality_param_def,
     validate_quality,
 };
 use crate::encode;
-use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 use crate::svg;
 

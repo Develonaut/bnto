@@ -25,6 +25,7 @@ crate-type = ["rlib"]
 
 [dependencies]
 bnto-core = { path = "../bnto-core", version = "0.1.2" }
+bnto-encode = { path = "../bnto-encode", version = "0.1.2" }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }

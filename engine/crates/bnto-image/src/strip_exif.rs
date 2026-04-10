@@ -10,9 +10,10 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
+use bnto_encode::ImageFormat;
+
 use crate::common::{image_accepts, quality_param_def};
 use crate::encode;
-use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
 const MIN_QUALITY: u8 = 1;

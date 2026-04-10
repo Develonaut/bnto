@@ -1,6 +1,6 @@
 // Shared image encoding — single entrypoint for all image processors.
 //
-// All three processors (compress, resize, convert) route through this module
+// All processors that produce raster output route through this module
 // for final encoding. This prevents duplicated encode functions and ensures
 // quality/compression params are consistently applied across all formats.
 
