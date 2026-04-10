@@ -128,11 +128,14 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         return match key.code {
             KeyCode::Esc => Some(AppMessage::Browser(BrowserMessage::ExitSearch)),
             KeyCode::Backspace => Some(AppMessage::Browser(BrowserMessage::SearchBackspace)),
-            KeyCode::Enter => {
-                model.browser.confirm().map(|r| AppMessage::RecipeSelected { slug: r.slug })
-            }
+            KeyCode::Enter => model
+                .browser
+                .confirm()
+                .map(|r| AppMessage::RecipeSelected { slug: r.slug }),
             KeyCode::Char('u')
-                if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
+                if key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
             {
                 Some(AppMessage::Browser(BrowserMessage::SearchClear))
             }
@@ -142,17 +145,14 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     }
 
     match key.code {
-        KeyCode::Char('j') | KeyCode::Down => {
-            Some(AppMessage::Browser(BrowserMessage::CursorDown))
-        }
-        KeyCode::Char('k') | KeyCode::Up => {
-            Some(AppMessage::Browser(BrowserMessage::CursorUp))
-        }
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Browser(BrowserMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Browser(BrowserMessage::CursorUp)),
         KeyCode::Char('/') => Some(AppMessage::Browser(BrowserMessage::EnterSearch)),
         KeyCode::Char('s') => Some(AppMessage::OpenSettings),
-        KeyCode::Enter => {
-            model.browser.confirm().map(|r| AppMessage::RecipeSelected { slug: r.slug })
-        }
+        KeyCode::Enter => model
+            .browser
+            .confirm()
+            .map(|r| AppMessage::RecipeSelected { slug: r.slug }),
         _ => None,
     }
 }
