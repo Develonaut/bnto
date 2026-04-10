@@ -380,6 +380,7 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
+            "vector-rasterize",
         ];
         let params = serde_json::Map::new();
         for key in &expected_keys {
