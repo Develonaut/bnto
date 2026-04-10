@@ -14,8 +14,9 @@ use bnto_core::progress::ProgressReporter;
 
 use image::codecs::jpeg::JpegEncoder;
 
+use bnto_encode::ImageFormat;
+
 use crate::common::{image_accepts, quality_param_def};
-use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
 // --- Configuration Constants ---

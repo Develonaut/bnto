@@ -18,9 +18,10 @@ use bnto_core::metadata::{
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
+use bnto_encode::ImageFormat;
+
 use crate::common::image_accepts;
 use crate::encode;
-use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
 
 const DEFAULT_SIZE: u64 = 25;

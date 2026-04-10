@@ -4,6 +4,7 @@
 members = [
     "crates/bnto",
     "crates/bnto-core",
+    "crates/bnto-encode",
     "crates/bnto-spreadsheet",
     "crates/bnto-engine",
     "crates/bnto-file",

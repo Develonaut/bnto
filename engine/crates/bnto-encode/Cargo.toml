@@ -1,0 +1,32 @@
+# bnto-encode — Shared image encoding for the Bnto engine.
+# Provides ImageFormat detection and encode_image() used by bnto-image and bnto-vector.
+# Extracted to avoid circular dependencies: bnto-image depends on bnto-vector,
+# and both need encoding capabilities.
+
+[package]
+name = "bnto-encode"
+version = "0.1.2"
+edition = "2024"
+description = "Shared image format detection and encoding for Bnto engine crates"
+license = "MIT"
+repository = "https://github.com/Develonaut/bnto"
+homepage = "https://bnto.io"
+readme = "README.md"
+keywords = ["wasm", "image", "encoding", "format"]
+categories = ["multimedia::images"]
+
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
+# See bnto-wasm/Cargo.toml for full explanation.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+bnto-core = { path = "../bnto-core", version = "0.1.2" }
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+
+[dev-dependencies]
+wasm-bindgen-test = { workspace = true }
