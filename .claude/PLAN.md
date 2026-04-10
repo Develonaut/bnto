@@ -618,7 +618,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 2 (parallel — detail + picker)
 
-- [ ] `engine/crates/bnto` — **Recipe detail screen** (`screens/detail.rs`): `DetailModel` + `update()` + `view()`. Show recipe description, node list, editable parameter overrides from `metadata()`. `j/k` to focus params, `Enter` to edit, `Esc` to cancel edit, `Enter` to confirm and proceed to file picker. Unit tests for param editing, defaults, commit/cancel (~8 tests)
+- [x] `engine/crates/bnto` — **Recipe detail screen** (`screens/detail.rs`): `DetailModel` + `update()` + `view()`. Show recipe description, node list, editable parameter overrides from `metadata()`. `j/k` to focus params, `Enter` to edit, `Esc` to cancel edit, `Enter` to confirm and proceed to file picker. Unit tests for param editing, defaults, commit/cancel (~8 tests)
 - [ ] `engine/crates/bnto` — **File picker screen** (`screens/picker.rs`): `PickerModel` + `update()` + `view()`. Browse filesystem, directories first then files alphabetically. Filter by recipe's accept extensions. `Space` to toggle multi-select. `Enter` to open dir / confirm selection. `Backspace` for parent dir. `widgets/file_list.rs` shared widget. Unit tests for navigation, selection, filtering, sort (~10 tests)
 
 #### Wave 3 (parallel — execution + results)
