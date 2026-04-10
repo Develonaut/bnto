@@ -46,7 +46,7 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
     let variant_labels = [
         ("Los Angeles", "Warm cream light theme"),
         ("Tokyo", "Cool dark slate theme"),
-        ("Munich", "Golden-hour sunset theme"),
+        ("Monaco", "Golden-hour sunset theme"),
     ];
 
     let lines: Vec<Line> = ALL_VARIANTS

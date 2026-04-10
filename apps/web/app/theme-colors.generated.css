@@ -60,7 +60,7 @@
   --chart-5: oklch(0.5401 0.102 34.6762);
 }
 
-.munich {
+.monaco {
   --background: oklch(0.82 0.15 78);
   --foreground: oklch(0.25 0.04 260);
   --card: oklch(0.97 0.03 80);

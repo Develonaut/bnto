@@ -238,114 +238,114 @@ oklch = "0.5401 0.102 34.6762"
 rgb = [161, 87, 69]
 
 # ══════════════════════════════════════════════════════════════════════
-# Munich (sunset) — Mini Motorways Munich golden hour
+# Monaco (sunset) — Mini Motorways Monaco golden hour
 # Rich amber background, deep navy foreground, coral accent.
 # ══════════════════════════════════════════════════════════════════════
 
-[munich.background]
+[monaco.background]
 oklch = "0.82 0.15 78"
 rgb = [249, 183, 63]
 
-[munich.foreground]
+[monaco.foreground]
 oklch = "0.25 0.04 260"
 rgb = [22, 34, 53]
 
-[munich.card]
+[monaco.card]
 oklch = "0.97 0.03 80"
 rgb = [255, 243, 223]
 
-[munich.card_foreground]
+[monaco.card_foreground]
 oklch = "0.25 0.04 260"
 rgb = [22, 34, 53]
 
-[munich.primary]
+[monaco.primary]
 oklch = "0.6755 0.1791 35.2662"
 rgb = [240, 101, 66]
 
-[munich.primary_foreground]
+[monaco.primary_foreground]
 oklch = "1 0 0"
 rgb = [255, 255, 255]
 
-[munich.secondary]
+[monaco.secondary]
 oklch = "0.4 0.06 258"
 rgb = [51, 72, 104]
 
-[munich.secondary_foreground]
+[monaco.secondary_foreground]
 oklch = "0.9 0.04 80"
 rgb = [236, 220, 193]
 
-[munich.muted]
+[monaco.muted]
 oklch = "0.76 0.1 77"
 rgb = [213, 169, 101]
 
-[munich.muted_foreground]
+[monaco.muted_foreground]
 oklch = "0.4 0.05 50"
 rgb = [94, 64, 47]
 
-[munich.accent]
+[monaco.accent]
 oklch = "0.72 0.17 22"
 rgb = [253, 114, 115]
 
-[munich.accent_foreground]
+[monaco.accent_foreground]
 oklch = "0.25 0.04 260"
 rgb = [22, 34, 53]
 
-[munich.destructive]
+[monaco.destructive]
 oklch = "0.6 0.21 25"
 rgb = [226, 52, 57]
 
-[munich.destructive_foreground]
+[monaco.destructive_foreground]
 oklch = "1 0 0"
 rgb = [255, 255, 255]
 
-[munich.success]
+[monaco.success]
 oklch = "0.65 0.13 165"
 rgb = [30, 168, 123]
 
-[munich.success_foreground]
+[monaco.success_foreground]
 oklch = "1 0 0"
 rgb = [255, 255, 255]
 
-[munich.warning]
+[monaco.warning]
 oklch = "0.72 0.15 55"
 rgb = [235, 136, 59]
 
-[munich.warning_foreground]
+[monaco.warning_foreground]
 oklch = "0.25 0.04 260"
 rgb = [22, 34, 53]
 
-[munich.border]
+[monaco.border]
 oklch = "0.73 0.1 77"
 rgb = [203, 159, 92]
 
-[munich.input]
+[monaco.input]
 oklch = "0.79 0.1 78"
 rgb = [222, 179, 110]
 
-[munich.ring]
+[monaco.ring]
 oklch = "0.6755 0.1791 35.2662"
 rgb = [240, 101, 66]
 
-[munich.focus_ring]
+[monaco.focus_ring]
 oklch = "0.55 0.22 264"
 rgb = [43, 98, 239]
 
-[munich.chart_1]
+[monaco.chart_1]
 oklch = "0.6755 0.1791 35.2662"
 rgb = [240, 101, 66]
 
-[munich.chart_2]
+[monaco.chart_2]
 oklch = "0.7868 0.1103 223.0437"
 rgb = [94, 201, 237]
 
-[munich.chart_3]
+[monaco.chart_3]
 oklch = "0.8887 0.1337 91.2263"
 rgb = [251, 215, 106]
 
-[munich.chart_4]
+[monaco.chart_4]
 oklch = "0.7692 0.1554 157.4196"
 rgb = [71, 209, 140]
 
-[munich.chart_5]
+[monaco.chart_5]
 oklch = "0.5401 0.102 34.6762"
 rgb = [161, 87, 69]

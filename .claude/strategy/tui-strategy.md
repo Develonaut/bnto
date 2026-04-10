@@ -29,11 +29,13 @@ The same principles that govern our TypeScript codebase govern the TUI:
 | **Size limits**           | Files < 250 lines, functions < 20 lines | Same. Rust files < 250 lines, functions < 20 lines |
 | **YAGNI**                 | Don't build for hypothetical futures    | MVP screens only — no premature features           |
 
-### Motorway Design Language → Terminal
+### Motorway Design Language → 8-Bit Terminal
 
-3D surface elevation and spring animations don't exist in a terminal. But the _feelings_ they create do. Here's what transfers:
+3D surface elevation and spring animations don't exist in a terminal. But the _feelings_ they create do. Our approach: **render the Motorway palette through an 8-bit retro lens** — like playing Mini Motorways on a Game Boy Color or SNES. The warm colors stay, the kawaii personality stays, but expressed through chunky pixels and box-drawing characters instead of CSS gradients and spring physics.
 
-| Web (Motorway)                  | TUI equivalent                                    | The feeling it creates |
+**The visual concept:** Imagine the web app's polished Motorway surfaces translated to a retro console. Rounded borders become the friendly `╭╮╰╯`. Terracotta and golden accents become bold ANSI colors. The kawaii sushi mascots become tiny pixel-art sprites built from half-block characters (▀▄█░▓▒). It should feel like a premium retro game UI — not a raw terminal app.
+
+| Web (Motorway)                  | TUI (8-Bit Motorway)                              | The feeling it creates |
 | ------------------------------- | ------------------------------------------------- | ---------------------- |
 | Warm cream background           | Muted/dim background with warm accent colors      | Warmth, not clinical   |
 | Terracotta primary              | Bold/colored primary text (terracotta ANSI 256)   | Brand identity         |
@@ -46,12 +48,152 @@ The same principles that govern our TypeScript codebase govern the TUI:
 | `font-display` (Geist) headings | Bold + uppercase for headers                      | Typography hierarchy   |
 | `font-mono` for code            | Default terminal font for all content             | Clean and readable     |
 | Skeleton loading states         | Spinner + "Loading..." with progress context      | No dead air            |
+| Kawaii sushi SVG mascots        | Tiny half-block pixel-art sushi sprites           | Brand personality      |
+| 3D surface elevation            | Double-line borders + block shading               | Visual depth/hierarchy |
+
+**What we do:**
+
+- Kawaii sushi mascots as small pixel-art sprites (3-5 lines tall, using ▀▄█░▓▒)
+- Chunky, geometric, retro-game aesthetic — think SNES menu screens
+- Rounded borders everywhere — `╭╮╰╯` as default, never sharp
+- Color used for warmth and meaning, not decoration
 
 **What we don't do:**
 
-- No ASCII art logos or decorative borders — the content is the hero
+- No large ASCII art banners — sprites stay small (3-7 lines), content is the hero
 - No slow animations or transitions — terminals reward instant feedback
 - No color overload — reserve color for meaning (status, selection, categories)
+- No emoji for mascots — they render inconsistently across terminals
+
+### Sushi Mascots in the Terminal
+
+The web app has kawaii sushi characters from Catalyst Labs (see [brand-messaging-audit.md](brand-messaging-audit.md)). The TUI gets terminal-native versions of the same roster — expressed through three tiers depending on context.
+
+#### Tier 1: Emoji (inline, status bars, category labels)
+
+Emoji are the lightest touch — one character, instantly recognizable, zero rendering complexity. Use them for inline context where a full sprite would be overkill.
+
+| Category    | Emoji | Use in TUI                                      |
+| ----------- | ----- | ----------------------------------------------- |
+| Image       | 🍣    | Category label in recipe browser, status bar    |
+| Spreadsheet | 🍱    | Category label, bento = compartments = grid     |
+| File        | 🍙    | Category label, onigiri = simple building block |
+| Video       | 🐙    | Category label, octopus = multiple streams      |
+| Brand       | 🍣    | App header accent, footer                       |
+
+**Emoji gotchas:**
+
+- Width varies across terminals (1 cell vs 2 cells). Use `unicode-width` crate to measure
+- Some terminals render monochrome. That's fine — the shape is what matters
+- Never rely on emoji as the sole UI indicator — always pair with text
+
+#### Tier 2: Kaomoji (compact, help text, loading states)
+
+Japanese-style emoticons that work in any monospace font. Zero Unicode compatibility issues.
+
+```
+Sushi roll:  (●‿●)     or  (°ω°)
+Onigiri:     (△‿△)     or  (▽ω▽)
+Bento box:   [▪‿▪]     or  {◻‿◻}
+Octopus:     (∿‿∿)     or  (~ω~)
+```
+
+Use these in:
+
+- Loading spinners: `(°ω°) Browsing recipes...`
+- Help text: `(●‿●) Tip: press / to search`
+- Empty states: `(△‿△) No files selected yet`
+- Error messages: `(∿‿∿) Something went wrong`
+
+#### Tier 3: Half-Block Pixel Art (header, splash, about screen)
+
+Small sprites built from Unicode half-block characters (▀▄█░▓▒). 3-5 lines tall, 8-12 characters wide. These are the "hero" versions — used sparingly for maximum impact.
+
+**The technique:** Each terminal cell is split into top/bottom halves using ▀ (upper) and ▄ (lower), giving 2x vertical pixel resolution. Combined with ratatui's color system, you can create recognizable 8-bit sprites at tiny sizes.
+
+```
+Sushi roll (5 lines, colored with theme palette):
+ ▄████▄
+█░░░░░░█
+█▓▓▓▓▓▓█    <- nori (teal)
+█░░●░●░█    <- rice + filling (cream + terracotta)
+ ▀████▀
+
+Onigiri (4 lines):
+   ▄▄
+  █░░█
+ █▓░░▓█     <- nori wrap (teal)
+  ▀▀▀▀
+
+Bento box (3 lines):
+╔══╦══╗
+║▓▓║░░║     <- compartments with different fills
+╚══╩══╝
+
+Octopus (4 lines):
+  ▄██▄
+  █●●█
+ ▄████▄
+ ╘╘╘╘╘╘     <- tentacles
+```
+
+**These are concepts, not final.** The actual sprites will be refined once we can test rendering across target terminals (kitty, Alacritty, iTerm2, Windows Terminal, GNOME Terminal). The goal is recognizable at 3-5 lines, charming, and consistent with the web mascots' personality.
+
+**Color mapping (Motorway palette → terminal):**
+
+- Sushi rice → white/cream (background token)
+- Nori/seaweed → teal (secondary token)
+- Fish/filling → terracotta (primary token)
+- Bento box frame → golden (accent token)
+- Eyes/face → foreground token
+
+#### Where each tier appears
+
+| Context               | Tier    | Example                                    |
+| --------------------- | ------- | ------------------------------------------ |
+| Recipe browser list   | Emoji   | `🍣 Compress Images`                       |
+| Category headers      | Emoji   | `🍱 SPREADSHEET`                           |
+| Status bar            | Emoji   | `🍣 bnto v1.0 — Los Angeles theme`         |
+| Loading states        | Kaomoji | `(°ω°) Loading recipes...`                 |
+| Help/tips             | Kaomoji | `(●‿●) Press Enter to select`              |
+| Error states          | Kaomoji | `(∿‿∿) Oops — file not found`              |
+| App header (splash)   | Sprite  | Half-block sushi roll next to "bnto" title |
+| Settings/about screen | Sprite  | Full mascot roster                         |
+
+### Terminal Dark/Light Auto-Detection
+
+The web app detects the user's system theme (`prefers-color-scheme`) and adjusts. The TUI needs the same intelligence — a dark terminal with the Los Angeles (light) theme looks washed out.
+
+**Strategy: Layered detection with graceful fallback.**
+
+| Priority | Method                      | How it works                                                      | Reliability |
+| -------- | --------------------------- | ----------------------------------------------------------------- | ----------- |
+| 1        | `--theme` CLI flag          | User explicitly sets `bnto tui --theme tokyo`                     | 100%        |
+| 2        | `terminal-colorsaurus`      | Sends OSC 11 query to read terminal background color              | ~85%        |
+| 3        | `COLORFGBG` env var         | Set by some terminals (rxvt, xterm) — `15;0` = light on dark      | ~40%        |
+| 4        | macOS `AppleInterfaceStyle` | Read via `defaults read -g AppleInterfaceStyle` — "Dark" or empty | macOS only  |
+| 5        | Default                     | Fall back to Los Angeles (light) — matches web default            | 100%        |
+
+**`terminal-colorsaurus`** is the key crate — used by production tools like `bat` and `delta`. It sends an OSC 11 escape sequence to query the terminal's background color, then uses a DA1 (Device Attributes) bail-out trick to avoid hanging on terminals that don't respond. From the background luminance, we can classify the terminal as light or dark.
+
+**Implementation (future, not MVP):**
+
+```rust
+fn detect_theme() -> ThemeVariant {
+    // Priority 1: CLI flag (already implemented via --theme)
+    // Priority 2: OSC 11 terminal query
+    match terminal_colorsaurus::background_color(QueryOptions::default()) {
+        Ok(color) if color.perceived_lightness() < 0.5 => ThemeVariant::Tokyo,
+        Ok(_) => ThemeVariant::LosAngeles,
+        Err(_) => {
+            // Priority 3-5: env vars, OS detection, default
+            ThemeVariant::LosAngeles
+        }
+    }
+}
+```
+
+**Not in MVP.** The `--theme` flag and runtime theme switching (Settings screen) cover the user need for now. Auto-detection is a quality-of-life improvement for later iterations. Added `terminal-colorsaurus` to the dependencies section below.
 
 ### Elm Architecture (TEA)
 
@@ -175,16 +317,16 @@ struct BrowserModel {
 **Layout:**
 
 ```
-╭─ bnto ──────────────────────────────────────────╮
+╭─ 🍣 bnto ───────────────────────────────────────╮
 │                                                  │
 │  Search: compress_                               │
 │                                                  │
-│  IMAGE                                           │
+│  🍣 IMAGE                                        │
 │  > Compress Images     Reduce file size          │
 │    Resize Images       Change dimensions         │
 │    Convert Format      PNG, JPEG, WebP           │
 │                                                  │
-│  SPREADSHEET                                     │
+│  🍱 SPREADSHEET                                  │
 │    Clean CSV           Remove empty rows         │
 │                                                  │
 ╰──────────────────────────────────────────────────╯
@@ -422,6 +564,13 @@ crossterm = "0.28"
 
 Both are mature, well-maintained, and the de facto standard for Rust TUI. No additional deps needed for MVP.
 
+**Post-MVP deps (add when needed):**
+
+```toml
+terminal-colorsaurus = "0.4"  # Dark/light terminal detection (used by bat, delta)
+unicode-width = "0.2"         # Accurate emoji/CJK width measurement
+```
+
 **Existing deps we reuse:**
 
 - `bnto-engine` — recipe registry, pipeline executor, progress events
@@ -441,7 +590,8 @@ These are real features that belong in later iterations, not Sprint 10:
 - **History** (recently run recipes, recent file paths)
 - **Drag-and-drop files** (terminal limitation)
 - **Responsive layout** (handle small terminals gracefully — later)
-- **Themes** (dark/light detection, custom palettes)
+- **Terminal dark/light auto-detection** (`terminal-colorsaurus` crate — strategy captured above, implement after MVP)
+- **Pixel-art sushi sprites** (Tier 3 half-block mascots — design finalized, render after core screens work)
 - **Golden snapshot tests for rendering** (capture terminal frame output to string buffers, compare against committed golden files for visual regression)
 
 ---
@@ -457,3 +607,11 @@ These are real features that belong in later iterations, not Sprint 10:
 4. **No animation library.** Unlike the web app where CSS springs are essential, the TUI relies on instant feedback. No `tachyonfx` or frame-based animation for MVP. The "springy" feel comes from immediate responsiveness, not visual animation.
 
 5. **Reuse `builtin_recipes()` directly.** The TUI reads from the same recipe registry as the CLI. No separate TUI catalog or data layer.
+
+6. **8-bit retro Motorway aesthetic.** The TUI can't do 3D surfaces or spring animations. Instead, we render the Motorway palette through a retro console lens — chunky half-block sprites, warm ANSI colors, rounded box-drawing borders. Like playing Mini Motorways on a Game Boy Color.
+
+7. **Three-tier mascot system.** Emoji (🍣🍙🍱🐙) for inline labels, kaomoji `(●‿●)` for help/loading text, half-block pixel-art sprites for headers/splash. Emoji are primary — sprites are a polish layer added after core functionality works.
+
+8. **Runtime theme switching via Settings screen.** `--theme` CLI flag for startup, `s` key from Browser → Settings screen for live switching. Three themes: Los Angeles (light), Tokyo (dark), Munich (sunset). Already implemented.
+
+9. **Auto-detection deferred.** Terminal dark/light detection (`terminal-colorsaurus`) is captured in strategy but not in MVP. The `--theme` flag and Settings screen cover the user need. Auto-detection is a future quality-of-life improvement.

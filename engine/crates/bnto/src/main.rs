@@ -68,7 +68,7 @@ enum Command {
 
     /// Launch the interactive terminal UI.
     Tui {
-        /// Color theme: los-angeles (default), tokyo (dark), munich (sunset).
+        /// Color theme: los-angeles (default), tokyo (dark), monaco (sunset).
         #[arg(long, default_value = "los-angeles")]
         theme: String,
     },

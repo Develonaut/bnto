@@ -365,16 +365,16 @@
   --surface-outline-shadow: oklch(0.18 0.01 264 / 0.3);
 }
 
-/* ── Sunset Theme (Mini Motorways Munich) ────────────────────────────
+/* ── Sunset Theme (Mini Motorways Monaco) ────────────────────────────
  *
- * Golden-hour palette inspired by the Munich map:
+ * Golden-hour palette inspired by the Monaco map:
  * rich amber background, deep navy foreground (road color),
  * coral accents, teal water, warm amber shadows.
  *
  * Positioned between light and dark as the "sunset" stop
  * in the day→sunset→night timeline.
  * ──────────────────────────────────────────────────────────────────── */
-.munich {
+.monaco {
   /* ── Popover & Sidebar aliases (sunset mode) ───────────────────────── */
   --popover: var(--card);
   --popover-foreground: var(--card-foreground);

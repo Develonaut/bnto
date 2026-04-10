@@ -189,7 +189,7 @@ mod tests {
         let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, up),
-            Some(AppMessage::ThemeChanged(ThemeVariant::Munich))
+            Some(AppMessage::ThemeChanged(ThemeVariant::Monaco))
         );
     }
 
@@ -207,8 +207,8 @@ mod tests {
     fn settings_down_wraps_from_last_to_first() {
         let model = AppModel {
             screen: Screen::Settings,
-            theme: Theme::from_variant(ThemeVariant::Munich),
-            theme_variant: ThemeVariant::Munich,
+            theme: Theme::from_variant(ThemeVariant::Monaco),
+            theme_variant: ThemeVariant::Monaco,
             ..default_model()
         };
         let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
@@ -227,7 +227,7 @@ mod tests {
         let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, up),
-            Some(AppMessage::ThemeChanged(ThemeVariant::Munich))
+            Some(AppMessage::ThemeChanged(ThemeVariant::Monaco))
         );
     }
 
