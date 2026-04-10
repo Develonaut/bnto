@@ -25,6 +25,7 @@ use ratatui::layout::{Constraint, Layout};
 
 use app::{AppMessage, AppModel, Screen, update};
 use screens::browser::BrowserMessage;
+use screens::detail::DetailMessage;
 use theme::{ALL_VARIANTS, ThemeVariant};
 
 /// Tick rate for the event loop (how often we check for input).
@@ -113,6 +114,13 @@ fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         return handle_browser_key(model, key);
     }
 
+    // Detail editing mode captures all keys (like browser search mode).
+    let detail_editing = matches!(&model.screen, Screen::Detail { .. }
+        if model.detail.as_ref().is_some_and(|d| d.editing));
+    if detail_editing {
+        return handle_detail_key(model, key);
+    }
+
     if let Some(msg) = event::map_global_key(key) {
         return Some(msg);
     }
@@ -120,7 +128,7 @@ fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     match &model.screen {
         Screen::Browser => handle_browser_key(model, key),
         Screen::Settings => handle_settings_key(model, key),
-        Screen::Detail { .. } => None,
+        Screen::Detail { .. } => handle_detail_key(model, key),
         Screen::Picker { .. } => None,
         Screen::Execution { .. } => None,
         Screen::Results { .. } => None,
@@ -158,6 +166,46 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             .browser
             .confirm()
             .map(|r| AppMessage::RecipeSelected { slug: r.slug }),
+        _ => None,
+    }
+}
+
+/// Handle key events on the Detail screen.
+///
+/// When editing a parameter, char keys feed the edit buffer and Enter/Esc
+/// commit or cancel. When not editing, j/k navigate params and Enter starts
+/// editing or confirms when no params exist.
+fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let editing = model.detail.as_ref().is_some_and(|d| d.editing);
+
+    if editing {
+        return match key.code {
+            KeyCode::Enter => Some(AppMessage::Detail(DetailMessage::CommitEdit)),
+            KeyCode::Esc => Some(AppMessage::Detail(DetailMessage::CancelEdit)),
+            KeyCode::Backspace => Some(AppMessage::Detail(DetailMessage::EditBackspace)),
+            KeyCode::Char(ch) => Some(AppMessage::Detail(DetailMessage::EditChar(ch))),
+            _ => None,
+        };
+    }
+
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Detail(DetailMessage::FocusNext)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Detail(DetailMessage::FocusPrev)),
+        KeyCode::Enter => {
+            let has_params = model.detail.as_ref().is_some_and(|d| !d.params.is_empty());
+            if has_params {
+                Some(AppMessage::Detail(DetailMessage::StartEdit))
+            } else {
+                Some(AppMessage::ConfigConfirmed {
+                    slug: model
+                        .detail
+                        .as_ref()
+                        .map(|d| d.slug.clone())
+                        .unwrap_or_default(),
+                })
+            }
+        }
+        KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
     }
 }
@@ -380,6 +428,176 @@ mod tests {
         assert_eq!(
             handle_key(&model, key),
             Some(AppMessage::Browser(BrowserMessage::SearchBackspace))
+        );
+    }
+
+    // --- Detail key handling ---
+
+    fn detail_model() -> AppModel {
+        use bnto_core::metadata::ParameterType;
+        use screens::detail::{DetailModel, ParamEntry};
+
+        let params = vec![
+            ParamEntry {
+                node_id: "n".into(),
+                name: "quality".into(),
+                label: "Quality".into(),
+                value: "80".into(),
+                param_type: ParameterType::Number,
+                default: "80".into(),
+            },
+            ParamEntry {
+                node_id: "n".into(),
+                name: "format".into(),
+                label: "Format".into(),
+                value: "jpeg".into(),
+                param_type: ParameterType::String,
+                default: "jpeg".into(),
+            },
+        ];
+
+        AppModel {
+            screen: Screen::Detail {
+                slug: "compress-images".into(),
+            },
+            detail: Some(DetailModel::from_test_data(
+                "compress-images",
+                "Compress Images",
+                "desc",
+                params,
+            )),
+            ..default_model()
+        }
+    }
+
+    #[test]
+    fn detail_j_focuses_next_param() {
+        let model = detail_model();
+        let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::FocusNext))
+        );
+    }
+
+    #[test]
+    fn detail_k_focuses_prev_param() {
+        let model = detail_model();
+        let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::FocusPrev))
+        );
+    }
+
+    #[test]
+    fn detail_arrow_keys_navigate() {
+        let model = detail_model();
+        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, down),
+            Some(AppMessage::Detail(DetailMessage::FocusNext))
+        );
+        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, up),
+            Some(AppMessage::Detail(DetailMessage::FocusPrev))
+        );
+    }
+
+    #[test]
+    fn detail_enter_starts_edit_when_params_exist() {
+        let model = detail_model();
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::StartEdit))
+        );
+    }
+
+    #[test]
+    fn detail_enter_confirms_when_no_params() {
+        use screens::detail::DetailModel;
+
+        let model = AppModel {
+            screen: Screen::Detail { slug: "s".into() },
+            detail: Some(DetailModel::from_test_data("s", "n", "d", vec![])),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ConfigConfirmed { slug: "s".into() })
+        );
+    }
+
+    #[test]
+    fn detail_esc_goes_back() {
+        let model = detail_model();
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Back));
+    }
+
+    #[test]
+    fn detail_q_quits() {
+        let model = detail_model();
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
+    }
+
+    #[test]
+    fn detail_editing_captures_chars() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().editing = true;
+        let key = KeyEvent::new(KeyCode::Char('5'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::EditChar('5')))
+        );
+    }
+
+    #[test]
+    fn detail_editing_enter_commits() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().editing = true;
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::CommitEdit))
+        );
+    }
+
+    #[test]
+    fn detail_editing_esc_cancels() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().editing = true;
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::CancelEdit))
+        );
+    }
+
+    #[test]
+    fn detail_editing_backspace() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().editing = true;
+        let key = KeyEvent::new(KeyCode::Backspace, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::EditBackspace))
+        );
+    }
+
+    #[test]
+    fn detail_editing_blocks_global_q() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().editing = true;
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        // 'q' is captured as EditChar, not Quit
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::EditChar('q')))
         );
     }
 }

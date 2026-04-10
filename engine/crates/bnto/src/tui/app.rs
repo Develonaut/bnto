@@ -3,7 +3,11 @@
 // Pure state + pure transitions. No I/O, no terminal access.
 // All screen navigation logic is testable with `cargo test`.
 
+use bnto_core::registry::NodeRegistry;
+use bnto_engine::create_registry;
+
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
+use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
 use super::theme::{Theme, ThemeVariant};
 
 /// Which screen the TUI is currently showing.
@@ -18,13 +22,27 @@ pub enum Screen {
 }
 
 /// Top-level app state.
-#[derive(Debug)]
 pub struct AppModel {
     pub screen: Screen,
     pub should_quit: bool,
     pub theme: Theme,
     pub theme_variant: ThemeVariant,
     pub browser: BrowserModel,
+    /// Detail screen state — populated when navigating to a recipe.
+    pub detail: Option<DetailModel>,
+    /// Engine registry for resolving processor metadata.
+    pub registry: NodeRegistry,
+}
+
+impl std::fmt::Debug for AppModel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AppModel")
+            .field("screen", &self.screen)
+            .field("should_quit", &self.should_quit)
+            .field("theme_variant", &self.theme_variant)
+            .field("detail", &self.detail)
+            .finish_non_exhaustive()
+    }
 }
 
 /// Messages that drive screen transitions.
@@ -49,6 +67,8 @@ pub enum AppMessage {
     ThemeChanged(ThemeVariant),
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
+    /// Forward a message to the detail screen.
+    Detail(DetailMessage),
     /// Quit the application.
     Quit,
 }
@@ -62,6 +82,8 @@ impl AppModel {
             theme: Theme::from_variant(variant),
             theme_variant: variant,
             browser: BrowserModel::new(),
+            detail: None,
+            registry: create_registry(),
         }
     }
 }
@@ -70,10 +92,14 @@ impl AppModel {
 /// Takes current state + message, returns the next state.
 pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
-        AppMessage::RecipeSelected { slug } => AppModel {
-            screen: Screen::Detail { slug },
-            ..model
-        },
+        AppMessage::RecipeSelected { slug } => {
+            let detail = DetailModel::from_slug(&slug, &model.registry);
+            AppModel {
+                screen: Screen::Detail { slug },
+                detail,
+                ..model
+            }
+        }
         AppMessage::ConfigConfirmed { slug } => AppModel {
             screen: Screen::Picker { slug },
             ..model
@@ -86,10 +112,17 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             screen: Screen::Results { slug },
             ..model
         },
-        AppMessage::Back => AppModel {
-            screen: back_screen(&model.screen),
-            ..model
-        },
+        AppMessage::Back => {
+            let detail = match &model.screen {
+                Screen::Detail { .. } => None,
+                _ => model.detail,
+            };
+            AppModel {
+                screen: back_screen(&model.screen),
+                detail,
+                ..model
+            }
+        }
         AppMessage::RunAnother => AppModel {
             screen: Screen::Browser,
             ..model
@@ -106,6 +139,10 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         AppMessage::Browser(msg) => {
             let browser = browser_update(model.browser, msg);
             AppModel { browser, ..model }
+        }
+        AppMessage::Detail(msg) => {
+            let detail = model.detail.map(|d| detail_update(d, msg));
+            AppModel { detail, ..model }
         }
         AppMessage::Quit => AppModel {
             should_quit: true,
