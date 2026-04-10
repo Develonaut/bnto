@@ -6,6 +6,7 @@ import { AppShell } from "@bnto/ui";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { t } from "@bnto/i18n";
 import { BASE_URL } from "@/lib/constants";
+import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -25,13 +26,15 @@ const geistMono = Geist_Mono({
   variable: "--font-mono",
 });
 
+const recipeCount = { count: BNTO_REGISTRY.length };
+
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
     default: t("site.defaultTitle"),
     template: t("site.titleTemplate"),
   },
-  description: t("site.description"),
+  description: t("site.description", recipeCount),
   keywords: [
     "compress images free",
     "clean csv online",
@@ -67,13 +70,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: t("site.defaultTitle"),
-    description: t("site.description"),
+    description: t("site.description", recipeCount),
     siteName: t("site.title"),
   },
   twitter: {
     card: "summary_large_image",
     title: t("site.defaultTitle"),
-    description: t("site.description"),
+    description: t("site.description", recipeCount),
   },
 };
 

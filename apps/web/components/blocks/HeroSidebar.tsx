@@ -1,7 +1,10 @@
 import { Heading, Stack, Text } from "@bnto/ui";
 import { t } from "@bnto/i18n";
+import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
 
 import { HeroPitchPoints } from "./HeroPitchPoints";
+
+const recipeCount = BNTO_REGISTRY.length;
 
 export function HeroSidebar() {
   return (
@@ -13,7 +16,7 @@ export function HeroSidebar() {
         {t("hero.heading")}
       </Heading>
       <Text color="muted" leading="snug">
-        {t("hero.subheading")}
+        {t("hero.subheading", { count: recipeCount })}
       </Text>
       <HeroPitchPoints />
     </Stack>
