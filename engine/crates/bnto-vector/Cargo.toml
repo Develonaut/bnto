@@ -10,6 +10,7 @@ description = "SVG rasterization for Bnto engine — parses SVG and renders to p
 license = "MIT"
 repository = "https://github.com/Develonaut/bnto"
 homepage = "https://bnto.io"
+readme = "README.md"
 keywords = ["svg", "rasterize", "vector", "resvg", "wasm"]
 categories = ["graphics", "multimedia::images"]
 

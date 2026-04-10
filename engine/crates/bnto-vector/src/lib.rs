@@ -6,4 +6,4 @@
 
 pub mod rasterize;
 
-pub use rasterize::{RasterizeOptions, VectorError, rasterize_svg};
+pub use rasterize::{DEFAULT_DPI, MAX_DPI, MIN_DPI, RasterizeOptions, VectorError, rasterize_svg};
