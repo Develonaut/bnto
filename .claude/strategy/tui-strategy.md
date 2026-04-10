@@ -160,40 +160,59 @@ Octopus (4 lines):
 | App header (splash)   | Sprite  | Half-block sushi roll next to "bnto" title |
 | Settings/about screen | Sprite  | Full mascot roster                         |
 
-### Terminal Dark/Light Auto-Detection
+### TUI Theming: Accent-Only Strategy
 
-The web app detects the user's system theme (`prefers-color-scheme`) and adjusts. The TUI needs the same intelligence — a dark terminal with the Los Angeles (light) theme looks washed out.
+The web themes (Los Angeles, Tokyo, Monaco) assume they control both background and foreground — paired colors that only work together. The TUI can't paint the terminal background reliably, and even if it could, fighting the user's terminal setup violates "go with the grain."
 
-**Strategy: Layered detection with graceful fallback.**
+**The solution: themes only control accent colors.** Body text uses the terminal's native foreground (`Color::Reset`), which is always readable against the terminal's native background. Themes express personality through _where_ and _how_ accents are applied — not by repainting the entire surface.
 
-| Priority | Method                      | How it works                                                      | Reliability |
-| -------- | --------------------------- | ----------------------------------------------------------------- | ----------- |
-| 1        | `--theme` CLI flag          | User explicitly sets `bnto tui --theme tokyo`                     | 100%        |
-| 2        | `terminal-colorsaurus`      | Sends OSC 11 query to read terminal background color              | ~85%        |
-| 3        | `COLORFGBG` env var         | Set by some terminals (rxvt, xterm) — `15;0` = light on dark      | ~40%        |
-| 4        | macOS `AppleInterfaceStyle` | Read via `defaults read -g AppleInterfaceStyle` — "Dark" or empty | macOS only  |
-| 5        | Default                     | Fall back to Los Angeles (light) — matches web default            | 100%        |
+This matches how the old Go TUI handled theming: theme switching changed accent placement and the active color, not the whole palette.
 
-**`terminal-colorsaurus`** is the key crate — used by production tools like `bat` and `delta`. It sends an OSC 11 escape sequence to query the terminal's background color, then uses a DA1 (Device Attributes) bail-out trick to avoid hanging on terminals that don't respond. From the background luminance, we can classify the terminal as light or dark.
+#### Per-Theme Active Colors
 
-**Implementation (future, not MVP):**
+Each theme has a distinct **active color** — the single most visible element that gives the theme its identity. This color is used for selected items, borders, and key hints.
 
-```rust
-fn detect_theme() -> ThemeVariant {
-    // Priority 1: CLI flag (already implemented via --theme)
-    // Priority 2: OSC 11 terminal query
-    match terminal_colorsaurus::background_color(QueryOptions::default()) {
-        Ok(color) if color.perceived_lightness() < 0.5 => ThemeVariant::Tokyo,
-        Ok(_) => ThemeVariant::LosAngeles,
-        Err(_) => {
-            // Priority 3-5: env vars, OS detection, default
-            ThemeVariant::LosAngeles
-        }
-    }
-}
-```
+| Theme       | Active Color  | RGB              | Personality            |
+| ----------- | ------------- | ---------------- | ---------------------- |
+| Los Angeles | Terracotta    | `(240, 101, 66)` | Warm California sunset |
+| Tokyo       | Electric blue | `(78, 134, 255)` | Cool neon nighttime    |
+| Monaco      | Sunset amber  | `(235, 136, 59)` | Golden hour glow       |
 
-**Not in MVP.** The `--theme` flag and runtime theme switching (Settings screen) cover the user need for now. Auto-detection is a quality-of-life improvement for later iterations. Added `terminal-colorsaurus` to the dependencies section below.
+All three are mid-brightness saturated colors — readable on both dark and light terminals.
+
+#### Color Role Map
+
+| Role                        | Source                       | Notes                                           |
+| --------------------------- | ---------------------------- | ----------------------------------------------- |
+| Body text (names, headings) | `Color::Reset`               | Terminal native — always readable               |
+| Muted text (descriptions)   | `Color::DarkGray`            | Terminal-safe on both light and dark            |
+| Category headers            | `Color::DarkGray` + **bold** | Subtle but distinct from descriptions           |
+| Selected/active item        | `theme.active` + **bold**    | Per-theme — the primary differentiator          |
+| Borders                     | `theme.active`               | Persistent theme identity across every frame    |
+| Key hints (help bar)        | `theme.active` + **bold**    | Consistent accent color for attention           |
+| Key descriptions            | `Color::DarkGray`            | Same as muted — recedes behind the key hint     |
+| Success status              | `theme.success`              | Per-theme green — mid-brightness, works on both |
+| Error status                | `theme.destructive`          | Per-theme red — mid-brightness, works on both   |
+
+#### What This Means for palette.rs
+
+The generated palette constants (`FOREGROUND`, `MUTED_FOREGROUND`, `BACKGROUND`) still exist for web parity, but the TUI **ignores** them for text rendering. The `Theme` struct uses `Color::Reset` and `Color::DarkGray` for terminal-native text, and only pulls accent/status colors from the palette.
+
+The `Theme` struct gains an `active` field — the per-theme hero color. For Tokyo, this uses `FOCUS_RING` (electric blue) instead of `PRIMARY` (terracotta), giving each theme a distinct visual signature.
+
+#### Terminal Dark/Light Auto-Detection (Future)
+
+With accent-only theming, auto-detection becomes less urgent — themes are readable regardless of terminal background. But it's still a nice-to-have for defaulting the theme on first launch:
+
+| Priority | Method                      | Reliability |
+| -------- | --------------------------- | ----------- |
+| 1        | `--theme` CLI flag          | 100%        |
+| 2        | `terminal-colorsaurus`      | ~85%        |
+| 3        | `COLORFGBG` env var         | ~40%        |
+| 4        | macOS `AppleInterfaceStyle` | macOS only  |
+| 5        | Default to Los Angeles      | 100%        |
+
+Not in MVP. The `--theme` flag and Settings screen cover the user need.
 
 ### Elm Architecture (TEA)
 
@@ -615,3 +634,5 @@ These are real features that belong in later iterations, not Sprint 10:
 8. **Runtime theme switching via Settings screen.** `--theme` CLI flag for startup, `s` key from Browser → Settings screen for live switching. Three themes: Los Angeles (light), Tokyo (dark), Munich (sunset). Already implemented.
 
 9. **Auto-detection deferred.** Terminal dark/light detection (`terminal-colorsaurus`) is captured in strategy but not in MVP. The `--theme` flag and Settings screen cover the user need. Auto-detection is a future quality-of-life improvement.
+
+10. **Accent-only TUI theming.** Themes control accent colors (selected items, borders, key hints, status), not body text or backgrounds. Body text uses `Color::Reset` (terminal native foreground), muted text uses `Color::DarkGray`. This guarantees readability on any terminal background — light or dark. Each theme has a distinct active color: Los Angeles = terracotta, Tokyo = electric blue, Monaco = sunset amber. Borders use the active color for persistent theme identity.

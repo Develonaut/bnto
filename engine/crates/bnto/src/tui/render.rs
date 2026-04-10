@@ -26,7 +26,7 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
         .title(model.screen.title())
         .title_style(theme.heading())
         .border_set(ROUNDED_BORDERS)
-        .border_style(theme.muted());
+        .border_style(theme.border());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -86,7 +86,7 @@ fn draw_placeholder(frame: &mut ratatui::Frame, screen: &Screen, theme: &Theme, 
         .title(screen.title())
         .title_style(theme.heading())
         .border_set(ROUNDED_BORDERS)
-        .border_style(theme.muted());
+        .border_style(theme.border());
 
     let content = Paragraph::new(screen.placeholder_label())
         .style(theme.text())
@@ -100,15 +100,15 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
         .title(model.screen.title())
         .title_style(theme.heading())
         .border_set(ROUNDED_BORDERS)
-        .border_style(theme.muted());
+        .border_style(theme.border());
 
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
     let variant_labels = [
-        ("Los Angeles", "Warm cream light theme"),
-        ("Tokyo", "Cool dark slate theme"),
-        ("Monaco", "Golden-hour sunset theme"),
+        ("Los Angeles", "Warm terracotta accent"),
+        ("Tokyo", "Cool electric blue accent"),
+        ("Monaco", "Golden-hour amber accent"),
     ];
 
     let lines: Vec<Line> = ALL_VARIANTS
