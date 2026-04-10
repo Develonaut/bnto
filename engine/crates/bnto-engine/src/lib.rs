@@ -435,7 +435,7 @@ mod tests {
         assert_eq!(result.files.len(), 1);
         assert!(result.files[0].name.ends_with(".jpg"));
         // JPEG magic bytes
-        assert!(result.files[0].data.starts_with(&[0xFF, 0xD8, 0xFF]);
+        assert!(result.files[0].data.starts_with(&[0xFF, 0xD8, 0xFF]));
     }
 
     #[test]

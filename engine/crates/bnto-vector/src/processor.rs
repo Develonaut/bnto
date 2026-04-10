@@ -65,7 +65,7 @@ impl NodeProcessor for VectorRasterize {
             .map_err(|e| BntoError::ProcessingFailed(format!("SVG rasterization failed: {e}")))?;
 
         progress.report(50, "Converting to raster image...");
-        let img = pixmap_to_dynamic_image(&pixmap)?;
+        let img = pixmap_to_dynamic_image(&pixmap, target_format)?;
 
         progress.report(
             70,
@@ -131,10 +131,20 @@ fn extract_quality(
 }
 
 /// Convert a tiny_skia::Pixmap (premultiplied RGBA) to a DynamicImage.
-fn pixmap_to_dynamic_image(pixmap: &tiny_skia::Pixmap) -> Result<image::DynamicImage, BntoError> {
-    // tiny-skia stores pixels as premultiplied RGBA. Unpremultiply for image crate.
+///
+/// For formats that don't support transparency (JPEG), composites over a white
+/// background so transparent areas appear white instead of black.
+fn pixmap_to_dynamic_image(
+    pixmap: &tiny_skia::Pixmap,
+    target_format: ImageFormat,
+) -> Result<image::DynamicImage, BntoError> {
     let mut pixels = pixmap.data().to_vec();
     unpremultiply_alpha(&mut pixels);
+
+    let needs_opaque_bg = matches!(target_format, ImageFormat::Jpeg);
+    if needs_opaque_bg {
+        composite_over_white(&mut pixels);
+    }
 
     let rgba =
         image::RgbaImage::from_raw(pixmap.width(), pixmap.height(), pixels).ok_or_else(|| {
@@ -142,6 +152,18 @@ fn pixmap_to_dynamic_image(pixmap: &tiny_skia::Pixmap) -> Result<image::DynamicI
         })?;
 
     Ok(image::DynamicImage::ImageRgba8(rgba))
+}
+
+/// Blend RGBA pixels over a white background, setting alpha to 255.
+/// result_rgb = src_rgb * src_alpha + 255 * (1 - src_alpha)
+fn composite_over_white(data: &mut [u8]) {
+    for chunk in data.chunks_exact_mut(4) {
+        let a = chunk[3] as f32 / 255.0;
+        chunk[0] = (chunk[0] as f32 * a + 255.0 * (1.0 - a)) as u8;
+        chunk[1] = (chunk[1] as f32 * a + 255.0 * (1.0 - a)) as u8;
+        chunk[2] = (chunk[2] as f32 * a + 255.0 * (1.0 - a)) as u8;
+        chunk[3] = 255;
+    }
 }
 
 /// Unpremultiply RGBA pixels — tiny-skia uses premultiplied alpha,
