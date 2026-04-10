@@ -4,3 +4,5 @@
 //   Wave 1: browser
 //   Wave 2: detail, picker
 //   Wave 3: execution, results
+
+pub mod browser;

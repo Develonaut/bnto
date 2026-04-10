@@ -24,6 +24,7 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout};
 
 use app::{AppMessage, AppModel, Screen, update};
+use screens::browser::BrowserMessage;
 use theme::{ALL_VARIANTS, ThemeVariant};
 
 /// Tick rate for the event loop (how often we check for input).
@@ -98,21 +99,61 @@ fn run_loop(
 }
 
 /// Map a key event to an AppMessage based on the current screen.
+///
+/// When the browser is in search mode, screen-specific keys take priority
+/// so that Esc exits search and character keys type into the query.
 fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let searching = matches!(&model.screen, Screen::Browser if model.browser.searching);
+    if searching {
+        return handle_browser_key(model, key);
+    }
+
     if let Some(msg) = event::map_global_key(key) {
         return Some(msg);
     }
 
     match &model.screen {
-        Screen::Browser => match key.code {
-            KeyCode::Char('s') => Some(AppMessage::OpenSettings),
-            _ => None,
-        },
+        Screen::Browser => handle_browser_key(model, key),
         Screen::Settings => handle_settings_key(model, key),
         Screen::Detail { .. } => None,
         Screen::Picker { .. } => None,
         Screen::Execution { .. } => None,
         Screen::Results { .. } => None,
+    }
+}
+
+/// Handle key events on the Browser screen.
+fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    if model.browser.searching {
+        return match key.code {
+            KeyCode::Esc => Some(AppMessage::Browser(BrowserMessage::ExitSearch)),
+            KeyCode::Backspace => Some(AppMessage::Browser(BrowserMessage::SearchBackspace)),
+            KeyCode::Enter => {
+                model.browser.confirm().map(|r| AppMessage::RecipeSelected { slug: r.slug })
+            }
+            KeyCode::Char('u')
+                if key.modifiers.contains(crossterm::event::KeyModifiers::CONTROL) =>
+            {
+                Some(AppMessage::Browser(BrowserMessage::SearchClear))
+            }
+            KeyCode::Char(ch) => Some(AppMessage::Browser(BrowserMessage::SearchInput(ch))),
+            _ => None,
+        };
+    }
+
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => {
+            Some(AppMessage::Browser(BrowserMessage::CursorDown))
+        }
+        KeyCode::Char('k') | KeyCode::Up => {
+            Some(AppMessage::Browser(BrowserMessage::CursorUp))
+        }
+        KeyCode::Char('/') => Some(AppMessage::Browser(BrowserMessage::EnterSearch)),
+        KeyCode::Char('s') => Some(AppMessage::OpenSettings),
+        KeyCode::Enter => {
+            model.browser.confirm().map(|r| AppMessage::RecipeSelected { slug: r.slug })
+        }
+        _ => None,
     }
 }
 
@@ -160,9 +201,7 @@ mod tests {
         ] {
             let model = AppModel {
                 screen,
-                should_quit: false,
-                theme: Theme::from_variant(ThemeVariant::LosAngeles),
-                theme_variant: ThemeVariant::LosAngeles,
+                ..default_model()
             };
             assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
         }
@@ -249,5 +288,93 @@ mod tests {
         };
         let key = KeyEvent::new(KeyCode::Char('s'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), None);
+    }
+
+    // --- Browser key handling ---
+
+    #[test]
+    fn browser_j_moves_cursor_down() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Browser(BrowserMessage::CursorDown))
+        );
+    }
+
+    #[test]
+    fn browser_k_moves_cursor_up() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Browser(BrowserMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn browser_arrow_keys_navigate() {
+        let model = default_model();
+        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, down),
+            Some(AppMessage::Browser(BrowserMessage::CursorDown))
+        );
+        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, up),
+            Some(AppMessage::Browser(BrowserMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn browser_slash_enters_search() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('/'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Browser(BrowserMessage::EnterSearch))
+        );
+    }
+
+    #[test]
+    fn browser_enter_selects_recipe() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        let msg = handle_key(&model, key);
+        assert!(matches!(msg, Some(AppMessage::RecipeSelected { .. })));
+    }
+
+    #[test]
+    fn browser_search_mode_captures_chars() {
+        let mut model = default_model();
+        model.browser.searching = true;
+        let key = KeyEvent::new(KeyCode::Char('a'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Browser(BrowserMessage::SearchInput('a')))
+        );
+    }
+
+    #[test]
+    fn browser_search_mode_esc_exits() {
+        let mut model = default_model();
+        model.browser.searching = true;
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Browser(BrowserMessage::ExitSearch))
+        );
+    }
+
+    #[test]
+    fn browser_search_mode_backspace() {
+        let mut model = default_model();
+        model.browser.searching = true;
+        let key = KeyEvent::new(KeyCode::Backspace, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Browser(BrowserMessage::SearchBackspace))
+        );
     }
 }

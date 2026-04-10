@@ -3,6 +3,7 @@
 // Pure state + pure transitions. No I/O, no terminal access.
 // All screen navigation logic is testable with `cargo test`.
 
+use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::theme::{Theme, ThemeVariant};
 
 /// Which screen the TUI is currently showing.
@@ -23,6 +24,7 @@ pub struct AppModel {
     pub should_quit: bool,
     pub theme: Theme,
     pub theme_variant: ThemeVariant,
+    pub browser: BrowserModel,
 }
 
 /// Messages that drive screen transitions.
@@ -45,6 +47,8 @@ pub enum AppMessage {
     OpenSettings,
     /// User selected a new theme in settings.
     ThemeChanged(ThemeVariant),
+    /// Forward a message to the browser screen.
+    Browser(BrowserMessage),
     /// Quit the application.
     Quit,
 }
@@ -57,6 +61,7 @@ impl AppModel {
             should_quit: false,
             theme: Theme::from_variant(variant),
             theme_variant: variant,
+            browser: BrowserModel::new(),
         }
     }
 }
@@ -98,6 +103,10 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             theme_variant: variant,
             ..model
         },
+        AppMessage::Browser(msg) => {
+            let browser = browser_update(model.browser, msg);
+            AppModel { browser, ..model }
+        }
         AppMessage::Quit => AppModel {
             should_quit: true,
             ..model
