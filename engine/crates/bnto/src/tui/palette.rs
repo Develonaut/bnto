@@ -67,7 +67,7 @@ pub mod tokyo {
     pub const CHART_5: Color = Color::Rgb(161, 87, 69);
 }
 
-pub mod munich {
+pub mod monaco {
     use ratatui::style::Color;
 
     pub const BACKGROUND: Color = Color::Rgb(249, 183, 63);

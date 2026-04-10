@@ -87,7 +87,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             attribute="class"
             defaultTheme="light"
             themes={["light", "sunset", "dark"]}
-            value={{ light: "light", sunset: "munich", dark: "tokyo" }}
+            value={{ light: "light", sunset: "monaco", dark: "tokyo" }}
             enableSystem
             disableTransitionOnChange
           >

@@ -39,11 +39,11 @@ const DELTA_E_TOLERANCE = 3.0;
 const THEME_SELECTORS: Record<string, string> = {
   light: ":root",
   tokyo: ".tokyo",
-  munich: ".munich",
+  monaco: ".monaco",
 };
 
 // Ordered list — light first (default), then dark variants.
-const THEME_ORDER = ["light", "tokyo", "munich"];
+const THEME_ORDER = ["light", "tokyo", "monaco"];
 
 // ── Types ──────────────────────────────────────────────────────────────
 

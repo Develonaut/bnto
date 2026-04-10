@@ -231,7 +231,7 @@ The TUI uses the same semantic color tokens from `theme/palette.toml`, compiled 
 | ----------- | ------------------------------- | ------------------------ |
 | Los Angeles | `--theme los-angeles` (default) | Warm cream light theme   |
 | Tokyo       | `--theme tokyo`                 | Cool dark slate theme    |
-| Munich      | `--theme munich`                | Golden-hour sunset theme |
+| Monaco      | `--theme monaco`                | Golden-hour sunset theme |
 
 Runtime theme switching is available via the Settings screen (`s` key from Browser).
 

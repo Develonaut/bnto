@@ -9,7 +9,7 @@ use ratatui::symbols;
 
 // Re-export generated palette for direct access when needed.
 pub use super::palette;
-pub use super::palette::{munich, tokyo};
+pub use super::palette::{monaco, tokyo};
 
 // --- Backward-compatibility aliases (used in existing code) ---
 
@@ -34,15 +34,15 @@ pub enum ThemeVariant {
     LosAngeles,
     /// Tokyo — cool dark slate theme.
     Tokyo,
-    /// Munich — golden-hour sunset theme.
-    Munich,
+    /// Monaco — golden-hour sunset theme.
+    Monaco,
 }
 
 /// All available theme variants, used by settings screen and key handling.
 pub const ALL_VARIANTS: [ThemeVariant; 3] = [
     ThemeVariant::LosAngeles,
     ThemeVariant::Tokyo,
-    ThemeVariant::Munich,
+    ThemeVariant::Monaco,
 ];
 
 impl ThemeVariant {
@@ -51,9 +51,9 @@ impl ThemeVariant {
         match s {
             "los-angeles" => Ok(Self::LosAngeles),
             "tokyo" => Ok(Self::Tokyo),
-            "munich" => Ok(Self::Munich),
+            "monaco" => Ok(Self::Monaco),
             other => Err(format!(
-                "unknown theme: {other}. Valid: los-angeles, tokyo, munich"
+                "unknown theme: {other}. Valid: los-angeles, tokyo, monaco"
             )),
         }
     }
@@ -105,17 +105,17 @@ impl Theme {
                 warning: tokyo::WARNING,
                 border: tokyo::BORDER,
             },
-            ThemeVariant::Munich => Self {
-                primary: munich::PRIMARY,
-                accent: munich::ACCENT,
-                secondary: munich::SECONDARY,
-                foreground: munich::FOREGROUND,
-                muted_foreground: munich::MUTED_FOREGROUND,
-                background: munich::BACKGROUND,
-                success: munich::SUCCESS,
-                destructive: munich::DESTRUCTIVE,
-                warning: munich::WARNING,
-                border: munich::BORDER,
+            ThemeVariant::Monaco => Self {
+                primary: monaco::PRIMARY,
+                accent: monaco::ACCENT,
+                secondary: monaco::SECONDARY,
+                foreground: monaco::FOREGROUND,
+                muted_foreground: monaco::MUTED_FOREGROUND,
+                background: monaco::BACKGROUND,
+                success: monaco::SUCCESS,
+                destructive: monaco::DESTRUCTIVE,
+                warning: monaco::WARNING,
+                border: monaco::BORDER,
             },
         }
     }
@@ -194,7 +194,7 @@ mod tests {
     fn theme_from_variant_returns_distinct_colors() {
         let la = Theme::from_variant(ThemeVariant::LosAngeles);
         let tk = Theme::from_variant(ThemeVariant::Tokyo);
-        let mn = Theme::from_variant(ThemeVariant::Munich);
+        let mn = Theme::from_variant(ThemeVariant::Monaco);
 
         // Backgrounds must differ across all three themes.
         assert_ne!(la.background, tk.background);
@@ -217,8 +217,8 @@ mod tests {
             Ok(ThemeVariant::Tokyo)
         );
         assert_eq!(
-            ThemeVariant::from_str_lossy("munich"),
-            Ok(ThemeVariant::Munich)
+            ThemeVariant::from_str_lossy("monaco"),
+            Ok(ThemeVariant::Monaco)
         );
         assert!(ThemeVariant::from_str_lossy("invalid").is_err());
     }
@@ -277,10 +277,10 @@ mod tests {
     }
 
     #[test]
-    fn munich_variant_has_distinct_background() {
-        let mn = Theme::from_variant(ThemeVariant::Munich);
-        assert_eq!(mn.background, munich::BACKGROUND);
-        assert_eq!(mn.foreground, munich::FOREGROUND);
+    fn monaco_variant_has_distinct_background() {
+        let mn = Theme::from_variant(ThemeVariant::Monaco);
+        assert_eq!(mn.background, monaco::BACKGROUND);
+        assert_eq!(mn.foreground, monaco::FOREGROUND);
         assert_ne!(mn.background, palette::BACKGROUND);
     }
 }
