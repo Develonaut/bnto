@@ -24,7 +24,11 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
+bnto-core = { path = "../bnto-core", version = "0.1.2" }
+bnto-encode = { path = "../bnto-encode", version = "0.1.2" }
 resvg = "0.47"
 usvg = "0.47"
 tiny-skia = "0.12"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+serde_json = { workspace = true }
 thiserror = { workspace = true }

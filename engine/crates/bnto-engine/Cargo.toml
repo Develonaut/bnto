@@ -23,6 +23,7 @@ bnto-core = { path = "../bnto-core", version = "0.1.2" }
 bnto-spreadsheet = { path = "../bnto-spreadsheet", version = "0.1.2" }
 bnto-file = { path = "../bnto-file", version = "0.1.2" }
 bnto-image = { path = "../bnto-image", version = "0.1.2" }
+bnto-vector = { path = "../bnto-vector", version = "0.1.2" }
 bnto-video = { path = "../bnto-video", version = "0.1.2", optional = true }
 serde_json = { workspace = true }
 

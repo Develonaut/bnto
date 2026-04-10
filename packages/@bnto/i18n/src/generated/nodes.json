@@ -77,6 +77,10 @@
       "label": "Transform",
       "description": "Transform data using expressions (single value) or field mappings."
     },
+    "vectorRasterize": {
+      "label": "SVG to Image",
+      "description": "Convert SVG files to raster images (PNG, JPEG, WebP)."
+    },
     "videoDownload": {
       "label": "Download Video",
       "description": "Download video from URLs using yt-dlp (CLI/desktop only)."
@@ -220,6 +224,16 @@
         "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
       }
     },
+    "vectorRasterize": {
+      "format": {
+        "label": "Output Format",
+        "description": "The target raster format to convert SVG to"
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only."
+      }
+    },
     "videoDownload": {
       "url": {
         "label": "URL",
@@ -250,6 +264,7 @@
     "io": "Io",
     "system": "System",
     "spreadsheet": "Spreadsheet",
+    "vector": "Vector",
     "video": "Video"
   }
 }

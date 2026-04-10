@@ -24,5 +24,7 @@ export { spreadsheetMergeParamsSchema, spreadsheetMergeNodeSchema } from "./spre
 export type { SpreadsheetMergeParams } from "./spreadsheetMerge";
 export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
 export type { SpreadsheetRenameParams } from "./spreadsheetRename";
+export { vectorRasterizeParamsSchema, vectorRasterizeNodeSchema } from "./vectorRasterize";
+export type { VectorRasterizeParams } from "./vectorRasterize";
 export { videoDownloadParamsSchema, videoDownloadNodeSchema } from "./videoDownload";
 export type { VideoDownloadParams } from "./videoDownload";

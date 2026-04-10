@@ -211,6 +211,17 @@
       "icon": "arrow-left-right"
     },
     {
+      "name": "vector-rasterize",
+      "label": "SVG to Image",
+      "description": "Convert SVG files to raster images (PNG, JPEG, WebP).",
+      "category": "vector",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "image"
+    },
+    {
       "name": "video-download",
       "label": "Download Video",
       "description": "Download video from URLs using yt-dlp (CLI/desktop only).",
@@ -752,6 +763,54 @@
           "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
           "paramType": {
             "type": "object"
+          },
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "vector-rasterize",
+      "name": "SVG to Image",
+      "description": "Convert SVG files to raster images (PNG, JPEG, WebP)",
+      "category": "vector",
+      "accepts": [
+        "image/svg+xml"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
+        {
+          "name": "format",
+          "label": "Output Format",
+          "description": "The target raster format to convert SVG to",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              "png",
+              "jpeg",
+              "webp"
+            ]
+          },
+          "default": "png",
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
           },
           "surfaceable": true
         }
