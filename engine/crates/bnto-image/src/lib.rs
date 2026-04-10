@@ -6,6 +6,9 @@
 /// Shared helpers for image processors (accepts list, quality param def).
 mod common;
 
+/// SVG detection and rasterization (convert-only concern).
+pub(crate) mod svg;
+
 pub mod compress;
 pub mod convert;
 pub mod encode;

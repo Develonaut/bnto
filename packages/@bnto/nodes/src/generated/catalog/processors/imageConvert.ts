@@ -10,9 +10,9 @@ import type { ProcessorDef } from "../types";
 export const imageConvertProcessor: ProcessorDef = {
   nodeType: "image-convert",
   name: "Convert Image Format",
-  description: "Convert images between JPEG, PNG, and WebP formats",
+  description: "Convert images between JPEG, PNG, and WebP formats. Also accepts SVG input.",
   category: "image",
-  accepts: ["image/jpeg","image/png","image/webp"] as const,
+  accepts: ["image/jpeg","image/png","image/webp","image/svg+xml"] as const,
   platforms: ["browser"] as const,
   parameters: [
   {

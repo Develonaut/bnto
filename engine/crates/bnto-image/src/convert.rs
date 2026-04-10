@@ -1,4 +1,5 @@
 // Convert Image Format Node — re-encode images between JPEG, PNG, and WebP.
+// Also accepts SVG input, rasterizing via bnto-vector before encoding.
 //
 // WebP output is lossless-only (Rust `image` crate limitation).
 // Lossy WebP planned via jSquash JS fallback.
@@ -8,17 +9,19 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
-use crate::common::{image_accepts, quality_param_def};
+use crate::common::{
+    MAX_QUALITY, MIN_QUALITY, format_param_def, image_accepts_with_svg, quality_param_def,
+    validate_quality,
+};
 use crate::encode;
 use crate::format::ImageFormat;
 use crate::orientation::decode_with_orientation;
+use crate::svg;
 
 use bnto_core::DEFAULT_QUALITY;
 
 /// WebP quality cap — lossless encoder produces bloat above 85.
 const MAX_WEBP_QUALITY: u8 = 85;
-const MIN_QUALITY: u8 = 1;
-const MAX_QUALITY: u8 = 100;
 
 /// The convert-image-format node processor.
 pub struct ConvertImageFormat;
@@ -94,9 +97,11 @@ impl NodeProcessor for ConvertImageFormat {
         NodeMetadata {
             node_type: "image-convert".to_string(),
             name: "Convert Image Format".to_string(),
-            description: "Convert images between JPEG, PNG, and WebP formats".to_string(),
+            description:
+                "Convert images between JPEG, PNG, and WebP formats. Also accepts SVG input."
+                    .to_string(),
             category: NodeCategory::Image,
-            accepts: image_accepts(),
+            accepts: image_accepts_with_svg(),
             platforms: vec!["browser".to_string()],
             parameters: vec![format_param_def(), quality_param_def()],
             input_cardinality: InputCardinality::PerFile,
@@ -111,25 +116,12 @@ impl NodeProcessor for ConvertImageFormat {
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let target_format = extract_target_format(&input)?;
-        let input_format = detect_input_format(&input)?;
-
-        progress.report(
-            5,
-            &format!("Converting {:?} -> {:?}...", input_format, target_format),
-        );
-        let img = Self::decode_image(&input.data, progress)?;
-
-        let converted_data = encode_to_target(&img, target_format, &input.params, progress)?;
-        let metadata = build_convert_metadata(
-            input_format,
-            target_format,
-            input.data.len(),
-            converted_data.len(),
-        );
-
+        let (img, format_label) = decode_input(&input, target_format, progress)?;
+        let converted = encode_to_target(&img, target_format, &input.params, progress)?;
+        let metadata = build_output_metadata(&format_label, target_format, &input.data, &converted);
         progress.report(100, "Conversion complete");
         Ok(build_convert_output(
-            converted_data,
+            converted,
             &input.filename,
             target_format,
             metadata,
@@ -146,6 +138,26 @@ impl NodeProcessor for ConvertImageFormat {
 
 // --- Private helpers ---
 
+/// Decode input to a DynamicImage — SVG is rasterized, raster formats are decoded with EXIF.
+fn decode_input(
+    input: &NodeInput,
+    target_format: ImageFormat,
+    progress: &ProgressReporter,
+) -> Result<(image::DynamicImage, String), BntoError> {
+    if svg::is_svg(&input.data, &input.filename) {
+        progress.report(5, &format!("Rasterizing SVG -> {:?}...", target_format));
+        let img = svg::rasterize_svg_to_image(&input.data)?;
+        return Ok((img, "Svg".to_string()));
+    }
+    let input_format = detect_input_format(input)?;
+    progress.report(
+        5,
+        &format!("Converting {:?} -> {:?}...", input_format, target_format),
+    );
+    let img = ConvertImageFormat::decode_image(&input.data, progress)?;
+    Ok((img, format!("{:?}", input_format)))
+}
+
 fn extract_target_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
     let format_str = input
         .params
@@ -153,8 +165,7 @@ fn extract_target_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| {
             BntoError::InvalidInput(
-                "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'."
-                    .to_string(),
+                "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'.".into(),
             )
         })?;
     ConvertImageFormat::parse_target_format(format_str)
@@ -185,100 +196,56 @@ fn encode_to_target(
 
 fn build_convert_output(
     data: Vec<u8>,
-    input_filename: &str,
-    target_format: ImageFormat,
+    filename: &str,
+    target: ImageFormat,
     metadata: serde_json::Map<String, serde_json::Value>,
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
             data,
-            filename: ConvertImageFormat::output_filename(input_filename, target_format),
-            mime_type: target_format.mime_type().to_string(),
+            filename: ConvertImageFormat::output_filename(filename, target),
+            mime_type: target.mime_type().to_string(),
         }],
         metadata,
     }
 }
 
-fn build_convert_metadata(
-    input_format: ImageFormat,
-    target_format: ImageFormat,
-    original_size: usize,
-    converted_size: usize,
+fn build_output_metadata(
+    format_label: &str,
+    target: ImageFormat,
+    original: &[u8],
+    converted: &[u8],
 ) -> serde_json::Map<String, serde_json::Value> {
-    let mut m = serde_json::Map::new();
-    m.insert(
-        "originalFormat".to_string(),
-        serde_json::Value::String(format!("{:?}", input_format)),
-    );
-    m.insert(
-        "targetFormat".to_string(),
-        serde_json::Value::String(format!("{:?}", target_format)),
-    );
-    m.insert(
-        "originalSize".to_string(),
-        serde_json::Value::Number((original_size as u64).into()),
-    );
-    m.insert(
-        "newSize".to_string(),
-        serde_json::Value::Number((converted_size as u64).into()),
-    );
-    m
+    serde_json::json!({
+        "originalFormat": format_label,
+        "targetFormat": format!("{:?}", target),
+        "originalSize": original.len(),
+        "newSize": converted.len(),
+    })
+    .as_object()
+    .cloned()
+    .unwrap_or_default()
 }
 
 fn validate_format_param(
     params: &serde_json::Map<String, serde_json::Value>,
     errors: &mut Vec<String>,
 ) {
-    match params.get("format") {
-        None => {
-            errors.push(
-                "Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'."
-                    .to_string(),
-            );
-        }
-        Some(format_val) => match format_val.as_str() {
-            None => errors.push(format!(
-                "Format must be a string ('jpeg', 'png', or 'webp'), got: {format_val}"
-            )),
-            Some(s) if ConvertImageFormat::parse_target_format(s).is_err() => {
-                errors.push(format!(
-                    "Unsupported format: '{}'. Supported: jpeg, png, webp",
-                    s
-                ));
-            }
-            _ => {}
-        },
-    }
-}
-
-fn validate_quality(params: &serde_json::Map<String, serde_json::Value>, errors: &mut Vec<String>) {
-    if let Some(quality_val) = params.get("quality") {
-        match quality_val.as_u64() {
-            Some(q) if q >= MIN_QUALITY as u64 && q <= MAX_QUALITY as u64 => {}
-            Some(q) => errors.push(format!(
-                "Quality must be between {MIN_QUALITY} and {MAX_QUALITY}, got {q}"
-            )),
-            None => errors.push(format!("Quality must be a number, got: {quality_val}")),
-        }
-    }
-}
-
-fn format_param_def() -> bnto_core::metadata::ParameterDef {
-    use bnto_core::metadata::*;
-    ParameterDef {
-        name: "format".to_string(),
-        label: "Output Format".to_string(),
-        description: "The target image format to convert to".to_string(),
-        param_type: ParameterType::Enum {
-            options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
-        },
-        default: Some(serde_json::json!("jpeg")),
-        constraints: Some(Constraints {
-            min: None,
-            max: None,
-            required: true,
-        }),
-        ..Default::default()
+    let Some(format_val) = params.get("format") else {
+        errors
+            .push("Missing required 'format' parameter. Specify 'jpeg', 'png', or 'webp'.".into());
+        return;
+    };
+    let Some(s) = format_val.as_str() else {
+        errors.push(format!(
+            "Format must be a string ('jpeg', 'png', or 'webp'), got: {format_val}"
+        ));
+        return;
+    };
+    if ConvertImageFormat::parse_target_format(s).is_err() {
+        errors.push(format!(
+            "Unsupported format: '{s}'. Supported: jpeg, png, webp"
+        ));
     }
 }
 
@@ -287,6 +254,7 @@ fn format_param_def() -> bnto_core::metadata::ParameterDef {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::svg;
     use bnto_core::NoopContext;
 
     // =========================================================================
@@ -995,5 +963,195 @@ mod tests {
         let output_img = decode_with_orientation(&result.files[0].data).unwrap();
         assert_eq!(output_img.width(), 60, "Rot180 preserves width");
         assert_eq!(output_img.height(), 40, "Rot180 preserves height");
+    }
+
+    // =========================================================================
+    // SVG Input Tests
+    // =========================================================================
+
+    /// 100x100 SVG test fixture (blue rect + orange circle).
+    const TEST_SVG: &[u8] = include_bytes!("../../../../test-fixtures/images/small.svg");
+
+    /// Complex mascot SVG (2144x1569, paths + opacity groups + fills).
+    const TEST_MASCOT_SVG: &[u8] =
+        include_bytes!("../../../../test-fixtures/images/mascot-sushi-friends.svg");
+
+    // --- is_svg() detection ---
+
+    #[test]
+    fn test_is_svg_detects_svg_content() {
+        assert!(svg::is_svg(b"<svg xmlns=...", "unknown.bin"));
+        assert!(svg::is_svg(b"<?xml version=\"1.0\"?>", "unknown.bin"));
+    }
+
+    #[test]
+    fn test_is_svg_detects_svg_extension() {
+        assert!(svg::is_svg(b"not xml at all", "icon.svg"));
+        assert!(svg::is_svg(b"not xml at all", "ICON.SVG"));
+    }
+
+    #[test]
+    fn test_is_svg_handles_bom_and_whitespace() {
+        // UTF-8 BOM + whitespace before <svg
+        let with_bom = b"\xEF\xBB\xBF  \n<svg xmlns=...";
+        assert!(svg::is_svg(with_bom, "file.bin"));
+    }
+
+    #[test]
+    fn test_is_svg_rejects_raster() {
+        assert!(!svg::is_svg(TEST_JPEG, "photo.jpg"));
+        assert!(!svg::is_svg(TEST_PNG, "photo.png"));
+        assert!(!svg::is_svg(TEST_WEBP, "photo.webp"));
+    }
+
+    // --- SVG conversion pipeline ---
+
+    #[test]
+    fn test_convert_svg_to_png() {
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_SVG, "icon.svg", format_params("png"));
+
+        let result = processor.process(input, &progress, &NoopContext);
+        assert!(result.is_ok(), "SVG → PNG should succeed");
+
+        let output = result.unwrap();
+        assert_eq!(output.files.len(), 1);
+
+        let file = &output.files[0];
+        assert_eq!(file.filename, "icon.png");
+        assert_eq!(file.mime_type, "image/png");
+
+        // PNG magic bytes
+        assert!(file.data.len() > 8);
+        assert_eq!(file.data[0], 0x89);
+        assert_eq!(file.data[1], 0x50);
+        assert_eq!(file.data[2], 0x4E);
+        assert_eq!(file.data[3], 0x47);
+    }
+
+    #[test]
+    fn test_convert_svg_to_jpeg() {
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_SVG, "icon.svg", format_params("jpeg"));
+
+        let result = processor.process(input, &progress, &NoopContext);
+        assert!(result.is_ok(), "SVG → JPEG should succeed");
+
+        let file = &result.unwrap().files[0];
+        assert_eq!(file.filename, "icon.jpg");
+        assert_eq!(file.mime_type, "image/jpeg");
+
+        // JPEG magic bytes
+        assert_eq!(file.data[0], 0xFF);
+        assert_eq!(file.data[1], 0xD8);
+        assert_eq!(file.data[2], 0xFF);
+    }
+
+    #[test]
+    fn test_convert_svg_to_webp() {
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_SVG, "icon.svg", format_params("webp"));
+
+        let result = processor.process(input, &progress, &NoopContext);
+        assert!(result.is_ok(), "SVG → WebP should succeed");
+
+        let file = &result.unwrap().files[0];
+        assert_eq!(file.filename, "icon.webp");
+        assert_eq!(file.mime_type, "image/webp");
+
+        // WebP magic bytes: RIFF....WEBP
+        assert_eq!(file.data[0], b'R');
+        assert_eq!(file.data[1], b'I');
+        assert_eq!(file.data[2], b'F');
+        assert_eq!(file.data[3], b'F');
+        assert_eq!(file.data[8], b'W');
+        assert_eq!(file.data[9], b'E');
+        assert_eq!(file.data[10], b'B');
+        assert_eq!(file.data[11], b'P');
+    }
+
+    #[test]
+    fn test_convert_svg_output_dimensions_match_svg() {
+        // small.svg is 100x100. At 96 DPI (1:1), output should be 100x100.
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_SVG, "icon.svg", format_params("png"));
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        let img = image::load_from_memory(&output.files[0].data).unwrap();
+        assert_eq!(img.width(), 100, "SVG 100x100 should produce 100px wide");
+        assert_eq!(img.height(), 100, "SVG 100x100 should produce 100px tall");
+    }
+
+    #[test]
+    fn test_convert_svg_metadata_reports_svg_format() {
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_SVG, "icon.svg", format_params("png"));
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(
+            output
+                .metadata
+                .get("originalFormat")
+                .and_then(|v| v.as_str()),
+            Some("Svg"),
+            "originalFormat should be 'Svg' for SVG input"
+        );
+        assert_eq!(
+            output.metadata.get("targetFormat").and_then(|v| v.as_str()),
+            Some("Png")
+        );
+    }
+
+    #[test]
+    fn test_convert_svg_invalid_data_returns_error() {
+        // Non-SVG data with .svg extension should fail gracefully.
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(b"this is not svg", "bad.svg", format_params("png"));
+
+        let result = processor.process(input, &progress, &NoopContext);
+        assert!(result.is_err(), "Invalid SVG data should return an error");
+    }
+
+    #[test]
+    fn test_convert_svg_complex_mascot_to_png() {
+        // Complex real-world SVG (mascot illustration) should rasterize.
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_MASCOT_SVG, "mascot.svg", format_params("png"));
+
+        let result = processor.process(input, &progress, &NoopContext);
+        assert!(result.is_ok(), "Complex mascot SVG → PNG should succeed");
+
+        let file = &result.unwrap().files[0];
+        assert_eq!(file.filename, "mascot.png");
+        // PNG magic bytes
+        assert_eq!(file.data[0], 0x89);
+        assert_eq!(file.data[1], 0x50);
+    }
+
+    #[test]
+    fn test_convert_svg_detected_by_content_not_extension() {
+        // SVG content with a non-.svg filename should still be detected.
+        let processor = ConvertImageFormat::new();
+        let progress = ProgressReporter::new_noop();
+        let input = make_input(TEST_SVG, "icon.xml", format_params("png"));
+
+        let result = processor.process(input, &progress, &NoopContext);
+        assert!(result.is_ok(), "SVG detected by content should convert");
+
+        let output = result.unwrap();
+        assert_eq!(
+            output
+                .metadata
+                .get("originalFormat")
+                .and_then(|v| v.as_str()),
+            Some("Svg")
+        );
     }
 }
