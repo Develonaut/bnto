@@ -9,6 +9,7 @@ use ratatui::widgets::{Block, Paragraph};
 
 use super::app::{AppModel, Screen};
 use super::theme::{ALL_VARIANTS, ROUNDED_BORDERS, Theme};
+use super::widgets::{help_bar, search_input, status_line};
 
 /// Render the main content area based on the current screen.
 pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -33,16 +34,11 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
     let browser = &model.browser;
     let mut lines: Vec<Line> = Vec::new();
 
-    // Search input row
-    let search_display = if browser.searching {
-        format!("  Search: {}_", browser.search_query)
-    } else if !browser.search_query.is_empty() {
-        format!("  Search: {}", browser.search_query)
-    } else {
-        String::new()
-    };
-    if !search_display.is_empty() {
-        lines.push(Line::from(Span::styled(search_display, theme.text())));
+    // Search input row (delegated to widget)
+    if let Some(search_line) =
+        search_input::render_search_input(&browser.search_query, browser.searching, theme)
+    {
+        lines.push(search_line);
         lines.push(Line::from(""));
     }
 
@@ -137,24 +133,20 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
     frame.render_widget(content, inner);
 }
 
-/// Render the bottom help bar with contextual key hints.
+/// Render the bottom bar: status line (left) + help hints (right).
 pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let hints = model.screen.help_hints();
-    let spans: Vec<Span> = hints
-        .iter()
-        .enumerate()
-        .flat_map(|(i, (key, desc))| {
-            let mut parts = vec![
-                Span::styled(*key, theme.key_hint()),
-                Span::styled(format!(" {desc}"), theme.key_desc()),
-            ];
-            if i < hints.len() - 1 {
-                parts.push(Span::raw("  "));
-            }
-            parts
-        })
-        .collect();
+    let line = help_bar::render_help_bar(&hints, theme);
+    let bar = Paragraph::new(line);
+    frame.render_widget(bar, area);
+}
 
-    let bar = Paragraph::new(Line::from(spans));
+/// Render the status line with recipe count, version, and theme name.
+pub fn draw_status_line(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
+    let recipe_count = model.browser.recipes.len();
+    let version = env!("CARGO_PKG_VERSION");
+    let theme_name = model.theme_variant.display_name();
+    let line = status_line::render_status_line(recipe_count, version, theme_name, theme);
+    let bar = Paragraph::new(line);
     frame.render_widget(bar, area);
 }
