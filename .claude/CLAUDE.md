@@ -24,6 +24,7 @@
 | Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)                             |
 | Adding a new engine node       | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)                               |
 | Adding a new recipe            | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md#checklist-adding-a-new-recipe) |
+| Planning multi-PR features     | [feature-planning.md](.claude/rules/feature-planning.md)                                       |
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                    |
 | Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                                    |
 | TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                                            |
@@ -207,13 +208,14 @@ bnto/
 1. **Read context** — Review this file, rules/, and relevant docs
 2. **Check the plan** — See [PLAN.md](.claude/PLAN.md) for current sprint
 3. **Claim a task** — Mark it CLAIMED before starting
-4. **Create a branch** — `git checkout -b <type>/<short-description>`. Never commit directly to `main`
-5. **Follow patterns** — Match existing code style (see rules/)
-6. **Test boundaries** — Write tests for engine logic and API contracts
-7. **E2E test** — If you touched UI, run `task e2e` (requires `task dev` running — Next.js + Convex on port 4000). Start it yourself if needed — never skip because "the stack isn't running"
-8. **Mark done** — Update the plan when complete
-9. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
-10. **Push & PR** — Push your branch, create a PR targeting `main`. CI Gate must pass before merge
+4. **Plan multi-PR work** — If the task spans 2+ PRs, produce a structured plan per [feature-planning.md](.claude/rules/feature-planning.md) before writing code. Present the plan for approval
+5. **Create a branch** — `git checkout -b <type>/<short-description>`. Never commit directly to `main`
+6. **Follow patterns** — Match existing code style (see rules/)
+7. **Test boundaries** — Write tests for engine logic and API contracts
+8. **E2E test** — If you touched UI, run `task e2e` (requires `task dev` running — Next.js + Convex on port 4000). Start it yourself if needed — never skip because "the stack isn't running"
+9. **Mark done** — Update the plan when complete
+10. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
+11. **Push & PR** — Push your branch, create a PR targeting `main`. CI Gate must pass before merge
 
 **Branch protection:** `main` requires the CI Gate check (Rust + TypeScript) to pass via PR. Direct pushes to `main` are blocked.
 
@@ -251,6 +253,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 | [convex.md](.claude/rules/convex.md)                               | Query patterns, validators, N+1 prevention                                               |
 | [node-responsibilities.md](.claude/rules/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix                                      |
 | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)   | Adding new nodes & recipes — full checklists, test counts, codegen, surface verification |
+| [feature-planning.md](.claude/rules/feature-planning.md)           | Multi-PR feature plans — structure, RED tests, dependency chains, verification           |
 | [feature-flags.md](.claude/rules/feature-flags.md)                 | Feature flags & A/B testing via PostHog + `core.flags` API                               |
 | [gotchas.md](.claude/rules/gotchas.md)                             | Known pitfalls and fixes                                                                 |
 

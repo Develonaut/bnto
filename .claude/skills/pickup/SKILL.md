@@ -71,17 +71,27 @@ For the candidate task(s), do quick research to understand what's involved:
 
 ### Step 4: Present the Proposal
 
-Present a clear summary to the user with:
+**If the work spans 2+ PRs**, produce a structured multi-PR plan following [feature-planning.md](../../rules/feature-planning.md). This is mandatory — not optional. The plan must include:
+
+- Phase header with context, what changes, what doesn't change (counts, surfaces)
+- Per-PR sections: branch, one-sentence summary, files (new/modified with counts), key function/API, RED tests, verification commands, count changes
+- Dependency chain showing PR ordering
+
+Present the full plan document to the user for approval. This IS the proposal.
+
+**If the work fits in a single PR**, present a summary with:
 
 1. **Task(s):** The task description(s) from PLAN.md (verbatim). If recommending a batch, list all tasks and explain why they form a natural unit (shared context, same files, logical sequence).
 2. **Sprint / Wave:** Which sprint and wave it belongs to
 3. **Package scope:** Which packages/directories will be touched
 4. **Persona(s):** Which domain expert persona(s) will be activated
 5. **Approach:** 3-5 bullet points describing what you plan to do. **One bullet MUST describe your TDD approach** — which tests you'll write first and how they define the acceptance criteria before any implementation begins
-6. **Files to modify:** List of files you expect to create or change
+6. **Files to modify:** List of files you expect to create or change (new vs modified, with counts)
 7. **Tests (TDD):** What tests you'll write FIRST to define acceptance criteria — describe the test cases that will prove the feature works before writing any implementation code. Include unit, integration, and E2E tests as appropriate.
-8. **Risks / Open questions:** Anything unclear or potentially tricky
-9. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
+8. **Verification:** Exact copy-pasteable commands to run
+9. **Count changes:** Which test count registries change (or "no count changes")
+10. **Risks / Open questions:** Anything unclear or potentially tricky
+11. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
 
 If there are multiple available tasks in the wave, present all of them so the user can pick.
 
@@ -105,6 +115,7 @@ Before doing ANY work, read and internalize the project's coding standards and a
 ```
 .claude/CLAUDE.md                  # Master reference — architecture, layering, tech stack
 .claude/rules/code-standards.md    # Single responsibility, file/function size limits (Bento Box Principle)
+.claude/rules/feature-planning.md  # Multi-PR feature plan format (required for 2+ PR work)
 .claude/rules/                     # All rule files (if present)
 .claude/rules/pages.md             # SEO URL requirements and predefined Bnto page conventions
 .claude/rules/architecture.md      # Run quota schema, R2 transit rules
