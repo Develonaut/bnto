@@ -15,9 +15,12 @@ pub enum VectorError {
     InvalidDpi(u32),
 }
 
-const MIN_DPI: u32 = 72;
-const MAX_DPI: u32 = 300;
-const DEFAULT_DPI: u32 = 96;
+/// Minimum allowed DPI for rasterization.
+pub const MIN_DPI: u32 = 72;
+/// Maximum allowed DPI for rasterization.
+pub const MAX_DPI: u32 = 300;
+/// Default DPI — matches SVG spec's 1:1 mapping (96 CSS px per inch).
+pub const DEFAULT_DPI: u32 = 96;
 
 /// Options for SVG rasterization.
 #[derive(Debug, Clone)]
@@ -148,5 +151,34 @@ mod tests {
             has_visible_pixels,
             "rendered pixmap should contain visible pixels"
         );
+    }
+
+    // --- Complex real-world SVG (mascot illustration from Figma) ---
+
+    fn fixture_mascot() -> Vec<u8> {
+        std::fs::read(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../../test-fixtures/images/mascot-sushi-friends.svg"
+        ))
+        .expect("mascot-sushi-friends.svg fixture must exist")
+    }
+
+    #[test]
+    fn complex_svg_rasterizes_at_default_dpi() {
+        // 2144x1569 mascot SVG with paths, opacity groups, and fills
+        let pixmap = rasterize_svg(&fixture_mascot(), RasterizeOptions::default()).unwrap();
+        assert_eq!(pixmap.width(), 2144);
+        assert_eq!(pixmap.height(), 1569);
+        let has_visible_pixels = pixmap.data().iter().any(|&b| b != 0);
+        assert!(has_visible_pixels, "mascot should render visible pixels");
+    }
+
+    #[test]
+    fn complex_svg_scales_with_dpi() {
+        let opts = RasterizeOptions { dpi: 192 };
+        let pixmap = rasterize_svg(&fixture_mascot(), opts).unwrap();
+        // 2x scale: 2144 * 2 = 4288, 1569 * 2 = 3138
+        assert_eq!(pixmap.width(), 4288);
+        assert_eq!(pixmap.height(), 3138);
     }
 }
