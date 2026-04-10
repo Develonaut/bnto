@@ -618,15 +618,21 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 #### Wave 2 (parallel — detail + picker)
 
-- [x] `engine/crates/bnto` — **Recipe detail screen** (`screens/detail.rs`): `DetailModel` + `update()` + `view()`. Show recipe description, node list, editable parameter overrides from `metadata()`. `j/k` to focus params, `Enter` to edit, `Esc` to cancel edit, `Enter` to confirm and proceed to file picker. Unit tests for param editing, defaults, commit/cancel (~8 tests)
-- [ ] `engine/crates/bnto` — **File picker screen** (`screens/picker.rs`): `PickerModel` + `update()` + `view()`. Browse filesystem, directories first then files alphabetically. Filter by recipe's accept extensions. `Space` to toggle multi-select. `Enter` to open dir / confirm selection. `Backspace` for parent dir. `widgets/file_list.rs` shared widget. Unit tests for navigation, selection, filtering, sort (~10 tests)
+**Ecosystem libraries:** `tui-slider` dependency for Number params with min/max bounds. Vendor Input and Select widgets from ratatui-cheese (adapted to pure-data convention). Hand-build Toggle (~20 lines) for Boolean params. Evaluate ratatui-explorer before building file picker from scratch. See [tui-strategy.md § Ecosystem Libraries](strategy/tui-strategy.md#ecosystem-libraries) and [§ Param Control Matrix](strategy/tui-strategy.md#param-control-matrix).
+
+- [x] `engine/crates/bnto` — **Recipe detail screen** (`screens/detail.rs`): `DetailModel` + `update()` + `view()`. Show recipe description, node list, editable parameter overrides from `metadata()`. Schema-to-control mapping: Number+bounds → tui-slider, Number-unbounded → Input (vendor), String → Input (vendor), Boolean → Toggle (hand-build), Enum → Select (vendor). `j/k` to focus params, `Enter` to edit, `Esc` to cancel edit, `Enter` to confirm and proceed to file picker. Unit tests for param editing, defaults, commit/cancel (~8 tests)
+- [ ] `engine/crates/bnto` — **File picker screen** (`screens/picker.rs`): `PickerModel` + `update()` + `view()`. Evaluate ratatui-explorer first — if it fits, adapt; otherwise build from scratch. Browse filesystem, directories first then files alphabetically. Filter by recipe's accept extensions. `Space` to toggle multi-select. `Enter` to open dir / confirm selection. `Backspace` for parent dir. `widgets/file_list.rs` shared widget. Unit tests for navigation, selection, filtering, sort (~10 tests)
 
 #### Wave 3 (parallel — execution + results)
 
-- [ ] `engine/crates/bnto` — **Execution screen** (`screens/execution.rs`): `ExecutionModel` + `update()` + `view()`. Receive `ProgressEvent` from engine's `run_pipeline()`. Per-file progress bars, per-node status indicators, elapsed timer. `Esc` to cancel. Auto-transition to results on completion. `widgets/progress_bar.rs` shared widget. Unit tests for progress events, status transitions, cancel (~8 tests)
+**Ecosystem libraries:** Vendor Spinner from ratatui-cheese for in-progress indicators. Hand-build progress bar (ratatui's `Gauge` widget is sufficient). Evaluate tui-popup and tui-scrollview if modal confirmations or scrollable output are needed.
+
+- [ ] `engine/crates/bnto` — **Execution screen** (`screens/execution.rs`): `ExecutionModel` + `update()` + `view()`. Receive `ProgressEvent` from engine's `run_pipeline()`. Per-file progress bars, per-node status indicators (vendor Spinner from cheese), elapsed timer. `Esc` to cancel. Auto-transition to results on completion. `widgets/progress_bar.rs` shared widget. Unit tests for progress events, status transitions, cancel (~8 tests)
 - [ ] `engine/crates/bnto` — **Results screen** (`screens/results.rs`): `ResultsModel` + `update()` + `view()`. Output file list with sizes, total timing, compression savings. `o` to open file, `O` to open output folder, `r` to run another recipe (back to browser), `q` to quit. Unit tests for formatting, savings calculation (~6 tests)
 
 #### Wave 4 (sequential — integration + docs)
+
+**Ecosystem libraries:** Evaluate tachyonfx for screen transition effects and ratatui-toaster for toast notifications — both are polish items, skip if not needed for MVP.
 
 - [ ] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
 - [ ] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
