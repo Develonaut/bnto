@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn test_shared_registry_has_all_processors() {
         let registry = bnto_engine::create_browser_registry();
-        assert_eq!(registry.len(), 10);
+        assert_eq!(registry.len(), 11);
 
         let types = [
             "image-compress",
@@ -147,6 +147,7 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
+            "vector-rasterize",
         ];
 
         for node_type in &types {

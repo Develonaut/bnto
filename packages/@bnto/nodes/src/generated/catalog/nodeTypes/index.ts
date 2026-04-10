@@ -25,6 +25,7 @@ import { spreadsheetConvertNodeType } from "./spreadsheetConvert";
 import { spreadsheetMergeNodeType } from "./spreadsheetMerge";
 import { spreadsheetRenameNodeType } from "./spreadsheetRename";
 import { transformNodeType } from "./transform";
+import { vectorRasterizeNodeType } from "./vectorRasterize";
 import { videoDownloadNodeType } from "./videoDownload";
 
 /**
@@ -51,6 +52,7 @@ export const NODE_TYPES = {
   spreadsheetMerge: "spreadsheet-merge",
   spreadsheetRename: "spreadsheet-rename",
   transform: "transform",
+  vectorRasterize: "vector-rasterize",
   videoDownload: "video-download",
 } as const;
 
@@ -81,5 +83,6 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
   "transform": transformNodeType,
+  "vector-rasterize": vectorRasterizeNodeType,
   "video-download": videoDownloadNodeType,
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;

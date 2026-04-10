@@ -17,6 +17,7 @@ import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
+import { vectorRasterizeNodeSchema } from "./schemas/vectorRasterize";
 import { videoDownloadNodeSchema } from "./schemas/videoDownload";
 
 /**
@@ -34,6 +35,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
   "spreadsheet-rename": spreadsheetRenameNodeSchema,
+  "vector-rasterize": vectorRasterizeNodeSchema,
   "video-download": videoDownloadNodeSchema,
 };
 
@@ -52,5 +54,6 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "spreadsheet-convert": {},
   "spreadsheet-merge": {},
   "spreadsheet-rename": {},
+  "vector-rasterize": {},
   "video-download": {},
 };
