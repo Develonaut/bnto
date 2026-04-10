@@ -30,6 +30,8 @@ const RECIPE_IDS: Record<string, string> = {
   "strip-exif": "b8d4f2a1-9e53-4c0b-a6f7-4g2b3d5e7f8a",
   "watermark-images": "b7d2a3f1-8e4c-4d6b-9a1f-2c5e7b8d3f4a",
   "download-video": "d7e2c891-4f3a-4b1e-9c8d-2a5f6e7b3c01",
+  "svg-to-png": "a3f1b2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+  "svg-to-jpeg": "b4c2d3e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
 };
 
 /**
@@ -62,6 +64,10 @@ const WEB_DESCRIPTIONS: Record<string, string> = {
     "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
   "download-video":
     "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+  "svg-to-png":
+    "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
+  "svg-to-jpeg":
+    "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
 };
 
 /**
@@ -91,6 +97,8 @@ const WEB_FEATURES: Record<string, string[]> = {
     "Browser-based",
   ],
   "download-video": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
+  "svg-to-png": ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"],
+  "svg-to-jpeg": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"],
 };
 
 /**
@@ -113,6 +121,8 @@ const DISPLAY_ORDER: string[] = [
   "strip-exif",
   "watermark-images",
   "download-video",
+  "svg-to-png",
+  "svg-to-jpeg",
 ];
 
 /**
