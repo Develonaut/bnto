@@ -9,6 +9,13 @@ pub(crate) fn image_accepts() -> Vec<String> {
     ]
 }
 
+/// Accepted MIME types for processors that also handle SVG input.
+pub(crate) fn image_accepts_with_svg() -> Vec<String> {
+    let mut accepts = image_accepts();
+    accepts.push("image/svg+xml".to_string());
+    accepts
+}
+
 /// Quality parameter definition shared by all image operations.
 pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
     use bnto_core::metadata::*;
