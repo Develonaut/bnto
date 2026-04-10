@@ -20,6 +20,7 @@ Write failing tests BEFORE implementing the processor.
 - [ ] **`validate()`** — validate param combinations that metadata constraints can't express
 - [ ] **Image processors use `encode::encode_image()`** — never custom encode functions
 - [ ] **Shared params use `common.rs`** — e.g., `quality_param_def()`, `image_accepts()`
+- [ ] **`name()` matches registry key** — `fn name()` returns the same string used in `registry.register()`. Convention: `category-operation` kebab-case (e.g., `"image-compress"`)
 - [ ] **Re-export from crate `lib.rs`** — add `pub mod {name};` and `pub use {name}::ProcessorName;`
 - [ ] **Unit tests pass** — `cargo test -p bnto-{crate}`
 
@@ -417,17 +418,19 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 
 ## Common Violations
 
-| Violation                                                               | Fix                                                                |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode          |
-| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                          |
-| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)   |
-| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values         |
-| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests         |
-| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion       |
-| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed  |
-| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                  |
-| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this         |
-| Recipe not in `builtin_recipes()`                                       | Add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs` |
-| README table stale                                                      | Run `task readme:generate` after adding/changing recipes           |
-| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`  |
+| Violation                                                               | Fix                                                                   |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode             |
+| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                             |
+| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)      |
+| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values            |
+| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests            |
+| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion          |
+| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed     |
+| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                     |
+| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this            |
+| Recipe not in `builtin_recipes()`                                       | Add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`    |
+| README table stale                                                      | Run `task readme:generate` after adding/changing recipes              |
+| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`     |
+| `name()` doesn't match registry key                                     | Align to return the registry key (category-first: `"image-compress"`) |
+| Crate README missing processors                                         | Update the Processors table when adding/removing processors           |

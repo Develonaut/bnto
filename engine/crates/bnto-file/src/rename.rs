@@ -33,7 +33,7 @@ impl Default for RenameFiles {
 
 impl NodeProcessor for RenameFiles {
     fn name(&self) -> &str {
-        "rename-files"
+        "file-rename"
     }
 
     /// Self-describing metadata: find, replace, case (enum), prefix, suffix, pattern.

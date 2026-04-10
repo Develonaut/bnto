@@ -28,7 +28,7 @@ impl Default for MergeCsv {
 
 impl NodeProcessor for MergeCsv {
     fn name(&self) -> &str {
-        "merge-csv"
+        "spreadsheet-merge"
     }
 
     fn metadata(&self) -> bnto_core::NodeMetadata {
@@ -422,7 +422,7 @@ mod tests {
     #[test]
     fn test_name_returns_merge_csv() {
         let processor = MergeCsv::new();
-        assert_eq!(processor.name(), "merge-csv");
+        assert_eq!(processor.name(), "spreadsheet-merge");
     }
 
     #[test]

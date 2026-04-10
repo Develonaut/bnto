@@ -86,7 +86,7 @@ impl ConvertImageFormat {
 
 impl NodeProcessor for ConvertImageFormat {
     fn name(&self) -> &str {
-        "convert-image-format"
+        "image-convert"
     }
 
     fn metadata(&self) -> bnto_core::NodeMetadata {
@@ -783,7 +783,7 @@ mod tests {
     #[test]
     fn test_node_name() {
         let processor = ConvertImageFormat::new();
-        assert_eq!(processor.name(), "convert-image-format");
+        assert_eq!(processor.name(), "image-convert");
     }
 
     #[test]
@@ -792,7 +792,7 @@ mod tests {
         // Note: For unit structs (structs with no fields), Rust/clippy prefers
         // just using the struct name directly instead of calling ::default().
         let processor = ConvertImageFormat;
-        assert_eq!(processor.name(), "convert-image-format");
+        assert_eq!(processor.name(), "image-convert");
     }
 
     // =========================================================================

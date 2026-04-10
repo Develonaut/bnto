@@ -129,6 +129,7 @@ cd apps/web && pnpm exec playwright test --update-snapshots && pnpm exec playwri
 - **Test assertions** -- If you changed behavior, update any unit tests that assert on the old behavior.
 - **Code references** -- If you renamed, removed, or changed exports, find and update all consumers.
 - **Documentation** -- If you changed behavior that's documented, update the docs to match.
+- **Engine crate READMEs** -- If you added or changed processors, verify the crate's Processors table is up to date
 
 ## Step 7: PLAN.md Task Update (MANDATORY)
 

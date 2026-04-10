@@ -132,7 +132,7 @@ impl CompressImages {
 
 impl NodeProcessor for CompressImages {
     fn name(&self) -> &str {
-        "compress-images"
+        "image-compress"
     }
 
     fn metadata(&self) -> bnto_core::NodeMetadata {
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn test_name_is_compress_images() {
         let processor = CompressImages::new();
-        assert_eq!(processor.name(), "compress-images");
+        assert_eq!(processor.name(), "image-compress");
     }
 
     #[test]

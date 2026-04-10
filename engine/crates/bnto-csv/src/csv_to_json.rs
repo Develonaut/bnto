@@ -28,7 +28,7 @@ impl Default for CsvToJson {
 
 impl NodeProcessor for CsvToJson {
     fn name(&self) -> &str {
-        "csv-to-json"
+        "spreadsheet-convert"
     }
 
     fn metadata(&self) -> bnto_core::NodeMetadata {
@@ -352,7 +352,7 @@ mod tests {
 
     #[test]
     fn test_name() {
-        assert_eq!(CsvToJson::new().name(), "csv-to-json");
+        assert_eq!(CsvToJson::new().name(), "spreadsheet-convert");
     }
 
     #[test]

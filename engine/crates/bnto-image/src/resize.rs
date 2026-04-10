@@ -167,7 +167,7 @@ fn validate_final_dimensions(width: u32, height: u32) -> Result<(), BntoError> {
 
 impl NodeProcessor for ResizeImages {
     fn name(&self) -> &str {
-        "resize-images"
+        "image-resize"
     }
 
     fn metadata(&self) -> bnto_core::NodeMetadata {
@@ -480,14 +480,14 @@ mod tests {
     #[test]
     fn test_resize_processor_name() {
         let processor = ResizeImages::new();
-        assert_eq!(processor.name(), "resize-images");
+        assert_eq!(processor.name(), "image-resize");
     }
 
     #[test]
     fn test_resize_processor_default() {
         // Default trait works the same as new()
         let processor = ResizeImages;
-        assert_eq!(processor.name(), "resize-images");
+        assert_eq!(processor.name(), "image-resize");
     }
 
     // =========================================================================
