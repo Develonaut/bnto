@@ -583,9 +583,10 @@ crossterm = "0.28"
 
 Both are mature, well-maintained, and the de facto standard for Rust TUI. No additional deps needed for MVP.
 
-**Post-MVP deps (add when needed):**
+**Wave 2+ deps (add when needed):**
 
 ```toml
+tui-slider = "0.2"            # Slider widget for Number params with min/max bounds
 terminal-colorsaurus = "0.4"  # Dark/light terminal detection (used by bat, delta)
 unicode-width = "0.2"         # Accurate emoji/CJK width measurement
 ```
@@ -595,6 +596,76 @@ unicode-width = "0.2"         # Accurate emoji/CJK width measurement
 - `bnto-engine` — recipe registry, pipeline executor, progress events
 - `colored` — already imported, but TUI uses ratatui's styling instead
 - `indicatif` — CLI progress bars, not used in TUI mode (ratatui handles rendering)
+
+---
+
+## Ecosystem Libraries
+
+Evaluated from [awesome-ratatui](https://github.com/ratatui/awesome-ratatui). Strategy: **vendor small widgets** (cherry-pick into `src/tui/widgets/`, adapted to our pure-data convention), **depend on feature-rich crates** (add to `Cargo.toml`).
+
+### Vendor from ratatui-cheese (MIT)
+
+[ratatui-cheese](https://github.com/shashanktomar/ratatui-cheese) v0.6 — Bubbletea-inspired widget collection. Cherry-pick individual widgets, adapt to our pure-data render convention (return `Line`/`Vec<Line>` instead of writing to `Frame`).
+
+| Widget  | Use in TUI                                              | Wave |
+| ------- | ------------------------------------------------------- | ---- |
+| Input   | String param editing on detail screen                   | 2    |
+| Select  | Enum param selection on detail screen                   | 2    |
+| Spinner | Execution in-progress indicator                         | 3    |
+| List    | Evaluate for file picker (may overlap our browser list) | 2    |
+
+### Keep as dependency
+
+| Crate        | Version | Use                                  | Wave |
+| ------------ | ------- | ------------------------------------ | ---- |
+| `tui-slider` | 0.2     | Number params with min/max on detail | 2    |
+
+### Evaluate before building
+
+| Crate            | What it does                          | When to evaluate |
+| ---------------- | ------------------------------------- | ---------------- |
+| ratatui-explorer | File system tree browser              | Wave 2 (picker)  |
+| tachyonfx        | Terminal visual effects (transitions) | Wave 4 (polish)  |
+| ratatui-toaster  | Toast notifications                   | Wave 4 (polish)  |
+
+### Not useful for us
+
+- **tui-realm** — full framework with Redux-like state, conflicts with our TEA architecture
+- **rat-salsa** — another full framework, same conflict
+- **ratzilla** — browser-based TUI (WASM), different target than our native CLI
+- **edtui** — vim-like text editor, overkill for our param inputs
+- **ratatui-image** — image rendering in terminal, not needed for our workflow
+- **tui-nodes** — node graph visualization, we have the web editor for that
+- **ratatui-interact** — mouse interaction focus, we're keyboard-first
+
+---
+
+## Param Control Matrix
+
+The detail screen renders editable controls for recipe parameters. The engine's `ParameterType` enum maps to TUI controls — mirroring how `@bnto/form` maps schemas to web form controls.
+
+### ParameterType → TUI Control
+
+| ParameterType         | TUI Control            | Source        | Notes                                      |
+| --------------------- | ---------------------- | ------------- | ------------------------------------------ |
+| `Number` + has bounds | `tui-slider`           | Dependency    | `SliderState::new(value, min, max)`        |
+| `Number` + no bounds  | Input (text)           | Vendor cheese | Parse to f64, validate on commit           |
+| `String`              | Input (text)           | Vendor cheese | Show placeholder from `ParameterDef`       |
+| `Boolean`             | Toggle `[x]`/`[ ]`     | Hand-build    | ~20 lines, Space to toggle                 |
+| `Enum { options }`    | Select (dropdown)      | Vendor cheese | Options from enum variants                 |
+| `Object`              | Read-only JSON         | Hand-build    | Display as formatted text, no editing      |
+| `File { accept }`     | (skip — picker screen) | —             | File selection handled by dedicated screen |
+
+### ParameterDef Fields → TUI Affordances
+
+| ParameterDef field       | TUI affordance                                    |
+| ------------------------ | ------------------------------------------------- |
+| `constraints.min/max`    | Slider bounds, input validation                   |
+| `constraints.required`   | Visual indicator (asterisk), prevent empty commit |
+| `placeholder`            | Ghost text in Input widget                        |
+| `default`                | Pre-filled value, shown in muted style            |
+| `description`            | Help text below control or in status line         |
+| `conditional_visibility` | Show/hide control based on sibling param values   |
 
 ---
 
@@ -636,3 +707,7 @@ These are real features that belong in later iterations, not Sprint 10:
 9. **Auto-detection deferred.** Terminal dark/light detection (`terminal-colorsaurus`) is captured in strategy but not in MVP. The `--theme` flag and Settings screen cover the user need. Auto-detection is a future quality-of-life improvement.
 
 10. **Accent-only TUI theming.** Themes control accent colors (selected items, borders, key hints, status), not body text or backgrounds. Body text uses `Color::Reset` (terminal native foreground), muted text uses `Color::DarkGray`. This guarantees readability on any terminal background — light or dark. Each theme has a distinct active color: Los Angeles = terracotta, Tokyo = electric blue, Monaco = sunset amber. Borders use the active color for persistent theme identity.
+
+11. **Vendor small widgets, depend on large ones.** Cherry-pick individual widgets from MIT crates (ratatui-cheese) into `src/tui/widgets/`, adapted to our pure-data render convention. Keep crates with extensive APIs (tui-slider) as Cargo dependencies. This avoids framework lock-in while reusing battle-tested code.
+
+12. **Schema-to-control mapping mirrors `@bnto/form`.** The detail screen maps `ParameterType` → TUI control using the same engine metadata that `@bnto/form` uses for web forms. Same source of truth (engine `metadata()`), different rendering target. See Param Control Matrix section.
