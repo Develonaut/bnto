@@ -77,10 +77,15 @@ fn run_loop(
         terminal.draw(|frame| {
             let area = frame.area();
             let theme = &model.theme;
-            let [content_area, help_area] =
-                Layout::vertical([Constraint::Min(1), Constraint::Length(1)]).areas(area);
+            let [content_area, status_area, help_area] = Layout::vertical([
+                Constraint::Min(1),
+                Constraint::Length(1),
+                Constraint::Length(1),
+            ])
+            .areas(area);
 
             render::draw_content(frame, &model, theme, content_area);
+            render::draw_status_line(frame, &model, theme, status_area);
             render::draw_help_bar(frame, &model, theme, help_area);
         })?;
 

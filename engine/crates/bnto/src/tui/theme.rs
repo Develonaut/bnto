@@ -36,6 +36,15 @@ pub const ALL_VARIANTS: [ThemeVariant; 3] = [
 ];
 
 impl ThemeVariant {
+    /// Human-readable display name for the variant.
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::LosAngeles => "Los Angeles",
+            Self::Tokyo => "Tokyo",
+            Self::Monaco => "Monaco",
+        }
+    }
+
     /// Parse a variant from a CLI string.
     pub fn from_str_lossy(s: &str) -> Result<Self, String> {
         match s {
@@ -259,5 +268,12 @@ mod tests {
         assert_eq!(tk.success().fg, Some(tokyo::SUCCESS));
         assert_eq!(la.error().fg, Some(palette::DESTRUCTIVE));
         assert_eq!(tk.error().fg, Some(tokyo::DESTRUCTIVE));
+    }
+
+    #[test]
+    fn display_name_returns_human_readable_labels() {
+        assert_eq!(ThemeVariant::LosAngeles.display_name(), "Los Angeles");
+        assert_eq!(ThemeVariant::Tokyo.display_name(), "Tokyo");
+        assert_eq!(ThemeVariant::Monaco.display_name(), "Monaco");
     }
 }
