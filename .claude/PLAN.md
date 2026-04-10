@@ -613,8 +613,8 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 #### Wave 1 (parallel — shell + theme + browser)
 
 - [x] `engine/crates/bnto` — **TUI app shell**: Add `ratatui` + `crossterm` to Cargo.toml. Create `src/tui/` module: `mod.rs` (public `launch_tui()` entry point), `app.rs` (screen router state machine), `event.rs` (crossterm event loop → Message dispatch), `theme.rs` (color palette, border styles, layout constants). Terminal setup/teardown with panic hook. `bnto tui` subcommand in clap. Unit tests for screen transitions (~5 tests)
-- [ ] `engine/crates/bnto` — **Recipe browser screen** (`screens/browser.rs`): `BrowserModel` + `update()` + `view()`. List all recipes from `builtin_recipes()` grouped by category. Substring search filtering. `j/k` cursor navigation (wraps at boundaries). `Enter` to select. Contextual help bar widget. Unit tests for search, filter, cursor, category selection (~10 tests)
-- [ ] `engine/crates/bnto` — **Shared widgets**: `widgets/help_bar.rs` (contextual key hints footer), `widgets/search_input.rs` (text input with cursor), `widgets/status_line.rs` (bottom bar — recipe count, version). Each < 100 lines. Unit tests for search input state (~4 tests)
+- [x] `engine/crates/bnto` — **Recipe browser screen** (`screens/browser.rs`): `BrowserModel` + `update()` + `view()`. List all recipes from `builtin_recipes()` grouped by category. Substring search filtering. `j/k` cursor navigation (wraps at boundaries). `Enter` to select. Contextual help bar widget. Unit tests for search, filter, cursor, category selection (~10 tests)
+- [x] `engine/crates/bnto` — **Shared widgets**: `widgets/help_bar.rs` (contextual key hints footer), `widgets/search_input.rs` (text input with cursor), `widgets/status_line.rs` (bottom bar — recipe count, version). Each < 100 lines. Unit tests for search input state (~4 tests)
 
 #### Wave 2 (parallel — detail + picker)
 
