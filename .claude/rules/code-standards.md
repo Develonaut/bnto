@@ -131,16 +131,27 @@ function useAddNode() {
 
 **When to apply:** Any hook callback that does more than "get state → call one function → apply result" should have its logic extracted into a pure action. The hook is just the bridge between the action and the store.
 
-### Testing Strategy
+### Testing Strategy: TDD Red First
 
-| Layer                   | What to test                      | How                                      | Effort       |
-| ----------------------- | --------------------------------- | ---------------------------------------- | ------------ |
-| **Pure functions (TS)** | Logic, edge cases, business rules | Unit tests (Vitest) -- pure input/output | **Heavy**    |
-| **Hooks (TS)**          | Non-trivial logic, derived state  | `renderHook` when worth it               | **Medium**   |
-| **Components (TS)**     | Renders correctly                 | Snapshot or minimal render               | **Light**    |
-| **Flows**               | Everything works together         | E2E tests (Playwright)                   | **Targeted** |
+**Tests are the design phase, not an afterthought.** Before implementing any feature, write failing (Red) tests that define what the code should do. The test suite is the executable specification — it defines the API, contracts, edge cases, and error paths before any implementation exists.
 
-**Test pure functions heavily. Test hooks and components lightly. E2E captures the user experience.**
+```
+1. RED    — Write a failing test that defines one behavior
+2. GREEN  — Write the minimum code to make it pass
+3. REFACTOR — Clean up while tests stay green
+4. REPEAT — Next behavior, next Red test
+```
+
+**Start with the happy path, then edge cases.** First test: "it does the main thing correctly." Then: "it handles empty input," "it rejects invalid args," "it doesn't duplicate," etc. Each test case is an acceptance criterion.
+
+| Layer                   | Write Red tests for                 | How                                      | Effort       |
+| ----------------------- | ----------------------------------- | ---------------------------------------- | ------------ |
+| **Pure functions (TS)** | API shape, edge cases, error paths  | Unit tests (Vitest) -- pure input/output | **Heavy**    |
+| **Hooks (TS)**          | Derived state, side effects, guards | `renderHook` when worth it               | **Medium**   |
+| **Components (TS)**     | Renders with expected props         | Snapshot or minimal render               | **Light**    |
+| **Flows**               | Full user journeys                  | E2E tests (Playwright)                   | **Targeted** |
+
+**Test pure functions heavily. Test hooks and components lightly. E2E captures the user experience.** If you find yourself writing implementation code without a failing test, stop and write the test first.
 
 ### File Organization
 

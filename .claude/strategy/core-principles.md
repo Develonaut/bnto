@@ -8,11 +8,31 @@ These are not guidelines. They are the DNA of Bnto. Every line of code, every UI
 
 ---
 
-## 1. TDD is the Core of Our Success
+## 1. TDD Red — Tests Are the Design Phase
+
+Tests are not verification. Tests are **design.** Before writing a single line of implementation, write failing tests that describe what the feature should do. This is the Red phase of TDD — and it's the most important step in the entire development process.
+
+**Why Red tests come first:**
+
+- **They force you to think about the API before building it.** What does the caller pass in? What comes back? What happens on bad input? You answer these questions in test assertions, not in implementation code.
+- **They define acceptance criteria in executable form.** When all Red tests turn Green, the feature is done. No ambiguity, no "I think it works."
+- **They catch design mistakes early.** If a test is hard to write, the API is wrong. Refactor the interface before you've built anything behind it.
+- **They prevent scope creep.** You only build what the tests require. No speculative features, no "while I'm here" additions.
+
+**The Red-Green-Refactor cycle:**
+
+```
+1. RED    — Write a failing test that defines one behavior
+2. GREEN  — Write the minimum code to make it pass
+3. REFACTOR — Clean up while tests stay green
+4. REPEAT — Next behavior, next Red test
+```
 
 The engine is discrete, testable, deterministic. Every node type ships with fixtures. Every predefined Bnto has a test. If you can't test it, you can't ship it.
 
 Each layer owns its domain and is independently verifiable. Breaking changes are caught at the engine level before they reach a user. Agents verify their own work by running tests, not by claiming completion.
+
+**The test suite IS the specification.** Someone reading your tests should understand exactly what the feature does — its contracts, its edge cases, its error paths — without reading a single line of implementation.
 
 ## 2. Go With the Grain
 
@@ -61,6 +81,7 @@ Modularity makes testing easy. Going with the grain produces natural abstraction
 
 ## For Claude Code
 
+- **Write Red tests first.** Before implementing anything, write failing tests that define what the feature should do. The tests ARE the design. If you find yourself writing code without a failing test, stop and write the test first
 - Write tests for every new node type and every predefined Bnto fixture before shipping
 - Use each framework the way it wants to be used -- don't fight it
 - Build small, composable pieces -- no monolithic functions or components

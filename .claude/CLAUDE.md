@@ -98,7 +98,18 @@ These are enforced in detail by the [rules/](.claude/rules/) files. This section
 
 This applies to all code in `engine/` (Rust WASM) and any other `.rs` files in the repo.
 
-**Rust/WASM is TDD-first.** Since we can't visually inspect WASM output the way we can with UI components, tests are our primary verification tool. Every Rust function, trait implementation, and WASM export must have corresponding tests BEFORE being used in production code. The testing layers are:
+**TDD Red — tests are the design phase.** Every feature starts with failing (Red) tests that define what the code should do. Tests are not verification after the fact — they are the design tool. Write Red tests first, then implement the minimum code to make them Green, then Refactor. This applies to all code: Rust, TypeScript, UI components.
+
+**Why Red first:** Failing tests force you to think about the API, contracts, edge cases, and error paths before getting lost in implementation. The test suite becomes the executable specification — when all Red tests turn Green, the feature is done.
+
+```
+1. RED    — Write a failing test that defines one behavior
+2. GREEN  — Write the minimum code to make it pass
+3. REFACTOR — Clean up while tests stay green
+4. REPEAT — Next behavior, next Red test
+```
+
+**Rust/WASM is especially TDD-first.** Since we can't visually inspect WASM output the way we can with UI components, tests are our primary verification tool. Every Rust function, trait implementation, and WASM export must have corresponding tests BEFORE being used in production code. The testing layers are:
 
 1. **Unit tests** (in `#[cfg(test)]` blocks) — test pure Rust logic natively. Fast, no JS runtime needed.
 2. **WASM integration tests** (in `tests/` directory via `wasm-bindgen-test`) — test the Rust ↔ JS boundary. Run in Node.js or a real browser.
@@ -210,7 +221,7 @@ bnto/
 
 ## Key Principles
 
-1. **TDD is the core of our success** — If you can't test it, you can't ship it
+1. **TDD Red — tests are the design phase** — Write failing tests first to define what code should do, then implement to make them pass. Tests are not verification — they are the design tool
 2. **Go with the grain** — Work with tools the way they want to be used
 3. **Modularity is our bread and butter** — Think small, build small, compose big
 4. **Abstraction is the goal** — "Did we make this easier?" If no, go back
