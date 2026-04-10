@@ -1,0 +1,29 @@
+# bnto-vector — SVG rasterization library.
+# Converts SVG input to raster pixels using resvg/usvg/tiny-skia.
+# Pure Rust, no WASM boundary — consumed by bnto-image for the image-convert pipeline.
+
+[package]
+name = "bnto-vector"
+version = "0.1.2"
+edition = "2024"
+description = "SVG rasterization for Bnto engine — parses SVG and renders to pixels"
+license = "MIT"
+repository = "https://github.com/Develonaut/bnto"
+homepage = "https://bnto.io"
+keywords = ["svg", "rasterize", "vector", "resvg", "wasm"]
+categories = ["graphics", "multimedia::images"]
+
+# wasm-opt flags — must match ALL features Rust enables by default.
+# Rust 1.87+ (LLVM 20) enables 6 post-MVP features for wasm32-unknown-unknown.
+# See bnto-wasm/Cargo.toml for full explanation.
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "--enable-sign-ext", "--enable-mutable-globals", "--enable-reference-types", "--enable-multivalue"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+resvg = "0.47"
+usvg = "0.47"
+tiny-skia = "0.12"
+thiserror = { workspace = true }

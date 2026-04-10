@@ -8,6 +8,7 @@ members = [
     "crates/bnto-engine",
     "crates/bnto-file",
     "crates/bnto-image",
+    "crates/bnto-vector",
     "crates/bnto-video",
     "crates/bnto-wasm",
 ]
