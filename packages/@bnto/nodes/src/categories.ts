@@ -63,6 +63,11 @@ export const CATEGORIES: readonly CategoryInfo[] = [
     description: "Shell commands and system-level operations.",
   },
   {
+    name: "vector",
+    label: "Vector",
+    description: "Vector graphics — SVG rasterization, optimization.",
+  },
+  {
     name: "video",
     label: "Video",
     description: "Video operations — download, transcode (CLI/desktop only).",
