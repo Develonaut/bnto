@@ -8,14 +8,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph};
 
 use super::app::{AppModel, Screen};
-use super::theme::{ROUNDED_BORDERS, Theme, ThemeVariant};
-
-/// All available theme variants for the settings screen.
-const ALL_VARIANTS: [ThemeVariant; 3] = [
-    ThemeVariant::LosAngeles,
-    ThemeVariant::Tokyo,
-    ThemeVariant::Munich,
-];
+use super::theme::{ALL_VARIANTS, ROUNDED_BORDERS, Theme};
 
 /// Render the main content area based on the current screen.
 pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -27,38 +20,22 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
 
 /// Render a placeholder screen (used for screens not yet implemented).
 fn draw_placeholder(frame: &mut ratatui::Frame, screen: &Screen, theme: &Theme, area: Rect) {
-    let title = match screen {
-        Screen::Browser => " bnto ",
-        Screen::Detail { .. } => " Recipe Detail ",
-        Screen::Picker { .. } => " File Picker ",
-        Screen::Execution { .. } => " Running ",
-        Screen::Results { .. } => " Results ",
-        Screen::Settings => " Settings ",
-    };
-
     let block = Block::bordered()
-        .title(title)
+        .title(screen.title())
         .title_style(theme.heading())
         .border_set(ROUNDED_BORDERS)
         .border_style(theme.muted());
 
-    let label = match screen {
-        Screen::Browser => "Select a recipe to get started.".to_string(),
-        Screen::Detail { slug } => format!("Configure {slug}"),
-        Screen::Picker { slug } => format!("Pick files for {slug}"),
-        Screen::Execution { slug } => format!("Running {slug}..."),
-        Screen::Results { slug } => format!("Results for {slug}"),
-        Screen::Settings => "Settings".to_string(),
-    };
-
-    let content = Paragraph::new(label).style(theme.text()).block(block);
+    let content = Paragraph::new(screen.placeholder_label())
+        .style(theme.text())
+        .block(block);
     frame.render_widget(content, area);
 }
 
 /// Render the settings screen with theme picker.
 fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let block = Block::bordered()
-        .title(" Settings ")
+        .title(model.screen.title())
         .title_style(theme.heading())
         .border_set(ROUNDED_BORDERS)
         .border_style(theme.muted());
@@ -96,7 +73,7 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
 
 /// Render the bottom help bar with contextual key hints.
 pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let hints = help_hints(&model.screen);
+    let hints = model.screen.help_hints();
     let spans: Vec<Span> = hints
         .iter()
         .enumerate()
@@ -114,37 +91,4 @@ pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme
 
     let bar = Paragraph::new(Line::from(spans));
     frame.render_widget(bar, area);
-}
-
-/// Contextual key hints for each screen.
-fn help_hints(screen: &Screen) -> Vec<(&'static str, &'static str)> {
-    match screen {
-        Screen::Browser => vec![
-            ("↑↓", "navigate"),
-            ("/", "search"),
-            ("Enter", "select"),
-            ("s", "settings"),
-            ("q", "quit"),
-        ],
-        Screen::Detail { .. } => vec![
-            ("↑↓", "navigate"),
-            ("Enter", "edit/confirm"),
-            ("Esc", "back"),
-            ("q", "quit"),
-        ],
-        Screen::Picker { .. } => vec![
-            ("↑↓", "navigate"),
-            ("Space", "select"),
-            ("Enter", "confirm"),
-            ("Esc", "back"),
-        ],
-        Screen::Execution { .. } => vec![("Esc", "cancel")],
-        Screen::Results { .. } => vec![
-            ("o", "open file"),
-            ("O", "open folder"),
-            ("r", "run another"),
-            ("q", "quit"),
-        ],
-        Screen::Settings => vec![("↑↓", "navigate"), ("Enter", "confirm"), ("Esc", "back")],
-    }
 }

@@ -88,9 +88,7 @@ fn main() {
         Some(Command::Info { recipe }) => show_info(&recipe),
         Some(Command::Doctor) => doctor::run_doctor(),
         Some(Command::Tui { theme }) => launch_tui(&theme),
-        None if !cli.no_interactive && std::io::stdout().is_terminal() => {
-            launch_tui("los-angeles")
-        }
+        None if !cli.no_interactive && std::io::stdout().is_terminal() => launch_tui("los-angeles"),
         None => {
             Cli::parse_from(["bnto", "--help"]);
         }

@@ -38,6 +38,13 @@ pub enum ThemeVariant {
     Munich,
 }
 
+/// All available theme variants, used by settings screen and key handling.
+pub const ALL_VARIANTS: [ThemeVariant; 3] = [
+    ThemeVariant::LosAngeles,
+    ThemeVariant::Tokyo,
+    ThemeVariant::Munich,
+];
+
 impl ThemeVariant {
     /// Parse a variant from a CLI string.
     pub fn from_str_lossy(s: &str) -> Result<Self, String> {
@@ -229,5 +236,51 @@ mod tests {
         let la = Theme::from_variant(ThemeVariant::LosAngeles);
         let tk = Theme::from_variant(ThemeVariant::Tokyo);
         assert_ne!(la.text().fg, tk.text().fg);
+    }
+
+    #[test]
+    fn backward_compat_aliases_match_palette() {
+        assert_eq!(TEXT, palette::FOREGROUND);
+        assert_eq!(TEXT_MUTED, palette::MUTED_FOREGROUND);
+        assert_eq!(ERROR, palette::DESTRUCTIVE);
+    }
+
+    #[test]
+    fn from_str_lossy_error_includes_input() {
+        let err = ThemeVariant::from_str_lossy("nope").unwrap_err();
+        assert!(err.contains("nope"), "error should echo the bad input");
+        assert!(
+            err.contains("los-angeles"),
+            "error should list valid options"
+        );
+    }
+
+    #[test]
+    fn all_style_helpers_return_correct_colors() {
+        let t = Theme::from_variant(ThemeVariant::LosAngeles);
+        assert_eq!(t.accent().fg, Some(palette::ACCENT));
+        assert_eq!(t.heading().fg, Some(palette::FOREGROUND));
+        assert_eq!(t.category().fg, Some(palette::MUTED_FOREGROUND));
+        assert_eq!(t.selected().fg, Some(palette::PRIMARY));
+        assert_eq!(t.success().fg, Some(palette::SUCCESS));
+        assert_eq!(t.error().fg, Some(palette::DESTRUCTIVE));
+        assert_eq!(t.key_hint().fg, Some(palette::WARNING));
+        assert_eq!(t.key_desc().fg, Some(palette::MUTED_FOREGROUND));
+    }
+
+    #[test]
+    fn heading_and_selected_are_bold() {
+        let t = Theme::from_variant(ThemeVariant::Tokyo);
+        assert!(t.heading().add_modifier.contains(Modifier::BOLD));
+        assert!(t.selected().add_modifier.contains(Modifier::BOLD));
+        assert!(t.key_hint().add_modifier.contains(Modifier::BOLD));
+    }
+
+    #[test]
+    fn munich_variant_has_distinct_background() {
+        let mn = Theme::from_variant(ThemeVariant::Munich);
+        assert_eq!(mn.background, munich::BACKGROUND);
+        assert_eq!(mn.foreground, munich::FOREGROUND);
+        assert_ne!(mn.background, palette::BACKGROUND);
     }
 }

@@ -24,17 +24,10 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout};
 
 use app::{AppMessage, AppModel, Screen, update};
-use theme::ThemeVariant;
+use theme::{ALL_VARIANTS, ThemeVariant};
 
 /// Tick rate for the event loop (how often we check for input).
 const TICK_RATE: Duration = Duration::from_millis(50);
-
-/// All available theme variants for the settings screen.
-const ALL_VARIANTS: [ThemeVariant; 3] = [
-    ThemeVariant::LosAngeles,
-    ThemeVariant::Tokyo,
-    ThemeVariant::Munich,
-];
 
 /// Launch the interactive TUI with the given theme variant.
 pub fn launch_tui(variant: ThemeVariant) -> io::Result<()> {
@@ -208,5 +201,53 @@ mod tests {
         };
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), Some(AppMessage::Back));
+    }
+
+    #[test]
+    fn settings_down_wraps_from_last_to_first() {
+        let model = AppModel {
+            screen: Screen::Settings,
+            theme: Theme::from_variant(ThemeVariant::Munich),
+            theme_variant: ThemeVariant::Munich,
+            ..default_model()
+        };
+        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, down),
+            Some(AppMessage::ThemeChanged(ThemeVariant::LosAngeles))
+        );
+    }
+
+    #[test]
+    fn settings_up_wraps_from_first_to_last() {
+        let model = AppModel {
+            screen: Screen::Settings,
+            ..default_model() // LosAngeles is first
+        };
+        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, up),
+            Some(AppMessage::ThemeChanged(ThemeVariant::Munich))
+        );
+    }
+
+    #[test]
+    fn settings_unmapped_key_returns_none() {
+        let model = AppModel {
+            screen: Screen::Settings,
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Char('x'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
+    }
+
+    #[test]
+    fn s_key_does_nothing_outside_browser() {
+        let model = AppModel {
+            screen: Screen::Detail { slug: "t".into() },
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Char('s'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
     }
 }

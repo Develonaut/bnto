@@ -48,6 +48,12 @@ tasks:
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
+  cli:tui:
+    desc: Build and launch the TUI (dev mode, uses latest local changes)
+    dir: ./engine
+    cmds:
+      - cargo run --package bnto -- tui {{.CLI_ARGS}}
+
   cli:build:
     desc: Build the native CLI binary (release)
     dir: ./engine

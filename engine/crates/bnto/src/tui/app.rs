@@ -191,8 +191,18 @@ mod tests {
             Screen::Browser
         );
         assert_eq!(
-            transition(Screen::Picker { slug: s.clone() }, AppMessage::Back),
-            Screen::Detail { slug: s }
+            transition(Screen::Picker { slug: s }, AppMessage::Back),
+            Screen::Detail {
+                slug: "t".to_string()
+            }
+        );
+        assert_eq!(
+            transition(Screen::Execution { slug: "r".into() }, AppMessage::Back),
+            Screen::Browser
+        );
+        assert_eq!(
+            transition(Screen::Results { slug: "r".into() }, AppMessage::Back),
+            Screen::Browser
         );
         assert_eq!(
             transition(Screen::Settings, AppMessage::Back),
