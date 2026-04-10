@@ -27,7 +27,7 @@ impl Default for CleanCsv {
 
 impl NodeProcessor for CleanCsv {
     fn name(&self) -> &str {
-        "clean-csv"
+        "spreadsheet-clean"
     }
 
     /// Self-describing metadata: trimWhitespace, removeEmptyRows, removeDuplicates
@@ -399,7 +399,7 @@ mod tests {
     fn test_name_returns_clean_csv() {
         // Verify the node processor reports the correct name.
         let processor = CleanCsv::new();
-        assert_eq!(processor.name(), "clean-csv");
+        assert_eq!(processor.name(), "spreadsheet-clean");
     }
 
     #[test]

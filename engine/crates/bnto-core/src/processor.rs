@@ -90,8 +90,9 @@ pub struct BatchFile {
 /// Currently synchronous -- async is handled at the Web Worker level.
 /// wasm-bindgen doesn't support async trait methods across the WASM boundary.
 pub trait NodeProcessor {
-    /// The unique name of this node type (e.g., "compress-images").
-    /// Used for logging and progress reporting.
+    /// The processor's type key (e.g., "image-compress").
+    /// Must match the key used in `registry.register()`.
+    /// Convention: category-operation, kebab-case.
     fn name(&self) -> &str;
 
     /// Process a single input file and produce output.

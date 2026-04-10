@@ -351,6 +351,38 @@ mod tests {
     }
 
     #[test]
+    fn test_all_processor_names_match_registry_keys() {
+        // Convention: name() must return the same string used in registry.register().
+        // Pattern: category-operation (e.g., "image-compress", not "compress-images").
+        let registry = create_browser_registry();
+        let expected_keys = [
+            "image-compress",
+            "image-resize",
+            "image-convert",
+            "image-strip-exif",
+            "image-overlay",
+            "spreadsheet-clean",
+            "spreadsheet-rename",
+            "spreadsheet-convert",
+            "spreadsheet-merge",
+            "file-rename",
+        ];
+        let params = serde_json::Map::new();
+        for key in &expected_keys {
+            let processor = registry
+                .resolve(key, &params)
+                .unwrap_or_else(|| panic!("Missing processor for {key}"));
+            assert_eq!(
+                processor.name(),
+                *key,
+                "processor.name() must match registry key. Got '{}' for key '{}'",
+                processor.name(),
+                key
+            );
+        }
+    }
+
+    #[test]
     fn test_all_generated_recipes_parse() {
         let recipes = [
             include_str!("../recipes/compress-images.bnto.json"),

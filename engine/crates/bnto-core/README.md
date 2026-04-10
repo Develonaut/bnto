@@ -8,26 +8,6 @@ Foundation crate for the bnto engine. Types, traits, pipeline executor, and node
 
 Every other engine crate depends on `bnto-core`.
 
-## Directory Structure
-
-```
-src/
-├── lib.rs                # Public API: re-exports all modules
-├── errors.rs             # BntoError enum (thiserror)
-├── events.rs             # PipelineEvent tagged union for progress reporting
-├── metadata.rs           # NodeMetadata, ParameterDef, Constraints, NodeCategory
-├── processor.rs          # NodeProcessor trait, NodeInput, NodeOutput
-├── progress.rs           # ProgressReporter (target-agnostic closures)
-├── registry.rs           # NodeRegistry: compound key dispatch
-├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
-├── definition_schema.rs  # JSON Schema generator for .bnto.json
-└── executor/
-    ├── mod.rs            # Public API + node dispatch logic
-    ├── primitive.rs      # Leaf node execution
-    ├── container.rs      # Container execution (loop, group, parallel)
-    └── tests/            # 13 test modules, 45+ tests
-```
-
 ## Key Concepts
 
 ### NodeProcessor Trait
@@ -81,6 +61,26 @@ Self-describing parameter metadata used by the TypeScript codegen to generate UI
 - Name, type, default value, constraints (min/max/step/options)
 - Conditional visibility (`visible_when` - show param only when another param has a specific value)
 - Surfaceability flag (whether the param appears in the config panel)
+
+## Directory Structure
+
+```
+src/
+├── lib.rs                # Public API: re-exports all modules
+├── errors.rs             # BntoError enum (thiserror)
+├── events.rs             # PipelineEvent tagged union for progress reporting
+├── metadata.rs           # NodeMetadata, ParameterDef, Constraints, NodeCategory
+├── processor.rs          # NodeProcessor trait, NodeInput, NodeOutput
+├── progress.rs           # ProgressReporter (target-agnostic closures)
+├── registry.rs           # NodeRegistry: compound key dispatch
+├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
+├── definition_schema.rs  # JSON Schema generator for .bnto.json
+└── executor/
+    ├── mod.rs            # Public API + node dispatch logic
+    ├── primitive.rs      # Leaf node execution
+    ├── container.rs      # Container execution (loop, group, parallel)
+    └── tests/            # 13 test modules, 45+ tests
+```
 
 ## Development
 

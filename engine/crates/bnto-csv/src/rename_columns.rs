@@ -27,7 +27,7 @@ impl Default for RenameCsvColumns {
 
 impl NodeProcessor for RenameCsvColumns {
     fn name(&self) -> &str {
-        "rename-csv-columns"
+        "spreadsheet-rename"
     }
 
     /// Self-describing metadata. Parameters: columns (object mapping old->new names).
@@ -639,7 +639,7 @@ mod tests {
     #[test]
     fn test_processor_name() {
         let processor = RenameCsvColumns::new();
-        assert_eq!(processor.name(), "rename-csv-columns");
+        assert_eq!(processor.name(), "spreadsheet-rename");
     }
 
     #[test]

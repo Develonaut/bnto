@@ -56,7 +56,7 @@ impl StripExif {
 
 impl NodeProcessor for StripExif {
     fn name(&self) -> &str {
-        "strip-exif"
+        "image-strip-exif"
     }
 
     fn metadata(&self) -> bnto_core::NodeMetadata {
@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn test_strip_exif_name() {
         let processor = StripExif::new();
-        assert_eq!(processor.name(), "strip-exif");
+        assert_eq!(processor.name(), "image-strip-exif");
     }
 
     #[test]

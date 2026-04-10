@@ -168,6 +168,8 @@ Skip if no Rust files changed.
 - [ ] **Shared encoding**: Image processors use `encode::encode_image()`, not custom encode functions
 - [ ] **Parameterized tests**: Different param values produce measurably different outputs
 - [ ] **Golden tests**: If output changed, golden files updated and diff reviewed
+- [ ] **Processor naming**: `fn name()` returns the same string as the registry key (category-first: `"image-compress"`)
+- [ ] **Crate README**: Processors table is up to date and section order follows the standard template
 
 ## Step 3: Code Quality
 
