@@ -52,6 +52,24 @@ describe("t()", () => {
   });
 });
 
+describe("t() interpolation", () => {
+  it("replaces {{var}} placeholders with provided values", () => {
+    expect(t("hero.subheading", { count: 17 })).toBe("17 recipes included. Or pack your own.");
+  });
+
+  it("replaces multiple placeholders in one string", () => {
+    expect(t("site.description", { count: 17 })).toContain("17 recipes");
+  });
+
+  it("leaves string unchanged when no params provided", () => {
+    expect(t("site.trustLine")).toBe("Free. Open source. Runs on your machine.");
+  });
+
+  it("leaves unreplaced placeholders as-is when param is missing", () => {
+    expect(t("hero.subheading")).toBe("{{count}} recipes included. Or pack your own.");
+  });
+});
+
 describe("useT()", () => {
   it("returns the t function", () => {
     const tFn = useT();

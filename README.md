@@ -29,7 +29,7 @@ Recipes are portable `.bnto.json` files — composable pipelines that run everyw
 
 A recipe is a pipeline of nodes. Each node does one thing — compress, resize, rename, convert, download, call an API — and you chain them together into a workflow. Need something that doesn't exist? Build a node for it, and the engine takes care of running it everywhere.
 
-15 predefined recipes work out of the box:
+Predefined recipes work out of the box:
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
@@ -141,7 +141,7 @@ That idea is the architecture:
 
 ## Where This Is Going
 
-**Today:** 15 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, file operations — all from one tool. Free, unlimited, no account required.
+**Today:** 17 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, file operations — all from one tool. Free, unlimited, no account required.
 
 **Next:** New node types (shell commands, HTTP requests), TUI for interactive recipe execution, more video operations. The node catalog grows; every addition is automatically available on every target.
 
