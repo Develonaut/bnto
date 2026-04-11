@@ -9,8 +9,8 @@ mod helpers;
 
 use golden_helpers::assert_golden;
 use helpers::{
-    fixture_csv, fixture_image, fixture_overlay, run_custom_recipe_ok, run_explicit_recipe_ok,
-    run_explicit_recipe_ok_multi, run_recipe_ok, run_recipe_ok_multi,
+    fixture_csv, fixture_image, fixture_overlay, fixture_vector, run_custom_recipe_ok,
+    run_explicit_recipe_ok, run_explicit_recipe_ok_multi, run_recipe_ok, run_recipe_ok_multi,
 };
 
 // --- Image Recipes ---
@@ -115,6 +115,12 @@ fn golden_svg_to_png() {
 fn golden_svg_to_jpeg() {
     let (out, _) = run_recipe_ok("svg-to-jpeg", &fixture_image("small.svg"));
     assert_golden("svg-to-jpeg", &out);
+}
+
+#[test]
+fn golden_optimize_svg() {
+    let (out, _) = run_recipe_ok("optimize-svg", &fixture_vector("verbose.svg"));
+    assert_golden("optimize-svg", &out);
 }
 
 // --- File Recipes ---
@@ -345,4 +351,10 @@ fn golden_svg_to_png_explicit() {
 fn golden_svg_to_jpeg_explicit() {
     let (out, _) = run_explicit_recipe_ok("svg-to-jpeg", &fixture_image("small.svg"));
     assert_golden("svg-to-jpeg", &out);
+}
+
+#[test]
+fn golden_optimize_svg_explicit() {
+    let (out, _) = run_explicit_recipe_ok("optimize-svg", &fixture_vector("verbose.svg"));
+    assert_golden("optimize-svg", &out);
 }

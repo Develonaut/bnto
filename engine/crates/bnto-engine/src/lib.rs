@@ -51,6 +51,7 @@ pub fn create_browser_registry() -> NodeRegistry {
         "vector-rasterize",
         Box::new(bnto_vector::VectorRasterize::new()),
     );
+    registry.register("vector-optimize", Box::new(bnto_vector::OptimizeSvg));
 
     registry
 }
@@ -112,7 +113,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 11);
+        assert_eq!(registry.len(), 12);
 
         let expected = [
             "image-compress",
@@ -126,6 +127,7 @@ mod tests {
             "spreadsheet-merge",
             "file-rename",
             "vector-rasterize",
+            "vector-optimize",
         ];
 
         let params = serde_json::Map::new();
@@ -141,8 +143,8 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_video_download() {
         let registry = create_registry();
-        // Full registry = browser (11) + video-download (1) = 12
-        assert_eq!(registry.len(), 12);
+        // Full registry = browser (12) + video-download (1) = 13
+        assert_eq!(registry.len(), 13);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("video-download", &params).is_some(),
@@ -365,6 +367,32 @@ mod tests {
     }
 
     #[test]
+    fn test_generated_optimize_svg_recipe() {
+        let json = include_str!("../recipes/optimize-svg.bnto.json");
+        let test_svg = include_bytes!("../../../../test-fixtures/vector/verbose.svg");
+        let files = vec![PipelineFile {
+            name: "icon.svg".to_string(),
+            data: test_svg.to_vec(),
+            mime_type: "image/svg+xml".to_string(),
+            metadata: serde_json::Map::new(),
+        }];
+
+        let reporter = PipelineReporter::new_noop();
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("optimize-svg recipe");
+
+        assert_eq!(result.files.len(), 1);
+        // Output should be smaller than input (editor cruft removed)
+        assert!(result.files[0].data.len() < test_svg.len());
+        // Output should still be valid SVG (starts with <svg)
+        let output = String::from_utf8_lossy(&result.files[0].data);
+        assert!(
+            output.contains("<svg"),
+            "Output should contain <svg element"
+        );
+    }
+
+    #[test]
     fn test_all_processor_names_match_registry_keys() {
         // Convention: name() must return the same string used in registry.register().
         // Pattern: category-operation (e.g., "image-compress", not "compress-images").
@@ -381,6 +409,7 @@ mod tests {
             "spreadsheet-merge",
             "file-rename",
             "vector-rasterize",
+            "vector-optimize",
         ];
         let params = serde_json::Map::new();
         for key in &expected_keys {
@@ -458,6 +487,7 @@ mod tests {
             include_str!("../recipes/download-video.bnto.json"),
             include_str!("../recipes/svg-to-png.bnto.json"),
             include_str!("../recipes/svg-to-jpeg.bnto.json"),
+            include_str!("../recipes/optimize-svg.bnto.json"),
         ];
 
         for (i, json) in recipes.iter().enumerate() {

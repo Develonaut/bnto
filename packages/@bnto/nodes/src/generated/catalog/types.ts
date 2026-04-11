@@ -25,6 +25,7 @@ export type NodeTypeName =
   | "spreadsheet-merge"
   | "spreadsheet-rename"
   | "transform"
+  | "vector-optimize"
   | "vector-rasterize"
   | "video-download";
 

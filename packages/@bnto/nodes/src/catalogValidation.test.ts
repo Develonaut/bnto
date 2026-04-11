@@ -82,6 +82,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-merge")).toBe(true);
     expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
+    expect(PROCESSOR_MAP.has("vector-optimize")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-rasterize")).toBe(true);
     expect(PROCESSOR_MAP.has("video-download")).toBe(true);
   });

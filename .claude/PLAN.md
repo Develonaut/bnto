@@ -949,15 +949,15 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 - [ ] Codegen + golden tests + test count updates
 - [ ] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
 
-**Phase 2 — SVG Optimization (`svg-optimize` processor): TABLED**
+**Phase 2 — SVG Optimization (`vector-optimize` processor): DONE**
 
-> **Tabled (April 2026):** oxvg (Rust SVGO port) adds ~5MB to WASM binary due to hard `lightningcss` dependency — not worth the size trade-off. Future options: custom lightweight crate, CLI-only via SVGO shell-out, or wait for oxvg to offer tree-shakeable features. PR #375 merged then reverted via PR #376.
+> Custom XML-level optimizer using roxmltree/xmlwriter (already in WASM binary via resvg transitive chain — zero new deps). 9 cleanup passes: remove metadata, comments, DOCTYPE/PI, editor namespaces, empty containers, empty attributes, unused xmlns, collapse redundant groups, minify whitespace.
 
-- [ ] `engine/crates/bnto-vector` — `svg-optimize` processor (approach TBD)
-- [ ] Params: `precision`, `remove_comments`, `remove_metadata`, `collapse_groups`, `minify`
-- [ ] `engine/recipes/` — `optimize-svg.bnto.json`
-- [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/optimize-svg` recipe page
+- [x] `engine/crates/bnto-vector` — `vector-optimize` processor (custom roxmltree/xmlwriter approach)
+- [x] Params: `precision`, `removeComments`, `removeMetadata`, `collapseGroups`, `minify`
+- [x] `engine/recipes/` — `optimize-svg.bnto.json`
+- [x] Codegen + golden tests + test count updates
+- [x] **Delivers:** `/optimize-svg` recipe page
 
 **Phase 3 — EPS → SVG (CLI-only shell-out):**
 
