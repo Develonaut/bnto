@@ -202,9 +202,12 @@ fn build_metadata(
         "outputFormat".to_string(),
         serde_json::json!(target_format.extension()),
     );
-    meta.insert("inputSize".to_string(), serde_json::json!(input_data.len()));
     meta.insert(
-        "outputSize".to_string(),
+        "originalSize".to_string(),
+        serde_json::json!(input_data.len()),
+    );
+    meta.insert(
+        "compressedSize".to_string(),
         serde_json::json!(output_data.len()),
     );
     meta
