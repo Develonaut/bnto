@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files, resizes, converts to WebP, and compresses each one.",
-    "category": "image"
+    "description": "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
+    "category": "image",
+    "tags": ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

@@ -162,21 +162,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bnto-csv"
-version = "0.1.2"
-dependencies = [
- "bnto-core",
- "csv",
- "js-sys",
- "serde",
- "serde_json",
- "thiserror",
- "wasm-bindgen",
- "wasm-bindgen-test",
- "web-sys",
-]
-
-[[package]]
 name = "bnto-encode"
 version = "0.1.2"
 dependencies = [
@@ -191,9 +176,9 @@ version = "0.1.3"
 dependencies = [
  "base64",
  "bnto-core",
- "bnto-csv",
  "bnto-file",
  "bnto-image",
+ "bnto-spreadsheet",
  "bnto-vector",
  "bnto-video",
  "serde_json",
@@ -221,10 +206,26 @@ dependencies = [
  "base64",
  "bnto-core",
  "bnto-encode",
+ "bnto-vector",
  "image",
  "js-sys",
  "png",
  "quantizr",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "wasm-bindgen",
+ "wasm-bindgen-test",
+ "web-sys",
+]
+
+[[package]]
+name = "bnto-spreadsheet"
+version = "0.1.2"
+dependencies = [
+ "bnto-core",
+ "csv",
+ "js-sys",
  "serde",
  "serde_json",
  "thiserror",
@@ -260,10 +261,10 @@ name = "bnto-wasm"
 version = "0.1.1"
 dependencies = [
  "bnto-core",
- "bnto-csv",
  "bnto-engine",
  "bnto-file",
  "bnto-image",
+ "bnto-spreadsheet",
  "console_error_panic_hook",
  "criterion",
  "js-sys",

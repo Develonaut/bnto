@@ -7,9 +7,7 @@
       "description": "Set field values from static values or template expressions.",
       "category": "data",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "pen-line"
     },
     {
@@ -18,9 +16,7 @@
       "description": "Transform filenames using patterns, find/replace, and case rules.",
       "category": "file",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "folder-open"
     },
     {
@@ -29,9 +25,7 @@
       "description": "Container for child nodes. Orchestrates sequential or parallel execution.",
       "category": "control",
       "isContainer": true,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "box"
     },
     {
@@ -40,9 +34,7 @@
       "description": "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
       "category": "network",
       "isContainer": false,
-      "platforms": [
-        "server"
-      ],
+      "platforms": ["server"],
       "icon": "globe"
     },
     {
@@ -51,9 +43,7 @@
       "description": "Reduce image file size while maintaining quality.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "image"
     },
     {
@@ -62,9 +52,7 @@
       "description": "Convert images between JPEG, PNG, and WebP formats.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "image"
     },
     {
@@ -73,9 +61,7 @@
       "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "stamp"
     },
     {
@@ -84,9 +70,7 @@
       "description": "Change image dimensions while maintaining quality.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "image"
     },
     {
@@ -95,9 +79,7 @@
       "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "image"
     },
     {
@@ -106,9 +88,7 @@
       "description": "Declares how data enters the recipe.",
       "category": "io",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "file-up"
     },
     {
@@ -117,9 +97,7 @@
       "description": "Iterate over arrays (forEach), repeat N times, or loop while condition.",
       "category": "control",
       "isContainer": true,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "repeat"
     },
     {
@@ -128,9 +106,7 @@
       "description": "Declares how results are delivered.",
       "category": "io",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "download"
     },
     {
@@ -139,9 +115,7 @@
       "description": "Execute tasks concurrently with configurable worker pool and error strategy.",
       "category": "control",
       "isContainer": true,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "git-fork"
     },
     {
@@ -150,9 +124,7 @@
       "description": "Execute shell commands with stall detection, retry, and streaming output.",
       "category": "system",
       "isContainer": false,
-      "platforms": [
-        "server"
-      ],
+      "platforms": ["server"],
       "icon": "terminal"
     },
     {
@@ -161,9 +133,7 @@
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "sheet"
     },
     {
@@ -172,9 +142,7 @@
       "description": "Convert CSV data to JSON format with configurable delimiters.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "sheet"
     },
     {
@@ -183,9 +151,7 @@
       "description": "Combine multiple CSV files into one with header reconciliation and deduplication.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "sheet"
     },
     {
@@ -194,9 +160,7 @@
       "description": "Rename column headers in a CSV file.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "sheet"
     },
     {
@@ -205,9 +169,7 @@
       "description": "Transform data using expressions (single value) or field mappings.",
       "category": "data",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "arrow-left-right"
     },
     {
@@ -216,9 +178,7 @@
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP).",
       "category": "vector",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "icon": "image"
     },
     {
@@ -227,9 +187,7 @@
       "description": "Download video from URLs using yt-dlp (CLI/desktop only).",
       "category": "video",
       "isContainer": false,
-      "platforms": [
-        "server"
-      ],
+      "platforms": ["server"],
       "icon": "video"
     }
   ],
@@ -240,9 +198,7 @@
       "description": "Transform filenames using patterns, find/replace, and case rules",
       "category": "file",
       "accepts": [],
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "find",
@@ -268,11 +224,7 @@
           "description": "Transform the filename to a specific case",
           "paramType": {
             "type": "enum",
-            "options": [
-              "lower",
-              "upper",
-              "title"
-            ]
+            "options": ["lower", "upper", "title"]
           },
           "surfaceable": true
         },
@@ -312,14 +264,8 @@
       "name": "Compress Images",
       "description": "Reduce image file size while maintaining quality",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "quality",
@@ -344,15 +290,8 @@
       "name": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats. Also accepts SVG input.",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/svg+xml"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp", "image/svg+xml"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "format",
@@ -360,11 +299,7 @@
           "description": "The target image format to convert to",
           "paramType": {
             "type": "enum",
-            "options": [
-              "jpeg",
-              "png",
-              "webp"
-            ]
+            "options": ["jpeg", "png", "webp"]
           },
           "default": "jpeg",
           "constraints": {
@@ -395,14 +330,8 @@
       "name": "Overlay Image",
       "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "overlay",
@@ -410,11 +339,7 @@
           "description": "The image to overlay (base64-encoded).",
           "paramType": {
             "type": "file",
-            "accept": [
-              "image/png",
-              "image/jpeg",
-              "image/webp"
-            ]
+            "accept": ["image/png", "image/jpeg", "image/webp"]
           },
           "constraints": {
             "required": true
@@ -525,14 +450,8 @@
       "name": "Resize Images",
       "description": "Change image dimensions while maintaining quality",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "width",
@@ -593,14 +512,8 @@
       "name": "Strip EXIF",
       "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "quality",
@@ -625,12 +538,8 @@
       "name": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "trimWhitespace",
@@ -670,12 +579,8 @@
       "name": "CSV to JSON",
       "description": "Convert CSV rows to a JSON array of objects",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "delimiter",
@@ -683,12 +588,7 @@
           "description": "Column separator character",
           "paramType": {
             "type": "enum",
-            "options": [
-              "comma",
-              "semicolon",
-              "tab",
-              "pipe"
-            ]
+            "options": ["comma", "semicolon", "tab", "pipe"]
           },
           "default": "comma",
           "surfaceable": true
@@ -711,12 +611,8 @@
       "name": "Merge CSV",
       "description": "Combine multiple CSV files into one, with header reconciliation and deduplication.",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "headerHandling",
@@ -724,10 +620,7 @@
           "description": "How to reconcile headers across files",
           "paramType": {
             "type": "enum",
-            "options": [
-              "first-file",
-              "union"
-            ]
+            "options": ["first-file", "union"]
           },
           "default": "first-file",
           "surfaceable": true
@@ -750,12 +643,8 @@
       "name": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "columns",
@@ -774,12 +663,8 @@
       "name": "SVG to Image",
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP)",
       "category": "vector",
-      "accepts": [
-        "image/svg+xml"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/svg+xml"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "format",
@@ -787,11 +672,7 @@
           "description": "The target raster format to convert SVG to",
           "paramType": {
             "type": "enum",
-            "options": [
-              "png",
-              "jpeg",
-              "webp"
-            ]
+            "options": ["png", "jpeg", "webp"]
           },
           "default": "png",
           "constraints": {
@@ -823,11 +704,7 @@
       "description": "Download video from URLs using yt-dlp.",
       "category": "video",
       "accepts": [],
-      "platforms": [
-        "cli",
-        "server",
-        "desktop"
-      ],
+      "platforms": ["cli", "server", "desktop"],
       "parameters": [
         {
           "name": "url",
@@ -848,15 +725,7 @@
           "description": "Output format for the downloaded video or audio.",
           "paramType": {
             "type": "enum",
-            "options": [
-              "mp4",
-              "webm",
-              "mkv",
-              "mp3",
-              "m4a",
-              "wav",
-              "flac"
-            ]
+            "options": ["mp4", "webm", "mkv", "mp3", "m4a", "wav", "flac"]
           },
           "default": "mp4",
           "surfaceable": true
@@ -867,13 +736,7 @@
           "description": "Maximum video quality. 'best' downloads the highest available.",
           "paramType": {
             "type": "enum",
-            "options": [
-              "best",
-              "1080",
-              "720",
-              "480",
-              "360"
-            ]
+            "options": ["best", "1080", "720", "480", "360"]
           },
           "default": "best",
           "surfaceable": true
@@ -973,10 +836,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "x",
-              "y"
-            ],
+            "required": ["x", "y"],
             "type": "object"
           },
           "settings": {
@@ -1029,11 +889,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "source",
-          "target"
-        ],
+        "required": ["id", "source", "target"],
         "type": "object"
       },
       "Fields": {
@@ -1050,9 +906,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "values"
-        ],
+        "required": ["values"],
         "type": "object"
       },
       "Metadata": {
@@ -1095,10 +949,7 @@
           "iteration": {
             "default": "explicit",
             "description": "How the executor handles iteration over multiple input files. 'auto' wraps primitive sequences in implicit per-file loops; 'explicit' (default) executes exactly what's defined.",
-            "enum": [
-              "auto",
-              "explicit"
-            ],
+            "enum": ["auto", "explicit"],
             "type": "string"
           }
         },
@@ -1121,10 +972,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ],
+        "required": ["id", "name"],
         "type": "object"
       }
     },
@@ -1137,8 +985,9 @@
     {
       "slug": "compress-images",
       "name": "Compress Images",
-      "description": "Accepts image files and compresses each one.",
+      "description": "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
       "category": "image",
+      "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1156,7 +1005,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files and compresses each one."
+          "description": "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
+          "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"]
         },
         "name": "Compress Images",
         "nodes": [
@@ -1172,17 +1022,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -1251,8 +1092,9 @@
     {
       "slug": "resize-images",
       "name": "Resize Images",
-      "description": "Accepts image files and resizes each one.",
+      "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
       "category": "image",
+      "tags": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1270,7 +1112,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files and resizes each one."
+          "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
+          "tags": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"]
         },
         "name": "Resize Images",
         "nodes": [
@@ -1286,17 +1129,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -1367,8 +1201,9 @@
     {
       "slug": "convert-image-format",
       "name": "Convert Image Format",
-      "description": "Accepts image files and converts each to a target format.",
+      "description": "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
       "category": "image",
+      "tags": ["PNG", "JPEG", "WebP", "GIF", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1386,7 +1221,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files and converts each to a target format."
+          "description": "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
+          "tags": ["PNG", "JPEG", "WebP", "GIF", "Browser-based"]
         },
         "name": "Convert Image Format",
         "nodes": [
@@ -1402,19 +1238,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-                "image/gif"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp",
-                ".gif"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp", "image/gif"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp", ".gif"],
               "label": "JPEG, PNG, WebP, or GIF images",
               "mode": "file-upload",
               "multiple": true
@@ -1484,8 +1309,9 @@
     {
       "slug": "rename-files",
       "name": "Rename Files",
-      "description": "Accepts files and renames each one.",
+      "description": "Batch rename files with patterns. Free, no signup required.",
       "category": "file",
+      "tags": ["Batch rename", "Pattern matching", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1503,7 +1329,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "file",
-          "description": "Accepts files and renames each one."
+          "description": "Batch rename files with patterns. Free, no signup required.",
+          "tags": ["Batch rename", "Pattern matching", "Browser-based"]
         },
         "name": "Rename Files",
         "nodes": [
@@ -1519,9 +1346,7 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "*/*"
-              ],
+              "accept": ["*/*"],
               "extensions": [],
               "label": "any files",
               "mode": "file-upload",
@@ -1591,8 +1416,9 @@
     {
       "slug": "clean-csv",
       "name": "Clean CSV",
-      "description": "Accepts a CSV file and cleans it.",
+      "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
       "category": "spreadsheet",
+      "tags": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1610,7 +1436,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "spreadsheet",
-          "description": "Accepts a CSV file and cleans it."
+          "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+          "tags": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"]
         },
         "name": "Clean CSV",
         "nodes": [
@@ -1626,12 +1453,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -1712,8 +1535,9 @@
     {
       "slug": "rename-csv-columns",
       "name": "Rename CSV Columns",
-      "description": "Accepts a CSV file and renames its column headers.",
+      "description": "Rename CSV column headers in bulk. Free, no signup required.",
       "category": "spreadsheet",
+      "tags": ["CSV", "Column rename", "Bulk edit", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1731,7 +1555,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "spreadsheet",
-          "description": "Accepts a CSV file and renames its column headers."
+          "description": "Rename CSV column headers in bulk. Free, no signup required.",
+          "tags": ["CSV", "Column rename", "Bulk edit", "Browser-based"]
         },
         "name": "Rename CSV Columns",
         "nodes": [
@@ -1747,12 +1572,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -1831,8 +1652,9 @@
     {
       "slug": "csv-to-json",
       "name": "CSV to JSON",
-      "description": "Accepts a CSV file and converts it to JSON.",
+      "description": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
       "category": "spreadsheet",
+      "tags": ["CSV", "JSON", "Configurable delimiter", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1850,7 +1672,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "spreadsheet",
-          "description": "Accepts a CSV file and converts it to JSON."
+          "description": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
+          "tags": ["CSV", "JSON", "Configurable delimiter", "Browser-based"]
         },
         "name": "CSV to JSON",
         "nodes": [
@@ -1866,12 +1689,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -1951,8 +1770,9 @@
     {
       "slug": "merge-csv",
       "name": "Merge CSV",
-      "description": "Accepts multiple CSV files and merges them into one.",
+      "description": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
       "category": "spreadsheet",
+      "tags": ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1970,7 +1790,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "spreadsheet",
-          "description": "Accepts multiple CSV files and merges them into one."
+          "description": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
+          "tags": ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"]
         },
         "name": "Merge CSV",
         "nodes": [
@@ -1986,12 +1807,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": true
@@ -2071,8 +1888,9 @@
     {
       "slug": "optimize-images-for-web",
       "name": "Optimize Images for Web",
-      "description": "Accepts image files, resizes, converts to WebP, and compresses each one.",
+      "description": "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
       "category": "image",
+      "tags": ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2100,7 +1918,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files, resizes, converts to WebP, and compresses each one."
+          "description": "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
+          "tags": ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"]
         },
         "name": "Optimize Images for Web",
         "nodes": [
@@ -2116,17 +1935,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2230,8 +2040,9 @@
     {
       "slug": "generate-thumbnails",
       "name": "Generate Thumbnails",
-      "description": "Accepts image files, resizes to thumbnail dimensions, converts to WebP, and renames with a prefix.",
+      "description": "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
       "category": "image",
+      "tags": ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2259,7 +2070,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files, resizes to thumbnail dimensions, converts to WebP, and renames with a prefix."
+          "description": "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
+          "tags": ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"]
         },
         "name": "Generate Thumbnails",
         "nodes": [
@@ -2275,17 +2087,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2389,8 +2192,9 @@
     {
       "slug": "compress-and-rename",
       "name": "Compress & Rename",
-      "description": "Accepts image files, compresses each one, and renames with a suffix.",
+      "description": "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
       "category": "image",
+      "tags": ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2413,7 +2217,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files, compresses each one, and renames with a suffix."
+          "description": "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
+          "tags": ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"]
         },
         "name": "Compress & Rename",
         "nodes": [
@@ -2429,17 +2234,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2524,8 +2320,9 @@
     {
       "slug": "standardize-csv",
       "name": "Standardize CSV",
-      "description": "Accepts a CSV file, cleans it, and renames the column headers.",
+      "description": "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
       "category": "spreadsheet",
+      "tags": ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2548,7 +2345,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "spreadsheet",
-          "description": "Accepts a CSV file, cleans it, and renames the column headers."
+          "description": "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
+          "tags": ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"]
         },
         "name": "Standardize CSV",
         "nodes": [
@@ -2564,12 +2362,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -2676,8 +2470,9 @@
     {
       "slug": "strip-exif",
       "name": "Strip EXIF",
-      "description": "Accepts image files and strips EXIF metadata from each one.",
+      "description": "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
       "category": "image",
+      "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2695,7 +2490,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files and strips EXIF metadata from each one."
+          "description": "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
+          "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"]
         },
         "name": "Strip EXIF",
         "nodes": [
@@ -2711,17 +2507,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2790,8 +2577,16 @@
     {
       "slug": "watermark-images",
       "name": "Watermark Images",
-      "description": "Accepts image files and overlays an image onto each one.",
+      "description": "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
       "category": "image",
+      "tags": [
+        "PNG",
+        "JPEG",
+        "WebP",
+        "Configurable position",
+        "Adjustable opacity",
+        "Browser-based"
+      ],
       "definition": {
         "edges": [
           {
@@ -2809,7 +2604,15 @@
         "inputPorts": [],
         "metadata": {
           "category": "image",
-          "description": "Accepts image files and overlays an image onto each one."
+          "description": "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
+          "tags": [
+            "PNG",
+            "JPEG",
+            "WebP",
+            "Configurable position",
+            "Adjustable opacity",
+            "Browser-based"
+          ]
         },
         "name": "Watermark Images",
         "nodes": [
@@ -2825,17 +2628,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2910,8 +2704,9 @@
     {
       "slug": "download-video",
       "name": "Download Video",
-      "description": "Downloads video or audio from a URL via yt-dlp.",
+      "description": "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
       "category": "video",
+      "tags": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
       "definition": {
         "edges": [
           {
@@ -2929,7 +2724,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "video",
-          "description": "Downloads video or audio from a URL via yt-dlp."
+          "description": "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+          "tags": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"]
         },
         "name": "Download Video",
         "nodes": [
@@ -3018,8 +2814,9 @@
     {
       "slug": "svg-to-png",
       "name": "SVG to PNG",
-      "description": "Accepts SVG vector files and converts each to a PNG raster image.",
+      "description": "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
       "category": "vector",
+      "tags": ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -3037,7 +2834,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "vector",
-          "description": "Accepts SVG vector files and converts each to a PNG raster image."
+          "description": "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
+          "tags": ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"]
         },
         "name": "SVG to PNG",
         "nodes": [
@@ -3053,12 +2851,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/svg+xml"
-              ],
-              "extensions": [
-                ".svg"
-              ],
+              "accept": ["image/svg+xml"],
+              "extensions": [".svg"],
               "label": "SVG files",
               "mode": "file-upload",
               "multiple": true
@@ -3128,8 +2922,9 @@
     {
       "slug": "svg-to-jpeg",
       "name": "SVG to JPEG",
-      "description": "Accepts SVG vector files and converts each to a JPEG raster image.",
+      "description": "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
       "category": "vector",
+      "tags": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -3147,7 +2942,8 @@
         "inputPorts": [],
         "metadata": {
           "category": "vector",
-          "description": "Accepts SVG vector files and converts each to a JPEG raster image."
+          "description": "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
+          "tags": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"]
         },
         "name": "SVG to JPEG",
         "nodes": [
@@ -3163,12 +2959,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/svg+xml"
-              ],
-              "extensions": [
-                ".svg"
-              ],
+              "accept": ["image/svg+xml"],
+              "extensions": [".svg"],
               "label": "SVG files",
               "mode": "file-upload",
               "multiple": true

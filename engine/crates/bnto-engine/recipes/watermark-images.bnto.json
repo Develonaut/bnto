@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and overlays an image onto each one.",
-    "category": "image"
+    "description": "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
+    "category": "image",
+    "tags": ["PNG", "JPEG", "WebP", "Configurable position", "Adjustable opacity", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

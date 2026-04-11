@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and resizes each one.",
-    "category": "image"
+    "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
+    "category": "image",
+    "tags": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

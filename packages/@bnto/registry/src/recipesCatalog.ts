@@ -1,9 +1,9 @@
 /**
  * All predefined recipes — the bnto catalog.
  *
- * Engine owns recipe definitions (nodes, edges, parameters).
+ * Engine owns recipe definitions AND metadata (descriptions, tags).
  * This file derives `Recipe` objects from engine-generated data,
- * adding web-only overlays (features for JSON-LD, UUIDs for persistence).
+ * adding accept specs derived from the definition's input node.
  */
 
 import { GENERATED_RECIPES } from "@bnto/nodes";
@@ -11,142 +11,22 @@ import type { Recipe } from "./recipe";
 import { deriveAcceptSpec } from "./deriveAcceptSpec";
 
 /**
- * Stable UUIDs for predefined recipes.
- * These were assigned when recipes were first created and must not change.
- */
-const RECIPE_IDS: Record<string, string> = {
-  "compress-images": "04ad520d-3afe-470b-8225-6cae2b14c402",
-  "resize-images": "ea8bec03-b732-4bc6-aeec-1097f75c0b87",
-  "convert-image-format": "9cf4fa85-9145-49f7-b838-dae759261ba2",
-  "rename-files": "404cea0b-ea2c-4d81-bd89-47f5eb3b8389",
-  "clean-csv": "5beec7db-f553-4e99-90f3-07be1d419db8",
-  "rename-csv-columns": "5be92d39-fa8e-49ce-a0f3-c55d01a48c7b",
-  "csv-to-json": "a7c3e1f0-8d42-4b9a-b5e6-3f1a2c4d5e6f",
-  "merge-csv": "b4d5e6f7-8a9b-0c1d-2e3f-4a5b6c7d8e9f",
-  "optimize-images-for-web": "e8c3a3ad-1e7e-40f6-ab60-00f405514f6f",
-  "generate-thumbnails": "4cf63f58-327a-4e6a-a03c-caa9679c7152",
-  "compress-and-rename": "b3a1c7d2-8f4e-4a6b-9c5d-1e2f3a4b5c6d",
-  "standardize-csv": "a2b3c4d5-6e7f-8a9b-0c1d-2e3f4a5b6c7d",
-  "strip-exif": "b8d4f2a1-9e53-4c0b-a6f7-4g2b3d5e7f8a",
-  "watermark-images": "b7d2a3f1-8e4c-4d6b-9a1f-2c5e7b8d3f4a",
-  "download-video": "d7e2c891-4f3a-4b1e-9c8d-2a5f6e7b3c01",
-  "svg-to-png": "a3f1b2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
-  "svg-to-jpeg": "b4c2d3e5-6f7a-8b9c-0d1e-2f3a4b5c6d7e",
-};
-
-/**
- * Web-facing marketing descriptions for SEO and display.
- * Engine descriptions are terse ("Accepts image files and compresses each one.").
- * These are user-facing copy — not in the engine.
- */
-const WEB_DESCRIPTIONS: Record<string, string> = {
-  "compress-images":
-    "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
-  "resize-images": "Resize images to exact dimensions or percentages. Free, no signup required.",
-  "convert-image-format":
-    "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
-  "rename-files": "Batch rename files with patterns. Free, no signup required.",
-  "clean-csv": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
-  "rename-csv-columns": "Rename CSV column headers in bulk. Free, no signup required.",
-  "csv-to-json": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
-  "merge-csv": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
-  "optimize-images-for-web":
-    "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
-  "generate-thumbnails":
-    "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
-  "compress-and-rename":
-    "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
-  "standardize-csv":
-    "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
-  "strip-exif":
-    "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
-  "watermark-images":
-    "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
-  "download-video":
-    "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
-  "svg-to-png":
-    "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
-  "svg-to-jpeg":
-    "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
-};
-
-/**
- * Web-only feature tags for JSON-LD and display.
- * These are not in the engine — they're marketing/SEO metadata.
- */
-const WEB_FEATURES: Record<string, string[]> = {
-  "compress-images": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
-  "resize-images": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
-  "convert-image-format": ["PNG", "JPEG", "WebP", "GIF", "Browser-based"],
-  "rename-files": ["Batch rename", "Pattern matching", "Browser-based"],
-  "clean-csv": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
-  "rename-csv-columns": ["CSV", "Column rename", "Bulk edit", "Browser-based"],
-  "csv-to-json": ["CSV", "JSON", "Configurable delimiter", "Browser-based"],
-  "merge-csv": ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"],
-  "optimize-images-for-web": ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"],
-  "generate-thumbnails": ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"],
-  "compress-and-rename": ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"],
-  "standardize-csv": ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"],
-  "strip-exif": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
-  "watermark-images": [
-    "PNG",
-    "JPEG",
-    "WebP",
-    "Configurable position",
-    "Adjustable opacity",
-    "Browser-based",
-  ],
-  "download-video": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
-  "svg-to-png": ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"],
-  "svg-to-jpeg": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"],
-};
-
-/**
- * Display order for recipes on the home page grid.
- * Slugs listed first appear first. Unlisted slugs go at the end.
- */
-const DISPLAY_ORDER: string[] = [
-  "compress-images",
-  "resize-images",
-  "convert-image-format",
-  "rename-files",
-  "clean-csv",
-  "rename-csv-columns",
-  "csv-to-json",
-  "merge-csv",
-  "optimize-images-for-web",
-  "generate-thumbnails",
-  "compress-and-rename",
-  "standardize-csv",
-  "strip-exif",
-  "watermark-images",
-  "download-video",
-  "svg-to-png",
-  "svg-to-jpeg",
-];
-
-/**
  * All predefined recipes that map to public URLs.
  *
- * Derived from engine-generated recipes with web-only overlays
- * (UUIDs, features, accept specs). Order follows DISPLAY_ORDER.
+ * Derived from engine-generated recipes. Order matches the engine's
+ * `RECIPE_DEFINITIONS` array in `recipes.rs`.
  */
-export const RECIPES: readonly Recipe[] = DISPLAY_ORDER.map((slug) => {
-  const generated = GENERATED_RECIPES.find((r) => r.slug === slug);
-  if (!generated) throw new Error(`Recipe "${slug}" listed in DISPLAY_ORDER but not in engine`);
-
-  return {
-    id: RECIPE_IDS[slug] ?? slug,
-    slug: generated.slug,
-    name: generated.name,
-    description: WEB_DESCRIPTIONS[slug] ?? generated.description,
-    category: generated.category,
-    definition: generated.definition,
-    accept: deriveAcceptSpec(generated.definition) ?? {
-      mimeTypes: [],
-      extensions: [],
-      label: "Files",
-    },
-    features: WEB_FEATURES[slug] ?? [],
-  };
-}).filter(Boolean) as Recipe[];
+export const RECIPES: readonly Recipe[] = GENERATED_RECIPES.map((generated) => ({
+  id: generated.slug,
+  slug: generated.slug,
+  name: generated.name,
+  description: generated.description,
+  category: generated.category,
+  definition: generated.definition,
+  accept: deriveAcceptSpec(generated.definition) ?? {
+    mimeTypes: [],
+    extensions: [],
+    label: "Files",
+  },
+  features: [...generated.tags],
+}));

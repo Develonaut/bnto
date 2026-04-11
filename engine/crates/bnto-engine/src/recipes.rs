@@ -10,6 +10,7 @@ pub struct BuiltinRecipe {
     pub name: String,
     pub description: String,
     pub category: String,
+    pub tags: Vec<String>,
     pub definition_json: &'static str,
 }
 
@@ -52,6 +53,14 @@ pub fn builtin_recipes() -> Vec<BuiltinRecipe> {
                     .as_str()
                     .unwrap_or_default()
                     .to_string(),
+                tags: val["metadata"]["tags"]
+                    .as_array()
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(String::from))
+                            .collect()
+                    })
+                    .unwrap_or_default(),
                 definition_json: json,
             }
         })
@@ -119,6 +128,17 @@ mod tests {
         slugs.sort();
         slugs.dedup();
         assert_eq!(slugs.len(), recipes.len(), "Duplicate slugs found");
+    }
+
+    #[test]
+    fn test_builtin_recipes_all_have_tags() {
+        for recipe in builtin_recipes() {
+            assert!(
+                !recipe.tags.is_empty(),
+                "Recipe '{}' has no tags",
+                recipe.slug,
+            );
+        }
     }
 
     #[test]

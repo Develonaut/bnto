@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files, resizes to thumbnail dimensions, converts to WebP, and renames with a prefix.",
-    "category": "image"
+    "description": "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
+    "category": "image",
+    "tags": ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

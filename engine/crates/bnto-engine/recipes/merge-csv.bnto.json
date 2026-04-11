@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts multiple CSV files and merges them into one.",
-    "category": "spreadsheet"
+    "description": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
+    "category": "spreadsheet",
+    "tags": ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

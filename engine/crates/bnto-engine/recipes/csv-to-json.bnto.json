@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file and converts it to JSON.",
-    "category": "spreadsheet"
+    "description": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
+    "category": "spreadsheet",
+    "tags": ["CSV", "JSON", "Configurable delimiter", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

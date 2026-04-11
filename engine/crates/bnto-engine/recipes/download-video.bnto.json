@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Downloads video or audio from a URL via yt-dlp.",
-    "category": "video"
+    "description": "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+    "category": "video",
+    "tags": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"]
   },
   "parameters": {},
   "inputPorts": [],

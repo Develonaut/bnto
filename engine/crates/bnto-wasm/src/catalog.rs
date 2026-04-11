@@ -24,6 +24,7 @@ struct RecipeEntry {
     name: String,
     description: String,
     category: String,
+    tags: Vec<String>,
     definition: serde_json::Value,
 }
 
@@ -43,6 +44,7 @@ pub fn node_catalog() -> Result<String, JsValue> {
             name: r.name,
             description: r.description,
             category: r.category,
+            tags: r.tags,
             definition: serde_json::from_str(r.definition_json)
                 .expect("built-in recipe JSON must be valid"),
         })
@@ -73,6 +75,7 @@ mod tests {
                 name: r.name,
                 description: r.description,
                 category: r.category,
+                tags: r.tags,
                 definition: serde_json::from_str(r.definition_json)
                     .expect("built-in recipe JSON must be valid"),
             })
