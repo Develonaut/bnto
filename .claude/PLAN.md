@@ -980,6 +980,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 `apps/web/app/(app)/_components/BuildYourOwnSection.tsx`, `recipeSnippets.ts`
 
+### Triage: Context-aware result item actions
+
+**Priority: Triage.** Result items currently only have a download button. Add richer actions depending on the recipe/result type: before/after comparison slider for size-reduction recipes (compress, optimize), copy-to-clipboard for text-based outputs (SVG, CSV, JSON), image preview for raster outputs. Actions should be driven by the result's MIME type and metadata.
+
+`CompletedRow.tsx`, `ResultRow.tsx`
+
 ---
 
 ## Reference
