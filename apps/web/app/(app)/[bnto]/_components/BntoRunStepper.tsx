@@ -11,13 +11,15 @@ import { StepToolbar } from "./StepToolbar";
 export function BntoRunStepper({ entry }: { entry: BntoEntry }) {
   return (
     <RecipeStepper key={entry.slug} entry={entry}>
-      <RecipeHeroMascot category={entry.category} />
       <Heading level={1} data-testid="recipe-heading">
         {entry.h1}
       </Heading>
 
       <StepperContent value="1">
-        <RecipeHeroDropzone />
+        <div className="relative">
+          <RecipeHeroDropzone />
+          <RecipeHeroMascot category={entry.category} />
+        </div>
       </StepperContent>
 
       <ConditionalStepperIndicator />

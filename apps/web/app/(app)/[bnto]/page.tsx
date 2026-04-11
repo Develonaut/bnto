@@ -50,9 +50,11 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
             <BntoRunStepper entry={entry} />
           ) : (
             <>
-              <RecipeHeroMascot category={entry.category} />
               <BntoHero h1={entry.h1} description={entry.description} />
-              <CliPromo slug={slug} />
+              <div className="relative">
+                <CliPromo slug={slug} />
+                <RecipeHeroMascot category={entry.category} />
+              </div>
             </>
           )}
         </Container>
