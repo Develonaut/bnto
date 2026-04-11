@@ -25,22 +25,11 @@ export type NodeTypeName =
   | "spreadsheet-merge"
   | "spreadsheet-rename"
   | "transform"
-  | "vector-optimize"
   | "vector-rasterize"
   | "video-download";
 
 /** Node category for grouping in the UI and documentation. */
-export type NodeCategory =
-  | "control"
-  | "data"
-  | "file"
-  | "image"
-  | "io"
-  | "network"
-  | "spreadsheet"
-  | "system"
-  | "vector"
-  | "video";
+export type NodeCategory = "control" | "data" | "file" | "image" | "io" | "network" | "spreadsheet" | "system" | "vector" | "video";
 
 /** Metadata describing a node type's behavior and capabilities. */
 export interface NodeTypeInfo {

@@ -43,7 +43,6 @@ const NAV_DESCRIPTIONS: Record<string, string> = {
   "rename-files": "Batch rename files with patterns",
   "svg-to-png": "Convert SVG vector files to PNG images",
   "svg-to-jpeg": "Convert SVG vector files to JPEG images",
-  "optimize-svg": "Reduce SVG file size by removing unnecessary data",
 };
 
 /** Slugs shown in the nav dropdown. The rest are discoverable via /explore. */
@@ -58,7 +57,7 @@ const FEATURED_SLUGS = new Set([
   "merge-csv",
   "rename-files",
   "svg-to-png",
-  "optimize-svg",
+  "svg-to-jpeg",
 ]);
 
 /** All recipes grouped by category, derived from the engine registry. */
