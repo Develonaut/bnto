@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container } from "@bnto/ui";
+import { AppShellContent, Container, Heading } from "@bnto/ui";
 import { getRecipeBySlug, isRecipeBrowserCapable } from "@bnto/registry";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
-import { BntoHero } from "./_components/BntoHero";
 import { BntoRunStepper } from "./_components/BntoRunStepper";
 import { RecipeHeroMascot } from "./_components/RecipeHeroMascot";
 import { CliPromo } from "./_components/CliPromo";
@@ -45,12 +44,17 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
     <>
       <BntoJsonLd entry={entry} />
       <AppShellContent>
-        <Container size="md" className="space-y-6 text-center">
+        <Container size="lg" className="space-y-6 text-center">
           {browserCapable ? (
             <BntoRunStepper entry={entry} />
           ) : (
             <>
-              <BntoHero h1={entry.h1} description={entry.description} />
+              <Heading level={1} data-testid="recipe-heading">
+                {entry.h1}
+              </Heading>
+              <p className="text-muted-foreground mx-auto max-w-xl leading-snug text-balance">
+                {entry.description}
+              </p>
               <div className="relative">
                 <CliPromo slug={slug} />
                 <RecipeHeroMascot category={entry.category} />

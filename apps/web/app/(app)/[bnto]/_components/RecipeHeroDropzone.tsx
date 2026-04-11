@@ -1,22 +1,47 @@
 "use client";
 
-import { FileUploadDropzone, UploadIcon } from "@bnto/ui";
+import { Badge, Button, DormantWrapper, FileUploadDropzone, Heading, UploadIcon } from "@bnto/ui";
 import { useRecipeStepperDefn } from "../_stores/recipeStepperContext";
 
-/** Large prominent dropzone — the primary CTA on recipe landing pages. */
-export function RecipeHeroDropzone() {
+/**
+ * Full-hero dropzone — the entire above-fold area is one drop target.
+ *
+ * Contains H1, description, feature badges, and upload prompt.
+ * Inspired by Canva's approach: everything inside the CTA zone.
+ */
+export function RecipeHeroDropzone({
+  h1,
+  description,
+  features,
+}: {
+  h1: string;
+  description: string;
+  features: string[];
+}) {
   const defn = useRecipeStepperDefn();
   return (
-    <FileUploadDropzone className="gap-3 px-4 py-14 sm:px-6 sm:py-16">
-      <div className="rounded-full bg-muted p-3 text-muted-foreground">
-        <UploadIcon className="size-8" />
+    <FileUploadDropzone className="gap-6 px-6 py-12 sm:px-10 sm:py-16">
+      <Heading level={1} data-testid="recipe-heading">
+        {h1}
+      </Heading>
+      <p className="text-muted-foreground mx-auto max-w-lg text-sm leading-snug text-balance">
+        {description}
+      </p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {features.map((f) => (
+          <Badge key={f} variant="secondary" size="sm">
+            {f}
+          </Badge>
+        ))}
       </div>
-      <div className="text-center">
-        <p className="text-sm font-medium text-foreground">Drop your files here</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          or click to browse &middot; accepts {defn.acceptLabel}
-        </p>
-      </div>
+      <DormantWrapper>
+        <Button variant="primary">
+          <UploadIcon />
+          Upload your files
+        </Button>
+      </DormantWrapper>
+      <p className="text-muted-foreground text-sm">or drop here</p>
+      <p className="text-muted-foreground text-xs">accepts {defn.acceptLabel}</p>
     </FileUploadDropzone>
   );
 }

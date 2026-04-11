@@ -6,19 +6,19 @@ describe("getCategoryMascot", () => {
     expect(getCategoryMascot("image")).toBe("/mascots/sushi-thumbsup.svg");
   });
 
-  it("returns sushi-onigiri for spreadsheet", () => {
-    expect(getCategoryMascot("spreadsheet")).toBe("/mascots/sushi-onigiri.svg");
+  it("returns octopus-chef for spreadsheet", () => {
+    expect(getCategoryMascot("spreadsheet")).toBe("/mascots/octopus-chef.svg");
   });
 
-  it("returns salmon-chopstick for file", () => {
-    expect(getCategoryMascot("file")).toBe("/mascots/salmon-chopstick.svg");
+  it("returns sumo-sushi for file", () => {
+    expect(getCategoryMascot("file")).toBe("/mascots/sumo-sushi.svg");
   });
 
   it("returns penguin-chef for vector", () => {
     expect(getCategoryMascot("vector")).toBe("/mascots/penguin-chef.svg");
   });
 
-  it("returns octopus-chef fallback for unknown category", () => {
-    expect(getCategoryMascot("unknown")).toBe("/mascots/octopus-chef.svg");
+  it("returns sumo-sushi fallback for unknown category", () => {
+    expect(getCategoryMascot("unknown")).toBe("/mascots/sumo-sushi.svg");
   });
 });
