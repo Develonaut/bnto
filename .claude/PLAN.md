@@ -949,13 +949,15 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 - [ ] Codegen + golden tests + test count updates
 - [ ] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
 
-**Phase 2 — SVG Optimization (`svg-optimize` processor):**
+**Phase 2 — SVG Optimization (`svg-optimize` processor): TABLED**
 
-- [ ] `engine/crates/bnto-vector` — `svg-optimize` processor using `usvg` (parse → simplify → re-serialize)
+> **Tabled (April 2026):** oxvg (Rust SVGO port) adds ~5MB to WASM binary due to hard `lightningcss` dependency — not worth the size trade-off. Future options: custom lightweight crate, CLI-only via SVGO shell-out, or wait for oxvg to offer tree-shakeable features. PR #375 merged then reverted via PR #376.
+
+- [ ] `engine/crates/bnto-vector` — `svg-optimize` processor (approach TBD)
 - [ ] Params: `precision`, `remove_comments`, `remove_metadata`, `collapse_groups`, `minify`
 - [ ] `engine/recipes/` — `optimize-svg.bnto.json`
 - [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/optimize-svg` recipe page (browser + CLI)
+- [ ] **Delivers:** `/optimize-svg` recipe page
 
 **Phase 3 — EPS → SVG (CLI-only shell-out):**
 
