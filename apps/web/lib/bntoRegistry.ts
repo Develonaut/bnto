@@ -18,6 +18,7 @@ export interface BntoEntry {
   h1: string;
   fixture: string;
   features: string[];
+  category: string;
 }
 
 function toBntoEntry(r: Recipe): BntoEntry {
@@ -28,6 +29,7 @@ function toBntoEntry(r: Recipe): BntoEntry {
     h1: `${r.name} Online Free`,
     fixture: `${r.slug}.bnto.json`,
     features: r.features,
+    category: r.category,
   };
 }
 

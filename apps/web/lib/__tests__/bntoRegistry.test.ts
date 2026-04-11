@@ -40,6 +40,7 @@ describe("BNTO_REGISTRY", () => {
       expect(entry.h1).toBeTruthy();
       expect(entry.fixture).toBeTruthy();
       expect(entry.features.length).toBeGreaterThan(0);
+      expect(entry.category).toBeTruthy();
     }
   });
 
@@ -93,6 +94,7 @@ describe("single source of truth — @bnto/registry propagation", () => {
       expect(entry!.title).toContain(recipe.name);
       expect(entry!.description).toBe(recipe.description);
       expect(entry!.features).toEqual(recipe.features);
+      expect(entry!.category).toBe(recipe.category);
     }
   });
 

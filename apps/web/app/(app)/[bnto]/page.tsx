@@ -6,6 +6,7 @@ import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoHero } from "./_components/BntoHero";
 import { BntoRunStepper } from "./_components/BntoRunStepper";
+import { RecipeHeroMascot } from "./_components/RecipeHeroMascot";
 import { CliPromo } from "./_components/CliPromo";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404. */
@@ -49,6 +50,7 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
             <BntoRunStepper entry={entry} />
           ) : (
             <>
+              <RecipeHeroMascot category={entry.category} />
               <BntoHero h1={entry.h1} description={entry.description} />
               <CliPromo slug={slug} />
             </>
