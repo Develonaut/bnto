@@ -71,11 +71,6 @@ serde_json = { workspace = true }
 # Panic hook — shows real error messages in browser console
 console_error_panic_hook = "0.1"
 
-# getrandom 0.3+ requires explicit WASM support — enable wasm_js backend
-# for the browser target. Pulled in transitively by oxvg → lightningcss → ahash.
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-getrandom = { version = "0.3", features = ["wasm_js"] }
-
 # =============================================================================
 # Dev Dependencies (testing only)
 # =============================================================================
