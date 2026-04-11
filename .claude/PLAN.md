@@ -939,23 +939,22 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Priority: Medium.** New `vector` node category (counterpart to `image`/raster) with three incremental phases. Each phase is independently shippable. New `bnto-vector` crate houses all vector operations. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
 
-**Phase 1 — SVG → Raster (extend `image-convert`):**
+**Phase 1 — SVG → Raster (extend `image-convert`): DONE (v0.10.0, PRs #364–#372)**
 
-- [ ] `engine/crates/bnto-vector` — New crate with `resvg` + `usvg` + `tiny-skia` dependencies
-- [ ] `engine/crates/bnto-image` — Extend `image-convert` to detect SVG input, rasterize via `resvg`, encode to PNG/JPEG/WebP
-- [ ] `engine/crates/bnto-image` — New `dpi` parameter (default 96, range 72–300) for rasterization resolution
-- [ ] `engine/crates/bnto-core` — Add `vector` category to `NodeTypeInfo` metadata
-- [ ] `engine/recipes/` — `svg-to-png.bnto.json`, `svg-to-jpeg.bnto.json`
-- [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
+- [x] `engine/crates/bnto-vector` — New crate with `resvg` + `usvg` + `tiny-skia` dependencies
+- [x] `engine/crates/bnto-vector` — `vector-rasterize` processor (SVG→pixels via resvg) with DPI param
+- [x] `engine/crates/bnto-core` — Add `vector` category to `NodeTypeInfo` metadata
+- [x] `engine/recipes/` — `svg-to-png.bnto.json`, `svg-to-jpeg.bnto.json`
+- [x] Codegen + golden tests + test count updates
+- [x] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
 
-**Phase 2 — SVG Optimization (`svg-optimize` processor):**
+**Phase 2 — SVG Optimization (`vector-optimize` processor):**
 
-- [ ] `engine/crates/bnto-vector` — `svg-optimize` processor using `usvg` (parse → simplify → re-serialize)
-- [ ] Params: `precision`, `remove_comments`, `remove_metadata`, `collapse_groups`, `minify`
-- [ ] `engine/recipes/` — `optimize-svg.bnto.json`
-- [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/optimize-svg` recipe page (browser + CLI)
+- [x] `engine/crates/bnto-vector` — `vector-optimize` processor using `oxvg` (SVGO-equivalent, Rust-native)
+- [x] Params: `precision`, `remove_comments`, `remove_metadata`, `collapse_groups`, `minify`
+- [x] `engine/recipes/` — `optimize-svg.bnto.json`
+- [x] Codegen + golden tests + test count updates
+- [x] **Delivers:** `/optimize-svg` recipe page (browser + CLI)
 
 **Phase 3 — EPS → SVG (CLI-only shell-out):**
 

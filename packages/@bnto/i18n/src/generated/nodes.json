@@ -77,6 +77,10 @@
       "label": "Transform",
       "description": "Transform data using expressions (single value) or field mappings."
     },
+    "vectorOptimize": {
+      "label": "Optimize SVG",
+      "description": "Reduce SVG file size by removing unnecessary data and optimizing paths."
+    },
     "vectorRasterize": {
       "label": "SVG to Image",
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP)."
@@ -222,6 +226,28 @@
       "columns": {
         "label": "Column Mapping",
         "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
+      }
+    },
+    "vectorOptimize": {
+      "precision": {
+        "label": "Numeric Precision",
+        "description": "Decimal places for numeric values in paths and transforms (1-10)"
+      },
+      "removeComments": {
+        "label": "Remove Comments",
+        "description": "Strip XML comments"
+      },
+      "removeMetadata": {
+        "label": "Remove Metadata",
+        "description": "Strip <metadata> elements"
+      },
+      "collapseGroups": {
+        "label": "Collapse Groups",
+        "description": "Merge redundant nested <g> elements"
+      },
+      "minify": {
+        "label": "Minify",
+        "description": "Remove unnecessary whitespace and line breaks"
       }
     },
     "vectorRasterize": {
