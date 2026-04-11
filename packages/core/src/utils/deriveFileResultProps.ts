@@ -20,7 +20,13 @@ function deriveFileResultProps(result: BrowserFileResult): FileResultDisplay {
   const outputBytes = result.blob.size;
 
   const hasOriginal = origBytes != null;
-  const savingsPercent = hasOriginal ? Math.round((1 - outputBytes / origBytes) * 100) : undefined;
+  const rawPercent = hasOriginal ? (1 - outputBytes / origBytes) * 100 : undefined;
+  const savingsPercent =
+    rawPercent != null
+      ? Math.abs(rawPercent) < 1 && rawPercent !== 0
+        ? rawPercent
+        : Math.round(rawPercent)
+      : undefined;
 
   return {
     filename: result.filename,
@@ -49,8 +55,11 @@ function formatFileSize(bytes: number): string {
 
 /** Format the savings percentage with sign. */
 function formatSavings(percent: number): string {
-  if (percent > 0) return `-${percent}%`;
-  if (percent < 0) return `+${Math.abs(percent)}%`;
+  const display = Number.isInteger(percent)
+    ? `${Math.abs(percent)}`
+    : `${Math.abs(percent).toFixed(1)}`;
+  if (percent > 0) return `-${display}%`;
+  if (percent < 0) return `+${display}%`;
   return "0%";
 }
 
