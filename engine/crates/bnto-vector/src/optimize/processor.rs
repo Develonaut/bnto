@@ -123,13 +123,8 @@ impl NodeProcessor for OptimizeSvg {
 
         let input_size = input.data.len();
         let output_size = optimized.len();
-        let savings_pct = if input_size > 0 {
-            ((input_size - output_size) as f64 / input_size as f64 * 100.0).round() as i64
-        } else {
-            0
-        };
 
-        let metadata = build_metadata(input_size, output_size, savings_pct);
+        let metadata = build_metadata(input_size, output_size);
 
         progress.report(100, "SVG optimization complete");
         Ok(NodeOutput {
@@ -181,14 +176,27 @@ fn extract_config(params: &serde_json::Map<String, serde_json::Value>) -> Optimi
 }
 
 fn build_metadata(
-    input_size: usize,
-    output_size: usize,
-    savings_pct: i64,
+    original_size: usize,
+    compressed_size: usize,
 ) -> serde_json::Map<String, serde_json::Value> {
+    let ratio = if original_size > 0 {
+        (1.0 - (compressed_size as f64 / original_size as f64)) * 100.0
+    } else {
+        0.0
+    };
+
     let mut meta = serde_json::Map::new();
-    meta.insert("inputSize".to_string(), serde_json::json!(input_size));
-    meta.insert("outputSize".to_string(), serde_json::json!(output_size));
-    meta.insert("savingsPercent".to_string(), serde_json::json!(savings_pct));
+    meta.insert("originalSize".to_string(), serde_json::json!(original_size));
+    meta.insert(
+        "compressedSize".to_string(),
+        serde_json::json!(compressed_size),
+    );
+    if let Some(ratio_num) = serde_json::Number::from_f64(ratio) {
+        meta.insert(
+            "compressionRatio".to_string(),
+            serde_json::Value::Number(ratio_num),
+        );
+    }
     meta
 }
 
@@ -295,9 +303,9 @@ mod tests {
         let reporter = ProgressReporter::new_noop();
         let output = OptimizeSvg.process(input, &reporter, &NoopContext).unwrap();
 
-        assert!(output.metadata.contains_key("inputSize"));
-        assert!(output.metadata.contains_key("outputSize"));
-        assert!(output.metadata.contains_key("savingsPercent"));
+        assert!(output.metadata.contains_key("originalSize"));
+        assert!(output.metadata.contains_key("compressedSize"));
+        assert!(output.metadata.contains_key("compressionRatio"));
     }
 
     #[test]
@@ -326,14 +334,14 @@ mod tests {
         let reporter = ProgressReporter::new_noop();
         let output = OptimizeSvg.process(input, &reporter, &NoopContext).unwrap();
 
-        let savings = output
+        let ratio = output
             .metadata
-            .get("savingsPercent")
-            .and_then(|v| v.as_i64())
-            .expect("savingsPercent should be in metadata");
+            .get("compressionRatio")
+            .and_then(|v| v.as_f64())
+            .expect("compressionRatio should be in metadata");
         assert!(
-            savings >= 50,
-            "Expected >=50% savings on verbose SVG fixture, got {savings}%"
+            ratio >= 50.0,
+            "Expected >=50% savings on verbose SVG fixture, got {ratio}%"
         );
     }
 

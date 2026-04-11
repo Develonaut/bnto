@@ -21,110 +21,123 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
   {
     slug: "compress-images",
     name: "Compress Images",
-    description:
-      "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
+    description: "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
     category: "image",
-    tags: ["PNG", "JPEG", "WebP", "No upload", "Browser-based"] as const,
+    tags: ["PNG","JPEG","WebP","No upload","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "compress-image",
-        },
-        {
-          id: "e2",
-          source: "compress-image",
-          target: "output",
-        },
-      ],
-      id: "compress-images",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description:
-          "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
-        tags: ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
-      },
-      name: "Compress Images",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "compress-image"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "compress-image",
-          inputPorts: [],
-          metadata: {},
-          name: "Compress",
-          outputPorts: [],
-          parameters: {
-            quality: 80,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-compress",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Compressed Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "compress-image",
+                "target": "output"
+            }
+        ],
+        "id": "compress-images",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
+            "tags": [
+                "PNG",
+                "JPEG",
+                "WebP",
+                "No upload",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Compress Images",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "compress-image",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Compress",
+                "outputPorts": [],
+                "parameters": {
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-compress",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Compressed Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -132,108 +145,123 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Resize Images",
     description: "Resize images to exact dimensions or percentages. Free, no signup required.",
     category: "image",
-    tags: ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"] as const,
+    tags: ["PNG","JPEG","WebP","Custom dimensions","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "resize-image",
-        },
-        {
-          id: "e2",
-          source: "resize-image",
-          target: "output",
-        },
-      ],
-      id: "resize-images",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description: "Resize images to exact dimensions or percentages. Free, no signup required.",
-        tags: ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
-      },
-      name: "Resize Images",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "resize-image"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "resize-image",
-          inputPorts: [],
-          metadata: {},
-          name: "Resize",
-          outputPorts: [],
-          parameters: {
-            maintainAspect: true,
-            quality: 80,
-            width: 200,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-resize",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Resized Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "resize-image",
+                "target": "output"
+            }
+        ],
+        "id": "resize-images",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
+            "tags": [
+                "PNG",
+                "JPEG",
+                "WebP",
+                "Custom dimensions",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Resize Images",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "resize-image",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Resize",
+                "outputPorts": [],
+                "parameters": {
+                    "maintainAspect": true,
+                    "quality": 80,
+                    "width": 200
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-resize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Resized Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -241,107 +269,124 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Convert Image Format",
     description: "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
     category: "image",
-    tags: ["PNG", "JPEG", "WebP", "GIF", "Browser-based"] as const,
+    tags: ["PNG","JPEG","WebP","GIF","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "convert-image",
-        },
-        {
-          id: "e2",
-          source: "convert-image",
-          target: "output",
-        },
-      ],
-      id: "convert-image-format",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description: "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
-        tags: ["PNG", "JPEG", "WebP", "GIF", "Browser-based"],
-      },
-      name: "Convert Image Format",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "convert-image"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp", ".gif"],
-            label: "JPEG, PNG, WebP, or GIF images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "convert-image",
-          inputPorts: [],
-          metadata: {},
-          name: "Convert",
-          outputPorts: [],
-          parameters: {
-            format: "webp",
-            quality: 80,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-convert",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Converted Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "convert-image",
+                "target": "output"
+            }
+        ],
+        "id": "convert-image-format",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
+            "tags": [
+                "PNG",
+                "JPEG",
+                "WebP",
+                "GIF",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Convert Image Format",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp",
+                        "image/gif"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp",
+                        ".gif"
+                    ],
+                    "label": "JPEG, PNG, WebP, or GIF images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "convert-image",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Convert",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "webp",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-convert",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Converted Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -349,106 +394,112 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Rename Files",
     description: "Batch rename files with patterns. Free, no signup required.",
     category: "file",
-    tags: ["Batch rename", "Pattern matching", "Browser-based"] as const,
+    tags: ["Batch rename","Pattern matching","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "rename-file",
-        },
-        {
-          id: "e2",
-          source: "rename-file",
-          target: "output",
-        },
-      ],
-      id: "rename-files",
-      inputPorts: [],
-      metadata: {
-        category: "file",
-        description: "Batch rename files with patterns. Free, no signup required.",
-        tags: ["Batch rename", "Pattern matching", "Browser-based"],
-      },
-      name: "Rename Files",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "rename-file"
             },
-          ],
-          parameters: {
-            accept: ["*/*"],
-            extensions: [],
-            label: "any files",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "rename-file",
-          inputPorts: [],
-          metadata: {},
-          name: "Rename",
-          outputPorts: [],
-          parameters: {
-            prefix: "renamed-",
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "file-rename",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Renamed Files",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "rename-file",
+                "target": "output"
+            }
+        ],
+        "id": "rename-files",
+        "inputPorts": [],
+        "metadata": {
+            "category": "file",
+            "description": "Batch rename files with patterns. Free, no signup required.",
+            "tags": [
+                "Batch rename",
+                "Pattern matching",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Rename Files",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "*/*"
+                    ],
+                    "extensions": [],
+                    "label": "any files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rename-file",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rename",
+                "outputPorts": [],
+                "parameters": {
+                    "prefix": "renamed-"
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "file-rename",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Renamed Files",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -456,118 +507,127 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Clean CSV",
     description: "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
     category: "spreadsheet",
-    tags: ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"] as const,
+    tags: ["CSV","Remove duplicates","Trim whitespace","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "clean",
-        },
-        {
-          id: "e2",
-          source: "clean",
-          target: "output",
-        },
-      ],
-      id: "clean-csv",
-      inputPorts: [],
-      metadata: {
-        category: "spreadsheet",
-        description: "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
-        tags: ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
-      },
-      name: "Clean CSV",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "clean"
             },
-          ],
-          parameters: {
-            accept: ["text/csv"],
-            extensions: [".csv"],
-            label: "CSV files",
-            mode: "file-upload",
-            multiple: false,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "clean",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Clean",
-          outputPorts: [
-            {
-              id: "out-1",
-              name: "files",
-            },
-          ],
-          parameters: {
-            removeDuplicates: true,
-            removeEmptyRows: true,
-            trimWhitespace: true,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "spreadsheet-clean",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "clean",
+                "target": "output"
+            }
+        ],
+        "id": "clean-csv",
+        "inputPorts": [],
+        "metadata": {
+            "category": "spreadsheet",
+            "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+            "tags": [
+                "CSV",
+                "Remove duplicates",
+                "Trim whitespace",
+                "Browser-based"
+            ]
         },
-        {
-          id: "output",
-          inputPorts: [
+        "name": "Clean CSV",
+        "nodes": [
             {
-              id: "in-1",
-              name: "files",
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "text/csv"
+                    ],
+                    "extensions": [
+                        ".csv"
+                    ],
+                    "label": "CSV files",
+                    "mode": "file-upload",
+                    "multiple": false
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Cleaned CSV",
-            mode: "download",
-            zip: false,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "clean",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Clean",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "removeDuplicates": true,
+                    "removeEmptyRows": true,
+                    "trimWhitespace": true
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "spreadsheet-clean",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Cleaned CSV",
+                    "mode": "download",
+                    "zip": false
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -575,116 +635,125 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Rename CSV Columns",
     description: "Rename CSV column headers in bulk. Free, no signup required.",
     category: "spreadsheet",
-    tags: ["CSV", "Column rename", "Bulk edit", "Browser-based"] as const,
+    tags: ["CSV","Column rename","Bulk edit","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "rename-columns",
-        },
-        {
-          id: "e2",
-          source: "rename-columns",
-          target: "output",
-        },
-      ],
-      id: "rename-csv-columns",
-      inputPorts: [],
-      metadata: {
-        category: "spreadsheet",
-        description: "Rename CSV column headers in bulk. Free, no signup required.",
-        tags: ["CSV", "Column rename", "Bulk edit", "Browser-based"],
-      },
-      name: "Rename CSV Columns",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "rename-columns"
             },
-          ],
-          parameters: {
-            accept: ["text/csv"],
-            extensions: [".csv"],
-            label: "CSV files",
-            mode: "file-upload",
-            multiple: false,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "rename-columns",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Rename",
-          outputPorts: [
-            {
-              id: "out-1",
-              name: "files",
-            },
-          ],
-          parameters: {
-            columns: {},
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "spreadsheet-rename",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "rename-columns",
+                "target": "output"
+            }
+        ],
+        "id": "rename-csv-columns",
+        "inputPorts": [],
+        "metadata": {
+            "category": "spreadsheet",
+            "description": "Rename CSV column headers in bulk. Free, no signup required.",
+            "tags": [
+                "CSV",
+                "Column rename",
+                "Bulk edit",
+                "Browser-based"
+            ]
         },
-        {
-          id: "output",
-          inputPorts: [
+        "name": "Rename CSV Columns",
+        "nodes": [
             {
-              id: "in-1",
-              name: "files",
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "text/csv"
+                    ],
+                    "extensions": [
+                        ".csv"
+                    ],
+                    "label": "CSV files",
+                    "mode": "file-upload",
+                    "multiple": false
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Renamed CSV",
-            mode: "download",
-            zip: false,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "rename-columns",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Rename",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "columns": {}
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "spreadsheet-rename",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Renamed CSV",
+                    "mode": "download",
+                    "zip": false
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -692,118 +761,126 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "CSV to JSON",
     description: "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
     category: "spreadsheet",
-    tags: ["CSV", "JSON", "Configurable delimiter", "Browser-based"] as const,
+    tags: ["CSV","JSON","Configurable delimiter","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "convert",
-        },
-        {
-          id: "e2",
-          source: "convert",
-          target: "output",
-        },
-      ],
-      id: "csv-to-json",
-      inputPorts: [],
-      metadata: {
-        category: "spreadsheet",
-        description:
-          "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
-        tags: ["CSV", "JSON", "Configurable delimiter", "Browser-based"],
-      },
-      name: "CSV to JSON",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "convert"
             },
-          ],
-          parameters: {
-            accept: ["text/csv"],
-            extensions: [".csv"],
-            label: "CSV files",
-            mode: "file-upload",
-            multiple: false,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "convert",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Convert to JSON",
-          outputPorts: [
-            {
-              id: "out-1",
-              name: "files",
-            },
-          ],
-          parameters: {
-            delimiter: "comma",
-            pretty: false,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "spreadsheet-convert",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "convert",
+                "target": "output"
+            }
+        ],
+        "id": "csv-to-json",
+        "inputPorts": [],
+        "metadata": {
+            "category": "spreadsheet",
+            "description": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
+            "tags": [
+                "CSV",
+                "JSON",
+                "Configurable delimiter",
+                "Browser-based"
+            ]
         },
-        {
-          id: "output",
-          inputPorts: [
+        "name": "CSV to JSON",
+        "nodes": [
             {
-              id: "in-1",
-              name: "files",
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "text/csv"
+                    ],
+                    "extensions": [
+                        ".csv"
+                    ],
+                    "label": "CSV files",
+                    "mode": "file-upload",
+                    "multiple": false
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "JSON file",
-            mode: "download",
-            zip: false,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "convert",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Convert to JSON",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "delimiter": "comma",
+                    "pretty": false
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "spreadsheet-convert",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "JSON file",
+                    "mode": "download",
+                    "zip": false
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -811,556 +888,604 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Merge CSV",
     description: "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
     category: "spreadsheet",
-    tags: ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"] as const,
+    tags: ["CSV","Merge","Header reconciliation","Deduplication","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "merge",
-        },
-        {
-          id: "e2",
-          source: "merge",
-          target: "output",
-        },
-      ],
-      id: "merge-csv",
-      inputPorts: [],
-      metadata: {
-        category: "spreadsheet",
-        description:
-          "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
-        tags: ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"],
-      },
-      name: "Merge CSV",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "merge"
             },
-          ],
-          parameters: {
-            accept: ["text/csv"],
-            extensions: [".csv"],
-            label: "CSV files",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "merge",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Merge",
-          outputPorts: [
-            {
-              id: "out-1",
-              name: "files",
-            },
-          ],
-          parameters: {
-            deduplicate: false,
-            headerHandling: "first-file",
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "spreadsheet-merge",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "merge",
+                "target": "output"
+            }
+        ],
+        "id": "merge-csv",
+        "inputPorts": [],
+        "metadata": {
+            "category": "spreadsheet",
+            "description": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
+            "tags": [
+                "CSV",
+                "Merge",
+                "Header reconciliation",
+                "Deduplication",
+                "Browser-based"
+            ]
         },
-        {
-          id: "output",
-          inputPorts: [
+        "name": "Merge CSV",
+        "nodes": [
             {
-              id: "in-1",
-              name: "files",
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "text/csv"
+                    ],
+                    "extensions": [
+                        ".csv"
+                    ],
+                    "label": "CSV files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Merged CSV",
-            mode: "download",
-            zip: false,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "merge",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Merge",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "deduplicate": false,
+                    "headerHandling": "first-file"
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "spreadsheet-merge",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Merged CSV",
+                    "mode": "download",
+                    "zip": false
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "optimize-images-for-web",
     name: "Optimize Images for Web",
-    description:
-      "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
+    description: "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
     category: "image",
-    tags: ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"] as const,
+    tags: ["Resize","WebP","Compress","Multi-step","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "resize",
-        },
-        {
-          id: "e2",
-          source: "resize",
-          target: "convert",
-        },
-        {
-          id: "e3",
-          source: "convert",
-          target: "compress",
-        },
-        {
-          id: "e4",
-          source: "compress",
-          target: "output",
-        },
-      ],
-      id: "optimize-images-for-web",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description:
-          "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
-        tags: ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"],
-      },
-      name: "Optimize Images for Web",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "resize"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "resize",
-          inputPorts: [],
-          metadata: {},
-          name: "Resize",
-          outputPorts: [],
-          parameters: {
-            maintainAspect: true,
-            quality: 80,
-            width: 800,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-resize",
-          version: "1.0.0",
-        },
-        {
-          id: "convert",
-          inputPorts: [],
-          metadata: {},
-          name: "Convert",
-          outputPorts: [],
-          parameters: {
-            format: "webp",
-            quality: 80,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "image-convert",
-          version: "1.0.0",
-        },
-        {
-          id: "compress",
-          inputPorts: [],
-          metadata: {},
-          name: "Compress",
-          outputPorts: [],
-          parameters: {
-            quality: 80,
-          },
-          position: {
-            x: 750,
-            y: 100,
-          },
-          type: "image-compress",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
+                "id": "e2",
+                "source": "resize",
+                "target": "convert"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Optimized Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 1000,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "e3",
+                "source": "convert",
+                "target": "compress"
+            },
+            {
+                "id": "e4",
+                "source": "compress",
+                "target": "output"
+            }
+        ],
+        "id": "optimize-images-for-web",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
+            "tags": [
+                "Resize",
+                "WebP",
+                "Compress",
+                "Multi-step",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Optimize Images for Web",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "resize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Resize",
+                "outputPorts": [],
+                "parameters": {
+                    "maintainAspect": true,
+                    "quality": 80,
+                    "width": 800
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-resize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "convert",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Convert",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "webp",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "image-convert",
+                "version": "1.0.0"
+            },
+            {
+                "id": "compress",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Compress",
+                "outputPorts": [],
+                "parameters": {
+                    "quality": 80
+                },
+                "position": {
+                    "x": 750,
+                    "y": 100
+                },
+                "type": "image-compress",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Optimized Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 1000,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "generate-thumbnails",
     name: "Generate Thumbnails",
-    description:
-      "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
+    description: "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
     category: "image",
-    tags: ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"] as const,
+    tags: ["Thumbnails","Resize","WebP","Multi-step","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "resize",
-        },
-        {
-          id: "e2",
-          source: "resize",
-          target: "convert",
-        },
-        {
-          id: "e3",
-          source: "convert",
-          target: "rename",
-        },
-        {
-          id: "e4",
-          source: "rename",
-          target: "output",
-        },
-      ],
-      id: "generate-thumbnails",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description:
-          "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
-        tags: ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"],
-      },
-      name: "Generate Thumbnails",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "resize"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "resize",
-          inputPorts: [],
-          metadata: {},
-          name: "Resize",
-          outputPorts: [],
-          parameters: {
-            maintainAspect: true,
-            quality: 80,
-            width: 150,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-resize",
-          version: "1.0.0",
-        },
-        {
-          id: "convert",
-          inputPorts: [],
-          metadata: {},
-          name: "Convert",
-          outputPorts: [],
-          parameters: {
-            format: "webp",
-            quality: 80,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "image-convert",
-          version: "1.0.0",
-        },
-        {
-          id: "rename",
-          inputPorts: [],
-          metadata: {},
-          name: "Rename",
-          outputPorts: [],
-          parameters: {
-            prefix: "thumb_",
-          },
-          position: {
-            x: 750,
-            y: 100,
-          },
-          type: "file-rename",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
+                "id": "e2",
+                "source": "resize",
+                "target": "convert"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Thumbnails",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 1000,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "e3",
+                "source": "convert",
+                "target": "rename"
+            },
+            {
+                "id": "e4",
+                "source": "rename",
+                "target": "output"
+            }
+        ],
+        "id": "generate-thumbnails",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
+            "tags": [
+                "Thumbnails",
+                "Resize",
+                "WebP",
+                "Multi-step",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Generate Thumbnails",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "resize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Resize",
+                "outputPorts": [],
+                "parameters": {
+                    "maintainAspect": true,
+                    "quality": 80,
+                    "width": 150
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-resize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "convert",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Convert",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "webp",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "image-convert",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rename",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rename",
+                "outputPorts": [],
+                "parameters": {
+                    "prefix": "thumb_"
+                },
+                "position": {
+                    "x": 750,
+                    "y": 100
+                },
+                "type": "file-rename",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Thumbnails",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 1000,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "compress-and-rename",
     name: "Compress & Rename",
-    description:
-      "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
+    description: "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
     category: "image",
-    tags: ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"] as const,
+    tags: ["Compress","Rename","Suffix","Multi-step","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "compress",
-        },
-        {
-          id: "e2",
-          source: "compress",
-          target: "rename",
-        },
-        {
-          id: "e3",
-          source: "rename",
-          target: "output",
-        },
-      ],
-      id: "compress-and-rename",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description:
-          "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
-        tags: ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"],
-      },
-      name: "Compress & Rename",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "compress"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "compress",
-          inputPorts: [],
-          metadata: {},
-          name: "Compress",
-          outputPorts: [],
-          parameters: {
-            quality: 80,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-compress",
-          version: "1.0.0",
-        },
-        {
-          id: "rename",
-          inputPorts: [],
-          metadata: {},
-          name: "Rename",
-          outputPorts: [],
-          parameters: {
-            suffix: "-min",
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "file-rename",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
+                "id": "e2",
+                "source": "compress",
+                "target": "rename"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Compressed & Renamed",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 750,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "e3",
+                "source": "rename",
+                "target": "output"
+            }
+        ],
+        "id": "compress-and-rename",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
+            "tags": [
+                "Compress",
+                "Rename",
+                "Suffix",
+                "Multi-step",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Compress & Rename",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "compress",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Compress",
+                "outputPorts": [],
+                "parameters": {
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-compress",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rename",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rename",
+                "outputPorts": [],
+                "parameters": {
+                    "suffix": "-min"
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "file-rename",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Compressed & Renamed",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 750,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
@@ -1368,833 +1493,882 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     name: "Standardize CSV",
     description: "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
     category: "spreadsheet",
-    tags: ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"] as const,
+    tags: ["CSV","Clean","Rename columns","Multi-step","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "clean",
-        },
-        {
-          id: "e2",
-          source: "clean",
-          target: "rename-columns",
-        },
-        {
-          id: "e3",
-          source: "rename-columns",
-          target: "output",
-        },
-      ],
-      id: "standardize-csv",
-      inputPorts: [],
-      metadata: {
-        category: "spreadsheet",
-        description:
-          "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
-        tags: ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"],
-      },
-      name: "Standardize CSV",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "clean"
             },
-          ],
-          parameters: {
-            accept: ["text/csv"],
-            extensions: [".csv"],
-            label: "CSV files",
-            mode: "file-upload",
-            multiple: false,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
+            {
+                "id": "e2",
+                "source": "clean",
+                "target": "rename-columns"
+            },
+            {
+                "id": "e3",
+                "source": "rename-columns",
+                "target": "output"
+            }
+        ],
+        "id": "standardize-csv",
+        "inputPorts": [],
+        "metadata": {
+            "category": "spreadsheet",
+            "description": "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
+            "tags": [
+                "CSV",
+                "Clean",
+                "Rename columns",
+                "Multi-step",
+                "Browser-based"
+            ]
         },
-        {
-          id: "clean",
-          inputPorts: [
+        "name": "Standardize CSV",
+        "nodes": [
             {
-              id: "in-1",
-              name: "files",
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "text/csv"
+                    ],
+                    "extensions": [
+                        ".csv"
+                    ],
+                    "label": "CSV files",
+                    "mode": "file-upload",
+                    "multiple": false
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
             },
-          ],
-          metadata: {},
-          name: "Clean",
-          outputPorts: [
             {
-              id: "out-1",
-              name: "files",
+                "id": "clean",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Clean",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "removeDuplicates": true,
+                    "removeEmptyRows": true,
+                    "trimWhitespace": true
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "spreadsheet-clean",
+                "version": "1.0.0"
             },
-          ],
-          parameters: {
-            removeDuplicates: true,
-            removeEmptyRows: true,
-            trimWhitespace: true,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "spreadsheet-clean",
-          version: "1.0.0",
+            {
+                "id": "rename-columns",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Rename",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "columns": {}
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "spreadsheet-rename",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Standardized CSV",
+                    "mode": "download",
+                    "zip": false
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
         },
-        {
-          id: "rename-columns",
-          inputPorts: [
-            {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Rename",
-          outputPorts: [
-            {
-              id: "out-1",
-              name: "files",
-            },
-          ],
-          parameters: {
-            columns: {},
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "spreadsheet-rename",
-          version: "1.0.0",
+        "settings": {
+            "iteration": "auto"
         },
-        {
-          id: "output",
-          inputPorts: [
-            {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Standardized CSV",
-            mode: "download",
-            zip: false,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
-        },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "strip-exif",
     name: "Strip EXIF",
-    description:
-      "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
+    description: "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
     category: "image",
-    tags: ["PNG", "JPEG", "WebP", "No upload", "Browser-based"] as const,
+    tags: ["PNG","JPEG","WebP","No upload","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "strip-exif-node",
-        },
-        {
-          id: "e2",
-          source: "strip-exif-node",
-          target: "output",
-        },
-      ],
-      id: "strip-exif",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description:
-          "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
-        tags: ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
-      },
-      name: "Strip EXIF",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "strip-exif-node"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "strip-exif-node",
-          inputPorts: [],
-          metadata: {},
-          name: "Strip EXIF",
-          outputPorts: [],
-          parameters: {
-            quality: 80,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-strip-exif",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Cleaned Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "strip-exif-node",
+                "target": "output"
+            }
+        ],
+        "id": "strip-exif",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
+            "tags": [
+                "PNG",
+                "JPEG",
+                "WebP",
+                "No upload",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Strip EXIF",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "strip-exif-node",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Strip EXIF",
+                "outputPorts": [],
+                "parameters": {
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-strip-exif",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Cleaned Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "watermark-images",
     name: "Watermark Images",
-    description:
-      "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
+    description: "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
     category: "image",
-    tags: [
-      "PNG",
-      "JPEG",
-      "WebP",
-      "Configurable position",
-      "Adjustable opacity",
-      "Browser-based",
-    ] as const,
+    tags: ["PNG","JPEG","WebP","Configurable position","Adjustable opacity","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "overlay",
-        },
-        {
-          id: "e2",
-          source: "overlay",
-          target: "output",
-        },
-      ],
-      id: "watermark-images",
-      inputPorts: [],
-      metadata: {
-        category: "image",
-        description:
-          "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
-        tags: [
-          "PNG",
-          "JPEG",
-          "WebP",
-          "Configurable position",
-          "Adjustable opacity",
-          "Browser-based",
+        "edges": [
+            {
+                "id": "e1",
+                "source": "input",
+                "target": "overlay"
+            },
+            {
+                "id": "e2",
+                "source": "overlay",
+                "target": "output"
+            }
         ],
-      },
-      name: "Watermark Images",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "id": "watermark-images",
+        "inputPorts": [],
+        "metadata": {
+            "category": "image",
+            "description": "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
+            "tags": [
+                "PNG",
+                "JPEG",
+                "WebP",
+                "Configurable position",
+                "Adjustable opacity",
+                "Browser-based"
+            ]
+        },
+        "name": "Watermark Images",
+        "nodes": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                    ],
+                    "extensions": [
+                        ".jpg",
+                        ".jpeg",
+                        ".png",
+                        ".webp"
+                    ],
+                    "label": "JPEG, PNG, or WebP images",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
             },
-          ],
-          parameters: {
-            accept: ["image/jpeg", "image/png", "image/webp"],
-            extensions: [".jpg", ".jpeg", ".png", ".webp"],
-            label: "JPEG, PNG, or WebP images",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "overlay",
-          inputPorts: [],
-          metadata: {},
-          name: "Overlay",
-          outputPorts: [],
-          parameters: {
-            offsetX: 0,
-            offsetY: 0,
-            opacity: 80,
-            overlay: "",
-            position: "bottom-right",
-            quality: 80,
-            size: 25,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "image-overlay",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
+                "id": "overlay",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Overlay",
+                "outputPorts": [],
+                "parameters": {
+                    "offsetX": 0,
+                    "offsetY": 0,
+                    "opacity": 80,
+                    "overlay": "",
+                    "position": "bottom-right",
+                    "quality": 80,
+                    "size": 25
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "image-overlay",
+                "version": "1.0.0"
             },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Watermarked Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Watermarked Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "download-video",
     name: "Download Video",
-    description:
-      "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+    description: "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
     category: "video",
-    tags: ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"] as const,
+    tags: ["YouTube","m3u8/HLS","MP4/WebM/MKV","Audio extraction"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "video-download",
-        },
-        {
-          id: "e2",
-          source: "video-download",
-          target: "output",
-        },
-      ],
-      id: "download-video",
-      inputPorts: [],
-      metadata: {
-        category: "video",
-        description:
-          "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
-        tags: ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
-      },
-      name: "Download Video",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "video-download"
             },
-          ],
-          parameters: {
-            accept: [],
-            extensions: [],
-            label: "Video URL",
-            mode: "url",
-            multiple: true,
-            placeholder: "https://youtube.com/watch?v=...",
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "video-download",
-          inputPorts: [],
-          metadata: {},
-          name: "Download Video",
-          outputPorts: [],
-          parameters: {
-            format: "mp4",
-            quality: "best",
-            url: "",
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "video-download",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Downloaded Video",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "video-download",
+                "target": "output"
+            }
+        ],
+        "id": "download-video",
+        "inputPorts": [],
+        "metadata": {
+            "category": "video",
+            "description": "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+            "tags": [
+                "YouTube",
+                "m3u8/HLS",
+                "MP4/WebM/MKV",
+                "Audio extraction"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Download Video",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [],
+                    "extensions": [],
+                    "label": "Video URL",
+                    "mode": "url",
+                    "multiple": true,
+                    "placeholder": "https://youtube.com/watch?v=..."
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "video-download",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Download Video",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "mp4",
+                    "quality": "best",
+                    "url": ""
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "video-download",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Downloaded Video",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "svg-to-png",
     name: "SVG to PNG",
-    description:
-      "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
+    description: "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
     category: "vector",
-    tags: ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"] as const,
+    tags: ["SVG","PNG","Vector to raster","No upload","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "rasterize",
-        },
-        {
-          id: "e2",
-          source: "rasterize",
-          target: "output",
-        },
-      ],
-      id: "svg-to-png",
-      inputPorts: [],
-      metadata: {
-        category: "vector",
-        description:
-          "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
-        tags: ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"],
-      },
-      name: "SVG to PNG",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "rasterize"
             },
-          ],
-          parameters: {
-            accept: ["image/svg+xml"],
-            extensions: [".svg"],
-            label: "SVG files",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "rasterize",
-          inputPorts: [],
-          metadata: {},
-          name: "Rasterize",
-          outputPorts: [],
-          parameters: {
-            format: "png",
-            quality: 80,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "vector-rasterize",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "PNG Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "rasterize",
+                "target": "output"
+            }
+        ],
+        "id": "svg-to-png",
+        "inputPorts": [],
+        "metadata": {
+            "category": "vector",
+            "description": "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
+            "tags": [
+                "SVG",
+                "PNG",
+                "Vector to raster",
+                "No upload",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "SVG to PNG",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/svg+xml"
+                    ],
+                    "extensions": [
+                        ".svg"
+                    ],
+                    "label": "SVG files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rasterize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rasterize",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "png",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "vector-rasterize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "PNG Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "svg-to-jpeg",
     name: "SVG to JPEG",
-    description:
-      "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
+    description: "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
     category: "vector",
-    tags: ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"] as const,
+    tags: ["SVG","JPEG","Vector to raster","No upload","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "rasterize",
-        },
-        {
-          id: "e2",
-          source: "rasterize",
-          target: "output",
-        },
-      ],
-      id: "svg-to-jpeg",
-      inputPorts: [],
-      metadata: {
-        category: "vector",
-        description:
-          "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
-        tags: ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"],
-      },
-      name: "SVG to JPEG",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "rasterize"
             },
-          ],
-          parameters: {
-            accept: ["image/svg+xml"],
-            extensions: [".svg"],
-            label: "SVG files",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "rasterize",
-          inputPorts: [],
-          metadata: {},
-          name: "Rasterize",
-          outputPorts: [],
-          parameters: {
-            format: "jpeg",
-            quality: 80,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "vector-rasterize",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "JPEG Images",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "rasterize",
+                "target": "output"
+            }
+        ],
+        "id": "svg-to-jpeg",
+        "inputPorts": [],
+        "metadata": {
+            "category": "vector",
+            "description": "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
+            "tags": [
+                "SVG",
+                "JPEG",
+                "Vector to raster",
+                "No upload",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "SVG to JPEG",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/svg+xml"
+                    ],
+                    "extensions": [
+                        ".svg"
+                    ],
+                    "label": "SVG files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "rasterize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Rasterize",
+                "outputPorts": [],
+                "parameters": {
+                    "format": "jpeg",
+                    "quality": 80
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "vector-rasterize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "JPEG Images",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
   {
     slug: "optimize-svg",
     name: "Optimize SVG",
-    description:
-      "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
+    description: "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
     category: "vector",
-    tags: ["SVG", "Optimize", "Minify", "Clean", "Browser-based"] as const,
+    tags: ["SVG","Optimize","Minify","Clean","Browser-based"] as const,
     definition: {
-      edges: [
-        {
-          id: "e1",
-          source: "input",
-          target: "optimize",
-        },
-        {
-          id: "e2",
-          source: "optimize",
-          target: "output",
-        },
-      ],
-      id: "optimize-svg",
-      inputPorts: [],
-      metadata: {
-        category: "vector",
-        description:
-          "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
-        tags: ["SVG", "Optimize", "Minify", "Clean", "Browser-based"],
-      },
-      name: "Optimize SVG",
-      nodes: [
-        {
-          id: "input",
-          inputPorts: [],
-          metadata: {},
-          name: "Input",
-          outputPorts: [
+        "edges": [
             {
-              id: "out-1",
-              name: "files",
+                "id": "e1",
+                "source": "input",
+                "target": "optimize"
             },
-          ],
-          parameters: {
-            accept: ["image/svg+xml"],
-            extensions: [".svg"],
-            label: "SVG files",
-            mode: "file-upload",
-            multiple: true,
-          },
-          position: {
-            x: 0,
-            y: 100,
-          },
-          type: "input",
-          version: "1.0.0",
-        },
-        {
-          id: "optimize",
-          inputPorts: [],
-          metadata: {},
-          name: "Optimize",
-          outputPorts: [],
-          parameters: {
-            collapseGroups: true,
-            minify: true,
-            precision: 3,
-            removeComments: true,
-            removeMetadata: true,
-          },
-          position: {
-            x: 250,
-            y: 100,
-          },
-          type: "vector-optimize",
-          version: "1.0.0",
-        },
-        {
-          id: "output",
-          inputPorts: [
             {
-              id: "in-1",
-              name: "files",
-            },
-          ],
-          metadata: {},
-          name: "Output",
-          outputPorts: [],
-          parameters: {
-            autoDownload: true,
-            label: "Optimized SVGs",
-            mode: "download",
-            zip: true,
-          },
-          position: {
-            x: 500,
-            y: 100,
-          },
-          type: "output",
-          version: "1.0.0",
+                "id": "e2",
+                "source": "optimize",
+                "target": "output"
+            }
+        ],
+        "id": "optimize-svg",
+        "inputPorts": [],
+        "metadata": {
+            "category": "vector",
+            "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
+            "tags": [
+                "SVG",
+                "Optimize",
+                "Minify",
+                "Clean",
+                "Browser-based"
+            ]
         },
-      ],
-      outputPorts: [],
-      parameters: {},
-      position: {
-        x: 0,
-        y: 0,
-      },
-      settings: {
-        iteration: "auto",
-      },
-      type: "group",
-      version: "1.0.0",
+        "name": "Optimize SVG",
+        "nodes": [
+            {
+                "id": "input",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Input",
+                "outputPorts": [
+                    {
+                        "id": "out-1",
+                        "name": "files"
+                    }
+                ],
+                "parameters": {
+                    "accept": [
+                        "image/svg+xml"
+                    ],
+                    "extensions": [
+                        ".svg"
+                    ],
+                    "label": "SVG files",
+                    "mode": "file-upload",
+                    "multiple": true
+                },
+                "position": {
+                    "x": 0,
+                    "y": 100
+                },
+                "type": "input",
+                "version": "1.0.0"
+            },
+            {
+                "id": "optimize",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Optimize",
+                "outputPorts": [],
+                "parameters": {
+                    "collapseGroups": true,
+                    "minify": true,
+                    "precision": 3,
+                    "removeComments": true,
+                    "removeMetadata": true
+                },
+                "position": {
+                    "x": 250,
+                    "y": 100
+                },
+                "type": "vector-optimize",
+                "version": "1.0.0"
+            },
+            {
+                "id": "output",
+                "inputPorts": [
+                    {
+                        "id": "in-1",
+                        "name": "files"
+                    }
+                ],
+                "metadata": {},
+                "name": "Output",
+                "outputPorts": [],
+                "parameters": {
+                    "autoDownload": true,
+                    "label": "Optimized SVGs",
+                    "mode": "download",
+                    "zip": true
+                },
+                "position": {
+                    "x": 500,
+                    "y": 100
+                },
+                "type": "output",
+                "version": "1.0.0"
+            }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+            "x": 0,
+            "y": 0
+        },
+        "settings": {
+            "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
     },
   },
 ] as const;
