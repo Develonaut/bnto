@@ -81,7 +81,14 @@ pub fn optimize_svg(input: &str, config: &OptimizeConfig) -> Result<String, Opti
         opts.indent = xmlwriter::Indent::None;
     }
     let mut writer = XmlWriter::new(opts);
-    write::write_node(doc.root(), &mut writer, config, &editor_prefixes);
+    let mut declared_ns = std::collections::HashSet::new();
+    write::write_node(
+        doc.root(),
+        &mut writer,
+        config,
+        &editor_prefixes,
+        &mut declared_ns,
+    );
 
     Ok(writer.end_document())
 }
@@ -300,5 +307,67 @@ mod tests {
         assert!(result.contains("<svg"));
         assert!(result.contains("<rect"));
         assert!(result.contains("fill=\"blue\""));
+    }
+
+    // --- Quantitative proof tests ---
+    // These tests assert measurable optimization outcomes,
+    // not just structural correctness.
+
+    #[test]
+    fn test_verbose_svg_achieves_minimum_reduction() {
+        let input = verbose_svg();
+        let result = optimize_svg(&input, &OptimizeConfig::default()).unwrap();
+        let reduction_pct = (input.len() - result.len()) as f64 / input.len() as f64 * 100.0;
+        assert!(
+            reduction_pct >= 50.0,
+            "Expected >=50% reduction on verbose Inkscape SVG, got {reduction_pct:.1}% \
+             (input={} bytes, output={} bytes)",
+            input.len(),
+            result.len(),
+        );
+    }
+
+    #[test]
+    fn test_no_redundant_xmlns_on_child_elements() {
+        let result = optimize_svg(&verbose_svg(), &OptimizeConfig::default()).unwrap();
+        // xmlns should appear exactly once (on the root <svg>)
+        let xmlns_count = result.matches("xmlns=").count();
+        assert_eq!(
+            xmlns_count, 1,
+            "xmlns= should appear once (root only), found {xmlns_count} in: {result}"
+        );
+    }
+
+    #[test]
+    fn test_no_editor_namespace_survives() {
+        let result = optimize_svg(&verbose_svg(), &OptimizeConfig::default()).unwrap();
+        for keyword in &["inkscape", "sodipodi", "sketch", "rdf", "dc:", "cc:"] {
+            assert!(
+                !result.contains(keyword),
+                "Editor namespace '{keyword}' should be removed, found in: {result}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_no_xml_prolog_in_output() {
+        let result = optimize_svg(&verbose_svg(), &OptimizeConfig::default()).unwrap();
+        assert!(
+            !result.contains("<?xml"),
+            "XML declaration should be stripped"
+        );
+        assert!(!result.contains("<!DOCTYPE"), "DOCTYPE should be stripped");
+    }
+
+    #[test]
+    fn test_empty_group_nesting_eliminated() {
+        let result = optimize_svg(&verbose_svg(), &OptimizeConfig::default()).unwrap();
+        // The verbose fixture has nested <g> wrappers — verify they're collapsed.
+        // Only the meaningful group (id="layer1") should survive.
+        let g_count = result.matches("<g").count();
+        assert!(
+            g_count <= 1,
+            "Expected at most 1 <g> tag (the id=layer1 group), found {g_count}"
+        );
     }
 }

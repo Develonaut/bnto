@@ -321,6 +321,23 @@ mod tests {
     }
 
     #[test]
+    fn test_process_reports_minimum_50pct_savings() {
+        let input = make_input(empty_params());
+        let reporter = ProgressReporter::new_noop();
+        let output = OptimizeSvg.process(input, &reporter, &NoopContext).unwrap();
+
+        let savings = output
+            .metadata
+            .get("savingsPercent")
+            .and_then(|v| v.as_i64())
+            .expect("savingsPercent should be in metadata");
+        assert!(
+            savings >= 50,
+            "Expected >=50% savings on verbose SVG fixture, got {savings}%"
+        );
+    }
+
+    #[test]
     fn test_process_invalid_utf8_returns_error() {
         let input = NodeInput {
             data: vec![0xFF, 0xFE, 0x00],

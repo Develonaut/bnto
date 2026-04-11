@@ -1,26 +1,31 @@
 // Tree-walking writer — recursively walks roxmltree nodes and writes
 // optimized output to xmlwriter, applying passes from OptimizeConfig.
 
+use std::collections::HashSet;
+
 use xmlwriter::XmlWriter;
 
 use super::OptimizeConfig;
 use super::xml_passes;
 
 /// Recursively write a node and its children, applying optimization passes.
+/// `declared_ns` tracks namespace URIs already emitted to avoid duplicates
+/// on child elements (roxmltree propagates inherited namespaces to every node).
 pub fn write_node(
     node: roxmltree::Node,
     writer: &mut XmlWriter,
     config: &OptimizeConfig,
     editor_prefixes: &[String],
+    declared_ns: &mut HashSet<String>,
 ) {
     match node.node_type() {
         roxmltree::NodeType::Root => {
             for child in node.children() {
-                write_node(child, writer, config, editor_prefixes);
+                write_node(child, writer, config, editor_prefixes, declared_ns);
             }
         }
         roxmltree::NodeType::Element => {
-            write_element(node, writer, config, editor_prefixes);
+            write_element(node, writer, config, editor_prefixes, declared_ns);
         }
         roxmltree::NodeType::Text => {
             write_text(node, writer, config);
@@ -57,6 +62,7 @@ fn write_element(
     writer: &mut XmlWriter,
     config: &OptimizeConfig,
     editor_prefixes: &[String],
+    declared_ns: &mut HashSet<String>,
 ) {
     let tag = node.tag_name();
 
@@ -90,11 +96,11 @@ fn write_element(
         && children.len() == 1
         && xml_passes::has_no_meaningful_attributes(&node, editor_prefixes)
     {
-        write_node(children[0], writer, config, editor_prefixes);
+        write_node(children[0], writer, config, editor_prefixes, declared_ns);
         return;
     }
 
-    write_element_tag(node, writer, config, editor_prefixes);
+    write_element_tag(node, writer, config, editor_prefixes, declared_ns);
 }
 
 /// Write the element's opening tag, attributes, children, and closing tag.
@@ -103,15 +109,16 @@ fn write_element_tag(
     writer: &mut XmlWriter,
     config: &OptimizeConfig,
     editor_prefixes: &[String],
+    declared_ns: &mut HashSet<String>,
 ) {
     let elem_name = node.tag_name().name().to_string();
     writer.start_element(&elem_name);
 
     write_attributes(&node, writer, editor_prefixes);
-    write_namespace_declarations(&node, writer, editor_prefixes);
+    write_namespace_declarations(&node, writer, editor_prefixes, declared_ns);
 
     for child in node.children() {
-        write_node(child, writer, config, editor_prefixes);
+        write_node(child, writer, config, editor_prefixes, declared_ns);
     }
     writer.end_element();
 }
@@ -177,14 +184,20 @@ fn format_attr_name(attr: &roxmltree::Attribute) -> String {
     attr.name().to_string()
 }
 
-/// Write xmlns declarations for namespaces that aren't editor cruft.
+/// Write xmlns declarations for namespaces not yet declared and not editor cruft.
+/// roxmltree propagates inherited namespaces to every child, so without
+/// deduplication, every element gets redundant xmlns attributes.
 fn write_namespace_declarations(
     node: &roxmltree::Node,
     writer: &mut XmlWriter,
     editor_prefixes: &[String],
+    declared_ns: &mut HashSet<String>,
 ) {
     for ns in node.namespaces() {
         let uri = ns.uri();
+        if declared_ns.contains(uri) {
+            continue;
+        }
         if let Some(prefix) = ns.name() {
             if editor_prefixes.contains(&prefix.to_string()) {
                 continue;
@@ -193,6 +206,7 @@ fn write_namespace_declarations(
         } else {
             writer.write_attribute("xmlns", uri);
         }
+        declared_ns.insert(uri.to_string());
     }
 }
 

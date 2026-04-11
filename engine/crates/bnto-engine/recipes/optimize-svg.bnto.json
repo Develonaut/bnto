@@ -54,7 +54,13 @@
         "y": 100
       },
       "metadata": {},
-      "parameters": {},
+      "parameters": {
+        "removeComments": true,
+        "removeMetadata": true,
+        "collapseGroups": true,
+        "minify": true,
+        "precision": 3
+      },
       "inputPorts": [],
       "outputPorts": []
     },
