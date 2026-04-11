@@ -185,14 +185,31 @@ Dedicated SVG optimization processor in the `vector` category. Fundamentally dif
 
 **Why NOT in `compress-images`:** Compress operates on pixel grids (lossy re-encoding with quality slider). SVG optimize operates on XML text (lossless structural cleanup). Different input types, different parameters, different libraries, different mental models. One thing per processor.
 
-**Implementation options:**
+**Implementation: Custom lightweight optimizer using existing deps (zero binary cost).**
 
-- **Pure Rust (preferred):** `usvg` from the `linebender` project — parses SVGs into a simplified tree and re-serializes. Strips cruft, normalizes structure, collapses groups. Not as aggressive as SVGO but WASM-safe.
-- **Shell-out (CLI enhancement):** If `svgo` is available, use it for maximum optimization. Fall back to Rust implementation.
+We tried oxvg (Rust SVGO port, v0.0.5) — it adds ~5MB to the WASM binary because `lightningcss` (Parcel's full CSS compiler) is a non-optional hard dependency in 4 oxvg sub-crates. No feature flags can exclude it. PR #375 merged, then reverted via PR #376.
 
-**Platform:** Browser (pure Rust) + CLI (Rust, with optional SVGO shell-out for deeper optimization).
+The correct approach is a from-scratch optimizer using `roxmltree` + `xmlwriter` + `svgtypes` — all three are **already compiled into our WASM binary** via the resvg/usvg transitive dependency chain. Using them adds zero additional binary size.
 
-**Crate:** `bnto-vector` (same crate as Phase 3).
+**Reference implementations:**
+
+- **SVGO** (JS, MIT) — 33 default plugins, 22k+ GitHub stars. The definitive SVG optimizer. Study plugin algorithms at `github.com/svg/svgo/tree/main/plugins/`
+- **svgcleaner** (Rust, MIT, archived) — 40+ optimization passes, same author as resvg/roxmltree. Best Rust reference for algorithm porting. Uses its own `svgdom` parser (not roxmltree), so we study algorithms but reimplement on our own stack
+
+**Two-tier implementation:**
+
+| Tier                  | Optimizations                                                                                                                             | Dependencies                                  | WASM cost | Expected reduction |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | --------- | ------------------ |
+| **Tier 1: XML-level** | Remove metadata/comments/doctype, remove editor namespaces, remove empty containers/attrs, collapse groups, remove unused NS declarations | `roxmltree` + `xmlwriter` (already in binary) | ~0 KB     | 25-50%             |
+| **Tier 2: SVG-aware** | Round numeric values, shorten colors (`#ff0000` → `#f00`), optimize path `d` data (relative/absolute, shorthand commands, precision)      | `svgtypes` (already in binary)                | ~0 KB     | additional 15-35%  |
+
+Tier 3 (CSS-dependent: minify `<style>`, inline styles) is deferred — requires a CSS parser, which is what caused the oxvg bloat.
+
+**Platform:** Browser (pure Rust) + CLI (same Rust code).
+
+**Crate:** `bnto-vector` (same crate as Phase 3). See `.claude/decisions/svg-optimizer.md` for full research findings.
+
+**Predecessor code:** PR #375 has the processor shell (metadata, params, tests, recipe, golden tests, registration) — everything except the optimization core. Bring it back and replace the `run_optimization()` function's oxvg call with our own passes.
 
 ### Phase 5: EPS → SVG Conversion (CLI-only)
 
