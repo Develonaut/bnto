@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and strips EXIF metadata from each one.",
-    "category": "image"
+    "description": "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
+    "category": "image",
+    "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file, cleans it, and renames the column headers.",
-    "category": "spreadsheet"
+    "description": "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
+    "category": "spreadsheet",
+    "tags": ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

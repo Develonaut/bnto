@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files, compresses each one, and renames with a suffix.",
-    "category": "image"
+    "description": "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
+    "category": "image",
+    "tags": ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

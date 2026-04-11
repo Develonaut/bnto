@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts image files and converts each to a target format.",
-    "category": "image"
+    "description": "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
+    "category": "image",
+    "tags": ["PNG", "JPEG", "WebP", "GIF", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

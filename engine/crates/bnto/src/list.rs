@@ -91,6 +91,7 @@ mod tests {
             name: name.to_string(),
             description: desc.to_string(),
             category: category.to_string(),
+            tags: vec![],
             definition_json: "{}",
         }
     }

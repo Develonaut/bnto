@@ -41,6 +41,36 @@ describe("recipe catalog completeness", () => {
 });
 
 // =============================================================================
+// Engine-owned metadata — validates tags and descriptions flow through codegen
+// =============================================================================
+
+describe("engine-owned recipe metadata", () => {
+  it("every recipe has non-empty features (from engine tags)", () => {
+    for (const recipe of RECIPES) {
+      expect(
+        recipe.features.length,
+        `Recipe "${recipe.slug}" has no features/tags`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("every recipe has a non-empty description", () => {
+    for (const recipe of RECIPES) {
+      expect(
+        recipe.description.length,
+        `Recipe "${recipe.slug}" has empty description`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("recipe ID equals slug (no UUID mapping)", () => {
+    for (const recipe of RECIPES) {
+      expect(recipe.id, `Recipe "${recipe.slug}" has mismatched id`).toBe(recipe.slug);
+    }
+  });
+});
+
+// =============================================================================
 // Recipe definition structural compliance — catches engine schema drift
 // =============================================================================
 

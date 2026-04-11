@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts files and renames each one.",
-    "category": "file"
+    "description": "Batch rename files with patterns. Free, no signup required.",
+    "category": "file",
+    "tags": ["Batch rename", "Pattern matching", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file and cleans it.",
-    "category": "spreadsheet"
+    "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
+    "category": "spreadsheet",
+    "tags": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

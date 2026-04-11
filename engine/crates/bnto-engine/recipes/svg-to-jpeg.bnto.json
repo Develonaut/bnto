@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts SVG vector files and converts each to a JPEG raster image.",
-    "category": "vector"
+    "description": "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
+    "category": "vector",
+    "tags": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

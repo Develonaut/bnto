@@ -8,8 +8,9 @@
     "y": 0
   },
   "metadata": {
-    "description": "Accepts a CSV file and renames its column headers.",
-    "category": "spreadsheet"
+    "description": "Rename CSV column headers in bulk. Free, no signup required.",
+    "category": "spreadsheet",
+    "tags": ["CSV", "Column rename", "Bulk edit", "Browser-based"]
   },
   "parameters": {},
   "inputPorts": [],

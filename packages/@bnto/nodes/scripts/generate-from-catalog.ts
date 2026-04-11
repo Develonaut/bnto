@@ -62,6 +62,7 @@ interface RawRecipe {
   name: string;
   description: string;
   category: string;
+  tags: string[];
   definition: Record<string, unknown>;
 }
 
@@ -887,6 +888,7 @@ function generateRecipesFile(): string | null {
     name: ${JSON.stringify(r.name)},
     description: ${JSON.stringify(r.description)},
     category: ${JSON.stringify(r.category)},
+    tags: ${JSON.stringify(r.tags ?? [])} as const,
     definition: ${JSON.stringify(r.definition, null, 4)
       .split("\n")
       .map((line, i) => (i === 0 ? line : "    " + line))
@@ -905,6 +907,7 @@ export interface GeneratedRecipe {
   readonly name: string;
   readonly description: string;
   readonly category: string;
+  readonly tags: readonly string[];
   readonly definition: Definition;
 }
 
