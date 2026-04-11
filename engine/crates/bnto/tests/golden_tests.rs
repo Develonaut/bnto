@@ -117,6 +117,12 @@ fn golden_svg_to_jpeg() {
     assert_golden("svg-to-jpeg", &out);
 }
 
+#[test]
+fn golden_optimize_svg() {
+    let (out, _) = run_recipe_ok("optimize-svg", &fixture_image("small.svg"));
+    assert_golden("optimize-svg", &out);
+}
+
 // --- File Recipes ---
 
 #[test]
@@ -345,4 +351,10 @@ fn golden_svg_to_png_explicit() {
 fn golden_svg_to_jpeg_explicit() {
     let (out, _) = run_explicit_recipe_ok("svg-to-jpeg", &fixture_image("small.svg"));
     assert_golden("svg-to-jpeg", &out);
+}
+
+#[test]
+fn golden_optimize_svg_explicit() {
+    let (out, _) = run_explicit_recipe_ok("optimize-svg", &fixture_image("small.svg"));
+    assert_golden("optimize-svg", &out);
 }

@@ -1,11 +1,13 @@
-// bnto-vector — SVG rasterization library and processor.
+// bnto-vector — SVG processing library and processors.
 //
-// Converts SVG bytes to raster pixels via resvg/usvg/tiny-skia, and provides
-// the vector-rasterize NodeProcessor for the engine pipeline.
+// Provides vector-rasterize (SVG → raster) and vector-optimize (SVG size
+// reduction) NodeProcessors for the engine pipeline.
 
 mod common;
+pub mod optimize;
 pub mod processor;
 pub mod rasterize;
 
+pub use optimize::OptimizeSvg;
 pub use processor::VectorRasterize;
 pub use rasterize::{DEFAULT_DPI, MAX_DPI, MIN_DPI, RasterizeOptions, VectorError, rasterize_svg};
