@@ -100,21 +100,21 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_twelve_processors() {
-        // The native registry has 12 processors (11 browser + video-download).
+    fn test_catalog_has_all_thirteen_processors() {
+        // The native registry has 13 processors (12 browser + video-download).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            12,
-            "Catalog should have exactly 12 processors"
+            13,
+            "Catalog should have exactly 13 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 12 expected processor type keys are present.
+        // Verify all 13 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -132,6 +132,7 @@ mod tests {
             "file-rename",
             "image-overlay",
             "vector-rasterize",
+            "vector-optimize",
             "video-download",
         ];
 
@@ -196,9 +197,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 21);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 22);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 12);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 13);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),
@@ -213,8 +214,8 @@ mod tests {
         assert!(parsed["recipes"].is_array());
         assert_eq!(
             parsed["recipes"].as_array().unwrap().len(),
-            17,
-            "Catalog should include all 17 built-in recipes"
+            18,
+            "Catalog should include all 18 built-in recipes"
         );
     }
 

@@ -242,10 +242,12 @@ dependencies = [
  "bnto-encode",
  "image",
  "resvg",
+ "roxmltree 0.21.1",
  "serde_json",
  "thiserror",
  "tiny-skia",
  "usvg",
+ "xmlwriter",
 ]
 
 [[package]]

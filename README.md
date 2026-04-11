@@ -52,6 +52,7 @@ Predefined recipes work out of the box:
 | Download Video          | Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.                  | [bnto.io/download-video](https://bnto.io/download-video)                   |
 | SVG to PNG              | Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.                                         | [bnto.io/svg-to-png](https://bnto.io/svg-to-png)                           |
 | SVG to JPEG             | Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.                                        | [bnto.io/svg-to-jpeg](https://bnto.io/svg-to-jpeg)                         |
+| Optimize SVG            | Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.                            | [bnto.io/optimize-svg](https://bnto.io/optimize-svg)                       |
 
 <!-- END AUTO-GENERATED RECIPES TABLE -->
 

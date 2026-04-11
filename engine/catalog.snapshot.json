@@ -173,6 +173,15 @@
       "icon": "arrow-left-right"
     },
     {
+      "name": "vector-optimize",
+      "label": "Optimize SVG",
+      "description": "Remove editor metadata, comments, and unnecessary elements from SVG files.",
+      "category": "vector",
+      "isContainer": false,
+      "platforms": ["browser"],
+      "icon": "file-minus-2"
+    },
+    {
       "name": "vector-rasterize",
       "label": "SVG to Image",
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP).",
@@ -652,6 +661,72 @@
           "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
           "paramType": {
             "type": "object"
+          },
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "vector-optimize",
+      "name": "Optimize SVG",
+      "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements",
+      "category": "vector",
+      "accepts": ["image/svg+xml"],
+      "platforms": ["browser", "native"],
+      "parameters": [
+        {
+          "name": "removeComments",
+          "label": "Remove Comments",
+          "description": "Strip XML comments from the SVG",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "removeMetadata",
+          "label": "Remove Metadata",
+          "description": "Strip <metadata> elements (RDF, Dublin Core, etc.)",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "collapseGroups",
+          "label": "Collapse Groups",
+          "description": "Remove empty groups and collapse single-child wrapper groups",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "minify",
+          "label": "Minify",
+          "description": "Remove unnecessary whitespace and newlines",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "precision",
+          "label": "Numeric Precision",
+          "description": "Decimal places for numeric values (reserved for Tier 2)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 3,
+          "constraints": {
+            "min": 0.0,
+            "max": 8.0,
+            "required": false
           },
           "surfaceable": true
         }
@@ -3003,6 +3078,111 @@
             "parameters": {
               "autoDownload": true,
               "label": "JPEG Images",
+              "mode": "download",
+              "zip": true
+            },
+            "position": {
+              "x": 500,
+              "y": 100
+            },
+            "type": "output",
+            "version": "1.0.0"
+          }
+        ],
+        "outputPorts": [],
+        "parameters": {},
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "settings": {
+          "iteration": "auto"
+        },
+        "type": "group",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "slug": "optimize-svg",
+      "name": "Optimize SVG",
+      "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
+      "category": "vector",
+      "tags": ["SVG", "Optimize", "Minify", "Clean", "Browser-based"],
+      "definition": {
+        "edges": [
+          {
+            "id": "e1",
+            "source": "input",
+            "target": "optimize"
+          },
+          {
+            "id": "e2",
+            "source": "optimize",
+            "target": "output"
+          }
+        ],
+        "id": "optimize-svg",
+        "inputPorts": [],
+        "metadata": {
+          "category": "vector",
+          "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
+          "tags": ["SVG", "Optimize", "Minify", "Clean", "Browser-based"]
+        },
+        "name": "Optimize SVG",
+        "nodes": [
+          {
+            "id": "input",
+            "inputPorts": [],
+            "metadata": {},
+            "name": "Input",
+            "outputPorts": [
+              {
+                "id": "out-1",
+                "name": "files"
+              }
+            ],
+            "parameters": {
+              "accept": ["image/svg+xml"],
+              "extensions": [".svg"],
+              "label": "SVG files",
+              "mode": "file-upload",
+              "multiple": true
+            },
+            "position": {
+              "x": 0,
+              "y": 100
+            },
+            "type": "input",
+            "version": "1.0.0"
+          },
+          {
+            "id": "optimize",
+            "inputPorts": [],
+            "metadata": {},
+            "name": "Optimize",
+            "outputPorts": [],
+            "parameters": {},
+            "position": {
+              "x": 250,
+              "y": 100
+            },
+            "type": "vector-optimize",
+            "version": "1.0.0"
+          },
+          {
+            "id": "output",
+            "inputPorts": [
+              {
+                "id": "in-1",
+                "name": "files"
+              }
+            ],
+            "metadata": {},
+            "name": "Output",
+            "outputPorts": [],
+            "parameters": {
+              "autoDownload": true,
+              "label": "Optimized SVGs",
               "mode": "download",
               "zip": true
             },
