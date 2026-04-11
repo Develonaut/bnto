@@ -7,6 +7,8 @@ pub mod app;
 pub mod event;
 pub mod palette;
 mod render;
+mod render_detail;
+mod render_picker;
 pub mod screen;
 pub mod screens;
 #[allow(dead_code)]
@@ -26,6 +28,7 @@ use ratatui::layout::{Constraint, Layout};
 use app::{AppMessage, AppModel, Screen, update};
 use screens::browser::BrowserMessage;
 use screens::detail::DetailMessage;
+use screens::picker::PickerMessage;
 use theme::{ALL_VARIANTS, ThemeVariant};
 
 /// Tick rate for the event loop (how often we check for input).
@@ -129,7 +132,7 @@ fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         Screen::Browser => handle_browser_key(model, key),
         Screen::Settings => handle_settings_key(model, key),
         Screen::Detail { .. } => handle_detail_key(model, key),
-        Screen::Picker { .. } => None,
+        Screen::Picker { .. } => handle_picker_key(model, key),
         Screen::Execution { .. } => None,
         Screen::Results { .. } => None,
     }
@@ -203,6 +206,30 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
                         .map(|d| d.slug.clone())
                         .unwrap_or_default(),
                 })
+            }
+        }
+        KeyCode::Esc => Some(AppMessage::Back),
+        _ => None,
+    }
+}
+
+/// Handle key events on the Picker screen.
+fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let picker = model.picker.as_ref()?;
+
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Picker(PickerMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Picker(PickerMessage::CursorUp)),
+        KeyCode::Char(' ') => Some(AppMessage::Picker(PickerMessage::ToggleSelect)),
+        KeyCode::Backspace => Some(AppMessage::Picker(PickerMessage::ParentDir)),
+        KeyCode::Enter => {
+            if picker.cursor < picker.entries.len() && picker.entries[picker.cursor].is_dir {
+                Some(AppMessage::Picker(PickerMessage::EnterDir))
+            } else if !picker.selected.is_empty() {
+                let slug = picker.slug.clone();
+                Some(AppMessage::FilesSelected { slug })
+            } else {
+                None
             }
         }
         KeyCode::Esc => Some(AppMessage::Back),
@@ -599,5 +626,118 @@ mod tests {
             handle_key(&model, key),
             Some(AppMessage::Detail(DetailMessage::EditChar('q')))
         );
+    }
+
+    // --- Picker key handling ---
+
+    fn picker_model() -> AppModel {
+        use screens::picker::{FileEntry, PickerModel};
+        use std::path::PathBuf;
+
+        let entries = vec![
+            FileEntry {
+                name: "photos".into(),
+                is_dir: true,
+                path: PathBuf::from("/photos"),
+            },
+            FileEntry {
+                name: "cat.jpg".into(),
+                is_dir: false,
+                path: PathBuf::from("/cat.jpg"),
+            },
+        ];
+
+        let mut picker = PickerModel::from_test_data(
+            "compress-images",
+            PathBuf::from("/home"),
+            entries,
+            vec!["jpg".into()],
+        );
+        picker.selected.insert(1); // pre-select cat.jpg
+
+        AppModel {
+            screen: Screen::Picker {
+                slug: "compress-images".into(),
+            },
+            picker: Some(picker),
+            ..default_model()
+        }
+    }
+
+    #[test]
+    fn picker_j_moves_cursor_down() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::CursorDown))
+        );
+    }
+
+    #[test]
+    fn picker_k_moves_cursor_up() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn picker_space_toggles_select() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char(' '), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::ToggleSelect))
+        );
+    }
+
+    #[test]
+    fn picker_enter_on_dir_enters_dir() {
+        let model = picker_model(); // cursor=0 is a dir
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::EnterDir))
+        );
+    }
+
+    #[test]
+    fn picker_enter_with_selected_files_confirms() {
+        let mut model = picker_model();
+        model.picker.as_mut().unwrap().cursor = 1; // on a file, not a dir
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::FilesSelected {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
+    fn picker_backspace_goes_to_parent() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Backspace, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::ParentDir))
+        );
+    }
+
+    #[test]
+    fn picker_esc_goes_back() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Back));
+    }
+
+    #[test]
+    fn picker_q_quits() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
     }
 }
