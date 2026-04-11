@@ -79,19 +79,58 @@ For the candidate task(s), do quick research to understand what's involved:
 
 Present the full plan document to the user for approval. This IS the proposal.
 
-**If the work fits in a single PR**, present a summary with:
+**If the work fits in a single PR**, use the same structured format from [feature-planning.md](../../rules/feature-planning.md). Single-PR work follows the same per-PR section structure — the only difference is there's no dependency chain.
 
-1. **Task(s):** The task description(s) from PLAN.md (verbatim). If recommending a batch, list all tasks and explain why they form a natural unit (shared context, same files, logical sequence).
-2. **Sprint / Wave:** Which sprint and wave it belongs to
-3. **Package scope:** Which packages/directories will be touched
-4. **Persona(s):** Which domain expert persona(s) will be activated
-5. **Approach:** 3-5 bullet points describing what you plan to do. **One bullet MUST describe your TDD approach** — which tests you'll write first and how they define the acceptance criteria before any implementation begins
-6. **Files to modify:** List of files you expect to create or change (new vs modified, with counts)
-7. **Tests (TDD):** What tests you'll write FIRST to define acceptance criteria — describe the test cases that will prove the feature works before writing any implementation code. Include unit, integration, and E2E tests as appropriate.
-8. **Verification:** Exact copy-pasteable commands to run
-9. **Count changes:** Which test count registries change (or "no count changes")
-10. **Risks / Open questions:** Anything unclear or potentially tricky
-11. **Scope estimate:** Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
+Present the proposal using this exact structure:
+
+```
+## PR: One-sentence description
+
+**Branch:** `<type>/<short-description>` from `main`
+**One sentence:** Describe the PR in exactly one sentence without "and."
+**Sprint / Wave:** Which sprint and wave
+**Persona(s):** Which domain expert persona(s) will be activated
+
+### What
+2-3 sentences: what this PR delivers and why.
+
+### Files (~N new, ~N modified)
+**New:**
+- exact file paths with brief description
+
+**Modified:**
+- exact file paths with brief description
+
+### Key function / API
+Code signature or data structure that defines the PR's contract.
+
+### RED tests (write first)
+Bullet list of failing tests to write BEFORE implementation.
+These define acceptance criteria — when all pass, the feature is done.
+- `test_name` — what it asserts (specific input → expected output)
+
+### Verification
+Exact shell commands. Copy-pasteable.
+
+### Count changes
+Which test count registries change, or "no count changes."
+
+### Risks / Open questions
+- Anything unclear or potentially tricky
+
+### Scope estimate
+Small (< 1 hour), Medium (1-3 hours), Large (3+ hours)
+```
+
+**Rules (from feature-planning.md, apply to single-PR work too):**
+
+1. **One sentence per PR.** If you can't describe it without "and," split it.
+2. **RED tests are acceptance criteria.** They define what "done" looks like. When all RED tests turn green, the PR is complete.
+3. **Files are enumerated.** List every new and modified file with paths. Approximate counts in the header.
+4. **Verification is copy-pasteable.** Exact commands, not prose.
+5. **Count changes are explicit.** "No count changes" is a valid and important statement.
+
+If recommending a batch, list all tasks under "What" and explain why they form a natural unit (shared context, same files, logical sequence).
 
 If there are multiple available tasks in the wave, present all of them so the user can pick.
 
