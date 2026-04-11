@@ -8,3 +8,5 @@
 pub mod browser;
 pub mod detail;
 mod detail_loader;
+pub mod picker;
+mod picker_loader;
