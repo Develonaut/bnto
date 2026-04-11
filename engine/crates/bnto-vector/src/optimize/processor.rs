@@ -144,12 +144,12 @@ impl NodeProcessor for OptimizeSvg {
 
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         let mut errors = Vec::new();
-        if let Some(precision) = params.get("precision").and_then(|v| v.as_u64()) {
-            if precision > 8 {
-                errors.push(format!(
-                    "precision must be between 0 and 8, got {precision}"
-                ));
-            }
+        if let Some(precision) = params.get("precision").and_then(|v| v.as_u64())
+            && precision > 8
+        {
+            errors.push(format!(
+                "precision must be between 0 and 8, got {precision}"
+            ));
         }
         errors
     }

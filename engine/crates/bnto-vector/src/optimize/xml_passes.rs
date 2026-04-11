@@ -18,10 +18,10 @@ pub fn collect_editor_prefixes(doc: &Document, editor_uris: &[&str]) -> Vec<Stri
 
     let mut prefixes = Vec::new();
     for ns in svg.namespaces() {
-        if let Some(prefix) = ns.name() {
-            if editor_uris.contains(&ns.uri()) {
-                prefixes.push(prefix.to_string());
-            }
+        if let Some(prefix) = ns.name()
+            && editor_uris.contains(&ns.uri())
+        {
+            prefixes.push(prefix.to_string());
         }
     }
     prefixes
@@ -76,20 +76,20 @@ pub fn has_no_meaningful_attributes(node: &roxmltree::Node, editor_prefixes: &[S
 /// Check if an attribute belongs to an editor namespace.
 pub fn is_editor_attribute(attr: &Attribute, editor_prefixes: &[String]) -> bool {
     // If the attribute has a resolved namespace URI, check it
-    if let Some(ns) = attr.namespace() {
-        if ns != "http://www.w3.org/2000/svg"
-            && ns != "http://www.w3.org/1999/xlink"
-            && ns != "http://www.w3.org/XML/1998/namespace"
-        {
-            return true;
-        }
+    if let Some(ns) = attr.namespace()
+        && ns != "http://www.w3.org/2000/svg"
+        && ns != "http://www.w3.org/1999/xlink"
+        && ns != "http://www.w3.org/XML/1998/namespace"
+    {
+        return true;
     }
 
     // Check if the attribute name has an editor prefix (for unresolved prefixed attrs)
-    if let Some(prefix) = attr.name().split(':').next() {
-        if attr.name().contains(':') && editor_prefixes.contains(&prefix.to_string()) {
-            return true;
-        }
+    if let Some(prefix) = attr.name().split(':').next()
+        && attr.name().contains(':')
+        && editor_prefixes.contains(&prefix.to_string())
+    {
+        return true;
     }
 
     false

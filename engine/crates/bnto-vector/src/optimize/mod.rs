@@ -95,17 +95,17 @@ fn strip_xml_prolog(input: &str) -> String {
     let mut remaining = input.trim_start();
 
     // Skip XML declaration
-    if remaining.starts_with("<?xml") {
-        if let Some(end) = remaining.find("?>") {
-            remaining = remaining[end + 2..].trim_start();
-        }
+    if remaining.starts_with("<?xml")
+        && let Some(end) = remaining.find("?>")
+    {
+        remaining = remaining[end + 2..].trim_start();
     }
 
     // Skip DOCTYPE
-    if remaining.starts_with("<!DOCTYPE") {
-        if let Some(end) = remaining.find('>') {
-            remaining = remaining[end + 1..].trim_start();
-        }
+    if remaining.starts_with("<!DOCTYPE")
+        && let Some(end) = remaining.find('>')
+    {
+        remaining = remaining[end + 1..].trim_start();
     }
 
     result.push_str(remaining);

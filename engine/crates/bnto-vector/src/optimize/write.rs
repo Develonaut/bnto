@@ -26,10 +26,10 @@ pub fn write_node(
             write_text(node, writer, config);
         }
         roxmltree::NodeType::Comment => {
-            if !config.remove_comments {
-                if let Some(text) = node.text() {
-                    writer.write_comment(text);
-                }
+            if !config.remove_comments
+                && let Some(text) = node.text()
+            {
+                writer.write_comment(text);
             }
         }
         roxmltree::NodeType::PI => {
@@ -127,11 +127,10 @@ fn write_attributes(node: &roxmltree::Node, writer: &mut XmlWriter, editor_prefi
         }
         let attr_name = format_attr_name(&attr);
         // Skip editor xmlns declarations
-        if attr_name.starts_with("xmlns:") {
-            let prefix = &attr_name[6..];
-            if editor_prefixes.contains(&prefix.to_string()) {
-                continue;
-            }
+        if let Some(prefix) = attr_name.strip_prefix("xmlns:")
+            && editor_prefixes.contains(&prefix.to_string())
+        {
+            continue;
         }
         writer.write_attribute(&attr_name, attr.value());
     }
@@ -170,10 +169,10 @@ fn should_skip_child(
 
 /// Format an attribute name, preserving namespace prefixes.
 fn format_attr_name(attr: &roxmltree::Attribute) -> String {
-    if let Some(ns) = attr.namespace() {
-        if let Some(prefix) = namespace_uri_to_prefix(ns) {
-            return format!("{prefix}:{}", attr.name());
-        }
+    if let Some(ns) = attr.namespace()
+        && let Some(prefix) = namespace_uri_to_prefix(ns)
+    {
+        return format!("{prefix}:{}", attr.name());
     }
     attr.name().to_string()
 }
