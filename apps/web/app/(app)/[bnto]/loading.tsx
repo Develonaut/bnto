@@ -8,7 +8,7 @@ import { Container, Skeleton } from "@bnto/ui";
  */
 export default function BntoLoading() {
   return (
-    <Container size="md" className="py-20 text-center">
+    <Container size="lg" className="py-20 text-center">
       {/* Hero dropzone card with integrated content */}
       <Skeleton className="mx-auto h-80 w-full rounded-xl" />
     </Container>
