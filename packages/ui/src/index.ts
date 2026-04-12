@@ -125,7 +125,7 @@ export {
   AccordionTrigger,
   AccordionContent,
 } from "./interaction/Accordion";
-export { Button } from "./interaction/Button";
+export { Button, DormantWrapper } from "./interaction/Button";
 export type { ButtonVariant, SpringMode } from "./interaction/Button";
 export { CopyButton } from "./interaction/CopyButton";
 export { Checkbox } from "./interaction/Checkbox";
