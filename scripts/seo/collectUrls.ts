@@ -8,7 +8,7 @@
 import { RECIPES } from "../../packages/@bnto/registry/src/recipesCatalog";
 
 const SITE_URL = "https://bnto.io";
-const STATIC_PAGES = ["/", "/pricing", "/faq", "/privacy"];
+const STATIC_PAGES = ["/", "/explore", "/pricing", "/faq", "/privacy"];
 
 export function collectUrls(): string[] {
   const staticUrls = STATIC_PAGES.map((p) => `${SITE_URL}${p}`);

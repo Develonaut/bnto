@@ -19,7 +19,15 @@ async function main() {
     return;
   }
 
-  const credentials = JSON.parse(keyJson) as { client_email: string; private_key: string };
+  let credentials: { client_email: string; private_key: string };
+  try {
+    credentials = JSON.parse(keyJson);
+  } catch {
+    console.error("GOOGLE_INDEXING_KEY contains invalid JSON");
+    process.exitCode = 1;
+    return;
+  }
+
   const auth = new GoogleAuth({ credentials, scopes: SCOPES });
   const client = await auth.getClient();
 
