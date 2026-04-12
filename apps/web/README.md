@@ -19,8 +19,6 @@ app/
 │   ├── [bnto]/             # Dynamic tool pages (/compress-images, /clean-csv, etc.)
 │   ├── pricing/            # Pricing page
 │   └── privacy/            # Privacy policy
-├── (auth)/                 # Auth flows
-│   └── signin/             # Sign-in page
 ├── (dev)/                  # Dev-only routes (component showcase)
 └── editor/                 # Recipe editor (beta)
 components/
@@ -30,27 +28,26 @@ components/
 e2e/                        # Playwright E2E tests
 ├── fixtures/               # Custom fixtures (enhanced page, error capture)
 ├── helpers/                # Shared helpers (upload, run, download, assertions)
-├── journeys/               # User journey tests (auth, browser, editor)
+├── journeys/               # User journey tests (browser, editor)
 ├── pages/                  # Page-level screenshot tests
 └── editor/                 # Editor component tests
 lib/
 ├── bntoRegistry.ts         # SEO slug registry (single source of truth)
-├── routes.ts               # Route definitions (AUTH_PATHS, PROTECTED_PATHS)
+├── routes.ts               # Route definitions (ROUTES, editorUrl)
 └── stores/                 # App-level Zustand stores
-proxy.ts                    # Auth middleware (route protection)
+proxy.ts                    # URL normalization middleware
 ```
 
 ## Routing
 
-| Route                                  | Description                        | Auth          |
-| -------------------------------------- | ---------------------------------- | ------------- |
-| `/`                                    | Home - tool grid gallery           | Public        |
-| `/compress-images`, `/clean-csv`, etc. | Tool pages - SEO-optimized, static | Public        |
-| `/editor`                              | Visual recipe editor (beta)        | Public        |
-| `/explore`                             | Recipe & node browser              | Public        |
-| `/signin`                              | Sign-in page                       | Auth redirect |
-| `/pricing`                             | Pricing info                       | Public        |
-| `/motorway`                            | Component showcase (dev only)      | Public        |
+| Route                                  | Description                        |
+| -------------------------------------- | ---------------------------------- |
+| `/`                                    | Home - tool grid gallery           |
+| `/compress-images`, `/clean-csv`, etc. | Tool pages - SEO-optimized, static |
+| `/editor`                              | Visual recipe editor (beta)        |
+| `/explore`                             | Recipe & node browser              |
+| `/pricing`                             | Pricing info                       |
+| `/motorway`                            | Component showcase (dev only)      |
 
 Tool page slugs are registered in `lib/bntoRegistry.ts`. The `[bnto]` dynamic segment matches root-level slugs; unknown slugs return a real 404.
 

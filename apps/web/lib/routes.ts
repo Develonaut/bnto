@@ -1,75 +1,12 @@
-/**
- * Route definitions -- single source of truth for all route paths.
- *
- * Two-tier routing model:
- *   1. Protected routes: redirect to /signin if not authenticated (proxy)
- *   2. Everything else: pass through (public — auth pages, bnto slugs, landing)
- *
- * Auth pages (/signin, /signup) are public at the proxy level. The redirect
- * for already-authenticated users is handled client-side by SignInForm.
- * Unknown paths pass through middleware and 404 at the page level.
- */
+/** Route definitions — single source of truth for all route paths. */
 
 export const ROUTES = {
   home: "/",
   explore: "/explore",
   editor: "/editor",
-  signin: "/signin",
-  signup: "/signup",
-  waitlist: "/waitlist",
-  executions: "/executions",
-  settings: "/settings",
 } as const satisfies Record<string, string>;
-
-/**
- * Auth flow paths. Public at the proxy level — no server-side redirect.
- * Client-side redirect (SignInForm) handles already-authenticated users.
- * Used by SessionProvider to skip session-lost redirects on auth pages.
- */
-export const AUTH_PATHS = [ROUTES.signin, ROUTES.signup] as const;
-
-/**
- * Paths that require authentication.
- * Unauthenticated users are redirected to /signin.
- */
-export const PROTECTED_PATHS = [ROUTES.executions, ROUTES.settings] as const;
 
 /** Returns the editor URL for a saved recipe. */
 export function editorUrl(recipeId: string): string {
   return `/editor?recipe=${recipeId}`;
-}
-
-/**
- * Validates a returnTo path is safe to redirect to (internal, relative path).
- * Returns the path if valid, or "/" if not (prevents open redirects).
- */
-export function safeReturnTo(returnTo?: string | null): string {
-  if (!returnTo) return "/";
-  // Must start with / and must not start with // (protocol-relative URL)
-  if (!returnTo.startsWith("/") || returnTo.startsWith("//")) return "/";
-  // Must not be an auth path (avoid redirect loops)
-  const pathname = returnTo.split("?")[0];
-  if (isAuthPath(pathname)) return "/";
-  return returnTo;
-}
-
-type AuthPath = (typeof AUTH_PATHS)[number];
-type ProtectedPath = (typeof PROTECTED_PATHS)[number];
-
-/**
- * Returns true if the pathname is an auth-flow page (e.g. /signin, /signup).
- * Used by SessionProvider to skip the session-lost redirect on auth pages.
- */
-export function isAuthPath(pathname: string): pathname is AuthPath {
-  return (AUTH_PATHS as readonly string[]).includes(pathname);
-}
-
-/**
- * Returns true if the pathname requires authentication.
- * Matches exact paths and sub-paths (e.g. /settings/account).
- */
-export function isProtectedPath(pathname: string): pathname is ProtectedPath {
-  return (PROTECTED_PATHS as readonly string[]).some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
 }
