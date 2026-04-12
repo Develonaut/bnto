@@ -1,5 +1,5 @@
 /**
- * 2-column featured recipe grid for the Explore dropdown menu.
+ * 3-column featured recipe grid for the Explore dropdown menu.
  *
  * Shows a curated subset of recipes grouped by category.
  * The "Browse all" footer is in RecipesMenuFooter (sticky, outside scroll area).
@@ -13,11 +13,11 @@ import { FEATURED_RECIPES } from "./nav";
 
 export function RecipesMenuGrid() {
   return (
-    <ul className="grid grid-cols-2 gap-1">
+    <ul className="grid grid-cols-3 gap-1">
       {FEATURED_RECIPES.map((category) => (
-        <li key={category.title} className="col-span-2">
+        <li key={category.title} className="col-span-3">
           <MenuLabel>{category.title}</MenuLabel>
-          <ul className="grid grid-cols-2 gap-1">
+          <ul className="grid grid-cols-3 gap-1">
             {category.links.map((link) => (
               <li key={link.url}>
                 <MenuItem asChild className="flex-col items-start gap-1 py-2.5">

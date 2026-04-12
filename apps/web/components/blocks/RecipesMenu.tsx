@@ -1,7 +1,7 @@
 /**
  * Explore dropdown menu — curated recipe links from the registry.
  *
- * BookOpenIcon trigger opens a 2-column grid of featured recipes grouped by
+ * BookOpenIcon trigger opens a 3-column grid of featured recipes grouped by
  * category, with a "Browse all" footer linking to /explore.
  */
 
@@ -17,7 +17,7 @@ export function RecipesMenu() {
         <BookOpenIcon />
         Explore
       </MenuTrigger>
-      <MenuContent className="w-[28rem] p-0" offset="lg" data-testid="explore-dropdown">
+      <MenuContent className="w-[42rem] p-0" offset="lg" data-testid="explore-dropdown">
         <div className="flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden rounded-[inherit]">
           <div className="flex-1 overflow-y-auto p-3">
             <RecipesMenuGrid />
