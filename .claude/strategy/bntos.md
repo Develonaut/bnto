@@ -16,15 +16,16 @@ The technical registry of predefined recipes, node types, and implementation sta
 
 These execute locally — CLI (native Rust), browser (WASM), desktop (native). Cost to bnto: $0.
 
-| Node Type   | Crate / Library                       | CLI | Browser | What It Does                                                |
-| ----------- | ------------------------------------- | --- | ------- | ----------------------------------------------------------- |
-| `image`     | Rust `image`, `mozjpeg-sys`, `oxipng` | Yes | Yes     | Compress, resize, convert, strip EXIF, watermark            |
-| `csv`       | Rust `csv` + `serde`                  | Yes | Yes     | Clean, rename columns, merge, sort, filter, convert to JSON |
-| `file`      | Rust `bnto-file`                      | Yes | Yes     | Rename (pattern/regex), zip, unzip                          |
-| `video`     | Rust `bnto-video` (yt-dlp)            | Yes | No      | Download video/audio from URLs                              |
-| `transform` | Rust / JS                             | Yes | Yes     | Expression evaluation, field mapping, data transforms       |
-| `pdf`       | JS `pdf.js` + Canvas                  | TBD | TBD     | PDF to images, PDF to text                                  |
-| `archive`   | JS (JSZip) or Rust                    | TBD | TBD     | Zip/unzip operations                                        |
+| Node Type   | Crate / Library                           | CLI | Browser | What It Does                                                |
+| ----------- | ----------------------------------------- | --- | ------- | ----------------------------------------------------------- |
+| `image`     | Rust `image`, `mozjpeg-sys`, `oxipng`     | Yes | Yes     | Compress, resize, convert, strip EXIF, watermark            |
+| `vector`    | Rust `bnto-vector` (`resvg`, `roxmltree`) | Yes | Yes     | SVG→raster conversion, SVG optimization                     |
+| `csv`       | Rust `csv` + `serde`                      | Yes | Yes     | Clean, rename columns, merge, sort, filter, convert to JSON |
+| `file`      | Rust `bnto-file`                          | Yes | Yes     | Rename (pattern/regex), zip, unzip                          |
+| `video`     | Rust `bnto-video` (yt-dlp)                | Yes | No      | Download video/audio from URLs                              |
+| `transform` | Rust / JS                                 | Yes | Yes     | Expression evaluation, field mapping, data transforms       |
+| `pdf`       | JS `pdf.js` + Canvas                      | TBD | TBD     | PDF to images, PDF to text                                  |
+| `archive`   | JS (JSZip) or Rust                        | TBD | TBD     | Zip/unzip operations                                        |
 
 ### Server-Only Nodes (Pro tier, future — monetization tabled)
 
@@ -119,6 +120,9 @@ All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Tier
 | Convert CSV to JSON    | `/csv-to-json`      | Developer | `csv`, `transform`     | Delivered (PR #294)           |
 | Merge CSVs             | `/merge-csv`        | Both      | `csv`                  | Delivered (PRs #295, #296)    |
 | Batch Watermark Images | `/watermark-images` | Casual    | `image`                | Delivered (PRs #308, #309)    |
+| SVG to PNG             | `/svg-to-png`       | Casual    | `vector`, `image`      | Delivered (PRs #364–372)      |
+| SVG to JPEG            | `/svg-to-jpeg`      | Casual    | `vector`, `image`      | Delivered (PRs #364–372)      |
+| Optimize SVG           | `/optimize-svg`     | Both      | `vector`               | Delivered (PR #379)           |
 | PDF to Images          | `/pdf-to-images`    | Casual    | `pdf`                  | Blocked: pdf.js + Canvas (JS) |
 | Fetch & Save URL       | `/fetch-url`        | Developer | `http-request`, `file` | Blocked: Hybrid — CORS limits |
 
@@ -126,17 +130,18 @@ All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Tier
 
 ## Tier 4: Backlog Recipes
 
-| Recipe                  | Slug                 | Classification        | Node Types            | Notes                                     |
-| ----------------------- | -------------------- | --------------------- | --------------------- | ----------------------------------------- |
-| Extract video thumbnail | `/extract-thumbnail` | **Server-only (Pro)** | `shell-command`       | ffmpeg — impractical in browser WASM      |
-| Zip files               | `/zip-files`         | Browser-only          | `archive`             | JS zip libraries (JSZip)                  |
-| Unzip archive           | `/unzip-files`       | Browser-only          | `archive`             | JS unzip libraries                        |
-| Generate image grid     | `/image-grid`        | Browser-only          | `image`               | Rust `image` composite or Canvas API      |
-| Validate JSON           | `/validate-json`     | Browser-only          | `transform`           | Pure JS (JSON.parse)                      |
-| Format JSON             | `/format-json`       | Browser-only          | `transform`           | Pure JS (JSON.stringify)                  |
-| Sort CSV by column      | `/sort-csv`          | Browser-only          | `csv`                 | Rust `csv` or PapaParse                   |
-| Filter CSV rows         | `/filter-csv`        | Browser-only          | `csv`                 | Rust `csv` or PapaParse                   |
-| Fetch API to CSV        | `/api-to-csv`        | Hybrid                | `http-request`, `csv` | CORS limits browser; server proxy for Pro |
+| Recipe                  | Slug                  | Classification        | Node Types            | Notes                                                                 |
+| ----------------------- | --------------------- | --------------------- | --------------------- | --------------------------------------------------------------------- |
+| Convert EPS to SVG      | `/convert-eps-to-svg` | CLI-only              | `vector`              | Shell-out to Inkscape/Ghostscript. Backlog — requires native binaries |
+| Extract video thumbnail | `/extract-thumbnail`  | **Server-only (Pro)** | `shell-command`       | ffmpeg — impractical in browser WASM                                  |
+| Zip files               | `/zip-files`          | Browser-only          | `archive`             | JS zip libraries (JSZip)                                              |
+| Unzip archive           | `/unzip-files`        | Browser-only          | `archive`             | JS unzip libraries                                                    |
+| Generate image grid     | `/image-grid`         | Browser-only          | `image`               | Rust `image` composite or Canvas API                                  |
+| Validate JSON           | `/validate-json`      | Browser-only          | `transform`           | Pure JS (JSON.parse)                                                  |
+| Format JSON             | `/format-json`        | Browser-only          | `transform`           | Pure JS (JSON.stringify)                                              |
+| Sort CSV by column      | `/sort-csv`           | Browser-only          | `csv`                 | Rust `csv` or PapaParse                                               |
+| Filter CSV rows         | `/filter-csv`         | Browser-only          | `csv`                 | Rust `csv` or PapaParse                                               |
+| Fetch API to CSV        | `/api-to-csv`         | Hybrid                | `http-request`, `csv` | CORS limits browser; server proxy for Pro                             |
 
 ---
 

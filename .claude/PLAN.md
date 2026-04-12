@@ -937,25 +937,25 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 `packages/ui/src/layout/Grid.tsx`
 
-### Engine: Vector Format Support — `bnto-vector` Crate (3 Phases)
+### Engine: Vector Format Support — `bnto-vector` Crate (2 of 3 Phases Complete)
 
-**Priority: Medium.** New `vector` node category (counterpart to `image`/raster) with three incremental phases. Each phase is independently shippable. New `bnto-vector` crate houses all vector operations. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+**Priority: Backlog (EPS → SVG CLI-only remaining).** New `vector` node category (counterpart to `image`/raster) with three incremental phases. Phases 1-2 shipped. New `bnto-vector` crate houses all vector operations. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
 
-**Phase 1 — SVG → Raster (extend `image-convert`):**
+**Phase 1 — SVG → Raster (extend `image-convert`): DONE**
 
-- [ ] `engine/crates/bnto-vector` — New crate with `resvg` + `usvg` + `tiny-skia` dependencies
-- [ ] `engine/crates/bnto-image` — Extend `image-convert` to detect SVG input, rasterize via `resvg`, encode to PNG/JPEG/WebP
-- [ ] `engine/crates/bnto-image` — New `dpi` parameter (default 96, range 72–300) for rasterization resolution
-- [ ] `engine/crates/bnto-core` — Add `vector` category to `NodeTypeInfo` metadata
-- [ ] `engine/recipes/` — `svg-to-png.bnto.json`, `svg-to-jpeg.bnto.json`
-- [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
+- [x] `engine/crates/bnto-vector` — New crate with `resvg` + `usvg` + `tiny-skia` dependencies (PR #364)
+- [x] `engine/crates/bnto-image` — Extend `image-convert` to detect SVG input, rasterize via `resvg`, encode to PNG/JPEG/WebP (PR #369)
+- [x] `engine/crates/bnto-image` — New `dpi` parameter (default 96, range 72–300) for rasterization resolution (PR #369)
+- [x] `engine/crates/bnto-core` — Add `vector` category to `NodeTypeInfo` metadata (PR #364)
+- [x] `engine/recipes/` — `svg-to-png.bnto.json`, `svg-to-jpeg.bnto.json` (PR #370)
+- [x] Codegen + golden tests + test count updates (PRs #370, #372)
+- [x] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
 
 **Phase 2 — SVG Optimization (`vector-optimize` processor): DONE**
 
 > Custom XML-level optimizer using roxmltree/xmlwriter (already in WASM binary via resvg transitive chain — zero new deps). 9 cleanup passes: remove metadata, comments, DOCTYPE/PI, editor namespaces, empty containers, empty attributes, unused xmlns, collapse redundant groups, minify whitespace.
 
-- [x] `engine/crates/bnto-vector` — `vector-optimize` processor (custom roxmltree/xmlwriter approach)
+- [x] `engine/crates/bnto-vector` — `vector-optimize` processor (custom roxmltree/xmlwriter approach) (PR #379)
 - [x] Params: `precision`, `removeComments`, `removeMetadata`, `collapseGroups`, `minify`
 - [x] `engine/recipes/` — `optimize-svg.bnto.json`
 - [x] Codegen + golden tests + test count updates
