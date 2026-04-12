@@ -61,7 +61,7 @@ test.describe("editor entry & navigation @browser", () => {
     // Dialog should be visible on first visit
     const dialog = page.getByTestId("editor-beta-dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText("Recipe Editor (Beta)");
+    await expect(dialog).toContainText("Recipe Editor (Experimental)");
 
     // Dismiss via "Get started" button
     await dialog.getByTestId("beta-get-started").click();
@@ -75,7 +75,7 @@ test.describe("editor entry & navigation @browser", () => {
   test("BN2: beta dialog does not render when previously dismissed", async ({ page }) => {
     // Pre-set the dismissal flag before navigation
     await page.addInitScript(() => {
-      localStorage.setItem("bnto-editor-beta-dismissed", "true");
+      localStorage.setItem("bnto-editor-experimental-dismissed", "true");
     });
     await page.goto("/editor");
 

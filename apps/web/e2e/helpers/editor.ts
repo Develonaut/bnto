@@ -5,28 +5,8 @@
  * They abstract common editor interactions so tests read as user stories.
  */
 
-import path from "path";
 import type { Page } from "@playwright/test";
 import { expect } from "../fixtures";
-
-const IMAGE_FIXTURES_DIR = path.resolve(__dirname, "../../../../test-fixtures/images");
-const CSV_FIXTURES_DIR = path.resolve(__dirname, "../../../../test-fixtures/csv");
-
-/** Map recipe slugs to a fixture file for upload. */
-const SLUG_FIXTURES: Record<string, string> = {
-  "compress-images": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "resize-images": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "convert-image-format": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "strip-exif": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "generate-thumbnails": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "optimize-images-for-web": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "rename-files": path.join(IMAGE_FIXTURES_DIR, "small.jpg"),
-  "clean-csv": path.join(CSV_FIXTURES_DIR, "messy.csv"),
-  "rename-csv-columns": path.join(CSV_FIXTURES_DIR, "simple.csv"),
-  "csv-to-json": path.join(CSV_FIXTURES_DIR, "simple.csv"),
-  "merge-csv": path.join(CSV_FIXTURES_DIR, "simple.csv"),
-  "standardize-csv": path.join(CSV_FIXTURES_DIR, "simple.csv"),
-};
 
 // ---------------------------------------------------------------------------
 // Navigation
@@ -46,17 +26,11 @@ const SLUG_FIXTURES: Record<string, string> = {
  */
 export async function navigateToEditor(page: Page, slug?: string) {
   if (slug) {
-    // Navigate to the tool page and upload a file to advance the stepper
+    // Navigate to the tool page and click "Open in Editor" (visible on step 1,
+    // before any file upload). Files are uploaded later via runEditorWithFiles.
     await page.goto(`/${slug}`);
     await expect(page.getByTestId("recipe-heading")).toBeVisible();
 
-    const fixture = SLUG_FIXTURES[slug];
-    if (!fixture) throw new Error(`No fixture mapped for slug: ${slug}`);
-
-    const fileInput = page.getByTestId("file-input");
-    await fileInput.setInputFiles(fixture);
-
-    // Wait for the stepper to advance — edit button becomes visible
     const editButton = page.getByTestId("edit-in-editor-button");
     await editButton.waitFor({ timeout: 10_000 });
     await editButton.click();
