@@ -13,7 +13,10 @@ import { expect } from "../fixtures";
 // Reference fixture directory — engine owns the authoritative recipe files
 // ---------------------------------------------------------------------------
 
-export const DEFINITIONS_DIR = path.resolve(__dirname, "../../../../engine/recipes");
+export const DEFINITIONS_DIR = path.resolve(
+  __dirname,
+  "../../../../engine/crates/bnto-engine/recipes",
+);
 
 // ---------------------------------------------------------------------------
 // Types

@@ -81,7 +81,7 @@ test.describe("editor stale recipe resilience @browser", () => {
     await page.addInitScript(
       ({ key, payload }) => {
         sessionStorage.setItem(key, payload);
-        localStorage.setItem("bnto-editor-beta-dismissed", "true");
+        localStorage.setItem("bnto-editor-experimental-dismissed", "true");
       },
       { key: STORAGE_KEY, payload: buildStoragePayload() },
     );
@@ -107,7 +107,7 @@ test.describe("editor stale recipe resilience @browser", () => {
     await page.addInitScript(
       ({ key, payload }) => {
         sessionStorage.setItem(key, payload);
-        localStorage.setItem("bnto-editor-beta-dismissed", "true");
+        localStorage.setItem("bnto-editor-experimental-dismissed", "true");
       },
       { key: STORAGE_KEY, payload: buildStoragePayload() },
     );
@@ -139,7 +139,7 @@ test.describe("editor stale recipe resilience @browser", () => {
     await page.addInitScript(
       ({ key, payload }) => {
         sessionStorage.setItem(key, payload);
-        localStorage.setItem("bnto-editor-beta-dismissed", "true");
+        localStorage.setItem("bnto-editor-experimental-dismissed", "true");
       },
       { key: STORAGE_KEY, payload: buildStoragePayload() },
     );
