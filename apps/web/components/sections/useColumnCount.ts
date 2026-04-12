@@ -1,8 +1,4 @@
-/**
- * Responsive column count for the explore grid.
- *
- * Returns 1 (mobile), 2 (tablet), or 3 (desktop) based on window width.
- */
+"use client";
 
 import { useSyncExternalStore } from "react";
 
@@ -22,6 +18,7 @@ function getServerSnapshot() {
   return 1;
 }
 
+/** Returns 1 (mobile), 2 (tablet), or 3 (desktop) based on window width. */
 export function useColumnCount() {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

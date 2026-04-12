@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AppShellContent, Container, Heading } from "@bnto/ui";
+import { AppShellContent, Container, Divider, Heading } from "@bnto/ui";
 import { getRecipeBySlug, isRecipeBrowserCapable } from "@bnto/registry";
 import { BNTO_REGISTRY, getBntoBySlug } from "@/lib/bntoRegistry";
 import { BntoJsonLd } from "./_components/BntoJsonLd";
 import { BntoRunStepper } from "./_components/BntoRunStepper";
 import { RecipeHeroMascot } from "./_components/RecipeHeroMascot";
 import { CliPromo } from "./_components/CliPromo";
+import { HowItWorksSection } from "./_components/HowItWorksSection";
+import { WhyBntoSection } from "./_components/WhyBntoSection";
+import { CategoryFeaturesSection } from "./_components/CategoryFeaturesSection";
+import { RelatedRecipesSection } from "./_components/RelatedRecipesSection";
+import { RecipeFaqSection } from "./_components/RecipeFaqSection";
 
 /** Only slugs from generateStaticParams are valid — everything else is 404. */
 export const dynamicParams = false;
@@ -42,7 +47,7 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
 
   return (
     <>
-      <BntoJsonLd entry={entry} />
+      <BntoJsonLd entry={entry} recipe={recipe ?? undefined} />
       <AppShellContent>
         <Container size="lg" className="space-y-6 text-center">
           {browserCapable ? (
@@ -62,6 +67,25 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
             </>
           )}
         </Container>
+
+        {/* Below-the-fold SEO content */}
+        {recipe && (
+          <>
+            <Divider label="How it works" />
+            <HowItWorksSection recipe={recipe} />
+          </>
+        )}
+
+        <Divider label="No catches" />
+        <WhyBntoSection />
+
+        <Divider label="Features" />
+        <CategoryFeaturesSection category={entry.category} />
+
+        <RelatedRecipesSection category={entry.category} currentSlug={entry.slug} />
+
+        <Divider label="FAQ" />
+        <RecipeFaqSection slug={entry.slug} category={entry.category} />
       </AppShellContent>
     </>
   );
