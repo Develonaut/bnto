@@ -434,6 +434,12 @@ jobs:
       - name: Pull Vercel environment (production)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Write IndexNow verification file
+        if: env.INDEXNOW_KEY != ''
+        run: echo "$INDEXNOW_KEY" > apps/web/public/${INDEXNOW_KEY}.txt
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+
       - name: Build for production
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
@@ -513,7 +519,49 @@ jobs:
           sleep 15
           publish bnto
 
-  # ── Job 9: Create GitHub Release ──
+  # ── Job 9: Notify Search Engines (after production deploy) ──
+  notify-search-engines:
+    name: Notify Search Engines
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always() && needs.deploy-production.result == 'success'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Ping Google Sitemap
+        run: npx tsx scripts/seo/pingSitemap.ts
+
+      - name: Submit to IndexNow
+        if: env.INDEXNOW_KEY != ''
+        run: npx tsx scripts/seo/submitIndexNow.ts
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+
+      - name: Submit to Google Indexing API
+        if: env.GOOGLE_INDEXING_KEY != ''
+        run: npx tsx scripts/seo/submitGoogleIndexing.ts
+        env:
+          GOOGLE_INDEXING_KEY: ${{ secrets.GOOGLE_INDEXING_KEY }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Search Engine Notifications" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Sitemap ping: done" >> "$GITHUB_STEP_SUMMARY"
+          echo "- IndexNow: submitted or skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Google Indexing API: submitted or skipped" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Job 10: Create GitHub Release ──
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
