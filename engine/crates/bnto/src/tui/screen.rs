@@ -17,18 +17,6 @@ impl Screen {
         }
     }
 
-    /// Placeholder label shown in the content area.
-    pub fn placeholder_label(&self) -> String {
-        match self {
-            Self::Browser => "Select a recipe to get started.".to_string(),
-            Self::Detail { slug } => format!("Configure {slug}"),
-            Self::Picker { slug } => format!("Pick files for {slug}"),
-            Self::Execution { slug } => format!("Running {slug}..."),
-            Self::Results { slug } => format!("Results for {slug}"),
-            Self::Settings => "Settings".to_string(),
-        }
-    }
-
     /// Contextual key hints for the help bar.
     pub fn help_hints(&self) -> Vec<(&'static str, &'static str)> {
         match self {
@@ -41,7 +29,8 @@ impl Screen {
             ],
             Self::Detail { .. } => vec![
                 ("↑↓", "navigate"),
-                ("Enter", "edit/confirm"),
+                ("Enter", "edit/select"),
+                ("Tab", "continue"),
                 ("Esc", "back"),
                 ("q", "quit"),
             ],

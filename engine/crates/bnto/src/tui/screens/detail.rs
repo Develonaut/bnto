@@ -72,6 +72,12 @@ pub struct ConfigResult {
 }
 
 impl DetailModel {
+    /// Whether the "Continue" action at the bottom is focused.
+    /// The continue action lives at index `params.len()`.
+    pub fn is_continue_focused(&self) -> bool {
+        self.focused == self.params.len()
+    }
+
     /// Build a detail model from test data (no engine dependency).
     #[cfg(test)]
     pub fn from_test_data(
@@ -118,11 +124,9 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
             if model.editing || model.params.is_empty() {
                 return model;
             }
-            let next = if model.focused + 1 >= model.params.len() {
-                0
-            } else {
-                model.focused + 1
-            };
+            // Items: params[0..n] + continue action at index n
+            let item_count = model.params.len() + 1;
+            let next = (model.focused + 1) % item_count;
             DetailModel {
                 focused: next,
                 ..model
@@ -132,8 +136,9 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
             if model.editing || model.params.is_empty() {
                 return model;
             }
+            let item_count = model.params.len() + 1;
             let prev = if model.focused == 0 {
-                model.params.len().saturating_sub(1)
+                item_count - 1
             } else {
                 model.focused - 1
             };
@@ -143,7 +148,7 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
             }
         }
         DetailMessage::StartEdit => {
-            if model.params.is_empty() {
+            if model.params.is_empty() || model.is_continue_focused() {
                 return model;
             }
             let buffer = model.params[model.focused].value.clone();
@@ -283,11 +288,20 @@ mod tests {
     }
 
     #[test]
-    fn focus_next_wraps_at_end() {
+    fn focus_next_reaches_continue_action() {
         let mut m = detail();
         m.focused = 2; // last param
         let m = update(m, DetailMessage::FocusNext);
-        assert_eq!(m.focused, 0);
+        assert_eq!(m.focused, 3, "should reach continue action");
+        assert!(m.is_continue_focused());
+    }
+
+    #[test]
+    fn focus_next_wraps_from_continue_to_first() {
+        let mut m = detail();
+        m.focused = 3; // continue action
+        let m = update(m, DetailMessage::FocusNext);
+        assert_eq!(m.focused, 0, "should wrap to first param");
     }
 
     #[test]
@@ -302,7 +316,8 @@ mod tests {
     fn focus_prev_wraps_at_start() {
         let m = detail(); // focused = 0
         let m = update(m, DetailMessage::FocusPrev);
-        assert_eq!(m.focused, 2);
+        assert_eq!(m.focused, 3, "should wrap to continue action");
+        assert!(m.is_continue_focused());
     }
 
     #[test]
@@ -391,6 +406,27 @@ mod tests {
         let m = DetailModel::from_test_data("s", "n", "d", vec![]);
         let m = update(m, DetailMessage::StartEdit);
         assert!(!m.editing, "should not enter edit mode with no params");
+    }
+
+    #[test]
+    fn start_edit_ignored_on_continue_action() {
+        let mut m = detail();
+        m.focused = 3; // continue action
+        let m = update(m, DetailMessage::StartEdit);
+        assert!(!m.editing, "should not enter edit mode on continue");
+    }
+
+    #[test]
+    fn is_continue_focused_true_at_params_len() {
+        let mut m = detail();
+        m.focused = m.params.len();
+        assert!(m.is_continue_focused());
+    }
+
+    #[test]
+    fn is_continue_focused_false_on_param() {
+        let m = detail();
+        assert!(!m.is_continue_focused());
     }
 
     // --- Confirm ---

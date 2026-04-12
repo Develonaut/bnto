@@ -5,10 +5,13 @@
 
 pub mod app;
 pub mod event;
+mod keys;
 pub mod palette;
 mod render;
 mod render_detail;
+mod render_execution;
 mod render_picker;
+mod render_results;
 pub mod screen;
 pub mod screens;
 #[allow(dead_code)]
@@ -18,18 +21,16 @@ pub mod widgets;
 use std::io;
 use std::time::Duration;
 
-use crossterm::event::{Event, KeyCode, KeyEvent};
+use crossterm::event::Event;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{event as crossterm_event, execute};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout};
 
-use app::{AppMessage, AppModel, Screen, update};
-use screens::browser::BrowserMessage;
-use screens::detail::DetailMessage;
-use screens::picker::PickerMessage;
-use theme::{ALL_VARIANTS, ThemeVariant};
+use app::{AppModel, update};
+use keys::handle_key;
+use theme::ThemeVariant;
 
 /// Tick rate for the event loop (how often we check for input).
 const TICK_RATE: Duration = Duration::from_millis(50);
@@ -107,164 +108,17 @@ fn run_loop(
     Ok(())
 }
 
-/// Map a key event to an AppMessage based on the current screen.
-///
-/// When the browser is in search mode, screen-specific keys take priority
-/// so that Esc exits search and character keys type into the query.
-fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    let searching = matches!(&model.screen, Screen::Browser if model.browser.searching);
-    if searching {
-        return handle_browser_key(model, key);
-    }
-
-    // Detail editing mode captures all keys (like browser search mode).
-    let detail_editing = matches!(&model.screen, Screen::Detail { .. }
-        if model.detail.as_ref().is_some_and(|d| d.editing));
-    if detail_editing {
-        return handle_detail_key(model, key);
-    }
-
-    if let Some(msg) = event::map_global_key(key) {
-        return Some(msg);
-    }
-
-    match &model.screen {
-        Screen::Browser => handle_browser_key(model, key),
-        Screen::Settings => handle_settings_key(model, key),
-        Screen::Detail { .. } => handle_detail_key(model, key),
-        Screen::Picker { .. } => handle_picker_key(model, key),
-        Screen::Execution { .. } => None,
-        Screen::Results { .. } => None,
-    }
-}
-
-/// Handle key events on the Browser screen.
-fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    if model.browser.searching {
-        return match key.code {
-            KeyCode::Esc => Some(AppMessage::Browser(BrowserMessage::ExitSearch)),
-            KeyCode::Backspace => Some(AppMessage::Browser(BrowserMessage::SearchBackspace)),
-            KeyCode::Enter => model
-                .browser
-                .confirm()
-                .map(|r| AppMessage::RecipeSelected { slug: r.slug }),
-            KeyCode::Char('u')
-                if key
-                    .modifiers
-                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
-            {
-                Some(AppMessage::Browser(BrowserMessage::SearchClear))
-            }
-            KeyCode::Char(ch) => Some(AppMessage::Browser(BrowserMessage::SearchInput(ch))),
-            _ => None,
-        };
-    }
-
-    match key.code {
-        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Browser(BrowserMessage::CursorDown)),
-        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Browser(BrowserMessage::CursorUp)),
-        KeyCode::Char('/') => Some(AppMessage::Browser(BrowserMessage::EnterSearch)),
-        KeyCode::Char('s') => Some(AppMessage::OpenSettings),
-        KeyCode::Enter => model
-            .browser
-            .confirm()
-            .map(|r| AppMessage::RecipeSelected { slug: r.slug }),
-        _ => None,
-    }
-}
-
-/// Handle key events on the Detail screen.
-///
-/// When editing a parameter, char keys feed the edit buffer and Enter/Esc
-/// commit or cancel. When not editing, j/k navigate params and Enter starts
-/// editing or confirms when no params exist.
-fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    let editing = model.detail.as_ref().is_some_and(|d| d.editing);
-
-    if editing {
-        return match key.code {
-            KeyCode::Enter => Some(AppMessage::Detail(DetailMessage::CommitEdit)),
-            KeyCode::Esc => Some(AppMessage::Detail(DetailMessage::CancelEdit)),
-            KeyCode::Backspace => Some(AppMessage::Detail(DetailMessage::EditBackspace)),
-            KeyCode::Char(ch) => Some(AppMessage::Detail(DetailMessage::EditChar(ch))),
-            _ => None,
-        };
-    }
-
-    match key.code {
-        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Detail(DetailMessage::FocusNext)),
-        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Detail(DetailMessage::FocusPrev)),
-        KeyCode::Enter => {
-            let has_params = model.detail.as_ref().is_some_and(|d| !d.params.is_empty());
-            if has_params {
-                Some(AppMessage::Detail(DetailMessage::StartEdit))
-            } else {
-                Some(AppMessage::ConfigConfirmed {
-                    slug: model
-                        .detail
-                        .as_ref()
-                        .map(|d| d.slug.clone())
-                        .unwrap_or_default(),
-                })
-            }
-        }
-        KeyCode::Esc => Some(AppMessage::Back),
-        _ => None,
-    }
-}
-
-/// Handle key events on the Picker screen.
-fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    let picker = model.picker.as_ref()?;
-
-    match key.code {
-        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Picker(PickerMessage::CursorDown)),
-        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Picker(PickerMessage::CursorUp)),
-        KeyCode::Char(' ') => Some(AppMessage::Picker(PickerMessage::ToggleSelect)),
-        KeyCode::Backspace => Some(AppMessage::Picker(PickerMessage::ParentDir)),
-        KeyCode::Enter => {
-            if picker.cursor < picker.entries.len() && picker.entries[picker.cursor].is_dir {
-                Some(AppMessage::Picker(PickerMessage::EnterDir))
-            } else if !picker.selected.is_empty() {
-                let slug = picker.slug.clone();
-                Some(AppMessage::FilesSelected { slug })
-            } else {
-                None
-            }
-        }
-        KeyCode::Esc => Some(AppMessage::Back),
-        _ => None,
-    }
-}
-
-/// Handle key events on the Settings screen.
-fn handle_settings_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    let current_idx = ALL_VARIANTS
-        .iter()
-        .position(|v| *v == model.theme_variant)
-        .unwrap_or(0);
-
-    match key.code {
-        KeyCode::Up => {
-            let prev = if current_idx == 0 {
-                ALL_VARIANTS.len() - 1
-            } else {
-                current_idx - 1
-            };
-            Some(AppMessage::ThemeChanged(ALL_VARIANTS[prev]))
-        }
-        KeyCode::Down => {
-            let next = (current_idx + 1) % ALL_VARIANTS.len();
-            Some(AppMessage::ThemeChanged(ALL_VARIANTS[next]))
-        }
-        KeyCode::Enter => Some(AppMessage::Back),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
+    use crossterm::event::{KeyCode, KeyEvent};
+
     use super::*;
+    use app::{AppMessage, Screen};
+    use screens::browser::BrowserMessage;
+    use screens::detail::DetailMessage;
+    use screens::execution::ExecutionMessage;
+    use screens::picker::PickerMessage;
+    use screens::results::ResultsMessage;
     use theme::Theme;
 
     fn default_model() -> AppModel {
@@ -573,6 +427,32 @@ mod tests {
     }
 
     #[test]
+    fn detail_tab_confirms_from_any_focus() {
+        let model = detail_model(); // focused = 0 (on a param)
+        let key = KeyEvent::new(KeyCode::Tab, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ConfigConfirmed {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
+    fn detail_enter_confirms_on_continue_action() {
+        let mut model = detail_model();
+        // Focus on the continue action (index = params.len())
+        model.detail.as_mut().unwrap().focused = 2;
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ConfigConfirmed {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
     fn detail_editing_captures_chars() {
         let mut model = detail_model();
         model.detail.as_mut().unwrap().editing = true;
@@ -737,6 +617,120 @@ mod tests {
     #[test]
     fn picker_q_quits() {
         let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
+    }
+
+    // --- Execution key handling ---
+
+    fn execution_model() -> AppModel {
+        use screens::execution::ExecutionModel;
+
+        AppModel {
+            screen: Screen::Execution {
+                slug: "compress-images".into(),
+            },
+            execution: Some(ExecutionModel::new("compress-images")),
+            ..default_model()
+        }
+    }
+
+    #[test]
+    fn execution_esc_cancels() {
+        let model = execution_model();
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Execution(ExecutionMessage::Cancel))
+        );
+    }
+
+    #[test]
+    fn execution_q_quits() {
+        let model = execution_model();
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
+    }
+
+    #[test]
+    fn execution_unmapped_key_returns_none() {
+        let model = execution_model();
+        let key = KeyEvent::new(KeyCode::Char('x'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
+    }
+
+    // --- Results key handling ---
+
+    fn results_model() -> AppModel {
+        use screens::results::{OutputFile, ResultsModel};
+
+        let outputs = vec![
+            OutputFile {
+                name: "photo-1.jpg".into(),
+                size_bytes: 290_000,
+                original_size: Some(780_000),
+            },
+            OutputFile {
+                name: "photo-2.jpg".into(),
+                size_bytes: 340_000,
+                original_size: Some(920_000),
+            },
+        ];
+
+        AppModel {
+            screen: Screen::Results {
+                slug: "compress-images".into(),
+            },
+            results: Some(ResultsModel::new("compress-images", outputs, 4100, None)),
+            ..default_model()
+        }
+    }
+
+    #[test]
+    fn results_j_moves_cursor_down() {
+        let model = results_model();
+        let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Results(ResultsMessage::CursorDown))
+        );
+    }
+
+    #[test]
+    fn results_k_moves_cursor_up() {
+        let model = results_model();
+        let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Results(ResultsMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn results_arrow_keys_navigate() {
+        let model = results_model();
+        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, down),
+            Some(AppMessage::Results(ResultsMessage::CursorDown))
+        );
+        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, up),
+            Some(AppMessage::Results(ResultsMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn results_r_runs_another() {
+        let model = results_model();
+        let key = KeyEvent::new(KeyCode::Char('r'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::RunAnother));
+    }
+
+    #[test]
+    fn results_q_quits() {
+        let model = results_model();
         let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
     }

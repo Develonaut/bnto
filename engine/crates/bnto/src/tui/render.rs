@@ -9,7 +9,9 @@ use ratatui::widgets::{Block, Paragraph};
 
 use super::app::{AppModel, Screen};
 use super::render_detail::draw_detail;
+use super::render_execution::draw_execution;
 use super::render_picker::draw_picker;
+use super::render_results::draw_results;
 use super::theme::{ALL_VARIANTS, ROUNDED_BORDERS, Theme};
 use super::widgets::{help_bar, search_input, status_line};
 
@@ -19,8 +21,9 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
         Screen::Browser => draw_browser(frame, model, theme, area),
         Screen::Detail { .. } => draw_detail(frame, model, theme, area),
         Screen::Picker { .. } => draw_picker(frame, model, theme, area),
+        Screen::Execution { .. } => draw_execution(frame, model, theme, area),
+        Screen::Results { .. } => draw_results(frame, model, theme, area),
         Screen::Settings => draw_settings(frame, model, theme, area),
-        screen => draw_placeholder(frame, screen, theme, area),
     }
 }
 
@@ -82,20 +85,6 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
 
     let content = Paragraph::new(lines);
     frame.render_widget(content, inner);
-}
-
-/// Render a placeholder screen (used for screens not yet implemented).
-fn draw_placeholder(frame: &mut ratatui::Frame, screen: &Screen, theme: &Theme, area: Rect) {
-    let block = Block::bordered()
-        .title(screen.title())
-        .title_style(theme.heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme.border());
-
-    let content = Paragraph::new(screen.placeholder_label())
-        .style(theme.text())
-        .block(block);
-    frame.render_widget(content, area);
 }
 
 /// Render the settings screen with theme picker.
