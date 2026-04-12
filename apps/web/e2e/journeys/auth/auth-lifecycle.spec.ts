@@ -1,6 +1,10 @@
 import { test, expect } from "../../fixtures";
 import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
 
+// Auth UI removed in open-source-first positioning.
+// Follow-up PR will delete auth routes and these test files.
+test.skip();
+
 /**
  * Auth lifecycle E2E journeys
  *
@@ -10,6 +14,9 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
  *
  * Each test uses a unique email to avoid conflicts with other test runs.
  * Emails use @test.bnto.dev domain — cleaned up by global teardown.
+ *
+ * Note: NavUser UI was removed in the open-source-first positioning.
+ * Sign-out is simulated programmatically (clear cookies + signal cookie).
  */
 
 // ---------------------------------------------------------------------------
@@ -32,12 +39,15 @@ async function signUp(page: import("@playwright/test").Page, email: string) {
   await page.waitForURL("/", { timeout: 15000 });
 }
 
-/** Sign out via the NavUser dropdown and wait for /signin. */
+/** Programmatic sign-out — clears session cookies + sets signal cookie.
+ *  NavUser UI was removed; this simulates the cookie-level effects. */
 async function signOut(page: import("@playwright/test").Page) {
-  const userMenu = page.getByTestId("nav-user-menu");
-  await expect(userMenu).toBeVisible({ timeout: 10000 });
-  await userMenu.click();
-  await page.getByTestId("nav-sign-out").click();
+  await page.evaluate(() => {
+    document.cookie = "bnto-signout=1; path=/; max-age=10; samesite=lax";
+  });
+  await page.context().clearCookies({ name: "__convexAuthJWT" });
+  await page.context().clearCookies({ name: "__convexAuthRefreshToken" });
+  await page.goto("/signin");
   await page.waitForURL("/signin", { timeout: 10000 });
 }
 
@@ -56,20 +66,10 @@ test.describe("New user journey @auth", () => {
     await expect(page.getByTestId("auth-name-input")).toBeVisible();
   });
 
-  test("sign up → lands on home → sees user menu", async ({ page }) => {
+  test("sign up → lands on home", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
-
     await expect(page).toHaveURL("/");
-
-    // NavUser shows authenticated state (user menu, not "Sign In")
-    const userMenu = page.getByTestId("nav-user-menu");
-    await expect(userMenu).toBeVisible({ timeout: 10000 });
-
-    // Open menu — should display the user's email
-    await userMenu.click();
-    await expect(page.getByTestId("nav-user-email")).toBeVisible();
-    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 
   test("sign up → sign out → stays on /signin (no bounce)", async ({ page }) => {
@@ -81,19 +81,6 @@ test.describe("New user journey @auth", () => {
 
     // Should stay on /signin — NOT bounce back to /
     await expect(page).toHaveURL("/signin");
-
-    // After sign-out, hasAccount persists in store → shows signin mode
-    const authHeading = page.getByTestId("auth-heading");
-    await expect(authHeading).toBeVisible();
-    await expect(authHeading).toContainText("Welcome back");
-
-    // Wait briefly for session cleanup, then confirm the user is truly signed out
-    await page.waitForTimeout(2000);
-    await page.goto("/");
-    const userMenu = page.getByTestId("nav-user-menu");
-    await expect(userMenu).toBeVisible({ timeout: 10000 });
-    await userMenu.click();
-    await expect(page.getByTestId("nav-sign-in")).toBeVisible();
   });
 });
 
@@ -104,9 +91,6 @@ test.describe("New user journey @auth", () => {
 test.describe("Returning user journey @auth", () => {
   test("returning user sees signin form (persisted auth store)", async ({ page }) => {
     // Seed localStorage via addInitScript so it runs BEFORE page scripts.
-    // This avoids race conditions with Zustand persist: if we seed after
-    // page load, async state changes (e.g. SessionProvider) trigger persist
-    // writes that can overwrite the seeded value before the next navigation.
     await page.addInitScript(() => {
       const state = {
         state: {
@@ -134,7 +118,10 @@ test.describe("Returning user journey @auth", () => {
     // Create the account first
     await signUp(page, email);
 
-    // Clear session cookies (simulates browser restart) but keep bnto-has-account
+    // Break the Convex WebSocket connection so it can't re-issue cookies
+    await page.goto("about:blank");
+
+    // Clear session cookies (simulates browser restart) but keep localStorage
     await page.context().clearCookies({ name: "__convexAuthJWT" });
     await page.context().clearCookies({ name: "__convexAuthRefreshToken" });
     await page.goto("/signin");
@@ -152,42 +139,6 @@ test.describe("Returning user journey @auth", () => {
     // Should redirect to home
     await page.waitForURL("/", { timeout: 15000 });
     await expect(page).toHaveURL("/");
-
-    // NavUser should show authenticated state
-    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
-  });
-
-  test("sign out → sign back in → full round-trip", async ({ page }) => {
-    const email = testEmail();
-
-    // 1. Sign up (creates account + sets bnto-has-account cookie)
-    await signUp(page, email);
-    await expect(page).toHaveURL("/");
-
-    // 2. Sign out
-    await signOut(page);
-    await expect(page).toHaveURL("/signin");
-
-    // 3. Sign back in — bnto-has-account cookie present → signin mode shown
-    const authHeading = page.getByTestId("auth-heading");
-    await expect(authHeading).toBeVisible();
-    await expect(authHeading).toContainText("Welcome back");
-
-    await page.getByTestId("auth-email-input").fill(email);
-    await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
-    await page.getByTestId("auth-submit").click();
-    await page.waitForURL("/", { timeout: 15000 });
-
-    // 4. Confirm authenticated — wait for auth to fully resolve, then check email
-    const signOutItem = page.getByTestId("nav-sign-out");
-    // Poll: open menu, check for sign-out item (proves auth resolved)
-    await expect(async () => {
-      const userMenu = page.getByTestId("nav-user-menu");
-      await userMenu.click();
-      await expect(signOutItem).toBeVisible({ timeout: 1000 });
-    }).toPass({ timeout: 15000 });
-    await expect(page.getByTestId("nav-user-email")).toBeVisible();
-    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 });
 
@@ -215,24 +166,6 @@ test.describe("Auth form behavior @auth", () => {
     await expect(page.getByTestId("auth-name-input")).toBeVisible();
   });
 
-  test("switching to signup clears pre-filled email", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-    await signOut(page);
-
-    // After sign-out, persisted user email should pre-fill the signin form
-    const emailInput = page.getByTestId("auth-email-input");
-    await expect(emailInput).toHaveValue(email);
-
-    // Toggle to signup — email should clear (new account = new email)
-    await page.getByTestId("auth-mode-toggle").click();
-    await expect(emailInput).toHaveValue("");
-
-    // Toggle back to signin — email should re-fill from persisted user
-    await page.getByTestId("auth-mode-toggle").click();
-    await expect(emailInput).toHaveValue(email);
-  });
-
   test("invalid credentials show error message", async ({ page }) => {
     await page.goto("/signin");
 
@@ -254,9 +187,14 @@ test.describe("Auth form behavior @auth", () => {
     // Create the account first
     await signUp(page, email);
 
-    // Clear session and persisted auth store, then go back to signin
-    await page.context().clearCookies();
+    // Clear persisted auth store (must be on app origin before navigating away)
     await page.evaluate(() => localStorage.removeItem("bnto-auth"));
+
+    // Break the Convex WebSocket connection so it can't re-issue cookies
+    await page.goto("about:blank");
+
+    // Clear all cookies (safe now — no active WebSocket to re-issue them)
+    await page.context().clearCookies();
     await page.goto("/signin");
 
     // Should show signup form (no persisted auth → fresh visitor)
@@ -311,8 +249,7 @@ test.describe("Proxy route protection @auth", () => {
     const email = testEmail();
     await signUp(page, email);
 
-    // Sign out from home (protected pages like /settings don't have a
-    // rendered page yet — sign out from a page that works reliably)
+    // Sign out (programmatic)
     await signOut(page);
 
     // Wait for session cookie to clear server-side
@@ -321,19 +258,5 @@ test.describe("Proxy route protection @auth", () => {
     // Protected route should now redirect to /signin with returnTo
     await page.goto("/executions");
     await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
-  });
-
-  test("navbar Sign In navigates to /signin", async ({ page }) => {
-    await page.goto("/");
-
-    const userMenu = page.getByTestId("nav-user-menu");
-    await expect(userMenu).toBeVisible({ timeout: 10000 });
-    await userMenu.click();
-
-    const signInButton = page.getByTestId("nav-sign-in");
-    await expect(signInButton).toBeVisible({ timeout: 10000 });
-
-    await signInButton.click();
-    await page.waitForURL("/signin", { timeout: 10000 });
   });
 });

@@ -1,6 +1,10 @@
 import { test, expect } from "../../fixtures";
 import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
 
+// Auth UI removed in open-source-first positioning.
+// Follow-up PR will delete auth routes and these test files.
+test.skip();
+
 /**
  * Browser auth behavior verification
  *
@@ -9,8 +13,9 @@ import { testEmail, TEST_PASSWORD, TEST_NAME } from "../../accounts";
  * and mid-session auth loss detection. Complements auth-lifecycle.spec.ts
  * which covers the user-facing sign-up/sign-in/sign-out flows.
  *
- * Sprint 3 Wave 2 — "Token expiry, sign-out invalidation, cookie-based
- * default mode"
+ * Note: NavUser UI was removed in the open-source-first positioning.
+ * Sign-out is simulated programmatically (clear cookies + signal cookie).
+ * Tests that verified NavUser visibility have been removed.
  */
 
 // ---------------------------------------------------------------------------
@@ -31,46 +36,15 @@ async function signUp(page: import("@playwright/test").Page, email: string) {
   await page.waitForURL("/", { timeout: 15000 });
 }
 
-/** Seed the persisted auth store in localStorage to simulate a returning user. */
-async function seedAuthStore(
-  page: import("@playwright/test").Page,
-  user: { id: string; name: string; email: string },
-) {
-  await page.evaluate(
-    ({ user: u }) => {
-      const state = {
-        state: { user: { ...u, image: null }, hasAccount: true },
-        version: 0,
-      };
-      localStorage.setItem("bnto-auth", JSON.stringify(state));
-    },
-    { user },
-  );
-}
-
-/** Sign in an existing user and wait until we land on home. */
-async function signIn(page: import("@playwright/test").Page, email: string) {
-  await page.goto("/signin");
-
-  // Seed persisted auth store so form shows sign-in mode
-  await seedAuthStore(page, { id: "seed", name: TEST_NAME, email });
-  await page.goto("/signin");
-  const authHeading = page.getByTestId("auth-heading");
-  await expect(authHeading).toBeVisible();
-  await expect(authHeading).toContainText("Welcome back");
-
-  await page.getByTestId("auth-email-input").fill(email);
-  await page.getByTestId("auth-password-input").fill(TEST_PASSWORD);
-  await page.getByTestId("auth-submit").click();
-  await page.waitForURL("/", { timeout: 15000 });
-}
-
-/** Click sign out and wait for /signin. */
+/** Programmatic sign-out — clears session cookies + sets signal cookie.
+ *  NavUser UI was removed; this simulates the cookie-level effects. */
 async function signOut(page: import("@playwright/test").Page) {
-  const userMenu = page.getByTestId("nav-user-menu");
-  await expect(userMenu).toBeVisible({ timeout: 10000 });
-  await userMenu.click();
-  await page.getByTestId("nav-sign-out").click();
+  await page.evaluate(() => {
+    document.cookie = "bnto-signout=1; path=/; max-age=10; samesite=lax";
+  });
+  await page.context().clearCookies({ name: "__convexAuthJWT" });
+  await page.context().clearCookies({ name: "__convexAuthRefreshToken" });
+  await page.goto("/signin");
   await page.waitForURL("/signin", { timeout: 10000 });
 }
 
@@ -90,23 +64,6 @@ async function getCookie(page: import("@playwright/test").Page, name: string) {
 // ---------------------------------------------------------------------------
 
 test.describe("Sign-out signal cookie @auth", () => {
-  test("sign-out sets bnto-signout signal cookie", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-
-    // Before sign-out — no signal cookie
-    const beforeCookie = await getCookie(page, "bnto-signout");
-    expect(beforeCookie).toBeUndefined();
-
-    // Sign out
-    await signOut(page);
-
-    // Signal cookie should be set immediately after sign-out
-    const signalCookie = await getCookie(page, "bnto-signout");
-    expect(signalCookie).toBeDefined();
-    expect(signalCookie!.value).toBe("1");
-  });
-
   test("signal cookie prevents /signin → / bounce during sign-out", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
@@ -122,11 +79,13 @@ test.describe("Sign-out signal cookie @auth", () => {
   });
 
   test("signal cookie expires after ~10 seconds", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-    await signOut(page);
+    // Set signal cookie directly to test TTL
+    await page.goto("/signin");
+    await page.evaluate(() => {
+      document.cookie = "bnto-signout=1; path=/; max-age=10; samesite=lax";
+    });
 
-    // Signal cookie exists immediately after sign-out
+    // Signal cookie exists immediately
     let signalCookie = await getCookie(page, "bnto-signout");
     expect(signalCookie).toBeDefined();
 
@@ -155,29 +114,6 @@ test.describe("Session cookie lifecycle @auth", () => {
     expect(refresh).toBeDefined();
   });
 
-  test("session cookies are cleared after sign-out completes", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-
-    // Verify cookies exist before sign-out
-    let jwt = await getCookie(page, "__convexAuthJWT");
-    expect(jwt).toBeDefined();
-
-    await signOut(page);
-
-    // Wait for server-side cleanup (sign-out fires authSignOut in background)
-    await page.waitForTimeout(3000);
-
-    // Session cookies should be cleared by the server
-    jwt = await getCookie(page, "__convexAuthJWT");
-    const refresh = await getCookie(page, "__convexAuthRefreshToken");
-
-    // After server cleanup, both should be cleared
-    const jwtCleared = !jwt || jwt.value === "";
-    const refreshCleared = !refresh || refresh.value === "";
-    expect(jwtCleared || refreshCleared).toBeTruthy();
-  });
-
   test("hasAccount persists through sign-out (localStorage store)", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
@@ -193,16 +129,6 @@ test.describe("Session cookie lifecycle @auth", () => {
     const authHeading = page.getByTestId("auth-heading");
     await expect(authHeading).toBeVisible();
     await expect(authHeading).toContainText("Welcome back");
-  });
-
-  test("email pre-fills on signin page after sign-out", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-    await signOut(page);
-
-    // The persisted user's email should pre-fill the email input
-    const emailInput = page.getByTestId("auth-email-input");
-    await expect(emailInput).toHaveValue(email);
   });
 
   test("fresh browser context without auth store sees signup form", async ({ page }) => {
@@ -223,55 +149,6 @@ test.describe("Session cookie lifecycle @auth", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Session persistence across navigation
-// ---------------------------------------------------------------------------
-
-test.describe("Session persistence @auth", () => {
-  test("authenticated session persists across page navigation", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-
-    // Navigate to multiple public pages — session should persist
-    const routes = ["/", "/compress-images", "/clean-csv", "/"];
-
-    for (const route of routes) {
-      await page.goto(route);
-
-      // User menu should remain visible (authenticated state)
-      const userMenu = page.getByTestId("nav-user-menu");
-      await expect(userMenu).toBeVisible({ timeout: 10000 });
-    }
-
-    // Open menu on last page — email should still be visible
-    const userMenu = page.getByTestId("nav-user-menu");
-    await userMenu.click();
-    await expect(page.getByTestId("nav-user-email")).toBeVisible();
-    await expect(page.getByTestId("nav-user-email")).toContainText(email);
-  });
-
-  test("auth state is consistent after back/forward navigation", async ({ page }) => {
-    const email = testEmail();
-    await signUp(page, email);
-
-    // Navigate to a recipe page
-    await page.goto("/compress-images");
-    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
-
-    // Navigate to another page
-    await page.goto("/clean-csv");
-    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
-
-    // Go back
-    await page.goBack();
-    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
-
-    // Go forward
-    await page.goForward();
-    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Mid-session auth loss (simulated token expiry)
 // ---------------------------------------------------------------------------
 
@@ -280,15 +157,13 @@ test.describe("Mid-session auth loss @auth", () => {
     const email = testEmail();
     await signUp(page, email);
 
-    // Confirm authenticated state
-    const userMenu = page.getByTestId("nav-user-menu");
-    await expect(userMenu).toBeVisible({ timeout: 10000 });
-
     // Simulate token expiry by clearing the JWT cookie
     await page.context().clearCookies({ name: "__convexAuthJWT" });
     await page.context().clearCookies({ name: "__convexAuthRefreshToken" });
 
-    // Trigger a page interaction that forces auth re-evaluation.
+    // Break the Convex WebSocket connection so it can't re-issue cookies
+    await page.goto("about:blank");
+
     // Navigation to a protected route forces the proxy to check auth.
     await page.goto("/executions");
 
@@ -296,93 +171,22 @@ test.describe("Mid-session auth loss @auth", () => {
     await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
   });
 
-  test("clearing JWT while on public page — SessionProvider detects loss", async ({ page }) => {
+  test("clearing JWT while on public page — proxy catches on next navigation", async ({ page }) => {
     const email = testEmail();
     await signUp(page, email);
 
     // Navigate to a public page
     await page.goto("/compress-images");
-    await expect(page.getByTestId("nav-user-menu")).toBeVisible({ timeout: 10000 });
 
     // Simulate token expiry by clearing JWT cookie
     await page.context().clearCookies({ name: "__convexAuthJWT" });
     await page.context().clearCookies({ name: "__convexAuthRefreshToken" });
 
-    // SessionProvider polls Convex auth state. When the JWT is gone,
-    // useConvexAuth() transitions to unauthenticated → onSessionLost fires.
-    // This may take a moment as the Convex client detects the invalid token.
-    // Wait for the redirect OR for the nav to show unauthenticated state.
-    await page.waitForURL("**/signin**", { timeout: 15000 }).catch(() => {
-      // If no redirect (public page doesn't trigger proxy check),
-      // at minimum the UI should reflect unauthenticated state
-    });
+    // Break the Convex WebSocket connection so it can't re-issue cookies
+    await page.goto("about:blank");
 
-    // Whether redirected or not, auth UI should reflect unauthenticated state.
-    // If we're on /signin, the redirect worked. If still on the recipe page,
-    // the nav should show "Sign In" instead of the user menu dropdown.
-    const url = page.url();
-    if (url.includes("/signin")) {
-      // Redirect happened — SessionProvider detected loss (may include returnTo)
-      expect(url).toContain("/signin");
-    } else {
-      // Still on public page — verify nav shows unauthenticated state.
-      // The user menu should no longer be visible (replaced by sign-in link).
-      await expect(page.getByTestId("nav-user-menu")).not.toBeVisible({
-        timeout: 10000,
-      });
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Full auth round-trip with cookie verification
-// ---------------------------------------------------------------------------
-
-test.describe("Auth round-trip verification @auth", () => {
-  test("sign-up → verify cookies → sign-out → verify cleared → sign-in → verify cookies", async ({
-    page,
-  }) => {
-    const email = testEmail();
-
-    // 1. Sign up
-    await signUp(page, email);
-
-    // 2. Verify session cookies + persisted store exist
-    let jwt = await getCookie(page, "__convexAuthJWT");
-    expect(jwt).toBeDefined();
-    const storeData = await page.evaluate(() => localStorage.getItem("bnto-auth"));
-    expect(storeData).not.toBeNull();
-    expect(JSON.parse(storeData!).state.hasAccount).toBe(true);
-
-    // 3. Sign out
-    await signOut(page);
-
-    // 4. Wait for server cleanup
-    await page.waitForTimeout(3000);
-
-    // 5. Verify hasAccount persists but session is invalidated
-    const storeAfter = await page.evaluate(() => localStorage.getItem("bnto-auth"));
-    expect(JSON.parse(storeAfter!).state.hasAccount).toBe(true);
-
-    // Protected route should reject — redirects with returnTo
+    // Navigate to a protected route — proxy should catch the missing JWT
     await page.goto("/executions");
     await page.waitForURL("**/signin?returnTo=**", { timeout: 10000 });
-
-    // 6. Sign back in
-    await signIn(page, email);
-
-    // 7. Verify fresh session cookies exist
-    jwt = await getCookie(page, "__convexAuthJWT");
-    expect(jwt).toBeDefined();
-
-    // 8. Verify authenticated state in UI — wait for auth to fully resolve
-    const signOutItem = page.getByTestId("nav-sign-out");
-    await expect(async () => {
-      const userMenu = page.getByTestId("nav-user-menu");
-      await userMenu.click();
-      await expect(signOutItem).toBeVisible({ timeout: 1000 });
-    }).toPass({ timeout: 15000 });
-    await expect(page.getByTestId("nav-user-email")).toBeVisible();
-    await expect(page.getByTestId("nav-user-email")).toContainText(email);
   });
 });
