@@ -8,6 +8,7 @@ use bnto_engine::create_registry;
 
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
+use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::theme::{Theme, ThemeVariant};
 
 /// Which screen the TUI is currently showing.
@@ -30,6 +31,8 @@ pub struct AppModel {
     pub browser: BrowserModel,
     /// Detail screen state — populated when navigating to a recipe.
     pub detail: Option<DetailModel>,
+    /// Picker screen state — populated when navigating to file picker.
+    pub picker: Option<PickerModel>,
     /// Engine registry for resolving processor metadata.
     pub registry: NodeRegistry,
 }
@@ -41,6 +44,7 @@ impl std::fmt::Debug for AppModel {
             .field("should_quit", &self.should_quit)
             .field("theme_variant", &self.theme_variant)
             .field("detail", &self.detail)
+            .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .finish_non_exhaustive()
     }
 }
@@ -69,6 +73,8 @@ pub enum AppMessage {
     Browser(BrowserMessage),
     /// Forward a message to the detail screen.
     Detail(DetailMessage),
+    /// Forward a message to the picker screen.
+    Picker(PickerMessage),
     /// Quit the application.
     Quit,
 }
@@ -83,6 +89,7 @@ impl AppModel {
             theme_variant: variant,
             browser: BrowserModel::new(),
             detail: None,
+            picker: None,
             registry: create_registry(),
         }
     }
@@ -100,10 +107,15 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 ..model
             }
         }
-        AppMessage::ConfigConfirmed { slug } => AppModel {
-            screen: Screen::Picker { slug },
-            ..model
-        },
+        AppMessage::ConfigConfirmed { slug } => {
+            let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+            let picker = Some(PickerModel::from_slug(&slug, &cwd, &model.registry));
+            AppModel {
+                screen: Screen::Picker { slug: slug.clone() },
+                picker,
+                ..model
+            }
+        }
         AppMessage::FilesSelected { slug } => AppModel {
             screen: Screen::Execution { slug },
             ..model
@@ -117,9 +129,14 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 Screen::Detail { .. } => None,
                 _ => model.detail,
             };
+            let picker = match &model.screen {
+                Screen::Picker { .. } => None,
+                _ => model.picker,
+            };
             AppModel {
                 screen: back_screen(&model.screen),
                 detail,
+                picker,
                 ..model
             }
         }
@@ -143,6 +160,10 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         AppMessage::Detail(msg) => {
             let detail = model.detail.map(|d| detail_update(d, msg));
             AppModel { detail, ..model }
+        }
+        AppMessage::Picker(msg) => {
+            let picker = model.picker.map(|p| picker_update(p, msg));
+            AppModel { picker, ..model }
         }
         AppMessage::Quit => AppModel {
             should_quit: true,

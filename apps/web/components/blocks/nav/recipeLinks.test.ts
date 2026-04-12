@@ -51,9 +51,9 @@ describe("FEATURED_RECIPES", () => {
     }
   });
 
-  it("contains exactly 11 featured recipes", () => {
+  it("contains exactly 12 featured recipes", () => {
     const count = FEATURED_RECIPES.reduce((sum, cat) => sum + cat.links.length, 0);
-    expect(count).toBe(11);
+    expect(count).toBe(12);
   });
 
   it("preserves category order: Image, Data, File, Vector", () => {

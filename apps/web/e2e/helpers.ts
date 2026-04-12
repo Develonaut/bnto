@@ -21,6 +21,8 @@ export const IMAGE_FIXTURES_DIR = path.resolve(__dirname, "../../../test-fixture
 
 export const CSV_FIXTURES_DIR = path.resolve(__dirname, "../../../test-fixtures/csv");
 
+export const VECTOR_FIXTURES_DIR = path.resolve(__dirname, "../../../test-fixtures/vector");
+
 // ---------------------------------------------------------------------------
 // Magic byte constants
 // ---------------------------------------------------------------------------
@@ -170,6 +172,17 @@ export async function openConfigDialog(page: Page) {
 export async function closeConfigDialog(page: Page) {
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
+}
+
+/**
+ * Verify the buffer is a valid SVG: starts with `<svg` (possibly after whitespace).
+ * Returns the SVG text for further assertions.
+ */
+export function assertValidSvg(buffer: Buffer): string {
+  const text = buffer.toString("utf-8").trim();
+  expect(text).toMatch(/^<svg[\s>]/);
+  expect(text).toContain("</svg>");
+  return text;
 }
 
 /**

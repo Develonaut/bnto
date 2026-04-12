@@ -65,6 +65,26 @@ describe("deriveFileResultProps", () => {
     expect(result.savings).toBe("0%");
   });
 
+  it("shows fractional percent for sub-1% savings", () => {
+    const result = deriveFileResultProps(
+      mockResult({
+        blobSize: 477400,
+        metadata: { originalSize: 478200 },
+      }),
+    );
+    expect(result.savings).toBe("-0.2%");
+  });
+
+  it("shows fractional percent for sub-1% increase", () => {
+    const result = deriveFileResultProps(
+      mockResult({
+        blobSize: 1005,
+        metadata: { originalSize: 1000 },
+      }),
+    );
+    expect(result.savings).toBe("+0.5%");
+  });
+
   it("omits originalSize when not provided", () => {
     const result = deriveFileResultProps(mockResult({ metadata: {} }));
     expect(result.originalSize).toBeUndefined();

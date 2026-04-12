@@ -2084,4 +2084,117 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       version: "1.0.0",
     },
   },
+  {
+    slug: "optimize-svg",
+    name: "Optimize SVG",
+    description:
+      "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
+    category: "vector",
+    tags: ["SVG", "Optimize", "Minify", "Clean", "Browser-based"] as const,
+    definition: {
+      edges: [
+        {
+          id: "e1",
+          source: "input",
+          target: "optimize",
+        },
+        {
+          id: "e2",
+          source: "optimize",
+          target: "output",
+        },
+      ],
+      id: "optimize-svg",
+      inputPorts: [],
+      metadata: {
+        category: "vector",
+        description:
+          "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
+        tags: ["SVG", "Optimize", "Minify", "Clean", "Browser-based"],
+      },
+      name: "Optimize SVG",
+      nodes: [
+        {
+          id: "input",
+          inputPorts: [],
+          metadata: {},
+          name: "Input",
+          outputPorts: [
+            {
+              id: "out-1",
+              name: "files",
+            },
+          ],
+          parameters: {
+            accept: ["image/svg+xml"],
+            extensions: [".svg"],
+            label: "SVG files",
+            mode: "file-upload",
+            multiple: true,
+          },
+          position: {
+            x: 0,
+            y: 100,
+          },
+          type: "input",
+          version: "1.0.0",
+        },
+        {
+          id: "optimize",
+          inputPorts: [],
+          metadata: {},
+          name: "Optimize",
+          outputPorts: [],
+          parameters: {
+            collapseGroups: true,
+            minify: true,
+            precision: 3,
+            removeComments: true,
+            removeMetadata: true,
+          },
+          position: {
+            x: 250,
+            y: 100,
+          },
+          type: "vector-optimize",
+          version: "1.0.0",
+        },
+        {
+          id: "output",
+          inputPorts: [
+            {
+              id: "in-1",
+              name: "files",
+            },
+          ],
+          metadata: {},
+          name: "Output",
+          outputPorts: [],
+          parameters: {
+            autoDownload: true,
+            label: "Optimized SVGs",
+            mode: "download",
+            zip: true,
+          },
+          position: {
+            x: 500,
+            y: 100,
+          },
+          type: "output",
+          version: "1.0.0",
+        },
+      ],
+      outputPorts: [],
+      parameters: {},
+      position: {
+        x: 0,
+        y: 0,
+      },
+      settings: {
+        iteration: "auto",
+      },
+      type: "group",
+      version: "1.0.0",
+    },
+  },
 ] as const;

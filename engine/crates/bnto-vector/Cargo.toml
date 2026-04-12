@@ -30,5 +30,7 @@ resvg = "0.47"
 usvg = "0.47"
 tiny-skia = "0.12"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+roxmltree = "0.21"
+xmlwriter = "0.1"
 serde_json = { workspace = true }
 thiserror = { workspace = true }

@@ -1,0 +1,123 @@
+{
+  "id": "optimize-svg",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Optimize SVG",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["image/svg+xml"],
+        "extensions": [".svg"],
+        "label": "SVG files",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "optimize-loop",
+      "type": "loop",
+      "version": "1.0.0",
+      "name": "For Each",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "forEach"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "optimize",
+          "type": "vector-optimize",
+          "version": "1.0.0",
+          "name": "Optimize",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "metadata": {},
+          "parameters": {
+            "removeComments": true,
+            "removeMetadata": true,
+            "collapseGroups": true,
+            "minify": true,
+            "precision": 3
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "download",
+        "label": "Optimized SVGs",
+        "zip": true,
+        "autoDownload": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "optimize-loop"
+    },
+    {
+      "id": "e2",
+      "source": "optimize-loop",
+      "target": "output"
+    }
+  ]
+}

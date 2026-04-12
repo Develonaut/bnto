@@ -104,6 +104,13 @@ pub fn fixture_csv(name: &str) -> String {
         .to_string()
 }
 
+pub fn fixture_vector(name: &str) -> String {
+    repo_root()
+        .join(format!("test-fixtures/vector/{name}"))
+        .to_string_lossy()
+        .to_string()
+}
+
 pub fn temp_output_dir() -> tempfile::TempDir {
     tempfile::tempdir().expect("Failed to create temp dir")
 }

@@ -621,7 +621,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 **Ecosystem libraries:** `tui-slider` dependency for Number params with min/max bounds. Vendor Input and Select widgets from ratatui-cheese (adapted to pure-data convention). Hand-build Toggle (~20 lines) for Boolean params. Evaluate ratatui-explorer before building file picker from scratch. See [tui-strategy.md § Ecosystem Libraries](strategy/tui-strategy.md#ecosystem-libraries) and [§ Param Control Matrix](strategy/tui-strategy.md#param-control-matrix).
 
 - [x] `engine/crates/bnto` — **Recipe detail screen** (`screens/detail.rs`): `DetailModel` + `update()` + `view()`. Show recipe description, node list, editable parameter overrides from `metadata()`. Schema-to-control mapping: Number+bounds → tui-slider, Number-unbounded → Input (vendor), String → Input (vendor), Boolean → Toggle (hand-build), Enum → Select (vendor). `j/k` to focus params, `Enter` to edit, `Esc` to cancel edit, `Enter` to confirm and proceed to file picker. Unit tests for param editing, defaults, commit/cancel (~8 tests)
-- [ ] `engine/crates/bnto` — **File picker screen** (`screens/picker.rs`): `PickerModel` + `update()` + `view()`. Evaluate ratatui-explorer first — if it fits, adapt; otherwise build from scratch. Browse filesystem, directories first then files alphabetically. Filter by recipe's accept extensions. `Space` to toggle multi-select. `Enter` to open dir / confirm selection. `Backspace` for parent dir. `widgets/file_list.rs` shared widget. Unit tests for navigation, selection, filtering, sort (~10 tests)
+- [x] `engine/crates/bnto` — **File picker screen** (`screens/picker.rs`): `PickerModel` + `update()` + `view()`. Built from scratch (ratatui-explorer lacks multi-select). Browse filesystem, directories first then files alphabetically. Filter by recipe's accept extensions. `Space` to toggle multi-select. `Enter` to open dir / confirm selection. `Backspace` for parent dir. `widgets/file_list.rs` shared widget. 33 unit tests across picker, picker_loader, file_list, and key handling
 
 #### Wave 3 (parallel — execution + results)
 
@@ -634,7 +634,9 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 **Ecosystem libraries:** Evaluate tachyonfx for screen transition effects and ratatui-toaster for toast notifications — both are polish items, skip if not needed for MVP.
 
+- [ ] `engine/crates/bnto` — **Detail "confirm and proceed" action**: Add a keybind (e.g. `Tab` or `c`) on the Detail screen to accept current param values and transition to the Picker screen. Currently `Enter` starts editing a param — need a distinct "done editing, proceed" action. This is the missing link between Detail and Picker
 - [ ] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
+- [ ] `engine/crates/bnto` — **Screen transition integration tests**: Test the full Detail → Picker → Execution flow: param overrides carry through to definition, selected files pass to execution, progress events update execution model. Cover the confirm-with-params path that Wave 2 couldn't demo
 - [ ] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
 - [ ] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
@@ -949,15 +951,15 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 - [ ] Codegen + golden tests + test count updates
 - [ ] **Delivers:** `/svg-to-png`, `/svg-to-jpeg` recipe pages (browser + CLI)
 
-**Phase 2 — SVG Optimization (`svg-optimize` processor): TABLED**
+**Phase 2 — SVG Optimization (`vector-optimize` processor): DONE**
 
-> **Tabled (April 2026):** oxvg (Rust SVGO port) adds ~5MB to WASM binary due to hard `lightningcss` dependency — not worth the size trade-off. Future options: custom lightweight crate, CLI-only via SVGO shell-out, or wait for oxvg to offer tree-shakeable features. PR #375 merged then reverted via PR #376.
+> Custom XML-level optimizer using roxmltree/xmlwriter (already in WASM binary via resvg transitive chain — zero new deps). 9 cleanup passes: remove metadata, comments, DOCTYPE/PI, editor namespaces, empty containers, empty attributes, unused xmlns, collapse redundant groups, minify whitespace.
 
-- [ ] `engine/crates/bnto-vector` — `svg-optimize` processor (approach TBD)
-- [ ] Params: `precision`, `remove_comments`, `remove_metadata`, `collapse_groups`, `minify`
-- [ ] `engine/recipes/` — `optimize-svg.bnto.json`
-- [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/optimize-svg` recipe page
+- [x] `engine/crates/bnto-vector` — `vector-optimize` processor (custom roxmltree/xmlwriter approach)
+- [x] Params: `precision`, `removeComments`, `removeMetadata`, `collapseGroups`, `minify`
+- [x] `engine/recipes/` — `optimize-svg.bnto.json`
+- [x] Codegen + golden tests + test count updates
+- [x] **Delivers:** `/optimize-svg` recipe page
 
 **Phase 3 — EPS → SVG (CLI-only shell-out):**
 
@@ -977,6 +979,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Priority: Triage.** Add a file operation composition (e.g. `collect → sanitize → rename → copy`) as a "Build Your Own" hero snippet in `BuildYourOwnSection`. Demonstrates composable power vs monolithic tools. Blocked on file node ecosystem implementation.
 
 `apps/web/app/(app)/_components/BuildYourOwnSection.tsx`, `recipeSnippets.ts`
+
+### Triage: Context-aware result item actions
+
+**Priority: Triage.** Result items currently only have a download button. Add richer actions depending on the recipe/result type: before/after comparison slider for size-reduction recipes (compress, optimize), copy-to-clipboard for text-based outputs (SVG, CSV, JSON), image preview for raster outputs. Actions should be driven by the result's MIME type and metadata.
+
+`CompletedRow.tsx`, `ResultRow.tsx`
 
 ---
 

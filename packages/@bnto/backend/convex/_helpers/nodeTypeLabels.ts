@@ -24,6 +24,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-rename": "Rename CSV Columns",
   "transform": "Transform",
+  "vector-optimize": "Optimize SVG",
   "vector-rasterize": "SVG to Image",
   "video-download": "Download Video",
 };
