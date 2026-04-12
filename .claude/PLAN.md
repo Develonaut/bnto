@@ -627,8 +627,8 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 **Ecosystem libraries:** Vendor Spinner from ratatui-cheese for in-progress indicators. Hand-build progress bar (ratatui's `Gauge` widget is sufficient). Evaluate tui-popup and tui-scrollview if modal confirmations or scrollable output are needed.
 
-- [ ] `engine/crates/bnto` — **Execution screen** (`screens/execution.rs`): `ExecutionModel` + `update()` + `view()`. Receive `ProgressEvent` from engine's `run_pipeline()`. Per-file progress bars, per-node status indicators (vendor Spinner from cheese), elapsed timer. `Esc` to cancel. Auto-transition to results on completion. `widgets/progress_bar.rs` shared widget. Unit tests for progress events, status transitions, cancel (~8 tests)
-- [ ] `engine/crates/bnto` — **Results screen** (`screens/results.rs`): `ResultsModel` + `update()` + `view()`. Output file list with sizes, total timing, compression savings. `o` to open file, `O` to open output folder, `r` to run another recipe (back to browser), `q` to quit. Unit tests for formatting, savings calculation (~6 tests)
+- [x] `engine/crates/bnto` — **Execution screen** (`screens/execution.rs`): `ExecutionModel` + `update()` + `render_execution.rs`. Per-file and per-node status indicators, elapsed timer. `Esc` to cancel (early interception before global keys). Auto-transition to results on completion. Unit tests for progress events, status transitions, cancel (10 tests)
+- [x] `engine/crates/bnto` — **Results screen** (`screens/results.rs`): `ResultsModel` + `update()` + `render_results.rs`. Output file list with sizes, total timing, compression savings. `r` to run another, cursor navigation, `q` to quit. Unit tests for formatting, savings calculation (9 tests)
 
 #### Wave 4 (sequential — integration + docs)
 
