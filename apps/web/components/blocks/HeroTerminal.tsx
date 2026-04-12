@@ -2,7 +2,7 @@
 
 import { Surface } from "@bnto/ui";
 
-import { useStepInView } from "@/app/(app)/_components/useStepInView";
+import { useStepInView } from "@/components/sections";
 
 import { Terminal } from "./Terminal";
 

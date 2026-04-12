@@ -14,11 +14,18 @@ import type { BntoEntry } from "@/lib/bntoRegistry";
 
 import { hashDelay } from "./hashDelay";
 
-export function ShowcaseCard({ entry, dormant }: { entry: BntoEntry; dormant?: boolean }) {
+interface ShowcaseCardProps {
+  entry: BntoEntry;
+  dormant?: boolean;
+  /** Additional class names. Defaults to `w-80` for marquee use. Pass `w-full` for grid layouts. */
+  className?: string;
+}
+
+export function ShowcaseCard({ entry, dormant, className }: ShowcaseCardProps) {
   return (
     <RecipeCard
       href={`/${entry.slug}`}
-      className="w-80"
+      className={className ?? "w-80"}
       elevation="lg"
       dormant={dormant}
       style={{ "--spring-delay": `${hashDelay(entry.slug)}ms` } as CSSProperties}

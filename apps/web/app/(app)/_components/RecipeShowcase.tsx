@@ -3,10 +3,7 @@
 import { ArrowRight } from "lucide-react";
 import { Button, FadeIn, Heading, SlideUp, Stack, Text } from "@bnto/ui";
 import { BNTO_REGISTRY } from "@/lib/bntoRegistry";
-
-import { Marquee } from "./Marquee";
-import { ShowcaseCard } from "./ShowcaseCard";
-import { useStepInView } from "./useStepInView";
+import { Marquee, ShowcaseCard, useStepInView } from "@/components/sections";
 
 const firstRow = BNTO_REGISTRY.slice(0, Math.ceil(BNTO_REGISTRY.length / 2));
 const secondRow = BNTO_REGISTRY.slice(Math.ceil(BNTO_REGISTRY.length / 2));

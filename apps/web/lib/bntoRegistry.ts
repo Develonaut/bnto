@@ -21,7 +21,7 @@ export interface BntoEntry {
   category: string;
 }
 
-function toBntoEntry(r: Recipe): BntoEntry {
+export function toBntoEntry(r: Recipe): BntoEntry {
   return {
     slug: r.slug,
     title: `${r.name} Online Free -- bnto`,
