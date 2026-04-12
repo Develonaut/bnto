@@ -1,11 +1,10 @@
-import { Divider, Row, StepperContent, Text } from "@bnto/ui";
+import { Row, StepperContent, Text } from "@bnto/ui";
 import type { BntoEntry } from "@/lib/bntoRegistry";
-import { RecipeStepper, RecipeStepperResultList } from "./RecipeStepper";
+import { RecipeStepper } from "./RecipeStepper";
 import { RecipeHeroMascot } from "./RecipeHeroMascot";
 import { RecipeHeroDropzone } from "./RecipeHeroDropzone";
-import { ConditionalStepperIndicator } from "./ConditionalStepperIndicator";
+import { ResultStepLayout } from "./ResultStepLayout";
 import { OpenInEditorLink } from "./OpenInEditorLink";
-import { StepToolbar } from "./StepToolbar";
 
 export function BntoRunStepper({ entry }: { entry: BntoEntry }) {
   return (
@@ -19,7 +18,7 @@ export function BntoRunStepper({ entry }: { entry: BntoEntry }) {
           />
           <RecipeHeroMascot category={entry.category} />
         </div>
-        <Row className="justify-center gap-2 pt-2">
+        <Row className="justify-center gap-2 pr-28 pt-2 sm:pr-36 lg:pr-0">
           <Text size="sm" className="text-muted-foreground">
             Want to customize or build your own?
           </Text>
@@ -27,18 +26,22 @@ export function BntoRunStepper({ entry }: { entry: BntoEntry }) {
         </Row>
       </StepperContent>
 
-      <ConditionalStepperIndicator />
-
       <StepperContent value="2">
-        <StepToolbar />
-        <Divider />
-        <RecipeStepperResultList />
+        <ResultStepLayout
+          h1={entry.h1}
+          description={entry.description}
+          features={entry.features}
+          category={entry.category}
+        />
       </StepperContent>
 
       <StepperContent value="3">
-        <StepToolbar />
-        <Divider />
-        <RecipeStepperResultList />
+        <ResultStepLayout
+          h1={entry.h1}
+          description={entry.description}
+          features={entry.features}
+          category={entry.category}
+        />
       </StepperContent>
     </RecipeStepper>
   );
