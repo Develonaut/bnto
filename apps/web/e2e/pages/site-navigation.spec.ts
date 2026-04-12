@@ -20,7 +20,6 @@ const PUBLIC_ROUTES = [
   { path: "/pricing", name: "pricing" },
   { path: "/faq", name: "faq" },
   { path: "/privacy", name: "privacy" },
-  { path: "/signin", name: "signin" },
 ] as const;
 
 /* ── Desktop ─────────────────────────────────────────────────── */
@@ -100,7 +99,6 @@ test.describe("Site navigation — mobile @browser", () => {
     { path: "/pricing", name: "pricing" },
     { path: "/faq", name: "faq" },
     { path: "/privacy", name: "privacy" },
-    { path: "/signin", name: "signin" },
   ] as const;
 
   for (const route of MOBILE_ROUTES) {
