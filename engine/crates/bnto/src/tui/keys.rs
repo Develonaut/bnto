@@ -100,23 +100,29 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         };
     }
 
+    let slug = || {
+        model
+            .detail
+            .as_ref()
+            .map(|d| d.slug.clone())
+            .unwrap_or_default()
+    };
+
     match key.code {
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Detail(DetailMessage::FocusNext)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Detail(DetailMessage::FocusPrev)),
         KeyCode::Enter => {
-            let has_params = model.detail.as_ref().is_some_and(|d| !d.params.is_empty());
-            if has_params {
-                Some(AppMessage::Detail(DetailMessage::StartEdit))
+            let on_continue = model
+                .detail
+                .as_ref()
+                .is_some_and(|d| d.is_continue_focused() || d.params.is_empty());
+            if on_continue {
+                Some(AppMessage::ConfigConfirmed { slug: slug() })
             } else {
-                Some(AppMessage::ConfigConfirmed {
-                    slug: model
-                        .detail
-                        .as_ref()
-                        .map(|d| d.slug.clone())
-                        .unwrap_or_default(),
-                })
+                Some(AppMessage::Detail(DetailMessage::StartEdit))
             }
         }
+        KeyCode::Tab => Some(AppMessage::ConfigConfirmed { slug: slug() }),
         KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
     }

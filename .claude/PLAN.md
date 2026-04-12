@@ -988,6 +988,14 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ---
 
+### Triage: TUI File Picker UX Overhaul
+
+**Priority: Triage.** Evaluate whether to adopt a popular Rust file picker library (e.g., ratatui-explorer, tui-file-dialog) or build out our own with proper UX. Current picker feels lacking — needs evaluation of directory tree display, breadcrumb path, scroll behavior, visual density, keyboard shortcuts (home/end, page up/down), and overall feel compared to tools like yazi/ranger. Should slot immediately after the current TUI execution/results phase.
+
+`engine/crates/bnto/src/tui/screens/picker.rs`, `render_picker.rs`
+
+---
+
 ## Reference
 
 | Document                               | Purpose                                                                      |

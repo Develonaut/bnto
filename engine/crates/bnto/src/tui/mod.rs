@@ -427,6 +427,32 @@ mod tests {
     }
 
     #[test]
+    fn detail_tab_confirms_from_any_focus() {
+        let model = detail_model(); // focused = 0 (on a param)
+        let key = KeyEvent::new(KeyCode::Tab, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ConfigConfirmed {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
+    fn detail_enter_confirms_on_continue_action() {
+        let mut model = detail_model();
+        // Focus on the continue action (index = params.len())
+        model.detail.as_mut().unwrap().focused = 2;
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ConfigConfirmed {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
     fn detail_editing_captures_chars() {
         let mut model = detail_model();
         model.detail.as_mut().unwrap().editing = true;

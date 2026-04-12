@@ -29,7 +29,8 @@ impl Screen {
             ],
             Self::Detail { .. } => vec![
                 ("↑↓", "navigate"),
-                ("Enter", "edit/confirm"),
+                ("Enter", "edit/select"),
+                ("Tab", "continue"),
                 ("Esc", "back"),
                 ("q", "quit"),
             ],

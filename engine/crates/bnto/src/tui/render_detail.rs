@@ -51,14 +51,23 @@ fn detail_lines<'a>(
             "  No configurable parameters.",
             theme.muted(),
         )));
-        lines.push(Line::from(""));
-        lines.push(Line::from(Span::styled(
-            "  Press Enter to continue.",
-            theme.text(),
-        )));
     } else {
         detail_param_lines(detail, theme, &mut lines);
     }
+
+    // "Continue" action — always present, focusable at the bottom
+    lines.push(Line::from(""));
+    let on_continue = detail.is_continue_focused();
+    let marker = if on_continue { "▸ " } else { "  " };
+    let style = if on_continue {
+        theme.selected()
+    } else {
+        theme.text()
+    };
+    lines.push(Line::from(Span::styled(
+        format!("  {marker}Continue →"),
+        style,
+    )));
 
     lines
 }
