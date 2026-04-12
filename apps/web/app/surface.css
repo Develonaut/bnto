@@ -417,21 +417,22 @@
   transition-duration: var(--pressable-press-dur, 34ms);
 }
 
-/* ── CardActions override ───────────────────────────────────────
- * CSS :active propagates up the DOM — pressing a child inside
- * [data-card-actions] also activates the parent .pressable card.
- * JS stopPropagation can't prevent this (it's a rendering-engine
- * behavior, not a JS event). Override back to hover depth so the
- * card doesn't press flush when clicking nested controls. */
-.pressable:active:has([data-card-actions]:active) {
+/* ── Nested interactive override ───────────────────────────────
+ * CSS :active propagates up the DOM — pressing a child .pushable,
+ * .pressable, or [data-card-actions] also activates the parent
+ * .pressable. JS stopPropagation can't prevent this (it's a
+ * rendering-engine behavior, not a JS event). Override back to
+ * hover depth so the outer pressable doesn't press flush when
+ * clicking nested controls. */
+.pressable:active:has(:is([data-card-actions], .pressable, .pushable):active) {
   transform: translate(var(--face-hover-x), var(--face-hover-y));
 }
 
-.pressable:active:has([data-card-actions]:active)::before {
+.pressable:active:has(:is([data-card-actions], .pressable, .pushable):active)::before {
   transform: translate3d(calc(var(--elevation-x) * 0.66), calc(var(--elevation-y) * 0.66), -1px);
 }
 
-.pressable:active:has([data-card-actions]:active)::after {
+.pressable:active:has(:is([data-card-actions], .pressable, .pushable):active)::after {
   transform: translate3d(calc(var(--shadow-x) * 0.66), calc(var(--shadow-y) * 0.66), -2px);
   opacity: 1;
 }

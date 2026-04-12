@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Heading, Stack, Text } from "@bnto/ui";
 import { NotFoundActions } from "./NotFoundActions";
 
@@ -5,6 +6,14 @@ import { NotFoundActions } from "./NotFoundActions";
 export function NotFoundContent() {
   return (
     <Stack align="center" justify="center" className="min-h-[60vh] text-center">
+      <Image
+        src="/mascots/fish.svg"
+        alt=""
+        width={280}
+        height={166}
+        priority
+        className="select-none"
+      />
       <Stack gap="md" align="center" className="max-w-lg">
         <Text size="sm" mono color="muted" className="uppercase tracking-wider">
           404
