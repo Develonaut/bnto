@@ -4,7 +4,17 @@
   "ignoreBinaries": ["lefthook", "tsx", "playwright", "convex"],
   "workspaces": {
     ".": {
-      "ignoreDependencies": ["@auth/core", "@convex-dev/auth"]
+      "entry": ["scripts/**/*.ts"],
+      "project": ["scripts/**/*.ts"],
+      "ignoreDependencies": [
+        "@auth/core",
+        "@convex-dev/auth",
+        "@eslint/js",
+        "eslint-config-prettier",
+        "eslint-plugin-check-file",
+        "eslint-plugin-import-x",
+        "typescript-eslint"
+      ]
     },
     "apps/web": {
       "entry": [
@@ -50,5 +60,5 @@
       "ignore": ["src/generated/**"]
     }
   },
-  "ignore": ["test-fixtures/**", "apps/desktop/**"]
+  "ignore": ["apps/desktop/**"]
 }

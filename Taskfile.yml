@@ -127,6 +127,26 @@ tasks:
       - pnpm --filter @bnto/web build
       - pnpm --filter @bnto/web exec lhci autorun --config=../../lighthouserc.json --collect.numberOfRuns=1
 
+  # SEO search engine notifications
+  seo:ping:
+    desc: Ping Google with the sitemap URL
+    cmds: [npx tsx scripts/seo/pingSitemap.ts]
+
+  seo:index-now:
+    desc: Submit URLs to IndexNow endpoints (Bing, Yandex)
+    cmds: [npx tsx scripts/seo/submitIndexNow.ts]
+
+  seo:submit-google:
+    desc: Submit URLs to Google Indexing API
+    cmds: [npx tsx scripts/seo/submitGoogleIndexing.ts]
+
+  seo:submit-all:
+    desc: Run all search engine notifications (sitemap ping + IndexNow + Google)
+    cmds:
+      - task: seo:ping
+      - task: seo:index-now
+      - task: seo:submit-google
+
   # E2E account cleanup
   e2e:cleanup:
     desc: Delete ephemeral E2E test accounts from Convex
