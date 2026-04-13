@@ -641,6 +641,134 @@ mod tests {
         assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
     }
 
+    #[test]
+    fn picker_h_goes_to_parent() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('h'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::ParentDir))
+        );
+    }
+
+    #[test]
+    fn picker_left_arrow_goes_to_parent() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::ParentDir))
+        );
+    }
+
+    #[test]
+    fn picker_l_on_dir_enters_dir() {
+        let model = picker_model(); // cursor=0 is a dir
+        let key = KeyEvent::new(KeyCode::Char('l'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::EnterDir))
+        );
+    }
+
+    #[test]
+    fn picker_l_on_file_is_noop() {
+        let mut model = picker_model();
+        model.picker.as_mut().unwrap().cursor = 1; // on a file
+        let key = KeyEvent::new(KeyCode::Char('l'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
+    }
+
+    #[test]
+    fn picker_right_on_dir_enters_dir() {
+        let model = picker_model(); // cursor=0 is a dir
+        let key = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::EnterDir))
+        );
+    }
+
+    #[test]
+    fn picker_g_goes_to_top() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('g'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::GoToTop))
+        );
+    }
+
+    #[test]
+    fn picker_shift_g_goes_to_bottom() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('G'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::GoToBottom))
+        );
+    }
+
+    #[test]
+    fn picker_shift_j_pages_down() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('J'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::PageDown))
+        );
+    }
+
+    #[test]
+    fn picker_pgdn_pages_down() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::PageDown, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::PageDown))
+        );
+    }
+
+    #[test]
+    fn picker_shift_k_pages_up() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('K'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::PageUp))
+        );
+    }
+
+    #[test]
+    fn picker_pgup_pages_up() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::PageUp, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::PageUp))
+        );
+    }
+
+    #[test]
+    fn picker_dot_toggles_hidden() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('.'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::ToggleHidden))
+        );
+    }
+
+    #[test]
+    fn picker_a_selects_all() {
+        let model = picker_model();
+        let key = KeyEvent::new(KeyCode::Char('a'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Picker(PickerMessage::SelectAll))
+        );
+    }
+
     // --- Execution key handling ---
 
     fn execution_model() -> AppModel {
