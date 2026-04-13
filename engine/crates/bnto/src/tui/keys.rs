@@ -6,7 +6,7 @@ use super::app::{AppMessage, AppModel, Screen};
 use super::event;
 use super::screens::browser::BrowserMessage;
 use super::screens::detail::DetailMessage;
-use super::screens::execution::ExecutionMessage;
+use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::picker::PickerMessage;
 use super::screens::results::ResultsMessage;
 use super::theme::ALL_VARIANTS;
@@ -169,8 +169,25 @@ fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 }
 
 /// Handle key events on the Execution screen.
-fn handle_execution_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+///
+/// Enter transitions to Results when the pipeline has finished (Completed or Failed).
+/// Esc cancels a running pipeline (handled above in handle_key as a special case).
+fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let finished = model.execution.as_ref().is_some_and(|e| {
+        matches!(
+            e.status,
+            ExecutionStatus::Completed | ExecutionStatus::Failed
+        )
+    });
+
     match key.code {
+        KeyCode::Enter if finished => {
+            if let Screen::Execution { slug } = &model.screen {
+                Some(AppMessage::ExecutionComplete { slug: slug.clone() })
+            } else {
+                None
+            }
+        }
         KeyCode::Esc => Some(AppMessage::Execution(ExecutionMessage::Cancel)),
         _ => None,
     }
