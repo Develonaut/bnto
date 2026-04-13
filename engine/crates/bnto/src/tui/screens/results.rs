@@ -3,7 +3,7 @@
 // TEA pattern: ResultsModel (state) + ResultsMessage (events) + update() (pure transitions).
 
 /// An output file with size and optional original size for savings calculation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OutputFile {
     pub name: String,
     pub size_bytes: u64,

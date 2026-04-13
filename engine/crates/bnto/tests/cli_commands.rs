@@ -431,3 +431,23 @@ fn test_multiple_input_files() {
     assert!(stderr.contains("2 files"));
     assert_eq!(output_files(&out).len(), 2, "Expected 2 output files");
 }
+
+// --- TUI Subcommand ---
+
+#[test]
+fn test_tui_help_flag() {
+    let output = Command::new(bnto_bin())
+        .args(["tui", "--help"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("interactive") || stdout.contains("terminal"),
+        "tui help should mention interactive/terminal, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--theme"),
+        "tui help should mention --theme flag, got: {stdout}"
+    );
+}

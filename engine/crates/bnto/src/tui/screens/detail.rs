@@ -65,7 +65,6 @@ pub enum DetailMessage {
 }
 
 /// Result of confirming the detail screen — collected param overrides.
-#[allow(dead_code)]
 pub struct ConfigResult {
     /// Map of "node_id.param_name" → value for passing to execution.
     pub overrides: HashMap<String, String>,
@@ -103,7 +102,6 @@ impl DetailModel {
     }
 
     /// Confirm the current configuration — returns param overrides.
-    #[allow(dead_code)]
     pub fn confirm(&self) -> ConfigResult {
         let overrides = self
             .params
