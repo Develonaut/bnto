@@ -20,18 +20,20 @@ const nextConfig: NextConfig = {
   // corrupt the dev server's .next cache (set via NEXT_DIST_DIR env var).
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   // PostHog's API uses trailing slashes (e.g. /e/). Without this, Next.js
-  // redirects /ingest/e/ → /ingest/e which breaks event capture.
+  // redirects /d/e/ → /d/e which breaks event capture.
   skipTrailingSlashRedirect: true,
   // Reverse proxy for PostHog — routes analytics requests through our domain
   // so ad blockers don't intercept them. NEXT_PUBLIC_POSTHOG_HOST should be
-  // set to "/ingest" (not the PostHog URL) when this is active.
+  // set to "/d" (not the PostHog URL) when this is active. The path "/d" is
+  // deliberately short and generic — "/ingest" was being blocked by EasyPrivacy
+  // and uBlock Origin filter lists.
   async rewrites() {
     return [
       {
-        source: "/ingest/static/:path*",
+        source: "/d/static/:path*",
         destination: "https://us-assets.i.posthog.com/static/:path*",
       },
-      { source: "/ingest/:path*", destination: "https://us.i.posthog.com/:path*" },
+      { source: "/d/:path*", destination: "https://us.i.posthog.com/:path*" },
     ];
   },
 };
