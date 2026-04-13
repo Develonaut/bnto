@@ -27,11 +27,19 @@ pub fn draw_picker(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
 
     let mut lines: Vec<Line> = Vec::new();
 
-    // Current directory path
-    lines.push(Line::from(Span::styled(
-        format!("  {}", picker.current_dir.display()),
-        theme.heading(),
-    )));
+    // Current directory path + hidden indicator
+    let hidden_label = if picker.show_hidden {
+        "  Hidden: on"
+    } else {
+        ""
+    };
+    lines.push(Line::from(vec![
+        Span::styled(
+            format!("  {}", picker.current_dir.display()),
+            theme.heading(),
+        ),
+        Span::styled(hidden_label.to_string(), theme.muted()),
+    ]));
     lines.push(Line::from(""));
 
     // Selection count
@@ -47,15 +55,19 @@ pub fn draw_picker(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
         lines.push(Line::from(""));
     }
 
-    // File list
+    // File list — viewport-aware slice
     if picker.entries.is_empty() {
         lines.push(Line::from(Span::styled(
             "  No matching files",
             theme.muted(),
         )));
     } else {
+        let offset = picker.viewport_offset;
+        let end = (offset + picker.viewport_height).min(picker.entries.len());
+        let visible = &picker.entries[offset..end];
+        let display_cursor = picker.cursor.saturating_sub(offset);
         let file_lines =
-            file_list::render_file_list(&picker.entries, picker.cursor, &picker.selected, theme);
+            file_list::render_file_list(visible, display_cursor, &picker.selected, theme);
         lines.extend(file_lines);
     }
 

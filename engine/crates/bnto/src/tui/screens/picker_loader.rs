@@ -7,7 +7,7 @@ use std::path::Path;
 use super::picker::FileEntry;
 
 /// Read directory entries, filter files by extension, sort dirs-first then alpha.
-pub fn load_entries(dir: &Path, extensions: &[String]) -> Vec<FileEntry> {
+pub fn load_entries(dir: &Path, extensions: &[String], show_hidden: bool) -> Vec<FileEntry> {
     let read_dir = match std::fs::read_dir(dir) {
         Ok(rd) => rd,
         Err(_) => return Vec::new(),
@@ -18,8 +18,7 @@ pub fn load_entries(dir: &Path, extensions: &[String]) -> Vec<FileEntry> {
 
     for entry in read_dir.flatten() {
         let name = entry.file_name().to_string_lossy().to_string();
-        // Skip hidden files/directories (Unix convention).
-        if name.starts_with('.') {
+        if !show_hidden && name.starts_with('.') {
             continue;
         }
 
@@ -27,12 +26,19 @@ pub fn load_entries(dir: &Path, extensions: &[String]) -> Vec<FileEntry> {
         let is_dir = path.is_dir();
 
         if is_dir {
-            dirs.push(FileEntry { name, is_dir, path });
+            dirs.push(FileEntry {
+                name,
+                is_dir,
+                path,
+                size: None,
+            });
         } else if matches_extensions(&name, extensions) {
+            let size = std::fs::metadata(&path).ok().map(|m| m.len());
             files.push(FileEntry {
                 name,
                 is_dir: false,
                 path,
+                size,
             });
         }
     }
@@ -92,7 +98,39 @@ pub fn extensions_for_recipe(
         }
     }
 
-    super::picker::extensions_from_mimes(&mimes)
+    extensions_from_mimes(&mimes)
+}
+
+/// Resolve a MIME type to file extensions.
+pub fn mime_to_extensions(mime: &str) -> &'static [&'static str] {
+    match mime {
+        "image/jpeg" => &["jpg", "jpeg"],
+        "image/png" => &["png"],
+        "image/webp" => &["webp"],
+        "image/gif" => &["gif"],
+        "image/bmp" => &["bmp"],
+        "image/tiff" => &["tiff", "tif"],
+        "image/svg+xml" => &["svg"],
+        "text/csv" => &["csv"],
+        "application/json" => &["json"],
+        "text/plain" => &["txt"],
+        "video/mp4" => &["mp4"],
+        "video/webm" => &["webm"],
+        "audio/mpeg" => &["mp3"],
+        _ => &[],
+    }
+}
+
+/// Collect unique extensions from a list of MIME types.
+pub fn extensions_from_mimes(mimes: &[String]) -> Vec<String> {
+    let mut exts: Vec<String> = mimes
+        .iter()
+        .flat_map(|m| mime_to_extensions(m))
+        .map(|s| s.to_string())
+        .collect();
+    exts.sort();
+    exts.dedup();
+    exts
 }
 
 #[cfg(test)]
@@ -122,6 +160,25 @@ mod tests {
     #[test]
     fn matches_extensions_allows_all_when_empty() {
         assert!(matches_extensions("anything.xyz", &[]));
+    }
+
+    #[test]
+    fn mime_to_extensions_known_types() {
+        assert_eq!(mime_to_extensions("image/jpeg"), &["jpg", "jpeg"]);
+        assert_eq!(mime_to_extensions("image/png"), &["png"]);
+        assert_eq!(mime_to_extensions("text/csv"), &["csv"]);
+    }
+
+    #[test]
+    fn mime_to_extensions_unknown_returns_empty() {
+        assert!(mime_to_extensions("application/x-unknown").is_empty());
+    }
+
+    #[test]
+    fn extensions_from_mimes_deduplicates_and_sorts() {
+        let mimes = vec!["image/jpeg".into(), "image/png".into(), "image/jpeg".into()];
+        let exts = extensions_from_mimes(&mimes);
+        assert_eq!(exts, vec!["jpeg", "jpg", "png"]);
     }
 
     #[test]

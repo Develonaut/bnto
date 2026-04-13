@@ -4,9 +4,11 @@
 // The caller renders via Paragraph.
 
 use std::collections::BTreeSet;
+use std::path::PathBuf;
 
 use ratatui::text::{Line, Span};
 
+use super::super::format::format_size;
 use super::super::screens::picker::FileEntry;
 use super::super::theme::Theme;
 
@@ -14,10 +16,11 @@ use super::super::theme::Theme;
 ///
 /// Dirs show a folder icon, files show a document icon. Selected files
 /// are marked with a checkbox. The cursor row is highlighted.
+/// File sizes are shown right of the name for files with known size.
 pub fn render_file_list<'a>(
     entries: &[FileEntry],
     cursor: usize,
-    selected: &BTreeSet<usize>,
+    selected: &BTreeSet<PathBuf>,
     theme: &Theme,
 ) -> Vec<Line<'a>> {
     entries
@@ -25,7 +28,7 @@ pub fn render_file_list<'a>(
         .enumerate()
         .map(|(i, entry)| {
             let is_cursor = i == cursor;
-            let is_selected = selected.contains(&i);
+            let is_selected = selected.contains(&entry.path);
 
             let marker = if is_cursor { "▸ " } else { "  " };
             let icon = if entry.is_dir { "/ " } else { "  " };
@@ -45,9 +48,19 @@ pub fn render_file_list<'a>(
                 theme.text()
             };
 
+            let size_text = if !entry.is_dir {
+                entry
+                    .size
+                    .map(|s| format!("  {}", format_size(s)))
+                    .unwrap_or_default()
+            } else {
+                String::new()
+            };
+
             Line::from(vec![
                 Span::styled(format!("  {marker}{icon}"), name_style),
                 Span::styled(entry.name.clone(), name_style),
+                Span::styled(size_text, theme.muted()),
                 Span::styled(check.to_string(), theme.muted()),
             ])
         })
@@ -70,16 +83,19 @@ mod tests {
                 name: "photos".into(),
                 is_dir: true,
                 path: PathBuf::from("/photos"),
+                size: None,
             },
             FileEntry {
                 name: "cat.jpg".into(),
                 is_dir: false,
                 path: PathBuf::from("/cat.jpg"),
+                size: Some(290_000),
             },
             FileEntry {
                 name: "dog.png".into(),
                 is_dir: false,
                 path: PathBuf::from("/dog.png"),
+                size: Some(150_000),
             },
         ]
     }
@@ -93,7 +109,7 @@ mod tests {
     #[test]
     fn selected_file_shows_checkbox() {
         let mut selected = BTreeSet::new();
-        selected.insert(1); // cat.jpg
+        selected.insert(PathBuf::from("/cat.jpg"));
         let lines = render_file_list(&sample_entries(), 0, &selected, &theme());
         let cat_line: String = lines[1].spans.iter().map(|s| s.content.as_ref()).collect();
         assert!(
@@ -126,5 +142,25 @@ mod tests {
     fn empty_entries_returns_empty_lines() {
         let lines = render_file_list(&[], 0, &BTreeSet::new(), &theme());
         assert!(lines.is_empty());
+    }
+
+    #[test]
+    fn file_with_size_renders_size_text() {
+        let lines = render_file_list(&sample_entries(), 0, &BTreeSet::new(), &theme());
+        let cat_line: String = lines[1].spans.iter().map(|s| s.content.as_ref()).collect();
+        assert!(
+            cat_line.contains("283 KB"),
+            "file should show size, got: {cat_line}"
+        );
+    }
+
+    #[test]
+    fn directory_has_no_size_text() {
+        let lines = render_file_list(&sample_entries(), 0, &BTreeSet::new(), &theme());
+        let dir_line: String = lines[0].spans.iter().map(|s| s.content.as_ref()).collect();
+        assert!(
+            !dir_line.contains("KB") && !dir_line.contains("MB") && !dir_line.contains(" B"),
+            "directory should have no size, got: {dir_line}"
+        );
     }
 }

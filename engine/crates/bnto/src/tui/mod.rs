@@ -5,6 +5,7 @@
 
 pub mod app;
 pub mod event;
+pub mod format;
 mod keys;
 pub mod palette;
 mod render;
@@ -28,8 +29,9 @@ use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout};
 
-use app::{AppModel, update};
+use app::{AppMessage, AppModel, update};
 use keys::handle_key;
+use screens::picker::PickerMessage;
 use theme::ThemeVariant;
 
 /// Tick rate for the event loop (how often we check for input).
@@ -93,6 +95,22 @@ fn run_loop(
             render::draw_status_line(frame, &model, theme, status_area);
             render::draw_help_bar(frame, &model, theme, help_area);
         })?;
+
+        // Update picker viewport height from terminal size.
+        // Chrome overhead: 2 (status+help bars) + 2 (block borders) + 2 (dir path + blank line).
+        if matches!(model.screen, app::Screen::Picker { .. }) {
+            let total_height = terminal.size()?.height as usize;
+            let chrome = 6;
+            let picker_height = total_height.saturating_sub(chrome);
+            if picker_height > 0 {
+                model = update(
+                    model,
+                    AppMessage::Picker(PickerMessage::Resize {
+                        height: picker_height,
+                    }),
+                );
+            }
+        }
 
         if model.should_quit {
             break;
@@ -519,11 +537,13 @@ mod tests {
                 name: "photos".into(),
                 is_dir: true,
                 path: PathBuf::from("/photos"),
+                size: None,
             },
             FileEntry {
                 name: "cat.jpg".into(),
                 is_dir: false,
                 path: PathBuf::from("/cat.jpg"),
+                size: Some(290_000),
             },
         ];
 
@@ -533,7 +553,7 @@ mod tests {
             entries,
             vec!["jpg".into()],
         );
-        picker.selected.insert(1); // pre-select cat.jpg
+        picker.selected.insert(PathBuf::from("/cat.jpg")); // pre-select cat.jpg
 
         AppModel {
             screen: Screen::Picker {

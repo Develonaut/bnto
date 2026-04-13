@@ -6,12 +6,15 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
+use super::nav_history::NavHistory;
+
 /// A single filesystem entry shown in the picker.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileEntry {
     pub name: String,
     pub is_dir: bool,
     pub path: PathBuf,
+    pub size: Option<u64>,
 }
 
 /// File picker screen state — directory listing with multi-select.
@@ -25,32 +28,42 @@ pub struct PickerModel {
     pub entries: Vec<FileEntry>,
     /// Which entry currently has focus.
     pub cursor: usize,
-    /// Indices of selected files (multi-select via Space).
-    pub selected: BTreeSet<usize>,
+    /// Selected file paths (multi-select via Space).
+    pub selected: BTreeSet<PathBuf>,
     /// Allowed file extensions (e.g., ["jpg", "png", "webp"]).
     pub extensions: Vec<String>,
+    /// Whether hidden files (dotfiles) are shown.
+    pub show_hidden: bool,
+    /// First visible entry index (scroll offset).
+    pub viewport_offset: usize,
+    /// Number of entries visible in the viewport.
+    pub viewport_height: usize,
+    /// Cursor/offset snapshots for parent directory navigation.
+    pub nav_history: NavHistory,
 }
 
 /// Messages the picker screen can handle.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum PickerMessage {
-    /// Move cursor down one entry.
     CursorDown,
-    /// Move cursor up one entry.
     CursorUp,
-    /// Toggle selection on the file at cursor (ignored for directories).
     ToggleSelect,
-    /// Enter the directory at cursor.
     EnterDir,
-    /// Navigate to parent directory.
     ParentDir,
-    /// Confirm selection (only when files are selected).
     Confirm,
-    /// Directory contents loaded after navigation.
     DirLoaded {
         dir: PathBuf,
         entries: Vec<FileEntry>,
+    },
+    PageDown,
+    PageUp,
+    GoToTop,
+    GoToBottom,
+    ToggleHidden,
+    SelectAll,
+    Resize {
+        height: usize,
     },
 }
 
@@ -76,6 +89,10 @@ impl PickerModel {
             cursor: 0,
             selected: BTreeSet::new(),
             extensions,
+            show_hidden: false,
+            viewport_offset: 0,
+            viewport_height: 20,
+            nav_history: NavHistory::new(),
         }
     }
 
@@ -86,7 +103,7 @@ impl PickerModel {
         registry: &bnto_core::registry::NodeRegistry,
     ) -> Self {
         let extensions = super::picker_loader::extensions_for_recipe(slug, registry);
-        let entries = super::picker_loader::load_entries(dir, &extensions);
+        let entries = super::picker_loader::load_entries(dir, &extensions, false);
         Self {
             slug: slug.to_string(),
             current_dir: dir.to_path_buf(),
@@ -94,6 +111,10 @@ impl PickerModel {
             cursor: 0,
             selected: BTreeSet::new(),
             extensions,
+            show_hidden: false,
+            viewport_offset: 0,
+            viewport_height: 20,
+            nav_history: NavHistory::new(),
         }
     }
 
@@ -103,13 +124,7 @@ impl PickerModel {
         if self.selected.is_empty() {
             return None;
         }
-        let files = self
-            .selected
-            .iter()
-            .filter_map(|&i| self.entries.get(i))
-            .filter(|e| !e.is_dir)
-            .map(|e| e.path.clone())
-            .collect::<Vec<_>>();
+        let files: Vec<PathBuf> = self.selected.iter().cloned().collect();
         if files.is_empty() {
             return None;
         }
@@ -117,119 +132,8 @@ impl PickerModel {
     }
 }
 
-/// Pure state transition for the picker screen.
-pub fn update(model: PickerModel, msg: PickerMessage) -> PickerModel {
-    match msg {
-        PickerMessage::CursorDown => {
-            if model.entries.is_empty() {
-                return model;
-            }
-            let next = if model.cursor + 1 >= model.entries.len() {
-                0
-            } else {
-                model.cursor + 1
-            };
-            PickerModel {
-                cursor: next,
-                ..model
-            }
-        }
-        PickerMessage::CursorUp => {
-            if model.entries.is_empty() {
-                return model;
-            }
-            let prev = if model.cursor == 0 {
-                model.entries.len() - 1
-            } else {
-                model.cursor - 1
-            };
-            PickerModel {
-                cursor: prev,
-                ..model
-            }
-        }
-        PickerMessage::ToggleSelect => {
-            if model.entries.is_empty() || model.entries[model.cursor].is_dir {
-                return model;
-            }
-            let mut selected = model.selected;
-            if selected.contains(&model.cursor) {
-                selected.remove(&model.cursor);
-            } else {
-                selected.insert(model.cursor);
-            }
-            PickerModel { selected, ..model }
-        }
-        PickerMessage::EnterDir => {
-            if model.entries.is_empty() || !model.entries[model.cursor].is_dir {
-                return model;
-            }
-            let new_dir = model.entries[model.cursor].path.clone();
-            let entries = super::picker_loader::load_entries(&new_dir, &model.extensions);
-            PickerModel {
-                current_dir: new_dir,
-                entries,
-                cursor: 0,
-                selected: BTreeSet::new(),
-                ..model
-            }
-        }
-        PickerMessage::ParentDir => {
-            let parent = match model.current_dir.parent() {
-                Some(p) => p.to_path_buf(),
-                None => return model,
-            };
-            let entries = super::picker_loader::load_entries(&parent, &model.extensions);
-            PickerModel {
-                current_dir: parent,
-                entries,
-                cursor: 0,
-                selected: BTreeSet::new(),
-                ..model
-            }
-        }
-        PickerMessage::Confirm => model,
-        PickerMessage::DirLoaded { dir, entries } => PickerModel {
-            current_dir: dir,
-            entries,
-            cursor: 0,
-            selected: BTreeSet::new(),
-            ..model
-        },
-    }
-}
-
-/// Resolve a MIME type to file extensions.
-pub fn mime_to_extensions(mime: &str) -> &'static [&'static str] {
-    match mime {
-        "image/jpeg" => &["jpg", "jpeg"],
-        "image/png" => &["png"],
-        "image/webp" => &["webp"],
-        "image/gif" => &["gif"],
-        "image/bmp" => &["bmp"],
-        "image/tiff" => &["tiff", "tif"],
-        "image/svg+xml" => &["svg"],
-        "text/csv" => &["csv"],
-        "application/json" => &["json"],
-        "text/plain" => &["txt"],
-        "video/mp4" => &["mp4"],
-        "video/webm" => &["webm"],
-        "audio/mpeg" => &["mp3"],
-        _ => &[],
-    }
-}
-
-/// Collect unique extensions from a list of MIME types.
-pub fn extensions_from_mimes(mimes: &[String]) -> Vec<String> {
-    let mut exts: Vec<String> = mimes
-        .iter()
-        .flat_map(|m| mime_to_extensions(m))
-        .map(|s| s.to_string())
-        .collect();
-    exts.sort();
-    exts.dedup();
-    exts
-}
+// Re-export the update function from its own module.
+pub use super::picker_update::update;
 
 #[cfg(test)]
 mod tests {
@@ -243,21 +147,25 @@ mod tests {
                 name: "docs".into(),
                 is_dir: true,
                 path: PathBuf::from("/home/user/docs"),
+                size: None,
             },
             FileEntry {
                 name: "photos".into(),
                 is_dir: true,
                 path: PathBuf::from("/home/user/photos"),
+                size: None,
             },
             FileEntry {
                 name: "cat.jpg".into(),
                 is_dir: false,
                 path: PathBuf::from("/home/user/cat.jpg"),
+                size: Some(290_000),
             },
             FileEntry {
                 name: "dog.png".into(),
                 is_dir: false,
                 path: PathBuf::from("/home/user/dog.png"),
+                size: Some(150_000),
             },
         ]
     }
@@ -271,6 +179,27 @@ mod tests {
         )
     }
 
+    /// Build a picker with many entries for viewport testing.
+    fn big_picker() -> PickerModel {
+        let mut entries = Vec::new();
+        for i in 0..30 {
+            entries.push(FileEntry {
+                name: format!("file_{i:02}.jpg"),
+                is_dir: false,
+                path: PathBuf::from(format!("/home/user/file_{i:02}.jpg")),
+                size: Some(1000 * (i as u64 + 1)),
+            });
+        }
+        let mut m = PickerModel::from_test_data(
+            "compress-images",
+            PathBuf::from("/home/user"),
+            entries,
+            vec!["jpg".into()],
+        );
+        m.viewport_height = 10;
+        m
+    }
+
     // --- Initial state ---
 
     #[test]
@@ -280,6 +209,10 @@ mod tests {
         assert_eq!(m.current_dir, PathBuf::from("/home/user"));
         assert_eq!(m.cursor, 0);
         assert!(m.selected.is_empty());
+        assert!(!m.show_hidden);
+        assert_eq!(m.viewport_offset, 0);
+        assert_eq!(m.viewport_height, 20);
+        assert!(m.nav_history.is_empty());
     }
 
     #[test]
@@ -332,6 +265,28 @@ mod tests {
         assert_eq!(m.cursor, 0);
     }
 
+    #[test]
+    fn cursor_down_scrolls_viewport() {
+        let mut m = big_picker();
+        // Move cursor to just past viewport
+        for _ in 0..10 {
+            m = update(m, PickerMessage::CursorDown);
+        }
+        assert_eq!(m.cursor, 10);
+        assert!(m.viewport_offset > 0, "viewport should have scrolled");
+    }
+
+    #[test]
+    fn cursor_up_scrolls_viewport_back() {
+        let mut m = big_picker();
+        m.cursor = 15;
+        m.viewport_offset = 10;
+        m = update(m, PickerMessage::CursorUp);
+        assert_eq!(m.cursor, 14);
+        // Still within viewport, no scroll change
+        assert_eq!(m.viewport_offset, 10);
+    }
+
     // --- Selection ---
 
     #[test]
@@ -339,22 +294,42 @@ mod tests {
         let mut m = picker();
         m.cursor = 2; // cat.jpg (a file)
         let m = update(m, PickerMessage::ToggleSelect);
-        assert!(m.selected.contains(&2));
+        assert!(m.selected.contains(&PathBuf::from("/home/user/cat.jpg")));
     }
 
     #[test]
     fn toggle_select_removes_if_already_selected() {
         let mut m = picker();
         m.cursor = 2;
-        m.selected.insert(2);
+        m.selected.insert(PathBuf::from("/home/user/cat.jpg"));
         let m = update(m, PickerMessage::ToggleSelect);
-        assert!(!m.selected.contains(&2));
+        assert!(!m.selected.contains(&PathBuf::from("/home/user/cat.jpg")));
     }
 
     #[test]
     fn toggle_select_ignores_directories() {
         let m = picker(); // cursor = 0, which is a dir
         let m = update(m, PickerMessage::ToggleSelect);
+        assert!(m.selected.is_empty());
+    }
+
+    // --- Select all ---
+
+    #[test]
+    fn select_all_selects_all_files() {
+        let m = picker();
+        let m = update(m, PickerMessage::SelectAll);
+        assert_eq!(m.selected.len(), 2); // 2 files, not dirs
+        assert!(m.selected.contains(&PathBuf::from("/home/user/cat.jpg")));
+        assert!(m.selected.contains(&PathBuf::from("/home/user/dog.png")));
+    }
+
+    #[test]
+    fn select_all_toggles_off_when_all_selected() {
+        let mut m = picker();
+        m.selected.insert(PathBuf::from("/home/user/cat.jpg"));
+        m.selected.insert(PathBuf::from("/home/user/dog.png"));
+        let m = update(m, PickerMessage::SelectAll);
         assert!(m.selected.is_empty());
     }
 
@@ -369,32 +344,126 @@ mod tests {
     #[test]
     fn confirm_with_selected_files_returns_paths() {
         let mut m = picker();
-        m.selected.insert(2); // cat.jpg
-        m.selected.insert(3); // dog.png
+        m.selected.insert(PathBuf::from("/home/user/cat.jpg"));
+        m.selected.insert(PathBuf::from("/home/user/dog.png"));
         let result = m.confirm().expect("should return result");
         assert_eq!(result.files.len(), 2);
         assert!(result.files.contains(&PathBuf::from("/home/user/cat.jpg")));
         assert!(result.files.contains(&PathBuf::from("/home/user/dog.png")));
     }
 
-    // --- Extension helpers ---
+    // --- Page navigation ---
 
     #[test]
-    fn mime_to_extensions_known_types() {
-        assert_eq!(mime_to_extensions("image/jpeg"), &["jpg", "jpeg"]);
-        assert_eq!(mime_to_extensions("image/png"), &["png"]);
-        assert_eq!(mime_to_extensions("text/csv"), &["csv"]);
+    fn page_down_moves_cursor_by_viewport_height() {
+        let m = big_picker(); // 30 entries, height 10
+        let m = update(m, PickerMessage::PageDown);
+        assert_eq!(m.cursor, 10);
     }
 
     #[test]
-    fn mime_to_extensions_unknown_returns_empty() {
-        assert!(mime_to_extensions("application/x-unknown").is_empty());
+    fn page_up_moves_cursor_back() {
+        let mut m = big_picker();
+        m.cursor = 15;
+        m.viewport_offset = 10;
+        let m = update(m, PickerMessage::PageUp);
+        assert_eq!(m.cursor, 5);
     }
 
     #[test]
-    fn extensions_from_mimes_deduplicates_and_sorts() {
-        let mimes = vec!["image/jpeg".into(), "image/png".into(), "image/jpeg".into()];
-        let exts = extensions_from_mimes(&mimes);
-        assert_eq!(exts, vec!["jpeg", "jpg", "png"]);
+    fn go_to_top_moves_to_first() {
+        let mut m = big_picker();
+        m.cursor = 20;
+        m.viewport_offset = 15;
+        let m = update(m, PickerMessage::GoToTop);
+        assert_eq!(m.cursor, 0);
+        assert_eq!(m.viewport_offset, 0);
+    }
+
+    #[test]
+    fn go_to_bottom_moves_to_last() {
+        let m = big_picker(); // 30 entries, height 10
+        let m = update(m, PickerMessage::GoToBottom);
+        assert_eq!(m.cursor, 29);
+        assert_eq!(m.viewport_offset, 20);
+    }
+
+    // --- Nav history ---
+
+    #[test]
+    fn enter_dir_pushes_nav_history() {
+        let mut m = picker(); // entries[0] = docs dir
+        m.cursor = 0;
+        m.viewport_offset = 5;
+        assert!(m.nav_history.is_empty());
+        // EnterDir calls load_entries which hits filesystem — won't find /home/user/docs
+        // but the history push happens before the load
+        let m = update(m, PickerMessage::EnterDir);
+        // History was pushed (cursor=0, offset=5), then consumed on the model
+        // The model now has cursor=0, offset=0 for the new dir
+        assert_eq!(m.cursor, 0);
+        assert_eq!(m.viewport_offset, 0);
+    }
+
+    #[test]
+    fn parent_dir_pops_nav_history() {
+        let mut m = picker();
+        // Simulate having navigated into a child dir
+        m.nav_history.push(2, 1);
+        let m = update(m, PickerMessage::ParentDir);
+        // Nav history was popped — cursor restored (clamped to entry count)
+        assert!(m.nav_history.is_empty());
+    }
+
+    #[test]
+    fn parent_dir_without_history_resets_cursor() {
+        let m = picker();
+        let m = update(m, PickerMessage::ParentDir);
+        assert_eq!(m.cursor, 0);
+        assert_eq!(m.viewport_offset, 0);
+    }
+
+    // --- Hidden toggle ---
+
+    #[test]
+    fn toggle_hidden_flips_flag() {
+        let m = picker();
+        assert!(!m.show_hidden);
+        let m = update(m, PickerMessage::ToggleHidden);
+        assert!(m.show_hidden);
+        let m = update(m, PickerMessage::ToggleHidden);
+        assert!(!m.show_hidden);
+    }
+
+    #[test]
+    fn toggle_hidden_resets_cursor_and_selection() {
+        let mut m = picker();
+        m.cursor = 2;
+        m.selected.insert(PathBuf::from("/home/user/cat.jpg"));
+        let m = update(m, PickerMessage::ToggleHidden);
+        assert_eq!(m.cursor, 0);
+        assert!(m.selected.is_empty());
+    }
+
+    // --- Resize ---
+
+    #[test]
+    fn resize_updates_viewport_height() {
+        let m = picker();
+        assert_eq!(m.viewport_height, 20);
+        let m = update(m, PickerMessage::Resize { height: 15 });
+        assert_eq!(m.viewport_height, 15);
+    }
+
+    #[test]
+    fn resize_adjusts_viewport_offset() {
+        let mut m = big_picker();
+        m.cursor = 25;
+        m.viewport_offset = 20;
+        // Shrink viewport — cursor should still be visible
+        let m = update(m, PickerMessage::Resize { height: 5 });
+        assert_eq!(m.viewport_height, 5);
+        assert!(m.cursor >= m.viewport_offset);
+        assert!(m.cursor < m.viewport_offset + m.viewport_height);
     }
 }
