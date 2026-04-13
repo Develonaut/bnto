@@ -1,12 +1,12 @@
 // bnto CLI — run .bnto.json recipes from the command line.
 //
-// Usage: bnto                      (launches interactive TUI if terminal detected)
-//        bnto run <recipe> <file1> [file2 ...]
+// Usage: bnto run <recipe> <file1> [file2 ...]
 //        bnto run <recipe> <url>  (for url-mode recipes)
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto list
 //        bnto info <recipe>
 //        bnto doctor
+//        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
 mod context;
 mod doctor;
@@ -17,7 +17,6 @@ mod list;
 mod progress;
 mod tui;
 
-use std::io::IsTerminal;
 use std::process;
 
 use clap::{Parser, Subcommand};
@@ -29,10 +28,6 @@ use colored::Colorize;
 struct Cli {
     #[command(subcommand)]
     command: Option<Command>,
-
-    /// Disable interactive TUI even when running in a terminal.
-    #[arg(long)]
-    no_interactive: bool,
 }
 
 #[derive(Subcommand)]
@@ -88,7 +83,6 @@ fn main() {
         Some(Command::Info { recipe }) => show_info(&recipe),
         Some(Command::Doctor) => doctor::run_doctor(),
         Some(Command::Tui { theme }) => launch_tui(&theme),
-        None if !cli.no_interactive && std::io::stdout().is_terminal() => launch_tui("los-angeles"),
         None => {
             Cli::parse_from(["bnto", "--help"]);
         }

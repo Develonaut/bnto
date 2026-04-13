@@ -17,15 +17,12 @@ fn test_help_flag() {
 }
 
 #[test]
-fn test_no_interactive_shows_help() {
-    let output = Command::new(bnto_bin())
-        .arg("--no-interactive")
-        .output()
-        .unwrap();
+fn test_no_subcommand_shows_help() {
+    let output = Command::new(bnto_bin()).output().unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
         stdout.contains("Run .bnto.json recipes"),
-        "Running with --no-interactive and no subcommand should print help, got: {stdout}"
+        "Running with no subcommand should print help, got: {stdout}"
     );
 }
 
