@@ -36,7 +36,10 @@ impl Screen {
             ],
             Self::Picker { .. } => vec![
                 ("↑↓", "navigate"),
+                ("h/l", "parent/enter"),
                 ("Space", "select"),
+                ("a", "select all"),
+                (".", "hidden"),
                 ("Enter", "confirm"),
                 ("Esc", "back"),
             ],
