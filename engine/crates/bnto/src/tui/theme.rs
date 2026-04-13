@@ -45,6 +45,15 @@ impl ThemeVariant {
         }
     }
 
+    /// CLI-safe slug for serialization.
+    pub fn as_slug(self) -> &'static str {
+        match self {
+            Self::LosAngeles => "los-angeles",
+            Self::Tokyo => "tokyo",
+            Self::Monaco => "monaco",
+        }
+    }
+
     /// Parse a variant from a CLI string.
     pub fn from_str_lossy(s: &str) -> Result<Self, String> {
         match s {

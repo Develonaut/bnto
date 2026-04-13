@@ -12,7 +12,7 @@ use super::render_detail::draw_detail;
 use super::render_execution::draw_execution;
 use super::render_picker::draw_picker;
 use super::render_results::draw_results;
-use super::theme::{ALL_VARIANTS, ROUNDED_BORDERS, Theme};
+use super::theme::{ROUNDED_BORDERS, Theme};
 use super::widgets::{help_bar, search_input, status_line};
 
 /// Render the main content area based on the current screen.
@@ -87,7 +87,10 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
     frame.render_widget(content, inner);
 }
 
-/// Render the settings screen with theme picker.
+/// Render the settings screen with multi-field form.
+///
+/// Theme field shows the current variant with left/right arrows.
+/// Path fields show their value (Enter opens file picker to browse).
 fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let block = Block::bordered()
         .title(model.screen.title())
@@ -98,29 +101,49 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
-    let variant_labels = [
-        ("Los Angeles", "Warm terracotta accent"),
-        ("Tokyo", "Cool electric blue accent"),
-        ("Monaco", "Golden-hour amber accent"),
-    ];
+    let settings = match &model.settings {
+        Some(s) => s,
+        None => return,
+    };
 
-    let lines: Vec<Line> = ALL_VARIANTS
-        .iter()
-        .zip(variant_labels.iter())
-        .map(|(variant, (label, desc))| {
-            let is_selected = *variant == model.theme_variant;
-            let marker = if is_selected { "▸ " } else { "  " };
-            let style = if is_selected {
-                theme.selected()
-            } else {
-                theme.text()
-            };
-            Line::from(vec![
-                Span::styled(format!("{marker}{label}"), style),
-                Span::styled(format!("  {desc}"), theme.muted()),
-            ])
-        })
-        .collect();
+    let mut lines: Vec<Line> = Vec::new();
+
+    for (i, field) in settings.fields.iter().enumerate() {
+        let is_focused = i == settings.focused;
+        let marker = if is_focused { "▸ " } else { "  " };
+        let label_style = if is_focused {
+            theme.selected()
+        } else {
+            theme.text()
+        };
+
+        // Label row.
+        lines.push(Line::from(Span::styled(
+            format!("{marker}{}", field.label),
+            label_style,
+        )));
+
+        // Value row.
+        let value_display = if field.key == "theme" {
+            format!("    ◂ {} ▸", model.theme_variant.display_name())
+        } else if field.value.is_empty() {
+            "    (not set)".to_string()
+        } else {
+            format!("    {}", field.value)
+        };
+
+        let value_style = theme.muted();
+        lines.push(Line::from(Span::styled(value_display, value_style)));
+
+        // Description row.
+        lines.push(Line::from(Span::styled(
+            format!("    {}", field.description),
+            theme.muted(),
+        )));
+
+        // Spacer between fields.
+        lines.push(Line::from(""));
+    }
 
     let content = Paragraph::new(lines);
     frame.render_widget(content, inner);
@@ -128,7 +151,20 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
 
 /// Render the bottom bar: status line (left) + help hints (right).
 pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let hints = model.screen.help_hints();
+    // Settings picker shows directory-selection hints instead of file-selection hints.
+    let hints = if model.settings_picker_field.is_some()
+        && matches!(&model.screen, Screen::Picker { .. })
+    {
+        vec![
+            ("↑↓", "navigate"),
+            ("h/l", "parent/enter"),
+            (".", "hidden"),
+            ("Tab", "select dir"),
+            ("Esc", "back"),
+        ]
+    } else {
+        model.screen.help_hints()
+    };
     let line = help_bar::render_help_bar(&hints, theme);
     let bar = Paragraph::new(line);
     frame.render_widget(bar, area);

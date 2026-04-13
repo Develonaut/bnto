@@ -8,11 +8,13 @@ use std::collections::HashMap;
 use bnto_core::registry::NodeRegistry;
 use bnto_engine::create_registry;
 
+use super::config::TuiConfig;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
 use super::screens::execution::{ExecutionMessage, ExecutionModel, update as execution_update};
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
+use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
 use super::theme::{Theme, ThemeVariant};
 
 /// Which screen the TUI is currently showing.
@@ -41,6 +43,12 @@ pub struct AppModel {
     pub execution: Option<ExecutionModel>,
     /// Results screen state — populated when pipeline completes.
     pub results: Option<ResultsModel>,
+    /// Settings screen state — populated when on settings screen.
+    pub settings: Option<SettingsModel>,
+    /// Persistent config loaded from disk.
+    pub config: TuiConfig,
+    /// Which settings field opened the picker (None = normal recipe picker).
+    pub settings_picker_field: Option<String>,
     /// Param overrides from detail screen, carried through picker to execution.
     pub param_overrides: HashMap<String, String>,
     /// Engine registry for resolving processor metadata.
@@ -57,6 +65,8 @@ impl std::fmt::Debug for AppModel {
             .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
             .field("results", &self.results.as_ref().map(|r| &r.slug))
+            .field("settings", &self.settings.is_some())
+            .field("settings_picker_field", &self.settings_picker_field)
             .field("param_overrides", &self.param_overrides.len())
             .finish_non_exhaustive()
     }
@@ -92,23 +102,42 @@ pub enum AppMessage {
     Execution(ExecutionMessage),
     /// Forward a message to the results screen.
     Results(ResultsMessage),
+    /// Forward a message to the settings screen.
+    Settings(SettingsMessage),
+    /// Open the file picker from settings to browse for a directory.
+    OpenSettingsPicker { field_key: String },
+    /// Confirm the current picker directory as the settings field value.
+    SettingsPathConfirmed,
     /// Quit the application.
     Quit,
 }
 
 impl AppModel {
     /// Create a new app starting on the recipe browser.
+    ///
+    /// Loads persisted config from disk. The `variant` argument is the
+    /// CLI override — if `None`, uses the config's saved theme.
     pub fn new(variant: ThemeVariant) -> Self {
+        let config = TuiConfig::load();
+        // CLI --theme flag overrides saved config.
+        let effective_variant = if variant != ThemeVariant::LosAngeles {
+            variant
+        } else {
+            ThemeVariant::from_str_lossy(&config.theme).unwrap_or(variant)
+        };
         Self {
             screen: Screen::Browser,
             should_quit: false,
-            theme: Theme::from_variant(variant),
-            theme_variant: variant,
+            theme: Theme::from_variant(effective_variant),
+            theme_variant: effective_variant,
             browser: BrowserModel::new(),
             detail: None,
             picker: None,
             execution: None,
             results: None,
+            settings: None,
+            config,
+            settings_picker_field: None,
             param_overrides: HashMap::new(),
             registry: create_registry(),
         }
@@ -133,8 +162,16 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 .as_ref()
                 .map(|d| d.confirm().overrides)
                 .unwrap_or_default();
-            let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
-            let picker = Some(PickerModel::from_slug(&slug, &cwd, &model.registry));
+            let start_dir = model
+                .config
+                .default_path
+                .as_ref()
+                .map(std::path::PathBuf::from)
+                .filter(|p| p.is_dir())
+                .unwrap_or_else(|| {
+                    std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+                });
+            let picker = Some(PickerModel::from_slug(&slug, &start_dir, &model.registry));
             AppModel {
                 screen: Screen::Picker { slug },
                 picker,
@@ -177,15 +214,34 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             screen: Screen::Browser,
             ..model
         },
-        AppMessage::OpenSettings => AppModel {
-            screen: Screen::Settings,
-            ..model
-        },
-        AppMessage::ThemeChanged(variant) => AppModel {
-            theme: Theme::from_variant(variant),
-            theme_variant: variant,
-            ..model
-        },
+        AppMessage::OpenSettings => {
+            let settings = SettingsModel::from_config(&model.config);
+            AppModel {
+                screen: Screen::Settings,
+                settings: Some(settings),
+                ..model
+            }
+        }
+        AppMessage::ThemeChanged(variant) => {
+            // Update config and persist.
+            let mut config = model.config.clone();
+            config.theme = variant.as_slug().to_string();
+            let _ = config.save();
+            // Also update settings model if it exists (theme field display).
+            let settings = model.settings.map(|mut s| {
+                if let Some(f) = s.fields.iter_mut().find(|f| f.key == "theme") {
+                    f.value = variant.display_name().to_string();
+                }
+                s
+            });
+            AppModel {
+                theme: Theme::from_variant(variant),
+                theme_variant: variant,
+                config,
+                settings,
+                ..model
+            }
+        }
         AppMessage::Browser(msg) => {
             let browser = browser_update(model.browser, msg);
             AppModel { browser, ..model }
@@ -206,6 +262,65 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             let results = model.results.map(|r| results_update(r, msg));
             AppModel { results, ..model }
         }
+        AppMessage::Settings(msg) => {
+            let settings = model.settings.map(|s| settings_update(s, msg));
+            AppModel { settings, ..model }
+        }
+        AppMessage::OpenSettingsPicker { field_key } => {
+            // Start the picker at the field's current value if it's a valid dir.
+            let current_value = model
+                .settings
+                .as_ref()
+                .and_then(|s| s.fields.iter().find(|f| f.key == field_key))
+                .map(|f| f.value.clone())
+                .unwrap_or_default();
+            let start_dir = if !current_value.is_empty() {
+                let p = std::path::PathBuf::from(&current_value);
+                if p.is_dir() {
+                    p
+                } else {
+                    std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+                }
+            } else {
+                std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+            };
+            let picker = Some(PickerModel::from_dir(&field_key, &start_dir));
+            AppModel {
+                screen: Screen::Picker {
+                    slug: field_key.clone(),
+                },
+                picker,
+                settings_picker_field: Some(field_key),
+                ..model
+            }
+        }
+        AppMessage::SettingsPathConfirmed => {
+            let dir_path = model
+                .picker
+                .as_ref()
+                .map(|p| p.current_dir.to_string_lossy().to_string())
+                .unwrap_or_default();
+            let field_key = model.settings_picker_field.clone().unwrap_or_default();
+            let settings = model.settings.map(|mut s| {
+                if let Some(f) = s.fields.iter_mut().find(|f| f.key == field_key) {
+                    f.value = dir_path;
+                }
+                s
+            });
+            let config = settings
+                .as_ref()
+                .map(|s| s.to_config(model.theme_variant))
+                .unwrap_or_else(|| model.config.clone());
+            let _ = config.save();
+            AppModel {
+                screen: Screen::Settings,
+                picker: None,
+                settings_picker_field: None,
+                settings,
+                config,
+                ..model
+            }
+        }
         AppMessage::Quit => AppModel {
             should_quit: true,
             ..model
@@ -215,6 +330,16 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
 
 /// Navigate back one screen, clearing the state of the screen we're leaving.
 fn handle_back(model: AppModel) -> AppModel {
+    // Settings picker: return to Settings, not Detail.
+    if matches!(&model.screen, Screen::Picker { .. }) && model.settings_picker_field.is_some() {
+        return AppModel {
+            screen: Screen::Settings,
+            picker: None,
+            settings_picker_field: None,
+            ..model
+        };
+    }
+
     let detail = match &model.screen {
         Screen::Detail { .. } => None,
         _ => model.detail,
@@ -231,12 +356,17 @@ fn handle_back(model: AppModel) -> AppModel {
         Screen::Results { .. } => None,
         _ => model.results,
     };
+    let settings = match &model.screen {
+        Screen::Settings => None,
+        _ => model.settings,
+    };
     AppModel {
         screen: back_screen(&model.screen),
         detail,
         picker,
         execution,
         results,
+        settings,
         ..model
     }
 }
@@ -848,6 +978,55 @@ mod tests {
         assert_eq!(results.total_time_ms, 0);
     }
 
+    // --- Settings / Config persistence ---
+
+    #[test]
+    fn open_settings_creates_settings_model() {
+        let app = update(default_model(), AppMessage::OpenSettings);
+        assert_eq!(app.screen, Screen::Settings);
+        assert!(app.settings.is_some());
+        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 3);
+    }
+
+    #[test]
+    fn back_from_settings_clears_settings_model() {
+        let app = update(default_model(), AppMessage::OpenSettings);
+        assert!(app.settings.is_some());
+        let app = update(app, AppMessage::Back);
+        assert_eq!(app.screen, Screen::Browser);
+        assert!(app.settings.is_none());
+    }
+
+    #[test]
+    fn settings_message_forwarded_to_settings_update() {
+        let app = update(default_model(), AppMessage::OpenSettings);
+        let app = update(app, AppMessage::Settings(SettingsMessage::FocusNext));
+        assert_eq!(app.settings.as_ref().unwrap().focused, 1);
+    }
+
+    #[test]
+    fn theme_changed_persists_to_config() {
+        let app = update(
+            AppModel {
+                screen: Screen::Settings,
+                ..default_model()
+            },
+            AppMessage::ThemeChanged(ThemeVariant::Monaco),
+        );
+        assert_eq!(app.config.theme, "monaco");
+    }
+
+    #[test]
+    fn config_confirmed_uses_default_path_from_config() {
+        let mut app = default_model();
+        // Set a default_path that doesn't exist — should fall back to cwd.
+        app.config.default_path = Some("/nonexistent/path".into());
+        app.screen = Screen::Detail { slug: "s".into() };
+        let app = update(app, AppMessage::ConfigConfirmed { slug: "s".into() });
+        // The picker should be created (path falls back to cwd since /nonexistent doesn't exist).
+        assert!(app.picker.is_some());
+    }
+
     #[test]
     fn back_from_picker_clears_overrides() {
         let mut app = AppModel {
@@ -865,5 +1044,89 @@ mod tests {
         assert_eq!(app.screen, Screen::Detail { slug: "s".into() });
         // Overrides remain because user might go forward again.
         assert!(!app.param_overrides.is_empty());
+    }
+
+    // --- Settings picker flow ---
+
+    #[test]
+    fn open_settings_picker_transitions_to_picker_screen() {
+        let app = update(default_model(), AppMessage::OpenSettings);
+        let app = update(
+            app,
+            AppMessage::OpenSettingsPicker {
+                field_key: "default_path".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Picker {
+                slug: "default_path".into()
+            }
+        );
+        assert!(app.picker.is_some());
+        assert_eq!(app.settings_picker_field, Some("default_path".to_string()));
+        // Settings state is preserved.
+        assert!(app.settings.is_some());
+    }
+
+    #[test]
+    fn settings_path_confirmed_updates_field_and_returns_to_settings() {
+        let mut app = update(default_model(), AppMessage::OpenSettings);
+        // Manually set up a picker with a known directory.
+        app.screen = Screen::Picker {
+            slug: "output_dir".into(),
+        };
+        app.settings_picker_field = Some("output_dir".into());
+        app.picker = Some(PickerModel::from_dir(
+            "output_dir",
+            &std::path::PathBuf::from("/tmp"),
+        ));
+
+        let app = update(app, AppMessage::SettingsPathConfirmed);
+        assert_eq!(app.screen, Screen::Settings);
+        assert!(app.picker.is_none());
+        assert!(app.settings_picker_field.is_none());
+        // The output_dir field should be updated.
+        let output_dir_field = app
+            .settings
+            .as_ref()
+            .unwrap()
+            .fields
+            .iter()
+            .find(|f| f.key == "output_dir")
+            .unwrap();
+        assert_eq!(output_dir_field.value, "/tmp");
+    }
+
+    #[test]
+    fn back_from_settings_picker_returns_to_settings() {
+        let mut app = update(default_model(), AppMessage::OpenSettings);
+        app.screen = Screen::Picker {
+            slug: "default_path".into(),
+        };
+        app.settings_picker_field = Some("default_path".into());
+        app.picker = Some(PickerModel::from_dir(
+            "default_path",
+            &std::path::PathBuf::from("/tmp"),
+        ));
+
+        let app = update(app, AppMessage::Back);
+        assert_eq!(app.screen, Screen::Settings);
+        assert!(app.picker.is_none());
+        assert!(app.settings_picker_field.is_none());
+        // Settings state preserved.
+        assert!(app.settings.is_some());
+    }
+
+    #[test]
+    fn back_from_normal_picker_goes_to_detail_not_settings() {
+        let app = AppModel {
+            screen: Screen::Picker { slug: "s".into() },
+            settings_picker_field: None,
+            ..default_model()
+        };
+        let app = update(app, AppMessage::Back);
+        // Normal picker → Detail (not Settings).
+        assert_eq!(app.screen, Screen::Detail { slug: "s".into() });
     }
 }

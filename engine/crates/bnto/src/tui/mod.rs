@@ -5,6 +5,7 @@
 
 pub mod app;
 mod bridge;
+pub mod config;
 pub mod event;
 pub mod format;
 mod keys;
@@ -209,12 +210,13 @@ mod tests {
 
     use super::*;
     use app::{AppMessage, Screen};
+    use config::TuiConfig;
     use screens::browser::BrowserMessage;
     use screens::detail::DetailMessage;
     use screens::execution::ExecutionMessage;
     use screens::picker::PickerMessage;
     use screens::results::ResultsMessage;
-    use theme::Theme;
+    use screens::settings::SettingsModel;
 
     fn default_model() -> AppModel {
         AppModel::new(ThemeVariant::LosAngeles)
@@ -243,68 +245,78 @@ mod tests {
         assert_eq!(handle_key(&model, key), Some(AppMessage::OpenSettings));
     }
 
+    /// Helper: create a model on the Settings screen with a SettingsModel.
+    /// Uses explicit LosAngeles theme to avoid reading saved config from disk.
+    fn settings_model() -> AppModel {
+        let mut model = default_model();
+        model.screen = Screen::Settings;
+        model.theme_variant = ThemeVariant::LosAngeles;
+        model.settings = Some(SettingsModel::from_config(&TuiConfig::default()));
+        model
+    }
+
     #[test]
-    fn settings_arrow_keys_cycle_themes() {
-        let model = AppModel {
-            screen: Screen::Settings,
-            ..default_model()
-        };
-        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+    fn settings_left_right_cycle_themes_on_theme_field() {
+        let model = settings_model(); // focused=0 (theme field)
+        let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
-            handle_key(&model, down),
+            handle_key(&model, right),
             Some(AppMessage::ThemeChanged(ThemeVariant::Tokyo))
         );
-        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        let left = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
-            handle_key(&model, up),
+            handle_key(&model, left),
             Some(AppMessage::ThemeChanged(ThemeVariant::Monaco))
         );
     }
 
     #[test]
-    fn settings_enter_goes_back() {
-        let model = AppModel {
-            screen: Screen::Settings,
-            ..default_model()
-        };
+    fn settings_jk_navigate_fields() {
+        use screens::settings::SettingsMessage;
+        let model = settings_model();
+        let j = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, j),
+            Some(AppMessage::Settings(SettingsMessage::FocusNext))
+        );
+        let k = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, k),
+            Some(AppMessage::Settings(SettingsMessage::FocusPrev))
+        );
+    }
+
+    #[test]
+    fn settings_enter_opens_picker_on_editable_field() {
+        let mut model = settings_model();
+        // Focus on field 1 (default_path, editable).
+        model.settings.as_mut().unwrap().focused = 1;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::OpenSettingsPicker {
+                field_key: "default_path".into()
+            })
+        );
+    }
+
+    #[test]
+    fn settings_enter_on_theme_field_returns_none() {
+        let model = settings_model(); // focused=0 (theme, non-editable)
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
+    }
+
+    #[test]
+    fn settings_esc_goes_back() {
+        let model = settings_model();
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), Some(AppMessage::Back));
     }
 
     #[test]
-    fn settings_down_wraps_from_last_to_first() {
-        let model = AppModel {
-            screen: Screen::Settings,
-            theme: Theme::from_variant(ThemeVariant::Monaco),
-            theme_variant: ThemeVariant::Monaco,
-            ..default_model()
-        };
-        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
-        assert_eq!(
-            handle_key(&model, down),
-            Some(AppMessage::ThemeChanged(ThemeVariant::LosAngeles))
-        );
-    }
-
-    #[test]
-    fn settings_up_wraps_from_first_to_last() {
-        let model = AppModel {
-            screen: Screen::Settings,
-            ..default_model() // LosAngeles is first
-        };
-        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
-        assert_eq!(
-            handle_key(&model, up),
-            Some(AppMessage::ThemeChanged(ThemeVariant::Monaco))
-        );
-    }
-
-    #[test]
     fn settings_unmapped_key_returns_none() {
-        let model = AppModel {
-            screen: Screen::Settings,
-            ..default_model()
-        };
+        let model = settings_model();
         let key = KeyEvent::new(KeyCode::Char('x'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), None);
     }

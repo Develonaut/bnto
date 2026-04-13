@@ -24,8 +24,10 @@ bnto-engine = { path = "../bnto-engine", version = "0.1.3", features = ["native"
 clap = { workspace = true }
 colored = { workspace = true }
 crossterm = { workspace = true }
+dirs = { workspace = true }
 indicatif = { workspace = true }
 ratatui = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
