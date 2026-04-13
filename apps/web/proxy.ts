@@ -34,7 +34,7 @@ export default convexAuthNextjsMiddleware(async (request) => {
 export const config = {
   matcher: [
     // Page routes — skip static assets, API routes, PostHog proxy, and files
-    "/((?!_next|api|ingest|favicon.ico|.*\\..*).*)",
+    "/((?!_next|api|d|favicon.ico|.*\\..*).*)",
     // Auth proxy — @convex-dev/auth proxies signIn/signOut through middleware
     "/api/auth",
   ],

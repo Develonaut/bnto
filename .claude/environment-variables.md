@@ -62,7 +62,7 @@ Set in the [Vercel Dashboard](https://vercel.com) under Project > Settings > Env
 | `NEXT_PUBLIC_CONVEX_URL`      | Convex deployment URL (e.g. `https://zealous-canary-422.convex.cloud`)                                                                    |
 | `NEXT_PUBLIC_CONVEX_SITE_URL` | Convex site URL for auth callbacks (e.g. `https://zealous-canary-422.convex.site`)                                                        |
 | `NEXT_PUBLIC_POSTHOG_KEY`     | PostHog project API key (e.g. `phc_...`). **Production only** — not set in `.env.local` to avoid polluting PostHog with localhost events. |
-| `NEXT_PUBLIC_POSTHOG_HOST`    | PostHog ingest path — set to `/ingest` (reverse proxy via Next.js rewrites). **Production only** — not set in `.env.local`.               |
+| `NEXT_PUBLIC_POSTHOG_HOST`    | PostHog ingest path — set to `/d` (reverse proxy via Next.js rewrites). **Production only** — not set in `.env.local`.                    |
 
 **Dev values** (in `apps/web/.env.local`):
 
@@ -74,7 +74,7 @@ Set in the [Vercel Dashboard](https://vercel.com) under Project > Settings > Env
 
 - `NEXT_PUBLIC_CONVEX_URL` / `NEXT_PUBLIC_CONVEX_SITE_URL` — production Convex deployment URLs
 - `NEXT_PUBLIC_POSTHOG_KEY` — set in Vercel, get from PostHog project settings
-- `NEXT_PUBLIC_POSTHOG_HOST` — set to `/ingest` in Vercel (reverse proxy — bypasses ad blockers)
+- `NEXT_PUBLIC_POSTHOG_HOST` — set to `/d` in Vercel (reverse proxy — bypasses ad blockers)
 
 ---
 

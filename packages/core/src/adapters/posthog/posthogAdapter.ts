@@ -45,7 +45,7 @@ export function initPostHog(config: TelemetryConfig) {
 
   posthog.init(config.apiKey, {
     api_host: config.host,
-    // When api_host is a relative proxy path (e.g. "/ingest"), the PostHog
+    // When api_host is a relative proxy path (e.g. "/d"), the PostHog
     // toolbar and other dashboard features need to know the real PostHog URL.
     ui_host: "https://us.posthog.com",
     // Cookieless mode — no cookie consent banner needed
