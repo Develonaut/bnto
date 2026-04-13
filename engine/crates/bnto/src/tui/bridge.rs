@@ -145,18 +145,13 @@ fn run_bridge(
     };
 
     // Use configured output directory or fall back to temp.
+    // Always clean previous run's output before writing new results.
     let output_dir = match output_dir_override {
-        Some(dir) if !dir.is_empty() => {
-            let p = PathBuf::from(dir).join(format!("bnto-{slug}"));
-            let _ = std::fs::create_dir_all(&p);
-            p
-        }
-        _ => {
-            let p = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
-            let _ = std::fs::remove_dir_all(&p);
-            p
-        }
+        Some(dir) if !dir.is_empty() => PathBuf::from(dir).join(format!("bnto-{slug}")),
+        _ => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
     };
+    let _ = std::fs::remove_dir_all(&output_dir);
+    let _ = std::fs::create_dir_all(&output_dir);
     let output_dir_str = output_dir.to_string_lossy().into_owned();
 
     // Extract per-file metadata before writing (writing consumes data).

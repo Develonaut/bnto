@@ -179,21 +179,16 @@ fn run_loop(
             }
         }
 
-        // Clear the bridge receiver when execution finishes or is cancelled.
+        // Clear the bridge receiver when we've left the execution screen
+        // (auto-transition fired) or user cancelled. Don't clear on Completed/Failed
+        // status — the bridge thread may still be writing files and hasn't sent
+        // BridgeEvent::Done yet.
         if bridge_rx.is_some() {
-            let should_clear = model
+            let cancelled = model
                 .execution
                 .as_ref()
-                .map(|e| {
-                    matches!(
-                        e.status,
-                        ExecutionStatus::Completed
-                            | ExecutionStatus::Failed
-                            | ExecutionStatus::Cancelled
-                    )
-                })
-                .unwrap_or(true);
-            if should_clear || !matches!(model.screen, app::Screen::Execution { .. }) {
+                .is_some_and(|e| e.status == ExecutionStatus::Cancelled);
+            if cancelled || !matches!(model.screen, app::Screen::Execution { .. }) {
                 bridge_rx = None;
             }
         }
