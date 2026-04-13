@@ -28,9 +28,32 @@ pub enum BridgeEvent {
         output_dir: String,
         file_count: usize,
         duration_ms: u64,
+        file_metadata: Vec<FileResultMeta>,
     },
     /// Pipeline or setup failed with an error message.
     Error(String),
+}
+
+/// Per-file metadata extracted from engine results before writing to disk.
+#[derive(Debug, Clone)]
+pub struct FileResultMeta {
+    pub name: String,
+    pub original_size: Option<u64>,
+}
+
+/// Extract per-file metadata (original size) from the engine's PipelineResult.
+fn extract_file_metadata(result: &bnto_core::pipeline::PipelineResult) -> Vec<FileResultMeta> {
+    result
+        .files
+        .iter()
+        .map(|f| {
+            let original_size = f.metadata.get("originalSize").and_then(|v| v.as_u64());
+            FileResultMeta {
+                name: f.name.clone(),
+                original_size,
+            }
+        })
+        .collect()
 }
 
 /// Spawn a background thread that runs the pipeline for the given recipe.
@@ -42,11 +65,18 @@ pub fn spawn_pipeline(
     slug: String,
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
+    output_dir_override: Option<String>,
 ) -> mpsc::Receiver<BridgeEvent> {
     let (tx, rx) = mpsc::channel();
 
     thread::spawn(move || {
-        run_bridge(tx, &slug, &selected_files, &param_overrides);
+        run_bridge(
+            tx,
+            &slug,
+            &selected_files,
+            &param_overrides,
+            output_dir_override.as_deref(),
+        );
     });
 
     rx
@@ -58,6 +88,7 @@ fn run_bridge(
     slug: &str,
     selected_files: &[PathBuf],
     param_overrides: &HashMap<String, String>,
+    output_dir_override: Option<&str>,
 ) {
     // Resolve the recipe from the embedded catalog.
     let recipe = match builtin_recipe_by_slug(slug) {
@@ -113,11 +144,23 @@ fn run_bridge(
         }
     };
 
-    // Create a temp output directory and write results.
-    let output_dir = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
-    // Clean any previous run's output for this slug.
-    let _ = std::fs::remove_dir_all(&output_dir);
+    // Use configured output directory or fall back to temp.
+    let output_dir = match output_dir_override {
+        Some(dir) if !dir.is_empty() => {
+            let p = PathBuf::from(dir).join(format!("bnto-{slug}"));
+            let _ = std::fs::create_dir_all(&p);
+            p
+        }
+        _ => {
+            let p = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
+            let _ = std::fs::remove_dir_all(&p);
+            p
+        }
+    };
     let output_dir_str = output_dir.to_string_lossy().into_owned();
+
+    // Extract per-file metadata before writing (writing consumes data).
+    let file_metadata: Vec<FileResultMeta> = extract_file_metadata(&result);
 
     if let Err(e) = io::write_results(&result, &output_dir_str) {
         let _ = tx.send(BridgeEvent::Error(e));
@@ -128,6 +171,7 @@ fn run_bridge(
         output_dir: output_dir_str,
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
+        file_metadata,
     });
 }
 
@@ -181,20 +225,125 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
     }
 }
 
-/// Read output files from the bridge's output directory to build OutputFile list.
-pub fn build_output_files(output_dir: &str, expected_count: usize) -> Vec<OutputFile> {
+/// Read output files from the bridge's output directory, merging engine metadata.
+pub fn build_output_files(output_dir: &str, file_metadata: &[FileResultMeta]) -> Vec<OutputFile> {
     let dir = std::path::Path::new(output_dir);
-    let mut outputs = Vec::with_capacity(expected_count);
+    let mut outputs = Vec::new();
     if let Ok(entries) = std::fs::read_dir(dir) {
         for entry in entries.flatten() {
             let name = entry.file_name().to_string_lossy().into_owned();
             let size_bytes = entry.metadata().map(|m| m.len()).unwrap_or(0);
+            // Match by filename to get original_size from engine metadata.
+            let original_size = file_metadata
+                .iter()
+                .find(|m| m.name == name)
+                .and_then(|m| m.original_size);
             outputs.push(OutputFile {
                 name,
                 size_bytes,
-                original_size: None,
+                original_size,
             });
         }
     }
     outputs
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn extract_metadata_reads_original_size() {
+        let mut metadata = serde_json::Map::new();
+        metadata.insert(
+            "originalSize".to_string(),
+            serde_json::Value::Number(780_000.into()),
+        );
+        let result = bnto_core::pipeline::PipelineResult {
+            files: vec![bnto_core::pipeline::PipelineFileResult {
+                name: "photo.jpg".into(),
+                data: vec![],
+                mime_type: "image/jpeg".into(),
+                metadata,
+            }],
+            duration_ms: 100,
+        };
+        let meta = extract_file_metadata(&result);
+        assert_eq!(meta.len(), 1);
+        assert_eq!(meta[0].name, "photo.jpg");
+        assert_eq!(meta[0].original_size, Some(780_000));
+    }
+
+    #[test]
+    fn extract_metadata_handles_missing() {
+        let result = bnto_core::pipeline::PipelineResult {
+            files: vec![bnto_core::pipeline::PipelineFileResult {
+                name: "file.txt".into(),
+                data: vec![],
+                mime_type: "text/plain".into(),
+                metadata: serde_json::Map::new(),
+            }],
+            duration_ms: 50,
+        };
+        let meta = extract_file_metadata(&result);
+        assert_eq!(meta[0].original_size, None);
+    }
+
+    #[test]
+    fn extract_metadata_handles_non_numeric() {
+        let mut metadata = serde_json::Map::new();
+        metadata.insert(
+            "originalSize".to_string(),
+            serde_json::Value::String("not a number".into()),
+        );
+        let result = bnto_core::pipeline::PipelineResult {
+            files: vec![bnto_core::pipeline::PipelineFileResult {
+                name: "file.txt".into(),
+                data: vec![],
+                mime_type: "text/plain".into(),
+                metadata,
+            }],
+            duration_ms: 50,
+        };
+        let meta = extract_file_metadata(&result);
+        assert_eq!(meta[0].original_size, None);
+    }
+
+    #[test]
+    fn build_output_files_merges_metadata() {
+        let dir = std::env::temp_dir().join("bnto-test-bridge-merge");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("photo.jpg"), vec![0u8; 290]).unwrap();
+
+        let meta = vec![FileResultMeta {
+            name: "photo.jpg".into(),
+            original_size: Some(780),
+        }];
+        let outputs = build_output_files(&dir.to_string_lossy(), &meta);
+        assert_eq!(outputs.len(), 1);
+        assert_eq!(outputs[0].original_size, Some(780));
+        assert_eq!(outputs[0].size_bytes, 290);
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn build_output_files_handles_unmatched() {
+        let dir = std::env::temp_dir().join("bnto-test-bridge-unmatched");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("other.txt"), vec![0u8; 100]).unwrap();
+
+        let meta = vec![FileResultMeta {
+            name: "different.txt".into(),
+            original_size: Some(500),
+        }];
+        let outputs = build_output_files(&dir.to_string_lossy(), &meta);
+        assert_eq!(outputs.len(), 1);
+        assert_eq!(outputs[0].original_size, None);
+
+        let _ = fs::remove_dir_all(&dir);
+    }
 }
