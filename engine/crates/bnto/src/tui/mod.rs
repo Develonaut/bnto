@@ -4,6 +4,7 @@
 // restores the terminal on exit (including panics).
 
 pub mod app;
+mod bridge;
 pub mod event;
 pub mod format;
 mod keys;
@@ -20,6 +21,7 @@ pub mod theme;
 pub mod widgets;
 
 use std::io;
+use std::sync::mpsc;
 use std::time::Duration;
 
 use crossterm::event::Event;
@@ -30,7 +32,9 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Constraint, Layout};
 
 use app::{AppMessage, AppModel, update};
+use bridge::BridgeEvent;
 use keys::handle_key;
+use screens::execution::{ExecutionMessage, ExecutionStatus};
 use screens::picker::PickerMessage;
 use theme::ThemeVariant;
 
@@ -79,6 +83,7 @@ fn run_loop(
     variant: ThemeVariant,
 ) -> io::Result<()> {
     let mut model = AppModel::new(variant);
+    let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
 
     loop {
         terminal.draw(|frame| {
@@ -109,6 +114,78 @@ fn run_loop(
                         height: picker_height,
                     }),
                 );
+            }
+        }
+
+        // Spawn the pipeline bridge when execution screen enters Idle state.
+        if bridge_rx.is_none()
+            && let Some(exec) = &model.execution
+            && exec.status == ExecutionStatus::Idle
+            && let app::Screen::Execution { slug } = &model.screen
+        {
+            bridge_rx = Some(bridge::spawn_pipeline(
+                slug.clone(),
+                exec.selected_files.clone(),
+                exec.param_overrides.clone(),
+            ));
+        }
+
+        // Poll bridge events (non-blocking) and map to AppMessages.
+        if let Some(rx) = &bridge_rx {
+            while let Ok(event) = rx.try_recv() {
+                model = match event {
+                    BridgeEvent::Progress(pe) => {
+                        let msg = bridge::map_pipeline_event(pe);
+                        update(model, msg)
+                    }
+                    BridgeEvent::Done {
+                        output_dir,
+                        file_count,
+                        duration_ms,
+                    } => {
+                        let outputs = bridge::build_output_files(&output_dir, file_count);
+                        let model = update(
+                            model,
+                            AppMessage::Execution(ExecutionMessage::OutputsReady {
+                                files: outputs,
+                                output_dir: Some(output_dir),
+                            }),
+                        );
+                        update(
+                            model,
+                            AppMessage::Execution(ExecutionMessage::PipelineCompleted {
+                                duration_ms,
+                                total_files_processed: file_count,
+                            }),
+                        )
+                    }
+                    BridgeEvent::Error(err) => update(
+                        model,
+                        AppMessage::Execution(ExecutionMessage::PipelineFailed {
+                            node_id: String::new(),
+                            error: err,
+                        }),
+                    ),
+                };
+            }
+        }
+
+        // Clear the bridge receiver when execution finishes or is cancelled.
+        if bridge_rx.is_some() {
+            let should_clear = model
+                .execution
+                .as_ref()
+                .map(|e| {
+                    matches!(
+                        e.status,
+                        ExecutionStatus::Completed
+                            | ExecutionStatus::Failed
+                            | ExecutionStatus::Cancelled
+                    )
+                })
+                .unwrap_or(true);
+            if should_clear || !matches!(model.screen, app::Screen::Execution { .. }) {
+                bridge_rx = None;
             }
         }
 
@@ -804,6 +881,85 @@ mod tests {
     fn execution_unmapped_key_returns_none() {
         let model = execution_model();
         let key = KeyEvent::new(KeyCode::Char('x'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
+    }
+
+    #[test]
+    fn execution_enter_continues_when_completed() {
+        use screens::execution::ExecutionModel;
+
+        let mut exec = ExecutionModel::new("compress-images");
+        exec = screens::execution::update(
+            exec,
+            ExecutionMessage::PipelineCompleted {
+                duration_ms: 100,
+                total_files_processed: 1,
+            },
+        );
+        let model = AppModel {
+            screen: Screen::Execution {
+                slug: "compress-images".into(),
+            },
+            execution: Some(exec),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ExecutionComplete {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
+    fn execution_enter_continues_when_failed() {
+        use screens::execution::ExecutionModel;
+
+        let mut exec = ExecutionModel::new("compress-images");
+        exec = screens::execution::update(
+            exec,
+            ExecutionMessage::PipelineFailed {
+                node_id: "n".into(),
+                error: "err".into(),
+            },
+        );
+        let model = AppModel {
+            screen: Screen::Execution {
+                slug: "compress-images".into(),
+            },
+            execution: Some(exec),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::ExecutionComplete {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
+    fn execution_enter_ignored_while_running() {
+        use screens::execution::ExecutionModel;
+
+        let mut exec = ExecutionModel::new("compress-images");
+        exec = screens::execution::update(
+            exec,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+            },
+        );
+        let model = AppModel {
+            screen: Screen::Execution {
+                slug: "compress-images".into(),
+            },
+            execution: Some(exec),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), None);
     }
 

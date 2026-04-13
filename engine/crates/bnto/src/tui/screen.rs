@@ -43,7 +43,7 @@ impl Screen {
                 ("Enter", "confirm"),
                 ("Esc", "back"),
             ],
-            Self::Execution { .. } => vec![("Esc", "cancel")],
+            Self::Execution { .. } => vec![("Esc", "cancel"), ("Enter", "continue")],
             Self::Results { .. } => vec![
                 ("o", "open file"),
                 ("O", "open folder"),
