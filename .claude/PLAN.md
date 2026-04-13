@@ -634,11 +634,11 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 **Ecosystem libraries:** Evaluate tachyonfx for screen transition effects and ratatui-toaster for toast notifications — both are polish items, skip if not needed for MVP.
 
-- [ ] `engine/crates/bnto` — **Detail "confirm and proceed" action**: Add a keybind (e.g. `Tab` or `c`) on the Detail screen to accept current param values and transition to the Picker screen. Currently `Enter` starts editing a param — need a distinct "done editing, proceed" action. This is the missing link between Detail and Picker
-- [ ] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
-- [ ] `engine/crates/bnto` — **Screen transition integration tests**: Test the full Detail → Picker → Execution flow: param overrides carry through to definition, selected files pass to execution, progress events update execution model. Cover the confirm-with-params path that Wave 2 couldn't demo
-- [ ] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
-- [ ] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
+- [x] `engine/crates/bnto` — **Detail "confirm and proceed" action**: Add a keybind (e.g. `Tab` or `c`) on the Detail screen to accept current param values and transition to the Picker screen. Currently `Enter` starts editing a param — need a distinct "done editing, proceed" action. This is the missing link between Detail and Picker
+- [x] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
+- [x] `engine/crates/bnto` — **Screen transition integration tests**: Test the full Detail → Picker → Execution flow: param overrides carry through to definition, selected files pass to execution, progress events update execution model. Cover the confirm-with-params path that Wave 2 couldn't demo
+- [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
+- [ ] **CLAIMED** `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
 **After TUI:** File node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
 

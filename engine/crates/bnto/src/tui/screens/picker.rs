@@ -68,7 +68,6 @@ pub enum PickerMessage {
 }
 
 /// Result of confirming the picker — selected file paths.
-#[allow(dead_code)]
 pub struct PickerResult {
     pub files: Vec<PathBuf>,
 }
@@ -119,7 +118,6 @@ impl PickerModel {
     }
 
     /// Collect selected file paths for execution.
-    #[allow(dead_code)]
     pub fn confirm(&self) -> Option<PickerResult> {
         if self.selected.is_empty() {
             return None;

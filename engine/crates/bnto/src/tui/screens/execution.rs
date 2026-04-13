@@ -1,7 +1,11 @@
 // Execution screen — shows live pipeline progress with per-file and per-node status.
 //
 // TEA pattern: ExecutionModel (state) + ExecutionMessage (events) + update() (pure transitions).
-// Actual async execution wiring (background thread, channels) is handled in Wave 4.
+
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+use super::results::OutputFile;
 
 /// Pipeline execution status.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,6 +62,14 @@ pub struct ExecutionModel {
     pub nodes: Vec<NodeProgress>,
     pub elapsed_ms: u64,
     pub error: Option<String>,
+    /// Input files selected by the user in the picker.
+    pub selected_files: Vec<PathBuf>,
+    /// Param overrides from the detail screen configuration.
+    pub param_overrides: HashMap<String, String>,
+    /// Output files populated after pipeline completion.
+    pub output_files: Vec<OutputFile>,
+    /// Directory where output files were written.
+    pub output_dir: Option<String>,
 }
 
 /// Messages the execution screen can handle.
@@ -90,6 +102,11 @@ pub enum ExecutionMessage {
     },
     /// Pipeline failed.
     PipelineFailed { node_id: String, error: String },
+    /// Output files ready after pipeline writes results to disk.
+    OutputsReady {
+        files: Vec<OutputFile>,
+        output_dir: Option<String>,
+    },
     /// User pressed Esc to cancel.
     Cancel,
     /// Timer tick with current elapsed time.
@@ -106,6 +123,23 @@ impl ExecutionModel {
             nodes: Vec::new(),
             elapsed_ms: 0,
             error: None,
+            selected_files: Vec::new(),
+            param_overrides: HashMap::new(),
+            output_files: Vec::new(),
+            output_dir: None,
+        }
+    }
+
+    /// Create an execution model pre-loaded with input files and param overrides.
+    pub fn with_inputs(
+        slug: &str,
+        selected_files: Vec<PathBuf>,
+        param_overrides: HashMap<String, String>,
+    ) -> Self {
+        Self {
+            selected_files,
+            param_overrides,
+            ..Self::new(slug)
         }
     }
 }
@@ -180,6 +214,10 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
         ExecutionMessage::PipelineFailed { error, .. } => {
             model.status = ExecutionStatus::Failed;
             model.error = Some(error);
+        }
+        ExecutionMessage::OutputsReady { files, output_dir } => {
+            model.output_files = files;
+            model.output_dir = output_dir;
         }
         ExecutionMessage::Cancel => {
             model.status = ExecutionStatus::Cancelled;
@@ -375,6 +413,39 @@ mod tests {
         );
         let m = update(m, ExecutionMessage::Cancel);
         assert_eq!(m.status, ExecutionStatus::Cancelled);
+    }
+
+    #[test]
+    fn with_inputs_stores_files_and_overrides() {
+        let files = vec![PathBuf::from("/a.jpg"), PathBuf::from("/b.png")];
+        let mut overrides = HashMap::new();
+        overrides.insert("compress.quality".into(), "60".into());
+        let m = ExecutionModel::with_inputs("s", files.clone(), overrides.clone());
+        assert_eq!(m.slug, "s");
+        assert_eq!(m.status, ExecutionStatus::Idle);
+        assert_eq!(m.selected_files, files);
+        assert_eq!(m.param_overrides, overrides);
+        assert!(m.output_files.is_empty());
+        assert!(m.output_dir.is_none());
+    }
+
+    #[test]
+    fn outputs_ready_stores_files_and_dir() {
+        let m = ExecutionModel::new("s");
+        let outputs = vec![OutputFile {
+            name: "photo.jpg".into(),
+            size_bytes: 290_000,
+            original_size: Some(780_000),
+        }];
+        let m = update(
+            m,
+            ExecutionMessage::OutputsReady {
+                files: outputs.clone(),
+                output_dir: Some("/tmp/out".into()),
+            },
+        );
+        assert_eq!(m.output_files, outputs);
+        assert_eq!(m.output_dir, Some("/tmp/out".into()));
     }
 
     #[test]

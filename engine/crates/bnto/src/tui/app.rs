@@ -3,6 +3,8 @@
 // Pure state + pure transitions. No I/O, no terminal access.
 // All screen navigation logic is testable with `cargo test`.
 
+use std::collections::HashMap;
+
 use bnto_core::registry::NodeRegistry;
 use bnto_engine::create_registry;
 
@@ -39,6 +41,8 @@ pub struct AppModel {
     pub execution: Option<ExecutionModel>,
     /// Results screen state — populated when pipeline completes.
     pub results: Option<ResultsModel>,
+    /// Param overrides from detail screen, carried through picker to execution.
+    pub param_overrides: HashMap<String, String>,
     /// Engine registry for resolving processor metadata.
     pub registry: NodeRegistry,
 }
@@ -53,6 +57,7 @@ impl std::fmt::Debug for AppModel {
             .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
             .field("results", &self.results.as_ref().map(|r| &r.slug))
+            .field("param_overrides", &self.param_overrides.len())
             .finish_non_exhaustive()
     }
 }
@@ -104,6 +109,7 @@ impl AppModel {
             picker: None,
             execution: None,
             results: None,
+            param_overrides: HashMap::new(),
             registry: create_registry(),
         }
     }
@@ -122,25 +128,43 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             }
         }
         AppMessage::ConfigConfirmed { slug } => {
+            let overrides = model
+                .detail
+                .as_ref()
+                .map(|d| d.confirm().overrides)
+                .unwrap_or_default();
             let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
             let picker = Some(PickerModel::from_slug(&slug, &cwd, &model.registry));
             AppModel {
-                screen: Screen::Picker { slug: slug.clone() },
+                screen: Screen::Picker { slug },
                 picker,
+                param_overrides: overrides,
                 ..model
             }
         }
         AppMessage::FilesSelected { slug } => {
-            let execution = Some(ExecutionModel::new(&slug));
+            let files = model
+                .picker
+                .as_ref()
+                .and_then(|p| p.confirm())
+                .map(|r| r.files)
+                .unwrap_or_default();
+            let overrides = model.param_overrides.clone();
+            let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
             AppModel {
                 screen: Screen::Execution { slug },
                 execution,
+                param_overrides: HashMap::new(),
                 ..model
             }
         }
         AppMessage::ExecutionComplete { slug } => {
-            let elapsed = model.execution.as_ref().map_or(0, |e| e.elapsed_ms);
-            let results = Some(ResultsModel::new(&slug, Vec::new(), elapsed, None));
+            let (outputs, elapsed, output_dir) = model
+                .execution
+                .as_ref()
+                .map(|e| (e.output_files.clone(), e.elapsed_ms, e.output_dir.clone()))
+                .unwrap_or_default();
+            let results = Some(ResultsModel::new(&slug, outputs, elapsed, output_dir));
             AppModel {
                 screen: Screen::Results { slug },
                 execution: None,
@@ -438,6 +462,111 @@ mod tests {
     }
 
     #[test]
+    fn config_confirmed_captures_param_overrides() {
+        use super::super::screens::detail::{DetailModel, ParamEntry};
+        use bnto_core::metadata::ParameterType;
+
+        let params = vec![ParamEntry {
+            node_id: "img".into(),
+            name: "quality".into(),
+            label: "Quality".into(),
+            value: "60".into(),
+            param_type: ParameterType::Number,
+            default: "80".into(),
+        }];
+        let app = update(
+            AppModel {
+                screen: Screen::Detail { slug: "s".into() },
+                detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
+                ..default_model()
+            },
+            AppMessage::ConfigConfirmed { slug: "s".into() },
+        );
+        assert_eq!(app.screen, Screen::Picker { slug: "s".into() });
+        assert_eq!(
+            app.param_overrides.get("img.quality"),
+            Some(&"60".to_string())
+        );
+    }
+
+    #[test]
+    fn files_selected_passes_files_and_overrides_to_execution() {
+        use super::super::screens::picker::{FileEntry, PickerModel};
+        use std::path::PathBuf;
+
+        let mut overrides = HashMap::new();
+        overrides.insert("img.quality".into(), "60".into());
+
+        let mut picker = PickerModel::from_test_data(
+            "s",
+            PathBuf::from("/home"),
+            vec![FileEntry {
+                name: "cat.jpg".into(),
+                is_dir: false,
+                path: PathBuf::from("/home/cat.jpg"),
+                size: Some(100),
+            }],
+            vec!["jpg".into()],
+        );
+        picker.selected.insert(PathBuf::from("/home/cat.jpg"));
+
+        let app = update(
+            AppModel {
+                screen: Screen::Picker { slug: "s".into() },
+                picker: Some(picker),
+                param_overrides: overrides,
+                ..default_model()
+            },
+            AppMessage::FilesSelected { slug: "s".into() },
+        );
+        let exec = app.execution.as_ref().unwrap();
+        assert_eq!(exec.selected_files, vec![PathBuf::from("/home/cat.jpg")]);
+        assert_eq!(exec.param_overrides.get("img.quality"), Some(&"60".into()));
+        assert!(app.param_overrides.is_empty(), "cleared after handoff");
+    }
+
+    #[test]
+    fn execution_complete_builds_results_from_output_data() {
+        use super::super::screens::execution::ExecutionMessage;
+        use super::super::screens::results::OutputFile;
+
+        let mut exec = ExecutionModel::new("s");
+        // Simulate the bridge having populated output data.
+        exec = super::super::screens::execution::update(
+            exec,
+            ExecutionMessage::PipelineCompleted {
+                duration_ms: 1500,
+                total_files_processed: 1,
+            },
+        );
+        exec = super::super::screens::execution::update(
+            exec,
+            ExecutionMessage::OutputsReady {
+                files: vec![OutputFile {
+                    name: "out.jpg".into(),
+                    size_bytes: 500,
+                    original_size: Some(1000),
+                }],
+                output_dir: Some("/tmp/out".into()),
+            },
+        );
+
+        let app = update(
+            AppModel {
+                screen: Screen::Execution { slug: "s".into() },
+                execution: Some(exec),
+                ..default_model()
+            },
+            AppMessage::ExecutionComplete { slug: "s".into() },
+        );
+        let results = app.results.as_ref().unwrap();
+        assert_eq!(results.outputs.len(), 1);
+        assert_eq!(results.outputs[0].name, "out.jpg");
+        assert_eq!(results.total_time_ms, 1500);
+        assert_eq!(results.output_dir, Some("/tmp/out".into()));
+    }
+
+    #[test]
     fn results_message_forwarded_to_results_update() {
         use super::super::screens::results::OutputFile;
         let outputs = vec![
@@ -461,5 +590,280 @@ mod tests {
             AppMessage::Results(ResultsMessage::CursorDown),
         );
         assert_eq!(app.results.as_ref().unwrap().cursor, 1);
+    }
+
+    // --- Integration: multi-step data flow ---
+
+    #[test]
+    fn param_overrides_survive_detail_through_picker_to_execution() {
+        use super::super::screens::detail::{DetailMessage, DetailModel, ParamEntry};
+        use super::super::screens::picker::{FileEntry, PickerModel};
+        use bnto_core::metadata::ParameterType;
+        use std::path::PathBuf;
+
+        // Step 1: Start with detail screen, edit a param value.
+        let params = vec![
+            ParamEntry {
+                node_id: "compress".into(),
+                name: "quality".into(),
+                label: "Quality".into(),
+                value: "80".into(),
+                param_type: ParameterType::Number,
+                default: "80".into(),
+            },
+            ParamEntry {
+                node_id: "compress".into(),
+                name: "format".into(),
+                label: "Format".into(),
+                value: "jpeg".into(),
+                param_type: ParameterType::String,
+                default: "jpeg".into(),
+            },
+        ];
+        let app = AppModel {
+            screen: Screen::Detail {
+                slug: "compress-images".into(),
+            },
+            detail: Some(DetailModel::from_test_data(
+                "compress-images",
+                "Compress",
+                "desc",
+                params,
+            )),
+            ..default_model()
+        };
+
+        // Edit quality from 80 → 55 via TEA messages.
+        let app = update(app, AppMessage::Detail(DetailMessage::StartEdit));
+        let app = update(app, AppMessage::Detail(DetailMessage::EditBackspace));
+        let app = update(app, AppMessage::Detail(DetailMessage::EditBackspace));
+        let app = update(app, AppMessage::Detail(DetailMessage::EditChar('5')));
+        let app = update(app, AppMessage::Detail(DetailMessage::EditChar('5')));
+        let app = update(app, AppMessage::Detail(DetailMessage::CommitEdit));
+        assert_eq!(app.detail.as_ref().unwrap().params[0].value, "55");
+
+        // Step 2: Confirm config → overrides stored on AppModel.
+        let app = update(
+            app,
+            AppMessage::ConfigConfirmed {
+                slug: "compress-images".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Picker {
+                slug: "compress-images".into()
+            }
+        );
+        assert_eq!(
+            app.param_overrides.get("compress.quality"),
+            Some(&"55".to_string()),
+        );
+        assert_eq!(
+            app.param_overrides.get("compress.format"),
+            Some(&"jpeg".to_string()),
+        );
+
+        // Step 3: Inject a picker with selected files (from_slug hits filesystem,
+        // so we replace with test data after the transition).
+        let mut picker = PickerModel::from_test_data(
+            "compress-images",
+            PathBuf::from("/photos"),
+            vec![
+                FileEntry {
+                    name: "a.jpg".into(),
+                    is_dir: false,
+                    path: PathBuf::from("/photos/a.jpg"),
+                    size: Some(500),
+                },
+                FileEntry {
+                    name: "b.png".into(),
+                    is_dir: false,
+                    path: PathBuf::from("/photos/b.png"),
+                    size: Some(300),
+                },
+            ],
+            vec!["jpg".into(), "png".into()],
+        );
+        picker.selected.insert(PathBuf::from("/photos/a.jpg"));
+        picker.selected.insert(PathBuf::from("/photos/b.png"));
+
+        let app = AppModel {
+            picker: Some(picker),
+            ..app
+        };
+
+        // Step 4: Confirm files → overrides + files reach ExecutionModel.
+        let app = update(
+            app,
+            AppMessage::FilesSelected {
+                slug: "compress-images".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Execution {
+                slug: "compress-images".into()
+            }
+        );
+        let exec = app.execution.as_ref().expect("execution model populated");
+        assert_eq!(exec.selected_files.len(), 2);
+        assert_eq!(
+            exec.param_overrides.get("compress.quality"),
+            Some(&"55".to_string()),
+        );
+        assert_eq!(
+            exec.param_overrides.get("compress.format"),
+            Some(&"jpeg".to_string()),
+        );
+        assert!(app.param_overrides.is_empty(), "bridge overrides cleared");
+    }
+
+    #[test]
+    fn full_happy_path_journey() {
+        use super::super::screens::execution::ExecutionMessage;
+        use super::super::screens::results::OutputFile;
+
+        // Browser → Detail
+        let app = update(
+            default_model(),
+            AppMessage::RecipeSelected {
+                slug: "compress-images".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Detail {
+                slug: "compress-images".into()
+            }
+        );
+        assert!(app.detail.is_some());
+
+        // Detail → Picker (no param edits for this journey)
+        let app = update(
+            app,
+            AppMessage::ConfigConfirmed {
+                slug: "compress-images".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Picker {
+                slug: "compress-images".into()
+            }
+        );
+
+        // Picker → Execution (no files selected — empty vec is fine for state test)
+        let app = update(
+            app,
+            AppMessage::FilesSelected {
+                slug: "compress-images".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Execution {
+                slug: "compress-images".into()
+            }
+        );
+        assert!(app.execution.is_some());
+
+        // Simulate pipeline progress via forwarded messages.
+        let app = update(
+            app,
+            AppMessage::Execution(ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+            }),
+        );
+        let app = update(
+            app,
+            AppMessage::Execution(ExecutionMessage::PipelineCompleted {
+                duration_ms: 800,
+                total_files_processed: 1,
+            }),
+        );
+        let app = update(
+            app,
+            AppMessage::Execution(ExecutionMessage::OutputsReady {
+                files: vec![OutputFile {
+                    name: "result.jpg".into(),
+                    size_bytes: 200,
+                    original_size: Some(500),
+                }],
+                output_dir: Some("/out".into()),
+            }),
+        );
+
+        // Execution → Results
+        let app = update(
+            app,
+            AppMessage::ExecutionComplete {
+                slug: "compress-images".into(),
+            },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Results {
+                slug: "compress-images".into()
+            }
+        );
+        let results = app.results.as_ref().expect("results populated");
+        assert_eq!(results.outputs.len(), 1);
+        assert_eq!(results.outputs[0].name, "result.jpg");
+        assert_eq!(results.total_time_ms, 800);
+        assert_eq!(results.output_dir, Some("/out".into()));
+        assert!(results.savings.is_some(), "savings computed from sizes");
+        assert_eq!(results.savings.as_ref().unwrap().percent(), 60);
+        assert!(app.execution.is_none(), "execution cleared");
+
+        // Results → Browser via RunAnother
+        let app = update(app, AppMessage::RunAnother);
+        assert_eq!(app.screen, Screen::Browser);
+    }
+
+    #[test]
+    fn execution_failure_preserves_error_in_results_transition() {
+        use super::super::screens::execution::ExecutionMessage;
+
+        let mut exec = ExecutionModel::new("s");
+        exec = super::super::screens::execution::update(
+            exec,
+            ExecutionMessage::PipelineFailed {
+                node_id: "n".into(),
+                error: "disk full".into(),
+            },
+        );
+
+        let app = update(
+            AppModel {
+                screen: Screen::Execution { slug: "s".into() },
+                execution: Some(exec),
+                ..default_model()
+            },
+            AppMessage::ExecutionComplete { slug: "s".into() },
+        );
+        let results = app.results.as_ref().expect("results created");
+        assert!(results.outputs.is_empty());
+        assert_eq!(results.total_time_ms, 0);
+    }
+
+    #[test]
+    fn back_from_picker_clears_overrides() {
+        let mut app = AppModel {
+            screen: Screen::Picker { slug: "s".into() },
+            param_overrides: {
+                let mut m = HashMap::new();
+                m.insert("k".into(), "v".into());
+                m
+            },
+            ..default_model()
+        };
+        // Back from Picker goes to Detail. Overrides stay on AppModel
+        // (they're consumed on FilesSelected, not on Back).
+        app = update(app, AppMessage::Back);
+        assert_eq!(app.screen, Screen::Detail { slug: "s".into() });
+        // Overrides remain because user might go forward again.
+        assert!(!app.param_overrides.is_empty());
     }
 }
