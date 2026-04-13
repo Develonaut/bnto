@@ -147,6 +147,10 @@ fn run_loop(
                         file_metadata,
                     } => {
                         let outputs = bridge::build_output_files(&output_dir, &file_metadata);
+                        let slug = match &model.screen {
+                            app::Screen::Execution { slug } => slug.clone(),
+                            _ => String::new(),
+                        };
                         let model = update(
                             model,
                             AppMessage::Execution(ExecutionMessage::OutputsReady {
@@ -154,13 +158,15 @@ fn run_loop(
                                 output_dir: Some(output_dir),
                             }),
                         );
-                        update(
+                        let model = update(
                             model,
                             AppMessage::Execution(ExecutionMessage::PipelineCompleted {
                                 duration_ms,
                                 total_files_processed: file_count,
                             }),
-                        )
+                        );
+                        // Auto-transition to results screen.
+                        update(model, AppMessage::ExecutionComplete { slug })
                     }
                     BridgeEvent::Error(err) => update(
                         model,
