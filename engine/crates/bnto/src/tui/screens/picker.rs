@@ -95,6 +95,23 @@ impl PickerModel {
         }
     }
 
+    /// Build a picker for directory selection — no extension filter, shows all entries.
+    pub fn from_dir(label: &str, dir: &std::path::Path) -> Self {
+        let entries = super::picker_loader::load_entries(dir, &[], false);
+        Self {
+            slug: label.to_string(),
+            current_dir: dir.to_path_buf(),
+            entries,
+            cursor: 0,
+            selected: BTreeSet::new(),
+            extensions: Vec::new(),
+            show_hidden: false,
+            viewport_offset: 0,
+            viewport_height: 20,
+            nav_history: NavHistory::new(),
+        }
+    }
+
     /// Build a picker from a recipe slug — resolves extensions from engine metadata.
     pub fn from_slug(
         slug: &str,

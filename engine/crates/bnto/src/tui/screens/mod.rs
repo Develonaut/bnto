@@ -14,4 +14,5 @@ pub mod picker;
 mod picker_loader;
 mod picker_update;
 pub mod results;
+pub mod settings;
 pub mod viewport;

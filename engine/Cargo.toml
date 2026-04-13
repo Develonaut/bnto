@@ -38,6 +38,7 @@ colored = "3"
 crossterm = "0.29"
 indicatif = "0.17"
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
+dirs = "6"
 
 # --- Build Profiles ---
 

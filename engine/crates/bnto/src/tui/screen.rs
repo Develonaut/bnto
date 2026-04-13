@@ -50,7 +50,12 @@ impl Screen {
                 ("r", "run another"),
                 ("q", "quit"),
             ],
-            Self::Settings => vec![("↑↓", "navigate"), ("Enter", "confirm"), ("Esc", "back")],
+            Self::Settings => vec![
+                ("↑↓", "navigate"),
+                ("◂▸", "theme"),
+                ("Enter", "browse"),
+                ("Esc", "back"),
+            ],
         }
     }
 }

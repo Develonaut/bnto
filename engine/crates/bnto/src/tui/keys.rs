@@ -9,6 +9,7 @@ use super::screens::detail::DetailMessage;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::picker::PickerMessage;
 use super::screens::results::ResultsMessage;
+use super::screens::settings::SettingsMessage;
 use super::theme::ALL_VARIANTS;
 
 /// Map a key event to an AppMessage based on the current screen.
@@ -153,10 +154,20 @@ fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('K') | KeyCode::PageUp => Some(AppMessage::Picker(PickerMessage::PageUp)),
         KeyCode::Char('.') => Some(AppMessage::Picker(PickerMessage::ToggleHidden)),
         KeyCode::Char('a') => Some(AppMessage::Picker(PickerMessage::SelectAll)),
+        KeyCode::Tab => {
+            if model.settings_picker_field.is_some() {
+                Some(AppMessage::SettingsPathConfirmed)
+            } else if !picker.selected.is_empty() {
+                let slug = picker.slug.clone();
+                Some(AppMessage::FilesSelected { slug })
+            } else {
+                None
+            }
+        }
         KeyCode::Enter => {
             if on_dir {
                 Some(AppMessage::Picker(PickerMessage::EnterDir))
-            } else if !picker.selected.is_empty() {
+            } else if model.settings_picker_field.is_none() && !picker.selected.is_empty() {
                 let slug = picker.slug.clone();
                 Some(AppMessage::FilesSelected { slug })
             } else {
@@ -204,26 +215,58 @@ fn handle_results_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 }
 
 /// Handle key events on the Settings screen.
+///
+/// Theme field: left/right arrows cycle through themes.
+/// Path fields: Enter opens file picker for directory browsing.
 fn handle_settings_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    let current_idx = ALL_VARIANTS
-        .iter()
-        .position(|v| *v == model.theme_variant)
-        .unwrap_or(0);
+    let on_theme = model.settings.as_ref().is_some_and(|s| s.focused == 0);
+
+    // Theme field: left/right cycle through variants.
+    if on_theme {
+        let current_idx = ALL_VARIANTS
+            .iter()
+            .position(|v| *v == model.theme_variant)
+            .unwrap_or(0);
+        match key.code {
+            KeyCode::Left => {
+                let prev = if current_idx == 0 {
+                    ALL_VARIANTS.len() - 1
+                } else {
+                    current_idx - 1
+                };
+                return Some(AppMessage::ThemeChanged(ALL_VARIANTS[prev]));
+            }
+            KeyCode::Right => {
+                let next = (current_idx + 1) % ALL_VARIANTS.len();
+                return Some(AppMessage::ThemeChanged(ALL_VARIANTS[next]));
+            }
+            _ => {}
+        }
+    }
 
     match key.code {
-        KeyCode::Up => {
-            let prev = if current_idx == 0 {
-                ALL_VARIANTS.len() - 1
+        KeyCode::Char('j') | KeyCode::Down => {
+            Some(AppMessage::Settings(SettingsMessage::FocusNext))
+        }
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Settings(SettingsMessage::FocusPrev)),
+        KeyCode::Enter => {
+            if model
+                .settings
+                .as_ref()
+                .is_some_and(|s| s.is_focused_editable())
+            {
+                let field_key = model
+                    .settings
+                    .as_ref()
+                    .and_then(|s| s.fields.get(s.focused))
+                    .map(|f| f.key.to_string())
+                    .unwrap_or_default();
+                Some(AppMessage::OpenSettingsPicker { field_key })
             } else {
-                current_idx - 1
-            };
-            Some(AppMessage::ThemeChanged(ALL_VARIANTS[prev]))
+                None
+            }
         }
-        KeyCode::Down => {
-            let next = (current_idx + 1) % ALL_VARIANTS.len();
-            Some(AppMessage::ThemeChanged(ALL_VARIANTS[next]))
-        }
-        KeyCode::Enter => Some(AppMessage::Back),
+        KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
     }
 }
