@@ -255,6 +255,20 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             AppModel { picker, ..model }
         }
         AppMessage::Execution(msg) => {
+            // Cancel navigates back to detail instead of staying on a dead screen.
+            if matches!(msg, ExecutionMessage::Cancel) {
+                let slug = match &model.screen {
+                    Screen::Execution { slug } => slug.clone(),
+                    _ => String::new(),
+                };
+                let detail = DetailModel::from_slug(&slug, &model.registry);
+                return AppModel {
+                    screen: Screen::Detail { slug },
+                    detail,
+                    execution: None,
+                    ..model
+                };
+            }
             let execution = model.execution.map(|e| execution_update(e, msg));
             AppModel { execution, ..model }
         }
@@ -575,20 +589,19 @@ mod tests {
     }
 
     #[test]
-    fn execution_message_forwarded_to_execution_update() {
-        use super::super::screens::execution::ExecutionStatus;
+    fn cancel_execution_returns_to_detail() {
+        let slug = "compress-images";
         let app = update(
             AppModel {
-                screen: Screen::Execution { slug: "s".into() },
-                execution: Some(ExecutionModel::new("s")),
+                screen: Screen::Execution { slug: slug.into() },
+                execution: Some(ExecutionModel::new(slug)),
                 ..default_model()
             },
             AppMessage::Execution(ExecutionMessage::Cancel),
         );
-        assert_eq!(
-            app.execution.as_ref().unwrap().status,
-            ExecutionStatus::Cancelled
-        );
+        assert_eq!(app.screen, Screen::Detail { slug: slug.into() });
+        assert!(app.detail.is_some());
+        assert!(app.execution.is_none());
     }
 
     #[test]
