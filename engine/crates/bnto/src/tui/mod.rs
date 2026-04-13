@@ -128,6 +128,7 @@ fn run_loop(
                 slug.clone(),
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
+                model.config.output_dir.clone(),
             ));
         }
 
@@ -143,8 +144,9 @@ fn run_loop(
                         output_dir,
                         file_count,
                         duration_ms,
+                        file_metadata,
                     } => {
-                        let outputs = bridge::build_output_files(&output_dir, file_count);
+                        let outputs = bridge::build_output_files(&output_dir, &file_metadata);
                         let model = update(
                             model,
                             AppMessage::Execution(ExecutionMessage::OutputsReady {

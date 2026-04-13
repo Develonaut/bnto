@@ -82,10 +82,22 @@ fn results_lines<'a>(
             } else {
                 theme.text()
             };
-            let size = format_size(file.size_bytes);
+            // Show per-file savings when original_size is available.
+            let size_info = if let Some(orig) = file.original_size {
+                let orig_str = format_size(orig);
+                let new_str = format_size(file.size_bytes);
+                let pct = if orig > 0 {
+                    ((orig - file.size_bytes) * 100) / orig
+                } else {
+                    0
+                };
+                format!("  {orig_str} → {new_str}  ({pct}% smaller)")
+            } else {
+                format!("  {}", format_size(file.size_bytes))
+            };
             lines.push(Line::from(vec![
                 Span::styled(format!("  {marker}{}", file.name), name_style),
-                Span::styled(format!("  {size}"), theme.muted()),
+                Span::styled(size_info, theme.muted()),
             ]));
         }
     }
