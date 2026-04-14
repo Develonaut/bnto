@@ -90,6 +90,34 @@ bnto doctor
 
 The CLI runs recipes using the native Rust engine — direct native execution with full system access. Progress bars, colored output, and timing summaries keep you informed.
 
+### Interactive TUI
+
+```bash
+# Launch the interactive terminal UI
+bnto tui
+
+# With a dark theme
+bnto tui --theme tokyo
+
+# Golden-hour sunset theme
+bnto tui --theme monaco
+```
+
+The TUI is a full interactive terminal interface for browsing, configuring, and running recipes — no flags or arguments to memorize. Pick a recipe, tweak parameters, select files, watch progress, see results.
+
+**6 screens, one flow:**
+
+| Screen        | What it does                                                    |
+| ------------- | --------------------------------------------------------------- |
+| **Browser**   | Browse and search all recipes. `/` to search, `Enter` to select |
+| **Detail**    | View recipe description, edit parameters inline                 |
+| **Picker**    | Browse filesystem, multi-select input files by type             |
+| **Execution** | Live per-file progress with elapsed timer                       |
+| **Results**   | Output file list with sizes, savings, open-in-finder            |
+| **Settings**  | Switch themes, configure output directory                       |
+
+**3 themes** from the Motorway palette: `los-angeles` (warm cream, default), `tokyo` (cool dark), `monaco` (golden sunset). Switch at runtime via the Settings screen (`s` from Browser).
+
 ### Browser
 
 Pick a recipe at [bnto.io](https://bnto.io), drop your files, get results. Processing happens entirely in your browser using the same Rust engine compiled to WebAssembly. No server round-trips.
@@ -142,9 +170,9 @@ That idea is the architecture:
 
 ## Where This Is Going
 
-**Today:** 17 predefined recipes running via CLI and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, file operations — all from one tool. Free, unlimited, no account required.
+**Today:** 17 predefined recipes running via CLI, interactive TUI, and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, SVG optimization, file operations — all from one tool. Free, unlimited, no account required.
 
-**Next:** New node types (shell commands, HTTP requests), TUI for interactive recipe execution, more video operations. The node catalog grows; every addition is automatically available on every target.
+**Next:** New node types (shell commands, HTTP requests, Excel), more file operations, recipe expansion. The node catalog grows; every addition is automatically available on every target.
 
 **Later:** Desktop app (Tauri) for native local execution. Cloud execution for server-side nodes (AI inference, video processing). Community-contributed node types and recipes.
 
