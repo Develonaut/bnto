@@ -642,6 +642,8 @@ Evaluated from [awesome-ratatui](https://github.com/ratatui/awesome-ratatui). St
 
 ## Param Control Matrix
 
+**Status:** Planned for Sprint 11 (TUI Schema-Driven Config). Sprint 10 shipped with text-only param editing — all params use the same text input regardless of `ParameterType`. Sprint 11 implements the type-aware controls below.
+
 The detail screen renders editable controls for recipe parameters. The engine's `ParameterType` enum maps to TUI controls — mirroring how `@bnto/form` maps schemas to web form controls.
 
 ### ParameterType → TUI Control
@@ -671,7 +673,7 @@ The detail screen renders editable controls for recipe parameters. The engine's 
 
 ## What's NOT in MVP
 
-These are real features that belong in later iterations, not Sprint 10:
+These are real features that belong in later iterations, not Sprint 10 MVP. Items marked **(Sprint 11)** are planned for the schema-driven config sprint:
 
 - **Fuzzy search** (basic substring match is fine for 15 recipes)
 - **Mouse support** (keyboard-first, mouse later)
