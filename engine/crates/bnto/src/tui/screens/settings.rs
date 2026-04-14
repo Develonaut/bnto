@@ -197,4 +197,29 @@ mod tests {
         assert!(config.default_path.is_none());
         assert!(config.output_dir.is_none());
     }
+
+    #[test]
+    fn to_config_preserves_output_dir_when_only_default_path_changed() {
+        let mut m = default_settings();
+        // Simulate: user previously set output_dir, now only changes default_path.
+        m.fields[2].value = "/existing-output".to_string();
+        m.fields[1].value = "/new-default".to_string();
+        let config = m.to_config(ThemeVariant::LosAngeles);
+        assert_eq!(config.default_path, Some("/new-default".to_string()));
+        assert_eq!(config.output_dir, Some("/existing-output".to_string()));
+    }
+
+    #[test]
+    fn from_config_roundtrips_all_fields() {
+        let config = TuiConfig {
+            theme: "tokyo".to_string(),
+            default_path: Some("/photos".to_string()),
+            output_dir: Some("/output".to_string()),
+        };
+        let model = SettingsModel::from_config(&config);
+        let roundtripped = model.to_config(ThemeVariant::Tokyo);
+        assert_eq!(roundtripped.theme, "tokyo");
+        assert_eq!(roundtripped.default_path, config.default_path);
+        assert_eq!(roundtripped.output_dir, config.output_dir);
+    }
 }

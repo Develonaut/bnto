@@ -18,9 +18,9 @@ pub struct SizeSavings {
 }
 
 impl SizeSavings {
-    /// Savings as a percentage (0-100). Returns 0 if before is zero.
+    /// Savings as a percentage (0-100). Returns 0 if before is zero or output grew.
     pub fn percent(&self) -> u64 {
-        if self.before == 0 {
+        if self.before == 0 || self.after >= self.before {
             return 0;
         }
         ((self.before - self.after) * 100) / self.before
@@ -107,6 +107,14 @@ pub fn update(mut model: ResultsModel, msg: ResultsMessage) -> ResultsModel {
     model
 }
 
+/// Per-file savings percentage. Returns None if no original or output grew.
+pub fn file_savings_percent(original: u64, output: u64) -> Option<u64> {
+    if original == 0 || output >= original {
+        return None;
+    }
+    Some(((original - output) * 100) / original)
+}
+
 // Re-export format helpers from the shared module for backwards compatibility.
 pub use super::super::format::{format_duration, format_size};
 
@@ -181,6 +189,66 @@ mod tests {
         // after:  290000 + 340000 + 260000 = 890000
         // savings: (2340000 - 890000) * 100 / 2340000 = 61%
         assert_eq!(savings.percent(), 61);
+    }
+
+    #[test]
+    fn savings_percent_zero_when_output_grew() {
+        let savings = SizeSavings {
+            before: 100,
+            after: 150,
+        };
+        assert_eq!(savings.percent(), 0);
+    }
+
+    #[test]
+    fn savings_percent_zero_when_sizes_equal() {
+        let savings = SizeSavings {
+            before: 500,
+            after: 500,
+        };
+        assert_eq!(savings.percent(), 0);
+    }
+
+    #[test]
+    fn file_savings_percent_normal_reduction() {
+        // 780KB -> 290KB = 62% savings
+        assert_eq!(file_savings_percent(780_000, 290_000), Some(62));
+    }
+
+    #[test]
+    fn file_savings_percent_none_when_output_grew() {
+        assert_eq!(file_savings_percent(100, 150), None);
+    }
+
+    #[test]
+    fn file_savings_percent_none_when_equal() {
+        assert_eq!(file_savings_percent(100, 100), None);
+    }
+
+    #[test]
+    fn file_savings_percent_none_when_original_zero() {
+        assert_eq!(file_savings_percent(0, 50), None);
+    }
+
+    #[test]
+    fn savings_still_computed_when_some_files_grew() {
+        // Mix: one file shrunk, one grew. Aggregate: before=200, after=250 -> grew overall.
+        let outputs = vec![
+            OutputFile {
+                name: "shrunk.jpg".into(),
+                size_bytes: 50,
+                original_size: Some(100),
+            },
+            OutputFile {
+                name: "grew.jpg".into(),
+                size_bytes: 200,
+                original_size: Some(100),
+            },
+        ];
+        let m = ResultsModel::new("s", outputs, 0, None);
+        let savings = m.savings.unwrap();
+        // before=200, after=250 -> output grew -> 0%
+        assert_eq!(savings.percent(), 0);
     }
 
     #[test]

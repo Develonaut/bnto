@@ -5,7 +5,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph};
 
 use super::app::AppModel;
-use super::screens::results::{format_duration, format_size};
+use super::screens::results::{file_savings_percent, format_duration, format_size};
 use super::theme::{ROUNDED_BORDERS, Theme};
 
 /// Render the results screen.
@@ -86,12 +86,11 @@ fn results_lines<'a>(
             let size_info = if let Some(orig) = file.original_size {
                 let orig_str = format_size(orig);
                 let new_str = format_size(file.size_bytes);
-                let pct = if orig > 0 {
-                    ((orig - file.size_bytes) * 100) / orig
+                if let Some(pct) = file_savings_percent(orig, file.size_bytes) {
+                    format!("  {orig_str} → {new_str}  ({pct}% smaller)")
                 } else {
-                    0
-                };
-                format!("  {orig_str} → {new_str}  ({pct}% smaller)")
+                    format!("  {orig_str} → {new_str}")
+                }
             } else {
                 format!("  {}", format_size(file.size_bytes))
             };

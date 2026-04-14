@@ -1142,4 +1142,100 @@ mod tests {
         // Normal picker → Detail (not Settings).
         assert_eq!(app.screen, Screen::Detail { slug: "s".into() });
     }
+
+    // --- Settings persistence: path preservation across saves ---
+
+    #[test]
+    fn theme_changed_preserves_both_path_settings() {
+        let mut app = default_model();
+        app.config.default_path = Some("/photos".into());
+        app.config.output_dir = Some("/output".into());
+        app.screen = Screen::Settings;
+
+        let app = update(app, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
+        assert_eq!(app.config.theme, "tokyo");
+        assert_eq!(app.config.default_path, Some("/photos".into()));
+        assert_eq!(app.config.output_dir, Some("/output".into()));
+    }
+
+    #[test]
+    fn settings_path_confirmed_for_default_path_preserves_output_dir() {
+        // Simulate: config already has output_dir, user changes only default_path.
+        let mut app = update(default_model(), AppMessage::OpenSettings);
+        // Inject existing output_dir into both config and settings model.
+        app.config.output_dir = Some("/existing-output".into());
+        app.settings = app.settings.map(|mut s| {
+            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "output_dir") {
+                f.value = "/existing-output".to_string();
+            }
+            s
+        });
+        // Set up picker for default_path.
+        app.screen = Screen::Picker {
+            slug: "default_path".into(),
+        };
+        app.settings_picker_field = Some("default_path".into());
+        app.picker = Some(PickerModel::from_dir(
+            "default_path",
+            &std::path::PathBuf::from("/new-default"),
+        ));
+
+        let app = update(app, AppMessage::SettingsPathConfirmed);
+        assert_eq!(app.screen, Screen::Settings);
+        // default_path updated to picker's current_dir.
+        assert!(app.config.default_path.is_some());
+        // output_dir preserved — not clobbered by the default_path save.
+        assert_eq!(app.config.output_dir, Some("/existing-output".into()));
+    }
+
+    #[test]
+    fn settings_path_confirmed_for_output_dir_preserves_default_path() {
+        // Symmetric: config has default_path, user changes only output_dir.
+        let mut app = update(default_model(), AppMessage::OpenSettings);
+        app.config.default_path = Some("/existing-default".into());
+        app.settings = app.settings.map(|mut s| {
+            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "default_path") {
+                f.value = "/existing-default".to_string();
+            }
+            s
+        });
+        app.screen = Screen::Picker {
+            slug: "output_dir".into(),
+        };
+        app.settings_picker_field = Some("output_dir".into());
+        app.picker = Some(PickerModel::from_dir(
+            "output_dir",
+            &std::path::PathBuf::from("/new-output"),
+        ));
+
+        let app = update(app, AppMessage::SettingsPathConfirmed);
+        assert_eq!(app.config.default_path, Some("/existing-default".into()));
+        assert!(app.config.output_dir.is_some());
+    }
+
+    #[test]
+    fn settings_roundtrip_both_paths_survive_reload() {
+        // Full roundtrip: load config with both paths → open settings → verify fields.
+        let config = TuiConfig {
+            theme: "tokyo".to_string(),
+            default_path: Some("/photos".into()),
+            output_dir: Some("/output".into()),
+        };
+        let mut app = default_model();
+        app.config = config;
+        let app = update(app, AppMessage::OpenSettings);
+        let settings = app.settings.as_ref().expect("settings created");
+        let dp = settings
+            .fields
+            .iter()
+            .find(|f| f.key == "default_path")
+            .unwrap();
+        let od = settings
+            .fields
+            .iter()
+            .find(|f| f.key == "output_dir")
+            .unwrap();
+        assert_eq!(dp.value, "/photos");
+        assert_eq!(od.value, "/output");
+    }
 }
