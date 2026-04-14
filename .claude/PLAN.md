@@ -638,7 +638,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
 - [x] `engine/crates/bnto` — **Screen transition integration tests**: Test the full Detail → Picker → Execution flow: param overrides carry through to definition, selected files pass to execution, progress events update execution model. Cover the confirm-with-params path that Wave 2 couldn't demo
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
-- [ ] **CLAIMED** `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
+- [ ] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
 **After TUI:** File node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
 
@@ -991,6 +991,14 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 ### ~~Triage: TUI File Picker UX Overhaul~~ DONE
 
 **Resolved (PR 1 of 2).** Viewport scrolling, PathBuf-based selection, file sizes, hidden file toggle, nav history, format extraction, extended keybindings (h/l, g/G, J/K, PgUp/PgDn, `.`, `a`), and updated help bar. Built from scratch — no external library needed. Extracted `viewport.rs`, `nav_history.rs`, `picker_update.rs`, `format.rs`. 210 TUI tests passing.
+
+---
+
+### Triage: TUI File Picker UX Overhaul (Phase 2)
+
+**Priority: Triage.** Evaluate whether to adopt a popular Rust file picker library (e.g., ratatui-explorer, tui-file-dialog) or continue building out our own with proper UX. Current picker works but feels basic — needs evaluation of: directory tree display, file preview, breadcrumb path, scroll behavior, visual density, keyboard shortcuts (home/end, page up/down), and overall feel compared to tools like yazi/ranger. Should slot immediately after the current TUI settings/config work.
+
+`engine/crates/bnto/src/tui/screens/picker.rs`, `picker_update.rs`, `picker_loader.rs`, `render_picker.rs`
 
 ---
 
