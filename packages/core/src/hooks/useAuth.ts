@@ -48,7 +48,9 @@ export function useAuth(): AuthState {
 
   // Auto-persist live user when session resolves.
   useEffect(() => {
-    if (isAuthenticated && liveUser) core.auth.rememberUser(liveUser);
+    if (isAuthenticated && liveUser) {
+      core.auth.rememberUser(liveUser);
+    }
   }, [isAuthenticated, liveUser]);
 
   return {

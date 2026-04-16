@@ -58,6 +58,8 @@ export { stashFilesForTransfer, claimTransferredFiles } from "./fileTransfer";
 // ── Utils (pure functions) ────────────────────────────────────────────────
 export { computeTotalSaved } from "./utils/computeTotalSaved";
 export { deriveFileResultProps } from "./utils/deriveFileResultProps";
+export { bucketFileSize } from "./lib/bucketFileSize";
+export { categorizeError } from "./lib/categorizeError";
 export type { FileResultDisplay } from "./utils/deriveFileResultProps";
 
 // ── Store factories (for app-layer orchestration) ─────────────────────────
