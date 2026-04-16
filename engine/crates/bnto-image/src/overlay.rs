@@ -255,7 +255,7 @@ impl NodeProcessor for OverlayImage {
                             .collect(),
                     },
                     default: Some(serde_json::Value::String(DEFAULT_POSITION.to_string())),
-                    control: Some("positionGrid".to_string()),
+                    control: Some("watermarkPreview".to_string()),
                     ..Default::default()
                 },
                 ParameterDef {

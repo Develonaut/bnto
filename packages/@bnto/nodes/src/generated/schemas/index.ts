@@ -30,3 +30,17 @@ export { vectorRasterizeParamsSchema, vectorRasterizeNodeSchema } from "./vector
 export type { VectorRasterizeParams } from "./vectorRasterize";
 export { videoDownloadParamsSchema, videoDownloadNodeSchema } from "./videoDownload";
 export type { VideoDownloadParams } from "./videoDownload";
+export { editFieldsParamsSchema, editFieldsNodeSchema } from "./editFields";
+export type { EditFieldsParams } from "./editFields";
+export { groupParamsSchema, groupNodeSchema } from "./group";
+export type { GroupParams } from "./group";
+export { inputParamsSchema, inputNodeSchema } from "./input";
+export type { InputParams } from "./input";
+export { loopParamsSchema, loopNodeSchema } from "./loop";
+export type { LoopParams } from "./loop";
+export { outputParamsSchema, outputNodeSchema } from "./output";
+export type { OutputParams } from "./output";
+export { parallelParamsSchema, parallelNodeSchema } from "./parallel";
+export type { ParallelParams } from "./parallel";
+export { transformParamsSchema, transformNodeSchema } from "./transform";
+export type { TransformParams } from "./transform";

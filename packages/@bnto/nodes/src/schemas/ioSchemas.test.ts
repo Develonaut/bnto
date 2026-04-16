@@ -9,8 +9,8 @@
 import { describe, expect, it } from "vitest";
 
 import { getVisibleParams, getNodeSchema, getRequiredParams, getNodeParamFields } from "./index";
-import { inputNodeSchema, INPUT_MODES } from "./input";
-import { outputNodeSchema, OUTPUT_MODES } from "./output";
+import { inputNodeSchema } from "../generated/schemas/input";
+import { outputNodeSchema } from "../generated/schemas/output";
 
 // ---------- Input schema structure ----------
 

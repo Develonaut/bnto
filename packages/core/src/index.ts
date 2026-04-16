@@ -168,7 +168,8 @@ export { validateDefinition } from "@bnto/registry";
 
 // Schema introspection
 export {
-  inferFieldType,
+  getParamFieldInfo,
+  NODE_PARAM_FIELD_INFO,
   getVisibleParams,
   getRequiredParams,
   getConditionallyRequired,

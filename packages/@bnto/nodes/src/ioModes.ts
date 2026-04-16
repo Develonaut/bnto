@@ -4,8 +4,8 @@
  * Consumed by getNodeIcon (icon field) and getNodeSublabel (label field).
  */
 
-import type { InputParams } from "./schemas/input";
-import type { OutputParams } from "./schemas/output";
+import type { InputParams } from "./generated/schemas/input";
+import type { OutputParams } from "./generated/schemas/output";
 
 interface IoModeInfo {
   icon: string;

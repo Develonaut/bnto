@@ -12,8 +12,8 @@
 import type { Definition } from "./definition";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { ITERATION_MODES, NODE_TYPES } from "./generated/catalog";
-import { inputParamsSchema } from "./schemas/input";
-import { outputParamsSchema } from "./schemas/output";
+import { inputParamsSchema } from "./generated/schemas/input";
+import { outputParamsSchema } from "./generated/schemas/output";
 
 function createInputNode(): Definition {
   const defaults = inputParamsSchema.parse({});

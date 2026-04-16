@@ -3,4 +3,4 @@
 /**
  * 2D coordinate for a node on the editor canvas.
  */
-export type Position = { x: number; y: number };
+export type Position = { x: number, y: number, };

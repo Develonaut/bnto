@@ -84,7 +84,7 @@ export type {
   NodeParamField,
   NodeParamFields,
 } from "./schemas";
-export { inferFieldType } from "./schemas";
+export { getParamFieldInfo, NODE_PARAM_FIELD_INFO } from "./schemas";
 
 // I/O node helpers
 export { getInputNode } from "./getInputNode";

@@ -1,7 +1,7 @@
 /**
  * Tests for schema registry helper functions:
  * getNodeSchema, getRequiredParams, getConditionallyRequired,
- * getVisibleParams, inferFieldType.
+ * getVisibleParams, getParamFieldInfo.
  */
 
 import { describe, expect, it } from "vitest";
@@ -12,7 +12,7 @@ import {
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
-  inferFieldType,
+  getParamFieldInfo,
   GROUP_MODES,
 } from "./index";
 
@@ -171,50 +171,48 @@ describe("getVisibleParams", () => {
   });
 });
 
-// ---------- inferFieldType ----------
+// ---------- getParamFieldInfo ----------
 
-describe("inferFieldType", () => {
-  it("detects enum type from Zod enum", () => {
-    const shape = NODE_SCHEMAS["image-convert"]!.schema.shape;
-    const info = inferFieldType(shape.format);
-    expect(info.type).toBe("enum");
-    expect(info.enumValues).toEqual(["jpeg", "png", "webp"]);
+describe("getParamFieldInfo", () => {
+  it("detects enum type for image-convert format", () => {
+    const info = getParamFieldInfo("image-convert", "format");
+    expect(info).toBeDefined();
+    expect(info!.type).toBe("enum");
+    expect(info!.enumValues).toEqual(["jpeg", "png", "webp"]);
   });
 
-  it("detects number type with min/max", () => {
-    const shape = NODE_SCHEMAS["image-compress"]!.schema.shape;
-    const info = inferFieldType(shape.quality);
-    expect(info.type).toBe("number");
-    expect(info.min).toBe(1);
-    expect(info.max).toBe(100);
+  it("detects number type with min/max for image-compress quality", () => {
+    const info = getParamFieldInfo("image-compress", "quality");
+    expect(info).toBeDefined();
+    expect(info!.type).toBe("number");
+    expect(info!.min).toBe(1);
+    expect(info!.max).toBe(100);
   });
 
-  it("detects boolean type", () => {
-    const shape = NODE_SCHEMAS["image-resize"]!.schema.shape;
-    const info = inferFieldType(shape.maintainAspect);
-    expect(info.type).toBe("boolean");
+  it("detects boolean type for image-resize maintainAspect", () => {
+    const info = getParamFieldInfo("image-resize", "maintainAspect");
+    expect(info).toBeDefined();
+    expect(info!.type).toBe("boolean");
   });
 
-  it("detects string type for plain strings", () => {
-    const shape = NODE_SCHEMAS["file-rename"]!.schema.shape;
-    const info = inferFieldType(shape.find);
-    expect(info.type).toBe("string");
+  it("detects string type for file-rename find", () => {
+    const info = getParamFieldInfo("file-rename", "find");
+    expect(info).toBeDefined();
+    expect(info!.type).toBe("string");
   });
 
-  it("unwraps optional/default wrappers", () => {
-    // quality is z.number().min(1).max(100).optional().default(80)
-    const shape = NODE_SCHEMAS["image-compress"]!.schema.shape;
-    const info = inferFieldType(shape.quality);
-    expect(info.type).toBe("number");
-    expect(info.min).toBe(1);
-    expect(info.max).toBe(100);
+  it("detects enum for group mode", () => {
+    const info = getParamFieldInfo("group", "mode");
+    expect(info).toBeDefined();
+    expect(info!.type).toBe("enum");
+    expect(info!.enumValues).toEqual([...GROUP_MODES]);
   });
 
-  it("detects enum inside default wrapper", () => {
-    // mode is z.enum(GROUP_MODES).default("sequential")
-    const shape = NODE_SCHEMAS["group"]!.schema.shape;
-    const info = inferFieldType(shape.mode);
-    expect(info.type).toBe("enum");
-    expect(info.enumValues).toEqual(GROUP_MODES);
+  it("returns undefined for unknown type", () => {
+    expect(getParamFieldInfo("unknown", "field")).toBeUndefined();
+  });
+
+  it("returns undefined for unknown param", () => {
+    expect(getParamFieldInfo("image-compress", "nonexistent")).toBeUndefined();
   });
 });

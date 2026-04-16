@@ -5,7 +5,7 @@ import {
   getNodeSchema,
   getNodeParamFields,
   getVisibleParams,
-  inferFieldType,
+  getParamFieldInfo,
   NODE_TYPE_INFO,
   NODE_SCHEMAS,
   type NodeSchema,
@@ -165,7 +165,7 @@ export function SchemaFormPlayground() {
           title="Inferred Controls"
           description="Final control type derived from Zod schema shape and field config."
         >
-          <ControlsInspector schema={schema} fields={fields} visibleParams={visibleParams} />
+          <ControlsInspector schema={schema} visibleParams={visibleParams} />
         </InspectorSection>
       </div>
     </div>
@@ -294,11 +294,9 @@ function FieldsInspector({
 
 function ControlsInspector({
   schema,
-  fields,
   visibleParams,
 }: {
   schema: NodeSchema | undefined;
-  fields: NodeParamFields | undefined;
   visibleParams: string[];
 }) {
   if (!schema)
@@ -311,10 +309,8 @@ function ControlsInspector({
   return (
     <Stack gap="sm">
       {visibleParams.map((name) => {
-        const zodField = schema.schema.shape[name];
-        if (!zodField) return null;
-        const fc = fields?.[name];
-        const info = inferFieldType(zodField, fc);
+        const info = getParamFieldInfo(schema.nodeType, name);
+        if (!info) return null;
         return (
           <div key={name} className="text-xs">
             <Text size="xs" className="font-mono font-medium">
