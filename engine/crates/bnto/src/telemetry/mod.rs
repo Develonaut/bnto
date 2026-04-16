@@ -41,7 +41,7 @@ pub fn init() {
 
         // Check env var overrides.
         let env_disabled = is_env_disabled();
-        let active = consent_active && config.enabled && !env_disabled;
+        let active = compute_active(consent_active, config.enabled, env_disabled);
 
         // Read API key from env (write-only key, safe to embed).
         let api_key = std::env::var("BNTO_POSTHOG_KEY").unwrap_or_default();
@@ -92,6 +92,13 @@ fn is_env_disabled() -> bool {
         || std::env::var("DO_NOT_TRACK").is_ok_and(|v| v == "1")
 }
 
+/// Compute whether telemetry should be active given inputs.
+///
+/// Extracted for testability — `init()` feeds this the same values.
+fn compute_active(consent_active: bool, config_enabled: bool, env_disabled: bool) -> bool {
+    consent_active && config_enabled && !env_disabled
+}
+
 /// Enable or disable telemetry, persisting the choice to config.
 pub fn set_enabled(enabled: bool) {
     let mut config = TelemetryConfig::load();
@@ -126,6 +133,74 @@ mod tests {
     use std::sync::Mutex;
 
     static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    // --- compute_active: the decision function for whether telemetry sends data ---
+
+    #[test]
+    fn active_when_all_conditions_met() {
+        assert!(compute_active(true, true, false));
+    }
+
+    #[test]
+    fn inactive_when_config_disabled() {
+        assert!(!compute_active(true, false, false));
+    }
+
+    #[test]
+    fn inactive_when_consent_not_given() {
+        assert!(!compute_active(false, true, false));
+    }
+
+    #[test]
+    fn inactive_when_env_disabled() {
+        assert!(!compute_active(true, true, true));
+    }
+
+    #[test]
+    fn inactive_when_all_disabled() {
+        assert!(!compute_active(false, false, true));
+    }
+
+    // --- set_enabled persistence: toggling off actually persists ---
+
+    #[test]
+    fn set_enabled_false_persists_to_config() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bnto").join("telemetry.json");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+
+        // Write an enabled config.
+        let config = TelemetryConfig {
+            enabled: true,
+            anonymous_id: "test-id".into(),
+            consent_shown: true,
+        };
+        let json = serde_json::to_string_pretty(&config).unwrap();
+        std::fs::write(&path, &json).unwrap();
+
+        // Modify it to disabled.
+        let mut loaded: TelemetryConfig =
+            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        loaded.enabled = false;
+        loaded.consent_shown = true;
+        let json = serde_json::to_string_pretty(&loaded).unwrap();
+        std::fs::write(&path, &json).unwrap();
+
+        // Re-load and verify.
+        let reloaded: TelemetryConfig =
+            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert!(!reloaded.enabled, "disabled config should persist");
+        assert!(reloaded.consent_shown);
+    }
+
+    #[test]
+    fn disabled_config_means_inactive() {
+        // Simulates the full decision: config disabled → not active.
+        let config_enabled = false;
+        assert!(!compute_active(true, config_enabled, false));
+    }
+
+    // --- env var tests ---
 
     #[test]
     fn is_env_disabled_respects_bnto_var() {

@@ -126,6 +126,8 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
         // Value row.
         let value_display = if field.key == "theme" {
             format!("    ◂ {} ▸", model.theme_variant.display_name())
+        } else if field.key == "telemetry" {
+            format!("    ◂ {} ▸", field.value)
         } else if field.value.is_empty() {
             "    (not set)".to_string()
         } else {

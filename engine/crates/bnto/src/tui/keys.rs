@@ -217,6 +217,7 @@ fn handle_results_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 /// Handle key events on the Settings screen.
 ///
 /// Theme field: left/right arrows cycle through themes.
+/// Telemetry field: left/right arrows toggle on/off.
 /// Path fields: Enter opens file picker for directory browsing.
 fn handle_settings_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let on_theme = model.settings.as_ref().is_some_and(|s| s.focused == 0);
@@ -242,6 +243,21 @@ fn handle_settings_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             }
             _ => {}
         }
+    }
+
+    // Telemetry field: left/right toggle on/off.
+    let on_telemetry = model.settings.as_ref().is_some_and(|s| {
+        s.fields
+            .get(s.focused)
+            .is_some_and(|f| f.key == "telemetry")
+    });
+    if on_telemetry && matches!(key.code, KeyCode::Left | KeyCode::Right) {
+        let currently_on = model
+            .settings
+            .as_ref()
+            .and_then(|s| s.fields.get(s.focused))
+            .is_some_and(|f| f.value == "On");
+        return Some(AppMessage::TelemetryToggled(!currently_on));
     }
 
     match key.code {

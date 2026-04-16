@@ -5,6 +5,7 @@
 
 use super::super::config::TuiConfig;
 use super::super::theme::ThemeVariant;
+use crate::telemetry;
 
 /// A single configurable field in the settings screen.
 #[derive(Debug, Clone)]
@@ -63,6 +64,17 @@ impl SettingsModel {
                 value: config.output_dir.clone().unwrap_or_default(),
                 description: "Recipe output directory (Enter to browse)",
                 editable: true,
+            },
+            SettingsField {
+                key: "telemetry",
+                label: "Telemetry",
+                value: if telemetry::config::TelemetryConfig::load().enabled {
+                    "On".to_string()
+                } else {
+                    "Off".to_string()
+                },
+                description: "Anonymous usage data (use arrow keys to toggle)",
+                editable: false,
             },
         ];
         Self { fields, focused: 0 }
@@ -136,18 +148,32 @@ mod tests {
     }
 
     #[test]
-    fn new_creates_three_fields() {
+    fn new_creates_four_fields() {
         let m = default_settings();
-        assert_eq!(m.fields.len(), 3);
+        assert_eq!(m.fields.len(), 4);
         assert_eq!(m.fields[0].key, "theme");
         assert_eq!(m.fields[1].key, "default_path");
         assert_eq!(m.fields[2].key, "output_dir");
+        assert_eq!(m.fields[3].key, "telemetry");
     }
 
     #[test]
     fn theme_field_is_not_editable() {
         let m = default_settings();
         assert!(!m.fields[0].editable);
+    }
+
+    #[test]
+    fn telemetry_field_is_not_editable() {
+        let m = default_settings();
+        assert!(!m.fields[3].editable);
+    }
+
+    #[test]
+    fn telemetry_field_shows_on_or_off() {
+        let m = default_settings();
+        let value = &m.fields[3].value;
+        assert!(value == "On" || value == "Off");
     }
 
     #[test]
@@ -167,7 +193,7 @@ mod tests {
     #[test]
     fn focus_next_wraps() {
         let mut m = default_settings();
-        m.focused = 2;
+        m.focused = 3;
         let m = update(m, SettingsMessage::FocusNext);
         assert_eq!(m.focused, 0);
     }
@@ -176,7 +202,7 @@ mod tests {
     fn focus_prev_wraps() {
         let m = default_settings();
         let m = update(m, SettingsMessage::FocusPrev);
-        assert_eq!(m.focused, 2);
+        assert_eq!(m.focused, 3);
     }
 
     #[test]
