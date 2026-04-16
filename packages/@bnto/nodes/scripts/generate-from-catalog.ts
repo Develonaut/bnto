@@ -91,7 +91,11 @@ interface RawParameter {
   name: string;
   label: string;
   description: string;
-  paramType: { type: string; options?: string[]; accept?: string[] };
+  paramType: {
+    type: string;
+    options?: Array<{ value: string; label: string }>;
+    accept?: string[];
+  };
   default?: unknown;
   constraints?: { min?: number; max?: number; required?: boolean };
   placeholder?: string;
@@ -235,8 +239,9 @@ function generateParamLiteral(p: RawParameter): string {
   lines.push(`  description: ${JSON.stringify(p.description)},`);
 
   if (p.paramType.options) {
+    const values = p.paramType.options.map((o) => o.value);
     lines.push(`  type: "enum" as const,`);
-    lines.push(`  options: ${JSON.stringify(p.paramType.options)} as const,`);
+    lines.push(`  options: ${JSON.stringify(values)} as const,`);
   } else {
     lines.push(`  type: ${JSON.stringify(p.paramType.type)} as const,`);
   }
@@ -519,8 +524,8 @@ function generateZodField(param: RawParameter): string {
       break;
     }
     case "enum": {
-      const options = param.paramType.options ?? [];
-      zodChain = `z.enum(${JSON.stringify(options)} as const)`;
+      const values = (param.paramType.options ?? []).map((o) => o.value);
+      zodChain = `z.enum(${JSON.stringify(values)} as const)`;
       break;
     }
     case "object": {
@@ -738,7 +743,7 @@ function generateNodeReadme(nodeType: RawNodeType, processor: RawProcessor | und
       for (const param of processor.parameters) {
         const type = param.paramType.options ? "enum" : param.paramType.type;
         const range = param.paramType.options
-          ? param.paramType.options.join(", ")
+          ? param.paramType.options.map((o) => o.value).join(", ")
           : formatRange(param);
         lines.push(
           `| ${param.name} | ${type} | ${formatDefault(param)} | ${range} | ${param.description} |`,
@@ -752,7 +757,8 @@ function generateNodeReadme(nodeType: RawNodeType, processor: RawProcessor | und
       if (param.default !== undefined) {
         exampleParams[param.name] = param.default;
       } else if (param.constraints?.required) {
-        exampleParams[param.name] = param.paramType.options?.[0] ?? `<${param.paramType.type}>`;
+        exampleParams[param.name] =
+          param.paramType.options?.[0]?.value ?? `<${param.paramType.type}>`;
       }
     }
 

@@ -15,21 +15,21 @@ export const spreadsheetMergeProcessor: ProcessorDef = {
   accepts: ["text/csv"] as const,
   platforms: ["browser"] as const,
   parameters: [
-  {
-    name: "headerHandling",
-    label: "Header Handling",
-    description: "How to reconcile headers across files",
-    type: "enum" as const,
-    options: [{"value":"first-file","label":"First File"},{"value":"union","label":"Union"}] as const,
-    default: "first-file",
-  },
-  {
-    name: "deduplicate",
-    label: "Remove Duplicates",
-    description: "Remove duplicate rows across all files",
-    type: "boolean" as const,
-    default: false,
-  },
+    {
+      name: "headerHandling",
+      label: "Header Handling",
+      description: "How to reconcile headers across files",
+      type: "enum" as const,
+      options: ["first-file", "union"] as const,
+      default: "first-file",
+    },
+    {
+      name: "deduplicate",
+      label: "Remove Duplicates",
+      description: "Remove duplicate rows across all files",
+      type: "boolean" as const,
+      default: false,
+    },
   ],
   inputCardinality: "batch" as const,
 };

@@ -9,12 +9,12 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for file-rename node parameters. */
 export const fileRenameParamsSchema = z.object({
-    find: z.string().optional(),
-    replace: z.string().optional(),
-    case: z.enum([{"value":"lower","label":"lowercase"},{"value":"upper","label":"UPPERCASE"},{"value":"title","label":"Title Case"}] as const).optional(),
-    prefix: z.string().optional(),
-    suffix: z.string().optional(),
-    pattern: z.string().optional(),
+  find: z.string().optional(),
+  replace: z.string().optional(),
+  case: z.enum(["lower", "upper", "title"] as const).optional(),
+  prefix: z.string().optional(),
+  suffix: z.string().optional(),
+  pattern: z.string().optional(),
 });
 
 /** Inferred TypeScript type for file-rename node parameters. */
@@ -48,7 +48,8 @@ export const fileRenameNodeSchema: NodeSchema = {
     },
     pattern: {
       label: "Pattern",
-      description: "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
+      description:
+        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
       placeholder: "{{name}}-compressed.{{ext}}",
     },
   },

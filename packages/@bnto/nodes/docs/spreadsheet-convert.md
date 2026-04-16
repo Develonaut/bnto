@@ -10,10 +10,10 @@
 
 ## Parameters
 
-| Parameter | Type | Default | Range | Description |
-|-----------|------|---------|-------|-------------|
-| delimiter | enum | comma | [object Object], [object Object], [object Object], [object Object] | Column separator character |
-| pretty | boolean | false | - | Format output JSON with indentation |
+| Parameter | Type    | Default | Range                       | Description                         |
+| --------- | ------- | ------- | --------------------------- | ----------------------------------- |
+| delimiter | enum    | comma   | comma, semicolon, tab, pipe | Column separator character          |
+| pretty    | boolean | false   | -                           | Format output JSON with indentation |
 
 ## Configuration Example
 
@@ -21,12 +21,12 @@
 {
   "type": "spreadsheet-convert",
   "parameters": {
-      "delimiter": "comma",
-      "pretty": false
+    "delimiter": "comma",
+    "pretty": false
   }
 }
 ```
 
 ---
 
-*Auto-generated from engine catalog v1.0.0. Run `task nodes:generate` to regenerate.*
+_Auto-generated from engine catalog v1.0.0. Run `task nodes:generate` to regenerate._

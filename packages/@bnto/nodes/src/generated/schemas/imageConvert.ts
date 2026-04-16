@@ -9,8 +9,8 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for image-convert node parameters. */
 export const imageConvertParamsSchema = z.object({
-    format: z.enum([{"value":"jpeg","label":"JPEG"},{"value":"png","label":"PNG"},{"value":"webp","label":"WebP"}] as const).default("jpeg"),
-    quality: z.number().min(1).max(100).optional().default(80),
+  format: z.enum(["jpeg", "png", "webp"] as const).default("jpeg"),
+  quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-convert node parameters. */
@@ -28,7 +28,8 @@ export const imageConvertNodeSchema: NodeSchema = {
     },
     quality: {
       label: "Quality",
-      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description:
+        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };
