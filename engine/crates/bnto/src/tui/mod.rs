@@ -325,6 +325,33 @@ mod tests {
     }
 
     #[test]
+    fn settings_left_right_toggles_telemetry_on_telemetry_field() {
+        let mut model = settings_model();
+        // Focus on field 3 (telemetry, non-editable toggle).
+        model.settings.as_mut().unwrap().focused = 3;
+        // Default value is "On", so right should toggle to Off.
+        let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, right),
+            Some(AppMessage::TelemetryToggled(false))
+        );
+        // Left also toggles.
+        let left = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, left),
+            Some(AppMessage::TelemetryToggled(false))
+        );
+    }
+
+    #[test]
+    fn settings_enter_on_telemetry_field_returns_none() {
+        let mut model = settings_model();
+        model.settings.as_mut().unwrap().focused = 3;
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), None);
+    }
+
+    #[test]
     fn s_key_does_nothing_outside_browser() {
         let model = AppModel {
             screen: Screen::Detail { slug: "t".into() },

@@ -92,6 +92,8 @@ pub enum AppMessage {
     OpenSettings,
     /// User selected a new theme in settings.
     ThemeChanged(ThemeVariant),
+    /// User toggled telemetry on/off in settings.
+    TelemetryToggled(bool),
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
     /// Forward a message to the detail screen.
@@ -241,6 +243,16 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 settings,
                 ..model
             }
+        }
+        AppMessage::TelemetryToggled(enabled) => {
+            crate::telemetry::set_enabled(enabled);
+            let settings = model.settings.map(|mut s| {
+                if let Some(f) = s.fields.iter_mut().find(|f| f.key == "telemetry") {
+                    f.value = if enabled { "On" } else { "Off" }.to_string();
+                }
+                s
+            });
+            AppModel { settings, ..model }
         }
         AppMessage::Browser(msg) => {
             let browser = browser_update(model.browser, msg);
@@ -998,7 +1010,7 @@ mod tests {
         let app = update(default_model(), AppMessage::OpenSettings);
         assert_eq!(app.screen, Screen::Settings);
         assert!(app.settings.is_some());
-        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 3);
+        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 4);
     }
 
     #[test]
@@ -1027,6 +1039,44 @@ mod tests {
             AppMessage::ThemeChanged(ThemeVariant::Monaco),
         );
         assert_eq!(app.config.theme, "monaco");
+    }
+
+    #[test]
+    fn telemetry_toggled_updates_settings_field() {
+        let mut app = update(default_model(), AppMessage::OpenSettings);
+        // Verify telemetry field exists.
+        let telemetry_field = app
+            .settings
+            .as_ref()
+            .unwrap()
+            .fields
+            .iter()
+            .find(|f| f.key == "telemetry");
+        assert!(telemetry_field.is_some());
+
+        // Toggle off.
+        app = update(app, AppMessage::TelemetryToggled(false));
+        let field = app
+            .settings
+            .as_ref()
+            .unwrap()
+            .fields
+            .iter()
+            .find(|f| f.key == "telemetry")
+            .unwrap();
+        assert_eq!(field.value, "Off");
+
+        // Toggle on.
+        app = update(app, AppMessage::TelemetryToggled(true));
+        let field = app
+            .settings
+            .as_ref()
+            .unwrap()
+            .fields
+            .iter()
+            .find(|f| f.key == "telemetry")
+            .unwrap();
+        assert_eq!(field.value, "On");
     }
 
     #[test]
