@@ -27,6 +27,11 @@ pub mod events;
 /// so any consumer can validate recipe files without reimplementing TS types.
 pub mod definition_schema;
 
+/// Document-shape types for `.bnto.json` files — the authoring view.
+/// Mirrors the TypeScript `Definition` types and round-trips every real
+/// recipe fixture. Distinct from `pipeline` (the execution-pruned view).
+pub mod definition;
+
 /// Node metadata types — self-describing processor definitions.
 /// Each processor declares its name, category, parameters, accepted MIME types,
 /// and whether it runs in the browser. Powers the `node_catalog()` WASM export.
@@ -57,6 +62,7 @@ pub mod registry;
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
 pub use context::{NoopContext, ProcessContext};
+pub use definition::{Definition, Edge, FieldsConfig, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};

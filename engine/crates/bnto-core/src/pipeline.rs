@@ -24,7 +24,7 @@ pub enum IterationMode {
 
 /// Recipe-level settings on the root Definition. Extensible — new fields
 /// can be added without changing the schema shape.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineSettings {
     /// How the executor iterates over multiple input files.
