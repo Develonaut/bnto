@@ -54,10 +54,10 @@ M2: Platform Features                ← DELIVERED (March 2026)
 
 M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     CLI is the product. Dependency system DELIVERED. Video node DELIVERED.
-    ProcessContext DELIVERED. CLI commands DELIVERED (list, info, run with
-    progress). v0.5.0 shipped to crates.io.
+    ProcessContext DELIVERED. CLI commands DELIVERED. TUI DELIVERED (6 screens,
+    278 tests). v0.5.0 shipped to crates.io.
 
-    Next: TUI (Sprint 10 — ratatui interactive mode), more node types,
+    Next: TUI schema-driven config (Sprint 11), more node types,
     recipe expansion.
 
 M4: Distribution (backlog)
@@ -69,7 +69,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. Next: TUI (Sprint 10), then more node types and recipes. Desktop (M4) and monetization (M5) are backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. TUI delivered (Sprint 10). Next: schema-driven TUI config (Sprint 11), then more node types and recipes. Desktop (M4) and monetization (M5) are backlog.
 
 ---
 
@@ -86,7 +86,7 @@ M5: Monetization (tabled)
 
 **Extensibility is the point.** The 15 predefined recipes are a starting point. Anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
 
-**TUI is next.** After the CLI is solid, `bnto tui` will launch an interactive terminal UI (ratatui + crossterm) — recipe browser, file picker, progress display, results panel. Same engine, richer interface. See Sprint 10 in PLAN.md.
+**TUI is live.** `bnto tui` launches an interactive terminal UI (ratatui + crossterm) — recipe browser, file picker, progress display, results panel. Same engine, richer interface. Sprint 10 delivered 6 screens with 278 tests. Sprint 11 adds schema-driven parameter controls.
 
 **Dependency system:** Node types can declare external dependencies (`yt-dlp`, `ffmpeg`, `imagemagick`). The engine checks them before pipeline execution. `bnto doctor` reports missing dependencies with install hints.
 
