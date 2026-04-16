@@ -15,6 +15,7 @@ mod input;
 mod io;
 mod list;
 mod progress;
+pub mod telemetry;
 mod tui;
 
 use std::process;
@@ -67,10 +68,27 @@ enum Command {
         #[arg(long, default_value = "los-angeles")]
         theme: String,
     },
+
+    /// Manage anonymous telemetry settings.
+    Telemetry {
+        #[command(subcommand)]
+        action: TelemetryAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum TelemetryAction {
+    /// Enable anonymous telemetry.
+    Enable,
+    /// Disable anonymous telemetry.
+    Disable,
+    /// Show current telemetry status.
+    Status,
 }
 
 fn main() {
     let cli = Cli::parse();
+    telemetry::init();
 
     match cli.command {
         Some(Command::Run {
@@ -78,11 +96,37 @@ fn main() {
             inputs,
             output,
             param,
-        }) => run_recipe(&recipe, &inputs, &output, &param),
-        Some(Command::List) => list_recipes(),
-        Some(Command::Info { recipe }) => show_info(&recipe),
-        Some(Command::Doctor) => doctor::run_doctor(),
-        Some(Command::Tui { theme }) => launch_tui(&theme),
+        }) => {
+            telemetry::capture(telemetry::events::cli_command("run"));
+            run_recipe(&recipe, &inputs, &output, &param);
+        }
+        Some(Command::List) => {
+            telemetry::capture(telemetry::events::cli_command("list"));
+            list_recipes();
+        }
+        Some(Command::Info { recipe }) => {
+            telemetry::capture(telemetry::events::cli_command("info"));
+            show_info(&recipe);
+        }
+        Some(Command::Doctor) => {
+            telemetry::capture(telemetry::events::cli_command("doctor"));
+            doctor::run_doctor();
+        }
+        Some(Command::Tui { theme }) => {
+            telemetry::capture(telemetry::events::cli_command("tui"));
+            launch_tui(&theme);
+        }
+        Some(Command::Telemetry { action }) => match action {
+            TelemetryAction::Enable => {
+                telemetry::set_enabled(true);
+                eprintln!("Telemetry enabled.");
+            }
+            TelemetryAction::Disable => {
+                telemetry::set_enabled(false);
+                eprintln!("Telemetry disabled.");
+            }
+            TelemetryAction::Status => telemetry::print_status(),
+        },
         None => {
             Cli::parse_from(["bnto", "--help"]);
         }
@@ -97,10 +141,13 @@ fn launch_tui(theme_str: &str) {
             process::exit(1);
         }
     };
+    let start = std::time::Instant::now();
     if let Err(e) = tui::launch_tui(variant) {
         eprintln!("{} {e}", "TUI error:".red());
         process::exit(1);
     }
+    let duration_ms = start.elapsed().as_millis() as u64;
+    telemetry::capture(telemetry::events::cli_tui_session(duration_ms, theme_str));
 }
 
 /// Read recipe JSON — try built-in slug first, then disk path.
@@ -137,11 +184,30 @@ fn run_recipe(recipe_path: &str, inputs: &[String], output_dir: &str, param_over
     let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
     print_run_banner(recipe_path, &raw_json, &prepared);
 
+    let file_count = prepared.files.len();
+    let total_bytes: u64 = prepared.files.iter().map(|f| f.data.len() as u64).sum();
+    let param_names: Vec<String> = param_overrides
+        .iter()
+        .filter_map(|p| p.split('=').next().map(|k| k.to_string()))
+        .collect();
+
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
     let reporter = progress::stderr_reporter();
     match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
-        Ok(result) => write_output(&result, output_dir),
+        Ok(result) => {
+            telemetry::capture(telemetry::events::cli_recipe_run_with_params(
+                recipe_path,
+                result.duration_ms,
+                file_count,
+                total_bytes,
+                result.files.len(),
+                true,
+                &param_names,
+            ));
+            write_output(&result, output_dir);
+        }
         Err(e) => {
+            telemetry::capture(telemetry::events::cli_error("run", &e.to_string()));
             eprintln!("{} {e}", "Pipeline failed:".red());
             process::exit(1);
         }
