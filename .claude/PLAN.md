@@ -645,49 +645,49 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ---
 
-### Sprint 11: TUI Schema-Driven Config — NEXT
+### Sprint 11: Engine-Owned Node Schema + TUI Schema-Driven Config — NEXT
 
-**Next sprint.** Enrich the detail screen with type-aware parameter controls. Currently all params render as text inputs regardless of `ParameterType`. Sprint 11 maps engine metadata to purpose-built TUI widgets — mirroring how `@bnto/form` maps schemas to web form controls.
+**Plan doc:** [.claude/plans/inherited-watching-hennessy.md](./plans/inherited-watching-hennessy.md) — full context, 7-PR split, deletion surface, verification.
+
+**Goal:** Make the Rust engine the single source of truth for node config field schemas AND `.bnto.json` document types, end-to-end. `@bnto/nodes` collapses to a barrel over engine-generated code. Both web (`@bnto/form`) and TUI (`engine/crates/bnto/src/tui/screens/controls/`) consume the same platform-agnostic `control` field — mapping to React component or ratatui widget happens at the consumer layer. Deletes ~930 LOC of hand-written TypeScript from `@bnto/nodes` (processor overlays, IO/container schemas, runtime Zod→control inference, hand-written field types, and document-shape types — the latter now emitted by the engine via `ts-rs`).
 
 **Strategy doc:** [tui-strategy.md](strategy/tui-strategy.md) (§ Param Control Matrix)
 
-**Architecture:** Same TEA pattern — each new control type gets its own `DetailMessage` variants and pure `update()` logic. `ParamEntry` enriched with `constraints`, `description`, `placeholder` from engine's `ParameterDef`. Rendering branches on `param_type` to dispatch to control-specific renderers.
-
-**Key gap addressed:** `detail_loader.rs` currently extracts `param_type` and `default` from engine metadata but drops `constraints`, `description`, `placeholder`, `visible_when`. These fields are prerequisites for schema-driven controls.
-
-**Framework:** `ratatui` + `crossterm` + `tui-slider` (dependency, already identified in Sprint 10 strategy)
-
 **Persona ownership:**
 
-| Package              | Persona        |
-| -------------------- | -------------- |
-| `engine/crates/bnto` | `/rust-expert` |
+| Package                   | Persona              |
+| ------------------------- | -------------------- |
+| `engine/crates/bnto-core` | `/rust-expert`       |
+| `engine/crates/bnto-*`    | `/rust-expert`       |
+| `packages/@bnto/nodes`    | `/core-architect`    |
+| `packages/@bnto/form`     | `/frontend-engineer` |
+| `engine/crates/bnto`      | `/rust-expert`       |
 
-#### Wave 1 (parallel — metadata enrichment + boolean + enum + reset)
+#### Wave 1 — Engine owns schema (sequential, see plan doc PRs 1–3)
 
-- [ ] `engine/crates/bnto` — **Enrich ParamEntry with full metadata**: Add `constraints: Option<Constraints>`, `description: Option<String>`, `placeholder: Option<String>` to `ParamEntry`. Update `detail_loader.rs` `collect_params_from_processor()` to carry these fields through from `ParameterDef`. Update `from_test_data()` and all test fixtures. Unit tests verifying metadata flows from engine to detail model (~5 tests)
-- [ ] `engine/crates/bnto` — **Boolean toggle control**: When `param_type == Boolean`, render `[x]`/`[ ]` toggle instead of text input. `Space`/`Enter` toggles value. No edit buffer needed — direct value flip. `DetailMessage::ToggleBool` variant. Render shows checkmark with label. Unit tests for toggle on/off, toggle ignored when not focused, toggle skipped for non-boolean params (~6 tests)
-- [ ] `engine/crates/bnto` — **Enum select control**: When `param_type == Enum { options }`, render current value with `←`/`→` (or `h`/`l`) to cycle through options. No free-text editing — constrained to enum variants. `DetailMessage::EnumNext`/`EnumPrev` variants. Render shows `◀ value ▶` when focused. Wrap at boundaries. Unit tests for cycling, wrapping, correct options list (~6 tests)
-- [ ] `engine/crates/bnto` — **Reset to default**: `d` keybind on focused param resets value to `default` from `ParamEntry`. Works for all param types. `DetailMessage::ResetDefault` variant. Visual flash or indicator showing reset happened. Unit tests for reset across param types, reset on already-default value is no-op (~4 tests)
+- [ ] `engine/crates/bnto-core` — **Extend ParameterDef + ParameterType shape** (plan doc PR 1): add `group`, `suffix`, `control`, `accept`, `presets`, `inverted` to `ParameterDef`; refactor `ParameterType::Enum` options to `Vec<OptionEntry { value, label }>`; add `ParameterType::Array` and `ParameterType::Record` variants; add `PresetEntry`/`OptionEntry` structs; optional `ts-rs` derives. Update `common.rs` shared builders. Update all 8 processor `metadata()` impls across `bnto-image` (compress, resize, convert, overlay, strip-exif), `bnto-file` (rename), `bnto-csv` (clean, rename). Serde tests, processor-level metadata tests. Processor count unchanged.
+- [ ] `engine/crates/bnto-core` — **Add ParameterDef metadata for 7 IO/container/data node types** (plan doc PR 2): new `metadata/io_container.rs` with `io_container_param_defs()` for `input`, `output`, `loop`, `group`, `transform`, `parallel`, `edit-fields`. Port param defaults, constraints, `visible_when`, `surfaceable`, enum `OptionEntry` labels verbatim from existing `@bnto/nodes/src/schemas/*.ts`. Catalog snapshot gains `params` arrays on 7 non-processor node types. `all_node_types()` still returns 20 entries.
+- [ ] `engine/crates/bnto-core` — **Add document-shape Rust types** (plan doc PR 3 prerequisite): new `engine/crates/bnto-core/src/definition.rs` (or equivalent) with Rust structs for `Definition`, `Edge`, `Port`, `Metadata`, `Recipe`, `AcceptSpec` — the `.bnto.json` document shape. Add `ts-rs` derives so codegen can emit matching TypeScript. The engine already parses `.bnto.json` and owns `DEFINITION_JSON_SCHEMA`; this formalizes the types so `@bnto/nodes` can ingest them instead of hand-writing them.
+- [ ] `packages/@bnto/nodes` — **Codegen overhaul + delete ~930 LOC** (plan doc PR 3): extend `generate-from-catalog.ts` to (a) absorb `inferFieldType.ts`'s Zod→control decision tree — every generated param gets an explicit `control` field at codegen time; (b) emit `NodeSchema`/`NodeParamField`/`NodeParamControl`/`SelectOption`/`PresetEntry`/`VisibleWhenClause` TypeScript types (via `ts-rs` or hand-emitted); (c) generate Zod schemas for all 20 node types including IO/container; (d) emit `Definition`/`Edge`/`Port`/`Metadata`/`Recipe`/`AcceptSpec` document-shape types via `ts-rs` from `engine/crates/bnto-core/src/definition.rs`. Collapse `schemas/registry.ts` to ~5-line Map over generated entries. Delete 8 processor overlays (~228 LOC), 7 IO/container hand-written schemas (~371 LOC), `inferFieldType.ts` (~211 LOC), `schemas/types.ts`, `engineSchemaEntries.ts`, `definition.ts` (~30 LOC — now engine-generated via `ts-rs`), `recipe.ts` (~20 LOC — same). Update `catalogValidation.test.ts`, `nodeTypes.test.ts` to cover all 20 node types.
 
-#### Wave 2 (parallel — number control + validation + help text)
+#### Wave 2 — Consumers (parallel, see plan doc PRs 4–6)
 
-- [ ] `engine/crates/bnto` — **Number control with bounds**: When `param_type == Number` and `constraints` has `min`/`max`, render as bounded input showing `[value] (min–max)`. `+`/`-` or `←`/`→` to increment/decrement by step (integer=1, float=0.1). Clamp to bounds on commit. When no bounds, fall back to text input with numeric validation. `DetailMessage::NumberIncrement`/`NumberDecrement` variants. Unit tests for increment, decrement, clamp at bounds, step behavior, no-bounds fallback (~8 tests)
-- [ ] `engine/crates/bnto` — **Inline validation on commit**: When `CommitEdit` fires, validate the edit buffer against `param_type` and `constraints`. Number: parse as f64, check min/max. Required: reject empty string. Invalid commit shows error message on the param line (muted red), keeps edit mode active. `DetailModel.error: Option<String>` field. `DetailMessage::ClearError` on next keystroke. Unit tests for valid commit clears error, invalid shows error, error clears on next input (~6 tests)
-- [ ] `engine/crates/bnto` — **Description and help text**: When a param has `description`, show it below the control in muted style. When focused, show full description in a help area at the bottom of the detail screen (or inline below the param). `render_detail.rs` branches on `description.is_some()`. Truncate long descriptions to available width. Unit tests for description rendering lines (~3 tests)
+_Web verification (plan doc PR 4)_
 
-#### Wave 3 (parallel — conditional visibility + custom recipes + scrolling)
+- [ ] `apps/web` + `packages/@bnto/form` + `packages/editor` — **Web verification** (plan doc PR 4): run `task e2e:editor`; verify editor config panel, Motorway form showcase, SchemaForm render identically after the ~930 LOC deletion. Verify (or add) `controlType → React component` registry in `@bnto/form`. Fix any consumer regressions; do NOT re-introduce overlays.
 
-- [ ] `engine/crates/bnto` — **Conditional parameter visibility**: When `ParamEntry` has `visible_when` (carried from `ParameterDef`), evaluate the condition against current param values. Hidden params skip rendering and focus navigation. `DetailModel::visible_params()` method returns filtered indices. Update `FocusNext`/`FocusPrev` to skip hidden params. Unit tests for visibility toggle, focus skips hidden, confirm excludes hidden from overrides (~6 tests)
-- [ ] `engine/crates/bnto` — **Run custom .bnto.json from TUI**: Accept an optional file path argument: `bnto tui recipe.bnto.json`. Parse the definition, extract metadata, populate detail screen. Skip browser screen and go directly to detail. Error handling for invalid/missing file. Clap arg update + loader logic. Unit tests for custom recipe loading, invalid file handling (~5 tests)
-- [ ] `engine/crates/bnto` — **Detail screen viewport scrolling**: When params exceed the visible area, add scrolling. Track `viewport_offset` in `DetailModel`. `FocusNext`/`FocusPrev` auto-scroll to keep focused param visible. Scroll indicator (e.g., `▲`/`▼` or `1/5`) when content overflows. Unit tests for scroll offset calculation, auto-scroll on focus change, indicator visibility (~5 tests)
+_TUI type-aware controls (plan doc PRs 5–6)_
 
-#### Wave 4 (sequential — integration + docs)
+- [ ] `engine/crates/bnto` — **Enrich ParamEntry with full metadata** (plan doc PR 5): carry `constraints`, `description`, `placeholder`, `group`, `suffix`, `presets`, `control`, `visible_when` from engine into `ParamEntry`. Use `node_type_params()` so IO/container node types also get controls. Update `detail_loader.rs`, `from_test_data()`, all test fixtures.
+- [ ] `engine/crates/bnto` — **TUI controls module** (plan doc PR 5): new `src/tui/screens/controls/` with `boolean.rs`, `enum_select.rs`, `number.rs`. Dispatch on `control` field in `render_detail.rs` — mirrors `@bnto/form`'s role on the web. `Space`/`Enter` toggles bool, `←`/`→` cycles enum (displays `label`, stores `value`) / steps number (clamped to constraints), preset shortcut keys jump to preset values, `d` resets to default. `DetailMessage` gains `ToggleBool`, `EnumNext`, `EnumPrev`, `NumberIncrement`, `NumberDecrement`, `ResetDefault`, `ClearError`. `DetailModel.error: Option<String>` clears on next keystroke. Render suffix annotation and inline description.
+- [ ] `engine/crates/bnto` — **TUI visibility + custom recipes + scrolling** (plan doc PR 6): evaluate `visible_when` against current values — hidden params skip rendering and focus; `FocusNext`/`FocusPrev` skip hidden params; confirm omits hidden params. `bnto tui recipe.bnto.json` loads a custom recipe and skips browser; invalid file produces clear error. Detail screen auto-scrolls focused param into view; overflow indicator appears when content scrolls.
 
-- [ ] `engine/crates/bnto` — **End-to-end schema control verification**: Integration test that loads `compress-images` recipe, verifies quality param renders as Number control with 1–100 bounds, format param renders as Enum select with jpeg/png/webp options, strip_metadata renders as Boolean toggle. Verify param overrides with type-specific controls carry through to execution
-- [ ] `engine/crates/bnto` — **Update docs**: Update tui-strategy.md Param Control Matrix with implementation status. Update README TUI section with schema-driven control descriptions. Update CLAUDE.md if needed
+#### Wave 3 — Ship (sequential, see plan doc PR 7)
 
-**After Sprint 11:** File picker UX overhaul (backlog triage — ratatui-explorer evaluation, directory tree, breadcrumb, scroll behavior). Then file node ecosystem expansion, more node types, recipe expansion.
+- [ ] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): `tests/tui_schema_controls_integration.rs` loading `compress-images`, asserting quality renders bounded Number with presets, format renders Enum select, case renders Enum with labels, `overlay-watermark` renders image as file picker + watermarkPreview synthetic control, description lines render in help area, `visible_when` filtering active.
+- [ ] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Update **CLAUDE.md** (`@bnto/nodes is a barrel over engine-generated code`). Mark Sprint 11 complete in **PLAN.md**.
+
+**After Sprint 11:** File picker UX overhaul (ratatui-explorer, directory tree, breadcrumb, scroll). Then file node ecosystem expansion, more node types, recipe expansion.
 
 ---
 
