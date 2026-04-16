@@ -77,15 +77,13 @@ Use `layout.tsx` only for chrome shared across sibling routes (e.g., a tab bar a
 
 ```tsx
 // When layout.tsx makes sense -- shared chrome across siblings
-app/(app)/settings/
-  layout.tsx          // Settings nav shared by all settings pages
-  profile/page.tsx
-  account/page.tsx
+app / app / settings / layout.tsx; // Settings nav shared by all settings pages
+profile / page.tsx;
+account / page.tsx;
 
 // When layout.tsx is wrong -- only one page uses it
-app/(app)/workflows/[workflowId]/
-  layout.tsx          // Only serves page.tsx
-  page.tsx            // Opaque because layout has the shell
+app / app / workflows / [workflowId] / layout.tsx; // Only serves page.tsx
+page.tsx; // Opaque because layout has the shell
 ```
 
 ### 6. Extract repeated UI into small named components
