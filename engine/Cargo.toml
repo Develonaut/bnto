@@ -41,6 +41,11 @@ ratatui = { version = "0.30", default-features = false, features = ["crossterm"]
 dirs = "6"
 ureq = "3"
 uuid = { version = "1", features = ["v4"] }
+# TypeScript binding generator. Used by bnto-core to emit document-shape types
+# (Definition, Edge, Port, etc.) to `packages/@bnto/nodes/src/generated/` so
+# the Rust engine is the single source of truth for the `.bnto.json` shape.
+# Feature-gated via bnto-core's `ts` feature — zero cost in release builds.
+ts-rs = "12"
 
 # --- Build Profiles ---
 

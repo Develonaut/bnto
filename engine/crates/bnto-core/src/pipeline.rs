@@ -4,12 +4,22 @@
 // (loop, group, parallel) hold child nodes for nested execution.
 
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 // =============================================================================
 // Pipeline Settings — Recipe-Level Configuration
 // =============================================================================
 
 /// How the executor handles iteration over multiple input files.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum IterationMode {
@@ -24,6 +34,14 @@ pub enum IterationMode {
 
 /// Recipe-level settings on the root Definition. Extensible — new fields
 /// can be added without changing the schema shape.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PipelineSettings {

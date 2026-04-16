@@ -90,6 +90,15 @@ tasks:
     cmds:
       - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
 
+  nodes:export-types:
+    desc: Export document-shape TypeScript types from Rust via ts-rs
+    dir: ./engine
+    cmds:
+      # Uses ts-rs derives gated behind bnto-core's `ts` feature. Each struct
+      # has an auto-generated `export_bindings_*` test that writes one file into
+      # packages/@bnto/nodes/src/generated/definitionTypes/.
+      - cargo test -p bnto-core --features ts export_bindings_
+
   # Theme codegen (palette.toml → CSS + Rust)
   theme:generate:
     desc: Generate CSS + Rust palette from theme/palette.toml
@@ -224,11 +233,12 @@ tasks:
       - cargo test --package bnto-wasm generate_catalog_snapshot -- --ignored --nocapture
 
   wasm:codegen:
-    desc: Full engine codegen pipeline (build WASM + snapshot + generate TS catalog)
+    desc: Full engine codegen pipeline (build WASM + snapshot + export types + generate TS catalog)
     cmds:
       - task: wasm:build
       - task: wasm:copy
       - task: wasm:snapshot
+      - task: nodes:export-types
       - task: nodes:generate
 
   wasm:deploy:
