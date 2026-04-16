@@ -142,5 +142,5 @@ This gives the otherwise-empty config panel a useful purpose and makes recipe co
 ## Related Documents
 
 - [engine-execution.md](engine-execution.md) — Pipeline executor architecture
-- [node-responsibilities.md](../rules/node-responsibilities.md) — Engine / @bnto/nodes / Editor responsibility matrix
-- [engine-node-patterns.md](../rules/engine-node-patterns.md) — Processor implementation patterns
+- [node-responsibilities.md](../scopes/rust/node-responsibilities.md) — Engine / @bnto/nodes / Editor responsibility matrix
+- [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md) — Processor implementation patterns

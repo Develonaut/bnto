@@ -2,7 +2,7 @@
 
 **Status:** Awaiting approval
 **Target sprint:** Sprint 11 (restructured)
-**References:** `.claude/PLAN.md` §Sprint 11, `.claude/strategy/tui-strategy.md` §Param Control Matrix, `.claude/rules/node-responsibilities.md`, `.claude/rules/engine-node-patterns.md`
+**References:** `.claude/PLAN.md` §Sprint 11, `.claude/strategy/tui-strategy.md` §Param Control Matrix, `.claude/scopes/rust/node-responsibilities.md`, `.claude/scopes/rust/engine-node-patterns.md`
 
 ---
 
@@ -104,7 +104,7 @@ This is a multi-PR migration spanning 7 PRs across 3 Waves. A single plan file i
 - **Platform-agnostic `control` field** — engine emits a generic string identifier; platform consumers map it to their widget (`@bnto/form` → React component, TUI `controls/` → ratatui widget)
 - **Type origin map** — table of every TypeScript type exported from `@bnto/nodes` with its origin (hand-written → engine-generated) and the `ts-rs` source struct
 - **Migration plan** — condensed 7-PR / 3-Wave summary with links to this plan doc for detail
-- **Responsibility matrix** — what lives in engine / `@bnto/nodes` / `@bnto/form` / TUI `controls/` / editor — cross-reference with `.claude/rules/node-responsibilities.md`
+- **Responsibility matrix** — what lives in engine / `@bnto/nodes` / `@bnto/form` / TUI `controls/` / editor — cross-reference with `.claude/scopes/rust/node-responsibilities.md`
 - **Verification** — how to confirm a new engine field surfaces end-to-end in both web and TUI
 - **CLAUDE.md integration** — one-line guidance: "`@bnto/nodes` is a barrel over engine-generated code. Never hand-write schemas, document types, or control inference in `@bnto/nodes`."
 

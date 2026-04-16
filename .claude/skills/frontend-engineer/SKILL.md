@@ -165,13 +165,13 @@ Each domain owns its natural test boundary. Engine tests node logic. Core tests 
 
 | Document                                     | What it covers                                                      |
 | -------------------------------------------- | ------------------------------------------------------------------- |
-| `.claude/rules/components.md`                | Component architecture, hooks, flat exports, CSS-first states       |
-| `.claude/rules/theming.md`                   | Color tokens, fonts, radius, shadows                                |
-| `.claude/rules/animation.md`                 | Motion language, `Animate.*` API, CSS vs motion/react               |
-| `.claude/rules/skeletons.md`                 | Skeleton standards, layout shift prevention                         |
+| `.claude/scopes/web/components.md`           | Component architecture, hooks, flat exports, CSS-first states       |
+| `.claude/scopes/web/theming.md`              | Color tokens, fonts, radius, shadows                                |
+| `.claude/scopes/web/animation.md`            | Motion language, `Animate.*` API, CSS vs motion/react               |
+| `.claude/scopes/web/skeletons.md`            | Skeleton standards, layout shift prevention                         |
 | `.claude/strategy/data-fetching-strategy.md` | Hybrid fetching strategy, co-located queries, self-fetching pattern |
-| `.claude/rules/pages.md`                     | Page composition, SEO pages                                         |
-| `.claude/rules/performance.md`               | Server Components, bundle size, Core Web Vitals                     |
-| `.claude/rules/seo.md`                       | URL strategy, slug registry, metadata, JSON-LD                      |
+| `.claude/scopes/web/pages.md`                | Page composition, SEO pages                                         |
+| `.claude/scopes/web/performance.md`          | Server Components, bundle size, Core Web Vitals                     |
+| `.claude/scopes/web/seo.md`                  | URL strategy, slug registry, metadata, JSON-LD                      |
 | `.claude/rules/gotchas.md`                   | Known pitfalls and fixes                                            |
 | `.claude/rules/pre-commit.md`                | E2E testing requirements, screenshot verification                   |

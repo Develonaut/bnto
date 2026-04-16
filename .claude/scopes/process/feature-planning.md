@@ -173,6 +173,6 @@ No processor, node type, or recipe counts change.
 
 ## Relationship to Other Rules
 
-- **[pre-commit.md](pre-commit.md#pr-sizing--single-concern-prs-mandatory)** -- PR sizing rules apply to each planned PR. The planning format ensures compliance upfront.
-- **[code-standards.md](code-standards.md)** -- TDD Red-first applies within each PR's RED tests section.
-- **[engine-node-patterns.md](engine-node-patterns.md)** -- The checklists there define WHAT must happen. This format defines HOW to plan it across PRs.
+- **[pre-commit.md](../../rules/pre-commit.md#pr-sizing--single-concern-prs-mandatory)** -- PR sizing rules apply to each planned PR. The planning format ensures compliance upfront.
+- **[code-standards.md](../../rules/code-standards.md)** -- TDD Red-first applies within each PR's RED tests section.
+- **[engine-node-patterns.md](../rust/engine-node-patterns.md)** -- The checklists there define WHAT must happen. This format defines HOW to plan it across PRs.

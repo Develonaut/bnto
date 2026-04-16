@@ -10,10 +10,10 @@ You are working on the **Editor API Layer** sprint (Sprint 5D). This sprint adds
 
 ## Arguments
 
-| Flag | Description |
-|------|-------------|
-| _(no flag)_ | **Default.** Pick up the next unclaimed task in the current wave and execute it. |
-| `--status` | **Status check.** Report progress — what's done, what's next, any blockers. No code changes. |
+| Flag        | Description                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------------- |
+| _(no flag)_ | **Default.** Pick up the next unclaimed task in the current wave and execute it.             |
+| `--status`  | **Status check.** Report progress — what's done, what's next, any blockers. No code changes. |
 
 ## Before Every Session
 
@@ -35,6 +35,7 @@ createEditor(definition?)
 ```
 
 **Key rules:**
+
 - Services wrap **existing pure actions** + `storeApi.setState()` — do NOT duplicate action logic
 - Clients compose services for **cross-domain** operations (e.g., selectNode writes nodes + opens config panel)
 - Services NEVER call other services — cross-domain lives in clients only
@@ -43,19 +44,20 @@ createEditor(definition?)
 
 ## Wave → Phase Mapping
 
-| Wave | Phase | Summary |
-|------|-------|---------|
-| Wave 1 | Phase 1 | Services + `createEditor()` factory + tests |
-| Wave 2 | Phase 2 | EditorProvider + context + compat bridge |
+| Wave   | Phase   | Summary                                                 |
+| ------ | ------- | ------------------------------------------------------- |
+| Wave 1 | Phase 1 | Services + `createEditor()` factory + tests             |
+| Wave 2 | Phase 2 | EditorProvider + context + compat bridge                |
 | Wave 3 | Phase 3 | Domain-namespaced hooks (useNodes, useDefinition, etc.) |
-| Wave 4 | Phase 4 | Component migration (file-by-file) |
-| Wave 5 | Phase 5 | Delete deprecated hooks + singleton |
+| Wave 4 | Phase 4 | Component migration (file-by-file)                      |
+| Wave 5 | Phase 5 | Delete deprecated hooks + singleton                     |
 
 ## How to Pick Up a Task
 
 ### If `--status` flag:
 
 Read PLAN.md Sprint 5D. Report:
+
 - Completed tasks (count + list)
 - Current wave status (all done? any claimed?)
 - Next available task(s)
@@ -191,7 +193,7 @@ describe("createEditor", () => {
 
 - **Full plan:** `.claude/strategy/editor-api.md`
 - **Editor architecture:** `.claude/strategy/editor-architecture.md`
-- **Core API pattern (reference):** `.claude/rules/core-api.md`
+- **Core API pattern (reference):** `.claude/scopes/backend/core-api.md`
 - **Code standards:** `.claude/rules/code-standards.md`
 - **Editor store types:** `packages/editor/src/store/types.ts`
 - **Editor actions:** `packages/editor/src/actions/` (all files)

@@ -102,7 +102,7 @@ Use the audit table from Step 1b. Every file with `VIOLATION` status must be add
 - [ ] **Code duplication**: Near-identical logic across files = WARNING. Extract shared functions/components
 - [ ] **No grab bags**: No `utils.ts`, `helpers.ts`, `hooks.ts` files with multiple unrelated exports
 
-### 2c. Component Standards ([components.md](../../rules/components.md))
+### 2c. Component Standards ([components.md](../../scopes/web/components.md))
 
 Skip if no `.tsx` component files changed.
 
@@ -113,7 +113,7 @@ Skip if no `.tsx` component files changed.
 - [ ] **Size `md` default**: T-shirt-sized props default to `md`. Consumers rarely specify
 - [ ] **Hover/focus parity**: Every `group-hover:` has `group-focus-within:` for keyboard users
 
-### 2d. TypeScript Standards ([typescript.md](../../rules/typescript.md))
+### 2d. TypeScript Standards ([typescript.md](../../scopes/web/typescript.md))
 
 Skip if no TypeScript files changed.
 
@@ -124,7 +124,7 @@ Skip if no TypeScript files changed.
 - [ ] **`as const` + `satisfies`**: Used for literal preservation and shape validation
 - [ ] **Return types inferred**: Only annotate at public API boundaries
 
-### 2e. Data Fetching & State ([core-api.md](../../rules/core-api.md), [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md))
+### 2e. Data Fetching & State ([core-api.md](../../scopes/backend/core-api.md), [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md))
 
 Skip if no data fetching or state management files changed.
 
@@ -134,7 +134,7 @@ Skip if no data fetching or state management files changed.
 - [ ] **Right tool**: Server state → React Query, client state → Zustand, UI state → `useState`
 - [ ] **`convexQuery` skip guard**: Every `convexQuery()` with ID param uses `"skip"` when falsy
 
-### 2f. Performance ([performance.md](../../rules/performance.md))
+### 2f. Performance ([performance.md](../../scopes/web/performance.md))
 
 Skip if no frontend files changed.
 
@@ -143,7 +143,7 @@ Skip if no frontend files changed.
 - [ ] **No barrel imports in client**: Import specific files, not `index.ts`
 - [ ] **Heavy components lazy loaded**: Modals/dialogs use `next/dynamic`
 
-### 2g. Theming & Animation ([theming.md](../../rules/theming.md), [animation.md](../../rules/animation.md))
+### 2g. Theming & Animation ([theming.md](../../scopes/web/theming.md), [animation.md](../../scopes/web/animation.md))
 
 Skip if no styling/animation changes.
 
@@ -158,7 +158,7 @@ Skip if no styling/animation changes.
 - [ ] **Tailwind monorepo**: Classes in shared packages need `@source` in `globals.css`
 - [ ] **Transport-agnostic**: Components never call Convex or backend APIs directly
 
-### 2i. Rust Code ([engine-node-patterns.md](../../rules/engine-node-patterns.md))
+### 2i. Rust Code ([engine-node-patterns.md](../../scopes/rust/engine-node-patterns.md))
 
 Skip if no Rust files changed.
 

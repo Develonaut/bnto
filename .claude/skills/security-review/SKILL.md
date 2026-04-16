@@ -17,10 +17,10 @@ Before reviewing anything, read these files to understand the architecture and k
 
 ```
 .claude/CLAUDE.md                          # Architecture, tech stack, data flow
-.claude/rules/security.md                  # Existing security checklist (deferred items)
-.claude/rules/auth-routing.md              # Auth routing model (proxy, middleware, cookies)
+.claude/scopes/security/security.md                  # Existing security checklist (deferred items)
+.claude/scopes/web/auth-routing.md              # Auth routing model (proxy, middleware, cookies)
 .claude/environment-variables.md           # All env vars, where they're configured
-.claude/rules/convex.md                    # Convex function standards
+.claude/scopes/backend/convex.md                    # Convex function standards
 .claude/rules/code-standards.md             # Code standards
 ```
 

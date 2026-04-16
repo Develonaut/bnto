@@ -11,7 +11,7 @@ clients (public API)  ->  queries (read-path)  +  services (write-path)  ->  ada
 - **Services** -- Single-domain write-path logic. Mutations, cache invalidation, infrastructure lifecycle (e.g., lazy engine init). **Services do NOT call other services.** Cross-domain orchestration lives in clients only
 - **Adapters** -- Backend-specific bridge. Currently Convex (web data) and browser (WASM engine via Web Worker). Note: Desktop (Tauri) and CLI link the engine natively — they do not use `@bnto/core`. This package serves web consumers only. The only layer that imports from `@bnto/backend`. **Every adapter function that accepts an ID must use `"skip"` when the ID is falsy** -- see [convex.md](convex.md#convexquery-skip-guard-critical)
 
-**Node system re-exports:** Core re-exports all node system types, constants, and functions from `@bnto/registry` (which in turn re-exports from `@bnto/nodes`). This allows the editor and apps to import everything from `@bnto/core` — one import source for all runtime needs. See [architecture.md](architecture.md#import-boundary-rules).
+**Node system re-exports:** Core re-exports all node system types, constants, and functions from `@bnto/registry` (which in turn re-exports from `@bnto/nodes`). This allows the editor and apps to import everything from `@bnto/core` — one import source for all runtime needs. See [architecture.md](../../rules/architecture.md#import-boundary-rules).
 
 ### Dependency Rules
 
@@ -126,7 +126,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 
 The execution API accepts a **self-describing definition**. It doesn't know or care where the definition came from (predefined, custom, marketplace). The definition contains its own metadata (slug, name, nodes).
 
-**Engine owns pipeline execution.** The Rust engine handles graph walking, file iteration, container semantics, and progress events internally. In the browser, `core.executions.runPipeline()` converts browser types (File to bytes, Definition to WASM struct) and delegates to a single WASM call. The CLI calls the same engine natively. See [engine-execution.md](../strategy/engine-execution.md).
+**Engine owns pipeline execution.** The Rust engine handles graph walking, file iteration, container semantics, and progress events internally. In the browser, `core.executions.runPipeline()` converts browser types (File to bytes, Definition to WASM struct) and delegates to a single WASM call. The CLI calls the same engine natively. See [engine-execution.md](../../strategy/engine-execution.md).
 
 ```typescript
 // GOOD -- execution is definition-agnostic
@@ -201,7 +201,7 @@ const { data, isLoading } = useQuery({
 
 ### Convex Native Pagination: `usePaginatedQuery`
 
-Paginated lists use Convex's native `usePaginatedQuery` for real-time per-page subscriptions. See [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record.
+Paginated lists use Convex's native `usePaginatedQuery` for real-time per-page subscriptions. See [data-fetching-strategy.md](../../strategy/data-fetching-strategy.md) for the full decision record.
 
 **All paginated hooks MUST guard on `useReady()`** -- the `ConvexProvider` mounts after hydration. Without the guard, `usePaginatedQuery` crashes on the first render.
 

@@ -149,10 +149,10 @@ Security testing follows the same "each domain owns its boundary" principle, but
 
 | Document                                  | What it covers                                             |
 | ----------------------------------------- | ---------------------------------------------------------- |
-| `.claude/rules/security.md`               | Security audit checklist — auth, API, input, content, deps |
-| `.claude/rules/auth-routing.md`           | Two-layer auth model, proxy + data layer, signout flow     |
+| `.claude/scopes/security/security.md`     | Security audit checklist — auth, API, input, content, deps |
+| `.claude/scopes/web/auth-routing.md`      | Two-layer auth model, proxy + data layer, signout flow     |
 | `.claude/skills/security-review/SKILL.md` | Full security audit skill — 9 sections, all surfaces       |
-| `.claude/rules/convex.md`                 | Convex function standards, validators, auth checks         |
+| `.claude/scopes/backend/convex.md`        | Convex function standards, validators, auth checks         |
 | `.claude/rules/architecture.md`           | Data flow, R2 transit, execution model, service topology   |
 | `.claude/environment-variables.md`        | All env vars, where they're configured, which are public   |
 | `.claude/strategy/pricing-model.md`       | Browser free, server Pro. Pricing model                    |

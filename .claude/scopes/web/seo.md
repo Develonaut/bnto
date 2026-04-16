@@ -79,7 +79,7 @@ Tool pages include a factual description section (what/accepts/outputs/costs) us
 
 ### Registry
 
-3. Add to [strategy/bntos.md](../strategy/bntos.md)
+3. Add to [strategy/bntos.md](../../strategy/bntos.md)
 4. Add to `strategy/bntos.md`
 5. Add to `lib/bntoRegistry.ts` with full metadata (title, description, h1, fixture, features)
 6. Verify slug doesn't collide with reserved paths

@@ -194,7 +194,7 @@ Before building a new node type: verify the task isn't achievable with existing 
 
 ## SEO URL Conventions
 
-See [rules/seo.md](../rules/seo.md) for the full SEO strategy -- slug registry, naming conventions, metadata format, static generation, sitemap, middleware integration, and canonical URL handling.
+See [scopes/web/seo.md](../scopes/web/seo.md) for the full SEO strategy -- slug registry, naming conventions, metadata format, static generation, sitemap, middleware integration, and canonical URL handling.
 
 **Quick reference (details in seo.md):**
 
@@ -230,7 +230,7 @@ Every fixture must:
 
 ## Adding a New Recipe
 
-See the full checklist in [rules/seo.md](../rules/seo.md#checklist-shipping-a-new-bnto). Summary:
+See the full checklist in [scopes/web/seo.md](../scopes/web/seo.md#checklist-shipping-a-new-bnto). Summary:
 
 1. **Classify the node types** — Does it use browser nodes only (free) or server nodes (Pro)? See [pricing-model.md](pricing-model.md).
 2. Create or verify the fixture in `engine/examples/`

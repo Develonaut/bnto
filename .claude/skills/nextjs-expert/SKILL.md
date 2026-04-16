@@ -413,15 +413,15 @@ Run this checklist against every `apps/web/` change:
 
 ## References
 
-| Document                        | What it covers                                          |
-| ------------------------------- | ------------------------------------------------------- |
-| `.claude/rules/performance.md`  | Server Components, bundle size, Core Web Vitals targets |
-| `.claude/rules/pages.md`        | Page composition, layout vs page.tsx                    |
-| `.claude/rules/gotchas.md`      | SSG + Convex, Turbopack, Git case-sensitivity           |
-| `.claude/rules/auth-routing.md` | Proxy route protection, auth flow                       |
-| `.claude/rules/seo.md`          | Static generation, metadata, slug registry              |
-| `.claude/rules/skeletons.md`    | Loading states, layout shift prevention                 |
-| `.claude/rules/components.md`   | Component standards (shared with Frontend Engineer)     |
-| `apps/web/next.config.ts`       | Current Next.js configuration                           |
-| `apps/web/proxy.ts`             | Middleware implementation                               |
-| `apps/web/app/layout.tsx`       | Root layout, font loading, providers                    |
+| Document                             | What it covers                                          |
+| ------------------------------------ | ------------------------------------------------------- |
+| `.claude/scopes/web/performance.md`  | Server Components, bundle size, Core Web Vitals targets |
+| `.claude/scopes/web/pages.md`        | Page composition, layout vs page.tsx                    |
+| `.claude/rules/gotchas.md`           | SSG + Convex, Turbopack, Git case-sensitivity           |
+| `.claude/scopes/web/auth-routing.md` | Proxy route protection, auth flow                       |
+| `.claude/scopes/web/seo.md`          | Static generation, metadata, slug registry              |
+| `.claude/scopes/web/skeletons.md`    | Loading states, layout shift prevention                 |
+| `.claude/scopes/web/components.md`   | Component standards (shared with Frontend Engineer)     |
+| `apps/web/next.config.ts`            | Current Next.js configuration                           |
+| `apps/web/proxy.ts`                  | Middleware implementation                               |
+| `apps/web/app/layout.tsx`            | Root layout, font loading, providers                    |

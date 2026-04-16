@@ -139,9 +139,9 @@ MIT licensed. The engine compiles everywhere. Community-first. Link to GitHub, c
 This document is the **creative direction** for the landing page. It builds on:
 
 - [design-language.md](design-language.md) — Visual identity tokens (colors, type, radius, animation). Non-negotiable foundation
-- [animation.md](../rules/animation.md) — Animation implementation system (spring curves, CSS classes, components)
-- [theming.md](../rules/theming.md) — Exact token values (OKLCH colors, shadow scale, radius scale)
-- [seo.md](../rules/seo.md) — URL strategy, metadata, structured data for recipe pages
+- [animation.md](../scopes/web/animation.md) — Animation implementation system (spring curves, CSS classes, components)
+- [theming.md](../scopes/web/theming.md) — Exact token values (OKLCH colors, shadow scale, radius scale)
+- [seo.md](../scopes/web/seo.md) — URL strategy, metadata, structured data for recipe pages
 
 The design language is locked. This document adds landing-page-specific creative direction on top of it.
 

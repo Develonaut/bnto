@@ -71,7 +71,7 @@ For the candidate task(s), do quick research to understand what's involved:
 
 ### Step 4: Present the Proposal
 
-**If the work spans 2+ PRs**, produce a structured multi-PR plan following [feature-planning.md](../../rules/feature-planning.md). This is mandatory — not optional. The plan must include:
+**If the work spans 2+ PRs**, produce a structured multi-PR plan following [feature-planning.md](../../scopes/process/feature-planning.md). This is mandatory — not optional. The plan must include:
 
 - Phase header with context, what changes, what doesn't change (counts, surfaces)
 - Per-PR sections: branch, one-sentence summary, files (new/modified with counts), key function/API, RED tests, verification commands, count changes
@@ -79,7 +79,7 @@ For the candidate task(s), do quick research to understand what's involved:
 
 Present the full plan document to the user for approval. This IS the proposal.
 
-**If the work fits in a single PR**, use the same structured format from [feature-planning.md](../../rules/feature-planning.md). Single-PR work follows the same per-PR section structure — the only difference is there's no dependency chain.
+**If the work fits in a single PR**, use the same structured format from [feature-planning.md](../../scopes/process/feature-planning.md). Single-PR work follows the same per-PR section structure — the only difference is there's no dependency chain.
 
 Present the proposal using this exact structure:
 
@@ -154,9 +154,9 @@ Before doing ANY work, read and internalize the project's coding standards and a
 ```
 .claude/CLAUDE.md                  # Master reference — architecture, layering, tech stack
 .claude/rules/code-standards.md    # Single responsibility, file/function size limits (Bento Box Principle)
-.claude/rules/feature-planning.md  # Multi-PR feature plan format (required for 2+ PR work)
+.claude/scopes/process/feature-planning.md  # Multi-PR feature plan format (required for 2+ PR work)
 .claude/rules/                     # All rule files (if present)
-.claude/rules/pages.md             # SEO URL requirements and predefined Bnto page conventions
+.claude/scopes/web/pages.md             # SEO URL requirements and predefined Bnto page conventions
 .claude/rules/architecture.md      # Run quota schema, R2 transit rules
 .claude/strategy/core-principles.md # Trust commitments
 ```
@@ -219,7 +219,7 @@ Before writing any code, confirm your boundaries:
 
 **Pricing model scope check** — ask these before writing a single line (see [pricing-model.md](../../strategy/pricing-model.md)):
 
-- **Adding a new predefined recipe?** — It needs a dedicated URL slug, server-side metadata, and node classification (browser vs server). See `.claude/rules/pages.md` and `.claude/strategy/bntos.md`.
+- **Adding a new predefined recipe?** — It needs a dedicated URL slug, server-side metadata, and node classification (browser vs server). See `.claude/scopes/web/pages.md` and `.claude/strategy/bntos.md`.
 - **Adding execution logic?** — Browser-node executions are free, unlimited, no tracking needed. Server-node executions must be tracked (they count against Pro usage quota).
 - **Building a user-facing flow?** — Conversion hooks should trigger on value moments (save, history, server nodes, team) — never on browser execution limits.
 - **Touching the recipe editor?** — The editor is free. Create, run, export = free. Save, share, server nodes = Pro. Don't gate editor access.

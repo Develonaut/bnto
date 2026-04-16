@@ -17,7 +17,7 @@ Write failing tests BEFORE implementing the processor.
 - [ ] **Create processor file** — `engine/crates/bnto-{category}/src/{operation}.rs`
 - [ ] **Implement `NodeProcessor` trait** — `name()`, `metadata()`, `process()`, `validate()`
 - [ ] **`metadata()` complete** — all parameters have types, defaults, constraints, descriptions
-- [ ] **`metadata().input_cardinality`** — declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../strategy/smart-iteration.md)
+- [ ] **`metadata().input_cardinality`** — declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../../strategy/smart-iteration.md)
 - [ ] **`process()` parameter contract** — every param in `metadata()` is read and used in ALL code paths
 - [ ] **`validate()`** — validate param combinations that metadata constraints can't express
 - [ ] **Image processors use `encode::encode_image()`** — never custom encode functions

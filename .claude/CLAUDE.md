@@ -1,50 +1,75 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** April 9, 2026
+**Last Updated:** April 16, 2026
 
 ---
 
 ## Before You Write Any Code
 
-**STOP.** Read the relevant documentation first.
+**STOP.** Read the relevant documentation first. Rules are organized by scope — only the four **universal** rules auto-load on every session. Scope-specific rules are read on demand.
 
-| If you're working on...        | Read this first                                                                                |
-| ------------------------------ | ---------------------------------------------------------------------------------------------- |
-| Any code                       | [code-standards.md](.claude/rules/code-standards.md)                                           |
-| Any UI / styling work          | [rules/theming.md](.claude/rules/theming.md)                                                   |
-| Landing page / homepage        | [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md)                    |
-| Homepage sprint plan           | [homepage-sprint-plan.md](.claude/strategy/homepage-sprint-plan.md)                            |
-| Brand, messaging & mascots     | [brand-messaging-audit.md](.claude/strategy/brand-messaging-audit.md)                          |
-| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)                        |
-| Architecture decisions         | [rules/architecture.md](.claude/rules/architecture.md)                                         |
-| Editor architecture (frozen)   | [editor-architecture.md](.claude/strategy/editor-architecture.md)                              |
-| Editor API layer (frozen)      | [editor-api.md](.claude/strategy/editor-api.md)                                                |
-| Visual editor (frozen)         | [visual-editor.md](.claude/strategy/visual-editor.md)                                          |
-| Input/output nodes (frozen)    | [io-nodes.md](.claude/strategy/io-nodes.md)                                                    |
-| Node system responsibilities   | [node-responsibilities.md](.claude/rules/node-responsibilities.md)                             |
-| Adding a new engine node       | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)                               |
-| Adding a new recipe            | [engine-node-patterns.md](.claude/rules/engine-node-patterns.md#checklist-adding-a-new-recipe) |
-| Planning multi-PR features     | [feature-planning.md](.claude/rules/feature-planning.md)                                       |
-| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                                    |
-| Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                                    |
-| TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                                            |
-| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                                      |
-| Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)                              |
-| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                               |
-| Implementation task            | [PLAN.md](.claude/PLAN.md)                                                                     |
-| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                                          |
-| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                                    |
-| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                                                 |
-| SEO & URL strategy             | [rules/seo.md](.claude/rules/seo.md)                                                           |
-| Code editor (frozen)           | [code-editor.md](.claude/strategy/code-editor.md)                                              |
-| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)                        |
-| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                                      |
-| `@bnto/core` internals         | [core-api.md](.claude/rules/core-api.md)                                                       |
-| Environment variables          | [environment-variables.md](.claude/environment-variables.md)                                   |
-| Expression input UX (frozen)   | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)                              |
-| Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                                      |
-| Feature flags & A/B testing    | [feature-flags.md](.claude/rules/feature-flags.md)                                             |
-| Releases & versioning          | [releases.md](.claude/rules/releases.md)                                                       |
+### Universal (auto-loaded — always active)
+
+| If you're working on... | Read this first                                            |
+| ----------------------- | ---------------------------------------------------------- |
+| Any code                | [rules/code-standards.md](.claude/rules/code-standards.md) |
+| Architecture decisions  | [rules/architecture.md](.claude/rules/architecture.md)     |
+| Known pitfalls          | [rules/gotchas.md](.claude/rules/gotchas.md)               |
+| Pre-commit checklist    | [rules/pre-commit.md](.claude/rules/pre-commit.md)         |
+
+### Scope-Specific (read on demand — not auto-loaded)
+
+Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourself when working in that scope; persona skills (`/rust-expert`, `/frontend-engineer`, etc.) will load them for you when invoked.
+
+| If you're working on...       | Read this first                                                                                                                                |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any UI / styling work         | [scopes/web/theming.md](.claude/scopes/web/theming.md)                                                                                         |
+| React components              | [scopes/web/components.md](.claude/scopes/web/components.md)                                                                                   |
+| Page composition              | [scopes/web/pages.md](.claude/scopes/web/pages.md)                                                                                             |
+| Animation / motion            | [scopes/web/animation.md](.claude/scopes/web/animation.md)                                                                                     |
+| Loading states                | [scopes/web/skeletons.md](.claude/scopes/web/skeletons.md)                                                                                     |
+| Performance / Core Web Vitals | [scopes/web/performance.md](.claude/scopes/web/performance.md)                                                                                 |
+| TypeScript patterns           | [scopes/web/typescript.md](.claude/scopes/web/typescript.md)                                                                                   |
+| SEO & URL strategy            | [scopes/web/seo.md](.claude/scopes/web/seo.md)                                                                                                 |
+| Auth routing                  | [scopes/web/auth-routing.md](.claude/scopes/web/auth-routing.md)                                                                               |
+| Feature flags & A/B testing   | [scopes/web/feature-flags.md](.claude/scopes/web/feature-flags.md)                                                                             |
+| `@bnto/core` internals        | [scopes/backend/core-api.md](.claude/scopes/backend/core-api.md)                                                                               |
+| Convex queries / mutations    | [scopes/backend/convex.md](.claude/scopes/backend/convex.md)                                                                                   |
+| Node system responsibilities  | [scopes/rust/node-responsibilities.md](.claude/scopes/rust/node-responsibilities.md)                                                           |
+| Adding a new engine node      | [scopes/rust/engine-node-patterns.md](.claude/scopes/rust/engine-node-patterns.md)                                                             |
+| Adding a new recipe           | [scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe](.claude/scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe) |
+| Security / trust boundaries   | [scopes/security/security.md](.claude/scopes/security/security.md)                                                                             |
+| Planning multi-PR features    | [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md)                                                               |
+| Releases & versioning         | [scopes/process/releases.md](.claude/scopes/process/releases.md)                                                                               |
+
+### Strategy & Reference
+
+| If you're working on...        | Read this first                                                             |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| Landing page / homepage        | [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md) |
+| Homepage sprint plan           | [homepage-sprint-plan.md](.claude/strategy/homepage-sprint-plan.md)         |
+| Brand, messaging & mascots     | [brand-messaging-audit.md](.claude/strategy/brand-messaging-audit.md)       |
+| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)     |
+| Editor architecture (frozen)   | [editor-architecture.md](.claude/strategy/editor-architecture.md)           |
+| Editor API layer (frozen)      | [editor-api.md](.claude/strategy/editor-api.md)                             |
+| Visual editor (frozen)         | [visual-editor.md](.claude/strategy/visual-editor.md)                       |
+| Input/output nodes (frozen)    | [io-nodes.md](.claude/strategy/io-nodes.md)                                 |
+| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                 |
+| Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                 |
+| TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                         |
+| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                   |
+| Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)           |
+| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                            |
+| Implementation task            | [PLAN.md](.claude/PLAN.md)                                                  |
+| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                       |
+| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                 |
+| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                              |
+| Code editor (frozen)           | [code-editor.md](.claude/strategy/code-editor.md)                           |
+| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)     |
+| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                   |
+| Environment variables          | [environment-variables.md](.claude/environment-variables.md)                |
+| Expression input UX (frozen)   | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)           |
+| Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                   |
 
 ---
 
@@ -66,7 +91,7 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **1
 
 ## Critical Rules (Summary)
 
-These are enforced in detail by the [rules/](.claude/rules/) files. This section is the quick reference.
+These are enforced in detail by the universal rules files (auto-loaded) and scope-specific rules (read on demand). This section is the quick reference.
 
 1. **Layered Architecture:** CLI links engine directly. Web: `Apps → @bnto/core → Engine (Rust→WASM)`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
 2. **API Abstraction:** UI code NEVER calls Convex, Tauri, or Go directly. Always through `@bnto/core` hooks.
@@ -207,18 +232,25 @@ bnto/
 │   │   └── bnto/                # Native CLI binary (`bnto`) — primary consumer
 ├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
+    ├── rules/                   # Universal rules (auto-loaded)
+    └── scopes/                  # Scope-specific rules (read on demand)
+        ├── rust/
+        ├── web/
+        ├── backend/
+        ├── security/
+        └── process/
 ```
 
 ---
 
 ## Agent Workflow
 
-1. **Read context** — Review this file, rules/, and relevant docs
+1. **Read context** — Review this file, universal rules in `.claude/rules/`, and any scope-specific rules in `.claude/scopes/<scope>/` that match your work
 2. **Check the plan** — See [PLAN.md](.claude/PLAN.md) for current sprint
 3. **Claim a task** — Mark it CLAIMED before starting
-4. **Plan multi-PR work** — If the task spans 2+ PRs, produce a structured plan per [feature-planning.md](.claude/rules/feature-planning.md) before writing code. Present the plan for approval
+4. **Plan multi-PR work** — If the task spans 2+ PRs, produce a structured plan per [feature-planning.md](.claude/scopes/process/feature-planning.md) before writing code. Present the plan for approval
 5. **Create a branch** — `git checkout -b <type>/<short-description>`. Never commit directly to `main`
-6. **Follow patterns** — Match existing code style (see rules/)
+6. **Follow patterns** — Match existing code style (see the relevant scope's rules)
 7. **Test boundaries** — Write tests for engine logic and API contracts
 8. **E2E test** — If you touched UI, run `task e2e` (requires `task dev` running — Next.js + Convex on port 4000). Start it yourself if needed — never skip because "the stack isn't running"
 9. **Mark done** — Update the plan when complete
@@ -245,25 +277,62 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ## Documentation Index
 
-### Rules (auto-loaded, always active)
+### Universal Rules (auto-loaded)
 
-| Document                                                           | Purpose                                                                                  |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| [code-standards.md](.claude/rules/code-standards.md)               | Bento Box Principle, size limits, file organization                                      |
-| [architecture.md](.claude/rules/architecture.md)                   | Layered architecture, data flow, deployment topology                                     |
-| [components.md](.claude/rules/components.md)                       | Component patterns, hooks, flat exports, CSS-first states                                |
-| [theming.md](.claude/rules/theming.md)                             | Color tokens, fonts, radius, shadows                                                     |
-| [animation.md](.claude/rules/animation.md)                         | Motion language, CSS animation system, animation components                              |
-| [seo.md](.claude/rules/seo.md)                                     | URL strategy, slug registry, metadata, shipping checklist                                |
-| [pre-commit.md](.claude/rules/pre-commit.md)                       | Mandatory checklist before every commit                                                  |
-| [core-api.md](.claude/rules/core-api.md)                           | @bnto/core client/service/adapter pattern                                                |
-| [auth-routing.md](.claude/rules/auth-routing.md)                   | Proxy route protection, auth flow                                                        |
-| [convex.md](.claude/rules/convex.md)                               | Query patterns, validators, N+1 prevention                                               |
-| [node-responsibilities.md](.claude/rules/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix                                      |
-| [engine-node-patterns.md](.claude/rules/engine-node-patterns.md)   | Adding new nodes & recipes — full checklists, test counts, codegen, surface verification |
-| [feature-planning.md](.claude/rules/feature-planning.md)           | Multi-PR feature plans — structure, RED tests, dependency chains, verification           |
-| [feature-flags.md](.claude/rules/feature-flags.md)                 | Feature flags & A/B testing via PostHog + `core.flags` API                               |
-| [gotchas.md](.claude/rules/gotchas.md)                             | Known pitfalls and fixes                                                                 |
+Four rules auto-load on every session because they apply to every change, regardless of scope.
+
+| Document                                             | Purpose                                              |
+| ---------------------------------------------------- | ---------------------------------------------------- |
+| [architecture.md](.claude/rules/architecture.md)     | Layered architecture, data flow, deployment topology |
+| [code-standards.md](.claude/rules/code-standards.md) | Bento Box Principle, size limits, file organization  |
+| [gotchas.md](.claude/rules/gotchas.md)               | Known pitfalls and fixes                             |
+| [pre-commit.md](.claude/rules/pre-commit.md)         | Mandatory checklist before every commit              |
+
+### Scope-Specific Rules (read on demand)
+
+These rules do NOT auto-load. Read them yourself when you start working in a scope, or invoke the matching persona skill (e.g., `/rust-expert`) and it will load them for you.
+
+**Web (`apps/web/`, `packages/ui/`, `packages/editor/`):**
+
+| Document                                                           | Purpose                                                     |
+| ------------------------------------------------------------------ | ----------------------------------------------------------- |
+| [scopes/web/components.md](.claude/scopes/web/components.md)       | Component patterns, hooks, flat exports, CSS-first states   |
+| [scopes/web/theming.md](.claude/scopes/web/theming.md)             | Color tokens, fonts, radius, shadows                        |
+| [scopes/web/animation.md](.claude/scopes/web/animation.md)         | Motion language, CSS animation system, animation components |
+| [scopes/web/pages.md](.claude/scopes/web/pages.md)                 | Page composition, server/client boundaries                  |
+| [scopes/web/skeletons.md](.claude/scopes/web/skeletons.md)         | Loading states, layout shift prevention                     |
+| [scopes/web/performance.md](.claude/scopes/web/performance.md)     | Server Components first, bundle size, Core Web Vitals       |
+| [scopes/web/typescript.md](.claude/scopes/web/typescript.md)       | Inference-first, no `any`, `satisfies`, `as const` patterns |
+| [scopes/web/seo.md](.claude/scopes/web/seo.md)                     | URL strategy, slug registry, metadata, shipping checklist   |
+| [scopes/web/auth-routing.md](.claude/scopes/web/auth-routing.md)   | Proxy route protection, auth flow                           |
+| [scopes/web/feature-flags.md](.claude/scopes/web/feature-flags.md) | Feature flags & A/B testing via PostHog + `core.flags` API  |
+
+**Backend (`packages/core/`, `packages/@bnto/backend/`):**
+
+| Document                                                         | Purpose                                    |
+| ---------------------------------------------------------------- | ------------------------------------------ |
+| [scopes/backend/core-api.md](.claude/scopes/backend/core-api.md) | @bnto/core client/service/adapter pattern  |
+| [scopes/backend/convex.md](.claude/scopes/backend/convex.md)     | Query patterns, validators, N+1 prevention |
+
+**Rust (`engine/`):**
+
+| Document                                                                             | Purpose                                                                                  |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| [scopes/rust/node-responsibilities.md](.claude/scopes/rust/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix                                      |
+| [scopes/rust/engine-node-patterns.md](.claude/scopes/rust/engine-node-patterns.md)   | Adding new nodes & recipes — full checklists, test counts, codegen, surface verification |
+
+**Security (cross-cutting):**
+
+| Document                                                           | Purpose                                                |
+| ------------------------------------------------------------------ | ------------------------------------------------------ |
+| [scopes/security/security.md](.claude/scopes/security/security.md) | Security audit checklist — auth, API, input validation |
+
+**Process (planning + releases):**
+
+| Document                                                                         | Purpose                                                                        |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md) | Multi-PR feature plans — structure, RED tests, dependency chains, verification |
+| [scopes/process/releases.md](.claude/scopes/process/releases.md)                 | Release process — tag-triggered pipeline, versioning, rollback                 |
 
 ### Strategy & Reference (read on demand)
 
@@ -291,7 +360,7 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ### Domain Expert Personas (invoke with `/persona-name`)
 
-Persona skills are domain experts that can be activated to adopt specialized knowledge for a specific area of the codebase. Invoke them directly when working in their domain, or let workflow skills (`/pickup`, `/pre-commit`, `/code-review`) activate them automatically.
+Persona skills are domain experts that can be activated to adopt specialized knowledge for a specific area of the codebase. Invoke them directly when working in their domain, or let workflow skills (`/pickup`, `/pre-commit`, `/code-review`) activate them automatically. Each persona loads its scoped rules from `.claude/scopes/` when invoked.
 
 | Persona            | Domain                                                                                                            | Invoke                |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------- | --------------------- |

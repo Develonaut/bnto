@@ -32,7 +32,7 @@ Three layers own different concerns of the node system. This document is the dec
 > **If it's about the visual editing experience → Editor.**
 > **@bnto/nodes should be mostly generated code + types. Minimize hand-written logic. Recipes are engine-owned (`engine/recipes/`).**
 
-**Import boundary:** `@bnto/nodes` is consumed ONLY by `@bnto/registry`. Editor and core never import from `@bnto/nodes` directly — they import from `@bnto/core` (which re-exports from `@bnto/registry`, which re-exports from `@bnto/nodes`). See [architecture.md](architecture.md#import-boundary-rules).
+**Import boundary:** `@bnto/nodes` is consumed ONLY by `@bnto/registry`. Editor and core never import from `@bnto/nodes` directly — they import from `@bnto/core` (which re-exports from `@bnto/registry`, which re-exports from `@bnto/nodes`). See [architecture.md](../../rules/architecture.md#import-boundary-rules).
 
 ## Engine Node Processor Patterns
 
