@@ -15,6 +15,7 @@
 ## Inference Patterns
 
 **`as const` for literal preservation:**
+
 ```typescript
 export const NODE_TYPES = {
   image: "image",
@@ -26,6 +27,7 @@ export type NodeType = (typeof NODE_TYPES)[keyof typeof NODE_TYPES];
 ```
 
 **`satisfies` for validation without widening:**
+
 ```typescript
 const routes = {
   home: "/",
@@ -35,6 +37,7 @@ const routes = {
 ```
 
 **Factory functions over manual construction:**
+
 ```typescript
 // GOOD -- inference flows through the factory
 const mutation = createMutation(api.workflows.save);
@@ -45,11 +48,11 @@ const mutation = (args: SaveWorkflowArgs): Promise<void> => { ... };
 
 ## Anti-Patterns
 
-| Anti-Pattern | Fix |
-|---|---|
-| `const x: Foo = getFoo()` | `const x = getFoo()` -- inference handles it |
-| `function foo(): ReturnType` on internals | Drop annotation -- let TS infer |
-| `<Foo>` turbofish where TS can infer | Remove type parameter -- fix API if inference fails |
-| `as Type` to "help" the compiler | Fix the source type -- `as` hides real errors |
-| `Record<string, X>` for known keys | Mapped type or `as const satisfies` |
-| Separate type and value declarations | Derive types from values with `typeof` / `as const` |
+| Anti-Pattern                              | Fix                                                 |
+| ----------------------------------------- | --------------------------------------------------- |
+| `const x: Foo = getFoo()`                 | `const x = getFoo()` -- inference handles it        |
+| `function foo(): ReturnType` on internals | Drop annotation -- let TS infer                     |
+| `<Foo>` turbofish where TS can infer      | Remove type parameter -- fix API if inference fails |
+| `as Type` to "help" the compiler          | Fix the source type -- `as` hides real errors       |
+| `Record<string, X>` for known keys        | Mapped type or `as const satisfies`                 |
+| Separate type and value declarations      | Derive types from values with `typeof` / `as const` |

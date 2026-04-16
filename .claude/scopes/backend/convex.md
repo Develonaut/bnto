@@ -53,9 +53,7 @@ const withWorkflows = await Promise.all(
 
 // GOOD -- batch: one query per unique workflow
 const workflowIds = [...new Set(executions.map((e) => e.workflowId))];
-const workflows = await Promise.all(
-  workflowIds.map((id) => ctx.db.get(id as Id<"workflows">)),
-);
+const workflows = await Promise.all(workflowIds.map((id) => ctx.db.get(id as Id<"workflows">)));
 const workflowMap = new Map(
   workflows.filter((w): w is NonNullable<typeof w> => w !== null).map((w) => [w._id, w]),
 );

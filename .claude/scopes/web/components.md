@@ -109,10 +109,10 @@ Feature/
 
 **All t-shirt-sized props (`size`, `elevation`, `radius`, etc.) default to `md`.** This is the system-wide baseline — consumers should rarely need to specify a size. When `md` is the default, most call sites are clean: `<Button>Label</Button>`, not `<Button size="md">Label</Button>`.
 
-| Prop | Default | When to deviate |
-|---|---|---|
-| `size` | `md` | `sm` for tight spaces (toolbars, inline controls). `lg` for hero CTAs |
-| `elevation` | `md` (via size variant) | `none` for flat/ghost surfaces. `lg` for floating overlays |
+| Prop        | Default                 | When to deviate                                                       |
+| ----------- | ----------------------- | --------------------------------------------------------------------- |
+| `size`      | `md`                    | `sm` for tight spaces (toolbars, inline controls). `lg` for hero CTAs |
+| `elevation` | `md` (via size variant) | `none` for flat/ghost surfaces. `lg` for floating overlays            |
 
 **When building new components with size variants:** Set `defaultVariants.size` to `md` in `createCn()`. Consumers get the standard size for free — they only pass `size` when they explicitly need something smaller or larger.
 
