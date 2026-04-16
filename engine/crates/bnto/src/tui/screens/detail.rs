@@ -202,6 +202,7 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::metadata::OptionEntry;
 
     // --- Test helpers ---
 
@@ -221,7 +222,20 @@ mod tests {
                 label: "Output Format".into(),
                 value: "jpeg".into(),
                 param_type: ParameterType::Enum {
-                    options: vec!["jpeg".into(), "png".into(), "webp".into()],
+                    options: vec![
+                        OptionEntry {
+                            value: "jpeg".into(),
+                            label: "JPEG".into(),
+                        },
+                        OptionEntry {
+                            value: "png".into(),
+                            label: "PNG".into(),
+                        },
+                        OptionEntry {
+                            value: "webp".into(),
+                            label: "WebP".into(),
+                        },
+                    ],
                 },
                 default: "jpeg".into(),
             },

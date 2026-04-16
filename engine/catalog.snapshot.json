@@ -280,9 +280,18 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "lower",
-              "upper",
-              "title"
+              {
+                "value": "lower",
+                "label": "lowercase"
+              },
+              {
+                "value": "upper",
+                "label": "UPPERCASE"
+              },
+              {
+                "value": "title",
+                "label": "Title Case"
+              }
             ]
           },
           "surfaceable": true
@@ -345,7 +354,23 @@
             "max": 100.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
         }
       ],
       "inputCardinality": "perFile"
@@ -372,9 +397,18 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "jpeg",
-              "png",
-              "webp"
+              {
+                "value": "jpeg",
+                "label": "JPEG"
+              },
+              {
+                "value": "png",
+                "label": "PNG"
+              },
+              {
+                "value": "webp",
+                "label": "WebP"
+              }
             ]
           },
           "default": "jpeg",
@@ -396,7 +430,23 @@
             "max": 100.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
         }
       ],
       "inputCardinality": "perFile"
@@ -439,19 +489,47 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "top-left",
-              "top-center",
-              "top-right",
-              "middle-left",
-              "center",
-              "middle-right",
-              "bottom-left",
-              "bottom-center",
-              "bottom-right"
+              {
+                "value": "top-left",
+                "label": "Top Left"
+              },
+              {
+                "value": "top-center",
+                "label": "Top Center"
+              },
+              {
+                "value": "top-right",
+                "label": "Top Right"
+              },
+              {
+                "value": "middle-left",
+                "label": "Middle Left"
+              },
+              {
+                "value": "center",
+                "label": "Center"
+              },
+              {
+                "value": "middle-right",
+                "label": "Middle Right"
+              },
+              {
+                "value": "bottom-left",
+                "label": "Bottom Left"
+              },
+              {
+                "value": "bottom-center",
+                "label": "Bottom Center"
+              },
+              {
+                "value": "bottom-right",
+                "label": "Bottom Right"
+              }
             ]
           },
           "default": "bottom-right",
-          "surfaceable": true
+          "surfaceable": true,
+          "control": "positionGrid"
         },
         {
           "name": "size",
@@ -466,7 +544,8 @@
             "max": 500.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%"
         },
         {
           "name": "opacity",
@@ -481,7 +560,8 @@
             "max": 100.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%"
         },
         {
           "name": "offsetX",
@@ -496,7 +576,9 @@
             "max": 500.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "group": "offset",
+          "suffix": "px"
         },
         {
           "name": "offsetY",
@@ -511,7 +593,9 @@
             "max": 500.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "group": "offset",
+          "suffix": "px"
         },
         {
           "name": "quality",
@@ -526,7 +610,23 @@
             "max": 100.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
         }
       ],
       "inputCardinality": "perFile"
@@ -556,7 +656,9 @@
             "min": 1.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "group": "dimensions",
+          "suffix": "px"
         },
         {
           "name": "height",
@@ -569,7 +671,9 @@
             "min": 1.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "group": "dimensions",
+          "suffix": "px"
         },
         {
           "name": "maintainAspect",
@@ -594,7 +698,23 @@
             "max": 100.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
         }
       ],
       "inputCardinality": "perFile"
@@ -626,7 +746,23 @@
             "max": 100.0,
             "required": false
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
         }
       ],
       "inputCardinality": "perFile"
@@ -695,10 +831,22 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "comma",
-              "semicolon",
-              "tab",
-              "pipe"
+              {
+                "value": "comma",
+                "label": "Comma"
+              },
+              {
+                "value": "semicolon",
+                "label": "Semicolon"
+              },
+              {
+                "value": "tab",
+                "label": "Tab"
+              },
+              {
+                "value": "pipe",
+                "label": "Pipe"
+              }
             ]
           },
           "default": "comma",
@@ -736,8 +884,14 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "first-file",
-              "union"
+              {
+                "value": "first-file",
+                "label": "First File"
+              },
+              {
+                "value": "union",
+                "label": "Union"
+              }
             ]
           },
           "default": "first-file",
@@ -775,7 +929,8 @@
           "paramType": {
             "type": "object"
           },
-          "surfaceable": true
+          "surfaceable": true,
+          "control": "keyValue"
         }
       ],
       "inputCardinality": "perFile"
@@ -870,9 +1025,18 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "png",
-              "jpeg",
-              "webp"
+              {
+                "value": "png",
+                "label": "PNG"
+              },
+              {
+                "value": "jpeg",
+                "label": "JPEG"
+              },
+              {
+                "value": "webp",
+                "label": "WebP"
+              }
             ]
           },
           "default": "png",
@@ -931,13 +1095,34 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "mp4",
-              "webm",
-              "mkv",
-              "mp3",
-              "m4a",
-              "wav",
-              "flac"
+              {
+                "value": "mp4",
+                "label": "MP4"
+              },
+              {
+                "value": "webm",
+                "label": "WebM"
+              },
+              {
+                "value": "mkv",
+                "label": "MKV"
+              },
+              {
+                "value": "mp3",
+                "label": "MP3"
+              },
+              {
+                "value": "m4a",
+                "label": "M4A"
+              },
+              {
+                "value": "wav",
+                "label": "WAV"
+              },
+              {
+                "value": "flac",
+                "label": "FLAC"
+              }
             ]
           },
           "default": "mp4",
@@ -950,11 +1135,26 @@
           "paramType": {
             "type": "enum",
             "options": [
-              "best",
-              "1080",
-              "720",
-              "480",
-              "360"
+              {
+                "value": "best",
+                "label": "Best Available"
+              },
+              {
+                "value": "1080",
+                "label": "1080p"
+              },
+              {
+                "value": "720",
+                "label": "720p"
+              },
+              {
+                "value": "480",
+                "label": "480p"
+              },
+              {
+                "value": "360",
+                "label": "360p"
+              }
             ]
           },
           "default": "best",

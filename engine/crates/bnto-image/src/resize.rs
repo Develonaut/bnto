@@ -389,6 +389,8 @@ fn dimension_param(name: &str, label: &str, desc: &str) -> bnto_core::metadata::
             max: None,
             required: false,
         }),
+        group: Some("dimensions".to_string()),
+        suffix: Some("px".to_string()),
         ..Default::default()
     }
 }

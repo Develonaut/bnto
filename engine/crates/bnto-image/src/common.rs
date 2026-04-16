@@ -27,7 +27,20 @@ pub(crate) fn format_param_def() -> bnto_core::metadata::ParameterDef {
         label: "Output Format".to_string(),
         description: "The target image format to convert to".to_string(),
         param_type: ParameterType::Enum {
-            options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
+            options: vec![
+                OptionEntry {
+                    value: "jpeg".to_string(),
+                    label: "JPEG".to_string(),
+                },
+                OptionEntry {
+                    value: "png".to_string(),
+                    label: "PNG".to_string(),
+                },
+                OptionEntry {
+                    value: "webp".to_string(),
+                    label: "WebP".to_string(),
+                },
+            ],
         },
         default: Some(serde_json::json!("jpeg")),
         constraints: Some(Constraints {
@@ -53,6 +66,22 @@ pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
             max: Some(100.0),
             required: false,
         }),
+        control: Some("slider".to_string()),
+        suffix: Some("%".to_string()),
+        presets: Some(vec![
+            PresetEntry {
+                value: serde_json::json!(60),
+                label: "Draft".to_string(),
+            },
+            PresetEntry {
+                value: serde_json::json!(80),
+                label: "Balanced".to_string(),
+            },
+            PresetEntry {
+                value: serde_json::json!(100),
+                label: "Maximum".to_string(),
+            },
+        ]),
         ..Default::default()
     }
 }

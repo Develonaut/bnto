@@ -161,13 +161,9 @@ fn should_skip_child(
             false
         }
         roxmltree::NodeType::Comment => config.remove_comments,
-        roxmltree::NodeType::Text => {
-            if config.minify {
-                let text = node.text().unwrap_or("");
-                xml_passes::minify_text(text).is_empty()
-            } else {
-                false
-            }
+        roxmltree::NodeType::Text if config.minify => {
+            let text = node.text().unwrap_or("");
+            xml_passes::minify_text(text).is_empty()
         }
         roxmltree::NodeType::PI => true,
         _ => false,

@@ -41,10 +41,7 @@ impl NodeProcessor for OptimizeSvg {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::Value::Bool(true)),
                     constraints: None,
-                    placeholder: None,
-                    visible_when: None,
-                    required_when: None,
-                    surfaceable: true,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "removeMetadata".to_string(),
@@ -53,10 +50,7 @@ impl NodeProcessor for OptimizeSvg {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::Value::Bool(true)),
                     constraints: None,
-                    placeholder: None,
-                    visible_when: None,
-                    required_when: None,
-                    surfaceable: true,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "collapseGroups".to_string(),
@@ -66,10 +60,7 @@ impl NodeProcessor for OptimizeSvg {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::Value::Bool(true)),
                     constraints: None,
-                    placeholder: None,
-                    visible_when: None,
-                    required_when: None,
-                    surfaceable: true,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "minify".to_string(),
@@ -78,10 +69,7 @@ impl NodeProcessor for OptimizeSvg {
                     param_type: ParameterType::Boolean,
                     default: Some(serde_json::Value::Bool(true)),
                     constraints: None,
-                    placeholder: None,
-                    visible_when: None,
-                    required_when: None,
-                    surfaceable: true,
+                    ..Default::default()
                 },
                 ParameterDef {
                     name: "precision".to_string(),
@@ -95,10 +83,7 @@ impl NodeProcessor for OptimizeSvg {
                         max: Some(8.0),
                         required: false,
                     }),
-                    placeholder: None,
-                    visible_when: None,
-                    required_when: None,
-                    surfaceable: true,
+                    ..Default::default()
                 },
             ],
             requires: vec![],
