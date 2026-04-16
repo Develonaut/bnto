@@ -33,7 +33,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Engine (Rust):** Library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), WASM entry point (bnto-wasm), CLI binary (bnto). CLI is the primary consumer, browser (WASM) is secondary
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
-- **Next: TUI (Sprint 10)** — `bnto tui` via ratatui + crossterm (recipe browser, file picker, progress, results)
+- **TUI delivered (Sprint 10):** `bnto tui` via ratatui + crossterm — 6 screens (browser, detail, picker, execution, results, settings), 278 tests
+- **Next: TUI Schema-Driven Config (Sprint 11)** — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation, conditional visibility)
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -211,7 +212,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Next up: TUI Schema-Driven Config (Sprint 11).** The detail screen currently renders all parameters as text inputs regardless of type. Sprint 11 enriches the parameter editing experience with type-aware controls — boolean toggles, enum selects, number sliders with bounds, inline validation, description/help text, and conditional visibility. Same TEA architecture, same TDD approach. See Sprint 11 below.
 
-**After Sprint 11:** File picker UX overhaul (backlog triage), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
+**After Sprint 11:** File picker UX Phase 2 (backlog triage — breadcrumb, tree view, preview), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
 
 ---
 
@@ -638,9 +639,9 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
 - [x] `engine/crates/bnto` — **Screen transition integration tests**: Test the full Detail → Picker → Execution flow: param overrides carry through to definition, selected files pass to execution, progress events update execution model. Cover the confirm-with-params path that Wave 2 couldn't demo
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
-- [ ] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
+- [ ] `engine/crates/bnto` — **Carry-forward: Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
-**After TUI:** Schema-driven config (Sprint 11), file picker UX overhaul (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
+**After Sprint 11:** File picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
 
 ---
 
@@ -1007,7 +1008,7 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 - [x] Codegen + golden tests + test count updates
 - [x] **Delivers:** `/optimize-svg` recipe page
 
-**Phase 3 — EPS → SVG (CLI-only shell-out):**
+**Phase 3 — EPS → SVG (CLI-only shell-out): Priority: Low.**
 
 - [ ] `engine/crates/bnto-vector` — EPS/AI→SVG processor via Inkscape/Ghostscript shell-out
 - [ ] `#[cfg(feature = "native")]` only — no browser support

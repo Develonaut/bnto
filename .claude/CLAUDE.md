@@ -140,6 +140,13 @@ task cli:test           # Run CLI unit + integration + golden tests
 task cli:golden         # Run golden tests only (byte-exact output verification)
 task cli:golden:bless   # Regenerate golden files from current CLI output
 
+# CLI commands
+bnto run <recipe> [files...]  # Run a recipe against files
+bnto list                     # List available recipes
+bnto info <recipe>            # Show recipe details and dependencies
+bnto doctor                   # Check external dependencies (yt-dlp, etc.)
+bnto tui                      # Launch interactive TUI (recipe browser, file picker, execution)
+
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
 task ui:test            # Run all TS tests
