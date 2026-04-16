@@ -639,7 +639,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **End-to-end wiring**: Connect all 5 screens into the app router. Verify full flow: browser → detail → picker → execution → results → browser. Manual testing in terminal. Fix layout/rendering issues
 - [x] `engine/crates/bnto` — **Screen transition integration tests**: Test the full Detail → Picker → Execution flow: param overrides carry through to definition, selected files pass to execution, progress events update execution model. Cover the confirm-with-params path that Wave 2 couldn't demo
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
-- [ ] `engine/crates/bnto` — **Carry-forward: Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
+- [x] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
 **After Sprint 11:** File picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
 
