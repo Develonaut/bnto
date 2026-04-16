@@ -6,7 +6,7 @@
  * this file has ZERO imports from the context layer (no cycle).
  */
 
-import { core, definitionToPipeline } from "@bnto/core";
+import { core, definitionToPipeline, bucketFileSize, categorizeError } from "@bnto/core";
 import type { BrowserFileResult, ExecutionInstance } from "@bnto/core";
 import type { StoreApi } from "zustand";
 import type { RecipeStepperState } from "./recipeStepperStore";
@@ -74,10 +74,13 @@ function downloadResult(result: BrowserFileResult) {
 function setFilesAction(ctx: ActionContext, files: File[]) {
   ctx.store.getState().setFiles(files);
   if (files.length > 0) {
+    const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
     core.telemetry.capture("files_added", {
       slug: ctx.slug,
       fileCount: files.length,
-      totalBytes: files.reduce((sum, f) => sum + f.size, 0),
+      totalBytes,
+      sizeBucket: bucketFileSize(totalBytes),
+      fileTypes: countFileTypes(files),
     });
   }
 }
@@ -109,10 +112,13 @@ async function runAction(ctx: ActionContext) {
   const { files, config } = ctx.store.getState();
   if (files.length === 0) return;
 
+  const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
   const props = {
     slug: ctx.slug,
     fileCount: files.length,
-    totalBytes: files.reduce((sum, f) => sum + f.size, 0),
+    totalBytes,
+    sizeBucket: bucketFileSize(totalBytes),
+    fileTypes: countFileTypes(files),
   };
   const startTime = Date.now();
   core.telemetry.capture("recipe_run_started", props);
@@ -153,5 +159,20 @@ function captureCompleted(
 }
 
 function captureFailed(props: Record<string, unknown>, durationMs: number, error: string) {
-  core.telemetry.capture("recipe_run_failed", { ...props, durationMs, error });
+  core.telemetry.capture("recipe_run_failed", {
+    ...props,
+    durationMs,
+    error,
+    errorCategory: categorizeError(error),
+  });
+}
+
+/** Count occurrences of each MIME type in a file list. */
+function countFileTypes(files: File[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const file of files) {
+    const type = file.type || "unknown";
+    counts[type] = (counts[type] ?? 0) + 1;
+  }
+  return counts;
 }

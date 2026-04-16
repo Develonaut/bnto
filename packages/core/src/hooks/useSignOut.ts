@@ -16,6 +16,7 @@ export function useSignOut() {
   const authSignOut = useAuthSignOut();
 
   return useCallback(() => {
+    core.telemetry.reset();
     core.auth.signOutSideEffects();
     void authSignOut();
   }, [authSignOut]);
