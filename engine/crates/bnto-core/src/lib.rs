@@ -64,6 +64,7 @@ pub use executor::execute_pipeline;
 pub use metadata::{
     Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo,
     ParamCondition, ParamConditionEntry, ParameterDef, ParameterType, all_node_types,
+    io_container::io_container_param_defs, node_type_params,
 };
 pub use pipeline::{
     InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,

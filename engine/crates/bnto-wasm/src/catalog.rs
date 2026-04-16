@@ -11,10 +11,25 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 struct CatalogEnvelope {
     version: String,
-    node_types: Vec<bnto_core::NodeTypeInfo>,
+    node_types: Vec<CatalogNodeType>,
     processors: Vec<bnto_core::NodeMetadata>,
     definition_schema: serde_json::Value,
     recipes: Vec<RecipeEntry>,
+}
+
+/// A node-type entry in the catalog, joining `NodeTypeInfo` with the param
+/// definitions the engine knows for that type. For non-processor types
+/// (input, output, loop, group, parallel, transform, edit-fields) params
+/// come from `bnto_core::node_type_params`. For processor types they come
+/// from the registry's `NodeMetadata::parameters`. Types with no declared
+/// params (e.g. `http-request`, `shell-command`) omit the field.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CatalogNodeType {
+    #[serde(flatten)]
+    info: bnto_core::NodeTypeInfo,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    params: Vec<bnto_core::ParameterDef>,
 }
 
 /// A recipe entry in the catalog snapshot.
@@ -26,6 +41,25 @@ struct RecipeEntry {
     category: String,
     tags: Vec<String>,
     definition: serde_json::Value,
+}
+
+/// Build the catalog's `nodeTypes` array by joining every `NodeTypeInfo`
+/// with its parameter definitions. Keeps the engine as the single source
+/// of truth for the UI contract.
+fn build_catalog_node_types(processors: &[bnto_core::NodeMetadata]) -> Vec<CatalogNodeType> {
+    bnto_core::all_node_types()
+        .into_iter()
+        .map(|info| {
+            let params = bnto_core::node_type_params(&info.name).unwrap_or_else(|| {
+                processors
+                    .iter()
+                    .find(|m| m.node_type == info.name)
+                    .map(|m| m.parameters.clone())
+                    .unwrap_or_default()
+            });
+            CatalogNodeType { info, params }
+        })
+        .collect()
 }
 
 /// Return a pretty-printed JSON string of the engine's full catalog.
@@ -52,7 +86,7 @@ pub fn node_catalog() -> Result<String, JsValue> {
 
     let envelope = CatalogEnvelope {
         version: bnto_core::FORMAT_VERSION.to_string(),
-        node_types: bnto_core::all_node_types(),
+        node_types: build_catalog_node_types(&catalog),
         processors: catalog,
         definition_schema: bnto_core::definition_json_schema(),
         recipes,
@@ -82,20 +116,23 @@ mod tests {
             .collect()
     }
 
-    #[test]
-    fn test_catalog_envelope_has_correct_version() {
-        // The catalog version should match bnto-core's FORMAT_VERSION.
+    fn build_test_envelope() -> CatalogEnvelope {
         let registry = bnto_engine::create_registry();
-        let catalog = registry.catalog();
+        let mut catalog = registry.catalog();
+        catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
 
-        let envelope = CatalogEnvelope {
+        CatalogEnvelope {
             version: bnto_core::FORMAT_VERSION.to_string(),
-            node_types: bnto_core::all_node_types(),
+            node_types: build_catalog_node_types(&catalog),
             processors: catalog,
             definition_schema: bnto_core::definition_json_schema(),
-            recipes: vec![],
-        };
+            recipes: build_test_recipes(),
+        }
+    }
 
+    #[test]
+    fn test_catalog_envelope_has_correct_version() {
+        let envelope = build_test_envelope();
         assert_eq!(envelope.version, bnto_core::FORMAT_VERSION);
     }
 
@@ -174,24 +211,9 @@ mod tests {
 
     #[test]
     fn test_catalog_serializes_to_valid_json() {
-        // The full catalog should serialize to valid, parseable JSON.
-        let registry = bnto_engine::create_registry();
-        let mut catalog = registry.catalog();
-        catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
-
-        let recipes = build_test_recipes();
-
-        let envelope = CatalogEnvelope {
-            version: bnto_core::FORMAT_VERSION.to_string(),
-            node_types: bnto_core::all_node_types(),
-            processors: catalog,
-            definition_schema: bnto_core::definition_json_schema(),
-            recipes,
-        };
+        let envelope = build_test_envelope();
 
         let json = serde_json::to_string_pretty(&envelope).unwrap();
-
-        // Parse back to verify it's valid JSON.
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
         // Verify top-level structure.
@@ -219,6 +241,94 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_catalog_node_types_include_params_for_io_and_containers() {
+        // The 7 non-processor engine-defined node types must carry their
+        // parameter definitions directly on each `nodeTypes` entry — that's
+        // the point of PR 2 (engine as the single source of truth).
+        let envelope = build_test_envelope();
+        let json = serde_json::to_string(&envelope).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        let node_types = parsed["nodeTypes"].as_array().unwrap();
+        let expected_param_counts = [
+            ("input", 8),
+            ("output", 5),
+            ("loop", 5),
+            ("group", 1),
+            ("parallel", 3),
+            ("transform", 2),
+            ("edit-fields", 2),
+        ];
+
+        for (name, expected_count) in expected_param_counts {
+            let entry = node_types
+                .iter()
+                .find(|e| e["name"] == name)
+                .unwrap_or_else(|| panic!("node type `{}` missing from catalog", name));
+            let params = entry["params"]
+                .as_array()
+                .unwrap_or_else(|| panic!("node type `{}` must have params array", name));
+            assert_eq!(
+                params.len(),
+                expected_count,
+                "`{}` should have {} params, got {}",
+                name,
+                expected_count,
+                params.len()
+            );
+        }
+    }
+
+    #[test]
+    fn test_catalog_node_types_include_params_for_processors() {
+        // Processor node types (13 of them) should also carry their params
+        // on the `nodeTypes` entry — looked up from registry metadata.
+        let envelope = build_test_envelope();
+        let json = serde_json::to_string(&envelope).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        let node_types = parsed["nodeTypes"].as_array().unwrap();
+        // At least one known processor type should have non-empty params.
+        let compress = node_types
+            .iter()
+            .find(|e| e["name"] == "image-compress")
+            .expect("image-compress must be in catalog");
+        let params = compress["params"].as_array();
+        assert!(
+            params.is_some() && !params.unwrap().is_empty(),
+            "image-compress should have params inlined on its nodeTypes entry"
+        );
+    }
+
+    #[test]
+    fn test_catalog_input_mode_has_option_labels() {
+        // Spot-check that OptionEntry labels reach the catalog JSON for the
+        // input node type — proves the IO/container params round-trip.
+        let envelope = build_test_envelope();
+        let json = serde_json::to_string(&envelope).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        let input = parsed["nodeTypes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|e| e["name"] == "input")
+            .expect("input type must be in catalog");
+        let mode = input["params"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["name"] == "mode")
+            .expect("input.mode param must exist");
+        let options = mode["paramType"]["options"].as_array().unwrap();
+        let labels: Vec<&str> = options
+            .iter()
+            .map(|o| o["label"].as_str().unwrap())
+            .collect();
+        assert_eq!(labels, vec!["File Upload", "Text", "URL"]);
+    }
+
     /// Generate the catalog snapshot file at `engine/catalog.snapshot.json`.
     ///
     /// Run with: `cargo test --package bnto-wasm generate_catalog_snapshot -- --nocapture`
@@ -234,20 +344,7 @@ mod tests {
     #[test]
     #[ignore]
     fn generate_catalog_snapshot() {
-        let registry = bnto_engine::create_registry();
-        let mut catalog = registry.catalog();
-        catalog.sort_by(|a, b| a.node_type.cmp(&b.node_type));
-
-        let recipes = build_test_recipes();
-
-        let envelope = CatalogEnvelope {
-            version: bnto_core::FORMAT_VERSION.to_string(),
-            node_types: bnto_core::all_node_types(),
-            processors: catalog,
-            definition_schema: bnto_core::definition_json_schema(),
-            recipes,
-        };
-
+        let envelope = build_test_envelope();
         let json = serde_json::to_string_pretty(&envelope).unwrap();
 
         // Write to engine/catalog.snapshot.json (two levels up from crates/bnto-wasm/).

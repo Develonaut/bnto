@@ -7,10 +7,34 @@
       "description": "Set field values from static values or template expressions.",
       "category": "data",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "pen-line"
+      "platforms": ["browser"],
+      "icon": "pen-line",
+      "params": [
+        {
+          "name": "values",
+          "label": "Values",
+          "description": "Map of field names to values. Values can be static or template expressions (e.g., {{.record.name}}).",
+          "paramType": {
+            "type": "object"
+          },
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true,
+          "control": "keyValue"
+        },
+        {
+          "name": "keepOnlySet",
+          "label": "Keep Only Set Fields",
+          "description": "When true, only output fields that are explicitly set in values.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true,
+          "control": "switch"
+        }
+      ]
     },
     {
       "name": "file-rename",
@@ -18,10 +42,79 @@
       "description": "Transform filenames using patterns, find/replace, and case rules.",
       "category": "file",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "folder-open"
+      "platforms": ["browser"],
+      "icon": "folder-open",
+      "params": [
+        {
+          "name": "find",
+          "label": "Find",
+          "description": "Text or regex pattern to search for in the filename",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "replace",
+          "label": "Replace",
+          "description": "Replacement text (used with Find)",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "case",
+          "label": "Case",
+          "description": "Transform the filename to a specific case",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "lower",
+                "label": "lowercase"
+              },
+              {
+                "value": "upper",
+                "label": "UPPERCASE"
+              },
+              {
+                "value": "title",
+                "label": "Title Case"
+              }
+            ]
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "prefix",
+          "label": "Prefix",
+          "description": "Text to prepend to the filename",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "suffix",
+          "label": "Suffix",
+          "description": "Text to append before the file extension",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "pattern",
+          "label": "Pattern",
+          "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "{{name}}-compressed.{{ext}}",
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "group",
@@ -29,10 +122,31 @@
       "description": "Container for child nodes. Orchestrates sequential or parallel execution.",
       "category": "control",
       "isContainer": true,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "box"
+      "platforms": ["browser"],
+      "icon": "box",
+      "params": [
+        {
+          "name": "mode",
+          "label": "Mode",
+          "description": "How child nodes execute — sequentially (one after another) or in parallel (concurrently).",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "sequential",
+                "label": "Sequential"
+              },
+              {
+                "value": "parallel",
+                "label": "Parallel"
+              }
+            ]
+          },
+          "default": "sequential",
+          "surfaceable": true,
+          "control": "select"
+        }
+      ]
     },
     {
       "name": "http-request",
@@ -40,9 +154,7 @@
       "description": "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
       "category": "network",
       "isContainer": false,
-      "platforms": [
-        "server"
-      ],
+      "platforms": ["server"],
       "icon": "globe"
     },
     {
@@ -51,10 +163,41 @@
       "description": "Reduce image file size while maintaining quality.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "image"
+      "platforms": ["browser"],
+      "icon": "image",
+      "params": [
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "image-convert",
@@ -62,10 +205,68 @@
       "description": "Convert images between JPEG, PNG, and WebP formats.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "image"
+      "platforms": ["browser"],
+      "icon": "image",
+      "params": [
+        {
+          "name": "format",
+          "label": "Output Format",
+          "description": "The target image format to convert to",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "jpeg",
+                "label": "JPEG"
+              },
+              {
+                "value": "png",
+                "label": "PNG"
+              },
+              {
+                "value": "webp",
+                "label": "WebP"
+              }
+            ]
+          },
+          "default": "jpeg",
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "image-overlay",
@@ -73,10 +274,169 @@
       "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "stamp"
+      "platforms": ["browser"],
+      "icon": "stamp",
+      "params": [
+        {
+          "name": "overlay",
+          "label": "Overlay Image",
+          "description": "The image to overlay (base64-encoded).",
+          "paramType": {
+            "type": "file",
+            "accept": ["image/png", "image/jpeg", "image/webp"]
+          },
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "position",
+          "label": "Position",
+          "description": "Where to place the overlay on the image.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "top-left",
+                "label": "Top Left"
+              },
+              {
+                "value": "top-center",
+                "label": "Top Center"
+              },
+              {
+                "value": "top-right",
+                "label": "Top Right"
+              },
+              {
+                "value": "middle-left",
+                "label": "Middle Left"
+              },
+              {
+                "value": "center",
+                "label": "Center"
+              },
+              {
+                "value": "middle-right",
+                "label": "Middle Right"
+              },
+              {
+                "value": "bottom-left",
+                "label": "Bottom Left"
+              },
+              {
+                "value": "bottom-center",
+                "label": "Bottom Center"
+              },
+              {
+                "value": "bottom-right",
+                "label": "Bottom Right"
+              }
+            ]
+          },
+          "default": "bottom-right",
+          "surfaceable": true,
+          "control": "positionGrid"
+        },
+        {
+          "name": "size",
+          "label": "Size",
+          "description": "Overlay width as a percentage of the source image width.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 25,
+          "constraints": {
+            "min": 1.0,
+            "max": 500.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%"
+        },
+        {
+          "name": "opacity",
+          "label": "Opacity",
+          "description": "Overlay transparency (0 = invisible, 100 = fully opaque).",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 0.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%"
+        },
+        {
+          "name": "offsetX",
+          "label": "Offset X",
+          "description": "Horizontal pixel offset from the position. Positive = right, negative = left.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": -500.0,
+            "max": 500.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "offset",
+          "suffix": "px"
+        },
+        {
+          "name": "offsetY",
+          "label": "Offset Y",
+          "description": "Vertical pixel offset from the position. Positive = down, negative = up.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": -500.0,
+            "max": 500.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "offset",
+          "suffix": "px"
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "image-resize",
@@ -84,10 +444,81 @@
       "description": "Change image dimensions while maintaining quality.",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "image"
+      "platforms": ["browser"],
+      "icon": "image",
+      "params": [
+        {
+          "name": "width",
+          "label": "Width",
+          "description": "Target width in pixels",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "dimensions",
+          "suffix": "px"
+        },
+        {
+          "name": "height",
+          "label": "Height",
+          "description": "Target height in pixels",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "dimensions",
+          "suffix": "px"
+        },
+        {
+          "name": "maintainAspect",
+          "label": "Maintain Aspect Ratio",
+          "description": "Keep the original width-to-height ratio when resizing",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "image-strip-exif",
@@ -95,10 +526,41 @@
       "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
       "category": "image",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "image"
+      "platforms": ["browser"],
+      "icon": "image",
+      "params": [
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ]
     },
     {
       "name": "input",
@@ -106,10 +568,209 @@
       "description": "Declares how data enters the recipe.",
       "category": "io",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "file-up"
+      "platforms": ["browser"],
+      "icon": "file-up",
+      "params": [
+        {
+          "name": "mode",
+          "label": "Mode",
+          "description": "How data is provided to the recipe.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "file-upload",
+                "label": "File Upload"
+              },
+              {
+                "value": "text",
+                "label": "Text"
+              },
+              {
+                "value": "url",
+                "label": "URL"
+              }
+            ]
+          },
+          "default": "file-upload",
+          "surfaceable": true,
+          "control": "select"
+        },
+        {
+          "name": "accept",
+          "label": "Accepted MIME Types",
+          "description": "MIME types accepted (e.g., \"image/jpeg\", \"image/png\"). Derived from extensions.",
+          "paramType": {
+            "type": "string"
+          },
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "file-upload"
+          },
+          "surfaceable": true,
+          "control": "tagPicker"
+        },
+        {
+          "name": "extensions",
+          "label": "File Extensions",
+          "description": "File extensions accepted (e.g., \".jpg\", \".png\").",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": ".jpg",
+                "label": ".jpg"
+              },
+              {
+                "value": ".jpeg",
+                "label": ".jpeg"
+              },
+              {
+                "value": ".png",
+                "label": ".png"
+              },
+              {
+                "value": ".webp",
+                "label": ".webp"
+              },
+              {
+                "value": ".gif",
+                "label": ".gif"
+              },
+              {
+                "value": ".svg",
+                "label": ".svg"
+              },
+              {
+                "value": ".csv",
+                "label": ".csv"
+              },
+              {
+                "value": ".json",
+                "label": ".json"
+              },
+              {
+                "value": ".txt",
+                "label": ".txt"
+              },
+              {
+                "value": ".pdf",
+                "label": ".pdf"
+              },
+              {
+                "value": ".xml",
+                "label": ".xml"
+              },
+              {
+                "value": ".zip",
+                "label": ".zip"
+              },
+              {
+                "value": ".mp3",
+                "label": ".mp3"
+              },
+              {
+                "value": ".mp4",
+                "label": ".mp4"
+              },
+              {
+                "value": ".wav",
+                "label": ".wav"
+              }
+            ]
+          },
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "file-upload"
+          },
+          "surfaceable": true,
+          "control": "tagPicker"
+        },
+        {
+          "name": "label",
+          "label": "Label",
+          "description": "Human-readable label for the input control.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "JPEG, PNG, or WebP images",
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "file-upload"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "multiple",
+          "label": "Multiple",
+          "description": "Whether multiple files or items are accepted.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "file-upload"
+          },
+          "surfaceable": true,
+          "control": "switch"
+        },
+        {
+          "name": "maxFileSize",
+          "label": "Max File Size",
+          "description": "Maximum file size in bytes. 0 = no limit.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "file-upload"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "maxFiles",
+          "label": "Max Files",
+          "description": "Maximum number of files. 0 = no limit.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "file-upload"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "placeholder",
+          "label": "Placeholder",
+          "description": "Placeholder text for text or URL input.",
+          "paramType": {
+            "type": "string"
+          },
+          "visibleWhen": [
+            {
+              "param": "mode",
+              "equals": "text"
+            },
+            {
+              "param": "mode",
+              "equals": "url"
+            }
+          ],
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "loop",
@@ -117,10 +778,100 @@
       "description": "Iterate over arrays (forEach), repeat N times, or loop while condition.",
       "category": "control",
       "isContainer": true,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "repeat"
+      "platforms": ["browser"],
+      "icon": "repeat",
+      "params": [
+        {
+          "name": "mode",
+          "label": "Mode",
+          "description": "How the loop iterates: over items, N times, or while a condition holds.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "forEach",
+                "label": "For Each"
+              },
+              {
+                "value": "times",
+                "label": "N Times"
+              },
+              {
+                "value": "while",
+                "label": "While"
+              }
+            ]
+          },
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true,
+          "control": "select"
+        },
+        {
+          "name": "items",
+          "label": "Items",
+          "description": "Optional template expression for the item source. The Rust engine iterates over the incoming file batch by default — this is only needed for custom data sources.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "{{index . \"list-files\" \"files\"}}",
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "forEach"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "count",
+          "label": "Count",
+          "description": "Number of times to repeat.",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "times"
+          },
+          "requiredWhen": {
+            "param": "mode",
+            "equals": "times"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "condition",
+          "label": "Condition",
+          "description": "Expr expression that must evaluate to true to continue looping.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "counter < 10",
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "while"
+          },
+          "requiredWhen": {
+            "param": "mode",
+            "equals": "while"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "breakCondition",
+          "label": "Break Condition",
+          "description": "Optional expr expression — breaks out of the loop early when true.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "item.status == 'done'",
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "output",
@@ -128,10 +879,89 @@
       "description": "Declares how results are delivered.",
       "category": "io",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "download"
+      "platforms": ["browser"],
+      "icon": "download",
+      "params": [
+        {
+          "name": "mode",
+          "label": "Mode",
+          "description": "How results are delivered to the user.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "download",
+                "label": "Download"
+              },
+              {
+                "value": "display",
+                "label": "Display"
+              },
+              {
+                "value": "preview",
+                "label": "Preview"
+              }
+            ]
+          },
+          "default": "download",
+          "surfaceable": true,
+          "control": "select"
+        },
+        {
+          "name": "filename",
+          "label": "Filename Template",
+          "description": "Filename template for output files.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "compressed-{{name}}",
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "download"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "zip",
+          "label": "ZIP Multiple",
+          "description": "Auto-zip when there are multiple output files.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "download"
+          },
+          "surfaceable": true,
+          "control": "switch"
+        },
+        {
+          "name": "label",
+          "label": "Label",
+          "description": "Label for the download button or display section.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "Compressed Images",
+          "surfaceable": true
+        },
+        {
+          "name": "autoDownload",
+          "label": "Auto-Download",
+          "description": "Automatically download results on completion.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "download"
+          },
+          "surfaceable": true,
+          "control": "switch"
+        }
+      ]
     },
     {
       "name": "parallel",
@@ -139,10 +969,56 @@
       "description": "Execute tasks concurrently with configurable worker pool and error strategy.",
       "category": "control",
       "isContainer": true,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "git-fork"
+      "platforms": ["browser"],
+      "icon": "git-fork",
+      "params": [
+        {
+          "name": "tasks",
+          "label": "Tasks",
+          "description": "Array of task definitions to execute concurrently.",
+          "paramType": {
+            "type": "object"
+          },
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": false
+        },
+        {
+          "name": "maxWorkers",
+          "label": "Max Workers",
+          "description": "Maximum number of concurrent workers. Defaults to the number of tasks.",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "required": false
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "errorStrategy",
+          "label": "Error Strategy",
+          "description": "How to handle task errors — fail immediately or collect all results.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "failFast",
+                "label": "Fail Fast"
+              },
+              {
+                "value": "collectAll",
+                "label": "Collect All"
+              }
+            ]
+          },
+          "default": "failFast",
+          "surfaceable": true,
+          "control": "select"
+        }
+      ]
     },
     {
       "name": "shell-command",
@@ -150,9 +1026,7 @@
       "description": "Execute shell commands with stall detection, retry, and streaming output.",
       "category": "system",
       "isContainer": false,
-      "platforms": [
-        "server"
-      ],
+      "platforms": ["server"],
       "icon": "terminal"
     },
     {
@@ -161,10 +1035,40 @@
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "sheet"
+      "platforms": ["browser"],
+      "icon": "sheet",
+      "params": [
+        {
+          "name": "trimWhitespace",
+          "label": "Trim Whitespace",
+          "description": "Remove leading and trailing whitespace from every cell",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "removeEmptyRows",
+          "label": "Remove Empty Rows",
+          "description": "Skip rows where every cell is blank",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "removeDuplicates",
+          "label": "Remove Duplicates",
+          "description": "Remove duplicate rows, keeping the first occurrence",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "spreadsheet-convert",
@@ -172,10 +1076,48 @@
       "description": "Convert CSV data to JSON format with configurable delimiters.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "sheet"
+      "platforms": ["browser"],
+      "icon": "sheet",
+      "params": [
+        {
+          "name": "delimiter",
+          "label": "Delimiter",
+          "description": "Column separator character",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "comma",
+                "label": "Comma"
+              },
+              {
+                "value": "semicolon",
+                "label": "Semicolon"
+              },
+              {
+                "value": "tab",
+                "label": "Tab"
+              },
+              {
+                "value": "pipe",
+                "label": "Pipe"
+              }
+            ]
+          },
+          "default": "comma",
+          "surfaceable": true
+        },
+        {
+          "name": "pretty",
+          "label": "Pretty Print",
+          "description": "Format output JSON with indentation",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "spreadsheet-merge",
@@ -183,10 +1125,40 @@
       "description": "Combine multiple CSV files into one with header reconciliation and deduplication.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "sheet"
+      "platforms": ["browser"],
+      "icon": "sheet",
+      "params": [
+        {
+          "name": "headerHandling",
+          "label": "Header Handling",
+          "description": "How to reconcile headers across files",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "first-file",
+                "label": "First File"
+              },
+              {
+                "value": "union",
+                "label": "Union"
+              }
+            ]
+          },
+          "default": "first-file",
+          "surfaceable": true
+        },
+        {
+          "name": "deduplicate",
+          "label": "Remove Duplicates",
+          "description": "Remove duplicate rows across all files",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "spreadsheet-rename",
@@ -194,10 +1166,20 @@
       "description": "Rename column headers in a CSV file.",
       "category": "spreadsheet",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "sheet"
+      "platforms": ["browser"],
+      "icon": "sheet",
+      "params": [
+        {
+          "name": "columns",
+          "label": "Column Mapping",
+          "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": true,
+          "control": "keyValue"
+        }
+      ]
     },
     {
       "name": "transform",
@@ -205,10 +1187,31 @@
       "description": "Transform data using expressions (single value) or field mappings.",
       "category": "data",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "arrow-left-right"
+      "platforms": ["browser"],
+      "icon": "arrow-left-right",
+      "params": [
+        {
+          "name": "expression",
+          "label": "Expression",
+          "description": "Expr expression for a single transformation. Mutually exclusive with mappings.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "firstName + \" \" + lastName",
+          "surfaceable": true,
+          "control": "textarea"
+        },
+        {
+          "name": "mappings",
+          "label": "Mappings",
+          "description": "Map of field names to expr expressions for multi-field transformations. Mutually exclusive with expression.",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": true,
+          "control": "keyValue"
+        }
+      ]
     },
     {
       "name": "vector-optimize",
@@ -216,10 +1219,65 @@
       "description": "Remove editor metadata, comments, and unnecessary elements from SVG files.",
       "category": "vector",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "file-minus-2"
+      "platforms": ["browser"],
+      "icon": "file-minus-2",
+      "params": [
+        {
+          "name": "removeComments",
+          "label": "Remove Comments",
+          "description": "Strip XML comments from the SVG",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "removeMetadata",
+          "label": "Remove Metadata",
+          "description": "Strip <metadata> elements (RDF, Dublin Core, etc.)",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "collapseGroups",
+          "label": "Collapse Groups",
+          "description": "Remove empty groups and collapse single-child wrapper groups",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "minify",
+          "label": "Minify",
+          "description": "Remove unnecessary whitespace and newlines",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        },
+        {
+          "name": "precision",
+          "label": "Numeric Precision",
+          "description": "Decimal places for numeric values (reserved for Tier 2)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 3,
+          "constraints": {
+            "min": 0.0,
+            "max": 8.0,
+            "required": false
+          },
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "vector-rasterize",
@@ -227,10 +1285,52 @@
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP).",
       "category": "vector",
       "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "image"
+      "platforms": ["browser"],
+      "icon": "image",
+      "params": [
+        {
+          "name": "format",
+          "label": "Output Format",
+          "description": "The target raster format to convert SVG to",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "png",
+                "label": "PNG"
+              },
+              {
+                "value": "jpeg",
+                "label": "JPEG"
+              },
+              {
+                "value": "webp",
+                "label": "WebP"
+              }
+            ]
+          },
+          "default": "png",
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true
+        }
+      ]
     },
     {
       "name": "video-download",
@@ -238,10 +1338,106 @@
       "description": "Download video from URLs using yt-dlp (CLI/desktop only).",
       "category": "video",
       "isContainer": false,
-      "platforms": [
-        "server"
-      ],
-      "icon": "video"
+      "platforms": ["server"],
+      "icon": "video",
+      "params": [
+        {
+          "name": "url",
+          "label": "URL",
+          "description": "Video URL to download (YouTube, m3u8/HLS, or direct link).",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "https://youtube.com/watch?v=...",
+          "surfaceable": true
+        },
+        {
+          "name": "format",
+          "label": "Format",
+          "description": "Output format for the downloaded video or audio.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "mp4",
+                "label": "MP4"
+              },
+              {
+                "value": "webm",
+                "label": "WebM"
+              },
+              {
+                "value": "mkv",
+                "label": "MKV"
+              },
+              {
+                "value": "mp3",
+                "label": "MP3"
+              },
+              {
+                "value": "m4a",
+                "label": "M4A"
+              },
+              {
+                "value": "wav",
+                "label": "WAV"
+              },
+              {
+                "value": "flac",
+                "label": "FLAC"
+              }
+            ]
+          },
+          "default": "mp4",
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Maximum video quality. 'best' downloads the highest available.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "best",
+                "label": "Best Available"
+              },
+              {
+                "value": "1080",
+                "label": "1080p"
+              },
+              {
+                "value": "720",
+                "label": "720p"
+              },
+              {
+                "value": "480",
+                "label": "480p"
+              },
+              {
+                "value": "360",
+                "label": "360p"
+              }
+            ]
+          },
+          "default": "best",
+          "surfaceable": true
+        },
+        {
+          "name": "args",
+          "label": "Extra Arguments",
+          "description": "Raw yt-dlp arguments, space-separated. Appended after built-in flags.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "",
+          "placeholder": "--cookies-from-browser chrome",
+          "surfaceable": false
+        }
+      ]
     }
   ],
   "processors": [
@@ -251,9 +1447,7 @@
       "description": "Transform filenames using patterns, find/replace, and case rules",
       "category": "file",
       "accepts": [],
-      "platforms": [
-        "browser"
-      ],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "find",
@@ -332,14 +1526,8 @@
       "name": "Compress Images",
       "description": "Reduce image file size while maintaining quality",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "quality",
@@ -380,15 +1568,8 @@
       "name": "Convert Image Format",
       "description": "Convert images between JPEG, PNG, and WebP formats. Also accepts SVG input.",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/svg+xml"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp", "image/svg+xml"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "format",
@@ -456,14 +1637,8 @@
       "name": "Overlay Image",
       "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "overlay",
@@ -471,11 +1646,7 @@
           "description": "The image to overlay (base64-encoded).",
           "paramType": {
             "type": "file",
-            "accept": [
-              "image/png",
-              "image/jpeg",
-              "image/webp"
-            ]
+            "accept": ["image/png", "image/jpeg", "image/webp"]
           },
           "constraints": {
             "required": true
@@ -636,14 +1807,8 @@
       "name": "Resize Images",
       "description": "Change image dimensions while maintaining quality",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "width",
@@ -724,14 +1889,8 @@
       "name": "Strip EXIF",
       "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)",
       "category": "image",
-      "accepts": [
-        "image/jpeg",
-        "image/png",
-        "image/webp"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/jpeg", "image/png", "image/webp"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "quality",
@@ -772,12 +1931,8 @@
       "name": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "trimWhitespace",
@@ -817,12 +1972,8 @@
       "name": "CSV to JSON",
       "description": "Convert CSV rows to a JSON array of objects",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "delimiter",
@@ -870,12 +2021,8 @@
       "name": "Merge CSV",
       "description": "Combine multiple CSV files into one, with header reconciliation and deduplication.",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "headerHandling",
@@ -915,12 +2062,8 @@
       "name": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file",
       "category": "spreadsheet",
-      "accepts": [
-        "text/csv"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["text/csv"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "columns",
@@ -940,13 +2083,8 @@
       "name": "Optimize SVG",
       "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements",
       "category": "vector",
-      "accepts": [
-        "image/svg+xml"
-      ],
-      "platforms": [
-        "browser",
-        "native"
-      ],
+      "accepts": ["image/svg+xml"],
+      "platforms": ["browser", "native"],
       "parameters": [
         {
           "name": "removeComments",
@@ -1011,12 +2149,8 @@
       "name": "SVG to Image",
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP)",
       "category": "vector",
-      "accepts": [
-        "image/svg+xml"
-      ],
-      "platforms": [
-        "browser"
-      ],
+      "accepts": ["image/svg+xml"],
+      "platforms": ["browser"],
       "parameters": [
         {
           "name": "format",
@@ -1069,11 +2203,7 @@
       "description": "Download video from URLs using yt-dlp.",
       "category": "video",
       "accepts": [],
-      "platforms": [
-        "cli",
-        "server",
-        "desktop"
-      ],
+      "platforms": ["cli", "server", "desktop"],
       "parameters": [
         {
           "name": "url",
@@ -1255,10 +2385,7 @@
                 "type": "number"
               }
             },
-            "required": [
-              "x",
-              "y"
-            ],
+            "required": ["x", "y"],
             "type": "object"
           },
           "settings": {
@@ -1311,11 +2438,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "source",
-          "target"
-        ],
+        "required": ["id", "source", "target"],
         "type": "object"
       },
       "Fields": {
@@ -1332,9 +2455,7 @@
             "type": "object"
           }
         },
-        "required": [
-          "values"
-        ],
+        "required": ["values"],
         "type": "object"
       },
       "Metadata": {
@@ -1377,10 +2498,7 @@
           "iteration": {
             "default": "explicit",
             "description": "How the executor handles iteration over multiple input files. 'auto' wraps primitive sequences in implicit per-file loops; 'explicit' (default) executes exactly what's defined.",
-            "enum": [
-              "auto",
-              "explicit"
-            ],
+            "enum": ["auto", "explicit"],
             "type": "string"
           }
         },
@@ -1403,10 +2521,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "name"
-        ],
+        "required": ["id", "name"],
         "type": "object"
       }
     },
@@ -1421,13 +2536,7 @@
       "name": "Compress Images",
       "description": "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
       "category": "image",
-      "tags": [
-        "PNG",
-        "JPEG",
-        "WebP",
-        "No upload",
-        "Browser-based"
-      ],
+      "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1446,13 +2555,7 @@
         "metadata": {
           "category": "image",
           "description": "Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.",
-          "tags": [
-            "PNG",
-            "JPEG",
-            "WebP",
-            "No upload",
-            "Browser-based"
-          ]
+          "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"]
         },
         "name": "Compress Images",
         "nodes": [
@@ -1468,17 +2571,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -1549,13 +2643,7 @@
       "name": "Resize Images",
       "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
       "category": "image",
-      "tags": [
-        "PNG",
-        "JPEG",
-        "WebP",
-        "Custom dimensions",
-        "Browser-based"
-      ],
+      "tags": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1574,13 +2662,7 @@
         "metadata": {
           "category": "image",
           "description": "Resize images to exact dimensions or percentages. Free, no signup required.",
-          "tags": [
-            "PNG",
-            "JPEG",
-            "WebP",
-            "Custom dimensions",
-            "Browser-based"
-          ]
+          "tags": ["PNG", "JPEG", "WebP", "Custom dimensions", "Browser-based"]
         },
         "name": "Resize Images",
         "nodes": [
@@ -1596,17 +2678,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -1679,13 +2752,7 @@
       "name": "Convert Image Format",
       "description": "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
       "category": "image",
-      "tags": [
-        "PNG",
-        "JPEG",
-        "WebP",
-        "GIF",
-        "Browser-based"
-      ],
+      "tags": ["PNG", "JPEG", "WebP", "GIF", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1704,13 +2771,7 @@
         "metadata": {
           "category": "image",
           "description": "Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.",
-          "tags": [
-            "PNG",
-            "JPEG",
-            "WebP",
-            "GIF",
-            "Browser-based"
-          ]
+          "tags": ["PNG", "JPEG", "WebP", "GIF", "Browser-based"]
         },
         "name": "Convert Image Format",
         "nodes": [
@@ -1726,19 +2787,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-                "image/gif"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp",
-                ".gif"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp", "image/gif"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp", ".gif"],
               "label": "JPEG, PNG, WebP, or GIF images",
               "mode": "file-upload",
               "multiple": true
@@ -1810,11 +2860,7 @@
       "name": "Rename Files",
       "description": "Batch rename files with patterns. Free, no signup required.",
       "category": "file",
-      "tags": [
-        "Batch rename",
-        "Pattern matching",
-        "Browser-based"
-      ],
+      "tags": ["Batch rename", "Pattern matching", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1833,11 +2879,7 @@
         "metadata": {
           "category": "file",
           "description": "Batch rename files with patterns. Free, no signup required.",
-          "tags": [
-            "Batch rename",
-            "Pattern matching",
-            "Browser-based"
-          ]
+          "tags": ["Batch rename", "Pattern matching", "Browser-based"]
         },
         "name": "Rename Files",
         "nodes": [
@@ -1853,9 +2895,7 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "*/*"
-              ],
+              "accept": ["*/*"],
               "extensions": [],
               "label": "any files",
               "mode": "file-upload",
@@ -1927,12 +2967,7 @@
       "name": "Clean CSV",
       "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
       "category": "spreadsheet",
-      "tags": [
-        "CSV",
-        "Remove duplicates",
-        "Trim whitespace",
-        "Browser-based"
-      ],
+      "tags": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -1951,12 +2986,7 @@
         "metadata": {
           "category": "spreadsheet",
           "description": "Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.",
-          "tags": [
-            "CSV",
-            "Remove duplicates",
-            "Trim whitespace",
-            "Browser-based"
-          ]
+          "tags": ["CSV", "Remove duplicates", "Trim whitespace", "Browser-based"]
         },
         "name": "Clean CSV",
         "nodes": [
@@ -1972,12 +3002,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -2060,12 +3086,7 @@
       "name": "Rename CSV Columns",
       "description": "Rename CSV column headers in bulk. Free, no signup required.",
       "category": "spreadsheet",
-      "tags": [
-        "CSV",
-        "Column rename",
-        "Bulk edit",
-        "Browser-based"
-      ],
+      "tags": ["CSV", "Column rename", "Bulk edit", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2084,12 +3105,7 @@
         "metadata": {
           "category": "spreadsheet",
           "description": "Rename CSV column headers in bulk. Free, no signup required.",
-          "tags": [
-            "CSV",
-            "Column rename",
-            "Bulk edit",
-            "Browser-based"
-          ]
+          "tags": ["CSV", "Column rename", "Bulk edit", "Browser-based"]
         },
         "name": "Rename CSV Columns",
         "nodes": [
@@ -2105,12 +3121,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -2191,12 +3203,7 @@
       "name": "CSV to JSON",
       "description": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
       "category": "spreadsheet",
-      "tags": [
-        "CSV",
-        "JSON",
-        "Configurable delimiter",
-        "Browser-based"
-      ],
+      "tags": ["CSV", "JSON", "Configurable delimiter", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2215,12 +3222,7 @@
         "metadata": {
           "category": "spreadsheet",
           "description": "Convert CSV files to JSON format with configurable delimiters. Free, no signup.",
-          "tags": [
-            "CSV",
-            "JSON",
-            "Configurable delimiter",
-            "Browser-based"
-          ]
+          "tags": ["CSV", "JSON", "Configurable delimiter", "Browser-based"]
         },
         "name": "CSV to JSON",
         "nodes": [
@@ -2236,12 +3238,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -2323,13 +3321,7 @@
       "name": "Merge CSV",
       "description": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
       "category": "spreadsheet",
-      "tags": [
-        "CSV",
-        "Merge",
-        "Header reconciliation",
-        "Deduplication",
-        "Browser-based"
-      ],
+      "tags": ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2348,13 +3340,7 @@
         "metadata": {
           "category": "spreadsheet",
           "description": "Combine multiple CSV files into one with header reconciliation. Free, no signup.",
-          "tags": [
-            "CSV",
-            "Merge",
-            "Header reconciliation",
-            "Deduplication",
-            "Browser-based"
-          ]
+          "tags": ["CSV", "Merge", "Header reconciliation", "Deduplication", "Browser-based"]
         },
         "name": "Merge CSV",
         "nodes": [
@@ -2370,12 +3356,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": true
@@ -2457,13 +3439,7 @@
       "name": "Optimize Images for Web",
       "description": "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
       "category": "image",
-      "tags": [
-        "Resize",
-        "WebP",
-        "Compress",
-        "Multi-step",
-        "Browser-based"
-      ],
+      "tags": ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2492,13 +3468,7 @@
         "metadata": {
           "category": "image",
           "description": "Resize, convert to WebP, and compress images for fast web loading. Free, no signup.",
-          "tags": [
-            "Resize",
-            "WebP",
-            "Compress",
-            "Multi-step",
-            "Browser-based"
-          ]
+          "tags": ["Resize", "WebP", "Compress", "Multi-step", "Browser-based"]
         },
         "name": "Optimize Images for Web",
         "nodes": [
@@ -2514,17 +3484,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2630,13 +3591,7 @@
       "name": "Generate Thumbnails",
       "description": "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
       "category": "image",
-      "tags": [
-        "Thumbnails",
-        "Resize",
-        "WebP",
-        "Multi-step",
-        "Browser-based"
-      ],
+      "tags": ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2665,13 +3620,7 @@
         "metadata": {
           "category": "image",
           "description": "Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.",
-          "tags": [
-            "Thumbnails",
-            "Resize",
-            "WebP",
-            "Multi-step",
-            "Browser-based"
-          ]
+          "tags": ["Thumbnails", "Resize", "WebP", "Multi-step", "Browser-based"]
         },
         "name": "Generate Thumbnails",
         "nodes": [
@@ -2687,17 +3636,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2803,13 +3743,7 @@
       "name": "Compress & Rename",
       "description": "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
       "category": "image",
-      "tags": [
-        "Compress",
-        "Rename",
-        "Suffix",
-        "Multi-step",
-        "Browser-based"
-      ],
+      "tags": ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2833,13 +3767,7 @@
         "metadata": {
           "category": "image",
           "description": "Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.",
-          "tags": [
-            "Compress",
-            "Rename",
-            "Suffix",
-            "Multi-step",
-            "Browser-based"
-          ]
+          "tags": ["Compress", "Rename", "Suffix", "Multi-step", "Browser-based"]
         },
         "name": "Compress & Rename",
         "nodes": [
@@ -2855,17 +3783,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -2952,13 +3871,7 @@
       "name": "Standardize CSV",
       "description": "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
       "category": "spreadsheet",
-      "tags": [
-        "CSV",
-        "Clean",
-        "Rename columns",
-        "Multi-step",
-        "Browser-based"
-      ],
+      "tags": ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -2982,13 +3895,7 @@
         "metadata": {
           "category": "spreadsheet",
           "description": "Clean up messy CSV data and rename column headers in one step. Free, no signup.",
-          "tags": [
-            "CSV",
-            "Clean",
-            "Rename columns",
-            "Multi-step",
-            "Browser-based"
-          ]
+          "tags": ["CSV", "Clean", "Rename columns", "Multi-step", "Browser-based"]
         },
         "name": "Standardize CSV",
         "nodes": [
@@ -3004,12 +3911,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "text/csv"
-              ],
-              "extensions": [
-                ".csv"
-              ],
+              "accept": ["text/csv"],
+              "extensions": [".csv"],
               "label": "CSV files",
               "mode": "file-upload",
               "multiple": false
@@ -3118,13 +4021,7 @@
       "name": "Strip EXIF",
       "description": "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
       "category": "image",
-      "tags": [
-        "PNG",
-        "JPEG",
-        "WebP",
-        "No upload",
-        "Browser-based"
-      ],
+      "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -3143,13 +4040,7 @@
         "metadata": {
           "category": "image",
           "description": "Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.",
-          "tags": [
-            "PNG",
-            "JPEG",
-            "WebP",
-            "No upload",
-            "Browser-based"
-          ]
+          "tags": ["PNG", "JPEG", "WebP", "No upload", "Browser-based"]
         },
         "name": "Strip EXIF",
         "nodes": [
@@ -3165,17 +4056,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -3295,17 +4177,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/jpeg",
-                "image/png",
-                "image/webp"
-              ],
-              "extensions": [
-                ".jpg",
-                ".jpeg",
-                ".png",
-                ".webp"
-              ],
+              "accept": ["image/jpeg", "image/png", "image/webp"],
+              "extensions": [".jpg", ".jpeg", ".png", ".webp"],
               "label": "JPEG, PNG, or WebP images",
               "mode": "file-upload",
               "multiple": true
@@ -3382,12 +4255,7 @@
       "name": "Download Video",
       "description": "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
       "category": "video",
-      "tags": [
-        "YouTube",
-        "m3u8/HLS",
-        "MP4/WebM/MKV",
-        "Audio extraction"
-      ],
+      "tags": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
       "definition": {
         "edges": [
           {
@@ -3406,12 +4274,7 @@
         "metadata": {
           "category": "video",
           "description": "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
-          "tags": [
-            "YouTube",
-            "m3u8/HLS",
-            "MP4/WebM/MKV",
-            "Audio extraction"
-          ]
+          "tags": ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"]
         },
         "name": "Download Video",
         "nodes": [
@@ -3502,13 +4365,7 @@
       "name": "SVG to PNG",
       "description": "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
       "category": "vector",
-      "tags": [
-        "SVG",
-        "PNG",
-        "Vector to raster",
-        "No upload",
-        "Browser-based"
-      ],
+      "tags": ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -3527,13 +4384,7 @@
         "metadata": {
           "category": "vector",
           "description": "Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.",
-          "tags": [
-            "SVG",
-            "PNG",
-            "Vector to raster",
-            "No upload",
-            "Browser-based"
-          ]
+          "tags": ["SVG", "PNG", "Vector to raster", "No upload", "Browser-based"]
         },
         "name": "SVG to PNG",
         "nodes": [
@@ -3549,12 +4400,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/svg+xml"
-              ],
-              "extensions": [
-                ".svg"
-              ],
+              "accept": ["image/svg+xml"],
+              "extensions": [".svg"],
               "label": "SVG files",
               "mode": "file-upload",
               "multiple": true
@@ -3626,13 +4473,7 @@
       "name": "SVG to JPEG",
       "description": "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
       "category": "vector",
-      "tags": [
-        "SVG",
-        "JPEG",
-        "Vector to raster",
-        "No upload",
-        "Browser-based"
-      ],
+      "tags": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -3651,13 +4492,7 @@
         "metadata": {
           "category": "vector",
           "description": "Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.",
-          "tags": [
-            "SVG",
-            "JPEG",
-            "Vector to raster",
-            "No upload",
-            "Browser-based"
-          ]
+          "tags": ["SVG", "JPEG", "Vector to raster", "No upload", "Browser-based"]
         },
         "name": "SVG to JPEG",
         "nodes": [
@@ -3673,12 +4508,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/svg+xml"
-              ],
-              "extensions": [
-                ".svg"
-              ],
+              "accept": ["image/svg+xml"],
+              "extensions": [".svg"],
               "label": "SVG files",
               "mode": "file-upload",
               "multiple": true
@@ -3750,13 +4581,7 @@
       "name": "Optimize SVG",
       "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
       "category": "vector",
-      "tags": [
-        "SVG",
-        "Optimize",
-        "Minify",
-        "Clean",
-        "Browser-based"
-      ],
+      "tags": ["SVG", "Optimize", "Minify", "Clean", "Browser-based"],
       "definition": {
         "edges": [
           {
@@ -3775,13 +4600,7 @@
         "metadata": {
           "category": "vector",
           "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.",
-          "tags": [
-            "SVG",
-            "Optimize",
-            "Minify",
-            "Clean",
-            "Browser-based"
-          ]
+          "tags": ["SVG", "Optimize", "Minify", "Clean", "Browser-based"]
         },
         "name": "Optimize SVG",
         "nodes": [
@@ -3797,12 +4616,8 @@
               }
             ],
             "parameters": {
-              "accept": [
-                "image/svg+xml"
-              ],
-              "extensions": [
-                ".svg"
-              ],
+              "accept": ["image/svg+xml"],
+              "extensions": [".svg"],
               "label": "SVG files",
               "mode": "file-upload",
               "multiple": true
