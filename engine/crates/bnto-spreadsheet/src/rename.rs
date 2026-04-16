@@ -47,6 +47,7 @@ impl NodeProcessor for RenameColumns {
                     "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
                         .to_string(),
                 param_type: ParameterType::Object,
+                control: Some("keyValue".to_string()),
                 ..Default::default()
             }],
             input_cardinality: InputCardinality::PerFile,

@@ -20,7 +20,7 @@ export const vectorRasterizeProcessor: ProcessorDef = {
     label: "Output Format",
     description: "The target raster format to convert SVG to",
     type: "enum" as const,
-    options: ["png","jpeg","webp"] as const,
+    options: [{"value":"png","label":"PNG"},{"value":"jpeg","label":"JPEG"},{"value":"webp","label":"WebP"}] as const,
     default: "png",
     constraints: { required: true },
   },

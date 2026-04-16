@@ -128,10 +128,22 @@ fn build_convert_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
             description: "Column separator character".to_string(),
             param_type: ParameterType::Enum {
                 options: vec![
-                    "comma".to_string(),
-                    "semicolon".to_string(),
-                    "tab".to_string(),
-                    "pipe".to_string(),
+                    OptionEntry {
+                        value: "comma".to_string(),
+                        label: "Comma".to_string(),
+                    },
+                    OptionEntry {
+                        value: "semicolon".to_string(),
+                        label: "Semicolon".to_string(),
+                    },
+                    OptionEntry {
+                        value: "tab".to_string(),
+                        label: "Tab".to_string(),
+                    },
+                    OptionEntry {
+                        value: "pipe".to_string(),
+                        label: "Pipe".to_string(),
+                    },
                 ],
             },
             default: Some(serde_json::json!("comma")),

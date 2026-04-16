@@ -12,7 +12,7 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| headerHandling | enum | first-file | first-file, union | How to reconcile headers across files |
+| headerHandling | enum | first-file | [object Object], [object Object] | How to reconcile headers across files |
 | deduplicate | boolean | false | - | Remove duplicate rows across all files |
 
 ## Configuration Example

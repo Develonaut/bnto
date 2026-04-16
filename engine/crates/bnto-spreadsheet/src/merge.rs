@@ -159,7 +159,16 @@ fn build_merge_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
             label: "Header Handling".to_string(),
             description: "How to reconcile headers across files".to_string(),
             param_type: ParameterType::Enum {
-                options: vec!["first-file".to_string(), "union".to_string()],
+                options: vec![
+                    OptionEntry {
+                        value: "first-file".to_string(),
+                        label: "First File".to_string(),
+                    },
+                    OptionEntry {
+                        value: "union".to_string(),
+                        label: "Union".to_string(),
+                    },
+                ],
             },
             default: Some(serde_json::json!("first-file")),
             ..Default::default()

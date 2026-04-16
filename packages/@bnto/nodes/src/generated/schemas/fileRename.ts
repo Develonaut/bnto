@@ -11,7 +11,7 @@ import type { NodeSchema } from "../../schemas/types";
 export const fileRenameParamsSchema = z.object({
     find: z.string().optional(),
     replace: z.string().optional(),
-    case: z.enum(["lower","upper","title"] as const).optional(),
+    case: z.enum([{"value":"lower","label":"lowercase"},{"value":"upper","label":"UPPERCASE"},{"value":"title","label":"Title Case"}] as const).optional(),
     prefix: z.string().optional(),
     suffix: z.string().optional(),
     pattern: z.string().optional(),

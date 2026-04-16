@@ -15,7 +15,7 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | overlay | file | - | - | The image to overlay (base64-encoded). |
-| position | enum | bottom-right | top-left, top-center, top-right, middle-left, center, middle-right, bottom-left, bottom-center, bottom-right | Where to place the overlay on the image. |
+| position | enum | bottom-right | [object Object], [object Object], [object Object], [object Object], [object Object], [object Object], [object Object], [object Object], [object Object] | Where to place the overlay on the image. |
 | size | number | 25 | 1-500 | Overlay width as a percentage of the source image width. |
 | opacity | number | 80 | 0-100 | Overlay transparency (0 = invisible, 100 = fully opaque). |
 | offsetX | number | 0 | -500-500 | Horizontal pixel offset from the position. Positive = right, negative = left. |

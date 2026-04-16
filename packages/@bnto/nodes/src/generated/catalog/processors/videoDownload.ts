@@ -28,7 +28,7 @@ export const videoDownloadProcessor: ProcessorDef = {
     label: "Format",
     description: "Output format for the downloaded video or audio.",
     type: "enum" as const,
-    options: ["mp4","webm","mkv","mp3","m4a","wav","flac"] as const,
+    options: [{"value":"mp4","label":"MP4"},{"value":"webm","label":"WebM"},{"value":"mkv","label":"MKV"},{"value":"mp3","label":"MP3"},{"value":"m4a","label":"M4A"},{"value":"wav","label":"WAV"},{"value":"flac","label":"FLAC"}] as const,
     default: "mp4",
   },
   {
@@ -36,7 +36,7 @@ export const videoDownloadProcessor: ProcessorDef = {
     label: "Quality",
     description: "Maximum video quality. 'best' downloads the highest available.",
     type: "enum" as const,
-    options: ["best","1080","720","480","360"] as const,
+    options: [{"value":"best","label":"Best Available"},{"value":"1080","label":"1080p"},{"value":"720","label":"720p"},{"value":"480","label":"480p"},{"value":"360","label":"360p"}] as const,
     default: "best",
   },
   {

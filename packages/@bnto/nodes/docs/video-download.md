@@ -9,8 +9,8 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | url | string | - | - | Video URL to download (YouTube, m3u8/HLS, or direct link). |
-| format | enum | mp4 | mp4, webm, mkv, mp3, m4a, wav, flac | Output format for the downloaded video or audio. |
-| quality | enum | best | best, 1080, 720, 480, 360 | Maximum video quality. 'best' downloads the highest available. |
+| format | enum | mp4 | [object Object], [object Object], [object Object], [object Object], [object Object], [object Object], [object Object] | Output format for the downloaded video or audio. |
+| quality | enum | best | [object Object], [object Object], [object Object], [object Object], [object Object] | Maximum video quality. 'best' downloads the highest available. |
 | args | string |  | - | Raw yt-dlp arguments, space-separated. Appended after built-in flags. |
 
 ## Configuration Example

@@ -20,7 +20,7 @@ export const spreadsheetMergeProcessor: ProcessorDef = {
     label: "Header Handling",
     description: "How to reconcile headers across files",
     type: "enum" as const,
-    options: ["first-file","union"] as const,
+    options: [{"value":"first-file","label":"First File"},{"value":"union","label":"Union"}] as const,
     default: "first-file",
   },
   {

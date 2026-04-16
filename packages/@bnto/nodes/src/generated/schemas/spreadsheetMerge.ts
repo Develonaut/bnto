@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-merge node parameters. */
 export const spreadsheetMergeParamsSchema = z.object({
-    headerHandling: z.enum(["first-file","union"] as const).optional().default("first-file"),
+    headerHandling: z.enum([{"value":"first-file","label":"First File"},{"value":"union","label":"Union"}] as const).optional().default("first-file"),
     deduplicate: z.boolean().optional().default(false),
 });
 

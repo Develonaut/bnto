@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for image-convert node parameters. */
 export const imageConvertParamsSchema = z.object({
-    format: z.enum(["jpeg","png","webp"] as const).default("jpeg"),
+    format: z.enum([{"value":"jpeg","label":"JPEG"},{"value":"png","label":"PNG"},{"value":"webp","label":"WebP"}] as const).default("jpeg"),
     quality: z.number().min(1).max(100).optional().default(80),
 });
 

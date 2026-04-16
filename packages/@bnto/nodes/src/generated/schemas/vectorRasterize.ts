@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for vector-rasterize node parameters. */
 export const vectorRasterizeParamsSchema = z.object({
-    format: z.enum(["png","jpeg","webp"] as const).default("png"),
+    format: z.enum([{"value":"png","label":"PNG"},{"value":"jpeg","label":"JPEG"},{"value":"webp","label":"WebP"}] as const).default("png"),
     quality: z.number().min(1).max(100).optional().default(80),
 });
 

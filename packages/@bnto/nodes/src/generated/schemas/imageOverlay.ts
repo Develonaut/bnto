@@ -10,7 +10,7 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for image-overlay node parameters. */
 export const imageOverlayParamsSchema = z.object({
     overlay: z.string(),
-    position: z.enum(["top-left","top-center","top-right","middle-left","center","middle-right","bottom-left","bottom-center","bottom-right"] as const).optional().default("bottom-right"),
+    position: z.enum([{"value":"top-left","label":"Top Left"},{"value":"top-center","label":"Top Center"},{"value":"top-right","label":"Top Right"},{"value":"middle-left","label":"Middle Left"},{"value":"center","label":"Center"},{"value":"middle-right","label":"Middle Right"},{"value":"bottom-left","label":"Bottom Left"},{"value":"bottom-center","label":"Bottom Center"},{"value":"bottom-right","label":"Bottom Right"}] as const).optional().default("bottom-right"),
     size: z.number().min(1).max(500).optional().default(25),
     opacity: z.number().min(0).max(100).optional().default(80),
     offsetX: z.number().min(-500).max(500).optional().default(0),

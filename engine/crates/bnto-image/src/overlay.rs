@@ -13,7 +13,8 @@ use bnto_core::DEFAULT_QUALITY;
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::metadata::{
-    Constraints, InputCardinality, NodeCategory, NodeMetadata, ParameterDef, ParameterType,
+    Constraints, InputCardinality, NodeCategory, NodeMetadata, OptionEntry, ParameterDef,
+    ParameterType,
 };
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -41,6 +42,20 @@ const POSITIONS: &[&str] = &[
     "bottom-center",
     "bottom-right",
 ];
+
+fn position_label(value: &str) -> String {
+    value
+        .split('-')
+        .map(|word| {
+            let mut chars = word.chars();
+            match chars.next() {
+                Some(c) => c.to_uppercase().chain(chars).collect::<String>(),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
 
 pub struct OverlayImage;
 
@@ -231,9 +246,16 @@ impl NodeProcessor for OverlayImage {
                     label: "Position".to_string(),
                     description: "Where to place the overlay on the image.".to_string(),
                     param_type: ParameterType::Enum {
-                        options: POSITIONS.iter().map(|s| s.to_string()).collect(),
+                        options: POSITIONS
+                            .iter()
+                            .map(|s| OptionEntry {
+                                value: s.to_string(),
+                                label: position_label(s),
+                            })
+                            .collect(),
                     },
                     default: Some(serde_json::Value::String(DEFAULT_POSITION.to_string())),
+                    control: Some("positionGrid".to_string()),
                     ..Default::default()
                 },
                 ParameterDef {
@@ -248,6 +270,7 @@ impl NodeProcessor for OverlayImage {
                         max: Some(500.0),
                         required: false,
                     }),
+                    suffix: Some("%".to_string()),
                     ..Default::default()
                 },
                 ParameterDef {
@@ -262,6 +285,7 @@ impl NodeProcessor for OverlayImage {
                         max: Some(100.0),
                         required: false,
                     }),
+                    suffix: Some("%".to_string()),
                     ..Default::default()
                 },
                 ParameterDef {
@@ -275,6 +299,8 @@ impl NodeProcessor for OverlayImage {
                         max: Some(500.0),
                         required: false,
                     }),
+                    group: Some("offset".to_string()),
+                    suffix: Some("px".to_string()),
                     ..Default::default()
                 },
                 ParameterDef {
@@ -288,6 +314,8 @@ impl NodeProcessor for OverlayImage {
                         max: Some(500.0),
                         required: false,
                     }),
+                    group: Some("offset".to_string()),
+                    suffix: Some("px".to_string()),
                     ..Default::default()
                 },
                 crate::common::quality_param_def(),

@@ -20,7 +20,7 @@ export const spreadsheetConvertProcessor: ProcessorDef = {
     label: "Delimiter",
     description: "Column separator character",
     type: "enum" as const,
-    options: ["comma","semicolon","tab","pipe"] as const,
+    options: [{"value":"comma","label":"Comma"},{"value":"semicolon","label":"Semicolon"},{"value":"tab","label":"Tab"},{"value":"pipe","label":"Pipe"}] as const,
     default: "comma",
   },
   {

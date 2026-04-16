@@ -138,9 +138,18 @@ fn rename_case_param() -> bnto_core::metadata::ParameterDef {
         description: "Transform the filename to a specific case".to_string(),
         param_type: ParameterType::Enum {
             options: vec![
-                "lower".to_string(),
-                "upper".to_string(),
-                "title".to_string(),
+                OptionEntry {
+                    value: "lower".to_string(),
+                    label: "lowercase".to_string(),
+                },
+                OptionEntry {
+                    value: "upper".to_string(),
+                    label: "UPPERCASE".to_string(),
+                },
+                OptionEntry {
+                    value: "title".to_string(),
+                    label: "Title Case".to_string(),
+                },
             ],
         },
         ..Default::default()

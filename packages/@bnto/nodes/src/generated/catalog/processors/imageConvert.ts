@@ -20,7 +20,7 @@ export const imageConvertProcessor: ProcessorDef = {
     label: "Output Format",
     description: "The target image format to convert to",
     type: "enum" as const,
-    options: ["jpeg","png","webp"] as const,
+    options: [{"value":"jpeg","label":"JPEG"},{"value":"png","label":"PNG"},{"value":"webp","label":"WebP"}] as const,
     default: "jpeg",
     constraints: { required: true },
   },

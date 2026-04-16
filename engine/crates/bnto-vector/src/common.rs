@@ -13,7 +13,20 @@ pub(crate) fn format_param_def() -> bnto_core::metadata::ParameterDef {
         label: "Output Format".to_string(),
         description: "The target raster format to convert SVG to".to_string(),
         param_type: ParameterType::Enum {
-            options: vec!["png".to_string(), "jpeg".to_string(), "webp".to_string()],
+            options: vec![
+                OptionEntry {
+                    value: "png".to_string(),
+                    label: "PNG".to_string(),
+                },
+                OptionEntry {
+                    value: "jpeg".to_string(),
+                    label: "JPEG".to_string(),
+                },
+                OptionEntry {
+                    value: "webp".to_string(),
+                    label: "WebP".to_string(),
+                },
+            ],
         },
         default: Some(serde_json::json!("png")),
         constraints: Some(Constraints {

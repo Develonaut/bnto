@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-convert node parameters. */
 export const spreadsheetConvertParamsSchema = z.object({
-    delimiter: z.enum(["comma","semicolon","tab","pipe"] as const).optional().default("comma"),
+    delimiter: z.enum([{"value":"comma","label":"Comma"},{"value":"semicolon","label":"Semicolon"},{"value":"tab","label":"Tab"},{"value":"pipe","label":"Pipe"}] as const).optional().default("comma"),
     pretty: z.boolean().optional().default(false),
 });
 

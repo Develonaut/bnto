@@ -32,7 +32,7 @@ export const fileRenameProcessor: ProcessorDef = {
     label: "Case",
     description: "Transform the filename to a specific case",
     type: "enum" as const,
-    options: ["lower","upper","title"] as const,
+    options: [{"value":"lower","label":"lowercase"},{"value":"upper","label":"UPPERCASE"},{"value":"title","label":"Title Case"}] as const,
   },
   {
     name: "prefix",

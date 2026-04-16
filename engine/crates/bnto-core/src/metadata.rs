@@ -93,6 +93,21 @@ pub enum NodeCategory {
     Io,
 }
 
+// --- OptionEntry — labeled enum choice ---
+
+/// A single choice inside an `Enum` parameter. Carries a machine value
+/// (used as the config JSON value) and a human-readable label (shown in
+/// UI selects). Replaces the earlier bare `Vec<String>` shape so the
+/// engine can describe proper `{value, label}` select options.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct OptionEntry {
+    /// The value stored in config JSON (e.g., `"jpeg"`).
+    pub value: String,
+    /// The label shown in the UI (e.g., `"JPEG"`).
+    pub label: String,
+}
+
 // --- ParameterType ---
 
 /// The type of a node parameter. Determines what UI control to render.
@@ -108,11 +123,11 @@ pub enum ParameterType {
     /// A true/false toggle. Used for trimWhitespace, removeEmptyRows.
     Boolean,
     /// A choice from a fixed set of options (like a dropdown/select).
-    /// The `options` field lists all valid values.
+    /// Each option carries both a machine value and a human-readable label.
     Enum {
-        /// The list of valid values for this enum parameter.
-        /// Example: `["jpeg", "png", "webp"]` for image format selection.
-        options: Vec<std::string::String>,
+        /// The list of valid `{value, label}` entries for this parameter.
+        /// Example: `[{value:"jpeg", label:"JPEG"}, ...]` for format selection.
+        options: Vec<OptionEntry>,
     },
     /// A structured object (key-value map). Used for column rename mappings.
     Object,
@@ -141,6 +156,21 @@ pub struct Constraints {
 
     /// Whether this parameter must be provided.
     pub required: bool,
+}
+
+// --- PresetEntry — quick-pick preset for sliders/numerics ---
+
+/// A labeled preset value offered next to a parameter's control. Lets the UI
+/// render quick-pick chips (e.g., `Draft | Balanced | Maximum` for quality).
+/// `value` is heterogeneous (serde_json::Value) because presets are not
+/// limited to numbers — string presets are valid for text/enum parameters.
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct PresetEntry {
+    /// The value applied when the preset is chosen (e.g., `80` or `"jpeg"`).
+    pub value: serde_json::Value,
+    /// The human-readable label for the preset (e.g., `"Balanced"`).
+    pub label: String,
 }
 
 // --- ParameterDef ---
@@ -187,6 +217,41 @@ pub struct ParameterDef {
     /// Defaults to `true`. Set `false` for internal wiring params.
     #[serde(default = "default_true")]
     pub surfaceable: bool,
+
+    // --- Presentation Fields (engine-owned schema) ---
+    //
+    // These six optional fields let the engine describe how a parameter
+    // should be presented, so `@bnto/nodes` can collapse to a barrel over
+    // generated code instead of hand-writing overlays per processor.
+    /// Visual group label — parameters sharing a group render together
+    /// under a common heading (e.g., `"dimensions"` groups width + height).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group: Option<String>,
+
+    /// Unit suffix shown next to numeric inputs (e.g., `"%"`, `"px"`, `"ms"`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suffix: Option<String>,
+
+    /// Override control identifier. Platform-agnostic string that consumers
+    /// map to their widget: `"slider"`, `"select"`, `"switch"`, `"file"`,
+    /// `"textarea"`, `"positionGrid"`, `"watermarkPreview"`, `"tagPicker"`,
+    /// `"keyValue"`. When unset, consumers derive a default from `param_type`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub control: Option<String>,
+
+    /// Accepted MIME types when this parameter backs a file picker control.
+    /// Populated alongside `control: "file"`; unused for other controls.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accept: Option<Vec<String>>,
+
+    /// Quick-pick presets rendered next to the control (e.g., quality chips).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub presets: Option<Vec<PresetEntry>>,
+
+    /// Flip the semantic of a boolean control so `true` renders as "off"
+    /// and `false` as "on" (e.g., `keepOriginal` vs `removeOriginal`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub inverted: Option<bool>,
 }
 
 /// Serde default for `surfaceable` field during deserialization.
@@ -209,6 +274,12 @@ impl Default for ParameterDef {
             visible_when: None,
             required_when: None,
             surfaceable: true,
+            group: None,
+            suffix: None,
+            control: None,
+            accept: None,
+            presets: None,
+            inverted: None,
         }
     }
 }
@@ -757,13 +828,31 @@ mod tests {
 
     #[test]
     fn test_parameter_type_enum_serialization() {
-        // Enum type includes the options list.
+        // Enum options carry both a machine value and a human-readable label.
+        // This replaces the earlier `Vec<String>` shape — the UI needs labels
+        // so engine-backed node types can render proper select option text.
         let param = ParameterType::Enum {
-            options: vec!["jpeg".to_string(), "png".to_string(), "webp".to_string()],
+            options: vec![
+                OptionEntry {
+                    value: "jpeg".to_string(),
+                    label: "JPEG".to_string(),
+                },
+                OptionEntry {
+                    value: "png".to_string(),
+                    label: "PNG".to_string(),
+                },
+                OptionEntry {
+                    value: "webp".to_string(),
+                    label: "WebP".to_string(),
+                },
+            ],
         };
         let json = serde_json::to_string(&param).unwrap();
         assert!(json.contains(r#""type":"enum""#));
-        assert!(json.contains(r#""options":["jpeg","png","webp"]"#));
+        assert!(json.contains(r#""value":"jpeg""#));
+        assert!(json.contains(r#""label":"JPEG""#));
+        assert!(json.contains(r#""value":"webp""#));
+        assert!(json.contains(r#""label":"WebP""#));
     }
 
     #[test]
@@ -1101,5 +1190,211 @@ mod tests {
         assert!(json.contains(r#""requires""#));
         assert!(json.contains(r#""binary":"yt-dlp""#));
         assert!(json.contains(r#""version":">=2023.01.01""#));
+    }
+
+    // --- PR 1: Presentation Metadata Tests ---
+    //
+    // These cover the six new `ParameterDef` fields (group, suffix, control,
+    // accept, presets, inverted) plus the `PresetEntry` and `OptionEntry`
+    // structs. Together they let the engine ship the full UI contract —
+    // `@bnto/nodes` no longer hand-writes presentation overlays.
+
+    #[test]
+    fn test_preset_entry_serializes_value_and_label() {
+        let preset = PresetEntry {
+            value: serde_json::json!(80),
+            label: "Balanced".to_string(),
+        };
+        let json = serde_json::to_string(&preset).unwrap();
+        assert!(json.contains(r#""value":80"#));
+        assert!(json.contains(r#""label":"Balanced""#));
+    }
+
+    #[test]
+    fn test_preset_entry_accepts_heterogeneous_values() {
+        // Presets hold `serde_json::Value` so they work for numbers, strings,
+        // and booleans — a quality slider uses numeric presets while a format
+        // select would use string presets.
+        let string_preset = PresetEntry {
+            value: serde_json::json!("jpeg"),
+            label: "JPEG".to_string(),
+        };
+        let json = serde_json::to_string(&string_preset).unwrap();
+        assert!(json.contains(r#""value":"jpeg""#));
+    }
+
+    #[test]
+    fn test_option_entry_serializes_value_and_label() {
+        let option = OptionEntry {
+            value: "snake".to_string(),
+            label: "snake_case".to_string(),
+        };
+        let json = serde_json::to_string(&option).unwrap();
+        assert_eq!(json, r#"{"value":"snake","label":"snake_case"}"#);
+    }
+
+    #[test]
+    fn test_parameter_def_presets_round_trip() {
+        let param = ParameterDef {
+            name: "quality".to_string(),
+            label: "Quality".to_string(),
+            description: "Compression quality".to_string(),
+            param_type: ParameterType::Number,
+            presets: Some(vec![
+                PresetEntry {
+                    value: serde_json::json!(60),
+                    label: "Draft".to_string(),
+                },
+                PresetEntry {
+                    value: serde_json::json!(80),
+                    label: "Balanced".to_string(),
+                },
+                PresetEntry {
+                    value: serde_json::json!(100),
+                    label: "Maximum".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let presets = parsed["presets"].as_array().unwrap();
+        assert_eq!(presets.len(), 3);
+        assert_eq!(presets[0]["value"], 60);
+        assert_eq!(presets[0]["label"], "Draft");
+        assert_eq!(presets[1]["label"], "Balanced");
+        assert_eq!(presets[2]["value"], 100);
+    }
+
+    #[test]
+    fn test_parameter_def_group_and_suffix_round_trip() {
+        // `group` co-locates related params (e.g., width+height under
+        // "dimensions"); `suffix` annotates the value unit in the UI.
+        let param = ParameterDef {
+            name: "width".to_string(),
+            label: "Width".to_string(),
+            description: "Target width".to_string(),
+            param_type: ParameterType::Number,
+            group: Some("dimensions".to_string()),
+            suffix: Some("px".to_string()),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""group":"dimensions""#));
+        assert!(json.contains(r#""suffix":"px""#));
+    }
+
+    #[test]
+    fn test_parameter_def_control_and_accept_round_trip() {
+        // `control` overrides the default UI widget (e.g., "file" for a
+        // file picker); `accept` narrows MIME types when control = "file".
+        let param = ParameterDef {
+            name: "image".to_string(),
+            label: "Watermark image".to_string(),
+            description: "Image to overlay".to_string(),
+            param_type: ParameterType::String,
+            control: Some("file".to_string()),
+            accept: Some(vec!["image/*".to_string()]),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""control":"file""#));
+        assert!(json.contains(r#""accept":["image/*"]"#));
+    }
+
+    #[test]
+    fn test_parameter_def_control_without_accept() {
+        // Not every `control` needs `accept` — "watermarkPreview" is a
+        // synthetic preview field with no param binding.
+        let param = ParameterDef {
+            name: "preview".to_string(),
+            label: "Preview".to_string(),
+            description: "Watermark preview".to_string(),
+            param_type: ParameterType::String,
+            control: Some("watermarkPreview".to_string()),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""control":"watermarkPreview""#));
+        assert!(!json.contains("accept"));
+    }
+
+    #[test]
+    fn test_parameter_def_inverted_round_trip() {
+        // `inverted` lets a boolean switch display the negation of the
+        // stored value (e.g., store `strip_exif: true` but show as
+        // "Keep metadata: off").
+        let param = ParameterDef {
+            name: "stripExif".to_string(),
+            label: "Keep metadata".to_string(),
+            description: "Preserve EXIF metadata".to_string(),
+            param_type: ParameterType::Boolean,
+            inverted: Some(true),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(json.contains(r#""inverted":true"#));
+    }
+
+    #[test]
+    fn test_parameter_def_new_fields_skip_none() {
+        let param = ParameterDef {
+            name: "quality".to_string(),
+            label: "Quality".to_string(),
+            description: "Compression quality".to_string(),
+            param_type: ParameterType::Number,
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        assert!(!json.contains("\"group\""));
+        assert!(!json.contains("\"suffix\""));
+        assert!(!json.contains("\"control\""));
+        assert!(!json.contains("\"accept\""));
+        assert!(!json.contains("\"presets\""));
+        assert!(!json.contains("\"inverted\""));
+    }
+
+    #[test]
+    fn test_parameter_def_default_new_fields_are_none() {
+        let param = ParameterDef::default();
+        assert!(param.group.is_none());
+        assert!(param.suffix.is_none());
+        assert!(param.control.is_none());
+        assert!(param.accept.is_none());
+        assert!(param.presets.is_none());
+        assert!(param.inverted.is_none());
+    }
+
+    #[test]
+    fn test_parameter_def_new_fields_use_camel_case() {
+        // New fields are single-word so the camelCase rename is a no-op,
+        // but we assert the serialized shape explicitly so downstream
+        // TypeScript consumers can rely on it.
+        let param = ParameterDef {
+            name: "image".to_string(),
+            label: "Image".to_string(),
+            description: "Overlay image".to_string(),
+            param_type: ParameterType::String,
+            control: Some("file".to_string()),
+            accept: Some(vec!["image/png".to_string()]),
+            group: Some("media".to_string()),
+            suffix: Some("%".to_string()),
+            inverted: Some(false),
+            presets: Some(vec![PresetEntry {
+                value: serde_json::json!(80),
+                label: "Balanced".to_string(),
+            }]),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&param).unwrap();
+        for key in [
+            "control", "accept", "group", "suffix", "inverted", "presets",
+        ] {
+            let needle = format!(r#""{key}""#);
+            assert!(
+                json.contains(&needle),
+                "expected serialized param to contain {needle}; got: {json}"
+            );
+        }
     }
 }

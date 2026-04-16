@@ -28,7 +28,7 @@ export const imageOverlayProcessor: ProcessorDef = {
     label: "Position",
     description: "Where to place the overlay on the image.",
     type: "enum" as const,
-    options: ["top-left","top-center","top-right","middle-left","center","middle-right","bottom-left","bottom-center","bottom-right"] as const,
+    options: [{"value":"top-left","label":"Top Left"},{"value":"top-center","label":"Top Center"},{"value":"top-right","label":"Top Right"},{"value":"middle-left","label":"Middle Left"},{"value":"center","label":"Center"},{"value":"middle-right","label":"Middle Right"},{"value":"bottom-left","label":"Bottom Left"},{"value":"bottom-center","label":"Bottom Center"},{"value":"bottom-right","label":"Bottom Right"}] as const,
     default: "bottom-right",
   },
   {

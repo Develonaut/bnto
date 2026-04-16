@@ -8,8 +8,8 @@
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::metadata::{
-    Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, ParameterDef,
-    ParameterType,
+    Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, OptionEntry,
+    ParameterDef, ParameterType,
 };
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
@@ -180,13 +180,34 @@ fn format_param() -> ParameterDef {
         description: "Output format for the downloaded video or audio.".to_string(),
         param_type: ParameterType::Enum {
             options: vec![
-                "mp4".to_string(),
-                "webm".to_string(),
-                "mkv".to_string(),
-                "mp3".to_string(),
-                "m4a".to_string(),
-                "wav".to_string(),
-                "flac".to_string(),
+                OptionEntry {
+                    value: "mp4".to_string(),
+                    label: "MP4".to_string(),
+                },
+                OptionEntry {
+                    value: "webm".to_string(),
+                    label: "WebM".to_string(),
+                },
+                OptionEntry {
+                    value: "mkv".to_string(),
+                    label: "MKV".to_string(),
+                },
+                OptionEntry {
+                    value: "mp3".to_string(),
+                    label: "MP3".to_string(),
+                },
+                OptionEntry {
+                    value: "m4a".to_string(),
+                    label: "M4A".to_string(),
+                },
+                OptionEntry {
+                    value: "wav".to_string(),
+                    label: "WAV".to_string(),
+                },
+                OptionEntry {
+                    value: "flac".to_string(),
+                    label: "FLAC".to_string(),
+                },
             ],
         },
         default: Some(serde_json::json!("mp4")),
@@ -201,11 +222,26 @@ fn quality_param() -> ParameterDef {
         description: "Maximum video quality. 'best' downloads the highest available.".to_string(),
         param_type: ParameterType::Enum {
             options: vec![
-                "best".to_string(),
-                "1080".to_string(),
-                "720".to_string(),
-                "480".to_string(),
-                "360".to_string(),
+                OptionEntry {
+                    value: "best".to_string(),
+                    label: "Best Available".to_string(),
+                },
+                OptionEntry {
+                    value: "1080".to_string(),
+                    label: "1080p".to_string(),
+                },
+                OptionEntry {
+                    value: "720".to_string(),
+                    label: "720p".to_string(),
+                },
+                OptionEntry {
+                    value: "480".to_string(),
+                    label: "480p".to_string(),
+                },
+                OptionEntry {
+                    value: "360".to_string(),
+                    label: "360p".to_string(),
+                },
             ],
         },
         default: Some(serde_json::json!("best")),

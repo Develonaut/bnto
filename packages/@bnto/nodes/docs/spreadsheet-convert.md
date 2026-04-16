@@ -12,7 +12,7 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| delimiter | enum | comma | comma, semicolon, tab, pipe | Column separator character |
+| delimiter | enum | comma | [object Object], [object Object], [object Object], [object Object] | Column separator character |
 | pretty | boolean | false | - | Format output JSON with indentation |
 
 ## Configuration Example
