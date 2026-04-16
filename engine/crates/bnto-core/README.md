@@ -74,6 +74,7 @@ src/
 ├── progress.rs           # ProgressReporter (target-agnostic closures)
 ├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
+├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic
