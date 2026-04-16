@@ -44,32 +44,34 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 
 ### Strategy & Reference
 
-| If you're working on...        | Read this first                                                             |
-| ------------------------------ | --------------------------------------------------------------------------- |
-| Landing page / homepage        | [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md) |
-| Homepage sprint plan           | [homepage-sprint-plan.md](.claude/strategy/homepage-sprint-plan.md)         |
-| Brand, messaging & mascots     | [brand-messaging-audit.md](.claude/strategy/brand-messaging-audit.md)       |
-| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)     |
-| Editor architecture (frozen)   | [editor-architecture.md](.claude/strategy/editor-architecture.md)           |
-| Editor API layer (frozen)      | [editor-api.md](.claude/strategy/editor-api.md)                             |
-| Visual editor (frozen)         | [visual-editor.md](.claude/strategy/visual-editor.md)                       |
-| Input/output nodes (frozen)    | [io-nodes.md](.claude/strategy/io-nodes.md)                                 |
-| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                 |
-| Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                 |
-| TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                         |
-| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                   |
-| Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)           |
-| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                            |
-| Implementation task            | [PLAN.md](.claude/PLAN.md)                                                  |
-| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                       |
-| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                 |
-| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                              |
-| Code editor (frozen)           | [code-editor.md](.claude/strategy/code-editor.md)                           |
-| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)     |
-| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                   |
-| Environment variables          | [environment-variables.md](.claude/environment-variables.md)                |
-| Expression input UX (frozen)   | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)           |
-| Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                   |
+| If you're working on...        | Read this first                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| Landing page / homepage        | [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md)     |
+| Homepage sprint plan           | [homepage-sprint-plan.md](.claude/strategy/homepage-sprint-plan.md)             |
+| Brand, messaging & mascots     | [brand-messaging-audit.md](.claude/strategy/brand-messaging-audit.md)           |
+| Data fetching / hooks          | [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)         |
+| Editor architecture (frozen)   | [editor-architecture.md](.claude/strategy/editor-architecture.md)               |
+| Editor API layer (frozen)      | [editor-api.md](.claude/strategy/editor-api.md)                                 |
+| Visual editor (frozen)         | [visual-editor.md](.claude/strategy/visual-editor.md)                           |
+| Input/output nodes (frozen)    | [io-nodes.md](.claude/strategy/io-nodes.md)                                     |
+| Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                     |
+| Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                     |
+| TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                             |
+| Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                       |
+| Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)               |
+| Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                |
+| Implementation task            | [PLAN.md](.claude/PLAN.md)                                                      |
+| Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                           |
+| Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                     |
+| Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                                  |
+| Code editor (frozen)           | [code-editor.md](.claude/strategy/code-editor.md)                               |
+| Understanding the product      | [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)         |
+| Core principles (always)       | [core-principles.md](.claude/strategy/core-principles.md)                       |
+| Environment variables          | [environment-variables.md](.claude/environment-variables.md)                    |
+| Expression input UX (frozen)   | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)               |
+| Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                       |
+| Recipe editors (unified)       | [recipe-editors.md](.claude/strategy/recipe-editors.md)                         |
+| Editor implementation plan     | [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) |
 
 ---
 
@@ -336,27 +338,29 @@ These rules do NOT auto-load. Read them yourself when you start working in a sco
 
 ### Strategy & Reference (read on demand)
 
-| Document                                                                    | Purpose                                                                                                           |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| [ROADMAP.md](.claude/ROADMAP.md)                                            | Strategic roadmap — milestones, direction, big decisions                                                          |
-| [PLAN.md](.claude/PLAN.md)                                                  | Build plan — sprints, waves, what's next                                                                          |
-| [pricing-model.md](.claude/strategy/pricing-model.md)                       | Free vs premium — nodes, recipes, features, terminology                                                           |
-| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)     | Hybrid Convex native + React Query, co-located queries, self-fetching components                                  |
-| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)     | Full architecture, tech decisions, phases                                                                         |
-| [core-principles.md](.claude/strategy/core-principles.md)                   | TDD, Grain, Modularity, Abstraction                                                                               |
-| [design-language.md](.claude/strategy/design-language.md)                   | Visual identity, brand personality                                                                                |
-| [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md) | Landing page creative direction — reference sites, hero concept, page sections                                    |
-| [editor-architecture.md](.claude/strategy/editor-architecture.md)           | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
-| [editor-api.md](.claude/strategy/editor-api.md)                             | Editor API layer — client → service → store abstraction, Sprint 5D                                                |
-| [visual-editor.md](.claude/strategy/visual-editor.md)                       | Bento box visual editor — compartment design, grid layout, execution state                                        |
-| [io-nodes.md](.claude/strategy/io-nodes.md)                                 | Input & output nodes — self-describing recipe I/O, generic renderers, migration                                   |
-| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)           | Editor user journey — stages, flows, success criteria, phased delivery                                            |
-| [code-editor.md](.claude/strategy/code-editor.md)                           | Code editor design — CM6, slash commands, JSON Schema                                                             |
-| [engine-execution.md](.claude/strategy/engine-execution.md)                 | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
-| [tui-strategy.md](.claude/strategy/tui-strategy.md)                         | TUI design — TEA architecture, Motorway design language, 5-system breakdown, TDD approach                         |
-| [expression-input-ux.md](.claude/strategy/expression-input-ux.md)           | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
-| Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)        | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
-| [skills/](.claude/skills/)                                                  | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |
+| Document                                                                        | Purpose                                                                                                           |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| [ROADMAP.md](.claude/ROADMAP.md)                                                | Strategic roadmap — milestones, direction, big decisions                                                          |
+| [PLAN.md](.claude/PLAN.md)                                                      | Build plan — sprints, waves, what's next                                                                          |
+| [pricing-model.md](.claude/strategy/pricing-model.md)                           | Free vs premium — nodes, recipes, features, terminology                                                           |
+| [data-fetching-strategy.md](.claude/strategy/data-fetching-strategy.md)         | Hybrid Convex native + React Query, co-located queries, self-fetching components                                  |
+| [cloud-desktop-strategy.md](.claude/strategy/cloud-desktop-strategy.md)         | Full architecture, tech decisions, phases                                                                         |
+| [core-principles.md](.claude/strategy/core-principles.md)                       | TDD, Grain, Modularity, Abstraction                                                                               |
+| [design-language.md](.claude/strategy/design-language.md)                       | Visual identity, brand personality                                                                                |
+| [landing-page-inspiration.md](.claude/strategy/landing-page-inspiration.md)     | Landing page creative direction — reference sites, hero concept, page sections                                    |
+| [editor-architecture.md](.claude/strategy/editor-architecture.md)               | Shared editor layer — store, hooks, package strategy, switchable editors                                          |
+| [editor-api.md](.claude/strategy/editor-api.md)                                 | Editor API layer — client → service → store abstraction, Sprint 5D                                                |
+| [visual-editor.md](.claude/strategy/visual-editor.md)                           | Bento box visual editor — compartment design, grid layout, execution state                                        |
+| [io-nodes.md](.claude/strategy/io-nodes.md)                                     | Input & output nodes — self-describing recipe I/O, generic renderers, migration                                   |
+| [editor-user-journey.md](.claude/strategy/editor-user-journey.md)               | Editor user journey — stages, flows, success criteria, phased delivery                                            |
+| [code-editor.md](.claude/strategy/code-editor.md)                               | Code editor design — CM6, slash commands, JSON Schema                                                             |
+| [engine-execution.md](.claude/strategy/engine-execution.md)                     | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
+| [tui-strategy.md](.claude/strategy/tui-strategy.md)                             | TUI design — TEA architecture, Motorway design language, 5-system breakdown, TDD approach                         |
+| [expression-input-ux.md](.claude/strategy/expression-input-ux.md)               | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
+| [recipe-editors.md](.claude/strategy/recipe-editors.md)                         | Recipe editors — 4 editor types (List, Wizard, Visual, Code), interaction models, cross-platform strategy         |
+| [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) | Editor implementation — PR-by-PR breakdown, TUI first, TDD tests, dependency chain                                |
+| Private business docs (see `BNTO_PRIVATE_DOCS_PATH` in `.env.local`)            | Pricing strategy, revenue projections, SEO monetization, feature funnel, brand, personas, competitive positioning |
+| [skills/](.claude/skills/)                                                      | Agent skills (pre-commit, pickup, code-review, merge-pr, lighthouse-audit)                                        |
 
 ### Domain Expert Personas (invoke with `/persona-name`)
 

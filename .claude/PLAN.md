@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 5, 2026 (CLI/TUI-first pivot — rewrote current state, collapsed 23+ frozen backlog items, promoted Sprint 10 TUI)
+**Last Updated:** April 16, 2026 (Added recipe editor Sprints 12-18 to backlog — TUI List/Wizard/Code/Graph editors, bnto-editor crate extraction, Web List/Wizard/Code editors)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -35,6 +35,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
 - **TUI delivered (Sprint 10):** `bnto tui` via ratatui + crossterm — 6 screens (browser, detail, picker, execution, results, settings), 278 tests
 - **Next: TUI Schema-Driven Config (Sprint 11)** — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation, conditional visibility)
+- **Backlog: Recipe Editors (Sprints 12-18)** — TUI List/Wizard/Code/Graph editors, bnto-editor crate extraction, Web List/Wizard/Code editors (~28 PRs, ~153 tests). See [editor-implementation-plan.md](strategy/editor-implementation-plan.md)
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -687,7 +688,207 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 - [ ] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): `tests/tui_schema_controls_integration.rs` loading `compress-images`, asserting quality renders bounded Number with presets, format renders Enum select, case renders Enum with labels, `overlay-watermark` renders image as file picker + watermarkPreview synthetic control, description lines render in help area, `visible_when` filtering active.
 - [ ] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Update **CLAUDE.md** (`@bnto/nodes is a barrel over engine-generated code`). Mark Sprint 11 complete in **PLAN.md**.
 
-**After Sprint 11:** File picker UX overhaul (ratatui-explorer, directory tree, breadcrumb, scroll). Then file node ecosystem expansion, more node types, recipe expansion.
+**After Sprint 11:** Recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
+
+---
+
+### Sprint 12: TUI List Editor — BACKLOG
+
+**Goal:** Transform the TUI from a read-only runner into a recipe editor. The List editor is the center of gravity — it handles 90% of editing needs and establishes the editor state model that all other editor types share.
+
+**Strategy doc:** [recipe-editors.md](strategy/recipe-editors.md)
+**Implementation plan:** [editor-implementation-plan.md](strategy/editor-implementation-plan.md)
+**Depends on:** Sprint 11 (engine-owned node schema)
+
+**What changes:** New "Editor" screen (System 6) with the List editor view. Distinct from the existing Detail screen (configure + run predefined). Editor screen is for creating and modifying recipe structures.
+
+**Entry points:**
+
+- `bnto tui --new` → blank recipe → Editor screen
+- `bnto tui recipe.bnto.json` → load file → Editor screen
+- Browser screen: `e` on a predefined recipe → clone into Editor
+
+**Persona ownership:**
+
+| Package                   | Persona        |
+| ------------------------- | -------------- |
+| `engine/crates/bnto-core` | `/rust-expert` |
+| `engine/crates/bnto`      | `/rust-expert` |
+
+#### Wave 1 — Editor State Model + Recipe I/O (sequential)
+
+- [ ] `engine/crates/bnto-core` — **Editor state model**: `EditorModel` (recipe name, description, nodes vec, selected index, dirty flag, undo/redo stacks, source), `EditorNode`, `EditorSnapshot`, `EditorSource` enum. Pure Rust, no TUI dependency. RED tests: add/remove/reorder nodes, undo/redo, dirty flag, node defaults from metadata (~15 tests)
+- [ ] `engine/crates/bnto-core` — **Recipe file I/O**: Load `.bnto.json` → `EditorModel`, serialize `EditorModel` → `.bnto.json`. Roundtrip fidelity. New recipes default to `settings.iteration: "auto"`. RED tests: load/save roundtrip, invalid JSON error, predefined clone, auto-iteration preservation (~8 tests)
+
+#### Wave 2 — List Editor Screen (parallel)
+
+- [ ] `engine/crates/bnto` — **Editor screen shell + navigation** (`screens/editor.rs`): `EditorMessage` + `update()` + `view()`. Basic list rendering with focus navigation. Expand/collapse nodes. Back with dirty confirmation. Tab to switch editor types. RED tests: focus nav, expand/collapse, dirty guard, node list rendering (~10 tests)
+- [ ] `engine/crates/bnto` — **Node add/remove**: Picker overlay for adding nodes (reuse browser search pattern), `d` to delete with confirmation. Undo snapshots on add/remove. RED tests: picker search/select, delete confirm/cancel, undo integration (~12 tests)
+- [ ] `engine/crates/bnto` — **Node reorder**: `Shift+j`/`Shift+k` to move nodes up/down. Cursor follows moved node. Boundary checks. RED tests: reorder operations, bounds, cursor tracking (~6 tests)
+
+#### Wave 3 — Inline Config + Schema Controls (sequential)
+
+- [ ] `engine/crates/bnto` — **Inline parameter editing**: Expanded nodes show editable parameters using Sprint 11 type-aware controls (boolean, enum, number). Param edits update `EditorModel`, trigger undo snapshots. `visible_when` filtering. RED tests: param rendering by type, edit updates model, visibility conditions (~10 tests)
+
+#### Wave 4 — Save + Entry Points (parallel)
+
+- [ ] `engine/crates/bnto` — **Save workflow**: Save to disk. Confirm overwrite for existing files, prompt for path on new recipes. `Ctrl+s` shortcut. Clears dirty flag. RED tests: save path, save-as, dirty flag clear (~5 tests)
+- [ ] `engine/crates/bnto` — **Entry points + app integration**: Wire Editor screen into app state machine. `--new` flag, file arg, browser `e` key clone, detail `e` key. Back returns to source screen. RED tests: all entry points, screen routing (~5 tests)
+
+**Sprint 12 totals: ~8 PRs, ~75 tests, ~1500-2000 LOC**
+
+---
+
+### Sprint 13: TUI Wizard — BACKLOG
+
+**Goal:** Guided recipe creation for first-time users. "What do you want to do?" → category → operation → config → done.
+
+**Strategy doc:** [recipe-editors.md](strategy/recipe-editors.md) (§ Wizard Editor)
+**Depends on:** Sprint 12 (editor state model + List editor)
+
+**Persona ownership:**
+
+| Package              | Persona        |
+| -------------------- | -------------- |
+| `engine/crates/bnto` | `/rust-expert` |
+
+#### Wave 1 — Wizard Flow (sequential)
+
+- [ ] `engine/crates/bnto` — **Wizard state model**: `WizardModel` with step progression (Category → Operation → Config → Complete). Category/operation lists from engine metadata (not hardcoded). Back navigation between steps. RED tests: step advancement, back nav, filtered operations, produces valid EditorModel (~10 tests)
+- [ ] `engine/crates/bnto` — **Wizard screen + rendering**: TUI screen with step-by-step prompts. Category grid, operation list, config uses Sprint 11 controls. Summary on complete. RED tests: rendering per step, enter/esc navigation (~8 tests)
+
+#### Wave 2 — Wizard-to-Editor Handoff (sequential)
+
+- [ ] `engine/crates/bnto` — **Auto-name + handoff to List editor**: Wizard completion generates recipe name (e.g. "Compress Images v1"), populates `EditorModel`, switches to List editor. Browser `n` key opens Wizard. RED tests: auto-naming, handoff populates model, screen transition (~5 tests)
+
+**Sprint 13 totals: ~3 PRs, ~25 tests**
+
+---
+
+### Sprint 14: TUI Code + Graph Views — BACKLOG
+
+**Goal:** Power-user code view ($EDITOR integration) and read-only ASCII graph view.
+
+**Strategy doc:** [recipe-editors.md](strategy/recipe-editors.md) (§ Code Editor, § Visual Editor)
+**Depends on:** Sprint 12 (editor state model)
+
+**Persona ownership:**
+
+| Package              | Persona        |
+| -------------------- | -------------- |
+| `engine/crates/bnto` | `/rust-expert` |
+
+#### Wave 1 — Code Editor (sequential)
+
+- [ ] `engine/crates/bnto` — **$EDITOR integration**: Press `c` in Editor → export to temp `.bnto.json` → open in `$EDITOR` (fallback `$VISUAL`, then `vi`) → validate JSON on return → update EditorModel. RED tests: temp file creation, env var respect, valid/invalid JSON handling, roundtrip fidelity (~6 tests)
+
+#### Wave 2 — Read-Only Graph View (sequential)
+
+- [ ] `engine/crates/bnto` — **ASCII graph renderer**: Press `g` in Editor → read-only box-drawing view of recipe structure. Shows node labels + hero param in boxes, arrows between nodes. Container children indented. `l`/`Esc` returns to List. RED tests: linear pipeline rendering, container children, hero param display, read-only enforcement (~5 tests)
+
+**Sprint 14 totals: ~2 PRs, ~11 tests**
+
+---
+
+### Sprint 15: `bnto-editor` Crate Extraction — BACKLOG
+
+**Goal:** Extract the shared editor state model from TUI into standalone `bnto-editor` crate. Reusable for desktop (Tauri) and third-party integrations.
+
+**Implementation plan:** [editor-implementation-plan.md](strategy/editor-implementation-plan.md) (§ Phase 4)
+**Depends on:** Sprint 12-14 (editor state model proven in production)
+
+**Persona ownership:**
+
+| Package                     | Persona        |
+| --------------------------- | -------------- |
+| `engine/crates/bnto-editor` | `/rust-expert` |
+| `engine/crates/bnto`        | `/rust-expert` |
+
+#### Wave 1 — Extract (sequential)
+
+- [ ] `engine/crates/bnto-editor` — **Extract `bnto-editor` crate**: Move `EditorModel`, `EditorNode`, `EditorSnapshot`, `EditorCommand`, recipe I/O, wizard state model, validation from `bnto/src/tui/screens/` to `engine/crates/bnto-editor/`. TUI becomes a consumer (editor state + TUI rendering). All existing editor unit tests move to crate. RED tests: `EditorModel` is `Send + Sync`, `EditorCommand::apply` is pure (~5 new tests)
+
+**Sprint 15 totals: ~1 PR, migration + ~5 new tests**
+
+---
+
+### Sprint 16: Web List Editor — BACKLOG
+
+**Goal:** Add the List editor to the web `@bnto/editor` package alongside the existing Visual editor.
+
+**Strategy doc:** [recipe-editors.md](strategy/recipe-editors.md) (§ Web Platform)
+**Depends on:** Sprint 11 (engine-owned node schema). Independent of TUI sprints.
+
+**Persona ownership:**
+
+| Package               | Persona              |
+| --------------------- | -------------------- |
+| `packages/editor`     | `/frontend-engineer` |
+| `packages/@bnto/form` | `/frontend-engineer` |
+
+#### Wave 1 — List View Component (sequential)
+
+- [ ] `packages/editor` — **List editor component**: `ListEditor` renders store nodes as ordered step list. Expand/collapse steps. Collapsed shows label + hero param. Keyboard navigation (Arrow keys, Enter). RED tests: renders all nodes, expand/collapse, hero param display (~6 tests)
+- [ ] `packages/editor` — **Reorder + Add/Remove in List**: DnD reorder with `@dnd-kit` + keyboard (Shift+Arrow). Node picker popover for adding. Delete with undo. RED tests: drag reorder, keyboard reorder, add from picker, delete with undo (~5 tests)
+
+#### Wave 2 — Editor Switcher (parallel)
+
+- [ ] `packages/editor` — **Editor type switcher**: Toolbar control to switch between Visual (existing), List (new), and Code (Sprint 18). State preserved across switches. Preference persisted to localStorage. RED tests: state preservation across switches, preference persistence (~5 tests)
+- [ ] `packages/editor` — **Per-node JSON toggle**: In List editor, each expanded step has "Show JSON" toggle revealing raw JSON for that node. Read-only in list view. RED tests: toggle renders JSON, read-only, per-node state (~3 tests)
+
+**Sprint 16 totals: ~4 PRs, ~19 tests**
+
+---
+
+### Sprint 17: Web Wizard — BACKLOG
+
+**Goal:** Guided recipe creation for web users. Step-by-step: category → operation → config → done.
+
+**Strategy doc:** [recipe-editors.md](strategy/recipe-editors.md) (§ Wizard Editor)
+**Depends on:** Sprint 16 (web List editor for handoff target)
+
+**Persona ownership:**
+
+| Package               | Persona              |
+| --------------------- | -------------------- |
+| `packages/editor`     | `/frontend-engineer` |
+| `packages/@bnto/form` | `/frontend-engineer` |
+
+#### Wave 1 — Wizard Flow (sequential)
+
+- [ ] `packages/editor` — **Wizard flow component**: Step-by-step form (category card grid → operation radio list → config via `@bnto/form` SchemaForm → complete summary). Produces EditorModel, hands off to List editor. Auto-naming. Back navigation. RED tests: step rendering, navigation, config uses SchemaForm, handoff to List editor, skip-to-end (~8 tests)
+
+**Sprint 17 totals: ~1 PR, ~8 tests**
+
+---
+
+### Sprint 18: Web Code Editor (CM6) — BACKLOG
+
+**Goal:** JSON code editor with CodeMirror 6, following the existing [code-editor.md](strategy/code-editor.md) strategy.
+
+**Strategy doc:** [code-editor.md](strategy/code-editor.md)
+**Depends on:** Sprint 16 (editor switcher)
+
+**Persona ownership:**
+
+| Package           | Persona               |
+| ----------------- | --------------------- |
+| `packages/editor` | `/code-editor-expert` |
+| `packages/editor` | `/frontend-engineer`  |
+
+#### Wave 1 — CM6 Integration (sequential)
+
+- [ ] `packages/editor` — **CodeMirror 6 editor view**: JSON editing with validation, hover info, autocompletion from engine JSON Schema. Store sync (debounced). External update annotation. RED tests: renders JSON, validation errors, autocompletion, store sync (~6 tests)
+
+#### Wave 2 — Slash Commands (sequential)
+
+- [ ] `packages/editor` — **Slash command insertion**: `/` trigger shows node type menu, inserts complete valid node JSON block with defaults. Position-aware (only at valid insertion points). RED tests: slash menu, insert JSON, defaults, position check (~4 tests)
+
+**Sprint 18 totals: ~2 PRs, ~10 tests**
+
+---
+
+**After Sprint 18:** File picker UX overhaul (ratatui-explorer, directory tree, breadcrumb, scroll). Then file node ecosystem expansion, more node types, recipe expansion, distribution (desktop + server).
 
 ---
 
@@ -706,7 +907,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 **"Ready to charge" gate:** Before starting, confirm: real users running bntos, conversion hooks built and tested, people return voluntarily, at least one server-side bnto (AI or shell) ready for Pro tier.
 
-### Sprint 12: Stripe + Pro Tier (M5) — TABLED
+### Stripe + Pro Tier (M5) — TABLED
 
 **Goal:** First revenue. Pro sells real value — not artificial limits on browser-native operations.
 
