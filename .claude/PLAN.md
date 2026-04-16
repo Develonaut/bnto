@@ -33,7 +33,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **Engine (Rust):** Library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-video, bnto-engine), WASM entry point (bnto-wasm), CLI binary (bnto). CLI is the primary consumer, browser (WASM) is secondary
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
-- **Next: TUI (Sprint 10)** — `bnto tui` via ratatui + crossterm (recipe browser, file picker, progress, results)
+- **TUI delivered (Sprint 10):** `bnto tui` via ratatui + crossterm — 6 screens (browser, detail, picker, execution, results, settings), 278 tests
+- **Next: TUI Schema-Driven Config (Sprint 11)** — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation, conditional visibility)
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -207,11 +208,11 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 ## What's Next
 
-**Sprint 9 complete.** CLI is solid: 15 recipes, dependency system, video node, `bnto list/info/run/doctor`. v0.5.0 shipped to crates.io.
+**Sprint 10 complete.** TUI shipped: 6 screens (browser, detail, picker, execution, results, settings), 278 tests, 32 Rust files. `bnto tui` is live with recipe browsing, file picking, execution, and results.
 
-**Next up: TUI (Sprint 10).** `bnto tui` launches an interactive terminal UI via ratatui + crossterm — recipe browser, file picker, progress display, results panel. Same engine, richer interface. See Sprint 10 below.
+**Next up: TUI Schema-Driven Config (Sprint 11).** The detail screen currently renders all parameters as text inputs regardless of type. Sprint 11 enriches the parameter editing experience with type-aware controls — boolean toggles, enum selects, number sliders with bounds, inline validation, description/help text, and conditional visibility. Same TEA architecture, same TDD approach. See Sprint 11 below.
 
-**After TUI:** More node types (Excel, PDF, shell), recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
+**After Sprint 11:** File picker UX Phase 2 (backlog triage — breadcrumb, tree view, preview), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
 
 ---
 
@@ -594,7 +595,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ---
 
-### Sprint 10: TUI — NEXT
+### Sprint 10: TUI — COMPLETE
 
 **Next sprint.** `bnto tui` launches an interactive terminal UI — recipe browser, file picker, execution progress, results summary. Same engine, richer interface than raw CLI.
 
@@ -640,7 +641,53 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
 - [x] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
-**After TUI:** File node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
+**After Sprint 11:** File picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
+
+---
+
+### Sprint 11: TUI Schema-Driven Config — NEXT
+
+**Next sprint.** Enrich the detail screen with type-aware parameter controls. Currently all params render as text inputs regardless of `ParameterType`. Sprint 11 maps engine metadata to purpose-built TUI widgets — mirroring how `@bnto/form` maps schemas to web form controls.
+
+**Strategy doc:** [tui-strategy.md](strategy/tui-strategy.md) (§ Param Control Matrix)
+
+**Architecture:** Same TEA pattern — each new control type gets its own `DetailMessage` variants and pure `update()` logic. `ParamEntry` enriched with `constraints`, `description`, `placeholder` from engine's `ParameterDef`. Rendering branches on `param_type` to dispatch to control-specific renderers.
+
+**Key gap addressed:** `detail_loader.rs` currently extracts `param_type` and `default` from engine metadata but drops `constraints`, `description`, `placeholder`, `visible_when`. These fields are prerequisites for schema-driven controls.
+
+**Framework:** `ratatui` + `crossterm` + `tui-slider` (dependency, already identified in Sprint 10 strategy)
+
+**Persona ownership:**
+
+| Package              | Persona        |
+| -------------------- | -------------- |
+| `engine/crates/bnto` | `/rust-expert` |
+
+#### Wave 1 (parallel — metadata enrichment + boolean + enum + reset)
+
+- [ ] `engine/crates/bnto` — **Enrich ParamEntry with full metadata**: Add `constraints: Option<Constraints>`, `description: Option<String>`, `placeholder: Option<String>` to `ParamEntry`. Update `detail_loader.rs` `collect_params_from_processor()` to carry these fields through from `ParameterDef`. Update `from_test_data()` and all test fixtures. Unit tests verifying metadata flows from engine to detail model (~5 tests)
+- [ ] `engine/crates/bnto` — **Boolean toggle control**: When `param_type == Boolean`, render `[x]`/`[ ]` toggle instead of text input. `Space`/`Enter` toggles value. No edit buffer needed — direct value flip. `DetailMessage::ToggleBool` variant. Render shows checkmark with label. Unit tests for toggle on/off, toggle ignored when not focused, toggle skipped for non-boolean params (~6 tests)
+- [ ] `engine/crates/bnto` — **Enum select control**: When `param_type == Enum { options }`, render current value with `←`/`→` (or `h`/`l`) to cycle through options. No free-text editing — constrained to enum variants. `DetailMessage::EnumNext`/`EnumPrev` variants. Render shows `◀ value ▶` when focused. Wrap at boundaries. Unit tests for cycling, wrapping, correct options list (~6 tests)
+- [ ] `engine/crates/bnto` — **Reset to default**: `d` keybind on focused param resets value to `default` from `ParamEntry`. Works for all param types. `DetailMessage::ResetDefault` variant. Visual flash or indicator showing reset happened. Unit tests for reset across param types, reset on already-default value is no-op (~4 tests)
+
+#### Wave 2 (parallel — number control + validation + help text)
+
+- [ ] `engine/crates/bnto` — **Number control with bounds**: When `param_type == Number` and `constraints` has `min`/`max`, render as bounded input showing `[value] (min–max)`. `+`/`-` or `←`/`→` to increment/decrement by step (integer=1, float=0.1). Clamp to bounds on commit. When no bounds, fall back to text input with numeric validation. `DetailMessage::NumberIncrement`/`NumberDecrement` variants. Unit tests for increment, decrement, clamp at bounds, step behavior, no-bounds fallback (~8 tests)
+- [ ] `engine/crates/bnto` — **Inline validation on commit**: When `CommitEdit` fires, validate the edit buffer against `param_type` and `constraints`. Number: parse as f64, check min/max. Required: reject empty string. Invalid commit shows error message on the param line (muted red), keeps edit mode active. `DetailModel.error: Option<String>` field. `DetailMessage::ClearError` on next keystroke. Unit tests for valid commit clears error, invalid shows error, error clears on next input (~6 tests)
+- [ ] `engine/crates/bnto` — **Description and help text**: When a param has `description`, show it below the control in muted style. When focused, show full description in a help area at the bottom of the detail screen (or inline below the param). `render_detail.rs` branches on `description.is_some()`. Truncate long descriptions to available width. Unit tests for description rendering lines (~3 tests)
+
+#### Wave 3 (parallel — conditional visibility + custom recipes + scrolling)
+
+- [ ] `engine/crates/bnto` — **Conditional parameter visibility**: When `ParamEntry` has `visible_when` (carried from `ParameterDef`), evaluate the condition against current param values. Hidden params skip rendering and focus navigation. `DetailModel::visible_params()` method returns filtered indices. Update `FocusNext`/`FocusPrev` to skip hidden params. Unit tests for visibility toggle, focus skips hidden, confirm excludes hidden from overrides (~6 tests)
+- [ ] `engine/crates/bnto` — **Run custom .bnto.json from TUI**: Accept an optional file path argument: `bnto tui recipe.bnto.json`. Parse the definition, extract metadata, populate detail screen. Skip browser screen and go directly to detail. Error handling for invalid/missing file. Clap arg update + loader logic. Unit tests for custom recipe loading, invalid file handling (~5 tests)
+- [ ] `engine/crates/bnto` — **Detail screen viewport scrolling**: When params exceed the visible area, add scrolling. Track `viewport_offset` in `DetailModel`. `FocusNext`/`FocusPrev` auto-scroll to keep focused param visible. Scroll indicator (e.g., `▲`/`▼` or `1/5`) when content overflows. Unit tests for scroll offset calculation, auto-scroll on focus change, indicator visibility (~5 tests)
+
+#### Wave 4 (sequential — integration + docs)
+
+- [ ] `engine/crates/bnto` — **End-to-end schema control verification**: Integration test that loads `compress-images` recipe, verifies quality param renders as Number control with 1–100 bounds, format param renders as Enum select with jpeg/png/webp options, strip_metadata renders as Boolean toggle. Verify param overrides with type-specific controls carry through to execution
+- [ ] `engine/crates/bnto` — **Update docs**: Update tui-strategy.md Param Control Matrix with implementation status. Update README TUI section with schema-driven control descriptions. Update CLAUDE.md if needed
+
+**After Sprint 11:** File picker UX overhaul (backlog triage — ratatui-explorer evaluation, directory tree, breadcrumb, scroll behavior). Then file node ecosystem expansion, more node types, recipe expansion.
 
 ---
 
@@ -961,7 +1008,7 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 - [x] Codegen + golden tests + test count updates
 - [x] **Delivers:** `/optimize-svg` recipe page
 
-**Phase 3 — EPS → SVG (CLI-only shell-out):**
+**Phase 3 — EPS → SVG (CLI-only shell-out): Priority: Low.**
 
 - [ ] `engine/crates/bnto-vector` — EPS/AI→SVG processor via Inkscape/Ghostscript shell-out
 - [ ] `#[cfg(feature = "native")]` only — no browser support

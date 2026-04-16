@@ -140,13 +140,13 @@ task cli:test           # Run CLI unit + integration + golden tests
 task cli:golden         # Run golden tests only (byte-exact output verification)
 task cli:golden:bless   # Regenerate golden files from current CLI output
 
-# CLI binary commands (after `cargo install bnto` or `task cli:build`)
-bnto tui                # Launch interactive TUI (recipe browser, file picker, progress)
-bnto tui --theme tokyo  # TUI with dark theme (los-angeles | tokyo | monaco)
-bnto run <recipe> <files...>  # Run a recipe against input files
-bnto list               # List available built-in recipes
-bnto info <recipe>      # Show recipe details and dependencies
-bnto doctor             # Check external dependency availability
+# CLI commands
+bnto run <recipe> [files...]  # Run a recipe against files
+bnto list                     # List available recipes
+bnto info <recipe>            # Show recipe details and dependencies
+bnto doctor                   # Check external dependencies (yt-dlp, etc.)
+bnto tui                      # Launch interactive TUI (recipe browser, file picker, execution)
+bnto tui --theme tokyo        # TUI with dark theme (los-angeles | tokyo | monaco)
 
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
