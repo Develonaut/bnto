@@ -169,10 +169,10 @@ New core functionality is exposed via its domain namespace on the `core` singlet
 
 ## References
 
-| Document                          | What it covers                                                      |
-| --------------------------------- | ------------------------------------------------------------------- |
-| `.claude/rules/core-api.md`       | Client/service/adapter pattern, state management, React Query rules |
-| `.claude/rules/architecture.md`   | Layered architecture, data flow, package responsibilities           |
-| `.claude/rules/convex.md`         | Query patterns, validators, N+1 prevention, `.withIndex()`          |
-| `.claude/rules/code-standards.md` | Import discipline, type standards                                   |
-| `.claude/rules/typescript.md`     | Inference patterns, anti-patterns, `as const satisfies`             |
+| Document                             | What it covers                                                      |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `.claude/scopes/backend/core-api.md` | Client/service/adapter pattern, state management, React Query rules |
+| `.claude/rules/architecture.md`      | Layered architecture, data flow, package responsibilities           |
+| `.claude/scopes/backend/convex.md`   | Query patterns, validators, N+1 prevention, `.withIndex()`          |
+| `.claude/rules/code-standards.md`    | Import discipline, type standards                                   |
+| `.claude/scopes/web/typescript.md`   | Inference patterns, anti-patterns, `as const satisfies`             |

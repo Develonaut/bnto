@@ -2,7 +2,7 @@
 
 **Created:** April 2, 2026
 **Status:** Delivered — Sprint 9 (M3). v0.5.0 on crates.io
-**Related:** [ROADMAP.md](../ROADMAP.md), [PLAN.md](../PLAN.md), [engine-node-patterns.md](../rules/engine-node-patterns.md)
+**Related:** [ROADMAP.md](../ROADMAP.md), [PLAN.md](../PLAN.md), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md)
 
 ---
 

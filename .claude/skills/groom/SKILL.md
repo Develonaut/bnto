@@ -37,10 +37,10 @@ Read all of these before making any judgments:
 - `CLAUDE.md`
 - `.claude/rules/code-standards.md`
 - `.claude/rules/architecture.md`
-- `.claude/rules/convex.md`
+- `.claude/scopes/backend/convex.md`
 - `.claude/rules/gotchas.md`
-- `.claude/rules/pages.md` — SEO URL implementation rules
-- `.claude/rules/core-api.md` — @bnto/core client/service/adapter pattern
+- `.claude/scopes/web/pages.md` — SEO URL implementation rules
+- `.claude/scopes/backend/core-api.md` — @bnto/core client/service/adapter pattern
 
 **What's actually built:**
 

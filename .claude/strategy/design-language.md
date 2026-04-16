@@ -53,7 +53,7 @@ Three color temperatures on a warm base — like a Mini Motorways map where buil
 
 **Rules:** Same hues across modes (lightness shifts, identity stays). Warm shadows in light mode (`hsl(8 19% 15%)`). Cool slate dark mode (subtle blue tint, not neutral gray).
 
-For exact token values: see [theming.md](../rules/theming.md).
+For exact token values: see [theming.md](../scopes/web/theming.md).
 
 ---
 
@@ -63,7 +63,7 @@ For exact token values: see [theming.md](../rules/theming.md).
 
 Geist: clean geometric sans-serif — modern character pairs with the warm palette. Inter: universal UI font, clean at all sizes. Geist Mono: for logs, `.bnto.json` previews, node type labels.
 
-For font class usage: see [theming.md](../rules/theming.md).
+For font class usage: see [theming.md](../scopes/web/theming.md).
 
 ---
 
@@ -71,7 +71,7 @@ For font class usage: see [theming.md](../rules/theming.md).
 
 Generously rounded. Default to `rounded-lg` (20px base). Round more for prominent surfaces, tighter for small inline elements. Never sharp corners in brand UI.
 
-For exact radius tokens: see [theming.md](../rules/theming.md).
+For exact radius tokens: see [theming.md](../scopes/web/theming.md).
 
 ---
 
@@ -86,7 +86,7 @@ Inspired by Mini Motorways — buildings popping up, roads drawing themselves, n
 
 **CSS-first.** 95% of animations use CSS keyframes + custom properties. `motion/react` reserved for exit animations (`AnimatePresence`), layout animations, and gesture interactions.
 
-For implementation details, tokens, and the `Animate.*` component API: see [animation.md](../rules/animation.md).
+For implementation details, tokens, and the `Animate.*` component API: see [animation.md](../scopes/web/animation.md).
 
 ---
 

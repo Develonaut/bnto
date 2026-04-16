@@ -166,11 +166,11 @@ test("rejects unauthenticated caller", async () => {
 
 ## References
 
-| Document                            | What it covers                                                          |
-| ----------------------------------- | ----------------------------------------------------------------------- |
-| `.claude/rules/convex.md`           | Query patterns, validators, auth checks, N+1 prevention, `.withIndex()` |
-| `.claude/rules/auth-routing.md`     | Two-layer auth model, proxy + data layer, signout flow                  |
-| `.claude/rules/architecture.md`     | Execution model, R2 transit, service topology                           |
-| `.claude/rules/security.md`         | Security audit checklist — auth enforcement, input validation           |
-| `.claude/rules/gotchas.md`          | Schema migration dance, Convex filename restrictions                    |
-| `.claude/strategy/pricing-model.md` | Browser free, server Pro. Pricing model                                 |
+| Document                              | What it covers                                                          |
+| ------------------------------------- | ----------------------------------------------------------------------- |
+| `.claude/scopes/backend/convex.md`    | Query patterns, validators, auth checks, N+1 prevention, `.withIndex()` |
+| `.claude/scopes/web/auth-routing.md`  | Two-layer auth model, proxy + data layer, signout flow                  |
+| `.claude/rules/architecture.md`       | Execution model, R2 transit, service topology                           |
+| `.claude/scopes/security/security.md` | Security audit checklist — auth enforcement, input validation           |
+| `.claude/rules/gotchas.md`            | Schema migration dance, Convex filename restrictions                    |
+| `.claude/strategy/pricing-model.md`   | Browser free, server Pro. Pricing model                                 |

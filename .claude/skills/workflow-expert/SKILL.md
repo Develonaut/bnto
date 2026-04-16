@@ -217,13 +217,13 @@ Extend the editor journey matrix with custom recipe tests:
 
 ## References
 
-| Document                                                                  | What it covers                                                               |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [strategy/bntos.md](../../strategy/bntos.md)                              | Recipe directory — tiers, node types, slug conventions, fixture requirements |
-| [journeys/editor.md](../../journeys/editor.md)                            | Editor journey matrix — entry, build, execute, export, save test IDs         |
-| [strategy/editor-user-journey.md](../../strategy/editor-user-journey.md)  | Full editor user journey — stages, entry points, interaction model           |
-| [engine/catalog.snapshot.json](../../../engine/catalog.snapshot.json)     | Engine catalog — node types, operations, parameters, constraints             |
-| [rules/node-responsibilities.md](../../rules/node-responsibilities.md)    | Node system layers — engine vs @bnto/nodes vs editor                         |
-| [strategy/pricing-model.md](../../strategy/pricing-model.md)              | Free vs premium — browser nodes free, server nodes Pro                       |
-| [apps/web/e2e/helpers/editor.ts](../../../apps/web/e2e/helpers/editor.ts) | Editor E2E helpers — navigation, palette, selection, execution               |
-| [apps/web/e2e/helpers.ts](../../../apps/web/e2e/helpers.ts)               | Shared E2E helpers — fixtures, magic bytes, upload, download                 |
+| Document                                                                           | What it covers                                                               |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [strategy/bntos.md](../../strategy/bntos.md)                                       | Recipe directory — tiers, node types, slug conventions, fixture requirements |
+| [journeys/editor.md](../../journeys/editor.md)                                     | Editor journey matrix — entry, build, execute, export, save test IDs         |
+| [strategy/editor-user-journey.md](../../strategy/editor-user-journey.md)           | Full editor user journey — stages, entry points, interaction model           |
+| [engine/catalog.snapshot.json](../../../engine/catalog.snapshot.json)              | Engine catalog — node types, operations, parameters, constraints             |
+| [scopes/rust/node-responsibilities.md](../../scopes/rust/node-responsibilities.md) | Node system layers — engine vs @bnto/nodes vs editor                         |
+| [strategy/pricing-model.md](../../strategy/pricing-model.md)                       | Free vs premium — browser nodes free, server nodes Pro                       |
+| [apps/web/e2e/helpers/editor.ts](../../../apps/web/e2e/helpers/editor.ts)          | Editor E2E helpers — navigation, palette, selection, execution               |
+| [apps/web/e2e/helpers.ts](../../../apps/web/e2e/helpers.ts)                        | Shared E2E helpers — fixtures, magic bytes, upload, download                 |

@@ -364,7 +364,7 @@ The ReactFlow expert owns the graph interaction layer. The Frontend Engineer own
 | Document                                 | What it covers                                    |
 | ---------------------------------------- | ------------------------------------------------- |
 | `@xyflow/react` docs                     | https://reactflow.dev — full API reference        |
-| `.claude/rules/components.md`            | Component architecture (headless-first alignment) |
+| `.claude/scopes/web/components.md`       | Component architecture (headless-first alignment) |
 | `.claude/rules/code-standards.md`        | Bento Box Principle (one thing per file)          |
 | `packages/@bnto/nodes/src/definition.ts` | Definition type (the headless data model)         |
 | `packages/@bnto/nodes/src/schemas/`      | Node parameter schemas (config panel UI)          |

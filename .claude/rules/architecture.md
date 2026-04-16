@@ -56,7 +56,7 @@ const recipes = useQuery(api.recipes.list);
 const state = useStore(instance.store, useShallow(s => ({ ... })));
 ```
 
-See [core-api.md](core-api.md) for the full API design rules.
+See [core-api.md](../scopes/backend/core-api.md) for the full API design rules.
 
 ## Import Boundary Rules
 
@@ -155,7 +155,7 @@ Apps (apps/web, apps/desktop)
 
 ## Node System Layers
 
-The node system spans three layers: Engine (Rust), `@bnto/nodes` (TypeScript), and Editor. Each layer has distinct responsibilities. See [node-responsibilities.md](node-responsibilities.md) for the full decision matrix, golden rule, and common violations to watch for.
+The node system spans three layers: Engine (Rust), `@bnto/nodes` (TypeScript), and Editor. Each layer has distinct responsibilities. See [node-responsibilities.md](../scopes/rust/node-responsibilities.md) for the full decision matrix, golden rule, and common violations to watch for.
 
 **Key principle:** The engine defines what nodes CAN do. `@bnto/nodes` makes that knowledge available in TypeScript (mostly generated). The editor manages the visual experience.
 

@@ -2,7 +2,7 @@
 
 Feature flags and A/B testing are powered by PostHog, exposed via `core.flags` (the 7th domain on `@bnto/core`). Flags are created in the PostHog Dashboard and consumed in code through the adapter pattern.
 
-**Decision record:** [.claude/decisions/feature-flags.md](../decisions/feature-flags.md)
+**Decision record:** [.claude/decisions/feature-flags.md](../../decisions/feature-flags.md)
 
 ---
 

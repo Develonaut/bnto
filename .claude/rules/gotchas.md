@@ -16,7 +16,7 @@ export function getExecutionQuery(id: string) {
 }
 ```
 
-See [convex.md](convex.md#convexquery-skip-guard-critical) for the full rule.
+See [convex.md](../scopes/backend/convex.md#convexquery-skip-guard-critical) for the full rule.
 
 ## SSG + Convex Hooks
 

@@ -2,7 +2,7 @@
 
 **Created:** March 2026
 **Status:** Canonical reference -- informs all execution work
-**Related:** [architecture.md](../rules/architecture.md), [core-api.md](../rules/core-api.md), [editor-architecture.md](editor-architecture.md), [io-nodes.md](io-nodes.md)
+**Related:** [architecture.md](../rules/architecture.md), [core-api.md](../scopes/backend/core-api.md), [editor-architecture.md](editor-architecture.md), [io-nodes.md](io-nodes.md)
 
 ---
 

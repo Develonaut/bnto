@@ -2,7 +2,7 @@
 
 **Created:** March 13, 2026
 **Status:** Research — no implementation planned until Tier 3+ nodes ship
-**Related:** [visual-editor.md](visual-editor.md), [node-responsibilities.md](../rules/node-responsibilities.md), [code-editor.md](code-editor.md), [io-nodes.md](io-nodes.md)
+**Related:** [visual-editor.md](visual-editor.md), [node-responsibilities.md](../scopes/rust/node-responsibilities.md), [code-editor.md](code-editor.md), [io-nodes.md](io-nodes.md)
 
 ---
 

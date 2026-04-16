@@ -122,7 +122,7 @@ Wave 3: Ship (PR 7)
 
 ## Responsibility Matrix
 
-Cross-reference: [.claude/rules/node-responsibilities.md](../rules/node-responsibilities.md).
+Cross-reference: [.claude/scopes/rust/node-responsibilities.md](../scopes/rust/node-responsibilities.md).
 
 | Question                                                                                | Answer                                                                                                                 |
 | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
