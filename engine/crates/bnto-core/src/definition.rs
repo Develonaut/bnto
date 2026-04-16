@@ -16,41 +16,73 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 use crate::pipeline::PipelineSettings;
+
+// --- ts-rs export path ---
+//
+// The `ts` feature emits TypeScript interfaces into
+// `packages/@bnto/nodes/src/generated/definitionTypes/<StructName>.ts`.
+// Paths are relative to `bnto-core/`'s CARGO_MANIFEST_DIR.
+// Run: `cargo test -p bnto-core --features ts export_bindings_`
 
 /// Full document shape for a node in a `.bnto.json` file.
 ///
 /// This is the authoring view -- richer than `PipelineNode` (which is the
 /// execution-pruned view). The `settings` field is only meaningful at the
 /// root of a recipe document; nested nodes typically omit it.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Definition {
     pub id: String,
     #[serde(rename = "type")]
+    #[cfg_attr(feature = "ts", ts(rename = "type"))]
     pub node_type: String,
     pub version: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub parent_id: Option<String>,
     pub name: String,
     pub position: Position,
     pub metadata: Metadata,
     #[serde(default = "default_parameters")]
+    #[cfg_attr(feature = "ts", ts(type = "Record<string, unknown>"))]
     pub parameters: serde_json::Value,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub fields: Option<FieldsConfig>,
     pub input_ports: Vec<Port>,
     pub output_ports: Vec<Port>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub nodes: Option<Vec<Definition>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub edges: Option<Vec<Edge>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub settings: Option<PipelineSettings>,
 }
 
 /// 2D coordinate for a node on the editor canvas.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct Position {
     pub x: f64,
@@ -59,35 +91,66 @@ pub struct Position {
 
 /// Authoring metadata attached to every node (description, timestamps, tags).
 /// All fields are optional; an empty `Metadata` serializes to `{}`.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub created_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub updated_at: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub category: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub tags: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional, type = "Record<string, string>"))]
     pub custom_data: Option<BTreeMap<String, String>>,
 }
 
 /// An input or output port on a node. `handle` is used when a node exposes
 /// multiple logical slots (e.g. an `if` node with `then` / `else` outputs).
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Port {
     pub id: String,
     pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub handle: Option<String>,
 }
 
 /// A directed connection between two nodes in a container.
 /// `source_handle` / `target_handle` disambiguate when ports have handles.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Edge {
@@ -95,19 +158,31 @@ pub struct Edge {
     pub source: String,
     pub target: String,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub source_handle: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub target_handle: Option<String>,
 }
 
 /// Structured-data field overrides, used by nodes that operate on
 /// record-style inputs (e.g. spreadsheets). `values` is arbitrary JSON so the
 /// schema can stay permissive while individual node types enforce their own.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct FieldsConfig {
+    #[cfg_attr(feature = "ts", ts(type = "Record<string, unknown>"))]
     pub values: serde_json::Value,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
     pub keep_only_set: Option<bool>,
 }
 

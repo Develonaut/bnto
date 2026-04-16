@@ -5,6 +5,8 @@
 // WASM function, making the engine the single source of truth for node defs.
 
 use serde::Serialize;
+#[cfg(feature = "ts")]
+use ts_rs::TS;
 
 /// Parameter definitions for the engine-defined non-processor node types
 /// (input, output, loop, group, parallel, transform, edit-fields). Processor
@@ -55,6 +57,14 @@ pub enum ParamCondition {
 /// Declares how a processor expects to receive files for smart iteration.
 /// Used by the auto-iteration executor to partition flat node sequences
 /// into implicit per-file loops.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum InputCardinality {

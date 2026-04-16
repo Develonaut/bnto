@@ -27,6 +27,16 @@ crate-type = ["rlib"]
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+# Optional: TypeScript codegen. Enabled via the `ts` feature so release
+# builds (WASM, CLI) don't pay for the ts-rs trait impls.
+ts-rs = { workspace = true, optional = true }
+
+[features]
+default = []
+# Enable ts-rs derives on document-shape types. Run
+# `cargo test -p bnto-core --features ts export_bindings_` to emit TS files
+# into `packages/@bnto/nodes/src/generated/definitionTypes/`.
+ts = ["dep:ts-rs"]
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }

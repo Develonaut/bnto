@@ -1,166 +1,21 @@
 /**
  * Core recipe definition types — the JSON-serializable structure of `.bnto.json` files.
  *
- * Every execution target (Rust WASM, desktop, web editor) reads and validates
- * against these types.
- */
-
-// =============================================================================
-// Pipeline Settings — Recipe-Level Configuration
-// =============================================================================
-
-/** How the executor handles iteration over multiple input files. */
-export type IterationMode = "auto" | "explicit";
-
-/**
- * Recipe-level settings on the root Definition. Extensible — new fields
- * can be added without changing the schema shape.
- */
-export interface PipelineSettings {
-  /** How the executor iterates over multiple input files. Defaults to "explicit". */
-  iteration?: IterationMode;
-}
-
-// =============================================================================
-// Input Cardinality — Processor-Level Metadata
-// =============================================================================
-
-/** How a processor expects to receive input files. */
-export type InputCardinality = "perFile" | "batch" | "source";
-
-/**
- * A single node in a bnto recipe definition.
+ * **Source of truth:** `engine/crates/bnto-core/src/{definition,pipeline,metadata}.rs`.
+ * These types are emitted by `ts-rs` via `task nodes:export-types` and mirrored here
+ * through re-exports so every execution target (Rust WASM, desktop, web editor) reads
+ * the same shape from a single authoritative definition.
  *
- * Each node has a unique ID, a type (e.g., "http-request", "image-compress"),
- * type-specific parameters, and input/output ports for connecting to
- * other nodes.
- *
- * Definitions can be nested — group and loop nodes contain child `nodes`
- * and `edges`, forming a recursive tree structure.
+ * Do not edit the generated files in `./generated/definitionTypes/` by hand — run the
+ * export task after changing the Rust structs.
  */
-export interface Definition {
-  /** Unique identifier within the definition. */
-  id: string;
 
-  /** Node type (e.g., "http-request", "image", "loop"). */
-  type: string;
-
-  /** Schema version for compatibility (e.g., "1.0.0"). */
-  version: string;
-
-  /** Parent group ID if this node is nested inside a group. */
-  parentId?: string;
-
-  /** Human-readable name. */
-  name: string;
-
-  /** Visual editor position (pixels). Zero values for CLI-only usage. */
-  position: Position;
-
-  /** Additional metadata (description, tags, timestamps). */
-  metadata: Metadata;
-
-  /** Node-specific configuration. Keys and value types depend on the node type. */
-  parameters: Record<string, unknown>;
-
-  /** Field configuration for edit-fields nodes. */
-  fields?: FieldsConfig;
-
-  /** Input connection points. */
-  inputPorts: Port[];
-
-  /** Output connection points. */
-  outputPorts: Port[];
-
-  /** Child nodes (for group and loop nodes). */
-  nodes?: Definition[];
-
-  /** Connections between child nodes. */
-  edges?: Edge[];
-
-  /** Recipe-level settings (iteration mode, etc.). Optional for backward compat. */
-  settings?: PipelineSettings;
-}
-
-/** Visual location of a node in the editor canvas. */
-export interface Position {
-  /** X coordinate in pixels. */
-  x: number;
-
-  /** Y coordinate in pixels. */
-  y: number;
-}
-
-/** Additional node metadata — extensible without changing the core Definition. */
-export interface Metadata {
-  /** Human-readable description. */
-  description?: string;
-
-  /** ISO 8601 creation timestamp. */
-  createdAt?: string;
-
-  /** ISO 8601 last-updated timestamp. */
-  updatedAt?: string;
-
-  /** Recipe category (e.g. "image", "spreadsheet", "file", "video"). */
-  category?: string;
-
-  /** User-defined tags. */
-  tags?: string[];
-
-  /** Custom key-value pairs. */
-  customData?: Record<string, string>;
-}
-
-/**
- * An input or output connection point on a node.
- *
- * Ports are where edges attach. A node can have multiple input and
- * output ports for complex data flow patterns.
- */
-export interface Port {
-  /** Unique port identifier within the node. */
-  id: string;
-
-  /** Human-readable port name (e.g., "items", "rows", "files"). */
-  name: string;
-
-  /** Handle type for the visual editor (e.g., "source", "target"). */
-  handle?: string;
-}
-
-/**
- * A connection between two nodes defining data flow.
- *
- * Data flows from the source node's output port to the target
- * node's input port.
- */
-export interface Edge {
-  /** Unique edge identifier. */
-  id: string;
-
-  /** Source node ID. */
-  source: string;
-
-  /** Target node ID. */
-  target: string;
-
-  /** Source port handle. */
-  sourceHandle?: string;
-
-  /** Target port handle. */
-  targetHandle?: string;
-}
-
-/**
- * Field editor configuration for edit-fields nodes.
- *
- * Values can be static or use template expressions (e.g., `{{.item}}`).
- */
-export interface FieldsConfig {
-  /** Field values — static values or template strings. */
-  values: Record<string, unknown>;
-
-  /** When true, only output fields that are explicitly set. */
-  keepOnlySet?: boolean;
-}
+export type { Definition } from "./generated/definitionTypes/Definition";
+export type { Position } from "./generated/definitionTypes/Position";
+export type { Metadata } from "./generated/definitionTypes/Metadata";
+export type { Port } from "./generated/definitionTypes/Port";
+export type { Edge } from "./generated/definitionTypes/Edge";
+export type { FieldsConfig } from "./generated/definitionTypes/FieldsConfig";
+export type { PipelineSettings } from "./generated/definitionTypes/PipelineSettings";
+export type { IterationMode } from "./generated/definitionTypes/IterationMode";
+export type { InputCardinality } from "./generated/definitionTypes/InputCardinality";
