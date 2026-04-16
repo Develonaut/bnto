@@ -9,16 +9,10 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for video-download node parameters. */
 export const videoDownloadParamsSchema = z.object({
-  url: z.string(),
-  format: z
-    .enum(["mp4", "webm", "mkv", "mp3", "m4a", "wav", "flac"] as const)
-    .optional()
-    .default("mp4"),
-  quality: z
-    .enum(["best", "1080", "720", "480", "360"] as const)
-    .optional()
-    .default("best"),
-  args: z.string().optional().default(""),
+    url: z.string(),
+    format: z.enum(["mp4","webm","mkv","mp3","m4a","wav","flac"] as const).optional().default("mp4"),
+    quality: z.enum(["best","1080","720","480","360"] as const).optional().default("best"),
+    args: z.string().optional().default(""),
 });
 
 /** Inferred TypeScript type for video-download node parameters. */
