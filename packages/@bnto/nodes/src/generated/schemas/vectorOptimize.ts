@@ -9,11 +9,11 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for vector-optimize node parameters. */
 export const vectorOptimizeParamsSchema = z.object({
-    removeComments: z.boolean().optional().default(true),
-    removeMetadata: z.boolean().optional().default(true),
-    collapseGroups: z.boolean().optional().default(true),
-    minify: z.boolean().optional().default(true),
-    precision: z.number().min(0).max(8).optional().default(3),
+  removeComments: z.boolean().optional().default(true),
+  removeMetadata: z.boolean().optional().default(true),
+  collapseGroups: z.boolean().optional().default(true),
+  minify: z.boolean().optional().default(true),
+  precision: z.number().min(0).max(8).optional().default(3),
 });
 
 /** Inferred TypeScript type for vector-optimize node parameters. */

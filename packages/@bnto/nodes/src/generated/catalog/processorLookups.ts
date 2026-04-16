@@ -8,14 +8,10 @@ import type { ProcessorDef, ProcessorParam } from "./types";
 import { PROCESSORS } from "./processors";
 
 /** Map keyed by nodeType for O(1) lookup. */
-export const PROCESSOR_MAP = new Map<string, ProcessorDef>(
-  PROCESSORS.map((p) => [p.nodeType, p]),
-);
+export const PROCESSOR_MAP = new Map<string, ProcessorDef>(PROCESSORS.map((p) => [p.nodeType, p]));
 
 /** Get the engine defaults for a node type. */
-export function getProcessorDefaults(
-  nodeType: string,
-): Record<string, unknown> {
+export function getProcessorDefaults(nodeType: string): Record<string, unknown> {
   const proc = PROCESSOR_MAP.get(nodeType);
   if (!proc) return {};
   const defaults: Record<string, unknown> = {};
@@ -39,9 +35,7 @@ export function getParamConstraints(
 }
 
 /** Get the accepted MIME types for a node type. */
-export function getProcessorAccepts(
-  nodeType: string,
-): readonly string[] {
+export function getProcessorAccepts(nodeType: string): readonly string[] {
   const proc = PROCESSOR_MAP.get(nodeType);
   return proc?.accepts ?? [];
 }
