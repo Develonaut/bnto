@@ -12,18 +12,17 @@ export const imageStripExifProcessor: ProcessorDef = {
   name: "Strip EXIF",
   description: "Remove all EXIF metadata from images (GPS, camera info, timestamps)",
   category: "image",
-  accepts: ["image/jpeg", "image/png", "image/webp"] as const,
+  accepts: ["image/jpeg","image/png","image/webp"] as const,
   platforms: ["browser"] as const,
   parameters: [
-    {
-      name: "quality",
-      label: "Quality",
-      description:
-        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
-      type: "number" as const,
-      default: 80,
-      constraints: { min: 1, max: 100, required: false },
-    },
+  {
+    name: "quality",
+    label: "Quality",
+    description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+    type: "number" as const,
+    default: 80,
+    constraints: { min: 1, max: 100, required: false },
+  },
   ],
   inputCardinality: "perFile" as const,
 };
