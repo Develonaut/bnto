@@ -46,11 +46,10 @@ export function useAuth(): AuthState {
   const isLoading = status === "loading" || userLoading;
   const liveUser = useMemo(() => (currentUser ? toAuthUser(currentUser) : null), [currentUser]);
 
-  // Auto-persist live user and identify for telemetry when session resolves.
+  // Auto-persist live user when session resolves.
   useEffect(() => {
     if (isAuthenticated && liveUser) {
       core.auth.rememberUser(liveUser);
-      core.telemetry.identify(liveUser.id);
     }
   }, [isAuthenticated, liveUser]);
 
