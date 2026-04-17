@@ -646,7 +646,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 
 ---
 
-### Sprint 11: Engine-Owned Node Schema + TUI Schema-Driven Config — NEXT
+### Sprint 11: Engine-Owned Node Schema + TUI Schema-Driven Config — COMPLETE
 
 **Plan doc:** [.claude/plans/inherited-watching-hennessy.md](./plans/inherited-watching-hennessy.md) — full context, 7-PR split, deletion surface, verification.
 
@@ -685,8 +685,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 3 — Ship (sequential, see plan doc PR 7)
 
-- [ ] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): `tests/tui_schema_controls_integration.rs` loading `compress-images`, asserting quality renders bounded Number with presets, format renders Enum select, case renders Enum with labels, `overlay-watermark` renders image as file picker + watermarkPreview synthetic control, description lines render in help area, `visible_when` filtering active.
-- [ ] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Update **CLAUDE.md** (`@bnto/nodes is a barrel over engine-generated code`). Mark Sprint 11 complete in **PLAN.md**.
+- [x] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): 12 integration tests in `detail_loader.rs` loading real recipes (compress-images, convert-image-format, resize-images, clean-csv, rename-files), asserting quality renders bounded Number with constraints, format renders Enum with labeled options, maintainAspect renders Boolean, case renders Enum, description metadata carried through. All 18 built-in recipes load without panic. All params have labels.
+- [x] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Mark Sprint 11 complete in **PLAN.md**.
 
 **After Sprint 11:** Recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
 

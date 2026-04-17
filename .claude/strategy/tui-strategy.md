@@ -642,32 +642,33 @@ Evaluated from [awesome-ratatui](https://github.com/ratatui/awesome-ratatui). St
 
 ## Param Control Matrix
 
-**Status:** Planned for Sprint 11 (TUI Schema-Driven Config). Sprint 10 shipped with text-only param editing — all params use the same text input regardless of `ParameterType`. Sprint 11 implements the type-aware controls below.
+**Status:** Shipped in Sprint 11. Type-aware controls, conditional visibility, and scrolling are live.
 
 The detail screen renders editable controls for recipe parameters. The engine's `ParameterType` enum maps to TUI controls — mirroring how `@bnto/form` maps schemas to web form controls.
 
 ### ParameterType → TUI Control
 
-| ParameterType         | TUI Control            | Source        | Notes                                      |
-| --------------------- | ---------------------- | ------------- | ------------------------------------------ |
-| `Number` + has bounds | `tui-slider`           | Dependency    | `SliderState::new(value, min, max)`        |
-| `Number` + no bounds  | Input (text)           | Vendor cheese | Parse to f64, validate on commit           |
-| `String`              | Input (text)           | Vendor cheese | Show placeholder from `ParameterDef`       |
-| `Boolean`             | Toggle `[x]`/`[ ]`     | Hand-build    | ~20 lines, Space to toggle                 |
-| `Enum { options }`    | Select (dropdown)      | Vendor cheese | Options from enum variants                 |
-| `Object`              | Read-only JSON         | Hand-build    | Display as formatted text, no editing      |
-| `File { accept }`     | (skip — picker screen) | —             | File selection handled by dedicated screen |
+| ParameterType         | TUI Control              | Status   | Implementation                                            |
+| --------------------- | ------------------------ | -------- | --------------------------------------------------------- |
+| `Number` + has bounds | Arrow-key step (clamped) | Shipped  | `controls::number::step()` with auto step size from range |
+| `Number` + no bounds  | Text input               | Shipped  | Parse to f64, validate on commit                          |
+| `String`              | Text input               | Shipped  | Enter to edit, Esc to cancel                              |
+| `Boolean`             | Toggle `[x]`/`[ ]`       | Shipped  | `controls::boolean::toggle()`, Space key                  |
+| `Enum { options }`    | Cycle `◂ label ▸`        | Shipped  | `controls::enum_select::cycle_next/prev()`, arrow keys    |
+| `Object`              | Read-only JSON           | Deferred | No editable object params exist yet                       |
+| `File { accept }`     | (skip — picker screen)   | Deferred | File selection handled by dedicated screen                |
 
 ### ParameterDef Fields → TUI Affordances
 
-| ParameterDef field       | TUI affordance                                    |
-| ------------------------ | ------------------------------------------------- |
-| `constraints.min/max`    | Slider bounds, input validation                   |
-| `constraints.required`   | Visual indicator (asterisk), prevent empty commit |
-| `placeholder`            | Ghost text in Input widget                        |
-| `default`                | Pre-filled value, shown in muted style            |
-| `description`            | Help text below control or in status line         |
-| `conditional_visibility` | Show/hide control based on sibling param values   |
+| ParameterDef field     | TUI affordance                                  | Status  |
+| ---------------------- | ----------------------------------------------- | ------- |
+| `constraints.min/max`  | Clamped stepping, input validation              | Shipped |
+| `constraints.required` | Visual indicator (asterisk), prevent empty      | Planned |
+| `placeholder`          | Ghost text in Input widget                      | Planned |
+| `default`              | Pre-filled value, `d` key resets to default     | Shipped |
+| `description`          | Help text shown when param is focused           | Shipped |
+| `suffix`               | Unit annotation next to value (e.g., `80%`)     | Shipped |
+| `visible_when`         | Show/hide control based on sibling param values | Shipped |
 
 ---
 
