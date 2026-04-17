@@ -1,7 +1,7 @@
-// TUI config persistence — load/save settings to ~/.config/bnto/tui.json.
+// TUI config — in-memory settings struct used during migration from old JSON format.
+// Loading/saving now goes through TomlConfig + BntoPaths.
 
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 
 /// Persistent TUI settings saved between sessions.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,40 +31,9 @@ impl Default for TuiConfig {
     }
 }
 
-impl TuiConfig {
-    /// Load config from disk, falling back to defaults on any error.
-    pub fn load() -> Self {
-        let Some(path) = config_path() else {
-            return Self::default();
-        };
-
-        let Ok(contents) = std::fs::read_to_string(&path) else {
-            return Self::default();
-        };
-
-        serde_json::from_str(&contents).unwrap_or_default()
-    }
-
-    /// Save config to disk, creating parent directories as needed.
-    pub fn save(&self) -> Result<(), String> {
-        let path = config_path().ok_or("Could not determine config directory")?;
-
-        if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create config directory: {e}"))?;
-        }
-
-        let json = serde_json::to_string_pretty(self)
-            .map_err(|e| format!("Failed to serialize config: {e}"))?;
-
-        std::fs::write(&path, json).map_err(|e| format!("Failed to write config: {e}"))
-    }
-}
-
-/// Config file path: ~/.config/bnto/tui.json (XDG-compatible via `dirs`).
-pub fn config_path() -> Option<PathBuf> {
-    dirs::config_dir().map(|d| d.join("bnto").join("tui.json"))
-}
+// NOTE: TuiConfig::load() and config_path() removed — loading now goes through
+// TomlConfig::load(&BntoPaths) with automatic migration from old JSON format.
+// TuiConfig is still used as an in-memory compatibility struct for settings.
 
 #[cfg(test)]
 mod tests {
@@ -79,15 +48,7 @@ mod tests {
     }
 
     #[test]
-    fn load_does_not_panic() {
-        // load() reads from the real config path. It should always succeed
-        // (returning defaults if no file exists, or the saved config).
-        let c = TuiConfig::load();
-        assert!(!c.theme.is_empty(), "theme should never be empty");
-    }
-
-    #[test]
-    fn save_and_load_roundtrip() {
+    fn serde_roundtrip() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("bnto").join("tui.json");
 
@@ -139,13 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn config_path_returns_some() {
-        // dirs::config_dir() returns Some on macOS/Linux/Windows.
-        assert!(config_path().is_some());
-    }
-
-    #[test]
-    fn save_creates_parent_dirs() {
+    fn serde_nested_dir_roundtrip() {
         let dir = tempfile::tempdir().unwrap();
         let nested = dir.path().join("deep").join("nested").join("bnto");
 

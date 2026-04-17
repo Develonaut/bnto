@@ -89,8 +89,10 @@ pub struct Theme {
     /// Per-theme hero color — selected items, borders, key hints.
     pub active: Color,
     /// Success status (green family).
+    #[allow(dead_code)]
     pub success: Color,
     /// Error/destructive status (red family).
+    #[allow(dead_code)]
     pub destructive: Color,
 }
 
@@ -155,11 +157,13 @@ impl Theme {
     }
 
     /// Success status text.
+    #[allow(dead_code)]
     pub fn success(&self) -> Style {
         Style::default().fg(self.success)
     }
 
     /// Error status text.
+    #[allow(dead_code)]
     pub fn error(&self) -> Style {
         Style::default().fg(self.destructive)
     }

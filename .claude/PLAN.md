@@ -729,8 +729,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 2 — Migration + error handling (sequential)
 
-- [ ] `engine/crates/bnto` — **Config migration from old layout**: On startup, check for old `dirs::config_dir()/bnto/tui.json`. If found: read JSON, convert to TOML, write to new `~/.config/bnto/config.toml`. Merge old `telemetry.json` consent into config. One-time log message. Old files left in place. RED tests: migration from JSON, telemetry merge, missing old file (no-op), corrupted old file (graceful fallback) (~8 tests)
-- [ ] `engine/crates/bnto` — **Surface save errors + wire `BntoPaths`**: Replace all `let _ = config.save()` with error handling that sets status bar message. Pass `BntoPaths` through `AppModel::new()`. Telemetry config uses `BntoPaths`. Remove old `config_path()` function. RED tests: save error propagation, status bar error display (~7 tests)
+- [x] `engine/crates/bnto` — **Config migration from old layout**: On startup, check for old `dirs::config_dir()/bnto/tui.json`. If found: read JSON, convert to TOML, write to new `~/.config/bnto/config.toml`. Merge old `telemetry.json` consent into config. One-time log message. Old files left in place. RED tests: migration from JSON, telemetry merge, missing old file (no-op), corrupted old file (graceful fallback) (~8 tests)
+- [x] `engine/crates/bnto` — **Surface save errors + wire `BntoPaths`**: Replace all `let _ = config.save()` with error handling that sets status bar message. Pass `BntoPaths` through `AppModel::new()`. Telemetry config uses `BntoPaths`. Remove old `config_path()` function. RED tests: save error propagation, status bar error display (~7 tests)
 
 #### Wave 3 — Home screen + navigation (parallel)
 

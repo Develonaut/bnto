@@ -61,11 +61,13 @@ impl BntoPaths {
     }
 
     /// Path to execution history.
+    #[allow(dead_code)]
     pub fn history_file(&self) -> PathBuf {
         self.state.join("history.json")
     }
 
     /// Path to recently used recipes/directories.
+    #[allow(dead_code)]
     pub fn recent_file(&self) -> PathBuf {
         self.state.join("recent.json")
     }
