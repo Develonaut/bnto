@@ -27,6 +27,7 @@ pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
         focused: 0,
         editing: false,
         edit_buffer: String::new(),
+        error: None,
     })
 }
 
@@ -93,6 +94,13 @@ fn collect_params_from_processor(
             value: current_value,
             param_type: param_def.param_type.clone(),
             default: default_str,
+            description: if param_def.description.is_empty() {
+                None
+            } else {
+                Some(param_def.description.clone())
+            },
+            constraints: param_def.constraints.clone(),
+            suffix: param_def.suffix.clone(),
         });
     }
 }

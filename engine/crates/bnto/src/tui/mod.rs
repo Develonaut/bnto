@@ -463,6 +463,9 @@ mod tests {
                 value: "80".into(),
                 param_type: ParameterType::Number,
                 default: "80".into(),
+                description: None,
+                constraints: None,
+                suffix: None,
             },
             ParamEntry {
                 node_id: "n".into(),
@@ -471,6 +474,9 @@ mod tests {
                 value: "jpeg".into(),
                 param_type: ParameterType::String,
                 default: "jpeg".into(),
+                description: None,
+                constraints: None,
+                suffix: None,
             },
         ];
 
@@ -642,6 +648,188 @@ mod tests {
         assert_eq!(
             handle_key(&model, key),
             Some(AppMessage::Detail(DetailMessage::EditChar('q')))
+        );
+    }
+
+    #[test]
+    fn detail_space_toggles_bool() {
+        use bnto_core::metadata::ParameterType;
+        use screens::detail::{DetailModel, ParamEntry};
+
+        let params = vec![ParamEntry {
+            node_id: "n".into(),
+            name: "strip".into(),
+            label: "Strip".into(),
+            value: "true".into(),
+            param_type: ParameterType::Boolean,
+            default: "true".into(),
+            description: None,
+            constraints: None,
+            suffix: None,
+        }];
+        let model = AppModel {
+            screen: Screen::Detail { slug: "s".into() },
+            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Char(' '), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::ToggleBool))
+        );
+    }
+
+    #[test]
+    fn detail_left_right_cycles_enum() {
+        use bnto_core::metadata::{OptionEntry, ParameterType};
+        use screens::detail::{DetailModel, ParamEntry};
+
+        let params = vec![ParamEntry {
+            node_id: "n".into(),
+            name: "fmt".into(),
+            label: "Format".into(),
+            value: "jpeg".into(),
+            param_type: ParameterType::Enum {
+                options: vec![
+                    OptionEntry {
+                        value: "jpeg".into(),
+                        label: "JPEG".into(),
+                    },
+                    OptionEntry {
+                        value: "png".into(),
+                        label: "PNG".into(),
+                    },
+                ],
+            },
+            default: "jpeg".into(),
+            description: None,
+            constraints: None,
+            suffix: None,
+        }];
+        let model = AppModel {
+            screen: Screen::Detail { slug: "s".into() },
+            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
+            ..default_model()
+        };
+        let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, right),
+            Some(AppMessage::Detail(DetailMessage::EnumNext))
+        );
+        let left = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, left),
+            Some(AppMessage::Detail(DetailMessage::EnumPrev))
+        );
+    }
+
+    #[test]
+    fn detail_left_right_steps_bounded_number() {
+        use bnto_core::metadata::{Constraints, ParameterType};
+        use screens::detail::{DetailModel, ParamEntry};
+
+        let params = vec![ParamEntry {
+            node_id: "n".into(),
+            name: "quality".into(),
+            label: "Quality".into(),
+            value: "80".into(),
+            param_type: ParameterType::Number,
+            default: "80".into(),
+            description: None,
+            constraints: Some(Constraints {
+                min: Some(1.0),
+                max: Some(100.0),
+                required: false,
+            }),
+            suffix: None,
+        }];
+        let model = AppModel {
+            screen: Screen::Detail { slug: "s".into() },
+            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
+            ..default_model()
+        };
+        let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, right),
+            Some(AppMessage::Detail(DetailMessage::NumberIncrement))
+        );
+        let left = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, left),
+            Some(AppMessage::Detail(DetailMessage::NumberDecrement))
+        );
+    }
+
+    #[test]
+    fn detail_d_resets_default() {
+        let model = detail_model();
+        let key = KeyEvent::new(KeyCode::Char('d'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::ResetDefault))
+        );
+    }
+
+    #[test]
+    fn detail_enter_toggles_bool_instead_of_edit() {
+        use bnto_core::metadata::ParameterType;
+        use screens::detail::{DetailModel, ParamEntry};
+
+        let params = vec![ParamEntry {
+            node_id: "n".into(),
+            name: "strip".into(),
+            label: "Strip".into(),
+            value: "true".into(),
+            param_type: ParameterType::Boolean,
+            default: "true".into(),
+            description: None,
+            constraints: None,
+            suffix: None,
+        }];
+        let model = AppModel {
+            screen: Screen::Detail { slug: "s".into() },
+            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::ToggleBool)),
+            "Enter on bool should toggle, not start edit"
+        );
+    }
+
+    #[test]
+    fn detail_enter_cycles_enum_instead_of_edit() {
+        use bnto_core::metadata::{OptionEntry, ParameterType};
+        use screens::detail::{DetailModel, ParamEntry};
+
+        let params = vec![ParamEntry {
+            node_id: "n".into(),
+            name: "fmt".into(),
+            label: "Format".into(),
+            value: "jpeg".into(),
+            param_type: ParameterType::Enum {
+                options: vec![OptionEntry {
+                    value: "jpeg".into(),
+                    label: "JPEG".into(),
+                }],
+            },
+            default: "jpeg".into(),
+            description: None,
+            constraints: None,
+            suffix: None,
+        }];
+        let model = AppModel {
+            screen: Screen::Detail { slug: "s".into() },
+            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
+            ..default_model()
+        };
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Detail(DetailMessage::EnumNext)),
+            "Enter on enum should cycle, not start edit"
         );
     }
 

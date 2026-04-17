@@ -6,6 +6,7 @@
 //   Wave 3: execution, results
 
 pub mod browser;
+pub mod controls;
 pub mod detail;
 mod detail_loader;
 pub mod execution;
