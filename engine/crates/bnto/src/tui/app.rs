@@ -11,6 +11,7 @@ use bnto_engine::create_registry;
 use super::config::TuiConfig;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
+use super::screens::detail_loader::load_detail_from_json;
 use super::screens::execution::{ExecutionMessage, ExecutionModel, update as execution_update};
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
@@ -115,11 +116,13 @@ pub enum AppMessage {
 }
 
 impl AppModel {
-    /// Create a new app starting on the recipe browser.
+    /// Create a new app, optionally starting on a custom recipe's detail screen.
     ///
     /// Loads persisted config from disk. The `variant` argument is the
     /// CLI override — if `None`, uses the config's saved theme.
-    pub fn new(variant: ThemeVariant) -> Self {
+    /// If `recipe_json` is Some, attempts to parse it and start on Detail.
+    /// Falls back to Browser on parse failure.
+    pub fn new(variant: ThemeVariant, recipe_json: Option<String>) -> Self {
         let config = TuiConfig::load();
         // CLI --theme flag overrides saved config.
         let effective_variant = if variant != ThemeVariant::LosAngeles {
@@ -127,13 +130,30 @@ impl AppModel {
         } else {
             ThemeVariant::from_str_lossy(&config.theme).unwrap_or(variant)
         };
+        let registry = create_registry();
+
+        // If a recipe JSON was provided, try to load it directly.
+        let (screen, detail) = match recipe_json {
+            Some(json) => match load_detail_from_json(&json, &registry) {
+                Ok(model) => {
+                    let slug = model.slug.clone();
+                    (Screen::Detail { slug }, Some(model))
+                }
+                Err(e) => {
+                    eprintln!("Warning: {e} — starting on recipe browser.");
+                    (Screen::Browser, None)
+                }
+            },
+            None => (Screen::Browser, None),
+        };
+
         Self {
-            screen: Screen::Browser,
+            screen,
             should_quit: false,
             theme: Theme::from_variant(effective_variant),
             theme_variant: effective_variant,
             browser: BrowserModel::new(),
-            detail: None,
+            detail,
             picker: None,
             execution: None,
             results: None,
@@ -141,7 +161,7 @@ impl AppModel {
             config,
             settings_picker_field: None,
             param_overrides: HashMap::new(),
-            registry: create_registry(),
+            registry,
         }
     }
 }
@@ -414,7 +434,7 @@ mod tests {
     use super::*;
 
     fn default_model() -> AppModel {
-        AppModel::new(ThemeVariant::LosAngeles)
+        AppModel::new(ThemeVariant::LosAngeles, None)
     }
 
     /// Apply a message to a model on the given screen, return the resulting screen.
@@ -631,6 +651,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            visible_when: None,
         }];
         let app = update(
             AppModel {
@@ -771,6 +792,7 @@ mod tests {
                 description: None,
                 constraints: None,
                 suffix: None,
+                visible_when: None,
             },
             ParamEntry {
                 node_id: "compress".into(),
@@ -782,6 +804,7 @@ mod tests {
                 description: None,
                 constraints: None,
                 suffix: None,
+                visible_when: None,
             },
         ];
         let app = AppModel {
@@ -1296,5 +1319,39 @@ mod tests {
             .unwrap();
         assert_eq!(dp.value, "/photos");
         assert_eq!(od.value, "/output");
+    }
+
+    // --- Custom recipe loading ---
+
+    #[test]
+    fn new_with_recipe_starts_on_detail() {
+        let json = r#"{"name": "Custom", "description": "A custom recipe", "nodes": []}"#;
+        let app = AppModel::new(ThemeVariant::LosAngeles, Some(json.to_string()));
+        assert!(matches!(app.screen, Screen::Detail { .. }));
+        assert!(app.detail.is_some());
+    }
+
+    #[test]
+    fn new_with_recipe_loads_params() {
+        let json = r#"{
+            "name": "Test",
+            "nodes": [
+                {"id": "c", "type": "image-compress", "parameters": {"quality": 50}}
+            ]
+        }"#;
+        let app = AppModel::new(ThemeVariant::LosAngeles, Some(json.to_string()));
+        assert!(matches!(app.screen, Screen::Detail { .. }));
+        let detail = app.detail.as_ref().expect("detail populated");
+        assert!(
+            !detail.params.is_empty(),
+            "should have params from processor"
+        );
+    }
+
+    #[test]
+    fn new_with_invalid_recipe_starts_on_browser() {
+        let app = AppModel::new(ThemeVariant::LosAngeles, Some("{bad".to_string()));
+        assert_eq!(app.screen, Screen::Browser);
+        assert!(app.detail.is_none());
     }
 }

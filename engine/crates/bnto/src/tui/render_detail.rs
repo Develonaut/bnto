@@ -1,7 +1,7 @@
 // Render the recipe detail screen — recipe info + editable parameter list.
 //
 // Type-aware controls: booleans show [x]/[ ], enums show ◂ label ▸,
-// numbers show value + suffix, focused params show description.
+// numbers show value + suffix. Description shown when focused. Scrollable.
 
 use bnto_core::metadata::ParameterType;
 use ratatui::layout::Rect;
@@ -10,7 +10,7 @@ use ratatui::widgets::{Block, Paragraph};
 
 use super::app::AppModel;
 use super::screens::controls;
-use super::screens::detail::DetailModel;
+use super::screens::detail::{DetailModel, is_param_visible};
 use super::theme::{ROUNDED_BORDERS, Theme};
 
 /// Render the recipe detail screen.
@@ -31,8 +31,29 @@ pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
     };
 
     let lines = detail_lines(detail, theme);
-    let content = Paragraph::new(lines);
+    let total_lines = lines.len();
+    let content = Paragraph::new(lines).scroll((detail.scroll_offset as u16, 0));
     frame.render_widget(content, inner);
+
+    // Overflow indicators
+    let inner_width = inner.width as usize;
+    if inner_width > 1 {
+        if detail.scroll_offset > 0 {
+            let indicator = Paragraph::new("↑");
+            let area = Rect::new(inner.x + inner.width.saturating_sub(2), inner.y, 1, 1);
+            frame.render_widget(indicator, area);
+        }
+        if total_lines > detail.scroll_offset + (inner.height as usize) {
+            let indicator = Paragraph::new("↓");
+            let area = Rect::new(
+                inner.x + inner.width.saturating_sub(2),
+                inner.y + inner.height.saturating_sub(1),
+                1,
+                1,
+            );
+            frame.render_widget(indicator, area);
+        }
+    }
 }
 
 /// Build the lines for the detail screen content.
@@ -89,6 +110,9 @@ fn detail_param_lines<'a>(detail: &'a DetailModel, theme: &Theme, lines: &mut Ve
     lines.push(Line::from(""));
 
     for (i, param) in detail.params.iter().enumerate() {
+        if !is_param_visible(param, &detail.params) {
+            continue;
+        }
         let is_focused = i == detail.focused;
         let is_editing = is_focused && detail.editing;
         let marker = if is_focused { "▸ " } else { "  " };
@@ -110,13 +134,16 @@ fn detail_param_lines<'a>(detail: &'a DetailModel, theme: &Theme, lines: &mut Ve
             Span::styled(format!("  {value_display}"), value_style),
         ]));
 
-        // Description shown only for focused param.
+        // Description shown only when focused.
         if is_focused && let Some(desc) = &param.description {
             lines.push(Line::from(Span::styled(
                 format!("    {desc}"),
                 theme.muted(),
             )));
         }
+
+        // Spacing between params.
+        lines.push(Line::from(""));
     }
 }
 

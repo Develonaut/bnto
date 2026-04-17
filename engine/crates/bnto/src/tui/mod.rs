@@ -43,10 +43,13 @@ use theme::ThemeVariant;
 const TICK_RATE: Duration = Duration::from_millis(50);
 
 /// Launch the interactive TUI with the given theme variant.
-pub fn launch_tui(variant: ThemeVariant) -> io::Result<()> {
+///
+/// If `recipe_json` is Some, starts directly on the detail screen
+/// for that recipe instead of the browser.
+pub fn launch_tui(variant: ThemeVariant, recipe_json: Option<String>) -> io::Result<()> {
     install_panic_hook();
     let mut terminal = setup_terminal()?;
-    let result = run_loop(&mut terminal, variant);
+    let result = run_loop(&mut terminal, variant, recipe_json);
     restore_terminal(&mut terminal)?;
     result
 }
@@ -82,8 +85,9 @@ fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io
 fn run_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
     variant: ThemeVariant,
+    recipe_json: Option<String>,
 ) -> io::Result<()> {
-    let mut model = AppModel::new(variant);
+    let mut model = AppModel::new(variant, recipe_json);
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
 
     loop {
@@ -113,6 +117,21 @@ fn run_loop(
                     model,
                     AppMessage::Picker(PickerMessage::Resize {
                         height: picker_height,
+                    }),
+                );
+            }
+        }
+
+        // Update detail viewport height from terminal size.
+        if matches!(model.screen, app::Screen::Detail { .. }) {
+            let total_height = terminal.size()?.height as usize;
+            let chrome = 6; // 2 (status+help) + 2 (block borders) + 2 (padding)
+            let detail_height = total_height.saturating_sub(chrome);
+            if detail_height > 0 {
+                model = update(
+                    model,
+                    AppMessage::Detail(screens::detail::DetailMessage::Resize {
+                        height: detail_height,
                     }),
                 );
             }
@@ -222,7 +241,7 @@ mod tests {
     use screens::settings::SettingsModel;
 
     fn default_model() -> AppModel {
-        AppModel::new(ThemeVariant::LosAngeles)
+        AppModel::new(ThemeVariant::LosAngeles, None)
     }
 
     #[test]
@@ -466,6 +485,7 @@ mod tests {
                 description: None,
                 constraints: None,
                 suffix: None,
+                visible_when: None,
             },
             ParamEntry {
                 node_id: "n".into(),
@@ -477,6 +497,7 @@ mod tests {
                 description: None,
                 constraints: None,
                 suffix: None,
+                visible_when: None,
             },
         ];
 
@@ -666,6 +687,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            visible_when: None,
         }];
         let model = AppModel {
             screen: Screen::Detail { slug: "s".into() },
@@ -705,6 +727,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            visible_when: None,
         }];
         let model = AppModel {
             screen: Screen::Detail { slug: "s".into() },
@@ -742,6 +765,7 @@ mod tests {
                 required: false,
             }),
             suffix: None,
+            visible_when: None,
         }];
         let model = AppModel {
             screen: Screen::Detail { slug: "s".into() },
@@ -785,6 +809,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            visible_when: None,
         }];
         let model = AppModel {
             screen: Screen::Detail { slug: "s".into() },
@@ -819,6 +844,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            visible_when: None,
         }];
         let model = AppModel {
             screen: Screen::Detail { slug: "s".into() },

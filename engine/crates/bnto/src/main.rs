@@ -64,6 +64,9 @@ enum Command {
 
     /// Launch the interactive terminal UI.
     Tui {
+        /// Path to a .bnto.json recipe file to open directly.
+        recipe: Option<String>,
+
         /// Color theme: los-angeles (default), tokyo (dark), monaco (sunset).
         #[arg(long, default_value = "los-angeles")]
         theme: String,
@@ -112,9 +115,9 @@ fn main() {
             telemetry::capture(telemetry::events::cli_command("doctor"));
             doctor::run_doctor();
         }
-        Some(Command::Tui { theme }) => {
+        Some(Command::Tui { recipe, theme }) => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui(&theme);
+            launch_tui(&theme, recipe);
         }
         Some(Command::Telemetry { action }) => match action {
             TelemetryAction::Enable => {
@@ -133,7 +136,7 @@ fn main() {
     }
 }
 
-fn launch_tui(theme_str: &str) {
+fn launch_tui(theme_str: &str, recipe_path: Option<String>) {
     let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
         Ok(v) => v,
         Err(e) => {
@@ -141,8 +144,16 @@ fn launch_tui(theme_str: &str) {
             process::exit(1);
         }
     };
+    // Read recipe JSON from disk if a path was provided.
+    let recipe_json = recipe_path.map(|path| match std::fs::read_to_string(&path) {
+        Ok(json) => json,
+        Err(e) => {
+            eprintln!("{} Cannot read recipe file '{}': {e}", "Error:".red(), path);
+            process::exit(1);
+        }
+    });
     let start = std::time::Instant::now();
-    if let Err(e) = tui::launch_tui(variant) {
+    if let Err(e) = tui::launch_tui(variant, recipe_json) {
         eprintln!("{} {e}", "TUI error:".red());
         process::exit(1);
     }
