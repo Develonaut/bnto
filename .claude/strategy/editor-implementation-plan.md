@@ -41,13 +41,15 @@ Sprint 11 (Engine-Owned Node Schema + TUI Schema-Driven Config) must complete be
 ## Dependency Chain
 
 ```
-Sprint 11 (in progress)         ← prerequisite for all editor work
+Sprint 11 (complete)            ← prerequisite for all editor work
   │
-  ├── Sprint 12: TUI List Editor  ← Phase 1 TUI
+  ├── Sprint 12A: Data Persistence + Home + Library  ← TUI user journey foundation
   │     │
-  │     ├── Sprint 13: TUI Wizard     ← Phase 2 TUI
-  │     ├── Sprint 14: TUI Code + Graph  ← Phase 3 TUI
-  │     └── Sprint 15: bnto-editor crate extraction  ← package boundary
+  │     └── Sprint 12: TUI List Editor  ← Phase 1 TUI
+  │           │
+  │           ├── Sprint 13: TUI Wizard     ← Phase 2 TUI
+  │           ├── Sprint 14: TUI Code + Graph  ← Phase 3 TUI
+  │           └── Sprint 15: bnto-editor crate extraction  ← package boundary
   │
   └── Sprint 16: Web List Editor  ← Phase 1 Web
         │
@@ -55,7 +57,7 @@ Sprint 11 (in progress)         ← prerequisite for all editor work
         └── Sprint 18: Web Code Editor  ← Phase 3 Web (Visual already exists)
 ```
 
-TUI sprints are independent of web sprints. Web work can start after Sprint 11, but TUI is higher priority.
+Sprint 12A establishes the Home + Library navigation that editor entry points depend on. TUI sprints are independent of web sprints. Web work can start after Sprint 11, but TUI is higher priority.
 
 ---
 

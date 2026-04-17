@@ -55,10 +55,11 @@ M2: Platform Features                ← DELIVERED (March 2026)
 M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     CLI is the product. Dependency system DELIVERED. Video node DELIVERED.
     ProcessContext DELIVERED. CLI commands DELIVERED. TUI DELIVERED (6 screens,
-    278 tests). v0.5.0 shipped to crates.io.
+    278 tests). Schema-driven config DELIVERED (Sprint 11). v0.5.0 shipped
+    to crates.io.
 
-    Next: TUI schema-driven config (Sprint 11), more node types,
-    recipe expansion.
+    Next: Data persistence + Home + Library (Sprint 12A), then bnto-form
+    crate (Sprint 11.5), then TUI recipe editors (Sprints 12-18).
 
 M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
@@ -69,7 +70,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. TUI delivered (Sprint 10). Next: schema-driven TUI config (Sprint 11), then more node types and recipes. Desktop (M4) and monetization (M5) are backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. TUI delivered (Sprint 10). Schema-driven config delivered (Sprint 11). Next: data persistence + Home + Library (Sprint 12A), then bnto-form (Sprint 11.5), then recipe editors (Sprints 12-18). Desktop (M4) and monetization (M5) are backlog.
 
 ---
 

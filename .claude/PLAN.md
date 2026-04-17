@@ -219,7 +219,7 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Then: `bnto-form` crate (Sprint 11.5).** Standalone, open-source ratatui form widget library inspired by Charm's huh. Replaces the hand-built detail screen controls with polished TextInput (cursor, placeholder), Select (compact + filter), Confirm (Yes/No), Number (slider, bounds). TEA-native pure functions, zero bnto dependency. See [bnto-form-strategy.md](strategy/bnto-form-strategy.md) and Sprint 11.5 below.
 
-**After Sprint 11.5:** Recipe editors (Sprints 12-18), file picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
+**After Sprint 11.5:** Recipe editors (Sprints 12-18), file picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md). Sprint 12A (data persistence + Home + Library) is a prerequisite for editor sprints.
 
 ---
 
@@ -648,7 +648,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
 - [x] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
-**After Sprint 11:** File picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion.
+**After Sprint 10:** Data Persistence + Home + Library (Sprint 12A), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
 
 ---
 
@@ -703,7 +703,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 **Goal:** Establish the storage foundation and core TUI user journey. XDG-compliant data persistence replaces the fragile JSON config. Home screen replaces Browser as the default view. My Library gives users a personal recipe collection. `bnto` (no args) launches the TUI.
 
 **Strategy docs:** [tui-data-persistence.md](strategy/tui-data-persistence.md), [tui-user-journey.md](strategy/tui-user-journey.md)
-**Depends on:** Sprint 11 (complete)
+**Depends on:** Sprint 11 (complete — 1 remaining task in Wave 2 is independent of 12A Wave 1-2 storage work)
 
 **What changes:**
 
@@ -799,7 +799,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 **Strategy doc:** [recipe-editors.md](strategy/recipe-editors.md)
 **Implementation plan:** [editor-implementation-plan.md](strategy/editor-implementation-plan.md)
-**Depends on:** Sprint 11 (engine-owned node schema)
+**Depends on:** Sprint 11 (engine-owned node schema), Sprint 12A (Home + Library navigation)
 
 **What changes:** New "Editor" screen (System 6) with the List editor view. Distinct from the existing Detail screen (configure + run predefined). Editor screen is for creating and modifying recipe structures.
 
@@ -807,7 +807,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 - `bnto tui --new` → blank recipe → Editor screen
 - `bnto tui recipe.bnto.json` → load file → Editor screen
-- Browser screen: `e` on a predefined recipe → clone into Editor
+- Recipes screen: `e` on a predefined recipe → clone into Editor
+- My Library screen: `e` on a library recipe → edit in place
 
 **Persona ownership:**
 
