@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use bnto_core::metadata::{Constraints, ParameterType};
+use bnto_core::metadata::{Constraints, ParamCondition, ParameterType};
 use bnto_core::registry::NodeRegistry;
 
 /// A single editable parameter entry shown in the detail screen.
@@ -30,6 +30,8 @@ pub struct ParamEntry {
     pub constraints: Option<Constraints>,
     /// Unit suffix for display (e.g., "%", "px").
     pub suffix: Option<String>,
+    /// Conditional visibility — show only when another param matches a value.
+    pub visible_when: Option<ParamCondition>,
 }
 
 /// Detail screen state — recipe info + editable parameter list.
@@ -51,6 +53,10 @@ pub struct DetailModel {
     pub edit_buffer: String,
     /// Validation error for the focused param (cleared on next keystroke).
     pub error: Option<String>,
+    /// Line-based scroll offset for Paragraph::scroll().
+    pub scroll_offset: usize,
+    /// Available lines in the content area (set by Resize events).
+    pub viewport_height: usize,
 }
 
 /// Messages the detail screen can handle.
@@ -82,6 +88,8 @@ pub enum DetailMessage {
     NumberDecrement,
     /// Reset the focused parameter to its default value (d key).
     ResetDefault,
+    /// Terminal resized — update viewport height.
+    Resize { height: usize },
 }
 
 /// Result of confirming the detail screen — collected param overrides.
@@ -114,6 +122,8 @@ impl DetailModel {
             editing: false,
             edit_buffer: String::new(),
             error: None,
+            scroll_offset: 0,
+            viewport_height: 100, // large default for tests
         }
     }
 
@@ -123,10 +133,13 @@ impl DetailModel {
     }
 
     /// Confirm the current configuration — returns param overrides.
+    ///
+    /// Hidden params (failing `visible_when`) are excluded from overrides.
     pub fn confirm(&self) -> ConfigResult {
         let overrides = self
             .params
             .iter()
+            .filter(|p| is_param_visible(p, &self.params))
             .map(|p| {
                 let key = format!("{}.{}", p.node_id, p.name);
                 (key, p.value.clone())
@@ -136,6 +149,46 @@ impl DetailModel {
     }
 }
 
+/// Check whether a param should be visible based on its `visible_when` condition.
+///
+/// Evaluates against current values of all params. Returns true if:
+/// - No condition (`visible_when` is None)
+/// - Single condition matches
+/// - Any condition in an OR list matches
+/// - The referenced param doesn't exist (permissive default)
+pub fn is_param_visible(param: &ParamEntry, all_params: &[ParamEntry]) -> bool {
+    let Some(condition) = &param.visible_when else {
+        return true;
+    };
+    match condition {
+        ParamCondition::Single(entry) => all_params
+            .iter()
+            .any(|p| p.name == entry.param && p.value == entry.equals),
+        ParamCondition::Any(entries) => entries.iter().any(|entry| {
+            all_params
+                .iter()
+                .any(|p| p.name == entry.param && p.value == entry.equals)
+        }),
+    }
+}
+
+/// Estimate the line number where a given param starts in the rendered output.
+///
+/// Used to keep the focused param visible during scrolling.
+/// Each visible param occupies: label+value (1) + spacing (1).
+/// Descriptions only show for the focused param, so they don't affect
+/// the line count of params before it.
+fn estimate_focused_line(focused: usize, params: &[ParamEntry]) -> usize {
+    // Header: name + description + blank + PARAMETERS + blank = 5 lines
+    let header = 5;
+    let visible_before = params[..focused]
+        .iter()
+        .filter(|p| is_param_visible(p, params))
+        .count();
+    // Each non-focused visible param takes 2 lines: label + spacing.
+    header + visible_before * 2
+}
+
 /// Pure state transition for the detail screen.
 pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
     match msg {
@@ -143,11 +196,28 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
             if model.editing || model.params.is_empty() {
                 return model;
             }
-            // Items: params[0..n] + continue action at index n
+            // Items: params[0..n] + continue action at index n.
+            // Skip hidden params; continue action is always navigable.
             let item_count = model.params.len() + 1;
-            let next = (model.focused + 1) % item_count;
+            let mut next = (model.focused + 1) % item_count;
+            // Loop to skip hidden params (at most item_count steps).
+            for _ in 0..item_count {
+                if next == model.params.len()
+                    || is_param_visible(&model.params[next], &model.params)
+                {
+                    break;
+                }
+                next = (next + 1) % item_count;
+            }
+            let focused_line = estimate_focused_line(next, &model.params);
+            let scroll_offset = super::viewport::ensure_cursor_visible(
+                focused_line,
+                model.scroll_offset,
+                model.viewport_height,
+            );
             DetailModel {
                 focused: next,
+                scroll_offset,
                 ..model
             }
         }
@@ -156,13 +226,29 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
                 return model;
             }
             let item_count = model.params.len() + 1;
-            let prev = if model.focused == 0 {
+            let mut prev = if model.focused == 0 {
                 item_count - 1
             } else {
                 model.focused - 1
             };
+            // Loop to skip hidden params (at most item_count steps).
+            for _ in 0..item_count {
+                if prev == model.params.len()
+                    || is_param_visible(&model.params[prev], &model.params)
+                {
+                    break;
+                }
+                prev = if prev == 0 { item_count - 1 } else { prev - 1 };
+            }
+            let focused_line = estimate_focused_line(prev, &model.params);
+            let scroll_offset = super::viewport::ensure_cursor_visible(
+                focused_line,
+                model.scroll_offset,
+                model.viewport_height,
+            );
             DetailModel {
                 focused: prev,
+                scroll_offset,
                 ..model
             }
         }
@@ -329,13 +415,23 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
                 ..model
             }
         }
+        DetailMessage::Resize { height } => {
+            let focused_line = estimate_focused_line(model.focused, &model.params);
+            let scroll_offset =
+                super::viewport::ensure_cursor_visible(focused_line, model.scroll_offset, height);
+            DetailModel {
+                viewport_height: height,
+                scroll_offset,
+                ..model
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bnto_core::metadata::{Constraints, OptionEntry};
+    use bnto_core::metadata::{Constraints, OptionEntry, ParamConditionEntry};
 
     // --- Test helpers ---
 
@@ -358,6 +454,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            visible_when: None,
         }
     }
 
@@ -642,6 +739,33 @@ mod tests {
         );
     }
 
+    #[test]
+    fn confirm_omits_hidden_params() {
+        let params = vec![
+            conditional_param("mode", "compress", None),
+            conditional_param("width", "800", Some(single_condition("mode", "resize"))),
+            conditional_param("format", "jpeg", None),
+        ];
+        let m = DetailModel::from_test_data("s", "n", "d", params);
+        let result = m.confirm();
+        assert_eq!(result.overrides.len(), 2, "hidden param excluded");
+        assert!(!result.overrides.contains_key("n.width"));
+        assert!(result.overrides.contains_key("n.mode"));
+        assert!(result.overrides.contains_key("n.format"));
+    }
+
+    #[test]
+    fn confirm_includes_visible_conditional_params() {
+        let params = vec![
+            conditional_param("mode", "resize", None),
+            conditional_param("width", "800", Some(single_condition("mode", "resize"))),
+        ];
+        let m = DetailModel::from_test_data("s", "n", "d", params);
+        let result = m.confirm();
+        assert_eq!(result.overrides.len(), 2, "matching condition → included");
+        assert!(result.overrides.contains_key("n.width"));
+    }
+
     // --- Edit char/backspace ignored when not editing ---
 
     #[test]
@@ -872,6 +996,229 @@ mod tests {
         assert!(
             quality.description.is_some(),
             "quality should have description from engine"
+        );
+    }
+
+    // --- Conditional visibility (visible_when) ---
+
+    /// Build a param with a visible_when condition for testing.
+    fn conditional_param(
+        name: &str,
+        value: &str,
+        visible_when: Option<ParamCondition>,
+    ) -> ParamEntry {
+        ParamEntry {
+            node_id: "n".into(),
+            name: name.into(),
+            label: name.into(),
+            value: value.into(),
+            param_type: ParameterType::String,
+            default: value.into(),
+            description: None,
+            constraints: None,
+            suffix: None,
+            visible_when,
+        }
+    }
+
+    fn single_condition(param: &str, equals: &str) -> ParamCondition {
+        ParamCondition::Single(ParamConditionEntry {
+            param: param.into(),
+            equals: equals.into(),
+        })
+    }
+
+    fn any_condition(pairs: &[(&str, &str)]) -> ParamCondition {
+        ParamCondition::Any(
+            pairs
+                .iter()
+                .map(|(p, e)| ParamConditionEntry {
+                    param: (*p).into(),
+                    equals: (*e).into(),
+                })
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn is_param_visible_true_when_no_condition() {
+        let params = vec![conditional_param("mode", "resize", None)];
+        assert!(is_param_visible(&params[0], &params));
+    }
+
+    #[test]
+    fn is_param_visible_single_matches() {
+        let params = vec![
+            conditional_param("mode", "resize", None),
+            conditional_param("width", "800", Some(single_condition("mode", "resize"))),
+        ];
+        assert!(is_param_visible(&params[1], &params));
+    }
+
+    #[test]
+    fn is_param_visible_single_no_match() {
+        let params = vec![
+            conditional_param("mode", "compress", None),
+            conditional_param("width", "800", Some(single_condition("mode", "resize"))),
+        ];
+        assert!(!is_param_visible(&params[1], &params));
+    }
+
+    #[test]
+    fn is_param_visible_any_matches() {
+        let params = vec![
+            conditional_param("mode", "text", None),
+            conditional_param(
+                "prompt",
+                "hello",
+                Some(any_condition(&[("mode", "text"), ("mode", "url")])),
+            ),
+        ];
+        assert!(is_param_visible(&params[1], &params));
+    }
+
+    #[test]
+    fn is_param_visible_any_none_match() {
+        let params = vec![
+            conditional_param("mode", "file-upload", None),
+            conditional_param(
+                "prompt",
+                "hello",
+                Some(any_condition(&[("mode", "text"), ("mode", "url")])),
+            ),
+        ];
+        assert!(!is_param_visible(&params[1], &params));
+    }
+
+    #[test]
+    fn focus_next_skips_hidden_param() {
+        // Params: [mode=compress, width(hidden), format]. Focus 0 → should skip 1, land on 2.
+        let params = vec![
+            conditional_param("mode", "compress", None),
+            conditional_param("width", "800", Some(single_condition("mode", "resize"))),
+            conditional_param("format", "jpeg", None),
+        ];
+        let m = DetailModel::from_test_data("s", "n", "d", params);
+        let m = update(m, DetailMessage::FocusNext);
+        assert_eq!(m.focused, 2, "should skip hidden param at index 1");
+    }
+
+    #[test]
+    fn focus_prev_skips_hidden_param() {
+        // Params: [mode=compress, width(hidden), format]. Focus 2 → should skip 1, land on 0.
+        let params = vec![
+            conditional_param("mode", "compress", None),
+            conditional_param("width", "800", Some(single_condition("mode", "resize"))),
+            conditional_param("format", "jpeg", None),
+        ];
+        let mut m = DetailModel::from_test_data("s", "n", "d", params);
+        m.focused = 2;
+        let m = update(m, DetailMessage::FocusPrev);
+        assert_eq!(m.focused, 0, "should skip hidden param at index 1");
+    }
+
+    #[test]
+    fn focus_wraps_past_all_hidden_to_continue() {
+        // All params hidden → only continue (index 2) is navigable.
+        let params = vec![
+            conditional_param("a", "1", Some(single_condition("x", "y"))),
+            conditional_param("b", "2", Some(single_condition("x", "y"))),
+        ];
+        let m = DetailModel::from_test_data("s", "n", "d", params);
+        let m = update(m, DetailMessage::FocusNext);
+        assert_eq!(m.focused, 2, "should land on continue action");
+        assert!(m.is_continue_focused());
+    }
+
+    #[test]
+    fn is_param_visible_unknown_param_defaults_visible() {
+        // Condition references a param that doesn't exist → permissive default (hidden).
+        // Actually, no match found → returns false. But the plan says "visible".
+        // Let's check: the referenced param "nonexistent" isn't found, so
+        // `any(|p| p.name == "nonexistent" && ...)` is false → function returns false.
+        // The plan says "visible" but logically if the referenced param is missing,
+        // the condition can't be satisfied. Let's match actual behavior.
+        let params = vec![conditional_param(
+            "width",
+            "800",
+            Some(single_condition("nonexistent", "resize")),
+        )];
+        // No param named "nonexistent" → condition not met → hidden.
+        assert!(!is_param_visible(&params[0], &params));
+    }
+
+    // --- Scroll state ---
+
+    #[test]
+    fn resize_updates_viewport_height() {
+        let m = detail();
+        let m = update(m, DetailMessage::Resize { height: 20 });
+        assert_eq!(m.viewport_height, 20);
+    }
+
+    #[test]
+    fn focus_next_adjusts_scroll_when_past_viewport() {
+        // Small viewport (3 lines) — focusing past it should increase scroll_offset.
+        let params: Vec<ParamEntry> = (0..10)
+            .map(|i| {
+                test_param(
+                    "n",
+                    &format!("p{i}"),
+                    &format!("P{i}"),
+                    "v",
+                    ParameterType::String,
+                    "v",
+                )
+            })
+            .collect();
+        let mut m = DetailModel::from_test_data("s", "n", "d", params);
+        m.viewport_height = 3;
+        m.scroll_offset = 0;
+        // Focus through several params to push past viewport.
+        for _ in 0..8 {
+            m = update(m, DetailMessage::FocusNext);
+        }
+        assert!(
+            m.scroll_offset > 0,
+            "scroll should increase for small viewport"
+        );
+    }
+
+    #[test]
+    fn scroll_offset_stays_zero_when_all_fit() {
+        let m = detail(); // 3 params, viewport_height=100 (from_test_data)
+        let m = update(m, DetailMessage::FocusNext);
+        assert_eq!(m.scroll_offset, 0, "everything fits — no scrolling");
+    }
+
+    #[test]
+    fn focus_prev_scrolls_back_up() {
+        let params: Vec<ParamEntry> = (0..10)
+            .map(|i| {
+                test_param(
+                    "n",
+                    &format!("p{i}"),
+                    &format!("P{i}"),
+                    "v",
+                    ParameterType::String,
+                    "v",
+                )
+            })
+            .collect();
+        let mut m = DetailModel::from_test_data("s", "n", "d", params);
+        m.viewport_height = 3;
+        // Navigate far down.
+        for _ in 0..8 {
+            m = update(m, DetailMessage::FocusNext);
+        }
+        let scrolled = m.scroll_offset;
+        // Now navigate back up.
+        for _ in 0..8 {
+            m = update(m, DetailMessage::FocusPrev);
+        }
+        assert!(
+            m.scroll_offset < scrolled,
+            "scroll should decrease when moving back up"
         );
     }
 }

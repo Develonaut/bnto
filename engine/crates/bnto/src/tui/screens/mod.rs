@@ -8,7 +8,7 @@
 pub mod browser;
 pub mod controls;
 pub mod detail;
-mod detail_loader;
+pub(crate) mod detail_loader;
 pub mod execution;
 pub mod nav_history;
 pub mod picker;

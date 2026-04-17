@@ -28,6 +28,8 @@ pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
         editing: false,
         edit_buffer: String::new(),
         error: None,
+        scroll_offset: 0,
+        viewport_height: 0,
     })
 }
 
@@ -101,8 +103,38 @@ fn collect_params_from_processor(
             },
             constraints: param_def.constraints.clone(),
             suffix: param_def.suffix.clone(),
+            visible_when: param_def.visible_when.clone(),
         });
     }
+}
+
+/// Build a detail model from raw recipe JSON (for custom .bnto.json files).
+///
+/// Parses the JSON, extracts name/description from top-level fields,
+/// walks the node list to resolve processors and collect params.
+/// Returns Err if JSON is invalid or missing a `nodes` array.
+pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<DetailModel, String> {
+    let def: serde_json::Value =
+        serde_json::from_str(json).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let nodes = def["nodes"]
+        .as_array()
+        .ok_or_else(|| "Missing or invalid 'nodes' array".to_string())?;
+    let name = def["name"].as_str().unwrap_or("Custom Recipe").to_string();
+    let description = def["description"].as_str().unwrap_or("").to_string();
+    let params = extract_surfaceable_params(nodes, registry);
+
+    Ok(DetailModel {
+        slug: "custom".to_string(),
+        name,
+        description,
+        params,
+        focused: 0,
+        editing: false,
+        edit_buffer: String::new(),
+        error: None,
+        scroll_offset: 0,
+        viewport_height: 0,
+    })
 }
 
 /// Convert a JSON value to a display string for the TUI.
@@ -282,5 +314,54 @@ mod tests {
                 );
             }
         }
+    }
+
+    // --- Custom JSON loading ---
+
+    #[test]
+    fn load_from_json_valid_recipe() {
+        let json = r#"{
+            "name": "Compress Images",
+            "description": "Test recipe",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {}},
+                {"id": "compress-image", "type": "image-compress", "parameters": {"quality": 80}},
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        let result = load_detail_from_json(json, &registry());
+        assert!(result.is_ok());
+        let model = result.unwrap();
+        assert_eq!(model.name, "Compress Images");
+        assert_eq!(model.description, "Test recipe");
+        assert_eq!(model.slug, "custom");
+        assert!(
+            !model.params.is_empty(),
+            "should have params from processor"
+        );
+    }
+
+    #[test]
+    fn load_from_json_minimal() {
+        let json = r#"{"nodes": [], "name": "Empty"}"#;
+        let result = load_detail_from_json(json, &registry());
+        assert!(result.is_ok());
+        let model = result.unwrap();
+        assert_eq!(model.name, "Empty");
+        assert!(model.params.is_empty());
+    }
+
+    #[test]
+    fn load_from_json_invalid() {
+        let result = load_detail_from_json("{bad json", &registry());
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid JSON"));
+    }
+
+    #[test]
+    fn load_from_json_missing_nodes() {
+        let result = load_detail_from_json(r#"{"name": "No nodes"}"#, &registry());
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("nodes"));
     }
 }
