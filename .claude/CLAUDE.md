@@ -72,6 +72,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                       |
 | Recipe editors (unified)       | [recipe-editors.md](.claude/strategy/recipe-editors.md)                         |
 | Editor implementation plan     | [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) |
+| TUI form widgets (bnto-form)   | [bnto-form-strategy.md](.claude/strategy/bnto-form-strategy.md)                 |
 
 ---
 

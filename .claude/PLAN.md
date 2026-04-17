@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 16, 2026 (Added recipe editor Sprints 12-18 to backlog — TUI List/Wizard/Code/Graph editors, bnto-editor crate extraction, Web List/Wizard/Code editors)
+**Last Updated:** April 17, 2026 (Added Sprint 11.5: `bnto-form` — standalone ratatui form widget crate, ~6 PRs, ~105 tests)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -34,7 +34,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
 - **TUI delivered (Sprint 10):** `bnto tui` via ratatui + crossterm — 6 screens (browser, detail, picker, execution, results, settings), 278 tests
-- **Next: TUI Schema-Driven Config (Sprint 11)** — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation, conditional visibility)
+- **Sprint 11 complete:** TUI schema-driven config — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation)
+- **Next: `bnto-form` crate (Sprint 11.5)** — standalone ratatui form widget library, replaces hand-built detail controls (~6 PRs, ~105 tests). See [bnto-form-strategy.md](strategy/bnto-form-strategy.md)
 - **Backlog: Recipe Editors (Sprints 12-18)** — TUI List/Wizard/Code/Graph editors, bnto-editor crate extraction, Web List/Wizard/Code editors (~28 PRs, ~153 tests). See [editor-implementation-plan.md](strategy/editor-implementation-plan.md)
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
@@ -211,9 +212,11 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Sprint 10 complete.** TUI shipped: 6 screens (browser, detail, picker, execution, results, settings), 278 tests, 32 Rust files. `bnto tui` is live with recipe browsing, file picking, execution, and results.
 
-**Next up: TUI Schema-Driven Config (Sprint 11).** The detail screen currently renders all parameters as text inputs regardless of type. Sprint 11 enriches the parameter editing experience with type-aware controls — boolean toggles, enum selects, number sliders with bounds, inline validation, description/help text, and conditional visibility. Same TEA architecture, same TDD approach. See Sprint 11 below.
+**Sprint 11 complete.** TUI schema-driven config delivered — type-aware parameter controls (boolean toggles, enum selects, number sliders), engine-owned node schema, codegen overhaul.
 
-**After Sprint 11:** File picker UX Phase 2 (backlog triage — breadcrumb, tree view, preview), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
+**Next up: `bnto-form` crate (Sprint 11.5).** Standalone, open-source ratatui form widget library inspired by Charm's huh. Replaces the hand-built detail screen controls with polished TextInput (cursor, placeholder), Select (compact + filter), Confirm (Yes/No), Number (slider, bounds). TEA-native pure functions, zero bnto dependency. See [bnto-form-strategy.md](strategy/bnto-form-strategy.md) and Sprint 11.5 below.
+
+**After Sprint 11.5:** Recipe editors (Sprints 12-18), file picker UX Phase 2 (backlog), file node ecosystem expansion (see `strategy/file-node-ecosystem.md`), more node types, recipe expansion. Desktop (Tauri) and monetization are deep backlog. See [engine-expansion.md](strategy/engine-expansion.md).
 
 ---
 
@@ -688,7 +691,54 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 - [x] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): 12 integration tests in `detail_loader.rs` loading real recipes (compress-images, convert-image-format, resize-images, clean-csv, rename-files), asserting quality renders bounded Number with constraints, format renders Enum with labeled options, maintainAspect renders Boolean, case renders Enum, description metadata carried through. All 18 built-in recipes load without panic. All params have labels.
 - [x] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Mark Sprint 11 complete in **PLAN.md**.
 
-**After Sprint 11:** Recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
+**After Sprint 11:** `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
+
+---
+
+### Sprint 11.5: `bnto-form` — TUI Form Widget Crate — BACKLOG
+
+**Goal:** Build a standalone, open-source ratatui form crate (`bnto-form`) that replaces the hand-built detail screen controls with polished, huh-inspired form widgets. TEA-native, pure-function architecture, zero bnto dependency. Fills a genuine gap in the Rust TUI ecosystem — no existing crate provides complete, TEA-compatible form widgets.
+
+**Strategy doc:** [bnto-form-strategy.md](strategy/bnto-form-strategy.md)
+**Depends on:** Sprint 11 (engine-owned node schema — complete)
+
+**What changes:** New `engine/crates/bnto-form/` crate with 4 field types (TextInput, Select, Confirm, Number), per-field validation, theming, and a form-level API. The bnto CLI bridges engine `ParameterType` metadata onto `bnto-form` fields. Detail screen delegates to `bnto_form::update()`, `render_form()`, and `map_key_event()`.
+
+**Key design decisions:**
+
+- Pure functions over traits — `render_form()` returns `Vec<Line>`, no `Widget`/`StatefulWidget` impls
+- Zero bnto dependency — generic crate, integration lives in CLI crate
+- Vendor tui-slider rendering math (~300 lines) for Number field slider visualization
+- Reference tui-input cursor patterns for grapheme-safe TextInput
+
+**Persona ownership:**
+
+| Package                   | Persona        |
+| ------------------------- | -------------- |
+| `engine/crates/bnto-form` | `/rust-expert` |
+| `engine/crates/bnto`      | `/rust-expert` |
+
+#### Wave 1 — Core types + TextInput (sequential)
+
+- [ ] `engine/crates/bnto-form` — **Crate scaffold + core types**: `Cargo.toml`, `Field`, `FieldKind`, `FieldState`, `FormModel`, `FormMessage` enums/structs. `FieldBuilder` for ergonomic construction. RED tests: field creation, builder API, state transitions (~10 tests)
+- [ ] `engine/crates/bnto-form` — **TextInput control + widget**: Cursor operations (grapheme-aware insert/delete, word boundaries, Home/End). Placeholder rendering. Character limit. `Vec<Line>` output. RED tests: cursor math, word jump, placeholder, char limit (~15 tests)
+
+#### Wave 2 — Select + Confirm + Number (parallel)
+
+- [ ] `engine/crates/bnto-form` — **Select field**: Compact cycling (<=5 options), expanded vertical list with filter (>5). Case-insensitive substring match. Separate display label from stored value. Wrapping navigation. RED tests: cycling, filter, expand/collapse, label/value split (~20 tests)
+- [ ] `engine/crates/bnto-form` — **Confirm field**: Side-by-side Yes/No buttons. Space/arrows/y/n toggle. Custom labels. RED tests: toggle, shortcuts, custom labels (~8 tests)
+- [ ] `engine/crates/bnto-form` — **Number field + tui-slider vendor**: Vendored slider rendering math (~300 lines from tui-slider, adapted to pure-function model). Arrow-key bounded stepping. Text entry mode for precise input. Suffix display. Bounds validation on commit. RED tests: stepping, bounds, text entry, slider rendering (~12 tests)
+
+#### Wave 3 — Validation + Theme + Form API (sequential)
+
+- [ ] `engine/crates/bnto-form` — **Validation system**: `ValidatorFn` type, built-in validators (`not_empty`, `min_len`, `range`, `pattern`). Inline error rendering. Error clears on next keystroke. RED tests: each validator, error display, clear behavior (~15 tests)
+- [ ] `engine/crates/bnto-form` — **Theme + form-level API**: `FormTheme` trait + `DefaultTheme`. `render_form()` top-level renderer. `map_key_event()` key mapping. Scroll/viewport (auto-scroll focused field into view). Description display on focus. Reset-to-default. RED tests: theme application, scroll, focus management, reset (~15 tests)
+
+#### Wave 4 — bnto integration (sequential)
+
+- [ ] `engine/crates/bnto` — **Replace detail screen controls**: Bridge `ParamEntry` -> `bnto_form::Field` via `param_to_field()`. Wire `bnto_form::update()`, `render_form()`, `map_key_event()` into detail screen. Remove old hand-built editing state. `visible_when` stays in bnto layer. RED tests: bridge mapping, detail screen delegation, visibility (~10 tests)
+
+**Sprint 11.5 totals: ~6 PRs, ~105 tests, ~2000-2500 LOC**
 
 ---
 
@@ -1252,12 +1302,13 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ## Reference
 
-| Document                               | Purpose                                                                      |
-| -------------------------------------- | ---------------------------------------------------------------------------- |
-| [PLAN-HISTORY.md](PLAN-HISTORY.md)     | Completed sprint history (Phase 0 through Sprint 9, Homepage)                |
-| `.claude/strategy/engine-expansion.md` | Engine expansion strategy — dependency system, ProcessContext, TUI, taxonomy |
-| `.claude/strategy/engine-execution.md` | Engine execution architecture — pipeline executor, progress events           |
-| `.claude/strategy/bntos.md`            | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers               |
-| `.claude/strategy/core-principles.md`  | Trust commitments, key principles                                            |
-| `.claude/rules/`                       | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.) |
-| `.claude/skills/`                      | Agent skills (pickup, project-manager, code-review, pre-commit)              |
+| Document                                 | Purpose                                                                      |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| [PLAN-HISTORY.md](PLAN-HISTORY.md)       | Completed sprint history (Phase 0 through Sprint 9, Homepage)                |
+| `.claude/strategy/engine-expansion.md`   | Engine expansion strategy — dependency system, ProcessContext, TUI, taxonomy |
+| `.claude/strategy/bnto-form-strategy.md` | `bnto-form` crate — huh-inspired ratatui form widgets, ecosystem research    |
+| `.claude/strategy/engine-execution.md`   | Engine execution architecture — pipeline executor, progress events           |
+| `.claude/strategy/bntos.md`              | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers               |
+| `.claude/strategy/core-principles.md`    | Trust commitments, key principles                                            |
+| `.claude/rules/`                         | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.) |
+| `.claude/skills/`                        | Agent skills (pickup, project-manager, code-review, pre-commit)              |
