@@ -4,4 +4,10 @@
  * A directed connection between two nodes in a container.
  * `source_handle` / `target_handle` disambiguate when ports have handles.
  */
-export type Edge = { id: string, source: string, target: string, sourceHandle?: string, targetHandle?: string, };
+export type Edge = {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+};

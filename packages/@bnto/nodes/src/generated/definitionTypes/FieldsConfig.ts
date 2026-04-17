@@ -5,4 +5,4 @@
  * record-style inputs (e.g. spreadsheets). `values` is arbitrary JSON so the
  * schema can stay permissive while individual node types enforce their own.
  */
-export type FieldsConfig = { values: Record<string, unknown>, keepOnlySet?: boolean, };
+export type FieldsConfig = { values: Record<string, unknown>; keepOnlySet?: boolean };

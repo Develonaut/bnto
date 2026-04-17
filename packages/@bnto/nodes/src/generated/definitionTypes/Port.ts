@@ -4,4 +4,4 @@
  * An input or output port on a node. `handle` is used when a node exposes
  * multiple logical slots (e.g. an `if` node with `then` / `else` outputs).
  */
-export type Port = { id: string, name: string, handle?: string, };
+export type Port = { id: string; name: string; handle?: string };

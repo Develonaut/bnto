@@ -9,8 +9,8 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for vector-rasterize node parameters. */
 export const vectorRasterizeParamsSchema = z.object({
-    format: z.enum(["png","jpeg","webp"] as const).default("png"),
-    quality: z.number().min(1).max(100).optional().default(80),
+  format: z.enum(["png", "jpeg", "webp"] as const).default("png"),
+  quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for vector-rasterize node parameters. */
@@ -28,7 +28,8 @@ export const vectorRasterizeNodeSchema: NodeSchema = {
     },
     quality: {
       label: "Quality",
-      description: "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+      description:
+        "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
     },
   },
 };

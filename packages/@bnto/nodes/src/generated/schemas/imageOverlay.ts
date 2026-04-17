@@ -9,13 +9,26 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for image-overlay node parameters. */
 export const imageOverlayParamsSchema = z.object({
-    overlay: z.string(),
-    position: z.enum(["top-left","top-center","top-right","middle-left","center","middle-right","bottom-left","bottom-center","bottom-right"] as const).optional().default("bottom-right"),
-    size: z.number().min(1).max(500).optional().default(25),
-    opacity: z.number().min(0).max(100).optional().default(80),
-    offsetX: z.number().min(-500).max(500).optional().default(0),
-    offsetY: z.number().min(-500).max(500).optional().default(0),
-    quality: z.number().min(1).max(100).optional().default(80),
+  overlay: z.string(),
+  position: z
+    .enum([
+      "top-left",
+      "top-center",
+      "top-right",
+      "middle-left",
+      "center",
+      "middle-right",
+      "bottom-left",
+      "bottom-center",
+      "bottom-right",
+    ] as const)
+    .optional()
+    .default("bottom-right"),
+  size: z.number().min(1).max(500).optional().default(25),
+  opacity: z.number().min(0).max(100).optional().default(80),
+  offsetX: z.number().min(-500).max(500).optional().default(0),
+  offsetY: z.number().min(-500).max(500).optional().default(0),
+  quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-overlay node parameters. */
@@ -53,7 +66,8 @@ export const imageOverlayNodeSchema: NodeSchema = {
     },
     quality: {
       label: "Quality",
-      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description:
+        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };

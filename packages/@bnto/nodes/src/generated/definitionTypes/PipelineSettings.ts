@@ -5,8 +5,9 @@ import type { IterationMode } from "./IterationMode";
  * Recipe-level settings on the root Definition. Extensible — new fields
  * can be added without changing the schema shape.
  */
-export type PipelineSettings = { 
-/**
- * How the executor iterates over multiple input files.
- */
-iteration: IterationMode, };
+export type PipelineSettings = {
+  /**
+   * How the executor iterates over multiple input files.
+   */
+  iteration: IterationMode;
+};

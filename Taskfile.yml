@@ -89,6 +89,7 @@ tasks:
     desc: Generate TypeScript node definitions from engine catalog snapshot
     cmds:
       - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
+      - npx prettier --write "packages/@bnto/nodes/src/generated/**/*.ts"
 
   nodes:export-types:
     desc: Export document-shape TypeScript types from Rust via ts-rs
@@ -98,6 +99,7 @@ tasks:
       # has an auto-generated `export_bindings_*` test that writes one file into
       # packages/@bnto/nodes/src/generated/definitionTypes/.
       - cargo test -p bnto-core --features ts export_bindings_
+      - cd .. && npx prettier --write "packages/@bnto/nodes/src/generated/definitionTypes/**/*.ts"
 
   # Theme codegen (palette.toml → CSS + Rust)
   theme:generate:

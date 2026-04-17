@@ -4,4 +4,11 @@
  * Authoring metadata attached to every node (description, timestamps, tags).
  * All fields are optional; an empty `Metadata` serializes to `{}`.
  */
-export type Metadata = { description?: string, createdAt?: string, updatedAt?: string, category?: string, tags?: Array<string>, customData?: Record<string, string>, };
+export type Metadata = {
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  category?: string;
+  tags?: Array<string>;
+  customData?: Record<string, string>;
+};

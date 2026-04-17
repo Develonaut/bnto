@@ -9,9 +9,9 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-clean node parameters. */
 export const spreadsheetCleanParamsSchema = z.object({
-    trimWhitespace: z.boolean().optional().default(true),
-    removeEmptyRows: z.boolean().optional().default(true),
-    removeDuplicates: z.boolean().optional().default(true),
+  trimWhitespace: z.boolean().optional().default(true),
+  removeEmptyRows: z.boolean().optional().default(true),
+  removeDuplicates: z.boolean().optional().default(true),
 });
 
 /** Inferred TypeScript type for spreadsheet-clean node parameters. */

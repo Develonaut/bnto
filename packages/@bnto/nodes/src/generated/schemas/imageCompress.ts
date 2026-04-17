@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for image-compress node parameters. */
 export const imageCompressParamsSchema = z.object({
-    quality: z.number().min(1).max(100).optional().default(80),
+  quality: z.number().min(1).max(100).optional().default(80),
 });
 
 /** Inferred TypeScript type for image-compress node parameters. */
@@ -23,7 +23,8 @@ export const imageCompressNodeSchema: NodeSchema = {
   params: {
     quality: {
       label: "Quality",
-      description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+      description:
+        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
     },
   },
 };
