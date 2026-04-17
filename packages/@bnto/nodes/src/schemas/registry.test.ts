@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   NODE_SCHEMAS,
-  inferFieldType,
+  getParamFieldInfo,
   LOOP_MODES,
   IMAGE_FORMATS,
   GROUP_MODES,
@@ -87,11 +87,11 @@ describe("every schema definition", () => {
     }
   });
 
-  it("enum fields inferred via inferFieldType have enumValues", () => {
+  it("enum fields in paramFieldInfo have enumValues", () => {
     for (const def of allDefs) {
-      for (const [, zodField] of Object.entries(def!.schema.shape)) {
-        const info = inferFieldType(zodField);
-        if (info.type === "enum") {
+      for (const paramName of Object.keys(def!.schema.shape)) {
+        const info = getParamFieldInfo(def!.nodeType, paramName);
+        if (info && info.type === "enum") {
           expect(info.enumValues).toBeDefined();
           expect(info.enumValues!.length).toBeGreaterThan(0);
         }
@@ -101,9 +101,9 @@ describe("every schema definition", () => {
 
   it("number fields with min/max have min <= max", () => {
     for (const def of allDefs) {
-      for (const [, zodField] of Object.entries(def!.schema.shape)) {
-        const info = inferFieldType(zodField);
-        if (info.type === "number" && info.min !== undefined && info.max !== undefined) {
+      for (const paramName of Object.keys(def!.schema.shape)) {
+        const info = getParamFieldInfo(def!.nodeType, paramName);
+        if (info && info.type === "number" && info.min !== undefined && info.max !== undefined) {
           expect(info.min).toBeLessThanOrEqual(info.max);
         }
       }

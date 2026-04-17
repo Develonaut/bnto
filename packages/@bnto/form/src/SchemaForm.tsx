@@ -17,7 +17,7 @@ const EMPTY_FILES: File[] = [];
  *
  * Takes a schema definition, current parameter values, and a list of visible
  * parameter names. Renders the correct UI control for each visible parameter
- * using the Zod type -> control mapping from `inferFieldType`.
+ * using the pre-computed control mapping from `getParamFieldInfo`.
  *
  * Consecutive fields with the same `group` are collected and rendered together
  * via FieldGroup (e.g., "dimensions" -> aspect lock toggle + side-by-side W/H).

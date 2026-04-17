@@ -41,6 +41,8 @@ const CONVEX_LABELS_OUTPUT = resolve(
 );
 const I18N_STRINGS_OUTPUT = resolve(ROOT, "packages/@bnto/i18n/src/generated/nodes.json");
 const RECIPES_OUTPUT = resolve(GENERATED_DIR, "recipes.ts");
+const PARAM_FIELD_INFO_OUTPUT = resolve(GENERATED_DIR, "paramFieldInfo.ts");
+const ENUM_CONSTANTS_OUTPUT = resolve(GENERATED_DIR, "enumConstants.ts");
 
 // Legacy files to clean up
 const LEGACY_CATALOG = resolve(GENERATED_DIR, "catalog.ts");
@@ -74,6 +76,23 @@ interface RawNodeType {
   isContainer: boolean;
   platforms: string[];
   icon: string;
+  params?: RawNodeTypeParam[];
+}
+
+/** Condition for visibleWhen/requiredWhen in the catalog. */
+type ParamConditionRaw =
+  | { param: string; equals: string }
+  | Array<{ param: string; equals: string }>;
+
+/** Extended parameter with presentation metadata from nodeTypes[].params. */
+interface RawNodeTypeParam extends RawParameter {
+  suffix?: string;
+  control?: string;
+  presets?: Array<{ value: number; label: string }>;
+  group?: string;
+  visibleWhen?: ParamConditionRaw;
+  requiredWhen?: ParamConditionRaw;
+  inverted?: boolean;
 }
 
 interface RawProcessor {
@@ -499,46 +518,56 @@ export type { IterationModeValue } from "./iterationModes";`
 // Phase 2: Per-processor Zod schema files (schemas/*.ts)
 // =============================================================================
 
-/** Generate a single Zod field from a RawParameter. */
-function generateZodField(param: RawParameter): string {
+/** Generate a single Zod field from a RawParameter (or extended RawNodeTypeParam). */
+function generateZodField(param: RawParameter | RawNodeTypeParam): string {
   const name = param.name;
+  const control = "control" in param ? (param as RawNodeTypeParam).control : undefined;
   let zodChain: string;
 
-  switch (param.paramType.type) {
-    case "number": {
-      zodChain = "z.number()";
-      if (param.constraints?.min !== undefined) {
-        zodChain += `.min(${param.constraints.min})`;
+  // Control-based overrides: tagPicker → array, keyValue → record
+  if (control === "tagPicker") {
+    zodChain = "z.array(z.string())";
+  } else if (control === "keyValue" && param.paramType.type === "object") {
+    zodChain = "z.record(z.unknown())";
+  } else if (control === "keyValue") {
+    zodChain = "z.record(z.string())";
+  } else {
+    switch (param.paramType.type) {
+      case "number": {
+        zodChain = "z.number()";
+        if (param.constraints?.min !== undefined) {
+          zodChain += `.min(${param.constraints.min})`;
+        }
+        if (param.constraints?.max !== undefined) {
+          zodChain += `.max(${param.constraints.max})`;
+        }
+        break;
       }
-      if (param.constraints?.max !== undefined) {
-        zodChain += `.max(${param.constraints.max})`;
+      case "string": {
+        zodChain = "z.string()";
+        break;
       }
-      break;
-    }
-    case "string": {
-      zodChain = "z.string()";
-      break;
-    }
-    case "boolean": {
-      zodChain = "z.boolean()";
-      break;
-    }
-    case "enum": {
-      const values = (param.paramType.options ?? []).map((o) => o.value);
-      zodChain = `z.enum(${JSON.stringify(values)} as const)`;
-      break;
-    }
-    case "object": {
-      zodChain = "z.record(z.string())";
-      break;
-    }
-    case "file": {
-      // File params are base64-encoded strings
-      zodChain = "z.string()";
-      break;
-    }
-    default: {
-      zodChain = "z.unknown()";
+      case "boolean": {
+        zodChain = "z.boolean()";
+        break;
+      }
+      case "enum": {
+        const values = (param.paramType.options ?? []).map((o) => o.value);
+        zodChain = `z.enum(${JSON.stringify(values)} as const)`;
+        break;
+      }
+      case "object": {
+        zodChain = "z.record(z.unknown())";
+        break;
+      }
+      case "file": {
+        // File params are base64-encoded strings
+        zodChain = "z.string()";
+        break;
+      }
+      default: {
+        zodChain = "z.unknown()";
+      }
     }
   }
 
@@ -623,24 +652,297 @@ ${reexports.join("\n")}
 }
 
 // =============================================================================
+// Phase 2b: Non-processor schema files (from nodeTypes[].params)
+// =============================================================================
+
+/** Set of node types that have a processor entry (schemas generated from processors). */
+const processorNodeTypes = new Set(catalog.processors.map((p) => p.nodeType));
+
+/** Node types with params but no processor — need schemas generated from nodeTypes[].params. */
+function getNonProcessorTypesWithParams(): RawNodeType[] {
+  return catalog.nodeTypes.filter(
+    (nt) => !processorNodeTypes.has(nt.name) && nt.params && nt.params.length > 0,
+  );
+}
+
+/** All node types with params (both processor-backed and non-processor). */
+function getAllTypesWithParams(): RawNodeType[] {
+  return catalog.nodeTypes.filter((nt) => nt.params && nt.params.length > 0);
+}
+
+/** Generate a Zod schema file for a non-processor node type from nodeTypes[].params. */
+function generateNonProcessorSchemaFile(nt: RawNodeType): string {
+  const params = nt.params!;
+  const camelName = toCamelCase(nt.name);
+  const pascalName = toPascalCase(nt.name);
+
+  const zodFields = params.map((p) => `  ${generateZodField(p)},`);
+  const uiMetaEntries = params.map((p) => generateNodeParam(p));
+
+  return `${HEADER}
+
+import { z } from "zod";
+import type { NodeSchema } from "../../schemas/types";
+
+/** Zod schema for ${nt.name} node parameters. */
+export const ${camelName}ParamsSchema = z.object({
+${zodFields.join("\n")}
+});
+
+/** Inferred TypeScript type for ${nt.name} node parameters. */
+export type ${pascalName}Params = z.infer<typeof ${camelName}ParamsSchema>;
+
+/** Full schema definition for the ${nt.name} node type. */
+export const ${camelName}NodeSchema: NodeSchema = {
+  nodeType: ${JSON.stringify(nt.name)},
+  schemaVersion: 1,
+  schema: ${camelName}ParamsSchema,
+  params: {
+${uiMetaEntries.join("\n")}
+  },
+};
+`;
+}
+
+/** Regenerate the schemas barrel to include both processor and non-processor schemas. */
+function generateAllSchemasBarrel(): string {
+  const processorTypes = [...catalog.processors].sort((a, b) =>
+    a.nodeType.localeCompare(b.nodeType),
+  );
+  const nonProcessorTypes = getNonProcessorTypesWithParams().sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+
+  const reexports = [
+    ...processorTypes.map((p) => {
+      const camelName = toCamelCase(p.nodeType);
+      const pascalName = toPascalCase(p.nodeType);
+      return `export { ${camelName}ParamsSchema, ${camelName}NodeSchema } from "./${camelName}";
+export type { ${pascalName}Params } from "./${camelName}";`;
+    }),
+    ...nonProcessorTypes.map((nt) => {
+      const camelName = toCamelCase(nt.name);
+      const pascalName = toPascalCase(nt.name);
+      return `export { ${camelName}ParamsSchema, ${camelName}NodeSchema } from "./${camelName}";
+export type { ${pascalName}Params } from "./${camelName}";`;
+    }),
+  ];
+
+  return `${HEADER}
+
+${reexports.join("\n")}
+`;
+}
+
+// =============================================================================
+// Phase 2c: NodeParamFields generation (presentation metadata from catalog)
+// =============================================================================
+
+/** Serialize a ParamConditionRaw to TypeScript literal. */
+function serializeCondition(cond: ParamConditionRaw): string {
+  if (Array.isArray(cond)) {
+    const entries = cond.map(
+      (c) => `{ param: ${JSON.stringify(c.param)}, equals: ${JSON.stringify(c.equals)} }`,
+    );
+    return `[${entries.join(", ")}]`;
+  }
+  return `{ param: ${JSON.stringify(cond.param)}, equals: ${JSON.stringify(cond.equals)} }`;
+}
+
+/** Generate a NodeParamField literal for a single param. Returns empty string if no fields. */
+function generateParamFieldLiteral(param: RawNodeTypeParam): string {
+  const entries: string[] = [];
+
+  if (param.suffix) entries.push(`suffix: ${JSON.stringify(param.suffix)}`);
+  if (param.control) entries.push(`control: ${JSON.stringify(param.control)}`);
+  if (param.presets) {
+    const presetStr = param.presets
+      .map((p) => `{ value: ${p.value}, label: ${JSON.stringify(p.label)} }`)
+      .join(", ");
+    entries.push(`presets: [${presetStr}]`);
+  }
+  if (param.group) entries.push(`group: ${JSON.stringify(param.group)}`);
+  if (param.visibleWhen) entries.push(`visibleWhen: ${serializeCondition(param.visibleWhen)}`);
+  if (param.requiredWhen) entries.push(`requiredWhen: ${serializeCondition(param.requiredWhen)}`);
+  if (param.inverted) entries.push(`inverted: true`);
+  if (param.paramType.accept) entries.push(`accept: ${JSON.stringify(param.paramType.accept)}`);
+
+  // Generate options for enum params with option labels
+  if (param.paramType.options && param.paramType.options.length > 0) {
+    const optStr = param.paramType.options
+      .map((o) => `{ value: ${JSON.stringify(o.value)}, label: ${JSON.stringify(o.label)} }`)
+      .join(", ");
+    entries.push(`options: [${optStr}]`);
+  }
+
+  if (entries.length === 0) return "";
+  return `    ${param.name}: { ${entries.join(", ")} }`;
+}
+
+/** Generate NODE_PARAM_FIELDS entries for a node type. Returns empty object literal if no fields. */
+function generateNodeParamFieldsLiteral(params: RawNodeTypeParam[]): string {
+  const fieldEntries = params.map((p) => generateParamFieldLiteral(p)).filter((s) => s.length > 0);
+
+  if (fieldEntries.length === 0) return "{}";
+  return `{\n${fieldEntries.join(",\n")},\n  }`;
+}
+
+// =============================================================================
+// Phase 2d: Static paramFieldInfo map (replaces runtime Zod introspection)
+// =============================================================================
+
+/** Compute NodeParamFieldInfo for a parameter at codegen time. */
+function computeFieldInfo(param: RawNodeTypeParam): {
+  type: string;
+  control: string;
+  required: boolean;
+  enumValues?: string[];
+  min?: number;
+  max?: number;
+} {
+  const control = param.control;
+  const pType = param.paramType.type;
+  const isRequired = param.constraints?.required === true && param.default === undefined;
+
+  // Derive effective type and control
+  if (control === "tagPicker") {
+    return { type: "array", control: "tagPicker", required: isRequired };
+  }
+  if (control === "keyValue") {
+    return { type: "record", control: "keyValue", required: isRequired };
+  }
+
+  if (pType === "enum") {
+    const enumValues = (param.paramType.options ?? []).map((o) => o.value);
+    const effectiveControl = control ?? "select";
+    return { type: "enum", control: effectiveControl, required: isRequired, enumValues };
+  }
+  if (pType === "boolean") {
+    return { type: "boolean", control: control ?? "switch", required: isRequired };
+  }
+  if (pType === "number") {
+    const min = param.constraints?.min;
+    const max = param.constraints?.max;
+    const isBounded = min !== undefined && max !== undefined;
+    const effectiveControl = control ?? (isBounded ? "slider" : "number");
+    return { type: "number", control: effectiveControl, required: isRequired, min, max };
+  }
+  if (pType === "file") {
+    return { type: "string", control: control ?? "file", required: isRequired };
+  }
+  if (pType === "object") {
+    return { type: "record", control: control ?? "keyValue", required: isRequired };
+  }
+
+  // Default: string
+  const effectiveControl = control ?? "text";
+  return { type: "string", control: effectiveControl, required: isRequired };
+}
+
+/** Generate the static paramFieldInfo map file. */
+function generateParamFieldInfoFile(): string {
+  const allTypes = getAllTypesWithParams().sort((a, b) => a.name.localeCompare(b.name));
+
+  const typeEntries = allTypes.map((nt) => {
+    const paramEntries = nt.params!.map((p) => {
+      const info = computeFieldInfo(p);
+      const parts: string[] = [];
+      parts.push(`type: ${JSON.stringify(info.type)}`);
+      parts.push(`control: ${JSON.stringify(info.control)}`);
+      parts.push(`required: ${info.required}`);
+      if (info.enumValues) parts.push(`enumValues: ${JSON.stringify(info.enumValues)} as const`);
+      if (info.min !== undefined) parts.push(`min: ${info.min}`);
+      if (info.max !== undefined) parts.push(`max: ${info.max}`);
+      return `    ${JSON.stringify(p.name)}: { ${parts.join(", ")} }`;
+    });
+
+    return `  ${JSON.stringify(nt.name)}: {\n${paramEntries.join(",\n")},\n  }`;
+  });
+
+  return `${HEADER}
+
+import type { NodeParamFieldInfo } from "../schemas/types";
+
+/** Pre-computed field info for all node parameters — replaces runtime Zod introspection. */
+export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamFieldInfo>> = {
+${typeEntries.join(",\n")},
+};
+
+/** Look up pre-computed field info for a specific node type and parameter. */
+export function getParamFieldInfo(
+  nodeType: string,
+  paramName: string,
+): NodeParamFieldInfo | undefined {
+  return NODE_PARAM_FIELD_INFO[nodeType]?.[paramName];
+}
+`;
+}
+
+// =============================================================================
+// Phase 2e: Enum constants (from nodeTypes[].params enum options)
+// =============================================================================
+
+/** Known enum constant mappings: nodeType.paramName → exported constant name. */
+const ENUM_CONSTANT_MAP: Record<string, Record<string, string>> = {
+  input: { mode: "INPUT_MODES" },
+  output: { mode: "OUTPUT_MODES" },
+  loop: { mode: "LOOP_MODES" },
+  group: { mode: "GROUP_MODES" },
+  parallel: { errorStrategy: "ERROR_STRATEGIES" },
+  "image-convert": { format: "IMAGE_FORMATS" },
+};
+
+function generateEnumConstantsFile(): string {
+  const sections: string[] = [];
+
+  for (const nt of catalog.nodeTypes) {
+    const paramMap = ENUM_CONSTANT_MAP[nt.name];
+    if (!paramMap) continue;
+    const params = nt.params ?? [];
+
+    for (const param of params) {
+      const constName = paramMap[param.name];
+      if (!constName) continue;
+      const options = param.paramType.options;
+      if (!options || options.length === 0) continue;
+
+      const values = options.map((o) => JSON.stringify(o.value)).join(", ");
+      sections.push(`export const ${constName} = [${values}] as const;`);
+    }
+  }
+
+  return `${HEADER}
+
+${sections.join("\n\n")}
+`;
+}
+
+// =============================================================================
 // Phase 3: Engine schema entries (auto-assembled registry)
 // =============================================================================
 
 function generateEngineSchemaEntries(): string {
-  const sorted = [...catalog.processors].sort((a, b) => a.nodeType.localeCompare(b.nodeType));
+  // Collect all node types that have schemas (processor-backed + non-processor with params)
+  const allSchemaTypes = [
+    ...catalog.processors.map((p) => p.nodeType),
+    ...getNonProcessorTypesWithParams().map((nt) => nt.name),
+  ].sort();
 
-  const schemaImports = sorted
+  const allParamTypes = getAllTypesWithParams().sort((a, b) => a.name.localeCompare(b.name));
+
+  const schemaImports = allSchemaTypes
     .map(
-      (p) =>
-        `import { ${toCamelCase(p.nodeType)}NodeSchema } from "./schemas/${toCamelCase(p.nodeType)}";`,
+      (name) => `import { ${toCamelCase(name)}NodeSchema } from "./schemas/${toCamelCase(name)}";`,
     )
     .join("\n");
 
-  const schemaEntries = sorted
-    .map((p) => `  ${JSON.stringify(p.nodeType)}: ${toCamelCase(p.nodeType)}NodeSchema`)
+  const schemaEntries = allSchemaTypes
+    .map((name) => `  ${JSON.stringify(name)}: ${toCamelCase(name)}NodeSchema`)
     .join(",\n");
 
-  const fieldsEntries = sorted.map((p) => `  ${JSON.stringify(p.nodeType)}: {}`).join(",\n");
+  const fieldsEntries = allParamTypes
+    .map((nt) => `  ${JSON.stringify(nt.name)}: ${generateNodeParamFieldsLiteral(nt.params!)}`)
+    .join(",\n");
 
   return `${HEADER}
 
@@ -650,16 +952,16 @@ import type { NodeParamFields } from "../schemas/types";
 ${schemaImports}
 
 /**
- * Engine-backed schema entries - auto-assembled from generated per-type files.
- * Merged with hand-written schemas in schemas/registry.ts.
+ * Schema entries for ALL node types — auto-assembled from the engine catalog.
+ * The engine is the single source of truth. No hand-written overrides needed.
  */
 export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
 ${schemaEntries},
 };
 
 /**
- * Default (empty) field configs for engine-backed types.
- * Hand-written overrides in schemas/{type}.ts take precedence.
+ * UI field presentation metadata for all node types.
+ * Generated from the engine catalog's nodeTypes[].params presentation fields.
  */
 export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
 ${fieldsEntries},
@@ -983,18 +1285,29 @@ if (iterationModesContent) {
 
 write(resolve(CATALOG_DIR, "index.ts"), generateCatalogBarrel());
 
-// --- schemas/*.ts ---
+// --- schemas/*.ts (processor-backed + non-processor types) ---
 const expectedSchemaFiles = new Set<string>(["index.ts"]);
 for (const p of catalog.processors) {
   const filename = `${toCamelCase(p.nodeType)}.ts`;
   expectedSchemaFiles.add(filename);
   write(resolve(SCHEMAS_DIR, filename), generateSchemaFile(p));
 }
-write(resolve(SCHEMAS_DIR, "index.ts"), generateSchemasBarrel());
+for (const nt of getNonProcessorTypesWithParams()) {
+  const filename = `${toCamelCase(nt.name)}.ts`;
+  expectedSchemaFiles.add(filename);
+  write(resolve(SCHEMAS_DIR, filename), generateNonProcessorSchemaFile(nt));
+}
+write(resolve(SCHEMAS_DIR, "index.ts"), generateAllSchemasBarrel());
 cleanStaleFiles(SCHEMAS_DIR, expectedSchemaFiles);
 
 // --- engineSchemaEntries.ts ---
 write(ENGINE_SCHEMA_ENTRIES_OUTPUT, generateEngineSchemaEntries());
+
+// --- paramFieldInfo.ts ---
+write(PARAM_FIELD_INFO_OUTPUT, generateParamFieldInfoFile());
+
+// --- enumConstants.ts ---
+write(ENUM_CONSTANTS_OUTPUT, generateEnumConstantsFile());
 
 // --- Unchanged single-file outputs ---
 write(DEF_SCHEMA_OUTPUT, generateDefinitionSchemaFile());
@@ -1021,13 +1334,20 @@ for (const legacy of [LEGACY_CATALOG, LEGACY_SCHEMAS, LEGACY_NODE_TYPES]) {
 }
 
 // --- Summary ---
+const nonProcCount = getNonProcessorTypesWithParams().length;
+const allSchemaCount = catalog.processors.length + nonProcCount;
+const allParamCount = getAllTypesWithParams().length;
 console.log(`\nCodegen complete (${filesWritten} written, ${filesUnchanged} unchanged):`);
 console.log(`  catalog/nodeTypes/ - ${catalog.nodeTypes.length} per-type files`);
 console.log(`  catalog/processors/ - ${catalog.processors.length} per-processor files`);
-console.log(`  schemas/ - ${catalog.processors.length} per-processor Zod schemas`);
 console.log(
-  `  engineSchemaEntries.ts - ${catalog.processors.length} auto-assembled registry entries`,
+  `  schemas/ - ${allSchemaCount} Zod schemas (${catalog.processors.length} processor + ${nonProcCount} non-processor)`,
 );
+console.log(
+  `  engineSchemaEntries.ts - ${allSchemaCount} schemas + ${allParamCount} field configs`,
+);
+console.log(`  paramFieldInfo.ts - ${allParamCount} node types with field info`);
+console.log(`  enumConstants.ts - generated`);
 console.log(`  definitionSchema.ts - ${catalog.definitionSchema ? "included" : "NOT included"}`);
 console.log(`  formatVersion.ts - v${catalog.version}`);
 if (extractIterationModes()) {

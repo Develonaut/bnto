@@ -1,20 +1,18 @@
 /**
- * Output node schema — declares how results are delivered.
- *
- * The output node is a declaration, not a processor. The execution
- * environment reads it to know how to present results (file downloads,
- * text display, inline preview).
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
+ * Run `task nodes:generate` to regenerate after engine changes.
+ * Engine catalog v1.0.0
  */
 
 import { z } from "zod";
-import type { NodeParamFields, NodeSchema } from "./types";
-
-/** Valid output modes — determines which UI widget the environment renders. */
-export const OUTPUT_MODES = ["download", "display", "preview"] as const;
+import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for output node parameters. */
 export const outputParamsSchema = z.object({
-  mode: z.enum(OUTPUT_MODES).default("download"),
+  mode: z
+    .enum(["download", "display", "preview"] as const)
+    .optional()
+    .default("download"),
   filename: z.string().optional(),
   zip: z.boolean().optional().default(true),
   label: z.string().optional(),
@@ -52,25 +50,5 @@ export const outputNodeSchema: NodeSchema = {
       label: "Auto-Download",
       description: "Automatically download results on completion.",
     },
-  },
-};
-
-/** UI presentation metadata for output node fields. */
-export const outputFields: NodeParamFields = {
-  mode: {
-    options: [
-      { value: "download", label: "Download" },
-      { value: "display", label: "Display" },
-      { value: "preview", label: "Preview" },
-    ],
-  },
-  filename: {
-    visibleWhen: { param: "mode", equals: "download" },
-  },
-  zip: {
-    visibleWhen: { param: "mode", equals: "download" },
-  },
-  autoDownload: {
-    visibleWhen: { param: "mode", equals: "download" },
   },
 };

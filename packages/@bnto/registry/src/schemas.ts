@@ -8,7 +8,8 @@ export {
   getRequiredParams,
   getConditionallyRequired,
   getVisibleParams,
-  inferFieldType,
+  getParamFieldInfo,
+  NODE_PARAM_FIELD_INFO,
 } from "@bnto/nodes";
 export { getProcessorDefaults, getParamConstraints, getProcessorAccepts } from "@bnto/nodes";
 export type {

@@ -13,19 +13,4 @@ import type { Position } from "./Position";
  * execution-pruned view). The `settings` field is only meaningful at the
  * root of a recipe document; nested nodes typically omit it.
  */
-export type Definition = {
-  id: string;
-  type: string;
-  version: string;
-  parentId?: string;
-  name: string;
-  position: Position;
-  metadata: Metadata;
-  parameters: Record<string, unknown>;
-  fields?: FieldsConfig;
-  inputPorts: Array<Port>;
-  outputPorts: Array<Port>;
-  nodes?: Array<Definition>;
-  edges?: Array<Edge>;
-  settings?: PipelineSettings;
-};
+export type Definition = { id: string, type: string, version: string, parentId?: string, name: string, position: Position, metadata: Metadata, parameters: Record<string, unknown>, fields?: FieldsConfig, inputPorts: Array<Port>, outputPorts: Array<Port>, nodes?: Array<Definition>, edges?: Array<Edge>, settings?: PipelineSettings, };

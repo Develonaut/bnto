@@ -6,7 +6,7 @@
  */
 
 import type { Definition } from "./definition";
-import { LOOP_MODES } from "./schemas/loop";
+import { LOOP_MODES } from "./generated/enumConstants";
 import type { ValidationError } from "./validationError";
 
 /** Valid loop modes — derived from the schema's canonical array. */

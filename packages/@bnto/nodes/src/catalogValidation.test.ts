@@ -9,11 +9,11 @@
 
 import { describe, expect, it } from "vitest";
 import { NODE_TYPE_INFO, NODE_TYPE_NAMES, ITERATION_MODES } from "./generated/catalog";
-import { imageCompressParamsSchema } from "./schemas/imageCompress";
-import { imageResizeParamsSchema } from "./schemas/imageResize";
-import { IMAGE_FORMATS, imageConvertFields } from "./schemas/imageConvert";
-import { spreadsheetCleanParamsSchema } from "./schemas/spreadsheetClean";
-import { fileRenameParamsSchema } from "./schemas/fileRename";
+import { imageCompressParamsSchema } from "./generated/schemas/imageCompress";
+import { imageResizeParamsSchema } from "./generated/schemas/imageResize";
+import { IMAGE_FORMATS } from "./generated/enumConstants";
+import { spreadsheetCleanParamsSchema } from "./generated/schemas/spreadsheetClean";
+import { fileRenameParamsSchema } from "./generated/schemas/fileRename";
 import { imageOverlayParamsSchema } from "./generated/schemas/imageOverlay";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { CATALOG_FORMAT_VERSION } from "./generated/formatVersion";
@@ -21,7 +21,6 @@ import { PROCESSORS, PROCESSOR_MAP, getProcessorDefaults } from "./generated/cat
 import { CATEGORIES } from "./categories";
 import { NODE_SCHEMAS, NODE_PARAM_FIELDS } from "./schemas/registry";
 import { DEFINITION_JSON_SCHEMA } from "./generated/definitionSchema";
-import { inputFields } from "./schemas/input";
 
 // Import raw JSON to validate generated module matches it exactly
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -186,7 +185,8 @@ describe("schema registry completeness", () => {
 
 describe("image convert field options sync", () => {
   it("image-convert field options match IMAGE_FORMATS", () => {
-    const fieldOptions = imageConvertFields.format!.options!.map((o: { value: string }) => o.value);
+    const fields = NODE_PARAM_FIELDS["image-convert"]!;
+    const fieldOptions = fields.format!.options!.map((o: { value: string }) => o.value);
     expect(fieldOptions.sort()).toEqual([...IMAGE_FORMATS].sort());
   });
 });
@@ -211,8 +211,9 @@ describe("iteration modes sync", () => {
 
 describe("input extensions coverage (advisory)", () => {
   it("input extensions options cover common processor-accepted file types", () => {
+    const fields = NODE_PARAM_FIELDS["input"]!;
     const extensionOptions =
-      inputFields.extensions?.options?.map((o: { value: string }) => o.value) ?? [];
+      fields.extensions?.options?.map((o: { value: string }) => o.value) ?? [];
     // MIME type → expected extension mapping for known processors
     const mimeToExt: Record<string, string> = {
       "image/jpeg": ".jpg",

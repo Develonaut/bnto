@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
 import type { NodeSchema, NodeParamFields } from "@bnto/core";
+import { NODE_SCHEMAS } from "@bnto/core";
 import { buildFormEntries } from "./buildFormEntries";
 
 /** Minimal NodeSchema factory for testing. */
@@ -110,7 +111,7 @@ describe("buildFormEntries", () => {
     expect(entries[0]).toMatchObject({ kind: "single", paramName: "quality" });
   });
 
-  it("infers text control when no Zod field exists for a param", () => {
+  it("falls back to text control when param not in static field info", () => {
     const schema: NodeSchema = {
       nodeType: "test",
       schemaVersion: 1,
@@ -130,15 +131,15 @@ describe("buildFormEntries", () => {
     }
   });
 
-  it("populates fieldInfo with inferred control type from Zod schema", () => {
-    const schema = makeSchema({ enabled: meta("Enabled") }, { enabled: z.boolean().default(true) });
+  it("populates fieldInfo from static param field info for real node types", () => {
+    const schema = NODE_SCHEMAS["image-compress"]!;
 
-    const entries = buildFormEntries(schema, ["enabled"]);
+    const entries = buildFormEntries(schema, ["quality"]);
 
     expect(entries).toHaveLength(1);
     if (entries[0].kind === "single") {
-      expect(entries[0].fieldInfo.control).toBe("switch");
-      expect(entries[0].fieldInfo.type).toBe("boolean");
+      expect(entries[0].fieldInfo.control).toBe("slider");
+      expect(entries[0].fieldInfo.type).toBe("number");
     }
   });
 

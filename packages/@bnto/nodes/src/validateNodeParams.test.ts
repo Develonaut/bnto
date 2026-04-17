@@ -222,7 +222,7 @@ describe("validateNodeParams", () => {
 
   describe("parallel", () => {
     it("passes with valid tasks", () => {
-      const errors = validateNodeParams("parallel", "n1", { tasks: [{ a: 1 }] });
+      const errors = validateNodeParams("parallel", "n1", { tasks: { a: 1 } });
       expect(errors).toHaveLength(0);
     });
 

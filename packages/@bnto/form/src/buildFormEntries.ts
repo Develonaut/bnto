@@ -1,5 +1,5 @@
 import type { NodeParamFields, NodeSchema, NodeParamFieldInfo } from "@bnto/core";
-import { inferFieldType } from "@bnto/core";
+import { getParamFieldInfo } from "@bnto/core";
 import type { GroupField } from "./FieldGroup";
 
 /** A single ungrouped field. */
@@ -20,14 +20,10 @@ export interface GroupEntry {
 
 export type FormEntry = SingleEntry | GroupEntry;
 
-/** Resolve field info from Zod schema shape, falling back to text control. */
-function resolveFieldInfo(
-  schema: NodeSchema,
-  paramName: string,
-  fieldConfig?: GroupField["fieldConfig"],
-): NodeParamFieldInfo {
-  const zodField = schema.schema.shape[paramName];
-  if (zodField) return inferFieldType(zodField, fieldConfig);
+/** Resolve field info from static pre-computed map, falling back to text control. */
+function resolveFieldInfo(schema: NodeSchema, paramName: string): NodeParamFieldInfo {
+  const info = getParamFieldInfo(schema.nodeType, paramName);
+  if (info) return info;
   return { type: "string" as const, control: "text" as const, required: true };
 }
 
@@ -50,7 +46,7 @@ export function buildFormEntries(
     const meta = schema.params[paramName];
     if (!meta) continue;
     const fieldConfig = fields?.[paramName];
-    const fieldInfo = resolveFieldInfo(schema, paramName, fieldConfig);
+    const fieldInfo = resolveFieldInfo(schema, paramName);
     const group = fieldConfig?.group;
 
     if (group && currentGroup?.groupName === group) {

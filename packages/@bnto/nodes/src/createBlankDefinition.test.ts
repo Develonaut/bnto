@@ -4,8 +4,8 @@ import { createBlankDefinition } from "./createBlankDefinition";
 import { validateDefinition } from "./validate";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
 import { ITERATION_MODES, NODE_TYPES } from "./generated/catalog";
-import { inputParamsSchema } from "./schemas/input";
-import { outputParamsSchema } from "./schemas/output";
+import { inputParamsSchema } from "./generated/schemas/input";
+import { outputParamsSchema } from "./generated/schemas/output";
 
 describe("createBlankDefinition", () => {
   it("returns a valid definition with no validation errors", () => {

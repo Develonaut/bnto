@@ -1,19 +1,23 @@
-/** Loop node schema — parameters for iteration (forEach, times, while). */
+/**
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
+ * Run `task nodes:generate` to regenerate after engine changes.
+ * Engine catalog v1.0.0
+ */
 
 import { z } from "zod";
-import type { NodeParamFields, NodeSchema } from "./types";
-
-/** Valid loop execution modes. */
-export const LOOP_MODES = ["forEach", "times", "while"] as const;
+import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for loop node parameters. */
 export const loopParamsSchema = z.object({
-  mode: z.enum(LOOP_MODES),
+  mode: z.enum(["forEach", "times", "while"] as const),
   items: z.string().optional(),
   count: z.number().min(0).optional(),
   condition: z.string().optional(),
   breakCondition: z.string().optional(),
 });
+
+/** Inferred TypeScript type for loop node parameters. */
+export type LoopParams = z.infer<typeof loopParamsSchema>;
 
 /** Full schema definition for the loop node type. */
 export const loopNodeSchema: NodeSchema = {
@@ -28,9 +32,7 @@ export const loopNodeSchema: NodeSchema = {
     items: {
       label: "Items",
       description:
-        "Optional template expression for the item source. The Rust engine " +
-        "iterates over the incoming file batch by default — this is only " +
-        "needed for custom data sources.",
+        "Optional template expression for the item source. The Rust engine iterates over the incoming file batch by default — this is only needed for custom data sources.",
       placeholder: '{{index . "list-files" "files"}}',
     },
     count: {
@@ -47,27 +49,5 @@ export const loopNodeSchema: NodeSchema = {
       description: "Optional expr expression — breaks out of the loop early when true.",
       placeholder: "item.status == 'done'",
     },
-  },
-};
-
-/** UI presentation metadata for loop node fields. */
-export const loopFields: NodeParamFields = {
-  mode: {
-    options: [
-      { value: "forEach", label: "For Each" },
-      { value: "times", label: "N Times" },
-      { value: "while", label: "While" },
-    ],
-  },
-  items: {
-    visibleWhen: { param: "mode", equals: "forEach" },
-  },
-  count: {
-    visibleWhen: { param: "mode", equals: "times" },
-    requiredWhen: { param: "mode", equals: "times" },
-  },
-  condition: {
-    visibleWhen: { param: "mode", equals: "while" },
-    requiredWhen: { param: "mode", equals: "while" },
   },
 };

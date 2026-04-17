@@ -16,6 +16,50 @@
 
 import type { z } from "zod";
 
+/**
+ * UI control type — maps directly to a `@bnto/ui` component.
+ *
+ * - select:           `<Select>` dropdown (for enums)
+ * - switch:           `<Switch>` toggle (for booleans)
+ * - slider:           `<Slider>` range (for bounded numbers with both min AND max)
+ * - number:           `<Input type="number">` (for unbounded numbers)
+ * - text:             `<Input type="text">` (for strings, fallback)
+ * - textarea:         `<Textarea>` multiline (for strings with control = "textarea")
+ * - tagPicker:        `<Combobox>` multi-select (for z.array(z.string()))
+ * - keyValue:         `<KeyValueEditor>` key→value pairs (for z.record())
+ * - file:             `<FileControl>` file picker → base64 data URI (for file params)
+ * - positionGrid:     `<PositionGridControl>` 3×3 clickable grid (for 9-position enums)
+ * - watermarkPreview: `<WatermarkPreviewControl>` live composite preview
+ */
+export type NodeParamControl =
+  | "select"
+  | "switch"
+  | "slider"
+  | "number"
+  | "text"
+  | "textarea"
+  | "tagPicker"
+  | "keyValue"
+  | "file"
+  | "positionGrid"
+  | "watermarkPreview";
+
+/** Pre-computed field type info for a node parameter — replaces runtime Zod introspection. */
+export interface NodeParamFieldInfo {
+  /** Effective type for rendering the correct form control. */
+  type: "string" | "number" | "boolean" | "enum" | "array" | "record";
+  /** UI control to render — determined by type + constraints. */
+  control: NodeParamControl;
+  /** Whether the field is required (not wrapped in ZodOptional or ZodDefault). */
+  required: boolean;
+  /** Enum values if the field is an enum. */
+  enumValues?: readonly string[];
+  /** Minimum value for number fields. */
+  min?: number;
+  /** Maximum value for number fields. */
+  max?: number;
+}
+
 /** Condition for visibleWhen/requiredWhen rules — single or OR array. */
 export type ParamCondition =
   | { readonly param: string; readonly equals: string }
@@ -99,7 +143,7 @@ export interface NodeParamField {
    * isn't enough to determine the right control (e.g., a z.string() that
    * should render as a textarea instead of a single-line input).
    */
-  control?: "number" | "textarea" | "file" | "positionGrid" | "watermarkPreview";
+  control?: NodeParamControl;
 
   /**
    * Accepted MIME types for file controls. Only relevant when

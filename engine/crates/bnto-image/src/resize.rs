@@ -403,6 +403,7 @@ fn maintain_aspect_param() -> bnto_core::metadata::ParameterDef {
         description: "Keep the original width-to-height ratio when resizing".to_string(),
         param_type: ParameterType::Boolean,
         default: Some(serde_json::json!(true)),
+        group: Some("dimensions".to_string()),
         ..Default::default()
     }
 }

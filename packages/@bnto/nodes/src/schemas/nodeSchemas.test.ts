@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { NODE_SCHEMAS, NODE_PARAM_FIELDS, inferFieldType } from "./index";
+import { NODE_SCHEMAS, NODE_PARAM_FIELDS, getParamFieldInfo } from "./index";
 
 describe("file-rename schema", () => {
   const def = NODE_SCHEMAS["file-rename"]!;
@@ -15,12 +15,13 @@ describe("file-rename schema", () => {
   });
 
   it("case enum has 3 values", () => {
-    const info = inferFieldType(def.schema.shape.case);
-    expect(info.type).toBe("enum");
-    expect(info.enumValues).toHaveLength(3);
-    expect(info.enumValues).toContain("lower");
-    expect(info.enumValues).toContain("upper");
-    expect(info.enumValues).toContain("title");
+    const info = getParamFieldInfo("file-rename", "case");
+    expect(info).toBeDefined();
+    expect(info!.type).toBe("enum");
+    expect(info!.enumValues).toHaveLength(3);
+    expect(info!.enumValues).toContain("lower");
+    expect(info!.enumValues).toContain("upper");
+    expect(info!.enumValues).toContain("title");
   });
 });
 
@@ -64,9 +65,9 @@ describe("image-compress schema", () => {
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.quality).toBe(80);
 
-    const info = inferFieldType(def.schema.shape.quality);
-    expect(info.min).toBe(1);
-    expect(info.max).toBe(100);
+    const info = getParamFieldInfo("image-compress", "quality");
+    expect(info!.min).toBe(1);
+    expect(info!.max).toBe(100);
   });
 });
 
@@ -168,7 +169,7 @@ describe("parallel schema", () => {
   });
 
   it("errorStrategy defaults to failFast", () => {
-    const result = def.schema.safeParse({ tasks: [{ a: 1 }] });
+    const result = def.schema.safeParse({ tasks: { a: 1 } });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.errorStrategy).toBe("failFast");
   });
