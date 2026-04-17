@@ -1,5 +1,6 @@
 // Key event routing — maps keys to AppMessages per screen.
 
+use bnto_core::metadata::ParameterType;
 use crossterm::event::{KeyCode, KeyEvent};
 
 use super::app::{AppMessage, AppModel, Screen};
@@ -109,9 +110,37 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             .unwrap_or_default()
     };
 
+    // Peek at the focused param's type for smart key dispatch.
+    let focused_param_type = model
+        .detail
+        .as_ref()
+        .and_then(|d| d.params.get(d.focused))
+        .map(|p| &p.param_type);
+    let has_constraints = model
+        .detail
+        .as_ref()
+        .and_then(|d| d.params.get(d.focused))
+        .is_some_and(|p| p.constraints.is_some());
+
     match key.code {
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Detail(DetailMessage::FocusNext)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Detail(DetailMessage::FocusPrev)),
+        KeyCode::Char(' ') => Some(AppMessage::Detail(DetailMessage::ToggleBool)),
+        KeyCode::Char('d') => Some(AppMessage::Detail(DetailMessage::ResetDefault)),
+        KeyCode::Char('h') | KeyCode::Left => match focused_param_type {
+            Some(ParameterType::Enum { .. }) => Some(AppMessage::Detail(DetailMessage::EnumPrev)),
+            Some(ParameterType::Number) if has_constraints => {
+                Some(AppMessage::Detail(DetailMessage::NumberDecrement))
+            }
+            _ => None,
+        },
+        KeyCode::Char('l') | KeyCode::Right => match focused_param_type {
+            Some(ParameterType::Enum { .. }) => Some(AppMessage::Detail(DetailMessage::EnumNext)),
+            Some(ParameterType::Number) if has_constraints => {
+                Some(AppMessage::Detail(DetailMessage::NumberIncrement))
+            }
+            _ => None,
+        },
         KeyCode::Enter => {
             let on_continue = model
                 .detail
@@ -120,7 +149,16 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             if on_continue {
                 Some(AppMessage::ConfigConfirmed { slug: slug() })
             } else {
-                Some(AppMessage::Detail(DetailMessage::StartEdit))
+                // Non-text params use inline controls; Enter starts text edit only for String.
+                match focused_param_type {
+                    Some(ParameterType::Boolean) => {
+                        Some(AppMessage::Detail(DetailMessage::ToggleBool))
+                    }
+                    Some(ParameterType::Enum { .. }) => {
+                        Some(AppMessage::Detail(DetailMessage::EnumNext))
+                    }
+                    _ => Some(AppMessage::Detail(DetailMessage::StartEdit)),
+                }
             }
         }
         KeyCode::Tab => Some(AppMessage::ConfigConfirmed { slug: slug() }),

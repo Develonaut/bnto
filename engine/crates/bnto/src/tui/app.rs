@@ -628,6 +628,9 @@ mod tests {
             value: "60".into(),
             param_type: ParameterType::Number,
             default: "80".into(),
+            description: None,
+            constraints: None,
+            suffix: None,
         }];
         let app = update(
             AppModel {
@@ -765,6 +768,9 @@ mod tests {
                 value: "80".into(),
                 param_type: ParameterType::Number,
                 default: "80".into(),
+                description: None,
+                constraints: None,
+                suffix: None,
             },
             ParamEntry {
                 node_id: "compress".into(),
@@ -773,6 +779,9 @@ mod tests {
                 value: "jpeg".into(),
                 param_type: ParameterType::String,
                 default: "jpeg".into(),
+                description: None,
+                constraints: None,
+                suffix: None,
             },
         ];
         let app = AppModel {

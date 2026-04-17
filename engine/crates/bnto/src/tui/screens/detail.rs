@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use bnto_core::metadata::ParameterType;
+use bnto_core::metadata::{Constraints, ParameterType};
 use bnto_core::registry::NodeRegistry;
 
 /// A single editable parameter entry shown in the detail screen.
@@ -24,6 +24,12 @@ pub struct ParamEntry {
     pub param_type: ParameterType,
     /// Default value from engine metadata (display string).
     pub default: String,
+    /// Human-readable description (shown when focused).
+    pub description: Option<String>,
+    /// Numeric constraints (min/max/required).
+    pub constraints: Option<Constraints>,
+    /// Unit suffix for display (e.g., "%", "px").
+    pub suffix: Option<String>,
 }
 
 /// Detail screen state — recipe info + editable parameter list.
@@ -43,6 +49,8 @@ pub struct DetailModel {
     pub editing: bool,
     /// Text buffer for the current edit.
     pub edit_buffer: String,
+    /// Validation error for the focused param (cleared on next keystroke).
+    pub error: Option<String>,
 }
 
 /// Messages the detail screen can handle.
@@ -62,6 +70,18 @@ pub enum DetailMessage {
     CommitEdit,
     /// Cancel editing — restore the previous value.
     CancelEdit,
+    /// Toggle a boolean parameter (Space key).
+    ToggleBool,
+    /// Cycle an enum parameter to the next option (→ key).
+    EnumNext,
+    /// Cycle an enum parameter to the previous option (← key).
+    EnumPrev,
+    /// Increment a bounded number parameter (→ key).
+    NumberIncrement,
+    /// Decrement a bounded number parameter (← key).
+    NumberDecrement,
+    /// Reset the focused parameter to its default value (d key).
+    ResetDefault,
 }
 
 /// Result of confirming the detail screen — collected param overrides.
@@ -93,6 +113,7 @@ impl DetailModel {
             focused: 0,
             editing: false,
             edit_buffer: String::new(),
+            error: None,
         }
     }
 
@@ -196,32 +217,178 @@ pub fn update(model: DetailModel, msg: DetailMessage) -> DetailModel {
             edit_buffer: String::new(),
             ..model
         },
+        DetailMessage::ToggleBool => {
+            if model.params.is_empty() || model.is_continue_focused() {
+                return model;
+            }
+            let param = &model.params[model.focused];
+            if !matches!(param.param_type, ParameterType::Boolean) {
+                return model;
+            }
+            let mut params = model.params;
+            params[model.focused].value =
+                super::controls::boolean::toggle(&params[model.focused].value);
+            DetailModel {
+                params,
+                error: None,
+                ..model
+            }
+        }
+        DetailMessage::EnumNext => {
+            if model.params.is_empty() || model.is_continue_focused() {
+                return model;
+            }
+            let ParameterType::Enum { ref options } = model.params[model.focused].param_type else {
+                return model;
+            };
+            let next = super::controls::enum_select::cycle_next(
+                &model.params[model.focused].value,
+                options,
+            );
+            let mut params = model.params;
+            params[model.focused].value = next;
+            DetailModel {
+                params,
+                error: None,
+                ..model
+            }
+        }
+        DetailMessage::EnumPrev => {
+            if model.params.is_empty() || model.is_continue_focused() {
+                return model;
+            }
+            let ParameterType::Enum { ref options } = model.params[model.focused].param_type else {
+                return model;
+            };
+            let prev = super::controls::enum_select::cycle_prev(
+                &model.params[model.focused].value,
+                options,
+            );
+            let mut params = model.params;
+            params[model.focused].value = prev;
+            DetailModel {
+                params,
+                error: None,
+                ..model
+            }
+        }
+        DetailMessage::NumberIncrement => {
+            if model.params.is_empty() || model.is_continue_focused() {
+                return model;
+            }
+            let param = &model.params[model.focused];
+            if !matches!(param.param_type, ParameterType::Number) || param.constraints.is_none() {
+                return model;
+            }
+            let step = super::controls::number::step_size(param.constraints.as_ref());
+            let Some(next) =
+                super::controls::number::step(&param.value, step, param.constraints.as_ref())
+            else {
+                return model;
+            };
+            let mut params = model.params;
+            params[model.focused].value = next;
+            DetailModel {
+                params,
+                error: None,
+                ..model
+            }
+        }
+        DetailMessage::NumberDecrement => {
+            if model.params.is_empty() || model.is_continue_focused() {
+                return model;
+            }
+            let param = &model.params[model.focused];
+            if !matches!(param.param_type, ParameterType::Number) || param.constraints.is_none() {
+                return model;
+            }
+            let step = super::controls::number::step_size(param.constraints.as_ref());
+            let Some(next) =
+                super::controls::number::step(&param.value, -step, param.constraints.as_ref())
+            else {
+                return model;
+            };
+            let mut params = model.params;
+            params[model.focused].value = next;
+            DetailModel {
+                params,
+                error: None,
+                ..model
+            }
+        }
+        DetailMessage::ResetDefault => {
+            if model.params.is_empty() || model.is_continue_focused() {
+                return model;
+            }
+            let default = model.params[model.focused].default.clone();
+            let mut params = model.params;
+            params[model.focused].value = default;
+            DetailModel {
+                params,
+                error: None,
+                ..model
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bnto_core::metadata::OptionEntry;
+    use bnto_core::metadata::{Constraints, OptionEntry};
 
     // --- Test helpers ---
 
+    /// Create a test ParamEntry with metadata fields defaulted to None.
+    fn test_param(
+        node_id: &str,
+        name: &str,
+        label: &str,
+        value: &str,
+        param_type: ParameterType,
+        default: &str,
+    ) -> ParamEntry {
+        ParamEntry {
+            node_id: node_id.into(),
+            name: name.into(),
+            label: label.into(),
+            value: value.into(),
+            param_type,
+            default: default.into(),
+            description: None,
+            constraints: None,
+            suffix: None,
+        }
+    }
+
     fn sample_params() -> Vec<ParamEntry> {
+        let quality = {
+            let mut p = test_param(
+                "compress-image",
+                "quality",
+                "Quality",
+                "80",
+                ParameterType::Number,
+                "80",
+            );
+            p.constraints = Some(Constraints {
+                min: Some(1.0),
+                max: Some(100.0),
+                required: false,
+            });
+            p.suffix = Some("%".into());
+            p.description = Some("Compression quality (1=smallest, 100=best)".into());
+            p
+        };
+
         vec![
-            ParamEntry {
-                node_id: "compress-image".into(),
-                name: "quality".into(),
-                label: "Quality".into(),
-                value: "80".into(),
-                param_type: ParameterType::Number,
-                default: "80".into(),
-            },
-            ParamEntry {
-                node_id: "compress-image".into(),
-                name: "format".into(),
-                label: "Output Format".into(),
-                value: "jpeg".into(),
-                param_type: ParameterType::Enum {
+            quality,
+            test_param(
+                "compress-image",
+                "format",
+                "Output Format",
+                "jpeg",
+                ParameterType::Enum {
                     options: vec![
                         OptionEntry {
                             value: "jpeg".into(),
@@ -237,16 +404,16 @@ mod tests {
                         },
                     ],
                 },
-                default: "jpeg".into(),
-            },
-            ParamEntry {
-                node_id: "compress-image".into(),
-                name: "strip_metadata".into(),
-                label: "Strip Metadata".into(),
-                value: "true".into(),
-                param_type: ParameterType::Boolean,
-                default: "true".into(),
-            },
+                "jpeg",
+            ),
+            test_param(
+                "compress-image",
+                "strip_metadata",
+                "Strip Metadata",
+                "true",
+                ParameterType::Boolean,
+                "true",
+            ),
         ]
     }
 
@@ -561,6 +728,150 @@ mod tests {
             m.params.len() >= 2,
             "resize recipe should have multiple params, got {}",
             m.params.len()
+        );
+    }
+
+    // --- Boolean toggle ---
+
+    #[test]
+    fn toggle_bool_flips_true_to_false() {
+        let mut m = detail();
+        m.focused = 2; // strip_metadata (Boolean, value="true")
+        let m = update(m, DetailMessage::ToggleBool);
+        assert_eq!(m.params[2].value, "false");
+    }
+
+    #[test]
+    fn toggle_bool_flips_false_to_true() {
+        let mut m = detail();
+        m.focused = 2;
+        m.params[2].value = "false".into();
+        let m = update(m, DetailMessage::ToggleBool);
+        assert_eq!(m.params[2].value, "true");
+    }
+
+    #[test]
+    fn toggle_bool_noop_on_non_boolean() {
+        let m = detail(); // focused=0, quality (Number)
+        let m = update(m, DetailMessage::ToggleBool);
+        assert_eq!(m.params[0].value, "80", "non-boolean unchanged");
+    }
+
+    // --- Enum cycling ---
+
+    #[test]
+    fn enum_next_advances_to_next_option() {
+        let mut m = detail();
+        m.focused = 1; // format (Enum, value="jpeg")
+        let m = update(m, DetailMessage::EnumNext);
+        assert_eq!(m.params[1].value, "png");
+    }
+
+    #[test]
+    fn enum_next_wraps_at_end() {
+        let mut m = detail();
+        m.focused = 1;
+        m.params[1].value = "webp".into(); // last option
+        let m = update(m, DetailMessage::EnumNext);
+        assert_eq!(m.params[1].value, "jpeg");
+    }
+
+    #[test]
+    fn enum_prev_wraps_at_start() {
+        let mut m = detail();
+        m.focused = 1; // format, value="jpeg" (first option)
+        let m = update(m, DetailMessage::EnumPrev);
+        assert_eq!(m.params[1].value, "webp");
+    }
+
+    #[test]
+    fn enum_noop_on_non_enum() {
+        let m = detail(); // focused=0, quality (Number)
+        let m = update(m, DetailMessage::EnumNext);
+        assert_eq!(m.params[0].value, "80", "non-enum unchanged");
+    }
+
+    // --- Number stepping ---
+
+    #[test]
+    fn number_increment_steps_up() {
+        let m = detail(); // focused=0, quality=80, constraints 1-100
+        let m = update(m, DetailMessage::NumberIncrement);
+        assert_eq!(m.params[0].value, "81");
+    }
+
+    #[test]
+    fn number_decrement_steps_down() {
+        let m = detail();
+        let m = update(m, DetailMessage::NumberDecrement);
+        assert_eq!(m.params[0].value, "79");
+    }
+
+    #[test]
+    fn number_clamp_at_max() {
+        let mut m = detail();
+        m.params[0].value = "100".into();
+        let m = update(m, DetailMessage::NumberIncrement);
+        assert_eq!(m.params[0].value, "100");
+    }
+
+    #[test]
+    fn number_clamp_at_min() {
+        let mut m = detail();
+        m.params[0].value = "1".into();
+        let m = update(m, DetailMessage::NumberDecrement);
+        assert_eq!(m.params[0].value, "1");
+    }
+
+    #[test]
+    fn number_noop_without_constraints() {
+        let mut m = detail();
+        m.params[0].constraints = None; // remove constraints
+        let m = update(m, DetailMessage::NumberIncrement);
+        assert_eq!(m.params[0].value, "80", "unbounded number unchanged");
+    }
+
+    // --- Reset default ---
+
+    #[test]
+    fn reset_default_restores_original() {
+        let mut m = detail();
+        m.params[0].value = "42".into(); // changed from default "80"
+        let m = update(m, DetailMessage::ResetDefault);
+        assert_eq!(m.params[0].value, "80");
+    }
+
+    #[test]
+    fn reset_default_noop_when_already_default() {
+        let m = detail(); // quality = "80", default = "80"
+        let m = update(m, DetailMessage::ResetDefault);
+        assert_eq!(m.params[0].value, "80");
+    }
+
+    // --- Integration: metadata enrichment from engine ---
+
+    #[test]
+    fn from_slug_carries_constraints() {
+        let registry = bnto_engine::create_registry();
+        let m = DetailModel::from_slug("compress-images", &registry).unwrap();
+        let quality = m.params.iter().find(|p| p.name == "quality").unwrap();
+        assert!(
+            quality.constraints.is_some(),
+            "quality should have constraints from engine"
+        );
+        let c = quality.constraints.as_ref().unwrap();
+        assert!(c.min.is_some(), "quality should have min constraint");
+        assert!(c.max.is_some(), "quality should have max constraint");
+    }
+
+    #[test]
+    fn from_slug_carries_description() {
+        let registry = bnto_engine::create_registry();
+        let m = DetailModel::from_slug("compress-images", &registry).unwrap();
+        let quality = m.params.iter().find(|p| p.name == "quality").unwrap();
+        assert!(
+            quality.description.is_some(),
+            "quality should have description from engine"
         );
     }
 }
