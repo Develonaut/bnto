@@ -724,8 +724,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 1 — Storage foundation (sequential)
 
-- [ ] `engine/crates/bnto` — **`BntoPaths` struct + resolution**: Centralized path resolution for config/data/state/cache directories. XDG-compliant with macOS config exception (`~/.config/bnto/`). `BNTO_HOME` and `BNTO_CONFIG_DIR` env var overrides. `ensure_dirs()` creates all directories. Helper methods: `config_file()`, `recipes_dir()`, `history_file()`, `recent_file()`. RED tests: path resolution per platform, env var overrides, directory creation (~10 tests)
-- [ ] `engine/crates/bnto` — **Atomic writes + TOML config**: `atomic_write()` function using `tempfile::NamedTempFile` + `persist()`. New `TuiConfig` with TOML format, `version = 1` schema field, `serde(default)` on all fields. Replace `config_path()` with `BntoPaths::config_file()`. Add `toml` crate to workspace deps. RED tests: atomic write (verify no corruption on partial write), TOML round-trip, schema version presence, default values (~10 tests)
+- [x] `engine/crates/bnto` — **`BntoPaths` struct + resolution**: Centralized path resolution for config/data/state/cache directories. XDG-compliant with macOS config exception (`~/.config/bnto/`). `BNTO_HOME` and `BNTO_CONFIG_DIR` env var overrides. `ensure_dirs()` creates all directories. Helper methods: `config_file()`, `recipes_dir()`, `history_file()`, `recent_file()`. RED tests: path resolution per platform, env var overrides, directory creation (~10 tests)
+- [x] `engine/crates/bnto` — **Atomic writes + TOML config**: `atomic_write()` function using `tempfile::NamedTempFile` + `persist()`. New `TomlConfig` with TOML format, `version = 1` schema field, `serde(default)` on all fields. `BntoPaths::config_file()` for path resolution. Added `toml` crate to workspace deps. RED tests: atomic write (verify no corruption on partial write), TOML round-trip, schema version presence, default values (~10 tests)
 
 #### Wave 2 — Migration + error handling (sequential)
 

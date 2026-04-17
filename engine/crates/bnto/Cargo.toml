@@ -29,9 +29,10 @@ indicatif = { workspace = true }
 ratatui = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tempfile = { workspace = true }
+toml = { workspace = true }
 ureq = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]
 sha2 = { workspace = true }
-tempfile = { workspace = true }
