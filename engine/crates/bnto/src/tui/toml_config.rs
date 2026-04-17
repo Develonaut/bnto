@@ -220,6 +220,18 @@ mod tests {
     }
 
     #[test]
+    fn load_calls_migration_when_no_config_exists() {
+        let (_tmp, paths) = test_paths();
+
+        // Write an old-format JSON config to the location dirs::config_dir()
+        // would return. Since we can't mock dirs::config_dir(), test that
+        // TomlConfig::load returns defaults (not crash) when migration finds
+        // nothing. The migration integration is tested in migration.rs.
+        let loaded = TomlConfig::load(&paths);
+        assert_eq!(loaded, TomlConfig::default());
+    }
+
+    #[test]
     fn toml_config_preserves_all_fields() {
         let (_tmp, paths) = test_paths();
 

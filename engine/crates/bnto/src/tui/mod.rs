@@ -4,15 +4,14 @@
 // restores the terminal on exit (including panics).
 
 pub mod app;
-#[allow(dead_code)]
 pub mod atomic;
 mod bridge;
 pub mod config;
 pub mod event;
 pub mod format;
 mod keys;
+pub mod migration;
 pub mod palette;
-#[allow(dead_code)]
 pub mod paths;
 mod render;
 mod render_detail;
@@ -21,9 +20,7 @@ mod render_picker;
 mod render_results;
 pub mod screen;
 pub mod screens;
-#[allow(dead_code)]
 pub mod theme;
-#[allow(dead_code)]
 pub mod toml_config;
 pub mod widgets;
 
