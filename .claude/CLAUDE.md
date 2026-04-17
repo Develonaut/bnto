@@ -1,6 +1,6 @@
 # Bnto - Agent & Developer Guide
 
-**Last Updated:** April 16, 2026
+**Last Updated:** April 17, 2026
 
 ---
 
@@ -57,6 +57,8 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                     |
 | Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                     |
 | TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                             |
+| TUI user journey & screens     | [tui-user-journey.md](.claude/strategy/tui-user-journey.md)                     |
+| TUI data persistence           | [tui-data-persistence.md](.claude/strategy/tui-data-persistence.md)             |
 | Smart iteration / auto-looping | [smart-iteration.md](.claude/strategy/smart-iteration.md)                       |
 | Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)               |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                |
@@ -357,6 +359,8 @@ These rules do NOT auto-load. Read them yourself when you start working in a sco
 | [code-editor.md](.claude/strategy/code-editor.md)                               | Code editor design — CM6, slash commands, JSON Schema                                                             |
 | [engine-execution.md](.claude/strategy/engine-execution.md)                     | Engine execution architecture — pipeline executor, progress events, multi-consumer                                |
 | [tui-strategy.md](.claude/strategy/tui-strategy.md)                             | TUI design — TEA architecture, Motorway design language, 5-system breakdown, TDD approach                         |
+| [tui-user-journey.md](.claude/strategy/tui-user-journey.md)                     | TUI user journey — Home screen, My Library, Recipes catalog, screen flow, web parallel                            |
+| [tui-data-persistence.md](.claude/strategy/tui-data-persistence.md)             | TUI data persistence — XDG storage, BntoPaths, atomic writes, TOML config, migration                              |
 | [expression-input-ux.md](.claude/strategy/expression-input-ux.md)               | Expression input UX — pill tokens, variable picker, competitor analysis, phased rollout                           |
 | [recipe-editors.md](.claude/strategy/recipe-editors.md)                         | Recipe editors — 4 editor types (List, Wizard, Visual, Code), interaction models, cross-platform strategy         |
 | [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) | Editor implementation — PR-by-PR breakdown, TUI first, TDD tests, dependency chain                                |

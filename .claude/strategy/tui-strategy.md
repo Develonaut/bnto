@@ -2,7 +2,7 @@
 
 **Created:** April 9, 2026
 **Status:** Planning
-**Related:** [engine-expansion.md](engine-expansion.md), [PLAN.md](../PLAN.md), [design-language.md](design-language.md)
+**Related:** [tui-user-journey.md](tui-user-journey.md), [tui-data-persistence.md](tui-data-persistence.md), [recipe-editors.md](recipe-editors.md), [engine-expansion.md](engine-expansion.md), [PLAN.md](../PLAN.md), [design-language.md](design-language.md)
 
 ---
 
@@ -545,12 +545,22 @@ mod tests {
 
 ## User Flow
 
+> **Updated April 17, 2026.** The TUI user journey has been redesigned around a library-first model. The full screen map, navigation flow, and rationale are in [tui-user-journey.md](tui-user-journey.md). The flow below shows the updated structure.
+
 ```
-bnto tui
+bnto (or bnto tui)
   │
-  ├─ Recipe Browser (System 1)
-  │     Search, filter by category, select recipe
+  ├─ Home (main menu)
+  │     My Library, Recipes, New Recipe, Settings
   │     ↓ Enter
+  │
+  ├─ My Library
+  │     User's .bnto.json files — run, edit, rename, delete
+  │     ↓ Enter (run) or e (edit)
+  │
+  ├─ Recipes (catalog — was "Recipe Browser")
+  │     Predefined recipes — run, add to library, preview
+  │     ↓ Enter (run) or a (add to library)
   │
   ├─ Recipe Detail (System 2)
   │     View params, override if needed
@@ -566,7 +576,7 @@ bnto tui
   │
   └─ Results (System 5)
         Output summary, open files, run another
-        ↓ r → back to Browser, q → exit
+        ↓ r → back to Home, q → exit
 ```
 
 ---
