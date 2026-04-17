@@ -8,6 +8,8 @@ CLI and interactive TUI for running `.bnto.json` recipes. Compress images, clean
 
 `bnto tui` launches an interactive terminal UI with 6 screens: recipe browser, detail/config, file picker, execution progress, results summary, and settings. Three themes from the Motorway palette (los-angeles, tokyo, monaco) with runtime switching.
 
+The detail screen renders type-aware controls for recipe parameters: boolean toggles (`[x]`/`[ ]`), enum cycling (`◂ label ▸`), bounded number stepping with auto step size, and text input for strings. Parameters support conditional visibility (`visible_when`), descriptions on focus, unit suffix annotations, and reset-to-default.
+
 ## Install
 
 ```bash
@@ -111,8 +113,12 @@ src/
     +-- theme.rs           # Theme variants and style helpers
     +-- screens/
     |   +-- browser.rs     # Recipe browser model + update
+    |   +-- controls/      # Type-aware parameter controls
+    |   |   +-- boolean.rs    # [x]/[ ] toggle
+    |   |   +-- enum_select.rs # ◂ label ▸ cycling
+    |   |   +-- number.rs     # Arrow-key stepping with auto step size
     |   +-- detail.rs      # Recipe detail model + update
-    |   +-- detail_loader.rs # Async recipe detail loading
+    |   +-- detail_loader.rs # Recipe detail loading + integration tests
     |   +-- execution.rs   # Execution progress model + update
     |   +-- picker.rs      # File picker model + update
     |   +-- picker_update.rs # Picker key handling
@@ -144,9 +150,11 @@ cargo test -p bnto           # Run all tests (unit + integration + golden)
 
 ## Testing
 
-The TEA pattern makes most TUI logic testable as pure Rust — 210+ TUI tests:
+The TEA pattern makes most TUI logic testable as pure Rust — 450+ TUI tests:
 
 - **State transitions**: `update()` is a pure function tested with plain assertions
+- **Type-aware controls**: Boolean toggle, enum cycling, bounded number stepping, reset-to-default
+- **Schema integration**: Real recipes loaded through engine registry, param types and metadata verified
 - **Key mapping**: Global and per-screen key handlers tested without a terminal
 - **Screen models**: Browser search/filter, detail param editing, picker navigation/selection, execution progress, results formatting, settings persistence
 - **Viewport scrolling**: Cursor tracking, page up/down, boundary wrapping

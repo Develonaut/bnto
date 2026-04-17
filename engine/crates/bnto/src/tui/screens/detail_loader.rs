@@ -115,3 +115,172 @@ fn value_to_display_string(v: &serde_json::Value) -> String {
         other => other.to_string(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bnto_core::metadata::ParameterType;
+
+    fn registry() -> NodeRegistry {
+        bnto_engine::create_registry()
+    }
+
+    // --- compress-images: Number control ---
+
+    #[test]
+    fn compress_images_has_quality_param() {
+        let detail = load_detail("compress-images", &registry()).unwrap();
+        let quality = detail.params.iter().find(|p| p.name == "quality").unwrap();
+        assert!(matches!(quality.param_type, ParameterType::Number));
+        assert_eq!(quality.value, "80");
+        assert_eq!(quality.suffix.as_deref(), Some("%"));
+    }
+
+    #[test]
+    fn compress_images_quality_has_bounds() {
+        let detail = load_detail("compress-images", &registry()).unwrap();
+        let quality = detail.params.iter().find(|p| p.name == "quality").unwrap();
+        let constraints = quality
+            .constraints
+            .as_ref()
+            .expect("quality should have constraints");
+        assert_eq!(constraints.min, Some(1.0));
+        assert_eq!(constraints.max, Some(100.0));
+    }
+
+    // --- convert-image-format: Enum + Number controls ---
+
+    #[test]
+    fn convert_format_has_enum_param() {
+        let detail = load_detail("convert-image-format", &registry()).unwrap();
+        let format = detail.params.iter().find(|p| p.name == "format").unwrap();
+        let ParameterType::Enum { options } = &format.param_type else {
+            panic!("format should be Enum, got {:?}", format.param_type);
+        };
+        let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
+        assert!(values.contains(&"jpeg"));
+        assert!(values.contains(&"png"));
+        assert!(values.contains(&"webp"));
+    }
+
+    #[test]
+    fn convert_format_enum_has_labels() {
+        let detail = load_detail("convert-image-format", &registry()).unwrap();
+        let format = detail.params.iter().find(|p| p.name == "format").unwrap();
+        let ParameterType::Enum { options } = &format.param_type else {
+            panic!("expected Enum");
+        };
+        for opt in options {
+            assert!(
+                !opt.label.is_empty(),
+                "option '{}' should have a label",
+                opt.value
+            );
+        }
+    }
+
+    // --- resize-images: Boolean + Number controls ---
+
+    #[test]
+    fn resize_images_has_boolean_param() {
+        let detail = load_detail("resize-images", &registry()).unwrap();
+        let aspect = detail
+            .params
+            .iter()
+            .find(|p| p.name == "maintainAspect")
+            .unwrap();
+        assert!(matches!(aspect.param_type, ParameterType::Boolean));
+        assert_eq!(aspect.value, "true");
+    }
+
+    #[test]
+    fn resize_images_has_dimension_params() {
+        let detail = load_detail("resize-images", &registry()).unwrap();
+        let width = detail.params.iter().find(|p| p.name == "width").unwrap();
+        assert!(matches!(width.param_type, ParameterType::Number));
+        assert_eq!(width.suffix.as_deref(), Some("px"));
+    }
+
+    // --- clean-csv: Multiple Boolean controls ---
+
+    #[test]
+    fn clean_csv_has_boolean_controls() {
+        let detail = load_detail("clean-csv", &registry()).unwrap();
+        let bools: Vec<&ParamEntry> = detail
+            .params
+            .iter()
+            .filter(|p| matches!(p.param_type, ParameterType::Boolean))
+            .collect();
+        assert!(
+            bools.len() >= 3,
+            "clean-csv should have at least 3 boolean params, got {}",
+            bools.len()
+        );
+    }
+
+    // --- rename-files: String + Enum controls ---
+
+    #[test]
+    fn rename_files_has_string_params() {
+        let detail = load_detail("rename-files", &registry()).unwrap();
+        let find = detail.params.iter().find(|p| p.name == "find").unwrap();
+        assert!(matches!(find.param_type, ParameterType::String));
+    }
+
+    #[test]
+    fn rename_files_has_case_enum() {
+        let detail = load_detail("rename-files", &registry()).unwrap();
+        let case = detail.params.iter().find(|p| p.name == "case").unwrap();
+        let ParameterType::Enum { options } = &case.param_type else {
+            panic!("case should be Enum, got {:?}", case.param_type);
+        };
+        let values: Vec<&str> = options.iter().map(|o| o.value.as_str()).collect();
+        assert!(values.contains(&"lower"));
+        assert!(values.contains(&"upper"));
+    }
+
+    // --- Description metadata ---
+
+    #[test]
+    fn params_carry_descriptions() {
+        let detail = load_detail("compress-images", &registry()).unwrap();
+        let quality = detail.params.iter().find(|p| p.name == "quality").unwrap();
+        assert!(
+            quality.description.is_some(),
+            "quality should have a description"
+        );
+    }
+
+    // --- All built-in recipes load without panic ---
+
+    #[test]
+    fn all_builtin_recipes_load() {
+        let registry = registry();
+        let recipes = bnto_engine::recipes::builtin_recipes();
+        for recipe in &recipes {
+            let result = load_detail(&recipe.slug, &registry);
+            assert!(
+                result.is_some(),
+                "Failed to load detail for recipe '{}'",
+                recipe.slug
+            );
+        }
+    }
+
+    #[test]
+    fn all_loaded_params_have_labels() {
+        let registry = registry();
+        let recipes = bnto_engine::recipes::builtin_recipes();
+        for recipe in &recipes {
+            let detail = load_detail(&recipe.slug, &registry).unwrap();
+            for param in &detail.params {
+                assert!(
+                    !param.label.is_empty(),
+                    "param '{}' in recipe '{}' has empty label",
+                    param.name,
+                    recipe.slug
+                );
+            }
+        }
+    }
+}
