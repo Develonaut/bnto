@@ -8,6 +8,7 @@ use super::event;
 use super::screens::browser::BrowserMessage;
 use super::screens::detail::DetailMessage;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
+use super::screens::home::HomeMessage;
 use super::screens::picker::PickerMessage;
 use super::screens::results::ResultsMessage;
 use super::screens::settings::SettingsMessage;
@@ -40,12 +41,24 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     }
 
     match &model.screen {
+        Screen::Home => handle_home_key(model, key),
+        Screen::Library => None, // Placeholder — only global keys (q, Esc) apply.
         Screen::Browser => handle_browser_key(model, key),
         Screen::Settings => handle_settings_key(model, key),
         Screen::Detail { .. } => handle_detail_key(model, key),
         Screen::Picker { .. } => handle_picker_key(model, key),
         Screen::Execution { .. } => handle_execution_key(model, key),
         Screen::Results { .. } => handle_results_key(model, key),
+    }
+}
+
+/// Handle key events on the Home screen.
+fn handle_home_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Home(HomeMessage::SelectNext)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Home(HomeMessage::SelectPrev)),
+        KeyCode::Enter => Some(AppMessage::HomeConfirm),
+        _ => None,
     }
 }
 

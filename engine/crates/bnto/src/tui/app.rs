@@ -15,6 +15,9 @@ use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_up
 use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
 use super::screens::detail_loader::load_detail_from_json;
 use super::screens::execution::{ExecutionMessage, ExecutionModel, update as execution_update};
+use super::screens::home::{
+    HomeConfirmResult, HomeMessage, HomeModel, count_library_recipes, update as home_update,
+};
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
@@ -24,6 +27,8 @@ use super::toml_config::TomlConfig;
 /// Which screen the TUI is currently showing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Screen {
+    Home,
+    Library,
     Browser,
     Detail { slug: String },
     Picker { slug: String },
@@ -38,6 +43,8 @@ pub struct AppModel {
     pub should_quit: bool,
     pub theme: Theme,
     pub theme_variant: ThemeVariant,
+    /// Home screen state (always present — Home is the root screen).
+    pub home: HomeModel,
     pub browser: BrowserModel,
     /// Detail screen state — populated when navigating to a recipe.
     pub detail: Option<DetailModel>,
@@ -71,6 +78,7 @@ impl std::fmt::Debug for AppModel {
             .field("screen", &self.screen)
             .field("should_quit", &self.should_quit)
             .field("theme_variant", &self.theme_variant)
+            .field("home_selected", &self.home.selected)
             .field("detail", &self.detail)
             .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
@@ -105,6 +113,10 @@ pub enum AppMessage {
     ThemeChanged(ThemeVariant),
     /// User toggled telemetry on/off in settings.
     TelemetryToggled(bool),
+    /// Forward a message to the home screen.
+    Home(HomeMessage),
+    /// User confirmed the home screen selection.
+    HomeConfirm,
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
     /// Forward a message to the detail screen.
@@ -172,6 +184,9 @@ impl AppModel {
         };
         let registry = create_registry();
 
+        // Count library recipes for the home screen badge.
+        let library_count = count_library_recipes(&paths.data);
+
         // If a recipe JSON was provided, try to load it directly.
         let (screen, detail) = match recipe_json {
             Some(json) => match load_detail_from_json(&json, &registry) {
@@ -180,11 +195,11 @@ impl AppModel {
                     (Screen::Detail { slug }, Some(model))
                 }
                 Err(e) => {
-                    eprintln!("Warning: {e} — starting on recipe browser.");
-                    (Screen::Browser, None)
+                    eprintln!("Warning: {e} — starting on home screen.");
+                    (Screen::Home, None)
                 }
             },
-            None => (Screen::Browser, None),
+            None => (Screen::Home, None),
         };
 
         Self {
@@ -192,6 +207,7 @@ impl AppModel {
             should_quit: false,
             theme: Theme::from_variant(effective_variant),
             theme_variant: effective_variant,
+            home: HomeModel::new(library_count),
             browser: BrowserModel::new(),
             detail,
             picker: None,
@@ -274,6 +290,30 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 ..model
             }
         }
+        AppMessage::Home(msg) => {
+            let home = home_update(model.home, msg);
+            AppModel { home, ..model }
+        }
+        AppMessage::HomeConfirm => match model.home.confirm() {
+            HomeConfirmResult::Navigate(screen) => match screen {
+                Screen::Settings => {
+                    let settings = SettingsModel::from_config(&model.config);
+                    AppModel {
+                        screen: Screen::Settings,
+                        settings: Some(settings),
+                        ..model
+                    }
+                }
+                other => AppModel {
+                    screen: other,
+                    ..model
+                },
+            },
+            HomeConfirmResult::StatusMessage(msg) => AppModel {
+                status_message: Some(msg),
+                ..model
+            },
+        },
         AppMessage::Back => handle_back(model),
         AppMessage::RunAnother => AppModel {
             screen: Screen::Browser,
@@ -480,12 +520,14 @@ fn handle_back(model: AppModel) -> AppModel {
 /// Determine which screen to go back to from the current screen.
 fn back_screen(current: &Screen) -> Screen {
     match current {
-        Screen::Browser => Screen::Browser,
+        Screen::Home => Screen::Home,
+        Screen::Library => Screen::Home,
+        Screen::Browser => Screen::Home,
         Screen::Detail { .. } => Screen::Browser,
         Screen::Picker { slug } => Screen::Detail { slug: slug.clone() },
         Screen::Execution { .. } => Screen::Browser,
         Screen::Results { .. } => Screen::Browser,
-        Screen::Settings => Screen::Browser,
+        Screen::Settings => Screen::Home,
     }
 }
 
@@ -510,10 +552,54 @@ mod tests {
     }
 
     #[test]
-    fn initial_state_is_browser() {
+    fn initial_state_is_home() {
         let app = default_model();
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(!app.should_quit);
+    }
+
+    // --- Home screen ---
+
+    #[test]
+    fn home_confirm_navigates_to_library() {
+        let app = default_model(); // Home, selected=0 (Library)
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Library);
+    }
+
+    #[test]
+    fn home_confirm_navigates_to_recipes() {
+        let mut app = default_model();
+        app.home.selected = 1; // Recipes
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Browser);
+    }
+
+    #[test]
+    fn home_confirm_navigates_to_settings() {
+        let mut app = default_model();
+        app.home.selected = 3; // Settings
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Settings);
+        assert!(app.settings.is_some());
+    }
+
+    #[test]
+    fn home_confirm_new_recipe_sets_status() {
+        let mut app = default_model();
+        app.home.selected = 2; // New Recipe
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Home);
+        assert!(app.status_message.is_some());
+        assert!(app.status_message.unwrap().contains("coming soon"));
+    }
+
+    #[test]
+    fn home_message_forwarded() {
+        let app = default_model();
+        assert_eq!(app.home.selected, 0);
+        let app = update(app, AppMessage::Home(HomeMessage::SelectNext));
+        assert_eq!(app.home.selected, 1);
     }
 
     // --- Forward navigation (happy path) ---
@@ -554,10 +640,9 @@ mod tests {
     #[test]
     fn back_navigation() {
         let s = "t".to_string();
-        assert_eq!(
-            transition(Screen::Browser, AppMessage::Back),
-            Screen::Browser
-        );
+        assert_eq!(transition(Screen::Home, AppMessage::Back), Screen::Home);
+        assert_eq!(transition(Screen::Library, AppMessage::Back), Screen::Home);
+        assert_eq!(transition(Screen::Browser, AppMessage::Back), Screen::Home);
         assert_eq!(
             transition(Screen::Detail { slug: s.clone() }, AppMessage::Back),
             Screen::Browser
@@ -576,10 +661,7 @@ mod tests {
             transition(Screen::Results { slug: "r".into() }, AppMessage::Back),
             Screen::Browser
         );
-        assert_eq!(
-            transition(Screen::Settings, AppMessage::Back),
-            Screen::Browser
-        );
+        assert_eq!(transition(Screen::Settings, AppMessage::Back), Screen::Home);
     }
 
     // --- Other actions ---
@@ -602,10 +684,7 @@ mod tests {
             transition(Screen::Browser, AppMessage::OpenSettings),
             Screen::Settings
         );
-        assert_eq!(
-            transition(Screen::Settings, AppMessage::Back),
-            Screen::Browser
-        );
+        assert_eq!(transition(Screen::Settings, AppMessage::Back), Screen::Home);
     }
 
     #[test]
@@ -1110,7 +1189,7 @@ mod tests {
         let app = update(default_model(), AppMessage::OpenSettings);
         assert!(app.settings.is_some());
         let app = update(app, AppMessage::Back);
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(app.settings.is_none());
     }
 
@@ -1409,9 +1488,9 @@ mod tests {
     }
 
     #[test]
-    fn new_with_invalid_recipe_starts_on_browser() {
+    fn new_with_invalid_recipe_starts_on_home() {
         let app = AppModel::new(ThemeVariant::LosAngeles, Some("{bad".to_string()));
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(app.detail.is_none());
     }
 
