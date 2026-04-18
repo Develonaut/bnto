@@ -24,6 +24,16 @@ use super::screens::settings::{SettingsMessage, SettingsModel, update as setting
 use super::theme::{Theme, ThemeVariant};
 use super::toml_config::TomlConfig;
 
+/// Where the user came from when entering the Detail screen.
+///
+/// Used by `back_screen()` to return to the correct origin —
+/// Home (from the bento grid) or Browser (from the full recipe list).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DetailOrigin {
+    Home,
+    Browser,
+}
+
 /// Which screen the TUI is currently showing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Screen {
@@ -33,12 +43,15 @@ pub enum Screen {
     Browser,
     Detail {
         slug: String,
+        from: DetailOrigin,
     },
     Picker {
         slug: String,
+        from: DetailOrigin,
     },
     Execution {
         slug: String,
+        from: DetailOrigin,
     },
     Results {
         slug: String,
@@ -201,7 +214,13 @@ impl AppModel {
             Some(json) => match load_detail_from_json(&json, &registry) {
                 Ok(model) => {
                     let slug = model.slug.clone();
-                    (Screen::Detail { slug }, Some(model))
+                    (
+                        Screen::Detail {
+                            slug,
+                            from: DetailOrigin::Home,
+                        },
+                        Some(model),
+                    )
                 }
                 Err(e) => {
                     eprintln!("Warning: {e} — starting on home screen.");
@@ -241,12 +260,19 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         AppMessage::RecipeSelected { slug } => {
             let detail = DetailModel::from_slug(&slug, &model.registry);
             AppModel {
-                screen: Screen::Detail { slug },
+                screen: Screen::Detail {
+                    slug,
+                    from: DetailOrigin::Browser,
+                },
                 detail,
                 ..model
             }
         }
         AppMessage::ConfigConfirmed { slug } => {
+            let from = match &model.screen {
+                Screen::Detail { from, .. } => *from,
+                _ => DetailOrigin::Home,
+            };
             let overrides = model
                 .detail
                 .as_ref()
@@ -263,13 +289,17 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 });
             let picker = Some(PickerModel::from_slug(&slug, &start_dir, &model.registry));
             AppModel {
-                screen: Screen::Picker { slug },
+                screen: Screen::Picker { slug, from },
                 picker,
                 param_overrides: overrides,
                 ..model
             }
         }
         AppMessage::FilesSelected { slug } => {
+            let from = match &model.screen {
+                Screen::Picker { from, .. } => *from,
+                _ => DetailOrigin::Home,
+            };
             let files = model
                 .picker
                 .as_ref()
@@ -279,7 +309,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             let overrides = model.param_overrides.clone();
             let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
             AppModel {
-                screen: Screen::Execution { slug },
+                screen: Screen::Execution { slug, from },
                 execution,
                 param_overrides: HashMap::new(),
                 ..model
@@ -334,7 +364,10 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 let slug = model.browser.recipes[clamped].slug.clone();
                 let detail = DetailModel::from_slug(&slug, &model.registry);
                 AppModel {
-                    screen: Screen::Detail { slug },
+                    screen: Screen::Detail {
+                        slug,
+                        from: DetailOrigin::Home,
+                    },
                     detail,
                     ..model
                 }
@@ -342,7 +375,10 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             HomeConfirmResult::LibraryRecipe(slug) => {
                 let detail = DetailModel::from_slug(&slug, &model.registry);
                 AppModel {
-                    screen: Screen::Detail { slug },
+                    screen: Screen::Detail {
+                        slug,
+                        from: DetailOrigin::Home,
+                    },
                     detail,
                     ..model
                 }
@@ -424,13 +460,13 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         AppMessage::Execution(msg) => {
             // Cancel navigates back to detail instead of staying on a dead screen.
             if matches!(msg, ExecutionMessage::Cancel) {
-                let slug = match &model.screen {
-                    Screen::Execution { slug } => slug.clone(),
-                    _ => String::new(),
+                let (slug, from) = match &model.screen {
+                    Screen::Execution { slug, from } => (slug.clone(), *from),
+                    _ => (String::new(), DetailOrigin::Home),
                 };
                 let detail = DetailModel::from_slug(&slug, &model.registry);
                 return AppModel {
-                    screen: Screen::Detail { slug },
+                    screen: Screen::Detail { slug, from },
                     detail,
                     execution: None,
                     ..model
@@ -469,6 +505,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             AppModel {
                 screen: Screen::Picker {
                     slug: field_key.clone(),
+                    from: DetailOrigin::Home,
                 },
                 picker,
                 settings_picker_field: Some(field_key),
@@ -568,10 +605,20 @@ fn back_screen(current: &Screen) -> Screen {
         Screen::Home => Screen::Home,
         Screen::Library => Screen::Home,
         Screen::Browser => Screen::Home,
-        Screen::Detail { .. } => Screen::Browser,
-        Screen::Picker { slug } => Screen::Detail { slug: slug.clone() },
-        Screen::Execution { .. } => Screen::Browser,
-        Screen::Results { .. } => Screen::Browser,
+        Screen::Detail {
+            from: DetailOrigin::Home,
+            ..
+        } => Screen::Home,
+        Screen::Detail {
+            from: DetailOrigin::Browser,
+            ..
+        } => Screen::Browser,
+        Screen::Picker { slug, from } => Screen::Detail {
+            slug: slug.clone(),
+            from: *from,
+        },
+        Screen::Execution { .. } => Screen::Home,
+        Screen::Results { .. } => Screen::Home,
         Screen::Settings => Screen::Home,
     }
 }
@@ -697,30 +744,49 @@ mod tests {
     #[test]
     fn forward_navigation_follows_happy_path() {
         let s = "t".to_string();
+        let from = DetailOrigin::Browser;
         assert_eq!(
             transition(
                 Screen::Browser,
                 AppMessage::RecipeSelected { slug: s.clone() }
             ),
-            Screen::Detail { slug: s.clone() }
+            Screen::Detail {
+                slug: s.clone(),
+                from,
+            }
         );
         assert_eq!(
             transition(
-                Screen::Detail { slug: s.clone() },
+                Screen::Detail {
+                    slug: s.clone(),
+                    from,
+                },
                 AppMessage::ConfigConfirmed { slug: s.clone() }
             ),
-            Screen::Picker { slug: s.clone() }
+            Screen::Picker {
+                slug: s.clone(),
+                from,
+            }
         );
         assert_eq!(
             transition(
-                Screen::Picker { slug: s.clone() },
+                Screen::Picker {
+                    slug: s.clone(),
+                    from,
+                },
                 AppMessage::FilesSelected { slug: s.clone() }
             ),
-            Screen::Execution { slug: s.clone() }
+            Screen::Execution {
+                slug: s.clone(),
+                from,
+            }
         );
         assert_eq!(
             transition(
-                Screen::Execution { slug: s.clone() },
+                Screen::Execution {
+                    slug: s.clone(),
+                    from,
+                },
                 AppMessage::ExecutionComplete { slug: s.clone() }
             ),
             Screen::Results { slug: s }
@@ -728,30 +794,69 @@ mod tests {
     }
 
     #[test]
-    fn back_navigation() {
+    fn back_navigation_from_browser_origin() {
         let s = "t".to_string();
+        let from = DetailOrigin::Browser;
         assert_eq!(transition(Screen::Home, AppMessage::Back), Screen::Home);
         assert_eq!(transition(Screen::Library, AppMessage::Back), Screen::Home);
         assert_eq!(transition(Screen::Browser, AppMessage::Back), Screen::Home);
         assert_eq!(
-            transition(Screen::Detail { slug: s.clone() }, AppMessage::Back),
+            transition(
+                Screen::Detail {
+                    slug: s.clone(),
+                    from,
+                },
+                AppMessage::Back
+            ),
             Screen::Browser
         );
         assert_eq!(
-            transition(Screen::Picker { slug: s }, AppMessage::Back),
+            transition(Screen::Picker { slug: s, from }, AppMessage::Back),
             Screen::Detail {
-                slug: "t".to_string()
+                slug: "t".to_string(),
+                from,
             }
         );
         assert_eq!(
-            transition(Screen::Execution { slug: "r".into() }, AppMessage::Back),
-            Screen::Browser
+            transition(
+                Screen::Execution {
+                    slug: "r".into(),
+                    from,
+                },
+                AppMessage::Back
+            ),
+            Screen::Home
         );
         assert_eq!(
             transition(Screen::Results { slug: "r".into() }, AppMessage::Back),
-            Screen::Browser
+            Screen::Home
         );
         assert_eq!(transition(Screen::Settings, AppMessage::Back), Screen::Home);
+    }
+
+    #[test]
+    fn back_navigation_from_home_origin() {
+        let s = "t".to_string();
+        let from = DetailOrigin::Home;
+        // Detail entered from Home → back goes to Home.
+        assert_eq!(
+            transition(
+                Screen::Detail {
+                    slug: s.clone(),
+                    from,
+                },
+                AppMessage::Back
+            ),
+            Screen::Home
+        );
+        // Picker preserves origin.
+        assert_eq!(
+            transition(Screen::Picker { slug: s, from }, AppMessage::Back),
+            Screen::Detail {
+                slug: "t".to_string(),
+                from,
+            }
+        );
     }
 
     // --- Other actions ---
@@ -794,14 +899,24 @@ mod tests {
 
     #[test]
     fn files_selected_creates_execution_model() {
+        let from = DetailOrigin::Browser;
         let app = update(
             AppModel {
-                screen: Screen::Picker { slug: "s".into() },
+                screen: Screen::Picker {
+                    slug: "s".into(),
+                    from,
+                },
                 ..default_model()
             },
             AppMessage::FilesSelected { slug: "s".into() },
         );
-        assert_eq!(app.screen, Screen::Execution { slug: "s".into() });
+        assert_eq!(
+            app.screen,
+            Screen::Execution {
+                slug: "s".into(),
+                from,
+            }
+        );
         assert!(app.execution.is_some());
         assert_eq!(app.execution.as_ref().unwrap().slug, "s");
     }
@@ -810,7 +925,10 @@ mod tests {
     fn execution_complete_creates_results_model() {
         let app = update(
             AppModel {
-                screen: Screen::Execution { slug: "s".into() },
+                screen: Screen::Execution {
+                    slug: "s".into(),
+                    from: DetailOrigin::Browser,
+                },
                 execution: Some(ExecutionModel::new("s")),
                 ..default_model()
             },
@@ -825,13 +943,16 @@ mod tests {
     fn back_from_execution_clears_execution_model() {
         let app = update(
             AppModel {
-                screen: Screen::Execution { slug: "s".into() },
+                screen: Screen::Execution {
+                    slug: "s".into(),
+                    from: DetailOrigin::Browser,
+                },
                 execution: Some(ExecutionModel::new("s")),
                 ..default_model()
             },
             AppMessage::Back,
         );
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(app.execution.is_none());
     }
 
@@ -845,22 +966,32 @@ mod tests {
             },
             AppMessage::Back,
         );
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(app.results.is_none());
     }
 
     #[test]
     fn cancel_execution_returns_to_detail() {
         let slug = "compress-images";
+        let from = DetailOrigin::Browser;
         let app = update(
             AppModel {
-                screen: Screen::Execution { slug: slug.into() },
+                screen: Screen::Execution {
+                    slug: slug.into(),
+                    from,
+                },
                 execution: Some(ExecutionModel::new(slug)),
                 ..default_model()
             },
             AppMessage::Execution(ExecutionMessage::Cancel),
         );
-        assert_eq!(app.screen, Screen::Detail { slug: slug.into() });
+        assert_eq!(
+            app.screen,
+            Screen::Detail {
+                slug: slug.into(),
+                from,
+            }
+        );
         assert!(app.detail.is_some());
         assert!(app.execution.is_none());
     }
@@ -882,15 +1013,25 @@ mod tests {
             suffix: None,
             visible_when: None,
         }];
+        let from = DetailOrigin::Home;
         let app = update(
             AppModel {
-                screen: Screen::Detail { slug: "s".into() },
+                screen: Screen::Detail {
+                    slug: "s".into(),
+                    from,
+                },
                 detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
                 ..default_model()
             },
             AppMessage::ConfigConfirmed { slug: "s".into() },
         );
-        assert_eq!(app.screen, Screen::Picker { slug: "s".into() });
+        assert_eq!(
+            app.screen,
+            Screen::Picker {
+                slug: "s".into(),
+                from,
+            }
+        );
         assert_eq!(
             app.param_overrides.get("img.quality"),
             Some(&"60".to_string())
@@ -918,9 +1059,13 @@ mod tests {
         );
         picker.selected.insert(PathBuf::from("/home/cat.jpg"));
 
+        let from = DetailOrigin::Browser;
         let app = update(
             AppModel {
-                screen: Screen::Picker { slug: "s".into() },
+                screen: Screen::Picker {
+                    slug: "s".into(),
+                    from,
+                },
                 picker: Some(picker),
                 param_overrides: overrides,
                 ..default_model()
@@ -961,7 +1106,10 @@ mod tests {
 
         let app = update(
             AppModel {
-                screen: Screen::Execution { slug: "s".into() },
+                screen: Screen::Execution {
+                    slug: "s".into(),
+                    from: DetailOrigin::Browser,
+                },
                 execution: Some(exec),
                 ..default_model()
             },
@@ -1036,9 +1184,11 @@ mod tests {
                 visible_when: None,
             },
         ];
+        let from = DetailOrigin::Browser;
         let app = AppModel {
             screen: Screen::Detail {
                 slug: "compress-images".into(),
+                from,
             },
             detail: Some(DetailModel::from_test_data(
                 "compress-images",
@@ -1068,7 +1218,8 @@ mod tests {
         assert_eq!(
             app.screen,
             Screen::Picker {
-                slug: "compress-images".into()
+                slug: "compress-images".into(),
+                from,
             }
         );
         assert_eq!(
@@ -1119,7 +1270,8 @@ mod tests {
         assert_eq!(
             app.screen,
             Screen::Execution {
-                slug: "compress-images".into()
+                slug: "compress-images".into(),
+                from,
             }
         );
         let exec = app.execution.as_ref().expect("execution model populated");
@@ -1140,6 +1292,8 @@ mod tests {
         use super::super::screens::execution::ExecutionMessage;
         use super::super::screens::results::OutputFile;
 
+        let from = DetailOrigin::Browser;
+
         // Browser → Detail
         let app = update(
             default_model(),
@@ -1150,7 +1304,8 @@ mod tests {
         assert_eq!(
             app.screen,
             Screen::Detail {
-                slug: "compress-images".into()
+                slug: "compress-images".into(),
+                from,
             }
         );
         assert!(app.detail.is_some());
@@ -1165,7 +1320,8 @@ mod tests {
         assert_eq!(
             app.screen,
             Screen::Picker {
-                slug: "compress-images".into()
+                slug: "compress-images".into(),
+                from,
             }
         );
 
@@ -1179,7 +1335,8 @@ mod tests {
         assert_eq!(
             app.screen,
             Screen::Execution {
-                slug: "compress-images".into()
+                slug: "compress-images".into(),
+                from,
             }
         );
         assert!(app.execution.is_some());
@@ -1253,7 +1410,10 @@ mod tests {
 
         let app = update(
             AppModel {
-                screen: Screen::Execution { slug: "s".into() },
+                screen: Screen::Execution {
+                    slug: "s".into(),
+                    from: DetailOrigin::Browser,
+                },
                 execution: Some(exec),
                 ..default_model()
             },
@@ -1345,7 +1505,10 @@ mod tests {
         let mut app = default_model();
         // Set a default_path that doesn't exist — should fall back to cwd.
         app.config.default_path = Some("/nonexistent/path".into());
-        app.screen = Screen::Detail { slug: "s".into() };
+        app.screen = Screen::Detail {
+            slug: "s".into(),
+            from: DetailOrigin::Home,
+        };
         let app = update(app, AppMessage::ConfigConfirmed { slug: "s".into() });
         // The picker should be created (path falls back to cwd since /nonexistent doesn't exist).
         assert!(app.picker.is_some());
@@ -1353,8 +1516,12 @@ mod tests {
 
     #[test]
     fn back_from_picker_clears_overrides() {
+        let from = DetailOrigin::Home;
         let mut app = AppModel {
-            screen: Screen::Picker { slug: "s".into() },
+            screen: Screen::Picker {
+                slug: "s".into(),
+                from,
+            },
             param_overrides: {
                 let mut m = HashMap::new();
                 m.insert("k".into(), "v".into());
@@ -1365,7 +1532,13 @@ mod tests {
         // Back from Picker goes to Detail. Overrides stay on AppModel
         // (they're consumed on FilesSelected, not on Back).
         app = update(app, AppMessage::Back);
-        assert_eq!(app.screen, Screen::Detail { slug: "s".into() });
+        assert_eq!(
+            app.screen,
+            Screen::Detail {
+                slug: "s".into(),
+                from,
+            }
+        );
         // Overrides remain because user might go forward again.
         assert!(!app.param_overrides.is_empty());
     }
@@ -1384,7 +1557,8 @@ mod tests {
         assert_eq!(
             app.screen,
             Screen::Picker {
-                slug: "default_path".into()
+                slug: "default_path".into(),
+                from: DetailOrigin::Home,
             }
         );
         assert!(app.picker.is_some());
@@ -1399,6 +1573,7 @@ mod tests {
         // Manually set up a picker with a known directory.
         app.screen = Screen::Picker {
             slug: "output_dir".into(),
+            from: DetailOrigin::Home,
         };
         app.settings_picker_field = Some("output_dir".into());
         app.picker = Some(PickerModel::from_dir(
@@ -1427,6 +1602,7 @@ mod tests {
         let mut app = update(default_model(), AppMessage::OpenSettings);
         app.screen = Screen::Picker {
             slug: "default_path".into(),
+            from: DetailOrigin::Home,
         };
         app.settings_picker_field = Some("default_path".into());
         app.picker = Some(PickerModel::from_dir(
@@ -1444,14 +1620,24 @@ mod tests {
 
     #[test]
     fn back_from_normal_picker_goes_to_detail_not_settings() {
+        let from = DetailOrigin::Browser;
         let app = AppModel {
-            screen: Screen::Picker { slug: "s".into() },
+            screen: Screen::Picker {
+                slug: "s".into(),
+                from,
+            },
             settings_picker_field: None,
             ..default_model()
         };
         let app = update(app, AppMessage::Back);
         // Normal picker → Detail (not Settings).
-        assert_eq!(app.screen, Screen::Detail { slug: "s".into() });
+        assert_eq!(
+            app.screen,
+            Screen::Detail {
+                slug: "s".into(),
+                from,
+            }
+        );
     }
 
     // --- Settings persistence: path preservation across saves ---
@@ -1484,6 +1670,7 @@ mod tests {
         // Set up picker for default_path.
         app.screen = Screen::Picker {
             slug: "default_path".into(),
+            from: DetailOrigin::Home,
         };
         app.settings_picker_field = Some("default_path".into());
         app.picker = Some(PickerModel::from_dir(
@@ -1512,6 +1699,7 @@ mod tests {
         });
         app.screen = Screen::Picker {
             slug: "output_dir".into(),
+            from: DetailOrigin::Home,
         };
         app.settings_picker_field = Some("output_dir".into());
         app.picker = Some(PickerModel::from_dir(
@@ -1679,6 +1867,7 @@ mod tests {
 
         app.screen = Screen::Picker {
             slug: "output_dir".into(),
+            from: DetailOrigin::Home,
         };
         app.settings_picker_field = Some("output_dir".into());
         app.picker = Some(PickerModel::from_dir(

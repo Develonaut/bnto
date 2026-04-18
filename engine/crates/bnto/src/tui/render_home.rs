@@ -5,12 +5,13 @@
 
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
 use super::render_home_grid::draw_home_grid;
+use super::render_layout::content_panel;
 use super::screens::home::HomePane;
-use super::theme::{ROUNDED_BORDERS, Theme};
+use super::theme::Theme;
 
 /// Minimum terminal size for bento grid layout.
 const MIN_GRID_WIDTH: u16 = 60;
@@ -27,14 +28,7 @@ pub fn draw_home(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
 
 /// Simple linear menu fallback for small terminals.
 fn draw_home_simple(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let block = Block::bordered()
-        .title(model.screen.title())
-        .title_style(theme.heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme.border());
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
+    let inner = content_panel(frame, theme, area, model.screen.title());
 
     let home = &model.home;
     let items: [(HomePane, &str, &str); 4] = [

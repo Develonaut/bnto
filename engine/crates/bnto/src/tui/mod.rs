@@ -20,6 +20,7 @@ mod render_home;
 mod render_home_grid;
 mod render_home_logo;
 mod render_home_panes;
+mod render_layout;
 mod render_picker;
 mod render_results;
 pub mod screen;
@@ -148,7 +149,7 @@ fn run_loop(
         if bridge_rx.is_none()
             && let Some(exec) = &model.execution
             && exec.status == ExecutionStatus::Idle
-            && let app::Screen::Execution { slug } = &model.screen
+            && let app::Screen::Execution { slug, .. } = &model.screen
         {
             bridge_rx = Some(bridge::spawn_pipeline(
                 slug.clone(),
@@ -174,7 +175,7 @@ fn run_loop(
                     } => {
                         let outputs = bridge::build_output_files(&output_dir, &file_metadata);
                         let slug = match &model.screen {
-                            app::Screen::Execution { slug } => slug.clone(),
+                            app::Screen::Execution { slug, .. } => slug.clone(),
                             _ => String::new(),
                         };
                         let model = update(
@@ -282,7 +283,10 @@ mod tests {
             Screen::Home,
             Screen::Library,
             Screen::Browser,
-            Screen::Detail { slug: "t".into() },
+            Screen::Detail {
+                slug: "t".into(),
+                from: app::DetailOrigin::Browser,
+            },
             Screen::Results { slug: "t".into() },
         ] {
             let model = AppModel {
@@ -490,7 +494,10 @@ mod tests {
     #[test]
     fn s_key_does_nothing_outside_browser() {
         let model = AppModel {
-            screen: Screen::Detail { slug: "t".into() },
+            screen: Screen::Detail {
+                slug: "t".into(),
+                from: app::DetailOrigin::Browser,
+            },
             ..default_model()
         };
         let key = KeyEvent::new(KeyCode::Char('s'), crossterm::event::KeyModifiers::NONE);
@@ -621,6 +628,7 @@ mod tests {
         AppModel {
             screen: Screen::Detail {
                 slug: "compress-images".into(),
+                from: app::DetailOrigin::Browser,
             },
             detail: Some(DetailModel::from_test_data(
                 "compress-images",
@@ -682,7 +690,10 @@ mod tests {
         use screens::detail::DetailModel;
 
         let model = AppModel {
-            screen: Screen::Detail { slug: "s".into() },
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: app::DetailOrigin::Browser,
+            },
             detail: Some(DetailModel::from_test_data("s", "n", "d", vec![])),
             ..default_model()
         };
@@ -807,7 +818,10 @@ mod tests {
             visible_when: None,
         }];
         let model = AppModel {
-            screen: Screen::Detail { slug: "s".into() },
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: app::DetailOrigin::Browser,
+            },
             detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
             ..default_model()
         };
@@ -847,7 +861,10 @@ mod tests {
             visible_when: None,
         }];
         let model = AppModel {
-            screen: Screen::Detail { slug: "s".into() },
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: app::DetailOrigin::Browser,
+            },
             detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
             ..default_model()
         };
@@ -885,7 +902,10 @@ mod tests {
             visible_when: None,
         }];
         let model = AppModel {
-            screen: Screen::Detail { slug: "s".into() },
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: app::DetailOrigin::Browser,
+            },
             detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
             ..default_model()
         };
@@ -929,7 +949,10 @@ mod tests {
             visible_when: None,
         }];
         let model = AppModel {
-            screen: Screen::Detail { slug: "s".into() },
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: app::DetailOrigin::Browser,
+            },
             detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
             ..default_model()
         };
@@ -964,7 +987,10 @@ mod tests {
             visible_when: None,
         }];
         let model = AppModel {
-            screen: Screen::Detail { slug: "s".into() },
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: app::DetailOrigin::Browser,
+            },
             detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
             ..default_model()
         };
@@ -1008,6 +1034,7 @@ mod tests {
         AppModel {
             screen: Screen::Picker {
                 slug: "compress-images".into(),
+                from: app::DetailOrigin::Browser,
             },
             picker: Some(picker),
             ..default_model()
@@ -1227,6 +1254,7 @@ mod tests {
         AppModel {
             screen: Screen::Execution {
                 slug: "compress-images".into(),
+                from: app::DetailOrigin::Browser,
             },
             execution: Some(ExecutionModel::new("compress-images")),
             ..default_model()
@@ -1272,6 +1300,7 @@ mod tests {
         let model = AppModel {
             screen: Screen::Execution {
                 slug: "compress-images".into(),
+                from: app::DetailOrigin::Browser,
             },
             execution: Some(exec),
             ..default_model()
@@ -1300,6 +1329,7 @@ mod tests {
         let model = AppModel {
             screen: Screen::Execution {
                 slug: "compress-images".into(),
+                from: app::DetailOrigin::Browser,
             },
             execution: Some(exec),
             ..default_model()
@@ -1328,6 +1358,7 @@ mod tests {
         let model = AppModel {
             screen: Screen::Execution {
                 slug: "compress-images".into(),
+                from: app::DetailOrigin::Browser,
             },
             execution: Some(exec),
             ..default_model()
