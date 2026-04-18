@@ -25,8 +25,12 @@ impl Screen {
     /// Contextual key hints for the help bar.
     pub fn help_hints(&self) -> Vec<(&'static str, &'static str)> {
         match self {
-            // Home grid renders its own help hints — suppress the global bar.
-            Self::Home => vec![],
+            Self::Home => vec![
+                ("Tab", "pane"),
+                ("↑↓", "navigate"),
+                ("Enter", "select"),
+                ("q", "quit"),
+            ],
             Self::Library => vec![("Esc", "back"), ("q", "quit")],
             Self::Browser => vec![
                 ("↑↓", "navigate"),
