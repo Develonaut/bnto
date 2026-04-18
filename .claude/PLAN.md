@@ -739,8 +739,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 4 — My Library + CLI default (parallel)
 
-- [ ] `engine/crates/bnto` — **My Library screen**: `LibraryModel` loads `.bnto.json` files from `BntoPaths::recipes_dir()`. Parse name/description from each file. Search/filter. Actions: Enter (run → Detail), `e` (edit — placeholder until Sprint 12), `r` (rename — edit name field in JSON), `d` (delete with confirmation). Empty state with guidance. RED tests: file loading, search, rename, delete confirmation, empty state (~12 tests)
-- [ ] `engine/crates/bnto` — **"Add to Library" + CLI default**: Recipes screen gains `a` key: copies engine's embedded recipe JSON to `recipes_dir/{slug}.bnto.json`. Collision detection ("Already in library. Replace?"). CLI change: `bnto` with no subcommand launches TUI (clap default command). `bnto tui` remains as explicit alias. RED tests: add to library, collision handling, CLI no-args dispatch (~5 tests)
+- [x] `engine/crates/bnto` — **My Library screen**: `LibraryModel` loads `.bnto.json` files from `BntoPaths::recipes_dir()`. Parse name/description from each file. Search/filter. Actions: Enter (run → Detail), `r` (rename — edit name field in JSON), `d` (delete with confirmation). Empty state with guidance. 34 unit tests + 10 app-level tests.
+- [x] `engine/crates/bnto` — **"Add to Library" + CLI default**: Recipes screen gains `a` key: copies engine's embedded recipe JSON to `recipes_dir/{slug}.bnto.json`. Collision detection ("Already in library. Press 'A' to replace."). CLI change: `bnto` with no subcommand launches TUI. `bnto tui` remains as explicit alias. Tests: add to library, collision handling, overwrite, CLI no-args dispatch.
 
 **Sprint 12A totals: ~8 PRs, ~65 tests, ~1500-2000 LOC**
 

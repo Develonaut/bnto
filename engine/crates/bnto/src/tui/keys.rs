@@ -9,6 +9,7 @@ use super::screens::browser::BrowserMessage;
 use super::screens::detail::DetailMessage;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::home::HomeMessage;
+use super::screens::library::LibraryMessage;
 use super::screens::picker::PickerMessage;
 use super::screens::results::ResultsMessage;
 use super::screens::settings::SettingsMessage;
@@ -22,6 +23,14 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let searching = matches!(&model.screen, Screen::Browser if model.browser.searching);
     if searching {
         return handle_browser_key(model, key);
+    }
+
+    // Library search/rename/delete modes capture all keys.
+    let library_modal = matches!(&model.screen, Screen::Library
+        if model.library.as_ref().is_some_and(|l|
+            l.searching || l.renaming.is_some() || l.confirming_delete.is_some()));
+    if library_modal {
+        return handle_library_key(model, key);
     }
 
     // Detail editing mode captures all keys (like browser search mode).
@@ -42,7 +51,7 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
     match &model.screen {
         Screen::Home => handle_home_key(model, key),
-        Screen::Library => None, // Placeholder — only global keys (q, Esc) apply.
+        Screen::Library => handle_library_key(model, key),
         Screen::Browser => handle_browser_key(model, key),
         Screen::Settings => handle_settings_key(model, key),
         Screen::Detail { .. } => handle_detail_key(model, key),
@@ -64,6 +73,64 @@ fn handle_home_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Home(HomeMessage::CursorDown)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Home(HomeMessage::CursorUp)),
         KeyCode::Enter => Some(AppMessage::HomeConfirm),
+        _ => None,
+    }
+}
+
+/// Handle key events on the Library screen.
+fn handle_library_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let lib = model.library.as_ref()?;
+
+    // Search mode captures text input.
+    if lib.searching {
+        return match key.code {
+            KeyCode::Esc => Some(AppMessage::Library(LibraryMessage::ExitSearch)),
+            KeyCode::Backspace => Some(AppMessage::Library(LibraryMessage::SearchBackspace)),
+            KeyCode::Enter => Some(AppMessage::LibraryConfirm),
+            KeyCode::Char('u')
+                if key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+            {
+                Some(AppMessage::Library(LibraryMessage::SearchClear))
+            }
+            KeyCode::Char(ch) => Some(AppMessage::Library(LibraryMessage::SearchInput(ch))),
+            _ => None,
+        };
+    }
+
+    // Rename mode captures text input.
+    if lib.renaming.is_some() {
+        return match key.code {
+            KeyCode::Enter => Some(AppMessage::Library(LibraryMessage::RenameConfirm)),
+            KeyCode::Esc => Some(AppMessage::Library(LibraryMessage::RenameCancel)),
+            KeyCode::Backspace => Some(AppMessage::Library(LibraryMessage::RenameBackspace)),
+            KeyCode::Char(ch) => Some(AppMessage::Library(LibraryMessage::RenameInput(ch))),
+            _ => None,
+        };
+    }
+
+    // Delete confirmation mode.
+    if lib.confirming_delete.is_some() {
+        return match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                Some(AppMessage::Library(LibraryMessage::DeleteConfirm))
+            }
+            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                Some(AppMessage::Library(LibraryMessage::DeleteCancel))
+            }
+            _ => None,
+        };
+    }
+
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Library(LibraryMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Library(LibraryMessage::CursorUp)),
+        KeyCode::Char('/') => Some(AppMessage::Library(LibraryMessage::EnterSearch)),
+        KeyCode::Char('d') => Some(AppMessage::Library(LibraryMessage::DeleteRequest)),
+        KeyCode::Char('r') => Some(AppMessage::Library(LibraryMessage::RenameStart)),
+        KeyCode::Enter => Some(AppMessage::LibraryConfirm),
+        KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
     }
 }
@@ -95,6 +162,11 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Browser(BrowserMessage::CursorUp)),
         KeyCode::Char('/') => Some(AppMessage::Browser(BrowserMessage::EnterSearch)),
         KeyCode::Char('s') => Some(AppMessage::OpenSettings),
+        KeyCode::Char('a') => Some(AppMessage::AddToLibrary),
+        KeyCode::Char('A') => model
+            .browser
+            .confirm()
+            .map(|r| AppMessage::AddToLibraryConfirm { slug: r.slug }),
         KeyCode::Enter => model
             .browser
             .confirm()

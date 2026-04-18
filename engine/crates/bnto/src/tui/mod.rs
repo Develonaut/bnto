@@ -21,6 +21,7 @@ mod render_home_grid;
 mod render_home_logo;
 mod render_home_panes;
 mod render_layout;
+mod render_library;
 mod render_picker;
 mod render_results;
 pub mod screen;

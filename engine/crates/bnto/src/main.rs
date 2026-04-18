@@ -131,7 +131,8 @@ fn main() {
             TelemetryAction::Status => telemetry::print_status(),
         },
         None => {
-            Cli::parse_from(["bnto", "--help"]);
+            telemetry::capture(telemetry::events::cli_command("tui"));
+            launch_tui("los-angeles", None);
         }
     }
 }
