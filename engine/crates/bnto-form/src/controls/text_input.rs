@@ -9,17 +9,21 @@ use unicode_segmentation::UnicodeSegmentation;
 use crate::field::{Field, FieldKind, FieldState};
 use crate::form::FormMessage;
 
-/// Apply a text-editing message to a field in TextEditing state.
+/// Apply a text-editing message to a field in TextEditing or NumberEditing state.
+///
+/// Both states share identical cursor logic — the only difference is which
+/// `FieldState` variant wraps the `(buffer, cursor)` pair.
 pub fn update(field: Field, msg: FormMessage) -> Field {
-    let (buffer, cursor) = match &field.state {
-        FieldState::TextEditing { buffer, cursor } => (buffer.clone(), *cursor),
+    let (buffer, cursor, is_number) = match &field.state {
+        FieldState::TextEditing { buffer, cursor } => (buffer.clone(), *cursor, false),
+        FieldState::NumberEditing { buffer, cursor } => (buffer.clone(), *cursor, true),
         _ => return field,
     };
 
     let graphemes: Vec<&str> = buffer.graphemes(true).collect();
     let len = graphemes.len();
 
-    match msg {
+    let result = match msg {
         FormMessage::EditChar(ch) => insert_char(field, &buffer, &graphemes, cursor, ch),
         FormMessage::EditBackspace => backspace(field, &graphemes, cursor),
         FormMessage::DeleteForward => delete_forward(field, &graphemes, cursor, len),
@@ -37,6 +41,28 @@ pub fn update(field: Field, msg: FormMessage) -> Field {
         }
         FormMessage::DeleteWordBack => delete_word_back(field, &graphemes, cursor),
         // CommitEdit and CancelEdit are handled at the form level
+        _ => field,
+    };
+
+    // Re-wrap into the correct state variant if needed
+    if is_number {
+        rewrap_as_number(result)
+    } else {
+        result
+    }
+}
+
+/// Convert a `TextEditing` state back to `NumberEditing`.
+///
+/// All internal helpers produce `TextEditing`. When we entered from
+/// `NumberEditing`, we need to swap the variant so the rest of the
+/// system (commit, cancel, key mapping) sees the right state.
+fn rewrap_as_number(field: Field) -> Field {
+    match field.state {
+        FieldState::TextEditing { buffer, cursor } => Field {
+            state: FieldState::NumberEditing { buffer, cursor },
+            ..field
+        },
         _ => field,
     }
 }

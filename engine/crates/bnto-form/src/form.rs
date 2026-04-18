@@ -232,8 +232,101 @@ fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
             }
         }
 
-        // Text editing messages (after commit/cancel handled above)
-        (FieldKind::Text { .. }, FieldState::TextEditing { .. }, _) => {
+        // Select highlight navigation
+        (
+            _,
+            FieldState::SelectExpanded {
+                highlight,
+                filter,
+                filtered_indices,
+                ..
+            },
+            FormMessage::SelectHighlightNext,
+        ) => {
+            if filtered_indices.is_empty() {
+                return field;
+            }
+            let next = (*highlight + 1) % filtered_indices.len();
+            Field {
+                state: FieldState::SelectExpanded {
+                    highlight: next,
+                    filter: filter.clone(),
+                    filtered_indices: filtered_indices.clone(),
+                },
+                ..field
+            }
+        }
+
+        (
+            _,
+            FieldState::SelectExpanded {
+                highlight,
+                filter,
+                filtered_indices,
+                ..
+            },
+            FormMessage::SelectHighlightPrev,
+        ) => {
+            if filtered_indices.is_empty() {
+                return field;
+            }
+            let prev = if *highlight == 0 {
+                filtered_indices.len() - 1
+            } else {
+                highlight - 1
+            };
+            Field {
+                state: FieldState::SelectExpanded {
+                    highlight: prev,
+                    filter: filter.clone(),
+                    filtered_indices: filtered_indices.clone(),
+                },
+                ..field
+            }
+        }
+
+        // Select filter typing
+        (
+            FieldKind::Select { options, .. },
+            FieldState::SelectExpanded { filter, .. },
+            FormMessage::SelectFilterChar(ch),
+        ) => {
+            let new_filter = format!("{filter}{ch}");
+            let filtered = filter_options(options, &new_filter);
+            Field {
+                state: FieldState::SelectExpanded {
+                    highlight: 0,
+                    filter: new_filter,
+                    filtered_indices: filtered,
+                },
+                ..field
+            }
+        }
+
+        (
+            FieldKind::Select { options, .. },
+            FieldState::SelectExpanded { filter, .. },
+            FormMessage::SelectFilterBackspace,
+        ) => {
+            let new_filter = {
+                let mut f = filter.clone();
+                f.pop();
+                f
+            };
+            let filtered = filter_options(options, &new_filter);
+            Field {
+                state: FieldState::SelectExpanded {
+                    highlight: 0,
+                    filter: new_filter,
+                    filtered_indices: filtered,
+                },
+                ..field
+            }
+        }
+
+        // Text/Number editing messages (after commit/cancel handled above)
+        (FieldKind::Text { .. }, FieldState::TextEditing { .. }, _)
+        | (FieldKind::Number { .. }, FieldState::NumberEditing { .. }, _) => {
             controls::text_input::update(field, msg)
         }
 
@@ -382,6 +475,20 @@ fn commit_number_edit(field: Field, buffer: String) -> Field {
             ..field
         },
     }
+}
+
+/// Return indices of options whose labels contain the filter string (case-insensitive).
+fn filter_options(options: &[crate::field::SelectOption], filter: &str) -> Vec<usize> {
+    if filter.is_empty() {
+        return (0..options.len()).collect();
+    }
+    let lower = filter.to_lowercase();
+    options
+        .iter()
+        .enumerate()
+        .filter(|(_, o)| o.label.to_lowercase().contains(&lower))
+        .map(|(i, _)| i)
+        .collect()
 }
 
 fn clamp_number(val: f64, min: Option<f64>, max: Option<f64>) -> f64 {
