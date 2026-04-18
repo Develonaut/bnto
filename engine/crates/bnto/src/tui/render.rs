@@ -3,7 +3,7 @@
 // Per-screen renderers live in sibling modules (render_detail, render_picker)
 // to keep each file under 250 lines.
 
-use ratatui::layout::Rect;
+use ratatui::layout::{Alignment, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
@@ -11,11 +11,19 @@ use super::app::{AppModel, Screen};
 use super::render_detail::draw_detail;
 use super::render_execution::draw_execution;
 use super::render_home::draw_home;
+use super::render_home_logo::logo_lines;
 use super::render_layout::content_panel;
 use super::render_picker::draw_picker;
 use super::render_results::draw_results;
 use super::theme::Theme;
 use super::widgets::{help_bar, search_input, status_line};
+
+/// Render the bnto ASCII logo header — shared across all screens.
+pub fn draw_logo(frame: &mut ratatui::Frame, theme: &Theme, area: Rect) {
+    let lines = logo_lines(theme);
+    let logo = Paragraph::new(lines);
+    frame.render_widget(logo, area);
+}
 
 /// Render the main content area based on the current screen.
 pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -152,8 +160,11 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
     frame.render_widget(content, inner);
 }
 
-/// Render the bottom bar: status line (left) + help hints (right).
-pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
+/// Render the shared bottom bar: help hints (left) + status info (right).
+///
+/// All screens use this — rendered inside the app frame for consistent positioning.
+pub fn draw_bottom_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
+    // Help hints (left-aligned).
     // Settings picker shows directory-selection hints instead of file-selection hints.
     let hints = if model.settings_picker_field.is_some()
         && matches!(&model.screen, Screen::Picker { .. })
@@ -169,27 +180,18 @@ pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme
         model.screen.help_hints()
     };
     let line = help_bar::render_help_bar(&hints, theme);
-    let bar = Paragraph::new(line);
-    frame.render_widget(bar, area);
-}
+    frame.render_widget(Paragraph::new(line), area);
 
-/// Render the status line with recipe count, version, theme, and optional status message.
-///
-/// Home screen renders its own status info inside the bento grid — skip here.
-pub fn draw_status_line(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    if matches!(model.screen, Screen::Home) {
-        return;
-    }
+    // Status info (right-aligned).
     let recipe_count = model.browser.recipes.len();
     let version = env!("CARGO_PKG_VERSION");
     let theme_name = model.theme_variant.display_name();
-    let line = status_line::render_status_line_with_message(
+    let status = status_line::render_status_line_with_message(
         recipe_count,
         version,
         theme_name,
         model.status_message.as_deref(),
         theme,
     );
-    let bar = Paragraph::new(line);
-    frame.render_widget(bar, area);
+    frame.render_widget(Paragraph::new(status).alignment(Alignment::Right), area);
 }

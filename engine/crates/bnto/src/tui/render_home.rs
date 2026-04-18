@@ -1,7 +1,7 @@
 // Home screen renderer — dispatches to bento grid or simple fallback.
 //
-// Large terminals (≥60 cols, ≥20 rows) get the full bento grid layout.
-// Small terminals get a simple linear menu.
+// Large content areas (≥60 cols, ≥10 rows) get the full bento grid layout.
+// Small content areas get a simple linear menu.
 
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
@@ -13,9 +13,10 @@ use super::render_layout::content_panel;
 use super::screens::home::HomePane;
 use super::theme::Theme;
 
-/// Minimum terminal size for bento grid layout.
+/// Minimum content area size for bento grid layout.
+/// Height is lower than before — logo is now rendered by the app frame.
 const MIN_GRID_WIDTH: u16 = 60;
-const MIN_GRID_HEIGHT: u16 = 20;
+const MIN_GRID_HEIGHT: u16 = 10;
 
 /// Render the home screen — grid for large terminals, simple list for small.
 pub fn draw_home(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {

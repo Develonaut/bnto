@@ -38,7 +38,6 @@ use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{event as crossterm_event, execute};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
-use ratatui::layout::{Constraint, Layout};
 
 use app::{AppMessage, AppModel, update};
 use bridge::BridgeEvent;
@@ -102,24 +101,18 @@ fn run_loop(
         terminal.draw(|frame| {
             let area = frame.area();
             let theme = &model.theme;
-            let [content_area, status_area, help_area] = Layout::vertical([
-                Constraint::Min(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-            ])
-            .areas(area);
+            let (logo_area, content_area, bottom_area) = render_layout::app_frame(area);
 
+            render::draw_logo(frame, theme, logo_area);
             render::draw_content(frame, &model, theme, content_area);
-            render::draw_status_line(frame, &model, theme, status_area);
-            render::draw_help_bar(frame, &model, theme, help_area);
+            render::draw_bottom_bar(frame, &model, theme, bottom_area);
         })?;
 
         // Update picker viewport height from terminal size.
-        // Chrome overhead: 2 (status+help bars) + 2 (block borders) + 2 (dir path + blank line).
+        // Screen chrome: 2 (dir path + blank line).
         if matches!(model.screen, app::Screen::Picker { .. }) {
-            let total_height = terminal.size()?.height as usize;
-            let chrome = 6;
-            let picker_height = total_height.saturating_sub(chrome);
+            let term_h = terminal.size()?.height;
+            let picker_height = render_layout::viewport_height(term_h, 2);
             if picker_height > 0 {
                 model = update(
                     model,
@@ -131,10 +124,10 @@ fn run_loop(
         }
 
         // Update detail viewport height from terminal size.
+        // Screen chrome: 2 (name/desc header + blank line).
         if matches!(model.screen, app::Screen::Detail { .. }) {
-            let total_height = terminal.size()?.height as usize;
-            let chrome = 6; // 2 (status+help) + 2 (block borders) + 2 (padding)
-            let detail_height = total_height.saturating_sub(chrome);
+            let term_h = terminal.size()?.height;
+            let detail_height = render_layout::viewport_height(term_h, 2);
             if detail_height > 0 {
                 model = update(
                     model,
