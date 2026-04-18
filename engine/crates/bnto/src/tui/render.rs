@@ -193,7 +193,12 @@ pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme
 }
 
 /// Render the status line with recipe count, version, theme, and optional status message.
+///
+/// Home screen renders its own status info inside the bento grid — skip here.
 pub fn draw_status_line(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
+    if matches!(model.screen, Screen::Home) {
+        return;
+    }
     let recipe_count = model.browser.recipes.len();
     let version = env!("CARGO_PKG_VERSION");
     let theme_name = model.theme_variant.display_name();

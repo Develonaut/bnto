@@ -52,11 +52,17 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     }
 }
 
-/// Handle key events on the Home screen.
+/// Handle key events on the Home screen — 2D pane navigation.
 fn handle_home_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     match key.code {
-        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Home(HomeMessage::SelectNext)),
-        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Home(HomeMessage::SelectPrev)),
+        KeyCode::Tab | KeyCode::Char('l') | KeyCode::Right => {
+            Some(AppMessage::Home(HomeMessage::NextPane))
+        }
+        KeyCode::BackTab | KeyCode::Char('h') | KeyCode::Left => {
+            Some(AppMessage::Home(HomeMessage::PrevPane))
+        }
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Home(HomeMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Home(HomeMessage::CursorUp)),
         KeyCode::Enter => Some(AppMessage::HomeConfirm),
         _ => None,
     }

@@ -156,6 +156,11 @@ impl Theme {
         Style::default().fg(self.active)
     }
 
+    /// Muted border for unfocused panes (e.g. home grid).
+    pub fn border_muted(&self) -> Style {
+        Style::default().fg(Color::DarkGray)
+    }
+
     /// Success status text.
     #[allow(dead_code)]
     pub fn success(&self) -> Style {
