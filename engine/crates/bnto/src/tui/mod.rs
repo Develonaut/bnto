@@ -16,6 +16,10 @@ pub mod paths;
 mod render;
 mod render_detail;
 mod render_execution;
+mod render_home;
+mod render_home_grid;
+mod render_home_logo;
+mod render_home_panes;
 mod render_picker;
 mod render_results;
 pub mod screen;
@@ -239,18 +243,44 @@ mod tests {
     use screens::browser::BrowserMessage;
     use screens::detail::DetailMessage;
     use screens::execution::ExecutionMessage;
+    use screens::home::HomeMessage;
     use screens::picker::PickerMessage;
     use screens::results::ResultsMessage;
     use screens::settings::SettingsModel;
 
+    fn test_paths() -> paths::BntoPaths {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        static COUNTER: AtomicU32 = AtomicU32::new(0);
+        let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!("bnto-mod-test-{id}"));
+        let p = paths::BntoPaths {
+            config: root.join("config"),
+            data: root.join("data"),
+            state: root.join("state"),
+            cache: root.join("cache"),
+        };
+        let _ = p.ensure_dirs();
+        let _ = toml_config::TomlConfig::default().save(&p);
+        p
+    }
+
     fn default_model() -> AppModel {
-        AppModel::new(ThemeVariant::LosAngeles, None)
+        AppModel::with_paths(ThemeVariant::LosAngeles, None, test_paths())
+    }
+
+    fn browser_model() -> AppModel {
+        AppModel {
+            screen: Screen::Browser,
+            ..default_model()
+        }
     }
 
     #[test]
     fn handle_key_q_quits_from_any_screen() {
         let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
         for screen in [
+            Screen::Home,
+            Screen::Library,
             Screen::Browser,
             Screen::Detail { slug: "t".into() },
             Screen::Results { slug: "t".into() },
@@ -263,9 +293,93 @@ mod tests {
         }
     }
 
+    // --- Home screen key handling ---
+
+    #[test]
+    fn home_j_moves_cursor_down() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Home(HomeMessage::CursorDown))
+        );
+    }
+
+    #[test]
+    fn home_k_moves_cursor_up() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Home(HomeMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn home_arrow_keys_navigate_cursor() {
+        let model = default_model();
+        let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, down),
+            Some(AppMessage::Home(HomeMessage::CursorDown))
+        );
+        let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, up),
+            Some(AppMessage::Home(HomeMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn home_tab_cycles_pane() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Tab, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Home(HomeMessage::NextPane))
+        );
+    }
+
+    #[test]
+    fn home_shift_tab_cycles_pane_backward() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::BackTab, crossterm::event::KeyModifiers::SHIFT);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Home(HomeMessage::PrevPane))
+        );
+    }
+
+    #[test]
+    fn home_l_cycles_pane_forward() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('l'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Home(HomeMessage::NextPane))
+        );
+    }
+
+    #[test]
+    fn home_h_cycles_pane_backward() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Char('h'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Home(HomeMessage::PrevPane))
+        );
+    }
+
+    #[test]
+    fn home_enter_confirms_selection() {
+        let model = default_model();
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::HomeConfirm));
+    }
+
     #[test]
     fn s_key_opens_settings_from_browser() {
-        let model = default_model();
+        let model = browser_model();
         let key = KeyEvent::new(KeyCode::Char('s'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), Some(AppMessage::OpenSettings));
     }
@@ -387,7 +501,7 @@ mod tests {
 
     #[test]
     fn browser_j_moves_cursor_down() {
-        let model = default_model();
+        let model = browser_model();
         let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
@@ -397,7 +511,7 @@ mod tests {
 
     #[test]
     fn browser_k_moves_cursor_up() {
-        let model = default_model();
+        let model = browser_model();
         let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
@@ -407,7 +521,7 @@ mod tests {
 
     #[test]
     fn browser_arrow_keys_navigate() {
-        let model = default_model();
+        let model = browser_model();
         let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, down),
@@ -422,7 +536,7 @@ mod tests {
 
     #[test]
     fn browser_slash_enters_search() {
-        let model = default_model();
+        let model = browser_model();
         let key = KeyEvent::new(KeyCode::Char('/'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
@@ -432,7 +546,7 @@ mod tests {
 
     #[test]
     fn browser_enter_selects_recipe() {
-        let model = default_model();
+        let model = browser_model();
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         let msg = handle_key(&model, key);
         assert!(matches!(msg, Some(AppMessage::RecipeSelected { .. })));
@@ -440,7 +554,7 @@ mod tests {
 
     #[test]
     fn browser_search_mode_captures_chars() {
-        let mut model = default_model();
+        let mut model = browser_model();
         model.browser.searching = true;
         let key = KeyEvent::new(KeyCode::Char('a'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
@@ -451,7 +565,7 @@ mod tests {
 
     #[test]
     fn browser_search_mode_esc_exits() {
-        let mut model = default_model();
+        let mut model = browser_model();
         model.browser.searching = true;
         let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
@@ -462,7 +576,7 @@ mod tests {
 
     #[test]
     fn browser_search_mode_backspace() {
-        let mut model = default_model();
+        let mut model = browser_model();
         model.browser.searching = true;
         let key = KeyEvent::new(KeyCode::Backspace, crossterm::event::KeyModifiers::NONE);
         assert_eq!(

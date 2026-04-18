@@ -15,6 +15,9 @@ use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_up
 use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
 use super::screens::detail_loader::load_detail_from_json;
 use super::screens::execution::{ExecutionMessage, ExecutionModel, update as execution_update};
+use super::screens::home::{
+    HomeConfirmResult, HomeMessage, HomeModel, list_library_recipes, update as home_update,
+};
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
@@ -24,11 +27,22 @@ use super::toml_config::TomlConfig;
 /// Which screen the TUI is currently showing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Screen {
+    Home,
+    #[allow(dead_code)] // Wave 4: full Library screen
+    Library,
     Browser,
-    Detail { slug: String },
-    Picker { slug: String },
-    Execution { slug: String },
-    Results { slug: String },
+    Detail {
+        slug: String,
+    },
+    Picker {
+        slug: String,
+    },
+    Execution {
+        slug: String,
+    },
+    Results {
+        slug: String,
+    },
     Settings,
 }
 
@@ -38,6 +52,8 @@ pub struct AppModel {
     pub should_quit: bool,
     pub theme: Theme,
     pub theme_variant: ThemeVariant,
+    /// Home screen state (always present — Home is the root screen).
+    pub home: HomeModel,
     pub browser: BrowserModel,
     /// Detail screen state — populated when navigating to a recipe.
     pub detail: Option<DetailModel>,
@@ -71,6 +87,7 @@ impl std::fmt::Debug for AppModel {
             .field("screen", &self.screen)
             .field("should_quit", &self.should_quit)
             .field("theme_variant", &self.theme_variant)
+            .field("home_focused", &self.home.focused)
             .field("detail", &self.detail)
             .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
@@ -105,6 +122,10 @@ pub enum AppMessage {
     ThemeChanged(ThemeVariant),
     /// User toggled telemetry on/off in settings.
     TelemetryToggled(bool),
+    /// Forward a message to the home screen.
+    Home(HomeMessage),
+    /// User confirmed the home screen selection.
+    HomeConfirm,
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
     /// Forward a message to the detail screen.
@@ -172,6 +193,9 @@ impl AppModel {
         };
         let registry = create_registry();
 
+        // List library recipes for the home screen pane.
+        let library_names = list_library_recipes(&paths.data);
+
         // If a recipe JSON was provided, try to load it directly.
         let (screen, detail) = match recipe_json {
             Some(json) => match load_detail_from_json(&json, &registry) {
@@ -180,11 +204,11 @@ impl AppModel {
                     (Screen::Detail { slug }, Some(model))
                 }
                 Err(e) => {
-                    eprintln!("Warning: {e} — starting on recipe browser.");
-                    (Screen::Browser, None)
+                    eprintln!("Warning: {e} — starting on home screen.");
+                    (Screen::Home, None)
                 }
             },
-            None => (Screen::Browser, None),
+            None => (Screen::Home, None),
         };
 
         Self {
@@ -192,6 +216,7 @@ impl AppModel {
             should_quit: false,
             theme: Theme::from_variant(effective_variant),
             theme_variant: effective_variant,
+            home: HomeModel::new(library_names),
             browser: BrowserModel::new(),
             detail,
             picker: None,
@@ -274,6 +299,55 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 ..model
             }
         }
+        AppMessage::Home(msg) => {
+            let home = home_update(model.home, msg);
+            AppModel { home, ..model }
+        }
+        AppMessage::HomeConfirm => match model.home.confirm() {
+            HomeConfirmResult::Navigate(screen) => match screen {
+                Screen::Settings => {
+                    let settings = SettingsModel::from_config(&model.config);
+                    AppModel {
+                        screen: Screen::Settings,
+                        settings: Some(settings),
+                        ..model
+                    }
+                }
+                other => AppModel {
+                    screen: other,
+                    ..model
+                },
+            },
+            HomeConfirmResult::StatusMessage(msg) => AppModel {
+                status_message: Some(msg),
+                ..model
+            },
+            HomeConfirmResult::RecipeAtIndex(idx) => {
+                // Clamp to browser recipe count to avoid out-of-bounds.
+                if model.browser.recipes.is_empty() {
+                    return AppModel {
+                        status_message: Some("No recipes available".into()),
+                        ..model
+                    };
+                }
+                let clamped = idx.min(model.browser.recipes.len() - 1);
+                let slug = model.browser.recipes[clamped].slug.clone();
+                let detail = DetailModel::from_slug(&slug, &model.registry);
+                AppModel {
+                    screen: Screen::Detail { slug },
+                    detail,
+                    ..model
+                }
+            }
+            HomeConfirmResult::LibraryRecipe(slug) => {
+                let detail = DetailModel::from_slug(&slug, &model.registry);
+                AppModel {
+                    screen: Screen::Detail { slug },
+                    detail,
+                    ..model
+                }
+            }
+        },
         AppMessage::Back => handle_back(model),
         AppMessage::RunAnother => AppModel {
             screen: Screen::Browser,
@@ -316,13 +390,24 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         }
         AppMessage::TelemetryToggled(enabled) => {
             crate::telemetry::set_enabled(enabled);
+            let mut toml_config = model.toml_config.clone();
+            toml_config.telemetry.enabled = enabled;
+            let status_message = match toml_config.save(&model.paths) {
+                Ok(()) => None,
+                Err(e) => Some(format!("Failed to save: {e}")),
+            };
             let settings = model.settings.map(|mut s| {
                 if let Some(f) = s.fields.iter_mut().find(|f| f.key == "telemetry") {
                     f.value = if enabled { "On" } else { "Off" }.to_string();
                 }
                 s
             });
-            AppModel { settings, ..model }
+            AppModel {
+                toml_config,
+                settings,
+                status_message,
+                ..model
+            }
         }
         AppMessage::Browser(msg) => {
             let browser = browser_update(model.browser, msg);
@@ -480,12 +565,14 @@ fn handle_back(model: AppModel) -> AppModel {
 /// Determine which screen to go back to from the current screen.
 fn back_screen(current: &Screen) -> Screen {
     match current {
-        Screen::Browser => Screen::Browser,
+        Screen::Home => Screen::Home,
+        Screen::Library => Screen::Home,
+        Screen::Browser => Screen::Home,
         Screen::Detail { .. } => Screen::Browser,
         Screen::Picker { slug } => Screen::Detail { slug: slug.clone() },
         Screen::Execution { .. } => Screen::Browser,
         Screen::Results { .. } => Screen::Browser,
-        Screen::Settings => Screen::Browser,
+        Screen::Settings => Screen::Home,
     }
 }
 
@@ -493,8 +580,29 @@ fn back_screen(current: &Screen) -> Screen {
 mod tests {
     use super::*;
 
+    /// Build test paths in a unique temp directory.
+    ///
+    /// Pre-creates dirs and a default config.toml so `migrate_if_needed()`
+    /// is always skipped — otherwise migration reads from the real system
+    /// config dir and poisons test state.
+    fn test_paths() -> BntoPaths {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        static COUNTER: AtomicU32 = AtomicU32::new(0);
+        let id = COUNTER.fetch_add(1, Ordering::Relaxed);
+        let root = std::env::temp_dir().join(format!("bnto-test-{id}"));
+        let paths = BntoPaths {
+            config: root.join("config"),
+            data: root.join("data"),
+            state: root.join("state"),
+            cache: root.join("cache"),
+        };
+        let _ = paths.ensure_dirs();
+        let _ = TomlConfig::default().save(&paths);
+        paths
+    }
+
     fn default_model() -> AppModel {
-        AppModel::new(ThemeVariant::LosAngeles, None)
+        AppModel::with_paths(ThemeVariant::LosAngeles, None, test_paths())
     }
 
     /// Apply a message to a model on the given screen, return the resulting screen.
@@ -510,10 +618,78 @@ mod tests {
     }
 
     #[test]
-    fn initial_state_is_browser() {
+    fn initial_state_is_home() {
         let app = default_model();
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(!app.should_quit);
+    }
+
+    #[test]
+    fn default_model_uses_isolated_paths() {
+        let app = default_model();
+        let config_path = app.paths.config_file();
+        let real_config = dirs::home_dir()
+            .unwrap()
+            .join(".config")
+            .join("bnto")
+            .join("config.toml");
+        assert_ne!(
+            config_path, real_config,
+            "test models must never write to the real config directory"
+        );
+    }
+
+    // --- Home screen ---
+
+    #[test]
+    fn home_confirm_library_empty_shows_status() {
+        let app = default_model(); // Home, focused=Library, empty library
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Home);
+        assert!(app.status_message.is_some());
+        assert!(app.status_message.unwrap().contains("No recipes"));
+    }
+
+    #[test]
+    fn home_confirm_recipes_navigates_to_detail() {
+        let mut app = default_model();
+        app.home.focused = super::super::screens::home::HomePane::Recipes;
+        let app = update(app, AppMessage::HomeConfirm);
+        // Should navigate to Detail for the first recipe.
+        assert!(matches!(app.screen, Screen::Detail { .. }));
+    }
+
+    #[test]
+    fn home_confirm_navigates_to_settings() {
+        let mut app = default_model();
+        app.home.focused = super::super::screens::home::HomePane::Settings;
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Settings);
+        assert!(app.settings.is_some());
+    }
+
+    #[test]
+    fn home_confirm_new_recipe_sets_status() {
+        let mut app = default_model();
+        app.home.focused = super::super::screens::home::HomePane::NewRecipe;
+        let app = update(app, AppMessage::HomeConfirm);
+        assert_eq!(app.screen, Screen::Home);
+        assert!(app.status_message.is_some());
+        assert!(app.status_message.unwrap().contains("coming soon"));
+    }
+
+    #[test]
+    fn home_message_forwarded() {
+        let app = default_model();
+        assert_eq!(
+            app.home.focused,
+            super::super::screens::home::HomePane::Library
+        );
+        let app = update(app, AppMessage::Home(HomeMessage::NextPane));
+        assert_eq!(
+            app.home.focused,
+            super::super::screens::home::HomePane::Recipes
+        );
     }
 
     // --- Forward navigation (happy path) ---
@@ -554,10 +730,9 @@ mod tests {
     #[test]
     fn back_navigation() {
         let s = "t".to_string();
-        assert_eq!(
-            transition(Screen::Browser, AppMessage::Back),
-            Screen::Browser
-        );
+        assert_eq!(transition(Screen::Home, AppMessage::Back), Screen::Home);
+        assert_eq!(transition(Screen::Library, AppMessage::Back), Screen::Home);
+        assert_eq!(transition(Screen::Browser, AppMessage::Back), Screen::Home);
         assert_eq!(
             transition(Screen::Detail { slug: s.clone() }, AppMessage::Back),
             Screen::Browser
@@ -576,10 +751,7 @@ mod tests {
             transition(Screen::Results { slug: "r".into() }, AppMessage::Back),
             Screen::Browser
         );
-        assert_eq!(
-            transition(Screen::Settings, AppMessage::Back),
-            Screen::Browser
-        );
+        assert_eq!(transition(Screen::Settings, AppMessage::Back), Screen::Home);
     }
 
     // --- Other actions ---
@@ -602,10 +774,7 @@ mod tests {
             transition(Screen::Browser, AppMessage::OpenSettings),
             Screen::Settings
         );
-        assert_eq!(
-            transition(Screen::Settings, AppMessage::Back),
-            Screen::Browser
-        );
+        assert_eq!(transition(Screen::Settings, AppMessage::Back), Screen::Home);
     }
 
     #[test]
@@ -1110,7 +1279,7 @@ mod tests {
         let app = update(default_model(), AppMessage::OpenSettings);
         assert!(app.settings.is_some());
         let app = update(app, AppMessage::Back);
-        assert_eq!(app.screen, Screen::Browser);
+        assert_eq!(app.screen, Screen::Home);
         assert!(app.settings.is_none());
     }
 
@@ -1386,7 +1555,11 @@ mod tests {
     #[test]
     fn new_with_recipe_starts_on_detail() {
         let json = r#"{"name": "Custom", "description": "A custom recipe", "nodes": []}"#;
-        let app = AppModel::new(ThemeVariant::LosAngeles, Some(json.to_string()));
+        let app = AppModel::with_paths(
+            ThemeVariant::LosAngeles,
+            Some(json.to_string()),
+            test_paths(),
+        );
         assert!(matches!(app.screen, Screen::Detail { .. }));
         assert!(app.detail.is_some());
     }
@@ -1399,7 +1572,11 @@ mod tests {
                 {"id": "c", "type": "image-compress", "parameters": {"quality": 50}}
             ]
         }"#;
-        let app = AppModel::new(ThemeVariant::LosAngeles, Some(json.to_string()));
+        let app = AppModel::with_paths(
+            ThemeVariant::LosAngeles,
+            Some(json.to_string()),
+            test_paths(),
+        );
         assert!(matches!(app.screen, Screen::Detail { .. }));
         let detail = app.detail.as_ref().expect("detail populated");
         assert!(
@@ -1409,23 +1586,34 @@ mod tests {
     }
 
     #[test]
-    fn new_with_invalid_recipe_starts_on_browser() {
-        let app = AppModel::new(ThemeVariant::LosAngeles, Some("{bad".to_string()));
-        assert_eq!(app.screen, Screen::Browser);
+    fn new_with_invalid_recipe_starts_on_home() {
+        let app = AppModel::with_paths(
+            ThemeVariant::LosAngeles,
+            Some("{bad".to_string()),
+            test_paths(),
+        );
+        assert_eq!(app.screen, Screen::Home);
         assert!(app.detail.is_none());
     }
 
     // --- BntoPaths wiring + status message ---
 
-    fn test_paths() -> (tempfile::TempDir, super::super::paths::BntoPaths) {
+    /// Like `test_paths()` but returns the TempDir handle to keep it
+    /// alive for tests that read from disk after a save.
+    ///
+    /// Pre-creates a default config.toml so `migrate_if_needed()` is
+    /// always skipped — otherwise migration reads from the real system
+    /// config dir and poisons test state.
+    fn test_paths_with_dir() -> (tempfile::TempDir, BntoPaths) {
         let tmp = tempfile::tempdir().unwrap();
-        let paths = super::super::paths::BntoPaths {
+        let paths = BntoPaths {
             config: tmp.path().join("config"),
             data: tmp.path().join("data"),
             state: tmp.path().join("state"),
             cache: tmp.path().join("cache"),
         };
         paths.ensure_dirs().unwrap();
+        TomlConfig::default().save(&paths).unwrap();
         (tmp, paths)
     }
 
@@ -1437,14 +1625,14 @@ mod tests {
 
     #[test]
     fn app_model_has_paths_field() {
-        let (_tmp, paths) = test_paths();
+        let (_tmp, paths) = test_paths_with_dir();
         let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
         assert_eq!(app.paths.config, paths.config);
     }
 
     #[test]
     fn theme_changed_sets_status_on_save_success() {
-        let (_tmp, paths) = test_paths();
+        let (_tmp, paths) = test_paths_with_dir();
         let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
         let app = update(
             AppModel {
@@ -1462,7 +1650,7 @@ mod tests {
     fn theme_changed_surfaces_save_error() {
         // Create paths pointing to a read-only location to force save failure.
         let tmp = tempfile::tempdir().unwrap();
-        let paths = super::super::paths::BntoPaths {
+        let paths = BntoPaths {
             config: tmp.path().join("nonexistent").join("deep").join("config"),
             data: tmp.path().join("data"),
             state: tmp.path().join("state"),
@@ -1485,7 +1673,7 @@ mod tests {
 
     #[test]
     fn settings_path_confirmed_saves_via_toml_config() {
-        let (_tmp, paths) = test_paths();
+        let (_tmp, paths) = test_paths_with_dir();
         let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
         app = update(app, AppMessage::OpenSettings);
 
@@ -1502,25 +1690,60 @@ mod tests {
         assert_eq!(app.screen, Screen::Settings);
 
         // Verify the config was saved to disk via TOML.
-        let loaded = super::super::toml_config::TomlConfig::load(&paths);
+        let loaded = TomlConfig::load(&paths);
         assert_eq!(loaded.output.dir, Some("/tmp".into()));
     }
 
     #[test]
     fn with_paths_loads_toml_config() {
-        let (_tmp, paths) = test_paths();
+        let (_tmp, paths) = test_paths_with_dir();
 
         // Pre-save a TOML config.
-        let config = super::super::toml_config::TomlConfig {
-            tui: super::super::toml_config::TuiSection {
+        let config = TomlConfig {
+            tui: crate::tui::toml_config::TuiSection {
                 theme: "tokyo".into(),
             },
-            ..super::super::toml_config::TomlConfig::default()
+            ..TomlConfig::default()
         };
         config.save(&paths).unwrap();
 
         let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
         // Should pick up the saved theme from TOML config.
         assert_eq!(app.theme_variant, ThemeVariant::Tokyo);
+    }
+
+    #[test]
+    fn theme_changed_persists_to_disk_and_survives_reload() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        assert_eq!(app.theme_variant, ThemeVariant::LosAngeles);
+
+        // Change theme — should save to disk.
+        let app = update(app, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
+        assert_eq!(app.theme_variant, ThemeVariant::Tokyo);
+        assert!(app.status_message.is_none(), "save should succeed");
+
+        // Simulate restarting the TUI with default CLI args.
+        let reloaded = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        assert_eq!(
+            reloaded.theme_variant,
+            ThemeVariant::Tokyo,
+            "theme should persist across restarts"
+        );
+    }
+
+    #[test]
+    fn telemetry_toggled_persists_to_disk() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        assert!(app.toml_config.telemetry.enabled);
+
+        let app = update(app, AppMessage::TelemetryToggled(false));
+        assert!(!app.toml_config.telemetry.enabled);
+        assert!(app.status_message.is_none(), "save should succeed");
+
+        // Verify on disk.
+        let loaded = TomlConfig::load(&paths);
+        assert!(!loaded.telemetry.enabled);
     }
 }

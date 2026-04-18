@@ -103,10 +103,14 @@ bnto (or bnto tui)
 
 ## Home Screen
 
-The home screen is a simple menu. Clean, intentional, no information overload.
+The home screen is a **centered bento grid** — asymmetric compartments floating in the center of the terminal like a game main menu. See [tui-strategy.md — Home Screen: Centered Bento Grid](tui-strategy.md#home-screen-centered-bento-grid) for the full design vision and ratatui implementation approach.
+
+### Phase 1 (shipped): Simple Menu
+
+The current implementation is a centered text menu with cursor navigation. It works and is functional, but doesn't use the available screen real estate. This is the foundation that Phase 2 builds on.
 
 ```
-╭─ 🍣 bnto ──────────────────────────────────────╮
+╭─ bnto ──────────────────────────────────────────╮
 │                                                  │
 │   My Library           Your recipes              │
 │   Recipes              Browse & discover         │
@@ -116,6 +120,35 @@ The home screen is a simple menu. Clean, intentional, no information overload.
 ╰──────────────────────────────────────────────────╯
   ↑↓ navigate  Enter select  q quit
 ```
+
+### Phase 2 (planned): Centered Bento Grid
+
+The target layout: a centered grid with asymmetric compartments. Library on the left (showing actual recipe names), Recipes catalog on the right with category grouping and search, and action panels (New Recipe, Settings) stacked below the library.
+
+```
+         ╭─────────────────────╮╭──────────────────────────────╮
+         │ ▓▓ MY LIBRARY ▓▓▓▓ ││ ▓▓ RECIPES ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+         │                     ││                              │
+         │  compress-images    ││  IMAGE                       │
+         │  resize-photos      ││   ▸ Compress Images          │
+         │  clean-csv          ││     Resize Photos            │
+         │                     ││     Convert Format           │
+         │  3 recipes          ││  FILE                        │
+         ╰─────────────────────╯│     Rename Files             │
+         ╭─────────────────────╮│     Clean CSV                │
+         │ + New Recipe        ││  VIDEO                       │
+         ╰─────────────────────╯│     Download Video           │
+         ╭─────────────────────╮│                              │
+         │ ⚙ Settings   tokyo ││  / search                    │
+         ╰─────────────────────╯╰──────────────────────────────╯
+```
+
+**Key differences from Phase 1:**
+
+- Content is information-dense — the Library shows actual recipe names, not just "My Library"
+- The Recipes catalog is visible from the home screen with category grouping
+- Navigation is compartment-based (Tab moves focus between panels, j/k within)
+- Falls back to simple menu on small terminals (< 60 cols or < 20 rows)
 
 **Model:**
 

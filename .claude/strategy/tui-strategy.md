@@ -276,6 +276,122 @@ What to steal:
 - **Two-pane layout** — list on left, preview on right
 - **Minimal chrome** — content fills the space, borders are subtle
 
+### 5. Bottom / btm (Rust, 11k stars) — Grid Dashboard
+
+What to steal:
+
+- **Asymmetric grid layout** — variable-sized compartments, not uniform rows/columns
+- **Customizable layout** — users define which panels go where and how large they are
+- **Information density** — every cell of the terminal earns its place, nothing empty
+- **Responsive resizing** — panels reflow sensibly as terminal size changes
+
+### 6. Chess-TUI (Rust) — Game-Like Centered Layout
+
+What to steal:
+
+- **Centered content** — the board is the centerpiece, surrounded by context (captures, move list)
+- **Game menu feel** — not a "terminal app" but a "game running in a terminal"
+- **Chunky visual elements** — pieces rendered as block characters, bold and readable
+- **Focused interaction** — one main area of focus, supporting panels are secondary
+
+### 7. metafates/bento (Go) — Bento Box TUI Framework
+
+What to steal:
+
+- **Literally named after our concept** — "multiple blocks of different sizes side by side"
+- **Compartment-first design** — define the grid, then fill each cell with a component
+- **Mixed constraints** — some cells fixed-width, others proportional
+- **Natural hierarchy** — larger cells for primary content, smaller cells for secondary
+
+---
+
+## Home Screen: Centered Bento Grid
+
+**Design thesis:** The home screen should feel like you're loading into a level of Mini Motorways, not launching a terminal app. Content is centered on screen. Bold block headers use theme accent colors. Every compartment earns its space. The interaction focus is in the center of the screen.
+
+### The Problem
+
+The initial home screen (4-item text menu) is barren. A terminal window is typically 80-120 columns wide and 30-50 rows tall. A 4-line menu centered in that space wastes 90% of the screen. The user feels like they're in a placeholder, not a product.
+
+### The Vision: Asymmetric Bento Compartments
+
+The home screen is a centered bento box grid with asymmetric compartments. Each compartment is a self-contained panel with its own border, header, and content. The grid is not uniform — the primary content (Recipes catalog) gets more space than secondary panels (Library, New Recipe, Settings).
+
+```
+         ╭─────────────────────╮╭──────────────────────────────╮
+         │ ▓▓ MY LIBRARY ▓▓▓▓ ││ ▓▓ RECIPES ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ │
+         │                     ││                              │
+         │  compress-images    ││  IMAGE                       │
+         │  resize-photos      ││   ▸ Compress Images          │
+         │  clean-csv          ││     Resize Photos            │
+         │                     ││     Convert Format           │
+         │  3 recipes          ││  FILE                        │
+         ╰─────────────────────╯│     Rename Files             │
+         ╭─────────────────────╮│     Clean CSV                │
+         │ + New Recipe        ││  VIDEO                       │
+         ╰─────────────────────╯│     Download Video           │
+         ╭─────────────────────╮│                              │
+         │ ⚙ Settings   tokyo ││  / search                    │
+         ╰─────────────────────╯╰──────────────────────────────╯
+```
+
+### Layout Rules
+
+1. **Centered on screen** — use `Rect::centered()` (ratatui 0.29+) to compute a fixed content area in the middle of the terminal, regardless of window size
+2. **Asymmetric columns** — left column is ~35% width (Library, New Recipe, Settings), right column is ~65% (Recipes catalog with search)
+3. **Left column stacks vertically** — Library (flexible height), New Recipe (fixed 3 rows), Settings (fixed 3 rows)
+4. **Right column is one tall panel** — Recipes catalog with category headers and `/` search at the bottom
+5. **Bold block headers** — `▓▓` fill using theme accent color, white text. Each compartment has a visible header bar
+6. **Rounded borders** — `╭╮╰╯` everywhere, never sharp corners
+7. **Content area max-width** — cap at ~80 columns so it doesn't stretch absurdly on ultra-wide terminals
+8. **Min terminal size** — graceful fallback to the simple menu list if terminal is < 60 columns or < 20 rows
+
+### Interaction Model
+
+- **Active compartment** has a highlighted border (theme accent color)
+- **Tab / arrow keys** move focus between compartments
+- **Within a compartment** — j/k navigate items, Enter selects
+- **`/` in Recipes** — activates search mode (same as current browser search)
+- **Library compartment** shows the user's saved recipes (from `~/.local/share/bnto/library/`)
+- **Recipes compartment** shows the predefined catalog grouped by category
+
+### Ratatui Implementation Approach
+
+```rust
+// 1. Center the content area
+let content = area.centered(Constraint::Max(80), Constraint::Max(24));
+
+// 2. Split into two columns (35/65)
+let [left, right] = Layout::horizontal([
+    Constraint::Percentage(35),
+    Constraint::Percentage(65),
+]).areas(content);
+
+// 3. Stack left column: Library (flex), New Recipe (3), Settings (3)
+let [library, new_recipe, settings] = Layout::vertical([
+    Constraint::Min(6),      // Library grows with available space
+    Constraint::Length(3),   // New Recipe — fixed height
+    Constraint::Length(3),   // Settings — fixed height
+]).areas(left);
+
+// 4. Right column is one block: Recipes catalog
+// (right is used directly as the recipes panel area)
+```
+
+### Design Principles
+
+| Principle                  | Application                                                              |
+| -------------------------- | ------------------------------------------------------------------------ |
+| **Information density**    | Every compartment shows real content, not placeholder text               |
+| **Earned space**           | The Recipes catalog gets the most space because it has the most content  |
+| **Progressive disclosure** | Library shows recipe names; select one to enter Detail screen            |
+| **Game-like centering**    | The bento grid floats in the terminal like a game menu, not edge-to-edge |
+| **Theme accent only**      | Headers use accent color, body text uses terminal native `Color::Reset`  |
+
+### Fallback: Small Terminals
+
+If the terminal is too small for the bento grid (< 60 cols or < 20 rows), fall back to the simple centered menu list. This ensures usability on constrained terminals (SSH sessions, small panes in tmux/screen).
+
 ---
 
 ## System Decomposition

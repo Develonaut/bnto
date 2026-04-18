@@ -734,8 +734,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 3 — Home screen + navigation (parallel)
 
-- [ ] `engine/crates/bnto` — **Home screen (main menu)**: `HomeModel` with 4 items (My Library, Recipes, New Recipe, Settings). Library count badge (reads recipe dir file count). Cursor navigation, Enter dispatches screen transition. TEA pattern: pure `update()`, `render()`, key mapping. RED tests: cursor wrap, confirm dispatch, library count (~5 tests)
-- [ ] `engine/crates/bnto` — **App router update**: Add `Screen::Home` and `Screen::Library` to `Screen` enum. Home is the new default screen (replaces Browser). Update back-navigation: Library→Home, Recipes→Home, Settings→Home. Browser screen renamed to Recipes internally. RED tests: new screen transitions, back navigation from all screens (~8 tests)
+- [x] `engine/crates/bnto` — **Home screen (main menu)**: `HomeModel` with 4 items (My Library, Recipes, New Recipe, Settings). Library count badge (reads recipe dir file count). Cursor navigation, Enter dispatches screen transition. TEA pattern: pure `update()`, `render()`, key mapping. RED tests: cursor wrap, confirm dispatch, library count (~5 tests)
+- [x] `engine/crates/bnto` — **App router update**: Add `Screen::Home` and `Screen::Library` to `Screen` enum. Home is the new default screen (replaces Browser). Update back-navigation: Library→Home, Recipes→Home, Settings→Home. Browser screen renamed to Recipes internally. RED tests: new screen transitions, back navigation from all screens (~8 tests)
 
 #### Wave 4 — My Library + CLI default (parallel)
 

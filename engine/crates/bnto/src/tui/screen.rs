@@ -8,7 +8,9 @@ impl Screen {
     /// Display title for the screen's border block.
     pub fn title(&self) -> &'static str {
         match self {
-            Self::Browser => " bnto ",
+            Self::Home => " bnto ",
+            Self::Library => " My Library ",
+            Self::Browser => " Recipes ",
             Self::Detail { .. } => " Recipe Detail ",
             Self::Picker { .. } => " File Picker ",
             Self::Execution { .. } => " Running ",
@@ -20,6 +22,9 @@ impl Screen {
     /// Contextual key hints for the help bar.
     pub fn help_hints(&self) -> Vec<(&'static str, &'static str)> {
         match self {
+            // Home grid renders its own help hints — suppress the global bar.
+            Self::Home => vec![],
+            Self::Library => vec![("Esc", "back"), ("q", "quit")],
             Self::Browser => vec![
                 ("↑↓", "navigate"),
                 ("/", "search"),

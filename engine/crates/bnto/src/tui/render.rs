@@ -10,6 +10,7 @@ use ratatui::widgets::{Block, Paragraph};
 use super::app::{AppModel, Screen};
 use super::render_detail::draw_detail;
 use super::render_execution::draw_execution;
+use super::render_home::draw_home;
 use super::render_picker::draw_picker;
 use super::render_results::draw_results;
 use super::theme::{ROUNDED_BORDERS, Theme};
@@ -18,6 +19,8 @@ use super::widgets::{help_bar, search_input, status_line};
 /// Render the main content area based on the current screen.
 pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     match &model.screen {
+        Screen::Home => draw_home(frame, model, theme, area),
+        Screen::Library => draw_library(frame, model, theme, area),
         Screen::Browser => draw_browser(frame, model, theme, area),
         Screen::Detail { .. } => draw_detail(frame, model, theme, area),
         Screen::Picker { .. } => draw_picker(frame, model, theme, area),
@@ -25,6 +28,23 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
         Screen::Results { .. } => draw_results(frame, model, theme, area),
         Screen::Settings => draw_settings(frame, model, theme, area),
     }
+}
+
+/// Placeholder for the Library screen (Wave 4 implements LibraryModel).
+fn draw_library(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
+    let block = Block::bordered()
+        .title(model.screen.title())
+        .title_style(theme.heading())
+        .border_set(ROUNDED_BORDERS)
+        .border_style(theme.border());
+    let inner = block.inner(area);
+    frame.render_widget(block, area);
+    let lines = vec![
+        Line::from(""),
+        Line::from(Span::styled("  My Library — coming soon", theme.muted())),
+    ];
+    let content = Paragraph::new(lines);
+    frame.render_widget(content, inner);
 }
 
 /// Render the recipe browser — search bar + category-grouped recipe list.
@@ -173,7 +193,12 @@ pub fn draw_help_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme
 }
 
 /// Render the status line with recipe count, version, theme, and optional status message.
+///
+/// Home screen renders its own status info inside the bento grid — skip here.
 pub fn draw_status_line(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
+    if matches!(model.screen, Screen::Home) {
+        return;
+    }
     let recipe_count = model.browser.recipes.len();
     let version = env!("CARGO_PKG_VERSION");
     let theme_name = model.theme_variant.display_name();

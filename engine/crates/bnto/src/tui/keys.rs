@@ -8,6 +8,7 @@ use super::event;
 use super::screens::browser::BrowserMessage;
 use super::screens::detail::DetailMessage;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
+use super::screens::home::HomeMessage;
 use super::screens::picker::PickerMessage;
 use super::screens::results::ResultsMessage;
 use super::screens::settings::SettingsMessage;
@@ -40,12 +41,30 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     }
 
     match &model.screen {
+        Screen::Home => handle_home_key(model, key),
+        Screen::Library => None, // Placeholder — only global keys (q, Esc) apply.
         Screen::Browser => handle_browser_key(model, key),
         Screen::Settings => handle_settings_key(model, key),
         Screen::Detail { .. } => handle_detail_key(model, key),
         Screen::Picker { .. } => handle_picker_key(model, key),
         Screen::Execution { .. } => handle_execution_key(model, key),
         Screen::Results { .. } => handle_results_key(model, key),
+    }
+}
+
+/// Handle key events on the Home screen — 2D pane navigation.
+fn handle_home_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    match key.code {
+        KeyCode::Tab | KeyCode::Char('l') | KeyCode::Right => {
+            Some(AppMessage::Home(HomeMessage::NextPane))
+        }
+        KeyCode::BackTab | KeyCode::Char('h') | KeyCode::Left => {
+            Some(AppMessage::Home(HomeMessage::PrevPane))
+        }
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Home(HomeMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Home(HomeMessage::CursorUp)),
+        KeyCode::Enter => Some(AppMessage::HomeConfirm),
+        _ => None,
     }
 }
 
