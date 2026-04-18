@@ -6,16 +6,19 @@ use super::app::Screen;
 
 impl Screen {
     /// Display title for the screen's border block.
+    ///
+    /// Returns plain names — the `content_panel()` helper handles
+    /// spacing and padding at render time.
     pub fn title(&self) -> &'static str {
         match self {
-            Self::Home => " bnto ",
-            Self::Library => " My Library ",
-            Self::Browser => " Recipes ",
-            Self::Detail { .. } => " Recipe Detail ",
-            Self::Picker { .. } => " File Picker ",
-            Self::Execution { .. } => " Running ",
-            Self::Results { .. } => " Results ",
-            Self::Settings => " Settings ",
+            Self::Home => "bnto",
+            Self::Library => "Library",
+            Self::Browser => "Recipes",
+            Self::Detail { .. } => "Detail",
+            Self::Picker { .. } => "File Picker",
+            Self::Execution { .. } => "Running",
+            Self::Results { .. } => "Results",
+            Self::Settings => "Settings",
         }
     }
 

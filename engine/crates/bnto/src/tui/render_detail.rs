@@ -6,23 +6,17 @@
 use bnto_core::metadata::ParameterType;
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
+use super::render_layout::content_panel;
 use super::screens::controls;
 use super::screens::detail::{DetailModel, is_param_visible};
-use super::theme::{ROUNDED_BORDERS, Theme};
+use super::theme::Theme;
 
 /// Render the recipe detail screen.
 pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let block = Block::bordered()
-        .title(model.screen.title())
-        .title_style(theme.heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme.border());
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
+    let inner = content_panel(frame, theme, area, model.screen.title());
 
     let Some(detail) = &model.detail else {
         let fallback = Paragraph::new("Loading...").style(theme.muted());

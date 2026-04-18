@@ -8,7 +8,8 @@ use ratatui::widgets::{Block, Borders, Paragraph};
 
 use super::app::AppModel;
 use super::render_home_logo::logo_lines;
-use super::render_home_panes::{draw_action_pane, draw_library_pane, draw_recipes_pane, space_out};
+use super::render_home_panes::{draw_action_pane, draw_library_pane, draw_recipes_pane};
+use super::render_layout::{center_rect, space_out};
 use super::screens::home::HomePane;
 use super::theme::{ROUNDED_BORDERS, Theme};
 use super::widgets::{help_bar, status_line};
@@ -90,13 +91,6 @@ pub fn draw_home_grid(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         right_area,
         focused == HomePane::Recipes,
     );
-}
-
-/// Center a rect of given size within a larger area.
-fn center_rect(area: Rect, width: u16, height: u16) -> Rect {
-    let x = area.x + (area.width.saturating_sub(width)) / 2;
-    let y = area.y + (area.height.saturating_sub(height)) / 2;
-    Rect::new(x, y, width.min(area.width), height.min(area.height))
 }
 
 /// Draw the ASCII logo left-aligned in the logo area.

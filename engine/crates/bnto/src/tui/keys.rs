@@ -250,7 +250,7 @@ fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
     match key.code {
         KeyCode::Enter if finished => {
-            if let Screen::Execution { slug } = &model.screen {
+            if let Screen::Execution { slug, .. } = &model.screen {
                 Some(AppMessage::ExecutionComplete { slug: slug.clone() })
             } else {
                 None

@@ -5,15 +5,16 @@
 
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::widgets::Paragraph;
 
 use super::app::{AppModel, Screen};
 use super::render_detail::draw_detail;
 use super::render_execution::draw_execution;
 use super::render_home::draw_home;
+use super::render_layout::content_panel;
 use super::render_picker::draw_picker;
 use super::render_results::draw_results;
-use super::theme::{ROUNDED_BORDERS, Theme};
+use super::theme::Theme;
 use super::widgets::{help_bar, search_input, status_line};
 
 /// Render the main content area based on the current screen.
@@ -32,13 +33,7 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
 
 /// Placeholder for the Library screen (Wave 4 implements LibraryModel).
 fn draw_library(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let block = Block::bordered()
-        .title(model.screen.title())
-        .title_style(theme.heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme.border());
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
+    let inner = content_panel(frame, theme, area, model.screen.title());
     let lines = vec![
         Line::from(""),
         Line::from(Span::styled("  My Library — coming soon", theme.muted())),
@@ -49,14 +44,7 @@ fn draw_library(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
 
 /// Render the recipe browser — search bar + category-grouped recipe list.
 fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let block = Block::bordered()
-        .title(model.screen.title())
-        .title_style(theme.heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme.border());
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
+    let inner = content_panel(frame, theme, area, model.screen.title());
 
     let browser = &model.browser;
     let mut lines: Vec<Line> = Vec::new();
@@ -112,14 +100,7 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
 /// Theme field shows the current variant with left/right arrows.
 /// Path fields show their value (Enter opens file picker to browse).
 fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let block = Block::bordered()
-        .title(model.screen.title())
-        .title_style(theme.heading())
-        .border_set(ROUNDED_BORDERS)
-        .border_style(theme.border());
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
+    let inner = content_panel(frame, theme, area, model.screen.title());
 
     let settings = match &model.settings {
         Some(s) => s,

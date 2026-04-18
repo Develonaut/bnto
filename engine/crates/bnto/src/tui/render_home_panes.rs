@@ -7,15 +7,8 @@ use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
 use super::render_home_grid::pane_block;
+use super::render_layout::space_out;
 use super::theme::Theme;
-
-/// Intersperse characters with spaces for Judo-style spaced-out titles.
-pub fn space_out(s: &str) -> String {
-    s.chars()
-        .map(|c| c.to_uppercase().to_string())
-        .collect::<Vec<_>>()
-        .join(" ")
-}
 
 /// Draw the Library pane — user's saved recipe files.
 pub fn draw_library_pane(
