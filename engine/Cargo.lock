@@ -206,6 +206,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bnto-form"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "ratatui",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "bnto-image"
 version = "0.1.2"
 dependencies = [

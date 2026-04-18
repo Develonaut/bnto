@@ -1,0 +1,26 @@
+# bnto-form — TEA-native ratatui form widgets for Rust TUIs.
+# Standalone crate with zero bnto dependency. Provides TextInput, Select,
+# Confirm, and Number field types with pure-function state transitions
+# and rendering (returns Vec<Line>, not Widget trait impls).
+
+[package]
+name = "bnto-form"
+version = "0.1.0"
+edition = "2024"
+description = "TEA-native ratatui form widgets — TextInput, Select, Confirm, Number with pure-function rendering"
+license = "MIT"
+repository = "https://github.com/Develonaut/bnto"
+homepage = "https://bnto.io"
+readme = "README.md"
+keywords = ["tui", "form", "ratatui", "terminal", "widgets"]
+categories = ["command-line-utilities"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+unicode-segmentation = "1"
+
+[dev-dependencies]
