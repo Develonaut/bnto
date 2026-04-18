@@ -18,6 +18,9 @@ use super::screens::execution::{ExecutionMessage, ExecutionModel, update as exec
 use super::screens::home::{
     HomeConfirmResult, HomeMessage, HomeModel, list_library_recipes, update as home_update,
 };
+use super::screens::library::{
+    LibraryMessage, LibraryModel, load_library_entries, update as library_update,
+};
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
@@ -32,30 +35,19 @@ use super::toml_config::TomlConfig;
 pub enum DetailOrigin {
     Home,
     Browser,
+    Library,
 }
 
 /// Which screen the TUI is currently showing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Screen {
     Home,
-    #[allow(dead_code)] // Wave 4: full Library screen
     Library,
     Browser,
-    Detail {
-        slug: String,
-        from: DetailOrigin,
-    },
-    Picker {
-        slug: String,
-        from: DetailOrigin,
-    },
-    Execution {
-        slug: String,
-        from: DetailOrigin,
-    },
-    Results {
-        slug: String,
-    },
+    Detail { slug: String, from: DetailOrigin },
+    Picker { slug: String, from: DetailOrigin },
+    Execution { slug: String, from: DetailOrigin },
+    Results { slug: String },
     Settings,
 }
 
@@ -68,6 +60,8 @@ pub struct AppModel {
     /// Home screen state (always present — Home is the root screen).
     pub home: HomeModel,
     pub browser: BrowserModel,
+    /// Library screen state — populated when navigating to My Library.
+    pub library: Option<LibraryModel>,
     /// Detail screen state — populated when navigating to a recipe.
     pub detail: Option<DetailModel>,
     /// Picker screen state — populated when navigating to file picker.
@@ -101,6 +95,7 @@ impl std::fmt::Debug for AppModel {
             .field("should_quit", &self.should_quit)
             .field("theme_variant", &self.theme_variant)
             .field("home_focused", &self.home.focused)
+            .field("library", &self.library.is_some())
             .field("detail", &self.detail)
             .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
@@ -139,6 +134,16 @@ pub enum AppMessage {
     Home(HomeMessage),
     /// User confirmed the home screen selection.
     HomeConfirm,
+    /// Navigate to the Library screen.
+    OpenLibrary,
+    /// Forward a message to the library screen.
+    Library(LibraryMessage),
+    /// User confirmed a library selection.
+    LibraryConfirm,
+    /// Add the currently focused browser recipe to the user's library.
+    AddToLibrary,
+    /// User confirmed overwriting an existing library recipe.
+    AddToLibraryConfirm { slug: String },
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
     /// Forward a message to the detail screen.
@@ -237,6 +242,7 @@ impl AppModel {
             theme_variant: effective_variant,
             home: HomeModel::new(library_names),
             browser: BrowserModel::new(),
+            library: None,
             detail,
             picker: None,
             execution: None,
@@ -348,6 +354,15 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                     ..model
                 },
             },
+            HomeConfirmResult::StatusMessage(ref msg) if msg.contains("No recipes") => {
+                // Empty library — still open Library screen to show empty state.
+                let library = Some(LibraryModel::new(vec![]));
+                AppModel {
+                    screen: Screen::Library,
+                    library,
+                    ..model
+                }
+            }
             HomeConfirmResult::StatusMessage(msg) => AppModel {
                 status_message: Some(msg),
                 ..model
@@ -372,18 +387,74 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                     ..model
                 }
             }
-            HomeConfirmResult::LibraryRecipe(slug) => {
-                let detail = DetailModel::from_slug(&slug, &model.registry);
+            HomeConfirmResult::LibraryRecipe(_slug) => {
+                // Navigate to the full Library screen for browse/search/manage.
+                let entries = load_library_entries(&model.paths.recipes_dir());
+                let library = Some(LibraryModel::new(entries));
                 AppModel {
-                    screen: Screen::Detail {
-                        slug,
-                        from: DetailOrigin::Home,
-                    },
-                    detail,
+                    screen: Screen::Library,
+                    library,
                     ..model
                 }
             }
         },
+        AppMessage::OpenLibrary => {
+            let entries = load_library_entries(&model.paths.recipes_dir());
+            let library = Some(LibraryModel::new(entries));
+            AppModel {
+                screen: Screen::Library,
+                library,
+                ..model
+            }
+        }
+        AppMessage::Library(ref msg) => {
+            // Intercept delete/rename confirms to perform file I/O.
+            let status_message = match msg {
+                LibraryMessage::DeleteConfirm => handle_library_delete(&model),
+                LibraryMessage::RenameConfirm => handle_library_rename(&model),
+                _ => None,
+            };
+            let library = model.library.map(|l| library_update(l, msg.clone()));
+            // Refresh home library names after delete.
+            let home = if matches!(msg, LibraryMessage::DeleteConfirm) {
+                let library_names = list_library_recipes(&model.paths.recipes_dir());
+                HomeModel::new(library_names)
+            } else {
+                model.home
+            };
+            AppModel {
+                library,
+                home,
+                status_message: status_message.or(model.status_message),
+                ..model
+            }
+        }
+        AppMessage::LibraryConfirm => {
+            let slug = model
+                .library
+                .as_ref()
+                .and_then(|l| l.confirm())
+                .map(|s| s.slug);
+            match slug {
+                Some(slug) => {
+                    let detail = DetailModel::from_slug(&slug, &model.registry);
+                    AppModel {
+                        screen: Screen::Detail {
+                            slug,
+                            from: DetailOrigin::Library,
+                        },
+                        detail,
+                        ..model
+                    }
+                }
+                None => AppModel {
+                    status_message: Some("No recipe selected".into()),
+                    ..model
+                },
+            }
+        }
+        AppMessage::AddToLibrary => handle_add_to_library(model),
+        AppMessage::AddToLibraryConfirm { slug } => handle_add_to_library_write(model, &slug, true),
         AppMessage::Back => handle_back(model),
         AppMessage::RunAnother => AppModel {
             screen: Screen::Browser,
@@ -568,6 +639,17 @@ fn handle_back(model: AppModel) -> AppModel {
         };
     }
 
+    // Refresh home library count when returning to Home from Library.
+    let home = if matches!(back_screen(&model.screen), Screen::Home) {
+        let library_names = list_library_recipes(&model.paths.recipes_dir());
+        HomeModel::new(library_names)
+    } else {
+        model.home
+    };
+    let library = match &model.screen {
+        Screen::Library => None,
+        _ => model.library,
+    };
     let detail = match &model.screen {
         Screen::Detail { .. } => None,
         _ => model.detail,
@@ -590,6 +672,8 @@ fn handle_back(model: AppModel) -> AppModel {
     };
     AppModel {
         screen: back_screen(&model.screen),
+        home,
+        library,
         detail,
         picker,
         execution,
@@ -613,6 +697,10 @@ fn back_screen(current: &Screen) -> Screen {
             from: DetailOrigin::Browser,
             ..
         } => Screen::Browser,
+        Screen::Detail {
+            from: DetailOrigin::Library,
+            ..
+        } => Screen::Library,
         Screen::Picker { slug, from } => Screen::Detail {
             slug: slug.clone(),
             from: *from,
@@ -620,6 +708,118 @@ fn back_screen(current: &Screen) -> Screen {
         Screen::Execution { .. } => Screen::Home,
         Screen::Results { .. } => Screen::Home,
         Screen::Settings => Screen::Home,
+    }
+}
+
+/// Delete a library recipe file from disk.
+///
+/// Called before `library_update` so `confirming_delete` is still set.
+/// Returns a status message on success or failure.
+fn handle_library_delete(model: &AppModel) -> Option<String> {
+    let lib = model.library.as_ref()?;
+    let idx = lib.confirming_delete?;
+    let entry = lib.entries.get(idx)?;
+    let path = model
+        .paths
+        .recipes_dir()
+        .join(format!("{}.bnto.json", entry.slug));
+    match std::fs::remove_file(&path) {
+        Ok(()) => Some(format!("Deleted '{}'", entry.name)),
+        Err(e) => Some(format!("Failed to delete: {e}")),
+    }
+}
+
+/// Rename a library recipe by updating its JSON name field on disk.
+///
+/// Called before `library_update` so `renaming` is still set.
+/// Reads the JSON, patches the `name` field, writes atomically.
+fn handle_library_rename(model: &AppModel) -> Option<String> {
+    let lib = model.library.as_ref()?;
+    let (idx, new_name) = lib.renaming.as_ref()?;
+    let entry = lib.entries.get(*idx)?;
+    if new_name.is_empty() {
+        return None;
+    }
+
+    let path = model
+        .paths
+        .recipes_dir()
+        .join(format!("{}.bnto.json", entry.slug));
+    let json_str = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) => return Some(format!("Failed to read recipe: {e}")),
+    };
+    let mut doc: serde_json::Value = match serde_json::from_str(&json_str) {
+        Ok(v) => v,
+        Err(e) => return Some(format!("Failed to parse recipe: {e}")),
+    };
+    doc["name"] = serde_json::Value::String(new_name.clone());
+    let updated = serde_json::to_string_pretty(&doc).unwrap_or_default();
+    match super::atomic::atomic_write(&path, updated.as_bytes()) {
+        Ok(()) => Some(format!("Renamed to '{new_name}'")),
+        Err(e) => Some(format!("Failed to rename: {e}")),
+    }
+}
+
+/// Handle "Add to Library" — copies the focused browser recipe to the user's library.
+///
+/// If the file already exists, sets a status message prompting confirmation.
+/// Otherwise writes immediately.
+fn handle_add_to_library(model: AppModel) -> AppModel {
+    let slug = match model.browser.confirm() {
+        Some(r) => r.slug,
+        None => {
+            return AppModel {
+                status_message: Some("No recipe selected".into()),
+                ..model
+            };
+        }
+    };
+
+    let dest = model.paths.recipes_dir().join(format!("{slug}.bnto.json"));
+    if dest.exists() {
+        return AppModel {
+            status_message: Some(format!(
+                "'{slug}' already in library. Press 'A' to replace."
+            )),
+            ..model
+        };
+    }
+
+    handle_add_to_library_write(model, &slug, false)
+}
+
+/// Write a built-in recipe to the user's library directory.
+fn handle_add_to_library_write(model: AppModel, slug: &str, _overwrite: bool) -> AppModel {
+    let recipe = match bnto_engine::recipes::builtin_recipe_by_slug(slug) {
+        Some(r) => r,
+        None => {
+            return AppModel {
+                status_message: Some(format!("Unknown recipe: {slug}")),
+                ..model
+            };
+        }
+    };
+
+    let dest = model.paths.recipes_dir().join(format!("{slug}.bnto.json"));
+    let status_message = match super::atomic::atomic_write(&dest, recipe.definition_json.as_bytes())
+    {
+        Ok(()) => {
+            // Refresh home library count.
+            let name = recipe.name;
+            Some(format!("Added '{name}' to library"))
+        }
+        Err(e) => Some(format!("Failed to save: {e}")),
+    };
+
+    // Refresh home screen library names.
+    let library_names = list_library_recipes(&model.paths.recipes_dir());
+    let home = HomeModel::new(library_names);
+
+    AppModel {
+        home,
+        status_message,
+        ..model
     }
 }
 
@@ -689,12 +889,11 @@ mod tests {
     // --- Home screen ---
 
     #[test]
-    fn home_confirm_library_empty_shows_status() {
+    fn home_confirm_library_empty_opens_library() {
         let app = default_model(); // Home, focused=Library, empty library
         let app = update(app, AppMessage::HomeConfirm);
-        assert_eq!(app.screen, Screen::Home);
-        assert!(app.status_message.is_some());
-        assert!(app.status_message.unwrap().contains("No recipes"));
+        assert_eq!(app.screen, Screen::Library);
+        assert!(app.library.is_some());
     }
 
     #[test]
@@ -1934,5 +2133,157 @@ mod tests {
         // Verify on disk.
         let loaded = TomlConfig::load(&paths);
         assert!(!loaded.telemetry.enabled);
+    }
+
+    // --- Library screen ---
+
+    #[test]
+    fn open_library_populates_model() {
+        let app = update(default_model(), AppMessage::OpenLibrary);
+        assert_eq!(app.screen, Screen::Library);
+        assert!(app.library.is_some());
+    }
+
+    #[test]
+    fn library_confirm_navigates_to_detail() {
+        let (_tmp, paths) = test_paths_with_dir();
+        // Write a recipe file so the library has entries.
+        let recipes_dir = paths.recipes_dir();
+        let _ = std::fs::create_dir_all(&recipes_dir);
+        std::fs::write(
+            recipes_dir.join("compress-images.bnto.json"),
+            bnto_engine::recipes::builtin_recipe_by_slug("compress-images")
+                .unwrap()
+                .definition_json,
+        )
+        .unwrap();
+
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        app = update(app, AppMessage::OpenLibrary);
+        assert!(app.library.as_ref().is_some_and(|l| !l.entries.is_empty()));
+
+        let app = update(app, AppMessage::LibraryConfirm);
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Detail {
+                    from: DetailOrigin::Library,
+                    ..
+                }
+            ),
+            "expected Detail from Library, got {:?}",
+            app.screen
+        );
+    }
+
+    #[test]
+    fn library_confirm_empty_shows_status() {
+        let app = update(default_model(), AppMessage::OpenLibrary);
+        let app = update(app, AppMessage::LibraryConfirm);
+        assert!(app.status_message.is_some());
+    }
+
+    #[test]
+    fn back_from_library_returns_to_home() {
+        let app = update(default_model(), AppMessage::OpenLibrary);
+        let app = update(app, AppMessage::Back);
+        assert_eq!(app.screen, Screen::Home);
+        assert!(app.library.is_none()); // cleaned up
+    }
+
+    #[test]
+    fn back_from_detail_library_origin_returns_to_library() {
+        assert_eq!(
+            transition(
+                Screen::Detail {
+                    slug: "t".into(),
+                    from: DetailOrigin::Library,
+                },
+                AppMessage::Back
+            ),
+            Screen::Library
+        );
+    }
+
+    // --- Add to Library ---
+
+    #[test]
+    fn add_to_library_writes_recipe_file() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        // Navigate to browser and position on first recipe.
+        app.screen = Screen::Browser;
+        let app = update(app, AppMessage::AddToLibrary);
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.contains("Added")),
+            "expected 'Added' status, got: {:?}",
+            app.status_message
+        );
+        // Verify file was written.
+        let first_slug = &app.browser.recipes[0].slug;
+        let path = paths.recipes_dir().join(format!("{first_slug}.bnto.json"));
+        assert!(path.exists(), "recipe file should exist at {path:?}");
+    }
+
+    #[test]
+    fn add_to_library_collision_prompts() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        app.screen = Screen::Browser;
+        // Add once.
+        let app = update(app, AppMessage::AddToLibrary);
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.contains("Added"))
+        );
+        // Add again — should say "already in library".
+        let app = update(app, AppMessage::AddToLibrary);
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.contains("already in library")),
+            "expected collision message, got: {:?}",
+            app.status_message
+        );
+    }
+
+    #[test]
+    fn add_to_library_confirm_overwrites() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        app.screen = Screen::Browser;
+        let slug = app.browser.recipes[0].slug.clone();
+        // Add once.
+        let app = update(app, AppMessage::AddToLibrary);
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.contains("Added"))
+        );
+        // Force overwrite with A key.
+        let app = update(app, AppMessage::AddToLibraryConfirm { slug: slug.clone() });
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.contains("Added")),
+            "expected 'Added' after overwrite, got: {:?}",
+            app.status_message
+        );
+    }
+
+    #[test]
+    fn add_to_library_refreshes_home_library_names() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        assert!(app.home.library_names.is_empty());
+        app.screen = Screen::Browser;
+        let app = update(app, AppMessage::AddToLibrary);
+        assert!(
+            !app.home.library_names.is_empty(),
+            "home library_names should refresh after adding a recipe"
+        );
     }
 }

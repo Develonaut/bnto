@@ -11,6 +11,7 @@ pub mod detail;
 pub(crate) mod detail_loader;
 pub mod execution;
 pub mod home;
+pub mod library;
 pub mod nav_history;
 pub mod picker;
 mod picker_loader;

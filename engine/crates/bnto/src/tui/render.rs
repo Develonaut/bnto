@@ -13,6 +13,7 @@ use super::render_execution::draw_execution;
 use super::render_home::draw_home;
 use super::render_home_logo::logo_lines;
 use super::render_layout::content_panel;
+use super::render_library::draw_library;
 use super::render_picker::draw_picker;
 use super::render_results::draw_results;
 use super::theme::Theme;
@@ -37,17 +38,6 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
         Screen::Results { .. } => draw_results(frame, model, theme, area),
         Screen::Settings => draw_settings(frame, model, theme, area),
     }
-}
-
-/// Placeholder for the Library screen (Wave 4 implements LibraryModel).
-fn draw_library(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
-    let inner = content_panel(frame, theme, area, model.screen.title());
-    let lines = vec![
-        Line::from(""),
-        Line::from(Span::styled("  My Library — coming soon", theme.muted())),
-    ];
-    let content = Paragraph::new(lines);
-    frame.render_widget(content, inner);
 }
 
 /// Render the recipe browser — search bar + category-grouped recipe list.

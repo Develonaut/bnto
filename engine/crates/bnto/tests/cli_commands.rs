@@ -17,12 +17,18 @@ fn test_help_flag() {
 }
 
 #[test]
-fn test_no_subcommand_shows_help() {
+fn test_no_subcommand_launches_tui() {
+    // `bnto` with no args now launches the TUI (equivalent to `bnto tui`).
+    // Without a terminal, the TUI fails with a crossterm/ratatui error.
     let output = Command::new(bnto_bin()).output().unwrap();
-    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
-        stdout.contains("Run .bnto.json recipes"),
-        "Running with no subcommand should print help, got: {stdout}"
+        !output.status.success(),
+        "TUI should fail without a terminal"
+    );
+    assert!(
+        stderr.contains("TUI error"),
+        "Expected TUI error on stderr, got: {stderr}"
     );
 }
 
