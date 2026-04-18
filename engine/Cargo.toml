@@ -12,6 +12,7 @@ members = [
     "crates/bnto-vector",
     "crates/bnto-video",
     "crates/bnto-wasm",
+    "crates/bnto-form",
 ]
 resolver = "2"
 

@@ -771,8 +771,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 1 — Core types + TextInput (sequential)
 
-- [ ] `engine/crates/bnto-form` — **Crate scaffold + core types**: `Cargo.toml`, `Field`, `FieldKind`, `FieldState`, `FormModel`, `FormMessage` enums/structs. `FieldBuilder` for ergonomic construction. RED tests: field creation, builder API, state transitions (~10 tests)
-- [ ] `engine/crates/bnto-form` — **TextInput control + widget**: Cursor operations (grapheme-aware insert/delete, word boundaries, Home/End). Placeholder rendering. Character limit. `Vec<Line>` output. RED tests: cursor math, word jump, placeholder, char limit (~15 tests)
+- [x] `engine/crates/bnto-form` — **Crate scaffold + core types**: `Cargo.toml`, `Field`, `FieldKind`, `FieldState`, `FormModel`, `FormMessage` enums/structs. `FieldBuilder` for ergonomic construction. RED tests: field creation, builder API, state transitions (~10 tests)
+- [x] `engine/crates/bnto-form` — **TextInput control + widget**: Cursor operations (grapheme-aware insert/delete, word boundaries, Home/End). Placeholder rendering. Character limit. `Vec<Line>` output. RED tests: cursor math, word jump, placeholder, char limit (~15 tests)
 
 #### Wave 2 — Select + Confirm + Number (parallel)
 

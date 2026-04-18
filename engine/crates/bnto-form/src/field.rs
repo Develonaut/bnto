@@ -1,0 +1,408 @@
+//! Core field types for bnto-form.
+//!
+//! A `Field` represents one form control — text input, select dropdown,
+//! confirm toggle, or number slider. Each field carries its own state,
+//! value, and optional validation error.
+
+/// Callback that validates a field value. Returns `Some(error_message)` on failure.
+pub type ValidatorFn = fn(&str) -> Option<String>;
+
+/// A single form field with its display metadata, current value, and editing state.
+#[derive(Debug, Clone)]
+pub struct Field {
+    pub id: String,
+    pub label: String,
+    pub kind: FieldKind,
+    pub state: FieldState,
+    pub value: String,
+    pub default: Option<String>,
+    pub description: Option<String>,
+    pub error: Option<String>,
+    pub validator: Option<ValidatorFn>,
+    pub visible: bool,
+}
+
+/// What type of control this field renders as.
+#[derive(Debug, Clone)]
+pub enum FieldKind {
+    Text {
+        placeholder: Option<String>,
+        char_limit: Option<usize>,
+    },
+    Select {
+        options: Vec<SelectOption>,
+        filterable: bool,
+    },
+    Confirm {
+        affirmative: String,
+        negative: String,
+    },
+    Number {
+        min: Option<f64>,
+        max: Option<f64>,
+        step: Option<f64>,
+        suffix: Option<String>,
+    },
+}
+
+/// A select option with separate display label and stored value.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SelectOption {
+    pub value: String,
+    pub label: String,
+}
+
+/// Transient editing state for a field. Idle when not being edited.
+#[derive(Debug, Clone, PartialEq)]
+pub enum FieldState {
+    Idle,
+    TextEditing {
+        buffer: String,
+        cursor: usize,
+    },
+    SelectExpanded {
+        highlight: usize,
+        filter: String,
+        filtered_indices: Vec<usize>,
+    },
+    NumberEditing {
+        buffer: String,
+        cursor: usize,
+    },
+}
+
+// --- FieldBuilder ---
+
+/// Ergonomic builder for constructing fields.
+pub struct FieldBuilder {
+    id: String,
+    label: Option<String>,
+    kind: FieldKind,
+    value: Option<String>,
+    default: Option<String>,
+    description: Option<String>,
+    validator: Option<ValidatorFn>,
+    visible: bool,
+}
+
+impl FieldBuilder {
+    fn new(id: &str, kind: FieldKind) -> Self {
+        Self {
+            id: id.to_string(),
+            label: None,
+            kind,
+            value: None,
+            default: None,
+            description: None,
+            validator: None,
+            visible: true,
+        }
+    }
+
+    pub fn label(mut self, label: &str) -> Self {
+        self.label = Some(label.to_string());
+        self
+    }
+
+    pub fn value(mut self, value: &str) -> Self {
+        self.value = Some(value.to_string());
+        self
+    }
+
+    pub fn default(mut self, default: Option<&str>) -> Self {
+        self.default = default.map(|s| s.to_string());
+        self
+    }
+
+    pub fn description(mut self, desc: Option<&str>) -> Self {
+        self.description = desc.map(|s| s.to_string());
+        self
+    }
+
+    pub fn validator(mut self, v: ValidatorFn) -> Self {
+        self.validator = Some(v);
+        self
+    }
+
+    pub fn visible(mut self, visible: bool) -> Self {
+        self.visible = visible;
+        self
+    }
+
+    pub fn placeholder(mut self, placeholder: &str) -> Self {
+        if let FieldKind::Text {
+            placeholder: ref mut p,
+            ..
+        } = self.kind
+        {
+            *p = Some(placeholder.to_string());
+        }
+        self
+    }
+
+    pub fn char_limit(mut self, limit: usize) -> Self {
+        if let FieldKind::Text {
+            char_limit: ref mut c,
+            ..
+        } = self.kind
+        {
+            *c = Some(limit);
+        }
+        self
+    }
+
+    pub fn filterable(mut self) -> Self {
+        if let FieldKind::Select {
+            filterable: ref mut f,
+            ..
+        } = self.kind
+        {
+            *f = true;
+        }
+        self
+    }
+
+    pub fn range(mut self, min: f64, max: f64) -> Self {
+        if let FieldKind::Number {
+            min: ref mut mi,
+            max: ref mut ma,
+            ..
+        } = self.kind
+        {
+            *mi = Some(min);
+            *ma = Some(max);
+        }
+        self
+    }
+
+    pub fn step(mut self, step: f64) -> Self {
+        if let FieldKind::Number {
+            step: ref mut s, ..
+        } = self.kind
+        {
+            *s = Some(step);
+        }
+        self
+    }
+
+    pub fn suffix(mut self, suffix: &str) -> Self {
+        if let FieldKind::Number {
+            suffix: ref mut su, ..
+        } = self.kind
+        {
+            *su = Some(suffix.to_string());
+        }
+        self
+    }
+
+    pub fn build(self) -> Field {
+        let label = self.label.unwrap_or_else(|| self.id.clone());
+        let value = self.value.unwrap_or_default();
+
+        Field {
+            id: self.id,
+            label,
+            kind: self.kind,
+            state: FieldState::Idle,
+            value,
+            default: self.default,
+            description: self.description,
+            error: None,
+            validator: self.validator,
+            visible: self.visible,
+        }
+    }
+}
+
+// --- Top-level builder functions ---
+
+/// Start building a text input field.
+pub fn text(id: &str) -> FieldBuilder {
+    FieldBuilder::new(
+        id,
+        FieldKind::Text {
+            placeholder: None,
+            char_limit: None,
+        },
+    )
+}
+
+/// Start building a select field.
+pub fn select(id: &str, options: &[(&str, &str)]) -> FieldBuilder {
+    let opts = options
+        .iter()
+        .map(|(value, label)| SelectOption {
+            value: value.to_string(),
+            label: label.to_string(),
+        })
+        .collect();
+    FieldBuilder::new(
+        id,
+        FieldKind::Select {
+            options: opts,
+            filterable: false,
+        },
+    )
+}
+
+/// Start building a confirm (yes/no) field.
+pub fn confirm(id: &str) -> FieldBuilder {
+    FieldBuilder::new(
+        id,
+        FieldKind::Confirm {
+            affirmative: "Yes".to_string(),
+            negative: "No".to_string(),
+        },
+    )
+}
+
+/// Start building a number field.
+pub fn number(id: &str) -> FieldBuilder {
+    FieldBuilder::new(
+        id,
+        FieldKind::Number {
+            min: None,
+            max: None,
+            step: None,
+            suffix: None,
+        },
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_field_builder_text() {
+        let field = text("name").label("Recipe Name").build();
+        assert_eq!(field.id, "name");
+        assert_eq!(field.label, "Recipe Name");
+        assert!(matches!(field.kind, FieldKind::Text { .. }));
+    }
+
+    #[test]
+    fn test_field_builder_text_with_placeholder() {
+        let field = text("name")
+            .placeholder("Enter name")
+            .char_limit(50)
+            .build();
+        match &field.kind {
+            FieldKind::Text {
+                placeholder,
+                char_limit,
+            } => {
+                assert_eq!(placeholder.as_deref(), Some("Enter name"));
+                assert_eq!(*char_limit, Some(50));
+            }
+            _ => panic!("expected Text kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_select() {
+        let field = select("format", &[("jpeg", "JPEG"), ("png", "PNG")])
+            .label("Format")
+            .build();
+        match &field.kind {
+            FieldKind::Select {
+                options,
+                filterable,
+            } => {
+                assert_eq!(options.len(), 2);
+                assert_eq!(options[0].value, "jpeg");
+                assert_eq!(options[0].label, "JPEG");
+                assert!(!filterable);
+            }
+            _ => panic!("expected Select kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_select_filterable() {
+        let field = select("format", &[("a", "A")]).filterable().build();
+        match &field.kind {
+            FieldKind::Select { filterable, .. } => assert!(filterable),
+            _ => panic!("expected Select kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_confirm() {
+        let field = confirm("overwrite").label("Overwrite?").build();
+        match &field.kind {
+            FieldKind::Confirm {
+                affirmative,
+                negative,
+            } => {
+                assert_eq!(affirmative, "Yes");
+                assert_eq!(negative, "No");
+            }
+            _ => panic!("expected Confirm kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_number() {
+        let field = number("quality")
+            .range(1.0, 100.0)
+            .step(5.0)
+            .suffix("%")
+            .build();
+        match &field.kind {
+            FieldKind::Number {
+                min,
+                max,
+                step,
+                suffix,
+            } => {
+                assert_eq!(*min, Some(1.0));
+                assert_eq!(*max, Some(100.0));
+                assert_eq!(*step, Some(5.0));
+                assert_eq!(suffix.as_deref(), Some("%"));
+            }
+            _ => panic!("expected Number kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_defaults() {
+        let field = text("x").build();
+        assert_eq!(field.label, "x"); // falls back to id
+        assert_eq!(field.value, "");
+        assert!(field.default.is_none());
+        assert!(field.description.is_none());
+        assert!(field.error.is_none());
+        assert!(field.validator.is_none());
+    }
+
+    #[test]
+    fn test_field_state_idle_by_default() {
+        let field = text("x").build();
+        assert_eq!(field.state, FieldState::Idle);
+    }
+
+    #[test]
+    fn test_field_visible_by_default() {
+        let field = text("x").build();
+        assert!(field.visible);
+    }
+
+    #[test]
+    fn test_field_builder_with_value_and_default() {
+        let field = text("x")
+            .value("current")
+            .default(Some("fallback"))
+            .description(Some("A description"))
+            .build();
+        assert_eq!(field.value, "current");
+        assert_eq!(field.default.as_deref(), Some("fallback"));
+        assert_eq!(field.description.as_deref(), Some("A description"));
+    }
+
+    #[test]
+    fn test_field_builder_hidden() {
+        let field = text("x").visible(false).build();
+        assert!(!field.visible);
+    }
+}
