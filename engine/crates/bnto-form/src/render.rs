@@ -23,14 +23,9 @@ pub fn render_form(model: &FormModel) -> Vec<Line<'static>> {
 
         let field_lines = match &field.kind {
             crate::field::FieldKind::Text { .. } => widgets::text_input::render(field, focused),
-            // Other field types will be added in Wave 2
-            _ => {
-                let prefix = if focused { "> " } else { "  " };
-                vec![Line::raw(format!(
-                    "{prefix}{}: {}",
-                    field.label, field.value
-                ))]
-            }
+            crate::field::FieldKind::Select { .. } => widgets::select::render(field, focused),
+            crate::field::FieldKind::Confirm { .. } => widgets::confirm::render(field, focused),
+            crate::field::FieldKind::Number { .. } => widgets::number::render(field, focused),
         };
 
         lines.extend(field_lines);
@@ -72,12 +67,18 @@ mod tests {
     }
 
     #[test]
-    fn test_render_form_fallback_for_other_types() {
+    fn test_render_form_all_field_types() {
         let model = FormModel::new(vec![
             confirm("ok").label("Confirm?").value("true").build(),
             number("q").label("Quality").value("80").build(),
         ]);
         let lines = render_form(&model);
         assert!(!lines.is_empty());
+        let all_text: String = lines
+            .iter()
+            .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
+            .collect();
+        assert!(all_text.contains("Confirm?"));
+        assert!(all_text.contains("Quality"));
     }
 }

@@ -776,9 +776,9 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 2 — Select + Confirm + Number (parallel)
 
-- [ ] `engine/crates/bnto-form` — **Select field**: Compact cycling (<=5 options), expanded vertical list with filter (>5). Case-insensitive substring match. Separate display label from stored value. Wrapping navigation. RED tests: cycling, filter, expand/collapse, label/value split (~20 tests)
-- [ ] `engine/crates/bnto-form` — **Confirm field**: Side-by-side Yes/No buttons. Space/arrows/y/n toggle. Custom labels. RED tests: toggle, shortcuts, custom labels (~8 tests)
-- [ ] `engine/crates/bnto-form` — **Number field + tui-slider vendor**: Vendored slider rendering math (~300 lines from tui-slider, adapted to pure-function model). Arrow-key bounded stepping. Text entry mode for precise input. Suffix display. Bounds validation on commit. RED tests: stepping, bounds, text entry, slider rendering (~12 tests)
+- [x] `engine/crates/bnto-form` — **Select field**: Compact cycling (<=5 options), expanded vertical list with filter (>5). Case-insensitive substring match. Separate display label from stored value. Wrapping navigation. RED tests: cycling, filter, expand/collapse, label/value split (~20 tests)
+- [x] `engine/crates/bnto-form` — **Confirm field**: Side-by-side Yes/No buttons. Space/arrows/y/n toggle. Custom labels. RED tests: toggle, shortcuts, custom labels (~8 tests)
+- [x] `engine/crates/bnto-form` — **Number field + tui-slider vendor**: Vendored slider rendering math (~300 lines from tui-slider, adapted to pure-function model). Arrow-key bounded stepping. Text entry mode for precise input. Suffix display. Bounds validation on commit. RED tests: stepping, bounds, text entry, slider rendering (~12 tests)
 
 #### Wave 3 — Validation + Theme + Form API (sequential)
 

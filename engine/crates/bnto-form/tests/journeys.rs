@@ -199,13 +199,13 @@ fn journey_confirm_toggle_space() {
     let model = FormModel::new(vec![confirm("ok").label("Proceed?").value("false").build()]);
 
     let buf = render_to_buffer(&model, W, H);
-    assert_buffer_contains(&buf, "false");
+    assert_buffer_contains(&buf, "[ No ]");
 
     let model = simulate_key(model, char_key(' '));
     assert_eq!(model.fields[0].value, "true");
 
     let buf = render_to_buffer(&model, W, H);
-    assert_buffer_contains(&buf, "true");
+    assert_buffer_contains(&buf, "[ Yes ]");
 
     let model = simulate_key(model, char_key(' '));
     assert_eq!(model.fields[0].value, "false");
@@ -408,6 +408,126 @@ fn journey_number_edit_clamps() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// Select — Rendering
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn journey_select_render_compact_idle() {
+    let model = FormModel::new(vec![
+        select("fmt", &[("jpeg", "JPEG"), ("png", "PNG")])
+            .label("Format")
+            .value("jpeg")
+            .build(),
+    ]);
+
+    // Focused: shows arrows around current label
+    let buf = render_to_buffer(&model, W, H);
+    assert_buffer_contains(&buf, "< JPEG >");
+}
+
+#[test]
+fn journey_select_render_expanded_list() {
+    let model = FormModel::new(vec![
+        select("fmt", &[("jpeg", "JPEG"), ("png", "PNG"), ("webp", "WebP")])
+            .label("Format")
+            .value("jpeg")
+            .build(),
+    ]);
+
+    // Expand the select
+    let model = simulate_key(model, key(KeyCode::Enter));
+    let buf = render_to_buffer(&model, W, H);
+
+    // Should show the filter bar and all options
+    assert_buffer_contains(&buf, "Filter:");
+    assert_buffer_contains(&buf, "JPEG");
+    assert_buffer_contains(&buf, "PNG");
+    assert_buffer_contains(&buf, "WebP");
+}
+
+#[test]
+fn journey_select_filter_renders() {
+    let model = FormModel::new(vec![
+        select("fmt", &[("jpeg", "JPEG"), ("png", "PNG"), ("webp", "WebP")])
+            .label("Format")
+            .value("jpeg")
+            .build(),
+    ]);
+
+    // Expand and type filter "pn"
+    let model = simulate_keys(model, &[key(KeyCode::Enter), char_key('p'), char_key('n')]);
+    let buf = render_to_buffer(&model, W, H);
+
+    // Only PNG should match
+    assert_buffer_contains(&buf, "PNG");
+    assert_buffer_contains(&buf, "(1 of 3)");
+}
+
+// ═══════════════════════════════════════════════════════════
+// Number — Rendering
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn journey_number_render_slider() {
+    let model = FormModel::new(vec![
+        number("q")
+            .label("Quality")
+            .range(0.0, 100.0)
+            .suffix("%")
+            .value("50")
+            .build(),
+    ]);
+
+    let buf = render_to_buffer(&model, W, H);
+    let text = buffer_text(&buf);
+    // Should show slider bar characters
+    assert!(text.contains('█'), "should have filled blocks: {text}");
+    assert!(text.contains('░'), "should have empty blocks: {text}");
+    assert!(
+        text.contains("50%"),
+        "should show value with suffix: {text}"
+    );
+}
+
+#[test]
+fn journey_number_edit_renders_cursor() {
+    let model = FormModel::new(vec![
+        number("q")
+            .label("Quality")
+            .range(0.0, 100.0)
+            .value("80")
+            .build(),
+    ]);
+
+    // Enter text editing mode
+    let model = simulate_key(model, key(KeyCode::Enter));
+    let buf = render_to_buffer(&model, W, H);
+    assert_buffer_contains(&buf, "Quality");
+    assert_buffer_contains(&buf, "80");
+}
+
+// ═══════════════════════════════════════════════════════════
+// Confirm — Rendering
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn journey_confirm_render_buttons() {
+    let model = FormModel::new(vec![
+        confirm("ok").label("Overwrite?").value("true").build(),
+    ]);
+
+    let buf = render_to_buffer(&model, W, H);
+    assert_buffer_contains(&buf, "[ Yes ]");
+    assert_buffer_contains(&buf, "No");
+
+    // Toggle and check reverse
+    let model = simulate_key(model, char_key(' '));
+    let buf = render_to_buffer(&model, W, H);
+    assert_buffer_contains(&buf, "Yes");
+    assert_buffer_contains(&buf, "[ No ]");
+}
+
+// ═══════════════════════════════════════════════════════════
 // Cross-cutting
 // ═══════════════════════════════════════════════════════════
 
@@ -538,10 +658,10 @@ fn journey_mixed_form() {
     let model = simulate_key(model, char_key(' '));
     assert_eq!(model.value("overwrite"), Some("true"));
 
-    // Render final state — all values should appear
+    // Render final state — all values should appear (widgets show labels, not raw values)
     let buf = render_to_buffer(&model, W, H);
     assert_buffer_contains(&buf, "Recipe!");
     assert_buffer_contains(&buf, "90");
-    assert_buffer_contains(&buf, "png");
-    assert_buffer_contains(&buf, "true");
+    assert_buffer_contains(&buf, "PNG"); // select shows label, not value
+    assert_buffer_contains(&buf, "[ Yes ]"); // confirm shows button, not "true"
 }
