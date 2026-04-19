@@ -22,6 +22,16 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
     let mut all_lines: Vec<Line<'static>> = Vec::new();
     let mut field_start_lines: Vec<(usize, usize)> = Vec::new(); // (field_idx, start_line)
 
+    // Collect visible field indices for trailing-spacer logic
+    let visible_indices: Vec<usize> = model
+        .fields
+        .iter()
+        .enumerate()
+        .filter(|(_, f)| f.visible)
+        .map(|(i, _)| i)
+        .collect();
+    let last_visible = visible_indices.last().copied();
+
     for (i, field) in model.fields.iter().enumerate() {
         if !field.visible {
             continue;
@@ -45,8 +55,8 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
         };
         all_lines.extend(field_lines);
 
-        // Description shown only for focused field
-        if focused && let Some(ref desc) = field.description {
+        // Description always shown; muted style for all fields
+        if let Some(ref desc) = field.description {
             all_lines.push(Line::from(vec![
                 Span::raw("    "),
                 Span::styled(desc.clone(), theme.muted()),
@@ -54,6 +64,11 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
         }
 
         field_start_lines.push((i, start));
+
+        // Blank line between fields (not after the last one)
+        if last_visible != Some(i) {
+            all_lines.push(Line::default());
+        }
     }
 
     // Apply viewport scrolling
@@ -163,7 +178,7 @@ mod tests {
     }
 
     #[test]
-    fn test_description_not_shown_when_unfocused() {
+    fn test_description_shown_when_unfocused() {
         let mut model = FormModel::new(vec![
             text("a")
                 .label("Name")
@@ -179,8 +194,8 @@ mod tests {
             .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
             .collect();
         assert!(
-            !all_text.contains("Enter a name"),
-            "unfocused field description should not show"
+            all_text.contains("Enter a name"),
+            "unfocused field description should still show"
         );
     }
 

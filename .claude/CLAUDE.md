@@ -178,6 +178,9 @@ bnto doctor                   # Check external dependencies (yt-dlp, etc.)
 bnto tui                      # Launch interactive TUI (recipe browser, file picker, execution)
 bnto tui --theme tokyo        # TUI with dark theme (los-angeles | tokyo | monaco)
 
+# bnto-form demo
+task form:demo          # Launch kitchen-sink demo TUI for bnto-form
+
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)
 task ui:test            # Run all TS tests

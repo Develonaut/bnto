@@ -62,6 +62,9 @@ pub enum FieldKind {
         max: Option<f64>,
         step: Option<f64>,
         suffix: Option<String>,
+        /// When true, render a visual slider bar alongside the value.
+        /// Best for bounded ranges with intuitive visual mapping (e.g. percentages).
+        slider: bool,
     },
 }
 
@@ -220,6 +223,17 @@ impl FieldBuilder {
         self
     }
 
+    /// Enable a visual slider bar for this number field.
+    pub fn slider(mut self, enabled: bool) -> Self {
+        if let FieldKind::Number {
+            slider: ref mut s, ..
+        } = self.kind
+        {
+            *s = enabled;
+        }
+        self
+    }
+
     pub fn build(self) -> Field {
         let label = self.label.unwrap_or_else(|| self.id.clone());
         let value = self.value.unwrap_or_default();
@@ -290,6 +304,7 @@ pub fn number(id: &str) -> FieldBuilder {
             max: None,
             step: None,
             suffix: None,
+            slider: false,
         },
     )
 }
@@ -380,11 +395,13 @@ mod tests {
                 max,
                 step,
                 suffix,
+                slider,
             } => {
                 assert_eq!(*min, Some(1.0));
                 assert_eq!(*max, Some(100.0));
                 assert_eq!(*step, Some(5.0));
                 assert_eq!(suffix.as_deref(), Some("%"));
+                assert!(!slider, "slider defaults to false");
             }
             _ => panic!("expected Number kind"),
         }
