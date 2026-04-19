@@ -21,6 +21,7 @@ pub mod form;
 pub mod keys;
 pub mod render;
 pub mod theme;
+pub mod validators;
 pub mod widgets;
 
 // --- Public API re-exports ---
@@ -33,3 +34,4 @@ pub use form::{FormMessage, FormModel, update};
 pub use keys::map_key_event;
 pub use render::render_form;
 pub use theme::{DefaultTheme, FormTheme};
+pub use validators::{min_len, not_empty, range};

@@ -782,8 +782,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 3 — Validation + Theme + Form API (sequential)
 
-- [ ] `engine/crates/bnto-form` — **Validation system**: `ValidatorFn` type, built-in validators (`not_empty`, `min_len`, `range`, `pattern`). Inline error rendering. Error clears on next keystroke. RED tests: each validator, error display, clear behavior (~15 tests)
-- [ ] `engine/crates/bnto-form` — **Theme + form-level API**: `FormTheme` trait + `DefaultTheme`. `render_form()` top-level renderer. `map_key_event()` key mapping. Scroll/viewport (auto-scroll focused field into view). Description display on focus. Reset-to-default. RED tests: theme application, scroll, focus management, reset (~15 tests)
+- [x] `engine/crates/bnto-form` — **Validation system**: `ValidatorFn` type, built-in validators (`not_empty`, `min_len`, `range`, `pattern`). Inline error rendering. Error clears on next keystroke. RED tests: each validator, error display, clear behavior (~15 tests)
+- [x] `engine/crates/bnto-form` — **Theme + form-level API**: `FormTheme` trait + `DefaultTheme`. `render_form()` top-level renderer. `map_key_event()` key mapping. Scroll/viewport (auto-scroll focused field into view). Description display on focus. Reset-to-default. RED tests: theme application, scroll, focus management, reset (~15 tests)
 
 #### Wave 4 — bnto integration (sequential)
 

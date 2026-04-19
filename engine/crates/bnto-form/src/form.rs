@@ -29,6 +29,13 @@ impl FormModel {
         }
     }
 
+    /// Set the viewport height. When non-zero, `render_form()` slices output
+    /// to fit and auto-scrolls the focused field into view.
+    pub fn with_viewport(mut self, height: usize) -> Self {
+        self.viewport_height = height;
+        self
+    }
+
     /// Get the currently focused field, if any.
     pub fn focused_field(&self) -> Option<&Field> {
         self.fields.get(self.focused)
@@ -327,7 +334,10 @@ fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
         // Text/Number editing messages (after commit/cancel handled above)
         (FieldKind::Text { .. }, FieldState::TextEditing { .. }, _)
         | (FieldKind::Number { .. }, FieldState::NumberEditing { .. }, _) => {
-            controls::text_input::update(field, msg)
+            let mut updated = controls::text_input::update(field, msg);
+            // Clear error on any keystroke during editing
+            updated.error = None;
+            updated
         }
 
         // Confirm toggle works in Idle
@@ -438,7 +448,7 @@ fn step_number(field: Field, msg: &FormMessage) -> Field {
 }
 
 fn commit_text_edit(field: Field, buffer: String) -> Field {
-    if let Some(validator) = field.validator
+    if let Some(ref validator) = field.validator
         && let Some(err) = validator(&buffer)
     {
         return Field {
@@ -702,24 +712,52 @@ mod tests {
 
     #[test]
     fn test_commit_text_with_validator() {
-        fn not_empty(s: &str) -> Option<String> {
-            if s.is_empty() {
-                Some("Required".to_string())
-            } else {
-                None
-            }
-        }
-        let form = FormModel::new(vec![text("x").validator(not_empty).build()]);
+        let form = FormModel::new(vec![
+            text("x")
+                .validator(std::sync::Arc::new(crate::validators::not_empty))
+                .build(),
+        ]);
         let mut form = update(form, FormMessage::StartEdit);
         form.fields[0].state = FieldState::TextEditing {
             buffer: String::new(),
             cursor: 0,
         };
         let form = update(form, FormMessage::CommitEdit);
-        assert_eq!(form.fields[0].error.as_deref(), Some("Required"));
+        assert_eq!(form.fields[0].error.as_deref(), Some("Cannot be empty"));
         assert!(matches!(
             form.fields[0].state,
             FieldState::TextEditing { .. }
         ));
+    }
+
+    #[test]
+    fn test_error_clears_on_keystroke() {
+        let form = FormModel::new(vec![text("x").required().build()]);
+        // Start editing, set empty buffer, commit to get error
+        let mut form = update(form, FormMessage::StartEdit);
+        form.fields[0].state = FieldState::TextEditing {
+            buffer: String::new(),
+            cursor: 0,
+        };
+        let form = update(form, FormMessage::CommitEdit);
+        assert!(form.fields[0].error.is_some());
+        // Type a character — error should clear
+        let form = update(form, FormMessage::EditChar('a'));
+        assert!(form.fields[0].error.is_none());
+    }
+
+    #[test]
+    fn test_required_builder_shorthand() {
+        let field = text("x").required().build();
+        assert!(field.validator.is_some());
+    }
+
+    #[test]
+    fn test_commit_with_validator_clears_error_on_valid() {
+        let form = FormModel::new(vec![text("x").required().value("initial").build()]);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::CommitEdit);
+        assert!(form.fields[0].error.is_none());
+        assert_eq!(form.fields[0].value, "initial");
     }
 }

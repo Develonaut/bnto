@@ -559,21 +559,11 @@ fn journey_reset_no_default_noop() {
 
 #[test]
 fn journey_validation_error_renders() {
-    fn not_empty(s: &str) -> Option<String> {
-        if s.is_empty() {
-            Some("Required".to_string())
-        } else {
-            None
-        }
-    }
-
-    let model = FormModel::new(vec![
-        text("name").label("Name").validator(not_empty).build(),
-    ]);
+    let model = FormModel::new(vec![text("name").label("Name").required().build()]);
 
     // Enter edit (empty buffer), commit — validation fails, stays in editing
     let model = simulate_keys(model, &[key(KeyCode::Enter), key(KeyCode::Enter)]);
-    assert_eq!(model.fields[0].error.as_deref(), Some("Required"));
+    assert_eq!(model.fields[0].error.as_deref(), Some("Cannot be empty"));
     assert!(matches!(
         model.fields[0].state,
         FieldState::TextEditing { .. }
@@ -583,22 +573,12 @@ fn journey_validation_error_renders() {
     let model = simulate_key(model, key(KeyCode::Esc));
     assert_eq!(model.fields[0].state, FieldState::Idle);
     let buf = render_to_buffer(&model, W, H);
-    assert_buffer_contains(&buf, "Required");
+    assert_buffer_contains(&buf, "Cannot be empty");
 }
 
 #[test]
 fn journey_error_clears_on_success() {
-    fn not_empty(s: &str) -> Option<String> {
-        if s.is_empty() {
-            Some("Required".to_string())
-        } else {
-            None
-        }
-    }
-
-    let model = FormModel::new(vec![
-        text("name").label("Name").validator(not_empty).build(),
-    ]);
+    let model = FormModel::new(vec![text("name").label("Name").required().build()]);
 
     // Trigger validation error
     let model = simulate_keys(model, &[key(KeyCode::Enter), key(KeyCode::Enter)]);
@@ -610,7 +590,7 @@ fn journey_error_clears_on_success() {
     assert_eq!(model.fields[0].value, "x");
 
     let buf = render_to_buffer(&model, W, H);
-    assert_buffer_not_contains(&buf, "Required");
+    assert_buffer_not_contains(&buf, "Cannot be empty");
 }
 
 #[test]

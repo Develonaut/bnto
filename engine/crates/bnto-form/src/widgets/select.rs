@@ -4,29 +4,30 @@
 //! - **Idle**: compact display showing current value with cycle arrows if focused
 //! - **Expanded**: vertical list with highlight, filter bar, and match count
 
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 
 use crate::field::{Field, FieldKind, FieldState};
+use crate::theme::FormTheme;
 
 /// Render a select field as lines of styled spans.
-pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
+pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     match &field.state {
         FieldState::SelectExpanded {
             highlight,
             filter,
             filtered_indices,
-        } => render_expanded(field, *highlight, filter, filtered_indices),
-        _ => render_idle(field, focused),
+        } => render_expanded(field, *highlight, filter, filtered_indices, theme),
+        _ => render_idle(field, focused, theme),
     }
 }
 
-fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
+fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
-        Style::default().add_modifier(Modifier::BOLD)
+        theme.heading()
     } else {
-        Style::default()
+        theme.text()
     };
 
     let options = match &field.kind {
@@ -52,9 +53,9 @@ fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
     ];
 
     if focused {
-        spans.push(Span::styled("< ", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled("< ", theme.muted()));
         spans.push(Span::raw(display.to_string()));
-        spans.push(Span::styled(" >", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(" >", theme.muted()));
     } else {
         spans.push(Span::raw(display.to_string()));
     }
@@ -64,7 +65,7 @@ fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
     if let Some(ref err) = field.error {
         lines.push(Line::from(vec![
             Span::raw("    "),
-            Span::styled(err.clone(), Style::default().fg(Color::Red)),
+            Span::styled(err.clone(), theme.error()),
         ]));
     }
 
@@ -76,13 +77,14 @@ fn render_expanded(
     highlight: usize,
     filter: &str,
     filtered_indices: &[usize],
+    theme: &dyn FormTheme,
 ) -> Vec<Line<'static>> {
     let options = match &field.kind {
         FieldKind::Select { options, .. } => options,
         _ => return vec![],
     };
 
-    let label_style = Style::default().add_modifier(Modifier::BOLD);
+    let label_style = theme.heading();
     let mut lines = vec![];
 
     // Header line with label
@@ -106,15 +108,10 @@ fn render_expanded(
     if filtered_indices.is_empty() {
         lines.push(Line::from(vec![
             Span::raw("    "),
-            Span::styled(
-                "No matches".to_string(),
-                Style::default().fg(Color::DarkGray),
-            ),
+            Span::styled("No matches".to_string(), theme.muted()),
         ]));
     } else {
-        let highlight_style = Style::default()
-            .add_modifier(Modifier::BOLD)
-            .fg(Color::White);
+        let highlight_style = theme.selected();
 
         for (pos, &idx) in filtered_indices.iter().enumerate() {
             if let Some(opt) = options.get(idx) {
@@ -123,7 +120,7 @@ fn render_expanded(
                 let style = if is_highlighted {
                     highlight_style
                 } else {
-                    Style::default()
+                    theme.text()
                 };
                 lines.push(Line::from(vec![
                     Span::raw(marker.to_string()),
@@ -138,10 +135,7 @@ fn render_expanded(
         if showing < total {
             lines.push(Line::from(vec![
                 Span::raw("    "),
-                Span::styled(
-                    format!("({showing} of {total})"),
-                    Style::default().fg(Color::DarkGray),
-                ),
+                Span::styled(format!("({showing} of {total})"), theme.muted()),
             ]));
         }
     }
@@ -153,6 +147,11 @@ fn render_expanded(
 mod tests {
     use super::*;
     use crate::field::select;
+    use crate::theme::DefaultTheme;
+
+    fn theme() -> DefaultTheme {
+        DefaultTheme
+    }
 
     fn line_text(line: &Line) -> String {
         line.spans.iter().map(|s| s.content.as_ref()).collect()
@@ -168,7 +167,7 @@ mod tests {
     #[test]
     fn test_select_idle_focused_shows_arrows() {
         let field = make_select_field("jpeg");
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("< JPEG >"), "got: {text}");
     }
@@ -176,7 +175,7 @@ mod tests {
     #[test]
     fn test_select_idle_unfocused_no_arrows() {
         let field = make_select_field("jpeg");
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("JPEG"));
         assert!(!text.contains("<"), "got: {text}");
@@ -186,23 +185,22 @@ mod tests {
     #[test]
     fn test_select_idle_shows_label_not_value() {
         let field = make_select_field("png");
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("PNG"), "should show label, got: {text}");
-        // "png" is the value, "PNG" is the label — only label should show
     }
 
     #[test]
     fn test_select_idle_focused_prefix() {
         let field = make_select_field("jpeg");
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         assert_eq!(lines[0].spans[0].content.as_ref(), "> ");
     }
 
     #[test]
     fn test_select_idle_unfocused_prefix() {
         let field = make_select_field("jpeg");
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines[0].spans[0].content.as_ref(), "  ");
     }
 
@@ -214,7 +212,7 @@ mod tests {
             filter: String::new(),
             filtered_indices: vec![0, 1, 2],
         };
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let header = line_text(&lines[0]);
         assert!(header.contains("Format"), "got: {header}");
     }
@@ -227,7 +225,7 @@ mod tests {
             filter: "pn".to_string(),
             filtered_indices: vec![1],
         };
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let filter_line = line_text(&lines[1]);
         assert!(filter_line.contains("Filter:"), "got: {filter_line}");
         assert!(filter_line.contains("pn"), "got: {filter_line}");
@@ -241,8 +239,7 @@ mod tests {
             filter: String::new(),
             filtered_indices: vec![0, 1, 2],
         };
-        let lines = render(&field, true);
-        // Line indices: 0=header, 1=filter, 2=JPEG, 3=PNG (highlighted), 4=WebP
+        let lines = render(&field, true, &theme());
         let highlighted = line_text(&lines[3]);
         assert!(
             highlighted.contains("> "),
@@ -265,7 +262,7 @@ mod tests {
             filter: "xyz".to_string(),
             filtered_indices: vec![],
         };
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let all_text: String = lines
             .iter()
             .map(|l| line_text(l))
@@ -280,28 +277,26 @@ mod tests {
         field.state = FieldState::SelectExpanded {
             highlight: 0,
             filter: "p".to_string(),
-            filtered_indices: vec![0, 1, 2], // all match
+            filtered_indices: vec![0, 1, 2],
         };
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let all_text: String = lines
             .iter()
             .map(|l| line_text(l))
             .collect::<Vec<_>>()
             .join("\n");
-        // All 3 match out of 3, so no count line
         assert!(
             !all_text.contains("of 3"),
             "no count when all match: {all_text}"
         );
 
-        // Now filter to 1 match
         let mut field = make_select_field("jpeg");
         field.state = FieldState::SelectExpanded {
             highlight: 0,
             filter: "pn".to_string(),
-            filtered_indices: vec![1], // only PNG
+            filtered_indices: vec![1],
         };
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let all_text: String = lines
             .iter()
             .map(|l| line_text(l))
@@ -311,30 +306,27 @@ mod tests {
     }
 
     #[test]
-    fn test_select_expanded_highlight_style() {
+    fn test_select_expanded_highlight_uses_theme() {
         let mut field = make_select_field("jpeg");
         field.state = FieldState::SelectExpanded {
             highlight: 0,
             filter: String::new(),
             filtered_indices: vec![0, 1, 2],
         };
-        let lines = render(&field, true);
-        // Line 2 is first option (highlighted)
+        let lines = render(&field, true, &theme());
         let option_line = &lines[2];
         let label_span = option_line
             .spans
             .iter()
             .find(|s| s.content.as_ref() == "JPEG");
         assert!(label_span.is_some());
-        let style = label_span.unwrap().style;
-        assert!(style.add_modifier.contains(Modifier::BOLD));
-        assert_eq!(style.fg, Some(Color::White));
+        assert_eq!(label_span.unwrap().style, theme().selected());
     }
 
     #[test]
     fn test_select_unknown_value_shows_raw() {
         let field = select("fmt", &[("a", "Alpha")]).value("unknown").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let text = line_text(&lines[0]);
         assert!(
             text.contains("unknown"),
