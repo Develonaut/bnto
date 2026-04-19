@@ -54,6 +54,12 @@ tasks:
     cmds:
       - cargo run --package bnto -- tui {{.CLI_ARGS}}
 
+  form:demo:
+    desc: Build and launch the bnto-form kitchen-sink demo TUI
+    dir: ./engine
+    cmds:
+      - cargo run --package bnto-form --bin bnto-form-demo
+
   cli:build:
     desc: Build the native CLI binary (release)
     dir: ./engine
