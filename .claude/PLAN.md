@@ -819,8 +819,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 1 — Editor State Model + Recipe I/O (sequential)
 
-- [ ] `engine/crates/bnto-core` — **Editor state model**: `EditorModel` (recipe name, description, nodes vec, selected index, dirty flag, undo/redo stacks, source), `EditorNode`, `EditorSnapshot`, `EditorSource` enum. Pure Rust, no TUI dependency. RED tests: add/remove/reorder nodes, undo/redo, dirty flag, node defaults from metadata (~15 tests)
-- [ ] `engine/crates/bnto-core` — **Recipe file I/O**: Load `.bnto.json` → `EditorModel`, serialize `EditorModel` → `.bnto.json`. Roundtrip fidelity. New recipes default to `settings.iteration: "auto"`. RED tests: load/save roundtrip, invalid JSON error, predefined clone, auto-iteration preservation (~8 tests)
+- [x] `engine/crates/bnto-core` — **Editor state model**: `EditorModel` (recipe name, description, nodes vec, selected index, dirty flag, undo/redo stacks, source), `EditorNode`, `EditorSnapshot`, `EditorSource` enum. Pure Rust, no TUI dependency. RED tests: add/remove/reorder nodes, undo/redo, dirty flag, node defaults from metadata (~15 tests)
+- [x] `engine/crates/bnto-core` — **Recipe file I/O**: Load `.bnto.json` → `EditorModel`, serialize `EditorModel` → `.bnto.json`. Roundtrip fidelity. New recipes default to `settings.iteration: "auto"`. RED tests: load/save roundtrip, invalid JSON error, predefined clone, auto-iteration preservation (~8 tests)
 
 #### Wave 2 — List Editor Screen (parallel)
 
