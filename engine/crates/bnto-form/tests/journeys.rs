@@ -31,18 +31,18 @@ fn journey_tab_navigation() {
     assert_line_contains(&buf, 0, "> ");
     assert_line_contains(&buf, 0, "First");
 
-    // Tab to second field
+    // Tab to second field (row 2 — blank spacer line between fields)
     let model = simulate_key(model, key(KeyCode::Tab));
     assert_eq!(model.focused, 1);
     let buf = render_to_buffer(&model, W, H);
-    assert_line_contains(&buf, 1, "> ");
-    assert_line_contains(&buf, 1, "Second");
+    assert_line_contains(&buf, 2, "> ");
+    assert_line_contains(&buf, 2, "Second");
 
-    // Tab to third
+    // Tab to third (row 4)
     let model = simulate_key(model, key(KeyCode::Tab));
     assert_eq!(model.focused, 2);
     let buf = render_to_buffer(&model, W, H);
-    assert_line_contains(&buf, 2, "> ");
+    assert_line_contains(&buf, 4, "> ");
 
     // Tab wraps to first
     let model = simulate_key(model, key(KeyCode::Tab));

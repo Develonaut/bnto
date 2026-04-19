@@ -15,7 +15,7 @@ use bnto_form::field::{FieldKind, FieldState};
 use bnto_form::{DefaultTheme, FormModel};
 
 const W: u16 = 80;
-const H: u16 = 30;
+const H: u16 = 40;
 
 // ═══════════════════════════════════════════════════════════
 // Field Construction
@@ -92,7 +92,7 @@ fn initial_render_shows_focused_marker() {
 
 #[test]
 fn initial_render_shows_all_visible_labels() {
-    let model = FormModel::new(build_fields());
+    let model = FormModel::new(build_fields()).with_viewport(H as usize);
     let buf = render_to_buffer(&model, W, H);
     let text = buffer_text(&buf);
 
@@ -157,7 +157,7 @@ fn required_field_error_on_empty_commit() {
 
 #[test]
 fn pattern_validator_rejects_no_at() {
-    let mut model = FormModel::new(build_fields());
+    let mut model = FormModel::new(build_fields()).with_viewport(H as usize);
     // Focus email field (index 7)
     for _ in 0..7 {
         model = bnto_form::update(model, bnto_form::FormMessage::FocusNext);

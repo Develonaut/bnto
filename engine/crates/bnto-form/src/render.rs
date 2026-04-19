@@ -22,6 +22,16 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
     let mut all_lines: Vec<Line<'static>> = Vec::new();
     let mut field_start_lines: Vec<(usize, usize)> = Vec::new(); // (field_idx, start_line)
 
+    // Collect visible field indices for trailing-spacer logic
+    let visible_indices: Vec<usize> = model
+        .fields
+        .iter()
+        .enumerate()
+        .filter(|(_, f)| f.visible)
+        .map(|(i, _)| i)
+        .collect();
+    let last_visible = visible_indices.last().copied();
+
     for (i, field) in model.fields.iter().enumerate() {
         if !field.visible {
             continue;
@@ -54,6 +64,11 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
         }
 
         field_start_lines.push((i, start));
+
+        // Blank line between fields (not after the last one)
+        if last_visible != Some(i) {
+            all_lines.push(Line::default());
+        }
     }
 
     // Apply viewport scrolling
