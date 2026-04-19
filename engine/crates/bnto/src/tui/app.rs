@@ -12,7 +12,8 @@ use super::config::TuiConfig;
 use super::migration::migrate_if_needed;
 use super::paths::BntoPaths;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
-use super::screens::detail::{DetailMessage, DetailModel, update as detail_update};
+use super::screens::detail::DetailModel;
+use super::screens::detail_bridge;
 use super::screens::detail_loader::load_detail_from_json;
 use super::screens::execution::{ExecutionMessage, ExecutionModel, update as execution_update};
 use super::screens::home::{
@@ -146,8 +147,8 @@ pub enum AppMessage {
     AddToLibraryConfirm { slug: String },
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
-    /// Forward a message to the detail screen.
-    Detail(DetailMessage),
+    /// Forward a form message to the detail screen's FormModel.
+    DetailForm(bnto_form::FormMessage),
     /// Forward a message to the picker screen.
     Picker(PickerMessage),
     /// Forward a message to the execution screen.
@@ -520,8 +521,26 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             let browser = browser_update(model.browser, msg);
             AppModel { browser, ..model }
         }
-        AppMessage::Detail(msg) => {
-            let detail = model.detail.map(|d| detail_update(d, msg));
+        AppMessage::DetailForm(msg) => {
+            let detail = model.detail.map(|mut d| {
+                // FocusNext at the last visible field → move to Continue button.
+                // FocusPrev on Continue → return focus to form.
+                let at_last = matches!(msg, bnto_form::FormMessage::FocusNext)
+                    && !d.on_continue
+                    && is_at_last_visible_field(&d.form);
+                let leaving_continue =
+                    matches!(msg, bnto_form::FormMessage::FocusPrev) && d.on_continue;
+
+                if at_last {
+                    d.on_continue = true;
+                } else if leaving_continue {
+                    d.on_continue = false;
+                } else if !d.on_continue {
+                    d.form = bnto_form::update(d.form, msg);
+                    detail_bridge::update_visibility(&mut d.form, &d.params);
+                }
+                d
+            });
             AppModel { detail, ..model }
         }
         AppMessage::Picker(msg) => {
@@ -625,6 +644,18 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             ..model
         },
     }
+}
+
+/// Check if the form's focus is on the last visible field.
+fn is_at_last_visible_field(form: &bnto_form::FormModel) -> bool {
+    let last_visible = form
+        .fields
+        .iter()
+        .enumerate()
+        .rev()
+        .find(|(_, f)| f.visible)
+        .map(|(i, _)| i);
+    last_visible == Some(form.focused)
 }
 
 /// Navigate back one screen, clearing the state of the screen we're leaving.
@@ -1351,7 +1382,7 @@ mod tests {
 
     #[test]
     fn param_overrides_survive_detail_through_picker_to_execution() {
-        use super::super::screens::detail::{DetailMessage, DetailModel, ParamEntry};
+        use super::super::screens::detail::{DetailModel, ParamEntry};
         use super::super::screens::picker::{FileEntry, PickerModel};
         use bnto_core::metadata::ParameterType;
         use std::path::PathBuf;
@@ -1398,14 +1429,33 @@ mod tests {
             ..default_model()
         };
 
-        // Edit quality from 80 → 55 via TEA messages.
-        let app = update(app, AppMessage::Detail(DetailMessage::StartEdit));
-        let app = update(app, AppMessage::Detail(DetailMessage::EditBackspace));
-        let app = update(app, AppMessage::Detail(DetailMessage::EditBackspace));
-        let app = update(app, AppMessage::Detail(DetailMessage::EditChar('5')));
-        let app = update(app, AppMessage::Detail(DetailMessage::EditChar('5')));
-        let app = update(app, AppMessage::Detail(DetailMessage::CommitEdit));
-        assert_eq!(app.detail.as_ref().unwrap().params[0].value, "55");
+        // Edit quality from 80 → 55 via bnto-form messages.
+        let app = update(
+            app,
+            AppMessage::DetailForm(bnto_form::FormMessage::StartEdit),
+        );
+        let app = update(
+            app,
+            AppMessage::DetailForm(bnto_form::FormMessage::EditBackspace),
+        );
+        let app = update(
+            app,
+            AppMessage::DetailForm(bnto_form::FormMessage::EditBackspace),
+        );
+        let app = update(
+            app,
+            AppMessage::DetailForm(bnto_form::FormMessage::EditChar('5')),
+        );
+        let app = update(
+            app,
+            AppMessage::DetailForm(bnto_form::FormMessage::EditChar('5')),
+        );
+        let app = update(
+            app,
+            AppMessage::DetailForm(bnto_form::FormMessage::CommitEdit),
+        );
+        // Form field value should be updated (confirm reads from form).
+        assert_eq!(app.detail.as_ref().unwrap().form.fields[0].value, "55");
 
         // Step 2: Confirm config → overrides stored on AppModel.
         let app = update(

@@ -132,7 +132,7 @@ fn run_loop(
             if detail_height > 0 {
                 model = update(
                     model,
-                    AppMessage::Detail(screens::detail::DetailMessage::Resize {
+                    AppMessage::DetailForm(bnto_form::FormMessage::Resize {
                         height: detail_height,
                     }),
                 );
@@ -234,9 +234,9 @@ mod tests {
 
     use super::*;
     use app::{AppMessage, Screen};
+    use bnto_form::FormMessage;
     use config::TuiConfig;
     use screens::browser::BrowserMessage;
-    use screens::detail::DetailMessage;
     use screens::execution::ExecutionMessage;
     use screens::home::HomeMessage;
     use screens::picker::PickerMessage;
@@ -644,7 +644,7 @@ mod tests {
         let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::FocusNext))
+            Some(AppMessage::DetailForm(FormMessage::FocusNext))
         );
     }
 
@@ -654,7 +654,7 @@ mod tests {
         let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::FocusPrev))
+            Some(AppMessage::DetailForm(FormMessage::FocusPrev))
         );
     }
 
@@ -664,12 +664,12 @@ mod tests {
         let down = KeyEvent::new(KeyCode::Down, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, down),
-            Some(AppMessage::Detail(DetailMessage::FocusNext))
+            Some(AppMessage::DetailForm(FormMessage::FocusNext))
         );
         let up = KeyEvent::new(KeyCode::Up, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, up),
-            Some(AppMessage::Detail(DetailMessage::FocusPrev))
+            Some(AppMessage::DetailForm(FormMessage::FocusPrev))
         );
     }
 
@@ -679,7 +679,7 @@ mod tests {
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::StartEdit))
+            Some(AppMessage::DetailForm(FormMessage::StartEdit))
         );
     }
 
@@ -731,8 +731,7 @@ mod tests {
     #[test]
     fn detail_enter_confirms_on_continue_action() {
         let mut model = detail_model();
-        // Focus on the continue action (index = params.len())
-        model.detail.as_mut().unwrap().focused = 2;
+        model.detail.as_mut().unwrap().on_continue = true;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
@@ -742,96 +741,102 @@ mod tests {
         );
     }
 
+    /// Put the detail model's first form field into TextEditing state.
+    fn set_detail_editing(model: &mut AppModel) {
+        let detail = model.detail.as_mut().unwrap();
+        detail.form.fields[0].state = bnto_form::FieldState::TextEditing {
+            buffer: detail.form.fields[0].value.clone(),
+            cursor: detail.form.fields[0].value.len(),
+        };
+    }
+
     #[test]
     fn detail_editing_captures_chars() {
         let mut model = detail_model();
-        model.detail.as_mut().unwrap().editing = true;
+        set_detail_editing(&mut model);
         let key = KeyEvent::new(KeyCode::Char('5'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::EditChar('5')))
+            Some(AppMessage::DetailForm(FormMessage::EditChar('5')))
         );
     }
 
     #[test]
     fn detail_editing_enter_commits() {
         let mut model = detail_model();
-        model.detail.as_mut().unwrap().editing = true;
+        set_detail_editing(&mut model);
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::CommitEdit))
+            Some(AppMessage::DetailForm(FormMessage::CommitEdit))
         );
     }
 
     #[test]
     fn detail_editing_esc_cancels() {
         let mut model = detail_model();
-        model.detail.as_mut().unwrap().editing = true;
+        set_detail_editing(&mut model);
         let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::CancelEdit))
+            Some(AppMessage::DetailForm(FormMessage::CancelEdit))
         );
     }
 
     #[test]
     fn detail_editing_backspace() {
         let mut model = detail_model();
-        model.detail.as_mut().unwrap().editing = true;
+        set_detail_editing(&mut model);
         let key = KeyEvent::new(KeyCode::Backspace, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::EditBackspace))
+            Some(AppMessage::DetailForm(FormMessage::EditBackspace))
         );
     }
 
     #[test]
     fn detail_editing_blocks_global_q() {
         let mut model = detail_model();
-        model.detail.as_mut().unwrap().editing = true;
+        set_detail_editing(&mut model);
         let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
         // 'q' is captured as EditChar, not Quit
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::EditChar('q')))
+            Some(AppMessage::DetailForm(FormMessage::EditChar('q')))
         );
     }
 
     #[test]
-    fn detail_space_toggles_bool() {
-        use bnto_core::metadata::ParameterType;
-        use screens::detail::{DetailModel, ParamEntry};
-
-        let params = vec![ParamEntry {
-            node_id: "n".into(),
-            name: "strip".into(),
-            label: "Strip".into(),
-            value: "true".into(),
-            param_type: ParameterType::Boolean,
-            default: "true".into(),
-            description: None,
-            constraints: None,
-            suffix: None,
-            visible_when: None,
-        }];
-        let model = AppModel {
-            screen: Screen::Detail {
-                slug: "s".into(),
-                from: app::DetailOrigin::Browser,
-            },
-            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
-            ..default_model()
-        };
+    fn detail_space_toggles_confirm() {
+        let model = detail_model();
         let key = KeyEvent::new(KeyCode::Char(' '), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::ToggleBool))
+            Some(AppMessage::DetailForm(FormMessage::ToggleConfirm))
         );
     }
 
     #[test]
-    fn detail_left_right_cycles_enum() {
+    fn detail_left_right_cycles() {
+        // h/l are vim shortcuts that map to CyclePrev/CycleNext unconditionally.
+        // The form's update() handles whether it applies based on field kind.
+        let model = detail_model();
+        let right = KeyEvent::new(KeyCode::Char('l'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, right),
+            Some(AppMessage::DetailForm(FormMessage::CycleNext))
+        );
+        let left = KeyEvent::new(KeyCode::Char('h'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, left),
+            Some(AppMessage::DetailForm(FormMessage::CyclePrev))
+        );
+    }
+
+    #[test]
+    fn detail_arrow_keys_cycle_select() {
+        // Arrow keys fall through to bnto_form::map_key_event which maps them
+        // to CyclePrev/CycleNext for Select/Number fields.
         use bnto_core::metadata::{OptionEntry, ParameterType};
         use screens::detail::{DetailModel, ParamEntry};
 
@@ -869,53 +874,12 @@ mod tests {
         let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, right),
-            Some(AppMessage::Detail(DetailMessage::EnumNext))
+            Some(AppMessage::DetailForm(FormMessage::CycleNext))
         );
         let left = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, left),
-            Some(AppMessage::Detail(DetailMessage::EnumPrev))
-        );
-    }
-
-    #[test]
-    fn detail_left_right_steps_bounded_number() {
-        use bnto_core::metadata::{Constraints, ParameterType};
-        use screens::detail::{DetailModel, ParamEntry};
-
-        let params = vec![ParamEntry {
-            node_id: "n".into(),
-            name: "quality".into(),
-            label: "Quality".into(),
-            value: "80".into(),
-            param_type: ParameterType::Number,
-            default: "80".into(),
-            description: None,
-            constraints: Some(Constraints {
-                min: Some(1.0),
-                max: Some(100.0),
-                required: false,
-            }),
-            suffix: None,
-            visible_when: None,
-        }];
-        let model = AppModel {
-            screen: Screen::Detail {
-                slug: "s".into(),
-                from: app::DetailOrigin::Browser,
-            },
-            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
-            ..default_model()
-        };
-        let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
-        assert_eq!(
-            handle_key(&model, right),
-            Some(AppMessage::Detail(DetailMessage::NumberIncrement))
-        );
-        let left = KeyEvent::new(KeyCode::Left, crossterm::event::KeyModifiers::NONE);
-        assert_eq!(
-            handle_key(&model, left),
-            Some(AppMessage::Detail(DetailMessage::NumberDecrement))
+            Some(AppMessage::DetailForm(FormMessage::CyclePrev))
         );
     }
 
@@ -925,78 +889,19 @@ mod tests {
         let key = KeyEvent::new(KeyCode::Char('d'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::ResetDefault))
+            Some(AppMessage::DetailForm(FormMessage::ResetDefault))
         );
     }
 
     #[test]
-    fn detail_enter_toggles_bool_instead_of_edit() {
-        use bnto_core::metadata::ParameterType;
-        use screens::detail::{DetailModel, ParamEntry};
-
-        let params = vec![ParamEntry {
-            node_id: "n".into(),
-            name: "strip".into(),
-            label: "Strip".into(),
-            value: "true".into(),
-            param_type: ParameterType::Boolean,
-            default: "true".into(),
-            description: None,
-            constraints: None,
-            suffix: None,
-            visible_when: None,
-        }];
-        let model = AppModel {
-            screen: Screen::Detail {
-                slug: "s".into(),
-                from: app::DetailOrigin::Browser,
-            },
-            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
-            ..default_model()
-        };
+    fn detail_enter_starts_edit_on_text_field() {
+        // bnto-form's idle key mapping: Enter → StartEdit (generic).
+        // The form's dispatch handles per-kind behavior internally.
+        let model = detail_model();
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::ToggleBool)),
-            "Enter on bool should toggle, not start edit"
-        );
-    }
-
-    #[test]
-    fn detail_enter_cycles_enum_instead_of_edit() {
-        use bnto_core::metadata::{OptionEntry, ParameterType};
-        use screens::detail::{DetailModel, ParamEntry};
-
-        let params = vec![ParamEntry {
-            node_id: "n".into(),
-            name: "fmt".into(),
-            label: "Format".into(),
-            value: "jpeg".into(),
-            param_type: ParameterType::Enum {
-                options: vec![OptionEntry {
-                    value: "jpeg".into(),
-                    label: "JPEG".into(),
-                }],
-            },
-            default: "jpeg".into(),
-            description: None,
-            constraints: None,
-            suffix: None,
-            visible_when: None,
-        }];
-        let model = AppModel {
-            screen: Screen::Detail {
-                slug: "s".into(),
-                from: app::DetailOrigin::Browser,
-            },
-            detail: Some(DetailModel::from_test_data("s", "n", "d", params)),
-            ..default_model()
-        };
-        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
-        assert_eq!(
-            handle_key(&model, key),
-            Some(AppMessage::Detail(DetailMessage::EnumNext)),
-            "Enter on enum should cycle, not start edit"
+            Some(AppMessage::DetailForm(FormMessage::StartEdit))
         );
     }
 
