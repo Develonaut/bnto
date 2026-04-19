@@ -787,7 +787,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 4 — bnto integration (sequential)
 
-- [ ] `engine/crates/bnto` — **Replace detail screen controls**: Bridge `ParamEntry` -> `bnto_form::Field` via `param_to_field()`. Wire `bnto_form::update()`, `render_form()`, `map_key_event()` into detail screen. Remove old hand-built editing state. `visible_when` stays in bnto layer. RED tests: bridge mapping, detail screen delegation, visibility (~10 tests)
+- [x] `engine/crates/bnto` — **Replace detail screen controls**: Bridge `ParamEntry` -> `bnto_form::Field` via `param_to_field()`. Wire `bnto_form::update()`, `render_form()`, `map_key_event()` into detail screen. Remove old hand-built editing state. `visible_when` stays in bnto layer. RED tests: bridge mapping, detail screen delegation, visibility (~10 tests)
 
 **Sprint 11.5 totals: ~6 PRs, ~105 tests, ~2000-2500 LOC**
 

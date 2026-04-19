@@ -1,12 +1,11 @@
 // Key event routing — maps keys to AppMessages per screen.
 
-use bnto_core::metadata::ParameterType;
 use crossterm::event::{KeyCode, KeyEvent};
 
 use super::app::{AppMessage, AppModel, Screen};
 use super::event;
 use super::screens::browser::BrowserMessage;
-use super::screens::detail::DetailMessage;
+use super::screens::detail_bridge;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::home::HomeMessage;
 use super::screens::library::LibraryMessage;
@@ -35,7 +34,7 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
     // Detail editing mode captures all keys (like browser search mode).
     let detail_editing = matches!(&model.screen, Screen::Detail { .. }
-        if model.detail.as_ref().is_some_and(|d| d.editing));
+        if model.detail.as_ref().is_some_and(|d| detail_bridge::is_form_editing(&d.form)));
     if detail_editing {
         return handle_detail_key(model, key);
     }
@@ -177,85 +176,50 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
 /// Handle key events on the Detail screen.
 ///
-/// When editing a parameter, char keys feed the edit buffer and Enter/Esc
-/// commit or cancel. When not editing, j/k navigate params and Enter starts
-/// editing or confirms when no params exist.
+/// Delegates to `bnto_form::map_key_event` for field editing/navigation,
+/// adds vim-style shortcuts (j/k/h/l/d/Space), and handles app-level
+/// keys (Esc→Back, Tab→ConfigConfirmed, Enter on continue→ConfigConfirmed).
 fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    let editing = model.detail.as_ref().is_some_and(|d| d.editing);
+    use bnto_form::FormMessage;
 
-    if editing {
-        return match key.code {
-            KeyCode::Enter => Some(AppMessage::Detail(DetailMessage::CommitEdit)),
-            KeyCode::Esc => Some(AppMessage::Detail(DetailMessage::CancelEdit)),
-            KeyCode::Backspace => Some(AppMessage::Detail(DetailMessage::EditBackspace)),
-            KeyCode::Char(ch) => Some(AppMessage::Detail(DetailMessage::EditChar(ch))),
-            _ => None,
-        };
+    let detail = model.detail.as_ref()?;
+    let is_editing = detail_bridge::is_form_editing(&detail.form);
+
+    // When a field is in editing mode, delegate everything to bnto-form.
+    if is_editing {
+        return bnto_form::map_key_event(key, &detail.form).map(AppMessage::DetailForm);
     }
 
-    let slug = || {
-        model
-            .detail
-            .as_ref()
-            .map(|d| d.slug.clone())
-            .unwrap_or_default()
-    };
+    let slug = || detail.slug.clone();
 
-    // Peek at the focused param's type for smart key dispatch.
-    let focused_param_type = model
-        .detail
-        .as_ref()
-        .and_then(|d| d.params.get(d.focused))
-        .map(|p| &p.param_type);
-    let has_constraints = model
-        .detail
-        .as_ref()
-        .and_then(|d| d.params.get(d.focused))
-        .is_some_and(|p| p.constraints.is_some());
-
+    // App-level keys that bnto-form doesn't know about.
     match key.code {
-        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Detail(DetailMessage::FocusNext)),
-        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Detail(DetailMessage::FocusPrev)),
-        KeyCode::Char(' ') => Some(AppMessage::Detail(DetailMessage::ToggleBool)),
-        KeyCode::Char('d') => Some(AppMessage::Detail(DetailMessage::ResetDefault)),
-        KeyCode::Char('h') | KeyCode::Left => match focused_param_type {
-            Some(ParameterType::Enum { .. }) => Some(AppMessage::Detail(DetailMessage::EnumPrev)),
-            Some(ParameterType::Number) if has_constraints => {
-                Some(AppMessage::Detail(DetailMessage::NumberDecrement))
-            }
-            _ => None,
-        },
-        KeyCode::Char('l') | KeyCode::Right => match focused_param_type {
-            Some(ParameterType::Enum { .. }) => Some(AppMessage::Detail(DetailMessage::EnumNext)),
-            Some(ParameterType::Number) if has_constraints => {
-                Some(AppMessage::Detail(DetailMessage::NumberIncrement))
-            }
-            _ => None,
-        },
-        KeyCode::Enter => {
-            let on_continue = model
-                .detail
-                .as_ref()
-                .is_some_and(|d| d.is_continue_focused() || d.params.is_empty());
-            if on_continue {
-                Some(AppMessage::ConfigConfirmed { slug: slug() })
-            } else {
-                // Non-text params use inline controls; Enter starts text edit only for String.
-                match focused_param_type {
-                    Some(ParameterType::Boolean) => {
-                        Some(AppMessage::Detail(DetailMessage::ToggleBool))
-                    }
-                    Some(ParameterType::Enum { .. }) => {
-                        Some(AppMessage::Detail(DetailMessage::EnumNext))
-                    }
-                    _ => Some(AppMessage::Detail(DetailMessage::StartEdit)),
-                }
-            }
-        }
-        KeyCode::Tab => Some(AppMessage::ConfigConfirmed { slug: slug() }),
-        KeyCode::Esc => Some(AppMessage::Back),
-        _ => None,
+        KeyCode::Esc => return Some(AppMessage::Back),
+        KeyCode::Tab => return Some(AppMessage::ConfigConfirmed { slug: slug() }),
+        _ => {}
     }
+
+    // Enter on the Continue button or when no params exist.
+    if key.code == KeyCode::Enter && (detail.is_continue_focused() || detail.params.is_empty()) {
+        return Some(AppMessage::ConfigConfirmed { slug: slug() });
+    }
+
+    // Vim-style shortcuts mapped to FormMessage variants.
+    let vim_msg = match key.code {
+        KeyCode::Char('j') => Some(FormMessage::FocusNext),
+        KeyCode::Char('k') => Some(FormMessage::FocusPrev),
+        KeyCode::Char('h') => Some(FormMessage::CyclePrev),
+        KeyCode::Char('l') => Some(FormMessage::CycleNext),
+        KeyCode::Char('d') => Some(FormMessage::ResetDefault),
+        KeyCode::Char(' ') => Some(FormMessage::ToggleConfirm),
+        _ => None,
+    };
+    if let Some(msg) = vim_msg {
+        return Some(AppMessage::DetailForm(msg));
+    }
+
+    // Fall through to bnto-form's idle key mapping (Down/Up arrows, Enter→StartEdit, etc.)
+    bnto_form::map_key_event(key, &detail.form).map(AppMessage::DetailForm)
 }
 
 /// Handle key events on the Picker screen.

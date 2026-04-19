@@ -51,7 +51,7 @@ impl FormModel {
 }
 
 /// All possible user actions across field types.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FormMessage {
     // --- Navigation ---
     FocusNext,

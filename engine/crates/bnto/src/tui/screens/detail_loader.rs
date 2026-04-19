@@ -19,17 +19,16 @@ pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
     let nodes = def["nodes"].as_array()?;
     let params = extract_surfaceable_params(nodes, registry);
 
+    let fields = super::detail_bridge::params_to_fields(&params);
+    let form = bnto_form::FormModel::new(fields);
+
     Some(DetailModel {
         slug: recipe.slug.clone(),
         name: recipe.name.clone(),
         description: recipe.description.clone(),
         params,
-        focused: 0,
-        editing: false,
-        edit_buffer: String::new(),
-        error: None,
-        scroll_offset: 0,
-        viewport_height: 0,
+        form,
+        on_continue: false,
     })
 }
 
@@ -123,17 +122,16 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
     let description = def["description"].as_str().unwrap_or("").to_string();
     let params = extract_surfaceable_params(nodes, registry);
 
+    let fields = super::detail_bridge::params_to_fields(&params);
+    let form = bnto_form::FormModel::new(fields);
+
     Ok(DetailModel {
         slug: "custom".to_string(),
         name,
         description,
         params,
-        focused: 0,
-        editing: false,
-        edit_buffer: String::new(),
-        error: None,
-        scroll_offset: 0,
-        viewport_height: 0,
+        form,
+        on_continue: false,
     })
 }
 
