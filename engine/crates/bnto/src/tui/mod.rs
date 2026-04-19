@@ -462,8 +462,12 @@ mod tests {
     fn settings_left_right_toggles_telemetry_on_telemetry_field() {
         let mut model = settings_model();
         // Focus on field 3 (telemetry, non-editable toggle).
-        model.settings.as_mut().unwrap().focused = 3;
-        // Default value is "On", so right should toggle to Off.
+        let settings = model.settings.as_mut().unwrap();
+        settings.focused = 3;
+        // Explicitly set value to "On" — don't rely on TelemetryConfig::load()
+        // which can be polluted by other tests writing to the global config file.
+        settings.fields[3].value = "On".to_string();
+        // Value is "On", so right should toggle to Off.
         let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, right),
