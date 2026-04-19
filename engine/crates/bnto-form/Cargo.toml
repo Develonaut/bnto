@@ -23,4 +23,8 @@ ratatui = { workspace = true }
 crossterm = { workspace = true }
 unicode-segmentation = "1"
 
+[[bin]]
+name = "bnto-form-demo"
+path = "src/bin/demo/main.rs"
+
 [dev-dependencies]

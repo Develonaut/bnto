@@ -16,6 +16,7 @@
 //! ```
 
 pub mod controls;
+pub mod demo;
 pub mod field;
 pub mod form;
 pub mod keys;
@@ -34,4 +35,4 @@ pub use form::{FormMessage, FormModel, update};
 pub use keys::map_key_event;
 pub use render::render_form;
 pub use theme::{DefaultTheme, FormTheme};
-pub use validators::{min_len, not_empty, range};
+pub use validators::{min_len, not_empty, pattern, range};
