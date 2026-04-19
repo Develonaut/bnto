@@ -474,13 +474,14 @@ fn journey_number_render_slider() {
             .label("Quality")
             .range(0.0, 100.0)
             .suffix("%")
+            .slider(true)
             .value("50")
             .build(),
     ]);
 
     let buf = render_to_buffer(&model, W, H);
     let text = buffer_text(&buf);
-    // Should show slider bar characters
+    // Should show slider bar characters (slider opted in)
     assert!(text.contains('█'), "should have filled blocks: {text}");
     assert!(text.contains('░'), "should have empty blocks: {text}");
     assert!(

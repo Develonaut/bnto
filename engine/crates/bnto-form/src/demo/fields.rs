@@ -62,12 +62,13 @@ pub fn build_fields() -> Vec<Field> {
             .value("false")
             .description(Some("Replace files if they already exist"))
             .build(),
-        // 6. Number — range, step, suffix, default
+        // 6. Number — range, step, suffix, default, slider
         number("quality")
             .label("Quality")
             .range(1.0, 100.0)
             .step(5.0)
             .suffix("%")
+            .slider(true)
             .value("80")
             .default(Some("80"))
             .description(Some("Output quality from 1-100"))

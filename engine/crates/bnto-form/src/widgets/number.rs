@@ -32,11 +32,15 @@ fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<
         theme.text()
     };
 
-    let (min, max, suffix) = match &field.kind {
+    let (min, max, suffix, slider) = match &field.kind {
         FieldKind::Number {
-            min, max, suffix, ..
-        } => (*min, *max, suffix.clone()),
-        _ => (None, None, None),
+            min,
+            max,
+            suffix,
+            slider,
+            ..
+        } => (*min, *max, suffix.clone(), *slider),
+        _ => (None, None, None, false),
     };
 
     let suffix_str = suffix.as_deref().unwrap_or("");
@@ -55,8 +59,9 @@ fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<
         spans.push(Span::raw(display));
     }
 
-    // Slider bar when bounds exist
-    if let (Some(lo), Some(hi)) = (min, max)
+    // Slider bar when explicitly opted in and bounds exist
+    if slider
+        && let (Some(lo), Some(hi)) = (min, max)
         && hi > lo
     {
         let val: f64 = field.value.parse().unwrap_or(lo);
@@ -242,10 +247,11 @@ mod tests {
     }
 
     #[test]
-    fn test_number_slider_present_with_bounds() {
+    fn test_number_slider_present_when_opted_in() {
         let field = number("q")
             .label("Quality")
             .range(0.0, 100.0)
+            .slider(true)
             .value("50")
             .build();
         let lines = render(&field, true, &theme());
@@ -257,8 +263,25 @@ mod tests {
     }
 
     #[test]
+    fn test_number_slider_absent_without_opt_in() {
+        let field = number("q")
+            .label("Quality")
+            .range(0.0, 100.0)
+            .value("50")
+            .build();
+        let lines = render(&field, true, &theme());
+        let text = line_text(&lines[0]);
+        assert!(!text.contains('█'), "slider should be absent: {text}");
+        assert!(!text.contains('░'), "slider should be absent: {text}");
+    }
+
+    #[test]
     fn test_number_slider_absent_without_bounds() {
-        let field = number("q").label("Quality").value("50").build();
+        let field = number("q")
+            .label("Quality")
+            .slider(true)
+            .value("50")
+            .build();
         let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(!text.contains('█'), "slider should be absent: {text}");

@@ -22,10 +22,12 @@ pub fn char_key(ch: char) -> KeyEvent {
     KeyEvent::new(KeyCode::Char(ch), KeyModifiers::NONE)
 }
 
+#[allow(dead_code)]
 pub fn ctrl(code: KeyCode) -> KeyEvent {
     KeyEvent::new(code, KeyModifiers::CONTROL)
 }
 
+#[allow(dead_code)]
 pub fn shift_tab() -> KeyEvent {
     KeyEvent::new(KeyCode::BackTab, KeyModifiers::SHIFT)
 }
