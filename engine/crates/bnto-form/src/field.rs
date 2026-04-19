@@ -4,11 +4,16 @@
 //! confirm toggle, or number slider. Each field carries its own state,
 //! value, and optional validation error.
 
+use std::sync::Arc;
+
 /// Callback that validates a field value. Returns `Some(error_message)` on failure.
-pub type ValidatorFn = fn(&str) -> Option<String>;
+///
+/// Uses `Arc` so validators can capture parameters (e.g., `min_len(3)`)
+/// while remaining `Clone + Send + Sync`.
+pub type ValidatorFn = Arc<dyn Fn(&str) -> Option<String> + Send + Sync>;
 
 /// A single form field with its display metadata, current value, and editing state.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Field {
     pub id: String,
     pub label: String,
@@ -20,6 +25,21 @@ pub struct Field {
     pub error: Option<String>,
     pub validator: Option<ValidatorFn>,
     pub visible: bool,
+}
+
+impl std::fmt::Debug for Field {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Field")
+            .field("id", &self.id)
+            .field("label", &self.label)
+            .field("kind", &self.kind)
+            .field("state", &self.state)
+            .field("value", &self.value)
+            .field("visible", &self.visible)
+            .field("error", &self.error)
+            .field("validator", &self.validator.as_ref().map(|_| "<fn>"))
+            .finish()
+    }
 }
 
 /// What type of control this field renders as.
@@ -122,6 +142,11 @@ impl FieldBuilder {
     pub fn validator(mut self, v: ValidatorFn) -> Self {
         self.validator = Some(v);
         self
+    }
+
+    /// Shorthand for `.validator(Arc::new(not_empty))` — rejects empty values.
+    pub fn required(self) -> Self {
+        self.validator(Arc::new(crate::validators::not_empty))
     }
 
     pub fn visible(mut self, visible: bool) -> Self {

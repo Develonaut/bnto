@@ -4,26 +4,32 @@
 //! Focused + idle: shows value with focus indicator.
 //! Unfocused: shows label + value (or placeholder in muted style).
 
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::field::{Field, FieldKind, FieldState};
+use crate::theme::FormTheme;
 
 /// Render a text field as lines of styled spans.
-pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
+pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
-        Style::default().add_modifier(Modifier::BOLD)
+        theme.heading()
     } else {
-        Style::default()
+        theme.text()
     };
 
     match &field.state {
-        FieldState::TextEditing { buffer, cursor } => {
-            render_editing(prefix, &field.label, label_style, buffer, *cursor)
-        }
-        _ => render_idle(prefix, &field.label, label_style, field, focused),
+        FieldState::TextEditing { buffer, cursor } => render_editing(
+            prefix,
+            &field.label,
+            label_style,
+            buffer,
+            *cursor,
+            &field.error,
+        ),
+        _ => render_idle(prefix, &field.label, label_style, field, theme),
     }
 }
 
@@ -33,14 +39,16 @@ fn render_editing(
     label_style: Style,
     buffer: &str,
     cursor: usize,
+    error: &Option<String>,
 ) -> Vec<Line<'static>> {
-    let graphemes: Vec<&str> = buffer.graphemes(true).collect();
     let cursor_style = Style::default().bg(Color::White).fg(Color::Black);
 
     let mut spans = vec![
         Span::styled(prefix.to_string(), label_style),
         Span::styled(format!("{label}   "), label_style),
     ];
+
+    let graphemes: Vec<&str> = buffer.graphemes(true).collect();
 
     // Text before cursor
     let before: String = graphemes[..cursor].concat();
@@ -51,7 +59,6 @@ fn render_editing(
     // Cursor character (or block at end)
     if cursor < graphemes.len() {
         spans.push(Span::styled(graphemes[cursor].to_string(), cursor_style));
-        // Text after cursor
         let after: String = graphemes[cursor + 1..].concat();
         if !after.is_empty() {
             spans.push(Span::raw(after));
@@ -60,7 +67,16 @@ fn render_editing(
         spans.push(Span::styled(" ".to_string(), cursor_style));
     }
 
-    vec![Line::from(spans)]
+    let mut lines = vec![Line::from(spans)];
+
+    if let Some(err) = error {
+        lines.push(Line::from(vec![
+            Span::raw("    "),
+            Span::styled(err.clone(), Style::default().fg(Color::Red)),
+        ]));
+    }
+
+    lines
 }
 
 fn render_idle(
@@ -68,7 +84,7 @@ fn render_idle(
     label: &str,
     label_style: Style,
     field: &Field,
-    _focused: bool,
+    theme: &dyn FormTheme,
 ) -> Vec<Line<'static>> {
     let placeholder = match &field.kind {
         FieldKind::Text { placeholder, .. } => placeholder.as_deref(),
@@ -77,11 +93,11 @@ fn render_idle(
 
     let value_display = if field.value.is_empty() {
         match placeholder {
-            Some(ph) => Span::styled(ph.to_string(), Style::default().fg(Color::DarkGray)),
+            Some(ph) => Span::styled(ph.to_string(), theme.muted()),
             None => Span::raw(String::new()),
         }
     } else {
-        Span::styled(field.value.clone(), Style::default())
+        Span::styled(field.value.clone(), theme.text())
     };
 
     let mut lines = vec![Line::from(vec![
@@ -90,11 +106,10 @@ fn render_idle(
         value_display,
     ])];
 
-    // Show error below if present
     if let Some(ref err) = field.error {
         lines.push(Line::from(vec![
             Span::raw("    "),
-            Span::styled(err.clone(), Style::default().fg(Color::Red)),
+            Span::styled(err.clone(), theme.error()),
         ]));
     }
 
@@ -105,11 +120,16 @@ fn render_idle(
 mod tests {
     use super::*;
     use crate::field::text;
+    use crate::theme::DefaultTheme;
+
+    fn theme() -> DefaultTheme {
+        DefaultTheme
+    }
 
     #[test]
     fn test_render_idle_with_value() {
         let field = text("name").label("Name").value("hello").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines.len(), 1);
         let text: String = lines[0].spans.iter().map(|s| s.content.as_ref()).collect();
         assert!(text.contains("Name"));
@@ -119,7 +139,7 @@ mod tests {
     #[test]
     fn test_render_idle_with_placeholder() {
         let field = text("name").label("Name").placeholder("Enter name").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let text: String = lines[0].spans.iter().map(|s| s.content.as_ref()).collect();
         assert!(text.contains("Enter name"));
     }
@@ -127,7 +147,7 @@ mod tests {
     #[test]
     fn test_render_focused_prefix() {
         let field = text("name").label("Name").value("x").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let first_span = &lines[0].spans[0];
         assert_eq!(first_span.content.as_ref(), "> ");
     }
@@ -135,7 +155,7 @@ mod tests {
     #[test]
     fn test_render_unfocused_prefix() {
         let field = text("name").label("Name").value("x").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let first_span = &lines[0].spans[0];
         assert_eq!(first_span.content.as_ref(), "  ");
     }
@@ -147,8 +167,7 @@ mod tests {
             buffer: "abc".to_string(),
             cursor: 1,
         };
-        let lines = render(&field, true);
-        // The cursor character should have a distinct style (bg=White, fg=Black)
+        let lines = render(&field, true, &theme());
         let spans = &lines[0].spans;
         let cursor_span = spans.iter().find(|s| s.content.as_ref() == "b");
         assert!(cursor_span.is_some());
@@ -164,8 +183,7 @@ mod tests {
             buffer: "abc".to_string(),
             cursor: 3,
         };
-        let lines = render(&field, true);
-        // Should show a space block cursor at the end
+        let lines = render(&field, true, &theme());
         let spans = &lines[0].spans;
         let last_styled = spans.last().unwrap();
         assert_eq!(last_styled.content.as_ref(), " ");
@@ -176,7 +194,7 @@ mod tests {
     fn test_render_error_line() {
         let mut field = text("name").label("Name").build();
         field.error = Some("Required".to_string());
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines.len(), 2);
         let err_text: String = lines[1].spans.iter().map(|s| s.content.as_ref()).collect();
         assert!(err_text.contains("Required"));
@@ -185,9 +203,8 @@ mod tests {
     #[test]
     fn test_render_empty_no_placeholder() {
         let field = text("name").label("Name").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines.len(), 1);
-        // Just label, no placeholder text
         let text: String = lines[0].spans.iter().map(|s| s.content.as_ref()).collect();
         assert!(text.contains("Name"));
     }

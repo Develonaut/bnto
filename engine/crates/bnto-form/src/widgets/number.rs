@@ -4,31 +4,32 @@
 //! Idle + unfocused: `  Label   80%`
 //! Editing: cursor-tracked text input (delegates to text_input rendering pattern)
 
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::field::{Field, FieldKind, FieldState};
+use crate::theme::FormTheme;
 
 /// Default slider bar width in terminal columns.
 const SLIDER_WIDTH: u16 = 16;
 
 /// Render a number field as lines of styled spans.
-pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
+pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     match &field.state {
         FieldState::NumberEditing { buffer, cursor } => {
-            render_editing(field, focused, buffer, *cursor)
+            render_editing(field, buffer, *cursor, theme)
         }
-        _ => render_idle(field, focused),
+        _ => render_idle(field, focused, theme),
     }
 }
 
-fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
+fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
-        Style::default().add_modifier(Modifier::BOLD)
+        theme.heading()
     } else {
-        Style::default()
+        theme.text()
     };
 
     let (min, max, suffix) = match &field.kind {
@@ -47,9 +48,9 @@ fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
     ];
 
     if focused {
-        spans.push(Span::styled("< ", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled("< ", theme.muted()));
         spans.push(Span::raw(display));
-        spans.push(Span::styled(" >", Style::default().fg(Color::DarkGray)));
+        spans.push(Span::styled(" >", theme.muted()));
     } else {
         spans.push(Span::raw(display));
     }
@@ -68,7 +69,7 @@ fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
     if let Some(ref err) = field.error {
         lines.push(Line::from(vec![
             Span::raw("    "),
-            Span::styled(err.clone(), Style::default().fg(Color::Red)),
+            Span::styled(err.clone(), theme.error()),
         ]));
     }
 
@@ -77,11 +78,11 @@ fn render_idle(field: &Field, focused: bool) -> Vec<Line<'static>> {
 
 fn render_editing(
     field: &Field,
-    _focused: bool,
     buffer: &str,
     cursor: usize,
+    theme: &dyn FormTheme,
 ) -> Vec<Line<'static>> {
-    let label_style = Style::default().add_modifier(Modifier::BOLD);
+    let label_style = theme.heading();
     let cursor_style = Style::default().bg(Color::White).fg(Color::Black);
 
     let graphemes: Vec<&str> = buffer.graphemes(true).collect();
@@ -113,7 +114,7 @@ fn render_editing(
     if let Some(ref err) = field.error {
         lines.push(Line::from(vec![
             Span::raw("    "),
-            Span::styled(err.clone(), Style::default().fg(Color::Red)),
+            Span::styled(err.clone(), theme.error()),
         ]));
     }
 
@@ -142,14 +143,12 @@ fn render_slider_bar(ratio: f64, width: u16) -> String {
     let full_blocks = total_eighths / 8;
     let remainder = total_eighths % 8;
 
-    let mut bar = String::with_capacity(width as usize * 3); // UTF-8 chars up to 3 bytes
+    let mut bar = String::with_capacity(width as usize * 3);
 
-    // Full blocks
     for _ in 0..full_blocks.min(width as usize) {
         bar.push('█');
     }
 
-    // Partial block at the boundary
     if full_blocks < width as usize && remainder > 0 {
         let partial = match remainder {
             1 => '▏',
@@ -164,7 +163,6 @@ fn render_slider_bar(ratio: f64, width: u16) -> String {
         bar.push(partial);
     }
 
-    // Empty portion
     let filled_count = full_blocks + if remainder > 0 { 1 } else { 0 };
     for _ in filled_count..width as usize {
         bar.push('░');
@@ -177,6 +175,11 @@ fn render_slider_bar(ratio: f64, width: u16) -> String {
 mod tests {
     use super::*;
     use crate::field::number;
+    use crate::theme::DefaultTheme;
+
+    fn theme() -> DefaultTheme {
+        DefaultTheme
+    }
 
     fn line_text(line: &Line) -> String {
         line.spans.iter().map(|s| s.content.as_ref()).collect()
@@ -190,7 +193,7 @@ mod tests {
             .suffix("%")
             .value("80")
             .build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("< 80% >"), "got: {text}");
     }
@@ -202,7 +205,7 @@ mod tests {
             .range(0.0, 100.0)
             .value("80")
             .build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("< 80 >"), "got: {text}");
     }
@@ -210,7 +213,7 @@ mod tests {
     #[test]
     fn test_number_idle_no_bounds_no_arrows_unfocused() {
         let field = number("q").label("Quality").value("80").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("80"));
         assert!(!text.contains("<"), "got: {text}");
@@ -219,7 +222,7 @@ mod tests {
     #[test]
     fn test_number_idle_focused_has_arrows() {
         let field = number("q").label("Quality").value("80").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("< 80 >"), "got: {text}");
     }
@@ -227,14 +230,14 @@ mod tests {
     #[test]
     fn test_number_idle_focused_prefix() {
         let field = number("q").label("Quality").value("80").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         assert_eq!(lines[0].spans[0].content.as_ref(), "> ");
     }
 
     #[test]
     fn test_number_idle_unfocused_prefix() {
         let field = number("q").label("Quality").value("80").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines[0].spans[0].content.as_ref(), "  ");
     }
 
@@ -245,7 +248,7 @@ mod tests {
             .range(0.0, 100.0)
             .value("50")
             .build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(
             text.contains('█') || text.contains('░'),
@@ -256,7 +259,7 @@ mod tests {
     #[test]
     fn test_number_slider_absent_without_bounds() {
         let field = number("q").label("Quality").value("50").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(!text.contains('█'), "slider should be absent: {text}");
         assert!(!text.contains('░'), "slider should be absent: {text}");
@@ -273,8 +276,7 @@ mod tests {
             buffer: "80".to_string(),
             cursor: 1,
         };
-        let lines = render(&field, true);
-        // Should show cursor on '0'
+        let lines = render(&field, true, &theme());
         let spans = &lines[0].spans;
         let cursor_span = spans.iter().find(|s| s.content.as_ref() == "0");
         assert!(cursor_span.is_some(), "cursor span missing");
@@ -288,7 +290,7 @@ mod tests {
             buffer: "80".to_string(),
             cursor: 2,
         };
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let spans = &lines[0].spans;
         let last = spans.last().unwrap();
         assert_eq!(last.content.as_ref(), " ");
@@ -318,12 +320,10 @@ mod tests {
 
     #[test]
     fn test_slider_bar_partial_block() {
-        // 0.3125 = 2.5/8 of width=8 → 2 full + partial block + 5 empty = 8 chars
         let bar = render_slider_bar(0.3125, 8);
         assert_eq!(bar.chars().count(), 8);
         let full_count = bar.chars().filter(|c| *c == '█').count();
         assert_eq!(full_count, 2);
-        // Should have a partial block character
         let has_partial = bar.chars().any(|c| "▏▎▍▌▋▊▉".contains(c));
         assert!(has_partial, "should have partial block: {bar}");
     }
@@ -352,7 +352,7 @@ mod tests {
     fn test_number_error_renders() {
         let mut field = number("q").label("Quality").value("80").build();
         field.error = Some("Out of range".to_string());
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines.len(), 2);
         let err_text = line_text(&lines[1]);
         assert!(err_text.contains("Out of range"));

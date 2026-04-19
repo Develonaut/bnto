@@ -10,7 +10,7 @@ use ratatui::buffer::Buffer;
 use ratatui::text::Text;
 use ratatui::widgets::Paragraph;
 
-use bnto_form::{FormMessage, FormModel, map_key_event, render_form, update};
+use bnto_form::{DefaultTheme, FormMessage, FormModel, map_key_event, render_form, update};
 
 // --- Key constructors ---
 
@@ -56,7 +56,7 @@ pub fn render_to_buffer(model: &FormModel, width: u16, height: u16) -> Buffer {
     let mut terminal = Terminal::new(backend).expect("terminal creation failed");
     terminal
         .draw(|frame| {
-            let lines = render_form(model);
+            let lines = render_form(model, &DefaultTheme);
             let text = Text::from(lines);
             let paragraph = Paragraph::new(text);
             frame.render_widget(paragraph, frame.area());

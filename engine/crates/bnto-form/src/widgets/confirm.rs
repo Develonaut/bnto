@@ -3,18 +3,18 @@
 //! Focused: `> Label   [ Yes ]  No` or `> Label   Yes  [ No ]`
 //! Unfocused: `  Label   Yes` or `  Label   No`
 
-use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 
 use crate::field::{Field, FieldKind};
+use crate::theme::FormTheme;
 
 /// Render a confirm field as lines of styled spans.
-pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
+pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
-        Style::default().add_modifier(Modifier::BOLD)
+        theme.heading()
     } else {
-        Style::default()
+        theme.text()
     };
 
     let (affirmative, negative) = match &field.kind {
@@ -32,10 +32,8 @@ pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
         Span::styled(format!("{}   ", field.label), label_style),
     ];
 
-    let active_style = Style::default()
-        .add_modifier(Modifier::BOLD)
-        .fg(Color::White);
-    let inactive_style = Style::default().fg(Color::DarkGray);
+    let active_style = theme.selected();
+    let inactive_style = theme.muted();
 
     if is_true {
         spans.push(Span::styled(format!("[ {affirmative} ]"), active_style));
@@ -52,7 +50,7 @@ pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
     if let Some(ref err) = field.error {
         lines.push(Line::from(vec![
             Span::raw("    "),
-            Span::styled(err.clone(), Style::default().fg(Color::Red)),
+            Span::styled(err.clone(), theme.error()),
         ]));
     }
 
@@ -63,6 +61,11 @@ pub fn render(field: &Field, focused: bool) -> Vec<Line<'static>> {
 mod tests {
     use super::*;
     use crate::field::confirm;
+    use crate::theme::DefaultTheme;
+
+    fn theme() -> DefaultTheme {
+        DefaultTheme
+    }
 
     fn line_text(line: &Line) -> String {
         line.spans.iter().map(|s| s.content.as_ref()).collect()
@@ -71,7 +74,7 @@ mod tests {
     #[test]
     fn test_confirm_render_true() {
         let field = confirm("ok").label("Overwrite?").value("true").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("[ Yes ]"));
         assert!(text.contains("No"));
@@ -81,7 +84,7 @@ mod tests {
     #[test]
     fn test_confirm_render_false() {
         let field = confirm("ok").label("Overwrite?").value("false").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("[ No ]"));
         assert!(text.contains("Yes"));
@@ -99,7 +102,7 @@ mod tests {
             *affirmative = "Proceed".to_string();
             *negative = "Abort".to_string();
         }
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         let text = line_text(&lines[0]);
         assert!(text.contains("[ Proceed ]"));
         assert!(text.contains("Abort"));
@@ -108,48 +111,45 @@ mod tests {
     #[test]
     fn test_confirm_render_focused_prefix() {
         let field = confirm("ok").label("Ok?").value("true").build();
-        let lines = render(&field, true);
+        let lines = render(&field, true, &theme());
         assert_eq!(lines[0].spans[0].content.as_ref(), "> ");
     }
 
     #[test]
     fn test_confirm_render_unfocused_prefix() {
         let field = confirm("ok").label("Ok?").value("true").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         assert_eq!(lines[0].spans[0].content.as_ref(), "  ");
     }
 
     #[test]
     fn test_confirm_render_default_false() {
         let field = confirm("ok").label("Ok?").build();
-        let lines = render(&field, false);
+        let lines = render(&field, false, &theme());
         let text = line_text(&lines[0]);
-        // Default value is "" which is not "true", so negative should be active
         assert!(text.contains("[ No ]"));
     }
 
     #[test]
-    fn test_confirm_active_style_is_bold_white() {
+    fn test_confirm_active_uses_theme_selected() {
         let field = confirm("ok").label("Ok?").value("true").build();
-        let lines = render(&field, true);
-        // The "[ Yes ]" span should be bold + white
+        let lines = render(&field, true, &theme());
         let yes_span = lines[0]
             .spans
             .iter()
             .find(|s| s.content.contains("[ Yes ]"));
         assert!(yes_span.is_some());
+        // DefaultTheme selected() is BOLD — verify it matches
         let style = yes_span.unwrap().style;
-        assert_eq!(style.fg, Some(Color::White));
-        assert!(style.add_modifier.contains(Modifier::BOLD));
+        assert_eq!(style, theme().selected());
     }
 
     #[test]
-    fn test_confirm_inactive_style_is_muted() {
+    fn test_confirm_inactive_uses_theme_muted() {
         let field = confirm("ok").label("Ok?").value("true").build();
-        let lines = render(&field, true);
-        // The "No" span should be dark gray
+        let lines = render(&field, true, &theme());
         let no_span = lines[0].spans.iter().find(|s| s.content.as_ref() == "No");
         assert!(no_span.is_some());
-        assert_eq!(no_span.unwrap().style.fg, Some(Color::DarkGray));
+        assert_eq!(no_span.unwrap().style, theme().muted());
     }
 }
