@@ -40,3 +40,4 @@ ts = ["dep:ts-rs"]
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }
+tempfile = { workspace = true }

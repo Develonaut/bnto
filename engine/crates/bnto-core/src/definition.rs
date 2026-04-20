@@ -188,7 +188,7 @@ pub struct FieldsConfig {
 
 /// Default for `parameters` when the key is missing entirely. Produces `{}`,
 /// matching the TS convention that parameters is always an object.
-fn default_parameters() -> serde_json::Value {
+pub(crate) fn default_parameters() -> serde_json::Value {
     serde_json::Value::Object(serde_json::Map::new())
 }
 

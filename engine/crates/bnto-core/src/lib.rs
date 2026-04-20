@@ -57,6 +57,11 @@ pub mod progress;
 /// Replaces the JS-side `wasmLoader.ts` registry.
 pub mod registry;
 
+/// Editor state model — pure-data recipe editing state.
+/// Shared by all editor surfaces (TUI List, Wizard, Code, Graph).
+/// No TUI dependency. Sprint 15 extracts to standalone `bnto-editor` crate.
+pub mod editor;
+
 // --- Re-exports ---
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
@@ -64,6 +69,7 @@ pub mod registry;
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, FieldsConfig, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;
+pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSource};
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
