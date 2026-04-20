@@ -7,6 +7,7 @@ use super::event;
 use super::screens::browser::BrowserMessage;
 use super::screens::detail_bridge;
 use super::screens::editor::EditorMessage;
+use super::screens::editor_bridge;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::home::HomeMessage;
 use super::screens::library::LibraryMessage;
@@ -38,6 +39,14 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         if model.editor.as_ref().is_some_and(|e|
             e.picker.is_some() || e.confirming_delete));
     if editor_modal {
+        return handle_editor_key(model, key);
+    }
+
+    // Editor inline form editing captures all keys.
+    let editor_form_editing = matches!(&model.screen, Screen::Editor { .. }
+        if model.editor.as_ref().is_some_and(|e|
+            e.active_form.as_ref().is_some_and(editor_bridge::is_editing)));
+    if editor_form_editing {
         return handle_editor_key(model, key);
     }
 
@@ -361,7 +370,40 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         };
     }
 
-    // Normal editor keys.
+    // If an inline form is active, route keys through the form.
+    if let Some(active) = &editor.active_form {
+        let is_editing = editor_bridge::is_editing(active);
+
+        // When a field is in editing mode, delegate everything to bnto-form.
+        if is_editing {
+            return bnto_form::map_key_event(key, &active.form).map(AppMessage::EditorForm);
+        }
+
+        // Selected node is expanded with a form: form navigation + vim shortcuts.
+        let vim_msg = match key.code {
+            KeyCode::Char('j') => Some(bnto_form::FormMessage::FocusNext),
+            KeyCode::Char('k') => Some(bnto_form::FormMessage::FocusPrev),
+            KeyCode::Char('h') => Some(bnto_form::FormMessage::CyclePrev),
+            KeyCode::Char('l') => Some(bnto_form::FormMessage::CycleNext),
+            KeyCode::Char(' ') => Some(bnto_form::FormMessage::ToggleConfirm),
+            _ => None,
+        };
+        if let Some(msg) = vim_msg {
+            return Some(AppMessage::EditorForm(msg));
+        }
+
+        // Esc collapses the node (exits form).
+        if key.code == KeyCode::Esc {
+            return Some(AppMessage::Editor(EditorMessage::ExpandToggle));
+        }
+
+        // Fall through to bnto-form's idle key mapping.
+        if let Some(msg) = bnto_form::map_key_event(key, &active.form) {
+            return Some(AppMessage::EditorForm(msg));
+        }
+    }
+
+    // Normal editor keys (no active form).
     match key.code {
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Editor(EditorMessage::CursorDown)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Editor(EditorMessage::CursorUp)),

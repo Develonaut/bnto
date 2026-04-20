@@ -7,6 +7,7 @@ use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
 use super::render_layout::content_panel;
+use super::screens::detail_bridge::BntoFormTheme;
 use super::theme::Theme;
 use super::widgets::search_input;
 
@@ -81,9 +82,25 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
                 Span::styled(format!("  ({})", node.node_type), theme.muted()),
             ]));
 
-            // Expanded: show parameters.
+            // Expanded: show parameters (form controls or static fallback).
             if node.expanded {
-                if node.params.is_empty() {
+                let has_form = is_selected
+                    && editor_screen
+                        .active_form
+                        .as_ref()
+                        .is_some_and(|f| f.node_index == i);
+
+                if has_form {
+                    let active = editor_screen.active_form.as_ref().unwrap();
+                    let form_theme = BntoFormTheme(theme);
+                    let form_lines = bnto_form::render_form(&active.form, &form_theme);
+                    for line in form_lines {
+                        // Indent form lines to align with node content.
+                        let mut spans = vec![Span::raw("      ")];
+                        spans.extend(line.spans);
+                        lines.push(Line::from(spans));
+                    }
+                } else if node.params.is_empty() {
                     lines.push(Line::from(Span::styled(
                         "      No parameters",
                         theme.muted(),
