@@ -15,6 +15,9 @@ use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_up
 use super::screens::detail::DetailModel;
 use super::screens::detail_bridge;
 use super::screens::detail_loader::load_detail_from_json;
+use super::screens::editor::{
+    EditorAction, EditorMessage, EditorScreenModel, update as editor_update,
+};
 use super::screens::execution::{ExecutionMessage, ExecutionModel, update as execution_update};
 use super::screens::home::{
     HomeConfirmResult, HomeMessage, HomeModel, list_library_recipes, update as home_update,
@@ -45,11 +48,26 @@ pub enum Screen {
     Home,
     Library,
     Browser,
-    Detail { slug: String, from: DetailOrigin },
-    Picker { slug: String, from: DetailOrigin },
-    Execution { slug: String, from: DetailOrigin },
-    Results { slug: String },
+    Detail {
+        slug: String,
+        from: DetailOrigin,
+    },
+    Picker {
+        slug: String,
+        from: DetailOrigin,
+    },
+    Execution {
+        slug: String,
+        from: DetailOrigin,
+    },
+    Results {
+        slug: String,
+    },
     Settings,
+    #[allow(dead_code)] // Used in tests; production entry point pending detail→editor wiring
+    Editor {
+        from: DetailOrigin,
+    },
 }
 
 /// Top-level app state.
@@ -73,6 +91,8 @@ pub struct AppModel {
     pub results: Option<ResultsModel>,
     /// Settings screen state — populated when on settings screen.
     pub settings: Option<SettingsModel>,
+    /// Editor screen state — populated when editing a recipe.
+    pub editor: Option<EditorScreenModel>,
     /// Persistent config loaded from disk (old JSON format, for compatibility).
     pub config: TuiConfig,
     /// TOML-based config (new format) — used for saves.
@@ -102,6 +122,7 @@ impl std::fmt::Debug for AppModel {
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
             .field("results", &self.results.as_ref().map(|r| &r.slug))
             .field("settings", &self.settings.is_some())
+            .field("editor", &self.editor.is_some())
             .field("status_message", &self.status_message)
             .field("settings_picker_field", &self.settings_picker_field)
             .field("param_overrides", &self.param_overrides.len())
@@ -157,6 +178,8 @@ pub enum AppMessage {
     Results(ResultsMessage),
     /// Forward a message to the settings screen.
     Settings(SettingsMessage),
+    /// Forward a message to the editor screen.
+    Editor(EditorMessage),
     /// Open the file picker from settings to browse for a directory.
     OpenSettingsPicker { field_key: String },
     /// Confirm the current picker directory as the settings field value.
@@ -249,6 +272,7 @@ impl AppModel {
             execution: None,
             results: None,
             settings: None,
+            editor: None,
             config,
             toml_config,
             paths,
@@ -573,6 +597,39 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             let settings = model.settings.map(|s| settings_update(s, msg));
             AppModel { settings, ..model }
         }
+        AppMessage::Editor(msg) => {
+            let from = match &model.screen {
+                Screen::Editor { from } => *from,
+                _ => DetailOrigin::Home,
+            };
+            match model.editor {
+                Some(editor_model) => {
+                    let (new_editor, action) = editor_update(editor_model, msg);
+                    match action {
+                        EditorAction::Back => {
+                            let home = if matches!(back_screen_for_editor(from), Screen::Home) {
+                                let library_names =
+                                    list_library_recipes(&model.paths.recipes_dir());
+                                HomeModel::new(library_names)
+                            } else {
+                                model.home
+                            };
+                            AppModel {
+                                screen: back_screen_for_editor(from),
+                                editor: None,
+                                home,
+                                ..model
+                            }
+                        }
+                        _ => AppModel {
+                            editor: Some(new_editor),
+                            ..model
+                        },
+                    }
+                }
+                None => model,
+            }
+        }
         AppMessage::OpenSettingsPicker { field_key } => {
             // Start the picker at the field's current value if it's a valid dir.
             let current_value = model
@@ -701,6 +758,10 @@ fn handle_back(model: AppModel) -> AppModel {
         Screen::Settings => None,
         _ => model.settings,
     };
+    let editor = match &model.screen {
+        Screen::Editor { .. } => None,
+        _ => model.editor,
+    };
     AppModel {
         screen: back_screen(&model.screen),
         home,
@@ -710,6 +771,7 @@ fn handle_back(model: AppModel) -> AppModel {
         execution,
         results,
         settings,
+        editor,
         ..model
     }
 }
@@ -739,6 +801,16 @@ fn back_screen(current: &Screen) -> Screen {
         Screen::Execution { .. } => Screen::Home,
         Screen::Results { .. } => Screen::Home,
         Screen::Settings => Screen::Home,
+        Screen::Editor { from } => back_screen_for_editor(*from),
+    }
+}
+
+/// Determine the back target for the Editor screen.
+fn back_screen_for_editor(from: DetailOrigin) -> Screen {
+    match from {
+        DetailOrigin::Home => Screen::Home,
+        DetailOrigin::Browser => Screen::Browser,
+        DetailOrigin::Library => Screen::Library,
     }
 }
 

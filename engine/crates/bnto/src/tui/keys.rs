@@ -6,6 +6,7 @@ use super::app::{AppMessage, AppModel, Screen};
 use super::event;
 use super::screens::browser::BrowserMessage;
 use super::screens::detail_bridge;
+use super::screens::editor::EditorMessage;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::home::HomeMessage;
 use super::screens::library::LibraryMessage;
@@ -30,6 +31,14 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             l.searching || l.renaming.is_some() || l.confirming_delete.is_some()));
     if library_modal {
         return handle_library_key(model, key);
+    }
+
+    // Editor picker/delete modes capture all keys.
+    let editor_modal = matches!(&model.screen, Screen::Editor { .. }
+        if model.editor.as_ref().is_some_and(|e|
+            e.picker.is_some() || e.confirming_delete));
+    if editor_modal {
+        return handle_editor_key(model, key);
     }
 
     // Detail editing mode captures all keys (like browser search mode).
@@ -57,6 +66,7 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         Screen::Picker { .. } => handle_picker_key(model, key),
         Screen::Execution { .. } => handle_execution_key(model, key),
         Screen::Results { .. } => handle_results_key(model, key),
+        Screen::Editor { .. } => handle_editor_key(model, key),
     }
 }
 
@@ -303,6 +313,72 @@ fn handle_results_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Results(ResultsMessage::CursorDown)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Results(ResultsMessage::CursorUp)),
         KeyCode::Char('r') => Some(AppMessage::RunAnother),
+        _ => None,
+    }
+}
+
+/// Handle key events on the Editor screen.
+///
+/// When a picker overlay or delete confirmation is active, keys are routed
+/// to the overlay. Otherwise, normal editor navigation applies.
+fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let editor = model.editor.as_ref()?;
+
+    // Picker overlay captures text input.
+    if editor.picker.is_some() {
+        return match key.code {
+            KeyCode::Esc => Some(AppMessage::Editor(EditorMessage::PickerCancel)),
+            KeyCode::Enter => Some(AppMessage::Editor(EditorMessage::PickerSelect)),
+            KeyCode::Backspace => Some(AppMessage::Editor(EditorMessage::PickerBackspace)),
+            KeyCode::Char('u')
+                if key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+            {
+                Some(AppMessage::Editor(EditorMessage::PickerClear))
+            }
+            KeyCode::Down | KeyCode::Char('j') => {
+                Some(AppMessage::Editor(EditorMessage::PickerCursorDown))
+            }
+            KeyCode::Up | KeyCode::Char('k') => {
+                Some(AppMessage::Editor(EditorMessage::PickerCursorUp))
+            }
+            KeyCode::Char(ch) => Some(AppMessage::Editor(EditorMessage::PickerInput(ch))),
+            _ => None,
+        };
+    }
+
+    // Delete confirmation.
+    if editor.confirming_delete {
+        return match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                Some(AppMessage::Editor(EditorMessage::DeleteConfirm))
+            }
+            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                Some(AppMessage::Editor(EditorMessage::DeleteCancel))
+            }
+            _ => None,
+        };
+    }
+
+    // Normal editor keys.
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Editor(EditorMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Editor(EditorMessage::CursorUp)),
+        KeyCode::Enter => Some(AppMessage::Editor(EditorMessage::ExpandToggle)),
+        KeyCode::Char('a') => Some(AppMessage::Editor(EditorMessage::OpenPicker)),
+        KeyCode::Char('d') => Some(AppMessage::Editor(EditorMessage::DeleteRequest)),
+        KeyCode::Char('J') => Some(AppMessage::Editor(EditorMessage::MoveDown)),
+        KeyCode::Char('K') => Some(AppMessage::Editor(EditorMessage::MoveUp)),
+        KeyCode::Char('u') => Some(AppMessage::Editor(EditorMessage::Undo)),
+        KeyCode::Char('r')
+            if key
+                .modifiers
+                .contains(crossterm::event::KeyModifiers::CONTROL) =>
+        {
+            Some(AppMessage::Editor(EditorMessage::Redo))
+        }
+        KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
     }
 }

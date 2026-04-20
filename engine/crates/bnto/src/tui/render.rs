@@ -9,6 +9,7 @@ use ratatui::widgets::Paragraph;
 
 use super::app::{AppModel, Screen};
 use super::render_detail::draw_detail;
+use super::render_editor::draw_editor;
 use super::render_execution::draw_execution;
 use super::render_home::draw_home;
 use super::render_home_logo::logo_lines;
@@ -37,6 +38,7 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
         Screen::Execution { .. } => draw_execution(frame, model, theme, area),
         Screen::Results { .. } => draw_results(frame, model, theme, area),
         Screen::Settings => draw_settings(frame, model, theme, area),
+        Screen::Editor { .. } => draw_editor(frame, model, theme, area),
     }
 }
 

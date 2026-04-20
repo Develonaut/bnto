@@ -15,6 +15,7 @@ pub mod palette;
 pub mod paths;
 mod render;
 mod render_detail;
+mod render_editor;
 mod render_execution;
 mod render_home;
 mod render_home_grid;
