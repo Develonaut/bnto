@@ -9,6 +9,7 @@ pub mod browser;
 pub mod detail;
 pub(crate) mod detail_bridge;
 pub(crate) mod detail_loader;
+pub mod editor;
 pub mod execution;
 pub mod home;
 pub mod library;

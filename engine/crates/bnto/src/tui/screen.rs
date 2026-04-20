@@ -19,6 +19,7 @@ impl Screen {
             Self::Execution { .. } => "Running",
             Self::Results { .. } => "Results",
             Self::Settings => "Settings",
+            Self::Editor { .. } => "Editor",
         }
     }
 
@@ -74,6 +75,15 @@ impl Screen {
                 ("↑↓", "navigate"),
                 ("◂▸", "theme"),
                 ("Enter", "browse"),
+                ("Esc", "back"),
+            ],
+            Self::Editor { .. } => vec![
+                ("↑↓", "navigate"),
+                ("Enter", "expand"),
+                ("a", "add"),
+                ("d", "delete"),
+                ("J/K", "reorder"),
+                ("u", "undo"),
                 ("Esc", "back"),
             ],
         }

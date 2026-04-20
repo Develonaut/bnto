@@ -824,9 +824,9 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 2 — List Editor Screen (parallel)
 
-- [ ] `engine/crates/bnto` — **Editor screen shell + navigation** (`screens/editor.rs`): `EditorMessage` + `update()` + `view()`. Basic list rendering with focus navigation. Expand/collapse nodes. Back with dirty confirmation. Tab to switch editor types. RED tests: focus nav, expand/collapse, dirty guard, node list rendering (~10 tests)
-- [ ] `engine/crates/bnto` — **Node add/remove**: Picker overlay for adding nodes (reuse browser search pattern), `d` to delete with confirmation. Undo snapshots on add/remove. RED tests: picker search/select, delete confirm/cancel, undo integration (~12 tests)
-- [ ] `engine/crates/bnto` — **Node reorder**: `Shift+j`/`Shift+k` to move nodes up/down. Cursor follows moved node. Boundary checks. RED tests: reorder operations, bounds, cursor tracking (~6 tests)
+- [x] `engine/crates/bnto` — **Editor screen shell + navigation** (`screens/editor.rs`): `EditorMessage` + `update()` + `view()`. Basic list rendering with focus navigation. Expand/collapse nodes. Back with dirty confirmation. Tab to switch editor types. RED tests: focus nav, expand/collapse, dirty guard, node list rendering (~10 tests)
+- [x] `engine/crates/bnto` — **Node add/remove**: Picker overlay for adding nodes (reuse browser search pattern), `d` to delete with confirmation. Undo snapshots on add/remove. RED tests: picker search/select, delete confirm/cancel, undo integration (~12 tests)
+- [x] `engine/crates/bnto` — **Node reorder**: `Shift+j`/`Shift+k` to move nodes up/down. Cursor follows moved node. Boundary checks. RED tests: reorder operations, bounds, cursor tracking (~6 tests)
 
 #### Wave 3 — Inline Config + Schema Controls (sequential)
 
