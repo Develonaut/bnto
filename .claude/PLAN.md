@@ -830,7 +830,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 3 — Inline Config + Schema Controls (sequential)
 
-- [ ] `engine/crates/bnto` — **Inline parameter editing**: Expanded nodes show editable parameters using Sprint 11 type-aware controls (boolean, enum, number). Param edits update `EditorModel`, trigger undo snapshots. `visible_when` filtering. RED tests: param rendering by type, edit updates model, visibility conditions (~10 tests)
+- [x] `engine/crates/bnto` — **Inline parameter editing**: Expanded nodes show editable parameters using Sprint 11 type-aware controls (boolean, enum, number). Param edits update `EditorModel`, trigger undo snapshots. `visible_when` filtering. RED tests: param rendering by type, edit updates model, visibility conditions (~10 tests)
 
 #### Wave 4 — Save + Entry Points (parallel)
 

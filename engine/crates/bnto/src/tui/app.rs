@@ -180,6 +180,8 @@ pub enum AppMessage {
     Settings(SettingsMessage),
     /// Forward a message to the editor screen.
     Editor(EditorMessage),
+    /// Forward a form message to the editor's inline form.
+    EditorForm(bnto_form::FormMessage),
     /// Open the file picker from settings to browse for a directory.
     OpenSettingsPicker { field_key: String },
     /// Confirm the current picker directory as the settings field value.
@@ -604,7 +606,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             };
             match model.editor {
                 Some(editor_model) => {
-                    let (new_editor, action) = editor_update(editor_model, msg);
+                    let (new_editor, action) = editor_update(editor_model, msg, &model.registry);
                     match action {
                         EditorAction::Back => {
                             let home = if matches!(back_screen_for_editor(from), Screen::Home) {
@@ -625,6 +627,20 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                             editor: Some(new_editor),
                             ..model
                         },
+                    }
+                }
+                None => model,
+            }
+        }
+        AppMessage::EditorForm(form_msg) => {
+            // Route form messages through the editor screen's update.
+            let msg = EditorMessage::Form(form_msg);
+            match model.editor {
+                Some(editor_model) => {
+                    let (new_editor, _) = editor_update(editor_model, msg, &model.registry);
+                    AppModel {
+                        editor: Some(new_editor),
+                        ..model
                     }
                 }
                 None => model,
