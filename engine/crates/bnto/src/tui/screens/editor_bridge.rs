@@ -90,6 +90,7 @@ fn node_to_params(node: &EditorNode, registry: &NodeRegistry) -> Vec<ParamEntry>
                 },
                 constraints: p.constraints.clone(),
                 suffix: p.suffix.clone(),
+                control: p.control.clone(),
                 visible_when: p.visible_when.clone(),
             }
         })

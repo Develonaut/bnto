@@ -102,6 +102,7 @@ fn collect_params_from_processor(
             },
             constraints: param_def.constraints.clone(),
             suffix: param_def.suffix.clone(),
+            control: param_def.control.clone(),
             visible_when: param_def.visible_when.clone(),
         });
     }
@@ -176,6 +177,17 @@ mod tests {
             .expect("quality should have constraints");
         assert_eq!(constraints.min, Some(1.0));
         assert_eq!(constraints.max, Some(100.0));
+    }
+
+    #[test]
+    fn compress_images_quality_has_slider_control() {
+        let detail = load_detail("compress-images", &registry()).unwrap();
+        let quality = detail.params.iter().find(|p| p.name == "quality").unwrap();
+        assert_eq!(
+            quality.control.as_deref(),
+            Some("slider"),
+            "quality should have slider control hint"
+        );
     }
 
     // --- convert-image-format: Enum + Number controls ---
