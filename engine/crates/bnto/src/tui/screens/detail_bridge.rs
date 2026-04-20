@@ -58,6 +58,9 @@ pub fn param_to_field(param: &ParamEntry) -> Field {
                 if let Some(ref suffix) = param.suffix {
                     builder = builder.suffix(suffix);
                 }
+                if param.control.as_deref() == Some("slider") {
+                    builder = builder.slider(true);
+                }
                 builder.build()
             } else {
                 // No constraints — fall back to text input for free-form entry.
@@ -185,6 +188,7 @@ mod tests {
             description: Some(format!("{name} desc")),
             constraints: None,
             suffix: None,
+            control: None,
             visible_when: None,
         }
     }
@@ -226,6 +230,7 @@ mod tests {
                 required: false,
             }),
             suffix: suffix.map(|s| s.to_string()),
+            control: None,
             ..string_param(name, value)
         }
     }
@@ -319,6 +324,26 @@ mod tests {
                 assert_eq!(*max, Some(100.0));
                 assert_eq!(suffix.as_deref(), Some("%"));
             }
+            _ => panic!("expected Number"),
+        }
+    }
+
+    #[test]
+    fn number_with_slider_control_enables_slider() {
+        let mut param = number_param("quality", "80", 1.0, 100.0, Some("%"));
+        param.control = Some("slider".into());
+        let field = param_to_field(&param);
+        match &field.kind {
+            FieldKind::Number { slider, .. } => assert!(*slider, "slider should be enabled"),
+            _ => panic!("expected Number"),
+        }
+    }
+
+    #[test]
+    fn number_without_slider_control_disables_slider() {
+        let field = param_to_field(&number_param("quality", "80", 1.0, 100.0, Some("%")));
+        match &field.kind {
+            FieldKind::Number { slider, .. } => assert!(!*slider, "slider should be disabled"),
             _ => panic!("expected Number"),
         }
     }

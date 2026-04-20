@@ -31,6 +31,8 @@ pub struct ParamEntry {
     pub constraints: Option<bnto_core::metadata::Constraints>,
     /// Unit suffix for display (e.g., "%", "px").
     pub suffix: Option<String>,
+    /// Widget override hint from engine metadata (e.g., "slider").
+    pub control: Option<String>,
     /// Conditional visibility — show only when another param matches a value.
     pub visible_when: Option<ParamCondition>,
 }
@@ -159,6 +161,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            control: None,
             visible_when: None,
         }
     }
@@ -471,6 +474,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            control: None,
             visible_when,
         }
     }

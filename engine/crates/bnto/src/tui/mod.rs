@@ -608,6 +608,7 @@ mod tests {
                 description: None,
                 constraints: None,
                 suffix: None,
+                control: None,
                 visible_when: None,
             },
             ParamEntry {
@@ -620,6 +621,7 @@ mod tests {
                 description: None,
                 constraints: None,
                 suffix: None,
+                control: None,
                 visible_when: None,
             },
         ];
@@ -862,6 +864,7 @@ mod tests {
             description: None,
             constraints: None,
             suffix: None,
+            control: None,
             visible_when: None,
         }];
         let model = AppModel {
