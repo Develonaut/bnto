@@ -147,6 +147,7 @@ fn handle_library_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('/') => Some(AppMessage::Library(LibraryMessage::EnterSearch)),
         KeyCode::Char('d') => Some(AppMessage::Library(LibraryMessage::DeleteRequest)),
         KeyCode::Char('r') => Some(AppMessage::Library(LibraryMessage::RenameStart)),
+        KeyCode::Char('e') => Some(AppMessage::OpenEditorFromLibrary),
         KeyCode::Enter => Some(AppMessage::LibraryConfirm),
         KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
@@ -185,6 +186,7 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             .browser
             .confirm()
             .map(|r| AppMessage::AddToLibraryConfirm { slug: r.slug }),
+        KeyCode::Char('e') => Some(AppMessage::OpenEditorFromBrowser),
         KeyCode::Enter => model
             .browser
             .confirm()

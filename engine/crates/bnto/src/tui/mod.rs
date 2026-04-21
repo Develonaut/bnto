@@ -53,12 +53,16 @@ const TICK_RATE: Duration = Duration::from_millis(50);
 
 /// Launch the interactive TUI with the given theme variant.
 ///
-/// If `recipe_json` is Some, starts directly on the detail screen
-/// for that recipe instead of the browser.
-pub fn launch_tui(variant: ThemeVariant, recipe_json: Option<String>) -> io::Result<()> {
+/// If `recipe_json` is Some, starts directly on the editor screen
+/// for that recipe. If `new_recipe` is true, starts with a blank editor.
+pub fn launch_tui(
+    variant: ThemeVariant,
+    recipe_json: Option<String>,
+    new_recipe: bool,
+) -> io::Result<()> {
     install_panic_hook();
     let mut terminal = setup_terminal()?;
-    let result = run_loop(&mut terminal, variant, recipe_json);
+    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe);
     restore_terminal(&mut terminal)?;
     result
 }
@@ -95,8 +99,9 @@ fn run_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
     variant: ThemeVariant,
     recipe_json: Option<String>,
+    new_recipe: bool,
 ) -> io::Result<()> {
-    let mut model = AppModel::new(variant, recipe_json);
+    let mut model = AppModel::new(variant, recipe_json, new_recipe);
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
 
     loop {
@@ -261,7 +266,7 @@ mod tests {
     }
 
     fn default_model() -> AppModel {
-        AppModel::with_paths(ThemeVariant::LosAngeles, None, test_paths())
+        AppModel::with_paths(ThemeVariant::LosAngeles, None, false, test_paths())
     }
 
     fn browser_model() -> AppModel {
