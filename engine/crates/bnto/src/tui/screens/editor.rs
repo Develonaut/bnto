@@ -29,6 +29,13 @@ pub enum EditorMessage {
     Undo,
     Redo,
 
+    // --- Save + exit ---
+    Save,
+    Back,
+    DirtySave,
+    DirtyDiscard,
+    DirtyCancel,
+
     // --- Inline form editing ---
     Form(bnto_form::FormMessage),
 
@@ -67,6 +74,8 @@ pub struct EditorScreenModel {
     pub editor: EditorModel,
     pub picker: Option<PickerState>,
     pub confirming_delete: bool,
+    /// Whether the dirty-exit confirmation overlay is showing.
+    pub confirming_dirty_exit: bool,
     /// Active inline form for the currently expanded+selected node.
     pub active_form: Option<ActiveNodeForm>,
 }
@@ -78,6 +87,7 @@ impl EditorScreenModel {
             editor,
             picker: None,
             confirming_delete: false,
+            confirming_dirty_exit: false,
             active_form: None,
         }
     }
@@ -138,12 +148,12 @@ impl PickerState {
 pub enum EditorAction {
     /// Stay on editor, no app-level side effect.
     None,
-    /// User pressed Back with a clean state — navigate away.
-    #[allow(dead_code)] // Will be emitted by update() once save-on-exit is wired
+    /// Navigate away from editor (clean exit or discard).
     Back,
-    /// User pressed Back with dirty state — show confirm prompt.
-    #[allow(dead_code)] // Will be emitted by update() once save-on-exit is wired
-    ConfirmDirty,
+    /// Save the recipe, then navigate away.
+    SaveAndBack,
+    /// Save the recipe, stay on editor.
+    Save,
 }
 
 /// Pure state transition for the editor screen.
@@ -160,6 +170,11 @@ pub fn update(
     // Delete confirmation captures specific keys.
     if model.confirming_delete {
         return update_delete_confirm(model, msg);
+    }
+
+    // Dirty-exit confirmation captures specific keys.
+    if model.confirming_dirty_exit {
+        return update_dirty_confirm(model, msg);
     }
 
     // Form messages delegate to the active form.
@@ -254,6 +269,23 @@ pub fn update(
             sync_and_clear_form(&mut model);
             let types = all_node_types();
             model.picker = Some(PickerState::from_node_types(&types));
+            EditorAction::None
+        }
+        EditorMessage::Save => {
+            sync_and_clear_form(&mut model);
+            EditorAction::Save
+        }
+        EditorMessage::Back => {
+            sync_and_clear_form(&mut model);
+            if model.editor.dirty {
+                model.confirming_dirty_exit = true;
+                EditorAction::None
+            } else {
+                EditorAction::Back
+            }
+        }
+        // Dirty-confirm messages when no overlay is active — no-op.
+        EditorMessage::DirtySave | EditorMessage::DirtyDiscard | EditorMessage::DirtyCancel => {
             EditorAction::None
         }
         // Form/picker/delete messages when no overlay is active — no-op.
@@ -415,6 +447,32 @@ fn update_delete_confirm(
         }
     }
     (model, EditorAction::None)
+}
+
+/// Handle messages during dirty-exit confirmation ("Save? y/n/Esc").
+fn update_dirty_confirm(
+    mut model: EditorScreenModel,
+    msg: EditorMessage,
+) -> (EditorScreenModel, EditorAction) {
+    match msg {
+        EditorMessage::DirtySave => {
+            model.confirming_dirty_exit = false;
+            (model, EditorAction::SaveAndBack)
+        }
+        EditorMessage::DirtyDiscard => {
+            model.confirming_dirty_exit = false;
+            (model, EditorAction::Back)
+        }
+        EditorMessage::DirtyCancel => {
+            model.confirming_dirty_exit = false;
+            (model, EditorAction::None)
+        }
+        // Any other message cancels the confirmation.
+        _ => {
+            model.confirming_dirty_exit = false;
+            (model, EditorAction::None)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -938,5 +996,73 @@ mod tests {
             restored, original_quality,
             "undo should restore original value"
         );
+    }
+
+    // --- Save workflow ---
+
+    #[test]
+    fn save_emits_save_action() {
+        let r = reg();
+        let model = model_with_nodes(1);
+        let (_, action) = update(model, EditorMessage::Save, &r);
+        assert_eq!(action, EditorAction::Save);
+    }
+
+    #[test]
+    fn back_on_clean_emits_back_action() {
+        let r = reg();
+        let model = model_with_nodes(1);
+        assert!(!model.editor.dirty);
+        let (_, action) = update(model, EditorMessage::Back, &r);
+        assert_eq!(action, EditorAction::Back);
+    }
+
+    #[test]
+    fn back_on_dirty_shows_confirmation() {
+        let r = reg();
+        let mut model = model_with_nodes(1);
+        model.editor.dirty = true;
+        let (model, action) = update(model, EditorMessage::Back, &r);
+        assert_eq!(action, EditorAction::None);
+        assert!(model.confirming_dirty_exit);
+    }
+
+    #[test]
+    fn dirty_save_emits_save_and_back() {
+        let r = reg();
+        let mut model = model_with_nodes(1);
+        model.confirming_dirty_exit = true;
+        let (model, action) = update(model, EditorMessage::DirtySave, &r);
+        assert_eq!(action, EditorAction::SaveAndBack);
+        assert!(!model.confirming_dirty_exit);
+    }
+
+    #[test]
+    fn dirty_discard_emits_back() {
+        let r = reg();
+        let mut model = model_with_nodes(1);
+        model.confirming_dirty_exit = true;
+        let (model, action) = update(model, EditorMessage::DirtyDiscard, &r);
+        assert_eq!(action, EditorAction::Back);
+        assert!(!model.confirming_dirty_exit);
+    }
+
+    #[test]
+    fn dirty_cancel_stays_on_editor() {
+        let r = reg();
+        let mut model = model_with_nodes(1);
+        model.confirming_dirty_exit = true;
+        let (model, action) = update(model, EditorMessage::DirtyCancel, &r);
+        assert_eq!(action, EditorAction::None);
+        assert!(!model.confirming_dirty_exit);
+    }
+
+    #[test]
+    fn save_on_clean_editor_still_saves() {
+        let r = reg();
+        let model = model_with_nodes(1);
+        assert!(!model.editor.dirty);
+        let (_, action) = update(model, EditorMessage::Save, &r);
+        assert_eq!(action, EditorAction::Save, "Ctrl+S always saves");
     }
 }

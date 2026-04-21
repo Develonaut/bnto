@@ -124,7 +124,7 @@ pub(crate) fn params_to_json(params: &HashMap<String, serde_json::Value>) -> ser
 }
 
 /// Generate a URL-safe slug from a recipe name.
-fn slug_from_name(name: &str) -> String {
+pub(crate) fn slug_from_name(name: &str) -> String {
     name.to_lowercase()
         .chars()
         .map(|c| if c.is_alphanumeric() { c } else { '-' })

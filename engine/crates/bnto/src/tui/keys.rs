@@ -34,10 +34,10 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         return handle_library_key(model, key);
     }
 
-    // Editor picker/delete modes capture all keys.
+    // Editor picker/delete/dirty-confirm modes capture all keys.
     let editor_modal = matches!(&model.screen, Screen::Editor { .. }
         if model.editor.as_ref().is_some_and(|e|
-            e.picker.is_some() || e.confirming_delete));
+            e.picker.is_some() || e.confirming_delete || e.confirming_dirty_exit));
     if editor_modal {
         return handle_editor_key(model, key);
     }
@@ -372,6 +372,20 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         };
     }
 
+    // Dirty-exit confirmation.
+    if editor.confirming_dirty_exit {
+        return match key.code {
+            KeyCode::Char('y') | KeyCode::Char('Y') => {
+                Some(AppMessage::Editor(EditorMessage::DirtySave))
+            }
+            KeyCode::Char('n') | KeyCode::Char('N') => {
+                Some(AppMessage::Editor(EditorMessage::DirtyDiscard))
+            }
+            KeyCode::Esc => Some(AppMessage::Editor(EditorMessage::DirtyCancel)),
+            _ => None,
+        };
+    }
+
     // If an inline form is active, route keys through the form.
     if let Some(active) = &editor.active_form {
         let is_editing = editor_bridge::is_editing(active);
@@ -415,6 +429,13 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('J') => Some(AppMessage::Editor(EditorMessage::MoveDown)),
         KeyCode::Char('K') => Some(AppMessage::Editor(EditorMessage::MoveUp)),
         KeyCode::Char('u') => Some(AppMessage::Editor(EditorMessage::Undo)),
+        KeyCode::Char('s')
+            if key
+                .modifiers
+                .contains(crossterm::event::KeyModifiers::CONTROL) =>
+        {
+            Some(AppMessage::Editor(EditorMessage::Save))
+        }
         KeyCode::Char('r')
             if key
                 .modifiers
@@ -422,7 +443,7 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         {
             Some(AppMessage::Editor(EditorMessage::Redo))
         }
-        KeyCode::Esc => Some(AppMessage::Back),
+        KeyCode::Esc => Some(AppMessage::Editor(EditorMessage::Back)),
         _ => None,
     }
 }

@@ -613,26 +613,19 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 Screen::Editor { from } => *from,
                 _ => DetailOrigin::Home,
             };
-            match model.editor {
+            let editor_opt = model.editor;
+            let model = AppModel {
+                editor: None,
+                ..model
+            };
+            match editor_opt {
                 Some(editor_model) => {
                     let (new_editor, action) = editor_update(editor_model, msg, &model.registry);
                     match action {
-                        EditorAction::Back => {
-                            let home = if matches!(back_screen_for_editor(from), Screen::Home) {
-                                let library_names =
-                                    list_library_recipes(&model.paths.recipes_dir());
-                                HomeModel::new(library_names)
-                            } else {
-                                model.home
-                            };
-                            AppModel {
-                                screen: back_screen_for_editor(from),
-                                editor: None,
-                                home,
-                                ..model
-                            }
-                        }
-                        _ => AppModel {
+                        EditorAction::Back => navigate_back_from_editor(model, new_editor, from),
+                        EditorAction::Save => perform_editor_save(model, new_editor, false),
+                        EditorAction::SaveAndBack => perform_editor_save(model, new_editor, true),
+                        EditorAction::None => AppModel {
                             editor: Some(new_editor),
                             ..model
                         },
@@ -909,6 +902,76 @@ fn back_screen_for_editor(from: DetailOrigin) -> Screen {
         DetailOrigin::Home => Screen::Home,
         DetailOrigin::Browser => Screen::Browser,
         DetailOrigin::Library => Screen::Library,
+    }
+}
+
+/// Navigate back from the editor, cleaning up editor state.
+fn navigate_back_from_editor(
+    model: AppModel,
+    _editor: EditorScreenModel,
+    from: DetailOrigin,
+) -> AppModel {
+    let back = back_screen_for_editor(from);
+    let home = if matches!(back, Screen::Home) {
+        let library_names = list_library_recipes(&model.paths.recipes_dir());
+        HomeModel::new(library_names)
+    } else {
+        model.home
+    };
+    // Reload library when returning to it (recipe may have been saved).
+    let library = if matches!(back, Screen::Library) {
+        Some(LibraryModel::new(load_library_entries(
+            &model.paths.recipes_dir(),
+        )))
+    } else {
+        model.library
+    };
+    AppModel {
+        screen: back,
+        editor: None,
+        home,
+        library,
+        ..model
+    }
+}
+
+/// Save the editor's recipe to disk. Optionally navigate back after saving.
+fn perform_editor_save(
+    model: AppModel,
+    mut editor: EditorScreenModel,
+    navigate_back: bool,
+) -> AppModel {
+    let save_path = editor.editor.save_path(&model.paths.recipes_dir());
+    match editor.editor.save_to(&save_path) {
+        Ok(()) => {
+            editor.editor.mark_clean();
+            // Update source so subsequent saves go to the same file.
+            editor.editor.source = bnto_core::editor::EditorSource::File(save_path.clone());
+            let display_path = save_path
+                .file_name()
+                .map(|f| f.to_string_lossy().to_string())
+                .unwrap_or_else(|| save_path.display().to_string());
+            if navigate_back {
+                let from = match &model.screen {
+                    Screen::Editor { from } => *from,
+                    _ => DetailOrigin::Home,
+                };
+                let mut result = navigate_back_from_editor(model, editor, from);
+                result.status_message = Some(format!("Saved {display_path}"));
+                result
+            } else {
+                AppModel {
+                    editor: Some(editor),
+                    status_message: Some(format!("Saved {display_path}")),
+                    ..model
+                }
+            }
+        }
+        Err(e) => AppModel {
+            editor: Some(editor),
+            status_message: Some(format!("Failed to save: {e}")),
+            ..model
+        },
     }
 }
 
@@ -2693,5 +2756,143 @@ mod tests {
         let app = update(app, AppMessage::Back);
         assert_eq!(app.screen, Screen::Home);
         assert!(app.editor.is_none(), "editor should be cleared on back");
+    }
+
+    // --- Editor save workflow ---
+
+    #[test]
+    fn editor_save_writes_file_and_clears_dirty() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
+        let mut editor = bnto_core::editor::EditorModel::new();
+        editor.recipe_name = "Test Save".to_string();
+        editor.dirty = true;
+        app.screen = Screen::Editor {
+            from: DetailOrigin::Home,
+        };
+        app.editor = Some(EditorScreenModel::new(editor));
+
+        let app = update(app, AppMessage::Editor(EditorMessage::Save));
+
+        // File should exist on disk.
+        let save_path = paths.recipes_dir().join("test-save.bnto.json");
+        assert!(save_path.exists(), "file should be written to disk");
+        // Editor should still be on screen, dirty cleared.
+        assert!(app.editor.is_some());
+        assert!(!app.editor.as_ref().unwrap().editor.dirty);
+        // Status message confirms save.
+        assert_eq!(
+            app.status_message.as_deref(),
+            Some("Saved test-save.bnto.json")
+        );
+    }
+
+    #[test]
+    fn editor_save_updates_source_to_file() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
+        let mut editor = bnto_core::editor::EditorModel::new();
+        editor.recipe_name = "New Recipe".to_string();
+        assert!(matches!(
+            editor.source,
+            bnto_core::editor::EditorSource::New
+        ));
+        app.screen = Screen::Editor {
+            from: DetailOrigin::Home,
+        };
+        app.editor = Some(EditorScreenModel::new(editor));
+
+        let app = update(app, AppMessage::Editor(EditorMessage::Save));
+
+        let source = &app.editor.as_ref().unwrap().editor.source;
+        assert!(
+            matches!(source, bnto_core::editor::EditorSource::File(_)),
+            "source should become File after save"
+        );
+    }
+
+    #[test]
+    fn editor_save_error_shows_status_message() {
+        // Use a path that doesn't exist and can't be created.
+        let paths = BntoPaths {
+            config: std::path::PathBuf::from("/nonexistent/config"),
+            data: std::path::PathBuf::from("/nonexistent/data"),
+            state: std::path::PathBuf::from("/nonexistent/state"),
+            cache: std::path::PathBuf::from("/nonexistent/cache"),
+        };
+        let _ = TomlConfig::default().save(&paths);
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+        let mut editor = bnto_core::editor::EditorModel::new();
+        editor.recipe_name = "Will Fail".to_string();
+        editor.dirty = true;
+        app.screen = Screen::Editor {
+            from: DetailOrigin::Home,
+        };
+        app.editor = Some(EditorScreenModel::new(editor));
+
+        let app = update(app, AppMessage::Editor(EditorMessage::Save));
+
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.starts_with("Failed to save")),
+            "expected failure message, got {:?}",
+            app.status_message
+        );
+        // Editor should still be dirty (save failed).
+        assert!(app.editor.as_ref().unwrap().editor.dirty);
+    }
+
+    #[test]
+    fn editor_save_and_back_navigates_away() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+        let mut editor = bnto_core::editor::EditorModel::new();
+        editor.recipe_name = "Save And Go".to_string();
+        editor.dirty = true;
+        app.screen = Screen::Editor {
+            from: DetailOrigin::Home,
+        };
+        app.editor = Some(EditorScreenModel::new(editor));
+
+        // Trigger back on dirty → confirmation → save
+        let app = update(app, AppMessage::Editor(EditorMessage::Back));
+        assert!(
+            app.editor.as_ref().unwrap().confirming_dirty_exit,
+            "should show dirty confirmation"
+        );
+        let app = update(app, AppMessage::Editor(EditorMessage::DirtySave));
+        assert_eq!(app.screen, Screen::Home, "should navigate to Home");
+        assert!(app.editor.is_none(), "editor should be cleared");
+        assert!(
+            app.status_message
+                .as_ref()
+                .is_some_and(|m| m.starts_with("Saved")),
+        );
+    }
+
+    #[test]
+    fn editor_save_overwrites_existing_file() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
+        let save_path = paths.recipes_dir().join("overwrite.bnto.json");
+        std::fs::write(&save_path, "{}").unwrap();
+
+        let mut editor = bnto_core::editor::EditorModel::new();
+        editor.recipe_name = "Overwrite".to_string();
+        editor.source = bnto_core::editor::EditorSource::File(save_path.clone());
+        editor.dirty = true;
+        app.screen = Screen::Editor {
+            from: DetailOrigin::Home,
+        };
+        app.editor = Some(EditorScreenModel::new(editor));
+
+        let app = update(app, AppMessage::Editor(EditorMessage::Save));
+        let content = std::fs::read_to_string(&save_path).unwrap();
+        assert!(
+            content.contains("Overwrite"),
+            "file should be overwritten with new content"
+        );
+        assert!(!app.editor.as_ref().unwrap().editor.dirty);
     }
 }

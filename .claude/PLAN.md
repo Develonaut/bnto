@@ -834,7 +834,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 4 — Save + Entry Points (parallel)
 
-- [ ] `engine/crates/bnto` — **Save workflow**: Save to disk. Confirm overwrite for existing files, prompt for path on new recipes. `Ctrl+s` shortcut. Clears dirty flag. RED tests: save path, save-as, dirty flag clear (~5 tests)
+- [x] `engine/crates/bnto` — **Save workflow**: Save to disk. Confirm overwrite for existing files, prompt for path on new recipes. `Ctrl+s` shortcut. Clears dirty flag. RED tests: save path, save-as, dirty flag clear (~5 tests)
 - [x] `engine/crates/bnto` — **Entry points + app integration**: Wire Editor screen into app state machine. `--new` flag, file arg, browser `e` key clone, detail `e` key. Back returns to source screen. RED tests: all entry points, screen routing (~5 tests)
 
 **Sprint 12 totals: ~8 PRs, ~75 tests, ~1500-2000 LOC**

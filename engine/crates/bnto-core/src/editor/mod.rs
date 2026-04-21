@@ -21,7 +21,7 @@ mod tests {
     use crate::metadata::{NodeCategory, NodeTypeInfo};
     use crate::pipeline::{IterationMode, PipelineSettings};
     use serde_json::json;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     fn test_info(name: &str, label: &str) -> NodeTypeInfo {
         NodeTypeInfo {
@@ -496,6 +496,51 @@ mod tests {
             Some(PipelineSettings {
                 iteration: IterationMode::Auto
             })
+        );
+    }
+
+    // --- save_path resolution ---
+
+    #[test]
+    fn save_path_for_file_source_returns_original() {
+        let original = PathBuf::from("/tmp/my-recipe.bnto.json");
+        let mut model = EditorModel::new();
+        model.source = EditorSource::File(original.clone());
+        let recipes_dir = Path::new("/home/user/.local/share/bnto/recipes");
+        assert_eq!(model.save_path(recipes_dir), original);
+    }
+
+    #[test]
+    fn save_path_for_new_source_uses_recipes_dir() {
+        let mut model = EditorModel::new();
+        model.recipe_name = "My Recipe".to_string();
+        model.source = EditorSource::New;
+        let recipes_dir = Path::new("/home/user/.local/share/bnto/recipes");
+        assert_eq!(
+            model.save_path(recipes_dir),
+            recipes_dir.join("my-recipe.bnto.json")
+        );
+    }
+
+    #[test]
+    fn save_path_for_predefined_source_uses_recipes_dir() {
+        let mut model = EditorModel::new();
+        model.recipe_name = "Compress Images".to_string();
+        model.source = EditorSource::Predefined("compress-images".to_string());
+        let recipes_dir = Path::new("/home/user/.local/share/bnto/recipes");
+        assert_eq!(
+            model.save_path(recipes_dir),
+            recipes_dir.join("compress-images.bnto.json")
+        );
+    }
+
+    #[test]
+    fn save_path_for_empty_name_uses_untitled() {
+        let model = EditorModel::new(); // name is empty, source is New
+        let recipes_dir = Path::new("/tmp/recipes");
+        assert_eq!(
+            model.save_path(recipes_dir),
+            recipes_dir.join("untitled.bnto.json")
         );
     }
 }
