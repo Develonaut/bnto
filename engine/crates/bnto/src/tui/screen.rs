@@ -20,6 +20,7 @@ impl Screen {
             Self::Results { .. } => "Results",
             Self::Settings => "Settings",
             Self::Editor { .. } => "Editor",
+            Self::Wizard { .. } => "Wizard",
         }
     }
 
@@ -84,6 +85,12 @@ impl Screen {
                 ("d", "delete"),
                 ("J/K", "reorder"),
                 ("u", "undo"),
+                ("Esc", "back"),
+            ],
+            Self::Wizard { .. } => vec![
+                ("↑↓", "navigate"),
+                ("Enter", "select"),
+                ("Tab", "confirm"),
                 ("Esc", "back"),
             ],
         }

@@ -25,6 +25,7 @@ mod render_layout;
 mod render_library;
 mod render_picker;
 mod render_results;
+mod render_wizard;
 pub mod screen;
 pub mod screens;
 pub mod theme;

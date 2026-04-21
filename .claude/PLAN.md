@@ -856,12 +856,12 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 1 — Wizard Flow (sequential)
 
-- [ ] `engine/crates/bnto` — **Wizard state model**: `WizardModel` with step progression (Category → Operation → Config → Complete). Category/operation lists from engine metadata (not hardcoded). Back navigation between steps. RED tests: step advancement, back nav, filtered operations, produces valid EditorModel (~10 tests)
-- [ ] `engine/crates/bnto` — **Wizard screen + rendering**: TUI screen with step-by-step prompts. Category grid, operation list, config uses Sprint 11 controls. Summary on complete. RED tests: rendering per step, enter/esc navigation (~8 tests)
+- [x] `engine/crates/bnto` — **Wizard state model**: `WizardModel` with step progression (Category → Operation → Config → Complete). Category/operation lists from engine metadata (not hardcoded). Back navigation between steps. RED tests: step advancement, back nav, filtered operations, produces valid EditorModel (~10 tests)
+- [x] `engine/crates/bnto` — **Wizard screen + rendering**: TUI screen with step-by-step prompts. Category grid, operation list, config uses Sprint 11 controls. Summary on complete. RED tests: rendering per step, enter/esc navigation (~8 tests)
 
 #### Wave 2 — Wizard-to-Editor Handoff (sequential)
 
-- [ ] `engine/crates/bnto` — **Auto-name + handoff to List editor**: Wizard completion generates recipe name (e.g. "Compress Images v1"), populates `EditorModel`, switches to List editor. Browser `n` key opens Wizard. RED tests: auto-naming, handoff populates model, screen transition (~5 tests)
+- [x] `engine/crates/bnto` — **Auto-name + handoff to List editor**: Wizard completion generates recipe name (e.g. "Compress Images v1"), populates `EditorModel`, switches to List editor. Browser `n` key opens Wizard. RED tests: auto-naming, handoff populates model, screen transition (~5 tests)
 
 **Sprint 13 totals: ~3 PRs, ~25 tests**
 
