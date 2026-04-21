@@ -1,9 +1,10 @@
 // Editor file I/O — load and save `.bnto.json` files.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::definition::Definition;
 
+use super::convert::slug_from_name;
 use super::types::{EditorError, EditorModel, EditorSource};
 
 impl EditorModel {
@@ -38,5 +39,24 @@ impl EditorModel {
         std::fs::rename(&temp_path, path)?;
 
         Ok(())
+    }
+
+    /// Resolve the save destination path based on the recipe's source.
+    ///
+    /// - `File(path)` → save back to that path
+    /// - `New` or `Predefined` → save to `recipes_dir/{slug}.bnto.json`
+    pub fn save_path(&self, recipes_dir: &Path) -> PathBuf {
+        match &self.source {
+            EditorSource::File(path) => path.clone(),
+            EditorSource::New | EditorSource::Predefined(_) => {
+                let slug = slug_from_name(&self.recipe_name);
+                let filename = if slug.is_empty() {
+                    "untitled".to_string()
+                } else {
+                    slug
+                };
+                recipes_dir.join(format!("{filename}.bnto.json"))
+            }
+        }
     }
 }
