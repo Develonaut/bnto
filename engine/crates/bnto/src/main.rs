@@ -70,6 +70,10 @@ enum Command {
         /// Color theme: los-angeles (default), tokyo (dark), monaco (sunset).
         #[arg(long, default_value = "los-angeles")]
         theme: String,
+
+        /// Start with a blank recipe in the editor.
+        #[arg(long)]
+        new: bool,
     },
 
     /// Manage anonymous telemetry settings.
@@ -115,9 +119,9 @@ fn main() {
             telemetry::capture(telemetry::events::cli_command("doctor"));
             doctor::run_doctor();
         }
-        Some(Command::Tui { recipe, theme }) => {
+        Some(Command::Tui { recipe, theme, new }) => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui(&theme, recipe);
+            launch_tui(&theme, recipe, new);
         }
         Some(Command::Telemetry { action }) => match action {
             TelemetryAction::Enable => {
@@ -132,12 +136,12 @@ fn main() {
         },
         None => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui("los-angeles", None);
+            launch_tui("los-angeles", None, false);
         }
     }
 }
 
-fn launch_tui(theme_str: &str, recipe_path: Option<String>) {
+fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool) {
     let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
         Ok(v) => v,
         Err(e) => {
@@ -154,7 +158,7 @@ fn launch_tui(theme_str: &str, recipe_path: Option<String>) {
         }
     });
     let start = std::time::Instant::now();
-    if let Err(e) = tui::launch_tui(variant, recipe_json) {
+    if let Err(e) = tui::launch_tui(variant, recipe_json, new) {
         eprintln!("{} {e}", "TUI error:".red());
         process::exit(1);
     }

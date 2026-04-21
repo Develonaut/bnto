@@ -113,6 +113,7 @@ fn collect_params_from_processor(
 /// Parses the JSON, extracts name/description from top-level fields,
 /// walks the node list to resolve processors and collect params.
 /// Returns Err if JSON is invalid or missing a `nodes` array.
+#[cfg(test)]
 pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<DetailModel, String> {
     let def: serde_json::Value =
         serde_json::from_str(json).map_err(|e| format!("Invalid JSON: {e}"))?;

@@ -57,12 +57,14 @@ pub enum HomeMessage {
 pub enum HomeConfirmResult {
     /// Navigate to the given screen.
     Navigate(Screen),
-    /// Show a status message (e.g. "Coming soon" for New Recipe).
+    /// Show a status message.
     StatusMessage(String),
     /// Select a recipe from the Recipes pane by index into browser.recipes.
     RecipeAtIndex(usize),
     /// Select a library recipe by its slug.
     LibraryRecipe(String),
+    /// Open the editor with a blank recipe.
+    NewRecipe,
 }
 
 impl HomeModel {
@@ -90,9 +92,7 @@ impl HomeModel {
                 }
             }
             HomePane::Recipes => HomeConfirmResult::RecipeAtIndex(self.recipes_cursor),
-            HomePane::NewRecipe => {
-                HomeConfirmResult::StatusMessage("New Recipe — coming soon".into())
-            }
+            HomePane::NewRecipe => HomeConfirmResult::NewRecipe,
             HomePane::Settings => HomeConfirmResult::Navigate(Screen::Settings),
         }
     }
@@ -358,15 +358,13 @@ mod tests {
     }
 
     #[test]
-    fn confirm_new_recipe_shows_coming_soon() {
+    fn confirm_new_recipe_returns_new_recipe() {
         let mut m = HomeModel::new(vec![]);
         m.focused = HomePane::NewRecipe;
-        match m.confirm() {
-            HomeConfirmResult::StatusMessage(msg) => {
-                assert!(msg.contains("coming soon"), "got: {msg}");
-            }
-            other => panic!("expected StatusMessage, got {:?}", confirm_debug(&other)),
-        }
+        assert!(
+            matches!(m.confirm(), HomeConfirmResult::NewRecipe),
+            "expected NewRecipe variant"
+        );
     }
 
     #[test]
@@ -424,6 +422,7 @@ mod tests {
             HomeConfirmResult::StatusMessage(m) => format!("StatusMessage({m})"),
             HomeConfirmResult::RecipeAtIndex(i) => format!("RecipeAtIndex({i})"),
             HomeConfirmResult::LibraryRecipe(s) => format!("LibraryRecipe({s})"),
+            HomeConfirmResult::NewRecipe => "NewRecipe".to_string(),
         }
     }
 }

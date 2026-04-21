@@ -73,7 +73,6 @@ pub struct EditorScreenModel {
 
 impl EditorScreenModel {
     /// Create an editor screen from an existing EditorModel.
-    #[allow(dead_code)] // Used in tests; production entry point pending detail→editor wiring
     pub fn new(editor: EditorModel) -> Self {
         Self {
             editor,
@@ -140,10 +139,10 @@ pub enum EditorAction {
     /// Stay on editor, no app-level side effect.
     None,
     /// User pressed Back with a clean state — navigate away.
-    #[allow(dead_code)] // Used in tests; production entry point pending detail→editor wiring
+    #[allow(dead_code)] // Will be emitted by update() once save-on-exit is wired
     Back,
     /// User pressed Back with dirty state — show confirm prompt.
-    #[allow(dead_code)] // Used in tests; production entry point pending detail→editor wiring
+    #[allow(dead_code)] // Will be emitted by update() once save-on-exit is wired
     ConfirmDirty,
 }
 

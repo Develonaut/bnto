@@ -14,7 +14,6 @@ use super::paths::BntoPaths;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::DetailModel;
 use super::screens::detail_bridge;
-use super::screens::detail_loader::load_detail_from_json;
 use super::screens::editor::{
     EditorAction, EditorMessage, EditorScreenModel, update as editor_update,
 };
@@ -48,26 +47,12 @@ pub enum Screen {
     Home,
     Library,
     Browser,
-    Detail {
-        slug: String,
-        from: DetailOrigin,
-    },
-    Picker {
-        slug: String,
-        from: DetailOrigin,
-    },
-    Execution {
-        slug: String,
-        from: DetailOrigin,
-    },
-    Results {
-        slug: String,
-    },
+    Detail { slug: String, from: DetailOrigin },
+    Picker { slug: String, from: DetailOrigin },
+    Execution { slug: String, from: DetailOrigin },
+    Results { slug: String },
     Settings,
-    #[allow(dead_code)] // Used in tests; production entry point pending detail→editor wiring
-    Editor {
-        from: DetailOrigin,
-    },
+    Editor { from: DetailOrigin },
 }
 
 /// Top-level app state.
@@ -182,6 +167,10 @@ pub enum AppMessage {
     Editor(EditorMessage),
     /// Forward a form message to the editor's inline form.
     EditorForm(bnto_form::FormMessage),
+    /// Open the editor for a predefined recipe (clone into editor).
+    OpenEditorFromBrowser,
+    /// Open the editor for a library recipe (edit in place).
+    OpenEditorFromLibrary,
     /// Open the file picker from settings to browse for a directory.
     OpenSettingsPicker { field_key: String },
     /// Confirm the current picker directory as the settings field value.
@@ -195,16 +184,16 @@ impl AppModel {
     ///
     /// Loads persisted config from disk. The `variant` argument is the
     /// CLI override — if `None`, uses the config's saved theme.
-    /// If `recipe_json` is Some, attempts to parse it and start on Detail.
-    /// Falls back to Browser on parse failure.
-    pub fn new(variant: ThemeVariant, recipe_json: Option<String>) -> Self {
+    /// If `recipe_json` is Some, opens the recipe in the editor.
+    /// If `new_recipe` is true, opens a blank editor.
+    pub fn new(variant: ThemeVariant, recipe_json: Option<String>, new_recipe: bool) -> Self {
         let paths = BntoPaths::resolve().unwrap_or_else(|| BntoPaths {
             config: std::path::PathBuf::from(".bnto/config"),
             data: std::path::PathBuf::from(".bnto/data"),
             state: std::path::PathBuf::from(".bnto/state"),
             cache: std::path::PathBuf::from(".bnto/cache"),
         });
-        Self::with_paths(variant, recipe_json, paths)
+        Self::with_paths(variant, recipe_json, new_recipe, paths)
     }
 
     /// Create a new app with explicit storage paths.
@@ -214,6 +203,7 @@ impl AppModel {
     pub fn with_paths(
         variant: ThemeVariant,
         recipe_json: Option<String>,
+        new_recipe: bool,
         paths: BntoPaths,
     ) -> Self {
         let _ = paths.ensure_dirs();
@@ -240,25 +230,34 @@ impl AppModel {
         // List library recipes for the home screen pane.
         let library_names = list_library_recipes(&paths.data);
 
-        // If a recipe JSON was provided, try to load it directly.
-        let (screen, detail) = match recipe_json {
-            Some(json) => match load_detail_from_json(&json, &registry) {
-                Ok(model) => {
-                    let slug = model.slug.clone();
-                    (
-                        Screen::Detail {
-                            slug,
-                            from: DetailOrigin::Home,
-                        },
-                        Some(model),
-                    )
-                }
+        // Determine initial screen and state.
+        let (screen, detail, editor) = if new_recipe {
+            // --new flag: blank editor.
+            let editor_model = bnto_core::editor::EditorModel::new();
+            (
+                Screen::Editor {
+                    from: DetailOrigin::Home,
+                },
+                None,
+                Some(EditorScreenModel::new(editor_model)),
+            )
+        } else if let Some(json) = recipe_json {
+            // File arg: try strict Definition deserialization first, then lenient fallback.
+            match load_editor_from_json(&json) {
+                Ok(editor_model) => (
+                    Screen::Editor {
+                        from: DetailOrigin::Home,
+                    },
+                    None,
+                    Some(EditorScreenModel::new(editor_model)),
+                ),
                 Err(e) => {
                     eprintln!("Warning: {e} — starting on home screen.");
-                    (Screen::Home, None)
+                    (Screen::Home, None, None)
                 }
-            },
-            None => (Screen::Home, None),
+            }
+        } else {
+            (Screen::Home, None, None)
         };
 
         Self {
@@ -274,7 +273,7 @@ impl AppModel {
             execution: None,
             results: None,
             settings: None,
-            editor: None,
+            editor,
             config,
             toml_config,
             paths,
@@ -421,6 +420,16 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 AppModel {
                     screen: Screen::Library,
                     library,
+                    ..model
+                }
+            }
+            HomeConfirmResult::NewRecipe => {
+                let editor_model = bnto_core::editor::EditorModel::new();
+                AppModel {
+                    screen: Screen::Editor {
+                        from: DetailOrigin::Home,
+                    },
+                    editor: Some(EditorScreenModel::new(editor_model)),
                     ..model
                 }
             }
@@ -644,6 +653,79 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                     }
                 }
                 None => model,
+            }
+        }
+        AppMessage::OpenEditorFromBrowser => {
+            // Clone the focused browser recipe into a new editor session.
+            let slug = model.browser.confirm().map(|r| r.slug);
+            match slug {
+                Some(slug) => {
+                    let recipe = bnto_engine::recipes::builtin_recipe_by_slug(&slug);
+                    match recipe {
+                        Some(r) => {
+                            let def: Result<bnto_core::definition::Definition, _> =
+                                serde_json::from_str(r.definition_json);
+                            match def {
+                                Ok(def) => {
+                                    let source = bnto_core::editor::EditorSource::Predefined(slug);
+                                    let editor_model =
+                                        bnto_core::editor::EditorModel::from_definition(
+                                            &def, source,
+                                        );
+                                    AppModel {
+                                        screen: Screen::Editor {
+                                            from: DetailOrigin::Browser,
+                                        },
+                                        editor: Some(EditorScreenModel::new(editor_model)),
+                                        ..model
+                                    }
+                                }
+                                Err(e) => AppModel {
+                                    status_message: Some(format!("Failed to parse recipe: {e}")),
+                                    ..model
+                                },
+                            }
+                        }
+                        None => AppModel {
+                            status_message: Some(format!("Unknown recipe: {slug}")),
+                            ..model
+                        },
+                    }
+                }
+                None => AppModel {
+                    status_message: Some("No recipe selected".into()),
+                    ..model
+                },
+            }
+        }
+        AppMessage::OpenEditorFromLibrary => {
+            // Open a library recipe in the editor for in-place editing.
+            let slug = model
+                .library
+                .as_ref()
+                .and_then(|l| l.confirm())
+                .map(|s| s.slug);
+            match slug {
+                Some(slug) => {
+                    let path = model.paths.recipes_dir().join(format!("{slug}.bnto.json"));
+                    match bnto_core::editor::EditorModel::load(&path) {
+                        Ok(editor_model) => AppModel {
+                            screen: Screen::Editor {
+                                from: DetailOrigin::Library,
+                            },
+                            editor: Some(EditorScreenModel::new(editor_model)),
+                            ..model
+                        },
+                        Err(e) => AppModel {
+                            status_message: Some(format!("Failed to load recipe: {e}")),
+                            ..model
+                        },
+                    }
+                }
+                None => AppModel {
+                    status_message: Some("No recipe selected".into()),
+                    ..model
+                },
             }
         }
         AppMessage::OpenSettingsPicker { field_key } => {
@@ -880,6 +962,62 @@ fn handle_library_rename(model: &AppModel) -> Option<String> {
     }
 }
 
+/// Load an EditorModel from raw recipe JSON.
+///
+/// Tries strict `Definition` deserialization first. If that fails (e.g.,
+/// simplified JSON without all required fields), falls back to lenient
+/// Value-based parsing that extracts name and nodes.
+fn load_editor_from_json(json: &str) -> Result<bnto_core::editor::EditorModel, String> {
+    // Try strict deserialization.
+    if let Ok(def) = serde_json::from_str::<bnto_core::definition::Definition>(json) {
+        return Ok(bnto_core::editor::EditorModel::from_definition(
+            &def,
+            bnto_core::editor::EditorSource::Predefined("custom".into()),
+        ));
+    }
+    // Lenient fallback: extract name and nodes from a Value.
+    let val: serde_json::Value =
+        serde_json::from_str(json).map_err(|e| format!("invalid JSON: {e}"))?;
+    let name = val["name"].as_str().unwrap_or("Untitled").to_string();
+    let nodes = val["nodes"]
+        .as_array()
+        .ok_or_else(|| "missing 'nodes' array".to_string())?;
+    let editor_nodes: Vec<bnto_core::editor::EditorNode> = nodes
+        .iter()
+        .map(|n| bnto_core::editor::EditorNode {
+            id: n["id"].as_str().unwrap_or("").to_string(),
+            node_type: n["type"].as_str().unwrap_or("").to_string(),
+            label: n["name"].as_str().unwrap_or("").to_string(),
+            params: json_to_editor_params(n["parameters"].as_object()),
+            expanded: false,
+        })
+        .collect();
+    let selected_index = if editor_nodes.is_empty() {
+        None
+    } else {
+        Some(0)
+    };
+    Ok(bnto_core::editor::EditorModel {
+        recipe_name: name,
+        recipe_description: val["description"].as_str().unwrap_or("").to_string(),
+        nodes: editor_nodes,
+        selected_index,
+        dirty: false,
+        undo_stack: Vec::new(),
+        redo_stack: Vec::new(),
+        source: bnto_core::editor::EditorSource::Predefined("custom".into()),
+    })
+}
+
+/// Convert JSON parameters to the editor's param format.
+fn json_to_editor_params(
+    params: Option<&serde_json::Map<String, serde_json::Value>>,
+) -> HashMap<String, serde_json::Value> {
+    params
+        .map(|m| m.iter().map(|(k, v)| (k.clone(), v.clone())).collect())
+        .unwrap_or_default()
+}
+
 /// Handle "Add to Library" — copies the focused browser recipe to the user's library.
 ///
 /// If the file already exists, sets a status message prompting confirmation.
@@ -968,7 +1106,7 @@ mod tests {
     }
 
     fn default_model() -> AppModel {
-        AppModel::with_paths(ThemeVariant::LosAngeles, None, test_paths())
+        AppModel::with_paths(ThemeVariant::LosAngeles, None, false, test_paths())
     }
 
     /// Apply a message to a model on the given screen, return the resulting screen.
@@ -1034,13 +1172,21 @@ mod tests {
     }
 
     #[test]
-    fn home_confirm_new_recipe_sets_status() {
+    fn home_confirm_new_recipe_opens_editor() {
         let mut app = default_model();
         app.home.focused = super::super::screens::home::HomePane::NewRecipe;
         let app = update(app, AppMessage::HomeConfirm);
-        assert_eq!(app.screen, Screen::Home);
-        assert!(app.status_message.is_some());
-        assert!(app.status_message.unwrap().contains("coming soon"));
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Editor {
+                    from: DetailOrigin::Home
+                }
+            ),
+            "expected Editor from Home, got {:?}",
+            app.screen
+        );
+        assert!(app.editor.is_some());
     }
 
     #[test]
@@ -2081,19 +2227,20 @@ mod tests {
     // --- Custom recipe loading ---
 
     #[test]
-    fn new_with_recipe_starts_on_detail() {
+    fn recipe_json_opens_editor() {
         let json = r#"{"name": "Custom", "description": "A custom recipe", "nodes": []}"#;
         let app = AppModel::with_paths(
             ThemeVariant::LosAngeles,
             Some(json.to_string()),
+            false,
             test_paths(),
         );
-        assert!(matches!(app.screen, Screen::Detail { .. }));
-        assert!(app.detail.is_some());
+        assert!(matches!(app.screen, Screen::Editor { .. }));
+        assert!(app.editor.is_some());
     }
 
     #[test]
-    fn new_with_recipe_loads_params() {
+    fn recipe_json_loads_nodes_into_editor() {
         let json = r#"{
             "name": "Test",
             "nodes": [
@@ -2103,25 +2250,27 @@ mod tests {
         let app = AppModel::with_paths(
             ThemeVariant::LosAngeles,
             Some(json.to_string()),
+            false,
             test_paths(),
         );
-        assert!(matches!(app.screen, Screen::Detail { .. }));
-        let detail = app.detail.as_ref().expect("detail populated");
+        assert!(matches!(app.screen, Screen::Editor { .. }));
+        let editor = app.editor.as_ref().expect("editor populated");
         assert!(
-            !detail.params.is_empty(),
-            "should have params from processor"
+            !editor.editor.nodes.is_empty(),
+            "should have nodes from recipe"
         );
     }
 
     #[test]
-    fn new_with_invalid_recipe_starts_on_home() {
+    fn invalid_recipe_json_starts_on_home() {
         let app = AppModel::with_paths(
             ThemeVariant::LosAngeles,
             Some("{bad".to_string()),
+            false,
             test_paths(),
         );
         assert_eq!(app.screen, Screen::Home);
-        assert!(app.detail.is_none());
+        assert!(app.editor.is_none());
     }
 
     // --- BntoPaths wiring + status message ---
@@ -2154,14 +2303,14 @@ mod tests {
     #[test]
     fn app_model_has_paths_field() {
         let (_tmp, paths) = test_paths_with_dir();
-        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         assert_eq!(app.paths.config, paths.config);
     }
 
     #[test]
     fn theme_changed_sets_status_on_save_success() {
         let (_tmp, paths) = test_paths_with_dir();
-        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         let app = update(
             AppModel {
                 screen: Screen::Settings,
@@ -2187,7 +2336,7 @@ mod tests {
         // DON'T create config dir — save will fail because parent doesn't exist
         // Wait, atomic_write creates parent dirs. Let's use a truly read-only path.
         // For now, just verify the status_message field gets set on error.
-        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         let app = update(
             AppModel {
                 screen: Screen::Settings,
@@ -2202,7 +2351,7 @@ mod tests {
     #[test]
     fn settings_path_confirmed_saves_via_toml_config() {
         let (_tmp, paths) = test_paths_with_dir();
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         app = update(app, AppMessage::OpenSettings);
 
         app.screen = Screen::Picker {
@@ -2236,7 +2385,7 @@ mod tests {
         };
         config.save(&paths).unwrap();
 
-        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         // Should pick up the saved theme from TOML config.
         assert_eq!(app.theme_variant, ThemeVariant::Tokyo);
     }
@@ -2244,7 +2393,7 @@ mod tests {
     #[test]
     fn theme_changed_persists_to_disk_and_survives_reload() {
         let (_tmp, paths) = test_paths_with_dir();
-        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         assert_eq!(app.theme_variant, ThemeVariant::LosAngeles);
 
         // Change theme — should save to disk.
@@ -2253,7 +2402,7 @@ mod tests {
         assert!(app.status_message.is_none(), "save should succeed");
 
         // Simulate restarting the TUI with default CLI args.
-        let reloaded = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        let reloaded = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         assert_eq!(
             reloaded.theme_variant,
             ThemeVariant::Tokyo,
@@ -2264,7 +2413,7 @@ mod tests {
     #[test]
     fn telemetry_toggled_persists_to_disk() {
         let (_tmp, paths) = test_paths_with_dir();
-        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         assert!(app.toml_config.telemetry.enabled);
 
         let app = update(app, AppMessage::TelemetryToggled(false));
@@ -2299,7 +2448,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         app = update(app, AppMessage::OpenLibrary);
         assert!(app.library.as_ref().is_some_and(|l| !l.entries.is_empty()));
 
@@ -2351,7 +2500,7 @@ mod tests {
     #[test]
     fn add_to_library_writes_recipe_file() {
         let (_tmp, paths) = test_paths_with_dir();
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         // Navigate to browser and position on first recipe.
         app.screen = Screen::Browser;
         let app = update(app, AppMessage::AddToLibrary);
@@ -2371,7 +2520,7 @@ mod tests {
     #[test]
     fn add_to_library_collision_prompts() {
         let (_tmp, paths) = test_paths_with_dir();
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         app.screen = Screen::Browser;
         // Add once.
         let app = update(app, AppMessage::AddToLibrary);
@@ -2394,7 +2543,7 @@ mod tests {
     #[test]
     fn add_to_library_confirm_overwrites() {
         let (_tmp, paths) = test_paths_with_dir();
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths.clone());
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
         app.screen = Screen::Browser;
         let slug = app.browser.recipes[0].slug.clone();
         // Add once.
@@ -2418,7 +2567,7 @@ mod tests {
     #[test]
     fn add_to_library_refreshes_home_library_names() {
         let (_tmp, paths) = test_paths_with_dir();
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, paths);
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         assert!(app.home.library_names.is_empty());
         app.screen = Screen::Browser;
         let app = update(app, AppMessage::AddToLibrary);
@@ -2426,5 +2575,123 @@ mod tests {
             !app.home.library_names.is_empty(),
             "home library_names should refresh after adding a recipe"
         );
+    }
+
+    // --- Editor entry points ---
+
+    #[test]
+    fn new_flag_opens_blank_editor() {
+        let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, true, test_paths());
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Editor {
+                    from: DetailOrigin::Home
+                }
+            ),
+            "expected Editor from Home, got {:?}",
+            app.screen
+        );
+        let editor = app.editor.as_ref().expect("editor populated");
+        assert!(
+            editor.editor.nodes.is_empty(),
+            "blank editor should have no nodes"
+        );
+    }
+
+    #[test]
+    fn open_editor_from_browser_creates_editor_screen() {
+        let mut app = default_model();
+        app.screen = Screen::Browser;
+        let app = update(app, AppMessage::OpenEditorFromBrowser);
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Editor {
+                    from: DetailOrigin::Browser
+                }
+            ),
+            "expected Editor from Browser, got {:?}",
+            app.screen
+        );
+        assert!(app.editor.is_some());
+    }
+
+    #[test]
+    fn open_editor_from_library_creates_editor_screen() {
+        let (_tmp, paths) = test_paths_with_dir();
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
+        // Write a recipe file.
+        let recipes_dir = paths.recipes_dir();
+        let _ = std::fs::create_dir_all(&recipes_dir);
+        std::fs::write(
+            recipes_dir.join("compress-images.bnto.json"),
+            bnto_engine::recipes::builtin_recipe_by_slug("compress-images")
+                .unwrap()
+                .definition_json,
+        )
+        .unwrap();
+        // Navigate to library.
+        app = update(app, AppMessage::OpenLibrary);
+        assert!(app.library.as_ref().is_some_and(|l| !l.entries.is_empty()));
+        // Open editor from library.
+        let app = update(app, AppMessage::OpenEditorFromLibrary);
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Editor {
+                    from: DetailOrigin::Library
+                }
+            ),
+            "expected Editor from Library, got {:?}",
+            app.screen
+        );
+        assert!(app.editor.is_some());
+    }
+
+    #[test]
+    fn back_from_editor_returns_to_origin() {
+        // From Home
+        assert_eq!(
+            transition(
+                Screen::Editor {
+                    from: DetailOrigin::Home
+                },
+                AppMessage::Back
+            ),
+            Screen::Home
+        );
+        // From Browser
+        assert_eq!(
+            transition(
+                Screen::Editor {
+                    from: DetailOrigin::Browser
+                },
+                AppMessage::Back
+            ),
+            Screen::Browser
+        );
+        // From Library
+        assert_eq!(
+            transition(
+                Screen::Editor {
+                    from: DetailOrigin::Library
+                },
+                AppMessage::Back
+            ),
+            Screen::Library
+        );
+    }
+
+    #[test]
+    fn back_from_editor_clears_editor_model() {
+        let mut app = default_model();
+        app.screen = Screen::Editor {
+            from: DetailOrigin::Home,
+        };
+        app.editor = Some(EditorScreenModel::new(bnto_core::editor::EditorModel::new()));
+        let app = update(app, AppMessage::Back);
+        assert_eq!(app.screen, Screen::Home);
+        assert!(app.editor.is_none(), "editor should be cleared on back");
     }
 }
