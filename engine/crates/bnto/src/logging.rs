@@ -24,6 +24,8 @@ impl FileLogger {
     /// Creates a file named `session-{timestamp}.log` and returns the
     /// logger. Returns `None` if the file cannot be created.
     pub fn new(logs_dir: &std::path::Path, min_level: LogLevel) -> Option<Self> {
+        std::fs::create_dir_all(logs_dir).ok()?;
+
         let timestamp = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or_default()

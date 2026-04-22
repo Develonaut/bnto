@@ -438,6 +438,104 @@ fn test_multiple_input_files() {
     assert_eq!(output_files(&out).len(), 2, "Expected 2 output files");
 }
 
+// --- Logging ---
+
+/// Helper: read the first session log file from a BNTO_HOME temp dir.
+fn read_session_log(home: &tempfile::TempDir) -> String {
+    let logs_dir = home.path().join("state").join("logs");
+    assert!(
+        logs_dir.is_dir(),
+        "logs/ dir should exist at {}",
+        logs_dir.display()
+    );
+
+    let log_files: Vec<_> = std::fs::read_dir(&logs_dir)
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_name().to_string_lossy().starts_with("session-"))
+        .collect();
+    assert!(
+        !log_files.is_empty(),
+        "Expected at least one session log in {}",
+        logs_dir.display()
+    );
+
+    std::fs::read_to_string(log_files[0].path()).unwrap()
+}
+
+#[test]
+fn test_run_creates_session_log() {
+    // A normal `bnto run` should produce a session log file.
+    let home = temp_output_dir();
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path("compress-images")])
+        .arg(fixture_image("small.jpg"))
+        .args(["-o", out.path().to_str().unwrap()])
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+
+    let log = read_session_log(&home);
+    assert!(
+        log.contains("command: run"),
+        "Log should contain 'command: run', got: {log}"
+    );
+    assert!(
+        log.contains("[cli]"),
+        "Log should contain [cli] target, got: {log}"
+    );
+    assert!(
+        log.contains("run complete"),
+        "Log should contain 'run complete', got: {log}"
+    );
+}
+
+#[test]
+fn test_list_creates_session_log() {
+    // `bnto list` should also produce a session log.
+    let home = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .arg("list")
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+
+    let log = read_session_log(&home);
+    assert!(
+        log.contains("command: list"),
+        "Log should contain 'command: list', got: {log}"
+    );
+}
+
+#[test]
+fn test_tui_creates_session_log() {
+    // TUI fails without a terminal, but the logger writes before setup.
+    let home = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .arg("tui")
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+
+    let log = read_session_log(&home);
+    assert!(
+        log.contains("command: tui"),
+        "Log should contain 'command: tui', got: {log}"
+    );
+    assert!(
+        log.contains("session init"),
+        "Log should contain 'session init', got: {log}"
+    );
+}
+
 // --- TUI Subcommand ---
 
 #[test]

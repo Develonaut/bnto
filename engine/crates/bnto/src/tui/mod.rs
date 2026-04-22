@@ -35,7 +35,7 @@ use std::io;
 use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
-use bnto_core::logging::{LogEntry, LogLevel, Logger, NoopLogger};
+use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use crossterm::event::Event;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{event as crossterm_event, execute};
@@ -48,8 +48,6 @@ use keys::handle_key;
 use screens::execution::{ExecutionMessage, ExecutionStatus};
 use screens::picker::PickerMessage;
 use theme::ThemeVariant;
-
-use crate::logging::FileLogger;
 
 /// Render time threshold in microseconds — only log frames slower than this.
 const SLOW_FRAME_THRESHOLD_US: u64 = 16_000;
@@ -65,17 +63,21 @@ pub fn launch_tui(
     variant: ThemeVariant,
     recipe_json: Option<String>,
     new_recipe: bool,
+    logger: &Arc<dyn Logger>,
 ) -> io::Result<()> {
+    logger.log(LogEntry {
+        level: LogLevel::Info,
+        target: "tui",
+        message: format!("session init (theme={variant:?})"),
+        elapsed_us: None,
+    });
+
     install_panic_hook();
-    let mut terminal = setup_terminal()?;
+    let terminal = setup_terminal();
+    logger.flush(); // Flush the init entry even if setup fails.
+    let mut terminal = terminal?;
 
-    // Create a session logger. Falls back to NoopLogger if file creation fails.
-    let logger: Arc<dyn Logger> = paths::BntoPaths::resolve()
-        .and_then(|p| FileLogger::new(&p.logs_dir(), LogLevel::Debug))
-        .map(|fl| Arc::new(fl) as Arc<dyn Logger>)
-        .unwrap_or_else(|| Arc::new(NoopLogger));
-
-    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe, &logger);
+    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe, logger);
     logger.flush();
     restore_terminal(&mut terminal)?;
     result

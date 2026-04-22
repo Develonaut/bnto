@@ -20,9 +20,13 @@ pub mod telemetry;
 mod tui;
 
 use std::process;
+use std::sync::Arc;
 
+use bnto_core::logging::{LogEntry, LogLevel, Logger, NoopLogger};
 use clap::{Parser, Subcommand};
 use colored::Colorize;
+
+use logging::FileLogger;
 
 /// bnto — run recipes from the command line.
 #[derive(Parser)]
@@ -98,6 +102,25 @@ fn main() {
     let cli = Cli::parse();
     telemetry::init();
 
+    // Session logger — shared across all commands.
+    let logger = create_logger();
+
+    let cmd_name = match &cli.command {
+        Some(Command::Run { .. }) => "run",
+        Some(Command::List) => "list",
+        Some(Command::Info { .. }) => "info",
+        Some(Command::Doctor) => "doctor",
+        Some(Command::Tui { .. }) => "tui",
+        Some(Command::Telemetry { .. }) => "telemetry",
+        None => "tui",
+    };
+    logger.log(LogEntry {
+        level: LogLevel::Info,
+        target: "cli",
+        message: format!("command: {cmd_name}"),
+        elapsed_us: None,
+    });
+
     match cli.command {
         Some(Command::Run {
             recipe,
@@ -106,7 +129,7 @@ fn main() {
             param,
         }) => {
             telemetry::capture(telemetry::events::cli_command("run"));
-            run_recipe(&recipe, &inputs, &output, &param);
+            run_recipe(&recipe, &inputs, &output, &param, &logger);
         }
         Some(Command::List) => {
             telemetry::capture(telemetry::events::cli_command("list"));
@@ -122,7 +145,7 @@ fn main() {
         }
         Some(Command::Tui { recipe, theme, new }) => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui(&theme, recipe, new);
+            launch_tui(&theme, recipe, new, &logger);
         }
         Some(Command::Telemetry { action }) => match action {
             TelemetryAction::Enable => {
@@ -137,12 +160,22 @@ fn main() {
         },
         None => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui("los-angeles", None, false);
+            launch_tui("los-angeles", None, false, &logger);
         }
     }
+
+    logger.flush();
 }
 
-fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool) {
+/// Create the session logger. Falls back to NoopLogger if paths can't be resolved.
+fn create_logger() -> Arc<dyn Logger> {
+    tui::paths::BntoPaths::resolve()
+        .and_then(|p| FileLogger::new(&p.logs_dir(), LogLevel::Debug))
+        .map(|fl| Arc::new(fl) as Arc<dyn Logger>)
+        .unwrap_or_else(|| Arc::new(NoopLogger))
+}
+
+fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool, logger: &Arc<dyn Logger>) {
     let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
         Ok(v) => v,
         Err(e) => {
@@ -159,7 +192,7 @@ fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool) {
         }
     });
     let start = std::time::Instant::now();
-    if let Err(e) = tui::launch_tui(variant, recipe_json, new) {
+    if let Err(e) = tui::launch_tui(variant, recipe_json, new, logger) {
         eprintln!("{} {e}", "TUI error:".red());
         process::exit(1);
     }
@@ -196,7 +229,13 @@ fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
     );
 }
 
-fn run_recipe(recipe_path: &str, inputs: &[String], output_dir: &str, param_overrides: &[String]) {
+fn run_recipe(
+    recipe_path: &str,
+    inputs: &[String],
+    output_dir: &str,
+    param_overrides: &[String],
+    logger: &Arc<dyn Logger>,
+) {
     let raw_json = read_recipe(recipe_path);
     let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
     print_run_banner(recipe_path, &raw_json, &prepared);
@@ -208,10 +247,25 @@ fn run_recipe(recipe_path: &str, inputs: &[String], output_dir: &str, param_over
         .filter_map(|p| p.split('=').next().map(|k| k.to_string()))
         .collect();
 
+    logger.log(LogEntry {
+        level: LogLevel::Info,
+        target: "cli",
+        message: format!("run: recipe={recipe_path} files={file_count} bytes={total_bytes}"),
+        elapsed_us: None,
+    });
+
+    let start = std::time::Instant::now();
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
     let reporter = progress::stderr_reporter();
     match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
         Ok(result) => {
+            let elapsed_us = start.elapsed().as_micros() as u64;
+            logger.log(LogEntry {
+                level: LogLevel::Info,
+                target: "cli",
+                message: format!("run complete: {} output files", result.files.len()),
+                elapsed_us: Some(elapsed_us),
+            });
             telemetry::capture(telemetry::events::cli_recipe_run_with_params(
                 recipe_path,
                 result.duration_ms,
@@ -224,6 +278,12 @@ fn run_recipe(recipe_path: &str, inputs: &[String], output_dir: &str, param_over
             write_output(&result, output_dir);
         }
         Err(e) => {
+            logger.log(LogEntry {
+                level: LogLevel::Error,
+                target: "cli",
+                message: format!("run failed: {e}"),
+                elapsed_us: None,
+            });
             telemetry::capture(telemetry::events::cli_error("run", &e.to_string()));
             eprintln!("{} {e}", "Pipeline failed:".red());
             process::exit(1);
