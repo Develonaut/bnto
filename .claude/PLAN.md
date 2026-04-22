@@ -1360,6 +1360,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ---
 
+### Triage: Power Recipe Infrastructure
+
+**Priority: Triage.** Implement foundational engine capabilities (recipe variables, template expressions, data-driven forEach, inter-node data passing) and core node types (shell-command, file-system, spreadsheet-read, http-request) to support complex, data-driven custom recipes like the Etsy Product Image Pipeline. See [power-recipes.md](strategy/power-recipes.md) for full gap analysis, node maps, priority tiers (Tier 0 foundation → Tier 1 nodes → Tier 2 resilience → Tier 3 recipe-as-node), and acceptance test matrix.
+
+---
+
 ## Reference
 
 | Document                                 | Purpose                                                                      |

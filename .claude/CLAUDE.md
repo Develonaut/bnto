@@ -75,6 +75,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Recipe editors (unified)       | [recipe-editors.md](.claude/strategy/recipe-editors.md)                         |
 | Editor implementation plan     | [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) |
 | TUI form widgets (bnto-form)   | [bnto-form-strategy.md](.claude/strategy/bnto-form-strategy.md)                 |
+| Power recipes / gap analysis   | [power-recipes.md](.claude/strategy/power-recipes.md)                           |
 
 ---
 
