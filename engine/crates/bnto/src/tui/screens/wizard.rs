@@ -147,17 +147,11 @@ pub fn update(
     match msg {
         WizardMessage::CursorDown => {
             match model.step {
-                WizardStep::Category => {
-                    if !model.categories.is_empty() {
-                        model.category_cursor =
-                            (model.category_cursor + 1) % model.categories.len();
-                    }
+                WizardStep::Category if !model.categories.is_empty() => {
+                    model.category_cursor = (model.category_cursor + 1) % model.categories.len();
                 }
-                WizardStep::Operation => {
-                    if !model.operations.is_empty() {
-                        model.operation_cursor =
-                            (model.operation_cursor + 1) % model.operations.len();
-                    }
+                WizardStep::Operation if !model.operations.is_empty() => {
+                    model.operation_cursor = (model.operation_cursor + 1) % model.operations.len();
                 }
                 _ => {}
             }
@@ -165,23 +159,19 @@ pub fn update(
         }
         WizardMessage::CursorUp => {
             match model.step {
-                WizardStep::Category => {
-                    if !model.categories.is_empty() {
-                        model.category_cursor = if model.category_cursor == 0 {
-                            model.categories.len() - 1
-                        } else {
-                            model.category_cursor - 1
-                        };
-                    }
+                WizardStep::Category if !model.categories.is_empty() => {
+                    model.category_cursor = if model.category_cursor == 0 {
+                        model.categories.len() - 1
+                    } else {
+                        model.category_cursor - 1
+                    };
                 }
-                WizardStep::Operation => {
-                    if !model.operations.is_empty() {
-                        model.operation_cursor = if model.operation_cursor == 0 {
-                            model.operations.len() - 1
-                        } else {
-                            model.operation_cursor - 1
-                        };
-                    }
+                WizardStep::Operation if !model.operations.is_empty() => {
+                    model.operation_cursor = if model.operation_cursor == 0 {
+                        model.operations.len() - 1
+                    } else {
+                        model.operation_cursor - 1
+                    };
                 }
                 _ => {}
             }
