@@ -7,8 +7,11 @@
 
 use std::collections::HashMap;
 
+use bnto_core::InputMode;
 use bnto_core::metadata::{ParamCondition, ParameterType};
 use bnto_form::FormModel;
+
+use super::picker::PickerModel;
 
 /// A single editable parameter entry shown in the detail screen.
 #[derive(Debug, Clone)]
@@ -37,9 +40,20 @@ pub struct ParamEntry {
     pub visible_when: Option<ParamCondition>,
 }
 
+/// Which section of the detail screen has keyboard focus.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DetailFocus {
+    /// File picker section (file-mode only).
+    Input,
+    /// Form fields section.
+    Params,
+    /// The Run button at the bottom.
+    Run,
+}
+
 /// Detail screen state — recipe info + form for parameter editing.
 ///
-/// The "Continue" button is a virtual item at form field count,
+/// The "Run" button is a virtual item at form field count,
 /// managed by this wrapper — not by bnto_form.
 #[derive(Debug)]
 pub struct DetailModel {
@@ -53,20 +67,27 @@ pub struct DetailModel {
     pub params: Vec<ParamEntry>,
     /// Form model managing all field state, focus, and editing.
     pub form: FormModel,
-    /// Whether focus is on the "Continue" button below the form.
-    pub on_continue: bool,
+    /// Which section currently has keyboard focus.
+    pub focus: DetailFocus,
+    /// Resolved input mode for this recipe.
+    #[allow(dead_code)]
+    pub input_mode: InputMode,
+    /// Embedded file picker for file-mode recipes (None for URL/text-mode).
+    pub input_picker: Option<PickerModel>,
 }
 
-/// Result of confirming the detail screen — collected param overrides.
+/// Result of confirming the detail screen — collected param overrides + files.
 pub struct ConfigResult {
-    /// Map of "node_id.param_name" → value for passing to execution.
+    /// Map of "nodeId:paramName" → value for passing to execution.
     pub overrides: HashMap<String, String>,
+    /// Selected files from the embedded picker (empty for URL/text-mode).
+    pub files: Vec<std::path::PathBuf>,
 }
 
 impl DetailModel {
-    /// Whether the "Continue" action at the bottom is focused.
-    pub fn is_continue_focused(&self) -> bool {
-        self.on_continue
+    /// Whether the "Run" action at the bottom is focused.
+    pub fn is_run_focused(&self) -> bool {
+        self.focus == DetailFocus::Run
     }
 
     /// Build a detail model from test data (no engine dependency).
@@ -85,19 +106,27 @@ impl DetailModel {
             description: description.to_string(),
             params,
             form,
-            on_continue: false,
+            focus: DetailFocus::Params,
+            input_mode: InputMode::FileUpload,
+            input_picker: None,
         }
     }
 
     /// Build a detail model from a recipe slug using engine metadata.
+    ///
+    /// Convenience wrapper for tests and simple callers that don't need
+    /// to specify a start directory. Production code uses
+    /// `detail_loader::load_detail_with_dir()` directly.
+    #[allow(dead_code)]
     pub fn from_slug(slug: &str, registry: &bnto_core::registry::NodeRegistry) -> Option<Self> {
         super::detail_loader::load_detail(slug, registry)
     }
 
-    /// Confirm the current configuration — returns param overrides.
+    /// Confirm the current configuration — returns param overrides + selected files.
     ///
     /// Hidden params (failing `visible_when`) are excluded from overrides.
     /// Values come from the form fields, not the original ParamEntry values.
+    /// Files come from the embedded picker (empty for URL/text-mode).
     pub fn confirm(&self) -> ConfigResult {
         let overrides = self
             .params
@@ -106,11 +135,16 @@ impl DetailModel {
             .filter(|(_, p)| is_param_visible(p, &self.params))
             .filter_map(|(i, p)| {
                 let value = self.form.fields.get(i).map(|f| f.value.clone())?;
-                let key = format!("{}.{}", p.node_id, p.name);
+                let key = format!("{}:{}", p.node_id, p.name);
                 Some((key, value))
             })
             .collect();
-        ConfigResult { overrides }
+        let files = self
+            .input_picker
+            .as_ref()
+            .map(|p| p.selected.iter().cloned().collect())
+            .unwrap_or_default();
+        ConfigResult { overrides, files }
     }
 }
 
@@ -255,10 +289,11 @@ mod tests {
     }
 
     #[test]
-    fn initial_focus_is_zero_and_not_on_continue() {
+    fn initial_focus_is_params_and_not_on_run() {
         let m = detail();
         assert_eq!(m.form.focused, 0);
-        assert!(!m.on_continue);
+        assert_eq!(m.focus, DetailFocus::Params);
+        assert!(!m.is_run_focused());
     }
 
     // --- Form fields match params ---
@@ -294,11 +329,11 @@ mod tests {
         let result = m.confirm();
         assert_eq!(result.overrides.len(), 3);
         assert_eq!(
-            result.overrides.get("compress-image.quality"),
+            result.overrides.get("compress-image:quality"),
             Some(&"80".to_string())
         );
         assert_eq!(
-            result.overrides.get("compress-image.format"),
+            result.overrides.get("compress-image:format"),
             Some(&"jpeg".to_string())
         );
     }
@@ -310,7 +345,7 @@ mod tests {
         m.form.fields[0].value = "60".into();
         let result = m.confirm();
         assert_eq!(
-            result.overrides.get("compress-image.quality"),
+            result.overrides.get("compress-image:quality"),
             Some(&"60".to_string())
         );
     }
@@ -325,9 +360,9 @@ mod tests {
         let m = DetailModel::from_test_data("s", "n", "d", params);
         let result = m.confirm();
         assert_eq!(result.overrides.len(), 2, "hidden param excluded");
-        assert!(!result.overrides.contains_key("n.width"));
-        assert!(result.overrides.contains_key("n.mode"));
-        assert!(result.overrides.contains_key("n.format"));
+        assert!(!result.overrides.contains_key("n:width"));
+        assert!(result.overrides.contains_key("n:mode"));
+        assert!(result.overrides.contains_key("n:format"));
     }
 
     #[test]
@@ -339,22 +374,22 @@ mod tests {
         let m = DetailModel::from_test_data("s", "n", "d", params);
         let result = m.confirm();
         assert_eq!(result.overrides.len(), 2, "matching condition → included");
-        assert!(result.overrides.contains_key("n.width"));
+        assert!(result.overrides.contains_key("n:width"));
     }
 
-    // --- is_continue_focused ---
+    // --- is_run_focused ---
 
     #[test]
-    fn is_continue_focused_when_on_continue() {
+    fn is_run_focused_when_focus_is_run() {
         let mut m = detail();
-        m.on_continue = true;
-        assert!(m.is_continue_focused());
+        m.focus = DetailFocus::Run;
+        assert!(m.is_run_focused());
     }
 
     #[test]
-    fn is_continue_focused_false_on_param() {
+    fn is_run_focused_false_on_param() {
         let m = detail();
-        assert!(!m.is_continue_focused());
+        assert!(!m.is_run_focused());
     }
 
     // --- Integration: loads real recipe from engine ---

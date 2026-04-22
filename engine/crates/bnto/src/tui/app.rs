@@ -160,6 +160,12 @@ pub enum AppMessage {
     Browser(BrowserMessage),
     /// Forward a form message to the detail screen's FormModel.
     DetailForm(bnto_form::FormMessage),
+    /// Forward a message to the detail screen's embedded picker.
+    DetailPicker(PickerMessage),
+    /// Move detail focus to Input section.
+    DetailFocusInput,
+    /// Move detail focus to Params section.
+    DetailFocusParams,
     /// Forward a message to the picker screen.
     Picker(PickerMessage),
     /// Forward a message to the execution screen.
@@ -302,7 +308,12 @@ impl AppModel {
 pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::RecipeSelected { slug } => {
-            let detail = DetailModel::from_slug(&slug, &model.registry);
+            let start_dir = resolve_start_dir(&model.config);
+            let detail = super::screens::detail_loader::load_detail_with_dir(
+                &slug,
+                &model.registry,
+                Some(&start_dir),
+            );
             AppModel {
                 screen: Screen::Detail {
                     slug,
@@ -317,25 +328,24 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 Screen::Detail { from, .. } => *from,
                 _ => DetailOrigin::Home,
             };
-            let overrides = model
-                .detail
+            let config_result = model.detail.as_ref().map(|d| d.confirm());
+            let overrides = config_result
                 .as_ref()
-                .map(|d| d.confirm().overrides)
+                .map(|r| r.overrides.clone())
                 .unwrap_or_default();
-            let start_dir = model
-                .config
-                .default_path
+            let files = config_result
                 .as_ref()
-                .map(std::path::PathBuf::from)
-                .filter(|p| p.is_dir())
-                .unwrap_or_else(|| {
-                    std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
-                });
-            let picker = Some(PickerModel::from_slug(&slug, &start_dir, &model.registry));
+                .map(|r| r.files.clone())
+                .unwrap_or_default();
+
+            // All recipes go directly to Execution now.
+            // File-mode recipes get files from the embedded picker in DetailModel.
+            // URL/text-mode recipes get empty files (URL is in overrides).
+            let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
             AppModel {
-                screen: Screen::Picker { slug, from },
-                picker,
-                param_overrides: overrides,
+                screen: Screen::Execution { slug, from },
+                execution,
+                param_overrides: HashMap::new(),
                 ..model
             }
         }
@@ -415,7 +425,12 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 }
                 let clamped = idx.min(model.browser.recipes.len() - 1);
                 let slug = model.browser.recipes[clamped].slug.clone();
-                let detail = DetailModel::from_slug(&slug, &model.registry);
+                let start_dir = resolve_start_dir(&model.config);
+                let detail = super::screens::detail_loader::load_detail_with_dir(
+                    &slug,
+                    &model.registry,
+                    Some(&start_dir),
+                );
                 AppModel {
                     screen: Screen::Detail {
                         slug,
@@ -485,7 +500,12 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 .map(|s| s.slug);
             match slug {
                 Some(slug) => {
-                    let detail = DetailModel::from_slug(&slug, &model.registry);
+                    let start_dir = resolve_start_dir(&model.config);
+                    let detail = super::screens::detail_loader::load_detail_with_dir(
+                        &slug,
+                        &model.registry,
+                        Some(&start_dir),
+                    );
                     AppModel {
                         screen: Screen::Detail {
                             slug,
@@ -570,22 +590,62 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         }
         AppMessage::DetailForm(msg) => {
             let detail = model.detail.map(|mut d| {
-                // FocusNext at the last visible field → move to Continue button.
-                // FocusPrev on Continue → return focus to form.
-                let at_last = matches!(msg, bnto_form::FormMessage::FocusNext)
-                    && !d.on_continue
-                    && is_at_last_visible_field(&d.form);
-                let leaving_continue =
-                    matches!(msg, bnto_form::FormMessage::FocusPrev) && d.on_continue;
+                use super::screens::detail::DetailFocus;
 
-                if at_last {
-                    d.on_continue = true;
-                } else if leaving_continue {
-                    d.on_continue = false;
-                } else if !d.on_continue {
-                    d.form = bnto_form::update(d.form, msg);
-                    detail_bridge::update_visibility(&mut d.form, &d.params);
+                match d.focus {
+                    DetailFocus::Input => {
+                        // Tab from Input section → move focus to Params.
+                        if matches!(msg, bnto_form::FormMessage::FocusNext) {
+                            d.focus = DetailFocus::Params;
+                        }
+                    }
+                    DetailFocus::Params => {
+                        // FocusNext at the last visible field → move to Run button.
+                        let at_last = matches!(msg, bnto_form::FormMessage::FocusNext)
+                            && is_at_last_visible_field(&d.form);
+                        let at_first =
+                            matches!(msg, bnto_form::FormMessage::FocusPrev) && d.form.focused == 0;
+
+                        if at_last {
+                            d.focus = DetailFocus::Run;
+                        } else if at_first && d.input_picker.is_some() {
+                            // FocusPrev at top of form → back to Input section.
+                            d.focus = DetailFocus::Input;
+                        } else {
+                            d.form = bnto_form::update(d.form, msg);
+                            detail_bridge::update_visibility(&mut d.form, &d.params);
+                        }
+                    }
+                    DetailFocus::Run => {
+                        // FocusPrev on Run → return focus to Params.
+                        if matches!(msg, bnto_form::FormMessage::FocusPrev) {
+                            d.focus = DetailFocus::Params;
+                        }
+                    }
                 }
+                d
+            });
+            AppModel { detail, ..model }
+        }
+        AppMessage::DetailPicker(msg) => {
+            let detail = model.detail.map(|mut d| {
+                if let Some(picker) = d.input_picker.take() {
+                    d.input_picker = Some(picker_update(picker, msg));
+                }
+                d
+            });
+            AppModel { detail, ..model }
+        }
+        AppMessage::DetailFocusInput => {
+            let detail = model.detail.map(|mut d| {
+                d.focus = super::screens::detail::DetailFocus::Input;
+                d
+            });
+            AppModel { detail, ..model }
+        }
+        AppMessage::DetailFocusParams => {
+            let detail = model.detail.map(|mut d| {
+                d.focus = super::screens::detail::DetailFocus::Params;
                 d
             });
             AppModel { detail, ..model }
@@ -601,7 +661,12 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                     Screen::Execution { slug, from } => (slug.clone(), *from),
                     _ => (String::new(), DetailOrigin::Home),
                 };
-                let detail = DetailModel::from_slug(&slug, &model.registry);
+                let start_dir = resolve_start_dir(&model.config);
+                let detail = super::screens::detail_loader::load_detail_with_dir(
+                    &slug,
+                    &model.registry,
+                    Some(&start_dir),
+                );
                 return AppModel {
                     screen: Screen::Detail { slug, from },
                     detail,
@@ -1218,9 +1283,42 @@ fn handle_add_to_library_write(model: AppModel, slug: &str, _overwrite: bool) ->
     }
 }
 
+/// Resolve the starting directory for file pickers.
+///
+/// Uses the config's `default_path` if it's a valid directory,
+/// otherwise falls back to the current working directory.
+fn resolve_start_dir(config: &TuiConfig) -> std::path::PathBuf {
+    config
+        .default_path
+        .as_ref()
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_dir())
+        .unwrap_or_else(|| {
+            std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+        })
+}
+
+/// Resolve the input mode for a built-in recipe slug.
+///
+/// Looks up the recipe definition, parses it, and reads the input
+/// node's `mode` parameter. Falls back to `FileUpload` for unknown
+/// slugs or parse failures.
+#[cfg(test)]
+fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
+    let Some(recipe) = bnto_engine::recipes::builtin_recipe_by_slug(slug) else {
+        return bnto_core::InputMode::FileUpload;
+    };
+    let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(recipe.definition_json)
+    else {
+        return bnto_core::InputMode::FileUpload;
+    };
+    bnto_core::resolve_input_mode(&def)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::InputMode;
 
     /// Build test paths in a unique temp directory.
     ///
@@ -1357,6 +1455,7 @@ mod tests {
                 from,
             }
         );
+        // ConfigConfirmed goes directly to Execution (files from embedded picker).
         assert_eq!(
             transition(
                 Screen::Detail {
@@ -1364,19 +1463,6 @@ mod tests {
                     from,
                 },
                 AppMessage::ConfigConfirmed { slug: s.clone() }
-            ),
-            Screen::Picker {
-                slug: s.clone(),
-                from,
-            }
-        );
-        assert_eq!(
-            transition(
-                Screen::Picker {
-                    slug: s.clone(),
-                    from,
-                },
-                AppMessage::FilesSelected { slug: s.clone() }
             ),
             Screen::Execution {
                 slug: s.clone(),
@@ -1628,15 +1714,20 @@ mod tests {
             },
             AppMessage::ConfigConfirmed { slug: "s".into() },
         );
+        // ConfigConfirmed now goes directly to Execution.
         assert_eq!(
             app.screen,
-            Screen::Picker {
+            Screen::Execution {
                 slug: "s".into(),
                 from,
             }
         );
+        let exec = app
+            .execution
+            .as_ref()
+            .expect("execution model should exist");
         assert_eq!(
-            app.param_overrides.get("img.quality"),
+            exec.param_overrides.get("img:quality"),
             Some(&"60".to_string())
         );
     }
@@ -1647,7 +1738,7 @@ mod tests {
         use std::path::PathBuf;
 
         let mut overrides = HashMap::new();
-        overrides.insert("img.quality".into(), "60".into());
+        overrides.insert("img:quality".into(), "60".into());
 
         let mut picker = PickerModel::from_test_data(
             "s",
@@ -1677,7 +1768,7 @@ mod tests {
         );
         let exec = app.execution.as_ref().unwrap();
         assert_eq!(exec.selected_files, vec![PathBuf::from("/home/cat.jpg")]);
-        assert_eq!(exec.param_overrides.get("img.quality"), Some(&"60".into()));
+        assert_eq!(exec.param_overrides.get("img:quality"), Some(&"60".into()));
         assert!(app.param_overrides.is_empty(), "cleared after handoff");
     }
 
@@ -1754,7 +1845,7 @@ mod tests {
     // --- Integration: multi-step data flow ---
 
     #[test]
-    fn param_overrides_survive_detail_through_picker_to_execution() {
+    fn param_overrides_survive_detail_to_execution() {
         use super::super::screens::detail::{DetailModel, ParamEntry};
         use super::super::screens::picker::{FileEntry, PickerModel};
         use bnto_core::metadata::ParameterType;
@@ -1789,18 +1880,40 @@ mod tests {
                 visible_when: None,
             },
         ];
+
+        // Build an embedded picker with selected files.
+        let mut picker = PickerModel::from_test_data(
+            "compress-images",
+            PathBuf::from("/photos"),
+            vec![
+                FileEntry {
+                    name: "a.jpg".into(),
+                    is_dir: false,
+                    path: PathBuf::from("/photos/a.jpg"),
+                    size: Some(500),
+                },
+                FileEntry {
+                    name: "b.png".into(),
+                    is_dir: false,
+                    path: PathBuf::from("/photos/b.png"),
+                    size: Some(300),
+                },
+            ],
+            vec!["jpg".into(), "png".into()],
+        );
+        picker.selected.insert(PathBuf::from("/photos/a.jpg"));
+        picker.selected.insert(PathBuf::from("/photos/b.png"));
+
         let from = DetailOrigin::Browser;
+        let mut detail = DetailModel::from_test_data("compress-images", "Compress", "desc", params);
+        detail.input_picker = Some(picker);
+
         let app = AppModel {
             screen: Screen::Detail {
                 slug: "compress-images".into(),
                 from,
             },
-            detail: Some(DetailModel::from_test_data(
-                "compress-images",
-                "Compress",
-                "desc",
-                params,
-            )),
+            detail: Some(detail),
             ..default_model()
         };
 
@@ -1829,65 +1942,12 @@ mod tests {
             app,
             AppMessage::DetailForm(bnto_form::FormMessage::CommitEdit),
         );
-        // Form field value should be updated (confirm reads from form).
         assert_eq!(app.detail.as_ref().unwrap().form.fields[0].value, "55");
 
-        // Step 2: Confirm config → overrides stored on AppModel.
+        // Confirm config → goes directly to Execution with files + overrides.
         let app = update(
             app,
             AppMessage::ConfigConfirmed {
-                slug: "compress-images".into(),
-            },
-        );
-        assert_eq!(
-            app.screen,
-            Screen::Picker {
-                slug: "compress-images".into(),
-                from,
-            }
-        );
-        assert_eq!(
-            app.param_overrides.get("compress.quality"),
-            Some(&"55".to_string()),
-        );
-        assert_eq!(
-            app.param_overrides.get("compress.format"),
-            Some(&"jpeg".to_string()),
-        );
-
-        // Step 3: Inject a picker with selected files (from_slug hits filesystem,
-        // so we replace with test data after the transition).
-        let mut picker = PickerModel::from_test_data(
-            "compress-images",
-            PathBuf::from("/photos"),
-            vec![
-                FileEntry {
-                    name: "a.jpg".into(),
-                    is_dir: false,
-                    path: PathBuf::from("/photos/a.jpg"),
-                    size: Some(500),
-                },
-                FileEntry {
-                    name: "b.png".into(),
-                    is_dir: false,
-                    path: PathBuf::from("/photos/b.png"),
-                    size: Some(300),
-                },
-            ],
-            vec!["jpg".into(), "png".into()],
-        );
-        picker.selected.insert(PathBuf::from("/photos/a.jpg"));
-        picker.selected.insert(PathBuf::from("/photos/b.png"));
-
-        let app = AppModel {
-            picker: Some(picker),
-            ..app
-        };
-
-        // Step 4: Confirm files → overrides + files reach ExecutionModel.
-        let app = update(
-            app,
-            AppMessage::FilesSelected {
                 slug: "compress-images".into(),
             },
         );
@@ -1901,11 +1961,11 @@ mod tests {
         let exec = app.execution.as_ref().expect("execution model populated");
         assert_eq!(exec.selected_files.len(), 2);
         assert_eq!(
-            exec.param_overrides.get("compress.quality"),
+            exec.param_overrides.get("compress:quality"),
             Some(&"55".to_string()),
         );
         assert_eq!(
-            exec.param_overrides.get("compress.format"),
+            exec.param_overrides.get("compress:format"),
             Some(&"jpeg".to_string()),
         );
         assert!(app.param_overrides.is_empty(), "bridge overrides cleared");
@@ -1934,25 +1994,10 @@ mod tests {
         );
         assert!(app.detail.is_some());
 
-        // Detail → Picker (no param edits for this journey)
+        // Detail → Execution (embedded picker — no separate Picker step)
         let app = update(
             app,
             AppMessage::ConfigConfirmed {
-                slug: "compress-images".into(),
-            },
-        );
-        assert_eq!(
-            app.screen,
-            Screen::Picker {
-                slug: "compress-images".into(),
-                from,
-            }
-        );
-
-        // Picker → Execution (no files selected — empty vec is fine for state test)
-        let app = update(
-            app,
-            AppMessage::FilesSelected {
                 slug: "compress-images".into(),
             },
         );
@@ -2125,17 +2170,22 @@ mod tests {
     }
 
     #[test]
-    fn config_confirmed_uses_default_path_from_config() {
+    fn config_confirmed_goes_to_execution() {
         let mut app = default_model();
-        // Set a default_path that doesn't exist — should fall back to cwd.
-        app.config.default_path = Some("/nonexistent/path".into());
         app.screen = Screen::Detail {
             slug: "s".into(),
             from: DetailOrigin::Home,
         };
         let app = update(app, AppMessage::ConfigConfirmed { slug: "s".into() });
-        // The picker should be created (path falls back to cwd since /nonexistent doesn't exist).
-        assert!(app.picker.is_some());
+        // ConfigConfirmed now always goes directly to Execution.
+        assert_eq!(
+            app.screen,
+            Screen::Execution {
+                slug: "s".into(),
+                from: DetailOrigin::Home,
+            }
+        );
+        assert!(app.execution.is_some());
     }
 
     #[test]
@@ -2969,5 +3019,113 @@ mod tests {
             "file should be overwritten with new content"
         );
         assert!(!app.editor.as_ref().unwrap().editor.dirty);
+    }
+
+    // --- InputMode routing ---
+
+    #[test]
+    fn config_confirmed_url_mode_skips_picker() {
+        // download-video is a URL-mode recipe — should go to Execution, not Picker.
+        let from = DetailOrigin::Browser;
+        let slug = "download-video";
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: slug.into(),
+                    from,
+                },
+                detail: Some(DetailModel::from_slug(slug, &create_registry()).unwrap()),
+                ..default_model()
+            },
+            AppMessage::ConfigConfirmed { slug: slug.into() },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Execution {
+                slug: slug.into(),
+                from,
+            },
+            "URL-mode recipe should skip picker and go to execution"
+        );
+        assert!(app.picker.is_none(), "picker should not be created");
+        assert!(app.execution.is_some(), "execution model should be created");
+    }
+
+    #[test]
+    fn config_confirmed_file_mode_goes_to_execution() {
+        // compress-images is a file-upload recipe — now goes directly to Execution
+        // (files come from the embedded picker in DetailModel).
+        let from = DetailOrigin::Home;
+        let slug = "compress-images";
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: slug.into(),
+                    from,
+                },
+                detail: Some(DetailModel::from_slug(slug, &create_registry()).unwrap()),
+                ..default_model()
+            },
+            AppMessage::ConfigConfirmed { slug: slug.into() },
+        );
+        assert_eq!(
+            app.screen,
+            Screen::Execution {
+                slug: slug.into(),
+                from,
+            },
+            "file-upload recipe should go directly to execution"
+        );
+        assert!(app.execution.is_some(), "execution model should be created");
+    }
+
+    #[test]
+    fn config_confirmed_url_mode_carries_overrides_to_execution() {
+        let from = DetailOrigin::Home;
+        let slug = "download-video";
+        let detail = DetailModel::from_slug(slug, &create_registry()).unwrap();
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: slug.into(),
+                    from,
+                },
+                detail: Some(detail),
+                ..default_model()
+            },
+            AppMessage::ConfigConfirmed { slug: slug.into() },
+        );
+        // Overrides from detail.confirm() should be on the execution model.
+        let exec = app
+            .execution
+            .as_ref()
+            .expect("execution model should exist");
+        // The download-video recipe has video-download node with url, format, quality params.
+        // All non-default values become overrides.
+        assert!(!exec.param_overrides.is_empty() || !app.param_overrides.is_empty());
+    }
+
+    #[test]
+    fn resolve_input_mode_for_slug_returns_url_for_download_video() {
+        assert_eq!(
+            resolve_input_mode_for_slug("download-video"),
+            InputMode::Url
+        );
+    }
+
+    #[test]
+    fn resolve_input_mode_for_slug_returns_file_upload_for_compress_images() {
+        assert_eq!(
+            resolve_input_mode_for_slug("compress-images"),
+            InputMode::FileUpload
+        );
+    }
+
+    #[test]
+    fn resolve_input_mode_for_slug_defaults_for_unknown() {
+        assert_eq!(
+            resolve_input_mode_for_slug("nonexistent-recipe"),
+            InputMode::FileUpload
+        );
     }
 }

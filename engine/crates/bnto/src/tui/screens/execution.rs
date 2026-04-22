@@ -419,7 +419,7 @@ mod tests {
     fn with_inputs_stores_files_and_overrides() {
         let files = vec![PathBuf::from("/a.jpg"), PathBuf::from("/b.png")];
         let mut overrides = HashMap::new();
-        overrides.insert("compress.quality".into(), "60".into());
+        overrides.insert("compress:quality".into(), "60".into());
         let m = ExecutionModel::with_inputs("s", files.clone(), overrides.clone());
         assert_eq!(m.slug, "s");
         assert_eq!(m.status, ExecutionStatus::Idle);

@@ -4,16 +4,30 @@
 // Walks recipe definition JSON, resolves processors, collects surfaceable params.
 
 use bnto_core::registry::NodeRegistry;
+use bnto_core::{InputMode, PipelineDefinition};
 use bnto_engine::recipes::builtin_recipe_by_slug;
 
-use super::detail::{DetailModel, ParamEntry};
+use super::detail::{DetailFocus, DetailModel, ParamEntry};
+use super::picker::PickerModel;
 
 /// Build a detail model from a recipe slug using engine metadata.
 ///
 /// Looks up the recipe, parses its definition JSON, walks the node list
 /// to find processor nodes, then resolves each via the registry to get
 /// parameter metadata. Skips input/output nodes (not user-configurable).
+///
+/// For file-mode recipes, creates an embedded `PickerModel` starting at
+/// the given `start_dir`. For URL/text-mode, no picker is created.
 pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
+    load_detail_with_dir(slug, registry, None)
+}
+
+/// Build a detail model with an explicit start directory for the embedded picker.
+pub fn load_detail_with_dir(
+    slug: &str,
+    registry: &NodeRegistry,
+    start_dir: Option<&std::path::Path>,
+) -> Option<DetailModel> {
     let recipe = builtin_recipe_by_slug(slug)?;
     let def: serde_json::Value = serde_json::from_str(recipe.definition_json).ok()?;
     let nodes = def["nodes"].as_array()?;
@@ -22,13 +36,31 @@ pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
     let fields = super::detail_bridge::params_to_fields(&params);
     let form = bnto_form::FormModel::new(fields);
 
+    // Resolve input mode from the definition's input node.
+    let input_mode = serde_json::from_str::<PipelineDefinition>(recipe.definition_json)
+        .map(|d| bnto_core::resolve_input_mode(&d))
+        .unwrap_or(InputMode::FileUpload);
+
+    let (focus, input_picker) = match input_mode {
+        InputMode::FileUpload => {
+            let dir = start_dir.map(std::path::PathBuf::from).unwrap_or_else(|| {
+                std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+            });
+            let picker = PickerModel::from_slug(slug, &dir, registry);
+            (DetailFocus::Input, Some(picker))
+        }
+        InputMode::Url | InputMode::Text => (DetailFocus::Params, None),
+    };
+
     Some(DetailModel {
         slug: recipe.slug.clone(),
         name: recipe.name.clone(),
         description: recipe.description.clone(),
         params,
         form,
-        on_continue: false,
+        focus,
+        input_mode,
+        input_picker,
     })
 }
 
@@ -133,7 +165,9 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         description,
         params,
         form,
-        on_continue: false,
+        focus: DetailFocus::Params,
+        input_mode: InputMode::FileUpload,
+        input_picker: None,
     })
 }
 
