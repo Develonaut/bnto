@@ -36,6 +36,7 @@ impl Screen {
             Self::Results { .. } => "results",
             Self::Settings => "settings",
             Self::Editor { .. } => "editor",
+            Self::Wizard { .. } => "wizard",
         }
     }
 
