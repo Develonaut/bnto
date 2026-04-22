@@ -21,3 +21,4 @@ mod picker_update;
 pub mod results;
 pub mod settings;
 pub mod viewport;
+pub mod wizard;

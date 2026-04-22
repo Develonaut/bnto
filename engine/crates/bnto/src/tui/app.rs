@@ -27,6 +27,7 @@ use super::screens::library::{
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
+use super::screens::wizard::{WizardAction, WizardMessage, WizardModel, update as wizard_update};
 use super::theme::{Theme, ThemeVariant};
 use super::toml_config::TomlConfig;
 
@@ -53,6 +54,7 @@ pub enum Screen {
     Results { slug: String },
     Settings,
     Editor { from: DetailOrigin },
+    Wizard { from: DetailOrigin },
 }
 
 /// Top-level app state.
@@ -78,6 +80,8 @@ pub struct AppModel {
     pub settings: Option<SettingsModel>,
     /// Editor screen state — populated when editing a recipe.
     pub editor: Option<EditorScreenModel>,
+    /// Wizard screen state — populated when creating a recipe via wizard.
+    pub wizard: Option<WizardModel>,
     /// Persistent config loaded from disk (old JSON format, for compatibility).
     pub config: TuiConfig,
     /// TOML-based config (new format) — used for saves.
@@ -108,6 +112,7 @@ impl std::fmt::Debug for AppModel {
             .field("results", &self.results.as_ref().map(|r| &r.slug))
             .field("settings", &self.settings.is_some())
             .field("editor", &self.editor.is_some())
+            .field("wizard", &self.wizard.is_some())
             .field("status_message", &self.status_message)
             .field("settings_picker_field", &self.settings_picker_field)
             .field("param_overrides", &self.param_overrides.len())
@@ -167,6 +172,12 @@ pub enum AppMessage {
     Editor(EditorMessage),
     /// Forward a form message to the editor's inline form.
     EditorForm(bnto_form::FormMessage),
+    /// Forward a message to the wizard screen.
+    Wizard(WizardMessage),
+    /// Forward a form message to the wizard's inline form.
+    WizardForm(bnto_form::FormMessage),
+    /// Open the wizard for guided recipe creation.
+    OpenWizard,
     /// Open the editor for a predefined recipe (clone into editor).
     OpenEditorFromBrowser,
     /// Open the editor for a library recipe (edit in place).
@@ -274,6 +285,7 @@ impl AppModel {
             results: None,
             settings: None,
             editor,
+            wizard: None,
             config,
             toml_config,
             paths,
@@ -648,6 +660,63 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
                 None => model,
             }
         }
+        AppMessage::Wizard(msg) => {
+            let from = match &model.screen {
+                Screen::Wizard { from } => *from,
+                _ => DetailOrigin::Home,
+            };
+            match model.wizard {
+                Some(wizard_model) => {
+                    let (new_wizard, action) = wizard_update(wizard_model, msg, &model.registry);
+                    match action {
+                        WizardAction::None => AppModel {
+                            wizard: Some(new_wizard),
+                            ..model
+                        },
+                        WizardAction::Complete(editor_screen) => AppModel {
+                            screen: Screen::Editor { from },
+                            editor: Some(*editor_screen),
+                            wizard: None,
+                            ..model
+                        },
+                        WizardAction::Back => {
+                            let back = back_screen_for_editor(from);
+                            AppModel {
+                                screen: back,
+                                wizard: None,
+                                ..model
+                            }
+                        }
+                    }
+                }
+                None => model,
+            }
+        }
+        AppMessage::WizardForm(form_msg) => match model.wizard {
+            Some(wizard_model) => {
+                let msg = WizardMessage::Form(form_msg);
+                let (new_wizard, _) = wizard_update(wizard_model, msg, &model.registry);
+                AppModel {
+                    wizard: Some(new_wizard),
+                    ..model
+                }
+            }
+            None => model,
+        },
+        AppMessage::OpenWizard => {
+            let from = match &model.screen {
+                Screen::Home => DetailOrigin::Home,
+                Screen::Browser => DetailOrigin::Browser,
+                Screen::Library => DetailOrigin::Library,
+                _ => DetailOrigin::Home,
+            };
+            let wizard = WizardModel::new(&model.registry);
+            AppModel {
+                screen: Screen::Wizard { from },
+                wizard: Some(wizard),
+                ..model
+            }
+        }
         AppMessage::OpenEditorFromBrowser => {
             // Clone the focused browser recipe into a new editor session.
             let slug = model.browser.confirm().map(|r| r.slug);
@@ -853,6 +922,10 @@ fn handle_back(model: AppModel) -> AppModel {
         Screen::Editor { .. } => None,
         _ => model.editor,
     };
+    let wizard = match &model.screen {
+        Screen::Wizard { .. } => None,
+        _ => model.wizard,
+    };
     AppModel {
         screen: back_screen(&model.screen),
         home,
@@ -863,6 +936,7 @@ fn handle_back(model: AppModel) -> AppModel {
         results,
         settings,
         editor,
+        wizard,
         ..model
     }
 }
@@ -893,6 +967,7 @@ fn back_screen(current: &Screen) -> Screen {
         Screen::Results { .. } => Screen::Home,
         Screen::Settings => Screen::Home,
         Screen::Editor { from } => back_screen_for_editor(*from),
+        Screen::Wizard { from } => back_screen_for_editor(*from),
     }
 }
 

@@ -17,6 +17,7 @@ use super::render_layout::content_panel;
 use super::render_library::draw_library;
 use super::render_picker::draw_picker;
 use super::render_results::draw_results;
+use super::render_wizard::draw_wizard;
 use super::theme::Theme;
 use super::widgets::{help_bar, search_input, status_line};
 
@@ -39,6 +40,7 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
         Screen::Results { .. } => draw_results(frame, model, theme, area),
         Screen::Settings => draw_settings(frame, model, theme, area),
         Screen::Editor { .. } => draw_editor(frame, model, theme, area),
+        Screen::Wizard { .. } => draw_wizard(frame, model, theme, area),
     }
 }
 

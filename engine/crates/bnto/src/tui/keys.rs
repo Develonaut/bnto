@@ -14,6 +14,7 @@ use super::screens::library::LibraryMessage;
 use super::screens::picker::PickerMessage;
 use super::screens::results::ResultsMessage;
 use super::screens::settings::SettingsMessage;
+use super::screens::wizard::{WizardMessage, WizardStep};
 use super::theme::ALL_VARIANTS;
 
 /// Map a key event to an AppMessage based on the current screen.
@@ -50,6 +51,14 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         return handle_editor_key(model, key);
     }
 
+    // Wizard form editing captures all keys.
+    let wizard_editing = matches!(&model.screen, Screen::Wizard { .. }
+        if model.wizard.as_ref().is_some_and(|w|
+            w.form.as_ref().is_some_and(detail_bridge::is_form_editing)));
+    if wizard_editing {
+        return handle_wizard_key(model, key);
+    }
+
     // Detail editing mode captures all keys (like browser search mode).
     let detail_editing = matches!(&model.screen, Screen::Detail { .. }
         if model.detail.as_ref().is_some_and(|d| detail_bridge::is_form_editing(&d.form)));
@@ -76,6 +85,7 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         Screen::Execution { .. } => handle_execution_key(model, key),
         Screen::Results { .. } => handle_results_key(model, key),
         Screen::Editor { .. } => handle_editor_key(model, key),
+        Screen::Wizard { .. } => handle_wizard_key(model, key),
     }
 }
 
@@ -90,6 +100,7 @@ fn handle_home_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         }
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Home(HomeMessage::CursorDown)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Home(HomeMessage::CursorUp)),
+        KeyCode::Char('n') => Some(AppMessage::OpenWizard),
         KeyCode::Enter => Some(AppMessage::HomeConfirm),
         _ => None,
     }
@@ -148,6 +159,7 @@ fn handle_library_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('d') => Some(AppMessage::Library(LibraryMessage::DeleteRequest)),
         KeyCode::Char('r') => Some(AppMessage::Library(LibraryMessage::RenameStart)),
         KeyCode::Char('e') => Some(AppMessage::OpenEditorFromLibrary),
+        KeyCode::Char('n') => Some(AppMessage::OpenWizard),
         KeyCode::Enter => Some(AppMessage::LibraryConfirm),
         KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
@@ -187,6 +199,7 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             .confirm()
             .map(|r| AppMessage::AddToLibraryConfirm { slug: r.slug }),
         KeyCode::Char('e') => Some(AppMessage::OpenEditorFromBrowser),
+        KeyCode::Char('n') => Some(AppMessage::OpenWizard),
         KeyCode::Enter => model
             .browser
             .confirm()
@@ -444,6 +457,64 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             Some(AppMessage::Editor(EditorMessage::Redo))
         }
         KeyCode::Esc => Some(AppMessage::Editor(EditorMessage::Back)),
+        _ => None,
+    }
+}
+
+/// Handle key events on the Wizard screen.
+///
+/// Routes keys based on the current wizard step:
+/// - Category/Operation: j/k navigate, Enter confirms, Esc goes back
+/// - Configure: form keys (j/k/h/l/Enter for editing, Tab confirms, Esc back)
+/// - Complete: Enter opens editor, Esc goes back
+fn handle_wizard_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let wizard = model.wizard.as_ref()?;
+
+    // Configure step with a form — route keys through the form system.
+    if wizard.step == WizardStep::Configure
+        && let Some(form) = &wizard.form
+    {
+        let is_editing = detail_bridge::is_form_editing(form);
+
+        // When a field is in editing mode, delegate everything to bnto-form.
+        if is_editing {
+            return bnto_form::map_key_event(key, form).map(AppMessage::WizardForm);
+        }
+
+        // Tab advances to Complete step.
+        if key.code == KeyCode::Tab {
+            return Some(AppMessage::Wizard(WizardMessage::Confirm));
+        }
+
+        // Esc goes back.
+        if key.code == KeyCode::Esc {
+            return Some(AppMessage::Wizard(WizardMessage::Back));
+        }
+
+        // Vim-style form shortcuts.
+        let vim_msg = match key.code {
+            KeyCode::Char('j') => Some(bnto_form::FormMessage::FocusNext),
+            KeyCode::Char('k') => Some(bnto_form::FormMessage::FocusPrev),
+            KeyCode::Char('h') => Some(bnto_form::FormMessage::CyclePrev),
+            KeyCode::Char('l') => Some(bnto_form::FormMessage::CycleNext),
+            KeyCode::Char(' ') => Some(bnto_form::FormMessage::ToggleConfirm),
+            KeyCode::Char('d') => Some(bnto_form::FormMessage::ResetDefault),
+            _ => None,
+        };
+        if let Some(msg) = vim_msg {
+            return Some(AppMessage::WizardForm(msg));
+        }
+
+        // Fall through to bnto-form's idle key mapping.
+        return bnto_form::map_key_event(key, form).map(AppMessage::WizardForm);
+    }
+
+    // Category, Operation, Complete steps — simple list navigation.
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Wizard(WizardMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Wizard(WizardMessage::CursorUp)),
+        KeyCode::Enter | KeyCode::Tab => Some(AppMessage::Wizard(WizardMessage::Confirm)),
+        KeyCode::Esc => Some(AppMessage::Wizard(WizardMessage::Back)),
         _ => None,
     }
 }
