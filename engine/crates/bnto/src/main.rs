@@ -14,6 +14,7 @@ mod info;
 mod input;
 mod io;
 mod list;
+pub mod logging;
 mod progress;
 pub mod telemetry;
 mod tui;

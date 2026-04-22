@@ -72,6 +72,11 @@ impl BntoPaths {
         self.state.join("recent.json")
     }
 
+    /// Path to the session logs directory.
+    pub fn logs_dir(&self) -> PathBuf {
+        self.state.join("logs")
+    }
+
     /// Create all directories. Called once at startup.
     pub fn ensure_dirs(&self) -> Result<(), std::io::Error> {
         std::fs::create_dir_all(&self.config)?;
@@ -79,6 +84,7 @@ impl BntoPaths {
         std::fs::create_dir_all(&self.state)?;
         std::fs::create_dir_all(&self.cache)?;
         std::fs::create_dir_all(self.recipes_dir())?;
+        std::fs::create_dir_all(self.logs_dir())?;
         Ok(())
     }
 }
@@ -224,6 +230,13 @@ mod tests {
     }
 
     #[test]
+    fn logs_dir_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let paths = paths_from_root(tmp.path());
+        assert_eq!(paths.logs_dir(), tmp.path().join("state").join("logs"));
+    }
+
+    #[test]
     fn ensure_dirs_creates_all() {
         let tmp = tempfile::tempdir().unwrap();
         let paths = paths_from_root(tmp.path());
@@ -234,6 +247,7 @@ mod tests {
         assert!(paths.state.is_dir());
         assert!(paths.cache.is_dir());
         assert!(paths.recipes_dir().is_dir());
+        assert!(paths.logs_dir().is_dir());
     }
 
     #[test]
