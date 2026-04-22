@@ -159,6 +159,7 @@ fn handle_library_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('d') => Some(AppMessage::Library(LibraryMessage::DeleteRequest)),
         KeyCode::Char('r') => Some(AppMessage::Library(LibraryMessage::RenameStart)),
         KeyCode::Char('e') => Some(AppMessage::OpenEditorFromLibrary),
+        KeyCode::Char('n') => Some(AppMessage::OpenWizard),
         KeyCode::Enter => Some(AppMessage::LibraryConfirm),
         KeyCode::Esc => Some(AppMessage::Back),
         _ => None,
