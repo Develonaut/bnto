@@ -33,9 +33,10 @@ pub mod toml_config;
 pub mod widgets;
 
 use std::io;
-use std::sync::mpsc;
-use std::time::Duration;
+use std::sync::{Arc, mpsc};
+use std::time::{Duration, Instant};
 
+use bnto_core::logging::{LogEntry, LogLevel, Logger, NoopLogger};
 use crossterm::event::Event;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{event as crossterm_event, execute};
@@ -48,6 +49,11 @@ use keys::handle_key;
 use screens::execution::{ExecutionMessage, ExecutionStatus};
 use screens::picker::PickerMessage;
 use theme::ThemeVariant;
+
+use crate::logging::FileLogger;
+
+/// Render time threshold in microseconds — only log frames slower than this.
+const SLOW_FRAME_THRESHOLD_US: u64 = 16_000;
 
 /// Tick rate for the event loop (how often we check for input).
 const TICK_RATE: Duration = Duration::from_millis(50);
@@ -63,7 +69,15 @@ pub fn launch_tui(
 ) -> io::Result<()> {
     install_panic_hook();
     let mut terminal = setup_terminal()?;
-    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe);
+
+    // Create a session logger. Falls back to NoopLogger if file creation fails.
+    let logger: Arc<dyn Logger> = paths::BntoPaths::resolve()
+        .and_then(|p| FileLogger::new(&p.logs_dir(), LogLevel::Debug))
+        .map(|fl| Arc::new(fl) as Arc<dyn Logger>)
+        .unwrap_or_else(|| Arc::new(NoopLogger));
+
+    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe, &logger);
+    logger.flush();
     restore_terminal(&mut terminal)?;
     result
 }
@@ -101,11 +115,20 @@ fn run_loop(
     variant: ThemeVariant,
     recipe_json: Option<String>,
     new_recipe: bool,
+    logger: &Arc<dyn Logger>,
 ) -> io::Result<()> {
     let mut model = AppModel::new(variant, recipe_json, new_recipe);
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
 
+    logger.log(LogEntry {
+        level: LogLevel::Info,
+        target: "tui",
+        message: format!("session start (screen={})", model.screen.log_label()),
+        elapsed_us: None,
+    });
+
     loop {
+        let draw_start = Instant::now();
         terminal.draw(|frame| {
             let area = frame.area();
             let theme = &model.theme;
@@ -115,6 +138,15 @@ fn run_loop(
             render::draw_content(frame, &model, theme, content_area);
             render::draw_bottom_bar(frame, &model, theme, bottom_area);
         })?;
+        let draw_us = draw_start.elapsed().as_micros() as u64;
+        if draw_us >= SLOW_FRAME_THRESHOLD_US {
+            logger.log(LogEntry {
+                level: LogLevel::Warn,
+                target: "tui",
+                message: format!("slow frame render (screen={})", model.screen.log_label()),
+                elapsed_us: Some(draw_us),
+            });
+        }
 
         // Update picker viewport height from terminal size.
         // Screen chrome: 2 (dir path + blank line).
@@ -228,9 +260,36 @@ fn run_loop(
         if let Some(Event::Key(key)) = event::poll_event(TICK_RATE)?
             && let Some(msg) = handle_key(&model, key)
         {
-            model = update(model, msg);
+            let prev_screen = model.screen.log_label();
+            let update_start = Instant::now();
+            model = update(model, msg.clone());
+            let update_us = update_start.elapsed().as_micros() as u64;
+
+            let new_screen = model.screen.log_label();
+            if prev_screen != new_screen {
+                logger.log(LogEntry {
+                    level: LogLevel::Info,
+                    target: "tui",
+                    message: format!("{prev_screen} → {new_screen}"),
+                    elapsed_us: Some(update_us),
+                });
+            } else if update_us >= SLOW_FRAME_THRESHOLD_US {
+                logger.log(LogEntry {
+                    level: LogLevel::Debug,
+                    target: "tui",
+                    message: format!("update on {prev_screen}: {msg:?}"),
+                    elapsed_us: Some(update_us),
+                });
+            }
         }
     }
+
+    logger.log(LogEntry {
+        level: LogLevel::Info,
+        target: "tui",
+        message: "session end".into(),
+        elapsed_us: None,
+    });
 
     Ok(())
 }

@@ -62,6 +62,10 @@ pub mod registry;
 /// No TUI dependency. Sprint 15 extracts to standalone `bnto-editor` crate.
 pub mod editor;
 
+/// Engine-level logging — trait + types for structured diagnostics.
+/// Browser gets `NoopLogger`, CLI gets `FileLogger`.
+pub mod logging;
+
 // --- Re-exports ---
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
@@ -73,6 +77,7 @@ pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSou
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
+pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
     Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo,
     ParamCondition, ParamConditionEntry, ParameterDef, ParameterType, all_node_types,

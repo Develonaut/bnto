@@ -24,6 +24,21 @@ impl Screen {
         }
     }
 
+    /// Short label for log entries (no dynamic data).
+    pub fn log_label(&self) -> &'static str {
+        match self {
+            Self::Home => "home",
+            Self::Library => "library",
+            Self::Browser => "browser",
+            Self::Detail { .. } => "detail",
+            Self::Picker { .. } => "picker",
+            Self::Execution { .. } => "execution",
+            Self::Results { .. } => "results",
+            Self::Settings => "settings",
+            Self::Editor { .. } => "editor",
+        }
+    }
+
     /// Contextual key hints for the help bar.
     pub fn help_hints(&self) -> Vec<(&'static str, &'static str)> {
         match self {
