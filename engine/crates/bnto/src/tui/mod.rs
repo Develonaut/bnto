@@ -787,8 +787,20 @@ mod tests {
     }
 
     #[test]
-    fn detail_tab_confirms_from_any_focus() {
-        let model = detail_model(); // focused = 0 (on a param)
+    fn detail_tab_advances_focus_in_params() {
+        let model = detail_model(); // focus = Params, form focused = 0
+        let key = KeyEvent::new(KeyCode::Tab, crossterm::event::KeyModifiers::NONE);
+        // Tab within Params section → FocusNext (form navigation).
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::DetailForm(bnto_form::FormMessage::FocusNext))
+        );
+    }
+
+    #[test]
+    fn detail_tab_confirms_from_run_focus() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().focus = super::screens::detail::DetailFocus::Run;
         let key = KeyEvent::new(KeyCode::Tab, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
@@ -799,9 +811,9 @@ mod tests {
     }
 
     #[test]
-    fn detail_enter_confirms_on_continue_action() {
+    fn detail_enter_confirms_on_run_action() {
         let mut model = detail_model();
-        model.detail.as_mut().unwrap().on_continue = true;
+        model.detail.as_mut().unwrap().focus = super::screens::detail::DetailFocus::Run;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),

@@ -7,6 +7,7 @@ use std::sync::mpsc;
 use std::thread;
 
 use bnto_core::events::{PipelineEvent, PipelineReporter};
+use bnto_core::{InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::recipes::builtin_recipe_by_slug;
 use bnto_engine::run_pipeline;
 
@@ -99,14 +100,35 @@ fn run_bridge(
         }
     };
 
-    // Convert file paths to string args for prepare_inputs.
-    let args: Vec<String> = selected_files
+    // Resolve input mode to handle URL/Text recipes differently.
+    let input_mode = serde_json::from_str::<PipelineDefinition>(recipe.definition_json)
+        .map(|def| resolve_input_mode(&def))
+        .unwrap_or_default();
+
+    // For URL/Text mode, extract the value from param overrides and
+    // pass it as a positional arg (prepare_inputs expects it there).
+    let mut args: Vec<String> = selected_files
         .iter()
         .map(|p| p.to_string_lossy().into_owned())
         .collect();
+    let mut remaining_overrides = param_overrides.clone();
 
-    // Convert param overrides from HashMap to "key=value" strings.
-    let override_args: Vec<String> = param_overrides
+    match input_mode {
+        InputMode::Url => {
+            if let Some(url) = extract_override_value(&mut remaining_overrides, "url") {
+                args.push(url);
+            }
+        }
+        InputMode::Text => {
+            if let Some(text) = extract_override_value(&mut remaining_overrides, "text") {
+                args.push(text);
+            }
+        }
+        InputMode::FileUpload => {}
+    }
+
+    // Convert remaining param overrides to "key=value" strings.
+    let override_args: Vec<String> = remaining_overrides
         .iter()
         .map(|(k, v)| format!("{k}={v}"))
         .collect();
@@ -168,6 +190,21 @@ fn run_bridge(
         duration_ms: result.duration_ms,
         file_metadata,
     });
+}
+
+/// Find and remove an override value by param name (e.g. "url").
+///
+/// Override keys use "nodeId:paramName" format from the detail screen.
+/// Returns the value and removes the entry so it isn't double-applied.
+fn extract_override_value(
+    overrides: &mut HashMap<String, String>,
+    param_name: &str,
+) -> Option<String> {
+    let key = overrides
+        .keys()
+        .find(|k| k.ends_with(&format!(":{param_name}")))
+        .cloned();
+    key.and_then(|k| overrides.remove(&k))
 }
 
 /// Map an engine PipelineEvent to a TUI AppMessage.
@@ -322,6 +359,30 @@ mod tests {
         assert_eq!(outputs[0].size_bytes, 290);
 
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn extract_override_value_finds_by_param_name() {
+        let mut overrides = HashMap::new();
+        overrides.insert("video-download:url".into(), "https://example.com".into());
+        overrides.insert("video-download:format".into(), "mp4".into());
+
+        let url = extract_override_value(&mut overrides, "url");
+        assert_eq!(url, Some("https://example.com".into()));
+        // The key should be removed from overrides.
+        assert!(!overrides.contains_key("video-download:url"));
+        // Other keys remain.
+        assert!(overrides.contains_key("video-download:format"));
+    }
+
+    #[test]
+    fn extract_override_value_returns_none_when_missing() {
+        let mut overrides = HashMap::new();
+        overrides.insert("video-download:format".into(), "mp4".into());
+
+        let text = extract_override_value(&mut overrides, "text");
+        assert_eq!(text, None);
+        assert_eq!(overrides.len(), 1);
     }
 
     #[test]

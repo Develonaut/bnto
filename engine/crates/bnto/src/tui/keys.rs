@@ -5,6 +5,7 @@ use crossterm::event::{KeyCode, KeyEvent};
 use super::app::{AppMessage, AppModel, Screen};
 use super::event;
 use super::screens::browser::BrowserMessage;
+use super::screens::detail::DetailFocus;
 use super::screens::detail_bridge;
 use super::screens::editor::EditorMessage;
 use super::screens::editor_bridge;
@@ -210,12 +211,14 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
 /// Handle key events on the Detail screen.
 ///
-/// Delegates to `bnto_form::map_key_event` for field editing/navigation,
-/// adds vim-style shortcuts (j/k/h/l/d/Space), and handles app-level
-/// keys (Esc→Back, Tab→ConfigConfirmed, Enter on continue→ConfigConfirmed).
+/// Routes keys based on the active `DetailFocus` section:
+/// - Input: picker navigation (j/k/Space/h/l/./a/g/G)
+/// - Params: form field editing/navigation (j/k/h/l/d/Space + bnto-form)
+/// - Run: Enter/Tab to confirm and execute
+///
+/// Tab advances section forward, Shift+Tab goes backward.
+/// Esc always navigates back (unless a field is being edited).
 fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    use bnto_form::FormMessage;
-
     let detail = model.detail.as_ref()?;
     let is_editing = detail_bridge::is_form_editing(&detail.form);
 
@@ -224,18 +227,77 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         return bnto_form::map_key_event(key, &detail.form).map(AppMessage::DetailForm);
     }
 
-    let slug = || detail.slug.clone();
-
-    // App-level keys that bnto-form doesn't know about.
-    match key.code {
-        KeyCode::Esc => return Some(AppMessage::Back),
-        KeyCode::Tab => return Some(AppMessage::ConfigConfirmed { slug: slug() }),
-        _ => {}
+    // Esc always goes back (when not editing a field).
+    if key.code == KeyCode::Esc {
+        return Some(AppMessage::Back);
     }
 
-    // Enter on the Continue button or when no params exist.
-    if key.code == KeyCode::Enter && (detail.is_continue_focused() || detail.params.is_empty()) {
+    match detail.focus {
+        DetailFocus::Input => handle_detail_input_key(model, key),
+        DetailFocus::Params => handle_detail_params_key(model, key),
+        DetailFocus::Run => handle_detail_run_key(model, key),
+    }
+}
+
+/// Handle keys when the Input (file picker) section is focused.
+fn handle_detail_input_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let detail = model.detail.as_ref()?;
+    let picker = detail.input_picker.as_ref()?;
+    let on_dir = picker.cursor < picker.entries.len() && picker.entries[picker.cursor].is_dir;
+
+    match key.code {
+        // Tab → advance to Params section
+        KeyCode::Tab => Some(AppMessage::DetailForm(bnto_form::FormMessage::FocusNext)),
+        // Picker navigation keys
+        KeyCode::Char('j') | KeyCode::Down => {
+            Some(AppMessage::DetailPicker(PickerMessage::CursorDown))
+        }
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::DetailPicker(PickerMessage::CursorUp)),
+        KeyCode::Char(' ') => Some(AppMessage::DetailPicker(PickerMessage::ToggleSelect)),
+        KeyCode::Char('h') | KeyCode::Left | KeyCode::Backspace => {
+            Some(AppMessage::DetailPicker(PickerMessage::ParentDir))
+        }
+        KeyCode::Char('l') | KeyCode::Right | KeyCode::Enter => {
+            if on_dir {
+                Some(AppMessage::DetailPicker(PickerMessage::EnterDir))
+            } else {
+                Some(AppMessage::DetailPicker(PickerMessage::ToggleSelect))
+            }
+        }
+        KeyCode::Char('g') => Some(AppMessage::DetailPicker(PickerMessage::GoToTop)),
+        KeyCode::Char('G') => Some(AppMessage::DetailPicker(PickerMessage::GoToBottom)),
+        KeyCode::Char('J') | KeyCode::PageDown => {
+            Some(AppMessage::DetailPicker(PickerMessage::PageDown))
+        }
+        KeyCode::Char('K') | KeyCode::PageUp => {
+            Some(AppMessage::DetailPicker(PickerMessage::PageUp))
+        }
+        KeyCode::Char('.') => Some(AppMessage::DetailPicker(PickerMessage::ToggleHidden)),
+        KeyCode::Char('a') => Some(AppMessage::DetailPicker(PickerMessage::SelectAll)),
+        _ => None,
+    }
+}
+
+/// Handle keys when the Params (form fields) section is focused.
+fn handle_detail_params_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    use bnto_form::FormMessage;
+
+    let detail = model.detail.as_ref()?;
+    let slug = || detail.slug.clone();
+
+    // No params → Enter or Tab confirms directly.
+    if detail.params.is_empty() && matches!(key.code, KeyCode::Tab | KeyCode::Enter) {
         return Some(AppMessage::ConfigConfirmed { slug: slug() });
+    }
+
+    // Tab → advance focus through form fields.
+    if key.code == KeyCode::Tab {
+        return Some(AppMessage::DetailForm(FormMessage::FocusNext));
+    }
+
+    // Shift+Tab → go back to Input section (if file-mode), else no-op.
+    if key.code == KeyCode::BackTab && detail.input_picker.is_some() {
+        return Some(AppMessage::DetailFocusInput);
     }
 
     // Vim-style shortcuts mapped to FormMessage variants.
@@ -254,6 +316,19 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
     // Fall through to bnto-form's idle key mapping (Down/Up arrows, Enter→StartEdit, etc.)
     bnto_form::map_key_event(key, &detail.form).map(AppMessage::DetailForm)
+}
+
+/// Handle keys when the Run button is focused.
+fn handle_detail_run_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let detail = model.detail.as_ref()?;
+    let slug = || detail.slug.clone();
+
+    match key.code {
+        KeyCode::Enter | KeyCode::Tab => Some(AppMessage::ConfigConfirmed { slug: slug() }),
+        // Shift+Tab → go back to Params section.
+        KeyCode::BackTab => Some(AppMessage::DetailFocusParams),
+        _ => None,
+    }
 }
 
 /// Handle key events on the Picker screen.

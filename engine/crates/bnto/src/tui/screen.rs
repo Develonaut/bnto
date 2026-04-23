@@ -68,9 +68,9 @@ impl Screen {
             Self::Detail { .. } => vec![
                 ("↑↓", "navigate"),
                 ("Enter", "edit/select"),
-                ("Tab", "continue"),
+                ("Tab", "next section"),
+                ("Space", "select file"),
                 ("Esc", "back"),
-                ("q", "quit"),
             ],
             Self::Picker { .. } => vec![
                 ("↑↓", "navigate"),
