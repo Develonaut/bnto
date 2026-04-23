@@ -198,14 +198,14 @@ describe("validateDefinition — file-rename", () => {
   });
 });
 
-describe("validateDefinition — shell-command (no schema, no type-specific validation)", () => {
+describe("validateDefinition — shell-command (all params optional)", () => {
   it("accepts shell-command as a known type", () => {
     const def = validDef({ type: "shell-command", parameters: { command: "echo hello" } });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
 
-  it("passes with any params (no schema to validate against)", () => {
+  it("passes with empty params (all optional)", () => {
     const def = validDef({ type: "shell-command", parameters: {} });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);

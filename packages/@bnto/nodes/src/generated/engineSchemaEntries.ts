@@ -19,6 +19,7 @@ import { inputNodeSchema } from "./schemas/input";
 import { loopNodeSchema } from "./schemas/loop";
 import { outputNodeSchema } from "./schemas/output";
 import { parallelNodeSchema } from "./schemas/parallel";
+import { shellCommandNodeSchema } from "./schemas/shellCommand";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
@@ -45,6 +46,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   loop: loopNodeSchema,
   output: outputNodeSchema,
   parallel: parallelNodeSchema,
+  "shell-command": shellCommandNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
@@ -248,6 +250,9 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "collectAll", label: "Collect All" },
       ],
     },
+  },
+  "shell-command": {
+    timeout: { suffix: "seconds" },
   },
   "spreadsheet-clean": {},
   "spreadsheet-convert": {

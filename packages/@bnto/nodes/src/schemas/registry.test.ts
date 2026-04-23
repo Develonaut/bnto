@@ -22,7 +22,7 @@ import { NODE_TYPE_NAMES } from "../generated/catalog";
 describe("NODE_SCHEMAS", () => {
   it("has a schema for every node type that has one", () => {
     // Types without engine processors — no schemas generated
-    const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
+    const TYPES_WITHOUT_SCHEMAS = new Set(["http-request"]);
     const expected = NODE_TYPE_NAMES.filter((n: string) => !TYPES_WITHOUT_SCHEMAS.has(n)).length;
     expect(Object.keys(NODE_SCHEMAS)).toHaveLength(expected);
   });
@@ -33,9 +33,13 @@ describe("NODE_SCHEMAS", () => {
     }
   });
 
-  it("http-request and shell-command have no schema (no engine processor)", () => {
+  it("http-request has no schema (no engine processor)", () => {
     expect(NODE_SCHEMAS["http-request"]).toBeUndefined();
-    expect(NODE_SCHEMAS["shell-command"]).toBeUndefined();
+  });
+
+  it("shell-command has a generated schema (CLI-only but codegen-propagated)", () => {
+    expect(NODE_SCHEMAS["shell-command"]).toBeDefined();
+    expect(NODE_SCHEMAS["shell-command"]!.nodeType).toBe("shell-command");
   });
 
   it("video-download has a generated schema (CLI-only but codegen-propagated)", () => {

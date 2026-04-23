@@ -127,6 +127,12 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       enumValues: ["failFast", "collectAll"] as const,
     },
   },
+  "shell-command": {
+    command: { type: "string", control: "text", required: false },
+    args: { type: "string", control: "text", required: false },
+    timeout: { type: "number", control: "number", required: false },
+    env: { type: "record", control: "keyValue", required: false },
+  },
   "spreadsheet-clean": {
     trimWhitespace: { type: "boolean", control: "switch", required: false },
     removeEmptyRows: { type: "boolean", control: "switch", required: false },

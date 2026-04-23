@@ -733,7 +733,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 2 — Shell command processor (sequential)
 
-- [ ] `engine/crates/bnto-engine` — **`shell-command` processor**: Implement `NodeProcessor` for shell-command. Parameters: `command` (String, required), `args` (array of strings), `timeout` (number, default 300), `env` (object, optional). Uses `ProcessContext::run_command()`. Validates command is not empty, binary exists on PATH. Captures stdout as output file. Platforms: `["cli", "server", "desktop"]`. Register in `create_registry()` (native feature gate). RED tests: happy path, missing command, empty command validation, timeout param, exit code error, env var injection (~10 tests)
+- [x] `engine/crates/bnto-engine` — **`shell-command` processor**: Implemented in new `bnto-shell` crate. Security boundary in `validate.rs` (shell denylist, path validation, env var sanitization). NodeProcessor in `execute.rs`. Registered via `native` feature gate. 36 tests (21 security + 15 functional). Catalog tests updated (13→14 processors)
 
 #### Wave 3 — Download-video migration (sequential)
 
@@ -1418,6 +1418,18 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 ### Triage: Power Recipe Infrastructure
 
 **Priority: Triage.** Implement foundational engine capabilities (recipe variables, template expressions, data-driven forEach, inter-node data passing) and core node types (shell-command, file-system, spreadsheet-read, http-request) to support complex, data-driven custom recipes like the Etsy Product Image Pipeline. See [power-recipes.md](strategy/power-recipes.md) for full gap analysis, node maps, priority tiers (Tier 0 foundation → Tier 1 nodes → Tier 2 resilience → Tier 3 recipe-as-node), and acceptance test matrix.
+
+### Triage: Security hardening follow-ups (shell-command audit)
+
+**Priority: Triage.** Seven deferred security items from the `shell-command` processor threat model. Each is independent and can be triaged separately:
+
+1. **Recipe trust levels + first-run consent** — Distinguish built-in/local/community recipes. Prompt before executing `shell-command` nodes from untrusted sources. Cache approval per recipe hash. (P0 for community recipes, not needed while all recipes are built-in)
+2. **`bnto inspect <recipe>` command** — Dry-run mode showing exactly which commands a recipe will execute before running anything
+3. **Path traversal prevention in shell-command args** — Sandbox file path arguments to execution working directory. Reject absolute paths and `..` traversal. Canonicalize + verify
+4. **Fix `extra_args` whitespace splitting in yt-dlp adapter** — `bnto-video/src/adapters/ytdlp.rs:60` splits user input by whitespace → yt-dlp flag injection (`--exec`, `--cookies-from-browser`). Replace with structured params or denylist
+5. **TOCTOU fix in NativeContext::temp_file()** — Nanosecond timestamp without atomic creation. Replace with `tempfile` crate (`mkstemp` semantics) to eliminate symlink race
+6. **Network capability classification** — Classify recipes as local-only vs network-capable. Warn on network binaries (`curl`, `wget`, `nc`, `ssh`). Future: outbound domain allowlist
+7. **Recipe signatures** — Sign built-in recipes. Unsigned community recipes trigger warnings. Foundation for verified registry
 
 ---
 

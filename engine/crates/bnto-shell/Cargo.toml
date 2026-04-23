@@ -1,0 +1,21 @@
+# bnto-shell — Shell command processor for native execution.
+# Runs external CLI tools via ProcessContext::run_command().
+# Native-only — not compiled to WASM (no browser shell access).
+
+[package]
+name = "bnto-shell"
+version = "0.1.2"
+edition = "2024"
+description = "Shell command processor for Bnto engine — execute external CLI tools"
+license = "MIT"
+repository = "https://github.com/Develonaut/bnto"
+homepage = "https://bnto.io"
+keywords = ["cli", "shell", "command", "pipeline", "processor"]
+categories = ["command-line-utilities"]
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+bnto-core = { path = "../bnto-core", version = "0.1.2" }
+serde_json = { workspace = true }

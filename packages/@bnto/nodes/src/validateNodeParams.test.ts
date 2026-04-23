@@ -3,7 +3,7 @@
  *
  * Validates that node types with schemas produce correct field-level errors
  * for invalid parameters and pass cleanly for valid ones.
- * Types without schemas (http-request, shell-command) return empty arrays.
+ * Types without schemas (http-request) return empty arrays.
  */
 
 import { describe, expect, it } from "vitest";
@@ -134,15 +134,15 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- shell-command (no schema — returns empty) ----------
+  // ---------- shell-command (all params optional — returns empty) ----------
 
   describe("shell-command", () => {
-    it("returns empty (no schema for this type)", () => {
+    it("returns empty with no params (all optional)", () => {
       const errors = validateNodeParams("shell-command", "n1", {});
       expect(errors).toHaveLength(0);
     });
 
-    it("returns empty even with valid-looking params", () => {
+    it("returns empty with valid params", () => {
       const errors = validateNodeParams("shell-command", "n1", { command: "echo hello" });
       expect(errors).toHaveLength(0);
     });

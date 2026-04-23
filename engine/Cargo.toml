@@ -10,6 +10,7 @@ members = [
     "crates/bnto-file",
     "crates/bnto-image",
     "crates/bnto-vector",
+    "crates/bnto-shell",
     "crates/bnto-video",
     "crates/bnto-wasm",
     "crates/bnto-form",

@@ -88,7 +88,7 @@ describe("catalog structure", () => {
 
   it("browser processors include browser in platforms", () => {
     // Non-browser processors (CLI/server/desktop only) are expected
-    const NON_BROWSER_TYPES = new Set(["video-download"]);
+    const NON_BROWSER_TYPES = new Set(["video-download", "shell-command"]);
     for (const proc of PROCESSORS) {
       if (NON_BROWSER_TYPES.has(proc.nodeType)) {
         expect(proc.platforms).not.toContain("browser");
@@ -160,7 +160,7 @@ describe("engine defaults flow through to schemas", () => {
 
 describe("schema registry completeness", () => {
   // Types without engine processors — no schemas generated
-  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request", "shell-command"]);
+  const TYPES_WITHOUT_SCHEMAS = new Set(["http-request"]);
 
   it("every node type in NODE_TYPE_NAMES has a NODE_SCHEMAS entry (except unimplemented types)", () => {
     for (const name of NODE_TYPE_NAMES) {

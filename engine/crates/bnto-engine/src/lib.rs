@@ -67,6 +67,7 @@ pub fn create_registry() -> NodeRegistry {
 
     #[cfg(feature = "native")]
     {
+        registry.register("shell-command", Box::new(bnto_shell::ShellCommand::new()));
         registry.register(
             "video-download",
             Box::new(bnto_video::VideoDownload::with_ytdlp()),
@@ -141,11 +142,15 @@ mod tests {
 
     #[test]
     #[cfg(feature = "native")]
-    fn test_full_registry_has_video_download() {
+    fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (12) + video-download (1) = 13
-        assert_eq!(registry.len(), 13);
+        // Full registry = browser (12) + shell-command (1) + video-download (1) = 14
+        assert_eq!(registry.len(), 14);
         let params = serde_json::Map::new();
+        assert!(
+            registry.resolve("shell-command", &params).is_some(),
+            "Native registry should include shell-command",
+        );
         assert!(
             registry.resolve("video-download", &params).is_some(),
             "Native registry should include video-download",
