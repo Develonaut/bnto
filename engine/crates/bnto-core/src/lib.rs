@@ -71,7 +71,7 @@ pub mod logging;
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
 pub use context::{NoopContext, ProcessContext};
-pub use definition::{Definition, Edge, FieldsConfig, Metadata, Port, Position};
+pub use definition::{Definition, Edge, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;
 pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSource};
 pub use errors::BntoError;

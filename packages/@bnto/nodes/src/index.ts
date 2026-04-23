@@ -22,7 +22,6 @@ export type {
   Metadata,
   Port,
   Edge,
-  FieldsConfig,
   IterationMode,
   PipelineSettings,
   InputCardinality,

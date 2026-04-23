@@ -96,27 +96,6 @@ fn metadata_schema() -> Value {
     })
 }
 
-/// Build the JSON Schema for the optional `fields` block (edit-fields nodes).
-fn fields_schema() -> Value {
-    serde_json::json!({
-        "type": "object",
-        "description": "Field values for edit-fields nodes.",
-        "required": ["values"],
-        "properties": {
-            "values": {
-                "type": "object",
-                "description": "Map of field names to their values.",
-                "additionalProperties": true
-            },
-            "keepOnlySet": {
-                "type": "boolean",
-                "description": "If true, only fields listed in `values` are kept in the output."
-            }
-        },
-        "additionalProperties": false
-    })
-}
-
 /// Build the JSON Schema for `PipelineSettings` (recipe-level configuration).
 fn pipeline_settings_schema() -> Value {
     serde_json::json!({
@@ -161,7 +140,6 @@ fn definition_properties() -> Value {
         "position":   position_schema(),
         "metadata":   { "$ref": "#/$defs/Metadata" },
         "parameters": { "type": "object", "description": "Configuration parameters (key-value pairs).", "additionalProperties": true },
-        "fields":     { "$ref": "#/$defs/Fields" },
         "inputPorts": { "type": "array", "description": "Input connection ports.", "items": { "$ref": "#/$defs/Port" } },
         "outputPorts":{ "type": "array", "description": "Output connection ports.", "items": { "$ref": "#/$defs/Port" } },
         "settings":   { "$ref": "#/$defs/PipelineSettings" },
@@ -183,7 +161,6 @@ pub fn definition_json_schema() -> Value {
             "Port": port_schema(),
             "Edge": edge_schema(),
             "Metadata": metadata_schema(),
-            "Fields": fields_schema(),
             "PipelineSettings": pipeline_settings_schema(),
             "Definition": {
                 "type": "object",
@@ -228,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_definition_schema_has_all_defs() {
-        // The $defs block should contain all 6 type definitions.
+        // The $defs block should contain all 5 type definitions.
         let schema = definition_json_schema();
         let defs = schema["$defs"]
             .as_object()
@@ -240,7 +217,6 @@ mod tests {
         assert!(defs.contains_key("Port"), "Missing Port in $defs");
         assert!(defs.contains_key("Edge"), "Missing Edge in $defs");
         assert!(defs.contains_key("Metadata"), "Missing Metadata in $defs");
-        assert!(defs.contains_key("Fields"), "Missing Fields in $defs");
         assert!(
             defs.contains_key("PipelineSettings"),
             "Missing PipelineSettings in $defs"

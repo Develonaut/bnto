@@ -59,7 +59,6 @@ impl EditorModel {
                 },
                 metadata: Metadata::default(),
                 parameters: params_to_json(&node.params),
-                fields: None,
                 input_ports: vec![],
                 output_ports: vec![],
                 nodes: None,
@@ -97,7 +96,6 @@ impl EditorModel {
                 ..Default::default()
             },
             parameters: definition::default_parameters(),
-            fields: None,
             input_ports: vec![],
             output_ports: vec![],
             nodes: Some(child_defs),
