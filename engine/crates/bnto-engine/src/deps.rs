@@ -14,15 +14,25 @@ pub struct DependencyStatus {
 
 /// Collect unique dependencies required by a pipeline definition.
 ///
-/// Walks every node in the definition (including nested container children),
-/// resolves each to its processor via the registry, and collects every
-/// `Dependency` from each processor's `metadata().requires`.
+/// Merges two sources: recipe-level deps (`definition.requires`) first,
+/// then per-node processor deps (from `metadata().requires`). Deduplicates
+/// by binary name — recipe-level deps take precedence when both declare
+/// the same binary.
 pub fn collect_pipeline_dependencies(
     definition: &PipelineDefinition,
     registry: &NodeRegistry,
 ) -> Vec<Dependency> {
     let mut seen = HashSet::new();
     let mut deps = Vec::new();
+
+    // Recipe-level deps first — these take precedence.
+    for dep in &definition.requires {
+        if seen.insert(dep.binary.clone()) {
+            deps.push(dep.clone());
+        }
+    }
+
+    // Then per-node processor deps (existing logic).
     collect_from_nodes(&definition.nodes, registry, &mut seen, &mut deps);
     deps
 }
@@ -300,6 +310,34 @@ mod tests {
         serde_json::from_value(json).unwrap()
     }
 
+    /// Build a definition with recipe-level `requires` and the given nodes.
+    fn make_definition_with_requires(
+        node_types: &[&str],
+        requires: Vec<Dependency>,
+    ) -> PipelineDefinition {
+        let mut def = make_definition(node_types);
+        def.requires = requires;
+        def
+    }
+
+    fn ytdlp_dep() -> Dependency {
+        Dependency {
+            binary: "yt-dlp".to_string(),
+            version: String::new(),
+            install_hint: "brew install yt-dlp".to_string(),
+            homepage: String::new(),
+        }
+    }
+
+    fn ffmpeg_dep() -> Dependency {
+        Dependency {
+            binary: "ffmpeg".to_string(),
+            version: ">=6.0".to_string(),
+            install_hint: "brew install ffmpeg".to_string(),
+            homepage: "https://ffmpeg.org".to_string(),
+        }
+    }
+
     // --- collect_pipeline_dependencies ---
 
     #[test]
@@ -341,6 +379,101 @@ mod tests {
         let binaries: Vec<&str> = deps.iter().map(|d| d.binary.as_str()).collect();
         assert!(binaries.contains(&"ffmpeg"));
         assert!(binaries.contains(&"yt-dlp"));
+    }
+
+    // --- collect_pipeline_dependencies: recipe-level requires ---
+
+    #[test]
+    fn test_collect_recipe_only_deps() {
+        // Recipe declares deps but no nodes have processor deps.
+        let def = make_definition_with_requires(&["input", "output"], vec![ytdlp_dep()]);
+        let registry = NodeRegistry::new();
+        let deps = collect_pipeline_dependencies(&def, &registry);
+        assert_eq!(deps.len(), 1);
+        assert_eq!(deps[0].binary, "yt-dlp");
+    }
+
+    #[test]
+    fn test_collect_node_only_deps_unchanged() {
+        // Recipe has no requires but nodes have processor deps.
+        // This is the existing behavior — must still work.
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let def = make_definition(&["input", "video-transcode", "output"]);
+        let deps = collect_pipeline_dependencies(&def, &registry);
+        assert_eq!(deps.len(), 1);
+        assert_eq!(deps[0].binary, "ffmpeg");
+    }
+
+    #[test]
+    fn test_collect_merged_recipe_and_node_deps() {
+        // Recipe declares yt-dlp, node declares ffmpeg — both should appear.
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let def = make_definition_with_requires(
+            &["input", "video-transcode", "output"],
+            vec![ytdlp_dep()],
+        );
+        let deps = collect_pipeline_dependencies(&def, &registry);
+        assert_eq!(deps.len(), 2);
+        let binaries: Vec<&str> = deps.iter().map(|d| d.binary.as_str()).collect();
+        assert!(binaries.contains(&"yt-dlp"));
+        assert!(binaries.contains(&"ffmpeg"));
+    }
+
+    #[test]
+    fn test_collect_recipe_deps_come_first() {
+        // Recipe-level deps should appear before node-level deps in the list.
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let def = make_definition_with_requires(
+            &["input", "video-transcode", "output"],
+            vec![ytdlp_dep()],
+        );
+        let deps = collect_pipeline_dependencies(&def, &registry);
+        assert_eq!(
+            deps[0].binary, "yt-dlp",
+            "Recipe-level dep should come first"
+        );
+        assert_eq!(
+            deps[1].binary, "ffmpeg",
+            "Node-level dep should come second"
+        );
+    }
+
+    #[test]
+    fn test_collect_deduplicated_recipe_and_node_deps() {
+        // Both recipe and node declare ffmpeg — should appear only once.
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let def = make_definition_with_requires(
+            &["input", "video-transcode", "output"],
+            vec![ffmpeg_dep()],
+        );
+        let deps = collect_pipeline_dependencies(&def, &registry);
+        assert_eq!(deps.len(), 1, "Duplicate ffmpeg should be deduplicated");
+        assert_eq!(deps[0].binary, "ffmpeg");
+    }
+
+    #[test]
+    fn test_collect_empty_recipe_requires() {
+        // Recipe has explicit empty requires — should behave like no requires.
+        let def = make_definition_with_requires(&["input", "output"], vec![]);
+        let registry = NodeRegistry::new();
+        let deps = collect_pipeline_dependencies(&def, &registry);
+        assert!(deps.is_empty());
+    }
+
+    #[test]
+    fn test_check_pipeline_dependencies_catches_recipe_deps() {
+        // Pre-flight check should catch missing recipe-level deps too.
+        let def = make_definition_with_requires(&["input", "output"], vec![ytdlp_dep()]);
+        let registry = NodeRegistry::new();
+        let result = check_pipeline_dependencies(&def, &registry, &AllMissingContext);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("yt-dlp"));
+        assert!(err_msg.contains("brew install yt-dlp"));
     }
 
     // --- collect_all_dependencies ---

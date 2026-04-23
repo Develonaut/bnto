@@ -4,7 +4,7 @@
 // registry collects all metadata into a catalog exported via `node_catalog()`
 // WASM function, making the engine the single source of truth for node defs.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts")]
 use ts_rs::TS;
 
@@ -630,7 +630,7 @@ fn video_node_types() -> Vec<NodeTypeInfo> {
 /// Processors wrapping CLI tools (yt-dlp, ffmpeg) declare their
 /// requirements here. The dependency checker verifies these before
 /// pipeline execution; `bnto doctor` reports missing deps with install hints.
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
     /// Binary name to look up on PATH (e.g., `"yt-dlp"`, `"ffmpeg"`).
@@ -735,6 +735,68 @@ mod tests {
         };
         let json = serde_json::to_string(&metadata).unwrap();
         assert!(json.contains(r#""inputCardinality":"batch""#));
+    }
+
+    // --- Dependency Deserialization Tests ---
+
+    #[test]
+    fn test_dependency_deserializes_from_json() {
+        let json = r#"{
+            "binary": "yt-dlp",
+            "installHint": "brew install yt-dlp",
+            "homepage": "https://github.com/yt-dlp/yt-dlp"
+        }"#;
+        let dep: Dependency = serde_json::from_str(json).unwrap();
+        assert_eq!(dep.binary, "yt-dlp");
+        assert_eq!(dep.install_hint, "brew install yt-dlp");
+        assert_eq!(dep.homepage, "https://github.com/yt-dlp/yt-dlp");
+        // version defaults to empty when absent
+        assert!(dep.version.is_empty());
+    }
+
+    #[test]
+    fn test_dependency_deserializes_with_version() {
+        let json = r#"{
+            "binary": "ffmpeg",
+            "version": ">=6.0",
+            "installHint": "brew install ffmpeg"
+        }"#;
+        let dep: Dependency = serde_json::from_str(json).unwrap();
+        assert_eq!(dep.binary, "ffmpeg");
+        assert_eq!(dep.version, ">=6.0");
+        // homepage defaults to empty when absent
+        assert!(dep.homepage.is_empty());
+    }
+
+    #[test]
+    fn test_dependency_round_trip() {
+        let original = Dependency {
+            binary: "yt-dlp".to_string(),
+            version: ">=2024.0.0".to_string(),
+            install_hint: "brew install yt-dlp".to_string(),
+            homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let round_tripped: Dependency = serde_json::from_str(&json).unwrap();
+        assert_eq!(original, round_tripped);
+    }
+
+    #[test]
+    fn test_dependency_empty_optional_fields_omitted_in_serialization() {
+        let dep = Dependency {
+            binary: "curl".to_string(),
+            version: String::new(),
+            install_hint: "brew install curl".to_string(),
+            homepage: String::new(),
+        };
+        let json = serde_json::to_string(&dep).unwrap();
+        assert!(!json.contains("version"), "Empty version should be omitted");
+        assert!(
+            !json.contains("homepage"),
+            "Empty homepage should be omitted"
+        );
+        assert!(json.contains("binary"));
+        assert!(json.contains("installHint"));
     }
 
     // --- NodeTypeInfo Tests ---
