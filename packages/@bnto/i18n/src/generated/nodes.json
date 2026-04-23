@@ -188,6 +188,25 @@
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
       }
     },
+    "shellCommand": {
+      "command": {
+        "label": "Command",
+        "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+        "placeholder": "ffmpeg"
+      },
+      "args": {
+        "label": "Arguments",
+        "description": "Command arguments as an array of strings."
+      },
+      "timeout": {
+        "label": "Timeout",
+        "description": "Maximum execution time in seconds. Default: 300."
+      },
+      "env": {
+        "label": "Environment",
+        "description": "Additional environment variables for the command."
+      }
+    },
     "spreadsheetClean": {
       "trimWhitespace": {
         "label": "Trim Whitespace",

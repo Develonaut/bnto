@@ -186,6 +186,7 @@ dependencies = [
  "bnto-core",
  "bnto-file",
  "bnto-image",
+ "bnto-shell",
  "bnto-spreadsheet",
  "bnto-vector",
  "bnto-video",
@@ -234,6 +235,14 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-test",
  "web-sys",
+]
+
+[[package]]
+name = "bnto-shell"
+version = "0.1.2"
+dependencies = [
+ "bnto-core",
+ "serde_json",
 ]
 
 [[package]]

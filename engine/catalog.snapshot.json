@@ -1060,7 +1060,48 @@
       "platforms": [
         "server"
       ],
-      "icon": "terminal"
+      "icon": "terminal",
+      "params": [
+        {
+          "name": "command",
+          "label": "Command",
+          "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "ffmpeg",
+          "surfaceable": true
+        },
+        {
+          "name": "args",
+          "label": "Arguments",
+          "description": "Command arguments as an array of strings.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "timeout",
+          "label": "Timeout",
+          "description": "Maximum execution time in seconds. Default: 300.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 300,
+          "surfaceable": true,
+          "suffix": "seconds"
+        },
+        {
+          "name": "env",
+          "label": "Environment",
+          "description": "Additional environment variables for the command.",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": false
+        }
+      ]
     },
     {
       "name": "spreadsheet-clean",
@@ -2009,6 +2050,60 @@
               "label": "Maximum"
             }
           ]
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "shell-command",
+      "name": "Shell Command",
+      "description": "Execute external CLI tools with security validation.",
+      "category": "system",
+      "accepts": [],
+      "platforms": [
+        "cli",
+        "server",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "command",
+          "label": "Command",
+          "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "ffmpeg",
+          "surfaceable": true
+        },
+        {
+          "name": "args",
+          "label": "Arguments",
+          "description": "Command arguments as an array of strings.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "timeout",
+          "label": "Timeout",
+          "description": "Maximum execution time in seconds. Default: 300.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 300,
+          "surfaceable": true,
+          "suffix": "seconds"
+        },
+        {
+          "name": "env",
+          "label": "Environment",
+          "description": "Additional environment variables for the command.",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": false
         }
       ],
       "inputCardinality": "perFile"
