@@ -58,8 +58,9 @@ M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     278 tests). Schema-driven config DELIVERED (Sprint 11). v0.5.0 shipped
     to crates.io.
 
-    Next: Data persistence + Home + Library (Sprint 12A), then bnto-form
-    crate (Sprint 11.5), then TUI recipe editors (Sprints 12-18).
+    Next: Data persistence + Home + Library (Sprint 12A), recipe-level
+    dependencies + shell-command node (Sprint 12B), then bnto-form crate
+    (Sprint 11.5), then TUI recipe editors (Sprints 12-18).
 
 M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
@@ -70,7 +71,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. TUI delivered (Sprint 10). Schema-driven config delivered (Sprint 11). Next: data persistence + Home + Library (Sprint 12A), then bnto-form (Sprint 11.5), then recipe editors (Sprints 12-18). Desktop (M4) and monetization (M5) are backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. TUI delivered (Sprint 10). Schema-driven config delivered (Sprint 11). Next: data persistence + Home + Library (Sprint 12A), recipe-level deps + shell-command (Sprint 12B), then bnto-form (Sprint 11.5), then recipe editors (Sprints 12-18). Desktop (M4) and monetization (M5) are backlog.
 
 ---
 

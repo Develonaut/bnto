@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 17, 2026 (Added Sprint 12A: Data Persistence + Home + Library — TUI user journey foundation, ~8 PRs, ~60 tests)
+**Last Updated:** April 22, 2026 (Added Sprint 12B: Recipe-Level Dependencies + Shell Command — connector-as-recipe architecture, ~4 PRs, ~30 tests)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -36,6 +36,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **TUI delivered (Sprint 10):** `bnto tui` via ratatui + crossterm — 6 screens (browser, detail, picker, execution, results, settings), 278 tests
 - **Sprint 11 complete:** TUI schema-driven config — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation)
 - **Next: Data Persistence + Home + Library (Sprint 12A)** — XDG-compliant storage, `BntoPaths`, atomic writes, TOML config, Home screen, My Library screen, `bnto` = TUI default (~8 PRs, ~60 tests). See [tui-data-persistence.md](strategy/tui-data-persistence.md), [tui-user-journey.md](strategy/tui-user-journey.md)
+- **Next: Recipe-Level Dependencies (Sprint 12B)** — `PipelineDefinition.requires`, `shell-command` node, `download-video` migration, `bnto-video` crate deletion (~4 PRs, ~30 tests). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md)
 - **Then: `bnto-form` crate (Sprint 11.5)** — standalone ratatui form widget library, replaces hand-built detail controls (~6 PRs, ~105 tests). See [bnto-form-strategy.md](strategy/bnto-form-strategy.md)
 - **Backlog: Recipe Editors (Sprints 12-18)** — TUI List/Wizard/Code/Graph editors, bnto-editor crate extraction, Web List/Wizard/Code editors (~28 PRs, ~153 tests). See [editor-implementation-plan.md](strategy/editor-implementation-plan.md)
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
@@ -648,7 +649,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
 - [x] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
-**After Sprint 10:** Data Persistence + Home + Library (Sprint 12A), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
+**After Sprint 10:** Data Persistence + Home + Library (Sprint 12A), Recipe-Level Dependencies + Shell Command (Sprint 12B), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
 
 ---
 
@@ -694,7 +695,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 - [x] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): 12 integration tests in `detail_loader.rs` loading real recipes (compress-images, convert-image-format, resize-images, clean-csv, rename-files), asserting quality renders bounded Number with constraints, format renders Enum with labeled options, maintainAspect renders Boolean, case renders Enum, description metadata carried through. All 18 built-in recipes load without panic. All params have labels.
 - [x] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Mark Sprint 11 complete in **PLAN.md**.
 
-**After Sprint 11:** Data Persistence + Home + Library (Sprint 12A), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
+**After Sprint 11:** Data Persistence + Home + Library (Sprint 12A), Recipe-Level Dependencies + Shell Command (Sprint 12B), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
 
 ---
 
@@ -743,6 +744,58 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 - [x] `engine/crates/bnto` — **"Add to Library" + CLI default**: Recipes screen gains `a` key: copies engine's embedded recipe JSON to `recipes_dir/{slug}.bnto.json`. Collision detection ("Already in library. Press 'A' to replace."). CLI change: `bnto` with no subcommand launches TUI. `bnto tui` remains as explicit alias. Tests: add to library, collision handling, overwrite, CLI no-args dispatch.
 
 **Sprint 12A totals: ~8 PRs, ~65 tests, ~1500-2000 LOC**
+
+---
+
+### Sprint 12B: Recipe-Level Dependencies + Shell Command — NEXT
+
+**Goal:** Close the dependency gap for connector-as-recipe architecture. Recipe JSON gains a `requires` field so generic processors (`shell-command`) can declare what external tools a recipe needs. First proof: convert `download-video` from dedicated `bnto-video` crate to `shell-command` + recipe-level `requires`.
+
+**Strategy doc:** [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md)
+**Depends on:** None (independent of Sprint 12A)
+
+**What changes:**
+
+- `PipelineDefinition` gains `requires: Vec<Dependency>` (recipe-level deps)
+- `Dependency` struct gains `Deserialize` derive (currently serialize-only)
+- `collect_pipeline_dependencies()` merges recipe-level + node-level deps
+- New `shell-command` processor (uses `ProcessContext::run_command()`)
+- `download-video` recipe converted from `video-download` processor to `shell-command`
+- `bnto-video` crate deleted (no external consumers)
+- `bnto info` and `bnto doctor` show recipe-level deps automatically
+
+**Persona ownership:**
+
+| Package                     | Persona        |
+| --------------------------- | -------------- |
+| `engine/crates/bnto-core`   | `/rust-expert` |
+| `engine/crates/bnto-engine` | `/rust-expert` |
+| `engine/crates/bnto`        | `/rust-expert` |
+
+#### Wave 1 — Recipe-level requires (sequential)
+
+- [ ] `engine/crates/bnto-core` — **Add `Deserialize` to `Dependency` + `requires` to `PipelineDefinition`**: Add `Deserialize` derive to `Dependency`. Add `requires: Vec<Dependency>` field to `PipelineDefinition` with `#[serde(default, skip_serializing_if = "Vec::is_empty")]`. RED tests: deserialization with/without requires, round-trip, backward compat (existing recipes still parse), empty requires omitted in serialization (~6 tests)
+- [ ] `engine/crates/bnto-engine` — **Merge recipe-level deps in `collect_pipeline_dependencies()`**: Update to collect recipe-level deps first, then node-level deps (existing logic). Deduplication by binary name. RED tests: recipe-only deps, node-only deps, merged + deduplicated, empty recipe requires (~6 tests)
+
+#### Wave 2 — Shell command processor (sequential)
+
+- [ ] `engine/crates/bnto-engine` — **`shell-command` processor**: Implement `NodeProcessor` for shell-command. Parameters: `command` (String, required), `args` (array of strings), `timeout` (number, default 300), `env` (object, optional). Uses `ProcessContext::run_command()`. Validates command is not empty, binary exists on PATH. Captures stdout as output file. Platforms: `["cli", "server", "desktop"]`. Register in `create_registry()` (native feature gate). RED tests: happy path, missing command, empty command validation, timeout param, exit code error, env var injection (~10 tests)
+
+#### Wave 3 — Download-video migration (sequential)
+
+- [ ] `engine/crates/bnto-engine` — **Convert `download-video` recipe**: Rewrite `download-video.bnto.json` to use `shell-command` node + recipe-level `requires: [yt-dlp, ffmpeg]`. Delete `bnto-video` crate. Remove from workspace `Cargo.toml`, `bnto-engine/Cargo.toml` deps, `create_registry()` registration, feature gates. Update golden tests. Update `metadata.rs` `video_node_types()` (video-download becomes a recipe-only concept, not a processor). RED tests: recipe parses with requires, deps are collected correctly, `bnto info download-video` output includes recipe-level deps (~5 tests)
+- [ ] `engine/crates/bnto` — **Update CLI integration + codegen**: Update any CLI code that references `video-download` processor directly. Run codegen (`task wasm:codegen`). Update TypeScript test count assertions if node type count changes. Verify `bnto doctor` shows deps from recipe-level requires. (~3 tests)
+
+**Sprint 12B totals: ~4 PRs, ~30 tests, ~500-800 LOC**
+
+#### Follow-up backlog (ordered, each unblocks the next)
+
+These items are not part of Sprint 12B but are unlocked by it. See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md) for details.
+
+1. **`bnto install <recipe>`** — Auto-install recipe dependencies with OS/package manager detection
+2. **Version constraint enforcement** — Parse `<binary> --version` output, validate against `Dependency.version` semver constraint
+3. **Per-platform install hints** — Detect OS, show correct package manager command (`apt`, `choco`, `pacman`)
+4. **Recipe variables & template expressions** — `${NAME}` syntax in parameters, variable declarations with types, resolution chain
 
 ---
 
