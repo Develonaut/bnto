@@ -1352,6 +1352,14 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ---
 
+### Triage: TUI Execution Screen Progress Feedback
+
+**Priority: Triage.** The execution screen shows no progress feedback for long-running recipes (e.g. download-video). Users see a static screen for 10+ minutes with zero indication anything is happening. Root cause: `run_command()` blocks until the child process exits and only returns stdout — stderr progress (yt-dlp percentages, ffmpeg frame counts) is never relayed. Need to stream stderr from child processes, surface a live activity indicator (elapsed time, spinner, or parsed progress), and consider a generic heartbeat for any recipe that shells out to external tools.
+
+`engine/crates/bnto/src/tui/bridge.rs`, `engine/crates/bnto-core/src/context.rs`, `engine/crates/bnto/src/tui/screens/execution.rs`
+
+---
+
 ## Reference
 
 | Document                                 | Purpose                                                                      |
