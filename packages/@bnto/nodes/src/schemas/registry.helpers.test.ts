@@ -43,7 +43,12 @@ describe("getNodeSchema", () => {
 
   it("returns undefined for types without schemas", () => {
     expect(getNodeSchema("http-request")).toBeUndefined();
-    expect(getNodeSchema("shell-command")).toBeUndefined();
+  });
+
+  it("returns schema for shell-command", () => {
+    const schema = getNodeSchema("shell-command");
+    expect(schema).toBeDefined();
+    expect(schema!.nodeType).toBe("shell-command");
   });
 
   it("returns undefined for old multi-operation type names", () => {
