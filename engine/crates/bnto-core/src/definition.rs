@@ -58,9 +58,6 @@ pub struct Definition {
     #[serde(default = "default_parameters")]
     #[cfg_attr(feature = "ts", ts(type = "Record<string, unknown>"))]
     pub parameters: serde_json::Value,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[cfg_attr(feature = "ts", ts(optional))]
-    pub fields: Option<FieldsConfig>,
     pub input_ports: Vec<Port>,
     pub output_ports: Vec<Port>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -169,27 +166,6 @@ pub struct Edge {
     pub target_handle: Option<String>,
 }
 
-/// Structured-data field overrides, used by nodes that operate on
-/// record-style inputs (e.g. spreadsheets). `values` is arbitrary JSON so the
-/// schema can stay permissive while individual node types enforce their own.
-#[cfg_attr(feature = "ts", derive(TS))]
-#[cfg_attr(
-    feature = "ts",
-    ts(
-        export,
-        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
-    )
-)]
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct FieldsConfig {
-    #[cfg_attr(feature = "ts", ts(type = "Record<string, unknown>"))]
-    pub values: serde_json::Value,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[cfg_attr(feature = "ts", ts(optional))]
-    pub keep_only_set: Option<bool>,
-}
-
 /// Default for `parameters` when the key is missing entirely. Produces `{}`,
 /// matching the TS convention that parameters is always an object.
 pub(crate) fn default_parameters() -> serde_json::Value {
@@ -215,7 +191,6 @@ mod tests {
             position: Position { x: 0.0, y: 0.0 },
             metadata: Metadata::default(),
             parameters: default_parameters(),
-            fields: None,
             input_ports: vec![],
             output_ports: vec![],
             nodes: None,
@@ -251,7 +226,6 @@ mod tests {
         let def = minimal_leaf("n1", "image-compress");
         let json = serde_json::to_value(&def).unwrap();
         assert!(json.get("parentId").is_none());
-        assert!(json.get("fields").is_none());
         assert!(json.get("nodes").is_none());
         assert!(json.get("edges").is_none());
         assert!(json.get("settings").is_none());
@@ -348,17 +322,6 @@ mod tests {
         let json = serde_json::to_string(&port).unwrap();
         let back: Port = serde_json::from_str(&json).unwrap();
         assert_eq!(port, back);
-    }
-
-    #[test]
-    fn fields_config_serializes_with_camel_case() {
-        let fc = FieldsConfig {
-            values: json!({ "name": "test" }),
-            keep_only_set: Some(true),
-        };
-        let json = serde_json::to_value(&fc).unwrap();
-        assert_eq!(json["keepOnlySet"], json!(true));
-        assert!(json.get("keep_only_set").is_none());
     }
 
     // --- Round-trip tests against real fixtures ---

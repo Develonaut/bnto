@@ -15,7 +15,6 @@ export type { Position } from "./generated/definitionTypes/Position";
 export type { Metadata } from "./generated/definitionTypes/Metadata";
 export type { Port } from "./generated/definitionTypes/Port";
 export type { Edge } from "./generated/definitionTypes/Edge";
-export type { FieldsConfig } from "./generated/definitionTypes/FieldsConfig";
 export type { PipelineSettings } from "./generated/definitionTypes/PipelineSettings";
 export type { IterationMode } from "./generated/definitionTypes/IterationMode";
 export type { InputCardinality } from "./generated/definitionTypes/InputCardinality";

@@ -13,7 +13,7 @@ export interface RegistryData {
 
 // ── Node system type re-exports ─────────────────────────────────────────
 
-export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "@bnto/nodes";
+export type { Definition, Position, Metadata, Port, Edge } from "@bnto/nodes";
 export type { PipelineSettings, IterationMode } from "@bnto/nodes";
 export type { ExecutionContext, NodeResult } from "@bnto/nodes";
 export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "@bnto/nodes";

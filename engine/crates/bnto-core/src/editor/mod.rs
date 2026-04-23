@@ -52,7 +52,6 @@ mod tests {
                 ..Default::default()
             },
             parameters: default_parameters(),
-            fields: None,
             input_ports: vec![],
             output_ports: vec![],
             nodes: Some(vec![Definition {
@@ -64,7 +63,6 @@ mod tests {
                 position: Position { x: 0.0, y: 0.0 },
                 metadata: Metadata::default(),
                 parameters: json!({"quality": 80}),
-                fields: None,
                 input_ports: vec![],
                 output_ports: vec![],
                 nodes: None,

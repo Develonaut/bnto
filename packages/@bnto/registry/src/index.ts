@@ -16,7 +16,6 @@ export type {
   Metadata,
   Port,
   Edge,
-  FieldsConfig,
   PipelineSettings,
   IterationMode,
   ExecutionContext,

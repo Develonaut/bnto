@@ -24,9 +24,6 @@ export const DEFINITION_JSON_SCHEMA = {
           },
           type: "array",
         },
-        fields: {
-          $ref: "#/$defs/Fields",
-        },
         id: {
           description: "Unique identifier for this node within the recipe.",
           type: "string",
@@ -134,23 +131,6 @@ export const DEFINITION_JSON_SCHEMA = {
         },
       },
       required: ["id", "source", "target"],
-      type: "object",
-    },
-    Fields: {
-      additionalProperties: false,
-      description: "Field values for edit-fields nodes.",
-      properties: {
-        keepOnlySet: {
-          description: "If true, only fields listed in `values` are kept in the output.",
-          type: "boolean",
-        },
-        values: {
-          additionalProperties: true,
-          description: "Map of field names to their values.",
-          type: "object",
-        },
-      },
-      required: ["values"],
       type: "object",
     },
     Metadata: {
