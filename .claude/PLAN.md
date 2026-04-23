@@ -35,8 +35,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
 - **TUI delivered (Sprint 10):** `bnto tui` via ratatui + crossterm — 6 screens (browser, detail, picker, execution, results, settings), 278 tests
 - **Sprint 11 complete:** TUI schema-driven config — type-aware parameter controls (boolean toggles, enum selects, number sliders, validation)
-- **Next: Data Persistence + Home + Library (Sprint 12A)** — XDG-compliant storage, `BntoPaths`, atomic writes, TOML config, Home screen, My Library screen, `bnto` = TUI default (~8 PRs, ~60 tests). See [tui-data-persistence.md](strategy/tui-data-persistence.md), [tui-user-journey.md](strategy/tui-user-journey.md)
 - **Next: Recipe-Level Dependencies (Sprint 12B)** — `PipelineDefinition.requires`, `shell-command` node, `download-video` migration, `bnto-video` crate deletion (~4 PRs, ~30 tests). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md)
+- **Then: Data Persistence + Home + Library (Sprint 12A)** — XDG-compliant storage, `BntoPaths`, atomic writes, TOML config, Home screen, My Library screen, `bnto` = TUI default (~8 PRs, ~60 tests). See [tui-data-persistence.md](strategy/tui-data-persistence.md), [tui-user-journey.md](strategy/tui-user-journey.md)
 - **Then: `bnto-form` crate (Sprint 11.5)** — standalone ratatui form widget library, replaces hand-built detail controls (~6 PRs, ~105 tests). See [bnto-form-strategy.md](strategy/bnto-form-strategy.md)
 - **Backlog: Recipe Editors (Sprints 12-18)** — TUI List/Wizard/Code/Graph editors, bnto-editor crate extraction, Web List/Wizard/Code editors (~28 PRs, ~153 tests). See [editor-implementation-plan.md](strategy/editor-implementation-plan.md)
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
@@ -216,7 +216,9 @@ Editor shipped as usable v1: auto-download default, config panel controls (Texta
 
 **Sprint 11 complete.** TUI schema-driven config delivered — type-aware parameter controls (boolean toggles, enum selects, number sliders), engine-owned node schema, codegen overhaul.
 
-**Next up: Data Persistence + Home + Library (Sprint 12A).** Foundation sprint for the TUI user journey. XDG-compliant storage (`BntoPaths`), atomic writes, TOML config migration, Home screen (main menu), My Library screen (user recipe collection), `bnto` default to TUI. This is the prerequisite for everything else — library management, editing, wizard, history. See [tui-data-persistence.md](strategy/tui-data-persistence.md) and [tui-user-journey.md](strategy/tui-user-journey.md).
+**Next up: Recipe-Level Dependencies + Shell Command (Sprint 12B).** Close the dependency gap for connector-as-recipe. `PipelineDefinition` gains `requires: Vec<Dependency>`, new `shell-command` processor, `download-video` migrates from dedicated `bnto-video` crate to `shell-command` + recipe-level deps. Unlocks community recipes. See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
+
+**Then: Data Persistence + Home + Library (Sprint 12A).** Foundation sprint for the TUI user journey. XDG-compliant storage (`BntoPaths`), atomic writes, TOML config migration, Home screen (main menu), My Library screen (user recipe collection), `bnto` default to TUI. This is the prerequisite for everything else — library management, editing, wizard, history. See [tui-data-persistence.md](strategy/tui-data-persistence.md) and [tui-user-journey.md](strategy/tui-user-journey.md).
 
 **Then: `bnto-form` crate (Sprint 11.5).** Standalone, open-source ratatui form widget library inspired by Charm's huh. Replaces the hand-built detail screen controls with polished TextInput (cursor, placeholder), Select (compact + filter), Confirm (Yes/No), Number (slider, bounds). TEA-native pure functions, zero bnto dependency. See [bnto-form-strategy.md](strategy/bnto-form-strategy.md) and Sprint 11.5 below.
 
@@ -649,7 +651,7 @@ Bring back the `/editor` route as a lightweight open+export tool. No persistence
 - [x] `engine/crates/bnto` — **CLI integration tests**: Test `bnto tui` subcommand registers correctly. Test recipe data flows from engine to browser model. Test param overrides merge into definition before execution
 - [x] `engine/crates/bnto` — **Documentation + README**: Update README with TUI usage, screenshots. Add `bnto tui` to CLI commands table in CLAUDE.md
 
-**After Sprint 10:** Data Persistence + Home + Library (Sprint 12A), Recipe-Level Dependencies + Shell Command (Sprint 12B), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
+**After Sprint 10:** Recipe-Level Dependencies + Shell Command (Sprint 12B), then Data Persistence + Home + Library (Sprint 12A), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
 
 ---
 
@@ -695,55 +697,7 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 - [x] `engine/crates/bnto` — **End-to-end integration test** (plan doc PR 7): 12 integration tests in `detail_loader.rs` loading real recipes (compress-images, convert-image-format, resize-images, clean-csv, rename-files), asserting quality renders bounded Number with constraints, format renders Enum with labeled options, maintainAspect renders Boolean, case renders Enum, description metadata carried through. All 18 built-in recipes load without panic. All params have labels.
 - [x] Update **tui-strategy.md** Param Control Matrix with shipped status. Update **README** TUI section. Mark Sprint 11 complete in **PLAN.md**.
 
-**After Sprint 11:** Data Persistence + Home + Library (Sprint 12A), Recipe-Level Dependencies + Shell Command (Sprint 12B), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
-
----
-
-### Sprint 12A: Data Persistence + Home + Library — NEXT
-
-**Goal:** Establish the storage foundation and core TUI user journey. XDG-compliant data persistence replaces the fragile JSON config. Home screen replaces Browser as the default view. My Library gives users a personal recipe collection. `bnto` (no args) launches the TUI.
-
-**Strategy docs:** [tui-data-persistence.md](strategy/tui-data-persistence.md), [tui-user-journey.md](strategy/tui-user-journey.md)
-**Depends on:** Sprint 11 (complete — 1 remaining task in Wave 2 is independent of 12A Wave 1-2 storage work)
-
-**What changes:**
-
-- New `BntoPaths` struct — centralized XDG-compliant path resolution with `BNTO_HOME` override
-- Config migrated from JSON (`tui.json`) to TOML (`config.toml`) with schema versioning
-- Atomic writes via tempfile+rename (replaces direct `fs::write`)
-- Save errors surfaced to status bar (replaces silent `let _ =`)
-- Home screen — main menu (My Library, Recipes, New Recipe, Settings)
-- My Library screen — loads `.bnto.json` files from `~/.local/share/bnto/recipes/`
-- Recipes screen — existing Browser with "Add to Library" action
-- CLI default: `bnto` (no args) → TUI instead of help text
-
-**Persona ownership:**
-
-| Package              | Persona        |
-| -------------------- | -------------- |
-| `engine/crates/bnto` | `/rust-expert` |
-
-#### Wave 1 — Storage foundation (sequential)
-
-- [x] `engine/crates/bnto` — **`BntoPaths` struct + resolution**: Centralized path resolution for config/data/state/cache directories. XDG-compliant with macOS config exception (`~/.config/bnto/`). `BNTO_HOME` and `BNTO_CONFIG_DIR` env var overrides. `ensure_dirs()` creates all directories. Helper methods: `config_file()`, `recipes_dir()`, `history_file()`, `recent_file()`. RED tests: path resolution per platform, env var overrides, directory creation (~10 tests)
-- [x] `engine/crates/bnto` — **Atomic writes + TOML config**: `atomic_write()` function using `tempfile::NamedTempFile` + `persist()`. New `TomlConfig` with TOML format, `version = 1` schema field, `serde(default)` on all fields. `BntoPaths::config_file()` for path resolution. Added `toml` crate to workspace deps. RED tests: atomic write (verify no corruption on partial write), TOML round-trip, schema version presence, default values (~10 tests)
-
-#### Wave 2 — Migration + error handling (sequential)
-
-- [x] `engine/crates/bnto` — **Config migration from old layout**: On startup, check for old `dirs::config_dir()/bnto/tui.json`. If found: read JSON, convert to TOML, write to new `~/.config/bnto/config.toml`. Merge old `telemetry.json` consent into config. One-time log message. Old files left in place. RED tests: migration from JSON, telemetry merge, missing old file (no-op), corrupted old file (graceful fallback) (~8 tests)
-- [x] `engine/crates/bnto` — **Surface save errors + wire `BntoPaths`**: Replace all `let _ = config.save()` with error handling that sets status bar message. Pass `BntoPaths` through `AppModel::new()`. Telemetry config uses `BntoPaths`. Remove old `config_path()` function. RED tests: save error propagation, status bar error display (~7 tests)
-
-#### Wave 3 — Home screen + navigation (parallel)
-
-- [x] `engine/crates/bnto` — **Home screen (main menu)**: `HomeModel` with 4 items (My Library, Recipes, New Recipe, Settings). Library count badge (reads recipe dir file count). Cursor navigation, Enter dispatches screen transition. TEA pattern: pure `update()`, `render()`, key mapping. RED tests: cursor wrap, confirm dispatch, library count (~5 tests)
-- [x] `engine/crates/bnto` — **App router update**: Add `Screen::Home` and `Screen::Library` to `Screen` enum. Home is the new default screen (replaces Browser). Update back-navigation: Library→Home, Recipes→Home, Settings→Home. Browser screen renamed to Recipes internally. RED tests: new screen transitions, back navigation from all screens (~8 tests)
-
-#### Wave 4 — My Library + CLI default (parallel)
-
-- [x] `engine/crates/bnto` — **My Library screen**: `LibraryModel` loads `.bnto.json` files from `BntoPaths::recipes_dir()`. Parse name/description from each file. Search/filter. Actions: Enter (run → Detail), `r` (rename — edit name field in JSON), `d` (delete with confirmation). Empty state with guidance. 34 unit tests + 10 app-level tests.
-- [x] `engine/crates/bnto` — **"Add to Library" + CLI default**: Recipes screen gains `a` key: copies engine's embedded recipe JSON to `recipes_dir/{slug}.bnto.json`. Collision detection ("Already in library. Press 'A' to replace."). CLI change: `bnto` with no subcommand launches TUI. `bnto tui` remains as explicit alias. Tests: add to library, collision handling, overwrite, CLI no-args dispatch.
-
-**Sprint 12A totals: ~8 PRs, ~65 tests, ~1500-2000 LOC**
+**After Sprint 11:** Recipe-Level Dependencies + Shell Command (Sprint 12B), then Data Persistence + Home + Library (Sprint 12A), then `bnto-form` crate (Sprint 11.5), then recipe editors (Sprints 12-18). Then file picker UX overhaul, file node ecosystem expansion, more node types.
 
 ---
 
@@ -796,6 +750,54 @@ These items are not part of Sprint 12B but are unlocked by it. See [recipe-deps-
 2. **Version constraint enforcement** — Parse `<binary> --version` output, validate against `Dependency.version` semver constraint
 3. **Per-platform install hints** — Detect OS, show correct package manager command (`apt`, `choco`, `pacman`)
 4. **Recipe variables & template expressions** — `${NAME}` syntax in parameters, variable declarations with types, resolution chain
+
+---
+
+### Sprint 12A: Data Persistence + Home + Library — AFTER 12B
+
+**Goal:** Establish the storage foundation and core TUI user journey. XDG-compliant data persistence replaces the fragile JSON config. Home screen replaces Browser as the default view. My Library gives users a personal recipe collection. `bnto` (no args) launches the TUI.
+
+**Strategy docs:** [tui-data-persistence.md](strategy/tui-data-persistence.md), [tui-user-journey.md](strategy/tui-user-journey.md)
+**Depends on:** Sprint 11 (complete — 1 remaining task in Wave 2 is independent of 12A Wave 1-2 storage work)
+
+**What changes:**
+
+- New `BntoPaths` struct — centralized XDG-compliant path resolution with `BNTO_HOME` override
+- Config migrated from JSON (`tui.json`) to TOML (`config.toml`) with schema versioning
+- Atomic writes via tempfile+rename (replaces direct `fs::write`)
+- Save errors surfaced to status bar (replaces silent `let _ =`)
+- Home screen — main menu (My Library, Recipes, New Recipe, Settings)
+- My Library screen — loads `.bnto.json` files from `~/.local/share/bnto/recipes/`
+- Recipes screen — existing Browser with "Add to Library" action
+- CLI default: `bnto` (no args) → TUI instead of help text
+
+**Persona ownership:**
+
+| Package              | Persona        |
+| -------------------- | -------------- |
+| `engine/crates/bnto` | `/rust-expert` |
+
+#### Wave 1 — Storage foundation (sequential)
+
+- [x] `engine/crates/bnto` — **`BntoPaths` struct + resolution**: Centralized path resolution for config/data/state/cache directories. XDG-compliant with macOS config exception (`~/.config/bnto/`). `BNTO_HOME` and `BNTO_CONFIG_DIR` env var overrides. `ensure_dirs()` creates all directories. Helper methods: `config_file()`, `recipes_dir()`, `history_file()`, `recent_file()`. RED tests: path resolution per platform, env var overrides, directory creation (~10 tests)
+- [x] `engine/crates/bnto` — **Atomic writes + TOML config**: `atomic_write()` function using `tempfile::NamedTempFile` + `persist()`. New `TomlConfig` with TOML format, `version = 1` schema field, `serde(default)` on all fields. `BntoPaths::config_file()` for path resolution. Added `toml` crate to workspace deps. RED tests: atomic write (verify no corruption on partial write), TOML round-trip, schema version presence, default values (~10 tests)
+
+#### Wave 2 — Migration + error handling (sequential)
+
+- [x] `engine/crates/bnto` — **Config migration from old layout**: On startup, check for old `dirs::config_dir()/bnto/tui.json`. If found: read JSON, convert to TOML, write to new `~/.config/bnto/config.toml`. Merge old `telemetry.json` consent into config. One-time log message. Old files left in place. RED tests: migration from JSON, telemetry merge, missing old file (no-op), corrupted old file (graceful fallback) (~8 tests)
+- [x] `engine/crates/bnto` — **Surface save errors + wire `BntoPaths`**: Replace all `let _ = config.save()` with error handling that sets status bar message. Pass `BntoPaths` through `AppModel::new()`. Telemetry config uses `BntoPaths`. Remove old `config_path()` function. RED tests: save error propagation, status bar error display (~7 tests)
+
+#### Wave 3 — Home screen + navigation (parallel)
+
+- [x] `engine/crates/bnto` — **Home screen (main menu)**: `HomeModel` with 4 items (My Library, Recipes, New Recipe, Settings). Library count badge (reads recipe dir file count). Cursor navigation, Enter dispatches screen transition. TEA pattern: pure `update()`, `render()`, key mapping. RED tests: cursor wrap, confirm dispatch, library count (~5 tests)
+- [x] `engine/crates/bnto` — **App router update**: Add `Screen::Home` and `Screen::Library` to `Screen` enum. Home is the new default screen (replaces Browser). Update back-navigation: Library→Home, Recipes→Home, Settings→Home. Browser screen renamed to Recipes internally. RED tests: new screen transitions, back navigation from all screens (~8 tests)
+
+#### Wave 4 — My Library + CLI default (parallel)
+
+- [x] `engine/crates/bnto` — **My Library screen**: `LibraryModel` loads `.bnto.json` files from `BntoPaths::recipes_dir()`. Parse name/description from each file. Search/filter. Actions: Enter (run → Detail), `r` (rename — edit name field in JSON), `d` (delete with confirmation). Empty state with guidance. 34 unit tests + 10 app-level tests.
+- [x] `engine/crates/bnto` — **"Add to Library" + CLI default**: Recipes screen gains `a` key: copies engine's embedded recipe JSON to `recipes_dir/{slug}.bnto.json`. Collision detection ("Already in library. Press 'A' to replace."). CLI change: `bnto` with no subcommand launches TUI. `bnto tui` remains as explicit alias. Tests: add to library, collision handling, overwrite, CLI no-args dispatch.
+
+**Sprint 12A totals: ~8 PRs, ~65 tests, ~1500-2000 LOC**
 
 ---
 
