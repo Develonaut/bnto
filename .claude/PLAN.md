@@ -737,8 +737,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 3 — Download-video migration (sequential)
 
-- [ ] `engine/crates/bnto-engine` — **Convert `download-video` recipe**: Rewrite `download-video.bnto.json` to use `shell-command` node + recipe-level `requires: [yt-dlp, ffmpeg]`. Delete `bnto-video` crate. Remove from workspace `Cargo.toml`, `bnto-engine/Cargo.toml` deps, `create_registry()` registration, feature gates. Update golden tests. Update `metadata.rs` `video_node_types()` (video-download becomes a recipe-only concept, not a processor). RED tests: recipe parses with requires, deps are collected correctly, `bnto info download-video` output includes recipe-level deps (~5 tests)
-- [ ] `engine/crates/bnto` — **Update CLI integration + codegen**: Update any CLI code that references `video-download` processor directly. Run codegen (`task wasm:codegen`). Update TypeScript test count assertions if node type count changes. Verify `bnto doctor` shows deps from recipe-level requires. (~3 tests)
+- [x] `engine/crates/bnto-engine` — **Convert `download-video` recipe**: Rewrote `download-video.bnto.json` to use `shell-command` node + recipe-level `requires: [yt-dlp, ffmpeg]`. Deleted `bnto-video` crate. Removed from workspace `Cargo.toml`, `bnto-engine/Cargo.toml` deps, `create_registry()` registration, feature gates. Updated golden tests. Updated `metadata.rs` — video-download is now a recipe-only concept. Added `deriveCategory()` metadata.category precedence for shell-command recipes.
+- [x] `engine/crates/bnto` — **Update CLI integration + codegen**: Updated CLI references, ran `task wasm:codegen`. Updated TypeScript test count assertions (removed video-download from processor maps, server-only types, schema expectations). Added `CategoryName` type = `NodeCategory | RecipeCategory`. Added `requires` round-trip in `rfNodesToDefinition`. Added `Dependency` type export through nodes→registry→core chain.
 
 **Sprint 12B totals: ~4 PRs, ~30 tests, ~500-800 LOC**
 

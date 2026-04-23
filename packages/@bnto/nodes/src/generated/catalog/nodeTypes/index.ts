@@ -27,7 +27,6 @@ import { spreadsheetRenameNodeType } from "./spreadsheetRename";
 import { transformNodeType } from "./transform";
 import { vectorOptimizeNodeType } from "./vectorOptimize";
 import { vectorRasterizeNodeType } from "./vectorRasterize";
-import { videoDownloadNodeType } from "./videoDownload";
 
 /**
  * All registered node type names.
@@ -55,7 +54,6 @@ export const NODE_TYPES = {
   transform: "transform",
   vectorOptimize: "vector-optimize",
   vectorRasterize: "vector-rasterize",
-  videoDownload: "video-download",
 } as const;
 
 /** All node type names as a readonly array. */
@@ -87,5 +85,4 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   transform: transformNodeType,
   "vector-optimize": vectorOptimizeNodeType,
   "vector-rasterize": vectorRasterizeNodeType,
-  "video-download": videoDownloadNodeType,
 } as const satisfies Record<NodeTypeName, NodeTypeInfo>;

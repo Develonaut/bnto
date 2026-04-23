@@ -29,6 +29,14 @@ export const shellCommandProcessor: ProcessorDef = {
       type: "string" as const,
     },
     {
+      name: "outputMode",
+      label: "Output Mode",
+      description:
+        "How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {output_dir} in args to inject the path).",
+      type: "string" as const,
+      default: "stdout",
+    },
+    {
       name: "timeout",
       label: "Timeout",
       description: "Maximum execution time in seconds. Default: 300.",
@@ -43,5 +51,5 @@ export const shellCommandProcessor: ProcessorDef = {
       surfaceable: false,
     },
   ],
-  inputCardinality: "perFile" as const,
+  inputCardinality: "source" as const,
 };

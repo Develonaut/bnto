@@ -42,8 +42,8 @@ describe("NODE_SCHEMAS", () => {
     expect(NODE_SCHEMAS["shell-command"]!.nodeType).toBe("shell-command");
   });
 
-  it("video-download has a generated schema (CLI-only but codegen-propagated)", () => {
-    expect(NODE_SCHEMAS["video-download"]).toBeDefined();
+  it("video-download processor was removed (replaced by shell-command recipe)", () => {
+    expect(NODE_SCHEMAS["video-download"]).toBeUndefined();
   });
 });
 

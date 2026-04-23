@@ -114,6 +114,7 @@ export type {
   NodeCategory,
   NodeTypeInfo,
   CategoryInfo,
+  CategoryName,
   AcceptSpec,
   ProcessorDef,
   ProcessorParam,

@@ -364,21 +364,21 @@ mod tests {
     #[test]
     fn extract_override_value_finds_by_param_name() {
         let mut overrides = HashMap::new();
-        overrides.insert("video-download:url".into(), "https://example.com".into());
-        overrides.insert("video-download:format".into(), "mp4".into());
+        overrides.insert("download:url".into(), "https://example.com".into());
+        overrides.insert("download:format".into(), "mp4".into());
 
         let url = extract_override_value(&mut overrides, "url");
         assert_eq!(url, Some("https://example.com".into()));
         // The key should be removed from overrides.
-        assert!(!overrides.contains_key("video-download:url"));
+        assert!(!overrides.contains_key("download:url"));
         // Other keys remain.
-        assert!(overrides.contains_key("video-download:format"));
+        assert!(overrides.contains_key("download:format"));
     }
 
     #[test]
     fn extract_override_value_returns_none_when_missing() {
         let mut overrides = HashMap::new();
-        overrides.insert("video-download:format".into(), "mp4".into());
+        overrides.insert("download:format".into(), "mp4".into());
 
         let text = extract_override_value(&mut overrides, "text");
         assert_eq!(text, None);

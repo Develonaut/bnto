@@ -84,10 +84,6 @@
     "vectorRasterize": {
       "label": "SVG to Image",
       "description": "Convert SVG files to raster images (PNG, JPEG, WebP)."
-    },
-    "videoDownload": {
-      "label": "Download Video",
-      "description": "Download video from URLs using yt-dlp (CLI/desktop only)."
     }
   },
   "params": {
@@ -198,6 +194,10 @@
         "label": "Arguments",
         "description": "Command arguments as an array of strings."
       },
+      "outputMode": {
+        "label": "Output Mode",
+        "description": "How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {output_dir} in args to inject the path)."
+      },
       "timeout": {
         "label": "Timeout",
         "description": "Maximum execution time in seconds. Default: 300."
@@ -278,26 +278,6 @@
         "label": "Quality",
         "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only."
       }
-    },
-    "videoDownload": {
-      "url": {
-        "label": "URL",
-        "description": "Video URL to download (YouTube, m3u8/HLS, or direct link).",
-        "placeholder": "https://youtube.com/watch?v=..."
-      },
-      "format": {
-        "label": "Format",
-        "description": "Output format for the downloaded video or audio."
-      },
-      "quality": {
-        "label": "Quality",
-        "description": "Maximum video quality. 'best' downloads the highest available."
-      },
-      "args": {
-        "label": "Extra Arguments",
-        "description": "Raw yt-dlp arguments, space-separated. Appended after built-in flags.",
-        "placeholder": "--cookies-from-browser chrome"
-      }
     }
   },
   "categories": {
@@ -309,7 +289,6 @@
     "io": "Io",
     "system": "System",
     "spreadsheet": "Spreadsheet",
-    "vector": "Vector",
-    "video": "Video"
+    "vector": "Vector"
   }
 }

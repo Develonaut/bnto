@@ -18,6 +18,18 @@
   "settings": {
     "iteration": "auto"
   },
+  "requires": [
+    {
+      "binary": "yt-dlp",
+      "installHint": "brew install yt-dlp",
+      "homepage": "https://github.com/yt-dlp/yt-dlp"
+    },
+    {
+      "binary": "ffmpeg",
+      "installHint": "brew install ffmpeg",
+      "homepage": "https://ffmpeg.org"
+    }
+  ],
   "nodes": [
     {
       "id": "input",
@@ -46,8 +58,8 @@
       ]
     },
     {
-      "id": "video-download",
-      "type": "video-download",
+      "id": "download",
+      "type": "shell-command",
       "version": "1.0.0",
       "name": "Download Video",
       "position": {
@@ -56,9 +68,18 @@
       },
       "metadata": {},
       "parameters": {
-        "url": "",
-        "format": "mp4",
-        "quality": "best"
+        "command": "yt-dlp",
+        "args": [
+          "--no-playlist",
+          "--no-warnings",
+          "--merge-output-format",
+          "mp4",
+          "-S",
+          "vcodec:h264,acodec:m4a",
+          "-o",
+          "{output_dir}/%(title)s.%(ext)s"
+        ],
+        "outputMode": "file"
       },
       "inputPorts": [],
       "outputPorts": []
@@ -92,11 +113,11 @@
     {
       "id": "e1",
       "source": "input",
-      "target": "video-download"
+      "target": "download"
     },
     {
       "id": "e2",
-      "source": "video-download",
+      "source": "download",
       "target": "output"
     }
   ]

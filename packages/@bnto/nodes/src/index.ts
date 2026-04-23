@@ -17,6 +17,7 @@
 // Definition types
 export type {
   Definition,
+  Dependency,
   Position,
   Metadata,
   Port,
@@ -42,7 +43,7 @@ export { isContainerNodeType } from "./isContainerNodeType";
 
 // Categories
 export { CATEGORIES, getCategoryInfo } from "./categories";
-export type { CategoryInfo } from "./categories";
+export type { CategoryInfo, CategoryName, RecipeCategory } from "./categories";
 
 // Format versioning
 export {

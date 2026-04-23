@@ -65,6 +65,7 @@ impl EditorModel {
                 nodes: None,
                 edges: None,
                 settings: None,
+                requires: Vec::new(),
             })
             .collect();
 
@@ -104,6 +105,7 @@ impl EditorModel {
             settings: Some(PipelineSettings {
                 iteration: IterationMode::Auto,
             }),
+            requires: Vec::new(),
         }
     }
 }

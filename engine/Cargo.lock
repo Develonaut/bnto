@@ -189,7 +189,6 @@ dependencies = [
  "bnto-shell",
  "bnto-spreadsheet",
  "bnto-vector",
- "bnto-video",
  "serde_json",
 ]
 
@@ -274,14 +273,6 @@ dependencies = [
  "tiny-skia",
  "usvg",
  "xmlwriter",
-]
-
-[[package]]
-name = "bnto-video"
-version = "0.1.2"
-dependencies = [
- "bnto-core",
- "serde_json",
 ]
 
 [[package]]

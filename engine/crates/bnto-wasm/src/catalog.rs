@@ -22,7 +22,7 @@ struct CatalogEnvelope {
 /// (input, output, loop, group, parallel, transform, edit-fields) params
 /// come from `bnto_core::node_type_params`. For processor types they come
 /// from the registry's `NodeMetadata::parameters`. Types with no declared
-/// params (e.g. `http-request`, `shell-command`) omit the field.
+/// params (e.g. `http-request`) omit the field.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct CatalogNodeType {
@@ -137,21 +137,21 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_fourteen_processors() {
-        // The native registry has 14 processors (12 browser + video-download + shell-command).
+    fn test_catalog_has_all_thirteen_processors() {
+        // The native registry has 13 processors (12 browser + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            14,
-            "Catalog should have exactly 14 processors"
+            13,
+            "Catalog should have exactly 13 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 14 expected processor type keys are present.
+        // Verify all 13 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -170,7 +170,6 @@ mod tests {
             "image-overlay",
             "vector-rasterize",
             "vector-optimize",
-            "video-download",
             "shell-command",
         ];
 
@@ -186,12 +185,12 @@ mod tests {
 
     #[test]
     fn test_browser_processors_support_browser_platform() {
-        // All processors except video-download and shell-command should include "browser".
-        // These are native-only (need filesystem + external binaries).
+        // All processors except shell-command should include "browser".
+        // shell-command is native-only (needs filesystem + external binaries).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
-        let non_browser = ["video-download", "shell-command"];
+        let non_browser = ["shell-command"];
 
         for entry in &catalog {
             if non_browser.contains(&entry.node_type.as_str()) {
@@ -220,9 +219,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 22);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 21);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 14);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 13);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),
@@ -336,7 +335,7 @@ mod tests {
     /// Or via: `task wasm:snapshot`
     ///
     /// Uses the native registry so ALL processors (including CLI-only ones
-    /// like video-download) appear in the snapshot. TypeScript codegen gets
+    /// like shell-command) appear in the snapshot. TypeScript codegen gets
     /// the full schema/params even for processors that can't run in-browser
     /// yet — ready for when they can.
     ///

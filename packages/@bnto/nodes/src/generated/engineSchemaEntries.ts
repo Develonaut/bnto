@@ -27,7 +27,6 @@ import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
 import { transformNodeSchema } from "./schemas/transform";
 import { vectorOptimizeNodeSchema } from "./schemas/vectorOptimize";
 import { vectorRasterizeNodeSchema } from "./schemas/vectorRasterize";
-import { videoDownloadNodeSchema } from "./schemas/videoDownload";
 
 /**
  * Schema entries for ALL node types — auto-assembled from the engine catalog.
@@ -54,7 +53,6 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   transform: transformNodeSchema,
   "vector-optimize": vectorOptimizeNodeSchema,
   "vector-rasterize": vectorRasterizeNodeSchema,
-  "video-download": videoDownloadNodeSchema,
 };
 
 /**
@@ -252,6 +250,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     },
   },
   "shell-command": {
+    args: { control: "tagPicker" },
     timeout: { suffix: "seconds" },
   },
   "spreadsheet-clean": {},
@@ -287,28 +286,6 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "png", label: "PNG" },
         { value: "jpeg", label: "JPEG" },
         { value: "webp", label: "WebP" },
-      ],
-    },
-  },
-  "video-download": {
-    format: {
-      options: [
-        { value: "mp4", label: "MP4" },
-        { value: "webm", label: "WebM" },
-        { value: "mkv", label: "MKV" },
-        { value: "mp3", label: "MP3" },
-        { value: "m4a", label: "M4A" },
-        { value: "wav", label: "WAV" },
-        { value: "flac", label: "FLAC" },
-      ],
-    },
-    quality: {
-      options: [
-        { value: "best", label: "Best Available" },
-        { value: "1080", label: "1080p" },
-        { value: "720", label: "720p" },
-        { value: "480", label: "480p" },
-        { value: "360", label: "360p" },
       ],
     },
   },

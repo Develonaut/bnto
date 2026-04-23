@@ -25,6 +25,7 @@ export type {
   NodeCategory,
   NodeTypeInfo,
   CategoryInfo,
+  CategoryName,
   ProcessorDef,
   ProcessorParam,
   ParamType,

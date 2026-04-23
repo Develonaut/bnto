@@ -10,7 +10,8 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for shell-command node parameters. */
 export const shellCommandParamsSchema = z.object({
   command: z.string().optional(),
-  args: z.string().optional(),
+  args: z.array(z.string()).optional(),
+  outputMode: z.string().optional().default("stdout"),
   timeout: z.number().optional().default(300),
   env: z.record(z.unknown()).optional(),
 });
@@ -32,6 +33,11 @@ export const shellCommandNodeSchema: NodeSchema = {
     args: {
       label: "Arguments",
       description: "Command arguments as an array of strings.",
+    },
+    outputMode: {
+      label: "Output Mode",
+      description:
+        "How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {output_dir} in args to inject the path).",
     },
     timeout: {
       label: "Timeout",

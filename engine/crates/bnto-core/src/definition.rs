@@ -72,6 +72,10 @@ pub struct Definition {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[cfg_attr(feature = "ts", ts(optional))]
     pub settings: Option<PipelineSettings>,
+    /// Recipe-level dependencies — external tools needed at runtime.
+    /// Only meaningful at the root of a recipe document; nested nodes omit it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: Vec<crate::Dependency>,
 }
 
 /// 2D coordinate for a node on the editor canvas.
@@ -217,6 +221,7 @@ mod tests {
             nodes: None,
             edges: None,
             settings: None,
+            requires: Vec::new(),
         }
     }
 

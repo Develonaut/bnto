@@ -25,7 +25,6 @@ bnto-file = { path = "../bnto-file", version = "0.1.2" }
 bnto-image = { path = "../bnto-image", version = "0.1.2" }
 bnto-vector = { path = "../bnto-vector", version = "0.1.2" }
 bnto-shell = { path = "../bnto-shell", version = "0.1.2", optional = true }
-bnto-video = { path = "../bnto-video", version = "0.1.2", optional = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
@@ -33,4 +32,4 @@ base64 = "0.22"
 
 [features]
 default = []
-native = ["bnto-shell", "bnto-video"]
+native = ["bnto-shell"]
