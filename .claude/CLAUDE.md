@@ -57,6 +57,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Engine execution / pipeline    | [engine-execution.md](.claude/strategy/engine-execution.md)                     |
 | Engine expansion strategy      | [engine-expansion.md](.claude/strategy/engine-expansion.md)                     |
 | Recipe-level deps & shell-cmd  | [recipe-deps-strategy.md](.claude/strategy/recipe-deps-strategy.md)             |
+| Recipe fields & config surface | [recipe-fields.md](.claude/strategy/recipe-fields.md)                           |
 | TUI strategy & design          | [tui-strategy.md](.claude/strategy/tui-strategy.md)                             |
 | TUI user journey & screens     | [tui-user-journey.md](.claude/strategy/tui-user-journey.md)                     |
 | TUI data persistence           | [tui-data-persistence.md](.claude/strategy/tui-data-persistence.md)             |
