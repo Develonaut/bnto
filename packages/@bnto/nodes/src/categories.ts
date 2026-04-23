@@ -4,10 +4,16 @@
 
 import type { NodeCategory } from "./nodeTypes";
 
+/** Categories that exist only as recipe groupings, not as processor categories. */
+export type RecipeCategory = "video";
+
+/** All category names — processor categories plus recipe-only categories. */
+export type CategoryName = NodeCategory | RecipeCategory;
+
 /** Metadata for a node category. */
 export interface CategoryInfo {
-  /** Category identifier. */
-  name: NodeCategory;
+  /** Category identifier — includes both processor and recipe-only categories. */
+  name: CategoryName;
 
   /** Human-readable display label. */
   label: string;

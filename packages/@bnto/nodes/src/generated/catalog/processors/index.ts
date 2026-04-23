@@ -19,7 +19,6 @@ import { spreadsheetMergeProcessor } from "./spreadsheetMerge";
 import { spreadsheetRenameProcessor } from "./spreadsheetRename";
 import { vectorOptimizeProcessor } from "./vectorOptimize";
 import { vectorRasterizeProcessor } from "./vectorRasterize";
-import { videoDownloadProcessor } from "./videoDownload";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
   fileRenameProcessor,
@@ -35,5 +34,4 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   spreadsheetRenameProcessor,
   vectorOptimizeProcessor,
   vectorRasterizeProcessor,
-  videoDownloadProcessor,
 ] as const;

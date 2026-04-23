@@ -30,8 +30,6 @@ export { vectorOptimizeParamsSchema, vectorOptimizeNodeSchema } from "./vectorOp
 export type { VectorOptimizeParams } from "./vectorOptimize";
 export { vectorRasterizeParamsSchema, vectorRasterizeNodeSchema } from "./vectorRasterize";
 export type { VectorRasterizeParams } from "./vectorRasterize";
-export { videoDownloadParamsSchema, videoDownloadNodeSchema } from "./videoDownload";
-export type { VideoDownloadParams } from "./videoDownload";
 export { editFieldsParamsSchema, editFieldsNodeSchema } from "./editFields";
 export type { EditFieldsParams } from "./editFields";
 export { groupParamsSchema, groupNodeSchema } from "./group";

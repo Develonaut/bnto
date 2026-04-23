@@ -83,12 +83,11 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-optimize")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-rasterize")).toBe(true);
-    expect(PROCESSOR_MAP.has("video-download")).toBe(true);
   });
 
   it("browser processors include browser in platforms", () => {
     // Non-browser processors (CLI/server/desktop only) are expected
-    const NON_BROWSER_TYPES = new Set(["video-download", "shell-command"]);
+    const NON_BROWSER_TYPES = new Set(["shell-command"]);
     for (const proc of PROCESSORS) {
       if (NON_BROWSER_TYPES.has(proc.nodeType)) {
         expect(proc.platforms).not.toContain("browser");
@@ -240,10 +239,14 @@ describe("input extensions coverage (advisory)", () => {
 // =============================================================================
 
 describe("categories sync", () => {
-  it("every category in CATEGORIES exists in at least one NODE_TYPE_INFO entry", () => {
+  it("every category in CATEGORIES exists in at least one NODE_TYPE_INFO entry or is recipe-only", () => {
     const usedCategories = new Set(Object.values(NODE_TYPE_INFO).map((info) => info.category));
+    // "video" is a recipe-only category — no processor nodes, only recipe grouping
+    const RECIPE_ONLY_CATEGORIES = new Set(["video"]);
     for (const cat of CATEGORIES) {
-      expect(usedCategories).toContain(cat.name);
+      if (!RECIPE_ONLY_CATEGORIES.has(cat.name)) {
+        expect(usedCategories).toContain(cat.name);
+      }
     }
   });
 });

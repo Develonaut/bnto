@@ -129,7 +129,8 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   },
   "shell-command": {
     command: { type: "string", control: "text", required: false },
-    args: { type: "string", control: "text", required: false },
+    args: { type: "array", control: "tagPicker", required: false },
+    outputMode: { type: "string", control: "text", required: false },
     timeout: { type: "number", control: "number", required: false },
     env: { type: "record", control: "keyValue", required: false },
   },
@@ -178,22 +179,6 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       enumValues: ["png", "jpeg", "webp"] as const,
     },
     quality: { type: "number", control: "slider", required: false, min: 1, max: 100 },
-  },
-  "video-download": {
-    url: { type: "string", control: "text", required: true },
-    format: {
-      type: "enum",
-      control: "select",
-      required: false,
-      enumValues: ["mp4", "webm", "mkv", "mp3", "m4a", "wav", "flac"] as const,
-    },
-    quality: {
-      type: "enum",
-      control: "select",
-      required: false,
-      enumValues: ["best", "1080", "720", "480", "360"] as const,
-    },
-    args: { type: "string", control: "text", required: false },
   },
 };
 

@@ -209,13 +209,13 @@ fn test_youtube_download() {
 
 #[test]
 fn test_youtube_download_with_param_override() {
-    // Downloads with --param format=webm override.
+    // Param override: timeout=600 changes the shell-command timeout.
     // Verifies param injection works alongside URL input.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
         .args(["run", &recipe_path("download-video")])
         .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
-        .args(["--param", "format=webm"])
+        .args(["--param", "timeout=600"])
         .args(["-o", out.path().to_str().unwrap()])
         .output()
         .unwrap();
@@ -292,132 +292,10 @@ fn test_m3u8_download() {
     assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
 }
 
-// --- Extra Args ---
-
-#[test]
-fn test_youtube_download_with_extra_args_verbose() {
-    // Extra args pass-through: --verbose makes yt-dlp emit debug output.
-    // If args weren't appended, yt-dlp would run silently (no debug lines).
-    let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
-        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
-        .args(["--param", "args=--verbose"])
-        .args(["-o", out.path().to_str().unwrap()])
-        .output()
-        .unwrap();
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if output.status.success() {
-        let files = output_files(&out);
-        assert!(!files.is_empty(), "Expected at least one output file");
-        let size = files[0].metadata().unwrap().len();
-        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
-    } else {
-        // yt-dlp not installed — confirm failure is from yt-dlp, not args parsing
-        assert!(
-            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
-            "Should fail due to yt-dlp, not extra args: {stderr}"
-        );
-    }
-}
-
-#[test]
-fn test_youtube_download_with_extra_args_quality_cap() {
-    // Extra args override: -S "res:360" caps resolution to 360p via args.
-    // This overrides the recipe's default quality since args are appended last
-    // (yt-dlp uses last-wins for -S flags).
-    let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
-        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
-        .args(["--param", "args=-S res:360"])
-        .args(["-o", out.path().to_str().unwrap()])
-        .output()
-        .unwrap();
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if output.status.success() {
-        let files = output_files(&out);
-        assert!(!files.is_empty(), "Expected at least one output file");
-        // 360p "Me at the zoo" (~19s) should be smaller than 2MB
-        let size = files[0].metadata().unwrap().len();
-        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
-        assert!(
-            size < 2_000_000,
-            "360p video should be < 2MB, got {size} bytes — args may not have applied"
-        );
-    } else {
-        assert!(
-            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
-            "Should fail due to yt-dlp, not extra args: {stderr}"
-        );
-    }
-}
-
-#[test]
-fn test_youtube_download_with_extra_args_write_json() {
-    // Extra args: --write-info-json tells yt-dlp to write a .info.json sidecar.
-    // yt-dlp writes it next to the output file. Verifies args that produce
-    // additional output files work through the pass-through.
-    let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
-        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
-        .args(["--param", "args=--write-info-json"])
-        .args(["-o", out.path().to_str().unwrap()])
-        .output()
-        .unwrap();
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if output.status.success() {
-        let files = output_files(&out);
-        assert!(!files.is_empty(), "Expected at least one output file");
-        // The video file should be present and valid
-        let size = files[0].metadata().unwrap().len();
-        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
-    } else {
-        assert!(
-            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
-            "Should fail due to yt-dlp, not extra args: {stderr}"
-        );
-    }
-}
-
-#[test]
-fn test_youtube_download_with_multiple_extra_args() {
-    // Multiple extra args combined: --no-check-certificates --socket-timeout 30
-    // These are harmless flags that shouldn't affect the download result
-    // but verify multiple space-separated args are all passed through.
-    let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
-        .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
-        .args([
-            "--param",
-            "args=--no-check-certificates --socket-timeout 30",
-        ])
-        .args(["-o", out.path().to_str().unwrap()])
-        .output()
-        .unwrap();
-
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    if output.status.success() {
-        let files = output_files(&out);
-        assert!(!files.is_empty(), "Expected at least one output file");
-        let size = files[0].metadata().unwrap().len();
-        assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
-    } else {
-        assert!(
-            stderr.contains("Failed to run") || stderr.contains("yt-dlp"),
-            "Should fail due to yt-dlp, not extra args: {stderr}"
-        );
-    }
-}
+// --- Shell-command recipe end-to-end (download-video) ---
+// These tests verify the shell-command processor's file output mode
+// with yt-dlp. They require yt-dlp and ffmpeg installed; they skip
+// gracefully if the tool is missing.
 
 // --- Multiple Files ---
 

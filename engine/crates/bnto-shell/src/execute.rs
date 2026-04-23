@@ -5,6 +5,12 @@
 // they need via recipe-level `requires`, and this processor
 // executes them via ProcessContext::run_command().
 //
+// Two output modes:
+//   - "stdout" (default): captures command stdout as a single output file
+//   - "file": runs command in a temp dir, collects written files as output.
+//     Use `{output_dir}` in args to inject the temp directory path.
+//     Designed for tools like yt-dlp and ffmpeg that write to disk.
+//
 // Security boundary: validate.rs checks every command before execution.
 // See that module for the full threat model (shell denylist, path
 // validation, env var sanitization).
@@ -16,6 +22,13 @@ use bnto_core::{
 };
 
 use crate::validate::{self, DEFAULT_TIMEOUT_SECS, MAX_STDOUT_BYTES};
+
+/// Placeholder in args that gets replaced with the temp output directory path.
+const OUTPUT_DIR_PLACEHOLDER: &str = "{output_dir}";
+
+/// Placeholder in args for URL/text input injected by the CLI's input preparation.
+const URL_PLACEHOLDER: &str = "{url}";
+const INPUT_PLACEHOLDER: &str = "{input}";
 
 /// Shell command processor — runs external CLI tools.
 pub struct ShellCommand;
@@ -72,7 +85,7 @@ impl NodeProcessor for ShellCommand {
                 BntoError::InvalidInput("'command' parameter is required".to_string())
             })?;
 
-        let args: Vec<String> = input
+        let mut args: Vec<String> = input
             .params
             .get("args")
             .and_then(serde_json::Value::as_array)
@@ -101,49 +114,20 @@ impl NodeProcessor for ShellCommand {
         // Security check: reject shell interpreters and path-based commands
         validate::validate_command(command).map_err(BntoError::InvalidInput)?;
 
-        progress.report(10, &format!("Running {command}..."));
+        // Resolve {url} and {input} placeholders from injected params.
+        // The CLI injects "url" or "text" params for URL/Text mode recipes.
+        resolve_input_placeholders(&mut args, &input.params);
 
-        let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
-        let output_bytes = ctx.run_command(command, &arg_refs)?;
+        let output_mode = input
+            .params
+            .get("outputMode")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("stdout");
 
-        if output_bytes.len() > MAX_STDOUT_BYTES {
-            return Err(BntoError::ProcessingFailed(format!(
-                "Command output exceeded {} MB limit",
-                MAX_STDOUT_BYTES / (1024 * 1024)
-            )));
+        match output_mode {
+            "file" => process_file_mode(command, &args, &input, progress, ctx),
+            _ => process_stdout_mode(command, &args, &input, progress, ctx),
         }
-
-        progress.report(100, "Done");
-
-        let output_filename = if input.filename.is_empty() {
-            format!("{command}-output")
-        } else {
-            let stem = input
-                .filename
-                .rsplit_once('.')
-                .map(|(s, _)| s)
-                .unwrap_or(&input.filename);
-            format!("{stem}-{command}-output")
-        };
-
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "command".into(),
-            serde_json::Value::String(command.to_string()),
-        );
-        metadata.insert(
-            "outputBytes".into(),
-            serde_json::Value::Number(serde_json::Number::from(output_bytes.len())),
-        );
-
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: output_bytes,
-                filename: output_filename,
-                mime_type: "application/octet-stream".to_string(),
-            }],
-            metadata,
-        })
     }
 
     fn metadata(&self) -> NodeMetadata {
@@ -159,9 +143,225 @@ impl NodeProcessor for ShellCommand {
                 "desktop".to_string(),
             ],
             parameters: build_parameters(),
-            input_cardinality: InputCardinality::PerFile,
+            input_cardinality: InputCardinality::Source,
             requires: vec![],
         }
+    }
+}
+
+/// Resolve `{url}` and `{input}` placeholders in args from injected params.
+///
+/// The CLI's input preparation injects `"url"` or `"text"` into the node's
+/// params for URL/Text mode recipes. If no placeholder exists in the args
+/// but a `url` param is present, append the URL as the last argument.
+fn resolve_input_placeholders(
+    args: &mut Vec<String>,
+    params: &serde_json::Map<String, serde_json::Value>,
+) {
+    let url = params
+        .get("url")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
+    let text = params
+        .get("text")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("");
+
+    // The input value is whichever was injected (url or text).
+    let input_val = if !url.is_empty() { url } else { text };
+
+    let has_url_placeholder = args.iter().any(|a| a.contains(URL_PLACEHOLDER));
+    let has_input_placeholder = args.iter().any(|a| a.contains(INPUT_PLACEHOLDER));
+
+    // Substitute placeholders in existing args.
+    for arg in args.iter_mut() {
+        if arg.contains(URL_PLACEHOLDER) && !url.is_empty() {
+            *arg = arg.replace(URL_PLACEHOLDER, url);
+        }
+        if arg.contains(INPUT_PLACEHOLDER) && !input_val.is_empty() {
+            *arg = arg.replace(INPUT_PLACEHOLDER, input_val);
+        }
+    }
+
+    // If no placeholder was found but a URL was injected, append it.
+    // This is the common case: `yt-dlp <args...> <url>`
+    if !has_url_placeholder && !has_input_placeholder && !url.is_empty() {
+        args.push(url.to_string());
+    }
+}
+
+/// Stdout mode: capture command stdout as a single output file.
+fn process_stdout_mode(
+    command: &str,
+    args: &[String],
+    input: &NodeInput,
+    progress: &ProgressReporter,
+    ctx: &dyn ProcessContext,
+) -> Result<NodeOutput, BntoError> {
+    progress.report(10, &format!("Running {command}..."));
+
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    let output_bytes = ctx.run_command(command, &arg_refs)?;
+
+    if output_bytes.len() > MAX_STDOUT_BYTES {
+        return Err(BntoError::ProcessingFailed(format!(
+            "Command output exceeded {} MB limit",
+            MAX_STDOUT_BYTES / (1024 * 1024)
+        )));
+    }
+
+    progress.report(100, "Done");
+
+    let output_filename = make_output_filename(command, &input.filename);
+
+    let mut metadata = serde_json::Map::new();
+    metadata.insert("command".into(), command.into());
+    metadata.insert(
+        "outputBytes".into(),
+        serde_json::Number::from(output_bytes.len()).into(),
+    );
+
+    Ok(NodeOutput {
+        files: vec![OutputFile {
+            data: output_bytes,
+            filename: output_filename,
+            mime_type: "application/octet-stream".to_string(),
+        }],
+        metadata,
+    })
+}
+
+/// File mode: run command in a temp dir, collect written files as output.
+/// Replaces `{output_dir}` in args with the temp directory path.
+fn process_file_mode(
+    command: &str,
+    args: &[String],
+    _input: &NodeInput,
+    progress: &ProgressReporter,
+    ctx: &dyn ProcessContext,
+) -> Result<NodeOutput, BntoError> {
+    // Create a temp directory for the command's output files.
+    let temp_dir = ctx.temp_file("-output")?;
+    let output_dir = temp_dir.with_extension("d");
+    std::fs::create_dir_all(&output_dir).map_err(|e| {
+        BntoError::ProcessingFailed(format!("Failed to create output directory: {e}"))
+    })?;
+    let dir_str = output_dir.to_string_lossy();
+
+    // Substitute {output_dir} placeholder in args.
+    let resolved_args: Vec<String> = args
+        .iter()
+        .map(|a| a.replace(OUTPUT_DIR_PLACEHOLDER, &dir_str))
+        .collect();
+
+    progress.report(10, &format!("Running {command}..."));
+
+    let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
+    // Run the command — stdout is captured but we use the output dir files instead.
+    let _stdout = ctx.run_command(command, &arg_refs)?;
+
+    progress.report(80, "Collecting output files...");
+
+    let files = collect_output_files(&output_dir)?;
+
+    if files.is_empty() {
+        return Err(BntoError::ProcessingFailed(format!(
+            "Command '{command}' produced no output files in {dir_str}"
+        )));
+    }
+
+    // Clean up temp dir after reading files.
+    let _ = std::fs::remove_dir_all(&output_dir);
+
+    progress.report(100, "Done");
+
+    let total_bytes: usize = files.iter().map(|f| f.data.len()).sum();
+    let mut metadata = serde_json::Map::new();
+    metadata.insert("command".into(), command.into());
+    metadata.insert("outputMode".into(), "file".into());
+    metadata.insert(
+        "outputBytes".into(),
+        serde_json::Number::from(total_bytes).into(),
+    );
+    metadata.insert(
+        "fileCount".into(),
+        serde_json::Number::from(files.len()).into(),
+    );
+
+    Ok(NodeOutput { files, metadata })
+}
+
+/// Read all files from a directory as OutputFile entries.
+fn collect_output_files(dir: &std::path::Path) -> Result<Vec<OutputFile>, BntoError> {
+    let entries = std::fs::read_dir(dir).map_err(|e| {
+        BntoError::ProcessingFailed(format!("Failed to read output directory: {e}"))
+    })?;
+
+    let mut files = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let filename = path
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "output".to_string());
+
+        let data = std::fs::read(&path).map_err(|e| {
+            BntoError::ProcessingFailed(format!("Failed to read output file {filename}: {e}"))
+        })?;
+
+        if data.len() > MAX_STDOUT_BYTES {
+            return Err(BntoError::ProcessingFailed(format!(
+                "Output file '{filename}' exceeded {} MB limit",
+                MAX_STDOUT_BYTES / (1024 * 1024)
+            )));
+        }
+
+        let mime = mime_from_extension(&filename);
+        files.push(OutputFile {
+            data,
+            filename,
+            mime_type: mime,
+        });
+    }
+    Ok(files)
+}
+
+/// Derive MIME type from file extension for common media formats.
+fn mime_from_extension(filename: &str) -> String {
+    let ext = filename
+        .rsplit_once('.')
+        .map(|(_, e)| e.to_lowercase())
+        .unwrap_or_default();
+
+    match ext.as_str() {
+        "mp4" => "video/mp4",
+        "webm" => "video/webm",
+        "mkv" => "video/x-matroska",
+        "mp3" => "audio/mpeg",
+        "m4a" => "audio/mp4",
+        "ogg" | "opus" => "audio/ogg",
+        "wav" => "audio/wav",
+        "flac" => "audio/flac",
+        "json" => "application/json",
+        "txt" | "log" => "text/plain",
+        _ => "application/octet-stream",
+    }
+    .to_string()
+}
+
+/// Generate a filename for stdout mode output.
+fn make_output_filename(command: &str, input_filename: &str) -> String {
+    if input_filename.is_empty() {
+        format!("{command}-output")
+    } else {
+        let stem = input_filename
+            .rsplit_once('.')
+            .map(|(s, _)| s)
+            .unwrap_or(input_filename);
+        format!("{stem}-{command}-output")
     }
 }
 
@@ -192,6 +392,27 @@ fn build_parameters() -> Vec<ParameterDef> {
             description: "Command arguments as an array of strings.".to_string(),
             param_type: ParameterType::String,
             default: None,
+            constraints: None,
+            placeholder: None,
+            visible_when: None,
+            required_when: None,
+            surfaceable: true,
+            group: None,
+            suffix: None,
+            control: Some("tagPicker".to_string()),
+            accept: None,
+            presets: None,
+            inverted: None,
+        },
+        ParameterDef {
+            name: "outputMode".to_string(),
+            label: "Output Mode".to_string(),
+            description: "How to collect output. 'stdout' captures command output. \
+                'file' reads files written by the command to a temp directory \
+                (use {output_dir} in args to inject the path)."
+                .to_string(),
+            param_type: ParameterType::String,
+            default: Some(serde_json::Value::String("stdout".to_string())),
             constraints: None,
             placeholder: None,
             visible_when: None,
@@ -280,6 +501,7 @@ mod tests {
         let param_names: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
         assert!(param_names.contains(&"command"));
         assert!(param_names.contains(&"args"));
+        assert!(param_names.contains(&"outputMode"));
         assert!(param_names.contains(&"timeout"));
         assert!(param_names.contains(&"env"));
     }
@@ -439,5 +661,176 @@ mod tests {
             .find(|p| p.name == "env")
             .expect("env param should exist");
         assert!(!env_param.surfaceable, "env should be internal-only");
+    }
+
+    #[test]
+    fn test_output_mode_default_is_stdout() {
+        let processor = ShellCommand::new();
+        let meta = processor.metadata();
+        let param = meta
+            .parameters
+            .iter()
+            .find(|p| p.name == "outputMode")
+            .expect("outputMode param should exist");
+        assert_eq!(
+            param.default,
+            Some(serde_json::Value::String("stdout".to_string()))
+        );
+    }
+
+    // --- File mode helpers ---
+
+    #[test]
+    fn test_mime_from_extension_video() {
+        assert_eq!(mime_from_extension("video.mp4"), "video/mp4");
+        assert_eq!(mime_from_extension("video.webm"), "video/webm");
+        assert_eq!(mime_from_extension("video.mkv"), "video/x-matroska");
+    }
+
+    #[test]
+    fn test_mime_from_extension_audio() {
+        assert_eq!(mime_from_extension("audio.mp3"), "audio/mpeg");
+        assert_eq!(mime_from_extension("audio.m4a"), "audio/mp4");
+        assert_eq!(mime_from_extension("audio.wav"), "audio/wav");
+        assert_eq!(mime_from_extension("audio.flac"), "audio/flac");
+    }
+
+    #[test]
+    fn test_mime_from_extension_unknown() {
+        assert_eq!(mime_from_extension("file.xyz"), "application/octet-stream");
+        assert_eq!(mime_from_extension("noext"), "application/octet-stream");
+    }
+
+    #[test]
+    fn test_make_output_filename_empty_input() {
+        assert_eq!(make_output_filename("echo", ""), "echo-output");
+    }
+
+    #[test]
+    fn test_make_output_filename_with_input() {
+        assert_eq!(
+            make_output_filename("ffmpeg", "video.mp4"),
+            "video-ffmpeg-output"
+        );
+    }
+
+    #[test]
+    fn test_collect_output_files_reads_dir() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-output");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("video.mp4"), vec![0u8; 100]).unwrap();
+        std::fs::write(dir.join("info.json"), b"{}").unwrap();
+
+        let files = collect_output_files(&dir).unwrap();
+        assert_eq!(files.len(), 2);
+
+        let names: Vec<&str> = files.iter().map(|f| f.filename.as_str()).collect();
+        assert!(names.contains(&"video.mp4"));
+        assert!(names.contains(&"info.json"));
+
+        // Verify MIME types
+        let mp4 = files.iter().find(|f| f.filename == "video.mp4").unwrap();
+        assert_eq!(mp4.mime_type, "video/mp4");
+        let json = files.iter().find(|f| f.filename == "info.json").unwrap();
+        assert_eq!(json.mime_type, "application/json");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_collect_output_files_skips_directories() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-skip-dirs");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::create_dir_all(dir.join("subdir")).unwrap();
+        std::fs::write(dir.join("file.txt"), b"data").unwrap();
+
+        let files = collect_output_files(&dir).unwrap();
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].filename, "file.txt");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_collect_output_files_empty_dir() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-empty");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let files = collect_output_files(&dir).unwrap();
+        assert!(files.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_output_dir_placeholder_substitution() {
+        let args = [
+            "-o".to_string(),
+            "{output_dir}/%(title)s.%(ext)s".to_string(),
+            "--verbose".to_string(),
+        ];
+        let dir_str = "/tmp/bnto-output";
+        let resolved: Vec<String> = args
+            .iter()
+            .map(|a| a.replace(OUTPUT_DIR_PLACEHOLDER, dir_str))
+            .collect();
+        assert_eq!(resolved[0], "-o");
+        assert_eq!(resolved[1], "/tmp/bnto-output/%(title)s.%(ext)s");
+        assert_eq!(resolved[2], "--verbose");
+    }
+
+    // --- Input placeholder resolution ---
+
+    #[test]
+    fn test_resolve_url_appended_when_no_placeholder() {
+        let mut args = vec!["--no-playlist".to_string(), "-o".to_string()];
+        let mut params = serde_json::Map::new();
+        params.insert("url".into(), "https://example.com/video".into());
+        resolve_input_placeholders(&mut args, &params);
+        assert_eq!(args.len(), 3);
+        assert_eq!(args[2], "https://example.com/video");
+    }
+
+    #[test]
+    fn test_resolve_url_placeholder_substituted() {
+        let mut args = vec!["--download".to_string(), "{url}".to_string()];
+        let mut params = serde_json::Map::new();
+        params.insert("url".into(), "https://example.com/video".into());
+        resolve_input_placeholders(&mut args, &params);
+        assert_eq!(args.len(), 2);
+        assert_eq!(args[1], "https://example.com/video");
+    }
+
+    #[test]
+    fn test_resolve_input_placeholder_substituted() {
+        let mut args = vec!["process".to_string(), "{input}".to_string()];
+        let mut params = serde_json::Map::new();
+        params.insert("url".into(), "https://example.com/data".into());
+        resolve_input_placeholders(&mut args, &params);
+        assert_eq!(args.len(), 2);
+        assert_eq!(args[1], "https://example.com/data");
+    }
+
+    #[test]
+    fn test_resolve_no_url_no_change() {
+        let mut args = vec!["--help".to_string()];
+        let params = serde_json::Map::new();
+        resolve_input_placeholders(&mut args, &params);
+        assert_eq!(args.len(), 1);
+        assert_eq!(args[0], "--help");
+    }
+
+    #[test]
+    fn test_resolve_url_not_appended_when_placeholder_exists() {
+        let mut args = vec!["{url}".to_string(), "--verbose".to_string()];
+        let mut params = serde_json::Map::new();
+        params.insert("url".into(), "https://example.com".into());
+        resolve_input_placeholders(&mut args, &params);
+        // URL substituted in placeholder, NOT also appended
+        assert_eq!(args.len(), 2);
+        assert_eq!(args[0], "https://example.com");
     }
 }

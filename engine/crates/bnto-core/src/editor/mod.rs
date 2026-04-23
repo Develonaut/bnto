@@ -70,11 +70,13 @@ mod tests {
                 nodes: None,
                 edges: None,
                 settings: None,
+                requires: Vec::new(),
             }]),
             edges: Some(vec![]),
             settings: Some(PipelineSettings {
                 iteration: IterationMode::Auto,
             }),
+            requires: Vec::new(),
         }
     }
 

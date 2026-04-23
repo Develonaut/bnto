@@ -26,8 +26,7 @@ export type NodeTypeName =
   | "spreadsheet-rename"
   | "transform"
   | "vector-optimize"
-  | "vector-rasterize"
-  | "video-download";
+  | "vector-rasterize";
 
 /** Node category for grouping in the UI and documentation. */
 export type NodeCategory =
@@ -39,8 +38,7 @@ export type NodeCategory =
   | "network"
   | "spreadsheet"
   | "system"
-  | "vector"
-  | "video";
+  | "vector";
 
 /** Metadata describing a node type's behavior and capabilities. */
 export interface NodeTypeInfo {

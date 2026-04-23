@@ -3100,7 +3100,7 @@ mod tests {
             .execution
             .as_ref()
             .expect("execution model should exist");
-        // The download-video recipe has video-download node with url, format, quality params.
+        // The download-video recipe has shell-command node with command, args params.
         // All non-default values become overrides.
         assert!(!exec.param_overrides.is_empty() || !app.param_overrides.is_empty());
     }

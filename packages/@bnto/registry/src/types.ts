@@ -17,5 +17,5 @@ export type { Definition, Position, Metadata, Port, Edge, FieldsConfig } from "@
 export type { PipelineSettings, IterationMode } from "@bnto/nodes";
 export type { ExecutionContext, NodeResult } from "@bnto/nodes";
 export type { NodeTypeName, NodeCategory, NodeTypeInfo } from "@bnto/nodes";
-export type { CategoryInfo } from "@bnto/nodes";
+export type { CategoryInfo, CategoryName } from "@bnto/nodes";
 export type { ProcessorDef, ProcessorParam, ParamType } from "@bnto/nodes";

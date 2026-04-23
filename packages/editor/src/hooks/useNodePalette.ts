@@ -8,7 +8,13 @@
 "use client";
 
 import { useMemo } from "react";
-import type { NodeCategory, NodeTypeName, NodeTypeInfo, CategoryInfo } from "@bnto/core";
+import type {
+  NodeCategory,
+  CategoryName,
+  NodeTypeName,
+  NodeTypeInfo,
+  CategoryInfo,
+} from "@bnto/core";
 import { core } from "@bnto/core";
 
 // ---------------------------------------------------------------------------
@@ -68,7 +74,7 @@ function groupByCategory(
   items: PaletteItem[],
   categories: readonly CategoryInfo[],
 ): PaletteGroup[] {
-  const categoryMap = new Map<NodeCategory, PaletteItem[]>();
+  const categoryMap = new Map<CategoryName, PaletteItem[]>();
   for (const item of items) {
     const existing = categoryMap.get(item.category) ?? [];
     existing.push(item);

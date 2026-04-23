@@ -1764,11 +1764,11 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         {
           id: "e1",
           source: "input",
-          target: "video-download",
+          target: "download",
         },
         {
           id: "e2",
-          source: "video-download",
+          source: "download",
           target: "output",
         },
       ],
@@ -1809,21 +1809,30 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           version: "1.0.0",
         },
         {
-          id: "video-download",
+          id: "download",
           inputPorts: [],
           metadata: {},
           name: "Download Video",
           outputPorts: [],
           parameters: {
-            format: "mp4",
-            quality: "best",
-            url: "",
+            args: [
+              "--no-playlist",
+              "--no-warnings",
+              "--merge-output-format",
+              "mp4",
+              "-S",
+              "vcodec:h264,acodec:m4a",
+              "-o",
+              "{output_dir}/%(title)s.%(ext)s",
+            ],
+            command: "yt-dlp",
+            outputMode: "file",
           },
           position: {
             x: 250,
             y: 100,
           },
-          type: "video-download",
+          type: "shell-command",
           version: "1.0.0",
         },
         {
@@ -1857,6 +1866,18 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         x: 0,
         y: 0,
       },
+      requires: [
+        {
+          binary: "yt-dlp",
+          homepage: "https://github.com/yt-dlp/yt-dlp",
+          installHint: "brew install yt-dlp",
+        },
+        {
+          binary: "ffmpeg",
+          homepage: "https://ffmpeg.org",
+          installHint: "brew install ffmpeg",
+        },
+      ],
       settings: {
         iteration: "auto",
       },

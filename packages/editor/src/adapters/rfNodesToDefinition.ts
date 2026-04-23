@@ -77,6 +77,7 @@ function carryOverRootFields(definition: Definition | null): Partial<Definition>
   return {
     ...(definition.edges ? { edges: definition.edges } : {}),
     ...(definition.settings ? { settings: definition.settings } : {}),
+    ...(definition.requires?.length ? { requires: definition.requires } : {}),
   };
 }
 

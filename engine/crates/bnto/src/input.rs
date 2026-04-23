@@ -281,7 +281,7 @@ mod tests {
                         "type": "group",
                         "params": {},
                         "children": [
-                            { "id": "download", "type": "video-download", "params": {} }
+                            { "id": "download", "type": "shell-command", "params": {} }
                         ]
                     }
                 ]
@@ -326,7 +326,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "video-download", "params": {} },
+                { "id": "download", "type": "shell-command", "params": {} },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -347,7 +347,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "video-download", "params": {} },
+                { "id": "download", "type": "shell-command", "params": {} },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -363,7 +363,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "video-download", "params": { "format": "mp4" } },
+                { "id": "download", "type": "shell-command", "params": { "format": "mp4" } },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -396,7 +396,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "video-download", "params": {} }
+                { "id": "download", "type": "shell-command", "params": {} }
             ]
         }"#;
         let result = prepare_inputs(json, &[], &[]);
@@ -428,7 +428,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": {} },
-                { "id": "download", "type": "video-download", "params": {} },
+                { "id": "download", "type": "shell-command", "params": {} },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;

@@ -345,12 +345,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 22 registered node types.
+/// Return metadata for all 21 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(22);
+    let mut types = Vec::with_capacity(21);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -360,7 +360,6 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
     types.extend(spreadsheet_node_types());
     types.extend(system_node_types());
     types.extend(vector_node_types());
-    types.extend(video_node_types());
     types.sort_by(|a, b| a.name.cmp(&b.name));
     types
 }
@@ -610,18 +609,6 @@ fn vector_node_types() -> Vec<NodeTypeInfo> {
     ]
 }
 
-fn video_node_types() -> Vec<NodeTypeInfo> {
-    vec![node_type!(
-        "video-download",
-        "Download Video",
-        "Download video from URLs using yt-dlp (CLI/desktop only).",
-        NodeCategory::Video,
-        false,
-        "server",
-        "video"
-    )]
-}
-
 // --- Dependency ---
 
 /// An external binary that a processor requires at runtime.
@@ -630,6 +617,14 @@ fn video_node_types() -> Vec<NodeTypeInfo> {
 /// Processors wrapping CLI tools (yt-dlp, ffmpeg) declare their
 /// requirements here. The dependency checker verifies these before
 /// pipeline execution; `bnto doctor` reports missing deps with install hints.
+#[cfg_attr(feature = "ts", derive(TS))]
+#[cfg_attr(
+    feature = "ts",
+    ts(
+        export,
+        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
+    )
+)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Dependency {
@@ -805,7 +800,7 @@ mod tests {
     fn test_all_node_types_returns_22_entries() {
         // The engine defines all 22 node types.
         let types = all_node_types();
-        assert_eq!(types.len(), 22, "Should have exactly 22 node types");
+        assert_eq!(types.len(), 21, "Should have exactly 21 node types");
     }
 
     #[test]
@@ -825,7 +820,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 22, "All node type names should be unique");
+        assert_eq!(names.len(), 21, "All node type names should be unique");
     }
 
     #[test]
@@ -864,10 +859,7 @@ mod tests {
             .map(|t| t.name.as_str())
             .collect();
         server_only.sort();
-        assert_eq!(
-            server_only,
-            vec!["http-request", "shell-command", "video-download"]
-        );
+        assert_eq!(server_only, vec!["http-request", "shell-command"]);
     }
 
     #[test]

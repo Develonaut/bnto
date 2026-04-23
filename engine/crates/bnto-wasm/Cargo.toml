@@ -82,7 +82,7 @@ wasm-bindgen-test = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 # Enable native feature for catalog snapshot generation (includes all processors).
-# Tests run natively, not as WASM, so bnto-video compiles fine here.
+# Tests run natively, not as WASM, so native-only crates compile fine here.
 bnto-engine = { path = "../bnto-engine", features = ["native"] }
 
 # =============================================================================
