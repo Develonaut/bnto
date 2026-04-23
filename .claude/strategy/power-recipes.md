@@ -1090,16 +1090,377 @@ The 11 Heavy Handed recipes are the acceptance test suite. When the Rust engine 
 
 ---
 
+## Services as Recipes (Connector Architecture)
+
+### The Insight: Nodes Are Primitives, Recipes Are Connectors
+
+A dedicated `figma-export` engine node means writing Rust code, recompiling, and shipping a new crate version every time someone wants to integrate a new service. That doesn't scale. It's the wrong layer.
+
+Instead: **the engine ships a small set of primitive nodes. Service integrations are recipes that compose those primitives.** A "connector" is just a `.bnto.json` file.
+
+```
+Engine (Rust): Primitive nodes — the building blocks
+  http-request, shell-command, file-system, spreadsheet-read,
+  image-overlay, loop, etc.
+
+Service Recipes: "Connectors" built from primitives
+  figma-export.bnto.json      → 3 http-request nodes chained
+  slack-notify.bnto.json      → 1 http-request (webhook POST)
+  s3-upload.bnto.json         → shell-command (aws cli)
+  google-drive-sync.bnto.json → http-request + file-system
+  etsy-upload.bnto.json       → http-request + spreadsheet-read
+
+User Recipes: Compose service recipes + primitives
+  etsy-pipeline.bnto.json     → figma-export + blender + etsy-csv
+```
+
+Three layers. The engine only owns the bottom one. Adding a new service integration means writing a `.bnto.json` file, not writing Rust.
+
+### Example: figma-export as a Recipe
+
+```json
+{
+  "id": "figma-export",
+  "type": "group",
+  "name": "Figma Export",
+  "metadata": {
+    "description": "Export a Figma component as PNG with variable overrides",
+    "tags": ["figma", "design", "connector"]
+  },
+  "variables": [
+    { "name": "FIGMA_TOKEN", "type": "secret", "description": "Figma API token" },
+    { "name": "FILE_KEY", "type": "string", "description": "Figma file key" },
+    { "name": "NODE_ID", "type": "string", "description": "Component node ID" },
+    { "name": "VARIABLES", "type": "json", "description": "Variables to set on the component" },
+    { "name": "OUTPUT_PATH", "type": "path", "description": "Where to save the exported PNG" }
+  ],
+  "nodes": [
+    {
+      "id": "set-variables",
+      "type": "http-request",
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.figma.com/v1/files/${FILE_KEY}/variables",
+        "headers": { "X-Figma-Token": "${FIGMA_TOKEN}" },
+        "body": "${VARIABLES}",
+        "responseType": "json"
+      }
+    },
+    {
+      "id": "request-export",
+      "type": "http-request",
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.figma.com/v1/images/${FILE_KEY}?ids=${NODE_ID}&format=png&scale=2",
+        "headers": { "X-Figma-Token": "${FIGMA_TOKEN}" },
+        "responseType": "json"
+      }
+    },
+    {
+      "id": "download-png",
+      "type": "http-request",
+      "parameters": {
+        "method": "GET",
+        "url": "${request-export.data.images[NODE_ID]}",
+        "responseType": "file",
+        "saveTo": "${OUTPUT_PATH}"
+      }
+    }
+  ],
+  "edges": [
+    { "source": "set-variables", "target": "request-export" },
+    { "source": "request-export", "target": "download-png" }
+  ]
+}
+```
+
+Then in a user recipe:
+
+```json
+{
+  "id": "render-overlay",
+  "type": "recipe",
+  "parameters": {
+    "recipe": "figma-export.bnto.json",
+    "NODE_ID": "overlay-component",
+    "VARIABLES": { "modelName": "${item.name}", "modelTitle": "${item.title}" },
+    "OUTPUT_PATH": "${PRODUCTS_DIR}/${item.name}/overlay.png"
+  }
+}
+```
+
+The engine doesn't know what Figma is. It sees `http-request` nodes. Figma knowledge lives entirely in a recipe file that anyone can write, share, and improve.
+
+### What This Means for Engine Scope
+
+The engine does NOT need:
+
+- A Figma node
+- A Slack node
+- A Google Drive node
+- An S3 node
+- Any service-specific code, ever
+
+The engine DOES need:
+
+- `http-request` (generic REST client — the universal service primitive)
+- Recipe-as-node (`"type": "recipe"`) so connectors compose into user recipes
+- A variable system with secret support so API keys stay outside recipe files
+
+Every future service integration is a recipe, not an engine change. The engine stays small. The connector ecosystem grows through `.bnto.json` files.
+
+---
+
+## Secrets & Variable Injection
+
+### The Problem
+
+Recipes reference API keys, tokens, and machine-specific paths. These values cannot be hardcoded into `.bnto.json` files — recipes get shared, version-controlled, and potentially published. Secrets must live outside the recipe.
+
+### Industry Patterns
+
+Every workflow tool and CI/CD pipeline separates secret **storage** from workflow **definition**:
+
+| Tool               | Reference Syntax      | Secret Storage                            | Resolution Order                                      |
+| ------------------ | --------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| **GitHub Actions** | `${{ secrets.NAME }}` | Repo settings (encrypted)                 | secrets → env vars → defaults                         |
+| **Terraform**      | `var.name`            | `.tfvars`, `TF_VAR_*` env                 | CLI flags → .tfvars → env vars → defaults             |
+| **Docker Compose** | `${VAR_NAME}`         | `.env` files, `/run/secrets/`             | CLI → shell env → compose env → env_file → Dockerfile |
+| **n8n**            | `$credentials.prop`   | Credential store (separate from workflow) | credentials → node defaults                           |
+| **Zapier/Make**    | Automatic injection   | Connection auth bundles                   | connection → defaults                                 |
+
+**Universal pattern:** Recipes declare what variables they need. Values come from somewhere else — env vars, config files, CLI flags, or runtime prompts. The recipe stays pure.
+
+### Proposed Design for Bnto
+
+#### Expression Syntax
+
+Following the established patterns (GitHub Actions, Docker, shell), use `${NAME}` for variable references:
+
+```json
+{
+  "type": "http-request",
+  "parameters": {
+    "url": "https://api.figma.com/v1/images/${FILE_KEY}",
+    "headers": { "X-Figma-Token": "${FIGMA_TOKEN}" }
+  }
+}
+```
+
+| Pattern                | Syntax                  | Example                      |
+| ---------------------- | ----------------------- | ---------------------------- |
+| Recipe variable        | `${NAME}`               | `${PRODUCTS_DIR}`            |
+| Environment variable   | `${ENV.NAME}`           | `${ENV.FIGMA_TOKEN}`         |
+| Loop item field        | `${item.name}`          | `${item.stl_path}`           |
+| Loop index             | `${index}`              | `0`, `1`, `2`                |
+| Upstream node output   | `${node_id.data.field}` | `${request-export.data.url}` |
+| Parent scope (in loop) | `${$.NAME}`             | `${$.RENDER_THEME}`          |
+
+**Why `${NAME}` over `{{.NAME}}`:** The `${}` syntax is universally recognized from shell, Docker, GitHub Actions, and Terraform. Go template syntax (`{{.name}}`) is unfamiliar outside Go. Lower learning curve.
+
+#### Variable Declaration in Recipes
+
+Recipes declare the variables they need with type hints:
+
+```json
+{
+  "variables": [
+    {
+      "name": "PRODUCTS_DIR",
+      "type": "path",
+      "description": "Root folder for product files",
+      "required": true
+    },
+    {
+      "name": "FIGMA_TOKEN",
+      "type": "secret",
+      "description": "Figma API personal access token"
+    },
+    {
+      "name": "RENDER_THEME",
+      "type": "select",
+      "description": "Blender lighting theme",
+      "defaultValue": "default",
+      "options": ["default|Default", "fae_glow|Fae Glow", "fire|Fire"]
+    },
+    {
+      "name": "PRICE",
+      "type": "string",
+      "description": "Listing price (USD)",
+      "defaultValue": "9.99"
+    }
+  ]
+}
+```
+
+Variable types:
+
+| Type      | Behavior                               | TUI Rendering                  |
+| --------- | -------------------------------------- | ------------------------------ |
+| `string`  | Plain text                             | Text input                     |
+| `path`    | Filesystem path, validated             | Path input with file picker    |
+| `secret`  | Masked, never serialized, never logged | Masked input (\*\*\*\*)        |
+| `number`  | Numeric value                          | Number input                   |
+| `boolean` | True/false                             | Toggle                         |
+| `select`  | One of predefined options              | Select dropdown                |
+| `json`    | Structured data (object/array)         | JSON editor or key-value pairs |
+
+The `secret` type is the key addition. It tells the system:
+
+- **TUI:** Mask input with `****`
+- **CLI output:** Redact from all logs and progress events
+- **Storage:** Save in secrets store, not plain config
+- **Sharing:** Never serialize the value into recipe files or exports
+
+#### Resolution Chain
+
+When the engine encounters `${FIGMA_TOKEN}`, it resolves in this order:
+
+```
+1. CLI flag              bnto run recipe.json --var FIGMA_TOKEN=abc123
+                         (highest priority, per-invocation)
+
+2. Environment variable  BNTO_FIGMA_TOKEN or FIGMA_TOKEN in shell env
+                         (standard for CI/CD, scripts, automation)
+
+3. Secrets store         ~/.config/bnto/secrets.toml (0600 permissions)
+                         or OS keychain via keyring-rs (future)
+                         (persistent, per-machine, protected)
+
+4. User config           ~/.config/bnto/config.toml
+                         (persistent, per-machine, non-secret)
+
+5. Recipe default        variables[].defaultValue in .bnto.json
+                         (fallback for non-sensitive values)
+
+6. Interactive prompt    TUI/CLI asks the user
+                         (last resort, only in interactive mode)
+                         Secret type → masked input
+                         Select type → picker
+                         Path type → file browser
+```
+
+This matches the Terraform/Docker precedence pattern. Recipes stay pure — they declare needs, not values. Values flow in from outside.
+
+#### CLI Interface
+
+```bash
+# Run with inline variable
+bnto run recipe.bnto.json --var FIGMA_TOKEN=abc123
+
+# Run with env var (standard shell pattern)
+BNTO_FIGMA_TOKEN=abc123 bnto run recipe.bnto.json
+
+# Manage persistent config
+bnto config set RENDER_THEME fae_glow
+bnto config set PRODUCTS_DIR /path/to/products
+bnto config get RENDER_THEME
+bnto config list
+
+# Manage secrets (stored separately, masked in output)
+bnto secret set FIGMA_TOKEN
+  Enter value: ****
+  ✓ Saved to ~/.config/bnto/secrets.toml
+
+bnto secret list
+  FIGMA_TOKEN  ••••••••  (set 2026-04-22)
+
+# Validate a recipe's variable requirements
+bnto check recipe.bnto.json
+  ✓ PRODUCTS_DIR   = /path/to/products (config)
+  ✓ RENDER_THEME   = fae_glow (config)
+  ✓ FIGMA_TOKEN    = •••••••• (secret)
+  ✗ FILE_KEY       = (missing — will prompt at runtime)
+```
+
+#### File Layout
+
+```
+~/.config/bnto/
+├── config.toml           # Non-secret user preferences
+│   [variables]
+│   RENDER_THEME = "fae_glow"
+│   PRODUCTS_DIR = "/Users/ryan/Products"
+│
+└── secrets.toml          # Secrets (file permissions 0600)
+    [secrets]
+    FIGMA_TOKEN = "figd_..."
+    ETSY_API_KEY = "etsyv2_..."
+```
+
+Secrets file is created with `chmod 0600` (owner read/write only). Not as secure as OS keychain, but portable, simple, and matches how SSH keys and `.netrc` work. OS keychain support (`keyring-rs`) is a future enhancement.
+
+#### Log Redaction
+
+Any variable declared as `type: "secret"` is automatically redacted in:
+
+- CLI output (`Authorization: Bearer ***`)
+- TUI progress display
+- Streaming shell-command stdout (pattern-matched against known secret values)
+- Error messages
+
+This follows GitHub Actions' model: registered secrets are automatically masked. No manual `::add-mask::` needed.
+
+---
+
+## Community Recipe Ecosystem
+
+### The Vision
+
+The engine ships with ~8 primitive node types. Service integrations, workflow templates, and domain-specific pipelines are all recipes — `.bnto.json` files that compose primitives.
+
+```
+Layer 1: Engine Primitives (maintained by bnto)
+  http-request, shell-command, file-system, spreadsheet-read,
+  image-overlay, image-compress, image-resize, ...
+  ~8-15 node types, stable, rarely changes
+
+Layer 2: Connector Recipes (community-contributed)
+  figma-export, slack-notify, s3-upload, discord-webhook,
+  google-sheets-read, notion-export, airtable-sync, ...
+  Dozens → hundreds, grows organically
+
+Layer 3: Workflow Recipes (community + user)
+  etsy-product-pipeline, social-media-batch, invoice-generator,
+  blog-deploy, data-backup, ...
+  Unlimited, domain-specific
+```
+
+### Why This Works
+
+- **Low barrier to entry.** Writing a connector = writing a `.bnto.json` file. No Rust, no TypeScript, no build step. If you can use `curl`, you can write a connector.
+- **Shareable by default.** Recipes declare secrets by name, not value. You can publish `figma-export.bnto.json` without leaking your API key.
+- **Composable by default.** Connectors are recipes. Recipes compose into recipes. A user's pipeline can use 3 community connectors + 2 custom steps.
+- **Forkable.** Don't like how the community `figma-export` works? Copy it to your library, modify it. It's just a JSON file.
+- **Testable.** A connector recipe can have test fixtures — input CSV, expected output, mock HTTP responses. CI validates that connectors still work when the engine updates.
+
+### Distribution (Future)
+
+For now, community connectors would live in the `@bnto/registry` repo as GitHub PRs (same as predefined recipes today). The pipeline is already built — PR review, CI gate, codegen propagation.
+
+Future (when there's traction):
+
+- `bnto install figma-export` — downloads from a recipe registry
+- `bnto search slack` — discovers connectors by keyword
+- `bnto publish my-connector.bnto.json` — submits to the registry
+- Versioned connectors with semver compatibility
+
+But that's hopes and dreams territory. The architecture supports it, but the implementation is tabled until there's community demand.
+
+---
+
 ## Open Questions
 
-1. **Expression syntax** — Go templates (`{{.name}}`), Jinja2 (`{{ name }}`), or Mustache (`{{name}}`)? The old recipes used Go template syntax. Jinja2 is more familiar to Python/web users. Mustache is the simplest.
+1. **Expression syntax** — `${NAME}` (shell/Docker/GH Actions style) vs `{{.NAME}}` (Go template, used in old recipes) vs `{{ name }}` (Jinja2). Recommendation: `${NAME}` for familiarity. Open question: do we need a migration path from old `{{.NAME}}` syntax?
 
-2. **Variable prompting UX** — TUI wizard (current direction) prompts variables before execution. Should variables also be settable via CLI flags (`--var THEME=fae_glow`) for scriptability? Almost certainly yes.
+2. **Data typing** — Should the expression engine enforce types (string, number, boolean, array, object) or treat everything as stringly-typed like the old engine? Stringly-typed is simpler and matches shell conventions.
 
-3. **Data typing** — Should the expression engine enforce types (string, number, boolean, array, object) or treat everything as stringly-typed like the old engine? Stringly-typed is simpler and matches shell conventions.
+3. **File-system node granularity** — Single `file-system` processor with `operation` param, or separate processors (`fs-mkdir`, `fs-list`, `fs-copy`, etc.)? Single is more ergonomic for authors, separate is more "bento box." Both are valid.
 
-4. **File-system node granularity** — Single `file-system` processor with `operation` param, or separate processors (`fs-mkdir`, `fs-list`, `fs-copy`, etc.)? Single is more ergonomic for authors, separate is more "bento box." Both are valid.
+4. **Figma API specifics** — The overlay generation via Figma needs investigation: which Figma API endpoints support variable injection and image export? This determines the shape of the `figma-export` connector recipe. Answer doesn't affect the engine — only the recipe.
 
-5. **Figma API specifics** — The overlay generation via Figma needs investigation: which Figma API endpoints support variable injection and image export? This may need a specialized node or a generic http-request + JSON body construction.
+5. **Recipe format migration** — The old `.bento.json` format is close to the current `.bnto.json` but not identical (variables, edge structure, node types). Should the engine support both formats, or require migration? Migration is simpler (one-time script).
 
-6. **Recipe format migration** — The old `.bento.json` format is close to the current `.bnto.json` but not identical (variables, edge structure, node types). Should the engine support both formats, or require migration? Migration is simpler (one-time script).
+6. **Connector recipe discovery** — How does the engine find connector recipes referenced by `"type": "recipe"`? Options: relative path, `~/.local/share/bnto/connectors/`, or a registry lookup. Simplest: relative path first, registry later.
+
+7. **Secret rotation** — Should `bnto secret set` support expiry or rotation reminders? Probably overkill for now, but worth noting for future security hardening.
