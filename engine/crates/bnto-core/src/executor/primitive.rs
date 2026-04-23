@@ -97,6 +97,17 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     Ok(())
 }
 
+/// Resolve `{fields.*}` templates in node params using the pipeline's field definitions.
+fn resolve_node_params<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    node: PipelineNodeRef,
+) -> serde_json::Map<String, serde_json::Value> {
+    if ctx.field_values.is_empty() {
+        return node.params.clone();
+    }
+    super::resolve::resolve_fields(&node.params, ctx.field_values)
+}
+
 /// Execute a primitive (leaf) node on a batch of files.
 ///
 /// Resolves the processor from the registry, then dispatches based on
@@ -111,10 +122,15 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
     let processor = resolve_processor(ctx, node)?;
     let cardinality = processor.metadata().input_cardinality;
     let local_file_count = files.len();
+    let resolved_params = resolve_node_params(ctx, node);
 
     match cardinality {
-        InputCardinality::Batch => process_batch(ctx, processor, node, files, file_offset),
-        InputCardinality::Source => process_source(ctx, processor, node, file_offset),
+        InputCardinality::Batch => {
+            process_batch(ctx, processor, node, &resolved_params, files, file_offset)
+        }
+        InputCardinality::Source => {
+            process_source(ctx, processor, node, &resolved_params, file_offset)
+        }
         InputCardinality::PerFile => {
             let mut output_files: Vec<PipelineFile> = Vec::with_capacity(local_file_count);
             for (file_index, file) in files.into_iter().enumerate() {
@@ -122,7 +138,7 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
                     ctx,
                     processor,
                     &node.id,
-                    &node.params,
+                    &resolved_params,
                     file,
                     file_offset + file_index,
                     &mut output_files,
@@ -142,6 +158,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     processor: &dyn crate::processor::NodeProcessor,
     node: PipelineNodeRef,
+    resolved_params: &serde_json::Map<String, serde_json::Value>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     emit_file_progress(
@@ -156,7 +173,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
         data: Vec::new(),
         filename: String::new(),
         mime_type: None,
-        params: node.params.clone(),
+        params: resolved_params.clone(),
     };
 
     let noop_reporter = ProgressReporter::new(|_, _| {});
@@ -177,6 +194,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     processor: &dyn crate::processor::NodeProcessor,
     node: PipelineNodeRef,
+    resolved_params: &serde_json::Map<String, serde_json::Value>,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
@@ -201,7 +219,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
 
     let batch_input = BatchInput {
         files: batch_files,
-        params: node.params.clone(),
+        params: resolved_params.clone(),
     };
 
     let noop_reporter = ProgressReporter::new(|_, _| {});

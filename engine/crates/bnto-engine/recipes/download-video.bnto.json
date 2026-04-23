@@ -30,6 +30,42 @@
       "homepage": "https://ffmpeg.org"
     }
   ],
+  "fields": {
+    "format": {
+      "type": "enum",
+      "label": "Output Format",
+      "description": "Video container format",
+      "options": [
+        { "value": "mp4", "label": "MP4 (H.264)" },
+        { "value": "webm", "label": "WebM (VP9)" },
+        { "value": "mkv", "label": "MKV (Matroska)" }
+      ],
+      "default": "mp4",
+      "order": 1
+    },
+    "videoCodec": {
+      "type": "enum",
+      "label": "Video Codec",
+      "options": [
+        { "value": "h264", "label": "H.264" },
+        { "value": "vp9", "label": "VP9" },
+        { "value": "av1", "label": "AV1" }
+      ],
+      "default": "h264",
+      "order": 2
+    },
+    "audioCodec": {
+      "type": "enum",
+      "label": "Audio Codec",
+      "options": [
+        { "value": "m4a", "label": "M4A (AAC)" },
+        { "value": "opus", "label": "Opus" },
+        { "value": "mp3", "label": "MP3" }
+      ],
+      "default": "m4a",
+      "order": 3
+    }
+  },
   "nodes": [
     {
       "id": "input",
@@ -73,9 +109,9 @@
           "--no-playlist",
           "--no-warnings",
           "--merge-output-format",
-          "mp4",
+          "{fields.format}",
           "-S",
-          "vcodec:h264,acodec:m4a",
+          "vcodec:{fields.videoCodec},acodec:{fields.audioCodec}",
           "-o",
           "{output_dir}/%(title)s.%(ext)s"
         ],

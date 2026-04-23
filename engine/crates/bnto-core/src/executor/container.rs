@@ -26,6 +26,7 @@ fn clone_children_definitions(node: PipelineNodeRef) -> Option<PipelineDefinitio
         nodes: children.clone(),
         settings: None,
         requires: Vec::new(),
+        fields: std::collections::BTreeMap::new(),
     })
 }
 

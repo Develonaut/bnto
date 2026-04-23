@@ -3,9 +3,13 @@
 // I/O nodes are structural markers (skipped by executor); container nodes
 // (loop, group, parallel) hold child nodes for nested execution.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts")]
 use ts_rs::TS;
+
+use crate::field_def::FieldDef;
 
 // =============================================================================
 // Pipeline Settings — Recipe-Level Configuration
@@ -71,6 +75,12 @@ pub struct PipelineDefinition {
     /// Empty by default so existing recipes (without this field) still parse.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requires: Vec<crate::Dependency>,
+
+    /// Recipe-level field declarations — user-facing controls that map to
+    /// `{fields.*}` templates in node parameters. Empty by default so
+    /// existing recipes (without this field) still parse.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub fields: BTreeMap<String, FieldDef>,
 }
 
 impl PipelineDefinition {
