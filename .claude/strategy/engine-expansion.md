@@ -262,6 +262,34 @@ This is the core value proposition: build one node, get it on every target, comp
 
 ---
 
+## Recipe-Level Dependencies
+
+The dependency system (Sprint 9) handles processor-level deps well. But when recipes use generic processors like `shell-command` to invoke external tools, the dependency info is lost — the processor itself has no deps, but the recipe needs them.
+
+**Solution:** Add `requires: Vec<Dependency>` to `PipelineDefinition`. Recipe-level deps merge with node-level deps during pre-flight check (deduplication by binary name). Existing downstream code (`check_pipeline_dependencies`, `bnto info`, `bnto doctor`) works unchanged.
+
+**This unlocks connector-as-recipe:** Any recipe can declare what external tools it needs, regardless of which processor it uses. Community recipes become viable — authors declare deps in JSON, the engine validates before execution.
+
+See [recipe-deps-strategy.md](recipe-deps-strategy.md) for the full design, work items, and follow-up backlog.
+
+---
+
+## Shell Command Node (`shell-command`)
+
+A generic processor for invoking CLI tools. Replaces the need for dedicated crates when wrapping external binaries.
+
+- **Node type:** `shell-command`
+- **Category:** System
+- **Platforms:** `["cli", "server", "desktop"]`
+- **Parameters:** `command`, `args`, `timeout`, `env`
+- **Requires:** `[]` (generic — recipe declares its own deps)
+
+Uses `ProcessContext::run_command()` — explicit command + args split, no `sh -c`, no shell injection. The `NodeTypeInfo` entry already exists in `metadata.rs`.
+
+First conversion target: `download-video` recipe migrates from `bnto-video` crate to `shell-command` + recipe-level `requires: [yt-dlp, ffmpeg]`. The `bnto-video` crate is then deleted.
+
+---
+
 ## What Does NOT Change
 
 - The website is a polished landing page (homepage redesign complete April 2026)
@@ -280,3 +308,9 @@ This is the core value proposition: build one node, get it on every target, comp
 2. **TUI framework: `ratatui` + `crossterm`.** Standard choice, well-documented, active maintenance. (Sprint 10, PLAN.md)
 
 3. **`ProcessContext` on every `process()` call.** All processors receive `&dyn ProcessContext`. Browser gets `NoopContext`, CLI gets `NativeContext`. Simpler API surface, no conditional typing. (Sprint 9, PR #318)
+
+4. **Recipe-level `requires` merges with node-level deps.** Same `Dependency` struct, same deduplication. Recipes that use generic processors (like `shell-command`) declare their external tool requirements at the recipe level. See [recipe-deps-strategy.md](recipe-deps-strategy.md).
+
+5. **`shell-command` uses explicit command + args, not `sh -c`.** No shell injection vector. `ProcessContext::run_command()` handles execution.
+
+6. **`bnto-video` crate deletion is safe.** No external consumers. `download-video` recipe migrates to `shell-command` + recipe-level `requires`.
