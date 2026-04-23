@@ -65,6 +65,12 @@ pub struct PipelineDefinition {
     /// Optional for backward compatibility — missing defaults to explicit iteration.
     #[serde(default)]
     pub settings: Option<PipelineSettings>,
+
+    /// Recipe-level dependencies — external tools this recipe needs at runtime.
+    /// Merged with per-node processor dependencies during the pre-flight check.
+    /// Empty by default so existing recipes (without this field) still parse.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: Vec<crate::Dependency>,
 }
 
 impl PipelineDefinition {
@@ -777,6 +783,120 @@ mod tests {
         let processor = &loop_node.children.as_ref().unwrap()[0];
         assert_eq!(processor.node_type, "image-compress");
         assert_eq!(processor.params["quality"], 50);
+    }
+
+    // --- Recipe-level requires Tests ---
+
+    #[test]
+    fn test_definition_without_requires_still_parses() {
+        // Backward compat: existing recipes have no "requires" field.
+        let json = r#"{
+            "nodes": [
+                { "id": "n1", "type": "input" },
+                { "id": "n2", "type": "image-compress" }
+            ]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert!(def.requires.is_empty());
+    }
+
+    #[test]
+    fn test_definition_with_requires_parses() {
+        let json = r#"{
+            "requires": [
+                {
+                    "binary": "yt-dlp",
+                    "installHint": "brew install yt-dlp",
+                    "homepage": "https://github.com/yt-dlp/yt-dlp"
+                }
+            ],
+            "nodes": [
+                { "id": "n1", "type": "input" }
+            ]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert_eq!(def.requires.len(), 1);
+        assert_eq!(def.requires[0].binary, "yt-dlp");
+        assert_eq!(def.requires[0].install_hint, "brew install yt-dlp");
+    }
+
+    #[test]
+    fn test_definition_with_multiple_requires() {
+        let json = r#"{
+            "requires": [
+                { "binary": "yt-dlp", "installHint": "brew install yt-dlp" },
+                { "binary": "ffmpeg", "installHint": "brew install ffmpeg", "version": ">=6.0" }
+            ],
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert_eq!(def.requires.len(), 2);
+        assert_eq!(def.requires[0].binary, "yt-dlp");
+        assert_eq!(def.requires[1].binary, "ffmpeg");
+        assert_eq!(def.requires[1].version, ">=6.0");
+    }
+
+    #[test]
+    fn test_definition_empty_requires_omitted_in_serialization() {
+        // When requires is empty, it should NOT appear in the serialized JSON.
+        let json = r#"{ "nodes": [{ "id": "n1", "type": "input" }] }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        assert!(
+            !serialized.contains("requires"),
+            "Empty requires should be omitted; got: {serialized}"
+        );
+    }
+
+    #[test]
+    fn test_definition_requires_round_trip() {
+        let json = r#"{
+            "requires": [
+                {
+                    "binary": "yt-dlp",
+                    "version": ">=2024.0.0",
+                    "installHint": "brew install yt-dlp",
+                    "homepage": "https://github.com/yt-dlp/yt-dlp"
+                }
+            ],
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        let round_tripped: PipelineDefinition = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(round_tripped.requires.len(), 1);
+        assert_eq!(round_tripped.requires[0].binary, "yt-dlp");
+        assert_eq!(round_tripped.requires[0].version, ">=2024.0.0");
+        assert_eq!(
+            round_tripped.requires[0].install_hint,
+            "brew install yt-dlp"
+        );
+        assert_eq!(
+            round_tripped.requires[0].homepage,
+            "https://github.com/yt-dlp/yt-dlp"
+        );
+    }
+
+    #[test]
+    fn test_definition_requires_preserves_all_dependency_fields() {
+        // Verify all Dependency fields survive deserialization.
+        let json = r#"{
+            "requires": [
+                {
+                    "binary": "ffmpeg",
+                    "version": ">=6.0",
+                    "installHint": "brew install ffmpeg",
+                    "homepage": "https://ffmpeg.org"
+                }
+            ],
+            "nodes": []
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let dep = &def.requires[0];
+        assert_eq!(dep.binary, "ffmpeg");
+        assert_eq!(dep.version, ">=6.0");
+        assert_eq!(dep.install_hint, "brew install ffmpeg");
+        assert_eq!(dep.homepage, "https://ffmpeg.org");
     }
 
     // --- Helper Function Tests ---

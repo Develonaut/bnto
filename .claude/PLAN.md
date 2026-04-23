@@ -728,8 +728,8 @@ _TUI type-aware controls (plan doc PRs 5–6)_
 
 #### Wave 1 — Recipe-level requires (sequential)
 
-- [ ] `engine/crates/bnto-core` — **Add `Deserialize` to `Dependency` + `requires` to `PipelineDefinition`**: Add `Deserialize` derive to `Dependency`. Add `requires: Vec<Dependency>` field to `PipelineDefinition` with `#[serde(default, skip_serializing_if = "Vec::is_empty")]`. RED tests: deserialization with/without requires, round-trip, backward compat (existing recipes still parse), empty requires omitted in serialization (~6 tests)
-- [ ] `engine/crates/bnto-engine` — **Merge recipe-level deps in `collect_pipeline_dependencies()`**: Update to collect recipe-level deps first, then node-level deps (existing logic). Deduplication by binary name. RED tests: recipe-only deps, node-only deps, merged + deduplicated, empty recipe requires (~6 tests)
+- [x] `engine/crates/bnto-core` — **Add `Deserialize` to `Dependency` + `requires` to `PipelineDefinition`**: Add `Deserialize` derive to `Dependency`. Add `requires: Vec<Dependency>` field to `PipelineDefinition` with `#[serde(default, skip_serializing_if = "Vec::is_empty")]`. RED tests: deserialization with/without requires, round-trip, backward compat (existing recipes still parse), empty requires omitted in serialization (~6 tests)
+- [x] `engine/crates/bnto-engine` — **Merge recipe-level deps in `collect_pipeline_dependencies()`**: Update to collect recipe-level deps first, then node-level deps (existing logic). Deduplication by binary name. RED tests: recipe-only deps, node-only deps, merged + deduplicated, empty recipe requires (~6 tests)
 
 #### Wave 2 — Shell command processor (sequential)
 
