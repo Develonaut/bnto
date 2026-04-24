@@ -57,6 +57,10 @@ pub mod progress;
 /// Replaces the JS-side `wasmLoader.ts` registry.
 pub mod registry;
 
+/// Node-level field declarations — typed user-facing controls for nodes.
+/// Field values are substituted into `{{fields.*}}` templates at execution time.
+pub mod field_def;
+
 /// Editor state model — pure-data recipe editing state.
 /// Shared by all editor surfaces (TUI List, Wizard, Code, Graph).
 /// No TUI dependency. Sprint 15 extracts to standalone `bnto-editor` crate.
@@ -77,6 +81,7 @@ pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSou
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
+pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
     Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo,

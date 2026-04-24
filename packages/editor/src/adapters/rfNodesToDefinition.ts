@@ -26,6 +26,9 @@ function carryOverOptionalFields(originalDef: Definition | null): Partial<Defini
     ...(originalDef.nodes ? { nodes: originalDef.nodes } : {}),
     ...(originalDef.edges ? { edges: originalDef.edges } : {}),
     ...(originalDef.parentId ? { parentId: originalDef.parentId } : {}),
+    ...(originalDef.fields && Object.keys(originalDef.fields).length > 0
+      ? { fields: originalDef.fields }
+      : {}),
   };
 }
 

@@ -8,7 +8,7 @@
 // Two output modes:
 //   - "stdout" (default): captures command stdout as a single output file
 //   - "file": runs command in a temp dir, collects written files as output.
-//     Use `{output_dir}` in args to inject the temp directory path.
+//     Use `{{output_dir}}` in args to inject the temp directory path.
 //     Designed for tools like yt-dlp and ffmpeg that write to disk.
 //
 // Security boundary: validate.rs checks every command before execution.
@@ -24,11 +24,11 @@ use bnto_core::{
 use crate::validate::{self, DEFAULT_TIMEOUT_SECS, MAX_STDOUT_BYTES};
 
 /// Placeholder in args that gets replaced with the temp output directory path.
-const OUTPUT_DIR_PLACEHOLDER: &str = "{output_dir}";
+const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
 
 /// Placeholder in args for URL/text input injected by the CLI's input preparation.
-const URL_PLACEHOLDER: &str = "{url}";
-const INPUT_PLACEHOLDER: &str = "{input}";
+const URL_PLACEHOLDER: &str = "{{url}}";
+const INPUT_PLACEHOLDER: &str = "{{input}}";
 
 /// Shell command processor — runs external CLI tools.
 pub struct ShellCommand;
@@ -114,7 +114,7 @@ impl NodeProcessor for ShellCommand {
         // Security check: reject shell interpreters and path-based commands
         validate::validate_command(command).map_err(BntoError::InvalidInput)?;
 
-        // Resolve {url} and {input} placeholders from injected params.
+        // Resolve {{url}} and {{input}} placeholders from injected params.
         // The CLI injects "url" or "text" params for URL/Text mode recipes.
         resolve_input_placeholders(&mut args, &input.params);
 
@@ -149,7 +149,7 @@ impl NodeProcessor for ShellCommand {
     }
 }
 
-/// Resolve `{url}` and `{input}` placeholders in args from injected params.
+/// Resolve `{{url}}` and `{{input}}` placeholders in args from injected params.
 ///
 /// The CLI's input preparation injects `"url"` or `"text"` into the node's
 /// params for URL/Text mode recipes. If no placeholder exists in the args
@@ -232,7 +232,7 @@ fn process_stdout_mode(
 }
 
 /// File mode: run command in a temp dir, collect written files as output.
-/// Replaces `{output_dir}` in args with the temp directory path.
+/// Replaces `{{output_dir}}` in args with the temp directory path.
 fn process_file_mode(
     command: &str,
     args: &[String],
@@ -248,7 +248,7 @@ fn process_file_mode(
     })?;
     let dir_str = output_dir.to_string_lossy();
 
-    // Substitute {output_dir} placeholder in args.
+    // Substitute {{output_dir}} placeholder in args.
     let resolved_args: Vec<String> = args
         .iter()
         .map(|a| a.replace(OUTPUT_DIR_PLACEHOLDER, &dir_str))
@@ -409,7 +409,7 @@ fn build_parameters() -> Vec<ParameterDef> {
             label: "Output Mode".to_string(),
             description: "How to collect output. 'stdout' captures command output. \
                 'file' reads files written by the command to a temp directory \
-                (use {output_dir} in args to inject the path)."
+                (use {{output_dir}} in args to inject the path)."
                 .to_string(),
             param_type: ParameterType::String,
             default: Some(serde_json::Value::String("stdout".to_string())),
@@ -769,7 +769,7 @@ mod tests {
     fn test_output_dir_placeholder_substitution() {
         let args = [
             "-o".to_string(),
-            "{output_dir}/%(title)s.%(ext)s".to_string(),
+            "{{output_dir}}/%(title)s.%(ext)s".to_string(),
             "--verbose".to_string(),
         ];
         let dir_str = "/tmp/bnto-output";
@@ -796,7 +796,7 @@ mod tests {
 
     #[test]
     fn test_resolve_url_placeholder_substituted() {
-        let mut args = vec!["--download".to_string(), "{url}".to_string()];
+        let mut args = vec!["--download".to_string(), "{{url}}".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/video".into());
         resolve_input_placeholders(&mut args, &params);
@@ -806,7 +806,7 @@ mod tests {
 
     #[test]
     fn test_resolve_input_placeholder_substituted() {
-        let mut args = vec!["process".to_string(), "{input}".to_string()];
+        let mut args = vec!["process".to_string(), "{{input}}".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/data".into());
         resolve_input_placeholders(&mut args, &params);
@@ -825,7 +825,7 @@ mod tests {
 
     #[test]
     fn test_resolve_url_not_appended_when_placeholder_exists() {
-        let mut args = vec!["{url}".to_string(), "--verbose".to_string()];
+        let mut args = vec!["{{url}}".to_string(), "--verbose".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com".into());
         resolve_input_placeholders(&mut args, &params);

@@ -165,6 +165,10 @@ fn inject_param_in_nodes(
 ///
 /// Format: `key=value` targets the default processing node.
 /// Format: `nodeId:key=value` targets a specific node.
+///
+/// If the target node declares a matching field, the field's default is
+/// updated so `collect_field_values()` picks it up. Otherwise, falls back
+/// to raw param injection.
 fn apply_param_overrides(
     def: &mut PipelineDefinition,
     overrides: &[String],
@@ -172,10 +176,73 @@ fn apply_param_overrides(
 ) -> Result<(), String> {
     for entry in overrides {
         let (node_id, key, value) = parse_override(entry, default_node_id)?;
+        if node_id.is_empty() {
+            return Err(format!(
+                "Invalid --param format: ':{}={}'. Recipe-level field overrides are not supported. \
+                 Use nodeId:key=value to target a specific node.",
+                key, value
+            ));
+        }
         let json_value = parse_param_value(&value);
-        inject_param(def, &node_id, &key, &json_value)?;
+        // Try updating a declared field on the node first.
+        if !apply_node_field_override(def, &node_id, &key, &json_value) {
+            // Not a declared field — inject as raw param.
+            inject_param(def, &node_id, &key, &json_value)?;
+        }
     }
     Ok(())
+}
+
+/// Update a node-level field's default value.
+///
+/// Walks the definition tree to find the target node, checks if `key`
+/// matches a declared field, and updates its default. Returns `true` if
+/// a field was found and updated, `false` if the key is not a field
+/// (caller should fall back to raw param injection).
+fn apply_node_field_override(
+    def: &mut PipelineDefinition,
+    node_id: &str,
+    key: &str,
+    value: &serde_json::Value,
+) -> bool {
+    apply_node_field_in_nodes(&mut def.nodes, node_id, key, value)
+}
+
+fn apply_node_field_in_nodes(
+    nodes: &mut [PipelineNode],
+    node_id: &str,
+    key: &str,
+    value: &serde_json::Value,
+) -> bool {
+    use bnto_core::FieldDef;
+    for node in nodes.iter_mut() {
+        if node.id == node_id {
+            if let Some(field) = node.fields.get_mut(key) {
+                let str_val = match value {
+                    serde_json::Value::String(s) => s.clone(),
+                    other => other.to_string(),
+                };
+                match field {
+                    FieldDef::String { default, .. } => *default = Some(str_val),
+                    FieldDef::Number { default, .. } => {
+                        *default = str_val.parse::<f64>().ok();
+                    }
+                    FieldDef::Boolean { default, .. } => {
+                        *default = str_val.parse::<bool>().ok();
+                    }
+                    FieldDef::Enum { default, .. } => *default = Some(str_val),
+                }
+                return true;
+            }
+            return false;
+        }
+        if let Some(children) = &mut node.children
+            && apply_node_field_in_nodes(children, node_id, key, value)
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// Parse a `--param` value into (node_id, key, value).
@@ -494,5 +561,146 @@ mod tests {
     #[test]
     fn test_parse_param_value_string() {
         assert_eq!(parse_param_value("hello"), serde_json::json!("hello"));
+    }
+
+    // --- field override tests ---
+
+    #[test]
+    fn test_parse_override_empty_node_id() {
+        // `:key=value` still parses — routing rejects it
+        let (node_id, key, value) = parse_override(":format=mp4", None).unwrap();
+        assert_eq!(node_id, "");
+        assert_eq!(key, "format");
+        assert_eq!(value, "mp4");
+    }
+
+    #[test]
+    fn test_empty_node_id_override_rejected() {
+        // Recipe-level field overrides (`:key=value`) are no longer supported.
+        let mut def = test_def(
+            r#"{
+                "nodes": [
+                    { "id": "proc", "type": "image-compress", "params": {} }
+                ]
+            }"#,
+        );
+        let result = apply_param_overrides(&mut def, &[":format=webm".to_string()], Some("proc"));
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("not supported"));
+    }
+
+    #[test]
+    fn test_node_field_override_updates_default() {
+        // Field overrides target a specific node's declared fields.
+        let mut def = test_def(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    {
+                        "id": "download",
+                        "type": "shell-command",
+                        "params": {},
+                        "fields": {
+                            "format": {
+                                "type": "enum",
+                                "label": "Format",
+                                "options": [
+                                    { "value": "mp4", "label": "MP4" },
+                                    { "value": "webm", "label": "WebM" }
+                                ],
+                                "default": "mp4"
+                            }
+                        }
+                    },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        apply_param_overrides(
+            &mut def,
+            &["download:format=webm".to_string()],
+            Some("download"),
+        )
+        .unwrap();
+        let bnto_core::FieldDef::Enum { default, .. } = &def.nodes[1].fields["format"] else {
+            panic!("expected Enum field");
+        };
+        assert_eq!(default.as_deref(), Some("webm"));
+    }
+
+    #[test]
+    fn test_node_field_override_falls_back_to_param() {
+        // When key doesn't match a declared field, inject as raw param.
+        let mut def = test_def(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    {
+                        "id": "download",
+                        "type": "shell-command",
+                        "params": {},
+                        "fields": {
+                            "format": {
+                                "type": "enum",
+                                "label": "Format",
+                                "options": [],
+                                "default": "mp4"
+                            }
+                        }
+                    },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        apply_param_overrides(
+            &mut def,
+            &["download:timeout=600".to_string()],
+            Some("download"),
+        )
+        .unwrap();
+        // timeout is not a declared field, so it's injected as a raw param
+        assert_eq!(def.nodes[1].params["timeout"], 600);
+    }
+
+    #[test]
+    fn test_apply_overrides_field_and_param_together() {
+        // Field override + param injection on the same node.
+        let mut def = test_def(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    {
+                        "id": "download",
+                        "type": "shell-command",
+                        "params": {},
+                        "fields": {
+                            "format": {
+                                "type": "enum",
+                                "label": "Format",
+                                "options": [],
+                                "default": "mp4"
+                            }
+                        }
+                    },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        apply_param_overrides(
+            &mut def,
+            &[
+                "download:format=webm".to_string(),
+                "download:timeout=600".to_string(),
+            ],
+            Some("download"),
+        )
+        .unwrap();
+        // Field default was updated
+        let bnto_core::FieldDef::Enum { default, .. } = &def.nodes[1].fields["format"] else {
+            panic!("expected Enum");
+        };
+        assert_eq!(default.as_deref(), Some("webm"));
+        // Raw param was injected
+        assert_eq!(def.nodes[1].params["timeout"], 600);
     }
 }

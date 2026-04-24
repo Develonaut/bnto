@@ -3,11 +3,14 @@
 // Extracted from detail.rs to keep files under 250 lines.
 // Walks recipe definition JSON, resolves processors, collects surfaceable params.
 
+use bnto_core::metadata::ParameterType;
+use bnto_core::pipeline::PipelineNode;
 use bnto_core::registry::NodeRegistry;
 use bnto_core::{InputMode, PipelineDefinition};
 use bnto_engine::recipes::builtin_recipe_by_slug;
 
 use super::detail::{DetailFocus, DetailModel, ParamEntry};
+use super::detail_fields::fields_to_params;
 use super::picker::PickerModel;
 
 /// Build a detail model from a recipe slug using engine metadata.
@@ -29,16 +32,38 @@ pub fn load_detail_with_dir(
     start_dir: Option<&std::path::Path>,
 ) -> Option<DetailModel> {
     let recipe = builtin_recipe_by_slug(slug)?;
-    let def: serde_json::Value = serde_json::from_str(recipe.definition_json).ok()?;
-    let nodes = def["nodes"].as_array()?;
-    let params = extract_surfaceable_params(nodes, registry);
+    let def_json: serde_json::Value = serde_json::from_str(recipe.definition_json).ok()?;
+    let nodes = def_json["nodes"].as_array()?;
+
+    // Parse typed definition for field declarations and input mode.
+    let pipeline_def = serde_json::from_str::<PipelineDefinition>(recipe.definition_json).ok();
+
+    // If any node declares fields, use those instead of extracting from processors.
+    let field_params = pipeline_def
+        .as_ref()
+        .map(|def| collect_field_params(&def.nodes))
+        .unwrap_or_default();
+    let mut params = if !field_params.is_empty() {
+        field_params
+    } else {
+        extract_surfaceable_params(nodes, registry)
+    };
+
+    // Surface URL/text input node (prepend if not already present from fields).
+    if let Some(input_param) = find_input_param_in_nodes(nodes)
+        && !params
+            .iter()
+            .any(|p| p.name == input_param.name && p.node_id == input_param.node_id)
+    {
+        params.insert(0, input_param);
+    }
 
     let fields = super::detail_bridge::params_to_fields(&params);
     let form = bnto_form::FormModel::new(fields);
 
-    // Resolve input mode from the definition's input node.
-    let input_mode = serde_json::from_str::<PipelineDefinition>(recipe.definition_json)
-        .map(|d| bnto_core::resolve_input_mode(&d))
+    let input_mode = pipeline_def
+        .as_ref()
+        .map(bnto_core::resolve_input_mode)
         .unwrap_or(InputMode::FileUpload);
 
     let (focus, input_picker) = match input_mode {
@@ -64,6 +89,27 @@ pub fn load_detail_with_dir(
     })
 }
 
+/// Collect field params from all nodes that declare fields.
+///
+/// Walks nodes (including container children) and converts each node's
+/// fields into ParamEntries tagged with the owning node_id.
+fn collect_field_params(nodes: &[PipelineNode]) -> Vec<ParamEntry> {
+    let mut params = Vec::new();
+    collect_field_params_recursive(nodes, &mut params);
+    params
+}
+
+fn collect_field_params_recursive(nodes: &[PipelineNode], params: &mut Vec<ParamEntry>) {
+    for node in nodes {
+        if !node.fields.is_empty() {
+            params.extend(fields_to_params(&node.fields, &node.id));
+        }
+        if let Some(children) = &node.children {
+            collect_field_params_recursive(children, params);
+        }
+    }
+}
+
 /// Walk definition nodes, resolve processors, and collect surfaceable params.
 fn extract_surfaceable_params(
     nodes: &[serde_json::Value],
@@ -74,8 +120,14 @@ fn extract_surfaceable_params(
         let node_type = node["type"].as_str().unwrap_or_default();
         let node_id = node["id"].as_str().unwrap_or_default();
 
-        // Skip I/O nodes — only processor nodes have user-configurable params.
-        if node_type == "input" || node_type == "output" {
+        // Surface URL/text input nodes as the first param, then skip.
+        if node_type == "input" {
+            if let Some(param) = extract_input_param(node, node_id) {
+                params.insert(0, param);
+            }
+            continue;
+        }
+        if node_type == "output" {
             continue;
         }
 
@@ -89,6 +141,63 @@ fn extract_surfaceable_params(
         collect_params_from_processor(node_id, &node_params, processor, &mut params);
     }
     params
+}
+
+/// Find the input param entry across all nodes in the definition.
+fn find_input_param_in_nodes(nodes: &[serde_json::Value]) -> Option<ParamEntry> {
+    for node in nodes {
+        if node["type"].as_str() == Some("input") {
+            let node_id = node["id"].as_str().unwrap_or("input");
+            return extract_input_param(node, node_id);
+        }
+    }
+    None
+}
+
+/// Extract a ParamEntry from a URL/text-mode input node.
+///
+/// Returns `Some(ParamEntry)` for url and text modes so the detail screen
+/// shows a text field for the user to enter a URL or text before running.
+/// Returns `None` for file-upload mode (handled by the file picker).
+fn extract_input_param(node: &serde_json::Value, node_id: &str) -> Option<ParamEntry> {
+    let params = node["parameters"].as_object()?;
+    let mode = params.get("mode")?.as_str()?;
+
+    let (name, default_label) = match mode {
+        "url" => ("url", "URL"),
+        "text" => ("text", "Text"),
+        _ => return None,
+    };
+
+    let label = params
+        .get("label")
+        .and_then(|v| v.as_str())
+        .unwrap_or(default_label)
+        .to_string();
+
+    let placeholder = params
+        .get("placeholder")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+
+    Some(ParamEntry {
+        node_id: node_id.to_string(),
+        name: name.to_string(),
+        label,
+        value: String::new(),
+        param_type: ParameterType::String,
+        default: String::new(),
+        description: if placeholder.is_empty() {
+            None
+        } else {
+            Some(placeholder)
+        },
+        constraints: None,
+        suffix: None,
+        control: None,
+        visible_when: None,
+    })
 }
 
 /// Extract surfaceable params from a single processor's metadata.
@@ -147,14 +256,27 @@ fn collect_params_from_processor(
 /// Returns Err if JSON is invalid or missing a `nodes` array.
 #[cfg(test)]
 pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<DetailModel, String> {
-    let def: serde_json::Value =
+    let def_json: serde_json::Value =
         serde_json::from_str(json).map_err(|e| format!("Invalid JSON: {e}"))?;
-    let nodes = def["nodes"]
+    let nodes = def_json["nodes"]
         .as_array()
         .ok_or_else(|| "Missing or invalid 'nodes' array".to_string())?;
-    let name = def["name"].as_str().unwrap_or("Custom Recipe").to_string();
-    let description = def["description"].as_str().unwrap_or("").to_string();
-    let params = extract_surfaceable_params(nodes, registry);
+    let name = def_json["name"]
+        .as_str()
+        .unwrap_or("Custom Recipe")
+        .to_string();
+    let description = def_json["description"].as_str().unwrap_or("").to_string();
+
+    let pipeline_def = serde_json::from_str::<PipelineDefinition>(json).ok();
+    let field_params = pipeline_def
+        .as_ref()
+        .map(|def| collect_field_params(&def.nodes))
+        .unwrap_or_default();
+    let params = if !field_params.is_empty() {
+        field_params
+    } else {
+        extract_surfaceable_params(nodes, registry)
+    };
 
     let fields = super::detail_bridge::params_to_fields(&params);
     let form = bnto_form::FormModel::new(fields);
@@ -185,7 +307,6 @@ fn value_to_display_string(v: &serde_json::Value) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bnto_core::metadata::ParameterType;
 
     fn registry() -> NodeRegistry {
         bnto_engine::create_registry()
@@ -408,5 +529,155 @@ mod tests {
         let result = load_detail_from_json(r#"{"name": "No nodes"}"#, &registry());
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("nodes"));
+    }
+
+    // --- extract_input_param: URL/text mode surfacing ---
+
+    fn input_node(mode: &str, label: Option<&str>, placeholder: Option<&str>) -> serde_json::Value {
+        let mut params = serde_json::Map::new();
+        params.insert("mode".into(), serde_json::Value::String(mode.into()));
+        if let Some(l) = label {
+            params.insert("label".into(), serde_json::Value::String(l.into()));
+        }
+        if let Some(p) = placeholder {
+            params.insert("placeholder".into(), serde_json::Value::String(p.into()));
+        }
+        serde_json::json!({
+            "id": "input",
+            "type": "input",
+            "parameters": params
+        })
+    }
+
+    #[test]
+    fn extract_input_param_returns_some_for_url_mode() {
+        let node = input_node("url", Some("Video URL"), Some("https://youtube.com/..."));
+        let param = extract_input_param(&node, "input").unwrap();
+        assert_eq!(param.name, "url");
+        assert_eq!(param.label, "Video URL");
+        assert_eq!(param.node_id, "input");
+        assert!(matches!(param.param_type, ParameterType::String));
+    }
+
+    #[test]
+    fn extract_input_param_returns_some_for_text_mode() {
+        let node = input_node("text", Some("Prompt"), None);
+        let param = extract_input_param(&node, "input").unwrap();
+        assert_eq!(param.name, "text");
+        assert_eq!(param.label, "Prompt");
+    }
+
+    #[test]
+    fn extract_input_param_returns_none_for_file_upload() {
+        let node = input_node("file-upload", None, None);
+        assert!(extract_input_param(&node, "input").is_none());
+    }
+
+    #[test]
+    fn extract_input_param_returns_none_for_missing_mode() {
+        let node = serde_json::json!({"id": "input", "type": "input", "parameters": {}});
+        assert!(extract_input_param(&node, "input").is_none());
+    }
+
+    #[test]
+    fn extract_input_param_uses_placeholder_as_description() {
+        let node = input_node("url", None, Some("https://youtube.com/watch?v=..."));
+        let param = extract_input_param(&node, "input").unwrap();
+        assert_eq!(
+            param.description.as_deref(),
+            Some("https://youtube.com/watch?v=...")
+        );
+    }
+
+    #[test]
+    fn extract_input_param_uses_default_label_when_missing() {
+        let node = input_node("url", None, None);
+        let param = extract_input_param(&node, "input").unwrap();
+        assert_eq!(param.label, "URL");
+    }
+
+    #[test]
+    fn download_video_has_url_as_first_param() {
+        let detail = load_detail("download-video", &registry()).unwrap();
+        assert!(
+            !detail.params.is_empty(),
+            "download-video should have at least one param"
+        );
+        let first = &detail.params[0];
+        assert_eq!(first.name, "url");
+        assert_eq!(first.node_id, "input");
+        assert_eq!(first.label, "Video URL");
+    }
+
+    #[test]
+    fn compress_images_has_no_url_param() {
+        let detail = load_detail("compress-images", &registry()).unwrap();
+        assert!(
+            detail.params.iter().all(|p| p.name != "url"),
+            "file-upload recipes should not have a url param"
+        );
+    }
+
+    // --- fields_to_params: Integration tests (unit tests in detail_fields.rs) ---
+
+    #[test]
+    fn recipe_with_node_fields_shows_field_params() {
+        let json = r#"{
+            "name": "Test Recipe",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {}},
+                {
+                    "id": "proc",
+                    "type": "shell-command",
+                    "parameters": {"command": "echo"},
+                    "fields": {
+                        "format": {"type":"enum","label":"Format","options":[{"value":"mp4","label":"MP4"}],"default":"mp4"}
+                    }
+                },
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        let model = load_detail_from_json(json, &registry()).unwrap();
+        assert_eq!(model.params.len(), 1);
+        assert_eq!(model.params[0].name, "format");
+        assert_eq!(model.params[0].label, "Format");
+    }
+
+    #[test]
+    fn recipe_without_fields_shows_processor_params() {
+        let json = r#"{
+            "name": "Compress Images",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {}},
+                {"id": "compress", "type": "image-compress", "parameters": {"quality": 80}},
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        let model = load_detail_from_json(json, &registry()).unwrap();
+        assert!(
+            model.params.iter().any(|p| p.name == "quality"),
+            "should fall back to processor params when no fields declared"
+        );
+    }
+
+    #[test]
+    fn download_video_shows_url_and_field_params() {
+        let detail = load_detail("download-video", &registry()).unwrap();
+        // Should have URL param first, then field params.
+        assert!(
+            detail.params.len() >= 2,
+            "download-video should have URL + field params, got {}",
+            detail.params.len()
+        );
+        assert_eq!(detail.params[0].name, "url");
+        assert_eq!(detail.params[0].node_id, "input");
+    }
+
+    #[test]
+    fn download_video_recipe_json_parses() {
+        let recipe = builtin_recipe_by_slug("download-video").unwrap();
+        let def: PipelineDefinition =
+            serde_json::from_str(recipe.definition_json).expect("should parse");
+        assert!(def.nodes.len() >= 2);
     }
 }

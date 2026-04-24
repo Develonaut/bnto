@@ -8,6 +8,7 @@
 pub mod browser;
 pub mod detail;
 pub(crate) mod detail_bridge;
+mod detail_fields;
 pub(crate) mod detail_loader;
 pub mod editor;
 pub(crate) mod editor_bridge;

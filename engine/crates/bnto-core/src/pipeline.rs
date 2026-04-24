@@ -3,9 +3,13 @@
 // I/O nodes are structural markers (skipped by executor); container nodes
 // (loop, group, parallel) hold child nodes for nested execution.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts")]
 use ts_rs::TS;
+
+use crate::field_def::FieldDef;
 
 // =============================================================================
 // Pipeline Settings — Recipe-Level Configuration
@@ -115,6 +119,12 @@ pub struct PipelineNode {
     /// (with `"children"`) both work.
     #[serde(alias = "nodes")]
     pub children: Option<Vec<PipelineNode>>,
+
+    /// Node-level field declarations — user-facing controls that map to
+    /// `{{fields.*}}` templates in this node's parameters. Each node is
+    /// self-contained: its fields resolve into its own params.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub fields: BTreeMap<String, FieldDef>,
 }
 
 // =============================================================================

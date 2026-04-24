@@ -1809,6 +1809,69 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           version: "1.0.0",
         },
         {
+          fields: {
+            audioCodec: {
+              default: "m4a",
+              label: "Audio Codec",
+              options: [
+                {
+                  label: "M4A (AAC)",
+                  value: "m4a",
+                },
+                {
+                  label: "Opus",
+                  value: "opus",
+                },
+                {
+                  label: "MP3",
+                  value: "mp3",
+                },
+              ],
+              order: 3,
+              type: "enum",
+            },
+            format: {
+              default: "mp4",
+              description: "Video container format",
+              label: "Output Format",
+              options: [
+                {
+                  label: "MP4 (H.264)",
+                  value: "mp4",
+                },
+                {
+                  label: "WebM (VP9)",
+                  value: "webm",
+                },
+                {
+                  label: "MKV (Matroska)",
+                  value: "mkv",
+                },
+              ],
+              order: 1,
+              type: "enum",
+            },
+            videoCodec: {
+              default: "h264",
+              label: "Video Codec",
+              options: [
+                {
+                  label: "H.264",
+                  value: "h264",
+                },
+                {
+                  label: "VP9",
+                  value: "vp9",
+                },
+                {
+                  label: "AV1",
+                  value: "av1",
+                },
+              ],
+              order: 2,
+              type: "enum",
+            },
+          },
           id: "download",
           inputPorts: [],
           metadata: {},
@@ -1819,11 +1882,11 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
               "--no-playlist",
               "--no-warnings",
               "--merge-output-format",
-              "mp4",
+              "{{fields.format}}",
               "-S",
-              "vcodec:h264,acodec:m4a",
+              "vcodec:{{fields.videoCodec}},acodec:{{fields.audioCodec}}",
               "-o",
-              "{output_dir}/%(title)s.%(ext)s",
+              "{{output_dir}}/%(title)s.%(ext)s",
             ],
             command: "yt-dlp",
             outputMode: "file",
