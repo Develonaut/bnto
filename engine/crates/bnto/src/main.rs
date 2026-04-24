@@ -256,7 +256,7 @@ fn run_recipe(
 
     let start = std::time::Instant::now();
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
-    let reporter = progress::stderr_reporter();
+    let reporter = progress::stderr_reporter(Arc::clone(logger));
     match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
         Ok(result) => {
             let elapsed_us = start.elapsed().as_micros() as u64;

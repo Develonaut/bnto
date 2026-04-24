@@ -2,6 +2,8 @@
 // Complements `progress.rs` (per-file within one node) with pipeline-level
 // events (node started/completed, file progress, pipeline result).
 
+use std::sync::Arc;
+
 use serde::Serialize;
 
 // =============================================================================
@@ -94,6 +96,16 @@ pub enum PipelineEvent {
         /// Human-readable error message.
         error: String,
     },
+
+    /// Emitted when a child process writes a line to stderr during execution.
+    /// Used for live progress from tools like yt-dlp and ffmpeg.
+    #[serde(rename_all = "camelCase")]
+    CommandOutput {
+        /// Which node's command produced this output.
+        node_id: String,
+        /// One line of stderr output from the child process.
+        line: String,
+    },
 }
 
 // =============================================================================
@@ -102,29 +114,26 @@ pub enum PipelineEvent {
 
 /// Emits structured pipeline events to a callback.
 ///
-/// This is the pipeline-level equivalent of `ProgressReporter`.
-/// The callback receives a `PipelineEvent` which can be serialized
-/// to JSON and sent to the UI (via Web Worker postMessage, CLI stdout,
-/// or any other transport).
+/// Uses `Arc` internally so it can be cloned and shared — the executor
+/// clones the reporter to move into closures that relay command output.
 pub struct PipelineReporter {
     /// The callback that receives events. `None` = no-op mode.
-    callback: Option<Box<dyn Fn(PipelineEvent)>>,
+    callback: Option<Arc<dyn Fn(PipelineEvent)>>,
+}
+
+impl Clone for PipelineReporter {
+    fn clone(&self) -> Self {
+        Self {
+            callback: self.callback.clone(),
+        }
+    }
 }
 
 impl PipelineReporter {
     /// Create a new reporter with a callback that receives pipeline events.
-    ///
-    /// USAGE:
-    /// ```rust
-    /// use bnto_core::PipelineReporter;
-    ///
-    /// let reporter = PipelineReporter::new(|event| {
-    ///     println!("Pipeline event: {:?}", event);
-    /// });
-    /// ```
     pub fn new(callback: impl Fn(PipelineEvent) + 'static) -> Self {
         Self {
-            callback: Some(Box::new(callback)),
+            callback: Some(Arc::new(callback)),
         }
     }
 
@@ -301,6 +310,41 @@ mod tests {
         assert_eq!(json["type"], "PipelineFailed");
         assert_eq!(json["nodeId"], "node-2");
         assert_eq!(json["error"], "Processing failed: out of memory");
+    }
+
+    #[test]
+    fn test_command_output_serializes_correctly() {
+        let event = PipelineEvent::CommandOutput {
+            node_id: "node-0".to_string(),
+            line: "[download]  34.2% of ~150MiB".to_string(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["type"], "CommandOutput");
+        assert_eq!(json["nodeId"], "node-0");
+        assert_eq!(json["line"], "[download]  34.2% of ~150MiB");
+    }
+
+    #[test]
+    fn test_pipeline_reporter_is_cloneable() {
+        let received = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let received_clone = std::sync::Arc::clone(&received);
+
+        let reporter = PipelineReporter::new(move |event| {
+            received_clone.lock().unwrap().push(event);
+        });
+        let reporter2 = reporter.clone();
+
+        reporter.emit(PipelineEvent::PipelineStarted {
+            total_nodes: 1,
+            total_files: 1,
+        });
+        reporter2.emit(PipelineEvent::CommandOutput {
+            node_id: "n".to_string(),
+            line: "hello".to_string(),
+        });
+
+        let events = received.lock().unwrap();
+        assert_eq!(events.len(), 2);
     }
 
     // --- Reporter Tests ---

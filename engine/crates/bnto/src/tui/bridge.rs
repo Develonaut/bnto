@@ -254,6 +254,9 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
         PipelineEvent::PipelineFailed { node_id, error } => {
             AppMessage::Execution(ExecutionMessage::PipelineFailed { node_id, error })
         }
+        PipelineEvent::CommandOutput { node_id, line } => {
+            AppMessage::Execution(ExecutionMessage::CommandOutput { node_id, line })
+        }
     }
 }
 

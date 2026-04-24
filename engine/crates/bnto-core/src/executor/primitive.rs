@@ -11,6 +11,24 @@ use crate::progress::ProgressReporter;
 
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
 
+/// Build a ProgressReporter that forwards output lines to PipelineEvent::CommandOutput.
+fn build_output_reporter<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    node_id: &str,
+) -> ProgressReporter {
+    let reporter = ctx.reporter.clone();
+    let nid = node_id.to_string();
+    ProgressReporter::with_output(
+        |_, _| {},
+        move |line| {
+            reporter.emit(PipelineEvent::CommandOutput {
+                node_id: nid.clone(),
+                line: line.to_string(),
+            });
+        },
+    )
+}
+
 /// Resolve the processor for a node, returning a descriptive error on miss.
 fn resolve_processor<'a, F: Fn() -> u64 + Copy>(
     ctx: &'a PipelineContext<F>,
@@ -81,10 +99,9 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         params: params.clone(),
     };
 
-    // No-op per-file reporter — pipeline-level FileProgress events are
-    // emitted here directly with correct global indices.
-    let noop_reporter = ProgressReporter::new(|_, _| {});
-    let output = processor.process(input, &noop_reporter, ctx.process_ctx)?;
+    // Reporter that forwards command output lines to PipelineEvent::CommandOutput.
+    let output_reporter = build_output_reporter(ctx, node_id);
+    let output = processor.process(input, &output_reporter, ctx.process_ctx)?;
 
     emit_file_progress(
         ctx,
@@ -178,8 +195,8 @@ fn process_source<F: Fn() -> u64 + Copy>(
         params: resolved_params.clone(),
     };
 
-    let noop_reporter = ProgressReporter::new(|_, _| {});
-    let output = processor.process(input, &noop_reporter, ctx.process_ctx)?;
+    let output_reporter = build_output_reporter(ctx, &node.id);
+    let output = processor.process(input, &output_reporter, ctx.process_ctx)?;
 
     emit_file_progress(ctx, &node.id, file_offset, 100, "Complete".to_string());
 
@@ -224,8 +241,8 @@ fn process_batch<F: Fn() -> u64 + Copy>(
         params: resolved_params.clone(),
     };
 
-    let noop_reporter = ProgressReporter::new(|_, _| {});
-    let output = processor.process_batch(batch_input, &noop_reporter, ctx.process_ctx)?;
+    let output_reporter = build_output_reporter(ctx, &node.id);
+    let output = processor.process_batch(batch_input, &output_reporter, ctx.process_ctx)?;
 
     emit_file_progress(
         ctx,

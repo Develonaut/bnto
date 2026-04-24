@@ -67,6 +67,10 @@ const EVENT_HANDLERS: Record<string, (event: LoggableEvent) => void> = {
       (e as Extract<PipelineEvent, { type: "PipelineFailed" }>).error,
     );
   },
+  CommandOutput: (e) => {
+    const ev = e as Extract<PipelineEvent, { type: "CommandOutput" }>;
+    console.log("[bnto]    [%s] %s", ev.nodeId, ev.line);
+  },
   ValidationFailed: (e) => {
     console.warn("[bnto] !! Validation — %s", (e as { error: string }).error);
   },

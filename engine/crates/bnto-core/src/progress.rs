@@ -20,6 +20,9 @@ pub struct ProgressReporter {
     /// `None` = no-op mode (for tests or when progress isn't needed).
     #[allow(clippy::type_complexity)]
     callback: Option<Box<dyn Fn(u32, &str)>>,
+    /// Optional callback for streaming command output lines (stderr from child processes).
+    #[allow(clippy::type_complexity)]
+    output_callback: Option<Box<dyn Fn(&str)>>,
 }
 
 impl ProgressReporter {
@@ -46,13 +49,32 @@ impl ProgressReporter {
     pub fn new(callback: impl Fn(u32, &str) + 'static) -> Self {
         Self {
             callback: Some(Box::new(callback)),
+            output_callback: None,
         }
     }
 
     /// Create a no-op reporter that discards all progress updates.
     /// Used in tests where we don't need progress reporting.
     pub fn new_noop() -> Self {
-        Self { callback: None }
+        Self {
+            callback: None,
+            output_callback: None,
+        }
+    }
+
+    /// Create a reporter with both progress and output callbacks.
+    ///
+    /// The output callback receives streaming lines from child process stderr
+    /// (e.g. yt-dlp download progress). Used by the executor to relay
+    /// command output to PipelineEvent::CommandOutput.
+    pub fn with_output(
+        callback: impl Fn(u32, &str) + 'static,
+        output_callback: impl Fn(&str) + 'static,
+    ) -> Self {
+        Self {
+            callback: Some(Box::new(callback)),
+            output_callback: Some(Box::new(output_callback)),
+        }
     }
 
     /// Report progress to the caller.
@@ -63,6 +85,16 @@ impl ProgressReporter {
     pub fn report(&self, percent: u32, message: &str) {
         if let Some(cb) = &self.callback {
             cb(percent, message);
+        }
+    }
+
+    /// Report a line of streaming output from a child process.
+    ///
+    /// Called by processors that use `run_command_streaming()` to relay
+    /// stderr lines (e.g. yt-dlp progress) to the pipeline reporter.
+    pub fn report_output(&self, line: &str) {
+        if let Some(cb) = &self.output_callback {
+            cb(line);
         }
     }
 }
@@ -130,6 +162,31 @@ mod tests {
         assert_eq!(recorded[0], (0, "Starting...".to_string()));
         assert_eq!(recorded[1], (50, "Halfway there...".to_string()));
         assert_eq!(recorded[2], (100, "Done!".to_string()));
+    }
+
+    #[test]
+    fn report_output_calls_callback() {
+        let received: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+        let received_clone = Arc::clone(&received);
+
+        let reporter = ProgressReporter::with_output(
+            |_, _| {},
+            move |line| received_clone.lock().unwrap().push(line.to_string()),
+        );
+
+        reporter.report_output("downloading 50%");
+        reporter.report_output("downloading 100%");
+
+        let lines = received.lock().unwrap();
+        assert_eq!(lines.len(), 2);
+        assert_eq!(lines[0], "downloading 50%");
+        assert_eq!(lines[1], "downloading 100%");
+    }
+
+    #[test]
+    fn report_output_noop_doesnt_panic() {
+        let reporter = ProgressReporter::new_noop();
+        reporter.report_output("ignored");
     }
 
     #[test]

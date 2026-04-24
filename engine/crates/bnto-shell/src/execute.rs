@@ -201,7 +201,9 @@ fn process_stdout_mode(
     progress.report(10, &format!("Running {command}..."));
 
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    let output_bytes = ctx.run_command(command, &arg_refs)?;
+    let output_bytes = ctx.run_command_streaming(command, &arg_refs, &|line| {
+        progress.report_output(line);
+    })?;
 
     if output_bytes.len() > MAX_STDOUT_BYTES {
         return Err(BntoError::ProcessingFailed(format!(
@@ -257,8 +259,10 @@ fn process_file_mode(
     progress.report(10, &format!("Running {command}..."));
 
     let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
-    // Run the command — stdout is captured but we use the output dir files instead.
-    let _stdout = ctx.run_command(command, &arg_refs)?;
+    // Run the command with stderr streaming — stdout is captured but unused.
+    let _stdout = ctx.run_command_streaming(command, &arg_refs, &|line| {
+        progress.report_output(line);
+    })?;
 
     progress.report(80, "Collecting output files...");
 
