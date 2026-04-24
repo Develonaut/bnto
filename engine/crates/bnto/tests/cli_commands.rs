@@ -93,6 +93,76 @@ fn test_info_unknown_recipe() {
     );
 }
 
+// --- Dry-Run ---
+
+#[test]
+fn test_dry_run_shell_command_recipe() {
+    let output = Command::new(bnto_bin())
+        .args(["dry-run", "download-video"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Download Video"),
+        "Should show recipe name, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("yt-dlp"),
+        "Should show resolved command, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("mp4"),
+        "Should show resolved default format, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_dry_run_no_shell_commands() {
+    let output = Command::new(bnto_bin())
+        .args(["dry-run", "compress-images"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("No shell commands"),
+        "Should indicate no shell commands, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_dry_run_unknown_recipe() {
+    let output = Command::new(bnto_bin())
+        .args(["dry-run", "nonexistent-recipe"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Unknown recipe"),
+        "Should show unknown recipe error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_dry_run_with_param_override() {
+    let output = Command::new(bnto_bin())
+        .args(["dry-run", "download-video", "--param", "format=webm"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("webm"),
+        "Should show overridden format, got: {stdout}"
+    );
+    assert!(
+        !stdout.contains("mp4"),
+        "Should not show default mp4 when overridden, got: {stdout}"
+    );
+}
+
 #[test]
 fn test_doctor_command() {
     let output = Command::new(bnto_bin()).arg("doctor").output().unwrap();
