@@ -84,6 +84,7 @@ fn test_recipe_clean_csv_event_sequence() {
     if let PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
+        ..
     } = &events[0]
     {
         assert_eq!(

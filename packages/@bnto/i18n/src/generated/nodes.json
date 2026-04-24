@@ -202,6 +202,10 @@
         "label": "Timeout",
         "description": "Maximum execution time in seconds. Default: 300."
       },
+      "maxOutputSize": {
+        "label": "Max Output Size",
+        "description": "Maximum size per output file in megabytes. Default: 100 MB."
+      },
       "env": {
         "label": "Environment",
         "description": "Additional environment variables for the command."

@@ -411,6 +411,8 @@ fn handle_results_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     match key.code {
         KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Results(ResultsMessage::CursorDown)),
         KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Results(ResultsMessage::CursorUp)),
+        KeyCode::Char('o') => Some(AppMessage::OpenFile),
+        KeyCode::Char('O') => Some(AppMessage::OpenFolder),
         KeyCode::Char('r') => Some(AppMessage::RunAnother),
         _ => None,
     }

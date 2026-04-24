@@ -39,9 +39,14 @@ const DENIED_ENV_VARS: &[&str] = &[
     "TMPDIR",
 ];
 
-/// Maximum bytes of stdout to capture before killing the process.
-/// Prevents memory exhaustion from commands producing infinite output.
-pub const MAX_STDOUT_BYTES: usize = 100 * 1024 * 1024; // 100 MB
+/// Default maximum bytes per output file.
+/// Configurable per-node via the `maxOutputSize` parameter (in MB).
+pub const DEFAULT_MAX_OUTPUT_MB: u64 = 500;
+
+/// Convert a megabyte value to bytes for comparison.
+pub fn max_output_bytes(mb: u64) -> usize {
+    (mb as usize) * 1024 * 1024
+}
 
 /// Default timeout in seconds for command execution.
 pub const DEFAULT_TIMEOUT_SECS: u64 = 300;

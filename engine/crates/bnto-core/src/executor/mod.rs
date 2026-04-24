@@ -15,7 +15,7 @@ pub mod resolve;
 
 use crate::context::ProcessContext;
 use crate::errors::BntoError;
-use crate::events::{PipelineEvent, PipelineReporter};
+use crate::events::{NodeInfo, PipelineEvent, PipelineReporter};
 use crate::pipeline::{
     IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
     PipelineResult, is_container_node, is_io_node,
@@ -101,9 +101,18 @@ pub fn execute_pipeline(
         now_ms,
     };
 
+    let node_infos: Vec<NodeInfo> = processing_nodes
+        .iter()
+        .map(|n| NodeInfo {
+            id: n.id.clone(),
+            node_type: n.node_type.clone(),
+        })
+        .collect();
+
     ctx.reporter.emit(PipelineEvent::PipelineStarted {
         total_nodes: processing_nodes.len(),
         total_files: files.len(),
+        nodes: node_infos,
     });
 
     let (current_files, total_files_processed) = match definition.resolved_iteration() {

@@ -43,6 +43,7 @@ fn test_single_file_full_event_sequence() {
     if let PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
+        ..
     } = &events[0]
     {
         assert_eq!(*total_nodes, 1, "1 processing node (I/O excluded)");

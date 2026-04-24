@@ -21,6 +21,8 @@ export interface PipelineStartedEvent {
   type: "PipelineStarted";
   totalNodes: number;
   totalFiles: number;
+  /** Metadata for each processing node — lets the UI populate node types immediately. */
+  nodes: Array<{ id: string; nodeType: string }>;
 }
 
 export interface NodeStartedEvent {

@@ -145,6 +145,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 2,
+            nodes: vec![],
         });
         reporter.emit(PipelineEvent::NodeStarted {
             node_id: "n1".to_string(),
@@ -183,6 +184,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
+            nodes: vec![],
         });
         reporter.emit(PipelineEvent::NodeStarted {
             node_id: "n1".to_string(),
@@ -212,6 +214,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
+            nodes: vec![],
         });
         reporter.emit(PipelineEvent::NodeStarted {
             node_id: "n1".to_string(),

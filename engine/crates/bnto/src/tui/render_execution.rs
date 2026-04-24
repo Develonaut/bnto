@@ -1,6 +1,9 @@
 // Render the execution screen — live pipeline progress with node and file status.
+//
+// Layout: fixed-height header (status, nodes, files, errors) on top,
+// command output fills remaining space at the bottom.
 
-use ratatui::layout::Rect;
+use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
@@ -20,19 +23,27 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         return;
     };
 
-    let lines = execution_lines(exec, theme);
-    let content = Paragraph::new(lines);
-    frame.render_widget(content, inner);
+    let header = header_lines(exec, theme);
+    let header_height = header.len() as u16;
+
+    let [top, bottom] =
+        Layout::vertical([Constraint::Length(header_height), Constraint::Min(1)]).areas(inner);
+
+    frame.render_widget(Paragraph::new(header), top);
+
+    // Fill the bottom area with the most recent command output lines.
+    let output = output_lines(exec, theme, bottom.height as usize);
+    frame.render_widget(Paragraph::new(output), bottom);
 }
 
-/// Build lines for the execution screen content.
-fn execution_lines<'a>(
+/// Build header lines: status, nodes, files, errors.
+fn header_lines<'a>(
     exec: &'a super::screens::execution::ExecutionModel,
     theme: &'a Theme,
 ) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 
-    // Status + elapsed time header
+    // Status + elapsed time
     let status_label = match &exec.status {
         ExecutionStatus::Idle => "Idle",
         ExecutionStatus::Running => "Running",
@@ -47,7 +58,7 @@ fn execution_lines<'a>(
     ]));
     lines.push(Line::from(""));
 
-    // Node progress section
+    // Node progress
     if !exec.nodes.is_empty() {
         lines.push(Line::from(Span::styled("  NODES", theme.category())));
         for node in &exec.nodes {
@@ -65,7 +76,7 @@ fn execution_lines<'a>(
         lines.push(Line::from(""));
     }
 
-    // File progress section
+    // File progress
     if !exec.files.is_empty() {
         lines.push(Line::from(Span::styled("  FILES", theme.category())));
         for file in &exec.files {
@@ -83,21 +94,37 @@ fn execution_lines<'a>(
         lines.push(Line::from(""));
     }
 
-    // Command output section (streaming stderr from child processes)
-    if !exec.output_lines.is_empty() {
-        lines.push(Line::from(Span::styled("  OUTPUT", theme.category())));
-        for line in &exec.output_lines {
-            lines.push(Line::from(Span::styled(format!("  {line}"), theme.muted())));
-        }
-        lines.push(Line::from(""));
-    }
-
     // Error display
     if let Some(error) = &exec.error {
         lines.push(Line::from(Span::styled(
             format!("  Error: {error}"),
             theme.heading(),
         )));
+    }
+
+    lines
+}
+
+/// Build output lines sized to fill available height.
+fn output_lines<'a>(
+    exec: &'a super::screens::execution::ExecutionModel,
+    theme: &'a Theme,
+    available_height: usize,
+) -> Vec<Line<'a>> {
+    if exec.output_lines.is_empty() {
+        return Vec::new();
+    }
+
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(Span::styled("  OUTPUT", theme.category())));
+
+    // Reserve 1 line for the "OUTPUT" header.
+    let max_visible = available_height.saturating_sub(1);
+    let total = exec.output_lines.len();
+    let skip = total.saturating_sub(max_visible);
+
+    for line in exec.output_lines.iter().skip(skip) {
+        lines.push(Line::from(Span::styled(format!("  {line}"), theme.muted())));
     }
 
     lines

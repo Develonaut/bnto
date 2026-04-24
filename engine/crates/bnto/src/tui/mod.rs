@@ -122,6 +122,7 @@ fn run_loop(
 ) -> io::Result<()> {
     let mut model = AppModel::new(variant, recipe_json, new_recipe);
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
+    let mut execution_start: Option<Instant> = None;
 
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -193,6 +194,7 @@ fn run_loop(
                 exec.param_overrides.clone(),
                 model.config.output_dir.clone(),
             ));
+            execution_start = Some(Instant::now());
         }
 
         // Poll bridge events (non-blocking) and map to AppMessages.
@@ -242,6 +244,20 @@ fn run_loop(
             }
         }
 
+        // Emit a Tick to keep the elapsed timer live while running.
+        if let Some(start) = execution_start
+            && model
+                .execution
+                .as_ref()
+                .is_some_and(|e| e.status == ExecutionStatus::Running)
+        {
+            let elapsed_ms = start.elapsed().as_millis() as u64;
+            model = update(
+                model,
+                AppMessage::Execution(ExecutionMessage::Tick { elapsed_ms }),
+            );
+        }
+
         // Clear the bridge receiver when we've left the execution screen
         // (auto-transition fired) or user cancelled. Don't clear on Completed/Failed
         // status — the bridge thread may still be writing files and hasn't sent
@@ -253,6 +269,7 @@ fn run_loop(
                 .is_some_and(|e| e.status == ExecutionStatus::Cancelled);
             if cancelled || !matches!(model.screen, app::Screen::Execution { .. }) {
                 bridge_rx = None;
+                execution_start = None;
             }
         }
 
@@ -1340,6 +1357,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 1,
                 total_files: 1,
+                node_info: vec![],
             },
         );
         let model = AppModel {

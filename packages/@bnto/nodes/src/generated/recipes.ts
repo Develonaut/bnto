@@ -1881,6 +1881,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
             args: [
               "--no-playlist",
               "--no-warnings",
+              "--newline",
               "--merge-output-format",
               "{{fields.format}}",
               "-S",
@@ -1889,6 +1890,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
               "{{output_dir}}/%(title)s.%(ext)s",
             ],
             command: "yt-dlp",
+            maxOutputSize: 2048,
             outputMode: "file",
           },
           position: {

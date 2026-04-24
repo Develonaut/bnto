@@ -112,6 +112,7 @@ fn test_pipeline_started_excludes_io_nodes() {
     if let PipelineEvent::PipelineStarted {
         total_nodes,
         total_files,
+        ..
     } = &events[0]
     {
         assert_eq!(*total_nodes, 3, "3 processing nodes, 2 I/O excluded");
