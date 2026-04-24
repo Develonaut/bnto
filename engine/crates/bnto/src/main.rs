@@ -6,6 +6,8 @@
 //        bnto list
 //        bnto info <recipe>
 //        bnto dry-run <recipe> [--param key=value]
+//        bnto install <recipe> [--yes]
+//        bnto install --all [--yes]
 //        bnto doctor
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
@@ -14,9 +16,11 @@ mod doctor;
 mod dry_run;
 mod info;
 mod input;
+mod install;
 mod io;
 mod list;
 pub mod logging;
+mod package_manager;
 mod progress;
 pub mod telemetry;
 mod tui;
@@ -76,6 +80,20 @@ enum Command {
         param: Vec<String>,
     },
 
+    /// Install external dependencies for a recipe.
+    Install {
+        /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
+        recipe: Option<String>,
+
+        /// Skip confirmation prompt.
+        #[arg(long)]
+        yes: bool,
+
+        /// Install dependencies for all built-in recipes.
+        #[arg(long)]
+        all: bool,
+    },
+
     /// Check that all external dependencies are installed.
     Doctor,
 
@@ -122,6 +140,7 @@ fn main() {
         Some(Command::List) => "list",
         Some(Command::Info { .. }) => "info",
         Some(Command::DryRun { .. }) => "dry-run",
+        Some(Command::Install { .. }) => "install",
         Some(Command::Doctor) => "doctor",
         Some(Command::Tui { .. }) => "tui",
         Some(Command::Telemetry { .. }) => "telemetry",
@@ -155,6 +174,10 @@ fn main() {
         Some(Command::DryRun { recipe, param }) => {
             telemetry::capture(telemetry::events::cli_command("dry-run"));
             show_dry_run(&recipe, &param);
+        }
+        Some(Command::Install { recipe, yes, all }) => {
+            telemetry::capture(telemetry::events::cli_command("install"));
+            install::run_install(recipe.as_deref(), yes, all);
         }
         Some(Command::Doctor) => {
             telemetry::capture(telemetry::events::cli_command("doctor"));

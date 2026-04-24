@@ -484,6 +484,73 @@ fn test_tui_creates_session_log() {
     );
 }
 
+// --- Install ---
+
+#[test]
+fn test_install_help_flag() {
+    let output = Command::new(bnto_bin())
+        .args(["install", "--help"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("dependencies"),
+        "install help should mention dependencies, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--yes"),
+        "install help should mention --yes flag, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--all"),
+        "install help should mention --all flag, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_install_no_deps_recipe() {
+    // compress-images has no external deps — should report "no dependencies".
+    let output = Command::new(bnto_bin())
+        .args(["install", "compress-images", "--yes"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("no external dependencies"),
+        "Should report no deps, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_install_unknown_recipe() {
+    let output = Command::new(bnto_bin())
+        .args(["install", "nonexistent-recipe", "--yes"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("Unknown recipe"),
+        "Should show unknown recipe error, got: {stderr}"
+    );
+}
+
+#[test]
+fn test_install_no_args_shows_usage() {
+    let output = Command::new(bnto_bin())
+        .args(["install", "--yes"])
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("--all") || stderr.contains("Usage"),
+        "Should show usage hint, got: {stderr}"
+    );
+}
+
 // --- TUI Subcommand ---
 
 #[test]
