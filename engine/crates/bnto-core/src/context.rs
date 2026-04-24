@@ -30,8 +30,8 @@ pub trait ProcessContext: Send + Sync {
         self.run_command(cmd, args)
     }
 
-    /// Return a unique temporary file path. The file is NOT pre-created —
-    /// the caller (or external tool) is responsible for writing to it.
+    /// Return a unique temporary file path with atomic creation (mkstemp).
+    /// The file IS pre-created on disk to prevent TOCTOU races.
     fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError>;
 
     /// Read an environment variable.

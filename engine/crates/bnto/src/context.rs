@@ -102,12 +102,14 @@ impl ProcessContext for NativeContext {
     }
 
     fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
-        let dir = std::env::temp_dir();
-        let id = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos();
-        Ok(dir.join(format!("bnto-{id}{suffix}")))
+        tempfile::Builder::new()
+            .prefix("bnto-")
+            .suffix(suffix)
+            .tempfile()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to create temp file: {e}")))?
+            .into_temp_path()
+            .keep()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to persist temp file: {e}")))
     }
 
     fn env_var(&self, key: &str) -> Option<String> {
@@ -141,13 +143,33 @@ mod tests {
     }
 
     #[test]
-    fn test_native_context_temp_file() {
+    fn test_temp_file_is_created_on_disk() {
         let ctx = NativeContext::current_dir().unwrap();
-        let result = ctx.temp_file(".txt");
-        assert!(result.is_ok());
-        let path = result.unwrap();
-        assert!(path.to_string_lossy().ends_with(".txt"));
-        assert!(!path.exists()); // path is reserved, not pre-created
+        let path = ctx.temp_file(".txt").unwrap();
+        assert!(path.exists(), "temp file must be atomically created");
+        std::fs::remove_file(&path).ok();
+    }
+
+    #[test]
+    fn test_temp_file_suffix_preserved() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let path = ctx.temp_file(".txt").unwrap();
+        assert!(
+            path.to_string_lossy().ends_with(".txt"),
+            "suffix must be preserved: {path:?}"
+        );
+        std::fs::remove_file(&path).ok();
+    }
+
+    #[test]
+    fn test_temp_file_no_collisions() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let paths: std::collections::HashSet<_> =
+            (0..50).map(|_| ctx.temp_file(".dat").unwrap()).collect();
+        assert_eq!(paths.len(), 50, "all 50 paths must be unique");
+        for p in &paths {
+            std::fs::remove_file(p).ok();
+        }
     }
 
     #[test]
