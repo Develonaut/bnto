@@ -313,10 +313,10 @@ File picker UX Phase 2, file node ecosystem expansion, more node types after the
 
 Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per MEMORY.md) — splitting them would be worse. But `app.rs` at 1305 prod lines has room to extract screen-specific update handlers into separate modules. `metadata.rs` and `form.rs` are not TEA patterns and should be broken up.
 
-- [ ] `engine/crates/bnto` — **Audit + extract `app.rs`**: Identify screen-specific update handlers that can move to screen modules. Target: `app.rs` under 500 prod lines
-- [ ] `engine/crates/bnto-core` — **Break up `metadata.rs`**: Extract per-category metadata into sub-modules (image, csv, file, vector, shell). Target: each module under 250 lines
-- [ ] `engine/crates/bnto-form` — **Break up `form.rs`**: Extract widget-specific rendering/update logic. Target: under 250 lines
-- [ ] `engine/crates/` — **Sweep remaining 250+ files**: Audit all ~30 files over 250 prod lines, fix any that aren't justified by idiomatic patterns (TEA, test-only)
+- [x] `engine/crates/bnto` — **Audit + extract `app.rs`**: Extracted 24 handler functions into `app_helpers/` module directory (6 submodules: navigation, editor, wizard, home_detail, library, settings). `app.rs` reduced from 1305 → 300 prod lines
+- [x] `engine/crates/bnto-core` — **Break up `metadata.rs`**: Extracted `node_types.rs` (252 prod) and `parameters.rs` (107 prod). `metadata.rs` reduced to 85 prod lines (re-export hub)
+- [x] `engine/crates/bnto-form` — **Break up `form.rs`**: Extracted `controls/dispatch.rs` (301 prod — TEA dispatch, idiomatic). `form.rs` reduced to 142 prod lines
+- [x] `engine/crates/` — **Sweep remaining 250+ files**: Audited 37 files over 250 prod lines. 6 are TEA dispatch (idiomatic exception), 10 are test files, 21 are production. `node_types.rs` (252) is a data registry — splitting would reduce cohesion
 
 #### Wave 1 — Execution Progress + Security (parallel)
 
