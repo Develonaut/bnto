@@ -330,7 +330,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 #### Wave 3 — Infra (parallel with Wave 2)
 
-- [ ] `.github/workflows/` — **Node.js 24 GitHub Actions upgrade**: Upgrade `actions/checkout` to v5+, audit all action versions for Node.js 24 compatibility. Hard deadline: June 2, 2026. RED tests: CI passes with updated actions
+- [x] `.github/workflows/` — **Node.js 24 GitHub Actions upgrade**: Upgrade `actions/checkout` to v5+, audit all action versions for Node.js 24 compatibility. Hard deadline: June 2, 2026. RED tests: CI passes with updated actions
 
 **Sprint 14 totals: ~5 PRs, ~18 tests**
 
