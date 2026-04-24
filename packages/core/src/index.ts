@@ -85,6 +85,7 @@ export type {
   NodeFailedEvent,
   PipelineCompletedEvent,
   PipelineFailedEvent,
+  CommandOutputEvent,
 } from "./types/pipelineEvents";
 
 // ── Browser utilities (for app-layer use) ─────────────────────────────────

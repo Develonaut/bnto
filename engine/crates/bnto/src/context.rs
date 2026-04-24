@@ -3,7 +3,9 @@
 // Provides real implementations for running external commands, creating
 // temp files, reading env vars, and accessing the working directory.
 
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
@@ -31,7 +33,7 @@ impl NativeContext {
 
 impl ProcessContext for NativeContext {
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
-        let output = std::process::Command::new(cmd)
+        let output = Command::new(cmd)
             .args(args)
             .current_dir(&self.work_dir)
             .output()
@@ -45,6 +47,56 @@ impl ProcessContext for NativeContext {
                 "Command '{cmd}' failed (exit {}): {}",
                 output.status.code().unwrap_or(-1),
                 stderr.trim()
+            )))
+        }
+    }
+
+    fn run_command_streaming(
+        &self,
+        cmd: &str,
+        args: &[&str],
+        on_stderr: &dyn Fn(&str),
+    ) -> Result<Vec<u8>, BntoError> {
+        let mut child = Command::new(cmd)
+            .args(args)
+            .current_dir(&self.work_dir)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
+
+        // Collect stdout on a background thread.
+        let stdout = child.stdout.take().expect("stdout piped");
+        let stdout_handle =
+            std::thread::spawn(move || std::io::Read::bytes(stdout).flatten().collect::<Vec<u8>>());
+
+        // Stream stderr line-by-line on the caller thread.
+        let stderr = child.stderr.take().expect("stderr piped");
+        let mut stderr_lines = Vec::new();
+        for line in std::io::BufReader::new(stderr)
+            .lines()
+            .map_while(Result::ok)
+        {
+            on_stderr(&line);
+            stderr_lines.push(line);
+        }
+
+        let status = child
+            .wait()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to wait for '{cmd}': {e}")))?;
+
+        let stdout_bytes = stdout_handle.join().map_err(|_| {
+            BntoError::ProcessingFailed("stdout reader thread panicked".to_string())
+        })?;
+
+        if status.success() {
+            Ok(stdout_bytes)
+        } else {
+            let stderr_text = stderr_lines.join("\n");
+            Err(BntoError::ProcessingFailed(format!(
+                "Command '{cmd}' failed (exit {}): {}",
+                status.code().unwrap_or(-1),
+                stderr_text.trim()
             )))
         }
     }
@@ -110,6 +162,50 @@ mod tests {
         let ctx = NativeContext::current_dir().unwrap();
         let result = ctx.env_var("BNTO_NONEXISTENT_VAR_XYZ");
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn run_command_streaming_captures_stderr() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let lines = std::cell::RefCell::new(Vec::new());
+        let result =
+            ctx.run_command_streaming("sh", &["-c", "echo err >&2 && echo out"], &|line| {
+                lines.borrow_mut().push(line.to_string())
+            });
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), b"out\n");
+        assert_eq!(*lines.borrow(), vec!["err"]);
+    }
+
+    #[test]
+    fn run_command_streaming_returns_stdout() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let called = std::cell::Cell::new(false);
+        let result = ctx.run_command_streaming("echo", &["hello"], &|_| called.set(true));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), b"hello\n");
+        assert!(!called.get(), "no stderr = no callback");
+    }
+
+    #[test]
+    fn run_command_streaming_error_includes_stderr() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let lines = std::cell::RefCell::new(Vec::new());
+        let result =
+            ctx.run_command_streaming("sh", &["-c", "echo fail-info >&2 && exit 1"], &|line| {
+                lines.borrow_mut().push(line.to_string())
+            });
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("fail-info"),
+            "error should contain stderr: {err}"
+        );
+        assert_eq!(
+            *lines.borrow(),
+            vec!["fail-info"],
+            "callback should receive stderr"
+        );
     }
 
     #[test]

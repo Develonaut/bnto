@@ -320,7 +320,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 #### Wave 1 — Execution Progress + Security (parallel)
 
-- [ ] `engine/crates/bnto` — **TUI execution progress feedback**: Stream stderr from child processes in `run_command()`, surface live activity indicator (elapsed time, spinner, or parsed progress). Long-running recipes (download-video) currently show a blank screen for 10+ minutes. RED tests: stderr streaming, elapsed timer, cancellation (~5 tests)
+- [x] `engine/crates/bnto` — **TUI execution progress feedback**: Stream stderr from child processes in `run_command()`, surface live activity indicator (elapsed time, spinner, or parsed progress). Long-running recipes (download-video) currently show a blank screen for 10+ minutes. RED tests: stderr streaming, elapsed timer, cancellation (~5 tests)
 - [ ] `engine/crates/bnto-core` — **TOCTOU fix in `NativeContext::temp_file()`**: Replace nanosecond timestamp with `tempfile` crate (`mkstemp` semantics) to eliminate symlink race. RED tests: concurrent temp file creation, no collisions (~3 tests)
 - [ ] `engine/crates/bnto-shell` — **`bnto inspect <recipe>`**: Dry-run mode showing exactly which commands a recipe will execute before running. Resolves templates, shows final args. Builds trust for shell-command recipes. RED tests: inspect output format, template resolution display (~4 tests)
 

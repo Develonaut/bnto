@@ -2,7 +2,7 @@
 //
 // TEA pattern: ExecutionModel (state) + ExecutionMessage (events) + update() (pure transitions).
 
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 
 use super::results::OutputFile;
@@ -70,7 +70,12 @@ pub struct ExecutionModel {
     pub output_files: Vec<OutputFile>,
     /// Directory where output files were written.
     pub output_dir: Option<String>,
+    /// Rolling window of recent command output lines (stderr from child processes).
+    pub output_lines: VecDeque<String>,
 }
+
+/// Maximum number of command output lines to retain in the rolling window.
+const MAX_OUTPUT_LINES: usize = 10;
 
 /// Messages the execution screen can handle.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -107,6 +112,8 @@ pub enum ExecutionMessage {
         files: Vec<OutputFile>,
         output_dir: Option<String>,
     },
+    /// A line of stderr output from a running command.
+    CommandOutput { node_id: String, line: String },
     /// User pressed Esc to cancel.
     Cancel,
     /// Timer tick with current elapsed time.
@@ -127,6 +134,7 @@ impl ExecutionModel {
             param_overrides: HashMap::new(),
             output_files: Vec::new(),
             output_dir: None,
+            output_lines: VecDeque::new(),
         }
     }
 
@@ -214,6 +222,12 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
         ExecutionMessage::PipelineFailed { error, .. } => {
             model.status = ExecutionStatus::Failed;
             model.error = Some(error);
+        }
+        ExecutionMessage::CommandOutput { line, .. } => {
+            model.output_lines.push_back(line);
+            while model.output_lines.len() > MAX_OUTPUT_LINES {
+                model.output_lines.pop_front();
+            }
         }
         ExecutionMessage::OutputsReady { files, output_dir } => {
             model.output_files = files;
@@ -446,6 +460,38 @@ mod tests {
         );
         assert_eq!(m.output_files, outputs);
         assert_eq!(m.output_dir, Some("/tmp/out".into()));
+    }
+
+    #[test]
+    fn command_output_populates_output_lines() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::CommandOutput {
+                node_id: "n".into(),
+                line: "[download] 50%".into(),
+            },
+        );
+        assert_eq!(m.output_lines.len(), 1);
+        assert_eq!(m.output_lines[0], "[download] 50%");
+    }
+
+    #[test]
+    fn command_output_bounded_at_max() {
+        let mut m = ExecutionModel::new("s");
+        for i in 0..15 {
+            m = update(
+                m,
+                ExecutionMessage::CommandOutput {
+                    node_id: "n".into(),
+                    line: format!("line {i}"),
+                },
+            );
+        }
+        assert_eq!(m.output_lines.len(), MAX_OUTPUT_LINES);
+        // Oldest lines evicted — should start at line 5.
+        assert_eq!(m.output_lines[0], "line 5");
+        assert_eq!(m.output_lines[9], "line 14");
     }
 
     #[test]

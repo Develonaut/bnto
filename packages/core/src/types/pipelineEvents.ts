@@ -14,7 +14,8 @@ export type PipelineEvent =
   | NodeCompletedEvent
   | NodeFailedEvent
   | PipelineCompletedEvent
-  | PipelineFailedEvent;
+  | PipelineFailedEvent
+  | CommandOutputEvent;
 
 export interface PipelineStartedEvent {
   type: "PipelineStarted";
@@ -62,4 +63,10 @@ export interface PipelineFailedEvent {
   type: "PipelineFailed";
   nodeId: string;
   error: string;
+}
+
+export interface CommandOutputEvent {
+  type: "CommandOutput";
+  nodeId: string;
+  line: string;
 }

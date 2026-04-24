@@ -83,6 +83,15 @@ fn execution_lines<'a>(
         lines.push(Line::from(""));
     }
 
+    // Command output section (streaming stderr from child processes)
+    if !exec.output_lines.is_empty() {
+        lines.push(Line::from(Span::styled("  OUTPUT", theme.category())));
+        for line in &exec.output_lines {
+            lines.push(Line::from(Span::styled(format!("  {line}"), theme.muted())));
+        }
+        lines.push(Line::from(""));
+    }
+
     // Error display
     if let Some(error) = &exec.error {
         lines.push(Line::from(Span::styled(

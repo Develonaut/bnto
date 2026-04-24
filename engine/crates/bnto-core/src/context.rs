@@ -15,6 +15,21 @@ pub trait ProcessContext: Send + Sync {
     /// Run an external command, capturing stdout.
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError>;
 
+    /// Run an external command, streaming stderr lines via a callback.
+    ///
+    /// Like `run_command()` but calls `on_stderr` for each line of stderr
+    /// as it arrives, enabling live progress feedback from tools like yt-dlp.
+    /// Returns stdout bytes on success. Default falls back to `run_command()`.
+    fn run_command_streaming(
+        &self,
+        cmd: &str,
+        args: &[&str],
+        on_stderr: &dyn Fn(&str),
+    ) -> Result<Vec<u8>, BntoError> {
+        let _ = on_stderr;
+        self.run_command(cmd, args)
+    }
+
     /// Return a unique temporary file path. The file is NOT pre-created —
     /// the caller (or external tool) is responsible for writing to it.
     fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError>;
@@ -88,6 +103,18 @@ mod tests {
     fn test_noop_context_env_var_returns_none() {
         let ctx = NoopContext;
         assert_eq!(ctx.env_var("PATH"), None);
+    }
+
+    #[test]
+    fn test_noop_context_streaming_falls_back_to_run_command() {
+        let ctx = NoopContext;
+        let called = std::cell::Cell::new(false);
+        let result = ctx.run_command_streaming("ls", &[], &|_| called.set(true));
+        assert!(result.is_err());
+        assert!(
+            !called.get(),
+            "on_stderr should not be called in noop fallback"
+        );
     }
 
     #[test]

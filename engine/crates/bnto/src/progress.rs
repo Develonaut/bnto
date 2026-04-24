@@ -1,13 +1,17 @@
 // Progress reporting — prints pipeline events to stderr with colors.
+// Also logs command output lines via the session Logger for diagnostics.
 
 use std::cell::RefCell;
+use std::sync::Arc;
 
+use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use bnto_core::{PipelineEvent, PipelineReporter};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 
-/// Create a reporter that prints colored progress events to stderr.
-pub fn stderr_reporter() -> PipelineReporter {
+/// Create a reporter that prints colored progress events to stderr
+/// and logs command output through the session logger.
+pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.
     let bar: RefCell<Option<ProgressBar>> = RefCell::new(None);
@@ -87,6 +91,20 @@ pub fn stderr_reporter() -> PipelineReporter {
                 b.finish_and_clear();
             }
         }
+        PipelineEvent::CommandOutput { node_id, line } => {
+            // Suspend indicatif bar to print cleanly, then log for diagnostics.
+            if let Some(b) = bar.borrow().as_ref() {
+                b.suspend(|| eprintln!("        {}", line.dimmed()));
+            } else {
+                eprintln!("        {}", line.dimmed());
+            }
+            logger.log(LogEntry {
+                level: LogLevel::Debug,
+                target: "engine",
+                message: format!("[{node_id}] {line}"),
+                elapsed_us: None,
+            });
+        }
     })
 }
 
@@ -116,10 +134,14 @@ mod tests {
         assert_eq!(format_duration_short(2500), "2.5s");
     }
 
+    fn noop_logger() -> Arc<dyn Logger> {
+        Arc::new(bnto_core::logging::NoopLogger)
+    }
+
     #[test]
     fn test_stderr_reporter_handles_full_lifecycle() {
         // Verify the reporter doesn't panic on a full event sequence.
-        let reporter = stderr_reporter();
+        let reporter = stderr_reporter(noop_logger());
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 2,
@@ -156,8 +178,37 @@ mod tests {
     }
 
     #[test]
+    fn test_stderr_reporter_handles_command_output() {
+        let reporter = stderr_reporter(noop_logger());
+        reporter.emit(PipelineEvent::PipelineStarted {
+            total_nodes: 1,
+            total_files: 1,
+        });
+        reporter.emit(PipelineEvent::NodeStarted {
+            node_id: "n1".to_string(),
+            node_index: 0,
+            total_nodes: 1,
+            node_type: "shell-command".to_string(),
+        });
+        // CommandOutput events should not panic.
+        reporter.emit(PipelineEvent::CommandOutput {
+            node_id: "n1".to_string(),
+            line: "[download]  34.2% of ~150MiB".to_string(),
+        });
+        reporter.emit(PipelineEvent::NodeCompleted {
+            node_id: "n1".to_string(),
+            duration_ms: 5000,
+            files_processed: 1,
+        });
+        reporter.emit(PipelineEvent::PipelineCompleted {
+            duration_ms: 5100,
+            total_files_processed: 1,
+        });
+    }
+
+    #[test]
     fn test_stderr_reporter_handles_failure() {
-        let reporter = stderr_reporter();
+        let reporter = stderr_reporter(noop_logger());
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
