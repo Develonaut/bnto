@@ -2,27 +2,10 @@
 
 /**
  * An external binary that a processor requires at runtime.
- *
- * Pure-Rust processors (image, csv, file) have no dependencies.
- * Processors wrapping CLI tools (yt-dlp, ffmpeg) declare their
- * requirements here. The dependency checker verifies these before
- * pipeline execution; `bnto doctor` reports missing deps with install hints.
  */
 export type Dependency = {
-  /**
-   * Binary name to look up on PATH (e.g., `"yt-dlp"`, `"ffmpeg"`).
-   */
   binary: string;
-  /**
-   * Semver version constraint (e.g., `">=2023.0.0"`). Empty = any version.
-   */
   version?: string;
-  /**
-   * Human-readable install instructions (e.g., `"brew install yt-dlp"`).
-   */
   installHint: string;
-  /**
-   * Homepage URL for the tool.
-   */
   homepage?: string;
 };

@@ -2,7 +2,5 @@
 
 /**
  * Declares how a processor expects to receive files for smart iteration.
- * Used by the auto-iteration executor to partition flat node sequences
- * into implicit per-file loops.
  */
 export type InputCardinality = "perFile" | "batch" | "source";

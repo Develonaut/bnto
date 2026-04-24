@@ -4,6 +4,7 @@
 // restores the terminal on exit (including panics).
 
 pub mod app;
+mod app_helpers;
 pub mod atomic;
 mod bridge;
 pub mod config;
