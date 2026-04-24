@@ -326,7 +326,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 #### Wave 2 — Dependency UX (sequential, depends on Wave 1)
 
-- [ ] `engine/crates/bnto` — **`bnto install <recipe>`**: Auto-install recipe dependencies with OS/package manager detection (brew/apt/choco/pacman). Reads `requires` from recipe definition. RED tests: detection per OS, install command generation, already-installed skip (~6 tests)
+- [x] `engine/crates/bnto` — **`bnto install <recipe>`**: Auto-install recipe dependencies with OS/package manager detection (brew/apt/choco/pacman). Reads `requires` from recipe definition. RED tests: detection per OS, install command generation, already-installed skip (~6 tests)
 
 #### Wave 3 — Infra (parallel with Wave 2)
 
