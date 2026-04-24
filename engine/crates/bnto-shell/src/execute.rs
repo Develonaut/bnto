@@ -21,7 +21,7 @@ use bnto_core::{
     BntoError, NodeCategory, NodeMetadata, NodeProcessor, ProcessContext, ProgressReporter,
 };
 
-use crate::validate::{self, DEFAULT_TIMEOUT_SECS, MAX_STDOUT_BYTES};
+use crate::validate::{self, DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
 /// Placeholder in args that gets replaced with the temp output directory path.
 const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
@@ -118,6 +118,12 @@ impl NodeProcessor for ShellCommand {
         // The CLI injects "url" or "text" params for URL/Text mode recipes.
         resolve_input_placeholders(&mut args, &input.params);
 
+        let max_output_mb = input
+            .params
+            .get("maxOutputSize")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(DEFAULT_MAX_OUTPUT_MB);
+
         let output_mode = input
             .params
             .get("outputMode")
@@ -125,8 +131,8 @@ impl NodeProcessor for ShellCommand {
             .unwrap_or("stdout");
 
         match output_mode {
-            "file" => process_file_mode(command, &args, &input, progress, ctx),
-            _ => process_stdout_mode(command, &args, &input, progress, ctx),
+            "file" => process_file_mode(command, &args, &input, progress, ctx, max_output_mb),
+            _ => process_stdout_mode(command, &args, &input, progress, ctx, max_output_mb),
         }
     }
 
@@ -197,6 +203,7 @@ fn process_stdout_mode(
     input: &NodeInput,
     progress: &ProgressReporter,
     ctx: &dyn ProcessContext,
+    max_output_mb: u64,
 ) -> Result<NodeOutput, BntoError> {
     progress.report(10, &format!("Running {command}..."));
 
@@ -205,10 +212,10 @@ fn process_stdout_mode(
         progress.report_output(line);
     })?;
 
-    if output_bytes.len() > MAX_STDOUT_BYTES {
+    let limit = validate::max_output_bytes(max_output_mb);
+    if output_bytes.len() > limit {
         return Err(BntoError::ProcessingFailed(format!(
-            "Command output exceeded {} MB limit",
-            MAX_STDOUT_BYTES / (1024 * 1024)
+            "Command output exceeded {max_output_mb} MB limit"
         )));
     }
 
@@ -241,6 +248,7 @@ fn process_file_mode(
     _input: &NodeInput,
     progress: &ProgressReporter,
     ctx: &dyn ProcessContext,
+    max_output_mb: u64,
 ) -> Result<NodeOutput, BntoError> {
     // Create a temp directory for the command's output files.
     let temp_dir = ctx.temp_file("-output")?;
@@ -266,7 +274,7 @@ fn process_file_mode(
 
     progress.report(80, "Collecting output files...");
 
-    let files = collect_output_files(&output_dir)?;
+    let files = collect_output_files(&output_dir, max_output_mb)?;
 
     if files.is_empty() {
         return Err(BntoError::ProcessingFailed(format!(
@@ -296,7 +304,10 @@ fn process_file_mode(
 }
 
 /// Read all files from a directory as OutputFile entries.
-fn collect_output_files(dir: &std::path::Path) -> Result<Vec<OutputFile>, BntoError> {
+fn collect_output_files(
+    dir: &std::path::Path,
+    max_output_mb: u64,
+) -> Result<Vec<OutputFile>, BntoError> {
     let entries = std::fs::read_dir(dir).map_err(|e| {
         BntoError::ProcessingFailed(format!("Failed to read output directory: {e}"))
     })?;
@@ -316,10 +327,10 @@ fn collect_output_files(dir: &std::path::Path) -> Result<Vec<OutputFile>, BntoEr
             BntoError::ProcessingFailed(format!("Failed to read output file {filename}: {e}"))
         })?;
 
-        if data.len() > MAX_STDOUT_BYTES {
+        let limit = validate::max_output_bytes(max_output_mb);
+        if data.len() > limit {
             return Err(BntoError::ProcessingFailed(format!(
-                "Output file '{filename}' exceeded {} MB limit",
-                MAX_STDOUT_BYTES / (1024 * 1024)
+                "Output file '{filename}' exceeded {max_output_mb} MB limit"
             )));
         }
 
@@ -450,6 +461,26 @@ fn build_parameters() -> Vec<ParameterDef> {
             inverted: None,
         },
         ParameterDef {
+            name: "maxOutputSize".to_string(),
+            label: "Max Output Size".to_string(),
+            description: "Maximum size per output file in megabytes. Default: 100 MB.".to_string(),
+            param_type: ParameterType::Number,
+            default: Some(serde_json::Value::Number(serde_json::Number::from(
+                DEFAULT_MAX_OUTPUT_MB,
+            ))),
+            constraints: None,
+            placeholder: None,
+            visible_when: None,
+            required_when: None,
+            surfaceable: true,
+            group: None,
+            suffix: Some("MB".to_string()),
+            control: None,
+            accept: None,
+            presets: None,
+            inverted: None,
+        },
+        ParameterDef {
             name: "env".to_string(),
             label: "Environment".to_string(),
             description: "Additional environment variables for the command.".to_string(),
@@ -507,6 +538,7 @@ mod tests {
         assert!(param_names.contains(&"args"));
         assert!(param_names.contains(&"outputMode"));
         assert!(param_names.contains(&"timeout"));
+        assert!(param_names.contains(&"maxOutputSize"));
         assert!(param_names.contains(&"env"));
     }
 
@@ -656,6 +688,24 @@ mod tests {
     }
 
     #[test]
+    fn test_default_max_output_size_in_metadata() {
+        let processor = ShellCommand::new();
+        let meta = processor.metadata();
+        let param = meta
+            .parameters
+            .iter()
+            .find(|p| p.name == "maxOutputSize")
+            .expect("maxOutputSize param should exist");
+        assert_eq!(
+            param.default,
+            Some(serde_json::Value::Number(serde_json::Number::from(
+                DEFAULT_MAX_OUTPUT_MB
+            )))
+        );
+        assert_eq!(param.suffix, Some("MB".to_string()));
+    }
+
+    #[test]
     fn test_env_param_not_surfaceable() {
         let processor = ShellCommand::new();
         let meta = processor.metadata();
@@ -726,7 +776,7 @@ mod tests {
         std::fs::write(dir.join("video.mp4"), vec![0u8; 100]).unwrap();
         std::fs::write(dir.join("info.json"), b"{}").unwrap();
 
-        let files = collect_output_files(&dir).unwrap();
+        let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert_eq!(files.len(), 2);
 
         let names: Vec<&str> = files.iter().map(|f| f.filename.as_str()).collect();
@@ -750,7 +800,7 @@ mod tests {
         std::fs::create_dir_all(dir.join("subdir")).unwrap();
         std::fs::write(dir.join("file.txt"), b"data").unwrap();
 
-        let files = collect_output_files(&dir).unwrap();
+        let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].filename, "file.txt");
 
@@ -763,7 +813,7 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
 
-        let files = collect_output_files(&dir).unwrap();
+        let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert!(files.is_empty());
 
         let _ = std::fs::remove_dir_all(&dir);

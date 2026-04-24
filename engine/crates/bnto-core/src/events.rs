@@ -10,6 +10,15 @@ use serde::Serialize;
 // Pipeline Event Types
 // =============================================================================
 
+/// Lightweight node metadata included in `PipelineStarted` so the UI
+/// can show real node ids and types immediately (instead of "node-0").
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NodeInfo {
+    pub id: String,
+    pub node_type: String,
+}
+
 /// Every event the pipeline executor can emit during execution.
 ///
 /// Serialized as a tagged union with `"type"` discriminant and camelCase
@@ -25,6 +34,9 @@ pub enum PipelineEvent {
         total_nodes: usize,
         /// How many input files were provided.
         total_files: usize,
+        /// Metadata for each processing node — lets the UI populate
+        /// node types immediately instead of waiting for NodeStarted.
+        nodes: Vec<NodeInfo>,
     },
 
     /// Emitted when a processing node begins execution.
@@ -208,18 +220,33 @@ mod tests {
 
     #[test]
     fn test_pipeline_started_serializes_correctly() {
-        // Create an event and serialize it to JSON.
         let event = PipelineEvent::PipelineStarted {
             total_nodes: 3,
             total_files: 10,
+            nodes: vec![
+                NodeInfo {
+                    id: "n1".into(),
+                    node_type: "image-compress".into(),
+                },
+                NodeInfo {
+                    id: "n2".into(),
+                    node_type: "file-rename".into(),
+                },
+                NodeInfo {
+                    id: "n3".into(),
+                    node_type: "image-resize".into(),
+                },
+            ],
         };
         let json = serde_json::to_value(&event).unwrap();
 
-        // Check the JSON has the right shape:
-        // { "type": "PipelineStarted", "totalNodes": 3, "totalFiles": 10 }
         assert_eq!(json["type"], "PipelineStarted");
         assert_eq!(json["totalNodes"], 3);
         assert_eq!(json["totalFiles"], 10);
+        let nodes = json["nodes"].as_array().unwrap();
+        assert_eq!(nodes.len(), 3);
+        assert_eq!(nodes[0]["id"], "n1");
+        assert_eq!(nodes[0]["nodeType"], "image-compress");
     }
 
     #[test]
@@ -337,6 +364,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
+            nodes: vec![],
         });
         reporter2.emit(PipelineEvent::CommandOutput {
             node_id: "n".to_string(),
@@ -356,6 +384,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
+            nodes: vec![],
         });
         reporter.emit(PipelineEvent::PipelineCompleted {
             duration_ms: 100,
@@ -373,6 +402,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 2,
             total_files: 3,
+            nodes: vec![],
         });
         reporter.emit(PipelineEvent::NodeStarted {
             node_id: "n1".to_string(),
@@ -408,6 +438,7 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
+            nodes: vec![],
         });
 
         let events = received.lock().unwrap();
@@ -415,6 +446,7 @@ mod tests {
         if let PipelineEvent::PipelineStarted {
             total_nodes,
             total_files,
+            ..
         } = &events[0]
         {
             assert_eq!(*total_nodes, 1);

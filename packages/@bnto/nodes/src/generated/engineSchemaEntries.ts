@@ -252,6 +252,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "shell-command": {
     args: { control: "tagPicker" },
     timeout: { suffix: "seconds" },
+    maxOutputSize: { suffix: "MB" },
   },
   "spreadsheet-clean": {},
   "spreadsheet-convert": {

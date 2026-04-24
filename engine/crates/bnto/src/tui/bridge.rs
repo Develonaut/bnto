@@ -213,9 +213,11 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
         PipelineEvent::PipelineStarted {
             total_nodes,
             total_files,
+            nodes,
         } => AppMessage::Execution(ExecutionMessage::PipelineStarted {
             total_nodes,
             total_files,
+            node_info: nodes.into_iter().map(|n| (n.id, n.node_type)).collect(),
         }),
         PipelineEvent::NodeStarted {
             node_id, node_type, ..

@@ -55,7 +55,7 @@ impl ProcessContext for NativeContext {
         &self,
         cmd: &str,
         args: &[&str],
-        on_stderr: &dyn Fn(&str),
+        on_output: &dyn Fn(&str),
     ) -> Result<Vec<u8>, BntoError> {
         let mut child = Command::new(cmd)
             .args(args)
@@ -65,20 +65,59 @@ impl ProcessContext for NativeContext {
             .spawn()
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
 
-        // Collect stdout on a background thread.
+        // Stream stdout line-by-line on a background thread, calling the
+        // callback AND collecting raw bytes. This lets tools like yt-dlp
+        // (which send progress to stdout) show lines in the TUI while we
+        // still capture the full output for stdout mode.
         let stdout = child.stdout.take().expect("stdout piped");
-        let stdout_handle =
-            std::thread::spawn(move || std::io::Read::bytes(stdout).flatten().collect::<Vec<u8>>());
+        let (line_tx, line_rx) = std::sync::mpsc::channel::<String>();
+        let stdout_handle = std::thread::spawn(move || {
+            let reader = std::io::BufReader::new(stdout);
+            let mut raw_bytes = Vec::new();
+            for line in reader.lines().map_while(Result::ok) {
+                let _ = line_tx.send(line.clone());
+                raw_bytes.extend_from_slice(line.as_bytes());
+                raw_bytes.push(b'\n');
+            }
+            raw_bytes
+        });
 
-        // Stream stderr line-by-line on the caller thread.
+        // Stream stderr line-by-line on another background thread.
         let stderr = child.stderr.take().expect("stderr piped");
-        let mut stderr_lines = Vec::new();
-        for line in std::io::BufReader::new(stderr)
-            .lines()
-            .map_while(Result::ok)
-        {
-            on_stderr(&line);
-            stderr_lines.push(line);
+        let (stderr_tx, stderr_rx) = std::sync::mpsc::channel::<String>();
+        let stderr_handle = std::thread::spawn(move || {
+            let reader = std::io::BufReader::new(stderr);
+            let mut lines = Vec::new();
+            for line in reader.lines().map_while(Result::ok) {
+                let _ = stderr_tx.send(line.clone());
+                lines.push(line);
+            }
+            lines
+        });
+
+        // Relay lines from both streams to the callback on the caller thread.
+        // Poll both channels until both senders are dropped (threads finished).
+        let mut stdout_done = false;
+        let mut stderr_done = false;
+        while !stdout_done || !stderr_done {
+            if !stdout_done {
+                match line_rx.try_recv() {
+                    Ok(line) => on_output(&line),
+                    Err(std::sync::mpsc::TryRecvError::Disconnected) => stdout_done = true,
+                    Err(std::sync::mpsc::TryRecvError::Empty) => {}
+                }
+            }
+            if !stderr_done {
+                match stderr_rx.try_recv() {
+                    Ok(line) => on_output(&line),
+                    Err(std::sync::mpsc::TryRecvError::Disconnected) => stderr_done = true,
+                    Err(std::sync::mpsc::TryRecvError::Empty) => {}
+                }
+            }
+            // Small sleep to avoid busy-spinning when both channels are empty.
+            if !stdout_done || !stderr_done {
+                std::thread::sleep(std::time::Duration::from_millis(10));
+            }
         }
 
         let status = child
@@ -87,6 +126,10 @@ impl ProcessContext for NativeContext {
 
         let stdout_bytes = stdout_handle.join().map_err(|_| {
             BntoError::ProcessingFailed("stdout reader thread panicked".to_string())
+        })?;
+
+        let stderr_lines = stderr_handle.join().map_err(|_| {
+            BntoError::ProcessingFailed("stderr reader thread panicked".to_string())
         })?;
 
         if status.success() {
@@ -187,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn run_command_streaming_captures_stderr() {
+    fn run_command_streaming_captures_both_streams() {
         let ctx = NativeContext::current_dir().unwrap();
         let lines = std::cell::RefCell::new(Vec::new());
         let result =
@@ -196,17 +239,27 @@ mod tests {
             });
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), b"out\n");
-        assert_eq!(*lines.borrow(), vec!["err"]);
+        let captured = lines.borrow();
+        assert!(
+            captured.contains(&"err".to_string()),
+            "should capture stderr"
+        );
+        assert!(
+            captured.contains(&"out".to_string()),
+            "should capture stdout"
+        );
     }
 
     #[test]
     fn run_command_streaming_returns_stdout() {
         let ctx = NativeContext::current_dir().unwrap();
-        let called = std::cell::Cell::new(false);
-        let result = ctx.run_command_streaming("echo", &["hello"], &|_| called.set(true));
+        let lines = std::cell::RefCell::new(Vec::new());
+        let result = ctx.run_command_streaming("echo", &["hello"], &|line| {
+            lines.borrow_mut().push(line.to_string())
+        });
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), b"hello\n");
-        assert!(!called.get(), "no stderr = no callback");
+        assert_eq!(*lines.borrow(), vec!["hello"], "stdout lines relayed");
     }
 
     #[test]
@@ -223,9 +276,9 @@ mod tests {
             err.contains("fail-info"),
             "error should contain stderr: {err}"
         );
-        assert_eq!(
-            *lines.borrow(),
-            vec!["fail-info"],
+        let captured = lines.borrow();
+        assert!(
+            captured.contains(&"fail-info".to_string()),
             "callback should receive stderr"
         );
     }

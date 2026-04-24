@@ -44,6 +44,13 @@ export const shellCommandProcessor: ProcessorDef = {
       default: 300,
     },
     {
+      name: "maxOutputSize",
+      label: "Max Output Size",
+      description: "Maximum size per output file in megabytes. Default: 100 MB.",
+      type: "number" as const,
+      default: 500,
+    },
+    {
       name: "env",
       label: "Environment",
       description: "Additional environment variables for the command.",

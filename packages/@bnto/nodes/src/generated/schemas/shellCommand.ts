@@ -13,6 +13,7 @@ export const shellCommandParamsSchema = z.object({
   args: z.array(z.string()).optional(),
   outputMode: z.string().optional().default("stdout"),
   timeout: z.number().optional().default(300),
+  maxOutputSize: z.number().optional().default(500),
   env: z.record(z.unknown()).optional(),
 });
 
@@ -42,6 +43,10 @@ export const shellCommandNodeSchema: NodeSchema = {
     timeout: {
       label: "Timeout",
       description: "Maximum execution time in seconds. Default: 300.",
+    },
+    maxOutputSize: {
+      label: "Max Output Size",
+      description: "Maximum size per output file in megabytes. Default: 100 MB.",
     },
     env: {
       label: "Environment",

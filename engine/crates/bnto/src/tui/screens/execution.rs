@@ -75,7 +75,7 @@ pub struct ExecutionModel {
 }
 
 /// Maximum number of command output lines to retain in the rolling window.
-const MAX_OUTPUT_LINES: usize = 10;
+const MAX_OUTPUT_LINES: usize = 50;
 
 /// Messages the execution screen can handle.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -85,6 +85,9 @@ pub enum ExecutionMessage {
     PipelineStarted {
         total_nodes: usize,
         total_files: usize,
+        /// Pre-populated node metadata (id, type) so the UI shows real
+        /// node types immediately instead of placeholder "node-0".
+        node_info: Vec<(String, String)>,
     },
     /// A processing node began execution.
     NodeStarted { node_id: String, node_type: String },
@@ -158,6 +161,7 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
         ExecutionMessage::PipelineStarted {
             total_nodes,
             total_files,
+            node_info,
         } => {
             model.status = ExecutionStatus::Running;
             model.files = (0..total_files)
@@ -167,13 +171,25 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                     status: FileStatus::Waiting,
                 })
                 .collect();
-            model.nodes = (0..total_nodes)
-                .map(|i| NodeProgress {
-                    id: format!("node-{}", i),
-                    node_type: String::new(),
-                    status: NodeStatus::Pending,
-                })
-                .collect();
+            // Use real node metadata when available, fall back to placeholders.
+            model.nodes = if node_info.len() == total_nodes {
+                node_info
+                    .into_iter()
+                    .map(|(id, node_type)| NodeProgress {
+                        id,
+                        node_type,
+                        status: NodeStatus::Pending,
+                    })
+                    .collect()
+            } else {
+                (0..total_nodes)
+                    .map(|i| NodeProgress {
+                        id: format!("node-{}", i),
+                        node_type: String::new(),
+                        status: NodeStatus::Pending,
+                    })
+                    .collect()
+            };
         }
         ExecutionMessage::NodeStarted { node_id, node_type } => {
             if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
@@ -266,12 +282,35 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 2,
                 total_files: 3,
+                node_info: vec![],
             },
         );
         assert_eq!(m.status, ExecutionStatus::Running);
         assert_eq!(m.files.len(), 3);
         assert_eq!(m.nodes.len(), 2);
         assert!(m.files.iter().all(|f| f.status == FileStatus::Waiting));
+        assert!(m.nodes.iter().all(|n| n.status == NodeStatus::Pending));
+    }
+
+    #[test]
+    fn pipeline_started_uses_node_info_for_real_ids() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 2,
+                total_files: 1,
+                node_info: vec![
+                    ("compress".into(), "image-compress".into()),
+                    ("rename".into(), "file-rename".into()),
+                ],
+            },
+        );
+        assert_eq!(m.nodes.len(), 2);
+        assert_eq!(m.nodes[0].id, "compress");
+        assert_eq!(m.nodes[0].node_type, "image-compress");
+        assert_eq!(m.nodes[1].id, "rename");
+        assert_eq!(m.nodes[1].node_type, "file-rename");
         assert!(m.nodes.iter().all(|n| n.status == NodeStatus::Pending));
     }
 
@@ -283,6 +322,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 2,
                 total_files: 1,
+                node_info: vec![],
             },
         );
         let m = update(
@@ -305,6 +345,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 1,
                 total_files: 2,
+                node_info: vec![],
             },
         );
         let m = update(
@@ -332,6 +373,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 1,
                 total_files: 1,
+                node_info: vec![],
             },
         );
         let m = update(
@@ -362,6 +404,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 1,
                 total_files: 1,
+                node_info: vec![],
             },
         );
         let m = update(
@@ -385,6 +428,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 1,
                 total_files: 2,
+                node_info: vec![],
             },
         );
         let m = update(
@@ -423,6 +467,7 @@ mod tests {
             ExecutionMessage::PipelineStarted {
                 total_nodes: 1,
                 total_files: 1,
+                node_info: vec![],
             },
         );
         let m = update(m, ExecutionMessage::Cancel);
@@ -479,7 +524,7 @@ mod tests {
     #[test]
     fn command_output_bounded_at_max() {
         let mut m = ExecutionModel::new("s");
-        for i in 0..15 {
+        for i in 0..55 {
             m = update(
                 m,
                 ExecutionMessage::CommandOutput {
@@ -491,7 +536,7 @@ mod tests {
         assert_eq!(m.output_lines.len(), MAX_OUTPUT_LINES);
         // Oldest lines evicted — should start at line 5.
         assert_eq!(m.output_lines[0], "line 5");
-        assert_eq!(m.output_lines[9], "line 14");
+        assert_eq!(m.output_lines[49], "line 54");
     }
 
     #[test]

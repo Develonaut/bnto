@@ -72,6 +72,7 @@
         "args": [
           "--no-playlist",
           "--no-warnings",
+          "--newline",
           "--merge-output-format",
           "{{fields.format}}",
           "-S",
@@ -79,7 +80,8 @@
           "-o",
           "{{output_dir}}/%(title)s.%(ext)s"
         ],
-        "outputMode": "file"
+        "outputMode": "file",
+        "maxOutputSize": 2048
       },
       "fields": {
         "format": {

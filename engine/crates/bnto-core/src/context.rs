@@ -15,18 +15,18 @@ pub trait ProcessContext: Send + Sync {
     /// Run an external command, capturing stdout.
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError>;
 
-    /// Run an external command, streaming stderr lines via a callback.
+    /// Run an external command, streaming output lines via a callback.
     ///
-    /// Like `run_command()` but calls `on_stderr` for each line of stderr
-    /// as it arrives, enabling live progress feedback from tools like yt-dlp.
+    /// Calls `on_output` for each line of stdout and stderr as it arrives,
+    /// enabling live progress feedback from tools like yt-dlp.
     /// Returns stdout bytes on success. Default falls back to `run_command()`.
     fn run_command_streaming(
         &self,
         cmd: &str,
         args: &[&str],
-        on_stderr: &dyn Fn(&str),
+        on_output: &dyn Fn(&str),
     ) -> Result<Vec<u8>, BntoError> {
-        let _ = on_stderr;
+        let _ = on_output;
         self.run_command(cmd, args)
     }
 
@@ -113,7 +113,7 @@ mod tests {
         assert!(result.is_err());
         assert!(
             !called.get(),
-            "on_stderr should not be called in noop fallback"
+            "on_output should not be called in noop fallback"
         );
     }
 
