@@ -73,6 +73,10 @@ pub struct Definition {
     /// Only meaningful at the root of a recipe document; nested nodes omit it.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requires: Vec<crate::Dependency>,
+    /// User-facing field declarations for recipe-level controls.
+    /// When present, the TUI/editor renders these instead of raw processor params.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub fields: BTreeMap<String, crate::FieldDef>,
 }
 
 /// 2D coordinate for a node on the editor canvas.
@@ -197,6 +201,7 @@ mod tests {
             edges: None,
             settings: None,
             requires: Vec::new(),
+            fields: BTreeMap::new(),
         }
     }
 

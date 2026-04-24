@@ -65,6 +65,7 @@ impl EditorModel {
                 edges: None,
                 settings: None,
                 requires: Vec::new(),
+                fields: std::collections::BTreeMap::new(),
             })
             .collect();
 
@@ -104,6 +105,7 @@ impl EditorModel {
                 iteration: IterationMode::Auto,
             }),
             requires: Vec::new(),
+            fields: std::collections::BTreeMap::new(),
         }
     }
 }

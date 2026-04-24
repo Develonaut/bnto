@@ -69,12 +69,14 @@ mod tests {
                 edges: None,
                 settings: None,
                 requires: Vec::new(),
+                fields: std::collections::BTreeMap::new(),
             }]),
             edges: Some(vec![]),
             settings: Some(PipelineSettings {
                 iteration: IterationMode::Auto,
             }),
             requires: Vec::new(),
+            fields: std::collections::BTreeMap::new(),
         }
     }
 
