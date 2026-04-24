@@ -37,7 +37,7 @@ export const shellCommandNodeSchema: NodeSchema = {
     outputMode: {
       label: "Output Mode",
       description:
-        "How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {output_dir} in args to inject the path).",
+        "How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {{output_dir}} in args to inject the path).",
     },
     timeout: {
       label: "Timeout",

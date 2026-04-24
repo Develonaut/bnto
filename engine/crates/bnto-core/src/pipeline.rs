@@ -75,12 +75,6 @@ pub struct PipelineDefinition {
     /// Empty by default so existing recipes (without this field) still parse.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requires: Vec<crate::Dependency>,
-
-    /// Recipe-level field declarations — user-facing controls that map to
-    /// `{fields.*}` templates in node parameters. Empty by default so
-    /// existing recipes (without this field) still parse.
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub fields: BTreeMap<String, FieldDef>,
 }
 
 impl PipelineDefinition {
@@ -125,6 +119,12 @@ pub struct PipelineNode {
     /// (with `"children"`) both work.
     #[serde(alias = "nodes")]
     pub children: Option<Vec<PipelineNode>>,
+
+    /// Node-level field declarations — user-facing controls that map to
+    /// `{{fields.*}}` templates in this node's parameters. Each node is
+    /// self-contained: its fields resolve into its own params.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub fields: BTreeMap<String, FieldDef>,
 }
 
 // =============================================================================

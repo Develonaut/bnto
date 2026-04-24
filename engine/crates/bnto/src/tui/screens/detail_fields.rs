@@ -9,12 +9,14 @@ use bnto_core::metadata::{Constraints, OptionEntry, ParameterType};
 
 use super::detail::ParamEntry;
 
-/// Convert recipe-level FieldDef declarations into ParamEntry list.
+/// Convert node-level FieldDef declarations into ParamEntry list.
 ///
 /// Sorted by `order` (lower first), then alphabetically by key.
-/// When a recipe declares fields, these replace processor-extracted params.
+/// `node_id` is attached to each entry so the TUI can route overrides
+/// back to the correct node via `nodeId:key=value` format.
 pub(super) fn fields_to_params(
     fields: &std::collections::BTreeMap<String, FieldDef>,
+    node_id: &str,
 ) -> Vec<ParamEntry> {
     let mut entries: Vec<(String, &FieldDef)> =
         fields.iter().map(|(k, v)| (k.clone(), v)).collect();
@@ -22,12 +24,12 @@ pub(super) fn fields_to_params(
 
     entries
         .into_iter()
-        .map(|(name, def)| field_def_to_param(&name, def))
+        .map(|(name, def)| field_def_to_param(&name, def, node_id))
         .collect()
 }
 
 /// Convert a single FieldDef into a ParamEntry for the detail screen.
-fn field_def_to_param(name: &str, def: &FieldDef) -> ParamEntry {
+fn field_def_to_param(name: &str, def: &FieldDef, node_id: &str) -> ParamEntry {
     match def {
         FieldDef::String {
             label,
@@ -36,7 +38,7 @@ fn field_def_to_param(name: &str, def: &FieldDef) -> ParamEntry {
             placeholder,
             ..
         } => ParamEntry {
-            node_id: String::new(),
+            node_id: node_id.to_string(),
             name: name.to_string(),
             label: label.clone(),
             value: default.clone().unwrap_or_default(),
@@ -57,7 +59,7 @@ fn field_def_to_param(name: &str, def: &FieldDef) -> ParamEntry {
             suffix,
             ..
         } => ParamEntry {
-            node_id: String::new(),
+            node_id: node_id.to_string(),
             name: name.to_string(),
             label: label.clone(),
             value: default.map(|n| n.to_string()).unwrap_or_default(),
@@ -83,7 +85,7 @@ fn field_def_to_param(name: &str, def: &FieldDef) -> ParamEntry {
             default,
             ..
         } => ParamEntry {
-            node_id: String::new(),
+            node_id: node_id.to_string(),
             name: name.to_string(),
             label: label.clone(),
             value: default.map(|b| b.to_string()).unwrap_or_default(),
@@ -102,7 +104,7 @@ fn field_def_to_param(name: &str, def: &FieldDef) -> ParamEntry {
             default,
             ..
         } => ParamEntry {
-            node_id: String::new(),
+            node_id: node_id.to_string(),
             name: name.to_string(),
             label: label.clone(),
             value: default.clone().unwrap_or_default(),
@@ -152,7 +154,7 @@ mod tests {
                 order: Some(1),
             },
         );
-        let params = fields_to_params(&fields);
+        let params = fields_to_params(&fields, "test-node");
         assert_eq!(params.len(), 1);
         assert_eq!(params[0].label, "Output Format");
         assert_eq!(params[0].value, "mp4");
@@ -182,7 +184,7 @@ mod tests {
                 order: None,
             },
         );
-        let params = fields_to_params(&fields);
+        let params = fields_to_params(&fields, "test-node");
         assert_eq!(params[0].value, "80");
         assert_eq!(params[0].suffix.as_deref(), Some("%"));
         let c = params[0].constraints.as_ref().unwrap();
@@ -202,7 +204,7 @@ mod tests {
                 order: None,
             },
         );
-        let params = fields_to_params(&fields);
+        let params = fields_to_params(&fields, "test-node");
         assert_eq!(params[0].value, "true");
         assert_eq!(params[0].param_type, ParameterType::Boolean);
     }
@@ -220,7 +222,7 @@ mod tests {
                 order: None,
             },
         );
-        let params = fields_to_params(&fields);
+        let params = fields_to_params(&fields, "test-node");
         assert_eq!(params[0].description.as_deref(), Some("Enter name..."));
     }
 
@@ -257,7 +259,7 @@ mod tests {
                 order: Some(2),
             },
         );
-        let params = fields_to_params(&fields);
+        let params = fields_to_params(&fields, "test-node");
         assert_eq!(params[0].name, "alpha");
         assert_eq!(params[1].name, "beta");
         assert_eq!(params[2].name, "gamma");

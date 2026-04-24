@@ -57,8 +57,8 @@ pub mod progress;
 /// Replaces the JS-side `wasmLoader.ts` registry.
 pub mod registry;
 
-/// Recipe-level field declarations — typed user-facing controls for recipes.
-/// Field values are substituted into `{fields.*}` templates at execution time.
+/// Node-level field declarations — typed user-facing controls for nodes.
+/// Field values are substituted into `{{fields.*}}` templates at execution time.
 pub mod field_def;
 
 /// Editor state model — pure-data recipe editing state.

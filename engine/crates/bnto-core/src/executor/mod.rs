@@ -13,8 +13,6 @@ mod container;
 mod primitive;
 pub(crate) mod resolve;
 
-use std::collections::BTreeMap;
-
 use crate::context::ProcessContext;
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, PipelineReporter};
@@ -45,9 +43,6 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     pipeline_total_files: usize,
     /// Returns current time in ms (injected for testability in WASM).
     now_ms: F,
-    /// Resolved field values for `{fields.*}` template substitution.
-    /// Collected from definition's field defaults + user overrides.
-    field_values: &'a BTreeMap<String, serde_json::Value>,
 }
 
 /// Result of executing a single node or container sub-pipeline.
@@ -98,16 +93,12 @@ pub fn execute_pipeline(
 ) -> Result<PipelineResult, BntoError> {
     let start_ms = now_ms();
     let processing_nodes = filter_processing_nodes(definition);
-    // Collect field values from defaults (no user overrides at executor level —
-    // callers resolve overrides before passing the definition).
-    let field_values = resolve::collect_field_values(&definition.fields, &BTreeMap::new());
     let ctx = PipelineContext {
         registry,
         reporter,
         process_ctx,
         pipeline_total_files: files.len(),
         now_ms,
-        field_values: &field_values,
     };
 
     ctx.reporter.emit(PipelineEvent::PipelineStarted {

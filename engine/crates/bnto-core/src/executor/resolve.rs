@@ -1,15 +1,15 @@
-// Field template resolution — substitutes `{fields.*}` placeholders in node params.
+// Field template resolution — substitutes `{{fields.*}}` placeholders in node params.
 //
 // Called before passing params to a processor so templates like
-// `"{fields.format}"` become concrete values like `"mp4"`.
+// `"{{fields.format}}"` become concrete values like `"mp4"`.
 
 use std::collections::BTreeMap;
 
 use serde_json::Value;
 
-/// Substitute `{fields.*}` placeholders in all string values within params.
+/// Substitute `{{fields.*}}` placeholders in all string values within params.
 ///
-/// Walks the params map and replaces occurrences of `{fields.X}` with the
+/// Walks the params map and replaces occurrences of `{{fields.X}}` with the
 /// corresponding value from `field_values`. Non-string values pass through
 /// unchanged. Supports substitution inside array elements and nested strings
 /// containing multiple placeholders.
@@ -35,14 +35,14 @@ fn resolve_value(value: &Value, field_values: &BTreeMap<String, Value>) -> Value
     }
 }
 
-/// Resolve `{fields.*}` placeholders in a string.
+/// Resolve `{{fields.*}}` placeholders in a string.
 ///
-/// If the entire string is a single `{fields.X}` placeholder and the value
+/// If the entire string is a single `{{fields.X}}` placeholder and the value
 /// is a non-string type (number, boolean), returns the typed value directly
 /// to preserve JSON types. Otherwise, performs string interpolation.
 fn resolve_string(s: &str, field_values: &BTreeMap<String, Value>) -> Value {
     // Fast path: no placeholders.
-    if !s.contains("{fields.") {
+    if !s.contains("{{fields.") {
         return Value::String(s.to_string());
     }
 
@@ -58,7 +58,7 @@ fn resolve_string(s: &str, field_values: &BTreeMap<String, Value>) -> Value {
     // Multiple or partial placeholders — string interpolation.
     let mut result = s.to_string();
     for (key, value) in field_values {
-        let placeholder = format!("{{fields.{key}}}");
+        let placeholder = ["{{fields.", key, "}}"].concat();
         if result.contains(&placeholder) {
             let replacement = value_to_string(value);
             result = result.replace(&placeholder, &replacement);
@@ -67,11 +67,12 @@ fn resolve_string(s: &str, field_values: &BTreeMap<String, Value>) -> Value {
     Value::String(result)
 }
 
-/// If the string is exactly `{fields.X}`, return the key `X`.
+/// If the string is exactly `{{fields.X}}`, return the key `X`.
 fn extract_sole_placeholder(s: &str) -> Option<&str> {
     let trimmed = s.trim();
-    if trimmed.starts_with("{fields.") && trimmed.ends_with('}') {
-        let inner = &trimmed[8..trimmed.len() - 1];
+    if trimmed.starts_with("{{fields.") && trimmed.ends_with("}}") {
+        // "{{fields." is 9 chars, "}}" is 2 chars
+        let inner = &trimmed[9..trimmed.len() - 2];
         // Only a sole placeholder if there's no nested braces.
         if !inner.contains('{') && !inner.contains('}') {
             return Some(inner);
@@ -134,7 +135,7 @@ mod tests {
 
     #[test]
     fn simple_string_substitution() {
-        let params = make_params(&[("format", json!("{fields.format}"))]);
+        let params = make_params(&[("format", json!("{{fields.format}}"))]);
         let fields = make_fields(&[("format", json!("mp4"))]);
         let resolved = resolve_fields(&params, &fields);
         assert_eq!(resolved["format"], json!("mp4"));
@@ -142,7 +143,10 @@ mod tests {
 
     #[test]
     fn substitution_inside_array() {
-        let params = make_params(&[("args", json!(["--format", "{fields.format}", "-o", "out"]))]);
+        let params = make_params(&[(
+            "args",
+            json!(["--format", "{{fields.format}}", "-o", "out"]),
+        )]);
         let fields = make_fields(&[("format", json!("webm"))]);
         let resolved = resolve_fields(&params, &fields);
         assert_eq!(resolved["args"], json!(["--format", "webm", "-o", "out"]));
@@ -152,7 +156,7 @@ mod tests {
     fn multiple_placeholders_in_one_string() {
         let params = make_params(&[(
             "selector",
-            json!("vcodec:{fields.videoCodec},acodec:{fields.audioCodec}"),
+            json!("vcodec:{{fields.videoCodec}},acodec:{{fields.audioCodec}}"),
         )]);
         let fields = make_fields(&[("videoCodec", json!("h264")), ("audioCodec", json!("m4a"))]);
         let resolved = resolve_fields(&params, &fields);
@@ -175,15 +179,15 @@ mod tests {
 
     #[test]
     fn missing_field_leaves_placeholder() {
-        let params = make_params(&[("x", json!("{fields.missing}"))]);
+        let params = make_params(&[("x", json!("{{fields.missing}}"))]);
         let fields = make_fields(&[]);
         let resolved = resolve_fields(&params, &fields);
-        assert_eq!(resolved["x"], json!("{fields.missing}"));
+        assert_eq!(resolved["x"], json!("{{fields.missing}}"));
     }
 
     #[test]
     fn sole_placeholder_preserves_number_type() {
-        let params = make_params(&[("quality", json!("{fields.quality}"))]);
+        let params = make_params(&[("quality", json!("{{fields.quality}}"))]);
         let fields = make_fields(&[("quality", json!(80))]);
         let resolved = resolve_fields(&params, &fields);
         assert_eq!(resolved["quality"], json!(80));
@@ -192,7 +196,7 @@ mod tests {
 
     #[test]
     fn sole_placeholder_preserves_boolean_type() {
-        let params = make_params(&[("strip", json!("{fields.strip}"))]);
+        let params = make_params(&[("strip", json!("{{fields.strip}}"))]);
         let fields = make_fields(&[("strip", json!(true))]);
         let resolved = resolve_fields(&params, &fields);
         assert_eq!(resolved["strip"], json!(true));
@@ -201,7 +205,7 @@ mod tests {
 
     #[test]
     fn number_field_stringified_in_interpolation() {
-        let params = make_params(&[("label", json!("Quality: {fields.quality}%"))]);
+        let params = make_params(&[("label", json!("Quality: {{fields.quality}}%"))]);
         let fields = make_fields(&[("quality", json!(80))]);
         let resolved = resolve_fields(&params, &fields);
         assert_eq!(resolved["label"], json!("Quality: 80%"));
@@ -275,7 +279,7 @@ mod tests {
 
     #[test]
     fn nested_object_substitution() {
-        let params = make_params(&[("config", json!({"nested": "{fields.x}"}))]);
+        let params = make_params(&[("config", json!({"nested": "{{fields.x}}"}))]);
         let fields = make_fields(&[("x", json!("resolved"))]);
         let resolved = resolve_fields(&params, &fields);
         assert_eq!(resolved["config"]["nested"], json!("resolved"));

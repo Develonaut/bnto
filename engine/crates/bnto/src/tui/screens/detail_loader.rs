@@ -4,6 +4,7 @@
 // Walks recipe definition JSON, resolves processors, collects surfaceable params.
 
 use bnto_core::metadata::ParameterType;
+use bnto_core::pipeline::PipelineNode;
 use bnto_core::registry::NodeRegistry;
 use bnto_core::{InputMode, PipelineDefinition};
 use bnto_engine::recipes::builtin_recipe_by_slug;
@@ -37,13 +38,13 @@ pub fn load_detail_with_dir(
     // Parse typed definition for field declarations and input mode.
     let pipeline_def = serde_json::from_str::<PipelineDefinition>(recipe.definition_json).ok();
 
-    // If the recipe declares fields, use those instead of extracting from processors.
-    let mut params = if let Some(ref def) = pipeline_def {
-        if !def.fields.is_empty() {
-            fields_to_params(&def.fields)
-        } else {
-            extract_surfaceable_params(nodes, registry)
-        }
+    // If any node declares fields, use those instead of extracting from processors.
+    let field_params = pipeline_def
+        .as_ref()
+        .map(|def| collect_field_params(&def.nodes))
+        .unwrap_or_default();
+    let mut params = if !field_params.is_empty() {
+        field_params
     } else {
         extract_surfaceable_params(nodes, registry)
     };
@@ -86,6 +87,27 @@ pub fn load_detail_with_dir(
         input_mode,
         input_picker,
     })
+}
+
+/// Collect field params from all nodes that declare fields.
+///
+/// Walks nodes (including container children) and converts each node's
+/// fields into ParamEntries tagged with the owning node_id.
+fn collect_field_params(nodes: &[PipelineNode]) -> Vec<ParamEntry> {
+    let mut params = Vec::new();
+    collect_field_params_recursive(nodes, &mut params);
+    params
+}
+
+fn collect_field_params_recursive(nodes: &[PipelineNode], params: &mut Vec<ParamEntry>) {
+    for node in nodes {
+        if !node.fields.is_empty() {
+            params.extend(fields_to_params(&node.fields, &node.id));
+        }
+        if let Some(children) = &node.children {
+            collect_field_params_recursive(children, params);
+        }
+    }
 }
 
 /// Walk definition nodes, resolve processors, and collect surfaceable params.
@@ -246,12 +268,12 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
     let description = def_json["description"].as_str().unwrap_or("").to_string();
 
     let pipeline_def = serde_json::from_str::<PipelineDefinition>(json).ok();
-    let params = if let Some(ref def) = pipeline_def {
-        if !def.fields.is_empty() {
-            fields_to_params(&def.fields)
-        } else {
-            extract_surfaceable_params(nodes, registry)
-        }
+    let field_params = pipeline_def
+        .as_ref()
+        .map(|def| collect_field_params(&def.nodes))
+        .unwrap_or_default();
+    let params = if !field_params.is_empty() {
+        field_params
     } else {
         extract_surfaceable_params(nodes, registry)
     };
@@ -599,17 +621,21 @@ mod tests {
     // --- fields_to_params: Integration tests (unit tests in detail_fields.rs) ---
 
     #[test]
-    fn recipe_with_fields_shows_field_params() {
+    fn recipe_with_node_fields_shows_field_params() {
         let json = r#"{
             "name": "Test Recipe",
             "nodes": [
                 {"id": "input", "type": "input", "parameters": {}},
-                {"id": "proc", "type": "shell-command", "parameters": {"command": "echo"}},
+                {
+                    "id": "proc",
+                    "type": "shell-command",
+                    "parameters": {"command": "echo"},
+                    "fields": {
+                        "format": {"type":"enum","label":"Format","options":[{"value":"mp4","label":"MP4"}],"default":"mp4"}
+                    }
+                },
                 {"id": "output", "type": "output", "parameters": {}}
-            ],
-            "fields": {
-                "format": {"type":"enum","label":"Format","options":[{"value":"mp4","label":"MP4"}],"default":"mp4"}
-            }
+            ]
         }"#;
         let model = load_detail_from_json(json, &registry()).unwrap();
         assert_eq!(model.params.len(), 1);

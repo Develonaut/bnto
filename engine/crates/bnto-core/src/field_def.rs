@@ -1,10 +1,10 @@
-// Recipe-level field declarations — user-facing controls for recipes.
+// Node-level field declarations — user-facing controls for nodes.
 //
 // Fields provide an interface layer between what users see and what
-// processors consume. A recipe declares typed fields (string, number,
+// processors consume. A node declares typed fields (string, number,
 // boolean, enum) that render as form controls in the TUI/editor.
-// Field values are substituted into `{fields.*}` templates in node
-// parameters at execution time.
+// Field values are substituted into `{{fields.*}}` templates in the
+// node's parameters at execution time.
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
