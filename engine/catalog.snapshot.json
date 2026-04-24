@@ -1104,17 +1104,6 @@
           "suffix": "seconds"
         },
         {
-          "name": "maxOutputSize",
-          "label": "Max Output Size",
-          "description": "Maximum size per output file in megabytes. Default: 100 MB.",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 500,
-          "surfaceable": true,
-          "suffix": "MB"
-        },
-        {
           "name": "env",
           "label": "Environment",
           "description": "Additional environment variables for the command.",
@@ -2019,17 +2008,6 @@
           "default": 300,
           "surfaceable": true,
           "suffix": "seconds"
-        },
-        {
-          "name": "maxOutputSize",
-          "label": "Max Output Size",
-          "description": "Maximum size per output file in megabytes. Default: 100 MB.",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 500,
-          "surfaceable": true,
-          "suffix": "MB"
         },
         {
           "name": "env",
@@ -4654,7 +4632,6 @@
                 "{{output_dir}}/%(title)s.%(ext)s"
               ],
               "command": "yt-dlp",
-              "maxOutputSize": 2048,
               "outputMode": "file"
             },
             "position": {

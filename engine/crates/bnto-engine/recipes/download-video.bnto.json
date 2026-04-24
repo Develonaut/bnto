@@ -80,8 +80,7 @@
           "-o",
           "{{output_dir}}/%(title)s.%(ext)s"
         ],
-        "outputMode": "file",
-        "maxOutputSize": 2048
+        "outputMode": "file"
       },
       "fields": {
         "format": {

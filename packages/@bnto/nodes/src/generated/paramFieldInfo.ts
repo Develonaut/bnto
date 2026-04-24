@@ -132,7 +132,6 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     args: { type: "array", control: "tagPicker", required: false },
     outputMode: { type: "string", control: "text", required: false },
     timeout: { type: "number", control: "number", required: false },
-    maxOutputSize: { type: "number", control: "number", required: false },
     env: { type: "record", control: "keyValue", required: false },
   },
   "spreadsheet-clean": {
