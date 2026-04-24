@@ -22,7 +22,7 @@ These execute locally — CLI (native Rust), browser (WASM), desktop (native). C
 | `vector`    | Rust `bnto-vector` (`resvg`, `roxmltree`) | Yes | Yes     | SVG→raster conversion, SVG optimization                     |
 | `csv`       | Rust `csv` + `serde`                      | Yes | Yes     | Clean, rename columns, merge, sort, filter, convert to JSON |
 | `file`      | Rust `bnto-file`                          | Yes | Yes     | Rename (pattern/regex), zip, unzip                          |
-| `video`     | Rust `bnto-video` (yt-dlp)                | Yes | No      | Download video/audio from URLs                              |
+| `video`     | `shell-command` recipe (yt-dlp + ffmpeg)  | Yes | No      | Download video/audio from URLs                              |
 | `transform` | Rust / JS                                 | Yes | Yes     | Expression evaluation, field mapping, data transforms       |
 | `pdf`       | JS `pdf.js` + Canvas                      | TBD | TBD     | PDF to images, PDF to text                                  |
 | `archive`   | JS (JSZip) or Rust                        | TBD | TBD     | Zip/unzip operations                                        |

@@ -18,7 +18,7 @@ Bnto is workflow automation through composable parts. Each node encapsulates a s
 | Target                  | Status                 | Cost to Us  | Cost to User       |
 | ----------------------- | ---------------------- | ----------- | ------------------ |
 | **CLI** (Rust native)   | **Primary (now)**      | $0          | Free forever (OSS) |
-| **TUI** (ratatui)       | Next (Sprint 10)       | $0          | Free forever (OSS) |
+| **TUI** (ratatui)       | Delivered (Sprint 10)  | $0          | Free forever (OSS) |
 | **Browser** (Rust→WASM) | Delivered, maintenance | $0          | Free forever       |
 | **Desktop** (Tauri)     | Backlog (M4)           | $0          | Free forever       |
 | **Cloud** (server-side) | Backlog (M4)           | ~$5/mo base | Pro tier           |
@@ -53,14 +53,15 @@ M2: Platform Features                ← DELIVERED (March 2026)
     Community recipes via GitHub PRs, curated by maintainer.
 
 M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
-    CLI is the product. Dependency system DELIVERED. Video node DELIVERED.
-    ProcessContext DELIVERED. CLI commands DELIVERED. TUI DELIVERED (6 screens,
-    278 tests). Schema-driven config DELIVERED (Sprint 11). v0.5.0 shipped
-    to crates.io.
+    CLI is the product. v0.5.0 on crates.io. 15 recipes. TUI shipped
+    (7 screens, 400+ tests). Schema-driven config, data persistence,
+    Home/Library, List editor, Wizard, bnto-form widget crate — all
+    delivered. Recipe fields ({{fields.*}}) shipped. `download-video`
+    migrated to shell-command + recipe deps, `bnto-video` crate deleted.
 
-    Next: Data persistence + Home + Library (Sprint 12A), recipe-level
-    dependencies + shell-command node (Sprint 12B), then bnto-form crate
-    (Sprint 11.5), then TUI recipe editors (Sprints 12-18).
+    Next: Engine hardening + triage — execution progress feedback,
+    `bnto install`, security quick wins, recipe wave. All editor
+    sprints (14-18) deprioritized. Focus: bulletproofing current experience.
 
 M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
@@ -71,7 +72,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. TUI delivered (Sprint 10). Schema-driven config delivered (Sprint 11). Next: data persistence + Home + Library (Sprint 12A), recipe-level deps + shell-command (Sprint 12B), then bnto-form (Sprint 11.5), then recipe editors (Sprints 12-18). Desktop (M4) and monetization (M5) are backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. Sprints 10-13 delivered full TUI (7 screens, 400+ tests, List editor, Wizard, bnto-form, data persistence, Home/Library). Sprint 12B delivered recipe deps + shell-command + recipe fields. All editor sprints (14-18) deprioritized — focus on engine hardening, triage, and making the current experience bulletproof. Next priorities: TUI execution progress feedback, `bnto install`, security quick wins, next recipe wave. Desktop (M4) and monetization (M5) are deep backlog.
 
 ---
 
@@ -88,7 +89,7 @@ M5: Monetization (tabled)
 
 **Extensibility is the point.** The 15 predefined recipes are a starting point. Anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
 
-**TUI is live.** `bnto tui` launches an interactive terminal UI (ratatui + crossterm) — recipe browser, file picker, progress display, results panel. Same engine, richer interface. Sprint 10 delivered 6 screens with 278 tests. Sprint 11 adds schema-driven parameter controls.
+**TUI is live.** `bnto tui` launches an interactive terminal UI (ratatui + crossterm) — 7 screens (Home, Recipes, Library, Detail, Picker, Execution, Results), List editor with undo/redo, Wizard for guided creation, schema-driven parameter controls. 400+ tests. `bnto` (no args) launches the TUI.
 
 **Dependency system:** Node types can declare external dependencies (`yt-dlp`, `ffmpeg`, `imagemagick`). The engine checks them before pipeline execution. `bnto doctor` reports missing dependencies with install hints.
 
