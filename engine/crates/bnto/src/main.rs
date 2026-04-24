@@ -5,11 +5,13 @@
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto list
 //        bnto info <recipe>
+//        bnto dry-run <recipe> [--param key=value]
 //        bnto doctor
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
 mod context;
 mod doctor;
+mod dry_run;
 mod info;
 mod input;
 mod io;
@@ -64,6 +66,16 @@ enum Command {
         recipe: String,
     },
 
+    /// Dry-run: show exactly which commands a recipe will execute without running.
+    DryRun {
+        /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
+        recipe: String,
+
+        /// Override a field value. Format: key=value or nodeId:key=value
+        #[arg(short = 'p', long = "param")]
+        param: Vec<String>,
+    },
+
     /// Check that all external dependencies are installed.
     Doctor,
 
@@ -109,6 +121,7 @@ fn main() {
         Some(Command::Run { .. }) => "run",
         Some(Command::List) => "list",
         Some(Command::Info { .. }) => "info",
+        Some(Command::DryRun { .. }) => "dry-run",
         Some(Command::Doctor) => "doctor",
         Some(Command::Tui { .. }) => "tui",
         Some(Command::Telemetry { .. }) => "telemetry",
@@ -138,6 +151,10 @@ fn main() {
         Some(Command::Info { recipe }) => {
             telemetry::capture(telemetry::events::cli_command("info"));
             show_info(&recipe);
+        }
+        Some(Command::DryRun { recipe, param }) => {
+            telemetry::capture(telemetry::events::cli_command("dry-run"));
+            show_dry_run(&recipe, &param);
         }
         Some(Command::Doctor) => {
             telemetry::capture(telemetry::events::cli_command("doctor"));
@@ -329,6 +346,15 @@ fn show_info(slug: &str) {
         process::exit(1);
     };
     info::print_recipe_info(slug, &recipe_info);
+}
+
+fn show_dry_run(slug: &str, param_overrides: &[String]) {
+    let Some(result) = dry_run::dry_run_recipe(slug, param_overrides) else {
+        eprintln!("{} Unknown recipe: {slug}", "Error:".red());
+        eprintln!("Run {} to see available recipes.", "bnto list".cyan());
+        process::exit(1);
+    };
+    dry_run::print_dry_run(slug, &result);
 }
 
 /// Format milliseconds into a human-readable duration string.
