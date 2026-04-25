@@ -70,6 +70,10 @@ pub enum FieldKind {
         extensions: Vec<String>,
         start_home: bool,
     },
+    TextArea {
+        placeholder: Option<String>,
+        char_limit: Option<usize>,
+    },
 }
 
 /// A select option with separate display label and stored value.
@@ -116,6 +120,18 @@ impl Field {
                     abbreviate_home(&self.value)
                 }
             }
+            FieldKind::TextArea { .. } => {
+                if self.value.is_empty() {
+                    return String::new();
+                }
+                let lines: Vec<&str> = self.value.lines().collect();
+                let first = lines.first().unwrap_or(&"");
+                if lines.len() > 1 {
+                    format!("{first} ({} lines)", lines.len())
+                } else {
+                    first.to_string()
+                }
+            }
         }
     }
 }
@@ -157,9 +173,15 @@ pub enum FieldState {
         viewport_height: usize,
         nav_history: crate::file_entry::NavHistory,
     },
+    TextAreaEditing {
+        buffer: String,
+        cursor: usize,
+        line: usize,
+        scroll_offset: usize,
+    },
 }
 
-pub use crate::field_builder::{FieldBuilder, confirm, file_path, number, select, text};
+pub use crate::field_builder::{FieldBuilder, confirm, file_path, number, select, text, textarea};
 
 #[cfg(test)]
 mod tests {
@@ -396,5 +418,65 @@ mod tests {
         let path = format!("{home}/Documents/file.txt");
         let field = file_path("f").value(&path).build();
         assert_eq!(field.display_value(), "~/Documents/file.txt");
+    }
+
+    // --- TextArea tests ---
+
+    #[test]
+    fn test_field_builder_textarea() {
+        let field = textarea("notes").label("Notes").build();
+        assert_eq!(field.id, "notes");
+        assert!(matches!(field.kind, FieldKind::TextArea { .. }));
+    }
+
+    #[test]
+    fn test_field_builder_textarea_defaults() {
+        let field = textarea("t").build();
+        match &field.kind {
+            FieldKind::TextArea {
+                placeholder,
+                char_limit,
+            } => {
+                assert!(placeholder.is_none());
+                assert!(char_limit.is_none());
+            }
+            _ => panic!("expected TextArea kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_textarea_with_options() {
+        let field = textarea("t")
+            .placeholder("Enter text")
+            .char_limit(500)
+            .build();
+        match &field.kind {
+            FieldKind::TextArea {
+                placeholder,
+                char_limit,
+            } => {
+                assert_eq!(placeholder.as_deref(), Some("Enter text"));
+                assert_eq!(*char_limit, Some(500));
+            }
+            _ => panic!("expected TextArea kind"),
+        }
+    }
+
+    #[test]
+    fn test_display_value_textarea_empty() {
+        let field = textarea("t").build();
+        assert_eq!(field.display_value(), "");
+    }
+
+    #[test]
+    fn test_display_value_textarea_single_line() {
+        let field = textarea("t").value("hello world").build();
+        assert_eq!(field.display_value(), "hello world");
+    }
+
+    #[test]
+    fn test_display_value_textarea_multi_line() {
+        let field = textarea("t").value("line1\nline2\nline3").build();
+        assert_eq!(field.display_value(), "line1 (3 lines)");
     }
 }

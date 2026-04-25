@@ -77,6 +77,11 @@ pub enum FormMessage {
         entries: Vec<FileEntry>,
     },
 
+    // --- TextArea ---
+    TextAreaNewline,
+    TextAreaCursorUp,
+    TextAreaCursorDown,
+
     // --- Viewport ---
     Resize {
         height: usize,

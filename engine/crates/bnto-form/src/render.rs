@@ -131,6 +131,9 @@ fn render_field_inline(
         crate::field::FieldKind::FilePath { .. } => {
             widgets::file_path::render(field, focused, theme)
         }
+        crate::field::FieldKind::TextArea { .. } => {
+            widgets::text_area::render(field, focused, theme)
+        }
     }
 }
 

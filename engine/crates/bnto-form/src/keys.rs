@@ -15,6 +15,7 @@ pub fn map_key_event(key: KeyEvent, model: &FormModel) -> Option<FormMessage> {
 
     match &field.state {
         FieldState::TextEditing { .. } | FieldState::NumberEditing { .. } => map_editing_key(key),
+        FieldState::TextAreaEditing { .. } => map_text_area_editing_key(key),
         FieldState::SelectExpanded { .. } => map_select_expanded_key(key),
         FieldState::FilePathBrowsing { .. } => map_file_path_browsing_key(key),
         FieldState::Idle => map_idle_key(key, &field.kind),
@@ -37,6 +38,27 @@ fn map_editing_key(key: KeyEvent) -> Option<FormMessage> {
         (KeyCode::Left, KeyModifiers::CONTROL) => Some(FormMessage::CursorWordBack),
         (KeyCode::Right, KeyModifiers::CONTROL) => Some(FormMessage::CursorWordForward),
         (KeyCode::Char('w'), KeyModifiers::CONTROL) => Some(FormMessage::DeleteWordBack),
+        _ => None,
+    }
+}
+
+fn map_text_area_editing_key(key: KeyEvent) -> Option<FormMessage> {
+    match (key.code, key.modifiers) {
+        (KeyCode::Esc, _) => Some(FormMessage::CancelEdit),
+        // Ctrl+D commits (Enter inserts newline)
+        (KeyCode::Char('d'), KeyModifiers::CONTROL) => Some(FormMessage::CommitEdit),
+        (KeyCode::Enter, _) => Some(FormMessage::TextAreaNewline),
+        (KeyCode::Up, _) => Some(FormMessage::TextAreaCursorUp),
+        (KeyCode::Down, _) => Some(FormMessage::TextAreaCursorDown),
+        (KeyCode::Left, KeyModifiers::NONE) => Some(FormMessage::CursorLeft),
+        (KeyCode::Right, KeyModifiers::NONE) => Some(FormMessage::CursorRight),
+        (KeyCode::Home, _) => Some(FormMessage::CursorHome),
+        (KeyCode::End, _) => Some(FormMessage::CursorEnd),
+        (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT) => {
+            Some(FormMessage::EditChar(c))
+        }
+        (KeyCode::Backspace, KeyModifiers::NONE) => Some(FormMessage::EditBackspace),
+        (KeyCode::Delete, KeyModifiers::NONE) => Some(FormMessage::DeleteForward),
         _ => None,
     }
 }
@@ -334,5 +356,66 @@ mod tests {
             map_key_event(key(KeyCode::Char('h')), &model),
             Some(FormMessage::FilePathParentDir)
         );
+    }
+
+    // --- TextAreaEditing tests ---
+
+    fn text_area_editing_model() -> FormModel {
+        use crate::field::textarea;
+        let mut model = FormModel::new(vec![textarea("notes").build()]);
+        model.fields[0].state = FieldState::TextAreaEditing {
+            buffer: "hello\nworld".to_string(),
+            cursor: 0,
+            line: 0,
+            scroll_offset: 0,
+        };
+        model
+    }
+
+    #[test]
+    fn test_textarea_enter_inserts_newline() {
+        let model = text_area_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Enter), &model),
+            Some(FormMessage::TextAreaNewline)
+        );
+    }
+
+    #[test]
+    fn test_textarea_ctrl_d_commits() {
+        let model = text_area_editing_model();
+        assert_eq!(
+            map_key_event(ctrl_key(KeyCode::Char('d')), &model),
+            Some(FormMessage::CommitEdit)
+        );
+    }
+
+    #[test]
+    fn test_textarea_esc_cancels() {
+        let model = text_area_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Esc), &model),
+            Some(FormMessage::CancelEdit)
+        );
+    }
+
+    #[test]
+    fn test_textarea_up_down_cursor() {
+        let model = text_area_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Up), &model),
+            Some(FormMessage::TextAreaCursorUp)
+        );
+        assert_eq!(
+            map_key_event(key(KeyCode::Down), &model),
+            Some(FormMessage::TextAreaCursorDown)
+        );
+    }
+
+    #[test]
+    fn test_textarea_char_input() {
+        let model = text_area_editing_model();
+        let k = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::NONE);
+        assert_eq!(map_key_event(k, &model), Some(FormMessage::EditChar('x')));
     }
 }

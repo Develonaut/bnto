@@ -66,23 +66,21 @@ impl FieldBuilder {
     }
 
     pub fn placeholder(mut self, placeholder: &str) -> Self {
-        if let FieldKind::Text {
-            placeholder: ref mut p,
-            ..
-        } = self.kind
-        {
-            *p = Some(placeholder.to_string());
+        match &mut self.kind {
+            FieldKind::Text { placeholder: p, .. } | FieldKind::TextArea { placeholder: p, .. } => {
+                *p = Some(placeholder.to_string());
+            }
+            _ => {}
         }
         self
     }
 
     pub fn char_limit(mut self, limit: usize) -> Self {
-        if let FieldKind::Text {
-            char_limit: ref mut c,
-            ..
-        } = self.kind
-        {
-            *c = Some(limit);
+        match &mut self.kind {
+            FieldKind::Text { char_limit: c, .. } | FieldKind::TextArea { char_limit: c, .. } => {
+                *c = Some(limit);
+            }
+            _ => {}
         }
         self
     }
@@ -236,6 +234,17 @@ pub fn file_path(id: &str) -> FieldBuilder {
         FieldKind::FilePath {
             extensions: Vec::new(),
             start_home: true,
+        },
+    )
+}
+
+/// Start building a multi-line text area field.
+pub fn textarea(id: &str) -> FieldBuilder {
+    FieldBuilder::new(
+        id,
+        FieldKind::TextArea {
+            placeholder: None,
+            char_limit: None,
         },
     )
 }

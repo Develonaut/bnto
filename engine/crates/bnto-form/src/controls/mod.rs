@@ -3,4 +3,6 @@
 
 pub(crate) mod dispatch;
 pub mod file_path;
+pub mod fuzzy;
+pub mod text_area;
 pub mod text_input;
