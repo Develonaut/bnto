@@ -194,22 +194,38 @@ jobs:
       - name: "Test: @bnto/web"
         run: pnpm --filter @bnto/web run test
 
+  # ── Validate release workflow matches workspace crates ──
+  crate-publish-check:
+    name: Crate Publish List
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate crate publish list
+        run: ./scripts/check-crate-publish-list.sh
+
   # Gate job — single status check for branch protection.
   # Accepts skipped jobs when their surface didn't change.
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [detect-changes, rust, typescript]
+    needs: [detect-changes, rust, typescript, crate-publish-check]
     if: always()
     steps:
       - name: Check job results
         run: |
           rust="${{ needs.rust.result }}"
           ts="${{ needs.typescript.result }}"
+          crates="${{ needs.crate-publish-check.result }}"
           engine="${{ needs.detect-changes.outputs.engine }}"
           web="${{ needs.detect-changes.outputs.web }}"
 
           failed=0
+
+          # Crate publish list is always required
+          if [ "$crates" != "success" ]; then
+            echo "FAILED: Crate Publish List = $crates"
+            failed=1
+          fi
 
           # Rust is required when engine files changed
           if [ "$engine" = "true" ] && [ "$rust" != "success" ]; then
@@ -228,6 +244,7 @@ jobs:
           fi
 
           echo "CI Gate passed."
+          echo "  Crates:     $crates"
           echo "  Rust:       $rust (engine_changed: $engine)"
           echo "  TypeScript: $ts (web_changed: $web)"
 
