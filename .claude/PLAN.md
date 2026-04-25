@@ -795,6 +795,12 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 6. **Network capability classification** — Classify recipes as local-only vs network-capable. Warn on network binaries (`curl`, `wget`, `nc`, `ssh`). Future: outbound domain allowlist
 7. **Recipe signatures** — Sign built-in recipes. Unsigned community recipes trigger warnings. Foundation for verified registry
 
+### Triage: TUI Controls — Bubbles-Inspired UX Overhaul
+
+**Priority: Triage.** Improve `bnto-form` controls and file picker to match [Charm Bubbles](https://github.com/charmbracelet/bubbles) quality. Key changes: display/edit mode for form fields (compact inline value, focused edit view on Enter), FilePath as a form control (shows path inline, opens browser on activation), picker search/filter + metadata columns + breadcrumb path, Select with fuzzy matching, TextArea field type. Strategy doc: [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md). ~7 tasks, ~35 tests.
+
+`engine/crates/bnto-form`, `engine/crates/bnto`
+
 ---
 
 ## Reference
