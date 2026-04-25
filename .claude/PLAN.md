@@ -345,13 +345,13 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 #### Wave 1 — Form Control Interaction Model (sequential)
 
 - [x] `engine/crates/bnto-form` — **Display/Edit mode for form fields**: Each field renders a compact display line (label + value). Enter opens edit mode (full control). Enter/Esc returns to display. RED tests: display rendering, mode transitions, value preservation (~6 tests)
-- [ ] `engine/crates/bnto-form` — **FilePath field type**: New `FieldKind::FilePath` renders as path string in display mode. Edit mode opens inline directory browser (picker logic extracted into bnto-form). RED tests: display, browser nav, file selection, ext filter (~8 tests)
+- [x] `engine/crates/bnto-form` — **FilePath field type**: New `FieldKind::FilePath` renders as path string in display mode. Edit mode opens inline directory browser (picker logic extracted into bnto-form). RED tests: display, browser nav, file selection, ext filter (~8 tests)
 
 #### Wave 2 — Picker Polish (parallel with Wave 1 completion)
 
-- [ ] `engine/crates/bnto` — **Picker search/filter**: Inline text search filters entries by filename (case-insensitive). Backspace clears. Shows match count. RED tests: filter narrows, clear restores, empty state (~5 tests)
-- [ ] `engine/crates/bnto` — **Picker file metadata columns**: Aligned perms + human-readable sizes. Toggle with `p`. Symlink `->` indicator. RED tests: size format, perms display, symlink indicator (~4 tests)
-- [ ] `engine/crates/bnto` — **Picker breadcrumb path**: Styled path segments replacing plain directory string. Current dir highlighted. RED tests: breadcrumb rendering, segment styling (~3 tests)
+- [x] `engine/crates/bnto` — **Picker search/filter**: Inline text search filters entries by filename (case-insensitive). Backspace clears. Shows match count. RED tests: filter narrows, clear restores, empty state (~5 tests)
+- [x] `engine/crates/bnto` — **Picker file metadata columns**: Aligned perms + human-readable sizes. Toggle with `p`. Symlink `->` indicator. RED tests: size format, perms display, symlink indicator (~4 tests)
+- [x] `engine/crates/bnto` — **Picker breadcrumb path**: Styled path segments replacing plain directory string. Current dir highlighted. RED tests: breadcrumb rendering, segment styling (~3 tests)
 
 #### Wave 3 — Form Control Refinements (depends on Wave 1)
 

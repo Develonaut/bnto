@@ -23,7 +23,18 @@ pub fn load_entries(dir: &Path, extensions: &[String], show_hidden: bool) -> Vec
         }
 
         let path = entry.path();
+        let symlink_meta = std::fs::symlink_metadata(&path).ok();
+        let is_symlink = symlink_meta.as_ref().is_some_and(|m| m.is_symlink());
         let is_dir = path.is_dir();
+
+        let permissions = symlink_meta.as_ref().map(format_permissions);
+        let symlink_target = if is_symlink {
+            std::fs::read_link(&path)
+                .ok()
+                .map(|t| t.to_string_lossy().to_string())
+        } else {
+            None
+        };
 
         if is_dir {
             dirs.push(FileEntry {
@@ -31,6 +42,8 @@ pub fn load_entries(dir: &Path, extensions: &[String], show_hidden: bool) -> Vec
                 is_dir,
                 path,
                 size: None,
+                permissions,
+                symlink_target,
             });
         } else if matches_extensions(&name, extensions) {
             let size = std::fs::metadata(&path).ok().map(|m| m.len());
@@ -39,6 +52,8 @@ pub fn load_entries(dir: &Path, extensions: &[String], show_hidden: bool) -> Vec
                 is_dir: false,
                 path,
                 size,
+                permissions,
+                symlink_target,
             });
         }
     }
@@ -48,6 +63,40 @@ pub fn load_entries(dir: &Path, extensions: &[String], show_hidden: bool) -> Vec
 
     dirs.extend(files);
     dirs
+}
+
+/// Format file permissions as a Unix-style string (e.g., "rwxr-xr-x").
+#[cfg(unix)]
+fn format_permissions(meta: &std::fs::Metadata) -> String {
+    use std::os::unix::fs::PermissionsExt;
+    let mode = meta.permissions().mode();
+    format_mode(mode)
+}
+
+/// Format a Unix mode integer as a 9-character permission string.
+#[cfg(unix)]
+pub fn format_mode(mode: u32) -> String {
+    let mut s = String::with_capacity(9);
+    for &(bit, ch) in &[
+        (0o400, 'r'),
+        (0o200, 'w'),
+        (0o100, 'x'),
+        (0o040, 'r'),
+        (0o020, 'w'),
+        (0o010, 'x'),
+        (0o004, 'r'),
+        (0o002, 'w'),
+        (0o001, 'x'),
+    ] {
+        s.push(if mode & bit != 0 { ch } else { '-' });
+    }
+    s
+}
+
+/// Non-Unix stub — returns empty string.
+#[cfg(not(unix))]
+fn format_permissions(_meta: &std::fs::Metadata) -> String {
+    String::new()
 }
 
 /// Check if a filename matches any of the allowed extensions.
@@ -200,5 +249,14 @@ mod tests {
         let registry = bnto_engine::create_registry();
         let exts = extensions_for_recipe("nonexistent-recipe", &registry);
         assert!(exts.is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn format_mode_standard_permissions() {
+        assert_eq!(format_mode(0o755), "rwxr-xr-x");
+        assert_eq!(format_mode(0o644), "rw-r--r--");
+        assert_eq!(format_mode(0o777), "rwxrwxrwx");
+        assert_eq!(format_mode(0o000), "---------");
     }
 }

@@ -28,6 +28,13 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         return handle_browser_key(model, key);
     }
 
+    // Picker search mode captures all keys (like browser search).
+    let picker_searching = matches!(&model.screen, Screen::Picker { .. }
+        if model.picker.as_ref().is_some_and(|p| p.searching));
+    if picker_searching {
+        return handle_picker_key(model, key);
+    }
+
     // Library search/rename/delete modes capture all keys.
     let library_modal = matches!(&model.screen, Screen::Library
         if model.library.as_ref().is_some_and(|l|
@@ -332,8 +339,29 @@ fn handle_detail_run_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> 
 }
 
 /// Handle key events on the Picker screen.
+///
+/// When search mode is active, character keys type into the query and
+/// navigation is limited to cursor + Esc. Otherwise, full picker keys apply.
 fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let picker = model.picker.as_ref()?;
+
+    // Search mode captures text input (same pattern as browser/library).
+    if picker.searching {
+        return match key.code {
+            KeyCode::Esc => Some(AppMessage::Picker(PickerMessage::ExitSearch)),
+            KeyCode::Backspace => Some(AppMessage::Picker(PickerMessage::SearchBackspace)),
+            KeyCode::Char('u')
+                if key
+                    .modifiers
+                    .contains(crossterm::event::KeyModifiers::CONTROL) =>
+            {
+                Some(AppMessage::Picker(PickerMessage::SearchClear))
+            }
+            KeyCode::Char(ch) => Some(AppMessage::Picker(PickerMessage::SearchInput(ch))),
+            _ => None,
+        };
+    }
+
     let on_dir = picker.cursor < picker.entries.len() && picker.entries[picker.cursor].is_dir;
 
     match key.code {
@@ -356,6 +384,8 @@ fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('K') | KeyCode::PageUp => Some(AppMessage::Picker(PickerMessage::PageUp)),
         KeyCode::Char('.') => Some(AppMessage::Picker(PickerMessage::ToggleHidden)),
         KeyCode::Char('a') => Some(AppMessage::Picker(PickerMessage::SelectAll)),
+        KeyCode::Char('/') => Some(AppMessage::Picker(PickerMessage::EnterSearch)),
+        KeyCode::Char('p') => Some(AppMessage::Picker(PickerMessage::ToggleMetadata)),
         KeyCode::Tab => {
             if model.settings_picker_field.is_some() {
                 Some(AppMessage::SettingsPathConfirmed)

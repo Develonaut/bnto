@@ -15,6 +15,10 @@ pub struct FileEntry {
     pub is_dir: bool,
     pub path: PathBuf,
     pub size: Option<u64>,
+    /// Unix permissions string (e.g., "rwxr-xr-x"). None on non-Unix.
+    pub permissions: Option<String>,
+    /// Symlink target path, if this entry is a symlink.
+    pub symlink_target: Option<String>,
 }
 
 /// File picker screen state — directory listing with multi-select.
@@ -40,6 +44,12 @@ pub struct PickerModel {
     pub viewport_height: usize,
     /// Cursor/offset snapshots for parent directory navigation.
     pub nav_history: NavHistory,
+    /// Current search/filter query (empty = no filter active).
+    pub query: String,
+    /// Whether search mode is active (captures key input).
+    pub searching: bool,
+    /// Whether to show file metadata columns (permissions, symlink target).
+    pub show_metadata: bool,
 }
 
 /// Messages the picker screen can handle.
@@ -65,6 +75,18 @@ pub enum PickerMessage {
     Resize {
         height: usize,
     },
+    /// Enter search mode — `/` key.
+    EnterSearch,
+    /// Exit search mode — Esc while searching.
+    ExitSearch,
+    /// Append a character to the search query.
+    SearchInput(char),
+    /// Delete the last character from the search query.
+    SearchBackspace,
+    /// Clear the entire search query (Ctrl+U).
+    SearchClear,
+    /// Toggle file metadata column display (permissions, symlinks).
+    ToggleMetadata,
 }
 
 /// Result of confirming the picker — selected file paths.
@@ -92,6 +114,9 @@ impl PickerModel {
             viewport_offset: 0,
             viewport_height: 20,
             nav_history: NavHistory::new(),
+            query: String::new(),
+            searching: false,
+            show_metadata: false,
         }
     }
 
@@ -109,6 +134,9 @@ impl PickerModel {
             viewport_offset: 0,
             viewport_height: 20,
             nav_history: NavHistory::new(),
+            query: String::new(),
+            searching: false,
+            show_metadata: false,
         }
     }
 
@@ -131,7 +159,25 @@ impl PickerModel {
             viewport_offset: 0,
             viewport_height: 20,
             nav_history: NavHistory::new(),
+            query: String::new(),
+            searching: false,
+            show_metadata: false,
         }
+    }
+
+    /// Return entries filtered by the current search query.
+    ///
+    /// When the query is empty, returns all entries unchanged.
+    /// Directories always pass the filter so navigation stays available.
+    pub fn filtered_entries(&self) -> Vec<&FileEntry> {
+        if self.query.is_empty() {
+            return self.entries.iter().collect();
+        }
+        let query_lower = self.query.to_lowercase();
+        self.entries
+            .iter()
+            .filter(|e| e.is_dir || e.name.to_lowercase().contains(&query_lower))
+            .collect()
     }
 
     /// Collect selected file paths for execution.
@@ -156,32 +202,23 @@ mod tests {
 
     // --- Test helpers ---
 
+    fn file_entry(name: &str, is_dir: bool, size: Option<u64>) -> FileEntry {
+        FileEntry {
+            name: name.into(),
+            is_dir,
+            path: PathBuf::from(format!("/home/user/{name}")),
+            size,
+            permissions: None,
+            symlink_target: None,
+        }
+    }
+
     fn sample_entries() -> Vec<FileEntry> {
         vec![
-            FileEntry {
-                name: "docs".into(),
-                is_dir: true,
-                path: PathBuf::from("/home/user/docs"),
-                size: None,
-            },
-            FileEntry {
-                name: "photos".into(),
-                is_dir: true,
-                path: PathBuf::from("/home/user/photos"),
-                size: None,
-            },
-            FileEntry {
-                name: "cat.jpg".into(),
-                is_dir: false,
-                path: PathBuf::from("/home/user/cat.jpg"),
-                size: Some(290_000),
-            },
-            FileEntry {
-                name: "dog.png".into(),
-                is_dir: false,
-                path: PathBuf::from("/home/user/dog.png"),
-                size: Some(150_000),
-            },
+            file_entry("docs", true, None),
+            file_entry("photos", true, None),
+            file_entry("cat.jpg", false, Some(290_000)),
+            file_entry("dog.png", false, Some(150_000)),
         ]
     }
 
@@ -198,12 +235,11 @@ mod tests {
     fn big_picker() -> PickerModel {
         let mut entries = Vec::new();
         for i in 0..30 {
-            entries.push(FileEntry {
-                name: format!("file_{i:02}.jpg"),
-                is_dir: false,
-                path: PathBuf::from(format!("/home/user/file_{i:02}.jpg")),
-                size: Some(1000 * (i as u64 + 1)),
-            });
+            entries.push(file_entry(
+                &format!("file_{i:02}.jpg"),
+                false,
+                Some(1000 * (i as u64 + 1)),
+            ));
         }
         let mut m = PickerModel::from_test_data(
             "compress-images",
@@ -480,5 +516,122 @@ mod tests {
         assert_eq!(m.viewport_height, 5);
         assert!(m.cursor >= m.viewport_offset);
         assert!(m.cursor < m.viewport_offset + m.viewport_height);
+    }
+
+    // --- Search / filter ---
+
+    #[test]
+    fn enter_search_activates_search_mode() {
+        let m = picker();
+        assert!(!m.searching);
+        let m = update(m, PickerMessage::EnterSearch);
+        assert!(m.searching);
+    }
+
+    #[test]
+    fn exit_search_deactivates_but_keeps_query() {
+        let mut m = picker();
+        m.searching = true;
+        m.query = "cat".into();
+        let m = update(m, PickerMessage::ExitSearch);
+        assert!(!m.searching);
+        assert_eq!(m.query, "cat");
+    }
+
+    #[test]
+    fn search_input_appends_characters() {
+        let m = picker();
+        let m = update(m, PickerMessage::EnterSearch);
+        let m = update(m, PickerMessage::SearchInput('c'));
+        let m = update(m, PickerMessage::SearchInput('a'));
+        assert_eq!(m.query, "ca");
+    }
+
+    #[test]
+    fn search_backspace_removes_last_char() {
+        let mut m = picker();
+        m.searching = true;
+        m.query = "cat".into();
+        let m = update(m, PickerMessage::SearchBackspace);
+        assert_eq!(m.query, "ca");
+    }
+
+    #[test]
+    fn search_backspace_on_empty_exits_search() {
+        let mut m = picker();
+        m.searching = true;
+        m.query = String::new();
+        let m = update(m, PickerMessage::SearchBackspace);
+        assert!(!m.searching);
+    }
+
+    #[test]
+    fn search_clear_empties_query() {
+        let mut m = picker();
+        m.searching = true;
+        m.query = "cat".into();
+        let m = update(m, PickerMessage::SearchClear);
+        assert!(m.query.is_empty());
+        assert!(m.searching, "should stay in search mode after clear");
+    }
+
+    #[test]
+    fn filtered_entries_narrows_by_name() {
+        let mut m = picker();
+        m.query = "cat".into();
+        let filtered = m.filtered_entries();
+        let names: Vec<&str> = filtered.iter().map(|e| e.name.as_str()).collect();
+        assert!(names.contains(&"cat.jpg"));
+        assert!(!names.contains(&"dog.png"));
+    }
+
+    #[test]
+    fn filtered_entries_is_case_insensitive() {
+        let mut m = picker();
+        m.query = "CAT".into();
+        let filtered = m.filtered_entries();
+        let names: Vec<&str> = filtered.iter().map(|e| e.name.as_str()).collect();
+        assert!(names.contains(&"cat.jpg"));
+    }
+
+    #[test]
+    fn filtered_entries_always_includes_dirs() {
+        let mut m = picker();
+        m.query = "cat".into();
+        let filtered = m.filtered_entries();
+        let dirs: Vec<&str> = filtered
+            .iter()
+            .filter(|e| e.is_dir)
+            .map(|e| e.name.as_str())
+            .collect();
+        assert_eq!(dirs.len(), 2, "dirs should always pass filter");
+    }
+
+    #[test]
+    fn filtered_entries_no_query_returns_all() {
+        let m = picker();
+        let filtered = m.filtered_entries();
+        assert_eq!(filtered.len(), m.entries.len());
+    }
+
+    #[test]
+    fn search_input_resets_cursor_to_zero() {
+        let mut m = picker();
+        m.cursor = 3;
+        m.searching = true;
+        let m = update(m, PickerMessage::SearchInput('c'));
+        assert_eq!(m.cursor, 0, "cursor should reset when query changes");
+    }
+
+    // --- Metadata toggle ---
+
+    #[test]
+    fn toggle_metadata_flips_flag() {
+        let m = picker();
+        assert!(!m.show_metadata);
+        let m = update(m, PickerMessage::ToggleMetadata);
+        assert!(m.show_metadata);
+        let m = update(m, PickerMessage::ToggleMetadata);
+        assert!(!m.show_metadata);
     }
 }

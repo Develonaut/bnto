@@ -99,8 +99,13 @@ fn detail_lines<'a>(
                 let end = (offset + picker.viewport_height).min(picker.entries.len());
                 let visible = &picker.entries[offset..end];
                 let display_cursor = picker.cursor.saturating_sub(offset);
-                let file_lines =
-                    file_list::render_file_list(visible, display_cursor, &picker.selected, theme);
+                let file_lines = file_list::render_file_list(
+                    visible,
+                    display_cursor,
+                    &picker.selected,
+                    theme,
+                    false,
+                );
                 lines.extend(file_lines);
             }
         }
