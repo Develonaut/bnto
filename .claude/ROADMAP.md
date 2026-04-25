@@ -53,15 +53,17 @@ M2: Platform Features                ← DELIVERED (March 2026)
     Community recipes via GitHub PRs, curated by maintainer.
 
 M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
-    CLI is the product. v0.5.0 on crates.io. 15 recipes. TUI shipped
+    CLI is the product. v0.12.0 on crates.io. 18 recipes. TUI shipped
     (7 screens, 400+ tests). Schema-driven config, data persistence,
     Home/Library, List editor, Wizard, bnto-form widget crate — all
     delivered. Recipe fields ({{fields.*}}) shipped. `download-video`
     migrated to shell-command + recipe deps, `bnto-video` crate deleted.
+    Vector operations (svg-to-png, svg-to-jpeg, optimize-svg) shipped.
+    Engine hardening complete (execution progress, dry-run, install, TOCTOU fix).
 
-    Next: Engine hardening + triage — execution progress feedback,
-    `bnto install`, security quick wins, recipe wave. All editor
-    sprints (14-18) deprioritized. Focus: bulletproofing current experience.
+    Next: TUI controls polish (Bubbles-inspired) — display/edit form modes,
+    file picker as form control, fuzzy select, picker search/metadata.
+    All editor sprints (14-18) deprioritized.
 
 M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
@@ -72,7 +74,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.5.0 shipped. Sprints 10-13 delivered full TUI (7 screens, 400+ tests, List editor, Wizard, bnto-form, data persistence, Home/Library). Sprint 12B delivered recipe deps + shell-command + recipe fields. All editor sprints (14-18) deprioritized — focus on engine hardening, triage, and making the current experience bulletproof. Next priorities: TUI execution progress feedback, `bnto install`, security quick wins, next recipe wave. Desktop (M4) and monetization (M5) are deep backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.12.0 shipped with 18 recipes. Sprints 10-14 delivered full TUI + engine hardening (execution progress, dry-run, install, TOCTOU fix, vector operations). Next: TUI controls polish (Bubbles-inspired display/edit modes, file picker as form control, fuzzy select). Desktop (M4) and monetization (M5) are deep backlog.
 
 ---
 
@@ -80,7 +82,7 @@ M5: Monetization (tabled)
 
 **A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. CLI nodes get full system access. Browser-capable nodes compile to WASM and work at bnto.io. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
 
-**The CLI is the product.** `cargo install bnto` gives you 15 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
+**The CLI is the product.** `cargo install bnto` gives you 18 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
 
 1. Build the processor in Rust (TDD-first, golden tests)
 2. Test via `bnto run <recipe> [files...]`

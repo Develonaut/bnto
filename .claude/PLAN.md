@@ -27,9 +27,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**CLI is the product.** `cargo install bnto` gets you 15 recipes. The web is a landing page.
+**CLI is the product.** `cargo install bnto` gets you 18 recipes. The web is a landing page.
 
-- **v0.5.0 released (April 2026):** 15 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor` commands. Published to crates.io
+- **v0.12.0 released (April 2026):** 18 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor/install/dry-run` commands, TUI execution progress, vector operations (SVG). Published to crates.io
 - **Engine (Rust):** Library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-shell, bnto-engine), WASM entry point (bnto-wasm), CLI binary (bnto). CLI is the primary consumer, browser (WASM) is secondary
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
@@ -40,7 +40,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **`bnto-form` crate (Sprint 11.5):** Standalone ratatui form widget library (TextInput, Select, Confirm, Number), TEA-native, zero bnto dependency. ~105 tests
 - **TUI List Editor (Sprint 12):** Full recipe editing — add/remove/reorder nodes, inline param editing, undo/redo, save workflow, multiple entry points. ~75 tests
 - **TUI Wizard (Sprint 13):** Guided recipe creation — category → operation → config → done. Hands off to List editor
-- **Next:** Engine hardening + triage — execution progress, `bnto install`, security, recipe wave. All editor sprints (14-18) deprioritized
+- **Next:** TUI controls polish (Bubbles-inspired) — display/edit modes, file picker as form control, fuzzy select, picker search. All editor sprints (14-18) deprioritized
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -103,6 +103,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] crates.io preparation: All 6 engine crates prepared for publish at v0.1.1. `cargo install bnto` scaffolded (PRs #316, #319)
 - [x] crates.io published: All crates live on crates.io. `cargo publish` job in `release.yml` publishes in dependency order on stable tags. `cargo install bnto` works
 - [x] Release v0.5.0 (April 2026): 15 predefined recipes, video-download node, extra args pass-through, dependency system
+- [x] Vector format support (April 2026): `bnto-vector` crate, svg-to-png, svg-to-jpeg, optimize-svg recipes. 18 total recipes
+- [x] Sprint 14 Engine Hardening (April 2026): Bento Box audit, TUI execution progress, TOCTOU fix, `bnto dry-run`, `bnto install`, Node.js 24 Actions. v0.12.0 released
 
 ---
 
@@ -270,24 +272,15 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 ## What's Next
 
-**Sprints 10-13 complete.** The TUI is a full-featured recipe runner and editor: 7 screens, 400+ tests, schema-driven controls, data persistence, Home/Library screens, List editor with undo/redo, Wizard for guided creation, bnto-form widget crate. `bnto` (no args) launches the TUI.
+**Sprint 14 complete.** Engine hardening shipped: execution progress feedback, TOCTOU fix, `bnto dry-run`, `bnto install`, Node.js 24 Actions upgrade (PRs #449-#454).
 
-**Sprint 12B complete.** Recipe-level dependencies + shell-command processor shipped. `download-video` migrated from dedicated `bnto-video` crate. Recipe fields (`{{fields.*}}`) delivered as follow-up.
+**Next up: TUI controls polish (Sprint 15).** Improve `bnto-form` controls and file picker to match [Charm Bubbles](https://github.com/charmbracelet/bubbles) quality. Key changes: display/edit mode for form fields, FilePath as a form control, picker search/filter, fuzzy Select, TextArea. Strategy doc: [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md).
 
-**Next up: Engine hardening + triage.** All editor sprints (14-18) deprioritized — the TUI List editor and Wizard already deliver a solid editing experience. Focus is on making the current experience bulletproof and user-friendly:
-
-1. **TUI execution progress feedback** — Stream stderr from child processes, show elapsed time / live activity for long-running recipes
-2. **Node.js 24 GitHub Actions** — Hard deadline June 2, 2026. Upgrade `actions/checkout` + audit all actions
-3. **`bnto install <recipe>`** — Auto-install recipe dependencies with OS/package manager detection
-4. **`bnto inspect <recipe>`** — Dry-run mode showing exactly which commands a recipe will execute
-5. **Security quick wins** — TOCTOU fix in `temp_file()`, path traversal prevention
-6. **Next recipe wave** — Evaluate iLovePNG parity (resize, crop, rotate with existing `image` crate)
-
-File picker UX Phase 2, file node ecosystem expansion, more node types after the above. Desktop (Tauri) and monetization are deep backlog.
+Recipe wave (iLovePNG parity), file node ecosystem expansion, more node types after Sprint 15. Desktop (Tauri) and monetization are deep backlog.
 
 ---
 
-## Sprint 14: Engine Hardening — NEXT
+## Sprint 14: Engine Hardening — COMPLETE
 
 **Goal:** Make the current experience bulletproof. Fix the worst UX gaps, address security quick wins, reduce friction for new users.
 
@@ -333,6 +326,39 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 - [x] `.github/workflows/` — **Node.js 24 GitHub Actions upgrade**: Upgrade `actions/checkout` to v5+, audit all action versions for Node.js 24 compatibility. Hard deadline: June 2, 2026. RED tests: CI passes with updated actions
 
 **Sprint 14 totals: ~5 PRs, ~18 tests**
+
+---
+
+## Sprint 15: TUI Controls — Bubbles-Quality UX — NEXT
+
+**Goal:** Make `bnto-form` controls and the file picker feel as polished as [Charm Bubbles](https://github.com/charmbracelet/bubbles). Form fields get display/edit modes. File selection becomes a form control. Picker gets search, metadata, breadcrumbs.
+
+**Strategy doc:** [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md)
+
+**Persona ownership:**
+
+| Package                   | Persona        |
+| ------------------------- | -------------- |
+| `engine/crates/bnto-form` | `/rust-expert` |
+| `engine/crates/bnto`      | `/rust-expert` |
+
+#### Wave 1 — Form Control Interaction Model (sequential)
+
+- [ ] `engine/crates/bnto-form` — **Display/Edit mode for form fields**: Each field renders a compact display line (label + value). Enter opens edit mode (full control). Enter/Esc returns to display. RED tests: display rendering, mode transitions, value preservation (~6 tests)
+- [ ] `engine/crates/bnto-form` — **FilePath field type**: New `FieldKind::FilePath` renders as path string in display mode. Edit mode opens inline directory browser (picker logic extracted into bnto-form). RED tests: display, browser nav, file selection, ext filter (~8 tests)
+
+#### Wave 2 — Picker Polish (parallel with Wave 1 completion)
+
+- [ ] `engine/crates/bnto` — **Picker search/filter**: Inline text search filters entries by filename (case-insensitive). Backspace clears. Shows match count. RED tests: filter narrows, clear restores, empty state (~5 tests)
+- [ ] `engine/crates/bnto` — **Picker file metadata columns**: Aligned perms + human-readable sizes. Toggle with `p`. Symlink `->` indicator. RED tests: size format, perms display, symlink indicator (~4 tests)
+- [ ] `engine/crates/bnto` — **Picker breadcrumb path**: Styled path segments replacing plain directory string. Current dir highlighted. RED tests: breadcrumb rendering, segment styling (~3 tests)
+
+#### Wave 3 — Form Control Refinements (depends on Wave 1)
+
+- [ ] `engine/crates/bnto-form` — **Select with fuzzy filter**: Typing filters options by fuzzy substring. Cycling preserved when no filter. RED tests: fuzzy match, cycling fallback, clear filter (~4 tests)
+- [ ] `engine/crates/bnto-form` — **TextArea field type**: Multi-line input. Display shows first line + count. Edit shows scrollable editor. RED tests: multi-line, scroll, display truncation (~5 tests)
+
+**Sprint 15 totals: ~7 PRs, ~35 tests**
 
 ---
 
@@ -700,10 +726,6 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Priority: Low.** Manual approval step via GitHub Environments for production deploys. Existing tag-based workflow already prevents accidental deploys.
 
-### ~~Infra: Upgrade GitHub Actions to Node.js 24~~ → Sprint 14 Wave 3
-
-**Promoted to Sprint 14 Wave 3.** Hard deadline: June 2, 2026. See Sprint 14: Engine Hardening above.
-
 ### Chore: Upgrade Convex 1.31.7 → 1.33.1
 
 **Priority: Low.** Minor Convex JS SDK update. Bump in `packages/@bnto/backend/`, run `task check`.
@@ -765,12 +787,6 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 ---
 
-### Triage: TUI File Picker UX Overhaul (Phase 2)
-
-**Priority: Triage.** Evaluate whether to adopt a popular Rust file picker library (e.g., ratatui-explorer, tui-file-dialog) or continue building out our own with proper UX. Current picker works but feels basic — needs evaluation of: directory tree display, file preview, breadcrumb path, scroll behavior, visual density, keyboard shortcuts (home/end, page up/down), and overall feel compared to tools like yazi/ranger. Should slot immediately after the current TUI settings/config work.
-
-`engine/crates/bnto/src/tui/screens/picker.rs`, `picker_update.rs`, `picker_loader.rs`, `render_picker.rs`
-
 ---
 
 ### ~~Triage: TUI Execution Screen Progress Feedback~~ → Sprint 14 Wave 1
@@ -788,30 +804,25 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 **Priority: Triage.** Seven deferred security items from the `shell-command` processor threat model. Each is independent and can be triaged separately:
 
 1. **Recipe trust levels + first-run consent** — Distinguish built-in/local/community recipes. Prompt before executing `shell-command` nodes from untrusted sources. Cache approval per recipe hash. (P0 for community recipes, not needed while all recipes are built-in)
-2. **`bnto inspect <recipe>` command** — **→ Sprint 14 Wave 1.** Dry-run mode showing exactly which commands a recipe will execute before running anything
+2. ~~**`bnto inspect <recipe>` command**~~ — **Done.** Shipped as `bnto dry-run` in Sprint 14 Wave 1 (PR #451)
 3. **Path traversal prevention in shell-command args** — Sandbox file path arguments to execution working directory. Reject absolute paths and `..` traversal. Canonicalize + verify
 4. ~~**Fix `extra_args` whitespace splitting in yt-dlp adapter**~~ — **Resolved.** `bnto-video` crate deleted; `download-video` migrated to shell-command recipe with `{{fields.*}}` templates. The old whitespace-splitting code path no longer exists
-5. **TOCTOU fix in NativeContext::temp_file()** — **→ Sprint 14 Wave 1.** Nanosecond timestamp without atomic creation. Replace with `tempfile` crate (`mkstemp` semantics) to eliminate symlink race
+5. ~~**TOCTOU fix in NativeContext::temp_file()**~~ — **Done.** Fixed in Sprint 14 Wave 1 (PR #450)
 6. **Network capability classification** — Classify recipes as local-only vs network-capable. Warn on network binaries (`curl`, `wget`, `nc`, `ssh`). Future: outbound domain allowlist
 7. **Recipe signatures** — Sign built-in recipes. Unsigned community recipes trigger warnings. Foundation for verified registry
-
-### Triage: TUI Controls — Bubbles-Inspired UX Overhaul
-
-**Priority: Triage.** Improve `bnto-form` controls and file picker to match [Charm Bubbles](https://github.com/charmbracelet/bubbles) quality. Key changes: display/edit mode for form fields (compact inline value, focused edit view on Enter), FilePath as a form control (shows path inline, opens browser on activation), picker search/filter + metadata columns + breadcrumb path, Select with fuzzy matching, TextArea field type. Strategy doc: [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md). ~7 tasks, ~35 tests.
-
-`engine/crates/bnto-form`, `engine/crates/bnto`
 
 ---
 
 ## Reference
 
-| Document                                 | Purpose                                                                      |
-| ---------------------------------------- | ---------------------------------------------------------------------------- |
-| [PLAN-HISTORY.md](PLAN-HISTORY.md)       | Completed sprint history (Phase 0 through Sprint 13, Homepage)               |
-| `.claude/strategy/engine-expansion.md`   | Engine expansion strategy — dependency system, ProcessContext, TUI, taxonomy |
-| `.claude/strategy/bnto-form-strategy.md` | `bnto-form` crate — huh-inspired ratatui form widgets, ecosystem research    |
-| `.claude/strategy/engine-execution.md`   | Engine execution architecture — pipeline executor, progress events           |
-| `.claude/strategy/bntos.md`              | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers               |
-| `.claude/strategy/core-principles.md`    | Trust commitments, key principles                                            |
-| `.claude/rules/`                         | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.) |
-| `.claude/skills/`                        | Agent skills (pickup, project-manager, code-review, pre-commit)              |
+| Document                                   | Purpose                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| [PLAN-HISTORY.md](PLAN-HISTORY.md)         | Completed sprint history (Phase 0 through Sprint 13, Homepage)               |
+| `.claude/strategy/engine-expansion.md`     | Engine expansion strategy — dependency system, ProcessContext, TUI, taxonomy |
+| `.claude/strategy/bnto-form-strategy.md`   | `bnto-form` crate — huh-inspired ratatui form widgets, ecosystem research    |
+| `.claude/strategy/tui-controls-bubbles.md` | Sprint 15 — Bubbles-inspired display/edit modes, FilePath control, picker UX |
+| `.claude/strategy/engine-execution.md`     | Engine execution architecture — pipeline executor, progress events           |
+| `.claude/strategy/bntos.md`                | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers               |
+| `.claude/strategy/core-principles.md`      | Trust commitments, key principles                                            |
+| `.claude/rules/`                           | Auto-loaded rules (architecture, code-standards, engine-node-patterns, etc.) |
+| `.claude/skills/`                          | Agent skills (pickup, project-manager, code-review, pre-commit)              |

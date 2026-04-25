@@ -77,6 +77,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Recipe editors (unified)       | [recipe-editors.md](.claude/strategy/recipe-editors.md)                         |
 | Editor implementation plan     | [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) |
 | TUI form widgets (bnto-form)   | [bnto-form-strategy.md](.claude/strategy/bnto-form-strategy.md)                 |
+| TUI controls polish (Bubbles)  | [tui-controls-bubbles.md](.claude/strategy/tui-controls-bubbles.md)             |
 | Power recipes / gap analysis   | [power-recipes.md](.claude/strategy/power-recipes.md)                           |
 
 ---
@@ -85,7 +86,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 
 **Bnto** is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes that automate your workflow. One Rust engine compiles to every target: CLI, browser (WASM), desktop (Tauri), server. Write a recipe once, run it anywhere.
 
-Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **15 recipes ship today** — running via CLI (native Rust) and browser (Rust→WASM). The CLI is the primary development surface. The dividing line: **nodes that run locally are free, nodes that need a managed server cost money** (monetization tabled). See [ROADMAP.md](.claude/ROADMAP.md).
+Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **18 recipes ship today** — running via CLI (native Rust) and browser (Rust→WASM). The CLI is the primary development surface. The dividing line: **nodes that run locally are free, nodes that need a managed server cost money** (monetization tabled). See [ROADMAP.md](.claude/ROADMAP.md).
 
 - **CLI** (primary): `engine/crates/bnto/` — native Rust binary, full system access, published to crates.io
 - **Rust Engine**: `engine/` — shared engine crate powering CLI (native) and browser (WASM)
@@ -231,13 +232,14 @@ bnto/
 │       ├── nodes/               # @bnto/nodes — Engine-agnostic node definitions
 │       └── registry/            # @bnto/registry — Curation + discovery layer
 ├── engine/                      # Rust engine (CLI + WASM + native)
-│   ├── recipes/                 # Authoritative .bnto.json recipe definitions (15 files)
+│   ├── recipes/                 # Authoritative .bnto.json recipe definitions (18 files)
 │   ├── crates/
 │   │   ├── bnto-core/           # Core library (types, traits, progress)
 │   │   ├── bnto-image/          # Image compression/resize/convert
 │   │   ├── bnto-csv/            # CSV clean/rename columns
 │   │   ├── bnto-file/           # File rename
-│   │   ├── bnto-video/          # Video download (yt-dlp, native-only)
+│   │   ├── bnto-shell/          # Shell command execution
+│   │   ├── bnto-vector/         # SVG processing (rasterize, optimize)
 │   │   ├── bnto-engine/         # Shared registry + pipeline runner + recipe catalog
 │   │   ├── bnto-wasm/           # cdylib entry point (WASM binary)
 │   │   └── bnto/                # Native CLI binary (`bnto`) — primary consumer
