@@ -165,5 +165,39 @@ pub fn update(mut model: PickerModel, msg: PickerMessage) -> PickerModel {
             );
             model
         }
+        PickerMessage::EnterSearch => {
+            model.searching = true;
+            model
+        }
+        PickerMessage::ExitSearch => {
+            model.searching = false;
+            model
+        }
+        PickerMessage::SearchInput(ch) => {
+            model.query.push(ch);
+            model.cursor = 0;
+            model.viewport_offset = 0;
+            model
+        }
+        PickerMessage::SearchBackspace => {
+            if model.query.is_empty() {
+                model.searching = false;
+            } else {
+                model.query.pop();
+                model.cursor = 0;
+                model.viewport_offset = 0;
+            }
+            model
+        }
+        PickerMessage::SearchClear => {
+            model.query.clear();
+            model.cursor = 0;
+            model.viewport_offset = 0;
+            model
+        }
+        PickerMessage::ToggleMetadata => {
+            model.show_metadata = !model.show_metadata;
+            model
+        }
     }
 }

@@ -1018,12 +1018,16 @@ mod tests {
                 is_dir: true,
                 path: PathBuf::from("/photos"),
                 size: None,
+                permissions: None,
+                symlink_target: None,
             },
             FileEntry {
                 name: "cat.jpg".into(),
                 is_dir: false,
                 path: PathBuf::from("/cat.jpg"),
                 size: Some(290_000),
+                permissions: None,
+                symlink_target: None,
             },
         ];
 
