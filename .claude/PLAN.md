@@ -355,8 +355,8 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 #### Wave 3 — Form Control Refinements (depends on Wave 1)
 
-- [ ] `engine/crates/bnto-form` — **Select with fuzzy filter**: Typing filters options by fuzzy substring. Cycling preserved when no filter. RED tests: fuzzy match, cycling fallback, clear filter (~4 tests)
-- [ ] `engine/crates/bnto-form` — **TextArea field type**: Multi-line input. Display shows first line + count. Edit shows scrollable editor. RED tests: multi-line, scroll, display truncation (~5 tests)
+- [x] `engine/crates/bnto-form` — **Select with fuzzy filter**: Typing filters options by fuzzy substring. Cycling preserved when no filter. RED tests: fuzzy match, cycling fallback, clear filter (~4 tests)
+- [x] `engine/crates/bnto-form` — **TextArea field type**: Multi-line input. Display shows first line + count. Edit shows scrollable editor. RED tests: multi-line, scroll, display truncation (~5 tests)
 
 **Sprint 15 totals: ~7 PRs, ~35 tests**
 

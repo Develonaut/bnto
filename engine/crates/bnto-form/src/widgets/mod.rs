@@ -6,4 +6,5 @@ pub mod display;
 pub mod file_path;
 pub mod number;
 pub mod select;
+pub mod text_area;
 pub mod text_input;

@@ -3,7 +3,10 @@
 // Pure function: takes a Field + FormMessage, returns a new Field with
 // the transition applied. No I/O, no rendering.
 
+use unicode_segmentation::UnicodeSegmentation;
+
 use crate::controls;
+use crate::controls::fuzzy::fuzzy_filter_options;
 use crate::field::{Field, FieldKind, FieldState};
 use crate::form::FormMessage;
 
@@ -123,7 +126,7 @@ pub(crate) fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
             FormMessage::SelectFilterChar(ch),
         ) => {
             let new_filter = format!("{filter}{ch}");
-            let filtered = filter_options(options, &new_filter);
+            let filtered = fuzzy_filter_options(options, &new_filter);
             Field {
                 state: FieldState::SelectExpanded {
                     highlight: 0,
@@ -144,7 +147,7 @@ pub(crate) fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
                 f.pop();
                 f
             };
-            let filtered = filter_options(options, &new_filter);
+            let filtered = fuzzy_filter_options(options, &new_filter);
             Field {
                 state: FieldState::SelectExpanded {
                     highlight: 0,
@@ -153,6 +156,54 @@ pub(crate) fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
                 },
                 ..field
             }
+        }
+
+        // TextArea StartEdit
+        (FieldKind::TextArea { .. }, FieldState::Idle, FormMessage::StartEdit) => {
+            let lines: Vec<&str> = field.value.split('\n').collect();
+            let last_line = lines.len().saturating_sub(1);
+            let last_col = lines.last().map(|l| l.graphemes(true).count()).unwrap_or(0);
+            Field {
+                state: FieldState::TextAreaEditing {
+                    buffer: field.value.clone(),
+                    cursor: last_col,
+                    line: last_line,
+                    scroll_offset: 0,
+                },
+                error: None,
+                ..field
+            }
+        }
+
+        // TextArea Cancel
+        (_, FieldState::TextAreaEditing { .. }, FormMessage::CancelEdit) => Field {
+            state: FieldState::Idle,
+            ..field
+        },
+
+        // TextArea Commit
+        (_, FieldState::TextAreaEditing { buffer, .. }, FormMessage::CommitEdit) => {
+            if let Some(ref validator) = field.validator
+                && let Some(err) = validator(buffer)
+            {
+                return Field {
+                    error: Some(err),
+                    ..field
+                };
+            }
+            Field {
+                value: buffer.clone(),
+                state: FieldState::Idle,
+                error: None,
+                ..field
+            }
+        }
+
+        // TextArea editing messages
+        (FieldKind::TextArea { .. }, FieldState::TextAreaEditing { .. }, _) => {
+            let mut updated = controls::text_area::update(field, msg);
+            updated.error = None;
+            updated
         }
 
         // Text/Number editing messages (after commit/cancel handled above)
@@ -309,20 +360,6 @@ fn commit_number_edit(field: Field, buffer: String) -> Field {
             ..field
         },
     }
-}
-
-/// Return indices of options whose labels contain the filter string (case-insensitive).
-fn filter_options(options: &[crate::field::SelectOption], filter: &str) -> Vec<usize> {
-    if filter.is_empty() {
-        return (0..options.len()).collect();
-    }
-    let lower = filter.to_lowercase();
-    options
-        .iter()
-        .enumerate()
-        .filter(|(_, o)| o.label.to_lowercase().contains(&lower))
-        .map(|(i, _)| i)
-        .collect()
 }
 
 fn clamp_number(val: f64, min: Option<f64>, max: Option<f64>) -> f64 {
