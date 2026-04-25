@@ -60,10 +60,15 @@ M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     migrated to shell-command + recipe deps, `bnto-video` crate deleted.
     Vector operations (svg-to-png, svg-to-jpeg, optimize-svg) shipped.
     Engine hardening complete (execution progress, dry-run, install, TOCTOU fix).
+    TUI controls polish complete (Bubbles-inspired display/edit, FilePath,
+    fuzzy Select, TextArea, picker search/metadata/breadcrumbs).
 
-    Next: TUI controls polish (Bubbles-inspired) — display/edit form modes,
-    file picker as form control, fuzzy select, picker search/metadata.
-    All editor sprints (14-18) deprioritized.
+    Next: Sprint 16 — Recipe expansion + huh parity. bnto-form reaches
+    full huh equivalence (FullScreenEdit, MultiSelect, field grouping, Note).
+    File node expansion (BRU-style: counter rename, sanitize filenames).
+    Image crop/rotate for iLovePNG parity. Engine infra (template expressions,
+    version constraints, migration tool). Target: 22+ recipes.
+    All web editor sprints deprioritized.
 
 M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
@@ -74,7 +79,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.12.0 shipped with 18 recipes. Sprints 10-14 delivered full TUI + engine hardening (execution progress, dry-run, install, TOCTOU fix, vector operations). Next: TUI controls polish (Bubbles-inspired display/edit modes, file picker as form control, fuzzy select). Desktop (M4) and monetization (M5) are deep backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.12.0 shipped with 18 recipes. Sprints 10-15 delivered full TUI + engine hardening + Bubbles-quality controls. Next: Sprint 16 — recipe expansion (file nodes, image crop/rotate → 22+ recipes), huh parity for bnto-form, engine infrastructure (template expressions, version constraints, migration). Desktop (M4) and monetization (M5) are deep backlog.
 
 ---
 

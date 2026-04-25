@@ -347,13 +347,61 @@ The detail screen delegates to `bnto_form::update()`, `bnto_form::render_form()`
 
 | Feature                  | Why defer                            |
 | ------------------------ | ------------------------------------ |
-| MultiSelect              | No bnto param type needs it yet      |
-| Text (multiline)         | No bnto param needs multiline        |
-| FilePicker               | bnto has a dedicated Picker screen   |
 | Suggestions/autocomplete | Complex; add when a use case appears |
-| Form groups/pages        | Single-page forms cover bnto's needs |
 | External editor          | Overkill for short param values      |
-| Accessible mode          | Nice-to-have for v2                  |
+
+---
+
+## huh Parity — Gap Analysis (April 2026)
+
+**Goal:** Make `bnto-form` the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library — "A simple, powerful library for building interactive forms and prompts in the terminal."
+
+Sprint 15 delivered Display/Edit mode, FilePath, TextArea, and fuzzy Select. Four gaps remain to reach huh parity.
+
+### Current State vs huh
+
+| huh Feature                           | bnto-form Status                                      | Gap           |
+| ------------------------------------- | ----------------------------------------------------- | ------------- |
+| Input (single-line text)              | **Parity** — `TextInput` (Phase 1)                    | —             |
+| Text (multi-line)                     | **Parity** — `TextArea` (Sprint 15)                   | —             |
+| Select                                | **Parity** — `Select` with fuzzy filter (Sprint 15)   | —             |
+| **MultiSelect**                       | **Missing**                                           | **Sprint 16** |
+| Confirm                               | **Parity** — `Confirm` (Phase 1)                      | —             |
+| FilePicker (via Bubbles)              | **Parity** — `FilePath` (Sprint 15)                   | —             |
+| Number/Slider                         | **Ahead of huh** — `Number` with tui-slider (Phase 1) | —             |
+| **Full-screen focused editing**       | **Missing** — FullScreenEdit FormMode                 | **Sprint 16** |
+| **Field grouping** (multi-page forms) | **Missing**                                           | **Sprint 16** |
+| **Note/read-only field**              | **Missing**                                           | **Sprint 16** |
+| Dynamic field properties              | Partial — validation exists                           | Minor — defer |
+| Theming                               | **Parity** — `FormTheme` trait (Phase 1)              | —             |
+| Accessible mode                       | **Missing**                                           | Defer to v2   |
+| Spinner                               | N/A (execution screen has its own)                    | —             |
+
+### Remaining Gaps (Sprint 16 Wave 1)
+
+**1. FullScreenEdit FormMode** — The signature huh UX. When editing a field, the form hides all other fields and renders a dedicated full-screen panel showing only the focused field's control — label header, full widget, helper footer. Display mode identical to DisplayEdit (compact one-liners). This is how huh operates: one field at a time, full focus. Becomes the default form mode.
+
+**2. MultiSelect field type** — Choose multiple options from a list. Display: `"Tags: image, vector (2 selected)"`. Edit: checkboxes with Space to toggle, Enter to confirm. huh's `NewMultiSelect()` equivalent.
+
+**3. Field grouping** — huh organizes forms into groups that render as pages. `FieldGroup` wraps fields into named sections. In FullScreenEdit mode, groups become navigable pages (next/prev). In DisplayEdit mode, groups render as visual sections with headers. Enables multi-page wizard forms.
+
+**4. Note field type** — Read-only `FieldKind::Note` for displaying informational text between fields. huh uses `NewNote()` for descriptions, instructions, and section context. Display: styled text block, not editable.
+
+### After Sprint 16
+
+With these four additions, `bnto-form` reaches functional parity with huh:
+
+| Capability   | huh                                           | bnto-form (post Sprint 16)                                               |
+| ------------ | --------------------------------------------- | ------------------------------------------------------------------------ |
+| Field types  | 5 (Input, Text, Select, MultiSelect, Confirm) | 8 (Text, TextArea, Select, MultiSelect, Confirm, Number, FilePath, Note) |
+| Form modes   | 1 (full-screen focused)                       | 3 (Inline, DisplayEdit, FullScreenEdit)                                  |
+| Grouping     | Groups as pages                               | FieldGroup with page navigation                                          |
+| Theming      | 5 presets + custom                            | Trait-based + DefaultTheme                                               |
+| Validation   | Per-field                                     | Per-field with built-in validators                                       |
+| Architecture | Bubble Tea model                              | TEA-native (pure functions)                                              |
+| Standalone   | Yes                                           | Yes (zero bnto dependency)                                               |
+
+**bnto-form advantages over huh:** Number/slider field (no huh equivalent), FilePath with inline directory browser (huh delegates to Bubbles), three form modes (huh has one), pure-function rendering (easier to test). bnto-form is the Rust community's answer to huh.
 
 ---
 

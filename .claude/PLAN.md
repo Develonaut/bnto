@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 24, 2026 (Groom: all editor sprints deprioritized, focus shifted to engine hardening + triage)
+**Last Updated:** April 25, 2026 (Groom: Sprint 15 complete, Sprint 16 defined — recipe expansion + huh parity + engine infra)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -40,7 +40,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **`bnto-form` crate (Sprint 11.5):** Standalone ratatui form widget library (TextInput, Select, Confirm, Number), TEA-native, zero bnto dependency. ~105 tests
 - **TUI List Editor (Sprint 12):** Full recipe editing — add/remove/reorder nodes, inline param editing, undo/redo, save workflow, multiple entry points. ~75 tests
 - **TUI Wizard (Sprint 13):** Guided recipe creation — category → operation → config → done. Hands off to List editor
-- **Next:** TUI controls polish (Bubbles-inspired) — display/edit modes, file picker as form control, fuzzy select, picker search. All editor sprints (14-18) deprioritized
+- **TUI controls polish (Sprints 14-15):** Bubbles-inspired display/edit modes, FilePath field type, TextArea, fuzzy Select filter, picker search/metadata/breadcrumbs, vim keybindings. `bnto-form` now at huh parity for shipped controls
+- **Next:** Sprint 16 — recipe expansion (file nodes, image crop/rotate), bnto-form huh parity (FullScreenEdit, MultiSelect, field grouping, Note), engine infra (template expressions, version constraints, migration tool), design spikes
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -272,11 +273,11 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 ## What's Next
 
-**Sprint 14 complete.** Engine hardening shipped: execution progress feedback, TOCTOU fix, `bnto dry-run`, `bnto install`, Node.js 24 Actions upgrade (PRs #449-#454).
+**Sprints 14-15 complete.** Engine hardening (PRs #448-#454) and TUI controls polish (PRs #455-#457) both shipped. `bnto-form` now has Display/Edit mode, FilePath, TextArea, fuzzy Select — matching Charm Bubbles quality.
 
-**Next up: TUI controls polish (Sprint 15).** Improve `bnto-form` controls and file picker to match [Charm Bubbles](https://github.com/charmbracelet/bubbles) quality. Key changes: display/edit mode for form fields, FilePath as a form control, picker search/filter, fuzzy Select, TextArea. Strategy doc: [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md).
+**Next: Sprint 16 — Recipe Expansion + huh Parity.** Three streams: (1) bring `bnto-form` to full huh parity (FullScreenEdit, MultiSelect, field grouping, Note field), (2) expand file operations (BRU-style composable nodes), (3) add image crop/rotate for iLovePNG parity. Plus engine infrastructure (template expressions, version constraints, migration tool). Grows recipe count from 18→22+.
 
-Recipe wave (iLovePNG parity), file node ecosystem expansion, more node types after Sprint 15. Desktop (Tauri) and monetization are deep backlog.
+Desktop (Tauri) and monetization are deep backlog.
 
 ---
 
@@ -329,7 +330,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 ---
 
-## Sprint 15: TUI Controls — Bubbles-Quality UX — NEXT
+## Sprint 15: TUI Controls — Bubbles-Quality UX — COMPLETE
 
 **Goal:** Make `bnto-form` controls and the file picker feel as polished as [Charm Bubbles](https://github.com/charmbracelet/bubbles). Form fields get display/edit modes. File selection becomes a form control. Picker gets search, metadata, breadcrumbs.
 
@@ -359,6 +360,73 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 - [x] `engine/crates/bnto-form` — **TextArea field type**: Multi-line input. Display shows first line + count. Edit shows scrollable editor. RED tests: multi-line, scroll, display truncation (~5 tests)
 
 **Sprint 15 totals: ~7 PRs, ~35 tests**
+
+---
+
+## Sprint 16: Recipe Expansion + huh Parity — NEXT
+
+**Goal:** Rename `bnto-form` → `tonkotsu` and make it the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library. Expand recipe catalog with new image and file operations. Strengthen engine infrastructure for future recipes. Grows recipe count from 18→22+.
+
+**Strategy docs:** [bnto-form-strategy.md](strategy/bnto-form-strategy.md) (§ huh Parity), [file-node-ecosystem.md](strategy/file-node-ecosystem.md) (Phases 1-2), [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md)
+
+**Persona ownership:**
+
+| Package                     | Persona        |
+| --------------------------- | -------------- |
+| `engine/crates/tonkotsu`    | `/rust-expert` |
+| `engine/crates/bnto-image`  | `/rust-expert` |
+| `engine/crates/bnto-file`   | `/rust-expert` |
+| `engine/crates/bnto-engine` | `/rust-expert` |
+| `engine/crates/bnto`        | `/rust-expert` |
+| `engine/crates/bnto-core`   | `/rust-expert` |
+
+#### Wave 0 — Rename bnto-form → tonkotsu (prerequisite)
+
+Rename the `bnto-form` crate to `tonkotsu` — a playful ramen-themed name for the ratatui ecosystem. `tonkotsu` is available on crates.io. The broth holds the whole bowl together, just like the form library holds the whole TUI interaction together.
+
+- [ ] `engine/crates/bnto-form` → `engine/crates/tonkotsu` — **Rename crate to tonkotsu**: Rename directory (`git mv`), update `Cargo.toml` (package name, bin name → `tonkotsu-demo`), update workspace `Cargo.toml` member, update `bnto/Cargo.toml` dependency, update all `use bnto_form::` → `use tonkotsu::` imports (~15 source files), update `Taskfile.yml` (`form:demo` task), update strategy docs + PLAN.md + CLAUDE.md references. Verify `task wasm:lint && task cli:test` pass clean. (~0 tests — pure rename, existing tests validate)
+
+#### Wave 1 — tonkotsu: huh Parity (parallel, depends on Wave 0)
+
+Bring `tonkotsu` (formerly `bnto-form`) to full feature parity with Charm's huh library. See [bnto-form-strategy.md § huh Parity](strategy/bnto-form-strategy.md) for the gap analysis.
+
+- [ ] `engine/crates/tonkotsu` — **FullScreenEdit form mode**: Third `FormMode` variant. Display mode identical to DisplayEdit (compact one-liners). Edit mode hides all other fields, renders dedicated panel with label header + full control + helper footer. Becomes default demo mode. RED tests: display rendering, edit panel visibility, mode transitions, all field types, panel framing, helper text (~8 tests)
+- [ ] `engine/crates/tonkotsu` — **MultiSelect field type**: New `FieldKind::MultiSelect`. Display: `"Tags: image, vector (2 selected)"`. Edit: checkboxes with Space to toggle, Enter to confirm. Wrapping navigation. RED tests: toggle selection, display formatting, confirm/cancel, empty selection (~5 tests)
+- [ ] `engine/crates/tonkotsu` — **Field grouping**: `FieldGroup` wraps fields into named sections. In FullScreenEdit, groups render as navigable pages (next/prev). In DisplayEdit, groups render as visual sections with headers. RED tests: group rendering, page navigation, field-to-group mapping (~5 tests)
+- [ ] `engine/crates/tonkotsu` — **Note field type**: Read-only `FieldKind::Note` for informational text between fields. Not editable, not focusable. Display: styled text block. RED tests: renders text, skipped by focus navigation, not editable (~3 tests)
+
+#### Wave 2 — File Node Expansion (parallel with Wave 1)
+
+BRU-style composable file operations. See [file-node-ecosystem.md](strategy/file-node-ecosystem.md) Phase 1 (enhance file-rename) and Phase 2 (file-sanitize).
+
+- [ ] `engine/crates/bnto-file` — **Enhance file-rename: counter + extension params**: Add `counter_start` (integer, default 1), `counter_pad` (integer, default 0), `extension` (string) params. New `{{counter}}` template variable (auto-incrementing, respects start/pad). RED tests: counter formatting, zero-pad widths, extension replacement, counter across files (~5 tests)
+- [ ] `engine/crates/bnto-file` — **File-sanitize processor**: New `file-sanitize` processor. Params: `mode` (slugify/strip/normalize), `separator` (default `-`), `max_length` (default 0 = no limit). Pure string manipulation, browser+CLI. RED tests: each mode, unicode normalization, max length truncation, separator replacement (~5 tests)
+- [ ] `engine/crates/bnto-engine` + `engine/recipes/` — **File recipes + codegen**: `number-files.bnto.json` (file-rename with counter), `sanitize-filenames.bnto.json` (file-sanitize). Register processors. Golden tests. Codegen updates. SEO slugs: `/number-files`, `/sanitize-filenames`. RED tests: recipe execution, golden output verification (~4 tests)
+
+#### Wave 3 — Engine Infrastructure (parallel with Wave 2)
+
+Template expressions, version constraints, and migration tooling. Strengthens the engine for future recipe complexity.
+
+- [ ] `engine/crates/bnto-core` — **Template expression expansion**: Extend `{{fields.*}}` template system with `{{env.*}}` (environment variables), `{{ctx.*}}` (execution context — temp dir, working dir, platform), `{{node.<id>.*}}` (inter-node output references). RED tests: each namespace resolution, missing var handling, nested references (~6 tests)
+- [ ] `engine/crates/bnto-core` — **Version constraint enforcement**: Parse `<binary> --version` output, validate against `Dependency.version` semver constraint. Fail pipeline before execution if version doesn't satisfy. RED tests: semver parsing, constraint matching, version extraction from output (~5 tests)
+- [ ] `engine/crates/bnto` — **`bnto migrate` CLI command**: Migrate `.bnto.json` files across breaking parameter changes (e.g., `compression`→`quality`). Detect version, apply sequential transforms, report changes. RED tests: version detection, migration transforms, idempotent re-run (~5 tests)
+
+#### Wave 4 — Design Spikes (parallel with Wave 3, strategy docs not code)
+
+Write strategy docs to unblock future sprints. No code — research, mockups, and architecture decisions.
+
+- [ ] `.claude/strategy/execution-progress-ux.md` — **Rich execution progress UX design spike**: Competitive audit (Claude Code, cargo, docker, Bubbles), Unicode indicator inventory (spinners, progress bars, frames), metrics design (elapsed, throughput, ETA, file count), layout mockups (CLI single-line vs TUI multi-line), architecture review (engine events vs rendering), phased scope recommendation
+- [ ] `.claude/strategy/recipe-secrets.md` — **Secret/env variable management design spike**: How recipes reference secrets without embedding in `.bnto.json`. Resolution per target (CLI reads env/dotfiles, server reads vault, browser prompts). Integration with `{{env.*}}` template namespace (Wave 4). Threat model for secret exposure
+
+#### Wave 5 — Image Recipe Expansion (depends on Wave 2 codegen pattern)
+
+iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zero new dependencies).
+
+- [ ] `engine/crates/bnto-image` — **Crop image processor**: New `image-crop` processor. Params: `x`, `y`, `width`, `height`, `anchor` (center/top-left/top-right/bottom-left/bottom-right). Auto EXIF orientation via existing `decode_with_orientation()`. RED tests: crop dimensions, bounds validation, anchor positioning, EXIF handling (~6 tests)
+- [ ] `engine/crates/bnto-image` — **Rotate image processor**: New `image-rotate` processor. Params: `degrees` (enum: 90/180/270), `flip_horizontal` (bool), `flip_vertical` (bool). Uses existing `image::imageops::rotate*()` + `flip_*()`. RED tests: each rotation angle, flip combinations, rotation+flip compound (~5 tests)
+- [ ] `engine/crates/bnto-engine` + `engine/recipes/` — **Crop/Rotate recipes + codegen**: `crop-images.bnto.json`, `rotate-images.bnto.json`. Register processors. Golden tests. Codegen updates. SEO slugs: `/crop-images`, `/rotate-images`. RED tests: recipe execution, golden output verification (~4 tests)
+
+**Sprint 16 totals: ~14 PRs, ~72 tests, 4 new recipes (18→22), 2 strategy docs, 1 crate rename**
 
 ---
 
@@ -546,14 +614,14 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 ## Backlog
 
-### Engine: Sprint 12B Follow-Up (ordered, each unblocks the next)
+### Engine: Sprint 12B Follow-Up (remaining)
 
 **Priority: Medium.** Items unlocked by Sprint 12B (recipe-level deps + shell-command). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
 
-1. **`bnto install <recipe>`** — **→ Sprint 14 Wave 2.** Auto-install recipe dependencies with OS/package manager detection
-2. **Version constraint enforcement** — Parse `<binary> --version` output, validate against `Dependency.version` semver constraint
+1. ~~**`bnto install <recipe>`**~~ — **Done.** Sprint 14 Wave 2 (PR #453)
+2. ~~**Version constraint enforcement**~~ — **→ Sprint 16 Wave 4**
 3. **Per-platform install hints** — Detect OS, show correct package manager command (`apt`, `choco`, `pacman`)
-4. **Template expression expansion** — `{{fields.*}}` delivered (PR bc23fca9). Remaining: `{{env.*}}`, `{{ctx.*}}`, `{{node.<id>.*}}` namespaces per [recipe-fields.md](strategy/recipe-fields.md)
+4. ~~**Template expression expansion**~~ — **→ Sprint 16 Wave 4** (`{{env.*}}`, `{{ctx.*}}`, `{{node.<id>.*}}`)
 
 ### Growth: Product Hunt Launch
 
@@ -636,73 +704,21 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 - Convex dev environment cleanup (run `cleanTestAccounts` against dev, verify table health)
 - Wire version into app build (`NEXT_PUBLIC_APP_VERSION` from git tag)
 
-### Triage: iLovePNG recipe parity — next wave candidates
+### ~~Triage: iLovePNG recipe parity~~ → Sprint 16 Wave 3
 
-**Priority: Medium.** When planning the next recipe wave, evaluate iLovePNG's offerings for feasibility: Resize IMAGE, Crop IMAGE, Rotate IMAGE, Watermark IMAGE (done), Blur face, Upscale, Convert to/from JPG, HTML to IMAGE, Meme generator. Several (resize, crop, rotate) are doable with existing `image` crate.
+**Promoted.** Crop + Rotate promoted to Sprint 16 Wave 3. Remaining iLovePNG candidates (blur face, upscale, HTML to image, meme generator) require ML or headless browser — deep backlog.
 
 ### Triage: Engine documentation — auto-generated docs
 
 **Priority: Low.** Set up `cargo doc` or docs site for the Rust engine. Document crate responsibilities, API surface, architecture. `engine/crates/`.
 
-### Triage: Definition/recipe version migration tool
+### ~~Triage: Definition/recipe version migration tool~~ → Sprint 16 Wave 4
 
-**Priority: Medium.** `bnto migrate` CLI command for breaking changes to `.bnto.json` node parameters (e.g., `compression`→`quality`). Versioned migration system: detect version, apply sequential transforms, report changes. The `version` field already exists in `Definition`.
+**Promoted.** `bnto migrate` promoted to Sprint 16 Wave 4.
 
-### @bnto/i18n: Interpolation + Raw Text Migration
+### ~~@bnto/i18n: Interpolation + Raw Text Migration~~ — ARCHIVED (web frozen)
 
-**Priority: Low.** Add `{{variable}}` interpolation support to `t()` so dynamic values (recipe counts, etc.) can live in `en.json` instead of template literals in components. Then migrate all hardcoded `<Text>` strings in landing page components to `t()` calls.
-
-- [ ] `packages/@bnto/i18n` — Add optional `vars` parameter to `t()`: `t(key, { count: 15 })` replaces `{{count}}` in the resolved string
-- [ ] `packages/@bnto/i18n` — Unit tests for interpolation (single var, multiple vars, missing var, no vars)
-- [ ] `apps/web` — Migrate hardcoded strings in landing page section components to `t()` calls
-- [ ] `packages/@bnto/i18n` — Move dynamic recipe count strings to `en.json` with `{{count}}` placeholders
-
-### @bnto/ui: `<SpringIn>` Entrance Animation Component
-
-**Priority: Low.** Homepage shipped using `Card dormant` prop + `ScaleIn`/`SlideUp` instead. `SpringIn` is a nice-to-have refinement for future card-heavy sections, not a blocker.
-
-The springable surface system (grounded → raised with bouncy spring) is the most satisfying animation in Motorways, but it's currently only available as a **state toggle** on `<Card loading>` / `<Surface grounded>`. You have to manage a boolean to trigger it. There's no way to use it as a one-shot entrance animation composable with `<Stagger>`.
-
-`<SpringIn>` would bridge this gap: a keyframe-based entrance animation where elements start grounded (flat, muted, no elevation) and spring up to their natural elevated state on mount — the "building materializing on the map" feeling, usable anywhere `<ScaleIn>` or `<SlideUp>` is used today.
-
-**The gap:**
-
-- `ScaleIn` = scale + opacity (2D, no depth change)
-- `SlideUp` = translate + opacity (2D, no depth change)
-- Springable surfaces = grounded → raised (3D elevation, but requires state toggle)
-- `SpringIn` (new) = grounded → raised as a one-shot keyframe entrance, composable with `Stagger`
-
-**Implementation approach:**
-
-- [ ] `packages/ui` — Create `@keyframes spring-in` in `animations.css`: starts with `translate(0, 0)` + muted colors + collapsed walls, ends at elevated rest position. Uses `--ease-spring-pressable` (the bounciest 3-oscillation curve)
-- [ ] `packages/ui` — Create `SpringIn` component in `packages/ui/src/animation/Animate/SpringIn.tsx` following the same pattern as `ScaleIn` (forwardRef, `asChild`, `index`, `easing`, `buildStyle`)
-- [ ] `packages/ui` — Add `spring` prop: `"bouncy" | "bouncier" | "bounciest"` (default `"bounciest"`) to control oscillation intensity
-- [ ] `packages/ui` — Add `elevation` prop: `"sm" | "md" | "lg"` (default `"md"`) to set the target height the element springs up to
-- [ ] `packages/ui` — Ensure composability with `<Stagger>` via `--stagger-index` delay
-- [ ] `packages/ui` — Respect `motion-safe:` prefix (reduced motion shows element at final state, no animation)
-- [ ] `packages/ui` — Add to animation component barrel export and update Motorway showcase page
-- [ ] `packages/ui` — Unit tests: renders, respects asChild, stagger index sets delay, reduced motion applies
-- [ ] `apps/web` — Add `SpringIn` demo to Motorway animation showcase tab
-
-**Usage vision:**
-
-```tsx
-// Cards spring up from the ground one by one
-<Stagger interval={80}>
-  {recipes.map((r, i) => (
-    <SpringIn key={r.id} index={i} elevation="md">
-      <Card elevation="md">{r.name}</Card>
-    </SpringIn>
-  ))}
-</Stagger>
-
-// Hero element springs up dramatically
-<SpringIn spring="bounciest" elevation="lg">
-  <Card elevation="lg">Hero content</Card>
-</SpringIn>
-```
-
-**Key decision:** The `<SpringIn>` component wraps the child (like `ScaleIn` wraps). It does NOT need the child to be a `<Surface>` — it applies its own keyframe animation. But when wrapping a `<Card>`, the card's elevation should match the `SpringIn` elevation for visual consistency (the card's resting shadow matches where the spring animation lands).
+**Archived (April 2026).** Web is maintenance mode. i18n interpolation is web-only, no CLI/TUI impact.
 
 ---
 
@@ -710,9 +726,9 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 
 **Shipped (April 2026).** All pieces delivered. See PLAN-HISTORY.md for full breakdown.
 
-### Triage: Secret/environment variable management for recipes
+### ~~Triage: Secret/environment variable management for recipes~~ → Sprint 16 Wave 5
 
-**Priority: Medium.** Recipes will need secrets (API keys, tokens, env vars) without embedding in `.bnto.json`. Design: how recipes reference variables, how secrets resolve per target (CLI reads env/dotfiles, server reads vault, browser prompts user).
+**Promoted.** Design spike promoted to Sprint 16 Wave 5 (`strategy/recipe-secrets.md`). Depends on `{{env.*}}` template namespace (Wave 4).
 
 ### Triage: E2E teardown cleanup fails in release pipeline
 
@@ -729,12 +745,6 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 ### Chore: Upgrade Convex 1.31.7 → 1.33.1
 
 **Priority: Low.** Minor Convex JS SDK update. Bump in `packages/@bnto/backend/`, run `task check`.
-
-### Triage: Responsive GridItem props
-
-**Priority: Triage.** `GridItem` props (`colSpan`, `rowSpan`, `colStart`, `rowStart`) should accept `ResponsiveProp<T>` like the `Grid` `cols` prop does, so spans and positions can vary by breakpoint (mobile/tablet/desktop). Currently only `cols` is responsive — all placement props are static.
-
-`packages/ui/src/layout/Grid.tsx`
 
 ### Engine: Vector Format Support — `bnto-vector` Crate (2 of 3 Phases Complete)
 
@@ -814,6 +824,21 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 ### Triage: FullScreenEdit FormMode (default)
 
 **Priority: Triage.** Add a third `FormMode::FullScreenEdit` that renders only the focused field's control on a dedicated sub-screen when editing (like Bubble Tea's `huh` library). User wants this as the default form mode instead of `DisplayEdit` which expands inline. `engine/crates/bnto-form`. Related: `.claude/strategy/tui-controls-bubbles.md`
+
+### Triage: Rich execution progress UX for CLI/TUI — NEEDS DESIGN SPIKE
+
+**Priority: Triage (blocked on strategy doc).** Make recipe execution feel alive with animated Unicode progress indicators, spinners, throughput counters, and elapsed time — inspired by Claude Code's progress display (e.g. `✳ Quantumizing… (3m 7s · ↓ 4.6k tokens)`). Covers both `bnto run` (CLI) and TUI execution screen: animated Unicode spinner characters, progress bars with percentage, per-file status indicators, streaming byte/throughput metrics.
+
+**Before this can be promoted to a sprint, write a strategy doc** (`strategy/execution-progress-ux.md`) covering:
+
+- [ ] **Competitive audit**: Survey progress UX in Claude Code, `cargo install` progress, `docker pull`, Charm Bubbles spinner/progress, `npx`/`pnpm` install indicators. Screenshot or describe each
+- [ ] **Unicode indicator inventory**: Which spinner characters (braille, box-drawing, geometric shapes, emoji), animation frame sequences, and progress bar styles to support
+- [ ] **Metrics design**: What metrics to surface per context — elapsed time, throughput (bytes/s, files/s), ETA, file count progress (3/12), current file name, current node name
+- [ ] **Layout design**: ASCII mockups for CLI (`bnto run`) single-line progress vs TUI execution screen multi-line layout. How does it degrade on narrow terminals?
+- [ ] **Architecture**: Where do progress events originate (engine `bnto-core` events vs CLI rendering), what new event types are needed beyond existing `PipelineStarted`/`NodeStarted`/`FileProgress`/`NodeCompleted`/`PipelineCompleted`
+- [ ] **Scope definition**: What ships in the first PR vs follow-up. Recommend phased: spinner+elapsed first, then throughput metrics, then per-file progress bars
+
+`engine/crates/bnto`, `engine/crates/bnto-core`
 
 ---
 
