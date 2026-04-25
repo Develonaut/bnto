@@ -1,10 +1,10 @@
 {
   "site": {
     "title": "bnto",
-    "defaultTitle": "bnto - Automate tasks with recipes",
+    "defaultTitle": "bnto - Pack your workflow",
     "titleTemplate": "%s - bnto",
-    "description": "Pack your workflow. {{count}} recipes for images, SVGs, CSVs, files, and video. Chain nodes into custom pipelines. Run from the CLI or browser. Free, open source, MIT licensed.",
-    "tagline": "Pack. Run. Done.",
+    "description": "Pack your workflow. {{count}} free recipes for images, CSVs, SVGs, video, and more. Runs locally in CLI or browser. Open source, MIT licensed.",
+    "tagline": "Packed with love.",
     "trustLine": "Free. Open source. Runs on your machine.",
     "licenseLine": "MIT Licensed. Free and open source."
   },

@@ -150,7 +150,7 @@ cargo test -p bnto           # Run all tests (unit + integration + golden)
 
 ## Testing
 
-The TEA pattern makes most TUI logic testable as pure Rust — 450+ TUI tests:
+The TEA pattern makes most TUI logic testable as pure Rust. 450+ TUI tests:
 
 - **State transitions**: `update()` is a pure function tested with plain assertions
 - **Type-aware controls**: Boolean toggle, enum cycling, bounded number stepping, reset-to-default

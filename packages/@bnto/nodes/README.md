@@ -76,20 +76,9 @@ The engine's `NodeRegistry` iterates all registered processors, serializes their
 
 ## Predefined Recipes
 
-8 recipes ship with bnto, each composing engine nodes into a ready-to-use pipeline:
+18 recipes ship with bnto, each composing engine nodes into a ready-to-use pipeline. The authoritative recipe definitions live in the engine (`engine/recipes/*.bnto.json`). TypeScript recipe metadata is generated from the engine's catalog snapshot.
 
-| Recipe               | Slug                      | Nodes                                          |
-| -------------------- | ------------------------- | ---------------------------------------------- |
-| Compress Images      | `compress-images`         | input → image-compress → output                |
-| Resize Images        | `resize-images`           | input → image-resize → output                  |
-| Convert Image Format | `convert-image-format`    | input → image-convert → output                 |
-| Generate Thumbnails  | `generate-thumbnails`     | input → image-resize → output                  |
-| Optimize for Web     | `optimize-images-for-web` | input → image-resize → image-compress → output |
-| Clean CSV            | `clean-csv`               | input → spreadsheet-clean → output             |
-| Rename CSV Columns   | `rename-csv-columns`      | input → spreadsheet-rename → output            |
-| Rename Files         | `rename-files`            | input → file-rename → output                   |
-
-Access via `RECIPES` array or `getRecipeBySlug(slug)`.
+Access via `RECIPES` array or `getRecipeBySlug(slug)`. See the root README for the full recipe table.
 
 ## Development
 
