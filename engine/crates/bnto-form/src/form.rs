@@ -1,7 +1,6 @@
-//! Form-level model and message types.
+//! Form-level model and update logic.
 //!
 //! `FormModel` holds a collection of fields and tracks which one is focused.
-//! `FormMessage` is the union of all possible user actions across field types.
 //! `update()` is a pure function: takes ownership of the model + message,
 //! returns a new model with the transition applied.
 
@@ -28,6 +27,8 @@ pub struct FormModel {
     pub scroll_offset: usize,
     pub viewport_height: usize,
     pub mode: FormMode,
+    /// Side effects pending caller fulfillment. Drain after each `update()`.
+    pub pending_effects: Vec<FormEffect>,
 }
 
 impl FormModel {
@@ -41,6 +42,7 @@ impl FormModel {
             scroll_offset: 0,
             viewport_height: 20,
             mode: FormMode::Inline,
+            pending_effects: Vec::new(),
         }
     }
 
@@ -87,46 +89,8 @@ impl FormModel {
     }
 }
 
-/// All possible user actions across field types.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum FormMessage {
-    // --- Navigation ---
-    FocusNext,
-    FocusPrev,
-
-    // --- Edit lifecycle ---
-    StartEdit,
-    CommitEdit,
-    CancelEdit,
-
-    // --- Text input (TextEditing / NumberEditing) ---
-    EditChar(char),
-    EditBackspace,
-    DeleteForward,
-    CursorLeft,
-    CursorRight,
-    CursorHome,
-    CursorEnd,
-    CursorWordBack,
-    CursorWordForward,
-    DeleteWordBack,
-
-    // --- Inline actions (no edit mode needed) ---
-    ToggleConfirm,
-    CycleNext,
-    CyclePrev,
-    ResetDefault,
-
-    // --- Select list (SelectExpanded) ---
-    SelectHighlightNext,
-    SelectHighlightPrev,
-    SelectConfirm,
-    SelectFilterChar(char),
-    SelectFilterBackspace,
-
-    // --- Viewport ---
-    Resize { height: usize },
-}
+// Re-export messages types for downstream use.
+pub use crate::messages::{FormEffect, FormMessage};
 
 /// Pure state transition — apply a message to the form model.
 pub fn update(model: FormModel, msg: FormMessage) -> FormModel {
@@ -149,6 +113,34 @@ pub fn update(model: FormModel, msg: FormMessage) -> FormModel {
             ..model
         },
         FormMessage::ResetDefault => reset_default(model),
+
+        // StartEdit for FilePath fields needs the form-level handler
+        // (emits LoadDirectory effect, enters FilePathBrowsing state).
+        FormMessage::StartEdit
+            if model
+                .focused_field()
+                .is_some_and(|f| matches!(f.kind, crate::field::FieldKind::FilePath { .. })) =>
+        {
+            crate::form_file_path::handle_file_path_message(model, msg)
+        }
+
+        // FilePath messages are handled at the form level (not dispatch)
+        // because they need access to pending_effects and field id lookups.
+        FormMessage::FilePathCursorDown
+        | FormMessage::FilePathCursorUp
+        | FormMessage::FilePathEnterDir
+        | FormMessage::FilePathParentDir
+        | FormMessage::FilePathConfirm
+        | FormMessage::FilePathToggleHidden
+        | FormMessage::FilePathPageDown
+        | FormMessage::FilePathPageUp
+        | FormMessage::FilePathGoToTop
+        | FormMessage::FilePathGoToBottom
+        | FormMessage::FilePathCancel
+        | FormMessage::FilePathDirLoaded { .. } => {
+            crate::form_file_path::handle_file_path_message(model, msg)
+        }
+
         // All other messages dispatch to the focused field
         _ => update_focused_field(model, msg),
     }

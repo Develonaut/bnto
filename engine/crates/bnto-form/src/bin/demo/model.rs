@@ -6,7 +6,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use bnto_form::demo::fields::build_fields;
-use bnto_form::{FormMessage, FormModel, map_key_event};
+use bnto_form::{FormEffect, FormMessage, FormModel, map_key_event};
 
 /// Top-level demo state wrapping the form.
 pub struct DemoModel {
@@ -56,6 +56,9 @@ pub fn handle_demo_key(key: KeyEvent, model: &DemoModel) -> Option<DemoMessage> 
 }
 
 /// Apply a demo message to the model.
+///
+/// After each form update, drains pending effects (e.g. directory reads)
+/// and feeds results back into the form via `FilePathDirLoaded`.
 pub fn update_demo(mut model: DemoModel, msg: DemoMessage) -> DemoModel {
     match msg {
         DemoMessage::Quit => {
@@ -71,7 +74,103 @@ pub fn update_demo(mut model: DemoModel, msg: DemoMessage) -> DemoModel {
         }
         DemoMessage::Form(fm) => {
             model.form = bnto_form::update(model.form, fm);
+            drain_effects(&mut model);
             model
         }
     }
+}
+
+/// Drain pending form effects and fulfill them with filesystem I/O.
+fn drain_effects(model: &mut DemoModel) {
+    let effects: Vec<FormEffect> = model.form.pending_effects.drain(..).collect();
+    for effect in effects {
+        match effect {
+            FormEffect::LoadDirectory {
+                field_id,
+                path,
+                extensions,
+                show_hidden,
+            } => {
+                let entries = read_directory(&path, &extensions, show_hidden);
+                model.form = bnto_form::update(
+                    model.form.clone(),
+                    bnto_form::FormMessage::FilePathDirLoaded {
+                        field_id,
+                        dir: path,
+                        entries,
+                    },
+                );
+            }
+        }
+    }
+}
+
+/// Read a directory and return sorted FileEntry items.
+///
+/// Dirs come first (alphabetical), then files (alphabetical).
+/// Filters files by extension when the list is non-empty.
+/// Hidden entries (starting with '.') are excluded unless show_hidden is true.
+fn read_directory(
+    path: &std::path::Path,
+    extensions: &[String],
+    show_hidden: bool,
+) -> Vec<bnto_form::FileEntry> {
+    let read_dir = match std::fs::read_dir(path) {
+        Ok(rd) => rd,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut dirs = Vec::new();
+    let mut files = Vec::new();
+
+    for entry in read_dir.flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+
+        // Skip hidden unless requested
+        if !show_hidden && name.starts_with('.') {
+            continue;
+        }
+
+        let metadata = entry.metadata().ok();
+        let is_dir = metadata.as_ref().is_some_and(|m| m.is_dir());
+        let size = if is_dir {
+            None
+        } else {
+            metadata.as_ref().map(|m| m.len())
+        };
+
+        // Filter files by extension (dirs always pass)
+        if !is_dir && !extensions.is_empty() {
+            let has_ext = entry
+                .path()
+                .extension()
+                .and_then(|e| e.to_str())
+                .is_some_and(|ext| {
+                    extensions
+                        .iter()
+                        .any(|allowed| allowed.eq_ignore_ascii_case(ext))
+                });
+            if !has_ext {
+                continue;
+            }
+        }
+
+        let fe = bnto_form::FileEntry {
+            name,
+            is_dir,
+            path: entry.path(),
+            size,
+        };
+
+        if is_dir {
+            dirs.push(fe);
+        } else {
+            files.push(fe);
+        }
+    }
+
+    dirs.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    files.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    dirs.append(&mut files);
+    dirs
 }

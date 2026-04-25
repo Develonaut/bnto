@@ -344,7 +344,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 #### Wave 1 — Form Control Interaction Model (sequential)
 
-- [ ] `engine/crates/bnto-form` — **Display/Edit mode for form fields**: Each field renders a compact display line (label + value). Enter opens edit mode (full control). Enter/Esc returns to display. RED tests: display rendering, mode transitions, value preservation (~6 tests)
+- [x] `engine/crates/bnto-form` — **Display/Edit mode for form fields**: Each field renders a compact display line (label + value). Enter opens edit mode (full control). Enter/Esc returns to display. RED tests: display rendering, mode transitions, value preservation (~6 tests)
 - [ ] `engine/crates/bnto-form` — **FilePath field type**: New `FieldKind::FilePath` renders as path string in display mode. Edit mode opens inline directory browser (picker logic extracted into bnto-form). RED tests: display, browser nav, file selection, ext filter (~8 tests)
 
 #### Wave 2 — Picker Polish (parallel with Wave 1 completion)
@@ -810,6 +810,10 @@ The springable surface system (grounded → raised with bouncy spring) is the mo
 5. ~~**TOCTOU fix in NativeContext::temp_file()**~~ — **Done.** Fixed in Sprint 14 Wave 1 (PR #450)
 6. **Network capability classification** — Classify recipes as local-only vs network-capable. Warn on network binaries (`curl`, `wget`, `nc`, `ssh`). Future: outbound domain allowlist
 7. **Recipe signatures** — Sign built-in recipes. Unsigned community recipes trigger warnings. Foundation for verified registry
+
+### Triage: FullScreenEdit FormMode (default)
+
+**Priority: Triage.** Add a third `FormMode::FullScreenEdit` that renders only the focused field's control on a dedicated sub-screen when editing (like Bubble Tea's `huh` library). User wants this as the default form mode instead of `DisplayEdit` which expands inline. `engine/crates/bnto-form`. Related: `.claude/strategy/tui-controls-bubbles.md`
 
 ---
 

@@ -18,20 +18,28 @@
 pub mod controls;
 pub mod demo;
 pub mod field;
+mod field_builder;
+pub mod file_entry;
+pub mod file_path_nav;
 pub mod form;
+pub mod form_file_path;
+pub mod format_size;
 pub mod keys;
+pub mod messages;
 pub mod render;
 pub mod theme;
 pub mod validators;
+pub mod viewport;
 pub mod widgets;
 
 // --- Public API re-exports ---
 
 pub use field::{
-    Field, FieldBuilder, FieldKind, FieldState, SelectOption, ValidatorFn, confirm, number, select,
-    text,
+    Field, FieldBuilder, FieldKind, FieldState, SelectOption, ValidatorFn, confirm, file_path,
+    number, select, text,
 };
-pub use form::{FormMessage, FormMode, FormModel, update};
+pub use file_entry::FileEntry;
+pub use form::{FormEffect, FormMessage, FormMode, FormModel, update};
 pub use keys::map_key_event;
 pub use render::render_form;
 pub use theme::{DefaultTheme, FormTheme};

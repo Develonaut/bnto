@@ -22,9 +22,9 @@ const H: u16 = 40;
 // ═══════════════════════════════════════════════════════════
 
 #[test]
-fn kitchen_sink_has_ten_fields() {
+fn kitchen_sink_has_eleven_fields() {
     let fields = build_fields();
-    assert_eq!(fields.len(), 10);
+    assert_eq!(fields.len(), 11);
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn kitchen_sink_has_number_with_suffix() {
 #[test]
 fn kitchen_sink_last_is_hidden() {
     let fields = build_fields();
-    let last = &fields[9];
+    let last = &fields[10];
     assert_eq!(last.id, "hidden_field");
     assert!(!last.visible);
 }
@@ -106,6 +106,7 @@ fn initial_render_shows_all_visible_labels() {
         "Max Width",
         "Notification Email",
         "Min File Size",
+        "Input File",
     ];
 
     for label in &visible_labels {
@@ -134,12 +135,12 @@ fn initial_render_shows_description() {
 #[test]
 fn scroll_to_last_field_shows_it() {
     let mut model = FormModel::new(build_fields()).with_viewport(6);
-    // Tab to the last visible field (index 8 = min_size, skipping hidden at 9)
-    for _ in 0..8 {
+    // Tab to the last visible field (index 9 = input_file, skipping hidden at 10)
+    for _ in 0..9 {
         model = bnto_form::update(model, bnto_form::FormMessage::FocusNext);
     }
     let buf = render_to_buffer(&model, W, 6);
-    assert_buffer_contains(&buf, "Min File Size");
+    assert_buffer_contains(&buf, "Input File");
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -226,11 +227,11 @@ fn help_bar_shows_version() {
 #[test]
 fn help_bar_shows_field_count() {
     let theme = DefaultTheme;
-    let line = render_help_bar(10, &theme);
+    let line = render_help_bar(11, &theme);
     let text: String = line.spans.iter().map(|s| s.content.to_string()).collect();
     assert!(
-        text.contains("10 fields"),
-        "help bar should show '10 fields'. got: {text}"
+        text.contains("11 fields"),
+        "help bar should show '11 fields'. got: {text}"
     );
 }
 

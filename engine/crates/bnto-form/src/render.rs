@@ -128,6 +128,9 @@ fn render_field_inline(
         crate::field::FieldKind::Select { .. } => widgets::select::render(field, focused, theme),
         crate::field::FieldKind::Confirm { .. } => widgets::confirm::render(field, focused, theme),
         crate::field::FieldKind::Number { .. } => widgets::number::render(field, focused, theme),
+        crate::field::FieldKind::FilePath { .. } => {
+            widgets::file_path::render(field, focused, theme)
+        }
     }
 }
 
