@@ -1,10 +1,18 @@
-# bnto
+<p align="center">
+  <img src="apps/web/public/favicon/Logo.svg" alt="bnto logo" width="80" height="80" />
+</p>
 
-[![CI](https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg)](https://github.com/Develonaut/bnto/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/Rust-WASM-black?logo=rust)](https://www.rust-lang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+<h1 align="center">bnto</h1>
+
+<p align="center">
+  <a href="https://github.com/Develonaut/bnto/actions"><img src="https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-WASM-black?logo=rust" alt="Rust" /></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white" alt="TypeScript" /></a>
+</p>
+
+<p align="center"><strong>Pack your workflow.</strong></p>
 
 **Workflow automation through composable parts.** Build a node for anything: image processing, data transforms, API calls, video downloads, shell commands. Chain nodes into recipes that automate your workflow. One Rust engine that compiles to native binaries, WebAssembly, and (soon) desktop and server. Write a recipe once, run it anywhere.
 
