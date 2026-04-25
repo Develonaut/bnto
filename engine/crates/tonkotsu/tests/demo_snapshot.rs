@@ -1,4 +1,4 @@
-//! Snapshot tests for the bnto-form kitchen-sink demo.
+//! Snapshot tests for the tonkotsu kitchen-sink demo.
 //!
 //! Tests field construction, form rendering, validation behavior,
 //! help bar output, and demo model key handling.
@@ -9,10 +9,10 @@ mod helpers;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use helpers::*;
 
-use bnto_form::demo::fields::build_fields;
-use bnto_form::demo::help_bar::render_help_bar;
-use bnto_form::field::{FieldKind, FieldState};
-use bnto_form::{DefaultTheme, FormModel};
+use tonkotsu::demo::fields::build_fields;
+use tonkotsu::demo::help_bar::render_help_bar;
+use tonkotsu::field::{FieldKind, FieldState};
+use tonkotsu::{DefaultTheme, FormModel};
 
 const W: u16 = 80;
 const H: u16 = 40;
@@ -137,7 +137,7 @@ fn scroll_to_last_field_shows_it() {
     let mut model = FormModel::new(build_fields()).with_viewport(6);
     // Tab to the last visible field (index 9 = input_file, skipping hidden at 10)
     for _ in 0..9 {
-        model = bnto_form::update(model, bnto_form::FormMessage::FocusNext);
+        model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
     let buf = render_to_buffer(&model, W, 6);
     assert_buffer_contains(&buf, "Input File");
@@ -161,7 +161,7 @@ fn pattern_validator_rejects_no_at() {
     let mut model = FormModel::new(build_fields()).with_viewport(H as usize);
     // Focus email field (index 7)
     for _ in 0..7 {
-        model = bnto_form::update(model, bnto_form::FormMessage::FocusNext);
+        model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
     assert_eq!(model.fields[model.focused].id, "email");
 
@@ -186,7 +186,7 @@ fn number_error_on_non_numeric() {
     let mut model = FormModel::new(build_fields());
     // Focus quality field (index 5)
     for _ in 0..5 {
-        model = bnto_form::update(model, bnto_form::FormMessage::FocusNext);
+        model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
     assert_eq!(model.fields[model.focused].id, "quality");
 
@@ -262,7 +262,7 @@ fn esc_in_idle_does_not_edit() {
     // (the demo binary catches it as Quit before it reaches the form)
     let model = FormModel::new(build_fields());
     let esc = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
-    let msg = bnto_form::map_key_event(esc, &model);
+    let msg = tonkotsu::map_key_event(esc, &model);
     // In idle, Esc is not a form-level message (form doesn't handle quit)
     assert!(
         msg.is_none(),
@@ -282,8 +282,8 @@ fn esc_in_editing_cancels_not_quits() {
 
     // Esc during editing should produce CancelEdit
     let esc = KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE);
-    let msg = bnto_form::map_key_event(esc, &model);
-    assert_eq!(msg, Some(bnto_form::FormMessage::CancelEdit));
+    let msg = tonkotsu::map_key_event(esc, &model);
+    assert_eq!(msg, Some(tonkotsu::FormMessage::CancelEdit));
 }
 
 #[test]
@@ -291,15 +291,15 @@ fn ctrl_r_in_idle_resets_default() {
     // Ctrl+R in idle maps to ResetDefault at the form level
     let model = FormModel::new(build_fields());
     let ctrl_r = KeyEvent::new(KeyCode::Char('r'), KeyModifiers::CONTROL);
-    let msg = bnto_form::map_key_event(ctrl_r, &model);
-    assert_eq!(msg, Some(bnto_form::FormMessage::ResetDefault));
+    let msg = tonkotsu::map_key_event(ctrl_r, &model);
+    assert_eq!(msg, Some(tonkotsu::FormMessage::ResetDefault));
 }
 
 #[test]
 fn char_key_in_idle_does_nothing() {
     // Regular character keys shouldn't produce messages in idle (text fields)
     let model = FormModel::new(build_fields());
-    let msg = bnto_form::map_key_event(char_key('a'), &model);
+    let msg = tonkotsu::map_key_event(char_key('a'), &model);
     assert!(
         msg.is_none(),
         "char 'a' in idle text field should not produce a message"

@@ -161,7 +161,7 @@ pub(crate) fn handle_editor(model: AppModel, msg: EditorMessage) -> AppModel {
 }
 
 /// Route form messages through the editor screen's update.
-pub(crate) fn handle_editor_form(model: AppModel, form_msg: bnto_form::FormMessage) -> AppModel {
+pub(crate) fn handle_editor_form(model: AppModel, form_msg: tonkotsu::FormMessage) -> AppModel {
     let msg = EditorMessage::Form(form_msg);
     match model.editor {
         Some(editor_model) => {

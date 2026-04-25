@@ -1,7 +1,7 @@
 //! Kitchen-sink field definitions for the demo binary.
 //!
 //! Ten fields covering every builder method, field kind, and validator
-//! that bnto-form supports. Used by both the demo binary and snapshot tests.
+//! that tonkotsu supports. Used by both the demo binary and snapshot tests.
 
 use crate::field::Field;
 use crate::validators;

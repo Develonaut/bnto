@@ -175,7 +175,7 @@ fn run_loop(
             if detail_height > 0 {
                 model = update(
                     model,
-                    AppMessage::DetailForm(bnto_form::FormMessage::Resize {
+                    AppMessage::DetailForm(tonkotsu::FormMessage::Resize {
                         height: detail_height,
                     }),
                 );
@@ -320,7 +320,6 @@ mod tests {
 
     use super::*;
     use app::{AppMessage, Screen};
-    use bnto_form::FormMessage;
     use config::TuiConfig;
     use screens::browser::BrowserMessage;
     use screens::execution::ExecutionMessage;
@@ -328,6 +327,7 @@ mod tests {
     use screens::picker::PickerMessage;
     use screens::results::ResultsMessage;
     use screens::settings::SettingsModel;
+    use tonkotsu::FormMessage;
 
     fn test_paths() -> paths::BntoPaths {
         use std::sync::atomic::{AtomicU32, Ordering};
@@ -811,7 +811,7 @@ mod tests {
         // Tab within Params section → FocusNext (form navigation).
         assert_eq!(
             handle_key(&model, key),
-            Some(AppMessage::DetailForm(bnto_form::FormMessage::FocusNext))
+            Some(AppMessage::DetailForm(tonkotsu::FormMessage::FocusNext))
         );
     }
 
@@ -844,7 +844,7 @@ mod tests {
     /// Put the detail model's first form field into TextEditing state.
     fn set_detail_editing(model: &mut AppModel) {
         let detail = model.detail.as_mut().unwrap();
-        detail.form.fields[0].state = bnto_form::FieldState::TextEditing {
+        detail.form.fields[0].state = tonkotsu::FieldState::TextEditing {
             buffer: detail.form.fields[0].value.clone(),
             cursor: detail.form.fields[0].value.len(),
         };
@@ -935,7 +935,7 @@ mod tests {
 
     #[test]
     fn detail_arrow_keys_cycle_select() {
-        // Arrow keys fall through to bnto_form::map_key_event which maps them
+        // Arrow keys fall through to tonkotsu::map_key_event which maps them
         // to CyclePrev/CycleNext for Select/Number fields.
         use bnto_core::metadata::{OptionEntry, ParameterType};
         use screens::detail::{DetailModel, ParamEntry};
@@ -996,7 +996,7 @@ mod tests {
 
     #[test]
     fn detail_enter_starts_edit_on_text_field() {
-        // bnto-form's idle key mapping: Enter → StartEdit (generic).
+        // tonkotsu's idle key mapping: Enter → StartEdit (generic).
         // The form's dispatch handles per-kind behavior internally.
         let model = detail_model();
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);

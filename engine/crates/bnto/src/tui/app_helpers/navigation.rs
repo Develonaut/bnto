@@ -5,7 +5,7 @@ use super::super::config::TuiConfig;
 use super::super::screens::home::{HomeModel, list_library_recipes};
 
 /// Check if the form's focus is on the last visible field.
-pub(crate) fn is_at_last_visible_field(form: &bnto_form::FormModel) -> bool {
+pub(crate) fn is_at_last_visible_field(form: &tonkotsu::FormModel) -> bool {
     let last_visible = form
         .fields
         .iter()

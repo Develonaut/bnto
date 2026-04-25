@@ -1,4 +1,4 @@
-// Bridge between EditorNode params and bnto-form fields.
+// Bridge between EditorNode params and tonkotsu fields.
 //
 // Converts an EditorNode's params into ParamEntry + Field lists using
 // engine registry metadata. Reuses param_to_field and visibility logic
@@ -6,7 +6,7 @@
 
 use bnto_core::editor::EditorNode;
 use bnto_core::registry::NodeRegistry;
-use bnto_form::{FormMessage, FormModel};
+use tonkotsu::{FormMessage, FormModel};
 
 use super::detail::ParamEntry;
 use super::detail_bridge;
@@ -99,7 +99,7 @@ fn node_to_params(node: &EditorNode, registry: &NodeRegistry) -> Vec<ParamEntry>
 
 /// Apply a form message to the active form, updating visibility afterwards.
 pub fn apply_form_message(active: &mut ActiveNodeForm, msg: FormMessage) {
-    active.form = bnto_form::update(active.form.clone(), msg);
+    active.form = tonkotsu::update(active.form.clone(), msg);
     detail_bridge::update_visibility(&mut active.form, &active.params);
 }
 

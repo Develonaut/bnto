@@ -93,7 +93,7 @@ pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
                 if has_form {
                     let active = editor_screen.active_form.as_ref().unwrap();
                     let form_theme = BntoFormTheme(theme);
-                    let form_lines = bnto_form::render_form(&active.form, &form_theme);
+                    let form_lines = tonkotsu::render_form(&active.form, &form_theme);
                     for line in form_lines {
                         // Indent form lines to align with node content.
                         let mut spans = vec![Span::raw("      ")];

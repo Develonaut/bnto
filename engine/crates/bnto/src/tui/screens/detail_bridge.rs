@@ -1,17 +1,17 @@
-// Bridge between engine ParamEntry metadata and bnto-form fields.
+// Bridge between engine ParamEntry metadata and tonkotsu fields.
 //
 // Converts ParamEntry (engine-owned parameter definitions) into
-// bnto_form::Field instances. Also handles visible_when re-evaluation
+// tonkotsu::Field instances. Also handles visible_when re-evaluation
 // and provides a FormTheme adapter wrapping the TUI Theme.
 
 use bnto_core::metadata::ParameterType;
-use bnto_form::{Field, FieldState, FormModel};
 use ratatui::style::Style;
+use tonkotsu::{Field, FieldState, FormModel};
 
 use super::detail::{ParamEntry, is_param_visible};
 use crate::tui::theme::Theme;
 
-/// Convert a ParamEntry into a bnto_form::Field.
+/// Convert a ParamEntry into a tonkotsu::Field.
 ///
 /// Maps engine parameter types to form field kinds:
 /// - Boolean → Confirm (Yes/No toggle)
@@ -21,7 +21,7 @@ use crate::tui::theme::Theme;
 /// - String → Text
 pub fn param_to_field(param: &ParamEntry) -> Field {
     match &param.param_type {
-        ParameterType::Boolean => bnto_form::confirm(&param.name)
+        ParameterType::Boolean => tonkotsu::confirm(&param.name)
             .label(&param.label)
             .value(&param.value)
             .default(Some(&param.default))
@@ -34,7 +34,7 @@ pub fn param_to_field(param: &ParamEntry) -> Field {
                 .map(|o| (o.value.as_str(), o.label.as_str()))
                 .collect();
             let filterable = options.len() > 5;
-            let mut builder = bnto_form::select(&param.name, &opts)
+            let mut builder = tonkotsu::select(&param.name, &opts)
                 .label(&param.label)
                 .value(&param.value)
                 .default(Some(&param.default))
@@ -47,7 +47,7 @@ pub fn param_to_field(param: &ParamEntry) -> Field {
 
         ParameterType::Number => {
             if let Some(ref constraints) = param.constraints {
-                let mut builder = bnto_form::number(&param.name)
+                let mut builder = tonkotsu::number(&param.name)
                     .label(&param.label)
                     .value(&param.value)
                     .default(Some(&param.default))
@@ -64,7 +64,7 @@ pub fn param_to_field(param: &ParamEntry) -> Field {
                 builder.build()
             } else {
                 // No constraints — fall back to text input for free-form entry.
-                bnto_form::text(&param.name)
+                tonkotsu::text(&param.name)
                     .label(&param.label)
                     .value(&param.value)
                     .default(Some(&param.default))
@@ -73,7 +73,7 @@ pub fn param_to_field(param: &ParamEntry) -> Field {
             }
         }
 
-        _ => bnto_form::text(&param.name)
+        _ => tonkotsu::text(&param.name)
             .label(&param.label)
             .value(&param.value)
             .default(Some(&param.default))
@@ -133,10 +133,10 @@ pub fn is_form_editing(form: &FormModel) -> bool {
         .is_some_and(|f| !matches!(f.state, FieldState::Idle))
 }
 
-/// Theme adapter — wraps the TUI Theme to implement bnto_form::FormTheme.
+/// Theme adapter — wraps the TUI Theme to implement tonkotsu::FormTheme.
 pub struct BntoFormTheme<'a>(pub &'a Theme);
 
-impl bnto_form::FormTheme for BntoFormTheme<'_> {
+impl tonkotsu::FormTheme for BntoFormTheme<'_> {
     fn text(&self) -> Style {
         self.0.text()
     }
@@ -164,9 +164,9 @@ impl bnto_form::FormTheme for BntoFormTheme<'_> {
 
 /// Extract SelectOption values from a field for comparison (test helper).
 #[cfg(test)]
-fn select_options(field: &Field) -> Vec<bnto_form::SelectOption> {
+fn select_options(field: &Field) -> Vec<tonkotsu::SelectOption> {
     match &field.kind {
-        bnto_form::FieldKind::Select { options, .. } => options.clone(),
+        tonkotsu::FieldKind::Select { options, .. } => options.clone(),
         _ => vec![],
     }
 }
@@ -175,7 +175,7 @@ fn select_options(field: &Field) -> Vec<bnto_form::SelectOption> {
 mod tests {
     use super::*;
     use bnto_core::metadata::{Constraints, OptionEntry, ParamCondition, ParamConditionEntry};
-    use bnto_form::FieldKind;
+    use tonkotsu::FieldKind;
 
     fn string_param(name: &str, value: &str) -> ParamEntry {
         ParamEntry {
@@ -428,13 +428,13 @@ mod tests {
 
     #[test]
     fn is_form_editing_false_when_idle() {
-        let form = FormModel::new(vec![bnto_form::text("a").build()]);
+        let form = FormModel::new(vec![tonkotsu::text("a").build()]);
         assert!(!is_form_editing(&form));
     }
 
     #[test]
     fn is_form_editing_true_when_text_editing() {
-        let mut form = FormModel::new(vec![bnto_form::text("a").build()]);
+        let mut form = FormModel::new(vec![tonkotsu::text("a").build()]);
         form.fields[0].state = FieldState::TextEditing {
             buffer: String::new(),
             cursor: 0,
@@ -447,7 +447,7 @@ mod tests {
     #[test]
     fn theme_bridge_maps_styles() {
         use crate::tui::theme::ThemeVariant;
-        use bnto_form::FormTheme;
+        use tonkotsu::FormTheme;
 
         let theme = Theme::from_variant(ThemeVariant::Tokyo);
         let bridge = BntoFormTheme(&theme);

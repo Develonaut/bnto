@@ -1,4 +1,4 @@
-//! Core field types for bnto-form.
+//! Core field types for tonkotsu.
 //!
 //! A `Field` represents one form control — text input, select dropdown,
 //! confirm toggle, or number slider. Each field carries its own state,

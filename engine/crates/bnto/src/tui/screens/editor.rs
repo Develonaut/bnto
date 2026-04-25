@@ -37,7 +37,7 @@ pub enum EditorMessage {
     DirtyCancel,
 
     // --- Inline form editing ---
-    Form(bnto_form::FormMessage),
+    Form(tonkotsu::FormMessage),
 
     // --- Picker overlay ---
     OpenPicker,
@@ -307,7 +307,7 @@ pub fn update(
 /// Handle a form message for the active inline form.
 fn update_form(
     mut model: EditorScreenModel,
-    msg: bnto_form::FormMessage,
+    msg: tonkotsu::FormMessage,
     registry: &NodeRegistry,
 ) -> (EditorScreenModel, EditorAction) {
     if let Some(ref mut active) = model.active_form {
@@ -899,33 +899,33 @@ mod tests {
         // Start editing, change value, commit.
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::StartEdit),
+            EditorMessage::Form(tonkotsu::FormMessage::StartEdit),
             &r,
         );
         // Type new value.
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::EditBackspace),
+            EditorMessage::Form(tonkotsu::FormMessage::EditBackspace),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::EditBackspace),
+            EditorMessage::Form(tonkotsu::FormMessage::EditBackspace),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::EditChar('5')),
+            EditorMessage::Form(tonkotsu::FormMessage::EditChar('5')),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::EditChar('0')),
+            EditorMessage::Form(tonkotsu::FormMessage::EditChar('0')),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::CommitEdit),
+            EditorMessage::Form(tonkotsu::FormMessage::CommitEdit),
             &r,
         );
 
@@ -945,12 +945,12 @@ mod tests {
         // Start edit, commit.
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::StartEdit),
+            EditorMessage::Form(tonkotsu::FormMessage::StartEdit),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::CommitEdit),
+            EditorMessage::Form(tonkotsu::FormMessage::CommitEdit),
             &r,
         );
 
@@ -970,22 +970,22 @@ mod tests {
         // Edit quality.
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::StartEdit),
+            EditorMessage::Form(tonkotsu::FormMessage::StartEdit),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::EditBackspace),
+            EditorMessage::Form(tonkotsu::FormMessage::EditBackspace),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::EditChar('1')),
+            EditorMessage::Form(tonkotsu::FormMessage::EditChar('1')),
             &r,
         );
         let (model, _) = update(
             model,
-            EditorMessage::Form(bnto_form::FormMessage::CommitEdit),
+            EditorMessage::Form(tonkotsu::FormMessage::CommitEdit),
             &r,
         );
 

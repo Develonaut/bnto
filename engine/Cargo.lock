@@ -141,7 +141,6 @@ version = "0.1.2"
 dependencies = [
  "bnto-core",
  "bnto-engine",
- "bnto-form",
  "clap",
  "colored",
  "crossterm",
@@ -153,6 +152,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "toml",
+ "tonkotsu",
  "ureq",
  "uuid",
 ]
@@ -205,15 +205,6 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-test",
  "web-sys",
-]
-
-[[package]]
-name = "bnto-form"
-version = "0.1.0"
-dependencies = [
- "crossterm",
- "ratatui",
- "unicode-segmentation",
 ]
 
 [[package]]
@@ -2147,6 +2138,15 @@ name = "toml_write"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
+
+[[package]]
+name = "tonkotsu"
+version = "0.1.0"
+dependencies = [
+ "crossterm",
+ "ratatui",
+ "unicode-segmentation",
+]
 
 [[package]]
 name = "ts-rs"

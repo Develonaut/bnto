@@ -37,11 +37,11 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **TUI schema-driven config (Sprint 11):** Type-aware parameter controls (boolean toggles, enum selects, number sliders, validation), engine-owned node schema, ~930 LOC hand-written TS deleted
 - **Recipe-level deps + shell-command (Sprint 12B):** `PipelineDefinition.requires`, `shell-command` processor with security boundary, `download-video` migrated from dedicated crate, `bnto-video` deleted. Recipe fields (`{{fields.*}}`) delivered
 - **Data persistence + Home + Library (Sprint 12A):** XDG-compliant storage (`BntoPaths`), atomic writes, TOML config, Home screen, My Library, `bnto` = TUI default
-- **`bnto-form` crate (Sprint 11.5):** Standalone ratatui form widget library (TextInput, Select, Confirm, Number), TEA-native, zero bnto dependency. ~105 tests
+- **`tonkotsu` crate (Sprint 11.5, renamed from bnto-form):** Standalone ratatui form widget library (TextInput, Select, Confirm, Number), TEA-native, zero bnto dependency. ~105 tests
 - **TUI List Editor (Sprint 12):** Full recipe editing — add/remove/reorder nodes, inline param editing, undo/redo, save workflow, multiple entry points. ~75 tests
 - **TUI Wizard (Sprint 13):** Guided recipe creation — category → operation → config → done. Hands off to List editor
-- **TUI controls polish (Sprints 14-15):** Bubbles-inspired display/edit modes, FilePath field type, TextArea, fuzzy Select filter, picker search/metadata/breadcrumbs, vim keybindings. `bnto-form` now at huh parity for shipped controls
-- **Next:** Sprint 16 — recipe expansion (file nodes, image crop/rotate), bnto-form huh parity (FullScreenEdit, MultiSelect, field grouping, Note), engine infra (template expressions, version constraints, migration tool), design spikes
+- **TUI controls polish (Sprints 14-15):** Bubbles-inspired display/edit modes, FilePath field type, TextArea, fuzzy Select filter, picker search/metadata/breadcrumbs, vim keybindings. `tonkotsu` now at huh parity for shipped controls
+- **Next:** Sprint 16 — recipe expansion (file nodes, image crop/rotate), tonkotsu huh parity (FullScreenEdit, MultiSelect, field grouping, Note), engine infra (template expressions, version constraints, migration tool), design spikes
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -249,7 +249,7 @@ Engine single source of truth for node schemas + document types. ~930 LOC hand-w
 
 XDG-compliant storage (`BntoPaths`), atomic writes, TOML config, Home screen, My Library, `bnto` (no args) = TUI. ~8 PRs, ~65 tests.
 
-### Sprint 11.5: `bnto-form` — TUI Form Widget Crate — COMPLETE
+### Sprint 11.5: `tonkotsu` (formerly bnto-form) — TUI Form Widget Crate — COMPLETE
 
 Standalone ratatui form crate: TextInput (grapheme-aware), Select (compact cycling + filter), Confirm, Number (vendored slider). TEA-native, zero bnto dependency. ~6 PRs, ~105 tests.
 
@@ -273,9 +273,9 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 ## What's Next
 
-**Sprints 14-15 complete.** Engine hardening (PRs #448-#454) and TUI controls polish (PRs #455-#457) both shipped. `bnto-form` now has Display/Edit mode, FilePath, TextArea, fuzzy Select — matching Charm Bubbles quality.
+**Sprints 14-15 complete.** Engine hardening (PRs #448-#454) and TUI controls polish (PRs #455-#457) both shipped. `tonkotsu` (formerly bnto-form) now has Display/Edit mode, FilePath, TextArea, fuzzy Select — matching Charm Bubbles quality.
 
-**Next: Sprint 16 — Recipe Expansion + huh Parity.** Three streams: (1) bring `bnto-form` to full huh parity (FullScreenEdit, MultiSelect, field grouping, Note field), (2) expand file operations (BRU-style composable nodes), (3) add image crop/rotate for iLovePNG parity. Plus engine infrastructure (template expressions, version constraints, migration tool). Grows recipe count from 18→22+.
+**Next: Sprint 16 — Recipe Expansion + huh Parity.** Three streams: (1) bring `tonkotsu` to full huh parity (FullScreenEdit, MultiSelect, field grouping, Note field), (2) expand file operations (BRU-style composable nodes), (3) add image crop/rotate for iLovePNG parity. Plus engine infrastructure (template expressions, version constraints, migration tool). Grows recipe count from 18→22+.
 
 Desktop (Tauri) and monetization are deep backlog.
 
@@ -302,14 +302,14 @@ Desktop (Tauri) and monetization are deep backlog.
 | --------------------------- | ---------- | ------------------------------------------------------------------------- |
 | `bnto/src/tui/app.rs`       | ~1305      | TEA update() — idiomatic match arms, but extract screen-specific handlers |
 | `bnto-core/src/metadata.rs` | ~673       | Node metadata registry — extract per-category modules                     |
-| `bnto-form/src/form.rs`     | ~523       | Form widget — extract widget-specific logic                               |
+| `tonkotsu/src/form.rs`      | ~523       | Form widget — extract widget-specific logic                               |
 | `bnto/src/tui/keys.rs`      | ~668       | Key dispatch — idiomatic match arms, evaluate extraction                  |
 
 Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per MEMORY.md) — splitting them would be worse. But `app.rs` at 1305 prod lines has room to extract screen-specific update handlers into separate modules. `metadata.rs` and `form.rs` are not TEA patterns and should be broken up.
 
 - [x] `engine/crates/bnto` — **Audit + extract `app.rs`**: Extracted 24 handler functions into `app_helpers/` module directory (6 submodules: navigation, editor, wizard, home_detail, library, settings). `app.rs` reduced from 1305 → 300 prod lines
 - [x] `engine/crates/bnto-core` — **Break up `metadata.rs`**: Extracted `node_types.rs` (252 prod) and `parameters.rs` (107 prod). `metadata.rs` reduced to 85 prod lines (re-export hub)
-- [x] `engine/crates/bnto-form` — **Break up `form.rs`**: Extracted `controls/dispatch.rs` (301 prod — TEA dispatch, idiomatic). `form.rs` reduced to 142 prod lines
+- [x] `engine/crates/tonkotsu` — **Break up `form.rs`**: Extracted `controls/dispatch.rs` (301 prod — TEA dispatch, idiomatic). `form.rs` reduced to 142 prod lines
 - [x] `engine/crates/` — **Sweep remaining 250+ files**: Audited 37 files over 250 prod lines. 6 are TEA dispatch (idiomatic exception), 10 are test files, 21 are production. `node_types.rs` (252) is a data registry — splitting would reduce cohesion
 
 #### Wave 1 — Execution Progress + Security (parallel)
@@ -332,21 +332,21 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 ## Sprint 15: TUI Controls — Bubbles-Quality UX — COMPLETE
 
-**Goal:** Make `bnto-form` controls and the file picker feel as polished as [Charm Bubbles](https://github.com/charmbracelet/bubbles). Form fields get display/edit modes. File selection becomes a form control. Picker gets search, metadata, breadcrumbs.
+**Goal:** Make `tonkotsu` controls and the file picker feel as polished as [Charm Bubbles](https://github.com/charmbracelet/bubbles). Form fields get display/edit modes. File selection becomes a form control. Picker gets search, metadata, breadcrumbs.
 
 **Strategy doc:** [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md)
 
 **Persona ownership:**
 
-| Package                   | Persona        |
-| ------------------------- | -------------- |
-| `engine/crates/bnto-form` | `/rust-expert` |
-| `engine/crates/bnto`      | `/rust-expert` |
+| Package                  | Persona        |
+| ------------------------ | -------------- |
+| `engine/crates/tonkotsu` | `/rust-expert` |
+| `engine/crates/bnto`     | `/rust-expert` |
 
 #### Wave 1 — Form Control Interaction Model (sequential)
 
-- [x] `engine/crates/bnto-form` — **Display/Edit mode for form fields**: Each field renders a compact display line (label + value). Enter opens edit mode (full control). Enter/Esc returns to display. RED tests: display rendering, mode transitions, value preservation (~6 tests)
-- [x] `engine/crates/bnto-form` — **FilePath field type**: New `FieldKind::FilePath` renders as path string in display mode. Edit mode opens inline directory browser (picker logic extracted into bnto-form). RED tests: display, browser nav, file selection, ext filter (~8 tests)
+- [x] `engine/crates/tonkotsu` — **Display/Edit mode for form fields**: Each field renders a compact display line (label + value). Enter opens edit mode (full control). Enter/Esc returns to display. RED tests: display rendering, mode transitions, value preservation (~6 tests)
+- [x] `engine/crates/tonkotsu` — **FilePath field type**: New `FieldKind::FilePath` renders as path string in display mode. Edit mode opens inline directory browser (picker logic extracted into bnto-form). RED tests: display, browser nav, file selection, ext filter (~8 tests)
 
 #### Wave 2 — Picker Polish (parallel with Wave 1 completion)
 
@@ -356,8 +356,8 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 #### Wave 3 — Form Control Refinements (depends on Wave 1)
 
-- [x] `engine/crates/bnto-form` — **Select with fuzzy filter**: Typing filters options by fuzzy substring. Cycling preserved when no filter. RED tests: fuzzy match, cycling fallback, clear filter (~4 tests)
-- [x] `engine/crates/bnto-form` — **TextArea field type**: Multi-line input. Display shows first line + count. Edit shows scrollable editor. RED tests: multi-line, scroll, display truncation (~5 tests)
+- [x] `engine/crates/tonkotsu` — **Select with fuzzy filter**: Typing filters options by fuzzy substring. Cycling preserved when no filter. RED tests: fuzzy match, cycling fallback, clear filter (~4 tests)
+- [x] `engine/crates/tonkotsu` — **TextArea field type**: Multi-line input. Display shows first line + count. Edit shows scrollable editor. RED tests: multi-line, scroll, display truncation (~5 tests)
 
 **Sprint 15 totals: ~7 PRs, ~35 tests**
 
@@ -367,7 +367,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 **Goal:** Rename `bnto-form` → `tonkotsu` and make it the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library. Expand recipe catalog with new image and file operations. Strengthen engine infrastructure for future recipes. Grows recipe count from 18→22+.
 
-**Strategy docs:** [bnto-form-strategy.md](strategy/bnto-form-strategy.md) (§ huh Parity), [file-node-ecosystem.md](strategy/file-node-ecosystem.md) (Phases 1-2), [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md)
+**Strategy docs:** [tonkotsu-strategy.md](strategy/tonkotsu-strategy.md) (§ huh Parity), [file-node-ecosystem.md](strategy/file-node-ecosystem.md) (Phases 1-2), [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md)
 
 **Persona ownership:**
 
@@ -384,11 +384,11 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 Rename the `bnto-form` crate to `tonkotsu` — a playful ramen-themed name for the ratatui ecosystem. `tonkotsu` is available on crates.io. The broth holds the whole bowl together, just like the form library holds the whole TUI interaction together.
 
-- [ ] `engine/crates/bnto-form` → `engine/crates/tonkotsu` — **Rename crate to tonkotsu**: Rename directory (`git mv`), update `Cargo.toml` (package name, bin name → `tonkotsu-demo`), update workspace `Cargo.toml` member, update `bnto/Cargo.toml` dependency, update all `use bnto_form::` → `use tonkotsu::` imports (~15 source files), update `Taskfile.yml` (`form:demo` task), update strategy docs + PLAN.md + CLAUDE.md references. Verify `task wasm:lint && task cli:test` pass clean. (~0 tests — pure rename, existing tests validate)
+- [x] `engine/crates/bnto-form` → `engine/crates/tonkotsu` — **Rename crate to tonkotsu**: Rename directory (`git mv`), update `Cargo.toml` (package name, bin name → `tonkotsu-demo`), update workspace `Cargo.toml` member, update `bnto/Cargo.toml` dependency, update all `use bnto_form::` → `use tonkotsu::` imports (~15 source files), update `Taskfile.yml` (`form:demo` task), update strategy docs + PLAN.md + CLAUDE.md references. Verify `task wasm:lint && task cli:test` pass clean. (~0 tests — pure rename, existing tests validate)
 
 #### Wave 1 — tonkotsu: huh Parity (parallel, depends on Wave 0)
 
-Bring `tonkotsu` (formerly `bnto-form`) to full feature parity with Charm's huh library. See [bnto-form-strategy.md § huh Parity](strategy/bnto-form-strategy.md) for the gap analysis.
+Bring `tonkotsu` (formerly `bnto-form`) to full feature parity with Charm's huh library. See [tonkotsu-strategy.md § huh Parity](strategy/tonkotsu-strategy.md) for the gap analysis.
 
 - [ ] `engine/crates/tonkotsu` — **FullScreenEdit form mode**: Third `FormMode` variant. Display mode identical to DisplayEdit (compact one-liners). Edit mode hides all other fields, renders dedicated panel with label header + full control + helper footer. Becomes default demo mode. RED tests: display rendering, edit panel visibility, mode transitions, all field types, panel framing, helper text (~8 tests)
 - [ ] `engine/crates/tonkotsu` — **MultiSelect field type**: New `FieldKind::MultiSelect`. Display: `"Tags: image, vector (2 selected)"`. Edit: checkboxes with Space to toggle, Enter to confirm. Wrapping navigation. RED tests: toggle selection, display formatting, confirm/cancel, empty selection (~5 tests)
@@ -823,7 +823,7 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 
 ### Triage: FullScreenEdit FormMode (default)
 
-**Priority: Triage.** Add a third `FormMode::FullScreenEdit` that renders only the focused field's control on a dedicated sub-screen when editing (like Bubble Tea's `huh` library). User wants this as the default form mode instead of `DisplayEdit` which expands inline. `engine/crates/bnto-form`. Related: `.claude/strategy/tui-controls-bubbles.md`
+**Priority: Triage.** Add a third `FormMode::FullScreenEdit` that renders only the focused field's control on a dedicated sub-screen when editing (like Bubble Tea's `huh` library). User wants this as the default form mode instead of `DisplayEdit` which expands inline. `engine/crates/tonkotsu`. Related: `.claude/strategy/tui-controls-bubbles.md`
 
 ### Triage: Rich execution progress UX for CLI/TUI — NEEDS DESIGN SPIKE
 
@@ -840,6 +840,12 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 
 `engine/crates/bnto`, `engine/crates/bnto-core`
 
+### Triage: Cloud Execution via Railway
+
+**Priority: Triage.** Build `bnto-server` crate (Axum HTTP service wrapping `bnto-engine`), `ServerContext` (sandboxed ProcessContext), Dockerfile with pre-installed binaries, Railway Pro deployment with scale-to-zero, update `execution_engine.ts` to target Railway, R2 presigned URL I/O, execution token auth, SSE progress streaming. Exit criteria: `download-video` runs on bnto.io via cloud execution. Full strategy and phased plan: [`.claude/strategy/cloud-execution.md`](strategy/cloud-execution.md).
+
+`engine/crates/bnto-server/` (new), `packages/@bnto/backend/convex/execution_engine.ts`, `packages/core/src/adapters/`
+
 ---
 
 ## Reference
@@ -848,7 +854,7 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 | ------------------------------------------ | ---------------------------------------------------------------------------- |
 | [PLAN-HISTORY.md](PLAN-HISTORY.md)         | Completed sprint history (Phase 0 through Sprint 13, Homepage)               |
 | `.claude/strategy/engine-expansion.md`     | Engine expansion strategy — dependency system, ProcessContext, TUI, taxonomy |
-| `.claude/strategy/bnto-form-strategy.md`   | `bnto-form` crate — huh-inspired ratatui form widgets, ecosystem research    |
+| `.claude/strategy/tonkotsu-strategy.md`    | `tonkotsu` crate — rich terminal forms for ratatui, huh parity               |
 | `.claude/strategy/tui-controls-bubbles.md` | Sprint 15 — Bubbles-inspired display/edit modes, FilePath control, picker UX |
 | `.claude/strategy/engine-execution.md`     | Engine execution architecture — pipeline executor, progress events           |
 | `.claude/strategy/bntos.md`                | Predefined Bnto registry — slugs, fixtures, SEO targets, tiers               |

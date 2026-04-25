@@ -59,7 +59,7 @@ pub fn load_detail_with_dir(
     }
 
     let fields = super::detail_bridge::params_to_fields(&params);
-    let form = bnto_form::FormModel::new(fields);
+    let form = tonkotsu::FormModel::new(fields);
 
     let input_mode = pipeline_def
         .as_ref()
@@ -279,7 +279,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
     };
 
     let fields = super::detail_bridge::params_to_fields(&params);
-    let form = bnto_form::FormModel::new(fields);
+    let form = tonkotsu::FormModel::new(fields);
 
     Ok(DetailModel {
         slug: "custom".to_string(),

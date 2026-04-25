@@ -41,7 +41,7 @@ pub(crate) fn handle_wizard(model: AppModel, msg: WizardMessage) -> AppModel {
 }
 
 /// Route form messages through the wizard's update.
-pub(crate) fn handle_wizard_form(model: AppModel, form_msg: bnto_form::FormMessage) -> AppModel {
+pub(crate) fn handle_wizard_form(model: AppModel, form_msg: tonkotsu::FormMessage) -> AppModel {
     match model.wizard {
         Some(wizard_model) => {
             let msg = WizardMessage::Form(form_msg);

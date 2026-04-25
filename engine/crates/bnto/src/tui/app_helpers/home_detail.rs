@@ -90,33 +90,33 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
 }
 
 /// Route a form message to the detail screen's focus sections.
-pub(crate) fn handle_detail_form(model: AppModel, msg: bnto_form::FormMessage) -> AppModel {
+pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) -> AppModel {
     let detail = model.detail.map(|mut d| {
         use super::super::screens::detail::DetailFocus;
 
         match d.focus {
             DetailFocus::Input => {
-                if matches!(msg, bnto_form::FormMessage::FocusNext) {
+                if matches!(msg, tonkotsu::FormMessage::FocusNext) {
                     d.focus = DetailFocus::Params;
                 }
             }
             DetailFocus::Params => {
-                let at_last = matches!(msg, bnto_form::FormMessage::FocusNext)
+                let at_last = matches!(msg, tonkotsu::FormMessage::FocusNext)
                     && is_at_last_visible_field(&d.form);
                 let at_first =
-                    matches!(msg, bnto_form::FormMessage::FocusPrev) && d.form.focused == 0;
+                    matches!(msg, tonkotsu::FormMessage::FocusPrev) && d.form.focused == 0;
 
                 if at_last {
                     d.focus = DetailFocus::Run;
                 } else if at_first && d.input_picker.is_some() {
                     d.focus = DetailFocus::Input;
                 } else {
-                    d.form = bnto_form::update(d.form, msg);
+                    d.form = tonkotsu::update(d.form, msg);
                     detail_bridge::update_visibility(&mut d.form, &d.params);
                 }
             }
             DetailFocus::Run => {
-                if matches!(msg, bnto_form::FormMessage::FocusPrev) {
+                if matches!(msg, tonkotsu::FormMessage::FocusPrev) {
                     d.focus = DetailFocus::Params;
                 }
             }

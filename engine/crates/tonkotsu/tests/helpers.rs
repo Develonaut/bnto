@@ -1,7 +1,7 @@
-//! Test helpers for bnto-form journey tests.
+//! Test helpers for tonkotsu journey tests.
 //!
 //! Provides key constructors, simulation helpers, and terminal buffer
-//! assertion helpers. Uses only the public API surface of bnto-form.
+//! assertion helpers. Uses only the public API surface of tonkotsu.
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::Terminal;
@@ -10,7 +10,7 @@ use ratatui::buffer::Buffer;
 use ratatui::text::Text;
 use ratatui::widgets::Paragraph;
 
-use bnto_form::{DefaultTheme, FormMessage, FormModel, map_key_event, render_form, update};
+use tonkotsu::{DefaultTheme, FormMessage, FormModel, map_key_event, render_form, update};
 
 // --- Key constructors ---
 

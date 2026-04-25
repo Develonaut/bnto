@@ -3,7 +3,7 @@
 // Three-section layout:
 // 1. Recipe header (name, description) — always shown
 // 2. INPUT section — file picker for file-mode recipes (conditional)
-// 3. PARAMETERS section — form fields rendered by bnto_form
+// 3. PARAMETERS section — form fields rendered by tonkotsu
 // 4. Run button — always present at the bottom
 
 use ratatui::layout::Rect;
@@ -142,9 +142,9 @@ fn detail_lines<'a>(
         lines.push(Line::from(Span::styled("  PARAMETERS", section_style)));
         lines.push(Line::from(""));
 
-        // Delegate field rendering to bnto-form.
+        // Delegate field rendering to tonkotsu.
         let form_theme = BntoFormTheme(theme);
-        let form_lines = bnto_form::render_form(&detail.form, &form_theme);
+        let form_lines = tonkotsu::render_form(&detail.form, &form_theme);
         lines.extend(form_lines);
     }
 

@@ -12,7 +12,7 @@ members = [
     "crates/bnto-vector",
     "crates/bnto-shell",
     "crates/bnto-wasm",
-    "crates/bnto-form",
+    "crates/tonkotsu",
 ]
 resolver = "2"
 

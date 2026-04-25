@@ -220,7 +220,7 @@ fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 ///
 /// Routes keys based on the active `DetailFocus` section:
 /// - Input: picker navigation (j/k/Space/h/l/./a/g/G)
-/// - Params: form field editing/navigation (j/k/h/l/d/Space + bnto-form)
+/// - Params: form field editing/navigation (j/k/h/l/d/Space + tonkotsu)
 /// - Run: Enter/Tab to confirm and execute
 ///
 /// Tab advances section forward, Shift+Tab goes backward.
@@ -229,9 +229,9 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let detail = model.detail.as_ref()?;
     let is_editing = detail_bridge::is_form_editing(&detail.form);
 
-    // When a field is in editing mode, delegate everything to bnto-form.
+    // When a field is in editing mode, delegate everything to tonkotsu.
     if is_editing {
-        return bnto_form::map_key_event(key, &detail.form).map(AppMessage::DetailForm);
+        return tonkotsu::map_key_event(key, &detail.form).map(AppMessage::DetailForm);
     }
 
     // Esc always goes back (when not editing a field).
@@ -254,7 +254,7 @@ fn handle_detail_input_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage
 
     match key.code {
         // Tab → advance to Params section
-        KeyCode::Tab => Some(AppMessage::DetailForm(bnto_form::FormMessage::FocusNext)),
+        KeyCode::Tab => Some(AppMessage::DetailForm(tonkotsu::FormMessage::FocusNext)),
         // Picker navigation keys
         KeyCode::Char('j') | KeyCode::Down => {
             Some(AppMessage::DetailPicker(PickerMessage::CursorDown))
@@ -287,7 +287,7 @@ fn handle_detail_input_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage
 
 /// Handle keys when the Params (form fields) section is focused.
 fn handle_detail_params_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
-    use bnto_form::FormMessage;
+    use tonkotsu::FormMessage;
 
     let detail = model.detail.as_ref()?;
     let slug = || detail.slug.clone();
@@ -321,8 +321,8 @@ fn handle_detail_params_key(model: &AppModel, key: KeyEvent) -> Option<AppMessag
         return Some(AppMessage::DetailForm(msg));
     }
 
-    // Fall through to bnto-form's idle key mapping (Down/Up arrows, Enter→StartEdit, etc.)
-    bnto_form::map_key_event(key, &detail.form).map(AppMessage::DetailForm)
+    // Fall through to tonkotsu's idle key mapping (Down/Up arrows, Enter→StartEdit, etc.)
+    tonkotsu::map_key_event(key, &detail.form).map(AppMessage::DetailForm)
 }
 
 /// Handle keys when the Run button is focused.
@@ -510,18 +510,18 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     if let Some(active) = &editor.active_form {
         let is_editing = editor_bridge::is_editing(active);
 
-        // When a field is in editing mode, delegate everything to bnto-form.
+        // When a field is in editing mode, delegate everything to tonkotsu.
         if is_editing {
-            return bnto_form::map_key_event(key, &active.form).map(AppMessage::EditorForm);
+            return tonkotsu::map_key_event(key, &active.form).map(AppMessage::EditorForm);
         }
 
         // Selected node is expanded with a form: form navigation + vim shortcuts.
         let vim_msg = match key.code {
-            KeyCode::Char('j') => Some(bnto_form::FormMessage::FocusNext),
-            KeyCode::Char('k') => Some(bnto_form::FormMessage::FocusPrev),
-            KeyCode::Char('h') => Some(bnto_form::FormMessage::CyclePrev),
-            KeyCode::Char('l') => Some(bnto_form::FormMessage::CycleNext),
-            KeyCode::Char(' ') => Some(bnto_form::FormMessage::ToggleConfirm),
+            KeyCode::Char('j') => Some(tonkotsu::FormMessage::FocusNext),
+            KeyCode::Char('k') => Some(tonkotsu::FormMessage::FocusPrev),
+            KeyCode::Char('h') => Some(tonkotsu::FormMessage::CyclePrev),
+            KeyCode::Char('l') => Some(tonkotsu::FormMessage::CycleNext),
+            KeyCode::Char(' ') => Some(tonkotsu::FormMessage::ToggleConfirm),
             _ => None,
         };
         if let Some(msg) = vim_msg {
@@ -533,8 +533,8 @@ fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
             return Some(AppMessage::Editor(EditorMessage::ExpandToggle));
         }
 
-        // Fall through to bnto-form's idle key mapping.
-        if let Some(msg) = bnto_form::map_key_event(key, &active.form) {
+        // Fall through to tonkotsu's idle key mapping.
+        if let Some(msg) = tonkotsu::map_key_event(key, &active.form) {
             return Some(AppMessage::EditorForm(msg));
         }
     }
@@ -583,9 +583,9 @@ fn handle_wizard_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     {
         let is_editing = detail_bridge::is_form_editing(form);
 
-        // When a field is in editing mode, delegate everything to bnto-form.
+        // When a field is in editing mode, delegate everything to tonkotsu.
         if is_editing {
-            return bnto_form::map_key_event(key, form).map(AppMessage::WizardForm);
+            return tonkotsu::map_key_event(key, form).map(AppMessage::WizardForm);
         }
 
         // Tab advances to Complete step.
@@ -600,20 +600,20 @@ fn handle_wizard_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
         // Vim-style form shortcuts.
         let vim_msg = match key.code {
-            KeyCode::Char('j') => Some(bnto_form::FormMessage::FocusNext),
-            KeyCode::Char('k') => Some(bnto_form::FormMessage::FocusPrev),
-            KeyCode::Char('h') => Some(bnto_form::FormMessage::CyclePrev),
-            KeyCode::Char('l') => Some(bnto_form::FormMessage::CycleNext),
-            KeyCode::Char(' ') => Some(bnto_form::FormMessage::ToggleConfirm),
-            KeyCode::Char('d') => Some(bnto_form::FormMessage::ResetDefault),
+            KeyCode::Char('j') => Some(tonkotsu::FormMessage::FocusNext),
+            KeyCode::Char('k') => Some(tonkotsu::FormMessage::FocusPrev),
+            KeyCode::Char('h') => Some(tonkotsu::FormMessage::CyclePrev),
+            KeyCode::Char('l') => Some(tonkotsu::FormMessage::CycleNext),
+            KeyCode::Char(' ') => Some(tonkotsu::FormMessage::ToggleConfirm),
+            KeyCode::Char('d') => Some(tonkotsu::FormMessage::ResetDefault),
             _ => None,
         };
         if let Some(msg) = vim_msg {
             return Some(AppMessage::WizardForm(msg));
         }
 
-        // Fall through to bnto-form's idle key mapping.
-        return bnto_form::map_key_event(key, form).map(AppMessage::WizardForm);
+        // Fall through to tonkotsu's idle key mapping.
+        return tonkotsu::map_key_event(key, form).map(AppMessage::WizardForm);
     }
 
     // Category, Operation, Complete steps — simple list navigation.
