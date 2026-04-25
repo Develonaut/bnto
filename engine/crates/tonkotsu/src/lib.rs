@@ -36,7 +36,7 @@ pub mod widgets;
 
 pub use field::{
     Field, FieldBuilder, FieldKind, FieldState, SelectOption, ValidatorFn, confirm, file_path,
-    number, select, text, textarea,
+    note, number, select, text, textarea,
 };
 pub use file_entry::FileEntry;
 pub use form::{FormEffect, FormMessage, FormMode, FormModel, update};

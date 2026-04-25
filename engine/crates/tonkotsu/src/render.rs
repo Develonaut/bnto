@@ -20,6 +20,7 @@ use crate::widgets;
 pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     match model.mode {
         FormMode::DisplayEdit => render_display_edit(model, theme),
+        FormMode::FullScreenEdit => render_fullscreen_edit(model, theme),
         FormMode::Inline => render_inline(model, theme),
     }
 }
@@ -72,6 +73,88 @@ fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'st
     }
 
     apply_viewport(model, all_lines, &field_start_lines)
+}
+
+/// FullScreenEdit mode: display identical to DisplayEdit.
+/// Edit mode hides all other fields and renders a dedicated panel:
+/// label header, full control widget, description, and key hints footer.
+fn render_fullscreen_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
+    if !model.is_editing() {
+        // Display mode is identical to DisplayEdit
+        return render_display_edit(model, theme);
+    }
+
+    // Edit mode: render only the focused field's full-screen panel
+    let field = match model.focused_field() {
+        Some(f) => f,
+        None => return vec![],
+    };
+
+    let mut lines: Vec<Line<'static>> = Vec::new();
+
+    // Blank line for top padding
+    lines.push(Line::default());
+
+    // Label header
+    lines.push(Line::from(vec![
+        Span::raw("  "),
+        Span::styled(field.label.clone(), theme.heading()),
+    ]));
+
+    // Description (if present)
+    if let Some(ref desc) = field.description {
+        lines.push(Line::from(vec![
+            Span::raw("  "),
+            Span::styled(desc.clone(), theme.muted()),
+        ]));
+    }
+
+    // Blank line before control
+    lines.push(Line::default());
+
+    // Full control widget
+    let control_lines = render_field_inline(field, true, theme);
+    lines.extend(control_lines);
+
+    // Error line (if present)
+    if let Some(ref err) = field.error {
+        lines.push(Line::from(vec![
+            Span::raw("  "),
+            Span::styled(err.clone(), theme.error()),
+        ]));
+    }
+
+    // Blank line before footer
+    lines.push(Line::default());
+
+    // Helper footer with key hints
+    lines.push(render_edit_footer(field, theme));
+
+    lines
+}
+
+/// Render the key hints footer for full-screen edit mode.
+fn render_edit_footer(field: &crate::field::Field, theme: &dyn FormTheme) -> Line<'static> {
+    let hints = match &field.state {
+        crate::field::FieldState::TextAreaEditing { .. } => {
+            vec![("Ctrl+D", "confirm"), ("Esc", "cancel")]
+        }
+        crate::field::FieldState::SelectExpanded { .. } => {
+            vec![("Enter", "select"), ("Esc", "cancel")]
+        }
+        _ => vec![("Enter", "confirm"), ("Esc", "cancel")],
+    };
+
+    let mut spans: Vec<Span<'static>> = vec![Span::raw("  ")];
+    for (i, (key, desc)) in hints.iter().enumerate() {
+        spans.push(Span::styled((*key).to_string(), theme.heading()));
+        spans.push(Span::styled(format!(" {desc}"), theme.muted()));
+        if i < hints.len() - 1 {
+            spans.push(Span::raw("  "));
+        }
+    }
+
+    Line::from(spans)
 }
 
 /// Inline mode (legacy): every field renders its full control.
@@ -134,6 +217,7 @@ fn render_field_inline(
         crate::field::FieldKind::TextArea { .. } => {
             widgets::text_area::render(field, focused, theme)
         }
+        crate::field::FieldKind::Note { .. } => widgets::note::render(field, theme),
     }
 }
 
@@ -399,5 +483,141 @@ mod tests {
         // Inline mode shows full controls (not "label: value" format)
         assert!(text.contains("First"), "got: {text}");
         assert!(text.contains("hello"), "got: {text}");
+    }
+
+    // --- FullScreenEdit mode rendering tests ---
+
+    #[test]
+    fn test_fullscreen_display_renders_all_fields_compact() {
+        let model = FormModel::new(vec![
+            text("name").label("Name").value("My Recipe").build(),
+            number("q").label("Quality").suffix("%").value("80").build(),
+            select("fmt", &[("jpeg", "JPEG")])
+                .label("Format")
+                .value("jpeg")
+                .build(),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        // Display mode is identical to DisplayEdit — all compact
+        assert!(text.contains("Name:"), "got: {text}");
+        assert!(text.contains("My Recipe"), "got: {text}");
+        assert!(text.contains("Quality:"), "got: {text}");
+        assert!(text.contains("80%"), "got: {text}");
+        assert!(text.contains("Format:"), "got: {text}");
+        assert!(text.contains("JPEG"), "got: {text}");
+    }
+
+    #[test]
+    fn test_fullscreen_edit_shows_only_focused_field() {
+        let mut model = FormModel::new(vec![
+            text("name").label("Name").value("My Recipe").build(),
+            text("other").label("Other").value("val").build(),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        model.fields[0].state = FieldState::TextEditing {
+            buffer: "My Recipe".to_string(),
+            cursor: 9,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        // Focused field label should appear
+        assert!(text.contains("Name"), "got: {text}");
+        // Other field should NOT appear (full-screen hides all others)
+        assert!(
+            !text.contains("Other"),
+            "other fields should be hidden: {text}"
+        );
+    }
+
+    #[test]
+    fn test_fullscreen_edit_panel_has_label_header() {
+        let mut model = FormModel::new(vec![
+            text("name").label("Recipe Name").value("test").build(),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        model.fields[0].state = FieldState::TextEditing {
+            buffer: "test".to_string(),
+            cursor: 4,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("Recipe Name"),
+            "should show label header: {text}"
+        );
+    }
+
+    #[test]
+    fn test_fullscreen_edit_panel_has_helper_footer() {
+        let mut model = FormModel::new(vec![text("name").label("Name").value("test").build()])
+            .with_mode(FormMode::FullScreenEdit);
+        model.fields[0].state = FieldState::TextEditing {
+            buffer: "test".to_string(),
+            cursor: 4,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(text.contains("Enter"), "should show key hints: {text}");
+        assert!(text.contains("confirm"), "should show confirm hint: {text}");
+        assert!(text.contains("Esc"), "should show Esc hint: {text}");
+        assert!(text.contains("cancel"), "should show cancel hint: {text}");
+    }
+
+    #[test]
+    fn test_fullscreen_description_shown_in_edit_panel() {
+        let mut model = FormModel::new(vec![
+            text("name")
+                .label("Name")
+                .value("x")
+                .description(Some("Enter a name"))
+                .build(),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        model.fields[0].state = FieldState::TextEditing {
+            buffer: "x".to_string(),
+            cursor: 1,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("Enter a name"),
+            "should show description in panel: {text}"
+        );
+    }
+
+    #[test]
+    fn test_fullscreen_edit_textarea_shows_ctrl_d_hint() {
+        let mut model =
+            FormModel::new(vec![crate::field::textarea("notes").label("Notes").build()])
+                .with_mode(FormMode::FullScreenEdit);
+        model.fields[0].state = FieldState::TextAreaEditing {
+            buffer: "text".to_string(),
+            cursor: 4,
+            line: 0,
+            scroll_offset: 0,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("Ctrl+D"),
+            "textarea should show Ctrl+D hint: {text}"
+        );
+    }
+
+    #[test]
+    fn test_fullscreen_note_rendered_in_display() {
+        let model = FormModel::new(vec![
+            crate::field::note("info", "Important notice").build(),
+            text("name").label("Name").value("x").build(),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("Important notice"),
+            "note should render in display mode: {text}"
+        );
     }
 }

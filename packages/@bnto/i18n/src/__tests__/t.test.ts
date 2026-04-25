@@ -58,7 +58,7 @@ describe("t() interpolation", () => {
   });
 
   it("replaces multiple placeholders in one string", () => {
-    expect(t("site.description", { count: 17 })).toContain("17 recipes");
+    expect(t("site.description", { count: 17 })).toContain("17 free recipes");
   });
 
   it("leaves string unchanged when no params provided", () => {

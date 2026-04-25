@@ -1,30 +1,32 @@
 //! Kitchen-sink field definitions for the demo binary.
 //!
-//! Ten fields covering every builder method, field kind, and validator
+//! Twelve fields covering every builder method, field kind, and validator
 //! that tonkotsu supports. Used by both the demo binary and snapshot tests.
 
 use crate::field::Field;
 use crate::validators;
-use crate::{confirm, file_path, number, select, text};
+use crate::{confirm, file_path, note, number, select, text};
 
-/// Build the full set of 11 kitchen-sink demo fields.
+/// Build the full set of 12 kitchen-sink demo fields.
 pub fn build_fields() -> Vec<Field> {
     vec![
-        // 1. Text — placeholder, required validator, description
+        // 1. Note — read-only informational text (not focusable)
+        note("intro", "Configure your recipe settings below.").build(),
+        // 2. Text — placeholder, required validator, description
         text("recipe_name")
             .label("Recipe Name")
             .placeholder("My Recipe")
             .required()
             .description(Some("A short name for your recipe"))
             .build(),
-        // 2. Text — char_limit, description
+        // 3. Text — char_limit, description
         text("description")
             .label("Description")
             .placeholder("What does this recipe do?")
             .char_limit(120)
             .description(Some("Max 120 characters"))
             .build(),
-        // 3. Select — 4 options, compact cycle, description
+        // 4. Select — 4 options, compact cycle, description
         select(
             "output_format",
             &[
@@ -38,7 +40,7 @@ pub fn build_fields() -> Vec<Field> {
         .value("json")
         .description(Some("Choose the output serialization format"))
         .build(),
-        // 4. Select — 8 options, filterable, description
+        // 5. Select — 8 options, filterable, description
         select(
             "category",
             &[
@@ -56,13 +58,13 @@ pub fn build_fields() -> Vec<Field> {
         .filterable()
         .description(Some("Filter with keyboard, Enter to expand"))
         .build(),
-        // 5. Confirm — standard Yes/No, description
+        // 6. Confirm — standard Yes/No, description
         confirm("overwrite")
             .label("Overwrite Existing?")
             .value("false")
             .description(Some("Replace files if they already exist"))
             .build(),
-        // 6. Number — range, step, suffix, default, slider
+        // 7. Number — range, step, suffix, default, slider
         number("quality")
             .label("Quality")
             .range(1.0, 100.0)
@@ -73,7 +75,7 @@ pub fn build_fields() -> Vec<Field> {
             .default(Some("80"))
             .description(Some("Output quality from 1-100"))
             .build(),
-        // 7. Number — range, step, suffix
+        // 8. Number — range, step, suffix
         number("max_width")
             .label("Max Width")
             .range(100.0, 4096.0)
@@ -82,14 +84,14 @@ pub fn build_fields() -> Vec<Field> {
             .value("1920")
             .description(Some("Maximum output width in pixels"))
             .build(),
-        // 8. Text — pattern("@") validator, description
+        // 9. Text — pattern("@") validator, description
         text("email")
             .label("Notification Email")
             .placeholder("you@example.com")
             .validator(validators::pattern("@"))
             .description(Some("Must contain @"))
             .build(),
-        // 9. Number — range validator on commit (narrower than field range)
+        // 10. Number — range validator on commit (narrower than field range)
         number("min_size")
             .label("Min File Size")
             .range(0.0, 10000.0)
@@ -99,13 +101,13 @@ pub fn build_fields() -> Vec<Field> {
             .validator(validators::range(10.0, 5000.0))
             .description(Some("Validated range: 10-5000 KB"))
             .build(),
-        // 10. FilePath — file browser with extension filter
+        // 11. FilePath — file browser with extension filter
         file_path("input_file")
             .label("Input File")
             .extensions(&["jpg", "png", "webp"])
             .description(Some("Browse and select an image file"))
             .build(),
-        // 11. Text — visible(false), shows field hiding
+        // 12. Text — visible(false), shows field hiding
         text("hidden_field")
             .label("Hidden Secret")
             .value("you can't see me")

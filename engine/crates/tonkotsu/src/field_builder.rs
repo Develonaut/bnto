@@ -248,3 +248,13 @@ pub fn textarea(id: &str) -> FieldBuilder {
         },
     )
 }
+
+/// Start building a read-only note field for informational text.
+pub fn note(id: &str, content: &str) -> FieldBuilder {
+    FieldBuilder::new(
+        id,
+        FieldKind::Note {
+            content: content.to_string(),
+        },
+    )
+}

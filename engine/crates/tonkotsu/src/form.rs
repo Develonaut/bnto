@@ -7,8 +7,9 @@
 use crate::controls::dispatch::dispatch_field_message;
 use crate::field::{Field, FieldState};
 
-/// Controls how the form renders: all fields expanded (Inline) or
-/// compact one-liners with focused-field editing (DisplayEdit).
+/// Controls how the form renders: all fields expanded (Inline),
+/// compact one-liners with focused-field editing (DisplayEdit),
+/// or full-screen single-field editing (FullScreenEdit).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FormMode {
     /// Legacy behavior: every field renders its full control at all times.
@@ -17,6 +18,10 @@ pub enum FormMode {
     /// Enter on focused field opens edit mode (full control for that field only).
     /// Enter/Esc returns to display with saved/cancelled value.
     DisplayEdit,
+    /// Full-screen edit: display mode identical to DisplayEdit (compact one-liners).
+    /// Edit mode hides all other fields and renders a dedicated panel with
+    /// label header, full control widget, and helper footer.
+    FullScreenEdit,
 }
 
 /// Top-level form state — a list of fields with focus tracking.
@@ -35,7 +40,10 @@ impl FormModel {
     /// Create a new form from a list of fields. Focus starts on the first visible field.
     /// Defaults to `FormMode::Inline` (legacy behavior).
     pub fn new(fields: Vec<Field>) -> Self {
-        let focused = fields.iter().position(|f| f.visible).unwrap_or(0);
+        let focused = fields
+            .iter()
+            .position(|f| f.visible && f.is_focusable())
+            .unwrap_or(0);
         Self {
             fields,
             focused,
@@ -52,17 +60,17 @@ impl FormModel {
         self
     }
 
-    /// Whether the form is in display mode (DisplayEdit mode with no field editing).
+    /// Whether the form is in display mode (DisplayEdit/FullScreenEdit with no field editing).
     pub fn is_display(&self) -> bool {
-        self.mode == FormMode::DisplayEdit
+        matches!(self.mode, FormMode::DisplayEdit | FormMode::FullScreenEdit)
             && self
                 .focused_field()
                 .is_some_and(|f| matches!(f.state, FieldState::Idle))
     }
 
-    /// Whether the form is in edit mode (DisplayEdit mode with focused field editing).
+    /// Whether the form is in edit mode (DisplayEdit/FullScreenEdit with focused field editing).
     pub fn is_editing(&self) -> bool {
-        self.mode == FormMode::DisplayEdit
+        matches!(self.mode, FormMode::DisplayEdit | FormMode::FullScreenEdit)
             && self
                 .focused_field()
                 .is_some_and(|f| !matches!(f.state, FieldState::Idle))
@@ -153,7 +161,7 @@ fn focus_next(model: FormModel) -> FormModel {
         .fields
         .iter()
         .enumerate()
-        .filter(|(_, f)| f.visible)
+        .filter(|(_, f)| f.visible && f.is_focusable())
         .map(|(i, _)| i)
         .collect();
     if visible_indices.is_empty() {
@@ -175,7 +183,7 @@ fn focus_prev(model: FormModel) -> FormModel {
         .fields
         .iter()
         .enumerate()
-        .filter(|(_, f)| f.visible)
+        .filter(|(_, f)| f.visible && f.is_focusable())
         .map(|(i, _)| i)
         .collect();
     if visible_indices.is_empty() {
@@ -226,7 +234,7 @@ fn update_focused_field(model: FormModel, msg: FormMessage) -> FormModel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::field::{confirm, number, select, text};
+    use crate::field::{confirm, note, number, select, text};
 
     fn make_form() -> FormModel {
         FormModel::new(vec![
@@ -565,5 +573,91 @@ mod tests {
         let form = update(form, FormMessage::CycleNext);
         assert_eq!(form.fields[0].value, "b");
         assert!(form.is_display());
+    }
+
+    // --- Note field tests ---
+
+    #[test]
+    fn test_note_skipped_by_focus_next() {
+        let form = FormModel::new(vec![
+            text("a").label("First").build(),
+            note("info", "Read-only text").build(),
+            text("b").label("Second").build(),
+        ]);
+        assert_eq!(form.focused, 0);
+        let form = update(form, FormMessage::FocusNext);
+        assert_eq!(form.focused, 2, "should skip note at index 1");
+    }
+
+    #[test]
+    fn test_note_skipped_by_focus_prev() {
+        let form = FormModel::new(vec![
+            text("a").label("First").build(),
+            note("info", "Read-only text").build(),
+            text("b").label("Second").build(),
+        ]);
+        let form = update(form, FormMessage::FocusNext); // move to index 2
+        assert_eq!(form.focused, 2);
+        let form = update(form, FormMessage::FocusPrev);
+        assert_eq!(form.focused, 0, "should skip note at index 1");
+    }
+
+    #[test]
+    fn test_note_start_edit_is_noop() {
+        let form = FormModel::new(vec![note("info", "text").build()]);
+        // Note won't get focus normally, but test the dispatch directly
+        let form = update(form, FormMessage::StartEdit);
+        assert_eq!(form.fields[0].state, FieldState::Idle);
+    }
+
+    #[test]
+    fn test_note_initial_focus_skips_note() {
+        let form = FormModel::new(vec![
+            note("info", "Header text").build(),
+            text("name").label("Name").build(),
+        ]);
+        assert_eq!(form.focused, 1, "initial focus should skip note at index 0");
+    }
+
+    // --- FullScreenEdit mode tests ---
+
+    #[test]
+    fn test_fullscreen_edit_is_display_initially() {
+        let form = make_form().with_mode(FormMode::FullScreenEdit);
+        assert!(form.is_display());
+        assert!(!form.is_editing());
+    }
+
+    #[test]
+    fn test_fullscreen_edit_enter_starts_editing() {
+        let form = FormModel::new(vec![text("x").value("hello").build()])
+            .with_mode(FormMode::FullScreenEdit);
+        let form = update(form, FormMessage::StartEdit);
+        assert!(form.is_editing());
+        assert!(!form.is_display());
+    }
+
+    #[test]
+    fn test_fullscreen_edit_commit_returns_to_display() {
+        let form = FormModel::new(vec![text("x").value("old").build()])
+            .with_mode(FormMode::FullScreenEdit);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::EditChar('!'));
+        let form = update(form, FormMessage::CommitEdit);
+        assert!(form.is_display());
+        assert_eq!(form.fields[0].value, "old!");
+    }
+
+    #[test]
+    fn test_fullscreen_edit_blocks_navigation_while_editing() {
+        let form = FormModel::new(vec![
+            text("a").label("First").build(),
+            text("b").label("Second").build(),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        let form = update(form, FormMessage::StartEdit);
+        assert!(form.is_editing());
+        let form = update(form, FormMessage::FocusNext);
+        assert_eq!(form.focused, 0, "should not navigate while editing");
     }
 }

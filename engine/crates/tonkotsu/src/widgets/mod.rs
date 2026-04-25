@@ -4,6 +4,7 @@
 pub mod confirm;
 pub mod display;
 pub mod file_path;
+pub mod note;
 pub mod number;
 pub mod select;
 pub mod text_area;
