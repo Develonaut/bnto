@@ -1,15 +1,15 @@
 # bnto-vector
 
-SVG processing library — rasterization and optimization.
+SVG processing library. Rasterization and optimization.
 
 ## Overview
 
 `bnto-vector` provides two capabilities:
 
-1. **Rasterization** — Convert SVG to raster images (PNG, JPEG, WebP) via resvg/usvg/tiny-skia
-2. **Optimization** — Strip editor cruft from SVG files (metadata, comments, unused namespaces, empty groups) via roxmltree/xmlwriter
+1. **Rasterization**: Convert SVG to raster images (PNG, JPEG, WebP) via resvg/usvg/tiny-skia
+2. **Optimization**: Strip editor cruft from SVG files (metadata, comments, unused namespaces, empty groups) via roxmltree/xmlwriter
 
-Both use libraries already in the WASM binary via the resvg transitive dependency chain — zero additional binary size.
+Both use libraries already in the WASM binary via the resvg transitive dependency chain. Zero additional binary size.
 
 ## Processors
 

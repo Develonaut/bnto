@@ -6,7 +6,7 @@ Image processing nodes. Compress, resize, convert, overlay, and strip metadata f
 
 `bnto-image` provides `NodeProcessor` implementations for image transformation. All codecs are pure Rust (no system dependencies), WASM-compatible, and run entirely client-side. Supports JPEG, PNG, and WebP formats with automatic format detection via magic bytes. The convert processor also accepts SVG input, rasterizing via `bnto-vector` before encoding.
 
-Format detection and raster encoding live in [`bnto-encode`](../bnto-encode/) — a shared crate that both `bnto-image` and `bnto-vector` depend on.
+Format detection and raster encoding live in [`bnto-encode`](../bnto-encode/), a shared crate that both `bnto-image` and `bnto-vector` depend on.
 
 ## Processors
 

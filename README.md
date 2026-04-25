@@ -1,12 +1,20 @@
-# bnto
+<p align="center">
+  <img src="apps/web/public/favicon/Logo.svg" alt="bnto logo" width="80" height="80" />
+</p>
 
-[![CI](https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg)](https://github.com/Develonaut/bnto/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/Rust-WASM-black?logo=rust)](https://www.rust-lang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+<h1 align="center">bnto</h1>
 
-**Workflow automation through composable parts.** Build a node for anything — image processing, data transforms, API calls, video downloads, shell commands — then chain nodes into recipes that automate your workflow. One Rust engine that compiles to native binaries, WebAssembly, and (soon) desktop and server. Write a recipe once, run it anywhere.
+<p align="center">
+  <a href="https://github.com/Develonaut/bnto/actions"><img src="https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust-WASM-black?logo=rust" alt="Rust" /></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" alt="Next.js" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript&logoColor=white" alt="TypeScript" /></a>
+</p>
+
+<p align="center"><strong>Pack your workflow.</strong></p>
+
+**Workflow automation through composable parts.** Build a node for anything: image processing, data transforms, API calls, video downloads, shell commands. Chain nodes into recipes that automate your workflow. One Rust engine that compiles to native binaries, WebAssembly, and (soon) desktop and server. Write a recipe once, run it anywhere.
 
 ```bash
 # Run a predefined recipe
@@ -19,46 +27,46 @@ bnto run optimize-images-for-web photos/
 bnto run my-custom-pipeline data/
 ```
 
-Recipes are portable `.bnto.json` files — composable pipelines that run everywhere: CLI, browser, desktop, server.
+Recipes are portable `.bnto.json` files: composable pipelines that run everywhere (CLI, browser, desktop, server).
 
-> **Also runs in your browser:** [bnto.io](https://bnto.io) — same engine, compiled to WebAssembly. Files never leave your machine.
+> **Also runs in your browser:** [bnto.io](https://bnto.io). Same engine, compiled to WebAssembly. Files never leave your machine.
 
 ---
 
 ## Recipes
 
-A recipe is a pipeline of nodes. Each node does one thing — compress, resize, rename, convert, download, call an API — and you chain them together into a workflow. Need something that doesn't exist? Build a node for it, and the engine takes care of running it everywhere.
+A recipe is a pipeline of nodes. Each node does one thing (compress, resize, rename, convert, download, call an API) and you chain them together into a workflow. Need something that doesn't exist? Build a node for it, and the engine takes care of running it everywhere.
 
 Predefined recipes work out of the box:
 
 <!-- BEGIN AUTO-GENERATED RECIPES TABLE -->
 
-| Recipe                  | What it does                                                                                                                                  | Try it                                                                     |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                                                   | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
-| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                                                   | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
-| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                                                  | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
-| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                                                   | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
-| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                                                    | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
-| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                                                  | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
-| CSV to JSON             | Convert CSV files to JSON format with configurable delimiters. Free, no signup.                                                               | [bnto.io/csv-to-json](https://bnto.io/csv-to-json)                         |
-| Merge CSV               | Combine multiple CSV files into one with header reconciliation. Free, no signup.                                                              | [bnto.io/merge-csv](https://bnto.io/merge-csv)                             |
-| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                                                           | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
-| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                                                          | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
-| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.                                   | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
-| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                                                               | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
-| Strip EXIF              | Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.                                                      | [bnto.io/strip-exif](https://bnto.io/strip-exif)                           |
-| Watermark Images        | Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine. | [bnto.io/watermark-images](https://bnto.io/watermark-images)               |
-| Download Video          | Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.                  | [bnto.io/download-video](https://bnto.io/download-video)                   |
-| SVG to PNG              | Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.                                         | [bnto.io/svg-to-png](https://bnto.io/svg-to-png)                           |
-| SVG to JPEG             | Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.                                        | [bnto.io/svg-to-jpeg](https://bnto.io/svg-to-jpeg)                         |
-| Optimize SVG            | Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.                            | [bnto.io/optimize-svg](https://bnto.io/optimize-svg)                       |
+| Recipe                  | What it does                                                                                                                                 | Try it                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Compress Images         | Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup.                                                  | [bnto.io/compress-images](https://bnto.io/compress-images)                 |
+| Resize Images           | Resize images to exact dimensions or percentages. Free, no signup required.                                                                  | [bnto.io/resize-images](https://bnto.io/resize-images)                     |
+| Convert Image Format    | Convert between PNG, JPEG, WebP, and GIF formats instantly. Free, no signup.                                                                 | [bnto.io/convert-image-format](https://bnto.io/convert-image-format)       |
+| Rename Files            | Batch rename files with patterns. Free, no signup required.                                                                                  | [bnto.io/rename-files](https://bnto.io/rename-files)                       |
+| Clean CSV               | Remove empty rows, trim whitespace, deduplicate CSV data. Free, no signup.                                                                   | [bnto.io/clean-csv](https://bnto.io/clean-csv)                             |
+| Rename CSV Columns      | Rename CSV column headers in bulk. Free, no signup required.                                                                                 | [bnto.io/rename-csv-columns](https://bnto.io/rename-csv-columns)           |
+| CSV to JSON             | Convert CSV files to JSON format with configurable delimiters. Free, no signup.                                                              | [bnto.io/csv-to-json](https://bnto.io/csv-to-json)                         |
+| Merge CSV               | Combine multiple CSV files into one with header reconciliation. Free, no signup.                                                             | [bnto.io/merge-csv](https://bnto.io/merge-csv)                             |
+| Optimize Images for Web | Resize, convert to WebP, and compress images for fast web loading. Free, no signup.                                                          | [bnto.io/optimize-images-for-web](https://bnto.io/optimize-images-for-web) |
+| Generate Thumbnails     | Resize images to thumbnail size, convert to WebP, and add a prefix. Free, no signup.                                                         | [bnto.io/generate-thumbnails](https://bnto.io/generate-thumbnails)         |
+| Compress & Rename       | Compress images and add a suffix so originals and compressed versions are distinguishable. Free, no signup.                                  | [bnto.io/compress-and-rename](https://bnto.io/compress-and-rename)         |
+| Standardize CSV         | Clean up messy CSV data and rename column headers in one step. Free, no signup.                                                              | [bnto.io/standardize-csv](https://bnto.io/standardize-csv)                 |
+| Strip EXIF              | Remove EXIF metadata from images instantly in your browser. No upload limits, no signup.                                                     | [bnto.io/strip-exif](https://bnto.io/strip-exif)                           |
+| Watermark Images        | Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser, files never leave your machine. | [bnto.io/watermark-images](https://bnto.io/watermark-images)               |
+| Download Video          | Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.                 | [bnto.io/download-video](https://bnto.io/download-video)                   |
+| SVG to PNG              | Convert SVG vector files to PNG raster images instantly in your browser. No upload limits, no signup.                                        | [bnto.io/svg-to-png](https://bnto.io/svg-to-png)                           |
+| SVG to JPEG             | Convert SVG vector files to JPEG raster images instantly in your browser. No upload limits, no signup.                                       | [bnto.io/svg-to-jpeg](https://bnto.io/svg-to-jpeg)                         |
+| Optimize SVG            | Optimize SVG files by removing editor metadata, comments, and unnecessary elements. Runs entirely in your browser.                           | [bnto.io/optimize-svg](https://bnto.io/optimize-svg)                       |
 
 <!-- END AUTO-GENERATED RECIPES TABLE -->
 
 ### Build Your Own
 
-Don't see what you need? Build it. Compose nodes into custom recipes using the visual editor or write `.bnto.json` by hand. Any node you create automatically works on every target the engine supports — browser, CLI, desktop, server.
+Don't see what you need? Build it. Compose nodes into custom recipes using the visual editor or write `.bnto.json` by hand. Any node you create automatically works on every target the engine supports: browser, CLI, desktop, server.
 
 Open the editor at [bnto.io/editor](https://bnto.io/editor).
 
@@ -88,7 +96,7 @@ bnto info download-video
 bnto doctor
 ```
 
-The CLI runs recipes using the native Rust engine — direct native execution with full system access. Progress bars, colored output, and timing summaries keep you informed.
+The CLI runs recipes using the native Rust engine. Direct native execution with full system access. Progress bars, colored output, and timing summaries keep you informed.
 
 ### Interactive TUI
 
@@ -103,7 +111,7 @@ bnto tui --theme tokyo
 bnto tui --theme monaco
 ```
 
-The TUI is a full interactive terminal interface for browsing, configuring, and running recipes — no flags or arguments to memorize. Pick a recipe, tweak parameters, select files, watch progress, see results.
+The TUI is a full interactive terminal interface for browsing, configuring, and running recipes. No flags or arguments to memorize. Pick a recipe, tweak parameters, select files, watch progress, see results.
 
 **6 screens, one flow:**
 
@@ -151,32 +159,32 @@ A recipe is a portable JSON file that describes a pipeline of nodes:
 }
 ```
 
-The same `.bnto.json` runs in the CLI, browser, desktop, and server. Nodes are the building blocks — each one encapsulates a single capability. Recipes compose them into workflows. The engine handles execution, progress reporting, and error handling across every target.
+The same `.bnto.json` runs in the CLI, browser, desktop, and server. Nodes are the building blocks: each one encapsulates a single capability. Recipes compose them into workflows. The engine handles execution, progress reporting, and error handling across every target.
 
 ---
 
 ## The Bento Box
 
-bnto is named after the bento box — a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
+bnto is named after the bento box: a Japanese lunch container where each compartment holds one thing, serves one purpose, and fits together into a complete meal.
 
 That idea is the architecture:
 
-- **Nodes** are compartments. Each encapsulates one capability — compress an image, call an API, run a shell command, download a video. Build a node for anything you want to automate.
+- **Nodes** are compartments. Each encapsulates one capability: compress an image, call an API, run a shell command, download a video. Build a node for anything you want to automate.
 - **Recipes** are boxes. Compose nodes into multi-step workflows. Portable, shareable, version-controlled `.bnto.json` files.
-- **The engine** is the tray. One Rust codebase compiles to every target: native CLI binary, WebAssembly for the browser, native desktop app, server-side execution. A node you write today runs everywhere the engine runs — without changes.
+- **The engine** is the tray. One Rust codebase compiles to every target: native CLI binary, WebAssembly for the browser, native desktop app, server-side execution. A node you write today runs everywhere the engine runs, without changes.
 - **Boxes compose.** A recipe can contain other recipes. One node or twenty, the mental model never changes.
 
 ---
 
 ## Where This Is Going
 
-**Today:** 17 predefined recipes running via CLI, interactive TUI, and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, SVG optimization, file operations — all from one tool. Free, unlimited, no account required.
+**Today:** 18 predefined recipes running via CLI, interactive TUI, and browser. A visual editor for building custom recipes. Video download (yt-dlp), image processing, CSV transforms, SVG optimization, file operations, all from one tool. Free, unlimited, no account required.
 
 **Next:** New node types (shell commands, HTTP requests, Excel), more file operations, recipe expansion. The node catalog grows; every addition is automatically available on every target.
 
 **Later:** Desktop app (Tauri) for native local execution. Cloud execution for server-side nodes (AI inference, video processing). Community-contributed node types and recipes.
 
-**The vision:** Any workflow you can describe as a sequence of steps, bnto can automate. Build the node, compose the recipe, run it anywhere. One Rust engine powering CLI, browser, desktop, and cloud — with recipes as portable `.bnto.json` files that work on every target.
+**The vision:** Any workflow you can describe as a sequence of steps, bnto can automate. Build the node, compose the recipe, run it anywhere. One Rust engine powering CLI, browser, desktop, and cloud, with recipes as portable `.bnto.json` files that work on every target.
 
 ---
 
@@ -229,24 +237,25 @@ task check              # Full check (lint + test + build)
 
 bnto follows the **Bento Box Principle**: every file, function, and package does one thing well.
 
-The Rust engine is the core — a single codebase that compiles to every execution target. Write a node once, and it runs everywhere the engine runs.
+The Rust engine is the core, a single codebase that compiles to every execution target. Write a node once, and it runs everywhere the engine runs.
 
 ```
 Rust Engine (single codebase, multiple targets)
   │
   ├── Native CLI (bnto run, bnto list, bnto doctor)
-  ├── WASM (browser, via Web Worker — same crates, same code)
-  ├── Desktop (Tauri, planned — native Rust, no WASM overhead)
-  └── Server (cloud execution, planned — same engine, managed infra)
+  ├── WASM (browser, via Web Worker, same crates, same code)
+  ├── Desktop (Tauri, planned, native Rust, no WASM overhead)
+  └── Server (cloud execution, planned, same engine, managed infra)
 
 Node Crates (each domain gets its own crate)
-  ├── bnto-image (compress, resize, convert, overlay, strip-exif)
-  ├── bnto-spreadsheet (clean, rename columns, merge, csv-to-json)
+  ├── bnto-image (compress, resize, convert, overlay, strip EXIF)
+  ├── bnto-spreadsheet (clean, rename columns, merge, CSV to JSON)
   ├── bnto-file (rename)
-  └── bnto-video (download via yt-dlp, native-only)
+  ├── bnto-vector (SVG rasterize, optimize)
+  └── bnto-shell (shell command execution, native-only)
 ```
 
-`@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly. They use core hooks that swap backends depending on runtime (browser, desktop, or cloud).
+`@bnto/core` is the transport-agnostic API layer. UI components never call backend services directly; they use core hooks that swap backends depending on runtime (browser, desktop, or cloud).
 
 ### Repository Structure
 
@@ -255,24 +264,26 @@ bnto/
 ├── apps/
 │   └── web/                     # Next.js on Vercel (bnto.io)
 ├── packages/
-│   ├── core/                    # @bnto/core - Transport-agnostic API
-│   ├── ui/                      # @bnto/ui - Motorway design system
-│   ├── editor/                  # @bnto/editor - Visual recipe editor
+│   ├── core/                    # @bnto/core: Transport-agnostic API
+│   ├── ui/                      # @bnto/ui: Motorway design system
+│   ├── editor/                  # @bnto/editor: Visual recipe editor
 │   └── @bnto/
-│       ├── auth/                # @bnto/auth - Cloud auth
-│       ├── backend/             # @bnto/backend - Convex schema + functions
-│       ├── form/                # @bnto/form - Schema-driven config forms
-│       ├── nodes/               # @bnto/nodes - Engine-generated node catalog
-│       └── registry/            # @bnto/registry - Recipe curation + discovery
+│       ├── auth/                # @bnto/auth: Cloud auth
+│       ├── backend/             # @bnto/backend: Convex schema + functions
+│       ├── form/                # @bnto/form: Schema-driven config forms
+│       ├── nodes/               # @bnto/nodes: Engine-generated node catalog
+│       └── registry/            # @bnto/registry: Recipe curation + discovery
 └── engine/                      # Rust engine (WASM + native CLI)
     └── crates/
         ├── bnto-core/           # Core types, traits, progress reporting
         ├── bnto-engine/         # Pipeline executor + node registry
         ├── bnto-image/          # Image compression/resize/convert/overlay
         ├── bnto-spreadsheet/    # Spreadsheet clean/rename/merge/convert
-        ├── bnto-file/           # File rename, EXIF strip
-        ├── bnto-video/          # Video download (yt-dlp, native-only)
-        ├── bnto/                # Native CLI binary
+        ├── bnto-vector/         # SVG rasterize/optimize
+        ├── bnto-file/           # File rename
+        ├── bnto-encode/         # Shared image format detection + encoding
+        ├── bnto-shell/          # Shell command execution (native-only)
+        ├── bnto/                # Native CLI binary + interactive TUI
         └── bnto-wasm/           # cdylib entry point (single WASM binary)
 ```
 
