@@ -508,15 +508,31 @@ jobs:
             echo "$output" >&2
             return 1
           }
+          # Layer 0: no deps
           publish bnto-core
           sleep 15
+
+          # Layer 1: depends on bnto-core
+          publish bnto-encode
           publish bnto-spreadsheet
           publish bnto-file
           publish bnto-image
-          publish bnto-video
+          publish bnto-shell
           sleep 15
+
+          # Layer 2: depends on bnto-core + bnto-encode
+          publish bnto-vector
+          sleep 15
+
+          # Standalone (no bnto deps)
+          publish tonkotsu
+          sleep 15
+
+          # Layer 3: depends on all node crates
           publish bnto-engine
           sleep 15
+
+          # CLI binary: depends on bnto-engine + tonkotsu
           publish bnto
 
   # ── Job 9: Notify Search Engines (after production deploy) ──
