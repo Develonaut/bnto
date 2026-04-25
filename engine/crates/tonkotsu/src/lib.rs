@@ -1,4 +1,4 @@
-//! `bnto-form` — TEA-native ratatui form widgets.
+//! `tonkotsu` — TEA-native ratatui form widgets.
 //!
 //! Standalone crate with zero bnto dependency. Provides TextInput, Select,
 //! Confirm, and Number field types with pure-function state transitions
@@ -7,7 +7,7 @@
 //! # Usage
 //!
 //! ```rust
-//! use bnto_form::{FormModel, text, select, confirm, number, update, render_form, map_key_event};
+//! use tonkotsu::{FormModel, text, select, confirm, number, update, render_form, map_key_event};
 //!
 //! let form = FormModel::new(vec![
 //!     text("name").label("Recipe Name").placeholder("My Recipe").build(),

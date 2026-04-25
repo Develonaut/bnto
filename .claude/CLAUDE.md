@@ -76,9 +76,10 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Config panel controls (frozen) | [config-controls.md](.claude/strategy/config-controls.md)                       |
 | Recipe editors (unified)       | [recipe-editors.md](.claude/strategy/recipe-editors.md)                         |
 | Editor implementation plan     | [editor-implementation-plan.md](.claude/strategy/editor-implementation-plan.md) |
-| TUI form widgets (bnto-form)   | [bnto-form-strategy.md](.claude/strategy/bnto-form-strategy.md)                 |
+| TUI form widgets (tonkotsu)    | [tonkotsu-strategy.md](.claude/strategy/tonkotsu-strategy.md)                   |
 | TUI controls polish (Bubbles)  | [tui-controls-bubbles.md](.claude/strategy/tui-controls-bubbles.md)             |
 | Power recipes / gap analysis   | [power-recipes.md](.claude/strategy/power-recipes.md)                           |
+| Cloud execution (Railway)      | [cloud-execution.md](.claude/strategy/cloud-execution.md)                       |
 
 ---
 
@@ -182,8 +183,8 @@ bnto doctor                   # Check external dependencies (yt-dlp, etc.)
 bnto tui                      # Launch interactive TUI (recipe browser, file picker, execution)
 bnto tui --theme tokyo        # TUI with dark theme (los-angeles | tokyo | monaco)
 
-# bnto-form demo
-task form:demo          # Launch kitchen-sink demo TUI for bnto-form
+# tonkotsu demo (TUI form widgets)
+task form:demo          # Launch tonkotsu kitchen-sink demo TUI
 
 # Frontend (via Turborepo)
 task ui:build           # Build all TS packages (with Turbo caching)

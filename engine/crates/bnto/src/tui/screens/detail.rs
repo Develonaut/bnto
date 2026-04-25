@@ -1,6 +1,6 @@
 // Recipe detail screen — state for recipe configuration.
 //
-// The editing state machine is delegated to bnto_form::FormModel.
+// The editing state machine is delegated to tonkotsu::FormModel.
 // This module owns recipe metadata, the "Continue" button, and
 // visible_when evaluation. Loading logic lives in detail_loader.rs.
 // Bridge logic (ParamEntry → Field) lives in detail_bridge.rs.
@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use bnto_core::InputMode;
 use bnto_core::metadata::{ParamCondition, ParameterType};
-use bnto_form::FormModel;
+use tonkotsu::FormModel;
 
 use super::picker::PickerModel;
 
@@ -54,7 +54,7 @@ pub enum DetailFocus {
 /// Detail screen state — recipe info + form for parameter editing.
 ///
 /// The "Run" button is a virtual item at form field count,
-/// managed by this wrapper — not by bnto_form.
+/// managed by this wrapper — not by tonkotsu.
 #[derive(Debug)]
 pub struct DetailModel {
     /// Recipe slug (used for forward navigation).
@@ -317,7 +317,7 @@ mod tests {
     #[test]
     fn focus_next_advances_via_form() {
         let mut m = detail();
-        m.form = bnto_form::update(m.form, bnto_form::FormMessage::FocusNext);
+        m.form = tonkotsu::update(m.form, tonkotsu::FormMessage::FocusNext);
         assert_eq!(m.form.focused, 1);
     }
 

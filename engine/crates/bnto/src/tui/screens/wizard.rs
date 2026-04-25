@@ -7,7 +7,7 @@
 use bnto_core::editor::{EditorModel, EditorSource};
 use bnto_core::metadata::{NodeCategory, NodeTypeInfo};
 use bnto_core::registry::NodeRegistry;
-use bnto_form::FormModel;
+use tonkotsu::FormModel;
 
 use super::detail::ParamEntry;
 use super::detail_bridge;
@@ -80,7 +80,7 @@ pub enum WizardMessage {
     CursorUp,
     Confirm,
     Back,
-    Form(bnto_form::FormMessage),
+    Form(tonkotsu::FormMessage),
 }
 
 /// Side effect from the wizard update.
@@ -181,7 +181,7 @@ pub fn update(
         WizardMessage::Back => handle_back(model),
         WizardMessage::Form(form_msg) => {
             if let Some(form) = model.form.take() {
-                let updated = bnto_form::update(form, form_msg);
+                let updated = tonkotsu::update(form, form_msg);
                 detail_bridge::update_visibility(model.form.insert(updated), &model.params);
             }
             (model, WizardAction::None)
@@ -794,7 +794,7 @@ mod tests {
         // Send a focus message — should not crash.
         let (w, _) = update(
             w,
-            WizardMessage::Form(bnto_form::FormMessage::FocusNext),
+            WizardMessage::Form(tonkotsu::FormMessage::FocusNext),
             &reg,
         );
         assert!(w.form.is_some());

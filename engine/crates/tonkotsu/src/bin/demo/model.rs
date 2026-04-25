@@ -5,8 +5,8 @@
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-use bnto_form::demo::fields::build_fields;
-use bnto_form::{FormEffect, FormMessage, FormModel, map_key_event};
+use tonkotsu::demo::fields::build_fields;
+use tonkotsu::{FormEffect, FormMessage, FormModel, map_key_event};
 
 /// Top-level demo state wrapping the form.
 pub struct DemoModel {
@@ -38,7 +38,7 @@ pub enum DemoMessage {
 pub fn handle_demo_key(key: KeyEvent, model: &DemoModel) -> Option<DemoMessage> {
     let field = model.form.focused_field();
     let is_editing = field
-        .map(|f| !matches!(f.state, bnto_form::FieldState::Idle))
+        .map(|f| !matches!(f.state, tonkotsu::FieldState::Idle))
         .unwrap_or(false);
 
     match (key.code, key.modifiers, is_editing) {
@@ -73,7 +73,7 @@ pub fn update_demo(mut model: DemoModel, msg: DemoMessage) -> DemoModel {
             }
         }
         DemoMessage::Form(fm) => {
-            model.form = bnto_form::update(model.form, fm);
+            model.form = tonkotsu::update(model.form, fm);
             drain_effects(&mut model);
             model
         }
@@ -92,9 +92,9 @@ fn drain_effects(model: &mut DemoModel) {
                 show_hidden,
             } => {
                 let entries = read_directory(&path, &extensions, show_hidden);
-                model.form = bnto_form::update(
+                model.form = tonkotsu::update(
                     model.form.clone(),
-                    bnto_form::FormMessage::FilePathDirLoaded {
+                    tonkotsu::FormMessage::FilePathDirLoaded {
                         field_id,
                         dir: path,
                         entries,
@@ -114,7 +114,7 @@ fn read_directory(
     path: &std::path::Path,
     extensions: &[String],
     show_hidden: bool,
-) -> Vec<bnto_form::FileEntry> {
+) -> Vec<tonkotsu::FileEntry> {
     let read_dir = match std::fs::read_dir(path) {
         Ok(rd) => rd,
         Err(_) => return Vec::new(),
@@ -155,7 +155,7 @@ fn read_directory(
             }
         }
 
-        let fe = bnto_form::FileEntry {
+        let fe = tonkotsu::FileEntry {
             name,
             is_dir,
             path: entry.path(),

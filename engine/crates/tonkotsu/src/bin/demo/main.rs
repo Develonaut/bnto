@@ -1,9 +1,9 @@
-//! bnto-form kitchen-sink demo binary.
+//! tonkotsu kitchen-sink demo binary.
 //!
-//! Launch: `cargo run -p bnto-form --bin bnto-form-demo`
+//! Launch: `cargo run -p tonkotsu --bin tonkotsu-demo`
 //!
 //! Interactive demo showcasing every field type, validator, and feature
-//! in bnto-form. Mirrors the bnto TUI visual shell (logo, bordered panel,
+//! in tonkotsu. Mirrors the bnto TUI visual shell (logo, bordered panel,
 //! help bar) but stands alone with zero bnto dependency.
 
 mod layout;
@@ -20,8 +20,8 @@ use ratatui::backend::CrosstermBackend;
 use ratatui::text::Text;
 use ratatui::widgets::Paragraph;
 
-use bnto_form::demo::help_bar::render_help_bar;
-use bnto_form::{DefaultTheme, FormMessage, FormTheme, render_form};
+use tonkotsu::demo::help_bar::render_help_bar;
+use tonkotsu::{DefaultTheme, FormMessage, FormTheme, render_form};
 
 use model::{DemoModel, handle_demo_key, update_demo};
 
@@ -97,7 +97,7 @@ fn run_loop(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io::Result
         let new_h = terminal.size()?.height;
         let new_vh = layout::viewport_height(new_h);
         if new_vh != model.form.viewport_height {
-            model.form = bnto_form::update(model.form, FormMessage::Resize { height: new_vh });
+            model.form = tonkotsu::update(model.form, FormMessage::Resize { height: new_vh });
         }
 
         if model.should_quit {

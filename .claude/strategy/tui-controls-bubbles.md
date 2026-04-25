@@ -8,7 +8,7 @@
 
 ## Problem
 
-Our TUI form controls (`bnto-form`) and file picker work but feel basic compared to polished TUI tools like Charm Bubbles. Two specific pain points:
+Our TUI form controls (`tonkotsu`) and file picker work but feel basic compared to polished TUI tools like Charm Bubbles. Two specific pain points:
 
 1. **The file picker is a separate screen, not a form control.** When a recipe needs a file path, the user navigates to a full-screen picker. Bubbles treats file selection as a form field — the field shows the current path inline, and activating it opens a focused browser view. This is the interaction model we should adopt.
 
@@ -20,10 +20,10 @@ Our TUI form controls (`bnto-form`) and file picker work but feel basic compared
 
 | Component           | Description                                                                                | bnto Equivalent                                | Gap                                       |
 | ------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------- | ----------------------------------------- |
-| **TextInput**       | Single-line, Unicode, paste, in-place scroll, placeholder                                  | `bnto-form::TextInput`                         | Parity — ours is solid                    |
+| **TextInput**       | Single-line, Unicode, paste, in-place scroll, placeholder                                  | `tonkotsu::TextInput`                          | Parity — ours is solid                    |
 | **TextArea**        | Multi-line input, vertical scroll                                                          | None                                           | **Missing**                               |
 | **FilePicker**      | Hierarchical directory browser, ext filter, perms/size display, vim keys (g/G/j/k/J/K/h/l) | `bnto::tui::screens::picker` (separate screen) | **Not a form control** — full-screen only |
-| **List**            | Paginated list with fuzzy filtering, spinner, status messages, auto-help                   | `bnto-form::Select` (cycling + basic filter)   | **No fuzzy matching**                     |
+| **List**            | Paginated list with fuzzy filtering, spinner, status messages, auto-help                   | `tonkotsu::Select` (cycling + basic filter)    | **No fuzzy matching**                     |
 | **Table**           | Column/row navigation, tabular data                                                        | None                                           | Not needed yet                            |
 | **Spinner**         | Customizable animation frames                                                              | Execution screen spinner                       | Already have for execution                |
 | **Progress**        | Gradient fills, customizable meter                                                         | Execution screen progress                      | Already have for execution                |
@@ -64,10 +64,10 @@ DISPLAY MODE (scanning)          EDIT MODE (focused)
 
 ## Current Architecture
 
-### `bnto-form` (standalone crate)
+### `tonkotsu` (standalone crate)
 
 ```
-engine/crates/bnto-form/
+engine/crates/tonkotsu/
 ├── src/
 │   ├── lib.rs           # Public API re-exports
 │   ├── field.rs         # Field, FieldKind, FieldBuilder, FieldState
@@ -122,7 +122,7 @@ engine/crates/bnto/src/tui/
 
 The core UX change. Every field type gets display and edit rendering.
 
-**Task 1: Display/Edit mode infrastructure in `bnto-form`**
+**Task 1: Display/Edit mode infrastructure in `tonkotsu`**
 
 Add `FormMode` (Display/Edit) to `FormModel`. In display mode, `render_form()` renders each field as a compact one-liner. Pressing Enter on the focused field switches to edit mode (only that field's full control visible). Enter/Esc in edit mode returns to display with updated/original value.
 
@@ -144,19 +144,19 @@ Changes to:
 - `field.rs` — Add `display_value()` method per FieldKind
 - `keys.rs` — Enter toggles mode, Esc exits edit mode
 
-**Task 2: FilePath field type in `bnto-form`**
+**Task 2: FilePath field type in `tonkotsu`**
 
 New `FieldKind::FilePath` that renders as a path string in display mode. Edit mode shows an inline directory browser (adapted from the picker logic). This requires extracting the core picker state machine from `bnto` into a reusable form.
 
 Options:
 
-- **Option A:** Move picker model into `bnto-form` as a new control type
-- **Option B:** Keep picker in `bnto` but add a simpler path-entry control to `bnto-form` that just accepts typed paths
-- **Option C (recommended):** Extract picker logic into `bnto-form` as `controls/file_path.rs`. The standalone screen picker in `bnto` then becomes a thin wrapper around the form control.
+- **Option A:** Move picker model into `tonkotsu` as a new control type
+- **Option B:** Keep picker in `bnto` but add a simpler path-entry control to `tonkotsu` that just accepts typed paths
+- **Option C (recommended):** Extract picker logic into `tonkotsu` as `controls/file_path.rs`. The standalone screen picker in `bnto` then becomes a thin wrapper around the form control.
 
 Option C is recommended because:
 
-- `bnto-form` stays standalone (no bnto dependency — the picker model is pure state machine)
+- `tonkotsu` stays standalone (no bnto dependency — the picker model is pure state machine)
 - The full-screen picker screen reuses the same control, just rendered larger
 - One codebase for file selection UX, two rendering contexts
 
@@ -180,7 +180,7 @@ Replace plain path with styled breadcrumb segments. Visual hierarchy showing the
 
 **Task 6: Select with fuzzy filter**
 
-Enhance `bnto-form::Select` to support fuzzy substring matching when typing. The current cycling behavior (up/down arrows) is preserved when no filter text is active. When the user types, entries filter down. This matches Bubbles' List component pattern.
+Enhance `tonkotsu::Select` to support fuzzy substring matching when typing. The current cycling behavior (up/down arrows) is preserved when no filter text is active. When the user types, entries filter down. This matches Bubbles' List component pattern.
 
 **Task 7: TextArea field type**
 
@@ -237,6 +237,6 @@ All work is TDD-first (RED tests before implementation):
 | Document                                                  | Relevance                                                             |
 | --------------------------------------------------------- | --------------------------------------------------------------------- |
 | [Charm Bubbles](https://github.com/charmbracelet/bubbles) | Reference implementation — interaction patterns, keyboard conventions |
-| [bnto-form-strategy.md](bnto-form-strategy.md)            | Original bnto-form design decisions, huh inspiration                  |
+| [tonkotsu-strategy.md](tonkotsu-strategy.md)              | Original tonkotsu design decisions, huh inspiration                   |
 | [tui-strategy.md](tui-strategy.md)                        | TUI architecture, TEA pattern, Motorway design language               |
 | [tui-user-journey.md](tui-user-journey.md)                | Screen flow, picker integration points                                |

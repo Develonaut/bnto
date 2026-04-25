@@ -1,13 +1,13 @@
-# bnto-form — TEA-native ratatui form widgets for Rust TUIs.
+# tonkotsu — Rich terminal forms for ratatui.
 # Standalone crate with zero bnto dependency. Provides TextInput, Select,
-# Confirm, and Number field types with pure-function state transitions
-# and rendering (returns Vec<Line>, not Widget trait impls).
+# Confirm, Number, TextArea, FilePath, and Note field types with pure-function
+# state transitions and rendering (returns Vec<Line>, not Widget trait impls).
 
 [package]
-name = "bnto-form"
+name = "tonkotsu"
 version = "0.1.0"
 edition = "2024"
-description = "TEA-native ratatui form widgets — TextInput, Select, Confirm, Number with pure-function rendering"
+description = "Rich terminal forms for ratatui — TextInput, Select, Confirm, Number, TextArea, FilePath with pure-function rendering"
 license = "MIT"
 repository = "https://github.com/Develonaut/bnto"
 homepage = "https://bnto.io"
@@ -24,7 +24,7 @@ crossterm = { workspace = true }
 unicode-segmentation = "1"
 
 [[bin]]
-name = "bnto-form-demo"
+name = "tonkotsu-demo"
 path = "src/bin/demo/main.rs"
 
 [dev-dependencies]

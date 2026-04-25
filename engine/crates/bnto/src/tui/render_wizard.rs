@@ -111,7 +111,7 @@ fn render_configure_step(
 
     if let Some(form) = &wizard.form {
         let form_theme = BntoFormTheme(theme);
-        let form_lines = bnto_form::render_form(form, &form_theme);
+        let form_lines = tonkotsu::render_form(form, &form_theme);
         for line in form_lines {
             let mut spans = vec![Span::raw("  ")];
             spans.extend(line.spans);

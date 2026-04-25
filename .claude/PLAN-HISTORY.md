@@ -424,11 +424,11 @@ Brought back `/editor` route as lightweight open+export tool. No persistence —
 
 ---
 
-## Sprint 11.5: `bnto-form` — TUI Form Widget Crate — COMPLETE
+## Sprint 11.5: `tonkotsu` (formerly bnto-form) — TUI Form Widget Crate — COMPLETE
 
 **Goal:** Standalone, open-source ratatui form crate replacing hand-built detail screen controls. TEA-native, pure-function architecture, zero bnto dependency.
 
-**Strategy doc:** [bnto-form-strategy.md](strategy/bnto-form-strategy.md)
+**Strategy doc:** [tonkotsu-strategy.md](strategy/tonkotsu-strategy.md)
 
 ### Wave 1 — Core types + TextInput (sequential)
 

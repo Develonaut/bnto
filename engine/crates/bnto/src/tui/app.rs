@@ -161,7 +161,7 @@ pub enum AppMessage {
     /// Forward a message to the browser screen.
     Browser(BrowserMessage),
     /// Forward a form message to the detail screen's FormModel.
-    DetailForm(bnto_form::FormMessage),
+    DetailForm(tonkotsu::FormMessage),
     /// Forward a message to the detail screen's embedded picker.
     DetailPicker(PickerMessage),
     /// Move detail focus to Input section.
@@ -179,11 +179,11 @@ pub enum AppMessage {
     /// Forward a message to the editor screen.
     Editor(EditorMessage),
     /// Forward a form message to the editor's inline form.
-    EditorForm(bnto_form::FormMessage),
+    EditorForm(tonkotsu::FormMessage),
     /// Forward a message to the wizard screen.
     Wizard(WizardMessage),
     /// Forward a form message to the wizard's inline form.
-    WizardForm(bnto_form::FormMessage),
+    WizardForm(tonkotsu::FormMessage),
     /// Open the wizard for guided recipe creation.
     OpenWizard,
     /// Open the editor for a predefined recipe (clone into editor).
@@ -1061,30 +1061,30 @@ mod tests {
             ..default_model()
         };
 
-        // Edit quality from 80 → 55 via bnto-form messages.
+        // Edit quality from 80 → 55 via tonkotsu messages.
         let app = update(
             app,
-            AppMessage::DetailForm(bnto_form::FormMessage::StartEdit),
+            AppMessage::DetailForm(tonkotsu::FormMessage::StartEdit),
         );
         let app = update(
             app,
-            AppMessage::DetailForm(bnto_form::FormMessage::EditBackspace),
+            AppMessage::DetailForm(tonkotsu::FormMessage::EditBackspace),
         );
         let app = update(
             app,
-            AppMessage::DetailForm(bnto_form::FormMessage::EditBackspace),
+            AppMessage::DetailForm(tonkotsu::FormMessage::EditBackspace),
         );
         let app = update(
             app,
-            AppMessage::DetailForm(bnto_form::FormMessage::EditChar('5')),
+            AppMessage::DetailForm(tonkotsu::FormMessage::EditChar('5')),
         );
         let app = update(
             app,
-            AppMessage::DetailForm(bnto_form::FormMessage::EditChar('5')),
+            AppMessage::DetailForm(tonkotsu::FormMessage::EditChar('5')),
         );
         let app = update(
             app,
-            AppMessage::DetailForm(bnto_form::FormMessage::CommitEdit),
+            AppMessage::DetailForm(tonkotsu::FormMessage::CommitEdit),
         );
         assert_eq!(app.detail.as_ref().unwrap().form.fields[0].value, "55");
 

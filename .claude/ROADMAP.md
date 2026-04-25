@@ -55,7 +55,7 @@ M2: Platform Features                ← DELIVERED (March 2026)
 M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     CLI is the product. v0.12.0 on crates.io. 18 recipes. TUI shipped
     (7 screens, 400+ tests). Schema-driven config, data persistence,
-    Home/Library, List editor, Wizard, bnto-form widget crate — all
+    Home/Library, List editor, Wizard, tonkotsu widget crate — all
     delivered. Recipe fields ({{fields.*}}) shipped. `download-video`
     migrated to shell-command + recipe deps, `bnto-video` crate deleted.
     Vector operations (svg-to-png, svg-to-jpeg, optimize-svg) shipped.
@@ -63,7 +63,7 @@ M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     TUI controls polish complete (Bubbles-inspired display/edit, FilePath,
     fuzzy Select, TextArea, picker search/metadata/breadcrumbs).
 
-    Next: Sprint 16 — Recipe expansion + huh parity. bnto-form reaches
+    Next: Sprint 16 — Recipe expansion + huh parity. tonkotsu reaches
     full huh equivalence (FullScreenEdit, MultiSelect, field grouping, Note).
     File node expansion (BRU-style: counter rename, sanitize filenames).
     Image crop/rotate for iLovePNG parity. Engine infra (template expressions,
@@ -79,7 +79,7 @@ M5: Monetization (tabled)
     Revenue strategy revisited when the tool has community traction.
 ```
 
-**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.12.0 shipped with 18 recipes. Sprints 10-15 delivered full TUI + engine hardening + Bubbles-quality controls. Next: Sprint 16 — recipe expansion (file nodes, image crop/rotate → 22+ recipes), huh parity for bnto-form, engine infrastructure (template expressions, version constraints, migration). Desktop (M4) and monetization (M5) are deep backlog.
+**Key:** M1 (browser) and M2 (platform) delivered. M3 active: CLI is the primary product surface, crates.io live, v0.12.0 shipped with 18 recipes. Sprints 10-15 delivered full TUI + engine hardening + Bubbles-quality controls. Next: Sprint 16 — recipe expansion (file nodes, image crop/rotate → 22+ recipes), huh parity for tonkotsu, engine infrastructure (template expressions, version constraints, migration). Desktop (M4) and monetization (M5) are deep backlog.
 
 ---
 

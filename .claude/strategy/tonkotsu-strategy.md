@@ -1,4 +1,4 @@
-# Strategy: `bnto-form` — huh-Inspired TUI Form Widgets for Ratatui
+# Strategy: `tonkotsu` — Rich Terminal Forms for Ratatui
 
 **Last Updated:** April 17, 2026
 
@@ -6,7 +6,7 @@
 
 The TUI detail screen's parameter editing is functional but basic — trailing `_` cursor, no cursor movement, no placeholder text, no inline validation, no filterable selects. Charm's [huh](https://github.com/charmbracelet/huh) library set the standard for polished terminal forms in Go, but **no Rust equivalent exists**. `inquire` can't embed in ratatui. `ratatui-form` is v0.1.1 with 3 field types. `tui-textarea` is mature but does one thing (multiline text).
 
-We build `bnto-form`: a standalone, open-source ratatui form crate that anyone can use. For bnto, it replaces the hand-built detail screen controls. For the Rust community, it fills the gap between ratatui's low-level widget system and a ready-to-use form library.
+We build `tonkotsu`: a standalone, open-source ratatui form crate that anyone can use. For bnto, it replaces the hand-built detail screen controls. For the Rust community, it fills the gap between ratatui's low-level widget system and a ready-to-use form library.
 
 **Parallel to `@bnto/form` on the web.** Same concept (schema-driven forms, control registry, per-field validation), different target (terminal vs browser). The web package maps `NodeParamControl` to React components. The Rust crate maps field types to ratatui widgets.
 
@@ -16,7 +16,7 @@ We build `bnto-form`: a standalone, open-source ratatui form crate that anyone c
 
 1. **TEA-native** — Fields don't own state. State lives in caller's model, fields render it. Pure `update()` functions, no side effects.
 2. **Pure functions over traits** — Control logic and rendering are plain functions. No `Widget`/`StatefulWidget` trait implementations. Returns `Vec<Line>` that callers compose into their layout. Testable without a terminal.
-3. **Zero bnto dependency** — The crate depends on `ratatui` and `crossterm`. Nothing from `bnto-core`, `bnto-engine`, or any bnto internals. The bnto CLI crate consumes `bnto-form` and maps engine metadata onto form fields.
+3. **Zero bnto dependency** — The crate depends on `ratatui` and `crossterm`. Nothing from `bnto-core`, `bnto-engine`, or any bnto internals. The bnto CLI crate consumes `tonkotsu` and maps engine metadata onto form fields.
 4. **Batteries included, opinions optional** — Ships with sensible defaults (colors, key bindings, layout) but everything is overridable. Bring your own theme.
 5. **Incremental adoption** — Use one field type or the whole form system. Fields work standalone.
 
@@ -28,23 +28,23 @@ We build `bnto-form`: a standalone, open-source ratatui form crate that anyone c
 
 ```
 bnto (CLI binary)
-  +-- bnto-form (new crate — ratatui form widgets)
+  +-- tonkotsu (new crate — ratatui form widgets)
   +-- bnto-engine (existing — registry, recipes)
   +-- bnto-core (existing — metadata types)
 
-bnto-form (standalone, open-source)
+tonkotsu (standalone, open-source)
   +-- ratatui (0.30)
   +-- crossterm (for key event types — already transitive via ratatui)
   +-- unicode-segmentation (for grapheme-safe cursor)
   +-- (vendored: ~300 lines from tui-slider for slider rendering math)
 ```
 
-`bnto-form` has **no knowledge of bnto**. It provides generic form fields. The `bnto` CLI crate maps engine `ParameterType` + `Constraints` onto `bnto-form` field types.
+`tonkotsu` has **no knowledge of bnto**. It provides generic form fields. The `bnto` CLI crate maps engine `ParameterType` + `Constraints` onto `tonkotsu` field types.
 
 ### Crate Location
 
 ```
-engine/crates/bnto-form/
+engine/crates/tonkotsu/
 +-- Cargo.toml
 +-- README.md
 +-- src/
@@ -100,7 +100,7 @@ pub fn number(id: &str) -> FieldBuilder
 ### Usage Example (for any ratatui app)
 
 ```rust
-use bnto_form::{FormModel, text, select, confirm, number, update, render_form, map_key_event};
+use tonkotsu::{FormModel, text, select, confirm, number, update, render_form, map_key_event};
 
 // Build a form
 let form = FormModel::new(vec![
@@ -302,10 +302,10 @@ A `DefaultTheme` ships with the crate using terminal-safe colors (`Color::Reset`
 
 ## Integration with bnto
 
-The bnto CLI bridges engine metadata to `bnto-form` fields:
+The bnto CLI bridges engine metadata to `tonkotsu` fields:
 
 ```rust
-fn param_to_field(param: &ParamEntry) -> bnto_form::Field {
+fn param_to_field(param: &ParamEntry) -> tonkotsu::Field {
     let kind = match &param.param_type {
         ParameterType::Boolean => FieldKind::Confirm { .. },
         ParameterType::Enum { options } => FieldKind::Select { options, filterable: options.len() > 5 },
@@ -320,7 +320,7 @@ fn param_to_field(param: &ParamEntry) -> bnto_form::Field {
 }
 ```
 
-The detail screen delegates to `bnto_form::update()`, `bnto_form::render_form()`, and `bnto_form::map_key_event()`.
+The detail screen delegates to `tonkotsu::update()`, `tonkotsu::render_form()`, and `tonkotsu::map_key_event()`.
 
 **visible_when** stays in the bnto layer — domain-specific logic. The form crate exposes `field.visible: bool` that the caller manages.
 
@@ -354,13 +354,13 @@ The detail screen delegates to `bnto_form::update()`, `bnto_form::render_form()`
 
 ## huh Parity — Gap Analysis (April 2026)
 
-**Goal:** Make `bnto-form` the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library — "A simple, powerful library for building interactive forms and prompts in the terminal."
+**Goal:** Make `tonkotsu` the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library — "A simple, powerful library for building interactive forms and prompts in the terminal."
 
 Sprint 15 delivered Display/Edit mode, FilePath, TextArea, and fuzzy Select. Four gaps remain to reach huh parity.
 
 ### Current State vs huh
 
-| huh Feature                           | bnto-form Status                                      | Gap           |
+| huh Feature                           | tonkotsu Status                                       | Gap           |
 | ------------------------------------- | ----------------------------------------------------- | ------------- |
 | Input (single-line text)              | **Parity** — `TextInput` (Phase 1)                    | —             |
 | Text (multi-line)                     | **Parity** — `TextArea` (Sprint 15)                   | —             |
@@ -389,9 +389,9 @@ Sprint 15 delivered Display/Edit mode, FilePath, TextArea, and fuzzy Select. Fou
 
 ### After Sprint 16
 
-With these four additions, `bnto-form` reaches functional parity with huh:
+With these four additions, `tonkotsu` reaches functional parity with huh:
 
-| Capability   | huh                                           | bnto-form (post Sprint 16)                                               |
+| Capability   | huh                                           | tonkotsu (post Sprint 16)                                                |
 | ------------ | --------------------------------------------- | ------------------------------------------------------------------------ |
 | Field types  | 5 (Input, Text, Select, MultiSelect, Confirm) | 8 (Text, TextArea, Select, MultiSelect, Confirm, Number, FilePath, Note) |
 | Form modes   | 1 (full-screen focused)                       | 3 (Inline, DisplayEdit, FullScreenEdit)                                  |
@@ -401,7 +401,7 @@ With these four additions, `bnto-form` reaches functional parity with huh:
 | Architecture | Bubble Tea model                              | TEA-native (pure functions)                                              |
 | Standalone   | Yes                                           | Yes (zero bnto dependency)                                               |
 
-**bnto-form advantages over huh:** Number/slider field (no huh equivalent), FilePath with inline directory browser (huh delegates to Bubbles), three form modes (huh has one), pure-function rendering (easier to test). bnto-form is the Rust community's answer to huh.
+**tonkotsu advantages over huh:** Number/slider field (no huh equivalent), FilePath with inline directory browser (huh delegates to Bubbles), three form modes (huh has one), pure-function rendering (easier to test). tonkotsu is the Rust community's answer to huh.
 
 ---
 
@@ -409,7 +409,7 @@ With these four additions, `bnto-form` reaches functional parity with huh:
 
 ### PR 1: Crate scaffold + TextInput
 
-New `engine/crates/bnto-form/`. Field/FieldState/FormModel/FormMessage types. TextInput control logic (cursor ops). TextInput widget rendering (cursor, placeholder). ~25 tests.
+New `engine/crates/tonkotsu/`. Field/FieldState/FormModel/FormMessage types. TextInput control logic (cursor ops). TextInput widget rendering (cursor, placeholder). ~25 tests.
 
 ### PR 2: Select field (compact + expanded + filter)
 
@@ -429,7 +429,7 @@ FormModel builder. Top-level update/render/map_key_event. Scroll/viewport. Descr
 
 ### PR 6: bnto integration
 
-Replace detail screen controls with bnto-form. Bridge ParamEntry -> Field. Remove old editing state. ~10 tests.
+Replace detail screen controls with tonkotsu. Bridge ParamEntry -> Field. Remove old editing state. ~10 tests.
 
 ---
 
@@ -483,13 +483,13 @@ The user explicitly wants tui-slider's visual quality: "I really like those and 
 
 ### Ecosystem Gap Confirmed
 
-No existing Rust crate provides a complete, TEA-compatible form widget set. The closest is `rat-widget`, but it uses a fundamentally different event model (`HandleEvent` trait with `Regular`/`MouseOnly`/`DoubleClick` qualifiers) and pulls in the entire `rat` ecosystem. Building `bnto-form` fills a genuine gap.
+No existing Rust crate provides a complete, TEA-compatible form widget set. The closest is `rat-widget`, but it uses a fundamentally different event model (`HandleEvent` trait with `Regular`/`MouseOnly`/`DoubleClick` qualifiers) and pulls in the entire `rat` ecosystem. Building `tonkotsu` fills a genuine gap.
 
 ---
 
 ## Open Source Considerations
 
-- **Crate name:** `bnto-form`
+- **Crate name:** `tonkotsu`
 - **License:** MIT (matches bnto)
 - **Minimum ratatui version:** 0.30
 - **MSRV:** Match bnto workspace
@@ -499,7 +499,7 @@ No existing Rust crate provides a complete, TEA-compatible form widget set. The 
 ## Verification
 
 ```bash
-cargo test -p bnto-form        # New crate tests
+cargo test -p tonkotsu        # New crate tests
 task wasm:test                 # Existing tests still pass
 task cli:test                  # CLI golden tests still pass
 cargo run -p bnto -- tui       # Manual: test each control type

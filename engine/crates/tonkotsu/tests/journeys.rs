@@ -1,4 +1,4 @@
-//! Journey tests for bnto-form.
+//! Journey tests for tonkotsu.
 //!
 //! Each test simulates a real user scenario end-to-end:
 //! key press → message → state update → render to terminal buffer → verify output.
@@ -10,7 +10,7 @@ mod helpers;
 use crossterm::event::KeyCode;
 use helpers::*;
 
-use bnto_form::{FieldState, FormModel, confirm, number, select, text};
+use tonkotsu::{FieldState, FormModel, confirm, number, select, text};
 
 const W: u16 = 60;
 const H: u16 = 10;
