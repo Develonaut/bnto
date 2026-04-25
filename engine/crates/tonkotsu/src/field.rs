@@ -74,6 +74,8 @@ pub enum FieldKind {
         placeholder: Option<String>,
         char_limit: Option<usize>,
     },
+    /// Read-only informational text. Not editable, not focusable.
+    Note { content: String },
 }
 
 /// A select option with separate display label and stored value.
@@ -84,6 +86,11 @@ pub struct SelectOption {
 }
 
 impl Field {
+    /// Whether this field can receive focus. Note fields are not focusable.
+    pub fn is_focusable(&self) -> bool {
+        !matches!(self.kind, FieldKind::Note { .. })
+    }
+
     /// One-line formatted value for display mode rendering.
     ///
     /// Each field kind produces a human-readable summary:
@@ -132,6 +139,7 @@ impl Field {
                     first.to_string()
                 }
             }
+            FieldKind::Note { content } => content.clone(),
         }
     }
 }
@@ -181,7 +189,9 @@ pub enum FieldState {
     },
 }
 
-pub use crate::field_builder::{FieldBuilder, confirm, file_path, number, select, text, textarea};
+pub use crate::field_builder::{
+    FieldBuilder, confirm, file_path, note, number, select, text, textarea,
+};
 
 #[cfg(test)]
 mod tests {
@@ -478,5 +488,34 @@ mod tests {
     fn test_display_value_textarea_multi_line() {
         let field = textarea("t").value("line1\nline2\nline3").build();
         assert_eq!(field.display_value(), "line1 (3 lines)");
+    }
+
+    // --- Note tests ---
+
+    #[test]
+    fn test_field_builder_note() {
+        let field = note("info", "Some helpful text").build();
+        assert_eq!(field.id, "info");
+        assert!(matches!(field.kind, FieldKind::Note { .. }));
+    }
+
+    #[test]
+    fn test_note_display_value() {
+        let field = note("info", "Important info").build();
+        assert_eq!(field.display_value(), "Important info");
+    }
+
+    #[test]
+    fn test_note_not_focusable() {
+        let field = note("info", "text").build();
+        assert!(!field.is_focusable());
+    }
+
+    #[test]
+    fn test_other_fields_are_focusable() {
+        assert!(text("x").build().is_focusable());
+        assert!(number("x").build().is_focusable());
+        assert!(select("x", &[("a", "A")]).build().is_focusable());
+        assert!(confirm("x").build().is_focusable());
     }
 }

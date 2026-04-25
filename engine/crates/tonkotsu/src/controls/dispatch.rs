@@ -13,6 +13,9 @@ use crate::form::FormMessage;
 /// Route a message to the appropriate control handler based on field kind + state.
 pub(crate) fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
     match (&field.kind, &field.state, &msg) {
+        // Note fields are read-only — ignore all messages
+        (FieldKind::Note { .. }, _, _) => field,
+
         // StartEdit: transition from Idle to editing state
         (FieldKind::Text { .. }, FieldState::Idle, FormMessage::StartEdit) => {
             let cursor = field.value.len();

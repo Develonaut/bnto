@@ -22,20 +22,29 @@ const H: u16 = 40;
 // ═══════════════════════════════════════════════════════════
 
 #[test]
-fn kitchen_sink_has_eleven_fields() {
+fn kitchen_sink_has_twelve_fields() {
     let fields = build_fields();
-    assert_eq!(fields.len(), 11);
+    assert_eq!(fields.len(), 12);
 }
 
 #[test]
-fn kitchen_sink_first_is_required_text() {
+fn kitchen_sink_first_is_note() {
     let fields = build_fields();
     let first = &fields[0];
-    assert_eq!(first.id, "recipe_name");
-    assert!(matches!(first.kind, FieldKind::Text { .. }));
+    assert_eq!(first.id, "intro");
+    assert!(matches!(first.kind, FieldKind::Note { .. }));
+    assert!(!first.is_focusable());
+}
+
+#[test]
+fn kitchen_sink_second_is_required_text() {
+    let fields = build_fields();
+    let second = &fields[1];
+    assert_eq!(second.id, "recipe_name");
+    assert!(matches!(second.kind, FieldKind::Text { .. }));
     assert!(
-        first.validator.is_some(),
-        "first field should have required validator"
+        second.validator.is_some(),
+        "recipe_name field should have required validator"
     );
 }
 
@@ -73,7 +82,7 @@ fn kitchen_sink_has_number_with_suffix() {
 #[test]
 fn kitchen_sink_last_is_hidden() {
     let fields = build_fields();
-    let last = &fields[10];
+    let last = &fields[11];
     assert_eq!(last.id, "hidden_field");
     assert!(!last.visible);
 }
@@ -83,11 +92,13 @@ fn kitchen_sink_last_is_hidden() {
 // ═══════════════════════════════════════════════════════════
 
 #[test]
-fn initial_render_shows_focused_marker() {
+fn initial_render_shows_note_and_focused_marker() {
     let model = FormModel::new(build_fields());
     let buf = render_to_buffer(&model, W, H);
-    // First field should have the ">" focus prefix
-    assert_line_contains(&buf, 0, "> ");
+    // Line 0: Note content (not focusable, no ">" prefix)
+    assert_line_contains(&buf, 0, "Configure your recipe settings below.");
+    // Focus marker appears on the first focusable field (recipe_name)
+    assert_buffer_contains(&buf, "> ");
 }
 
 #[test]
@@ -97,6 +108,7 @@ fn initial_render_shows_all_visible_labels() {
     let text = buffer_text(&buf);
 
     let visible_labels = [
+        "Configure your recipe settings below.",
         "Recipe Name",
         "Description",
         "Output Format",
@@ -135,7 +147,7 @@ fn initial_render_shows_description() {
 #[test]
 fn scroll_to_last_field_shows_it() {
     let mut model = FormModel::new(build_fields()).with_viewport(6);
-    // Tab to the last visible field (index 9 = input_file, skipping hidden at 10)
+    // Tab to the last visible field (index 10 = input_file, skipping Note and hidden)
     for _ in 0..9 {
         model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
@@ -227,11 +239,11 @@ fn help_bar_shows_version() {
 #[test]
 fn help_bar_shows_field_count() {
     let theme = DefaultTheme;
-    let line = render_help_bar(11, &theme);
+    let line = render_help_bar(12, &theme);
     let text: String = line.spans.iter().map(|s| s.content.to_string()).collect();
     assert!(
-        text.contains("11 fields"),
-        "help bar should show '11 fields'. got: {text}"
+        text.contains("12 fields"),
+        "help bar should show '12 fields'. got: {text}"
     );
 }
 
@@ -273,10 +285,10 @@ fn esc_in_idle_does_not_edit() {
 #[test]
 fn esc_in_editing_cancels_not_quits() {
     let model = FormModel::new(build_fields());
-    // Enter edit mode
+    // Enter edit mode on focused field (recipe_name at index 1)
     let model = simulate_key(model, key(KeyCode::Enter));
     assert!(matches!(
-        model.fields[0].state,
+        model.fields[model.focused].state,
         FieldState::TextEditing { .. }
     ));
 

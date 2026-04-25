@@ -6,7 +6,7 @@
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 use tonkotsu::demo::fields::build_fields;
-use tonkotsu::{FormEffect, FormMessage, FormModel, map_key_event};
+use tonkotsu::{FormEffect, FormMessage, FormMode, FormModel, map_key_event};
 
 /// Top-level demo state wrapping the form.
 pub struct DemoModel {
@@ -18,7 +18,9 @@ impl DemoModel {
     /// Create a fresh demo model with all kitchen-sink fields.
     pub fn new(viewport_height: usize) -> Self {
         Self {
-            form: FormModel::new(build_fields()).with_viewport(viewport_height),
+            form: FormModel::new(build_fields())
+                .with_mode(FormMode::FullScreenEdit)
+                .with_viewport(viewport_height),
             should_quit: false,
         }
     }
@@ -68,7 +70,9 @@ pub fn update_demo(mut model: DemoModel, msg: DemoMessage) -> DemoModel {
         DemoMessage::Reset => {
             let viewport = model.form.viewport_height;
             DemoModel {
-                form: FormModel::new(build_fields()).with_viewport(viewport),
+                form: FormModel::new(build_fields())
+                    .with_mode(FormMode::FullScreenEdit)
+                    .with_viewport(viewport),
                 should_quit: false,
             }
         }
