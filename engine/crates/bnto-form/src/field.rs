@@ -66,6 +66,10 @@ pub enum FieldKind {
         /// Best for bounded ranges with intuitive visual mapping (e.g. percentages).
         slider: bool,
     },
+    FilePath {
+        extensions: Vec<String>,
+        start_home: bool,
+    },
 }
 
 /// A select option with separate display label and stored value.
@@ -73,6 +77,58 @@ pub enum FieldKind {
 pub struct SelectOption {
     pub value: String,
     pub label: String,
+}
+
+impl Field {
+    /// One-line formatted value for display mode rendering.
+    ///
+    /// Each field kind produces a human-readable summary:
+    /// - Text: the raw value (or placeholder)
+    /// - Number: value + suffix (e.g., "80%")
+    /// - Select: the display label (not the raw value)
+    /// - Confirm: affirmative/negative label (e.g., "Yes" / "No")
+    pub fn display_value(&self) -> String {
+        match &self.kind {
+            FieldKind::Text { .. } => self.value.clone(),
+            FieldKind::Number { suffix, .. } => {
+                let s = suffix.as_deref().unwrap_or("");
+                format!("{}{s}", self.value)
+            }
+            FieldKind::Select { options, .. } => options
+                .iter()
+                .find(|o| o.value == self.value)
+                .map(|o| o.label.clone())
+                .unwrap_or_else(|| self.value.clone()),
+            FieldKind::Confirm {
+                affirmative,
+                negative,
+            } => {
+                if self.value == "true" {
+                    affirmative.clone()
+                } else {
+                    negative.clone()
+                }
+            }
+            FieldKind::FilePath { .. } => {
+                if self.value.is_empty() {
+                    String::new()
+                } else {
+                    abbreviate_home(&self.value)
+                }
+            }
+        }
+    }
+}
+
+/// Replace the user's home directory prefix with `~` for compact display.
+pub fn abbreviate_home(path: &str) -> String {
+    if let Ok(home) = std::env::var("HOME")
+        && path.starts_with(&home)
+    {
+        format!("~{}", &path[home.len()..])
+    } else {
+        path.to_string()
+    }
 }
 
 /// Transient editing state for a field. Idle when not being edited.
@@ -92,222 +148,18 @@ pub enum FieldState {
         buffer: String,
         cursor: usize,
     },
+    FilePathBrowsing {
+        current_dir: std::path::PathBuf,
+        entries: Vec<crate::file_entry::FileEntry>,
+        cursor: usize,
+        show_hidden: bool,
+        viewport_offset: usize,
+        viewport_height: usize,
+        nav_history: crate::file_entry::NavHistory,
+    },
 }
 
-// --- FieldBuilder ---
-
-/// Ergonomic builder for constructing fields.
-pub struct FieldBuilder {
-    id: String,
-    label: Option<String>,
-    kind: FieldKind,
-    value: Option<String>,
-    default: Option<String>,
-    description: Option<String>,
-    validator: Option<ValidatorFn>,
-    visible: bool,
-}
-
-impl FieldBuilder {
-    fn new(id: &str, kind: FieldKind) -> Self {
-        Self {
-            id: id.to_string(),
-            label: None,
-            kind,
-            value: None,
-            default: None,
-            description: None,
-            validator: None,
-            visible: true,
-        }
-    }
-
-    pub fn label(mut self, label: &str) -> Self {
-        self.label = Some(label.to_string());
-        self
-    }
-
-    pub fn value(mut self, value: &str) -> Self {
-        self.value = Some(value.to_string());
-        self
-    }
-
-    pub fn default(mut self, default: Option<&str>) -> Self {
-        self.default = default.map(|s| s.to_string());
-        self
-    }
-
-    pub fn description(mut self, desc: Option<&str>) -> Self {
-        self.description = desc.map(|s| s.to_string());
-        self
-    }
-
-    pub fn validator(mut self, v: ValidatorFn) -> Self {
-        self.validator = Some(v);
-        self
-    }
-
-    /// Shorthand for `.validator(Arc::new(not_empty))` — rejects empty values.
-    pub fn required(self) -> Self {
-        self.validator(Arc::new(crate::validators::not_empty))
-    }
-
-    pub fn visible(mut self, visible: bool) -> Self {
-        self.visible = visible;
-        self
-    }
-
-    pub fn placeholder(mut self, placeholder: &str) -> Self {
-        if let FieldKind::Text {
-            placeholder: ref mut p,
-            ..
-        } = self.kind
-        {
-            *p = Some(placeholder.to_string());
-        }
-        self
-    }
-
-    pub fn char_limit(mut self, limit: usize) -> Self {
-        if let FieldKind::Text {
-            char_limit: ref mut c,
-            ..
-        } = self.kind
-        {
-            *c = Some(limit);
-        }
-        self
-    }
-
-    pub fn filterable(mut self) -> Self {
-        if let FieldKind::Select {
-            filterable: ref mut f,
-            ..
-        } = self.kind
-        {
-            *f = true;
-        }
-        self
-    }
-
-    pub fn range(mut self, min: f64, max: f64) -> Self {
-        if let FieldKind::Number {
-            min: ref mut mi,
-            max: ref mut ma,
-            ..
-        } = self.kind
-        {
-            *mi = Some(min);
-            *ma = Some(max);
-        }
-        self
-    }
-
-    pub fn step(mut self, step: f64) -> Self {
-        if let FieldKind::Number {
-            step: ref mut s, ..
-        } = self.kind
-        {
-            *s = Some(step);
-        }
-        self
-    }
-
-    pub fn suffix(mut self, suffix: &str) -> Self {
-        if let FieldKind::Number {
-            suffix: ref mut su, ..
-        } = self.kind
-        {
-            *su = Some(suffix.to_string());
-        }
-        self
-    }
-
-    /// Enable a visual slider bar for this number field.
-    pub fn slider(mut self, enabled: bool) -> Self {
-        if let FieldKind::Number {
-            slider: ref mut s, ..
-        } = self.kind
-        {
-            *s = enabled;
-        }
-        self
-    }
-
-    pub fn build(self) -> Field {
-        let label = self.label.unwrap_or_else(|| self.id.clone());
-        let value = self.value.unwrap_or_default();
-
-        Field {
-            id: self.id,
-            label,
-            kind: self.kind,
-            state: FieldState::Idle,
-            value,
-            default: self.default,
-            description: self.description,
-            error: None,
-            validator: self.validator,
-            visible: self.visible,
-        }
-    }
-}
-
-// --- Top-level builder functions ---
-
-/// Start building a text input field.
-pub fn text(id: &str) -> FieldBuilder {
-    FieldBuilder::new(
-        id,
-        FieldKind::Text {
-            placeholder: None,
-            char_limit: None,
-        },
-    )
-}
-
-/// Start building a select field.
-pub fn select(id: &str, options: &[(&str, &str)]) -> FieldBuilder {
-    let opts = options
-        .iter()
-        .map(|(value, label)| SelectOption {
-            value: value.to_string(),
-            label: label.to_string(),
-        })
-        .collect();
-    FieldBuilder::new(
-        id,
-        FieldKind::Select {
-            options: opts,
-            filterable: false,
-        },
-    )
-}
-
-/// Start building a confirm (yes/no) field.
-pub fn confirm(id: &str) -> FieldBuilder {
-    FieldBuilder::new(
-        id,
-        FieldKind::Confirm {
-            affirmative: "Yes".to_string(),
-            negative: "No".to_string(),
-        },
-    )
-}
-
-/// Start building a number field.
-pub fn number(id: &str) -> FieldBuilder {
-    FieldBuilder::new(
-        id,
-        FieldKind::Number {
-            min: None,
-            max: None,
-            step: None,
-            suffix: None,
-            slider: false,
-        },
-    )
-}
+pub use crate::field_builder::{FieldBuilder, confirm, file_path, number, select, text};
 
 #[cfg(test)]
 mod tests {
@@ -446,5 +298,103 @@ mod tests {
     fn test_field_builder_hidden() {
         let field = text("x").visible(false).build();
         assert!(!field.visible);
+    }
+
+    // --- display_value tests ---
+
+    #[test]
+    fn test_display_value_text() {
+        let field = text("x").value("hello").build();
+        assert_eq!(field.display_value(), "hello");
+    }
+
+    #[test]
+    fn test_display_value_number_with_suffix() {
+        let field = number("q").suffix("%").value("80").build();
+        assert_eq!(field.display_value(), "80%");
+    }
+
+    #[test]
+    fn test_display_value_number_no_suffix() {
+        let field = number("q").value("42").build();
+        assert_eq!(field.display_value(), "42");
+    }
+
+    #[test]
+    fn test_display_value_select_shows_label() {
+        let field = select("fmt", &[("jpeg", "JPEG"), ("png", "PNG")])
+            .value("jpeg")
+            .build();
+        assert_eq!(field.display_value(), "JPEG");
+    }
+
+    #[test]
+    fn test_display_value_select_unknown_value() {
+        let field = select("fmt", &[("a", "Alpha")]).value("unknown").build();
+        assert_eq!(field.display_value(), "unknown");
+    }
+
+    #[test]
+    fn test_display_value_confirm_true() {
+        let field = confirm("ok").value("true").build();
+        assert_eq!(field.display_value(), "Yes");
+    }
+
+    #[test]
+    fn test_display_value_confirm_false() {
+        let field = confirm("ok").value("false").build();
+        assert_eq!(field.display_value(), "No");
+    }
+
+    // --- FilePath tests ---
+
+    #[test]
+    fn test_field_builder_file_path() {
+        let field = file_path("input").label("Input File").build();
+        assert_eq!(field.id, "input");
+        assert!(matches!(field.kind, FieldKind::FilePath { .. }));
+    }
+
+    #[test]
+    fn test_field_builder_file_path_defaults() {
+        let field = file_path("f").build();
+        match &field.kind {
+            FieldKind::FilePath {
+                extensions,
+                start_home,
+            } => {
+                assert!(extensions.is_empty());
+                assert!(*start_home);
+            }
+            _ => panic!("expected FilePath kind"),
+        }
+    }
+
+    #[test]
+    fn test_field_builder_file_path_with_extensions() {
+        let field = file_path("f").extensions(&["jpg", "png"]).build();
+        match &field.kind {
+            FieldKind::FilePath { extensions, .. } => {
+                assert_eq!(extensions, &["jpg", "png"]);
+            }
+            _ => panic!("expected FilePath kind"),
+        }
+    }
+
+    #[test]
+    fn test_display_value_file_path_empty() {
+        let field = file_path("f").build();
+        assert_eq!(field.display_value(), "");
+    }
+
+    #[test]
+    fn test_display_value_file_path_abbreviates_home() {
+        let home = std::env::var("HOME").unwrap_or_default();
+        if home.is_empty() {
+            return;
+        }
+        let path = format!("{home}/Documents/file.txt");
+        let field = file_path("f").value(&path).build();
+        assert_eq!(field.display_value(), "~/Documents/file.txt");
     }
 }

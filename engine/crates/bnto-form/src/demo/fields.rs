@@ -5,9 +5,9 @@
 
 use crate::field::Field;
 use crate::validators;
-use crate::{confirm, number, select, text};
+use crate::{confirm, file_path, number, select, text};
 
-/// Build the full set of 10 kitchen-sink demo fields.
+/// Build the full set of 11 kitchen-sink demo fields.
 pub fn build_fields() -> Vec<Field> {
     vec![
         // 1. Text — placeholder, required validator, description
@@ -99,7 +99,13 @@ pub fn build_fields() -> Vec<Field> {
             .validator(validators::range(10.0, 5000.0))
             .description(Some("Validated range: 10-5000 KB"))
             .build(),
-        // 10. Text — visible(false), shows field hiding
+        // 10. FilePath — file browser with extension filter
+        file_path("input_file")
+            .label("Input File")
+            .extensions(&["jpg", "png", "webp"])
+            .description(Some("Browse and select an image file"))
+            .build(),
+        // 11. Text — visible(false), shows field hiding
         text("hidden_field")
             .label("Hidden Secret")
             .value("you can't see me")

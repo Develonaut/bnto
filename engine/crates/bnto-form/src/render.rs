@@ -6,7 +6,7 @@
 
 use ratatui::text::{Line, Span};
 
-use crate::form::FormModel;
+use crate::form::{FormMode, FormModel};
 use crate::theme::FormTheme;
 use crate::widgets;
 
@@ -18,11 +18,67 @@ use crate::widgets;
 /// When `viewport_height > 0`, the output is sliced to fit the viewport,
 /// auto-scrolling so the focused field is always visible.
 pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
-    // First pass: collect all field lines with their field indices
-    let mut all_lines: Vec<Line<'static>> = Vec::new();
-    let mut field_start_lines: Vec<(usize, usize)> = Vec::new(); // (field_idx, start_line)
+    match model.mode {
+        FormMode::DisplayEdit => render_display_edit(model, theme),
+        FormMode::Inline => render_inline(model, theme),
+    }
+}
 
-    // Collect visible field indices for trailing-spacer logic
+/// DisplayEdit mode: all fields as compact one-liners, except the editing field
+/// which gets its full control rendered.
+fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
+    let mut all_lines: Vec<Line<'static>> = Vec::new();
+    let mut field_start_lines: Vec<(usize, usize)> = Vec::new();
+
+    let visible_indices: Vec<usize> = model
+        .fields
+        .iter()
+        .enumerate()
+        .filter(|(_, f)| f.visible)
+        .map(|(i, _)| i)
+        .collect();
+    let last_visible = visible_indices.last().copied();
+    let is_editing = model.is_editing();
+
+    for (i, field) in model.fields.iter().enumerate() {
+        if !field.visible {
+            continue;
+        }
+        let focused = i == model.focused;
+        let start = all_lines.len();
+
+        let field_lines = if focused && is_editing {
+            // Focused field in edit mode: render its full control
+            render_field_inline(field, true, theme)
+        } else {
+            // All other fields (or focused field in display mode): compact display
+            widgets::display::render(field, focused, theme)
+        };
+        all_lines.extend(field_lines);
+
+        // Description only shown for focused field
+        if focused && let Some(ref desc) = field.description {
+            all_lines.push(Line::from(vec![
+                Span::raw("    "),
+                Span::styled(desc.clone(), theme.muted()),
+            ]));
+        }
+
+        field_start_lines.push((i, start));
+
+        if last_visible != Some(i) {
+            all_lines.push(Line::default());
+        }
+    }
+
+    apply_viewport(model, all_lines, &field_start_lines)
+}
+
+/// Inline mode (legacy): every field renders its full control.
+fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
+    let mut all_lines: Vec<Line<'static>> = Vec::new();
+    let mut field_start_lines: Vec<(usize, usize)> = Vec::new();
+
     let visible_indices: Vec<usize> = model
         .fields
         .iter()
@@ -39,20 +95,7 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
         let focused = i == model.focused;
         let start = all_lines.len();
 
-        let field_lines = match &field.kind {
-            crate::field::FieldKind::Text { .. } => {
-                widgets::text_input::render(field, focused, theme)
-            }
-            crate::field::FieldKind::Select { .. } => {
-                widgets::select::render(field, focused, theme)
-            }
-            crate::field::FieldKind::Confirm { .. } => {
-                widgets::confirm::render(field, focused, theme)
-            }
-            crate::field::FieldKind::Number { .. } => {
-                widgets::number::render(field, focused, theme)
-            }
-        };
+        let field_lines = render_field_inline(field, focused, theme);
         all_lines.extend(field_lines);
 
         // Description always shown; muted style for all fields
@@ -71,32 +114,51 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
         }
     }
 
-    // Apply viewport scrolling
+    apply_viewport(model, all_lines, &field_start_lines)
+}
+
+/// Render a single field using its type-specific full control widget.
+fn render_field_inline(
+    field: &crate::field::Field,
+    focused: bool,
+    theme: &dyn FormTheme,
+) -> Vec<Line<'static>> {
+    match &field.kind {
+        crate::field::FieldKind::Text { .. } => widgets::text_input::render(field, focused, theme),
+        crate::field::FieldKind::Select { .. } => widgets::select::render(field, focused, theme),
+        crate::field::FieldKind::Confirm { .. } => widgets::confirm::render(field, focused, theme),
+        crate::field::FieldKind::Number { .. } => widgets::number::render(field, focused, theme),
+        crate::field::FieldKind::FilePath { .. } => {
+            widgets::file_path::render(field, focused, theme)
+        }
+    }
+}
+
+/// Apply viewport scrolling, auto-scrolling the focused field into view.
+fn apply_viewport(
+    model: &FormModel,
+    all_lines: Vec<Line<'static>>,
+    field_start_lines: &[(usize, usize)],
+) -> Vec<Line<'static>> {
     if model.viewport_height == 0 || all_lines.len() <= model.viewport_height {
         return all_lines;
     }
 
-    // Find the focused field's start line
     let focused_start = field_start_lines
         .iter()
         .find(|(idx, _)| *idx == model.focused)
         .map(|(_, start)| *start)
         .unwrap_or(0);
 
-    // Auto-scroll: ensure focused field is within viewport
     let mut offset = model.scroll_offset;
 
-    // If focused field is above viewport, scroll up
     if focused_start < offset {
         offset = focused_start;
     }
-
-    // If focused field is below viewport, scroll down
     if focused_start >= offset + model.viewport_height {
         offset = focused_start.saturating_sub(model.viewport_height - 1);
     }
 
-    // Clamp offset to valid range
     let max_offset = all_lines.len().saturating_sub(model.viewport_height);
     offset = offset.min(max_offset);
 
@@ -107,7 +169,8 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::field::{confirm, number, text};
+    use crate::field::{FieldState, confirm, number, select, text};
+    use crate::form::FormMode;
     use crate::theme::DefaultTheme;
 
     fn theme() -> DefaultTheme {
@@ -248,5 +311,90 @@ mod tests {
     fn test_with_viewport_builder() {
         let model = FormModel::new(vec![text("a").label("A").build()]).with_viewport(10);
         assert_eq!(model.viewport_height, 10);
+    }
+
+    // --- DisplayEdit mode rendering tests ---
+
+    fn all_text(lines: &[Line]) -> String {
+        lines
+            .iter()
+            .flat_map(|l| l.spans.iter().map(|s| s.content.to_string()))
+            .collect()
+    }
+
+    #[test]
+    fn test_display_edit_renders_all_fields_compact() {
+        let model = FormModel::new(vec![
+            text("name").label("Name").value("My Recipe").build(),
+            number("q").label("Quality").suffix("%").value("80").build(),
+            select("fmt", &[("jpeg", "JPEG")])
+                .label("Format")
+                .value("jpeg")
+                .build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        // All fields should render as compact display lines with "label: value"
+        assert!(text.contains("Name:"), "got: {text}");
+        assert!(text.contains("My Recipe"), "got: {text}");
+        assert!(text.contains("Quality:"), "got: {text}");
+        assert!(text.contains("80%"), "got: {text}");
+        assert!(text.contains("Format:"), "got: {text}");
+        assert!(text.contains("JPEG"), "got: {text}");
+    }
+
+    #[test]
+    fn test_display_edit_editing_field_shows_full_control() {
+        let mut model = FormModel::new(vec![
+            text("name").label("Name").value("My Recipe").build(),
+            text("other").label("Other").value("val").build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        // Put first field into editing state
+        model.fields[0].state = FieldState::TextEditing {
+            buffer: "My Recipe".to_string(),
+            cursor: 9,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        // Other field should still be compact display (label: value)
+        assert!(
+            text.contains("Other:"),
+            "non-editing field should be compact: {text}"
+        );
+    }
+
+    #[test]
+    fn test_display_edit_one_line_per_field_in_display() {
+        let model = FormModel::new(vec![
+            text("a").label("First").value("1").build(),
+            text("b").label("Second").value("2").build(),
+            text("c").label("Third").value("3").build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        let lines = render_form(&model, &theme());
+        // 3 fields, each 1 line + 2 blank separators = 5 lines
+        assert_eq!(
+            lines.len(),
+            5,
+            "3 display fields + 2 spacers = 5 lines, got {}",
+            lines.len()
+        );
+    }
+
+    #[test]
+    fn test_inline_mode_unchanged() {
+        // Verify existing Inline mode still works exactly as before
+        let model = FormModel::new(vec![
+            text("a").label("First").value("hello").build(),
+            number("q").label("Quality").value("80").build(),
+        ]);
+        assert_eq!(model.mode, FormMode::Inline);
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        // Inline mode shows full controls (not "label: value" format)
+        assert!(text.contains("First"), "got: {text}");
+        assert!(text.contains("hello"), "got: {text}");
     }
 }

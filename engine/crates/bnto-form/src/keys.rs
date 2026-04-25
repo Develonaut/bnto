@@ -16,6 +16,7 @@ pub fn map_key_event(key: KeyEvent, model: &FormModel) -> Option<FormMessage> {
     match &field.state {
         FieldState::TextEditing { .. } | FieldState::NumberEditing { .. } => map_editing_key(key),
         FieldState::SelectExpanded { .. } => map_select_expanded_key(key),
+        FieldState::FilePathBrowsing { .. } => map_file_path_browsing_key(key),
         FieldState::Idle => map_idle_key(key, &field.kind),
     }
 }
@@ -49,6 +50,46 @@ fn map_select_expanded_key(key: KeyEvent) -> Option<FormMessage> {
         (KeyCode::Backspace, _) => Some(FormMessage::SelectFilterBackspace),
         (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT) => {
             Some(FormMessage::SelectFilterChar(c))
+        }
+        _ => None,
+    }
+}
+
+fn map_file_path_browsing_key(key: KeyEvent) -> Option<FormMessage> {
+    match (key.code, key.modifiers) {
+        // Navigation
+        (KeyCode::Down, _) | (KeyCode::Char('j'), KeyModifiers::NONE) => {
+            Some(FormMessage::FilePathCursorDown)
+        }
+        (KeyCode::Up, _) | (KeyCode::Char('k'), KeyModifiers::NONE) => {
+            Some(FormMessage::FilePathCursorUp)
+        }
+        // Enter directory / confirm file
+        (KeyCode::Enter, _) | (KeyCode::Right, _) | (KeyCode::Char('l'), KeyModifiers::NONE) => {
+            Some(FormMessage::FilePathEnterDir)
+        }
+        // Parent directory
+        (KeyCode::Backspace, _) | (KeyCode::Left, _) | (KeyCode::Char('h'), KeyModifiers::NONE) => {
+            Some(FormMessage::FilePathParentDir)
+        }
+        // Confirm (pick file)
+        (KeyCode::Char(' '), _) => Some(FormMessage::FilePathConfirm),
+        // Cancel
+        (KeyCode::Esc, _) => Some(FormMessage::FilePathCancel),
+        // Toggle hidden files
+        (KeyCode::Char('.'), _) => Some(FormMessage::FilePathToggleHidden),
+        // Page navigation
+        (KeyCode::PageDown, _) | (KeyCode::Char('J'), KeyModifiers::SHIFT) => {
+            Some(FormMessage::FilePathPageDown)
+        }
+        (KeyCode::PageUp, _) | (KeyCode::Char('K'), KeyModifiers::SHIFT) => {
+            Some(FormMessage::FilePathPageUp)
+        }
+        (KeyCode::Home, _) | (KeyCode::Char('g'), KeyModifiers::NONE) => {
+            Some(FormMessage::FilePathGoToTop)
+        }
+        (KeyCode::End, _) | (KeyCode::Char('G'), KeyModifiers::SHIFT) => {
+            Some(FormMessage::FilePathGoToBottom)
         }
         _ => None,
     }
@@ -220,5 +261,78 @@ mod tests {
     fn test_unrecognized_key_returns_none() {
         let model = FormModel::new(vec![text("a").build()]);
         assert_eq!(map_key_event(key(KeyCode::F(1)), &model), None);
+    }
+
+    // --- FilePathBrowsing tests ---
+
+    fn file_path_browsing_model() -> FormModel {
+        use crate::field::file_path;
+        use crate::file_entry::NavHistory;
+        use std::path::PathBuf;
+        let mut model = FormModel::new(vec![file_path("f").build()]);
+        model.fields[0].state = FieldState::FilePathBrowsing {
+            current_dir: PathBuf::from("/tmp"),
+            entries: vec![],
+            cursor: 0,
+            show_hidden: false,
+            viewport_offset: 0,
+            viewport_height: 20,
+            nav_history: NavHistory::new(),
+        };
+        model
+    }
+
+    #[test]
+    fn test_file_path_j_cursor_down() {
+        let model = file_path_browsing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Char('j')), &model),
+            Some(FormMessage::FilePathCursorDown)
+        );
+    }
+
+    #[test]
+    fn test_file_path_k_cursor_up() {
+        let model = file_path_browsing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Char('k')), &model),
+            Some(FormMessage::FilePathCursorUp)
+        );
+    }
+
+    #[test]
+    fn test_file_path_enter_enters_dir() {
+        let model = file_path_browsing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Enter), &model),
+            Some(FormMessage::FilePathEnterDir)
+        );
+    }
+
+    #[test]
+    fn test_file_path_esc_cancels() {
+        let model = file_path_browsing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Esc), &model),
+            Some(FormMessage::FilePathCancel)
+        );
+    }
+
+    #[test]
+    fn test_file_path_dot_toggles_hidden() {
+        let model = file_path_browsing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Char('.')), &model),
+            Some(FormMessage::FilePathToggleHidden)
+        );
+    }
+
+    #[test]
+    fn test_file_path_h_parent_dir() {
+        let model = file_path_browsing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Char('h')), &model),
+            Some(FormMessage::FilePathParentDir)
+        );
     }
 }
