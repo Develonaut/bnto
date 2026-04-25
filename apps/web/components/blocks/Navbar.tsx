@@ -18,6 +18,15 @@ export const Navbar = () => {
                 data-testid="nav-link-home"
                 className="text-xl font-display font-black tracking-tighter"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element -- inline SVG logo, next/image not needed */}
+                <img
+                  src="/favicon/Logo.svg"
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="shrink-0"
+                  aria-hidden
+                />
                 bnto
               </NavButton>
             </ToolbarGroup>
