@@ -75,6 +75,40 @@ pub struct SelectOption {
     pub label: String,
 }
 
+impl Field {
+    /// One-line formatted value for display mode rendering.
+    ///
+    /// Each field kind produces a human-readable summary:
+    /// - Text: the raw value (or placeholder)
+    /// - Number: value + suffix (e.g., "80%")
+    /// - Select: the display label (not the raw value)
+    /// - Confirm: affirmative/negative label (e.g., "Yes" / "No")
+    pub fn display_value(&self) -> String {
+        match &self.kind {
+            FieldKind::Text { .. } => self.value.clone(),
+            FieldKind::Number { suffix, .. } => {
+                let s = suffix.as_deref().unwrap_or("");
+                format!("{}{s}", self.value)
+            }
+            FieldKind::Select { options, .. } => options
+                .iter()
+                .find(|o| o.value == self.value)
+                .map(|o| o.label.clone())
+                .unwrap_or_else(|| self.value.clone()),
+            FieldKind::Confirm {
+                affirmative,
+                negative,
+            } => {
+                if self.value == "true" {
+                    affirmative.clone()
+                } else {
+                    negative.clone()
+                }
+            }
+        }
+    }
+}
+
 /// Transient editing state for a field. Idle when not being edited.
 #[derive(Debug, Clone, PartialEq)]
 pub enum FieldState {
@@ -446,5 +480,51 @@ mod tests {
     fn test_field_builder_hidden() {
         let field = text("x").visible(false).build();
         assert!(!field.visible);
+    }
+
+    // --- display_value tests ---
+
+    #[test]
+    fn test_display_value_text() {
+        let field = text("x").value("hello").build();
+        assert_eq!(field.display_value(), "hello");
+    }
+
+    #[test]
+    fn test_display_value_number_with_suffix() {
+        let field = number("q").suffix("%").value("80").build();
+        assert_eq!(field.display_value(), "80%");
+    }
+
+    #[test]
+    fn test_display_value_number_no_suffix() {
+        let field = number("q").value("42").build();
+        assert_eq!(field.display_value(), "42");
+    }
+
+    #[test]
+    fn test_display_value_select_shows_label() {
+        let field = select("fmt", &[("jpeg", "JPEG"), ("png", "PNG")])
+            .value("jpeg")
+            .build();
+        assert_eq!(field.display_value(), "JPEG");
+    }
+
+    #[test]
+    fn test_display_value_select_unknown_value() {
+        let field = select("fmt", &[("a", "Alpha")]).value("unknown").build();
+        assert_eq!(field.display_value(), "unknown");
+    }
+
+    #[test]
+    fn test_display_value_confirm_true() {
+        let field = confirm("ok").value("true").build();
+        assert_eq!(field.display_value(), "Yes");
+    }
+
+    #[test]
+    fn test_display_value_confirm_false() {
+        let field = confirm("ok").value("false").build();
+        assert_eq!(field.display_value(), "No");
     }
 }

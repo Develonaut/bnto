@@ -8,6 +8,18 @@
 use crate::controls::dispatch::dispatch_field_message;
 use crate::field::{Field, FieldState};
 
+/// Controls how the form renders: all fields expanded (Inline) or
+/// compact one-liners with focused-field editing (DisplayEdit).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FormMode {
+    /// Legacy behavior: every field renders its full control at all times.
+    Inline,
+    /// Compact display: each field shows label + value on one line.
+    /// Enter on focused field opens edit mode (full control for that field only).
+    /// Enter/Esc returns to display with saved/cancelled value.
+    DisplayEdit,
+}
+
 /// Top-level form state — a list of fields with focus tracking.
 #[derive(Debug, Clone)]
 pub struct FormModel {
@@ -15,10 +27,12 @@ pub struct FormModel {
     pub focused: usize,
     pub scroll_offset: usize,
     pub viewport_height: usize,
+    pub mode: FormMode,
 }
 
 impl FormModel {
     /// Create a new form from a list of fields. Focus starts on the first visible field.
+    /// Defaults to `FormMode::Inline` (legacy behavior).
     pub fn new(fields: Vec<Field>) -> Self {
         let focused = fields.iter().position(|f| f.visible).unwrap_or(0);
         Self {
@@ -26,7 +40,30 @@ impl FormModel {
             focused,
             scroll_offset: 0,
             viewport_height: 20,
+            mode: FormMode::Inline,
         }
+    }
+
+    /// Set the form interaction mode.
+    pub fn with_mode(mut self, mode: FormMode) -> Self {
+        self.mode = mode;
+        self
+    }
+
+    /// Whether the form is in display mode (DisplayEdit mode with no field editing).
+    pub fn is_display(&self) -> bool {
+        self.mode == FormMode::DisplayEdit
+            && self
+                .focused_field()
+                .is_some_and(|f| matches!(f.state, FieldState::Idle))
+    }
+
+    /// Whether the form is in edit mode (DisplayEdit mode with focused field editing).
+    pub fn is_editing(&self) -> bool {
+        self.mode == FormMode::DisplayEdit
+            && self
+                .focused_field()
+                .is_some_and(|f| !matches!(f.state, FieldState::Idle))
     }
 
     /// Set the viewport height. When non-zero, `render_form()` slices output
@@ -94,8 +131,19 @@ pub enum FormMessage {
 /// Pure state transition — apply a message to the form model.
 pub fn update(model: FormModel, msg: FormMessage) -> FormModel {
     match msg {
-        FormMessage::FocusNext => focus_next(model),
-        FormMessage::FocusPrev => focus_prev(model),
+        FormMessage::FocusNext => {
+            // In DisplayEdit mode, block navigation while editing
+            if model.is_editing() {
+                return model;
+            }
+            focus_next(model)
+        }
+        FormMessage::FocusPrev => {
+            if model.is_editing() {
+                return model;
+            }
+            focus_prev(model)
+        }
         FormMessage::Resize { height } => FormModel {
             viewport_height: height,
             ..model
@@ -421,5 +469,109 @@ mod tests {
         let form = update(form, FormMessage::CommitEdit);
         assert!(form.fields[0].error.is_none());
         assert_eq!(form.fields[0].value, "initial");
+    }
+
+    // --- DisplayEdit mode tests ---
+
+    #[test]
+    fn test_form_defaults_to_inline_mode() {
+        let form = make_form();
+        assert_eq!(form.mode, FormMode::Inline);
+    }
+
+    #[test]
+    fn test_form_with_display_edit_mode() {
+        let form = make_form().with_mode(FormMode::DisplayEdit);
+        assert_eq!(form.mode, FormMode::DisplayEdit);
+    }
+
+    #[test]
+    fn test_display_edit_is_display_initially() {
+        let form = make_form().with_mode(FormMode::DisplayEdit);
+        assert!(form.is_display());
+        assert!(!form.is_editing());
+    }
+
+    #[test]
+    fn test_display_edit_enter_starts_editing() {
+        let form =
+            FormModel::new(vec![text("x").value("hello").build()]).with_mode(FormMode::DisplayEdit);
+        let form = update(form, FormMessage::StartEdit);
+        assert!(form.is_editing());
+        assert!(!form.is_display());
+        assert!(matches!(
+            form.fields[0].state,
+            FieldState::TextEditing { .. }
+        ));
+    }
+
+    #[test]
+    fn test_display_edit_commit_returns_to_display() {
+        let form =
+            FormModel::new(vec![text("x").value("old").build()]).with_mode(FormMode::DisplayEdit);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::EditChar('!'));
+        let form = update(form, FormMessage::CommitEdit);
+        assert!(form.is_display());
+        assert_eq!(form.fields[0].value, "old!");
+    }
+
+    #[test]
+    fn test_display_edit_cancel_returns_to_display() {
+        let form = FormModel::new(vec![text("x").value("original").build()])
+            .with_mode(FormMode::DisplayEdit);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::EditChar('Z'));
+        let form = update(form, FormMessage::CancelEdit);
+        assert!(form.is_display());
+        assert_eq!(form.fields[0].value, "original");
+    }
+
+    #[test]
+    fn test_display_edit_blocks_navigation_while_editing() {
+        let form = FormModel::new(vec![
+            text("a").label("First").build(),
+            text("b").label("Second").build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        let form = update(form, FormMessage::StartEdit);
+        assert!(form.is_editing());
+        let form = update(form, FormMessage::FocusNext);
+        assert_eq!(form.focused, 0, "should not navigate while editing");
+        let form = update(form, FormMessage::FocusPrev);
+        assert_eq!(form.focused, 0, "should not navigate while editing");
+    }
+
+    #[test]
+    fn test_display_edit_navigation_works_in_display_mode() {
+        let form = FormModel::new(vec![
+            text("a").label("First").build(),
+            text("b").label("Second").build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        assert!(form.is_display());
+        let form = update(form, FormMessage::FocusNext);
+        assert_eq!(form.focused, 1);
+    }
+
+    #[test]
+    fn test_display_edit_confirm_toggle_works() {
+        let form = FormModel::new(vec![confirm("ok").value("false").build()])
+            .with_mode(FormMode::DisplayEdit);
+        // Confirm toggle works without entering edit mode
+        let form = update(form, FormMessage::ToggleConfirm);
+        assert_eq!(form.fields[0].value, "true");
+        assert!(form.is_display()); // stays in display
+    }
+
+    #[test]
+    fn test_display_edit_select_cycle_works() {
+        let form = FormModel::new(vec![
+            select("fmt", &[("a", "A"), ("b", "B")]).value("a").build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        let form = update(form, FormMessage::CycleNext);
+        assert_eq!(form.fields[0].value, "b");
+        assert!(form.is_display());
     }
 }

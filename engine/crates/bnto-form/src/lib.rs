@@ -31,7 +31,7 @@ pub use field::{
     Field, FieldBuilder, FieldKind, FieldState, SelectOption, ValidatorFn, confirm, number, select,
     text,
 };
-pub use form::{FormMessage, FormModel, update};
+pub use form::{FormMessage, FormMode, FormModel, update};
 pub use keys::map_key_event;
 pub use render::render_form;
 pub use theme::{DefaultTheme, FormTheme};
