@@ -23,6 +23,7 @@ pub mod file_entry;
 pub mod file_path_nav;
 pub mod form;
 pub mod form_file_path;
+mod form_nav;
 pub mod format_size;
 pub mod group;
 pub mod keys;

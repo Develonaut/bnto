@@ -4,8 +4,8 @@
 //! `update()` is a pure function: takes ownership of the model + message,
 //! returns a new model with the transition applied.
 
-use crate::controls::dispatch::dispatch_field_message;
 use crate::field::{Field, FieldState};
+use crate::form_nav::{focus_next, focus_prev, reset_default, update_focused_field};
 use crate::group::FieldGroup;
 
 /// Controls how the form renders: all fields expanded (Inline),
@@ -190,83 +190,6 @@ pub fn update(model: FormModel, msg: FormMessage) -> FormModel {
 
         // All other messages dispatch to the focused field
         _ => update_focused_field(model, msg),
-    }
-}
-
-// --- Navigation ---
-
-fn focus_next(model: FormModel) -> FormModel {
-    let visible_indices: Vec<usize> = model
-        .fields
-        .iter()
-        .enumerate()
-        .filter(|(_, f)| f.visible && f.is_focusable())
-        .map(|(i, _)| i)
-        .collect();
-    if visible_indices.is_empty() {
-        return model;
-    }
-    let current_pos = visible_indices
-        .iter()
-        .position(|&i| i == model.focused)
-        .unwrap_or(0);
-    let next_pos = (current_pos + 1) % visible_indices.len();
-    FormModel {
-        focused: visible_indices[next_pos],
-        ..model
-    }
-}
-
-fn focus_prev(model: FormModel) -> FormModel {
-    let visible_indices: Vec<usize> = model
-        .fields
-        .iter()
-        .enumerate()
-        .filter(|(_, f)| f.visible && f.is_focusable())
-        .map(|(i, _)| i)
-        .collect();
-    if visible_indices.is_empty() {
-        return model;
-    }
-    let current_pos = visible_indices
-        .iter()
-        .position(|&i| i == model.focused)
-        .unwrap_or(0);
-    let next_pos = if current_pos == 0 {
-        visible_indices.len() - 1
-    } else {
-        current_pos - 1
-    };
-    FormModel {
-        focused: visible_indices[next_pos],
-        ..model
-    }
-}
-
-fn reset_default(model: FormModel) -> FormModel {
-    let mut fields = model.fields;
-    if let Some(field) = fields.get_mut(model.focused)
-        && let Some(ref default) = field.default
-    {
-        field.value = default.clone();
-        field.state = FieldState::Idle;
-        field.error = None;
-    }
-    FormModel { fields, ..model }
-}
-
-// --- Dispatch to focused field ---
-
-fn update_focused_field(model: FormModel, msg: FormMessage) -> FormModel {
-    let mut fields = model.fields;
-    let focused = model.focused;
-    if let Some(field) = fields.get_mut(focused) {
-        *field = dispatch_field_message(field.clone(), msg);
-    }
-    FormModel {
-        fields,
-        focused,
-        ..model
     }
 }
 
