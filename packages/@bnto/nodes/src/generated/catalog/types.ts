@@ -8,6 +8,7 @@
 export type NodeTypeName =
   | "edit-fields"
   | "file-rename"
+  | "file-sanitize"
   | "group"
   | "http-request"
   | "image-compress"

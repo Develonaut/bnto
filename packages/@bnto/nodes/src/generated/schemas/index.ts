@@ -6,6 +6,8 @@
 
 export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
 export type { FileRenameParams } from "./fileRename";
+export { fileSanitizeParamsSchema, fileSanitizeNodeSchema } from "./fileSanitize";
+export type { FileSanitizeParams } from "./fileSanitize";
 export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";
 export type { ImageCompressParams } from "./imageCompress";
 export { imageConvertParamsSchema, imageConvertNodeSchema } from "./imageConvert";

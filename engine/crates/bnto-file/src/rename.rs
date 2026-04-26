@@ -6,10 +6,11 @@
 //
 // Transformation order: find/replace -> case -> prefix -> suffix -> pattern.
 // Pattern has "final say" — it overrides everything using template variables.
+// Counter: {{counter}} auto-increments per-file in batch mode.
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use regex::Regex;
 
@@ -36,15 +37,16 @@ impl NodeProcessor for RenameFiles {
         "file-rename"
     }
 
-    /// Self-describing metadata: find, replace, case (enum), prefix, suffix, pattern.
-    /// Accepts any file type (empty accepts = wildcard).
+    /// Self-describing metadata: find, replace, case, prefix, suffix, pattern,
+    /// counter_start, counter_pad, extension. Accepts any file type.
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "file-rename".to_string(),
             name: "Rename Files".to_string(),
-            description: "Transform filenames using patterns, find/replace, and case rules"
-                .to_string(),
+            description:
+                "Transform filenames using patterns, find/replace, case rules, and counters"
+                    .to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string()],
@@ -82,6 +84,48 @@ impl NodeProcessor for RenameFiles {
         progress.report(100, "Done!");
         Ok(build_rename_output(input.data, new_filename, metadata))
     }
+
+    /// Override batch processing to inject auto-incrementing counter values.
+    /// Each file gets a `__counter` internal param based on its position + counter_start.
+    fn process_batch(
+        &self,
+        input: BatchInput,
+        progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        let counter_start = get_int_param(&input.params, "counter_start").unwrap_or(1);
+        let total = input.files.len();
+        let mut all_files = Vec::new();
+        let mut combined_metadata = serde_json::Map::new();
+
+        for (i, file) in input.files.into_iter().enumerate() {
+            let pct = ((i as u32) * 100) / (total as u32).max(1);
+            progress.report(pct, &format!("Renaming file {} of {total}...", i + 1));
+
+            let mut params = input.params.clone();
+            // Inject the counter value for this file's position
+            let counter_value = counter_start + i;
+            params.insert(
+                "__counter".to_string(),
+                serde_json::Value::Number(serde_json::Number::from(counter_value)),
+            );
+
+            let single_input = NodeInput {
+                data: file.data,
+                filename: file.filename,
+                mime_type: file.mime_type,
+                params,
+            };
+            let output = self.process(single_input, progress, ctx)?;
+            all_files.extend(output.files);
+            combined_metadata = output.metadata;
+        }
+
+        Ok(NodeOutput {
+            files: all_files,
+            metadata: combined_metadata,
+        })
+    }
 }
 
 fn build_rename_output(
@@ -117,6 +161,9 @@ fn build_rename_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
             "Text to append before the file extension",
         ),
         rename_pattern_param(),
+        rename_counter_start_param(),
+        rename_counter_pad_param(),
+        rename_extension_param(),
     ]
 }
 
@@ -161,9 +208,53 @@ fn rename_pattern_param() -> bnto_core::metadata::ParameterDef {
         name: "pattern".to_string(),
         label: "Pattern".to_string(),
         description:
-            "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})"
+            "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})"
                 .to_string(),
-        placeholder: Some("{{name}}-compressed.{{ext}}".to_string()),
+        placeholder: Some("{{name}}-{{counter}}.{{ext}}".to_string()),
+        ..Default::default()
+    }
+}
+
+fn rename_counter_start_param() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "counter_start".to_string(),
+        label: "Counter Start".to_string(),
+        description: "Starting number for the {{counter}} variable".to_string(),
+        param_type: ParameterType::Number,
+        default: Some(serde_json::Value::Number(serde_json::Number::from(1))),
+        constraints: Some(Constraints {
+            min: Some(0.0),
+            max: None,
+            required: false,
+        }),
+        ..Default::default()
+    }
+}
+
+fn rename_counter_pad_param() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "counter_pad".to_string(),
+        label: "Counter Padding".to_string(),
+        description: "Zero-pad width for the counter (e.g., 3 → 001, 002)".to_string(),
+        param_type: ParameterType::Number,
+        default: Some(serde_json::Value::Number(serde_json::Number::from(0))),
+        constraints: Some(Constraints {
+            min: Some(0.0),
+            max: Some(10.0),
+            required: false,
+        }),
+        ..Default::default()
+    }
+}
+
+fn rename_extension_param() -> bnto_core::metadata::ParameterDef {
+    bnto_core::metadata::ParameterDef {
+        name: "extension".to_string(),
+        label: "Extension".to_string(),
+        description: "Replace the file extension (without dot)".to_string(),
+        placeholder: Some("png".to_string()),
         ..Default::default()
     }
 }
@@ -198,21 +289,27 @@ fn apply_all_transformations(
 }
 
 /// If a pattern is provided, apply it (overriding the transformed stem).
-/// Otherwise reconstruct from transformed stem + original extension.
+/// Otherwise reconstruct from transformed stem + resolved extension.
 fn build_final_filename(
     stem: &str,
     original_stem: &str,
     original_ext: &str,
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> String {
+    // Extension override: if "extension" param is set, use it instead of original
+    let ext = get_string_param(params, "extension")
+        .filter(|e| !e.is_empty())
+        .unwrap_or_else(|| original_ext.to_string());
+
     if let Some(pattern) = get_string_param(params, "pattern") {
         let index = get_string_param(params, "index").unwrap_or_else(|| "1".to_string());
+        let counter = format_counter(params);
         let date = get_current_date();
-        apply_pattern(&pattern, original_stem, original_ext, &index, &date)
-    } else if original_ext.is_empty() {
+        apply_pattern(&pattern, original_stem, &ext, &index, &counter, &date)
+    } else if ext.is_empty() {
         stem.to_string()
     } else {
-        format!("{stem}.{original_ext}")
+        format!("{stem}.{ext}")
     }
 }
 
@@ -301,13 +398,45 @@ fn to_title_case(s: &str) -> String {
     }
 }
 
-/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{date}}.
-fn apply_pattern(pattern: &str, name: &str, ext: &str, index: &str, date: &str) -> String {
+/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{counter}}, {{date}}.
+fn apply_pattern(
+    pattern: &str,
+    name: &str,
+    ext: &str,
+    index: &str,
+    counter: &str,
+    date: &str,
+) -> String {
     pattern
         .replace("{{name}}", name)
         .replace("{{ext}}", ext)
         .replace("{{index}}", index)
+        .replace("{{counter}}", counter)
         .replace("{{date}}", date)
+}
+
+/// Format the counter value with zero-padding.
+/// Reads `__counter` (injected by process_batch) or falls back to counter_start.
+fn format_counter(params: &serde_json::Map<String, serde_json::Value>) -> String {
+    let counter_value = get_int_param(params, "__counter")
+        .or_else(|| get_int_param(params, "counter_start"))
+        .unwrap_or(1);
+    let pad = get_int_param(params, "counter_pad").unwrap_or(0);
+
+    if pad > 0 {
+        format!("{:0>width$}", counter_value, width = pad)
+    } else {
+        counter_value.to_string()
+    }
+}
+
+/// Extract an integer param from the JSON map.
+fn get_int_param(params: &serde_json::Map<String, serde_json::Value>, key: &str) -> Option<usize> {
+    params.get(key).and_then(|v| match v {
+        serde_json::Value::Number(n) => n.as_u64().map(|n| n as usize),
+        serde_json::Value::String(s) => s.parse().ok(),
+        _ => None,
+    })
 }
 
 /// Get current date as YYYY-MM-DD. Uses js_sys::Date in WASM, fixed date in native tests.
@@ -344,6 +473,12 @@ fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) ->
     }
     if params.contains_key("pattern") {
         transforms.push("pattern".to_string());
+    }
+    if params.contains_key("extension") {
+        transforms.push("extension".to_string());
+    }
+    if params.contains_key("counter_start") || params.contains_key("counter_pad") {
+        transforms.push("counter".to_string());
     }
     transforms
 }
@@ -805,6 +940,7 @@ mod tests {
             "photo",
             "jpg",
             "3",
+            "1",
             "2026-02-25",
         );
         assert_eq!(result, "2026-02-25-photo-3.jpg");
@@ -831,5 +967,249 @@ mod tests {
         assert_eq!(date.len(), 10);
         assert_eq!(&date[4..5], "-");
         assert_eq!(&date[7..8], "-");
+    }
+
+    // =========================================================================
+    // Counter Tests
+    // =========================================================================
+
+    #[test]
+    fn test_counter_default_start() {
+        // {{counter}} defaults to 1 when no __counter injected
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("pattern", "file-{{counter}}.{{ext}}");
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "file-1.jpg");
+    }
+
+    #[test]
+    fn test_counter_with_injected_value() {
+        // process_batch injects __counter for each file
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let mut params = string_param("pattern", "img-{{counter}}.{{ext}}");
+        params.insert(
+            "__counter".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(5)),
+        );
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "img-5.jpg");
+    }
+
+    #[test]
+    fn test_counter_zero_pad() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let mut params = string_param("pattern", "file-{{counter}}.{{ext}}");
+        params.insert(
+            "__counter".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(3)),
+        );
+        params.insert(
+            "counter_pad".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(4)),
+        );
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "file-0003.jpg");
+    }
+
+    #[test]
+    fn test_counter_batch_auto_increment() {
+        use bnto_core::processor::{BatchFile, BatchInput};
+
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("pattern", "img-{{counter}}.{{ext}}")]);
+        let batch = BatchInput {
+            files: vec![
+                BatchFile {
+                    data: b"a".to_vec(),
+                    filename: "a.jpg".to_string(),
+                    mime_type: None,
+                },
+                BatchFile {
+                    data: b"b".to_vec(),
+                    filename: "b.jpg".to_string(),
+                    mime_type: None,
+                },
+                BatchFile {
+                    data: b"c".to_vec(),
+                    filename: "c.jpg".to_string(),
+                    mime_type: None,
+                },
+            ],
+            params,
+        };
+
+        let output = processor
+            .process_batch(batch, &progress, &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "img-1.jpg");
+        assert_eq!(output.files[1].filename, "img-2.jpg");
+        assert_eq!(output.files[2].filename, "img-3.jpg");
+    }
+
+    #[test]
+    fn test_counter_batch_custom_start() {
+        use bnto_core::processor::{BatchFile, BatchInput};
+
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let mut params = string_param("pattern", "img-{{counter}}.{{ext}}");
+        params.insert(
+            "counter_start".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(10)),
+        );
+        let batch = BatchInput {
+            files: vec![
+                BatchFile {
+                    data: b"a".to_vec(),
+                    filename: "a.jpg".to_string(),
+                    mime_type: None,
+                },
+                BatchFile {
+                    data: b"b".to_vec(),
+                    filename: "b.jpg".to_string(),
+                    mime_type: None,
+                },
+            ],
+            params,
+        };
+
+        let output = processor
+            .process_batch(batch, &progress, &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "img-10.jpg");
+        assert_eq!(output.files[1].filename, "img-11.jpg");
+    }
+
+    #[test]
+    fn test_counter_batch_with_padding() {
+        use bnto_core::processor::{BatchFile, BatchInput};
+
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let mut params = string_param("pattern", "file-{{counter}}.{{ext}}");
+        params.insert(
+            "counter_pad".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(3)),
+        );
+        let batch = BatchInput {
+            files: vec![
+                BatchFile {
+                    data: b"a".to_vec(),
+                    filename: "a.txt".to_string(),
+                    mime_type: None,
+                },
+                BatchFile {
+                    data: b"b".to_vec(),
+                    filename: "b.txt".to_string(),
+                    mime_type: None,
+                },
+            ],
+            params,
+        };
+
+        let output = processor
+            .process_batch(batch, &progress, &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "file-001.txt");
+        assert_eq!(output.files[1].filename, "file-002.txt");
+    }
+
+    // =========================================================================
+    // Extension Replacement Tests
+    // =========================================================================
+
+    #[test]
+    fn test_extension_replacement() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("extension", "png");
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "photo.png");
+    }
+
+    #[test]
+    fn test_extension_replacement_with_pattern() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[
+            ("pattern", "{{name}}-converted.{{ext}}"),
+            ("extension", "webp"),
+        ]);
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        // {{ext}} should resolve to "webp" (the override), not "jpg"
+        assert_eq!(output.files[0].filename, "photo-converted.webp");
+    }
+
+    #[test]
+    fn test_extension_empty_string_uses_original() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("extension", "");
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "photo.jpg");
+    }
+
+    #[test]
+    fn test_extension_adds_to_extensionless_file() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("extension", "txt");
+        let input = make_input(b"data", "README", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "README.txt");
+    }
+
+    // =========================================================================
+    // Counter Helper Tests
+    // =========================================================================
+
+    #[test]
+    fn test_format_counter_default() {
+        let params = serde_json::Map::new();
+        assert_eq!(format_counter(&params), "1");
+    }
+
+    #[test]
+    fn test_format_counter_with_padding() {
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "__counter".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(7)),
+        );
+        params.insert(
+            "counter_pad".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(3)),
+        );
+        assert_eq!(format_counter(&params), "007");
+    }
+
+    #[test]
+    fn test_format_counter_no_padding() {
+        let mut params = serde_json::Map::new();
+        params.insert(
+            "__counter".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(42)),
+        );
+        assert_eq!(format_counter(&params), "42");
     }
 }

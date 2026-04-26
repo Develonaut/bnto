@@ -131,6 +131,18 @@ fn golden_rename_files() {
     assert_golden("rename-files", &out);
 }
 
+#[test]
+fn golden_number_files() {
+    let (out, _) = run_recipe_ok("number-files", &fixture_image("small.jpg"));
+    assert_golden("number-files", &out);
+}
+
+#[test]
+fn golden_sanitize_filenames() {
+    let (out, _) = run_recipe_ok("sanitize-filenames", &fixture_image("small.jpg"));
+    assert_golden("sanitize-filenames", &out);
+}
+
 // --- CSV Recipes ---
 
 #[test]

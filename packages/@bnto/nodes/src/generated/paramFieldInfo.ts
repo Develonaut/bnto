@@ -24,6 +24,19 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     prefix: { type: "string", control: "text", required: false },
     suffix: { type: "string", control: "text", required: false },
     pattern: { type: "string", control: "text", required: false },
+    counter_start: { type: "number", control: "number", required: false, min: 0 },
+    counter_pad: { type: "number", control: "slider", required: false, min: 0, max: 10 },
+    extension: { type: "string", control: "text", required: false },
+  },
+  "file-sanitize": {
+    mode: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["slugify", "strip", "normalize"] as const,
+    },
+    separator: { type: "string", control: "text", required: false },
+    max_length: { type: "number", control: "number", required: false, min: 0 },
   },
   group: {
     mode: {

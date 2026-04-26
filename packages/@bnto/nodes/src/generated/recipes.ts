@@ -2283,4 +2283,222 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       version: "1.0.0",
     },
   },
+  {
+    slug: "number-files",
+    name: "Number Files",
+    description: "Add sequential numbers to filenames. Free, no signup required.",
+    category: "file",
+    tags: ["Sequential numbering", "Batch rename", "Browser-based"] as const,
+    definition: {
+      edges: [
+        {
+          id: "e1",
+          source: "input",
+          target: "number-file",
+        },
+        {
+          id: "e2",
+          source: "number-file",
+          target: "output",
+        },
+      ],
+      id: "number-files",
+      inputPorts: [],
+      metadata: {
+        category: "file",
+        description: "Add sequential numbers to filenames. Free, no signup required.",
+        tags: ["Sequential numbering", "Batch rename", "Browser-based"],
+      },
+      name: "Number Files",
+      nodes: [
+        {
+          id: "input",
+          inputPorts: [],
+          metadata: {},
+          name: "Input",
+          outputPorts: [
+            {
+              id: "out-1",
+              name: "files",
+            },
+          ],
+          parameters: {
+            accept: ["*/*"],
+            extensions: [],
+            label: "any files",
+            mode: "file-upload",
+            multiple: true,
+          },
+          position: {
+            x: 0,
+            y: 100,
+          },
+          type: "input",
+          version: "1.0.0",
+        },
+        {
+          id: "number-file",
+          inputPorts: [],
+          metadata: {},
+          name: "Number",
+          outputPorts: [],
+          parameters: {
+            counter_pad: 3,
+            counter_start: 1,
+            pattern: "{{counter}}-{{name}}.{{ext}}",
+          },
+          position: {
+            x: 250,
+            y: 100,
+          },
+          type: "file-rename",
+          version: "1.0.0",
+        },
+        {
+          id: "output",
+          inputPorts: [
+            {
+              id: "in-1",
+              name: "files",
+            },
+          ],
+          metadata: {},
+          name: "Output",
+          outputPorts: [],
+          parameters: {
+            autoDownload: true,
+            label: "Numbered Files",
+            mode: "download",
+            zip: true,
+          },
+          position: {
+            x: 500,
+            y: 100,
+          },
+          type: "output",
+          version: "1.0.0",
+        },
+      ],
+      outputPorts: [],
+      parameters: {},
+      position: {
+        x: 0,
+        y: 0,
+      },
+      settings: {
+        iteration: "auto",
+      },
+      type: "group",
+      version: "1.0.0",
+    },
+  },
+  {
+    slug: "sanitize-filenames",
+    name: "Sanitize Filenames",
+    description: "Clean filenames for web-safe or cross-platform use. Free, no signup required.",
+    category: "file",
+    tags: ["Filename cleanup", "Web-safe", "Browser-based"] as const,
+    definition: {
+      edges: [
+        {
+          id: "e1",
+          source: "input",
+          target: "sanitize-file",
+        },
+        {
+          id: "e2",
+          source: "sanitize-file",
+          target: "output",
+        },
+      ],
+      id: "sanitize-filenames",
+      inputPorts: [],
+      metadata: {
+        category: "file",
+        description:
+          "Clean filenames for web-safe or cross-platform use. Free, no signup required.",
+        tags: ["Filename cleanup", "Web-safe", "Browser-based"],
+      },
+      name: "Sanitize Filenames",
+      nodes: [
+        {
+          id: "input",
+          inputPorts: [],
+          metadata: {},
+          name: "Input",
+          outputPorts: [
+            {
+              id: "out-1",
+              name: "files",
+            },
+          ],
+          parameters: {
+            accept: ["*/*"],
+            extensions: [],
+            label: "any files",
+            mode: "file-upload",
+            multiple: true,
+          },
+          position: {
+            x: 0,
+            y: 100,
+          },
+          type: "input",
+          version: "1.0.0",
+        },
+        {
+          id: "sanitize-file",
+          inputPorts: [],
+          metadata: {},
+          name: "Sanitize",
+          outputPorts: [],
+          parameters: {
+            mode: "slugify",
+            separator: "-",
+          },
+          position: {
+            x: 250,
+            y: 100,
+          },
+          type: "file-sanitize",
+          version: "1.0.0",
+        },
+        {
+          id: "output",
+          inputPorts: [
+            {
+              id: "in-1",
+              name: "files",
+            },
+          ],
+          metadata: {},
+          name: "Output",
+          outputPorts: [],
+          parameters: {
+            autoDownload: true,
+            label: "Sanitized Files",
+            mode: "download",
+            zip: true,
+          },
+          position: {
+            x: 500,
+            y: 100,
+          },
+          type: "output",
+          version: "1.0.0",
+        },
+      ],
+      outputPorts: [],
+      parameters: {},
+      position: {
+        x: 0,
+        y: 0,
+      },
+      settings: {
+        iteration: "auto",
+      },
+      type: "group",
+      version: "1.0.0",
+    },
+  },
 ] as const;

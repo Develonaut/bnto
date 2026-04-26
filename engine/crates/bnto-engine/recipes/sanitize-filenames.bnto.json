@@ -1,0 +1,101 @@
+{
+  "id": "sanitize-filenames",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Sanitize Filenames",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Clean filenames for web-safe or cross-platform use. Free, no signup required.",
+    "category": "file",
+    "tags": ["Filename cleanup", "Web-safe", "Browser-based"]
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["*/*"],
+        "extensions": [],
+        "label": "any files",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "sanitize-file",
+      "type": "file-sanitize",
+      "version": "1.0.0",
+      "name": "Sanitize",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "slugify",
+        "separator": "-"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "download",
+        "label": "Sanitized Files",
+        "zip": true,
+        "autoDownload": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "sanitize-file"
+    },
+    {
+      "id": "e2",
+      "source": "sanitize-file",
+      "target": "output"
+    }
+  ]
+}

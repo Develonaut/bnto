@@ -399,9 +399,9 @@ Bring `tonkotsu` (formerly `bnto-form`) to full feature parity with Charm's huh 
 
 BRU-style composable file operations. See [file-node-ecosystem.md](strategy/file-node-ecosystem.md) Phase 1 (enhance file-rename) and Phase 2 (file-sanitize).
 
-- [ ] `engine/crates/bnto-file` — **Enhance file-rename: counter + extension params**: Add `counter_start` (integer, default 1), `counter_pad` (integer, default 0), `extension` (string) params. New `{{counter}}` template variable (auto-incrementing, respects start/pad). RED tests: counter formatting, zero-pad widths, extension replacement, counter across files (~5 tests)
-- [ ] `engine/crates/bnto-file` — **File-sanitize processor**: New `file-sanitize` processor. Params: `mode` (slugify/strip/normalize), `separator` (default `-`), `max_length` (default 0 = no limit). Pure string manipulation, browser+CLI. RED tests: each mode, unicode normalization, max length truncation, separator replacement (~5 tests)
-- [ ] `engine/crates/bnto-engine` + `engine/recipes/` — **File recipes + codegen**: `number-files.bnto.json` (file-rename with counter), `sanitize-filenames.bnto.json` (file-sanitize). Register processors. Golden tests. Codegen updates. SEO slugs: `/number-files`, `/sanitize-filenames`. RED tests: recipe execution, golden output verification (~4 tests)
+- [x] `engine/crates/bnto-file` — **Enhance file-rename: counter + extension params**: Add `counter_start` (integer, default 1), `counter_pad` (integer, default 0), `extension` (string) params. New `{{counter}}` template variable (auto-incrementing, respects start/pad). RED tests: counter formatting, zero-pad widths, extension replacement, counter across files (~5 tests)
+- [x] `engine/crates/bnto-file` — **File-sanitize processor**: New `file-sanitize` processor. Params: `mode` (slugify/strip/normalize), `separator` (default `-`), `max_length` (default 0 = no limit). Pure string manipulation, browser+CLI. RED tests: each mode, unicode normalization, max length truncation, separator replacement (~5 tests)
+- [x] `engine/crates/bnto-engine` + `engine/recipes/` — **File recipes + codegen**: `number-files.bnto.json` (file-rename with counter), `sanitize-filenames.bnto.json` (file-sanitize). Register processors. Golden tests. Codegen updates. SEO slugs: `/number-files`, `/sanitize-filenames`. RED tests: recipe execution, golden output verification (~4 tests)
 
 #### Wave 3 — Engine Infrastructure (parallel with Wave 2)
 
@@ -845,6 +845,12 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 **Priority: Triage.** Build `bnto-server` crate (Axum HTTP service wrapping `bnto-engine`), `ServerContext` (sandboxed ProcessContext), Dockerfile with pre-installed binaries, Railway Pro deployment with scale-to-zero, update `execution_engine.ts` to target Railway, R2 presigned URL I/O, execution token auth, SSE progress streaming. Exit criteria: `download-video` runs on bnto.io via cloud execution. Full strategy and phased plan: [`.claude/strategy/cloud-execution.md`](strategy/cloud-execution.md).
 
 `engine/crates/bnto-server/` (new), `packages/@bnto/backend/convex/execution_engine.ts`, `packages/core/src/adapters/`
+
+### Triage: Rich execution progress UX for CLI/TUI
+
+**Priority: Triage.** Unicode progress indicators, animated spinners, token/byte counters, elapsed time for CLI (`bnto run`) and TUI execution screen. Inspired by Claude Code's progress display (e.g. `"Quantumizing... (3m 7s / 4.6k tokens)"`). Animated unicode characters, progress bars with percentage, file-level status indicators, streaming throughput metrics.
+
+`engine/crates/bnto`, `engine/crates/bnto-core`
 
 ---
 

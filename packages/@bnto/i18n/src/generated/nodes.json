@@ -7,7 +7,11 @@
     },
     "fileRename": {
       "label": "Rename Files",
-      "description": "Transform filenames using patterns, find/replace, and case rules."
+      "description": "Transform filenames using patterns, find/replace, case rules, and counters."
+    },
+    "fileSanitize": {
+      "label": "Sanitize Filenames",
+      "description": "Clean filenames for web-safe or cross-platform use."
     },
     "group": {
       "label": "Group",
@@ -110,8 +114,35 @@
       },
       "pattern": {
         "label": "Pattern",
-        "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
-        "placeholder": "{{name}}-compressed.{{ext}}"
+        "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})",
+        "placeholder": "{{name}}-{{counter}}.{{ext}}"
+      },
+      "counter_start": {
+        "label": "Counter Start",
+        "description": "Starting number for the {{counter}} variable"
+      },
+      "counter_pad": {
+        "label": "Counter Padding",
+        "description": "Zero-pad width for the counter (e.g., 3 → 001, 002)"
+      },
+      "extension": {
+        "label": "Extension",
+        "description": "Replace the file extension (without dot)",
+        "placeholder": "png"
+      }
+    },
+    "fileSanitize": {
+      "mode": {
+        "label": "Mode",
+        "description": "Sanitization strategy"
+      },
+      "separator": {
+        "label": "Separator",
+        "description": "Character to replace spaces and special characters"
+      },
+      "max_length": {
+        "label": "Max Length",
+        "description": "Maximum filename length (0 = no limit)"
       }
     },
     "imageCompress": {

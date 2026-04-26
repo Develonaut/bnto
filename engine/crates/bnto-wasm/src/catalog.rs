@@ -137,21 +137,21 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_thirteen_processors() {
-        // The native registry has 13 processors (12 browser + shell-command).
+    fn test_catalog_has_all_fourteen_processors() {
+        // The native registry has 14 processors (13 browser + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            13,
-            "Catalog should have exactly 13 processors"
+            14,
+            "Catalog should have exactly 14 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 13 expected processor type keys are present.
+        // Verify all 14 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -167,6 +167,7 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
+            "file-sanitize",
             "image-overlay",
             "vector-rasterize",
             "vector-optimize",
@@ -219,9 +220,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 21);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 22);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 13);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 14);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),
@@ -236,8 +237,8 @@ mod tests {
         assert!(parsed["recipes"].is_array());
         assert_eq!(
             parsed["recipes"].as_array().unwrap().len(),
-            18,
-            "Catalog should include all 18 built-in recipes"
+            20,
+            "Catalog should include all 20 built-in recipes"
         );
     }
 
@@ -282,7 +283,7 @@ mod tests {
 
     #[test]
     fn test_catalog_node_types_include_params_for_processors() {
-        // Processor node types (13 of them) should also carry their params
+        // Processor node types (14 of them) should also carry their params
         // on the `nodeTypes` entry — looked up from registry metadata.
         let envelope = build_test_envelope();
         let json = serde_json::to_string(&envelope).unwrap();

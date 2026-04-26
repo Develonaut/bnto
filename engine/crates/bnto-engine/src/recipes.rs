@@ -34,6 +34,8 @@ const RECIPE_DEFINITIONS: &[&str] = &[
     include_str!("../recipes/svg-to-png.bnto.json"),
     include_str!("../recipes/svg-to-jpeg.bnto.json"),
     include_str!("../recipes/optimize-svg.bnto.json"),
+    include_str!("../recipes/number-files.bnto.json"),
+    include_str!("../recipes/sanitize-filenames.bnto.json"),
 ];
 
 /// Returns all built-in recipes, embedded at compile time.
@@ -80,7 +82,7 @@ mod tests {
 
     #[test]
     fn test_builtin_recipes_count() {
-        assert_eq!(builtin_recipes().len(), 18);
+        assert_eq!(builtin_recipes().len(), 20);
     }
 
     #[test]
