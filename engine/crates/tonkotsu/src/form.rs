@@ -6,6 +6,7 @@
 
 use crate::controls::dispatch::dispatch_field_message;
 use crate::field::{Field, FieldState};
+use crate::group::FieldGroup;
 
 /// Controls how the form renders: all fields expanded (Inline),
 /// compact one-liners with focused-field editing (DisplayEdit),
@@ -32,14 +33,20 @@ pub struct FormModel {
     pub scroll_offset: usize,
     pub viewport_height: usize,
     pub mode: FormMode,
+    /// Named sections grouping fields. Always non-empty — flat fields
+    /// get a single implicit group with an empty label.
+    pub groups: Vec<FieldGroup>,
     /// Side effects pending caller fulfillment. Drain after each `update()`.
     pub pending_effects: Vec<FormEffect>,
 }
 
 impl FormModel {
     /// Create a new form from a list of fields. Focus starts on the first visible field.
+    /// All fields are placed in a single implicit group (no visible header).
     /// Defaults to `FormMode::Inline` (legacy behavior).
     pub fn new(fields: Vec<Field>) -> Self {
+        let indices: Vec<usize> = (0..fields.len()).collect();
+        let groups = vec![FieldGroup::new("", indices)];
         let focused = fields
             .iter()
             .position(|f| f.visible && f.is_focusable())
@@ -50,6 +57,38 @@ impl FormModel {
             scroll_offset: 0,
             viewport_height: 20,
             mode: FormMode::Inline,
+            groups,
+            pending_effects: Vec::new(),
+        }
+    }
+
+    /// Create a form with explicit named groups.
+    ///
+    /// Each `(label, fields)` pair becomes a `FieldGroup`. Groups render
+    /// section headers in DisplayEdit and FullScreenEdit modes.
+    pub fn with_groups(groups: Vec<(&str, Vec<Field>)>) -> Self {
+        let mut all_fields: Vec<Field> = Vec::new();
+        let mut field_groups: Vec<FieldGroup> = Vec::new();
+
+        for (label, fields) in groups {
+            let start = all_fields.len();
+            let count = fields.len();
+            all_fields.extend(fields);
+            let indices: Vec<usize> = (start..start + count).collect();
+            field_groups.push(FieldGroup::new(label, indices));
+        }
+
+        let focused = all_fields
+            .iter()
+            .position(|f| f.visible && f.is_focusable())
+            .unwrap_or(0);
+        Self {
+            fields: all_fields,
+            focused,
+            scroll_offset: 0,
+            viewport_height: 20,
+            mode: FormMode::Inline,
+            groups: field_groups,
             pending_effects: Vec::new(),
         }
     }
@@ -759,5 +798,64 @@ mod tests {
         let form = update(form, FormMessage::CancelEdit);
         assert_eq!(form.fields[0].state, FieldState::Idle);
         assert_eq!(form.fields[0].value, "a", "should revert to original");
+    }
+
+    // --- Field grouping tests ---
+
+    #[test]
+    fn test_new_creates_implicit_group() {
+        let form = make_form();
+        assert_eq!(form.groups.len(), 1);
+        assert!(!form.groups[0].has_header(), "implicit group has no header");
+        assert_eq!(form.groups[0].field_indices, vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn test_with_groups_creates_named_groups() {
+        let form = FormModel::with_groups(vec![
+            ("General", vec![text("a").label("A").build()]),
+            ("Advanced", vec![text("b").label("B").build()]),
+        ]);
+        assert_eq!(form.groups.len(), 2);
+        assert_eq!(form.groups[0].label, "General");
+        assert_eq!(form.groups[0].field_indices, vec![0]);
+        assert_eq!(form.groups[1].label, "Advanced");
+        assert_eq!(form.groups[1].field_indices, vec![1]);
+        assert_eq!(form.fields.len(), 2);
+    }
+
+    #[test]
+    fn test_with_groups_flattens_fields() {
+        let form = FormModel::with_groups(vec![
+            ("A", vec![text("x").build(), text("y").build()]),
+            ("B", vec![text("z").build()]),
+        ]);
+        assert_eq!(form.fields.len(), 3);
+        assert_eq!(form.fields[0].id, "x");
+        assert_eq!(form.fields[1].id, "y");
+        assert_eq!(form.fields[2].id, "z");
+        assert_eq!(form.groups[0].field_indices, vec![0, 1]);
+        assert_eq!(form.groups[1].field_indices, vec![2]);
+    }
+
+    #[test]
+    fn test_with_groups_focus_crosses_groups() {
+        let form = FormModel::with_groups(vec![
+            ("A", vec![text("x").build()]),
+            ("B", vec![text("y").build()]),
+        ]);
+        assert_eq!(form.focused, 0);
+        let form = update(form, FormMessage::FocusNext);
+        assert_eq!(form.focused, 1, "should cross group boundary");
+    }
+
+    #[test]
+    fn test_with_groups_value_lookup() {
+        let form = FormModel::with_groups(vec![
+            ("A", vec![text("x").value("hello").build()]),
+            ("B", vec![text("y").value("world").build()]),
+        ]);
+        assert_eq!(form.value("x"), Some("hello"));
+        assert_eq!(form.value("y"), Some("world"));
     }
 }
