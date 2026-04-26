@@ -1,17 +1,31 @@
 //! Kitchen-sink field definitions for the demo binary.
 //!
-//! Twelve fields covering every builder method, field kind, and validator
+//! Thirteen fields covering every builder method, field kind, and validator
 //! that tonkotsu supports. Used by both the demo binary and snapshot tests.
 
 use crate::field::Field;
 use crate::validators;
-use crate::{confirm, file_path, note, number, select, text};
+use crate::{confirm, file_path, multiselect, note, number, select, text};
 
-/// Build the full set of 12 kitchen-sink demo fields.
+/// Build the full set of 13 kitchen-sink demo fields.
 pub fn build_fields() -> Vec<Field> {
     vec![
         // 1. Note — read-only informational text (not focusable)
         note("intro", "Configure your recipe settings below.").build(),
+        // 1b. MultiSelect — multiple choice with checkboxes
+        multiselect(
+            "tags",
+            &[
+                ("image", "Image"),
+                ("video", "Video"),
+                ("vector", "Vector"),
+                ("data", "Data"),
+            ],
+        )
+        .label("Tags")
+        .value("image,vector")
+        .description(Some("Space to toggle, Enter to confirm"))
+        .build(),
         // 2. Text — placeholder, required validator, description
         text("recipe_name")
             .label("Recipe Name")

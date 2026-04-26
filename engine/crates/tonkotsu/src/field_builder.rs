@@ -249,6 +249,18 @@ pub fn textarea(id: &str) -> FieldBuilder {
     )
 }
 
+/// Start building a multi-select field for choosing multiple options.
+pub fn multiselect(id: &str, options: &[(&str, &str)]) -> FieldBuilder {
+    let opts = options
+        .iter()
+        .map(|(value, label)| SelectOption {
+            value: value.to_string(),
+            label: label.to_string(),
+        })
+        .collect();
+    FieldBuilder::new(id, FieldKind::MultiSelect { options: opts })
+}
+
 /// Start building a read-only note field for informational text.
 pub fn note(id: &str, content: &str) -> FieldBuilder {
     FieldBuilder::new(

@@ -17,6 +17,7 @@ pub fn map_key_event(key: KeyEvent, model: &FormModel) -> Option<FormMessage> {
         FieldState::TextEditing { .. } | FieldState::NumberEditing { .. } => map_editing_key(key),
         FieldState::TextAreaEditing { .. } => map_text_area_editing_key(key),
         FieldState::SelectExpanded { .. } => map_select_expanded_key(key),
+        FieldState::MultiSelectEditing { .. } => map_multiselect_editing_key(key),
         FieldState::FilePathBrowsing { .. } => map_file_path_browsing_key(key),
         FieldState::Idle => map_idle_key(key, &field.kind),
     }
@@ -73,6 +74,17 @@ fn map_select_expanded_key(key: KeyEvent) -> Option<FormMessage> {
         (KeyCode::Char(c), KeyModifiers::NONE | KeyModifiers::SHIFT) => {
             Some(FormMessage::SelectFilterChar(c))
         }
+        _ => None,
+    }
+}
+
+fn map_multiselect_editing_key(key: KeyEvent) -> Option<FormMessage> {
+    match (key.code, key.modifiers) {
+        (KeyCode::Char(' '), _) => Some(FormMessage::MultiSelectToggle),
+        (KeyCode::Enter, _) => Some(FormMessage::MultiSelectConfirm),
+        (KeyCode::Esc, _) => Some(FormMessage::CancelEdit),
+        (KeyCode::Up, _) => Some(FormMessage::MultiSelectHighlightPrev),
+        (KeyCode::Down, _) => Some(FormMessage::MultiSelectHighlightNext),
         _ => None,
     }
 }
@@ -417,5 +429,58 @@ mod tests {
         let model = text_area_editing_model();
         let k = KeyEvent::new(KeyCode::Char('x'), KeyModifiers::NONE);
         assert_eq!(map_key_event(k, &model), Some(FormMessage::EditChar('x')));
+    }
+
+    // --- MultiSelectEditing tests ---
+
+    fn multiselect_editing_model() -> FormModel {
+        use crate::field::multiselect;
+        let mut model =
+            FormModel::new(vec![multiselect("tags", &[("a", "A"), ("b", "B")]).build()]);
+        model.fields[0].state = FieldState::MultiSelectEditing {
+            highlight: 0,
+            selected: vec![],
+        };
+        model
+    }
+
+    #[test]
+    fn test_multiselect_space_toggles() {
+        let model = multiselect_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Char(' ')), &model),
+            Some(FormMessage::MultiSelectToggle)
+        );
+    }
+
+    #[test]
+    fn test_multiselect_enter_confirms() {
+        let model = multiselect_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Enter), &model),
+            Some(FormMessage::MultiSelectConfirm)
+        );
+    }
+
+    #[test]
+    fn test_multiselect_esc_cancels() {
+        let model = multiselect_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Esc), &model),
+            Some(FormMessage::CancelEdit)
+        );
+    }
+
+    #[test]
+    fn test_multiselect_arrows_navigate() {
+        let model = multiselect_editing_model();
+        assert_eq!(
+            map_key_event(key(KeyCode::Down), &model),
+            Some(FormMessage::MultiSelectHighlightNext)
+        );
+        assert_eq!(
+            map_key_event(key(KeyCode::Up), &model),
+            Some(FormMessage::MultiSelectHighlightPrev)
+        );
     }
 }

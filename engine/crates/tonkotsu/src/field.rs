@@ -74,6 +74,8 @@ pub enum FieldKind {
         placeholder: Option<String>,
         char_limit: Option<usize>,
     },
+    /// Multiple selection from a list. Value stored as comma-separated string.
+    MultiSelect { options: Vec<SelectOption> },
     /// Read-only informational text. Not editable, not focusable.
     Note { content: String },
 }
@@ -139,6 +141,27 @@ impl Field {
                     first.to_string()
                 }
             }
+            FieldKind::MultiSelect { options } => {
+                let selected = parse_multiselect_value(&self.value);
+                if selected.is_empty() {
+                    return "None selected".to_string();
+                }
+                let labels: Vec<&str> = selected
+                    .iter()
+                    .filter_map(|v| {
+                        options
+                            .iter()
+                            .find(|o| &o.value == v)
+                            .map(|o| o.label.as_str())
+                    })
+                    .collect();
+                let count = labels.len();
+                if count <= 3 {
+                    labels.join(", ")
+                } else {
+                    format!("{} ({count} selected)", labels[..3].join(", "))
+                }
+            }
             FieldKind::Note { content } => content.clone(),
         }
     }
@@ -187,10 +210,28 @@ pub enum FieldState {
         line: usize,
         scroll_offset: usize,
     },
+    MultiSelectEditing {
+        highlight: usize,
+        /// Which option indices are currently selected (toggled on).
+        selected: Vec<usize>,
+    },
+}
+
+/// Parse a comma-separated multiselect value string into individual values.
+pub fn parse_multiselect_value(value: &str) -> Vec<String> {
+    if value.is_empty() {
+        return Vec::new();
+    }
+    value.split(',').map(|s| s.to_string()).collect()
+}
+
+/// Serialize selected values into a comma-separated string.
+pub fn serialize_multiselect_value(selected: &[String]) -> String {
+    selected.join(",")
 }
 
 pub use crate::field_builder::{
-    FieldBuilder, confirm, file_path, note, number, select, text, textarea,
+    FieldBuilder, confirm, file_path, multiselect, note, number, select, text, textarea,
 };
 
 #[cfg(test)]
@@ -517,5 +558,62 @@ mod tests {
         assert!(number("x").build().is_focusable());
         assert!(select("x", &[("a", "A")]).build().is_focusable());
         assert!(confirm("x").build().is_focusable());
+        assert!(multiselect("x", &[("a", "A")]).build().is_focusable());
+    }
+
+    // --- MultiSelect tests ---
+
+    #[test]
+    fn test_field_builder_multiselect() {
+        let field = multiselect("tags", &[("img", "Image"), ("vec", "Vector")]).build();
+        assert_eq!(field.id, "tags");
+        assert!(matches!(field.kind, FieldKind::MultiSelect { .. }));
+    }
+
+    #[test]
+    fn test_multiselect_display_value_none_selected() {
+        let field = multiselect("tags", &[("a", "A"), ("b", "B")]).build();
+        assert_eq!(field.display_value(), "None selected");
+    }
+
+    #[test]
+    fn test_multiselect_display_value_shows_labels() {
+        let field = multiselect("tags", &[("img", "Image"), ("vec", "Vector")])
+            .value("img,vec")
+            .build();
+        assert_eq!(field.display_value(), "Image, Vector");
+    }
+
+    #[test]
+    fn test_multiselect_display_value_truncates_at_three() {
+        let field = multiselect(
+            "tags",
+            &[
+                ("a", "Alpha"),
+                ("b", "Beta"),
+                ("c", "Charlie"),
+                ("d", "Delta"),
+            ],
+        )
+        .value("a,b,c,d")
+        .build();
+        assert_eq!(field.display_value(), "Alpha, Beta, Charlie (4 selected)");
+    }
+
+    #[test]
+    fn test_parse_multiselect_value_empty() {
+        assert!(parse_multiselect_value("").is_empty());
+    }
+
+    #[test]
+    fn test_parse_multiselect_value_splits() {
+        let vals = parse_multiselect_value("a,b,c");
+        assert_eq!(vals, vec!["a", "b", "c"]);
+    }
+
+    #[test]
+    fn test_serialize_multiselect_value() {
+        let vals = vec!["a".to_string(), "b".to_string()];
+        assert_eq!(serialize_multiselect_value(&vals), "a,b");
     }
 }
