@@ -9,6 +9,7 @@ import type { NodeParamFields } from "../schemas/types";
 
 import { editFieldsNodeSchema } from "./schemas/editFields";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
+import { fileSanitizeNodeSchema } from "./schemas/fileSanitize";
 import { groupNodeSchema } from "./schemas/group";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
 import { imageConvertNodeSchema } from "./schemas/imageConvert";
@@ -35,6 +36,7 @@ import { vectorRasterizeNodeSchema } from "./schemas/vectorRasterize";
 export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "edit-fields": editFieldsNodeSchema,
   "file-rename": fileRenameNodeSchema,
+  "file-sanitize": fileSanitizeNodeSchema,
   group: groupNodeSchema,
   "image-compress": imageCompressNodeSchema,
   "image-convert": imageConvertNodeSchema,
@@ -70,6 +72,15 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "lower", label: "lowercase" },
         { value: "upper", label: "UPPERCASE" },
         { value: "title", label: "Title Case" },
+      ],
+    },
+  },
+  "file-sanitize": {
+    mode: {
+      options: [
+        { value: "slugify", label: "Slugify (web-safe)" },
+        { value: "strip", label: "Strip non-ASCII" },
+        { value: "normalize", label: "Normalize Unicode" },
       ],
     },
   },

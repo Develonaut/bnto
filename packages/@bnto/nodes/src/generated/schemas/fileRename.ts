@@ -15,6 +15,9 @@ export const fileRenameParamsSchema = z.object({
   prefix: z.string().optional(),
   suffix: z.string().optional(),
   pattern: z.string().optional(),
+  counter_start: z.number().min(0).optional().default(1),
+  counter_pad: z.number().min(0).max(10).optional().default(0),
+  extension: z.string().optional(),
 });
 
 /** Inferred TypeScript type for file-rename node parameters. */
@@ -49,8 +52,21 @@ export const fileRenameNodeSchema: NodeSchema = {
     pattern: {
       label: "Pattern",
       description:
-        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}})",
-      placeholder: "{{name}}-compressed.{{ext}}",
+        "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})",
+      placeholder: "{{name}}-{{counter}}.{{ext}}",
+    },
+    counter_start: {
+      label: "Counter Start",
+      description: "Starting number for the {{counter}} variable",
+    },
+    counter_pad: {
+      label: "Counter Padding",
+      description: "Zero-pad width for the counter (e.g., 3 → 001, 002)",
+    },
+    extension: {
+      label: "Extension",
+      description: "Replace the file extension (without dot)",
+      placeholder: "png",
     },
   },
 };

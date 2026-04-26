@@ -7,6 +7,7 @@
 import type { ProcessorDef } from "../types";
 
 import { fileRenameProcessor } from "./fileRename";
+import { fileSanitizeProcessor } from "./fileSanitize";
 import { imageCompressProcessor } from "./imageCompress";
 import { imageConvertProcessor } from "./imageConvert";
 import { imageOverlayProcessor } from "./imageOverlay";
@@ -22,6 +23,7 @@ import { vectorRasterizeProcessor } from "./vectorRasterize";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
   fileRenameProcessor,
+  fileSanitizeProcessor,
   imageCompressProcessor,
   imageConvertProcessor,
   imageOverlayProcessor,

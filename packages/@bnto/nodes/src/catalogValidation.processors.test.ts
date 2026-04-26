@@ -128,7 +128,17 @@ describe("file-rename", () => {
 
   it("has all rename params", () => {
     const names = proc.parameters.map((p) => p.name);
-    expect(names).toEqual(["find", "replace", "case", "prefix", "suffix", "pattern"]);
+    expect(names).toEqual([
+      "find",
+      "replace",
+      "case",
+      "prefix",
+      "suffix",
+      "pattern",
+      "counter_start",
+      "counter_pad",
+      "extension",
+    ]);
   });
 
   it("case param is enum with lower/upper/title", () => {

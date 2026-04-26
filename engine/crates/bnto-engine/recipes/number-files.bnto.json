@@ -1,0 +1,102 @@
+{
+  "id": "number-files",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Number Files",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Add sequential numbers to filenames. Free, no signup required.",
+    "category": "file",
+    "tags": ["Sequential numbering", "Batch rename", "Browser-based"]
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["*/*"],
+        "extensions": [],
+        "label": "any files",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "number-file",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Number",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "pattern": "{{counter}}-{{name}}.{{ext}}",
+        "counter_start": 1,
+        "counter_pad": 3
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "download",
+        "label": "Numbered Files",
+        "zip": true,
+        "autoDownload": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "number-file"
+    },
+    {
+      "id": "e2",
+      "source": "number-file",
+      "target": "output"
+    }
+  ]
+}

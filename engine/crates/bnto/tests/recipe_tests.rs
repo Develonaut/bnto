@@ -51,6 +51,30 @@ fn test_rename_files() {
     );
 }
 
+#[test]
+fn test_number_files() {
+    let (out, _) = run_recipe_ok("number-files", &fixture_image("small.jpg"));
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1);
+    let name = files[0].file_name().to_string_lossy().to_string();
+    assert!(
+        name.starts_with("001-"),
+        "Expected '001-' prefix from counter, got: {name}"
+    );
+}
+
+#[test]
+fn test_sanitize_filenames() {
+    let (out, _) = run_recipe_ok("sanitize-filenames", &fixture_image("small.jpg"));
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1);
+    let name = files[0].file_name().to_string_lossy().to_string();
+    assert_eq!(
+        name, "small.jpg",
+        "Already-clean filename should be unchanged"
+    );
+}
+
 // --- CSV Recipes ---
 
 #[test]

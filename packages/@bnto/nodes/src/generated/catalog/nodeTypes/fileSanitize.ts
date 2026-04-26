@@ -6,13 +6,13 @@
 
 import type { NodeTypeInfo } from "../types";
 
-/** Node type info for file-rename. */
-export const fileRenameNodeType: NodeTypeInfo = {
-  name: "file-rename",
-  label: "Rename Files",
-  description: "Transform filenames using patterns, find/replace, case rules, and counters.",
+/** Node type info for file-sanitize. */
+export const fileSanitizeNodeType: NodeTypeInfo = {
+  name: "file-sanitize",
+  label: "Sanitize Filenames",
+  description: "Clean filenames for web-safe or cross-platform use.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,
-  icon: "folder-open",
+  icon: "folder-check",
 };
