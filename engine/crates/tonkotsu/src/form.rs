@@ -234,7 +234,7 @@ fn update_focused_field(model: FormModel, msg: FormMessage) -> FormModel {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::field::{confirm, note, number, select, text};
+    use crate::field::{confirm, multiselect, note, number, select, text};
 
     fn make_form() -> FormModel {
         FormModel::new(vec![
@@ -659,5 +659,105 @@ mod tests {
         assert!(form.is_editing());
         let form = update(form, FormMessage::FocusNext);
         assert_eq!(form.focused, 0, "should not navigate while editing");
+    }
+
+    // --- MultiSelect tests ---
+
+    #[test]
+    fn test_multiselect_start_edit() {
+        let form = FormModel::new(vec![
+            multiselect("tags", &[("a", "A"), ("b", "B"), ("c", "C")])
+                .value("a,c")
+                .build(),
+        ]);
+        let form = update(form, FormMessage::StartEdit);
+        match &form.fields[0].state {
+            FieldState::MultiSelectEditing {
+                highlight,
+                selected,
+            } => {
+                assert_eq!(*highlight, 0);
+                assert_eq!(selected, &[0, 2]);
+            }
+            other => panic!("expected MultiSelectEditing, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_multiselect_toggle() {
+        let form = FormModel::new(vec![multiselect("tags", &[("a", "A"), ("b", "B")]).build()]);
+        let form = update(form, FormMessage::StartEdit);
+        // Toggle first option on
+        let form = update(form, FormMessage::MultiSelectToggle);
+        match &form.fields[0].state {
+            FieldState::MultiSelectEditing { selected, .. } => {
+                assert_eq!(selected, &[0]);
+            }
+            other => panic!("expected MultiSelectEditing, got {other:?}"),
+        }
+        // Toggle first option off
+        let form = update(form, FormMessage::MultiSelectToggle);
+        match &form.fields[0].state {
+            FieldState::MultiSelectEditing { selected, .. } => {
+                assert!(selected.is_empty());
+            }
+            other => panic!("expected MultiSelectEditing, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_multiselect_highlight_wraps() {
+        let form = FormModel::new(vec![multiselect("tags", &[("a", "A"), ("b", "B")]).build()]);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::MultiSelectHighlightNext);
+        match &form.fields[0].state {
+            FieldState::MultiSelectEditing { highlight, .. } => assert_eq!(*highlight, 1),
+            other => panic!("expected MultiSelectEditing, got {other:?}"),
+        }
+        let form = update(form, FormMessage::MultiSelectHighlightNext);
+        match &form.fields[0].state {
+            FieldState::MultiSelectEditing { highlight, .. } => assert_eq!(*highlight, 0),
+            other => panic!("expected MultiSelectEditing, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_multiselect_highlight_prev_wraps() {
+        let form = FormModel::new(vec![multiselect("tags", &[("a", "A"), ("b", "B")]).build()]);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::MultiSelectHighlightPrev);
+        match &form.fields[0].state {
+            FieldState::MultiSelectEditing { highlight, .. } => assert_eq!(*highlight, 1),
+            other => panic!("expected MultiSelectEditing, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_multiselect_confirm_saves() {
+        let form = FormModel::new(vec![
+            multiselect("tags", &[("a", "A"), ("b", "B"), ("c", "C")]).build(),
+        ]);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::MultiSelectToggle); // toggle a
+        let form = update(form, FormMessage::MultiSelectHighlightNext);
+        let form = update(form, FormMessage::MultiSelectHighlightNext);
+        let form = update(form, FormMessage::MultiSelectToggle); // toggle c
+        let form = update(form, FormMessage::MultiSelectConfirm);
+        assert_eq!(form.fields[0].state, FieldState::Idle);
+        assert_eq!(form.fields[0].value, "a,c");
+    }
+
+    #[test]
+    fn test_multiselect_cancel_discards() {
+        let form = FormModel::new(vec![
+            multiselect("tags", &[("a", "A"), ("b", "B")])
+                .value("a")
+                .build(),
+        ]);
+        let form = update(form, FormMessage::StartEdit);
+        let form = update(form, FormMessage::MultiSelectToggle); // toggle a off
+        let form = update(form, FormMessage::CancelEdit);
+        assert_eq!(form.fields[0].state, FieldState::Idle);
+        assert_eq!(form.fields[0].value, "a", "should revert to original");
     }
 }

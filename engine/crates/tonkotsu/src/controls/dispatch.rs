@@ -7,7 +7,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::controls;
 use crate::controls::fuzzy::fuzzy_filter_options;
-use crate::field::{Field, FieldKind, FieldState};
+use crate::field::{Field, FieldKind, FieldState, parse_multiselect_value};
 use crate::form::FormMessage;
 
 /// Route a message to the appropriate control handler based on field kind + state.
@@ -15,6 +15,124 @@ pub(crate) fn dispatch_field_message(field: Field, msg: FormMessage) -> Field {
     match (&field.kind, &field.state, &msg) {
         // Note fields are read-only — ignore all messages
         (FieldKind::Note { .. }, _, _) => field,
+
+        // MultiSelect: StartEdit → expand with current selections
+        (FieldKind::MultiSelect { options }, FieldState::Idle, FormMessage::StartEdit) => {
+            let current = parse_multiselect_value(&field.value);
+            let selected: Vec<usize> = options
+                .iter()
+                .enumerate()
+                .filter(|(_, o)| current.contains(&o.value))
+                .map(|(i, _)| i)
+                .collect();
+            Field {
+                state: FieldState::MultiSelectEditing {
+                    highlight: 0,
+                    selected,
+                },
+                error: None,
+                ..field
+            }
+        }
+
+        // MultiSelect: toggle highlighted option
+        (
+            FieldKind::MultiSelect { .. },
+            FieldState::MultiSelectEditing {
+                highlight,
+                selected,
+            },
+            FormMessage::MultiSelectToggle,
+        ) => {
+            let mut new_selected = selected.clone();
+            if new_selected.contains(highlight) {
+                new_selected.retain(|i| i != highlight);
+            } else {
+                new_selected.push(*highlight);
+                new_selected.sort_unstable();
+            }
+            Field {
+                state: FieldState::MultiSelectEditing {
+                    highlight: *highlight,
+                    selected: new_selected,
+                },
+                ..field
+            }
+        }
+
+        // MultiSelect: highlight navigation
+        (
+            FieldKind::MultiSelect { options },
+            FieldState::MultiSelectEditing {
+                highlight,
+                selected,
+            },
+            FormMessage::MultiSelectHighlightNext,
+        ) => {
+            if options.is_empty() {
+                return field;
+            }
+            let next = (*highlight + 1) % options.len();
+            Field {
+                state: FieldState::MultiSelectEditing {
+                    highlight: next,
+                    selected: selected.clone(),
+                },
+                ..field
+            }
+        }
+
+        (
+            FieldKind::MultiSelect { options },
+            FieldState::MultiSelectEditing {
+                highlight,
+                selected,
+            },
+            FormMessage::MultiSelectHighlightPrev,
+        ) => {
+            if options.is_empty() {
+                return field;
+            }
+            let prev = if *highlight == 0 {
+                options.len() - 1
+            } else {
+                highlight - 1
+            };
+            Field {
+                state: FieldState::MultiSelectEditing {
+                    highlight: prev,
+                    selected: selected.clone(),
+                },
+                ..field
+            }
+        }
+
+        // MultiSelect: confirm saves selection as comma-separated value
+        (
+            FieldKind::MultiSelect { options },
+            FieldState::MultiSelectEditing { selected, .. },
+            FormMessage::MultiSelectConfirm,
+        ) => {
+            let values: Vec<String> = selected
+                .iter()
+                .filter_map(|&i| options.get(i).map(|o| o.value.clone()))
+                .collect();
+            Field {
+                value: crate::field::serialize_multiselect_value(&values),
+                state: FieldState::Idle,
+                ..field
+            }
+        }
+
+        // MultiSelect: cancel discards changes
+        (
+            FieldKind::MultiSelect { .. },
+            FieldState::MultiSelectEditing { .. },
+            FormMessage::CancelEdit,
+        ) => Field {
+            state: FieldState::Idle,
+            ..field
+        },
 
         // StartEdit: transition from Idle to editing state
         (FieldKind::Text { .. }, FieldState::Idle, FormMessage::StartEdit) => {

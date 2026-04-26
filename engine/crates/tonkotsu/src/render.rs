@@ -142,6 +142,9 @@ fn render_edit_footer(field: &crate::field::Field, theme: &dyn FormTheme) -> Lin
         crate::field::FieldState::SelectExpanded { .. } => {
             vec![("Enter", "select"), ("Esc", "cancel")]
         }
+        crate::field::FieldState::MultiSelectEditing { .. } => {
+            vec![("Space", "toggle"), ("Enter", "confirm"), ("Esc", "cancel")]
+        }
         _ => vec![("Enter", "confirm"), ("Esc", "cancel")],
     };
 
@@ -216,6 +219,9 @@ fn render_field_inline(
         }
         crate::field::FieldKind::TextArea { .. } => {
             widgets::text_area::render(field, focused, theme)
+        }
+        crate::field::FieldKind::MultiSelect { .. } => {
+            widgets::multiselect::render(field, focused, theme)
         }
         crate::field::FieldKind::Note { .. } => widgets::note::render(field, theme),
     }

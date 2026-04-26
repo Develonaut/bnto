@@ -22,9 +22,9 @@ const H: u16 = 40;
 // ═══════════════════════════════════════════════════════════
 
 #[test]
-fn kitchen_sink_has_twelve_fields() {
+fn kitchen_sink_has_thirteen_fields() {
     let fields = build_fields();
-    assert_eq!(fields.len(), 12);
+    assert_eq!(fields.len(), 13);
 }
 
 #[test]
@@ -37,13 +37,21 @@ fn kitchen_sink_first_is_note() {
 }
 
 #[test]
-fn kitchen_sink_second_is_required_text() {
+fn kitchen_sink_second_is_multiselect() {
     let fields = build_fields();
     let second = &fields[1];
-    assert_eq!(second.id, "recipe_name");
-    assert!(matches!(second.kind, FieldKind::Text { .. }));
+    assert_eq!(second.id, "tags");
+    assert!(matches!(second.kind, FieldKind::MultiSelect { .. }));
+}
+
+#[test]
+fn kitchen_sink_third_is_required_text() {
+    let fields = build_fields();
+    let third = &fields[2];
+    assert_eq!(third.id, "recipe_name");
+    assert!(matches!(third.kind, FieldKind::Text { .. }));
     assert!(
-        second.validator.is_some(),
+        third.validator.is_some(),
         "recipe_name field should have required validator"
     );
 }
@@ -82,7 +90,7 @@ fn kitchen_sink_has_number_with_suffix() {
 #[test]
 fn kitchen_sink_last_is_hidden() {
     let fields = build_fields();
-    let last = &fields[11];
+    let last = &fields[12];
     assert_eq!(last.id, "hidden_field");
     assert!(!last.visible);
 }
@@ -97,7 +105,7 @@ fn initial_render_shows_note_and_focused_marker() {
     let buf = render_to_buffer(&model, W, H);
     // Line 0: Note content (not focusable, no ">" prefix)
     assert_line_contains(&buf, 0, "Configure your recipe settings below.");
-    // Focus marker appears on the first focusable field (recipe_name)
+    // Focus marker appears on the first focusable field (tags multiselect)
     assert_buffer_contains(&buf, "> ");
 }
 
@@ -109,6 +117,7 @@ fn initial_render_shows_all_visible_labels() {
 
     let visible_labels = [
         "Configure your recipe settings below.",
+        "Tags",
         "Recipe Name",
         "Description",
         "Output Format",
@@ -140,15 +149,15 @@ fn initial_render_hides_invisible() {
 fn initial_render_shows_description() {
     let model = FormModel::new(build_fields());
     let buf = render_to_buffer(&model, W, H);
-    // Focused field (recipe_name) description should be visible
-    assert_buffer_contains(&buf, "A short name for your recipe");
+    // Focused field (tags multiselect) description should be visible
+    assert_buffer_contains(&buf, "Space to toggle, Enter to confirm");
 }
 
 #[test]
 fn scroll_to_last_field_shows_it() {
     let mut model = FormModel::new(build_fields()).with_viewport(6);
-    // Tab to the last visible field (index 10 = input_file, skipping Note and hidden)
-    for _ in 0..9 {
+    // Tab to the last visible field (index 11 = input_file, skipping Note and hidden)
+    for _ in 0..10 {
         model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
     let buf = render_to_buffer(&model, W, 6);
@@ -162,8 +171,11 @@ fn scroll_to_last_field_shows_it() {
 #[test]
 fn required_field_error_on_empty_commit() {
     let model = FormModel::new(build_fields());
-    // Start editing recipe_name (already focused), commit empty → error
-    let model = simulate_keys(model, &[key(KeyCode::Enter), key(KeyCode::Enter)]);
+    // Focus recipe_name (one Tab past tags multiselect), edit, commit empty → error
+    let model = simulate_keys(
+        model,
+        &[key(KeyCode::Tab), key(KeyCode::Enter), key(KeyCode::Enter)],
+    );
     let buf = render_to_buffer(&model, W, H);
     assert_buffer_contains(&buf, "Cannot be empty");
 }
@@ -171,8 +183,8 @@ fn required_field_error_on_empty_commit() {
 #[test]
 fn pattern_validator_rejects_no_at() {
     let mut model = FormModel::new(build_fields()).with_viewport(H as usize);
-    // Focus email field (index 7)
-    for _ in 0..7 {
+    // Focus email field (8 tabs past tags multiselect)
+    for _ in 0..8 {
         model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
     assert_eq!(model.fields[model.focused].id, "email");
@@ -196,8 +208,8 @@ fn pattern_validator_rejects_no_at() {
 #[test]
 fn number_error_on_non_numeric() {
     let mut model = FormModel::new(build_fields());
-    // Focus quality field (index 5)
-    for _ in 0..5 {
+    // Focus quality field (6 tabs past tags multiselect)
+    for _ in 0..6 {
         model = tonkotsu::update(model, tonkotsu::FormMessage::FocusNext);
     }
     assert_eq!(model.fields[model.focused].id, "quality");
@@ -285,8 +297,8 @@ fn esc_in_idle_does_not_edit() {
 #[test]
 fn esc_in_editing_cancels_not_quits() {
     let model = FormModel::new(build_fields());
-    // Enter edit mode on focused field (recipe_name at index 1)
-    let model = simulate_key(model, key(KeyCode::Enter));
+    // Tab to recipe_name (one past tags multiselect), then enter edit
+    let model = simulate_keys(model, &[key(KeyCode::Tab), key(KeyCode::Enter)]);
     assert!(matches!(
         model.fields[model.focused].state,
         FieldState::TextEditing { .. }

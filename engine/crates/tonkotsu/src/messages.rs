@@ -77,6 +77,12 @@ pub enum FormMessage {
         entries: Vec<FileEntry>,
     },
 
+    // --- MultiSelect ---
+    MultiSelectToggle,
+    MultiSelectHighlightNext,
+    MultiSelectHighlightPrev,
+    MultiSelectConfirm,
+
     // --- TextArea ---
     TextAreaNewline,
     TextAreaCursorUp,
