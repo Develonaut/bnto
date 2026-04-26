@@ -1,8 +1,7 @@
-<p align="center">
-  <img src="apps/web/public/favicon/Logo.svg" alt="bnto logo" width="80" height="80" />
-</p>
-
-<h1 align="center">bnto</h1>
+<h1 align="center">
+  <img src="apps/web/public/favicon/Logo.svg" alt="bnto logo" width="140" height="140" style="margin: -10px;" /><br />
+  bnto
+</h1>
 
 <p align="center">
   <a href="https://github.com/Develonaut/bnto/actions"><img src="https://github.com/Develonaut/bnto/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
