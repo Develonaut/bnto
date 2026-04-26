@@ -46,7 +46,7 @@
     },
     {
       "id": "sanitize-file",
-      "type": "file-sanitize",
+      "type": "file-rename",
       "version": "1.0.0",
       "name": "Sanitize",
       "position": {
@@ -55,7 +55,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "slugify",
+        "sanitize": "slugify",
         "separator": "-"
       },
       "inputPorts": [],

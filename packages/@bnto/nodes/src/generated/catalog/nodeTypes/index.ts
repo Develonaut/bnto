@@ -8,7 +8,6 @@ import type { NodeTypeName, NodeTypeInfo } from "../types";
 
 import { editFieldsNodeType } from "./editFields";
 import { fileRenameNodeType } from "./fileRename";
-import { fileSanitizeNodeType } from "./fileSanitize";
 import { groupNodeType } from "./group";
 import { httpRequestNodeType } from "./httpRequest";
 import { imageCompressNodeType } from "./imageCompress";
@@ -36,7 +35,6 @@ import { vectorRasterizeNodeType } from "./vectorRasterize";
 export const NODE_TYPES = {
   editFields: "edit-fields",
   fileRename: "file-rename",
-  fileSanitize: "file-sanitize",
   group: "group",
   httpRequest: "http-request",
   imageCompress: "image-compress",
@@ -68,7 +66,6 @@ export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": editFieldsNodeType,
   "file-rename": fileRenameNodeType,
-  "file-sanitize": fileSanitizeNodeType,
   group: groupNodeType,
   "http-request": httpRequestNodeType,
   "image-compress": imageCompressNodeType,

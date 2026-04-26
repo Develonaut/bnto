@@ -487,45 +487,6 @@ export function resize_image_combined(data, filename, params_json, progress_call
 }
 
 /**
- * Sanitize a single filename and return both metadata and bytes in one call.
- * @param {Uint8Array} data
- * @param {string} filename
- * @param {string} params_json
- * @param {Function} progress_callback
- * @returns {any}
- */
-export function sanitize_file_combined(data, filename, params_json, progress_callback) {
-  try {
-    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-    const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(filename, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-    const len1 = WASM_VECTOR_LEN;
-    const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
-    const len2 = WASM_VECTOR_LEN;
-    wasm.sanitize_file_combined(
-      retptr,
-      ptr0,
-      len0,
-      ptr1,
-      len1,
-      ptr2,
-      len2,
-      addHeapObject(progress_callback),
-    );
-    var r0 = getDataViewMemory0().getInt32(retptr + 4 * 0, true);
-    var r1 = getDataViewMemory0().getInt32(retptr + 4 * 1, true);
-    var r2 = getDataViewMemory0().getInt32(retptr + 4 * 2, true);
-    if (r2) {
-      throw takeObject(r1);
-    }
-    return takeObject(r0);
-  } finally {
-    wasm.__wbindgen_add_to_stack_pointer(16);
-  }
-}
-
-/**
  * Initialize the WASM module. Call this ONCE when the Web Worker starts,
  * before calling any processing functions.
  *

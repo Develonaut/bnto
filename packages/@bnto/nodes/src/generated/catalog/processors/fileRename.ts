@@ -16,6 +16,28 @@ export const fileRenameProcessor: ProcessorDef = {
   platforms: ["browser"] as const,
   parameters: [
     {
+      name: "sanitize",
+      label: "Sanitize",
+      description: "Clean the filename before other transforms",
+      type: "enum" as const,
+      options: ["slugify", "strip", "normalize"] as const,
+    },
+    {
+      name: "separator",
+      label: "Separator",
+      description: "Character to replace spaces and special characters (used with Sanitize)",
+      type: "string" as const,
+      default: "-",
+    },
+    {
+      name: "max_length",
+      label: "Max Length",
+      description: "Maximum filename length after sanitize (0 = no limit)",
+      type: "number" as const,
+      default: 0,
+      constraints: { min: 0, required: false },
+    },
+    {
       name: "find",
       label: "Find",
       description: "Text or regex pattern to search for in the filename",

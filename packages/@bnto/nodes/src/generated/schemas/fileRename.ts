@@ -9,6 +9,9 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for file-rename node parameters. */
 export const fileRenameParamsSchema = z.object({
+  sanitize: z.enum(["slugify", "strip", "normalize"] as const).optional(),
+  separator: z.string().optional().default("-"),
+  max_length: z.number().min(0).optional().default(0),
   find: z.string().optional(),
   replace: z.string().optional(),
   case: z.enum(["lower", "upper", "title"] as const).optional(),
@@ -29,6 +32,18 @@ export const fileRenameNodeSchema: NodeSchema = {
   schemaVersion: 1,
   schema: fileRenameParamsSchema,
   params: {
+    sanitize: {
+      label: "Sanitize",
+      description: "Clean the filename before other transforms",
+    },
+    separator: {
+      label: "Separator",
+      description: "Character to replace spaces and special characters (used with Sanitize)",
+    },
+    max_length: {
+      label: "Max Length",
+      description: "Maximum filename length after sanitize (0 = no limit)",
+    },
     find: {
       label: "Find",
       description: "Text or regex pattern to search for in the filename",

@@ -37,7 +37,6 @@ pub fn create_browser_registry() -> NodeRegistry {
         Box::new(bnto_spreadsheet::RenameColumns::new()),
     );
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
-    registry.register("file-sanitize", Box::new(bnto_file::SanitizeFiles::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register(
         "spreadsheet-convert",
@@ -111,7 +110,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 13);
+        assert_eq!(registry.len(), 12);
 
         let expected = [
             "image-compress",
@@ -124,7 +123,6 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
-            "file-sanitize",
             "vector-rasterize",
             "vector-optimize",
         ];
@@ -142,8 +140,8 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (13) + shell-command (1) = 14
-        assert_eq!(registry.len(), 14);
+        // Full registry = browser (12) + shell-command (1) = 13
+        assert_eq!(registry.len(), 13);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -407,7 +405,6 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
-            "file-sanitize",
             "vector-rasterize",
             "vector-optimize",
         ];

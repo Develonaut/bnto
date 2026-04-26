@@ -2453,14 +2453,14 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           name: "Sanitize",
           outputPorts: [],
           parameters: {
-            mode: "slugify",
+            sanitize: "slugify",
             separator: "-",
           },
           position: {
             x: 250,
             y: 100,
           },
-          type: "file-sanitize",
+          type: "file-rename",
           version: "1.0.0",
         },
         {

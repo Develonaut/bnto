@@ -1,10 +1,10 @@
 // Rename Files Node — transform filenames in the browser.
 //
 // Browser version is a filename transformer: takes a file's current name,
-// applies transformation rules (find/replace, case, prefix, suffix, pattern),
-// and returns the same file data with the new name.
+// applies transformation rules, and returns the same file data with the new name.
 //
-// Transformation order: find/replace -> case -> prefix -> suffix -> pattern.
+// Transformation order: sanitize -> find/replace -> case -> prefix -> suffix -> pattern.
+// Sanitize runs first (if set) to clean the raw filename before other transforms.
 // Pattern has "final say" — it overrides everything using template variables.
 // Counter: {{counter}} auto-increments per-file in batch mode.
 
@@ -147,6 +147,9 @@ fn build_rename_output(
 
 fn build_rename_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
     vec![
+        rename_sanitize_param(),
+        rename_separator_param(),
+        rename_max_length_param(),
         rename_string_param(
             "find",
             "Find",
@@ -259,14 +262,80 @@ fn rename_extension_param() -> bnto_core::metadata::ParameterDef {
     }
 }
 
+fn rename_sanitize_param() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "sanitize".to_string(),
+        label: "Sanitize".to_string(),
+        description: "Clean the filename before other transforms".to_string(),
+        param_type: ParameterType::Enum {
+            options: vec![
+                OptionEntry {
+                    value: "slugify".to_string(),
+                    label: "Slugify (web-safe)".to_string(),
+                },
+                OptionEntry {
+                    value: "strip".to_string(),
+                    label: "Strip non-ASCII".to_string(),
+                },
+                OptionEntry {
+                    value: "normalize".to_string(),
+                    label: "Normalize Unicode".to_string(),
+                },
+            ],
+        },
+        ..Default::default()
+    }
+}
+
+fn rename_separator_param() -> bnto_core::metadata::ParameterDef {
+    bnto_core::metadata::ParameterDef {
+        name: "separator".to_string(),
+        label: "Separator".to_string(),
+        description: "Character to replace spaces and special characters (used with Sanitize)"
+            .to_string(),
+        default: Some(serde_json::Value::String("-".to_string())),
+        ..Default::default()
+    }
+}
+
+fn rename_max_length_param() -> bnto_core::metadata::ParameterDef {
+    use bnto_core::metadata::*;
+    ParameterDef {
+        name: "max_length".to_string(),
+        label: "Max Length".to_string(),
+        description: "Maximum filename length after sanitize (0 = no limit)".to_string(),
+        param_type: ParameterType::Number,
+        default: Some(serde_json::Value::Number(serde_json::Number::from(0))),
+        constraints: Some(Constraints {
+            min: Some(0.0),
+            max: None,
+            required: false,
+        }),
+        ..Default::default()
+    }
+}
+
 // --- Transformation Pipeline ---
 
-/// Apply all transformations in order: find/replace -> case -> prefix -> suffix.
+/// Apply all transformations in order: sanitize -> find/replace -> case -> prefix -> suffix.
 fn apply_all_transformations(
     original_stem: &str,
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> String {
     let mut stem = original_stem.to_string();
+
+    // Sanitize runs first — clean the raw filename before other transforms.
+    if let Some(mode) = get_string_param(params, "sanitize") {
+        let separator = get_string_param(params, "separator").unwrap_or_else(|| "-".to_string());
+        stem = match mode.as_str() {
+            "strip" => strip_non_ascii(&stem, &separator),
+            "normalize" => normalize_unicode(&stem),
+            _ => slugify(&stem, &separator),
+        };
+        let max_length = get_int_param(params, "max_length").unwrap_or(0);
+        stem = apply_max_length(&stem, max_length);
+    }
 
     if let Some(find_str) = get_string_param(params, "find") {
         let replace_str = get_string_param(params, "replace").unwrap_or_default();
@@ -342,6 +411,66 @@ fn build_rename_metadata(
     );
 
     metadata
+}
+
+// --- Sanitize Functions ---
+
+/// Slugify: lowercase, replace non-alphanumeric with separator, collapse runs.
+fn slugify(stem: &str, separator: &str) -> String {
+    let lowered = stem.to_lowercase();
+    let mut result = String::with_capacity(lowered.len());
+    let mut prev_was_sep = true; // avoid leading separator
+
+    for ch in lowered.chars() {
+        if ch.is_ascii_alphanumeric() {
+            result.push(ch);
+            prev_was_sep = false;
+        } else if !prev_was_sep {
+            result.push_str(separator);
+            prev_was_sep = true;
+        }
+    }
+
+    if result.ends_with(separator) {
+        result.truncate(result.len() - separator.len());
+    }
+
+    result
+}
+
+/// Strip: remove all non-ASCII characters, replace spaces/punctuation with separator.
+fn strip_non_ascii(stem: &str, separator: &str) -> String {
+    let mut result = String::with_capacity(stem.len());
+    let mut prev_was_sep = true;
+
+    for ch in stem.chars() {
+        if ch.is_ascii_alphanumeric() {
+            result.push(ch);
+            prev_was_sep = false;
+        } else if ch.is_ascii() && !prev_was_sep {
+            result.push_str(separator);
+            prev_was_sep = true;
+        }
+    }
+
+    if result.ends_with(separator) {
+        result.truncate(result.len() - separator.len());
+    }
+
+    result
+}
+
+/// Normalize: apply Unicode NFC normalization (compose accented characters).
+fn normalize_unicode(stem: &str) -> String {
+    unicode_normalization::UnicodeNormalization::nfc(stem).collect()
+}
+
+/// Truncate stem to max_length characters. 0 means no limit.
+fn apply_max_length(stem: &str, max_length: usize) -> String {
+    if max_length == 0 || stem.len() <= max_length {
+        return stem.to_string();
+    }
+    stem.chars().take(max_length).collect()
 }
 
 // --- Helper Functions ---
@@ -459,6 +588,9 @@ fn get_current_date() -> String {
 /// Build a list of which transformations were applied, for metadata display.
 fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
     let mut transforms = Vec::new();
+    if params.contains_key("sanitize") {
+        transforms.push("sanitize".to_string());
+    }
     if params.contains_key("find") {
         transforms.push("find/replace".to_string());
     }
@@ -1211,5 +1343,172 @@ mod tests {
             serde_json::Value::Number(serde_json::Number::from(42)),
         );
         assert_eq!(format_counter(&params), "42");
+    }
+
+    // =========================================================================
+    // Sanitize Mode Tests (merged from file-sanitize)
+    // =========================================================================
+
+    #[test]
+    fn test_sanitize_slugify_basic() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("sanitize", "slugify");
+        let input = make_input(b"test data", "Hello World (2024).txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "hello-world-2024.txt");
+    }
+
+    #[test]
+    fn test_sanitize_slugify_consecutive_specials() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("sanitize", "slugify");
+        let input = make_input(b"test data", "file---name...here.pdf", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "file-name-here.pdf");
+    }
+
+    #[test]
+    fn test_sanitize_slugify_custom_separator() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("sanitize", "slugify"), ("separator", "_")]);
+        let input = make_input(b"test data", "Hello World.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "hello_world.txt");
+    }
+
+    #[test]
+    fn test_sanitize_slugify_no_extension() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("sanitize", "slugify");
+        let input = make_input(b"test data", "My Document", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "my-document");
+    }
+
+    #[test]
+    fn test_sanitize_strip_removes_non_ascii() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("sanitize", "strip");
+        let input = make_input(b"test data", "café résumé.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "caf-rsum.txt");
+    }
+
+    #[test]
+    fn test_sanitize_strip_preserves_ascii_alphanumeric() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("sanitize", "strip");
+        let input = make_input(b"test data", "file123.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "file123.txt");
+    }
+
+    #[test]
+    fn test_sanitize_normalize_nfc() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        // U+0065 (e) + U+0301 (combining acute) = NFD form of "é"
+        let nfd = "re\u{0301}sume\u{0301}.txt";
+        let params = string_param("sanitize", "normalize");
+        let input = make_input(b"test data", nfd, params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "r\u{00e9}sum\u{00e9}.txt");
+    }
+
+    #[test]
+    fn test_sanitize_max_length_truncates_stem() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let mut params = string_param("sanitize", "slugify");
+        params.insert(
+            "max_length".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(5)),
+        );
+        let input = make_input(b"test data", "a-very-long-filename.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "a-ver.txt");
+    }
+
+    #[test]
+    fn test_sanitize_max_length_zero_means_no_limit() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let mut params = string_param("sanitize", "slugify");
+        params.insert(
+            "max_length".to_string(),
+            serde_json::Value::Number(serde_json::Number::from(0)),
+        );
+        let input = make_input(b"test data", "a-very-long-filename.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "a-very-long-filename.txt");
+    }
+
+    #[test]
+    fn test_sanitize_data_passes_through() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let input = NodeInput {
+            data: b"original content".to_vec(),
+            filename: "Hello World.txt".to_string(),
+            mime_type: None,
+            params: string_param("sanitize", "slugify"),
+        };
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].data, b"original content");
+    }
+
+    #[test]
+    fn test_sanitize_metadata_includes_transform() {
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_param("sanitize", "strip");
+        let input = make_input(b"data", "test.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        let transforms = output.metadata.get("transformsApplied").unwrap();
+        let arr = transforms.as_array().unwrap();
+        assert!(arr.iter().any(|v| v.as_str() == Some("sanitize")));
+    }
+
+    #[test]
+    fn test_sanitize_then_prefix() {
+        // Sanitize runs first, then prefix is applied to the cleaned stem.
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("sanitize", "slugify"), ("prefix", "clean-")]);
+        let input = make_input(b"data", "Hello World.txt", params);
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files[0].filename, "clean-hello-world.txt");
+    }
+
+    // =========================================================================
+    // Sanitize Helper Function Tests
+    // =========================================================================
+
+    #[test]
+    fn test_slugify_fn() {
+        assert_eq!(slugify("Hello World", "-"), "hello-world");
+        assert_eq!(slugify("file (copy).bak", "-"), "file-copy-bak");
+        assert_eq!(slugify("ALLCAPS", "-"), "allcaps");
+        assert_eq!(slugify("already-clean", "-"), "already-clean");
+    }
+
+    #[test]
+    fn test_strip_fn() {
+        assert_eq!(strip_non_ascii("hello", "-"), "hello");
+        assert_eq!(strip_non_ascii("café", "-"), "caf");
+        assert_eq!(strip_non_ascii("naïve résumé", "-"), "nave-rsum");
+    }
+
+    #[test]
+    fn test_apply_max_length_fn() {
+        assert_eq!(apply_max_length("hello", 3), "hel");
+        assert_eq!(apply_max_length("hi", 10), "hi");
+        assert_eq!(apply_max_length("test", 0), "test");
     }
 }
