@@ -4,6 +4,7 @@
 //! that tonkotsu supports. Used by both the demo binary and snapshot tests.
 
 use crate::field::Field;
+use crate::group::FieldGroup;
 use crate::validators;
 use crate::{confirm, file_path, multiselect, note, number, select, text};
 
@@ -128,4 +129,19 @@ pub fn build_fields() -> Vec<Field> {
             .visible(false)
             .build(),
     ]
+}
+
+/// Build the same kitchen-sink fields organized into named groups.
+///
+/// Three groups: General (note + tags + name + description + category),
+/// Output (format + overwrite + quality + max_width),
+/// Advanced (email + min_size + input_file + hidden).
+pub fn build_grouped_fields() -> (Vec<Field>, Vec<FieldGroup>) {
+    let fields = build_fields();
+    let groups = vec![
+        FieldGroup::new("General", vec![0, 1, 2, 3, 4]),
+        FieldGroup::new("Output", vec![5, 6, 7, 8]),
+        FieldGroup::new("Advanced", vec![9, 10, 11, 12]),
+    ];
+    (fields, groups)
 }

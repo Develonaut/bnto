@@ -7,6 +7,7 @@
 use ratatui::text::{Line, Span};
 
 use crate::form::{FormMode, FormModel};
+use crate::group::group_for_field;
 use crate::theme::FormTheme;
 use crate::widgets;
 
@@ -26,10 +27,12 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
 }
 
 /// DisplayEdit mode: all fields as compact one-liners, except the editing field
-/// which gets its full control rendered.
+/// which gets its full control rendered. Group headers appear before each group's
+/// first visible field.
 fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let mut all_lines: Vec<Line<'static>> = Vec::new();
     let mut field_start_lines: Vec<(usize, usize)> = Vec::new();
+    let mut rendered_groups: Vec<usize> = Vec::new();
 
     let visible_indices: Vec<usize> = model
         .fields
@@ -45,19 +48,20 @@ fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'st
         if !field.visible {
             continue;
         }
+
+        // Inject group header before the group's first visible field
+        maybe_render_group_header(model, i, &mut rendered_groups, &mut all_lines, theme);
+
         let focused = i == model.focused;
         let start = all_lines.len();
 
         let field_lines = if focused && is_editing {
-            // Focused field in edit mode: render its full control
             render_field_inline(field, true, theme)
         } else {
-            // All other fields (or focused field in display mode): compact display
             widgets::display::render(field, focused, theme)
         };
         all_lines.extend(field_lines);
 
-        // Description only shown for focused field
         if focused && let Some(ref desc) = field.description {
             all_lines.push(Line::from(vec![
                 Span::raw("    "),
@@ -94,6 +98,17 @@ fn render_fullscreen_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<
 
     // Blank line for top padding
     lines.push(Line::default());
+
+    // Group label (if field belongs to a named group)
+    if let Some(gidx) = group_for_field(&model.groups, model.focused) {
+        let group = &model.groups[gidx];
+        if group.has_header() {
+            lines.push(Line::from(vec![
+                Span::raw("  "),
+                Span::styled(group.label.clone(), theme.muted()),
+            ]));
+        }
+    }
 
     // Label header
     lines.push(Line::from(vec![
@@ -161,9 +176,11 @@ fn render_edit_footer(field: &crate::field::Field, theme: &dyn FormTheme) -> Lin
 }
 
 /// Inline mode (legacy): every field renders its full control.
+/// Group headers appear before each group's first visible field.
 fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let mut all_lines: Vec<Line<'static>> = Vec::new();
     let mut field_start_lines: Vec<(usize, usize)> = Vec::new();
+    let mut rendered_groups: Vec<usize> = Vec::new();
 
     let visible_indices: Vec<usize> = model
         .fields
@@ -178,13 +195,15 @@ fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>>
         if !field.visible {
             continue;
         }
+
+        maybe_render_group_header(model, i, &mut rendered_groups, &mut all_lines, theme);
+
         let focused = i == model.focused;
         let start = all_lines.len();
 
         let field_lines = render_field_inline(field, focused, theme);
         all_lines.extend(field_lines);
 
-        // Description always shown; muted style for all fields
         if let Some(ref desc) = field.description {
             all_lines.push(Line::from(vec![
                 Span::raw("    "),
@@ -194,13 +213,36 @@ fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>>
 
         field_start_lines.push((i, start));
 
-        // Blank line between fields (not after the last one)
         if last_visible != Some(i) {
             all_lines.push(Line::default());
         }
     }
 
     apply_viewport(model, all_lines, &field_start_lines)
+}
+
+/// Insert a group header line if this field is the first visible field in its group.
+fn maybe_render_group_header(
+    model: &FormModel,
+    field_index: usize,
+    rendered_groups: &mut Vec<usize>,
+    lines: &mut Vec<Line<'static>>,
+    theme: &dyn FormTheme,
+) {
+    if let Some(group_idx) = group_for_field(&model.groups, field_index) {
+        let group = &model.groups[group_idx];
+        if group.has_header() && !rendered_groups.contains(&group_idx) {
+            rendered_groups.push(group_idx);
+            // Blank line before header (except at the very start)
+            if !lines.is_empty() {
+                lines.push(Line::default());
+            }
+            lines.push(Line::from(vec![
+                Span::raw("  "),
+                Span::styled(group.label.clone(), theme.heading()),
+            ]));
+        }
+    }
 }
 
 /// Render a single field using its type-specific full control widget.
@@ -624,6 +666,98 @@ mod tests {
         assert!(
             text.contains("Important notice"),
             "note should render in display mode: {text}"
+        );
+    }
+
+    // --- Group rendering tests ---
+
+    #[test]
+    fn test_group_headers_render_in_display_edit() {
+        let model = FormModel::with_groups(vec![
+            ("General", vec![text("a").label("First").value("1").build()]),
+            (
+                "Advanced",
+                vec![text("b").label("Second").value("2").build()],
+            ),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("General"),
+            "should show General header: {text}"
+        );
+        assert!(
+            text.contains("Advanced"),
+            "should show Advanced header: {text}"
+        );
+    }
+
+    #[test]
+    fn test_group_headers_render_in_inline() {
+        let model = FormModel::with_groups(vec![
+            ("General", vec![text("a").label("First").value("1").build()]),
+            (
+                "Advanced",
+                vec![text("b").label("Second").value("2").build()],
+            ),
+        ]);
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("General"),
+            "should show General header: {text}"
+        );
+        assert!(
+            text.contains("Advanced"),
+            "should show Advanced header: {text}"
+        );
+    }
+
+    #[test]
+    fn test_implicit_group_no_header() {
+        let model = FormModel::new(vec![
+            text("a").label("First").value("1").build(),
+            text("b").label("Second").value("2").build(),
+        ])
+        .with_mode(FormMode::DisplayEdit);
+        let lines = render_form(&model, &theme());
+        // With implicit group (empty label), no group header rendered
+        // Just fields + spacers: 2 fields + 1 spacer = 3 lines
+        assert_eq!(lines.len(), 3, "no group header for implicit group");
+    }
+
+    #[test]
+    fn test_fullscreen_edit_panel_shows_group_label() {
+        let mut model = FormModel::with_groups(vec![
+            (
+                "Settings",
+                vec![text("name").label("Name").value("test").build()],
+            ),
+            (
+                "Other",
+                vec![text("other").label("Other").value("x").build()],
+            ),
+        ])
+        .with_mode(FormMode::FullScreenEdit);
+        model.fields[0].state = FieldState::TextEditing {
+            buffer: "test".to_string(),
+            cursor: 4,
+        };
+        let lines = render_form(&model, &theme());
+        let text = all_text(&lines);
+        assert!(
+            text.contains("Settings"),
+            "should show group label in panel: {text}"
+        );
+        assert!(
+            text.contains("Name"),
+            "should show field label in panel: {text}"
+        );
+        // Other group's fields should NOT appear
+        assert!(
+            !text.contains("Other"),
+            "other group should be hidden: {text}"
         );
     }
 }

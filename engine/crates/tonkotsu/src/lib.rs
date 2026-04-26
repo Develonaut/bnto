@@ -23,7 +23,9 @@ pub mod file_entry;
 pub mod file_path_nav;
 pub mod form;
 pub mod form_file_path;
+mod form_nav;
 pub mod format_size;
+pub mod group;
 pub mod keys;
 pub mod messages;
 pub mod render;
@@ -40,6 +42,7 @@ pub use field::{
 };
 pub use file_entry::FileEntry;
 pub use form::{FormEffect, FormMessage, FormMode, FormModel, update};
+pub use group::FieldGroup;
 pub use keys::map_key_event;
 pub use render::render_form;
 pub use theme::{DefaultTheme, FormTheme};
