@@ -6,7 +6,9 @@
 
 use std::collections::BTreeMap;
 
-use bnto_core::executor::resolve::{collect_field_values, resolve_fields};
+use bnto_core::context::NoopContext;
+use bnto_core::executor::resolve::collect_field_values;
+use bnto_core::executor::template::{TemplateContext, resolve_templates};
 use bnto_core::{Dependency, PipelineDefinition, PipelineNode};
 use bnto_engine::deps::collect_pipeline_dependencies;
 use bnto_engine::recipes::builtin_recipe_by_slug;
@@ -88,12 +90,19 @@ fn collect_shell_commands(
 
 /// Resolve a shell-command node's fields and extract display info.
 fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
-    let resolved_params = if node.fields.is_empty() {
-        node.params.clone()
+    let field_values = if node.fields.is_empty() {
+        BTreeMap::new()
     } else {
-        let field_values = collect_field_values(&node.fields, &BTreeMap::new());
-        resolve_fields(&node.params, &field_values)
+        collect_field_values(&node.fields, &BTreeMap::new())
     };
+    let noop = NoopContext;
+    let empty_outputs = BTreeMap::new();
+    let tpl_ctx = TemplateContext {
+        field_values: &field_values,
+        process_ctx: &noop,
+        node_outputs: &empty_outputs,
+    };
+    let resolved_params = resolve_templates(&node.params, &tpl_ctx);
 
     let command = resolved_params
         .get("command")

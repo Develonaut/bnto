@@ -407,7 +407,7 @@ BRU-style composable file operations. See [file-node-ecosystem.md](strategy/file
 
 Template expressions, version constraints, and migration tooling. Strengthens the engine for future recipe complexity.
 
-- [ ] `engine/crates/bnto-core` — **Template expression expansion**: Extend `{{fields.*}}` template system with `{{env.*}}` (environment variables), `{{ctx.*}}` (execution context — temp dir, working dir, platform), `{{node.<id>.*}}` (inter-node output references). RED tests: each namespace resolution, missing var handling, nested references (~6 tests)
+- [x] `engine/crates/bnto-core` — **Template expression expansion**: Extend `{{fields.*}}` template system with `{{env.*}}` (environment variables), `{{ctx.*}}` (execution context — temp dir, working dir, platform), `{{node.<id>.*}}` (inter-node output references). RED tests: each namespace resolution, missing var handling, nested references (~6 tests)
 - [ ] `engine/crates/bnto-core` — **Version constraint enforcement**: Parse `<binary> --version` output, validate against `Dependency.version` semver constraint. Fail pipeline before execution if version doesn't satisfy. RED tests: semver parsing, constraint matching, version extraction from output (~5 tests)
 - [ ] `engine/crates/bnto` — **`bnto migrate` CLI command**: Migrate `.bnto.json` files across breaking parameter changes (e.g., `compression`→`quality`). Detect version, apply sequential transforms, report changes. RED tests: version detection, migration transforms, idempotent re-run (~5 tests)
 
