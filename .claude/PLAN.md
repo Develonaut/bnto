@@ -363,7 +363,7 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 ---
 
-## Sprint 16: Recipe Expansion + huh Parity — NEXT
+## Sprint 16: Recipe Expansion + huh Parity — ACTIVE
 
 **Goal:** Rename `bnto-form` → `tonkotsu` and make it the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library. Expand recipe catalog with new image and file operations. Strengthen engine infrastructure for future recipes. Grows recipe count from 18→22+.
 
@@ -426,7 +426,7 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 - [ ] `engine/crates/bnto-image` — **Rotate image processor**: New `image-rotate` processor. Params: `degrees` (enum: 90/180/270), `flip_horizontal` (bool), `flip_vertical` (bool). Uses existing `image::imageops::rotate*()` + `flip_*()`. RED tests: each rotation angle, flip combinations, rotation+flip compound (~5 tests)
 - [ ] `engine/crates/bnto-engine` + `engine/recipes/` — **Crop/Rotate recipes + codegen**: `crop-images.bnto.json`, `rotate-images.bnto.json`. Register processors. Golden tests. Codegen updates. SEO slugs: `/crop-images`, `/rotate-images`. RED tests: recipe execution, golden output verification (~4 tests)
 
-**Sprint 16 totals: ~14 PRs, ~72 tests, 4 new recipes (18→22), 2 strategy docs, 1 crate rename**
+**Sprint 16 totals: ~14 PRs, ~72 tests, 4 new recipes (18→20 shipped, 22 target), 2 strategy docs, 1 crate rename**
 
 ---
 
@@ -619,7 +619,7 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 **Priority: Medium.** Items unlocked by Sprint 12B (recipe-level deps + shell-command). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
 
 1. ~~**`bnto install <recipe>`**~~ — **Done.** Sprint 14 Wave 2 (PR #453)
-2. ~~**Version constraint enforcement**~~ — **→ Sprint 16 Wave 4**
+2. ~~**Version constraint enforcement**~~ — **→ Sprint 16 Wave 3**
 3. **Per-platform install hints** — Detect OS, show correct package manager command (`apt`, `choco`, `pacman`)
 4. ~~**Template expression expansion**~~ — **→ Sprint 16 Wave 4** (`{{env.*}}`, `{{ctx.*}}`, `{{node.<id>.*}}`)
 
@@ -821,36 +821,48 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 6. **Network capability classification** — Classify recipes as local-only vs network-capable. Warn on network binaries (`curl`, `wget`, `nc`, `ssh`). Future: outbound domain allowlist
 7. **Recipe signatures** — Sign built-in recipes. Unsigned community recipes trigger warnings. Foundation for verified registry
 
-### Triage: FullScreenEdit FormMode (default)
+### ~~Triage: FullScreenEdit FormMode (default)~~ — DONE (PR #462)
 
-**Priority: Triage.** Add a third `FormMode::FullScreenEdit` that renders only the focused field's control on a dedicated sub-screen when editing (like Bubble Tea's `huh` library). User wants this as the default form mode instead of `DisplayEdit` which expands inline. `engine/crates/tonkotsu`. Related: `.claude/strategy/tui-controls-bubbles.md`
+**Delivered in Sprint 16 Wave 1.** `FormMode::FullScreenEdit` shipped in tonkotsu.
 
-### Triage: Rich execution progress UX for CLI/TUI — NEEDS DESIGN SPIKE
+### ~~Triage: Rich execution progress UX for CLI/TUI~~ — DESIGN SPIKE DELIVERED (PR #471)
 
-**Priority: Triage (blocked on strategy doc).** Make recipe execution feel alive with animated Unicode progress indicators, spinners, throughput counters, and elapsed time — inspired by Claude Code's progress display (e.g. `✳ Quantumizing… (3m 7s · ↓ 4.6k tokens)`). Covers both `bnto run` (CLI) and TUI execution screen: animated Unicode spinner characters, progress bars with percentage, per-file status indicators, streaming byte/throughput metrics.
+**Design spike delivered.** Strategy doc at `strategy/execution-progress-ux.md`. Three implementation phases defined below, each independently promotable. See the spike for competitive audit, indicator inventory, layout mockups, and architecture review.
 
-**Before this can be promoted to a sprint, write a strategy doc** (`strategy/execution-progress-ux.md`) covering:
+### Triage: Execution progress Phase 1 — CLI/TUI rendering polish
 
-- [ ] **Competitive audit**: Survey progress UX in Claude Code, `cargo install` progress, `docker pull`, Charm Bubbles spinner/progress, `npx`/`pnpm` install indicators. Screenshot or describe each
-- [ ] **Unicode indicator inventory**: Which spinner characters (braille, box-drawing, geometric shapes, emoji), animation frame sequences, and progress bar styles to support
-- [ ] **Metrics design**: What metrics to surface per context — elapsed time, throughput (bytes/s, files/s), ETA, file count progress (3/12), current file name, current node name
-- [ ] **Layout design**: ASCII mockups for CLI (`bnto run`) single-line progress vs TUI execution screen multi-line layout. How does it degrade on narrow terminals?
-- [ ] **Architecture**: Where do progress events originate (engine `bnto-core` events vs CLI rendering), what new event types are needed beyond existing `PipelineStarted`/`NodeStarted`/`FileProgress`/`NodeCompleted`/`PipelineCompleted`
-- [ ] **Scope definition**: What ships in the first PR vs follow-up. Recommend phased: spinner+elapsed first, then throughput metrics, then per-file progress bars
+**Priority: Medium.** Improve CLI and TUI execution rendering with zero engine changes. All data already available in existing `PipelineEvent` types. Single PR, ~5 tests.
 
-`engine/crates/bnto`, `engine/crates/bnto-core`
+- Add completion summary line: `Completed 10 files in 2.4s`
+- Show elapsed time per progress line: `3/10 photo.jpg (1.2s)`
+- Braille spinner + elapsed for indeterminate shell-command nodes (no file count)
+- TUI: rename "NODES" → "STEPS", inline file count next to active node, per-node elapsed
+
+Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase 1. `engine/crates/bnto`
+
+### Triage: Execution progress Phase 2 — Throughput + animated indicators
+
+**Priority: Low (depends on Phase 1 feedback).** Add computed metrics and animated indicators. Still no engine event changes. Single PR, ~4 tests.
+
+- Throughput metric (`4.2 files/s`) when batch >= 5 files
+- Animated braille spinner for active node in TUI
+- ETA for large batches (10+ files)
+
+Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase 2. `engine/crates/bnto`
+
+### Triage: Execution progress Phase 3 — Size-aware completion summary
+
+**Priority: Low (depends on Phase 2).** Show input→output size comparison on completion. Requires new `PipelineSummary` event or compute-from-disk in CLI renderer. Single PR, ~3 tests.
+
+- Summary: `Completed 10 files in 2.4s (12.4 MB → 3.1 MB, 75% smaller)`
+
+Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase 3. `engine/crates/bnto`, `engine/crates/bnto-core`
 
 ### Triage: Cloud Execution via Railway
 
 **Priority: Triage.** Build `bnto-server` crate (Axum HTTP service wrapping `bnto-engine`), `ServerContext` (sandboxed ProcessContext), Dockerfile with pre-installed binaries, Railway Pro deployment with scale-to-zero, update `execution_engine.ts` to target Railway, R2 presigned URL I/O, execution token auth, SSE progress streaming. Exit criteria: `download-video` runs on bnto.io via cloud execution. Full strategy and phased plan: [`.claude/strategy/cloud-execution.md`](strategy/cloud-execution.md).
 
 `engine/crates/bnto-server/` (new), `packages/@bnto/backend/convex/execution_engine.ts`, `packages/core/src/adapters/`
-
-### Triage: Rich execution progress UX for CLI/TUI
-
-**Priority: Triage.** Unicode progress indicators, animated spinners, token/byte counters, elapsed time for CLI (`bnto run`) and TUI execution screen. Inspired by Claude Code's progress display (e.g. `"Quantumizing... (3m 7s / 4.6k tokens)"`). Animated unicode characters, progress bars with percentage, file-level status indicators, streaming throughput metrics.
-
-`engine/crates/bnto`, `engine/crates/bnto-core`
 
 ---
 
