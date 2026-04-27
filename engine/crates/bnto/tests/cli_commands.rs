@@ -570,3 +570,151 @@ fn test_tui_help_flag() {
         "tui help should mention --theme flag, got: {stdout}"
     );
 }
+
+// --- Migrate ---
+
+#[test]
+fn test_migrate_help_flag() {
+    let output = Command::new(bnto_bin())
+        .args(["migrate", "--help"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Migrate"),
+        "migrate help should describe migration, got: {stdout}"
+    );
+    assert!(
+        stdout.contains("--dry-run"),
+        "migrate help should mention --dry-run flag, got: {stdout}"
+    );
+}
+
+#[test]
+fn test_migrate_file_dry_run() {
+    let dir = temp_output_dir();
+    let file = dir.path().join("old.bnto.json");
+    std::fs::write(
+        &file,
+        r#"{"id":"test","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"compression":80}}]}"#,
+    )
+    .unwrap();
+
+    let output = Command::new(bnto_bin())
+        .args(["migrate", file.to_str().unwrap(), "--dry-run"])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("compression"),
+        "Should report compression migration, got: {stderr}"
+    );
+    assert!(
+        stderr.contains("would migrate"),
+        "Should say 'would migrate' in dry run, got: {stderr}"
+    );
+
+    // File should be unchanged.
+    let content = std::fs::read_to_string(&file).unwrap();
+    assert!(
+        content.contains("compression"),
+        "File should not be modified in dry run"
+    );
+}
+
+#[test]
+fn test_migrate_file_applies_changes() {
+    let dir = temp_output_dir();
+    let file = dir.path().join("recipe.bnto.json");
+    std::fs::write(
+        &file,
+        r#"{"id":"test","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"compression":75}}]}"#,
+    )
+    .unwrap();
+
+    let output = Command::new(bnto_bin())
+        .args(["migrate", file.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("migrated"),
+        "Should report migration, got: {stderr}"
+    );
+
+    // File should be updated.
+    let content = std::fs::read_to_string(&file).unwrap();
+    assert!(
+        content.contains("quality"),
+        "File should have quality param"
+    );
+    assert!(
+        !content.contains("compression"),
+        "File should not have compression param"
+    );
+
+    // Backup should exist (original filename + .bak).
+    assert!(
+        file.with_file_name("recipe.bnto.json.bak").exists(),
+        "Backup should be created"
+    );
+}
+
+#[test]
+fn test_migrate_noop_recipe() {
+    let dir = temp_output_dir();
+    let file = dir.path().join("current.bnto.json");
+    std::fs::write(
+        &file,
+        r#"{"id":"test","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"quality":80}}]}"#,
+    )
+    .unwrap();
+
+    let output = Command::new(bnto_bin())
+        .args(["migrate", file.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("already up to date"),
+        "Should report no changes needed, got: {stderr}"
+    );
+
+    // No backup created when nothing changed.
+    assert!(!file.with_file_name("current.bnto.json.bak").exists());
+}
+
+#[test]
+fn test_migrate_directory() {
+    let dir = temp_output_dir();
+    // One file needs migration, one doesn't.
+    std::fs::write(
+        dir.path().join("old.bnto.json"),
+        r#"{"id":"old","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"compression":80}}]}"#,
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join("current.bnto.json"),
+        r#"{"id":"cur","type":"group","parameters":{},"nodes":[{"id":"c","type":"image-compress","parameters":{"quality":80}}]}"#,
+    )
+    .unwrap();
+
+    let output = Command::new(bnto_bin())
+        .args(["migrate", dir.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("1 file migrated"),
+        "Should report 1 file migrated, got: {stderr}"
+    );
+}

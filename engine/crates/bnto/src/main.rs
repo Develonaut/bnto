@@ -9,6 +9,7 @@
 //        bnto install <recipe> [--yes]
 //        bnto install --all [--yes]
 //        bnto doctor
+//        bnto migrate <path> [--dry-run]
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
 mod context;
@@ -20,6 +21,7 @@ mod install;
 mod io;
 mod list;
 pub mod logging;
+mod migrate;
 mod package_manager;
 mod progress;
 pub mod telemetry;
@@ -111,6 +113,16 @@ enum Command {
         new: bool,
     },
 
+    /// Migrate .bnto.json files across breaking parameter changes.
+    Migrate {
+        /// Path to a .bnto.json file or directory containing recipe files.
+        path: String,
+
+        /// Preview changes without modifying files.
+        #[arg(long)]
+        dry_run: bool,
+    },
+
     /// Manage anonymous telemetry settings.
     Telemetry {
         #[command(subcommand)]
@@ -142,6 +154,7 @@ fn main() {
         Some(Command::DryRun { .. }) => "dry-run",
         Some(Command::Install { .. }) => "install",
         Some(Command::Doctor) => "doctor",
+        Some(Command::Migrate { .. }) => "migrate",
         Some(Command::Tui { .. }) => "tui",
         Some(Command::Telemetry { .. }) => "telemetry",
         None => "tui",
@@ -182,6 +195,10 @@ fn main() {
         Some(Command::Doctor) => {
             telemetry::capture(telemetry::events::cli_command("doctor"));
             doctor::run_doctor();
+        }
+        Some(Command::Migrate { path, dry_run }) => {
+            telemetry::capture(telemetry::events::cli_command("migrate"));
+            migrate::run_migrate(&path, dry_run);
         }
         Some(Command::Tui { recipe, theme, new }) => {
             telemetry::capture(telemetry::events::cli_command("tui"));
