@@ -58,9 +58,9 @@ fn header_lines<'a>(
     ]));
     lines.push(Line::from(""));
 
-    // Node progress
+    // Node progress (labeled "STEPS" — user-facing terminology)
     if !exec.nodes.is_empty() {
-        lines.push(Line::from(Span::styled("  NODES", theme.category())));
+        lines.push(Line::from(Span::styled("  STEPS", theme.category())));
         for node in &exec.nodes {
             let (marker, style) = node_marker(&node.status, theme);
             let label = if node.node_type.is_empty() {
@@ -68,8 +68,9 @@ fn header_lines<'a>(
             } else {
                 node.node_type.as_str()
             };
+            let annotation = node_annotation(node);
             lines.push(Line::from(Span::styled(
-                format!("  {marker} {label}"),
+                format!("  {marker} {label}{annotation}"),
                 style,
             )));
         }
@@ -140,6 +141,19 @@ fn node_marker(status: &NodeStatus, theme: &Theme) -> (&'static str, ratatui::st
     }
 }
 
+/// Build a status annotation for a node: file count for active, elapsed for completed.
+fn node_annotation(node: &super::screens::execution::NodeProgress) -> String {
+    match &node.status {
+        NodeStatus::Active if node.total_files > 0 => {
+            format!(" ({}/{})", node.files_processed, node.total_files)
+        }
+        NodeStatus::Completed { duration_ms } => {
+            format!(" ({})", format_duration(*duration_ms))
+        }
+        _ => String::new(),
+    }
+}
+
 /// Map file status to a marker character and style.
 fn file_marker(status: &FileStatus, theme: &Theme) -> (&'static str, ratatui::style::Style) {
     match status {
@@ -147,5 +161,51 @@ fn file_marker(status: &FileStatus, theme: &Theme) -> (&'static str, ratatui::st
         FileStatus::Processing => ("◉", theme.selected()),
         FileStatus::Done => ("●", theme.text()),
         FileStatus::Failed(_) => ("✗", theme.heading()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tui::screens::execution::{NodeProgress, NodeStatus};
+
+    fn make_node(status: NodeStatus, files_processed: usize, total_files: usize) -> NodeProgress {
+        NodeProgress {
+            id: "n1".into(),
+            node_type: "image-compress".into(),
+            status,
+            files_processed,
+            total_files,
+        }
+    }
+
+    #[test]
+    fn annotation_active_with_files_shows_count() {
+        let node = make_node(NodeStatus::Active, 3, 10);
+        assert_eq!(node_annotation(&node), " (3/10)");
+    }
+
+    #[test]
+    fn annotation_active_no_files_is_empty() {
+        let node = make_node(NodeStatus::Active, 0, 0);
+        assert_eq!(node_annotation(&node), "");
+    }
+
+    #[test]
+    fn annotation_completed_shows_elapsed() {
+        let node = make_node(NodeStatus::Completed { duration_ms: 2400 }, 0, 0);
+        assert_eq!(node_annotation(&node), " (2.4s)");
+    }
+
+    #[test]
+    fn annotation_completed_sub_second() {
+        let node = make_node(NodeStatus::Completed { duration_ms: 350 }, 0, 0);
+        assert_eq!(node_annotation(&node), " (350ms)");
+    }
+
+    #[test]
+    fn annotation_pending_is_empty() {
+        let node = make_node(NodeStatus::Pending, 0, 0);
+        assert_eq!(node_annotation(&node), "");
     }
 }
