@@ -15,6 +15,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.
     let bar: RefCell<Option<ProgressBar>> = RefCell::new(None);
+    let spinner_tick: RefCell<usize> = RefCell::new(0);
 
     PipelineReporter::new(move |event: PipelineEvent| match &event {
         PipelineEvent::PipelineStarted { total_nodes, .. } => {
@@ -86,17 +87,32 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
             }
             eprintln!("  {} {error}", "Pipeline failed:".red().bold());
         }
-        PipelineEvent::PipelineCompleted { .. } => {
+        PipelineEvent::PipelineCompleted {
+            duration_ms,
+            total_files_processed,
+        } => {
             if let Some(b) = bar.borrow_mut().take() {
                 b.finish_and_clear();
             }
+            eprintln!(
+                "\n  {} {}",
+                "✓".green().bold(),
+                format_completion_summary(*total_files_processed, *duration_ms),
+            );
         }
         PipelineEvent::CommandOutput { node_id, line } => {
+            let tick = {
+                let mut t = spinner_tick.borrow_mut();
+                let val = *t;
+                *t += 1;
+                val
+            };
+            let spinner = braille_frame(tick);
             // Suspend indicatif bar to print cleanly, then log for diagnostics.
             if let Some(b) = bar.borrow().as_ref() {
-                b.suspend(|| eprintln!("        {}", line.dimmed()));
+                b.suspend(|| eprintln!("        {} {}", spinner.to_string().cyan(), line.dimmed()));
             } else {
-                eprintln!("        {}", line.dimmed());
+                eprintln!("        {} {}", spinner.to_string().cyan(), line.dimmed());
             }
             logger.log(LogEntry {
                 level: LogLevel::Debug,
@@ -106,6 +122,23 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
             });
         }
     })
+}
+
+/// Braille spinner frames for indeterminate progress (shell-command nodes).
+const BRAILLE_FRAMES: &[char] = &['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+/// Get the braille spinner character for a given frame index.
+pub fn braille_frame(tick: usize) -> char {
+    BRAILLE_FRAMES[tick % BRAILLE_FRAMES.len()]
+}
+
+/// Format a pipeline completion summary line.
+///
+/// Example: `"Completed 10 files in 2.4s"` or `"Completed 1 file in 350ms"`
+pub fn format_completion_summary(total_files: usize, duration_ms: u64) -> String {
+    let duration = format_duration_short(duration_ms);
+    let plural = if total_files == 1 { "file" } else { "files" };
+    format!("Completed {total_files} {plural} in {duration}")
 }
 
 /// Format milliseconds into a compact human-readable string.
@@ -132,6 +165,48 @@ mod tests {
     fn test_format_duration_seconds() {
         assert_eq!(format_duration_short(1000), "1.0s");
         assert_eq!(format_duration_short(2500), "2.5s");
+    }
+
+    // --- Completion summary tests ---
+
+    #[test]
+    fn test_completion_summary_singular() {
+        assert_eq!(
+            format_completion_summary(1, 350),
+            "Completed 1 file in 350ms"
+        );
+    }
+
+    #[test]
+    fn test_completion_summary_plural() {
+        assert_eq!(
+            format_completion_summary(10, 2400),
+            "Completed 10 files in 2.4s"
+        );
+    }
+
+    #[test]
+    fn test_completion_summary_zero_files() {
+        assert_eq!(
+            format_completion_summary(0, 100),
+            "Completed 0 files in 100ms"
+        );
+    }
+
+    // --- Braille spinner tests ---
+
+    #[test]
+    fn test_braille_frame_cycles() {
+        assert_eq!(braille_frame(0), '⠋');
+        assert_eq!(braille_frame(1), '⠙');
+        assert_eq!(braille_frame(9), '⠏');
+    }
+
+    #[test]
+    fn test_braille_frame_wraps() {
+        assert_eq!(braille_frame(10), '⠋');
+        assert_eq!(braille_frame(11), '⠙');
+        assert_eq!(braille_frame(20), '⠋');
     }
 
     fn noop_logger() -> Arc<dyn Logger> {

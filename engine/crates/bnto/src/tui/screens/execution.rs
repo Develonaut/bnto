@@ -50,6 +50,10 @@ pub struct NodeProgress {
     pub id: String,
     pub node_type: String,
     pub status: NodeStatus,
+    /// Number of files processed so far (updated by FileProgress events).
+    pub files_processed: usize,
+    /// Total files this node will process (set on first FileProgress).
+    pub total_files: usize,
 }
 
 /// Execution screen state.
@@ -179,6 +183,8 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                         id,
                         node_type,
                         status: NodeStatus::Pending,
+                        files_processed: 0,
+                        total_files: 0,
                     })
                     .collect()
             } else {
@@ -187,6 +193,8 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                         id: format!("node-{}", i),
                         node_type: String::new(),
                         status: NodeStatus::Pending,
+                        files_processed: 0,
+                        total_files: 0,
                     })
                     .collect()
             };
@@ -198,10 +206,11 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             }
         }
         ExecutionMessage::FileProgress {
+            node_id,
             file_index,
+            total_files,
             percent,
             message,
-            ..
         } => {
             if let Some(file) = model.files.get_mut(file_index) {
                 file.percent = percent;
@@ -209,6 +218,11 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                 if !message.is_empty() {
                     file.name = message;
                 }
+            }
+            // Track per-node file progress for inline count display.
+            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.total_files = total_files;
+                node.files_processed = file_index + 1;
             }
         }
         ExecutionMessage::NodeCompleted {
@@ -546,5 +560,72 @@ mod tests {
         assert_eq!(m.elapsed_ms, 500);
         let m = update(m, ExecutionMessage::Tick { elapsed_ms: 1000 });
         assert_eq!(m.elapsed_ms, 1000);
+    }
+
+    // --- Per-node file count tracking ---
+
+    #[test]
+    fn file_progress_tracks_per_node_counts() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 3,
+                node_info: vec![("compress".into(), "image-compress".into())],
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::NodeStarted {
+                node_id: "compress".into(),
+                node_type: "image-compress".into(),
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::FileProgress {
+                node_id: "compress".into(),
+                file_index: 0,
+                total_files: 3,
+                percent: 100,
+                message: "photo1.jpg".into(),
+            },
+        );
+        assert_eq!(m.nodes[0].files_processed, 1);
+        assert_eq!(m.nodes[0].total_files, 3);
+
+        let m = update(
+            m,
+            ExecutionMessage::FileProgress {
+                node_id: "compress".into(),
+                file_index: 1,
+                total_files: 3,
+                percent: 50,
+                message: "photo2.jpg".into(),
+            },
+        );
+        assert_eq!(m.nodes[0].files_processed, 2);
+        assert_eq!(m.nodes[0].total_files, 3);
+    }
+
+    #[test]
+    fn node_progress_initializes_with_zero_counts() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 2,
+                total_files: 1,
+                node_info: vec![
+                    ("a".into(), "image-compress".into()),
+                    ("b".into(), "file-rename".into()),
+                ],
+            },
+        );
+        assert_eq!(m.nodes[0].files_processed, 0);
+        assert_eq!(m.nodes[0].total_files, 0);
+        assert_eq!(m.nodes[1].files_processed, 0);
+        assert_eq!(m.nodes[1].total_files, 0);
     }
 }
