@@ -10,6 +10,11 @@ use std::collections::HashSet;
 pub struct DependencyStatus {
     pub dependency: Dependency,
     pub found: bool,
+    /// Installed version string (if detected via `--version`).
+    pub installed_version: Option<String>,
+    /// Whether the installed version satisfies the constraint.
+    /// `None` if no constraint was specified or version couldn't be determined.
+    pub version_satisfied: Option<bool>,
 }
 
 /// Collect unique dependencies required by a pipeline definition.
@@ -73,10 +78,12 @@ pub fn collect_all_dependencies(registry: &NodeRegistry) -> Vec<Dependency> {
     deps
 }
 
-/// Check whether each dependency's binary is available on the system.
+/// Check whether each dependency's binary is available on the system
+/// and whether its version satisfies any declared constraint.
 ///
-/// Uses `which <binary>` to probe the PATH. Returns a status for each
-/// dependency indicating whether it was found.
+/// Uses `which <binary>` to probe the PATH. If the dependency has a
+/// non-empty `version` constraint, runs `<binary> --version` and
+/// validates the output against the constraint.
 pub fn check_dependencies(
     deps: &[Dependency],
     ctx: &dyn bnto_core::ProcessContext,
@@ -84,9 +91,25 @@ pub fn check_dependencies(
     deps.iter()
         .map(|dep| {
             let found = ctx.run_command("which", &[&dep.binary]).is_ok();
+
+            // Only check version if the binary exists and has a constraint.
+            let (installed_version, version_satisfied) = if found && !dep.version.is_empty() {
+                match bnto_core::check_version(&dep.binary, &dep.version, ctx) {
+                    bnto_core::VersionCheckResult::Checked {
+                        installed,
+                        satisfied,
+                    } => (Some(installed), Some(satisfied)),
+                    bnto_core::VersionCheckResult::Skipped => (None, None),
+                }
+            } else {
+                (None, None)
+            };
+
             DependencyStatus {
                 dependency: dep.clone(),
                 found,
+                installed_version,
+                version_satisfied,
             }
         })
         .collect()
@@ -108,22 +131,28 @@ pub fn check_pipeline_dependencies(
     }
 
     let statuses = check_dependencies(&deps, ctx);
-    let missing: Vec<&DependencyStatus> = statuses.iter().filter(|s| !s.found).collect();
 
-    if missing.is_empty() {
+    let mut messages: Vec<String> = Vec::new();
+
+    for s in &statuses {
+        if !s.found {
+            let hint = &s.dependency.install_hint;
+            messages.push(format!("  - {} (install: {})", s.dependency.binary, hint));
+        } else if s.version_satisfied == Some(false) {
+            let installed = s.installed_version.as_deref().unwrap_or("unknown");
+            messages.push(format!(
+                "  - {} (installed: {}, requires: {})",
+                s.dependency.binary, installed, s.dependency.version
+            ));
+        }
+    }
+
+    if messages.is_empty() {
         return Ok(());
     }
 
-    let messages: Vec<String> = missing
-        .iter()
-        .map(|s| {
-            let hint = &s.dependency.install_hint;
-            format!("  - {} (install: {})", s.dependency.binary, hint)
-        })
-        .collect();
-
     Err(BntoError::InvalidInput(format!(
-        "Missing required dependencies:\n{}",
+        "Dependency requirements not met:\n{}",
         messages.join("\n")
     )))
 }
@@ -571,5 +600,97 @@ mod tests {
         let err_msg = result.unwrap_err().to_string();
         assert!(err_msg.contains("yt-dlp"));
         assert!(err_msg.contains("ffmpeg"));
+    }
+
+    // --- Version constraint integration ---
+
+    /// Mock context that returns a path for `which` and version output
+    /// for `<binary> --version`. Simulates a system with ffmpeg 6.1.1.
+    struct VersionedContext {
+        version_output: String,
+    }
+
+    impl VersionedContext {
+        fn new(version_output: &str) -> Self {
+            Self {
+                version_output: version_output.to_string(),
+            }
+        }
+    }
+
+    impl ProcessContext for VersionedContext {
+        fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            if cmd == "which" {
+                Ok(b"/usr/local/bin/found".to_vec())
+            } else {
+                Ok(self.version_output.as_bytes().to_vec())
+            }
+        }
+        fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&Path, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+    }
+
+    #[test]
+    fn test_check_deps_version_satisfied() {
+        let ctx = VersionedContext::new("ffmpeg version 6.1.1 Copyright");
+        let deps = vec![ffmpeg_dep()]; // requires >=6.0
+        let statuses = check_dependencies(&deps, &ctx);
+        assert_eq!(statuses.len(), 1);
+        assert!(statuses[0].found);
+        assert_eq!(statuses[0].installed_version.as_deref(), Some("6.1.1"));
+        assert_eq!(statuses[0].version_satisfied, Some(true));
+    }
+
+    #[test]
+    fn test_check_deps_version_unsatisfied() {
+        let ctx = VersionedContext::new("ffmpeg version 5.0.2 Copyright");
+        let deps = vec![ffmpeg_dep()]; // requires >=6.0
+        let statuses = check_dependencies(&deps, &ctx);
+        assert_eq!(statuses.len(), 1);
+        assert!(statuses[0].found);
+        assert_eq!(statuses[0].installed_version.as_deref(), Some("5.0.2"));
+        assert_eq!(statuses[0].version_satisfied, Some(false));
+    }
+
+    #[test]
+    fn test_check_deps_no_version_constraint() {
+        let ctx = VersionedContext::new("yt-dlp 2024.12.23");
+        let deps = vec![ytdlp_dep()]; // no version constraint
+        let statuses = check_dependencies(&deps, &ctx);
+        assert_eq!(statuses.len(), 1);
+        assert!(statuses[0].found);
+        assert!(statuses[0].installed_version.is_none());
+        assert!(statuses[0].version_satisfied.is_none());
+    }
+
+    #[test]
+    fn test_preflight_version_mismatch_returns_error() {
+        let ctx = VersionedContext::new("ffmpeg version 5.0.2 Copyright");
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let def = make_definition(&["input", "video-transcode", "output"]);
+        let result = check_pipeline_dependencies(&def, &registry, &ctx);
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("ffmpeg"));
+        assert!(err_msg.contains("5.0.2"));
+        assert!(err_msg.contains(">=6.0"));
+    }
+
+    #[test]
+    fn test_preflight_version_satisfied_passes() {
+        let ctx = VersionedContext::new("ffmpeg version 6.1.1 Copyright");
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let def = make_definition(&["input", "video-transcode", "output"]);
+        let result = check_pipeline_dependencies(&def, &registry, &ctx);
+        assert!(result.is_ok());
     }
 }

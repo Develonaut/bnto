@@ -4,7 +4,7 @@ use colored::Colorize;
 
 use crate::context;
 
-/// Run the doctor command — check all external dependencies.
+/// Run the doctor command �� check all external dependencies.
 pub fn run_doctor() {
     let registry = bnto_engine::create_registry();
     let deps = bnto_engine::deps::collect_all_dependencies(&registry);
@@ -17,22 +17,21 @@ pub fn run_doctor() {
     if print_statuses(&statuses) {
         eprintln!(
             "\n{}",
-            "Some dependencies are missing. Install them to use all processors.".yellow()
+            "Some dependencies are not satisfied. Install or update them to use all processors."
+                .yellow()
         );
         std::process::exit(1);
     }
     println!("\n{}", "All dependencies satisfied.".green());
 }
 
-/// Print each dependency status line. Returns true if any are missing.
+/// Print each dependency status line. Returns true if any have issues.
 fn print_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool {
-    let mut has_missing = false;
+    let mut has_issues = false;
     println!("{}\n", "Checking external dependencies...".bold());
     for status in statuses {
-        if status.found {
-            println!("  {} {}", "ok".green(), status.dependency.binary);
-        } else {
-            has_missing = true;
+        if !status.found {
+            has_issues = true;
             println!("  {} {}", "MISSING".red().bold(), status.dependency.binary);
             println!(
                 "         Install: {}",
@@ -41,7 +40,29 @@ fn print_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool {
             if !status.dependency.homepage.is_empty() {
                 println!("         Homepage: {}", status.dependency.homepage);
             }
+        } else if status.version_satisfied == Some(false) {
+            has_issues = true;
+            let installed = status.installed_version.as_deref().unwrap_or("unknown");
+            println!(
+                "  {} {} (installed: {}, requires: {})",
+                "OUTDATED".yellow().bold(),
+                status.dependency.binary,
+                installed,
+                status.dependency.version
+            );
+            println!("         Update: {}", status.dependency.install_hint.cyan());
+        } else {
+            let version_info = match &status.installed_version {
+                Some(v) => format!(" ({})", v.dimmed()),
+                None => String::new(),
+            };
+            println!(
+                "  {} {}{}",
+                "ok".green(),
+                status.dependency.binary,
+                version_info
+            );
         }
     }
-    has_missing
+    has_issues
 }

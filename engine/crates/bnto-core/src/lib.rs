@@ -70,6 +70,11 @@ pub mod editor;
 /// Browser gets `NoopLogger`, CLI gets `FileLogger`.
 pub mod logging;
 
+/// Version constraint checking for external dependencies.
+/// Parses `--version` output, extracts version numbers, validates against
+/// constraint strings like `">=6.0"`.
+pub mod version;
+
 // --- Re-exports ---
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
@@ -95,6 +100,7 @@ pub use pipeline::{
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;
+pub use version::{VersionCheckResult, VersionConstraint, check_version};
 
 // =============================================================================
 // Shared Constants
