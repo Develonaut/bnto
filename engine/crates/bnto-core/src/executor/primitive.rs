@@ -114,17 +114,22 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     Ok(())
 }
 
-/// Resolve `{{fields.*}}` templates in node params using the node's own field declarations.
+/// Resolve all template namespaces in node params (fields, env, ctx, node).
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
-    _ctx: &PipelineContext<F>,
+    ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
 ) -> serde_json::Map<String, serde_json::Value> {
-    if node.fields.is_empty() {
-        return node.params.clone();
-    }
-    let field_values =
-        super::resolve::collect_field_values(&node.fields, &std::collections::BTreeMap::new());
-    super::resolve::resolve_fields(&node.params, &field_values)
+    let field_values = if node.fields.is_empty() {
+        std::collections::BTreeMap::new()
+    } else {
+        super::resolve::collect_field_values(&node.fields, &std::collections::BTreeMap::new())
+    };
+    let tpl_ctx = super::template::TemplateContext {
+        field_values: &field_values,
+        process_ctx: ctx.process_ctx,
+        node_outputs: &std::collections::BTreeMap::new(),
+    };
+    super::template::resolve_templates(&node.params, &tpl_ctx)
 }
 
 /// Execute a primitive (leaf) node on a batch of files.

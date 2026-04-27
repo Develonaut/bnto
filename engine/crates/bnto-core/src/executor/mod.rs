@@ -12,6 +12,7 @@ mod auto_iteration;
 mod container;
 mod primitive;
 pub mod resolve;
+pub mod template;
 
 use crate::context::ProcessContext;
 use crate::errors::BntoError;
