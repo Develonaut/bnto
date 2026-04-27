@@ -1,6 +1,6 @@
 # Bnto — Build Plan
 
-**Last Updated:** April 25, 2026 (Groom: Sprint 15 complete, Sprint 16 defined — recipe expansion + huh parity + engine infra)
+**Last Updated:** April 27, 2026 (Groom: Sprint 16 complete, Sprint 17 defined — BRU file ecosystem + engine polish)
 **This is the single source of truth for what's been built, what's in progress, and what's next.**
 
 Skills and commands that reference the plan read this file. Update it after every sprint.
@@ -27,9 +27,9 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**CLI is the product.** `cargo install bnto` gets you 18 recipes. The web is a landing page.
+**CLI is the product.** `cargo install bnto` gets you 20 recipes. The web is a landing page.
 
-- **v0.12.0 released (April 2026):** 18 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor/install/dry-run` commands, TUI execution progress, vector operations (SVG). Published to crates.io
+- **v0.12.0 released (April 2026):** 20 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor/install/dry-run` commands, TUI execution progress, vector operations (SVG). Published to crates.io
 - **Engine (Rust):** Library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-shell, bnto-engine), WASM entry point (bnto-wasm), CLI binary (bnto). CLI is the primary consumer, browser (WASM) is secondary
 - **M1-M2 delivered:** Browser execution (WASM), editor v1, accounts, execution history — all shipped but web is now maintenance mode
 - **CLI/TUI-first pivot (April 2026):** Web reduced to landing page. Editor frozen. Auth stripped. Frontend/premium work on hold. Focus: engine, CLI, TUI, infra
@@ -41,7 +41,8 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **TUI List Editor (Sprint 12):** Full recipe editing — add/remove/reorder nodes, inline param editing, undo/redo, save workflow, multiple entry points. ~75 tests
 - **TUI Wizard (Sprint 13):** Guided recipe creation — category → operation → config → done. Hands off to List editor
 - **TUI controls polish (Sprints 14-15):** Bubbles-inspired display/edit modes, FilePath field type, TextArea, fuzzy Select filter, picker search/metadata/breadcrumbs, vim keybindings. `tonkotsu` now at huh parity for shipped controls
-- **Next:** Sprint 16 — recipe expansion (file nodes, image crop/rotate), tonkotsu huh parity (FullScreenEdit, MultiSelect, field grouping, Note), engine infra (template expressions, version constraints, migration tool), design spikes
+- **Sprint 16 delivered:** tonkotsu huh parity, file-rename enhanced, template expressions, version constraints, `bnto migrate`, 2 design spikes (execution progress UX, recipe secrets). 20 recipes
+- **Next:** Sprint 17 — BRU file ecosystem (file-filter, file-collect, file-copy, file-metadata), engine polish (execution progress Phase 1, secrets Phase 1, recipe trust), image crop/rotate, format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -273,9 +274,9 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 ## What's Next
 
-**Sprints 14-15 complete.** Engine hardening (PRs #448-#454) and TUI controls polish (PRs #455-#457) both shipped. `tonkotsu` (formerly bnto-form) now has Display/Edit mode, FilePath, TextArea, fuzzy Select — matching Charm Bubbles quality.
+**Sprint 16 complete.** tonkotsu at full huh parity, file-rename enhanced (counter + sanitize), template expressions (`{{env.*}}`, `{{ctx.*}}`, `{{node.*}}`), version constraints, `bnto migrate`, execution progress + secrets design spikes delivered. 20 recipes shipped.
 
-**Next: Sprint 16 — Recipe Expansion + huh Parity.** Three streams: (1) bring `tonkotsu` to full huh parity (FullScreenEdit, MultiSelect, field grouping, Note field), (2) expand file operations (BRU-style composable nodes), (3) add image crop/rotate for iLovePNG parity. Plus engine infrastructure (template expressions, version constraints, migration tool). Grows recipe count from 18→22+.
+**Next: Sprint 17 — BRU File Ecosystem + Engine Polish.** Achieve BRU (Bulk Rename Utility) composable file operations goal: 4 new file processors (file-filter, file-collect, file-copy, file-metadata) that chain together for BRU-level power. Parallel engine polish (execution progress Phase 1, secrets Phase 1, recipe trust/consent). Image crop/rotate. Format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes.
 
 Desktop (Tauri) and monetization are deep backlog.
 
@@ -363,9 +364,9 @@ Note: TEA `update()` match blocks and `handle_*_key()` are idiomatic Rust (per M
 
 ---
 
-## Sprint 16: Recipe Expansion + huh Parity — ACTIVE
+## Sprint 16: Recipe Expansion + huh Parity — COMPLETE
 
-**Goal:** Rename `bnto-form` → `tonkotsu` and make it the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library. Expand recipe catalog with new image and file operations. Strengthen engine infrastructure for future recipes. Grows recipe count from 18→22+.
+**Goal:** Rename `bnto-form` → `tonkotsu` and make it the Rust equivalent of Charm's [huh](https://github.com/charmbracelet/huh) library. Expand recipe catalog with new file operations. Strengthen engine infrastructure for future recipes. Grew recipe count from 18→20. Wave 5 (image crop/rotate) deferred to Sprint 17.
 
 **Strategy docs:** [tonkotsu-strategy.md](strategy/tonkotsu-strategy.md) (§ huh Parity), [file-node-ecosystem.md](strategy/file-node-ecosystem.md) (Phases 1-2), [tui-controls-bubbles.md](strategy/tui-controls-bubbles.md)
 
@@ -418,15 +419,71 @@ Write strategy docs to unblock future sprints. No code — research, mockups, an
 - [x] `.claude/strategy/execution-progress-ux.md` — **Rich execution progress UX design spike**: Competitive audit (Claude Code, cargo, docker, Bubbles), Unicode indicator inventory (spinners, progress bars, frames), metrics design (elapsed, throughput, ETA, file count), layout mockups (CLI single-line vs TUI multi-line), architecture review (engine events vs rendering), phased scope recommendation
 - [x] `.claude/strategy/recipe-secrets.md` — **Secret/env variable management design spike**: How recipes reference secrets without embedding in `.bnto.json`. Resolution per target (CLI reads env/dotfiles, server reads vault, browser prompts). Integration with `{{env.*}}` template namespace (Wave 4). Threat model for secret exposure
 
-#### Wave 5 — Image Recipe Expansion (depends on Wave 2 codegen pattern)
+#### Wave 5 — Image Recipe Expansion — DEFERRED → Sprint 17
 
-iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zero new dependencies).
+Deferred to Sprint 17 Wave 3. Image crop/rotate is lower priority than BRU file ecosystem.
+
+**Sprint 16 totals: ~12 PRs, ~57 tests, 2 new recipes (18→20), 2 strategy docs, 1 crate rename**
+
+---
+
+## Sprint 17: BRU File Ecosystem + Engine Polish — ACTIVE
+
+**Goal:** Achieve the BRU (Bulk Rename Utility) composable file operations goal. Four new file processors that chain together to give BRU-level power. Parallel engine polish for execution progress, secrets, and trust model. Image crop/rotate (deferred from Sprint 16). Format expansion (CSV sort/filter, Excel, EPS→SVG). Grows recipe count from 20→26+.
+
+**Strategy docs:** [file-node-ecosystem.md](strategy/file-node-ecosystem.md) (Phases 2+), [execution-progress-ux.md](strategy/execution-progress-ux.md) (Phase 1), [recipe-secrets.md](strategy/recipe-secrets.md) (Phase 1)
+
+**Persona ownership:**
+
+| Package                     | Persona        |
+| --------------------------- | -------------- |
+| `engine/crates/bnto`        | `/rust-expert` |
+| `engine/crates/bnto-core`   | `/rust-expert` |
+| `engine/crates/bnto-file`   | `/rust-expert` |
+| `engine/crates/bnto-image`  | `/rust-expert` |
+| `engine/crates/bnto-csv`    | `/rust-expert` |
+| `engine/crates/bnto-vector` | `/rust-expert` |
+| `engine/crates/bnto-engine` | `/rust-expert` |
+| `engine/crates/bnto-editor` | `/rust-expert` |
+
+#### Wave 1 — Engine Polish (parallel, no deps)
+
+Improve all recipe execution. Can start immediately.
+
+- [ ] `engine/crates/bnto` — **Execution progress Phase 1**: Completion summary line (`Completed 10 files in 2.4s`), per-file elapsed (`3/10 photo.jpg (1.2s)`), braille spinner + elapsed for indeterminate shell-command nodes. TUI: rename "NODES" → "STEPS", inline file count next to active node, per-node elapsed. Zero engine event changes — rendering only. RED tests: summary format, elapsed display, spinner rendering, TUI label changes (~5 tests). Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase 1
+- [ ] `engine/crates/bnto-core` + `engine/crates/bnto` — **Secrets Phase 1: dotenv + pre-flight validation**: Load `.env` from working directory and `~/.config/bnto/.env` in `NativeContext`. Simple `KEY=VALUE` parser (no crate). Add `secrets` array to `PipelineDefinition` schema. Pre-flight check: fail with clear message if required secrets missing. `bnto doctor` shows secret status. RED tests: dotenv parsing, resolution order (system > project > user), pre-flight validation, missing secret error (~6 tests). Strategy: [recipe-secrets.md](strategy/recipe-secrets.md) § Phase 1
+- [ ] `engine/crates/bnto` — **Recipe trust/consent**: Distinguish built-in vs local vs community recipes. First-run consent prompt before executing `shell-command` nodes from untrusted sources. Cache approval per recipe hash in `BntoPaths` config. TUI: trust badge on recipe detail. RED tests: trust level classification, consent prompt, approval caching, bypass for built-in (~5 tests)
+
+#### Wave 2 — BRU File Processors (parallel, the core BRU nodes)
+
+Four new processors in `bnto-file`. Each does one thing, composes with the others. This is the core BRU delivery.
+
+- [ ] `engine/crates/bnto-file` — **`file-filter` processor**: Filter files by extension, name pattern, or size. Params: `extensions` (string, comma-separated), `name_pattern` (string, glob/regex), `min_size` (integer, bytes), `max_size` (integer, bytes). Files that don't match are dropped from the pipeline. Browser+CLI. RED tests: extension filter, pattern filter, size filter, combined filters, empty result (~5 tests)
+- [ ] `engine/crates/bnto-file` — **`file-collect` processor**: Directory traversal + glob matching. Params: `pattern` (string, glob), `recursive` (boolean, default true), `flatten` (boolean, default true). Accepts directory path as input, outputs matched files into pipeline. CLI-only (filesystem traversal). Input model: Option 3 — directory as standard input. RED tests: glob matching, recursive vs flat, flatten behavior, no matches (~5 tests)
+- [ ] `engine/crates/bnto-file` — **`file-copy` processor**: Place output files in destination directory. Params: `destination` (string, path), `create_dirs` (boolean, default true), `conflict` (enum: skip/overwrite/rename, default skip), `preserve_structure` (boolean, default false). CLI-only (filesystem write). RED tests: copy to dest, create dirs, conflict modes, preserve structure (~5 tests)
+- [ ] `engine/crates/bnto-file` — **`file-metadata` processor**: Extract file properties for downstream rename templates. Params: `extract` (array: size, created, modified, width, height, exif_date). Enriches file metadata map — downstream `file-rename` pattern templates reference `{{created_year}}`, `{{width}}x{{height}}`, `{{size_kb}}`. Browser (limited) + CLI (full). RED tests: property extraction, template variable injection, missing properties, image dimensions (~5 tests)
+
+#### Wave 3 — Image Processors + All Recipes + Codegen (depends on Wave 2)
+
+Ship image crop/rotate (deferred from Sprint 16) alongside all new file recipes and codegen.
 
 - [ ] `engine/crates/bnto-image` — **Crop image processor**: New `image-crop` processor. Params: `x`, `y`, `width`, `height`, `anchor` (center/top-left/top-right/bottom-left/bottom-right). Auto EXIF orientation via existing `decode_with_orientation()`. RED tests: crop dimensions, bounds validation, anchor positioning, EXIF handling (~6 tests)
 - [ ] `engine/crates/bnto-image` — **Rotate image processor**: New `image-rotate` processor. Params: `degrees` (enum: 90/180/270), `flip_horizontal` (bool), `flip_vertical` (bool). Uses existing `image::imageops::rotate*()` + `flip_*()`. RED tests: each rotation angle, flip combinations, rotation+flip compound (~5 tests)
-- [ ] `engine/crates/bnto-engine` + `engine/recipes/` — **Crop/Rotate recipes + codegen**: `crop-images.bnto.json`, `rotate-images.bnto.json`. Register processors. Golden tests. Codegen updates. SEO slugs: `/crop-images`, `/rotate-images`. RED tests: recipe execution, golden output verification (~4 tests)
+- [ ] `engine/crates/bnto-engine` + `engine/recipes/` — **File + image recipes + codegen**: `flatten-folder.bnto.json` (file-collect → file-copy), `collect-and-rename.bnto.json` (file-collect → file-rename), `crop-images.bnto.json`, `rotate-images.bnto.json`. Register all new processors. Golden tests. Codegen updates. SEO slugs: `/flatten-folder`, `/collect-and-rename`, `/crop-images`, `/rotate-images`. RED tests: recipe execution, golden output verification (~6 tests)
 
-**Sprint 16 totals: ~14 PRs, ~72 tests, 4 new recipes (18→20 shipped, 22 target), 2 strategy docs, 1 crate rename**
+#### Wave 4 — Format Expansion (parallel with Wave 3)
+
+Spreadsheet operations and vector format conversion. Extends recipe breadth.
+
+- [ ] `engine/crates/bnto-csv` — **CSV sort/filter processor**: New `csv-sort` processor. Params: `sort_by` (string, column name), `order` (enum: asc/desc), `filter_column` (string), `filter_value` (string), `filter_op` (enum: equals/contains/greater/less). Browser+CLI. RED tests: sort ascending/descending, filter by value, combined sort+filter, missing column handling (~5 tests)
+- [ ] `engine/crates/bnto-csv` — **Excel (.xlsx) read/write**: New `spreadsheet-convert` processor. Read via `calamine`, write via `rust_xlsxwriter`. Params: `direction` (enum: xlsx-to-csv/csv-to-xlsx), `sheet` (string, sheet name for xlsx input). CLI-only initially (WASM binary size concern — evaluate `#[cfg(feature = "native")]`). RED tests: xlsx→csv, csv→xlsx, sheet selection, multi-sheet (~5 tests)
+- [ ] `engine/crates/bnto-vector` — **EPS→SVG processor**: CLI-only shell-out via Inkscape or Ghostscript. New `vector-convert` processor. Params: `format` (enum: svg). `bnto doctor` checks for Inkscape/Ghostscript availability. Recipe: `convert-eps-to-svg.bnto.json`. RED tests: EPS conversion, missing binary error, doctor check (~4 tests)
+
+#### Wave 5 — Crate Extraction (parallel with Wave 4)
+
+- [ ] `engine/crates/bnto-editor` — **Extract `bnto-editor` crate**: Move `EditorModel`, `EditorNode`, `EditorSnapshot`, `EditorCommand`, recipe I/O, wizard state model, validation from `bnto/src/tui/screens/` to `engine/crates/bnto-editor/`. TUI becomes a consumer (editor state + TUI rendering). All existing editor unit tests move to crate. RED tests: `EditorModel` is `Send + Sync`, `EditorCommand::apply` is pure (~5 new tests)
+
+**Sprint 17 totals: ~14 PRs, ~72 tests, 6 new recipes (20→26), 4 new file processors, 2 new image processors, 2 new format processors, 1 crate extraction**
 
 ---
 
@@ -454,25 +511,9 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 
 ---
 
-### Sprint 15: `bnto-editor` Crate Extraction — BACKLOG
+### ~~Sprint 15: `bnto-editor` Crate Extraction~~ → Sprint 17 Wave 5
 
-**Goal:** Extract the shared editor state model from TUI into standalone `bnto-editor` crate. Reusable for desktop (Tauri) and third-party integrations.
-
-**Implementation plan:** [editor-implementation-plan.md](strategy/editor-implementation-plan.md) (§ Phase 4)
-**Depends on:** Sprint 12-14 (editor state model proven in production)
-
-**Persona ownership:**
-
-| Package                     | Persona        |
-| --------------------------- | -------------- |
-| `engine/crates/bnto-editor` | `/rust-expert` |
-| `engine/crates/bnto`        | `/rust-expert` |
-
-#### Wave 1 — Extract (sequential)
-
-- [ ] `engine/crates/bnto-editor` — **Extract `bnto-editor` crate**: Move `EditorModel`, `EditorNode`, `EditorSnapshot`, `EditorCommand`, recipe I/O, wizard state model, validation from `bnto/src/tui/screens/` to `engine/crates/bnto-editor/`. TUI becomes a consumer (editor state + TUI rendering). All existing editor unit tests move to crate. RED tests: `EditorModel` is `Send + Sync`, `EditorCommand::apply` is pure (~5 new tests)
-
-**Sprint 15 totals: ~1 PR, migration + ~5 new tests**
+**Promoted to Sprint 17 Wave 5.** Extract the shared editor state model from TUI into standalone `bnto-editor` crate.
 
 ---
 
@@ -643,7 +684,7 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 **Priority: Medium.** Multi-step orchestration delivered. Remaining items are future node prerequisites.
 
 - [ ] `engine` — **Expression evaluation**: Expression evaluator for `transform` node and `loop` conditions. Candidates: custom Rust evaluator, `expr-eval` (for browser). Not needed until Tier 4 nodes ship
-- [ ] `engine` — **Excel (.xlsx) read/write** in `bnto-csv`: Rust options `calamine` (read) + `rust_xlsxwriter` (write)
+- ~~[ ] `engine` — **Excel (.xlsx) read/write**~~ — **→ Sprint 17 Wave 4**
 
 ### Engine: `pdf` Node — Future
 
@@ -704,9 +745,9 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 - Convex dev environment cleanup (run `cleanTestAccounts` against dev, verify table health)
 - Wire version into app build (`NEXT_PUBLIC_APP_VERSION` from git tag)
 
-### ~~Triage: iLovePNG recipe parity~~ → Sprint 16 Wave 3
+### ~~Triage: iLovePNG recipe parity~~ → Sprint 17 Wave 3
 
-**Promoted.** Crop + Rotate promoted to Sprint 16 Wave 3. Remaining iLovePNG candidates (blur face, upscale, HTML to image, meme generator) require ML or headless browser — deep backlog.
+**Promoted.** Crop + Rotate promoted to Sprint 17 Wave 3 (deferred from Sprint 16 Wave 5). Remaining iLovePNG candidates (blur face, upscale, HTML to image, meme generator) require ML or headless browser — deep backlog.
 
 ### Triage: Engine documentation — auto-generated docs
 
@@ -770,18 +811,13 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 - [x] Codegen + golden tests + test count updates
 - [x] **Delivers:** `/optimize-svg` recipe page
 
-**Phase 3 — EPS → SVG (CLI-only shell-out): Priority: Low.**
+**Phase 3 — EPS → SVG (CLI-only shell-out): → Sprint 17 Wave 4**
 
-- [ ] `engine/crates/bnto-vector` — EPS/AI→SVG processor via Inkscape/Ghostscript shell-out
-- [ ] `#[cfg(feature = "native")]` only — no browser support
-- [ ] `bnto doctor` checks for Inkscape/Ghostscript availability
-- [ ] `engine/recipes/` — `convert-eps-to-svg.bnto.json`
-- [ ] Codegen + golden tests + test count updates
-- [ ] **Delivers:** `/convert-eps-to-svg` recipe page (CLI-only)
+Promoted to Sprint 17 Wave 4.
 
-### Backlog: File Node Ecosystem — BRU-Style Composable File Operations
+### ~~Backlog: File Node Ecosystem — BRU-Style Composable File Operations~~ → Sprint 17 Wave 2
 
-**Priority: Backlog (after vector work).** Expand the `file` category from 1 recipe to 6-8 with composable node processors inspired by Bulk Rename Utility. Enhance `file-rename` (counter, extension params), add new nodes (`file-collect`, `file-copy`, `file-filter`, `file-sanitize`, `file-metadata`). Each node unlocks standalone recipes and custom compositions. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+**Promoted to Sprint 17 Wave 2.** `file-rename` enhancement and `file-sanitize` shipped in Sprint 16. Remaining nodes (`file-filter`, `file-collect`, `file-copy`, `file-metadata`) promoted to Sprint 17. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
 
 ### Triage: Homepage hero — BRU-style file recipe showcase
 
@@ -813,7 +849,7 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 
 **Priority: Triage.** Seven deferred security items from the `shell-command` processor threat model. Each is independent and can be triaged separately:
 
-1. **Recipe trust levels + first-run consent** — Distinguish built-in/local/community recipes. Prompt before executing `shell-command` nodes from untrusted sources. Cache approval per recipe hash. (P0 for community recipes, not needed while all recipes are built-in)
+1. ~~**Recipe trust levels + first-run consent**~~ — **→ Sprint 17 Wave 1**
 2. ~~**`bnto inspect <recipe>` command**~~ — **Done.** Shipped as `bnto dry-run` in Sprint 14 Wave 1 (PR #451)
 3. **Path traversal prevention in shell-command args** — Sandbox file path arguments to execution working directory. Reject absolute paths and `..` traversal. Canonicalize + verify
 4. ~~**Fix `extra_args` whitespace splitting in yt-dlp adapter**~~ — **Resolved.** `bnto-video` crate deleted; `download-video` migrated to shell-command recipe with `{{fields.*}}` templates. The old whitespace-splitting code path no longer exists
@@ -829,16 +865,9 @@ iLovePNG parity — crop and rotate. Uses existing `image` crate primitives (zer
 
 **Design spike delivered.** Strategy doc at `strategy/execution-progress-ux.md`. Three implementation phases defined below, each independently promotable. See the spike for competitive audit, indicator inventory, layout mockups, and architecture review.
 
-### Triage: Execution progress Phase 1 — CLI/TUI rendering polish
+### ~~Triage: Execution progress Phase 1~~ → Sprint 17 Wave 1
 
-**Priority: Medium.** Improve CLI and TUI execution rendering with zero engine changes. All data already available in existing `PipelineEvent` types. Single PR, ~5 tests.
-
-- Add completion summary line: `Completed 10 files in 2.4s`
-- Show elapsed time per progress line: `3/10 photo.jpg (1.2s)`
-- Braille spinner + elapsed for indeterminate shell-command nodes (no file count)
-- TUI: rename "NODES" → "STEPS", inline file count next to active node, per-node elapsed
-
-Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase 1. `engine/crates/bnto`
+**Promoted to Sprint 17 Wave 1.** CLI/TUI rendering polish — completion summary, per-file elapsed, braille spinner.
 
 ### Triage: Execution progress Phase 2 — Throughput + animated indicators
 
@@ -857,6 +886,12 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 - Summary: `Completed 10 files in 2.4s (12.4 MB → 3.1 MB, 75% smaller)`
 
 Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase 3. `engine/crates/bnto`, `engine/crates/bnto-core`
+
+### Triage: Rich execution progress UX — animated Unicode indicators
+
+**Priority: Medium.** Unicode progress indicators, animated spinners, token/byte counters, elapsed time. Inspired by Claude Code's progress display (e.g. `✳ Quantumizing… (3m 7s · ↓ 4.6k tokens)`). Make recipe execution feel alive with animated unicode characters, progress bars with percentage, file-level status indicators, and streaming throughput metrics. Covers both CLI (`bnto run`) and TUI execution screen. Depends on Phase 1 (Sprint 17 Wave 1) shipping first.
+
+`engine/crates/bnto`, `engine/crates/bnto-core`
 
 ### Triage: Cloud Execution via Railway
 
