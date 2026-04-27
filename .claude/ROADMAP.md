@@ -1,6 +1,6 @@
 # Bnto — Strategic Roadmap
 
-**Last Updated:** April 5, 2026
+**Last Updated:** April 27, 2026
 **Purpose:** High-level strategy, milestones, and big decisions. PLAN.md tracks sprint tasks. This tracks the "why" and "where we're going."
 
 ---
@@ -53,7 +53,7 @@ M2: Platform Features                ← DELIVERED (March 2026)
     Community recipes via GitHub PRs, curated by maintainer.
 
 M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
-    CLI is the product. v0.12.0 on crates.io. 18 recipes. TUI shipped
+    CLI is the product. v0.12.0 on crates.io. 20 recipes. TUI shipped
     (7 screens, 400+ tests). Schema-driven config, data persistence,
     Home/Library, List editor, Wizard, tonkotsu widget crate — all
     delivered. Recipe fields ({{fields.*}}) shipped. `download-video`
@@ -62,13 +62,16 @@ M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     Engine hardening complete (execution progress, dry-run, install, TOCTOU fix).
     TUI controls polish complete (Bubbles-inspired display/edit, FilePath,
     fuzzy Select, TextArea, picker search/metadata/breadcrumbs).
+    tonkotsu at full huh parity (FullScreenEdit, MultiSelect, field grouping, Note).
+    Template expressions ({{env.*}}, {{ctx.*}}, {{node.*}}), version constraints,
+    `bnto migrate` shipped. Design spikes: execution progress UX, recipe secrets.
 
-    Next: Sprint 16 — Recipe expansion + huh parity. tonkotsu reaches
-    full huh equivalence (FullScreenEdit, MultiSelect, field grouping, Note).
-    File node expansion (BRU-style: counter rename, sanitize filenames).
-    Image crop/rotate for iLovePNG parity. Engine infra (template expressions,
-    version constraints, migration tool). Target: 22+ recipes.
-    All web editor sprints deprioritized.
+    Next: Sprint 17 — BRU file ecosystem + engine polish. Composable file
+    operations (file-filter, file-collect, file-copy, file-metadata) for
+    BRU-level power. Engine polish (execution progress Phase 1, secrets
+    Phase 1, recipe trust/consent). Image crop/rotate. Format expansion
+    (CSV sort/filter, Excel, EPS→SVG). bnto-editor crate extraction.
+    Target: 26+ recipes. All web editor sprints deprioritized.
 
 M4: Distribution (backlog)
     Desktop app (Tauri, Rust-native). Server-side execution for premium
