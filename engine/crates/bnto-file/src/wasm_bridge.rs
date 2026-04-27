@@ -9,7 +9,6 @@ use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::rename::RenameFiles;
-use crate::sanitize::SanitizeFiles;
 
 // Helper: convert BntoError to JsValue at the WASM boundary.
 // Each node crate has its own copy because Rust's orphan rule prevents
@@ -182,43 +181,5 @@ pub fn rename_file_combined(
     //
     // This packs the NodeOutput into a single JS object containing
     // metadata JSON string + raw Uint8Array bytes + filename + mimeType.
-    build_combined_result(output)
-}
-
-// =============================================================================
-// Sanitize File — Combined (Single Process Call)
-// =============================================================================
-
-/// Sanitize a single filename and return both metadata and bytes in one call.
-#[wasm_bindgen]
-pub fn sanitize_file_combined(
-    data: &[u8],
-    filename: &str,
-    params_json: &str,
-    progress_callback: js_sys::Function,
-) -> Result<JsValue, JsValue> {
-    let params: serde_json::Map<String, serde_json::Value> =
-        serde_json::from_str(params_json).unwrap_or_default();
-
-    let input = NodeInput {
-        data: data.to_vec(),
-        filename: filename.to_string(),
-        mime_type: None,
-        params,
-    };
-
-    let processor = SanitizeFiles::new();
-    let progress = ProgressReporter::new(move |percent, message| {
-        let _ = progress_callback.call2(
-            &JsValue::NULL,
-            &JsValue::from(percent),
-            &JsValue::from(message),
-        );
-    });
-
-    let output = processor
-        .process(input, &progress, &NoopContext)
-        .map_err(bnto_err_to_js)?;
-
     build_combined_result(output)
 }

@@ -137,21 +137,21 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_fourteen_processors() {
-        // The native registry has 14 processors (13 browser + shell-command).
+    fn test_catalog_has_all_thirteen_processors() {
+        // The native registry has 13 processors (12 browser + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            14,
-            "Catalog should have exactly 14 processors"
+            13,
+            "Catalog should have exactly 13 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 14 expected processor type keys are present.
+        // Verify all 13 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -167,7 +167,6 @@ mod tests {
             "spreadsheet-convert",
             "spreadsheet-merge",
             "file-rename",
-            "file-sanitize",
             "image-overlay",
             "vector-rasterize",
             "vector-optimize",
@@ -220,9 +219,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 22);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 21);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 14);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 13);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),

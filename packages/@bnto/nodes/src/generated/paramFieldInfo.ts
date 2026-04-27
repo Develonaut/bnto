@@ -13,6 +13,14 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     keepOnlySet: { type: "boolean", control: "switch", required: false },
   },
   "file-rename": {
+    sanitize: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["slugify", "strip", "normalize"] as const,
+    },
+    separator: { type: "string", control: "text", required: false },
+    max_length: { type: "number", control: "number", required: false, min: 0 },
     find: { type: "string", control: "text", required: false },
     replace: { type: "string", control: "text", required: false },
     case: {
@@ -27,16 +35,6 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     counter_start: { type: "number", control: "number", required: false, min: 0 },
     counter_pad: { type: "number", control: "slider", required: false, min: 0, max: 10 },
     extension: { type: "string", control: "text", required: false },
-  },
-  "file-sanitize": {
-    mode: {
-      type: "enum",
-      control: "select",
-      required: false,
-      enumValues: ["slugify", "strip", "normalize"] as const,
-    },
-    separator: { type: "string", control: "text", required: false },
-    max_length: { type: "number", control: "number", required: false, min: 0 },
   },
   group: {
     mode: {

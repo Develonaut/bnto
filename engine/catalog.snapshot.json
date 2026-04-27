@@ -39,12 +39,59 @@
     {
       "name": "file-rename",
       "label": "Rename Files",
-      "description": "Transform filenames using patterns, find/replace, case rules, and counters.",
+      "description": "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
       "category": "file",
       "isContainer": false,
       "platforms": ["browser"],
       "icon": "folder-open",
       "params": [
+        {
+          "name": "sanitize",
+          "label": "Sanitize",
+          "description": "Clean the filename before other transforms",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "slugify",
+                "label": "Slugify (web-safe)"
+              },
+              {
+                "value": "strip",
+                "label": "Strip non-ASCII"
+              },
+              {
+                "value": "normalize",
+                "label": "Normalize Unicode"
+              }
+            ]
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "separator",
+          "label": "Separator",
+          "description": "Character to replace spaces and special characters (used with Sanitize)",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "-",
+          "surfaceable": true
+        },
+        {
+          "name": "max_length",
+          "label": "Max Length",
+          "description": "Maximum filename length after sanitize (0 = no limit)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "surfaceable": true
+        },
         {
           "name": "find",
           "label": "Find",
@@ -151,65 +198,6 @@
             "type": "string"
           },
           "placeholder": "png",
-          "surfaceable": true
-        }
-      ]
-    },
-    {
-      "name": "file-sanitize",
-      "label": "Sanitize Filenames",
-      "description": "Clean filenames for web-safe or cross-platform use.",
-      "category": "file",
-      "isContainer": false,
-      "platforms": ["browser"],
-      "icon": "folder-check",
-      "params": [
-        {
-          "name": "mode",
-          "label": "Mode",
-          "description": "Sanitization strategy",
-          "paramType": {
-            "type": "enum",
-            "options": [
-              {
-                "value": "slugify",
-                "label": "Slugify (web-safe)"
-              },
-              {
-                "value": "strip",
-                "label": "Strip non-ASCII"
-              },
-              {
-                "value": "normalize",
-                "label": "Normalize Unicode"
-              }
-            ]
-          },
-          "default": "slugify",
-          "surfaceable": true
-        },
-        {
-          "name": "separator",
-          "label": "Separator",
-          "description": "Character to replace spaces and special characters",
-          "paramType": {
-            "type": "string"
-          },
-          "default": "-",
-          "surfaceable": true
-        },
-        {
-          "name": "max_length",
-          "label": "Max Length",
-          "description": "Maximum filename length (0 = no limit)",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 0,
-          "constraints": {
-            "min": 0.0,
-            "required": false
-          },
           "surfaceable": true
         }
       ]
@@ -1505,6 +1493,53 @@
       "platforms": ["browser"],
       "parameters": [
         {
+          "name": "sanitize",
+          "label": "Sanitize",
+          "description": "Clean the filename before other transforms",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "slugify",
+                "label": "Slugify (web-safe)"
+              },
+              {
+                "value": "strip",
+                "label": "Strip non-ASCII"
+              },
+              {
+                "value": "normalize",
+                "label": "Normalize Unicode"
+              }
+            ]
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "separator",
+          "label": "Separator",
+          "description": "Character to replace spaces and special characters (used with Sanitize)",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "-",
+          "surfaceable": true
+        },
+        {
+          "name": "max_length",
+          "label": "Max Length",
+          "description": "Maximum filename length after sanitize (0 = no limit)",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 0,
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "surfaceable": true
+        },
+        {
           "name": "find",
           "label": "Find",
           "description": "Text or regex pattern to search for in the filename",
@@ -1610,65 +1645,6 @@
             "type": "string"
           },
           "placeholder": "png",
-          "surfaceable": true
-        }
-      ],
-      "inputCardinality": "perFile"
-    },
-    {
-      "nodeType": "file-sanitize",
-      "name": "Sanitize Filenames",
-      "description": "Clean filenames for web-safe or cross-platform use",
-      "category": "file",
-      "accepts": [],
-      "platforms": ["browser"],
-      "parameters": [
-        {
-          "name": "mode",
-          "label": "Mode",
-          "description": "Sanitization strategy",
-          "paramType": {
-            "type": "enum",
-            "options": [
-              {
-                "value": "slugify",
-                "label": "Slugify (web-safe)"
-              },
-              {
-                "value": "strip",
-                "label": "Strip non-ASCII"
-              },
-              {
-                "value": "normalize",
-                "label": "Normalize Unicode"
-              }
-            ]
-          },
-          "default": "slugify",
-          "surfaceable": true
-        },
-        {
-          "name": "separator",
-          "label": "Separator",
-          "description": "Character to replace spaces and special characters",
-          "paramType": {
-            "type": "string"
-          },
-          "default": "-",
-          "surfaceable": true
-        },
-        {
-          "name": "max_length",
-          "label": "Max Length",
-          "description": "Maximum filename length (0 = no limit)",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 0,
-          "constraints": {
-            "min": 0.0,
-            "required": false
-          },
           "surfaceable": true
         }
       ],
@@ -5029,14 +5005,14 @@
             "name": "Sanitize",
             "outputPorts": [],
             "parameters": {
-              "mode": "slugify",
+              "sanitize": "slugify",
               "separator": "-"
             },
             "position": {
               "x": 250,
               "y": 100
             },
-            "type": "file-sanitize",
+            "type": "file-rename",
             "version": "1.0.0"
           },
           {

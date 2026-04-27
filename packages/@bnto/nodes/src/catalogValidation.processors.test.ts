@@ -129,6 +129,9 @@ describe("file-rename", () => {
   it("has all rename params", () => {
     const names = proc.parameters.map((p) => p.name);
     expect(names).toEqual([
+      "sanitize",
+      "separator",
+      "max_length",
       "find",
       "replace",
       "case",
