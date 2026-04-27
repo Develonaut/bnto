@@ -415,7 +415,7 @@ Template expressions, version constraints, and migration tooling. Strengthens th
 
 Write strategy docs to unblock future sprints. No code — research, mockups, and architecture decisions.
 
-- [ ] `.claude/strategy/execution-progress-ux.md` — **Rich execution progress UX design spike**: Competitive audit (Claude Code, cargo, docker, Bubbles), Unicode indicator inventory (spinners, progress bars, frames), metrics design (elapsed, throughput, ETA, file count), layout mockups (CLI single-line vs TUI multi-line), architecture review (engine events vs rendering), phased scope recommendation
+- [x] `.claude/strategy/execution-progress-ux.md` — **Rich execution progress UX design spike**: Competitive audit (Claude Code, cargo, docker, Bubbles), Unicode indicator inventory (spinners, progress bars, frames), metrics design (elapsed, throughput, ETA, file count), layout mockups (CLI single-line vs TUI multi-line), architecture review (engine events vs rendering), phased scope recommendation
 - [ ] `.claude/strategy/recipe-secrets.md` — **Secret/env variable management design spike**: How recipes reference secrets without embedding in `.bnto.json`. Resolution per target (CLI reads env/dotfiles, server reads vault, browser prompts). Integration with `{{env.*}}` template namespace (Wave 4). Threat model for secret exposure
 
 #### Wave 5 — Image Recipe Expansion (depends on Wave 2 codegen pattern)
