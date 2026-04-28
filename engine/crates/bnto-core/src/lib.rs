@@ -70,6 +70,14 @@ pub mod editor;
 /// Browser gets `NoopLogger`, CLI gets `FileLogger`.
 pub mod logging;
 
+/// Simple dotenv parser — loads KEY=VALUE pairs from `.env` files.
+/// No crate dependency, handles comments, quotes, and `export` prefix.
+pub mod dotenv;
+
+/// Secret declarations for recipes — pre-flight validation of required env vars.
+/// Recipes declare what secrets they need; the engine validates before execution.
+pub mod secrets;
+
 /// Version constraint checking for external dependencies.
 /// Parses `--version` output, extracts version numbers, validates against
 /// constraint strings like `">=6.0"`.
@@ -100,6 +108,7 @@ pub use pipeline::{
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;
+pub use secrets::SecretDef;
 pub use version::{VersionCheckResult, VersionConstraint, check_version};
 
 // =============================================================================

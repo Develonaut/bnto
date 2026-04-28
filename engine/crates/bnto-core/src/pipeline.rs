@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::field_def::FieldDef;
+use crate::secrets::SecretDef;
 
 // =============================================================================
 // Pipeline Settings — Recipe-Level Configuration
@@ -75,6 +76,13 @@ pub struct PipelineDefinition {
     /// Empty by default so existing recipes (without this field) still parse.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requires: Vec<crate::Dependency>,
+
+    /// Secrets this recipe needs at execution time (API keys, tokens, etc.).
+    /// Each entry maps to a `{{env.KEY}}` placeholder in node params.
+    /// Required secrets are validated before execution; optional ones resolve
+    /// to empty string if absent. See `strategy/recipe-secrets.md`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub secrets: Vec<SecretDef>,
 }
 
 impl PipelineDefinition {
@@ -907,6 +915,72 @@ mod tests {
         assert_eq!(dep.version, ">=6.0");
         assert_eq!(dep.install_hint, "brew install ffmpeg");
         assert_eq!(dep.homepage, "https://ffmpeg.org");
+    }
+
+    // --- Secrets Field Tests ---
+
+    #[test]
+    fn test_definition_without_secrets_still_parses() {
+        let json = r#"{
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert!(def.secrets.is_empty());
+    }
+
+    #[test]
+    fn test_definition_with_secrets_parses() {
+        let json = r#"{
+            "secrets": [
+                { "key": "OPENAI_API_KEY", "description": "OpenAI API key", "required": true }
+            ],
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert_eq!(def.secrets.len(), 1);
+        assert_eq!(def.secrets[0].key, "OPENAI_API_KEY");
+        assert!(def.secrets[0].required);
+    }
+
+    #[test]
+    fn test_definition_secrets_defaults_required_true() {
+        let json = r#"{
+            "secrets": [{ "key": "API_KEY" }],
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert!(def.secrets[0].required);
+        assert!(def.secrets[0].description.is_empty());
+    }
+
+    #[test]
+    fn test_definition_empty_secrets_omitted_in_serialization() {
+        let json = r#"{ "nodes": [{ "id": "n1", "type": "input" }] }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        assert!(
+            !serialized.contains("secrets"),
+            "Empty secrets should be omitted; got: {serialized}"
+        );
+    }
+
+    #[test]
+    fn test_definition_secrets_round_trip() {
+        let json = r#"{
+            "secrets": [
+                { "key": "API_KEY", "description": "Test key", "required": true },
+                { "key": "OPTIONAL", "required": false }
+            ],
+            "nodes": [{ "id": "n1", "type": "input" }]
+        }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        let serialized = serde_json::to_string(&def).unwrap();
+        let rt: PipelineDefinition = serde_json::from_str(&serialized).unwrap();
+        assert_eq!(rt.secrets.len(), 2);
+        assert_eq!(rt.secrets[0].key, "API_KEY");
+        assert!(rt.secrets[0].required);
+        assert_eq!(rt.secrets[1].key, "OPTIONAL");
+        assert!(!rt.secrets[1].required);
     }
 
     // --- Helper Function Tests ---
