@@ -2,24 +2,42 @@
 //
 // Provides real implementations for running external commands, creating
 // temp files, reading env vars, and accessing the working directory.
+// Env var resolution: system env > project .env > user ~/.config/bnto/.env.
 
+use std::collections::HashMap;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 use bnto_core::context::ProcessContext;
+use bnto_core::dotenv::parse_dotenv;
 use bnto_core::errors::BntoError;
 
 /// Native context for CLI execution with full system access.
+///
+/// Env var resolution order (first match wins):
+/// 1. System environment (`std::env::var`)
+/// 2. Project `.env` file in the working directory
+/// 3. User dotenv at `~/.config/bnto/.env`
 pub struct NativeContext {
     work_dir: PathBuf,
+    /// Key-value pairs from the project-level `.env` file.
+    project_env: HashMap<String, String>,
+    /// Key-value pairs from the user-level `~/.config/bnto/.env` file.
+    user_env: HashMap<String, String>,
 }
 
 impl NativeContext {
     /// Create a context rooted at the given working directory.
     #[allow(dead_code)]
     pub fn new(work_dir: PathBuf) -> Self {
-        Self { work_dir }
+        let project_env = load_dotenv_file(&work_dir.join(".env"));
+        let user_env = load_user_dotenv();
+        Self {
+            work_dir,
+            project_env,
+            user_env,
+        }
     }
 
     /// Create a context using the current working directory.
@@ -27,8 +45,44 @@ impl NativeContext {
         let work_dir = std::env::current_dir().map_err(|e| {
             BntoError::ProcessingFailed(format!("Failed to get current directory: {e}"))
         })?;
-        Ok(Self { work_dir })
+        let project_env = load_dotenv_file(&work_dir.join(".env"));
+        let user_env = load_user_dotenv();
+        Ok(Self {
+            work_dir,
+            project_env,
+            user_env,
+        })
     }
+}
+
+/// Load and parse a `.env` file, returning an empty map if it doesn't exist.
+fn load_dotenv_file(path: &Path) -> HashMap<String, String> {
+    match std::fs::read_to_string(path) {
+        Ok(contents) => parse_dotenv(&contents),
+        Err(_) => HashMap::new(),
+    }
+}
+
+/// Load the user-level dotenv from `~/.config/bnto/.env`.
+/// Uses the same XDG logic as `BntoPaths` but avoids a dependency on the TUI module.
+fn load_user_dotenv() -> HashMap<String, String> {
+    let config_dir = resolve_user_config_dir();
+    match config_dir {
+        Some(dir) => load_dotenv_file(&dir.join(".env")),
+        None => HashMap::new(),
+    }
+}
+
+/// Resolve the user config dir without depending on `BntoPaths` (TUI module).
+/// Priority: BNTO_CONFIG_DIR > XDG_CONFIG_HOME > ~/.config/bnto/.
+fn resolve_user_config_dir() -> Option<PathBuf> {
+    if let Some(dir) = std::env::var_os("BNTO_CONFIG_DIR") {
+        return Some(PathBuf::from(dir));
+    }
+    if let Some(xdg) = std::env::var_os("XDG_CONFIG_HOME") {
+        return Some(PathBuf::from(xdg).join("bnto"));
+    }
+    dirs::home_dir().map(|h| h.join(".config").join("bnto"))
 }
 
 impl ProcessContext for NativeContext {
@@ -156,7 +210,19 @@ impl ProcessContext for NativeContext {
     }
 
     fn env_var(&self, key: &str) -> Option<String> {
-        std::env::var(key).ok()
+        // 1. System environment (most explicit — user actively exported it).
+        if let Ok(val) = std::env::var(key) {
+            return Some(val);
+        }
+        // 2. Project .env (per-project credentials).
+        if let Some(val) = self.project_env.get(key) {
+            return Some(val.clone());
+        }
+        // 3. User dotenv (~/.config/bnto/.env) — global defaults.
+        if let Some(val) = self.user_env.get(key) {
+            return Some(val.clone());
+        }
+        None
     }
 
     fn work_dir(&self) -> Result<&Path, BntoError> {
@@ -289,5 +355,84 @@ mod tests {
         let result = ctx.work_dir();
         assert!(result.is_ok());
         assert!(result.unwrap().is_dir());
+    }
+
+    // --- Dotenv loading tests ---
+
+    #[test]
+    fn load_dotenv_file_reads_project_env() {
+        let tmp = tempfile::tempdir().unwrap();
+        let env_path = tmp.path().join(".env");
+        std::fs::write(&env_path, "PROJECT_VAR=project_value\n").unwrap();
+
+        let vars = super::load_dotenv_file(&env_path);
+        assert_eq!(vars.get("PROJECT_VAR").unwrap(), "project_value");
+    }
+
+    #[test]
+    fn load_dotenv_file_missing_returns_empty() {
+        let vars = super::load_dotenv_file(Path::new("/nonexistent/.env"));
+        assert!(vars.is_empty());
+    }
+
+    #[test]
+    fn native_context_reads_project_dotenv() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::write(
+            tmp.path().join(".env"),
+            "BNTO_TEST_PROJECT_KEY=from_project\n",
+        )
+        .unwrap();
+
+        let ctx = NativeContext::new(tmp.path().to_path_buf());
+        // Should resolve from project .env (system env won't have this key).
+        assert_eq!(
+            ctx.env_var("BNTO_TEST_PROJECT_KEY"),
+            Some("from_project".to_string())
+        );
+    }
+
+    #[test]
+    fn system_env_takes_priority_over_project_dotenv() {
+        let tmp = tempfile::tempdir().unwrap();
+        // PATH is always set in the system environment.
+        std::fs::write(tmp.path().join(".env"), "PATH=overridden\n").unwrap();
+
+        let ctx = NativeContext::new(tmp.path().to_path_buf());
+        // System env should win — PATH should NOT be "overridden".
+        let val = ctx.env_var("PATH").unwrap();
+        assert_ne!(val, "overridden", "System env should take priority");
+    }
+
+    #[test]
+    fn env_var_resolution_prefers_project_over_user() {
+        // Test the layered resolution directly by constructing a context
+        // with injected dotenv maps, without touching real env vars.
+        let ctx = NativeContext {
+            work_dir: PathBuf::from("/tmp"),
+            project_env: [("KEY".to_string(), "project".to_string())]
+                .into_iter()
+                .collect(),
+            user_env: [("KEY".to_string(), "user".to_string())]
+                .into_iter()
+                .collect(),
+        };
+        assert_eq!(
+            ctx.env_var("KEY"),
+            Some("project".to_string()),
+            "Project .env should take priority over user .env"
+        );
+    }
+
+    #[test]
+    fn env_var_falls_through_to_user_env() {
+        let ctx = NativeContext {
+            work_dir: PathBuf::from("/tmp"),
+            project_env: HashMap::new(),
+            user_env: [("USER_ONLY_KEY".to_string(), "user_val".to_string())]
+                .into_iter()
+                .collect(),
+        };
+        assert_eq!(ctx.env_var("USER_ONLY_KEY"), Some("user_val".to_string()),);
     }
 }

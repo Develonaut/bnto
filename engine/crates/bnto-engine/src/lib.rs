@@ -92,6 +92,9 @@ pub fn run_pipeline(
     // Pre-flight: fail fast if required external tools are missing.
     deps::check_pipeline_dependencies(&definition, &registry, ctx)?;
 
+    // Pre-flight: fail fast if required secrets (env vars) are missing.
+    deps::check_pipeline_secrets(&definition, ctx)?;
+
     let now_ms = || {
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)

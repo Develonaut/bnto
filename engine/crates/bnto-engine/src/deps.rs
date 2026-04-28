@@ -157,6 +157,31 @@ pub fn check_pipeline_dependencies(
     )))
 }
 
+/// Check that all required secrets declared by a pipeline are available.
+///
+/// Parallel to `check_pipeline_dependencies()` — this is the pre-flight
+/// check for env vars. Returns `Ok(())` when all required secrets are
+/// present, or `Err(BntoError)` listing the missing ones.
+pub fn check_pipeline_secrets(
+    definition: &PipelineDefinition,
+    ctx: &dyn bnto_core::ProcessContext,
+) -> Result<(), BntoError> {
+    if definition.secrets.is_empty() {
+        return Ok(());
+    }
+
+    let statuses = bnto_core::secrets::check_secrets(&definition.secrets, ctx);
+    let missing = bnto_core::secrets::missing_required(&statuses);
+
+    if missing.is_empty() {
+        return Ok(());
+    }
+
+    Err(BntoError::InvalidInput(
+        bnto_core::secrets::format_missing_error(&missing),
+    ))
+}
+
 // =============================================================================
 // Tests
 // =============================================================================
@@ -692,5 +717,105 @@ mod tests {
         let def = make_definition(&["input", "video-transcode", "output"]);
         let result = check_pipeline_dependencies(&def, &registry, &ctx);
         assert!(result.is_ok());
+    }
+
+    // --- check_pipeline_secrets ---
+
+    fn make_definition_with_secrets(secrets: Vec<bnto_core::SecretDef>) -> PipelineDefinition {
+        let mut def = make_definition(&["input", "output"]);
+        def.secrets = secrets;
+        def
+    }
+
+    fn required_secret(key: &str) -> bnto_core::SecretDef {
+        bnto_core::SecretDef {
+            key: key.to_string(),
+            description: String::new(),
+            required: true,
+        }
+    }
+
+    fn optional_secret(key: &str) -> bnto_core::SecretDef {
+        bnto_core::SecretDef {
+            key: key.to_string(),
+            description: String::new(),
+            required: false,
+        }
+    }
+
+    /// Mock context that provides specific env vars.
+    struct EnvContext {
+        vars: std::collections::HashMap<String, String>,
+    }
+
+    impl EnvContext {
+        fn new(pairs: &[(&str, &str)]) -> Self {
+            Self {
+                vars: pairs
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect(),
+            }
+        }
+    }
+
+    impl ProcessContext for EnvContext {
+        fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+        fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+        fn env_var(&self, key: &str) -> Option<String> {
+            self.vars.get(key).cloned()
+        }
+        fn work_dir(&self) -> Result<&Path, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+    }
+
+    #[test]
+    fn test_secrets_preflight_no_secrets_ok() {
+        let def = make_definition(&["input", "output"]);
+        let result = check_pipeline_secrets(&def, &NoopContext);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_secrets_preflight_all_present_ok() {
+        let def = make_definition_with_secrets(vec![required_secret("API_KEY")]);
+        let ctx = EnvContext::new(&[("API_KEY", "sk-123")]);
+        let result = check_pipeline_secrets(&def, &ctx);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_secrets_preflight_required_missing_fails() {
+        let def = make_definition_with_secrets(vec![required_secret("API_KEY")]);
+        let result = check_pipeline_secrets(&def, &NoopContext);
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(msg.contains("API_KEY"));
+        assert!(msg.contains("~/.config/bnto/.env"));
+    }
+
+    #[test]
+    fn test_secrets_preflight_optional_missing_ok() {
+        let def = make_definition_with_secrets(vec![optional_secret("OPTIONAL_KEY")]);
+        let result = check_pipeline_secrets(&def, &NoopContext);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_secrets_preflight_mixed_missing_only_required() {
+        let def = make_definition_with_secrets(vec![
+            required_secret("REQUIRED_KEY"),
+            optional_secret("OPTIONAL_KEY"),
+        ]);
+        let result = check_pipeline_secrets(&def, &NoopContext);
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(msg.contains("REQUIRED_KEY"));
+        assert!(!msg.contains("OPTIONAL_KEY"));
     }
 }
