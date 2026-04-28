@@ -210,7 +210,7 @@ fn test_missing_input_file() {
 fn test_url_mode_no_input_shows_error() {
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
+        .args(["run", &recipe_path("download-video"), "--yes"])
         .args(["-o", out.path().to_str().unwrap()])
         .output()
         .unwrap();
@@ -227,7 +227,7 @@ fn test_url_mode_no_input_shows_error() {
 fn test_url_mode_non_url_input_shows_error() {
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
+        .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("not-a-url.mp4")
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -248,7 +248,7 @@ fn test_youtube_download() {
     // Requires yt-dlp + ffmpeg installed. Skips gracefully if missing.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
+        .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -283,7 +283,7 @@ fn test_youtube_download_with_param_override() {
     // Verifies param injection works alongside URL input.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
+        .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
         .args(["--param", "timeout=600"])
         .args(["-o", out.path().to_str().unwrap()])
@@ -322,7 +322,7 @@ fn test_m3u8_url_routes_correctly() {
     // validation errors. Routing is fast — no download needed.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
+        .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -347,7 +347,7 @@ fn test_m3u8_download() {
     // Big Buck Bunny via Mux test stream. Requires yt-dlp + ffmpeg.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path("download-video")])
+        .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
         .args(["-o", out.path().to_str().unwrap()])
         .output()

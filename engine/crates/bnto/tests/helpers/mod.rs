@@ -45,7 +45,7 @@ pub fn custom_recipe_path(slug: &str) -> String {
 pub fn run_custom_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &custom_recipe_path(slug)])
+        .args(["run", &custom_recipe_path(slug), "--yes"])
         .arg(fixture)
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -68,7 +68,7 @@ pub fn explicit_recipe_path(slug: &str) -> String {
 pub fn run_explicit_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &explicit_recipe_path(slug)])
+        .args(["run", &explicit_recipe_path(slug), "--yes"])
         .arg(fixture)
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -119,7 +119,7 @@ pub fn temp_output_dir() -> tempfile::TempDir {
 pub fn run_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
-        .args(["run", &recipe_path(slug)])
+        .args(["run", &recipe_path(slug), "--yes"])
         .arg(fixture)
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -134,7 +134,7 @@ pub fn run_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
 pub fn run_recipe_ok_multi(slug: &str, fixtures: &[String]) -> (tempfile::TempDir, String) {
     let out = temp_output_dir();
     let mut cmd = Command::new(bnto_bin());
-    cmd.args(["run", &recipe_path(slug)]);
+    cmd.args(["run", &recipe_path(slug), "--yes"]);
     for f in fixtures {
         cmd.arg(f);
     }
@@ -153,7 +153,7 @@ pub fn run_explicit_recipe_ok_multi(
 ) -> (tempfile::TempDir, String) {
     let out = temp_output_dir();
     let mut cmd = Command::new(bnto_bin());
-    cmd.args(["run", &explicit_recipe_path(slug)]);
+    cmd.args(["run", &explicit_recipe_path(slug), "--yes"]);
     for f in fixtures {
         cmd.arg(f);
     }

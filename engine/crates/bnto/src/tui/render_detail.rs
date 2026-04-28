@@ -10,6 +10,8 @@ use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
+use crate::trust;
+
 use super::app::AppModel;
 use super::render_layout::content_panel;
 use super::screens::detail::DetailFocus;
@@ -62,10 +64,13 @@ fn detail_lines<'a>(
     let mut lines: Vec<Line> = Vec::new();
 
     // Recipe header
-    lines.push(Line::from(Span::styled(
-        detail.name.as_str(),
-        theme.heading(),
-    )));
+    let source = trust::classify_source(&detail.slug);
+    let badge = trust::trust_badge(&source, false);
+    lines.push(Line::from(vec![
+        Span::styled(detail.name.as_str(), theme.heading()),
+        Span::raw("  "),
+        Span::styled(format!("[{badge}]"), theme.category()),
+    ]));
     lines.push(Line::from(Span::styled(
         detail.description.as_str(),
         theme.muted(),

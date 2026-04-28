@@ -72,6 +72,11 @@ impl BntoPaths {
         self.state.join("recent.json")
     }
 
+    /// Path to the trusted recipes store.
+    pub fn trusted_file(&self) -> PathBuf {
+        self.state.join("trusted.json")
+    }
+
     /// Path to the session logs directory.
     pub fn logs_dir(&self) -> PathBuf {
         self.state.join("logs")
@@ -226,6 +231,16 @@ mod tests {
         assert_eq!(
             paths.recent_file(),
             tmp.path().join("state").join("recent.json")
+        );
+    }
+
+    #[test]
+    fn trusted_file_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let paths = paths_from_root(tmp.path());
+        assert_eq!(
+            paths.trusted_file(),
+            tmp.path().join("state").join("trusted.json")
         );
     }
 
