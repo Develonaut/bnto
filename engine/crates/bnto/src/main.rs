@@ -25,6 +25,7 @@ mod migrate;
 mod package_manager;
 mod progress;
 pub mod telemetry;
+mod trust;
 mod tui;
 
 use std::process;
@@ -61,6 +62,10 @@ enum Command {
         /// Override a node parameter. Format: key=value or nodeId:key=value
         #[arg(short = 'p', long = "param")]
         param: Vec<String>,
+
+        /// Skip trust consent prompt for local recipes with shell commands.
+        #[arg(long)]
+        yes: bool,
     },
 
     /// List available built-in recipes.
@@ -172,9 +177,10 @@ fn main() {
             inputs,
             output,
             param,
+            yes,
         }) => {
             telemetry::capture(telemetry::events::cli_command("run"));
-            run_recipe(&recipe, &inputs, &output, &param, &logger);
+            run_recipe(&recipe, &inputs, &output, &param, yes, &logger);
         }
         Some(Command::List) => {
             telemetry::capture(telemetry::events::cli_command("list"));
@@ -291,9 +297,11 @@ fn run_recipe(
     inputs: &[String],
     output_dir: &str,
     param_overrides: &[String],
+    skip_consent: bool,
     logger: &Arc<dyn Logger>,
 ) {
     let raw_json = read_recipe(recipe_path);
+    check_trust(recipe_path, &raw_json, skip_consent);
     let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
     print_run_banner(recipe_path, &raw_json, &prepared);
 
@@ -359,6 +367,60 @@ fn print_run_banner(recipe_path: &str, raw_json: &str, prepared: &input::Prepare
             recipe_path.bold(),
             if count == 1 { "" } else { "s" }
         );
+    }
+}
+
+/// Extract recipe name from raw JSON, falling back to the CLI argument.
+fn extract_recipe_name(raw_json: &str, fallback: &str) -> String {
+    serde_json::from_str::<serde_json::Value>(raw_json)
+        .ok()
+        .and_then(|v| v["name"].as_str().map(String::from))
+        .unwrap_or_else(|| fallback.to_string())
+}
+
+/// Check trust level for a recipe and prompt for consent if needed.
+///
+/// Built-in recipes are always trusted. Local recipes with shell-command
+/// nodes require first-run consent, cached per definition hash.
+fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool) {
+    let source = trust::classify_source(recipe_arg);
+    let def: bnto_core::PipelineDefinition = match serde_json::from_str(raw_json) {
+        Ok(d) => d,
+        Err(_) => return, // Let later validation handle parse errors.
+    };
+    let has_shell = trust::has_shell_commands(&def.nodes);
+    let hash = trust::definition_hash(raw_json);
+
+    let trust_path = tui::paths::BntoPaths::resolve().map(|p| p.trusted_file());
+
+    let store = trust_path
+        .as_ref()
+        .map(|p| trust::TrustStore::load(p))
+        .unwrap_or_default();
+
+    let level = trust::trust_level(&source, has_shell, &store, &hash);
+
+    if level == trust::TrustLevel::Trusted || skip_consent {
+        return;
+    }
+
+    // FirstRun — prompt for consent.
+    let recipe_name = extract_recipe_name(raw_json, recipe_arg);
+    let cmd_names = trust::collect_shell_command_names(&def.nodes);
+    if !trust::prompt_consent(&recipe_name, &cmd_names) {
+        eprintln!("{} Execution cancelled.", "Aborted:".red().bold());
+        eprintln!(
+            "Run {} to inspect the commands first.",
+            format!("bnto dry-run {recipe_arg}").cyan()
+        );
+        process::exit(1);
+    }
+
+    // Cache approval.
+    if let Some(path) = trust_path {
+        let mut store = trust::TrustStore::load(&path);
+        store.approve(hash);
+        let _ = store.save(&path);
     }
 }
 
