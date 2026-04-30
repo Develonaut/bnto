@@ -8,6 +8,10 @@ import type { NodeSchema } from "../schemas/types";
 import type { NodeParamFields } from "../schemas/types";
 
 import { editFieldsNodeSchema } from "./schemas/editFields";
+import { fileCollectNodeSchema } from "./schemas/fileCollect";
+import { fileCopyNodeSchema } from "./schemas/fileCopy";
+import { fileFilterNodeSchema } from "./schemas/fileFilter";
+import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
 import { groupNodeSchema } from "./schemas/group";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
@@ -34,6 +38,10 @@ import { vectorRasterizeNodeSchema } from "./schemas/vectorRasterize";
  */
 export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "edit-fields": editFieldsNodeSchema,
+  "file-collect": fileCollectNodeSchema,
+  "file-copy": fileCopyNodeSchema,
+  "file-filter": fileFilterNodeSchema,
+  "file-metadata": fileMetadataNodeSchema,
   "file-rename": fileRenameNodeSchema,
   group: groupNodeSchema,
   "image-compress": imageCompressNodeSchema,
@@ -64,6 +72,27 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     values: { control: "keyValue" },
     keepOnlySet: { control: "switch" },
   },
+  "file-collect": {},
+  "file-copy": {
+    conflict: {
+      options: [
+        { value: "skip", label: "Skip" },
+        { value: "overwrite", label: "Overwrite" },
+        { value: "rename", label: "Rename (add suffix)" },
+      ],
+    },
+  },
+  "file-filter": {
+    pattern_mode: {
+      options: [
+        { value: "glob", label: "Glob (*, ?)" },
+        { value: "regex", label: "Regex" },
+      ],
+    },
+    min_size: { suffix: "bytes" },
+    max_size: { suffix: "bytes" },
+  },
+  "file-metadata": {},
   "file-rename": {
     sanitize: {
       options: [

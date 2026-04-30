@@ -137,37 +137,41 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_thirteen_processors() {
-        // The native registry has 13 processors (12 browser + shell-command).
+    fn test_catalog_has_all_seventeen_processors() {
+        // The native registry has 17 processors (14 browser + file-collect + file-copy + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            13,
-            "Catalog should have exactly 13 processors"
+            17,
+            "Catalog should have exactly 17 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 13 expected processor type keys are present.
+        // Verify all 17 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         let keys: Vec<&str> = catalog.iter().map(|m| m.node_type.as_str()).collect();
 
         let expected = [
+            "file-collect",
+            "file-copy",
+            "file-filter",
+            "file-metadata",
+            "file-rename",
             "image-compress",
             "image-resize",
             "image-convert",
             "image-strip-exif",
+            "image-overlay",
             "spreadsheet-clean",
             "spreadsheet-rename",
             "spreadsheet-convert",
             "spreadsheet-merge",
-            "file-rename",
-            "image-overlay",
             "vector-rasterize",
             "vector-optimize",
             "shell-command",
@@ -185,12 +189,12 @@ mod tests {
 
     #[test]
     fn test_browser_processors_support_browser_platform() {
-        // All processors except shell-command should include "browser".
-        // shell-command is native-only (needs filesystem + external binaries).
+        // All processors except native-only ones should include "browser".
+        // file-collect, file-copy, and shell-command need filesystem access.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
-        let non_browser = ["shell-command"];
+        let non_browser = ["file-collect", "file-copy", "shell-command"];
 
         for entry in &catalog {
             if non_browser.contains(&entry.node_type.as_str()) {
@@ -219,9 +223,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 21);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 25);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 13);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 17);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),

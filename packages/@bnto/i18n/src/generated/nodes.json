@@ -5,6 +5,22 @@
       "label": "Edit Fields",
       "description": "Set field values from static values or template expressions."
     },
+    "fileCollect": {
+      "label": "Collect Files",
+      "description": "Traverse a directory and collect files matching a glob pattern into the pipeline."
+    },
+    "fileCopy": {
+      "label": "Copy Files",
+      "description": "Place output files in a destination directory with conflict handling."
+    },
+    "fileFilter": {
+      "label": "Filter Files",
+      "description": "Drop files that don't match extension, pattern, or size criteria."
+    },
+    "fileMetadata": {
+      "label": "File Metadata",
+      "description": "Extract file metadata (size, extension, MIME type, hash) and attach to output."
+    },
     "fileRename": {
       "label": "Rename Files",
       "description": "Transform filenames using patterns, find/replace, case rules, counters, and sanitization."
@@ -87,6 +103,66 @@
     }
   },
   "params": {
+    "fileCollect": {
+      "pattern": {
+        "label": "Pattern",
+        "description": "Glob pattern to match files (e.g., \"*.jpg\", \"**/*.svg\"). Default: \"*\" (all files).",
+        "placeholder": "*.jpg"
+      },
+      "recursive": {
+        "label": "Recursive",
+        "description": "Traverse subdirectories when collecting files."
+      },
+      "flatten": {
+        "label": "Flatten",
+        "description": "Strip directory structure from output filenames. When true, all files appear as if in the same directory."
+      }
+    },
+    "fileCopy": {
+      "destination": {
+        "label": "Destination",
+        "description": "Directory path to copy files into.",
+        "placeholder": "./output"
+      },
+      "create_dirs": {
+        "label": "Create Directories",
+        "description": "Automatically create the destination directory if it doesn't exist."
+      },
+      "conflict": {
+        "label": "Conflict Resolution",
+        "description": "What to do when a file with the same name already exists."
+      }
+    },
+    "fileFilter": {
+      "extensions": {
+        "label": "Extensions",
+        "description": "Comma-separated list of file extensions to keep (e.g., \"jpg,png,svg\"). Leave empty to allow all extensions.",
+        "placeholder": "jpg,png,svg"
+      },
+      "name_pattern": {
+        "label": "Name Pattern",
+        "description": "Glob pattern to match against filenames (e.g., \"photo*\", \"*.backup.*\"). Uses glob syntax with * and ? wildcards.",
+        "placeholder": "photo*"
+      },
+      "pattern_mode": {
+        "label": "Pattern Mode",
+        "description": "How to interpret the name pattern."
+      },
+      "min_size": {
+        "label": "Minimum Size",
+        "description": "Minimum file size in bytes. Files smaller than this are dropped."
+      },
+      "max_size": {
+        "label": "Maximum Size",
+        "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit."
+      }
+    },
+    "fileMetadata": {
+      "include_hash": {
+        "label": "Include Hash",
+        "description": "Compute and include a SHA-256 hash of the file content."
+      }
+    },
     "fileRename": {
       "sanitize": {
         "label": "Sanitize",

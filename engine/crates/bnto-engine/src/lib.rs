@@ -36,6 +36,8 @@ pub fn create_browser_registry() -> NodeRegistry {
         "spreadsheet-rename",
         Box::new(bnto_spreadsheet::RenameColumns::new()),
     );
+    registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
+    registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register(
@@ -67,6 +69,8 @@ pub fn create_registry() -> NodeRegistry {
 
     #[cfg(feature = "native")]
     {
+        registry.register("file-collect", Box::new(bnto_file::FileCollect::new()));
+        registry.register("file-copy", Box::new(bnto_file::FileCopy::new()));
         registry.register("shell-command", Box::new(bnto_shell::ShellCommand::new()));
     }
 
@@ -113,9 +117,12 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 12);
+        assert_eq!(registry.len(), 14);
 
         let expected = [
+            "file-filter",
+            "file-metadata",
+            "file-rename",
             "image-compress",
             "image-resize",
             "image-convert",
@@ -125,7 +132,6 @@ mod tests {
             "spreadsheet-rename",
             "spreadsheet-convert",
             "spreadsheet-merge",
-            "file-rename",
             "vector-rasterize",
             "vector-optimize",
         ];
@@ -143,8 +149,8 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (12) + shell-command (1) = 13
-        assert_eq!(registry.len(), 13);
+        // Full registry = browser (14) + file-collect + file-copy + shell-command (3) = 17
+        assert_eq!(registry.len(), 17);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -398,6 +404,9 @@ mod tests {
         // Pattern: category-operation (e.g., "image-compress", not "compress-images").
         let registry = create_browser_registry();
         let expected_keys = [
+            "file-filter",
+            "file-metadata",
+            "file-rename",
             "image-compress",
             "image-resize",
             "image-convert",
@@ -407,7 +416,6 @@ mod tests {
             "spreadsheet-rename",
             "spreadsheet-convert",
             "spreadsheet-merge",
-            "file-rename",
             "vector-rasterize",
             "vector-optimize",
         ];

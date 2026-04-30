@@ -11,6 +11,10 @@
 /** Node type name → display label for processing nodes (excludes I/O and containers). */
 export const NODE_TYPE_LABELS: Record<string, string> = {
   "edit-fields": "Edit Fields",
+  "file-collect": "Collect Files",
+  "file-copy": "Copy Files",
+  "file-filter": "Filter Files",
+  "file-metadata": "File Metadata",
   "file-rename": "Rename Files",
   "http-request": "HTTP Request",
   "image-compress": "Compress Images",
@@ -23,7 +27,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-convert": "CSV to JSON",
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-rename": "Rename CSV Columns",
-  "transform": "Transform",
+  transform: "Transform",
   "vector-optimize": "Optimize SVG",
   "vector-rasterize": "SVG to Image",
 };

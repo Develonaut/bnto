@@ -80,6 +80,10 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-convert")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-merge")).toBe(true);
     expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-collect")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-copy")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-filter")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-metadata")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-optimize")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-rasterize")).toBe(true);
@@ -87,7 +91,7 @@ describe("catalog structure", () => {
 
   it("browser processors include browser in platforms", () => {
     // Non-browser processors (CLI/server/desktop only) are expected
-    const NON_BROWSER_TYPES = new Set(["shell-command"]);
+    const NON_BROWSER_TYPES = new Set(["file-collect", "file-copy", "shell-command"]);
     for (const proc of PROCESSORS) {
       if (NON_BROWSER_TYPES.has(proc.nodeType)) {
         expect(proc.platforms).not.toContain("browser");

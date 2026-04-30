@@ -6,6 +6,10 @@
 
 import type { ProcessorDef } from "../types";
 
+import { fileCollectProcessor } from "./fileCollect";
+import { fileCopyProcessor } from "./fileCopy";
+import { fileFilterProcessor } from "./fileFilter";
+import { fileMetadataProcessor } from "./fileMetadata";
 import { fileRenameProcessor } from "./fileRename";
 import { imageCompressProcessor } from "./imageCompress";
 import { imageConvertProcessor } from "./imageConvert";
@@ -21,6 +25,10 @@ import { vectorOptimizeProcessor } from "./vectorOptimize";
 import { vectorRasterizeProcessor } from "./vectorRasterize";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
+  fileCollectProcessor,
+  fileCopyProcessor,
+  fileFilterProcessor,
+  fileMetadataProcessor,
   fileRenameProcessor,
   imageCompressProcessor,
   imageConvertProcessor,

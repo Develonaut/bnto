@@ -7,6 +7,10 @@
 /** Union of all valid node type name strings. */
 export type NodeTypeName =
   | "edit-fields"
+  | "file-collect"
+  | "file-copy"
+  | "file-filter"
+  | "file-metadata"
   | "file-rename"
   | "group"
   | "http-request"

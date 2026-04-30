@@ -8,6 +8,8 @@ use bnto_core::errors::BntoError;
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
+use crate::filter::FileFilter;
+use crate::metadata::FileMetadata;
 use crate::rename::RenameFiles;
 
 // Helper: convert BntoError to JsValue at the WASM boundary.
@@ -181,5 +183,90 @@ pub fn rename_file_combined(
     //
     // This packs the NodeOutput into a single JS object containing
     // metadata JSON string + raw Uint8Array bytes + filename + mimeType.
+    build_combined_result(output)
+}
+
+// =============================================================================
+// Filter File — Combined (Single Process Call)
+// =============================================================================
+
+/// Filter a single file — returns the file if it matches, or null if dropped.
+///
+/// File-filter returns empty output.files when the file doesn't match.
+/// In that case, this function returns JsValue::NULL so the JS side
+/// knows to skip this file.
+#[wasm_bindgen]
+pub fn filter_file_combined(
+    data: &[u8],
+    filename: &str,
+    params_json: &str,
+    progress_callback: js_sys::Function,
+) -> Result<JsValue, JsValue> {
+    let params: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(params_json).unwrap_or_default();
+
+    let input = NodeInput {
+        data: data.to_vec(),
+        filename: filename.to_string(),
+        mime_type: None,
+        params,
+    };
+
+    let processor = FileFilter::new();
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
+
+    let output = processor
+        .process(input, &progress, &NoopContext)
+        .map_err(bnto_err_to_js)?;
+
+    // Empty output means the file was filtered out (dropped).
+    if output.files.is_empty() {
+        return Ok(JsValue::NULL);
+    }
+
+    build_combined_result(output)
+}
+
+// =============================================================================
+// File Metadata — Combined (Single Process Call)
+// =============================================================================
+
+/// Extract metadata from a file and return enriched output.
+#[wasm_bindgen]
+pub fn file_metadata_combined(
+    data: &[u8],
+    filename: &str,
+    params_json: &str,
+    progress_callback: js_sys::Function,
+) -> Result<JsValue, JsValue> {
+    let params: serde_json::Map<String, serde_json::Value> =
+        serde_json::from_str(params_json).unwrap_or_default();
+
+    let input = NodeInput {
+        data: data.to_vec(),
+        filename: filename.to_string(),
+        mime_type: None,
+        params,
+    };
+
+    let processor = FileMetadata::new();
+    let progress = ProgressReporter::new(move |percent, message| {
+        let _ = progress_callback.call2(
+            &JsValue::NULL,
+            &JsValue::from(percent),
+            &JsValue::from(message),
+        );
+    });
+
+    let output = processor
+        .process(input, &progress, &NoopContext)
+        .map_err(bnto_err_to_js)?;
+
     build_combined_result(output)
 }

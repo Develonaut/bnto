@@ -4,6 +4,14 @@
  * Engine catalog v1.0.0
  */
 
+export { fileCollectParamsSchema, fileCollectNodeSchema } from "./fileCollect";
+export type { FileCollectParams } from "./fileCollect";
+export { fileCopyParamsSchema, fileCopyNodeSchema } from "./fileCopy";
+export type { FileCopyParams } from "./fileCopy";
+export { fileFilterParamsSchema, fileFilterNodeSchema } from "./fileFilter";
+export type { FileFilterParams } from "./fileFilter";
+export { fileMetadataParamsSchema, fileMetadataNodeSchema } from "./fileMetadata";
+export type { FileMetadataParams } from "./fileMetadata";
 export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
 export type { FileRenameParams } from "./fileRename";
 export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";
