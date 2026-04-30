@@ -4,7 +4,7 @@ pre-commit:
     wasm-codegen:
       glob: "engine/**/*.{rs,toml}"
       priority: 1
-      run: task wasm:codegen && git add apps/web/public/wasm/bnto_wasm.js apps/web/public/wasm/bnto_wasm_bg.wasm engine/catalog.snapshot.json packages/@bnto/nodes/src/generated/ packages/@bnto/nodes/docs/ packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts packages/@bnto/i18n/src/generated/nodes.json
+      run: task wasm:codegen:dev && git add apps/web/public/wasm/bnto_wasm.js apps/web/public/wasm/bnto_wasm_bg.wasm engine/catalog.snapshot.json packages/@bnto/nodes/src/generated/ packages/@bnto/nodes/docs/ packages/@bnto/backend/convex/_helpers/nodeTypeLabels.ts packages/@bnto/i18n/src/generated/nodes.json
       stage_fixed: true
 
     nodes-test:

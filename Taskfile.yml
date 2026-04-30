@@ -249,6 +249,15 @@ tasks:
       - task: nodes:export-types
       - task: nodes:generate
 
+  wasm:codegen:dev:
+    desc: Fast codegen pipeline using dev WASM build (for pre-commit hooks)
+    cmds:
+      - task: wasm:build:dev
+      - task: wasm:copy
+      - task: wasm:snapshot
+      - task: nodes:export-types
+      - task: nodes:generate
+
   wasm:deploy:
     desc: Build WASM and copy to web app (full pipeline)
     cmds:
