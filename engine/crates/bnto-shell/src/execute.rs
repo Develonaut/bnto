@@ -89,12 +89,7 @@ impl NodeProcessor for ShellCommand {
             .params
             .get("args")
             .and_then(serde_json::Value::as_array)
-            .map(|arr: &Vec<serde_json::Value>| {
-                arr.iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .map(String::from)
-                    .collect()
-            })
+            .map(|arr| flatten_conditional_args(arr))
             .unwrap_or_default();
 
         let _timeout = input
@@ -365,6 +360,43 @@ fn mime_from_extension(filename: &str) -> String {
         _ => "application/octet-stream",
     }
     .to_string()
+}
+
+/// Flatten a resolved `args` array that may contain conditional groups.
+///
+/// After template resolution, the args array can contain:
+/// - **Flat string**: included if non-empty, dropped if `""`
+/// - **Nested array**: ALL elements must be non-empty strings → flattened
+///   into parent; if ANY element is `""` → entire group dropped
+/// - **Other types**: dropped (backward compat)
+///
+/// This enables conditional flag groups in recipes:
+/// ```json
+/// "args": ["--always", ["--cookies-from-browser", "{{fields.browser}}"], "{{fields.thumbnail}}"]
+/// ```
+/// When `browser=""`: `["--always"]`
+/// When `browser="chrome"`: `["--always", "--cookies-from-browser", "chrome"]`
+pub fn flatten_conditional_args(args: &[serde_json::Value]) -> Vec<String> {
+    let mut result = Vec::new();
+    for item in args {
+        match item {
+            serde_json::Value::String(s) if !s.is_empty() => {
+                result.push(s.clone());
+            }
+            serde_json::Value::Array(group) => {
+                let strings: Vec<&str> =
+                    group.iter().filter_map(serde_json::Value::as_str).collect();
+                // All elements must be present strings AND non-empty.
+                let all_non_empty =
+                    strings.len() == group.len() && strings.iter().all(|s| !s.is_empty());
+                if all_non_empty {
+                    result.extend(strings.into_iter().map(String::from));
+                }
+            }
+            _ => {}
+        }
+    }
+    result
 }
 
 /// Generate a filename for stdout mode output.
@@ -886,5 +918,139 @@ mod tests {
         // URL substituted in placeholder, NOT also appended
         assert_eq!(args.len(), 2);
         assert_eq!(args[0], "https://example.com");
+    }
+
+    // --- flatten_conditional_args ---
+
+    #[test]
+    fn test_flatten_flat_strings_included() {
+        let args = vec![
+            serde_json::Value::String("--no-playlist".into()),
+            serde_json::Value::String("--newline".into()),
+        ];
+        assert_eq!(
+            flatten_conditional_args(&args),
+            vec!["--no-playlist", "--newline"]
+        );
+    }
+
+    #[test]
+    fn test_flatten_empty_strings_dropped() {
+        let args = vec![
+            serde_json::Value::String("--always".into()),
+            serde_json::Value::String("".into()),
+            serde_json::Value::String("--also-always".into()),
+        ];
+        assert_eq!(
+            flatten_conditional_args(&args),
+            vec!["--always", "--also-always"]
+        );
+    }
+
+    #[test]
+    fn test_flatten_nested_array_all_non_empty_flattened() {
+        let args = vec![
+            serde_json::Value::String("--always".into()),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("--cookies-from-browser".into()),
+                serde_json::Value::String("chrome".into()),
+            ]),
+        ];
+        assert_eq!(
+            flatten_conditional_args(&args),
+            vec!["--always", "--cookies-from-browser", "chrome"]
+        );
+    }
+
+    #[test]
+    fn test_flatten_nested_array_any_empty_drops_group() {
+        let args = vec![
+            serde_json::Value::String("--always".into()),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("--cookies-from-browser".into()),
+                serde_json::Value::String("".into()),
+            ]),
+        ];
+        assert_eq!(flatten_conditional_args(&args), vec!["--always"]);
+    }
+
+    #[test]
+    fn test_flatten_nested_array_with_non_string_drops_group() {
+        let args = vec![serde_json::Value::Array(vec![
+            serde_json::Value::String("--flag".into()),
+            serde_json::Value::Number(serde_json::Number::from(42)),
+        ])];
+        assert!(
+            flatten_conditional_args(&args).is_empty(),
+            "Non-string element means group.len() != strings.len()"
+        );
+    }
+
+    #[test]
+    fn test_flatten_non_string_types_dropped() {
+        let args = vec![
+            serde_json::Value::String("--keep".into()),
+            serde_json::Value::Number(serde_json::Number::from(42)),
+            serde_json::Value::Bool(true),
+            serde_json::Value::Null,
+        ];
+        assert_eq!(flatten_conditional_args(&args), vec!["--keep"]);
+    }
+
+    #[test]
+    fn test_flatten_empty_array_produces_nothing() {
+        let args = vec![serde_json::Value::Array(vec![])];
+        // Empty group has all_non_empty = true (vacuously), but len == 0
+        // so nothing is actually added.
+        assert!(flatten_conditional_args(&args).is_empty());
+    }
+
+    #[test]
+    fn test_flatten_mixed_conditional_scenario() {
+        // Simulates the download-video recipe args after template resolution.
+        let args = vec![
+            serde_json::Value::String("--no-playlist".into()),
+            serde_json::Value::String("--newline".into()),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("--cookies-from-browser".into()),
+                serde_json::Value::String("chrome".into()),
+            ]),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("-S".into()),
+                serde_json::Value::String("res:720".into()),
+            ]),
+            serde_json::Value::String("".into()), // empty thumbnail → dropped
+            serde_json::Value::String("".into()), // empty sponsorblock → dropped
+        ];
+        assert_eq!(
+            flatten_conditional_args(&args),
+            vec![
+                "--no-playlist",
+                "--newline",
+                "--cookies-from-browser",
+                "chrome",
+                "-S",
+                "res:720",
+            ]
+        );
+    }
+
+    #[test]
+    fn test_flatten_all_groups_disabled() {
+        // All optional groups have empty values — only unconditional args survive.
+        let args = vec![
+            serde_json::Value::String("--no-playlist".into()),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("--cookies-from-browser".into()),
+                serde_json::Value::String("".into()),
+            ]),
+            serde_json::Value::Array(vec![
+                serde_json::Value::String("-S".into()),
+                serde_json::Value::String("".into()),
+            ]),
+            serde_json::Value::String("".into()),
+            serde_json::Value::String("".into()),
+        ];
+        assert_eq!(flatten_conditional_args(&args), vec!["--no-playlist"]);
     }
 }

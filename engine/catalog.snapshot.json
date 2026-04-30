@@ -4787,6 +4787,31 @@
                 "order": 3,
                 "type": "enum"
               },
+              "browser": {
+                "default": "",
+                "description": "Use cookies from a browser for authenticated content (Patreon, private videos)",
+                "label": "Browser Cookies",
+                "options": [
+                  {
+                    "label": "None",
+                    "value": ""
+                  },
+                  {
+                    "label": "Chrome",
+                    "value": "chrome"
+                  },
+                  {
+                    "label": "Firefox",
+                    "value": "firefox"
+                  },
+                  {
+                    "label": "Safari",
+                    "value": "safari"
+                  }
+                ],
+                "order": 4,
+                "type": "enum"
+              },
               "format": {
                 "default": "mp4",
                 "description": "Video container format",
@@ -4806,6 +4831,90 @@
                   }
                 ],
                 "order": 1,
+                "type": "enum"
+              },
+              "quality": {
+                "default": "",
+                "description": "Maximum video resolution (best available if unset)",
+                "label": "Quality Cap",
+                "options": [
+                  {
+                    "label": "Best available",
+                    "value": ""
+                  },
+                  {
+                    "label": "1080p",
+                    "value": "1080"
+                  },
+                  {
+                    "label": "720p",
+                    "value": "720"
+                  },
+                  {
+                    "label": "480p",
+                    "value": "480"
+                  }
+                ],
+                "order": 5,
+                "type": "enum"
+              },
+              "sponsorBlock": {
+                "default": "",
+                "description": "Remove sponsor segments from YouTube videos",
+                "label": "SponsorBlock",
+                "options": [
+                  {
+                    "label": "Keep all",
+                    "value": ""
+                  },
+                  {
+                    "label": "Remove sponsors",
+                    "value": "--sponsorblock-remove=default"
+                  }
+                ],
+                "order": 8,
+                "type": "enum"
+              },
+              "subtitles": {
+                "default": "",
+                "description": "Download and embed subtitles in the selected language",
+                "label": "Subtitles",
+                "options": [
+                  {
+                    "label": "None",
+                    "value": ""
+                  },
+                  {
+                    "label": "English",
+                    "value": "en"
+                  },
+                  {
+                    "label": "All languages",
+                    "value": "all"
+                  },
+                  {
+                    "label": "Common (EN/ES/FR/DE/JA)",
+                    "value": "en,es,fr,de,ja"
+                  }
+                ],
+                "order": 6,
+                "type": "enum"
+              },
+              "thumbnail": {
+                "default": "",
+                "description": "Embed the video thumbnail in the output file",
+                "label": "Embed Thumbnail",
+                "options": [
+                  {
+                    "label": "No",
+                    "value": ""
+                  },
+                  {
+                    "label": "Yes",
+                    "value": "--embed-thumbnail"
+                  }
+                ],
+                "order": 7,
                 "type": "enum"
               },
               "videoCodec": {
@@ -4843,6 +4952,11 @@
                 "{{fields.format}}",
                 "-S",
                 "vcodec:{{fields.videoCodec}},acodec:{{fields.audioCodec}}",
+                ["--cookies-from-browser", "{{fields.browser}}"],
+                ["--write-subs", "--embed-subs", "--sub-langs", "{{fields.subtitles}}"],
+                ["-S", "res:{{fields.quality}}"],
+                "{{fields.thumbnail}}",
+                "{{fields.sponsorBlock}}",
                 "-o",
                 "{{output_dir}}/%(title)s.%(ext)s"
               ],

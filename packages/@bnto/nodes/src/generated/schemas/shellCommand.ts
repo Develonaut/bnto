@@ -10,7 +10,7 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for shell-command node parameters. */
 export const shellCommandParamsSchema = z.object({
   command: z.string().optional(),
-  args: z.array(z.string()).optional(),
+  args: z.array(z.union([z.string(), z.array(z.string())])).optional(),
   outputMode: z.string().optional().default("stdout"),
   timeout: z.number().optional().default(300),
   maxOutputSize: z.number().optional().default(500),
