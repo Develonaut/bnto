@@ -12,6 +12,36 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     values: { type: "record", control: "keyValue", required: true },
     keepOnlySet: { type: "boolean", control: "switch", required: false },
   },
+  "file-collect": {
+    pattern: { type: "string", control: "text", required: false },
+    recursive: { type: "boolean", control: "switch", required: false },
+    flatten: { type: "boolean", control: "switch", required: false },
+  },
+  "file-copy": {
+    destination: { type: "string", control: "text", required: false },
+    create_dirs: { type: "boolean", control: "switch", required: false },
+    conflict: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["skip", "overwrite", "rename"] as const,
+    },
+  },
+  "file-filter": {
+    extensions: { type: "string", control: "text", required: false },
+    name_pattern: { type: "string", control: "text", required: false },
+    pattern_mode: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["glob", "regex"] as const,
+    },
+    min_size: { type: "number", control: "number", required: false, min: 0 },
+    max_size: { type: "number", control: "number", required: false, min: 0 },
+  },
+  "file-metadata": {
+    include_hash: { type: "boolean", control: "switch", required: false },
+  },
   "file-rename": {
     sanitize: {
       type: "enum",

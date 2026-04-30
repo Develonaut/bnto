@@ -21,12 +21,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 21 registered node types.
+/// Return metadata for all 25 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(21);
+    let mut types = Vec::with_capacity(25);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -113,15 +113,53 @@ fn data_node_types() -> Vec<NodeTypeInfo> {
 }
 
 fn file_node_types() -> Vec<NodeTypeInfo> {
-    vec![node_type!(
-        "file-rename",
-        "Rename Files",
-        "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
-        NodeCategory::File,
-        false,
-        "browser",
-        "folder-open"
-    )]
+    vec![
+        node_type!(
+            "file-collect",
+            "Collect Files",
+            "Traverse a directory and collect files matching a glob pattern into the pipeline.",
+            NodeCategory::File,
+            false,
+            "cli",
+            "folder-search"
+        ),
+        node_type!(
+            "file-copy",
+            "Copy Files",
+            "Place output files in a destination directory with conflict handling.",
+            NodeCategory::File,
+            false,
+            "cli",
+            "copy"
+        ),
+        node_type!(
+            "file-filter",
+            "Filter Files",
+            "Drop files that don't match extension, pattern, or size criteria.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "filter"
+        ),
+        node_type!(
+            "file-metadata",
+            "File Metadata",
+            "Extract file metadata (size, extension, MIME type, hash) and attach to output.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "file-text"
+        ),
+        node_type!(
+            "file-rename",
+            "Rename Files",
+            "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "folder-open"
+        ),
+    ]
 }
 
 fn image_node_types() -> Vec<NodeTypeInfo> {

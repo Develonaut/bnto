@@ -7,6 +7,10 @@
 import type { NodeTypeName, NodeTypeInfo } from "../types";
 
 import { editFieldsNodeType } from "./editFields";
+import { fileCollectNodeType } from "./fileCollect";
+import { fileCopyNodeType } from "./fileCopy";
+import { fileFilterNodeType } from "./fileFilter";
+import { fileMetadataNodeType } from "./fileMetadata";
 import { fileRenameNodeType } from "./fileRename";
 import { groupNodeType } from "./group";
 import { httpRequestNodeType } from "./httpRequest";
@@ -34,6 +38,10 @@ import { vectorRasterizeNodeType } from "./vectorRasterize";
  */
 export const NODE_TYPES = {
   editFields: "edit-fields",
+  fileCollect: "file-collect",
+  fileCopy: "file-copy",
+  fileFilter: "file-filter",
+  fileMetadata: "file-metadata",
   fileRename: "file-rename",
   group: "group",
   httpRequest: "http-request",
@@ -65,6 +73,10 @@ export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES
  */
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": editFieldsNodeType,
+  "file-collect": fileCollectNodeType,
+  "file-copy": fileCopyNodeType,
+  "file-filter": fileFilterNodeType,
+  "file-metadata": fileMetadataNodeType,
   "file-rename": fileRenameNodeType,
   group: groupNodeType,
   "http-request": httpRequestNodeType,
