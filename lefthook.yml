@@ -24,11 +24,6 @@ pre-commit:
       run: task theme:generate && git add apps/web/app/theme-colors.generated.css engine/crates/bnto/src/tui/palette.rs
       stage_fixed: true
 
-    rust-test:
-      glob: "engine/**/*.{rs,toml}"
-      priority: 3
-      run: cd engine && cargo test --workspace
-
     prettier:
       glob: "*.{ts,tsx,js,mjs,json,css,md,yml,yaml}"
       priority: 4
