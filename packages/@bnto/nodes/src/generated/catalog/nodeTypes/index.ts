@@ -27,6 +27,7 @@ import { shellCommandNodeType } from "./shellCommand";
 import { spreadsheetCleanNodeType } from "./spreadsheetClean";
 import { spreadsheetConvertNodeType } from "./spreadsheetConvert";
 import { spreadsheetMergeNodeType } from "./spreadsheetMerge";
+import { spreadsheetReadNodeType } from "./spreadsheetRead";
 import { spreadsheetRenameNodeType } from "./spreadsheetRename";
 import { transformNodeType } from "./transform";
 import { vectorOptimizeNodeType } from "./vectorOptimize";
@@ -58,6 +59,7 @@ export const NODE_TYPES = {
   spreadsheetClean: "spreadsheet-clean",
   spreadsheetConvert: "spreadsheet-convert",
   spreadsheetMerge: "spreadsheet-merge",
+  spreadsheetRead: "spreadsheet-read",
   spreadsheetRename: "spreadsheet-rename",
   transform: "transform",
   vectorOptimize: "vector-optimize",
@@ -93,6 +95,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
   "spreadsheet-merge": spreadsheetMergeNodeType,
+  "spreadsheet-read": spreadsheetReadNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
   transform: transformNodeType,
   "vector-optimize": vectorOptimizeNodeType,

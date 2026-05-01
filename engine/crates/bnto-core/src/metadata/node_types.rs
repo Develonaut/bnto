@@ -21,12 +21,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 25 registered node types.
+/// Return metadata for all 26 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(25);
+    let mut types = Vec::with_capacity(26);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -257,6 +257,15 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "sheet"
+        ),
+        node_type!(
+            "spreadsheet-read",
+            "Read CSV Rows",
+            "Explode a CSV into one item per row for loop iteration.",
+            NodeCategory::Spreadsheet,
+            false,
+            "browser",
+            "table"
         ),
         node_type!(
             "spreadsheet-convert",

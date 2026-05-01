@@ -27,6 +27,7 @@ import { shellCommandNodeSchema } from "./schemas/shellCommand";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
+import { spreadsheetReadNodeSchema } from "./schemas/spreadsheetRead";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
 import { transformNodeSchema } from "./schemas/transform";
 import { vectorOptimizeNodeSchema } from "./schemas/vectorOptimize";
@@ -57,6 +58,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
+  "spreadsheet-read": spreadsheetReadNodeSchema,
   "spreadsheet-rename": spreadsheetRenameNodeSchema,
   transform: transformNodeSchema,
   "vector-optimize": vectorOptimizeNodeSchema,
@@ -306,6 +308,16 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
       options: [
         { value: "first-file", label: "First File" },
         { value: "union", label: "Union" },
+      ],
+    },
+  },
+  "spreadsheet-read": {
+    delimiter: {
+      options: [
+        { value: "comma", label: "Comma" },
+        { value: "semicolon", label: "Semicolon" },
+        { value: "tab", label: "Tab" },
+        { value: "pipe", label: "Pipe" },
       ],
     },
   },

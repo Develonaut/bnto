@@ -32,6 +32,8 @@ export { spreadsheetConvertParamsSchema, spreadsheetConvertNodeSchema } from "./
 export type { SpreadsheetConvertParams } from "./spreadsheetConvert";
 export { spreadsheetMergeParamsSchema, spreadsheetMergeNodeSchema } from "./spreadsheetMerge";
 export type { SpreadsheetMergeParams } from "./spreadsheetMerge";
+export { spreadsheetReadParamsSchema, spreadsheetReadNodeSchema } from "./spreadsheetRead";
+export type { SpreadsheetReadParams } from "./spreadsheetRead";
 export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
 export type { SpreadsheetRenameParams } from "./spreadsheetRename";
 export { vectorOptimizeParamsSchema, vectorOptimizeNodeSchema } from "./vectorOptimize";
