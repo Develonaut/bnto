@@ -2703,6 +2703,179 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           name: "Per Row",
           nodes: [
             {
+              fields: {
+                audioCodec: {
+                  default: "m4a",
+                  label: "Audio Codec",
+                  options: [
+                    {
+                      label: "M4A (AAC)",
+                      value: "m4a",
+                    },
+                    {
+                      label: "Opus",
+                      value: "opus",
+                    },
+                    {
+                      label: "MP3",
+                      value: "mp3",
+                    },
+                  ],
+                  order: 3,
+                  type: "enum",
+                },
+                browser: {
+                  default: "",
+                  description:
+                    "Use cookies from a browser for authenticated content (Patreon, private videos)",
+                  label: "Browser Cookies",
+                  options: [
+                    {
+                      label: "None",
+                      value: "",
+                    },
+                    {
+                      label: "Chrome",
+                      value: "chrome",
+                    },
+                    {
+                      label: "Firefox",
+                      value: "firefox",
+                    },
+                    {
+                      label: "Safari",
+                      value: "safari",
+                    },
+                  ],
+                  order: 4,
+                  type: "enum",
+                },
+                format: {
+                  default: "mp4",
+                  description: "Video container format",
+                  label: "Output Format",
+                  options: [
+                    {
+                      label: "MP4 (H.264)",
+                      value: "mp4",
+                    },
+                    {
+                      label: "WebM (VP9)",
+                      value: "webm",
+                    },
+                    {
+                      label: "MKV (Matroska)",
+                      value: "mkv",
+                    },
+                  ],
+                  order: 1,
+                  type: "enum",
+                },
+                quality: {
+                  default: "",
+                  description: "Maximum video resolution (best available if unset)",
+                  label: "Quality Cap",
+                  options: [
+                    {
+                      label: "Best available",
+                      value: "",
+                    },
+                    {
+                      label: "1080p",
+                      value: "1080",
+                    },
+                    {
+                      label: "720p",
+                      value: "720",
+                    },
+                    {
+                      label: "480p",
+                      value: "480",
+                    },
+                  ],
+                  order: 5,
+                  type: "enum",
+                },
+                sponsorBlock: {
+                  default: "",
+                  description: "Remove sponsor segments from YouTube videos",
+                  label: "SponsorBlock",
+                  options: [
+                    {
+                      label: "Keep all",
+                      value: "",
+                    },
+                    {
+                      label: "Remove sponsors",
+                      value: "--sponsorblock-remove=default",
+                    },
+                  ],
+                  order: 8,
+                  type: "enum",
+                },
+                subtitles: {
+                  default: "",
+                  description: "Download and embed subtitles in the selected language",
+                  label: "Subtitles",
+                  options: [
+                    {
+                      label: "None",
+                      value: "",
+                    },
+                    {
+                      label: "English",
+                      value: "en",
+                    },
+                    {
+                      label: "All languages",
+                      value: "all",
+                    },
+                    {
+                      label: "Common (EN/ES/FR/DE/JA)",
+                      value: "en,es,fr,de,ja",
+                    },
+                  ],
+                  order: 6,
+                  type: "enum",
+                },
+                thumbnail: {
+                  default: "",
+                  description: "Embed the video thumbnail in the output file",
+                  label: "Embed Thumbnail",
+                  options: [
+                    {
+                      label: "No",
+                      value: "",
+                    },
+                    {
+                      label: "Yes",
+                      value: "--embed-thumbnail",
+                    },
+                  ],
+                  order: 7,
+                  type: "enum",
+                },
+                videoCodec: {
+                  default: "h264",
+                  label: "Video Codec",
+                  options: [
+                    {
+                      label: "H.264",
+                      value: "h264",
+                    },
+                    {
+                      label: "VP9",
+                      value: "vp9",
+                    },
+                    {
+                      label: "AV1",
+                      value: "av1",
+                    },
+                  ],
+                  order: 2,
+                  type: "enum",
+                },
+              },
               id: "download",
               inputPorts: [],
               metadata: {},
@@ -2714,7 +2887,14 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
                   "--no-warnings",
                   "--newline",
                   "--merge-output-format",
-                  "mp4",
+                  "{{fields.format}}",
+                  "-S",
+                  "vcodec:{{fields.videoCodec}},acodec:{{fields.audioCodec}}",
+                  ["--cookies-from-browser", "{{fields.browser}}"],
+                  ["--write-subs", "--embed-subs", "--sub-langs", "{{fields.subtitles}}"],
+                  ["-S", "res:{{fields.quality}}"],
+                  "{{fields.thumbnail}}",
+                  "{{fields.sponsorBlock}}",
                   "-o",
                   "{{output_dir}}/{{item.group}}/%(title)s.%(ext)s",
                   "{{item.url}}",
