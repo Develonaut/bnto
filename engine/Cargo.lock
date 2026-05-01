@@ -141,6 +141,7 @@ version = "0.1.2"
 dependencies = [
  "bnto-core",
  "bnto-engine",
+ "bnto-shell",
  "clap",
  "colored",
  "crossterm",

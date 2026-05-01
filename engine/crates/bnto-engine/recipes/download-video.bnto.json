@@ -77,6 +77,11 @@
           "{{fields.format}}",
           "-S",
           "vcodec:{{fields.videoCodec}},acodec:{{fields.audioCodec}}",
+          ["--cookies-from-browser", "{{fields.browser}}"],
+          ["--write-subs", "--embed-subs", "--sub-langs", "{{fields.subtitles}}"],
+          ["-S", "res:{{fields.quality}}"],
+          "{{fields.thumbnail}}",
+          "{{fields.sponsorBlock}}",
           "-o",
           "{{output_dir}}/%(title)s.%(ext)s"
         ],
@@ -117,6 +122,67 @@
           ],
           "default": "m4a",
           "order": 3
+        },
+        "browser": {
+          "type": "enum",
+          "label": "Browser Cookies",
+          "description": "Use cookies from a browser for authenticated content (Patreon, private videos)",
+          "options": [
+            { "value": "", "label": "None" },
+            { "value": "chrome", "label": "Chrome" },
+            { "value": "firefox", "label": "Firefox" },
+            { "value": "safari", "label": "Safari" }
+          ],
+          "default": "",
+          "order": 4
+        },
+        "quality": {
+          "type": "enum",
+          "label": "Quality Cap",
+          "description": "Maximum video resolution (best available if unset)",
+          "options": [
+            { "value": "", "label": "Best available" },
+            { "value": "1080", "label": "1080p" },
+            { "value": "720", "label": "720p" },
+            { "value": "480", "label": "480p" }
+          ],
+          "default": "",
+          "order": 5
+        },
+        "subtitles": {
+          "type": "enum",
+          "label": "Subtitles",
+          "description": "Download and embed subtitles in the selected language",
+          "options": [
+            { "value": "", "label": "None" },
+            { "value": "en", "label": "English" },
+            { "value": "all", "label": "All languages" },
+            { "value": "en,es,fr,de,ja", "label": "Common (EN/ES/FR/DE/JA)" }
+          ],
+          "default": "",
+          "order": 6
+        },
+        "thumbnail": {
+          "type": "enum",
+          "label": "Embed Thumbnail",
+          "description": "Embed the video thumbnail in the output file",
+          "options": [
+            { "value": "", "label": "No" },
+            { "value": "--embed-thumbnail", "label": "Yes" }
+          ],
+          "default": "",
+          "order": 7
+        },
+        "sponsorBlock": {
+          "type": "enum",
+          "label": "SponsorBlock",
+          "description": "Remove sponsor segments from YouTube videos",
+          "options": [
+            { "value": "", "label": "Keep all" },
+            { "value": "--sponsorblock-remove=default", "label": "Remove sponsors" }
+          ],
+          "default": "",
+          "order": 8
         }
       },
       "inputPorts": [],

@@ -113,12 +113,7 @@ fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
     let args: Vec<String> = resolved_params
         .get("args")
         .and_then(serde_json::Value::as_array)
-        .map(|arr| {
-            arr.iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(String::from)
-                .collect()
-        })
+        .map(|arr| bnto_shell::execute::flatten_conditional_args(arr))
         .unwrap_or_default();
 
     let output_mode = resolved_params
