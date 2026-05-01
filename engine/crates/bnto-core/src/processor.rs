@@ -55,6 +55,10 @@ pub struct OutputFile {
 
     /// The MIME type of the output (e.g., "image/jpeg").
     pub mime_type: String,
+
+    /// Per-file metadata (e.g., CSV row column values for loop iteration).
+    /// When non-empty, takes priority over `NodeOutput.metadata` in collect_output.
+    pub metadata: serde_json::Map<String, serde_json::Value>,
 }
 
 /// Input for batch processors that need all files at once (e.g., merge, zip).
@@ -223,6 +227,7 @@ mod tests {
                     mime_type: input
                         .mime_type
                         .unwrap_or_else(|| "application/octet-stream".to_string()),
+                    metadata: serde_json::Map::new(),
                 }],
                 metadata: serde_json::Map::new(),
             })

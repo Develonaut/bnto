@@ -113,6 +113,7 @@ impl NodeProcessor for StripExif {
                 data: stripped_data,
                 filename: output_filename,
                 mime_type: format.mime_type().to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })

@@ -82,6 +82,7 @@ impl NodeProcessor for VectorRasterize {
                 data: encoded,
                 filename: output_name,
                 mime_type: target_format.mime_type().to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })

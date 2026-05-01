@@ -61,6 +61,7 @@ impl NodeProcessor for MergeSpreadsheets {
                 data: input.data,
                 filename: input.filename,
                 mime_type: input.mime_type.unwrap_or_else(|| "text/csv".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::new(),
         })
@@ -110,6 +111,7 @@ impl NodeProcessor for MergeSpreadsheets {
                 data: output_bytes,
                 filename: "merged.csv".to_string(),
                 mime_type: "text/csv".to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })

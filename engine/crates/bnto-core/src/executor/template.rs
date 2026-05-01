@@ -1,8 +1,8 @@
-// Multi-namespace template resolution — extends {{fields.*}} with env, ctx, and node namespaces.
+// Multi-namespace template resolution — extends {{fields.*}} with env, ctx, node, and item namespaces.
 //
 // Entry point: `resolve_templates()` walks params and substitutes placeholders from
 // all namespaces. Falls back to `resolve_fields()` for the {{fields.*}} namespace,
-// then handles {{env.*}}, {{ctx.*}}, and {{node.<id>.*}} additionally.
+// then handles {{env.*}}, {{ctx.*}}, {{node.<id>.*}}, and {{item.*}} additionally.
 
 use std::collections::BTreeMap;
 
@@ -18,12 +18,14 @@ pub struct TemplateContext<'a> {
     pub process_ctx: &'a dyn ProcessContext,
     /// Per-node output params from previously executed nodes.
     pub node_outputs: &'a BTreeMap<String, Value>,
+    /// Current loop iteration's per-file metadata for {{item.*}} templates.
+    pub loop_item: &'a Option<serde_json::Map<String, Value>>,
 }
 
-/// Resolve all template namespaces in params: fields, env, ctx, node.
+/// Resolve all template namespaces in params: fields, env, ctx, node, item.
 ///
 /// Walks the params map and replaces placeholders from all namespaces.
-/// Namespace priority: {{fields.*}} first, then {{env.*}}, {{ctx.*}}, {{node.*}}.
+/// Namespace priority: {{fields.*}} first, then {{env.*}}, {{ctx.*}}, {{node.*}}, {{item.*}}.
 pub fn resolve_templates(
     params: &serde_json::Map<String, Value>,
     ctx: &TemplateContext,
@@ -46,7 +48,11 @@ fn resolve_value(value: &Value, ctx: &TemplateContext) -> Value {
 
 /// Check if a string contains any template placeholder.
 fn has_placeholder(s: &str) -> bool {
-    s.contains("{{fields.") || s.contains("{{env.") || s.contains("{{ctx.") || s.contains("{{node.")
+    s.contains("{{fields.")
+        || s.contains("{{env.")
+        || s.contains("{{ctx.")
+        || s.contains("{{node.")
+        || s.contains("{{item.")
 }
 
 /// If the string is exactly one `{{namespace.key}}` placeholder, return (prefix, key).
@@ -71,6 +77,7 @@ fn extract_sole_placeholder(s: &str) -> Option<(&str, &str)> {
         let (node_id, prop) = key.rsplit_once('.')?;
         return Some((&inner[..5 + node_id.len()], prop)); // "node.compress"
     }
+    // "item" is a simple namespace like "fields" — "item.url" → ("item", "url")
     Some((prefix, key))
 }
 
@@ -83,6 +90,7 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
             Some(Value::String(val))
         }
         "ctx" => resolve_ctx(key, ctx.process_ctx),
+        "item" => ctx.loop_item.as_ref().and_then(|m| m.get(key).cloned()),
         p if p.starts_with("node.") => {
             let node_id = &p[5..]; // strip "node."
             resolve_node_ref(node_id, key, ctx.node_outputs)
@@ -179,6 +187,9 @@ fn resolve_string(s: &str, ctx: &TemplateContext) -> Value {
     // Resolve {{ctx.*}}
     resolve_ctx_interpolation(&mut result, ctx.process_ctx);
 
+    // Resolve {{item.*}}
+    resolve_item_interpolation(&mut result, ctx.loop_item);
+
     // Resolve {{node.*}}
     resolve_node_interpolation(&mut result, ctx.node_outputs);
 
@@ -207,6 +218,24 @@ fn resolve_ctx_interpolation(result: &mut String, process_ctx: &dyn ProcessConte
             .map(|v| value_to_string(&v))
             .unwrap_or_default();
         let placeholder = format!("{{{{ctx.{key}}}}}");
+        *result = result.replace(&placeholder, &val);
+    }
+}
+
+/// Replace all `{{item.KEY}}` occurrences in-place via string interpolation.
+fn resolve_item_interpolation(
+    result: &mut String,
+    loop_item: &Option<serde_json::Map<String, Value>>,
+) {
+    let Some(item) = loop_item.as_ref() else {
+        return;
+    };
+    while let Some(start) = result.find("{{item.") {
+        let rest = &result[start + 7..];
+        let Some(end) = rest.find("}}") else { break };
+        let key = &result[start + 7..start + 7 + end];
+        let val = item.get(key).map(value_to_string).unwrap_or_default();
+        let placeholder = format!("{{{{item.{key}}}}}");
         *result = result.replace(&placeholder, &val);
     }
 }
@@ -302,6 +331,7 @@ mod tests {
             field_values: &fields,
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["format"], json!("mp4"));
@@ -315,6 +345,7 @@ mod tests {
             field_values: &fields,
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["quality"], json!(80));
@@ -328,6 +359,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{fields.missing}}"));
@@ -343,6 +375,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["home"], json!("/Users/test"));
@@ -356,6 +389,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!(""));
@@ -369,6 +403,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["path"], json!("/Users/test/output"));
@@ -384,6 +419,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["dir"], json!("/mock/work"));
@@ -397,6 +433,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let os = resolved["os"].as_str().unwrap();
@@ -414,6 +451,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let tmp = resolved["tmp"].as_str().unwrap();
@@ -435,6 +473,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{ctx.bogus}}"));
@@ -451,6 +490,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &outputs,
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["fmt"], json!("webp"));
@@ -463,6 +503,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{node.missing.prop}}"));
@@ -477,6 +518,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &outputs,
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{node.compress.missing}}"));
@@ -492,6 +534,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["cmd"].as_str().unwrap();
@@ -509,6 +552,7 @@ mod tests {
             field_values: &fields,
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("hello-world"));
@@ -521,6 +565,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["n"], json!(42));
@@ -535,6 +580,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["args"], json!(["--dir", "/test", "-v"]));
@@ -548,6 +594,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["config"]["dir"], json!("/test"));
@@ -560,6 +607,7 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["cmd"], json!("yt-dlp"));
@@ -574,8 +622,105 @@ mod tests {
             field_values: &empty_fields(),
             process_ctx: &NoopContext,
             node_outputs: &outputs,
+            loop_item: &None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["label"], json!("Format: webp"));
+    }
+
+    // --- {{item.*}} — loop iteration metadata ---
+
+    fn make_item(pairs: &[(&str, Value)]) -> Option<serde_json::Map<String, Value>> {
+        Some(
+            pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.clone()))
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn item_simple_substitution() {
+        let params = make_params(&[("url", json!("{{item.url}}"))]);
+        let item = make_item(&[("url", json!("https://example.com/video"))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &empty_outputs(),
+            loop_item: &item,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["url"], json!("https://example.com/video"));
+    }
+
+    #[test]
+    fn item_preserves_number_type() {
+        let params = make_params(&[("count", json!("{{item.count}}"))]);
+        let item = make_item(&[("count", json!(42))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &empty_outputs(),
+            loop_item: &item,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["count"], json!(42));
+        assert!(resolved["count"].is_number());
+    }
+
+    #[test]
+    fn item_missing_key_left_asis() {
+        let params = make_params(&[("x", json!("{{item.missing}}"))]);
+        let item = make_item(&[("url", json!("https://example.com"))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &empty_outputs(),
+            loop_item: &item,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["x"], json!("{{item.missing}}"));
+    }
+
+    #[test]
+    fn item_no_context_left_asis() {
+        let params = make_params(&[("url", json!("{{item.url}}"))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["url"], json!("{{item.url}}"));
+    }
+
+    #[test]
+    fn item_in_interpolation() {
+        let params = make_params(&[("path", json!("dir/{{item.group}}/out"))]);
+        let item = make_item(&[("group", json!("Alpha"))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &empty_outputs(),
+            loop_item: &item,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["path"], json!("dir/Alpha/out"));
+    }
+
+    #[test]
+    fn item_mixed_with_fields() {
+        let params = make_params(&[("x", json!("{{fields.format}}_{{item.group}}"))]);
+        let fields = make_fields(&[("format", json!("mp4"))]);
+        let item = make_item(&[("group", json!("Beta"))]);
+        let ctx = TemplateContext {
+            field_values: &fields,
+            process_ctx: &NoopContext,
+            node_outputs: &empty_outputs(),
+            loop_item: &item,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["x"], json!("mp4_Beta"));
     }
 }

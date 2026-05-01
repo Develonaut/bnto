@@ -388,6 +388,7 @@ impl NodeProcessor for OverlayImage {
                 filename: output_filename,
                 data: output_data,
                 mime_type: format.mime_type().to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::from_iter([
                 (

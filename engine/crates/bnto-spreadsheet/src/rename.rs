@@ -100,6 +100,7 @@ fn build_rename_output(
             data,
             filename: build_output_filename(input_filename),
             mime_type: "text/csv".to_string(),
+            metadata: serde_json::Map::new(),
         }],
         metadata,
     }

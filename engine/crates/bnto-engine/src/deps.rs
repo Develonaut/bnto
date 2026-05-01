@@ -218,6 +218,7 @@ mod tests {
                     data: input.data,
                     filename: input.filename,
                     mime_type: "video/mp4".to_string(),
+                    metadata: serde_json::Map::new(),
                 }],
                 metadata: serde_json::Map::new(),
             })
@@ -261,6 +262,7 @@ mod tests {
                     data: input.data,
                     filename: input.filename,
                     mime_type: "video/mp4".to_string(),
+                    metadata: serde_json::Map::new(),
                 }],
                 metadata: serde_json::Map::new(),
             })
@@ -313,6 +315,7 @@ mod tests {
                     data: input.data,
                     filename: input.filename,
                     mime_type: "application/octet-stream".to_string(),
+                    metadata: serde_json::Map::new(),
                 }],
                 metadata: serde_json::Map::new(),
             })

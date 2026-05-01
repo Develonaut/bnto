@@ -115,6 +115,7 @@ impl NodeProcessor for FileCollect {
                 data,
                 filename: output_name,
                 mime_type,
+                metadata: serde_json::Map::new(),
             });
         }
 

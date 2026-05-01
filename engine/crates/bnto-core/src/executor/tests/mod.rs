@@ -29,6 +29,7 @@ impl crate::processor::NodeProcessor for EchoProcessor {
                 mime_type: input
                     .mime_type
                     .unwrap_or_else(|| "application/octet-stream".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::new(),
         })
@@ -56,6 +57,7 @@ impl crate::processor::NodeProcessor for UpperCaseProcessor {
                 mime_type: input
                     .mime_type
                     .unwrap_or_else(|| "application/octet-stream".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::new(),
         })
@@ -108,6 +110,7 @@ impl crate::processor::NodeProcessor for SlowProcessor {
                 mime_type: input
                     .mime_type
                     .unwrap_or_else(|| "application/octet-stream".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::new(),
         })
@@ -137,11 +140,13 @@ impl crate::processor::NodeProcessor for DoubleProcessor {
                     data: input.data.clone(),
                     filename: format!("{}-a", input.filename),
                     mime_type: mime.clone(),
+                    metadata: serde_json::Map::new(),
                 },
                 OutputFile {
                     data: input.data,
                     filename: format!("{}-b", input.filename),
                     mime_type: mime,
+                    metadata: serde_json::Map::new(),
                 },
             ],
             metadata: serde_json::Map::new(),
@@ -188,6 +193,7 @@ impl crate::processor::NodeProcessor for SourceProcessor {
                 data: format!("downloaded-from:{}", url).into_bytes(),
                 filename: format!("{}.mp4", url.rsplit('/').next().unwrap_or("output")),
                 mime_type: "video/mp4".to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::new(),
         })
@@ -237,6 +243,7 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
                 mime_type: input
                     .mime_type
                     .unwrap_or_else(|| "application/octet-stream".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })

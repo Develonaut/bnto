@@ -230,6 +230,7 @@ fn process_stdout_mode(
             data: output_bytes,
             filename: output_filename,
             mime_type: "application/octet-stream".to_string(),
+            metadata: serde_json::Map::new(),
         }],
         metadata,
     })
@@ -334,6 +335,7 @@ fn collect_output_files(
             data,
             filename,
             mime_type: mime,
+            metadata: serde_json::Map::new(),
         });
     }
     Ok(files)

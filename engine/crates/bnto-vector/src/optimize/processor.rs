@@ -117,6 +117,7 @@ impl NodeProcessor for OptimizeSvg {
                 data: optimized.into_bytes(),
                 filename: input.filename,
                 mime_type: "image/svg+xml".to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })

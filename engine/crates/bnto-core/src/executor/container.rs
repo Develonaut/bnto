@@ -53,6 +53,7 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 }
 
 /// Run the sub-pipeline once per file, collecting all outputs.
+/// Sets `loop_item` from each file's metadata so child nodes can use `{{item.*}}`.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     sub_definition: &PipelineDefinition,
@@ -63,7 +64,20 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     let mut total_processed: usize = 0;
 
     for (i, file) in files.into_iter().enumerate() {
-        let result = execute_sub_pipeline(ctx, sub_definition, vec![file], file_offset + i)?;
+        let item_data = if file.metadata.is_empty() {
+            None
+        } else {
+            Some(file.metadata.clone())
+        };
+        let loop_ctx = PipelineContext {
+            registry: ctx.registry,
+            reporter: ctx.reporter,
+            process_ctx: ctx.process_ctx,
+            pipeline_total_files: ctx.pipeline_total_files,
+            now_ms: ctx.now_ms,
+            loop_item: item_data,
+        };
+        let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i)?;
         total_processed += result.files_processed;
         all_output_files.extend(result.output_files);
     }

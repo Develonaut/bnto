@@ -62,13 +62,19 @@ fn emit_file_progress<F: Fn() -> u64 + Copy>(
 }
 
 /// Collect processor output files into the pipeline result vector.
+/// Uses per-file metadata when non-empty, falling back to shared NodeOutput.metadata.
 fn collect_output(output: crate::processor::NodeOutput, output_files: &mut Vec<PipelineFile>) {
     for f in output.files {
+        let metadata = if f.metadata.is_empty() {
+            output.metadata.clone()
+        } else {
+            f.metadata
+        };
         output_files.push(PipelineFile {
             name: f.filename,
             data: f.data,
             mime_type: f.mime_type,
-            metadata: output.metadata.clone(),
+            metadata,
         });
     }
 }
@@ -114,7 +120,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     Ok(())
 }
 
-/// Resolve all template namespaces in node params (fields, env, ctx, node).
+/// Resolve all template namespaces in node params (fields, env, ctx, node, item).
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
@@ -128,6 +134,7 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
         field_values: &field_values,
         process_ctx: ctx.process_ctx,
         node_outputs: &std::collections::BTreeMap::new(),
+        loop_item: &ctx.loop_item,
     };
     super::template::resolve_templates(&node.params, &tpl_ctx)
 }
