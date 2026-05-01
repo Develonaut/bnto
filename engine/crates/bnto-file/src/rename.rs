@@ -138,6 +138,7 @@ fn build_rename_output(
             data,
             filename,
             mime_type: "application/octet-stream".to_string(),
+            metadata: serde_json::Map::new(),
         }],
         metadata,
     }

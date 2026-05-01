@@ -44,6 +44,9 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     pipeline_total_files: usize,
     /// Returns current time in ms (injected for testability in WASM).
     now_ms: F,
+    /// Current loop iteration's per-file metadata (CSV row columns, etc.).
+    /// Set by loop containers from PipelineFile.metadata each iteration.
+    loop_item: Option<serde_json::Map<String, serde_json::Value>>,
 }
 
 /// Result of executing a single node or container sub-pipeline.
@@ -100,6 +103,7 @@ pub fn execute_pipeline(
         process_ctx,
         pipeline_total_files: files.len(),
         now_ms,
+        loop_item: None,
     };
 
     let node_infos: Vec<NodeInfo> = processing_nodes

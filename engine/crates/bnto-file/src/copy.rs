@@ -136,6 +136,7 @@ impl NodeProcessor for FileCopy {
                 mime_type: input
                     .mime_type
                     .unwrap_or_else(|| "application/octet-stream".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             metadata: serde_json::Map::new(),
         })

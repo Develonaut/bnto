@@ -76,6 +76,7 @@ impl NodeProcessor for ConvertFormat {
                 data: json_bytes,
                 filename: output_filename,
                 mime_type: "application/json".to_string(),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })

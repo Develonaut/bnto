@@ -206,6 +206,7 @@ fn build_convert_output(
             data,
             filename: ConvertImageFormat::output_filename(filename, target),
             mime_type: target.mime_type().to_string(),
+            metadata: serde_json::Map::new(),
         }],
         metadata,
     }

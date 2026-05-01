@@ -298,6 +298,7 @@ fn build_resize_output(
             data,
             filename: ResizeImages::output_filename(input_filename, format),
             mime_type: format.mime_type().to_string(),
+            metadata: serde_json::Map::new(),
         }],
         metadata,
     }

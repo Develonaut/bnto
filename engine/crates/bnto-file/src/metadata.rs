@@ -91,6 +91,7 @@ impl NodeProcessor for FileMetadata {
                 data: input.data,
                 filename: input.filename,
                 mime_type: input.mime_type.unwrap_or(mime_type),
+                metadata: serde_json::Map::new(),
             }],
             metadata,
         })
