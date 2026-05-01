@@ -85,6 +85,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-filter")).toBe(true);
     expect(PROCESSOR_MAP.has("file-metadata")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
+    expect(PROCESSOR_MAP.has("spreadsheet-read")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-optimize")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-rasterize")).toBe(true);
   });

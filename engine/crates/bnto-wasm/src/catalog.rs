@@ -137,21 +137,21 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_seventeen_processors() {
-        // The native registry has 17 processors (14 browser + file-collect + file-copy + shell-command).
+    fn test_catalog_has_all_eighteen_processors() {
+        // The native registry has 18 processors (15 browser + file-collect + file-copy + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            17,
-            "Catalog should have exactly 17 processors"
+            18,
+            "Catalog should have exactly 18 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 17 expected processor type keys are present.
+        // Verify all 18 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -169,6 +169,7 @@ mod tests {
             "image-strip-exif",
             "image-overlay",
             "spreadsheet-clean",
+            "spreadsheet-read",
             "spreadsheet-rename",
             "spreadsheet-convert",
             "spreadsheet-merge",
@@ -223,9 +224,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 25);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 26);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 17);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 18);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),
@@ -240,8 +241,8 @@ mod tests {
         assert!(parsed["recipes"].is_array());
         assert_eq!(
             parsed["recipes"].as_array().unwrap().len(),
-            20,
-            "Catalog should include all 20 built-in recipes"
+            21,
+            "Catalog should include all 21 built-in recipes"
         );
     }
 

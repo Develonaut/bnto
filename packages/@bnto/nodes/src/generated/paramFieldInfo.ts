@@ -199,6 +199,16 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     },
     deduplicate: { type: "boolean", control: "switch", required: false },
   },
+  "spreadsheet-read": {
+    hasHeaders: { type: "boolean", control: "switch", required: false },
+    delimiter: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["comma", "semicolon", "tab", "pipe"] as const,
+    },
+    maxRows: { type: "number", control: "slider", required: false, min: 1, max: 10000000 },
+  },
   "spreadsheet-rename": {
     columns: { type: "record", control: "keyValue", required: false },
   },

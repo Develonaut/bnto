@@ -85,6 +85,10 @@
       "label": "Merge CSV",
       "description": "Combine multiple CSV files into one with header reconciliation and deduplication."
     },
+    "spreadsheetRead": {
+      "label": "Read CSV Rows",
+      "description": "Explode a CSV into one item per row for loop iteration."
+    },
     "spreadsheetRename": {
       "label": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file."
@@ -344,6 +348,20 @@
       "deduplicate": {
         "label": "Remove Duplicates",
         "description": "Remove duplicate rows across all files"
+      }
+    },
+    "spreadsheetRead": {
+      "hasHeaders": {
+        "label": "Has Headers",
+        "description": "First row contains column headers"
+      },
+      "delimiter": {
+        "label": "Delimiter",
+        "description": "Column separator character"
+      },
+      "maxRows": {
+        "label": "Max Rows",
+        "description": "Maximum rows to process. Error if CSV exceeds this limit."
       }
     },
     "spreadsheetRename": {

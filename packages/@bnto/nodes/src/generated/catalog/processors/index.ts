@@ -20,6 +20,7 @@ import { shellCommandProcessor } from "./shellCommand";
 import { spreadsheetCleanProcessor } from "./spreadsheetClean";
 import { spreadsheetConvertProcessor } from "./spreadsheetConvert";
 import { spreadsheetMergeProcessor } from "./spreadsheetMerge";
+import { spreadsheetReadProcessor } from "./spreadsheetRead";
 import { spreadsheetRenameProcessor } from "./spreadsheetRename";
 import { vectorOptimizeProcessor } from "./vectorOptimize";
 import { vectorRasterizeProcessor } from "./vectorRasterize";
@@ -39,6 +40,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   spreadsheetCleanProcessor,
   spreadsheetConvertProcessor,
   spreadsheetMergeProcessor,
+  spreadsheetReadProcessor,
   spreadsheetRenameProcessor,
   vectorOptimizeProcessor,
   vectorRasterizeProcessor,

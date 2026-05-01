@@ -54,6 +54,10 @@ pub fn create_browser_registry() -> NodeRegistry {
         Box::new(bnto_vector::VectorRasterize::new()),
     );
     registry.register("vector-optimize", Box::new(bnto_vector::OptimizeSvg));
+    registry.register(
+        "spreadsheet-read",
+        Box::new(bnto_spreadsheet::ReadSpreadsheet::new()),
+    );
 
     registry
 }
@@ -117,7 +121,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 14);
+        assert_eq!(registry.len(), 15);
 
         let expected = [
             "file-filter",
@@ -129,6 +133,7 @@ mod tests {
             "image-strip-exif",
             "image-overlay",
             "spreadsheet-clean",
+            "spreadsheet-read",
             "spreadsheet-rename",
             "spreadsheet-convert",
             "spreadsheet-merge",
@@ -149,8 +154,8 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (14) + file-collect + file-copy + shell-command (3) = 17
-        assert_eq!(registry.len(), 17);
+        // Full registry = browser (15) + file-collect + file-copy + shell-command (3) = 18
+        assert_eq!(registry.len(), 18);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -413,6 +418,7 @@ mod tests {
             "image-strip-exif",
             "image-overlay",
             "spreadsheet-clean",
+            "spreadsheet-read",
             "spreadsheet-rename",
             "spreadsheet-convert",
             "spreadsheet-merge",
@@ -496,6 +502,7 @@ mod tests {
             include_str!("../recipes/svg-to-png.bnto.json"),
             include_str!("../recipes/svg-to-jpeg.bnto.json"),
             include_str!("../recipes/optimize-svg.bnto.json"),
+            include_str!("../recipes/bulk-video-download.bnto.json"),
         ];
 
         for (i, json) in recipes.iter().enumerate() {

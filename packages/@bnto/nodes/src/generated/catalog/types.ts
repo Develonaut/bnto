@@ -27,6 +27,7 @@ export type NodeTypeName =
   | "spreadsheet-clean"
   | "spreadsheet-convert"
   | "spreadsheet-merge"
+  | "spreadsheet-read"
   | "spreadsheet-rename"
   | "transform"
   | "vector-optimize"
