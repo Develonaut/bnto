@@ -269,6 +269,43 @@ fn find_first_processing_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
 }
 
 // =============================================================================
+// Helper: Resolve output directory from recipe definition
+// =============================================================================
+
+/// Read the output node's `directory` parameter from a pipeline definition.
+///
+/// Returns `Some(value)` if a non-empty directory string is found,
+/// `None` otherwise. The caller is responsible for resolving any
+/// `{{ctx.*}}` templates in the returned value.
+pub fn resolve_output_directory(def: &PipelineDefinition) -> Option<String> {
+    find_output_directory_in_nodes(&def.nodes)
+}
+
+fn find_output_directory_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
+    for node in nodes {
+        if node.node_type == "output" {
+            let dir = node
+                .params
+                .get("directory")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            return if dir.is_empty() {
+                None
+            } else {
+                Some(dir.to_string())
+            };
+        }
+        // Recurse into container children
+        if let Some(children) = &node.children
+            && let Some(dir) = find_output_directory_in_nodes(children)
+        {
+            return Some(dir);
+        }
+    }
+    None
+}
+
+// =============================================================================
 // Helper: Check if a node type is an I/O marker
 // =============================================================================
 
@@ -1189,6 +1226,85 @@ mod tests {
         assert!(!is_container_node("image-compress"));
         assert!(!is_container_node("input"));
         assert!(!is_container_node("output"));
+    }
+
+    // --- resolve_output_directory Tests ---
+
+    #[test]
+    fn test_resolve_output_directory_found() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "proc", "type": "image-compress", "params": {} },
+                    { "id": "out", "type": "output", "params": { "directory": "{{ctx.date}}-output" } }
+                ]
+            }"#,
+        );
+        assert_eq!(
+            resolve_output_directory(&def),
+            Some("{{ctx.date}}-output".to_string())
+        );
+    }
+
+    #[test]
+    fn test_resolve_output_directory_none_when_missing() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "out", "type": "output", "params": { "mode": "download" } }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_directory(&def), None);
+    }
+
+    #[test]
+    fn test_resolve_output_directory_none_when_empty_string() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "out", "type": "output", "params": { "directory": "" } }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_directory(&def), None);
+    }
+
+    #[test]
+    fn test_resolve_output_directory_no_output_node() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "proc", "type": "image-compress", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_directory(&def), None);
+    }
+
+    #[test]
+    fn test_resolve_output_directory_nested() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    {
+                        "id": "group-1",
+                        "type": "group",
+                        "params": {},
+                        "children": [
+                            { "id": "out", "type": "output", "params": { "directory": "nested-dir" } }
+                        ]
+                    }
+                ]
+            }"#,
+        );
+        assert_eq!(
+            resolve_output_directory(&def),
+            Some("nested-dir".to_string())
+        );
     }
 
     // --- InputMode Resolution Tests ---

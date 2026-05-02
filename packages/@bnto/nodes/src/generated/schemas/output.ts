@@ -13,6 +13,7 @@ export const outputParamsSchema = z.object({
     .enum(["download", "display", "preview"] as const)
     .optional()
     .default("download"),
+  directory: z.string().optional().default(""),
   filename: z.string().optional(),
   zip: z.boolean().optional().default(true),
   label: z.string().optional(),
@@ -31,6 +32,11 @@ export const outputNodeSchema: NodeSchema = {
     mode: {
       label: "Mode",
       description: "How results are delivered to the user.",
+    },
+    directory: {
+      label: "Output Directory",
+      description: "Output directory path. Supports {{ctx.date}}, {{ctx.timestamp}} templates.",
+      placeholder: "{{ctx.date}}-bulk-download",
     },
     filename: {
       label: "Filename Template",

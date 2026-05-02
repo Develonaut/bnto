@@ -58,9 +58,10 @@ enum Command {
         /// Input files, URL, or text (depends on recipe input mode).
         inputs: Vec<String>,
 
-        /// Output directory (default: current directory).
-        #[arg(short, long, default_value = ".")]
-        output: String,
+        /// Output directory. Overrides recipe-defined output directory.
+        /// Defaults to recipe's directory param, or current directory if unset.
+        #[arg(short, long)]
+        output: Option<String>,
 
         /// Override a node parameter. Format: key=value or nodeId:key=value
         #[arg(short = 'p', long = "param")]
@@ -198,7 +199,15 @@ fn main() {
             yes,
         }) => {
             telemetry::capture(telemetry::events::cli_command("run"));
-            run_recipe(&recipe, &inputs, &output, &param, yes, &logger, &catalog);
+            run_recipe(
+                &recipe,
+                &inputs,
+                output.as_deref(),
+                &param,
+                yes,
+                &logger,
+                &catalog,
+            );
         }
         Some(Command::List) => {
             telemetry::capture(telemetry::events::cli_command("list"));
@@ -323,7 +332,7 @@ fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
 fn run_recipe(
     recipe_path: &str,
     inputs: &[String],
-    output_dir: &str,
+    output_override: Option<&str>,
     param_overrides: &[String],
     skip_consent: bool,
     logger: &Arc<dyn Logger>,
@@ -350,9 +359,13 @@ fn run_recipe(
 
     let start = std::time::Instant::now();
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
+
+    // Priority chain: explicit --output > recipe directory param > default "."
+    let output_dir = resolve_effective_output_dir(output_override, &prepared.definition_json, &ctx);
+
     // Create output dir before pipeline so progressive output can write there.
-    let _ = std::fs::create_dir_all(output_dir);
-    let reporter = progress::stderr_reporter(Arc::clone(logger), Some(output_dir.to_string()));
+    let _ = std::fs::create_dir_all(&output_dir);
+    let reporter = progress::stderr_reporter(Arc::clone(logger), Some(output_dir.clone()));
     match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
         Ok(result) => {
             let elapsed_us = start.elapsed().as_micros() as u64;
@@ -371,7 +384,7 @@ fn run_recipe(
                 true,
                 &param_names,
             ));
-            write_output(&result, output_dir);
+            write_output(&result, &output_dir);
         }
         Err(e) => {
             logger.log(LogEntry {
@@ -385,6 +398,29 @@ fn run_recipe(
             process::exit(1);
         }
     }
+}
+
+/// Resolve the effective output directory using the priority chain:
+/// 1. Explicit `--output` flag (highest priority)
+/// 2. Recipe's output node `directory` parameter (with {{ctx.*}} templates resolved)
+/// 3. Default: current directory (".")
+fn resolve_effective_output_dir(
+    output_override: Option<&str>,
+    definition_json: &str,
+    process_ctx: &dyn bnto_core::ProcessContext,
+) -> String {
+    // Explicit --output always wins.
+    if let Some(dir) = output_override {
+        return dir.to_string();
+    }
+    // Try recipe's output node directory param.
+    if let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(definition_json)
+        && let Some(recipe_dir) = bnto_core::resolve_output_directory(&def)
+    {
+        return bnto_core::resolve_ctx_templates(&recipe_dir, process_ctx);
+    }
+    // Default: current directory.
+    ".".to_string()
 }
 
 fn print_run_banner(recipe_path: &str, raw_json: &str, prepared: &input::PreparedInput) {

@@ -111,8 +111,73 @@ fn resolve_ctx(key: &str, process_ctx: &dyn ProcessContext) -> Option<Value> {
             Some(Value::String(dir.to_string_lossy().into_owned()))
         }
         "platform" => Some(Value::String(current_platform().to_string())),
+        "date" | "time" | "timestamp" => {
+            let (y, m, d, hh, mm, ss) = now_civil();
+            let val = match key {
+                "date" => format!("{y:04}-{m:02}-{d:02}"),
+                "time" => format!("{hh:02}-{mm:02}-{ss:02}"),
+                "timestamp" => format!("{y:04}{m:02}{d:02}-{hh:02}{mm:02}{ss:02}"),
+                _ => unreachable!(),
+            };
+            Some(Value::String(val))
+        }
         _ => None, // Unknown ctx property — leave as-is
     }
+}
+
+/// Convert current wall-clock time to civil (year, month, day, hour, min, sec).
+///
+/// Uses Howard Hinnant's civil calendar algorithm on the Unix epoch.
+/// No `chrono` dependency — pure arithmetic. `SystemTime::now()` works in
+/// WASM (backed by `Date.now()`).
+fn now_civil() -> (i32, u32, u32, u32, u32, u32) {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+
+    epoch_to_civil(secs)
+}
+
+/// Convert Unix epoch seconds to (year, month, day, hour, minute, second) in UTC.
+///
+/// Hinnant's algorithm: http://howardhinnant.github.io/date_algorithms.html
+fn epoch_to_civil(epoch_secs: u64) -> (i32, u32, u32, u32, u32, u32) {
+    let total_secs = epoch_secs;
+    let day_secs = (total_secs % 86400) as u32;
+    let hh = day_secs / 3600;
+    let mm = (day_secs % 3600) / 60;
+    let ss = day_secs % 60;
+
+    // Days since epoch, shifted so day 0 = 0000-03-01
+    let z = (total_secs / 86400) as i64 + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = (z - era * 146097) as u32; // day of era [0, 146096]
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+
+    (y as i32, m, d, hh, mm, ss)
+}
+
+/// Resolve only `{{ctx.*}}` variables in a string.
+///
+/// The environment (CLI, TUI) calls this to expand template variables in
+/// the output directory path before deciding where to write files.
+/// Only resolves ctx namespace — ignores fields, env, item, node placeholders.
+pub fn resolve_ctx_templates(s: &str, ctx: &dyn ProcessContext) -> String {
+    if !s.contains("{{ctx.") {
+        return s.to_string();
+    }
+    let mut result = s.to_string();
+    resolve_ctx_interpolation(&mut result, ctx);
+    result
 }
 
 /// Returns the current platform name.
@@ -463,6 +528,129 @@ mod tests {
             !tmp.contains("{{"),
             "Should not contain unresolved placeholder"
         );
+    }
+
+    #[test]
+    fn ctx_date_returns_iso_format() {
+        let params = make_params(&[("d", json!("{{ctx.date}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        let val = resolved["d"].as_str().unwrap();
+        // ISO 8601 date: YYYY-MM-DD
+        assert!(
+            val.len() == 10 && val.chars().nth(4) == Some('-') && val.chars().nth(7) == Some('-'),
+            "Expected YYYY-MM-DD, got: {val}"
+        );
+        // Year should be reasonable (2020+)
+        let year: u32 = val[..4].parse().unwrap();
+        assert!(year >= 2020, "Year should be >= 2020, got: {year}");
+    }
+
+    #[test]
+    fn ctx_time_returns_hyphen_separated() {
+        let params = make_params(&[("t", json!("{{ctx.time}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        let val = resolved["t"].as_str().unwrap();
+        // HH-MM-SS format (filesystem-safe)
+        assert_eq!(val.len(), 8, "Expected HH-MM-SS (8 chars), got: {val}");
+        let parts: Vec<&str> = val.split('-').collect();
+        assert_eq!(parts.len(), 3, "Expected 3 parts separated by hyphens");
+        let hour: u32 = parts[0].parse().unwrap();
+        let minute: u32 = parts[1].parse().unwrap();
+        let second: u32 = parts[2].parse().unwrap();
+        assert!(hour < 24, "Hour out of range: {hour}");
+        assert!(minute < 60, "Minute out of range: {minute}");
+        assert!(second < 60, "Second out of range: {second}");
+    }
+
+    #[test]
+    fn ctx_timestamp_returns_compact_sortable() {
+        let params = make_params(&[("ts", json!("{{ctx.timestamp}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        let val = resolved["ts"].as_str().unwrap();
+        // YYYYMMDD-HHMMSS format
+        assert_eq!(
+            val.len(),
+            15,
+            "Expected YYYYMMDD-HHMMSS (15 chars), got: {val}"
+        );
+        assert_eq!(
+            val.chars().nth(8),
+            Some('-'),
+            "Expected hyphen at position 8"
+        );
+        // Date part should be all digits
+        assert!(val[..8].chars().all(|c| c.is_ascii_digit()));
+        // Time part should be all digits
+        assert!(val[9..].chars().all(|c| c.is_ascii_digit()));
+    }
+
+    #[test]
+    fn ctx_date_in_interpolation() {
+        let params = make_params(&[("dir", json!("{{ctx.date}}-bulk-download"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        let val = resolved["dir"].as_str().unwrap();
+        assert!(
+            val.ends_with("-bulk-download"),
+            "Expected suffix, got: {val}"
+        );
+        assert!(
+            !val.contains("{{"),
+            "Should not contain unresolved placeholder"
+        );
+    }
+
+    #[test]
+    fn resolve_ctx_templates_public_function() {
+        let mock = MockContext::new();
+        let result = resolve_ctx_templates("{{ctx.date}}-output", &mock);
+        assert!(
+            !result.contains("{{"),
+            "Should not contain unresolved placeholder"
+        );
+        assert!(result.ends_with("-output"), "Suffix should be preserved");
+        assert!(result.len() > "-output".len(), "Date should be prepended");
+    }
+
+    #[test]
+    fn resolve_ctx_templates_no_placeholders() {
+        let mock = MockContext::new();
+        let result = resolve_ctx_templates("plain-string", &mock);
+        assert_eq!(result, "plain-string");
+    }
+
+    #[test]
+    fn resolve_ctx_templates_empty_string() {
+        let mock = MockContext::new();
+        let result = resolve_ctx_templates("", &mock);
+        assert_eq!(result, "");
     }
 
     #[test]

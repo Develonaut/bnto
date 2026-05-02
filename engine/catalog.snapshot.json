@@ -1230,6 +1230,21 @@
           "control": "select"
         },
         {
+          "name": "directory",
+          "label": "Output Directory",
+          "description": "Output directory path. Supports {{ctx.date}}, {{ctx.timestamp}} templates.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "",
+          "placeholder": "{{ctx.date}}-bulk-download",
+          "visibleWhen": {
+            "param": "mode",
+            "equals": "download"
+          },
+          "surfaceable": true
+        },
+        {
           "name": "filename",
           "label": "Filename Template",
           "description": "Filename template for output files.",

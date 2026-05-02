@@ -258,7 +258,7 @@ mod tests {
         let node_types = parsed["nodeTypes"].as_array().unwrap();
         let expected_param_counts = [
             ("input", 8),
-            ("output", 5),
+            ("output", 6),
             ("loop", 5),
             ("group", 1),
             ("parallel", 3),

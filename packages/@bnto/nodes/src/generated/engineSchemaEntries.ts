@@ -274,6 +274,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "preview", label: "Preview" },
       ],
     },
+    directory: { visibleWhen: { param: "mode", equals: "download" } },
     filename: { visibleWhen: { param: "mode", equals: "download" } },
     zip: { control: "switch", visibleWhen: { param: "mode", equals: "download" } },
     autoDownload: { control: "switch", visibleWhen: { param: "mode", equals: "download" } },

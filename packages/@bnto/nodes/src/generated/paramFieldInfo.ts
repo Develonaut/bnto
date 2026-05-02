@@ -153,6 +153,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       required: false,
       enumValues: ["download", "display", "preview"] as const,
     },
+    directory: { type: "string", control: "text", required: false },
     filename: { type: "string", control: "text", required: false },
     zip: { type: "boolean", control: "switch", required: false },
     label: { type: "string", control: "text", required: false },
