@@ -19,6 +19,21 @@ pub struct NodeInfo {
     pub node_type: String,
 }
 
+/// A single output file attached to an `IterationCompleted` event
+/// when progressive output is enabled. Lets consumers write files
+/// to disk immediately instead of waiting for the full pipeline.
+///
+/// The `data` field is `#[serde(skip)]` so WASM JSON serialization
+/// doesn't try to serialize multi-GB video files.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProgressOutputFile {
+    pub name: String,
+    #[serde(skip)]
+    pub data: Vec<u8>,
+    pub mime_type: String,
+}
+
 /// Every event the pipeline executor can emit during execution.
 ///
 /// Serialized as a tagged union with `"type"` discriminant and camelCase
@@ -82,6 +97,11 @@ pub enum PipelineEvent {
         duration_ms: u64,
         /// How many output files this iteration produced.
         files_produced: usize,
+        /// Output files from this iteration (progressive mode only).
+        /// Empty when `outputPersistence` is `deferred` (default).
+        /// Serde-skipped so WASM doesn't serialize multi-GB file data.
+        #[serde(skip)]
+        output_files: Vec<ProgressOutputFile>,
     },
 
     /// Emitted when a loop iteration fails.
@@ -355,6 +375,7 @@ mod tests {
             total_iterations: 7,
             duration_ms: 1500,
             files_produced: 1,
+            output_files: Vec::new(),
         };
         let json = serde_json::to_value(&event).unwrap();
 
@@ -364,6 +385,42 @@ mod tests {
         assert_eq!(json["totalIterations"], 7);
         assert_eq!(json["durationMs"], 1500);
         assert_eq!(json["filesProduced"], 1);
+    }
+
+    #[test]
+    fn test_iteration_completed_skips_output_files_in_json() {
+        let event = PipelineEvent::IterationCompleted {
+            node_id: "loop-1".to_string(),
+            iteration: 0,
+            total_iterations: 1,
+            duration_ms: 100,
+            files_produced: 1,
+            output_files: vec![ProgressOutputFile {
+                name: "video.mp4".to_string(),
+                data: vec![0u8; 100],
+                mime_type: "video/mp4".to_string(),
+            }],
+        };
+        let json = serde_json::to_value(&event).unwrap();
+
+        // output_files is serde(skip) — should NOT appear in JSON.
+        assert!(json.get("outputFiles").is_none());
+        assert_eq!(json["filesProduced"], 1);
+    }
+
+    #[test]
+    fn test_progress_output_file_serializes_without_data() {
+        let file = ProgressOutputFile {
+            name: "video.mp4".to_string(),
+            data: vec![0u8; 1024],
+            mime_type: "video/mp4".to_string(),
+        };
+        let json = serde_json::to_value(&file).unwrap();
+
+        assert_eq!(json["name"], "video.mp4");
+        assert_eq!(json["mimeType"], "video/mp4");
+        // data is serde(skip) — should NOT appear in JSON.
+        assert!(json.get("data").is_none());
     }
 
     #[test]

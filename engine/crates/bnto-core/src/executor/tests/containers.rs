@@ -423,6 +423,173 @@ fn test_container_with_no_children_is_passthrough() {
     assert_eq!(result.files[0].name, "test.txt");
 }
 
+// --- Progressive output tests ---
+
+#[test]
+fn test_loop_deferred_output_events_have_no_files() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "child", "type": "test-echo" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    let events = recorder.events();
+    for event in &events {
+        if let PipelineEvent::IterationCompleted { output_files, .. } = event {
+            assert!(
+                output_files.is_empty(),
+                "Deferred mode (default) should not attach files to events"
+            );
+        }
+    }
+}
+
+#[test]
+fn test_loop_progressive_output_events_carry_files() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "parameters": { "outputPersistence": "progressive" },
+                "children": [
+                    { "id": "child", "type": "test-echo" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    let events = recorder.events();
+    let completed_events: Vec<&PipelineEvent> = events
+        .iter()
+        .filter(|e| matches!(e, PipelineEvent::IterationCompleted { .. }))
+        .collect();
+
+    assert_eq!(completed_events.len(), 2);
+    for event in &completed_events {
+        if let PipelineEvent::IterationCompleted {
+            output_files,
+            files_produced,
+            ..
+        } = event
+        {
+            assert_eq!(
+                output_files.len(),
+                *files_produced,
+                "Progressive mode should attach output files to events"
+            );
+            assert!(!output_files.is_empty());
+            assert_eq!(output_files[0].data.len(), 3, "File data should be present");
+        }
+    }
+}
+
+#[test]
+fn test_loop_progressive_output_files_have_correct_metadata() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "parameters": { "outputPersistence": "progressive" },
+                "children": [
+                    { "id": "child", "type": "test-uppercase" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("hello.txt", b"hello")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    let events = recorder.events();
+    let completed = events
+        .iter()
+        .find(|e| matches!(e, PipelineEvent::IterationCompleted { .. }))
+        .expect("Should have IterationCompleted");
+
+    if let PipelineEvent::IterationCompleted { output_files, .. } = completed {
+        assert_eq!(output_files.len(), 1);
+        assert_eq!(output_files[0].name, "HELLO.TXT");
+        assert_eq!(output_files[0].data, b"hello");
+        assert_eq!(output_files[0].mime_type, "application/octet-stream");
+    }
+}
+
+#[test]
+fn test_loop_progressive_failed_iterations_emit_no_files() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "parameters": {
+                    "onError": "continue",
+                    "outputPersistence": "progressive"
+                },
+                "children": [
+                    { "id": "child", "type": "test-fail" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa")];
+    let _ = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
+
+    let events = recorder.events();
+    // Failed iterations should emit IterationCompleted with empty output_files.
+    let completed_events: Vec<&PipelineEvent> = events
+        .iter()
+        .filter(|e| matches!(e, PipelineEvent::IterationCompleted { .. }))
+        .collect();
+
+    for event in &completed_events {
+        if let PipelineEvent::IterationCompleted { output_files, .. } = event {
+            assert!(
+                output_files.is_empty(),
+                "Failed iterations should not carry output files"
+            );
+        }
+    }
+}
+
 // --- Continue-on-error tests ---
 
 #[test]

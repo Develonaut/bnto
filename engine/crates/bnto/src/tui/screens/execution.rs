@@ -145,6 +145,8 @@ pub enum ExecutionMessage {
         total_iterations: usize,
         duration_ms: u64,
         files_produced: usize,
+        /// Output files from progressive mode (written to disk by the bridge).
+        output_files: Vec<bnto_core::events::ProgressOutputFile>,
     },
     /// Loop iteration failed (in continue-on-error mode, loop continues).
     IterationFailed {
@@ -331,6 +333,8 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             node_id, iteration, ..
         } => {
             // Update iteration counter to reflect completion.
+            // Progressive output files are written to disk by the bridge,
+            // not handled here in the model update.
             if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
                 node.iteration = Some(iteration);
             }

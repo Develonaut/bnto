@@ -350,7 +350,9 @@ fn run_recipe(
 
     let start = std::time::Instant::now();
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
-    let reporter = progress::stderr_reporter(Arc::clone(logger));
+    // Create output dir before pipeline so progressive output can write there.
+    let _ = std::fs::create_dir_all(output_dir);
+    let reporter = progress::stderr_reporter(Arc::clone(logger), Some(output_dir.to_string()));
     match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
         Ok(result) => {
             let elapsed_us = start.elapsed().as_micros() as u64;
