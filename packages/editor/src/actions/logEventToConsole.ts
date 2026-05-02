@@ -67,6 +67,10 @@ const EVENT_HANDLERS: Record<string, (event: LoggableEvent) => void> = {
       (e as Extract<PipelineEvent, { type: "PipelineFailed" }>).error,
     );
   },
+  IterationStarted: (e) => {
+    const ev = e as Extract<PipelineEvent, { type: "IterationStarted" }>;
+    logInfo("[bnto]    Iteration %d/%d for %s", ev.iteration + 1, ev.totalIterations, ev.nodeId);
+  },
   CommandOutput: (e) => {
     const ev = e as Extract<PipelineEvent, { type: "CommandOutput" }>;
     console.log("[bnto]    [%s] %s", ev.nodeId, ev.line);

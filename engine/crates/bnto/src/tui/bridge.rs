@@ -213,8 +213,21 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
             node_info: nodes.into_iter().map(|n| (n.id, n.node_type)).collect(),
         }),
         PipelineEvent::NodeStarted {
-            node_id, node_type, ..
-        } => AppMessage::Execution(ExecutionMessage::NodeStarted { node_id, node_type }),
+            node_id,
+            node_type,
+            parent_node_id,
+            ..
+        } => {
+            if let Some(parent_id) = parent_node_id {
+                AppMessage::Execution(ExecutionMessage::ChildNodeStarted {
+                    parent_node_id: parent_id,
+                    node_id,
+                    node_type,
+                })
+            } else {
+                AppMessage::Execution(ExecutionMessage::NodeStarted { node_id, node_type })
+            }
+        }
         PipelineEvent::FileProgress {
             node_id,
             file_index,
@@ -231,12 +244,23 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
         PipelineEvent::NodeCompleted {
             node_id,
             duration_ms,
+            parent_node_id,
             ..
-        } => AppMessage::Execution(ExecutionMessage::NodeCompleted {
-            node_id,
-            duration_ms,
-        }),
-        PipelineEvent::NodeFailed { node_id, error } => {
+        } => {
+            if let Some(parent_id) = parent_node_id {
+                AppMessage::Execution(ExecutionMessage::ChildNodeCompleted {
+                    parent_node_id: parent_id,
+                    node_id,
+                    duration_ms,
+                })
+            } else {
+                AppMessage::Execution(ExecutionMessage::NodeCompleted {
+                    node_id,
+                    duration_ms,
+                })
+            }
+        }
+        PipelineEvent::NodeFailed { node_id, error, .. } => {
             AppMessage::Execution(ExecutionMessage::NodeFailed { node_id, error })
         }
         PipelineEvent::PipelineCompleted {
@@ -252,6 +276,15 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
         PipelineEvent::CommandOutput { node_id, line } => {
             AppMessage::Execution(ExecutionMessage::CommandOutput { node_id, line })
         }
+        PipelineEvent::IterationStarted {
+            node_id,
+            iteration,
+            total_iterations,
+        } => AppMessage::Execution(ExecutionMessage::IterationStarted {
+            node_id,
+            iteration,
+            total_iterations,
+        }),
     }
 }
 

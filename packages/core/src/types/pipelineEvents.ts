@@ -10,6 +10,7 @@
 export type PipelineEvent =
   | PipelineStartedEvent
   | NodeStartedEvent
+  | IterationStartedEvent
   | FileProgressEvent
   | NodeCompletedEvent
   | NodeFailedEvent
@@ -31,6 +32,18 @@ export interface NodeStartedEvent {
   nodeIndex: number;
   totalNodes: number;
   nodeType: string;
+  /** If this node is inside a container, the container's ID. Null for top-level nodes. */
+  parentNodeId: string | null;
+}
+
+export interface IterationStartedEvent {
+  type: "IterationStarted";
+  /** The loop container node that owns this iteration. */
+  nodeId: string;
+  /** Zero-based iteration index. */
+  iteration: number;
+  /** Total number of iterations in this loop. */
+  totalIterations: number;
 }
 
 export interface FileProgressEvent {
@@ -47,12 +60,16 @@ export interface NodeCompletedEvent {
   nodeId: string;
   durationMs: number;
   filesProcessed: number;
+  /** If this node is inside a container, the container's ID. Null for top-level nodes. */
+  parentNodeId: string | null;
 }
 
 export interface NodeFailedEvent {
   type: "NodeFailed";
   nodeId: string;
   error: string;
+  /** If this node is inside a container, the container's ID. Null for top-level nodes. */
+  parentNodeId: string | null;
 }
 
 export interface PipelineCompletedEvent {

@@ -58,6 +58,7 @@ fn test_single_file_full_event_sequence() {
         node_index,
         total_nodes,
         node_type,
+        ..
     } = &events[1]
     {
         assert_eq!(node_id, "proc");
@@ -110,6 +111,7 @@ fn test_single_file_full_event_sequence() {
         node_id,
         files_processed,
         duration_ms,
+        ..
     } = &events[4]
     {
         assert_eq!(node_id, "proc");

@@ -63,22 +63,31 @@ fn header_lines<'a>(
         lines.push(Line::from(Span::styled("  STEPS", theme.category())));
         for node in &exec.nodes {
             let (marker, style) = node_marker(&node.status, theme);
-            let label = if node.node_type.is_empty() {
-                node.id.as_str()
-            } else {
-                node.node_type.as_str()
-            };
+            let label = node_label(node);
             let annotation = node_annotation(node);
             lines.push(Line::from(Span::styled(
                 format!("  {marker} {label}{annotation}"),
                 style,
             )));
+            // Render child nodes indented under their parent container.
+            for child in &node.children {
+                let (cm, cs) = node_marker(&child.status, theme);
+                let child_label = node_label(child);
+                let child_ann = node_annotation(child);
+                lines.push(Line::from(Span::styled(
+                    format!("    {cm} {child_label}{child_ann}"),
+                    cs,
+                )));
+            }
         }
         lines.push(Line::from(""));
     }
 
-    // File progress
-    if !exec.files.is_empty() {
+    // File progress — hidden when all files are done but pipeline is still
+    // running, since it just shows "Complete" for input files while containers
+    // are doing the real work (e.g., loop iterating over dynamic items).
+    let show_files = !exec.files.is_empty() && !should_hide_files(exec);
+    if show_files {
         lines.push(Line::from(Span::styled("  FILES", theme.category())));
         for file in &exec.files {
             let (marker, style) = file_marker(&file.status, theme);
@@ -141,9 +150,27 @@ fn node_marker(status: &NodeStatus, theme: &Theme) -> (&'static str, ratatui::st
     }
 }
 
-/// Build a status annotation for a node: file count for active, elapsed for completed.
+/// Display label for a node — prefers node_type, falls back to id.
+fn node_label(node: &super::screens::execution::NodeProgress) -> &str {
+    if node.node_type.is_empty() {
+        node.id.as_str()
+    } else {
+        node.node_type.as_str()
+    }
+}
+
+/// Build a status annotation for a node.
+///
+/// - Active loops: iteration count `(3/15)`
+/// - Active non-loops with files: file count `(2/4)`
+/// - Completed: elapsed time `(2.4s)`
 fn node_annotation(node: &super::screens::execution::NodeProgress) -> String {
     match &node.status {
+        NodeStatus::Active if node.total_iterations.is_some() => {
+            let iter = node.iteration.unwrap_or(0) + 1; // 1-based for display
+            let total = node.total_iterations.unwrap();
+            format!(" ({iter}/{total})")
+        }
         NodeStatus::Active if node.total_files > 0 => {
             format!(" ({}/{})", node.files_processed, node.total_files)
         }
@@ -152,6 +179,17 @@ fn node_annotation(node: &super::screens::execution::NodeProgress) -> String {
         }
         _ => String::new(),
     }
+}
+
+/// Hide the FILES section when it's misleading: all input files are done
+/// but the pipeline is still running (containers generating dynamic work).
+fn should_hide_files(exec: &super::screens::execution::ExecutionModel) -> bool {
+    if exec.status != ExecutionStatus::Running {
+        return false;
+    }
+    let has_containers = exec.nodes.iter().any(|n| !n.children.is_empty());
+    let all_done = exec.files.iter().all(|f| f.status == FileStatus::Done);
+    has_containers && all_done
 }
 
 /// Map file status to a marker character and style.
@@ -176,6 +214,9 @@ mod tests {
             status,
             files_processed,
             total_files,
+            iteration: None,
+            total_iterations: None,
+            children: Vec::new(),
         }
     }
 
@@ -207,5 +248,24 @@ mod tests {
     fn annotation_pending_is_empty() {
         let node = make_node(NodeStatus::Pending, 0, 0);
         assert_eq!(node_annotation(&node), "");
+    }
+
+    #[test]
+    fn annotation_shows_iteration_for_loops() {
+        let mut node = make_node(NodeStatus::Active, 0, 0);
+        node.node_type = "loop".into();
+        node.iteration = Some(2); // 0-based
+        node.total_iterations = Some(15);
+        // 1-based display: iteration 2 -> "3/15"
+        assert_eq!(node_annotation(&node), " (3/15)");
+    }
+
+    #[test]
+    fn annotation_iteration_takes_priority_over_file_count() {
+        let mut node = make_node(NodeStatus::Active, 5, 10);
+        node.iteration = Some(0);
+        node.total_iterations = Some(3);
+        // Iteration count shown instead of file count.
+        assert_eq!(node_annotation(&node), " (1/3)");
     }
 }

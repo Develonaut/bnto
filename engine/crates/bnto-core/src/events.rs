@@ -51,6 +51,21 @@ pub enum PipelineEvent {
         total_nodes: usize,
         /// The type of node (e.g., "image-compress", "spreadsheet-clean").
         node_type: String,
+        /// If this node is inside a container (loop/group), the container's ID.
+        /// `None` for top-level nodes.
+        parent_node_id: Option<String>,
+    },
+
+    /// Emitted at the start of each loop iteration.
+    /// Powers iteration count display (e.g., "3/15").
+    #[serde(rename_all = "camelCase")]
+    IterationStarted {
+        /// The loop container node that owns this iteration.
+        node_id: String,
+        /// Zero-based iteration index.
+        iteration: usize,
+        /// Total number of iterations in this loop.
+        total_iterations: usize,
     },
 
     /// Emitted during file processing within a node.
@@ -79,6 +94,8 @@ pub enum PipelineEvent {
         duration_ms: u64,
         /// How many files this node processed.
         files_processed: usize,
+        /// If this node is inside a container, the container's ID.
+        parent_node_id: Option<String>,
     },
 
     /// Emitted when a node fails.
@@ -89,6 +106,8 @@ pub enum PipelineEvent {
         node_id: String,
         /// Human-readable error message.
         error: String,
+        /// If this node is inside a container, the container's ID.
+        parent_node_id: Option<String>,
     },
 
     /// Emitted once when the entire pipeline finishes successfully.
@@ -256,6 +275,7 @@ mod tests {
             node_index: 0,
             total_nodes: 3,
             node_type: "image-compress".to_string(),
+            parent_node_id: None,
         };
         let json = serde_json::to_value(&event).unwrap();
 
@@ -264,6 +284,37 @@ mod tests {
         assert_eq!(json["nodeIndex"], 0);
         assert_eq!(json["totalNodes"], 3);
         assert_eq!(json["nodeType"], "image-compress");
+        assert_eq!(json["parentNodeId"], serde_json::Value::Null);
+    }
+
+    #[test]
+    fn test_node_started_with_parent_serializes_correctly() {
+        let event = PipelineEvent::NodeStarted {
+            node_id: "child-1".to_string(),
+            node_index: 0,
+            total_nodes: 1,
+            node_type: "shell-command".to_string(),
+            parent_node_id: Some("loop-1".to_string()),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "NodeStarted");
+        assert_eq!(json["parentNodeId"], "loop-1");
+    }
+
+    #[test]
+    fn test_iteration_started_serializes_correctly() {
+        let event = PipelineEvent::IterationStarted {
+            node_id: "loop-1".to_string(),
+            iteration: 2,
+            total_iterations: 15,
+        };
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "IterationStarted");
+        assert_eq!(json["nodeId"], "loop-1");
+        assert_eq!(json["iteration"], 2);
+        assert_eq!(json["totalIterations"], 15);
     }
 
     #[test]
@@ -291,6 +342,7 @@ mod tests {
             node_id: "node-1".to_string(),
             duration_ms: 1234,
             files_processed: 5,
+            parent_node_id: None,
         };
         let json = serde_json::to_value(&event).unwrap();
 
@@ -305,6 +357,7 @@ mod tests {
         let event = PipelineEvent::NodeFailed {
             node_id: "node-3".to_string(),
             error: "Unsupported format: BMP".to_string(),
+            parent_node_id: None,
         };
         let json = serde_json::to_value(&event).unwrap();
 
@@ -409,6 +462,7 @@ mod tests {
             node_index: 0,
             total_nodes: 2,
             node_type: "image-compress".to_string(),
+            parent_node_id: None,
         });
         reporter.emit(PipelineEvent::PipelineCompleted {
             duration_ms: 500,

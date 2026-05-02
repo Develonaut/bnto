@@ -83,6 +83,7 @@ export type {
   FileProgressEvent,
   NodeCompletedEvent,
   NodeFailedEvent,
+  IterationStartedEvent,
   PipelineCompletedEvent,
   PipelineFailedEvent,
   CommandOutputEvent,

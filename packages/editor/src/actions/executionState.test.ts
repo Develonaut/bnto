@@ -26,6 +26,7 @@ describe("applyPipelineEvent", () => {
       nodeType: "image-compress",
       nodeIndex: 0,
       totalNodes: 2,
+      parentNodeId: null,
     });
     expect(next["compress-1"]).toBe("active");
   });
@@ -37,6 +38,7 @@ describe("applyPipelineEvent", () => {
       nodeId: "compress-1",
       filesProcessed: 3,
       durationMs: 500,
+      parentNodeId: null,
     });
     expect(next["compress-1"]).toBe("completed");
   });
@@ -47,6 +49,7 @@ describe("applyPipelineEvent", () => {
       type: "NodeFailed",
       nodeId: "compress-1",
       error: "out of memory",
+      parentNodeId: null,
     });
     expect(next["compress-1"]).toBe("failed");
   });
@@ -72,6 +75,7 @@ describe("applyPipelineEvent", () => {
       nodeType: "image-compress",
       nodeIndex: 0,
       totalNodes: 1,
+      parentNodeId: null,
     });
     expect(current["compress-1"]).toBe("pending");
   });
