@@ -67,6 +67,7 @@ pub fn spawn_pipeline(
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
     output_dir_override: Option<String>,
+    definition_json: Option<String>,
 ) -> mpsc::Receiver<BridgeEvent> {
     let (tx, rx) = mpsc::channel();
 
@@ -77,6 +78,7 @@ pub fn spawn_pipeline(
             &selected_files,
             &param_overrides,
             output_dir_override.as_deref(),
+            definition_json.as_deref(),
         );
     });
 
@@ -90,18 +92,24 @@ fn run_bridge(
     selected_files: &[PathBuf],
     param_overrides: &HashMap<String, String>,
     output_dir_override: Option<&str>,
+    definition_json: Option<&str>,
 ) {
-    // Resolve the recipe from the embedded catalog.
-    let recipe = match builtin_recipe_by_slug(slug) {
-        Some(r) => r,
-        None => {
-            let _ = tx.send(BridgeEvent::Error(format!("Unknown recipe: {slug}")));
-            return;
-        }
+    // Use the definition JSON passed from the detail screen if available,
+    // otherwise fall back to the builtin catalog. This enables running
+    // library recipes that aren't compiled-in builtins.
+    let recipe_json: String = match definition_json {
+        Some(json) => json.to_string(),
+        None => match builtin_recipe_by_slug(slug) {
+            Some(r) => r.definition_json.to_string(),
+            None => {
+                let _ = tx.send(BridgeEvent::Error(format!("Unknown recipe: {slug}")));
+                return;
+            }
+        },
     };
 
     // Resolve input mode to handle URL/Text recipes differently.
-    let input_mode = serde_json::from_str::<PipelineDefinition>(recipe.definition_json)
+    let input_mode = serde_json::from_str::<PipelineDefinition>(&recipe_json)
         .map(|def| resolve_input_mode(&def))
         .unwrap_or_default();
 
@@ -134,7 +142,7 @@ fn run_bridge(
         .collect();
 
     // Prepare inputs (validates files, applies param overrides to definition).
-    let prepared = match input::prepare_inputs(recipe.definition_json, &args, &override_args) {
+    let prepared = match input::prepare_inputs(&recipe_json, &args, &override_args) {
         Ok(p) => p,
         Err(e) => {
             let _ = tx.send(BridgeEvent::Error(e));
@@ -388,6 +396,75 @@ mod tests {
         let text = extract_override_value(&mut overrides, "text");
         assert_eq!(text, None);
         assert_eq!(overrides.len(), 1);
+    }
+
+    #[test]
+    fn spawn_pipeline_uses_provided_definition_json() {
+        // Pass a non-builtin slug with an explicit definition.
+        // The bridge should use the provided JSON instead of failing with
+        // "Unknown recipe".
+        let def =
+            r#"{"nodes":[{"id":"n1","type":"shell-command","config":{"command":"echo hello"}}]}"#;
+        let rx = spawn_pipeline(
+            "nonexistent-recipe".into(),
+            vec![],
+            HashMap::new(),
+            None,
+            Some(def.into()),
+        );
+        // Wait for result — should not be "Unknown recipe" error.
+        let event = rx.recv_timeout(std::time::Duration::from_secs(10));
+        match event {
+            Ok(BridgeEvent::Error(ref msg)) => {
+                assert!(
+                    !msg.contains("Unknown recipe"),
+                    "bridge should not fail with Unknown recipe when definition_json is provided: {msg}"
+                );
+            }
+            Ok(BridgeEvent::Done { .. }) => {} // success
+            Ok(BridgeEvent::Progress(_)) => {} // in-progress, that's fine
+            Err(e) => panic!("bridge channel error: {e}"),
+        }
+    }
+
+    #[test]
+    fn spawn_pipeline_falls_back_to_builtin_when_no_definition() {
+        // Passing a known builtin slug with no definition should work.
+        let rx = spawn_pipeline("compress-images".into(), vec![], HashMap::new(), None, None);
+        let event = rx.recv_timeout(std::time::Duration::from_secs(10));
+        match event {
+            Ok(BridgeEvent::Error(ref msg)) => {
+                assert!(
+                    !msg.contains("Unknown recipe"),
+                    "builtin recipe should resolve: {msg}"
+                );
+            }
+            Ok(_) => {} // success or progress
+            Err(e) => panic!("bridge channel error: {e}"),
+        }
+    }
+
+    #[test]
+    fn spawn_pipeline_errors_for_unknown_without_definition() {
+        // No definition + non-builtin slug should error.
+        let rx = spawn_pipeline(
+            "totally-fake-recipe".into(),
+            vec![],
+            HashMap::new(),
+            None,
+            None,
+        );
+        let event = rx.recv_timeout(std::time::Duration::from_secs(10));
+        match event {
+            Ok(BridgeEvent::Error(ref msg)) => {
+                assert!(
+                    msg.contains("Unknown recipe"),
+                    "should fail with Unknown recipe: {msg}"
+                );
+            }
+            Ok(other) => panic!("expected Error, got {other:?}"),
+            Err(e) => panic!("bridge channel error: {e}"),
+        }
     }
 
     #[test]

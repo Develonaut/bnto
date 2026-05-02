@@ -839,6 +839,35 @@ mod tests {
     }
 
     #[test]
+    fn config_confirmed_threads_definition_json_to_execution() {
+        use super::super::screens::detail::DetailModel;
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.definition_json = r#"{"nodes":[{"id":"n1","type":"shell-command"}]}"#.into();
+
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: "s".into(),
+                    from: DetailOrigin::Home,
+                },
+                detail: Some(detail),
+                ..default_model()
+            },
+            AppMessage::ConfigConfirmed { slug: "s".into() },
+        );
+        let exec = app
+            .execution
+            .as_ref()
+            .expect("execution model should exist");
+        assert_eq!(
+            exec.definition_json.as_deref(),
+            Some(r#"{"nodes":[{"id":"n1","type":"shell-command"}]}"#),
+            "definition JSON from detail should flow through to execution"
+        );
+    }
+
+    #[test]
     fn files_selected_passes_files_and_overrides_to_execution() {
         use super::super::screens::picker::{FileEntry, PickerModel};
         use std::path::PathBuf;

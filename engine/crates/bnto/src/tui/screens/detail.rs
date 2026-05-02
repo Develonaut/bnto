@@ -63,6 +63,8 @@ pub struct DetailModel {
     pub name: String,
     /// Recipe description.
     pub description: String,
+    /// Raw recipe definition JSON (threaded to the execution bridge).
+    pub definition_json: String,
     /// Original param entries (kept for visible_when evaluation + confirm).
     pub params: Vec<ParamEntry>,
     /// Form model managing all field state, focus, and editing.
@@ -104,6 +106,7 @@ impl DetailModel {
             slug: slug.to_string(),
             name: name.to_string(),
             description: description.to_string(),
+            definition_json: String::from(r#"{"nodes":[]}"#),
             params,
             form,
             focus: DetailFocus::Params,

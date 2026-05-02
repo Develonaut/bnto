@@ -200,6 +200,7 @@ fn run_loop(
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
                 model.toml_config.output_dir().map(String::from),
+                exec.definition_json.clone(),
             ));
             execution_start = Some(Instant::now());
         }
