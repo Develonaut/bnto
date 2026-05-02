@@ -148,11 +148,23 @@ fn run_bridge(
         }
     };
 
-    // Resolve and create output directory before pipeline runs.
-    // Progressive output writes files here as iterations complete.
+    // Resolve output directory using the priority chain:
+    // 1. User-configured TUI output dir (same slot as CLI --output)
+    // 2. Recipe's output node directory param (with {{ctx.*}} resolved)
+    // 3. Default: temp dir
     let output_dir = match output_dir_override {
         Some(dir) if !dir.is_empty() => PathBuf::from(dir).join(format!("bnto-{slug}")),
-        _ => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
+        _ => {
+            // Check recipe's output node for a directory param.
+            let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
+                .ok()
+                .and_then(|def| bnto_core::resolve_output_directory(&def))
+                .map(|d| bnto_core::resolve_ctx_templates(&d, &ctx));
+            match recipe_dir {
+                Some(dir) => PathBuf::from(dir),
+                None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
+            }
+        }
     };
     let _ = std::fs::remove_dir_all(&output_dir);
     let _ = std::fs::create_dir_all(&output_dir);

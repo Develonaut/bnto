@@ -905,6 +905,12 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 `engine/crates/bnto-core/src/executor/container.rs`, `engine/crates/bnto-core/src/executor/mod.rs`, `engine/crates/bnto-core/src/processor.rs`
 
+### Triage: Pipeline Environment-Agnosticism Audit
+
+**Priority: Triage.** Audit the pipeline/execution code for environment-specific logic that should be pushed to the environment layer. The pipeline should stay dumb — produce output bytes — and let each environment (CLI, browser/WASM, TUI) read output node metadata and decide what to do with I/O. Check: progress reporting wiring, output path decisions, file I/O handling, anything that makes the pipeline aware of which environment it's running in. Goal: execution code is simple, straightforward, and environment-agnostic.
+
+`engine/crates/bnto-core/src/executor/`, `engine/crates/bnto-engine/src/`, `engine/crates/bnto/src/main.rs`
+
 ---
 
 ## Reference

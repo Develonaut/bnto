@@ -201,6 +201,18 @@ fn output_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
+            name: "directory".to_string(),
+            label: "Output Directory".to_string(),
+            description:
+                "Output directory path. Supports {{ctx.date}}, {{ctx.timestamp}} templates."
+                    .to_string(),
+            param_type: ParameterType::String,
+            default: Some(serde_json::json!("")),
+            placeholder: Some("{{ctx.date}}-bulk-download".to_string()),
+            visible_when: Some(visible_when("mode", download)),
+            ..Default::default()
+        },
+        ParameterDef {
             name: "filename".to_string(),
             label: "Filename Template".to_string(),
             description: "Filename template for output files.".to_string(),
@@ -561,12 +573,30 @@ mod tests {
     // --- output ---
 
     #[test]
-    fn output_has_five_params_in_schema_order() {
+    fn output_has_six_params_in_schema_order() {
         let params = output_params();
         let names: Vec<&str> = params.iter().map(|p| p.name.as_str()).collect();
         assert_eq!(
             names,
-            vec!["mode", "filename", "zip", "label", "autoDownload"]
+            vec![
+                "mode",
+                "directory",
+                "filename",
+                "zip",
+                "label",
+                "autoDownload"
+            ]
+        );
+    }
+
+    #[test]
+    fn output_directory_is_string_with_template_hint() {
+        let params = output_params();
+        let dir = get_param(&params, "directory");
+        assert_eq!(dir.param_type, ParameterType::String);
+        assert!(
+            dir.description.contains("{{ctx.date}}"),
+            "description should mention template variables"
         );
     }
 
@@ -598,7 +628,7 @@ mod tests {
             param: "mode".to_string(),
             equals: "download".to_string(),
         }));
-        for name in ["filename", "zip", "autoDownload"] {
+        for name in ["directory", "filename", "zip", "autoDownload"] {
             let p = get_param(&params, name);
             assert_eq!(
                 p.visible_when, download_cond,

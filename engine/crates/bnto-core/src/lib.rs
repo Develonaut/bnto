@@ -94,6 +94,7 @@ pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSou
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
+pub use executor::template::resolve_ctx_templates;
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
@@ -104,6 +105,7 @@ pub use metadata::{
 pub use pipeline::{
     InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
     PipelineResult, PipelineSettings, first_processing_node_id, resolve_input_mode,
+    resolve_output_directory,
 };
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
