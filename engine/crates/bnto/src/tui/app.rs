@@ -345,7 +345,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             model
         }
         AppMessage::OpenSettings => {
-            let settings = SettingsModel::from_toml_config(&model.toml_config);
+            let settings = SettingsModel::from_toml_config(&model.toml_config, &model.paths);
             AppModel {
                 screen: Screen::Settings,
                 settings: Some(settings),

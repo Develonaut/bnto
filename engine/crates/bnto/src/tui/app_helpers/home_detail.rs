@@ -19,7 +19,7 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
     match model.home.confirm() {
         HomeConfirmResult::Navigate(screen) => match screen {
             Screen::Settings => {
-                let settings = SettingsModel::from_toml_config(&model.toml_config);
+                let settings = SettingsModel::from_toml_config(&model.toml_config, &model.paths);
                 AppModel {
                     screen: Screen::Settings,
                     settings: Some(settings),

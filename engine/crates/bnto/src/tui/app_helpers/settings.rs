@@ -97,7 +97,7 @@ pub(crate) fn handle_settings_path_confirmed(model: AppModel) -> AppModel {
     });
     let mut toml_config = model.toml_config.clone();
     if let Some(s) = &settings {
-        s.apply_to_config(&mut toml_config, model.theme_variant);
+        s.apply_to_config(&mut toml_config, model.theme_variant, &model.paths);
     }
     let status_message = match toml_config.save(&model.paths) {
         Ok(()) => None,

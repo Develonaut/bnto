@@ -475,7 +475,10 @@ mod tests {
         let mut model = default_model();
         model.screen = Screen::Settings;
         model.theme_variant = ThemeVariant::LosAngeles;
-        model.settings = Some(SettingsModel::from_toml_config(&model.toml_config));
+        model.settings = Some(SettingsModel::from_toml_config(
+            &model.toml_config,
+            &model.paths,
+        ));
         model
     }
 
