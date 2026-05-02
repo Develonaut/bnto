@@ -11,7 +11,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 /// Create a reporter that prints colored progress events to stderr
 /// and logs command output through the session logger.
-pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
+///
+/// When `output_dir` is provided, progressive output files from
+/// `IterationCompleted` events are written to disk immediately.
+pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> PipelineReporter {
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.
     let bar: RefCell<Option<ProgressBar>> = RefCell::new(None);
@@ -25,10 +28,14 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
                 if *total_nodes == 1 { "" } else { "s" }
             );
         }
-        PipelineEvent::IterationStarted { .. }
-        | PipelineEvent::IterationCompleted { .. }
-        | PipelineEvent::IterationFailed { .. } => {
-            // Handled by the TUI; CLI stderr reporter ignores iteration events.
+        PipelineEvent::IterationStarted { .. } | PipelineEvent::IterationFailed { .. } => {}
+        PipelineEvent::IterationCompleted { output_files, .. } => {
+            if let Some(dir) = &output_dir {
+                for file in output_files {
+                    let path = std::path::Path::new(dir).join(&file.name);
+                    let _ = std::fs::write(&path, &file.data);
+                }
+            }
         }
         PipelineEvent::NodeStarted {
             node_type,
@@ -221,7 +228,7 @@ mod tests {
     #[test]
     fn test_stderr_reporter_handles_full_lifecycle() {
         // Verify the reporter doesn't panic on a full event sequence.
-        let reporter = stderr_reporter(noop_logger());
+        let reporter = stderr_reporter(noop_logger(), None);
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 2,
@@ -262,7 +269,7 @@ mod tests {
 
     #[test]
     fn test_stderr_reporter_handles_command_output() {
-        let reporter = stderr_reporter(noop_logger());
+        let reporter = stderr_reporter(noop_logger(), None);
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,
@@ -294,7 +301,7 @@ mod tests {
 
     #[test]
     fn test_stderr_reporter_handles_failure() {
-        let reporter = stderr_reporter(noop_logger());
+        let reporter = stderr_reporter(noop_logger(), None);
         reporter.emit(PipelineEvent::PipelineStarted {
             total_nodes: 1,
             total_files: 1,

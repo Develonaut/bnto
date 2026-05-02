@@ -23,6 +23,9 @@ use super::screens::results::OutputFile;
 pub enum BridgeEvent {
     /// A pipeline progress event from the engine.
     Progress(PipelineEvent),
+    /// Output directory resolved — sent before pipeline execution starts.
+    /// Used by progressive output to write files as iterations complete.
+    OutputDir(String),
     /// Pipeline finished — output files written to this directory.
     Done {
         output_dir: String,
@@ -145,6 +148,18 @@ fn run_bridge(
         }
     };
 
+    // Resolve and create output directory before pipeline runs.
+    // Progressive output writes files here as iterations complete.
+    let output_dir = match output_dir_override {
+        Some(dir) if !dir.is_empty() => PathBuf::from(dir).join(format!("bnto-{slug}")),
+        _ => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
+    };
+    let _ = std::fs::remove_dir_all(&output_dir);
+    let _ = std::fs::create_dir_all(&output_dir);
+    let output_dir_str = output_dir.to_string_lossy().into_owned();
+
+    let _ = tx.send(BridgeEvent::OutputDir(output_dir_str.clone()));
+
     // Create a reporter that sends engine events to the TUI via the channel.
     let progress_tx = tx.clone();
     let reporter = PipelineReporter::new(move |event| {
@@ -159,16 +174,6 @@ fn run_bridge(
             return;
         }
     };
-
-    // Use configured output directory or fall back to temp.
-    // Always clean previous run's output before writing new results.
-    let output_dir = match output_dir_override {
-        Some(dir) if !dir.is_empty() => PathBuf::from(dir).join(format!("bnto-{slug}")),
-        _ => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
-    };
-    let _ = std::fs::remove_dir_all(&output_dir);
-    let _ = std::fs::create_dir_all(&output_dir);
-    let output_dir_str = output_dir.to_string_lossy().into_owned();
 
     // Extract per-file metadata before writing (writing consumes data).
     let file_metadata: Vec<FileResultMeta> = extract_file_metadata(&result);
@@ -293,12 +298,14 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
             total_iterations,
             duration_ms,
             files_produced,
+            output_files,
         } => AppMessage::Execution(ExecutionMessage::IterationCompleted {
             node_id,
             iteration,
             total_iterations,
             duration_ms,
             files_produced,
+            output_files,
         }),
         PipelineEvent::IterationFailed {
             node_id,
@@ -311,6 +318,17 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
             total_iterations,
             error,
         }),
+    }
+}
+
+/// Write progressive output files from an iteration to the output directory.
+/// Called from the TUI event loop when an `IterationCompleted` event
+/// carries file data (progressive output mode).
+pub fn write_progressive_files(output_dir: &str, files: &[bnto_core::events::ProgressOutputFile]) {
+    let dir = std::path::Path::new(output_dir);
+    for file in files {
+        let path = dir.join(&file.name);
+        let _ = std::fs::write(&path, &file.data);
     }
 }
 
