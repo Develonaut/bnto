@@ -6,7 +6,7 @@ use crate::errors::BntoError;
 use crate::events::PipelineEvent;
 use crate::pipeline::{PipelineDefinition, PipelineFile, PipelineNode, is_io_node};
 
-use super::loop_config::parse_loop_config;
+use super::loop_config::{OnErrorStrategy, parse_loop_config};
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef, run_node_chain};
 
 /// Passthrough result — returns input files unchanged with zero processing.
@@ -14,6 +14,7 @@ fn passthrough(files: Vec<PipelineFile>) -> NodeExecutionResult {
     NodeExecutionResult {
         files_processed: 0,
         output_files: files,
+        warnings: Vec::new(),
     }
 }
 
@@ -63,6 +64,9 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 
 /// Run the sub-pipeline once per file, collecting all outputs.
 /// Sets `loop_item` from each file's metadata so child nodes can use `{{item.*}}`.
+///
+/// When `onError: "continue"`, failed iterations are skipped with a warning
+/// instead of killing the entire loop. If ALL iterations fail, the loop fails.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     container_id: &str,
@@ -71,13 +75,11 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
-    // Parse config for future use (continue-on-error, progressive output).
-    // Currently unused — FailFast is the only behavior. PR 3 activates this.
-    let _config = parse_loop_config(loop_params);
-
+    let config = parse_loop_config(loop_params);
+    let total_iterations = files.len();
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
-    let total_iterations = files.len();
+    let mut warnings: Vec<String> = Vec::new();
 
     for (i, file) in files.into_iter().enumerate() {
         let iter_start = (ctx.now_ms)();
@@ -88,40 +90,95 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
             total_iterations,
         });
 
-        let item_data = if file.metadata.is_empty() {
-            None
-        } else {
-            Some(file.metadata.clone())
-        };
-        let loop_ctx = PipelineContext {
-            registry: ctx.registry,
-            reporter: ctx.reporter,
-            process_ctx: ctx.process_ctx,
-            pipeline_total_files: ctx.pipeline_total_files,
-            now_ms: ctx.now_ms,
-            loop_item: item_data,
-            parent_node_id: Some(container_id.to_string()),
-        };
-        let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i)?;
+        let loop_ctx = build_loop_context(ctx, container_id, &file);
+        let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i);
 
-        let iter_duration = (ctx.now_ms)() - iter_start;
-        let files_produced = result.output_files.len();
-        total_processed += result.files_processed;
-        all_output_files.extend(result.output_files);
+        match result {
+            Ok(exec_result) => {
+                let iter_duration = (ctx.now_ms)() - iter_start;
+                let files_produced = exec_result.output_files.len();
+                total_processed += exec_result.files_processed;
+                warnings.extend(exec_result.warnings);
+                all_output_files.extend(exec_result.output_files);
 
-        ctx.reporter.emit(PipelineEvent::IterationCompleted {
-            node_id: container_id.to_string(),
-            iteration: i,
-            total_iterations,
-            duration_ms: iter_duration,
-            files_produced,
-        });
+                ctx.reporter.emit(PipelineEvent::IterationCompleted {
+                    node_id: container_id.to_string(),
+                    iteration: i,
+                    total_iterations,
+                    duration_ms: iter_duration,
+                    files_produced,
+                });
+            }
+            Err(error) => {
+                let iter_duration = (ctx.now_ms)() - iter_start;
+                let error_msg = error.to_string();
+
+                ctx.reporter.emit(PipelineEvent::IterationFailed {
+                    node_id: container_id.to_string(),
+                    iteration: i,
+                    total_iterations,
+                    error: error_msg.clone(),
+                });
+
+                match config.on_error {
+                    OnErrorStrategy::FailFast => return Err(error),
+                    OnErrorStrategy::Continue => {
+                        warnings.push(format!(
+                            "Iteration {}/{}: {}",
+                            i + 1,
+                            total_iterations,
+                            error_msg
+                        ));
+                    }
+                }
+
+                // Emit zero-file completion so TUI progress tracking stays consistent.
+                ctx.reporter.emit(PipelineEvent::IterationCompleted {
+                    node_id: container_id.to_string(),
+                    iteration: i,
+                    total_iterations,
+                    duration_ms: iter_duration,
+                    files_produced: 0,
+                });
+            }
+        }
+    }
+
+    // If all iterations failed, the loop itself fails.
+    if all_output_files.is_empty() && !warnings.is_empty() {
+        return Err(BntoError::ProcessingFailed(format!(
+            "All {} iterations failed",
+            total_iterations
+        )));
     }
 
     Ok(NodeExecutionResult {
         files_processed: total_processed,
         output_files: all_output_files,
+        warnings,
     })
+}
+
+/// Build a PipelineContext for a single loop iteration.
+fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
+    ctx: &'a PipelineContext<'a, F>,
+    container_id: &str,
+    file: &PipelineFile,
+) -> PipelineContext<'a, F> {
+    let item_data = if file.metadata.is_empty() {
+        None
+    } else {
+        Some(file.metadata.clone())
+    };
+    PipelineContext {
+        registry: ctx.registry,
+        reporter: ctx.reporter,
+        process_ctx: ctx.process_ctx,
+        pipeline_total_files: ctx.pipeline_total_files,
+        now_ms: ctx.now_ms,
+        loop_item: item_data,
+        parent_node_id: Some(container_id.to_string()),
+    }
 }
 
 /// Run the sub-pipeline once on the full batch of files.
@@ -141,11 +198,7 @@ fn execute_group<F: Fn() -> u64 + Copy>(
         loop_item: ctx.loop_item.clone(),
         parent_node_id: Some(container_id.to_string()),
     };
-    let result = execute_sub_pipeline(&group_ctx, sub_definition, files, file_offset)?;
-    Ok(NodeExecutionResult {
-        files_processed: result.files_processed,
-        output_files: result.output_files,
-    })
+    execute_sub_pipeline(&group_ctx, sub_definition, files, file_offset)
 }
 
 /// Execute a sub-pipeline (container children). Same as `execute_pipeline`
@@ -162,11 +215,12 @@ fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
         .filter(|n| !is_io_node(&n.node_type))
         .collect();
 
-    let (output_files, files_processed) =
+    let (output_files, files_processed, warnings) =
         run_node_chain(ctx, &processing_nodes, files, file_offset)?;
 
     Ok(NodeExecutionResult {
         files_processed,
         output_files,
+        warnings,
     })
 }

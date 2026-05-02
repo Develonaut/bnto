@@ -218,6 +218,7 @@ fn run_loop(
                         file_count,
                         duration_ms,
                         file_metadata,
+                        warnings,
                     } => {
                         let outputs = bridge::build_output_files(&output_dir, &file_metadata);
                         let slug = match &model.screen {
@@ -229,6 +230,7 @@ fn run_loop(
                             AppMessage::Execution(ExecutionMessage::OutputsReady {
                                 files: outputs,
                                 output_dir: Some(output_dir),
+                                warnings,
                             }),
                         );
                         let model = update(

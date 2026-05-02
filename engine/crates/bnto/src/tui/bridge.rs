@@ -29,6 +29,7 @@ pub enum BridgeEvent {
         file_count: usize,
         duration_ms: u64,
         file_metadata: Vec<FileResultMeta>,
+        warnings: Vec<String>,
     },
     /// Pipeline or setup failed with an error message.
     Error(String),
@@ -182,6 +183,7 @@ fn run_bridge(
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
         file_metadata,
+        warnings: result.warnings,
     });
 }
 
@@ -355,6 +357,7 @@ mod tests {
                 metadata,
             }],
             duration_ms: 100,
+            warnings: Vec::new(),
         };
         let meta = extract_file_metadata(&result);
         assert_eq!(meta.len(), 1);
@@ -372,6 +375,7 @@ mod tests {
                 metadata: serde_json::Map::new(),
             }],
             duration_ms: 50,
+            warnings: Vec::new(),
         };
         let meta = extract_file_metadata(&result);
         assert_eq!(meta[0].original_size, None);
@@ -392,6 +396,7 @@ mod tests {
                 metadata,
             }],
             duration_ms: 50,
+            warnings: Vec::new(),
         };
         let meta = extract_file_metadata(&result);
         assert_eq!(meta[0].original_size, None);

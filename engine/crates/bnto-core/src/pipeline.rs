@@ -190,6 +190,9 @@ pub struct PipelineResult {
 
     /// Total wall-clock time for the entire pipeline, in milliseconds.
     pub duration_ms: u64,
+
+    /// Non-fatal warnings collected during execution (e.g. skipped loop iterations).
+    pub warnings: Vec<String>,
 }
 
 // =============================================================================

@@ -19,10 +19,11 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
-) -> Result<(Vec<PipelineFile>, usize), BntoError> {
+) -> Result<(Vec<PipelineFile>, usize, Vec<String>), BntoError> {
     let runs = partition_into_runs(nodes, ctx.registry);
     let mut current_files = files;
     let mut total_processed: usize = 0;
+    let mut all_warnings: Vec<String> = Vec::new();
 
     for run in &runs {
         match run {
@@ -30,34 +31,36 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
                 let seq = &nodes[*start..*start + *len];
                 let result = run_per_file_sequence(ctx, seq, current_files)?;
                 total_processed += result.files_processed;
+                all_warnings.extend(result.warnings);
                 current_files = result.output_files;
             }
             Run::Container { index } => {
                 let container = &nodes[*index..*index + 1];
-                let (output, processed) = run_node_chain(ctx, container, current_files, 0)?;
+                let (output, processed, warnings) =
+                    run_node_chain(ctx, container, current_files, 0)?;
                 total_processed += processed;
+                all_warnings.extend(warnings);
                 current_files = output;
             }
             Run::Batch { index } => {
-                // Batch nodes receive all files at once — dispatch as a
-                // single-node chain (primitive executor handles the batch).
                 let batch_node = &nodes[*index..*index + 1];
-                let (output, processed) = run_node_chain(ctx, batch_node, current_files, 0)?;
+                let (output, processed, warnings) =
+                    run_node_chain(ctx, batch_node, current_files, 0)?;
                 total_processed += processed;
+                all_warnings.extend(warnings);
                 current_files = output;
             }
             Run::Source { index } => {
-                // Source nodes run once with no input files — dispatch as a
-                // single-node chain (primitive executor handles empty-input).
                 let source_node = &nodes[*index..*index + 1];
-                let (output, processed) = run_node_chain(ctx, source_node, vec![], 0)?;
+                let (output, processed, warnings) = run_node_chain(ctx, source_node, vec![], 0)?;
                 total_processed += processed;
+                all_warnings.extend(warnings);
                 current_files = output;
             }
         }
     }
 
-    Ok((current_files, total_processed))
+    Ok((current_files, total_processed, all_warnings))
 }
 
 /// A contiguous run of nodes that share an execution strategy.
@@ -150,15 +153,18 @@ fn run_per_file_sequence<F: Fn() -> u64 + Copy>(
 ) -> Result<NodeExecutionResult, BntoError> {
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
+    let mut all_warnings: Vec<String> = Vec::new();
 
     for (i, file) in files.into_iter().enumerate() {
-        let (output, processed) = run_node_chain(ctx, nodes, vec![file], i)?;
+        let (output, processed, warnings) = run_node_chain(ctx, nodes, vec![file], i)?;
         total_processed += processed;
+        all_warnings.extend(warnings);
         all_output_files.extend(output);
     }
 
     Ok(NodeExecutionResult {
         files_processed: total_processed,
         output_files: all_output_files,
+        warnings: all_warnings,
     })
 }

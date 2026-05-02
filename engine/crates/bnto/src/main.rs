@@ -302,7 +302,7 @@ fn read_recipe(path: &str, catalog: &RecipeCatalog) -> String {
     }
 }
 
-/// Write pipeline results to disk, print summary.
+/// Write pipeline results to disk, print summary and any warnings.
 fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
     if let Err(e) = io::write_results(result, output_dir) {
         eprintln!("{} {e}", "Error writing output:".red());
@@ -315,6 +315,9 @@ fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
         "Done.".green().bold(),
         if n == 1 { "" } else { "s" },
     );
+    for warning in &result.warnings {
+        eprintln!("  {} {warning}", "Warning:".yellow().bold());
+    }
 }
 
 fn run_recipe(

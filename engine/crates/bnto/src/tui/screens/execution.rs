@@ -84,6 +84,8 @@ pub struct ExecutionModel {
     pub output_dir: Option<String>,
     /// Rolling window of recent command output lines (stderr from child processes).
     pub output_lines: VecDeque<String>,
+    /// Non-fatal warnings from the pipeline (e.g. skipped loop iterations).
+    pub warnings: Vec<String>,
 }
 
 /// Maximum number of command output lines to retain in the rolling window.
@@ -126,6 +128,7 @@ pub enum ExecutionMessage {
     OutputsReady {
         files: Vec<OutputFile>,
         output_dir: Option<String>,
+        warnings: Vec<String>,
     },
     /// A line of stderr output from a running command.
     CommandOutput { node_id: String, line: String },
@@ -184,6 +187,7 @@ impl ExecutionModel {
             output_files: Vec::new(),
             output_dir: None,
             output_lines: VecDeque::new(),
+            warnings: Vec::new(),
         }
     }
 
@@ -385,9 +389,14 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                 child.status = NodeStatus::Completed { duration_ms };
             }
         }
-        ExecutionMessage::OutputsReady { files, output_dir } => {
+        ExecutionMessage::OutputsReady {
+            files,
+            output_dir,
+            warnings,
+        } => {
             model.output_files = files;
             model.output_dir = output_dir;
+            model.warnings = warnings;
         }
         ExecutionMessage::Cancel => {
             model.status = ExecutionStatus::Cancelled;
@@ -643,6 +652,7 @@ mod tests {
             ExecutionMessage::OutputsReady {
                 files: outputs.clone(),
                 output_dir: Some("/tmp/out".into()),
+                warnings: Vec::new(),
             },
         );
         assert_eq!(m.output_files, outputs);
