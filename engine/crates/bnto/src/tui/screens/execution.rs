@@ -135,6 +135,21 @@ pub enum ExecutionMessage {
         iteration: usize,
         total_iterations: usize,
     },
+    /// Loop iteration completed successfully.
+    IterationCompleted {
+        node_id: String,
+        iteration: usize,
+        total_iterations: usize,
+        duration_ms: u64,
+        files_produced: usize,
+    },
+    /// Loop iteration failed (in continue-on-error mode, loop continues).
+    IterationFailed {
+        node_id: String,
+        iteration: usize,
+        total_iterations: usize,
+        error: String,
+    },
     /// A child node inside a container started.
     ChildNodeStarted {
         parent_node_id: String,
@@ -306,6 +321,33 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                 for child in &mut node.children {
                     child.status = NodeStatus::Pending;
                 }
+            }
+        }
+        ExecutionMessage::IterationCompleted {
+            node_id, iteration, ..
+        } => {
+            // Update iteration counter to reflect completion.
+            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.iteration = Some(iteration);
+            }
+        }
+        ExecutionMessage::IterationFailed {
+            node_id,
+            iteration,
+            error,
+            ..
+        } => {
+            // In continue mode the loop keeps going, so just update the counter.
+            // The error is visible via CommandOutput or warnings.
+            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.iteration = Some(iteration);
+            }
+            // Push the error into the output lines so the user can see it.
+            model
+                .output_lines
+                .push_back(format!("Iteration {iteration} failed: {error}"));
+            while model.output_lines.len() > MAX_OUTPUT_LINES {
+                model.output_lines.pop_front();
             }
         }
         ExecutionMessage::ChildNodeStarted {

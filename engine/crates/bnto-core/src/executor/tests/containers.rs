@@ -200,6 +200,120 @@ fn test_top_level_nodes_have_no_parent_id() {
 }
 
 #[test]
+fn test_loop_emits_iteration_completed_events() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "child", "type": "test-echo" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![
+        make_file("a.txt", b"aaa"),
+        make_file("b.txt", b"bbb"),
+        make_file("c.txt", b"ccc"),
+    ];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    let events = recorder.events();
+    let completed_events: Vec<&PipelineEvent> = events
+        .iter()
+        .filter(|e| matches!(e, PipelineEvent::IterationCompleted { .. }))
+        .collect();
+
+    assert_eq!(
+        completed_events.len(),
+        3,
+        "3-item loop should emit 3 IterationCompleted"
+    );
+
+    for (i, event) in completed_events.iter().enumerate() {
+        if let PipelineEvent::IterationCompleted {
+            node_id,
+            iteration,
+            total_iterations,
+            files_produced,
+            ..
+        } = event
+        {
+            assert_eq!(node_id, "loop-1");
+            assert_eq!(*iteration, i);
+            assert_eq!(*total_iterations, 3);
+            assert_eq!(*files_produced, 1, "Each iteration produces 1 file");
+        }
+    }
+}
+
+#[test]
+fn test_loop_iteration_events_alternate_correctly() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "child", "type": "test-echo" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    let events = recorder.events();
+
+    // Verify IterationStarted is always followed by IterationCompleted for same iteration.
+    let iteration_events: Vec<&PipelineEvent> = events
+        .iter()
+        .filter(|e| {
+            matches!(
+                e,
+                PipelineEvent::IterationStarted { node_id, .. }
+                | PipelineEvent::IterationCompleted { node_id, .. }
+                if node_id == "loop-1"
+            )
+        })
+        .collect();
+
+    // Should be: Started(0), Completed(0), Started(1), Completed(1)
+    assert_eq!(iteration_events.len(), 4);
+    assert!(matches!(
+        iteration_events[0],
+        PipelineEvent::IterationStarted { iteration: 0, .. }
+    ));
+    assert!(matches!(
+        iteration_events[1],
+        PipelineEvent::IterationCompleted { iteration: 0, .. }
+    ));
+    assert!(matches!(
+        iteration_events[2],
+        PipelineEvent::IterationStarted { iteration: 1, .. }
+    ));
+    assert!(matches!(
+        iteration_events[3],
+        PipelineEvent::IterationCompleted { iteration: 1, .. }
+    ));
+}
+
+#[test]
 fn test_loop_node_runs_children_per_file() {
     let def = parse_def(
         r#"{

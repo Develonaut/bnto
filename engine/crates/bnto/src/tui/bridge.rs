@@ -285,6 +285,30 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
             iteration,
             total_iterations,
         }),
+        PipelineEvent::IterationCompleted {
+            node_id,
+            iteration,
+            total_iterations,
+            duration_ms,
+            files_produced,
+        } => AppMessage::Execution(ExecutionMessage::IterationCompleted {
+            node_id,
+            iteration,
+            total_iterations,
+            duration_ms,
+            files_produced,
+        }),
+        PipelineEvent::IterationFailed {
+            node_id,
+            iteration,
+            total_iterations,
+            error,
+        } => AppMessage::Execution(ExecutionMessage::IterationFailed {
+            node_id,
+            iteration,
+            total_iterations,
+            error,
+        }),
     }
 }
 

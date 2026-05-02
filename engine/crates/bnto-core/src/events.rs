@@ -68,6 +68,36 @@ pub enum PipelineEvent {
         total_iterations: usize,
     },
 
+    /// Emitted after a loop iteration completes successfully.
+    /// Powers per-iteration progress (e.g., "3/15 done") and progressive output.
+    #[serde(rename_all = "camelCase")]
+    IterationCompleted {
+        /// The loop container node that owns this iteration.
+        node_id: String,
+        /// Zero-based iteration index.
+        iteration: usize,
+        /// Total number of iterations in this loop.
+        total_iterations: usize,
+        /// How long this iteration took, in milliseconds.
+        duration_ms: u64,
+        /// How many output files this iteration produced.
+        files_produced: usize,
+    },
+
+    /// Emitted when a loop iteration fails.
+    /// In `continue` mode, the loop keeps going after emitting this.
+    #[serde(rename_all = "camelCase")]
+    IterationFailed {
+        /// The loop container node that owns this iteration.
+        node_id: String,
+        /// Zero-based iteration index.
+        iteration: usize,
+        /// Total number of iterations in this loop.
+        total_iterations: usize,
+        /// Human-readable error message.
+        error: String,
+    },
+
     /// Emitted during file processing within a node.
     /// Powers progress bars and per-file status indicators.
     #[serde(rename_all = "camelCase")]
@@ -315,6 +345,42 @@ mod tests {
         assert_eq!(json["nodeId"], "loop-1");
         assert_eq!(json["iteration"], 2);
         assert_eq!(json["totalIterations"], 15);
+    }
+
+    #[test]
+    fn test_iteration_completed_serializes_correctly() {
+        let event = PipelineEvent::IterationCompleted {
+            node_id: "loop-1".to_string(),
+            iteration: 2,
+            total_iterations: 7,
+            duration_ms: 1500,
+            files_produced: 1,
+        };
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "IterationCompleted");
+        assert_eq!(json["nodeId"], "loop-1");
+        assert_eq!(json["iteration"], 2);
+        assert_eq!(json["totalIterations"], 7);
+        assert_eq!(json["durationMs"], 1500);
+        assert_eq!(json["filesProduced"], 1);
+    }
+
+    #[test]
+    fn test_iteration_failed_serializes_correctly() {
+        let event = PipelineEvent::IterationFailed {
+            node_id: "loop-1".to_string(),
+            iteration: 3,
+            total_iterations: 10,
+            error: "Download timed out".to_string(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "IterationFailed");
+        assert_eq!(json["nodeId"], "loop-1");
+        assert_eq!(json["iteration"], 3);
+        assert_eq!(json["totalIterations"], 10);
+        assert_eq!(json["error"], "Download timed out");
     }
 
     #[test]

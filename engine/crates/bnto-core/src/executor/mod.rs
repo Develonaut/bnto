@@ -10,6 +10,7 @@
 
 mod auto_iteration;
 mod container;
+pub mod loop_config;
 mod primitive;
 pub mod resolve;
 pub mod template;
