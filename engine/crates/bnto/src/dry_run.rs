@@ -11,7 +11,8 @@ use bnto_core::executor::resolve::collect_field_values;
 use bnto_core::executor::template::{TemplateContext, resolve_templates};
 use bnto_core::{Dependency, PipelineDefinition, PipelineNode};
 use bnto_engine::deps::collect_pipeline_dependencies;
-use bnto_engine::recipes::builtin_recipe_by_slug;
+
+use crate::catalog::RecipeCatalog;
 
 /// A resolved shell-command node ready for display.
 #[derive(Debug)]
@@ -34,13 +35,17 @@ pub struct DryRunResult {
     pub other_node_count: usize,
 }
 
-/// Perform dry-run analysis on a built-in recipe.
+/// Perform dry-run analysis on a recipe from the catalog.
 ///
 /// Returns `None` if the slug doesn't match any recipe.
 /// Applies `--param` overrides to field defaults before resolving.
-pub fn dry_run_recipe(slug: &str, param_overrides: &[String]) -> Option<DryRunResult> {
-    let recipe = builtin_recipe_by_slug(slug)?;
-    let mut def: PipelineDefinition = serde_json::from_str(recipe.definition_json).ok()?;
+pub fn dry_run_recipe(
+    slug: &str,
+    param_overrides: &[String],
+    catalog: &RecipeCatalog,
+) -> Option<DryRunResult> {
+    let entry = catalog.resolve(slug)?;
+    let mut def: PipelineDefinition = serde_json::from_str(&entry.definition_json).ok()?;
 
     // Apply field overrides before resolving templates.
     apply_field_overrides(&mut def, param_overrides);
@@ -53,8 +58,8 @@ pub fn dry_run_recipe(slug: &str, param_overrides: &[String]) -> Option<DryRunRe
     collect_shell_commands(&def.nodes, &mut shell_commands, &mut other_node_count);
 
     Some(DryRunResult {
-        name: recipe.name,
-        description: recipe.description,
+        name: entry.name.clone(),
+        description: entry.description.clone(),
         dependencies,
         shell_commands,
         other_node_count,
@@ -284,8 +289,13 @@ fn format_command_line(cmd: &ShellCommandInfo) -> String {
 #[cfg(test)]
 mod tests {
     use std::fmt::Write;
+    use std::path::Path;
 
     use super::*;
+
+    fn catalog() -> RecipeCatalog {
+        RecipeCatalog::load(Path::new("/nonexistent"))
+    }
 
     /// Plain text formatter for test assertions (no ANSI colors).
     fn format_dry_run(result: &DryRunResult) -> String {
@@ -331,7 +341,8 @@ mod tests {
 
     #[test]
     fn test_dry_run_known_recipe_with_shell_commands() {
-        let result = dry_run_recipe("download-video", &[]);
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &[], &c);
         assert!(result.is_some(), "download-video should exist");
 
         let result = result.unwrap();
@@ -344,13 +355,15 @@ mod tests {
 
     #[test]
     fn test_dry_run_unknown_recipe() {
-        let result = dry_run_recipe("nonexistent-recipe", &[]);
+        let c = catalog();
+        let result = dry_run_recipe("nonexistent-recipe", &[], &c);
         assert!(result.is_none());
     }
 
     #[test]
     fn test_dry_run_resolves_field_defaults() {
-        let result = dry_run_recipe("download-video", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &[], &c).unwrap();
         let cmd = &result.shell_commands[0];
 
         // Default format is "mp4" — should be resolved, not "{{fields.format}}"
@@ -369,7 +382,8 @@ mod tests {
 
     #[test]
     fn test_dry_run_shows_runtime_placeholders() {
-        let result = dry_run_recipe("download-video", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &[], &c).unwrap();
         let cmd = &result.shell_commands[0];
 
         // {{output_dir}} needs runtime resolution — should be flagged
@@ -382,7 +396,8 @@ mod tests {
 
     #[test]
     fn test_dry_run_no_shell_commands() {
-        let result = dry_run_recipe("compress-images", &[]);
+        let c = catalog();
+        let result = dry_run_recipe("compress-images", &[], &c);
         assert!(result.is_some(), "compress-images should exist");
 
         let result = result.unwrap();
@@ -398,7 +413,8 @@ mod tests {
 
     #[test]
     fn test_dry_run_with_param_override() {
-        let result = dry_run_recipe("download-video", &["format=webm".to_string()]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &["format=webm".to_string()], &c).unwrap();
         let cmd = &result.shell_commands[0];
 
         assert!(
@@ -415,14 +431,16 @@ mod tests {
 
     #[test]
     fn test_dry_run_output_mode() {
-        let result = dry_run_recipe("download-video", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &[], &c).unwrap();
         let cmd = &result.shell_commands[0];
         assert_eq!(cmd.output_mode, "file");
     }
 
     #[test]
     fn test_dry_run_has_dependencies() {
-        let result = dry_run_recipe("download-video", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &[], &c).unwrap();
         let dep_names: Vec<&str> = result
             .dependencies
             .iter()
@@ -434,7 +452,8 @@ mod tests {
 
     #[test]
     fn test_dry_run_image_recipe_no_dependencies() {
-        let result = dry_run_recipe("compress-images", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("compress-images", &[], &c).unwrap();
         assert!(result.dependencies.is_empty());
     }
 
@@ -471,7 +490,8 @@ mod tests {
 
     #[test]
     fn test_format_dry_run_contains_command() {
-        let result = dry_run_recipe("download-video", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("download-video", &[], &c).unwrap();
         let formatted = format_dry_run(&result);
         assert!(formatted.contains("yt-dlp"));
         assert!(formatted.contains("Download Video"));
@@ -479,7 +499,8 @@ mod tests {
 
     #[test]
     fn test_format_dry_run_no_shell_shows_message() {
-        let result = dry_run_recipe("compress-images", &[]).unwrap();
+        let c = catalog();
+        let result = dry_run_recipe("compress-images", &[], &c).unwrap();
         let formatted = format_dry_run(&result);
         assert!(formatted.contains("No shell commands"));
     }

@@ -2,10 +2,11 @@
 
 use colored::Colorize;
 
+use crate::catalog::RecipeCatalog;
 use crate::context;
 
 /// Run the doctor command — check dependencies and recipe secrets.
-pub fn run_doctor() {
+pub fn run_doctor(catalog: &RecipeCatalog) {
     let registry = bnto_engine::create_registry();
     let ctx = crate::unwrap_or_exit(context::NativeContext::current_dir());
 
@@ -23,7 +24,7 @@ pub fn run_doctor() {
     }
 
     // Check secrets for all known recipes that declare them.
-    if check_all_recipe_secrets(&ctx) {
+    if check_all_recipe_secrets(catalog, &ctx) {
         has_issues = true;
     }
 
@@ -79,16 +80,15 @@ fn print_dep_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool 
     has_issues
 }
 
-/// Check secrets across all recipes that declare them.
+/// Check secrets across all catalog recipes that declare them.
 /// Returns true if any required secrets are missing.
-fn check_all_recipe_secrets(ctx: &dyn bnto_core::ProcessContext) -> bool {
-    let catalog = bnto_engine::recipes::builtin_recipes();
+fn check_all_recipe_secrets(catalog: &RecipeCatalog, ctx: &dyn bnto_core::ProcessContext) -> bool {
     let mut has_missing = false;
     let mut checked_any = false;
 
-    for entry in &catalog {
+    for entry in catalog.all() {
         let def: Result<bnto_core::PipelineDefinition, _> =
-            serde_json::from_str(entry.definition_json);
+            serde_json::from_str(&entry.definition_json);
         let Ok(def) = def else { continue };
         if def.secrets.is_empty() {
             continue;

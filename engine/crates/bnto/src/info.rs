@@ -2,7 +2,8 @@
 
 use bnto_core::{Dependency, InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::deps::collect_pipeline_dependencies;
-use bnto_engine::recipes::builtin_recipe_by_slug;
+
+use crate::catalog::RecipeCatalog;
 
 /// Structured recipe details ready for display.
 #[derive(Debug)]
@@ -56,11 +57,11 @@ fn print_dependencies(deps: &[Dependency]) {
     }
 }
 
-/// Extract structured info from a built-in recipe slug.
-/// Returns `None` if the slug doesn't match any built-in recipe.
-pub fn get_recipe_info(slug: &str) -> Option<RecipeInfo> {
-    let recipe = builtin_recipe_by_slug(slug)?;
-    let def: PipelineDefinition = serde_json::from_str(recipe.definition_json).ok()?;
+/// Extract structured info from a catalog recipe.
+/// Returns `None` if the slug doesn't match any recipe.
+pub fn get_recipe_info(slug: &str, catalog: &RecipeCatalog) -> Option<RecipeInfo> {
+    let entry = catalog.resolve(slug)?;
+    let def: PipelineDefinition = serde_json::from_str(&entry.definition_json).ok()?;
 
     let node_types = extract_node_types(&def);
     let input_mode = match resolve_input_mode(&def) {
@@ -73,10 +74,10 @@ pub fn get_recipe_info(slug: &str) -> Option<RecipeInfo> {
     let dependencies = collect_pipeline_dependencies(&def, &registry);
 
     Some(RecipeInfo {
-        slug: recipe.slug,
-        name: recipe.name,
-        description: recipe.description,
-        category: recipe.category,
+        slug: entry.slug.clone(),
+        name: entry.name.clone(),
+        description: entry.description.clone(),
+        category: entry.category.clone(),
         node_types,
         dependencies,
         input_mode: input_mode.to_string(),
@@ -109,6 +110,11 @@ fn collect_types(nodes: &[bnto_core::PipelineNode], skip: &[&str], types: &mut V
 mod tests {
     use super::*;
     use std::fmt::Write;
+    use std::path::Path;
+
+    fn catalog() -> RecipeCatalog {
+        RecipeCatalog::load(Path::new("/nonexistent"))
+    }
 
     /// Format recipe info as plain text (no ANSI colors) for test assertions.
     fn format_recipe_info(info: &RecipeInfo) -> String {
@@ -140,7 +146,8 @@ mod tests {
 
     #[test]
     fn test_get_info_known_recipe() {
-        let info = get_recipe_info("compress-images");
+        let c = catalog();
+        let info = get_recipe_info("compress-images", &c);
         assert!(info.is_some(), "compress-images should exist");
 
         let info = info.unwrap();
@@ -152,13 +159,15 @@ mod tests {
 
     #[test]
     fn test_get_info_unknown_recipe() {
-        let info = get_recipe_info("nonexistent-recipe");
+        let c = catalog();
+        let info = get_recipe_info("nonexistent-recipe", &c);
         assert!(info.is_none());
     }
 
     #[test]
     fn test_get_info_extracts_node_types() {
-        let info = get_recipe_info("compress-images").unwrap();
+        let c = catalog();
+        let info = get_recipe_info("compress-images", &c).unwrap();
         assert!(
             !info.node_types.is_empty(),
             "Should extract processing node types"
@@ -171,18 +180,21 @@ mod tests {
 
     #[test]
     fn test_get_info_extracts_input_mode() {
+        let c = catalog();
+
         // file-upload recipes
-        let info = get_recipe_info("compress-images").unwrap();
+        let info = get_recipe_info("compress-images", &c).unwrap();
         assert_eq!(info.input_mode, "file-upload");
 
         // url-mode recipe
-        let info = get_recipe_info("download-video").unwrap();
+        let info = get_recipe_info("download-video", &c).unwrap();
         assert_eq!(info.input_mode, "url");
     }
 
     #[test]
     fn test_get_info_video_has_dependencies() {
-        let info = get_recipe_info("download-video").unwrap();
+        let c = catalog();
+        let info = get_recipe_info("download-video", &c).unwrap();
         assert!(
             !info.dependencies.is_empty(),
             "download-video requires external dependencies"
@@ -197,7 +209,8 @@ mod tests {
 
     #[test]
     fn test_get_info_image_recipe_no_dependencies() {
-        let info = get_recipe_info("compress-images").unwrap();
+        let c = catalog();
+        let info = get_recipe_info("compress-images", &c).unwrap();
         assert!(
             info.dependencies.is_empty(),
             "Browser-safe image recipes have no external dependencies"
@@ -206,7 +219,8 @@ mod tests {
 
     #[test]
     fn test_get_info_multi_node_recipe() {
-        let info = get_recipe_info("optimize-images-for-web").unwrap();
+        let c = catalog();
+        let info = get_recipe_info("optimize-images-for-web", &c).unwrap();
         assert!(
             info.node_types.len() >= 2,
             "optimize-images-for-web is a multi-node pipeline"
@@ -307,7 +321,6 @@ mod tests {
             input_mode: "file-upload".to_string(),
         };
         let output = format_recipe_info(&info);
-        // Should not contain a "Dependencies" section with content when empty
         assert!(
             !output.contains("yt-dlp"),
             "Should not mention deps when none exist"
