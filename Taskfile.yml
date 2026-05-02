@@ -61,7 +61,13 @@ tasks:
       - cargo run --package tonkotsu --bin tonkotsu-demo
 
   cli:build:
-    desc: Build the native CLI binary (release)
+    desc: Build the native CLI binary (fast profile for local development)
+    dir: ./engine
+    cmds:
+      - cargo build --profile fast --package bnto
+
+  cli:build:release:
+    desc: Build the native CLI binary (release, size-optimized for shipping/CI)
     dir: ./engine
     cmds:
       - cargo build --release --package bnto
