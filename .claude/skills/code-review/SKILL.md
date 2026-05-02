@@ -66,13 +66,14 @@ Fill in every row. Use actual line counts from the file, not guesses.
 **Status column values:**
 
 - `OK` — all metrics within limits
-- `VIOLATION` — any metric exceeds limits (file > 250 lines, function > 20 lines, multiple exported components, etc.)
+- `VIOLATION` — any metric exceeds limits (TS file > 250 lines, Rust file > 400 prod lines, function > 20 lines, multiple exported components, etc.)
 - `WARNING` — near limits or has code quality concerns
 - `DELETED` — file was removed (verify no stale references)
 
 **Hard limits to check per file:**
 
-- File length: **> 250 lines = VIOLATION** (hard cap, no exceptions)
+- File length (TypeScript): **> 250 lines = VIOLATION** (hard cap, no exceptions)
+- File length (Rust): **> 400 production lines = VIOLATION** (exclude `#[cfg(test)]` blocks)
 - Function/component length: **> 20 lines = VIOLATION** (hooks get 30 lines)
 - Exported components per file: **> 1 = VIOLATION** (exception: shadcn primitives)
 - Exported hooks per file: **> 1 = VIOLATION**
@@ -94,7 +95,7 @@ For EACH changed file, run it through every applicable standard below. Produce a
 
 Use the audit table from Step 1b. Every file with `VIOLATION` status must be addressed.
 
-- [ ] **File size**: > 250 lines = FAIL. Flag exact count
+- [ ] **File size**: TS > 250 lines = FAIL, Rust > 400 prod lines (excl. `#[cfg(test)]`) = FAIL. Flag exact count
 - [ ] **Function size**: > 20 lines = FAIL (hooks: 30). List every oversized function by name and line count
 - [ ] **One export per file**: > 1 exported component = FAIL. > 1 exported hook = FAIL
 - [ ] **No multi-component files**: Multiple `function` returning JSX in same file = FAIL. Extract to own files
