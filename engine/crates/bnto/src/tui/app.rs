@@ -839,6 +839,35 @@ mod tests {
     }
 
     #[test]
+    fn config_confirmed_threads_definition_json_to_execution() {
+        use super::super::screens::detail::DetailModel;
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.definition_json = r#"{"nodes":[{"id":"n1","type":"shell-command"}]}"#.into();
+
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: "s".into(),
+                    from: DetailOrigin::Home,
+                },
+                detail: Some(detail),
+                ..default_model()
+            },
+            AppMessage::ConfigConfirmed { slug: "s".into() },
+        );
+        let exec = app
+            .execution
+            .as_ref()
+            .expect("execution model should exist");
+        assert_eq!(
+            exec.definition_json.as_deref(),
+            Some(r#"{"nodes":[{"id":"n1","type":"shell-command"}]}"#),
+            "definition JSON from detail should flow through to execution"
+        );
+    }
+
+    #[test]
     fn files_selected_passes_files_and_overrides_to_execution() {
         use super::super::screens::picker::{FileEntry, PickerModel};
         use std::path::PathBuf;
@@ -1735,6 +1764,46 @@ mod tests {
         );
     }
 
+    #[test]
+    fn library_confirm_loads_non_builtin_recipe() {
+        let (_tmp, paths) = test_paths_with_dir();
+        // Write a custom recipe that isn't a builtin.
+        let recipes_dir = paths.recipes_dir();
+        let _ = std::fs::create_dir_all(&recipes_dir);
+        let custom_json = r#"{
+            "name": "Custom Only",
+            "description": "Not a builtin",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {"mode": "file-upload"}},
+                {"id": "compress", "type": "image-compress", "parameters": {"quality": 90}},
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        std::fs::write(recipes_dir.join("custom-only.bnto.json"), custom_json).unwrap();
+
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+        app = update(app, AppMessage::OpenLibrary);
+        assert!(app.library.as_ref().is_some_and(|l| !l.entries.is_empty()));
+
+        let app = update(app, AppMessage::LibraryConfirm);
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Detail {
+                    from: DetailOrigin::Library,
+                    ..
+                }
+            ),
+            "expected Detail from Library, got {:?}",
+            app.screen
+        );
+        assert!(
+            app.detail.is_some(),
+            "detail should load from library file even when not a builtin"
+        );
+        assert_eq!(app.detail.as_ref().unwrap().name, "Custom Only");
+    }
+
     // --- Add to Library ---
 
     #[test]
@@ -2174,6 +2243,85 @@ mod tests {
         assert_eq!(
             resolve_input_mode_for_slug("nonexistent-recipe"),
             InputMode::FileUpload
+        );
+    }
+
+    // --- Detail focus navigation ---
+
+    #[test]
+    fn detail_focus_params_moves_focus_from_run_to_params() {
+        use super::super::screens::detail::DetailModel;
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.focus = super::super::screens::detail::DetailFocus::Run;
+
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: "s".into(),
+                    from: DetailOrigin::Home,
+                },
+                detail: Some(detail),
+                ..default_model()
+            },
+            AppMessage::DetailFocusParams,
+        );
+        assert_eq!(
+            app.detail.as_ref().unwrap().focus,
+            super::super::screens::detail::DetailFocus::Params,
+            "DetailFocusParams should move focus from Run back to Params"
+        );
+    }
+
+    #[test]
+    fn up_key_on_run_focus_navigates_back_to_params() {
+        use super::super::screens::detail::DetailModel;
+        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.focus = super::super::screens::detail::DetailFocus::Run;
+
+        let model = AppModel {
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: DetailOrigin::Home,
+            },
+            detail: Some(detail),
+            ..default_model()
+        };
+
+        let key = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
+        let msg = super::super::keys::handle_key(&model, key);
+        assert_eq!(
+            msg,
+            Some(AppMessage::DetailFocusParams),
+            "Up arrow on Run focus should emit DetailFocusParams"
+        );
+    }
+
+    #[test]
+    fn k_key_on_run_focus_navigates_back_to_params() {
+        use super::super::screens::detail::DetailModel;
+        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.focus = super::super::screens::detail::DetailFocus::Run;
+
+        let model = AppModel {
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: DetailOrigin::Home,
+            },
+            detail: Some(detail),
+            ..default_model()
+        };
+
+        let key = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
+        let msg = super::super::keys::handle_key(&model, key);
+        assert_eq!(
+            msg,
+            Some(AppMessage::DetailFocusParams),
+            "'k' on Run focus should emit DetailFocusParams"
         );
     }
 }

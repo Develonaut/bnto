@@ -70,6 +70,8 @@ pub struct ExecutionModel {
     pub selected_files: Vec<PathBuf>,
     /// Param overrides from the detail screen configuration.
     pub param_overrides: HashMap<String, String>,
+    /// Raw recipe definition JSON (from the detail screen, avoids re-lookup).
+    pub definition_json: Option<String>,
     /// Output files populated after pipeline completion.
     pub output_files: Vec<OutputFile>,
     /// Directory where output files were written.
@@ -139,6 +141,7 @@ impl ExecutionModel {
             error: None,
             selected_files: Vec::new(),
             param_overrides: HashMap::new(),
+            definition_json: None,
             output_files: Vec::new(),
             output_dir: None,
             output_lines: VecDeque::new(),
@@ -150,10 +153,12 @@ impl ExecutionModel {
         slug: &str,
         selected_files: Vec<PathBuf>,
         param_overrides: HashMap<String, String>,
+        definition_json: Option<String>,
     ) -> Self {
         Self {
             selected_files,
             param_overrides,
+            definition_json,
             ..Self::new(slug)
         }
     }
@@ -493,11 +498,12 @@ mod tests {
         let files = vec![PathBuf::from("/a.jpg"), PathBuf::from("/b.png")];
         let mut overrides = HashMap::new();
         overrides.insert("compress:quality".into(), "60".into());
-        let m = ExecutionModel::with_inputs("s", files.clone(), overrides.clone());
+        let m = ExecutionModel::with_inputs("s", files.clone(), overrides.clone(), None);
         assert_eq!(m.slug, "s");
         assert_eq!(m.status, ExecutionStatus::Idle);
         assert_eq!(m.selected_files, files);
         assert_eq!(m.param_overrides, overrides);
+        assert!(m.definition_json.is_none());
         assert!(m.output_files.is_empty());
         assert!(m.output_dir.is_none());
     }

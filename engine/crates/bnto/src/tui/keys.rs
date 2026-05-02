@@ -332,8 +332,8 @@ fn handle_detail_run_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> 
 
     match key.code {
         KeyCode::Enter | KeyCode::Tab => Some(AppMessage::ConfigConfirmed { slug: slug() }),
-        // Shift+Tab → go back to Params section.
-        KeyCode::BackTab => Some(AppMessage::DetailFocusParams),
+        // Up/k/Shift+Tab → go back to Params section.
+        KeyCode::BackTab | KeyCode::Up | KeyCode::Char('k') => Some(AppMessage::DetailFocusParams),
         _ => None,
     }
 }

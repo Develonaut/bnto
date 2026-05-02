@@ -159,7 +159,13 @@ pub(crate) fn handle_config_confirmed(model: AppModel, slug: String) -> AppModel
         .as_ref()
         .map(|r| r.files.clone())
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
+    let definition_json = model.detail.as_ref().map(|d| d.definition_json.clone());
+    let execution = Some(ExecutionModel::with_inputs(
+        &slug,
+        files,
+        overrides,
+        definition_json,
+    ));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
@@ -181,7 +187,13 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
         .map(|r| r.files)
         .unwrap_or_default();
     let overrides = model.param_overrides.clone();
-    let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
+    let definition_json = model.detail.as_ref().map(|d| d.definition_json.clone());
+    let execution = Some(ExecutionModel::with_inputs(
+        &slug,
+        files,
+        overrides,
+        definition_json,
+    ));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
