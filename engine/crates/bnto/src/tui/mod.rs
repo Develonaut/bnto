@@ -32,6 +32,7 @@ use std::io;
 use std::sync::{Arc, mpsc};
 use std::time::{Duration, Instant};
 
+use bnto_core::events::PipelineEvent;
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use crossterm::event::Event;
 use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
@@ -130,6 +131,7 @@ fn run_loop(
     };
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
+    let mut progressive_output_dir: Option<String> = None;
 
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -209,7 +211,18 @@ fn run_loop(
         if let Some(rx) = &bridge_rx {
             while let Ok(event) = rx.try_recv() {
                 model = match event {
+                    BridgeEvent::OutputDir(dir) => {
+                        progressive_output_dir = Some(dir);
+                        model
+                    }
                     BridgeEvent::Progress(pe) => {
+                        // Write progressive output files to disk before mapping.
+                        if let PipelineEvent::IterationCompleted { output_files, .. } = &pe
+                            && !output_files.is_empty()
+                            && let Some(dir) = &progressive_output_dir
+                        {
+                            bridge::write_progressive_files(dir, output_files);
+                        }
                         let msg = bridge::map_pipeline_event(pe);
                         update(model, msg)
                     }
@@ -218,6 +231,7 @@ fn run_loop(
                         file_count,
                         duration_ms,
                         file_metadata,
+                        warnings,
                     } => {
                         let outputs = bridge::build_output_files(&output_dir, &file_metadata);
                         let slug = match &model.screen {
@@ -229,6 +243,7 @@ fn run_loop(
                             AppMessage::Execution(ExecutionMessage::OutputsReady {
                                 files: outputs,
                                 output_dir: Some(output_dir),
+                                warnings,
                             }),
                         );
                         let model = update(
@@ -278,6 +293,7 @@ fn run_loop(
             if cancelled || !matches!(model.screen, app::Screen::Execution { .. }) {
                 bridge_rx = None;
                 execution_start = None;
+                progressive_output_dir = None;
             }
         }
 

@@ -925,6 +925,7 @@ mod tests {
                     original_size: Some(1000),
                 }],
                 output_dir: Some("/tmp/out".into()),
+                warnings: Vec::new(),
             },
         );
 
@@ -1169,6 +1170,7 @@ mod tests {
                     original_size: Some(500),
                 }],
                 output_dir: Some("/out".into()),
+                warnings: Vec::new(),
             }),
         );
 

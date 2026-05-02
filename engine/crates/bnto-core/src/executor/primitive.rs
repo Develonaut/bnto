@@ -178,6 +178,7 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
             Ok(NodeExecutionResult {
                 files_processed: local_file_count,
                 output_files,
+                warnings: Vec::new(),
             })
         }
     }
@@ -217,6 +218,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
     Ok(NodeExecutionResult {
         files_processed: 0,
         output_files,
+        warnings: Vec::new(),
     })
 }
 
@@ -278,5 +280,6 @@ fn process_batch<F: Fn() -> u64 + Copy>(
     Ok(NodeExecutionResult {
         files_processed: file_count,
         output_files,
+        warnings: Vec::new(),
     })
 }
