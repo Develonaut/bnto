@@ -33,6 +33,10 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             if let Some(dir) = &output_dir {
                 for file in output_files {
                     let path = std::path::Path::new(dir).join(&file.name);
+                    // Create parent dirs for files with subdirectory paths.
+                    if let Some(parent) = path.parent() {
+                        let _ = std::fs::create_dir_all(parent);
+                    }
                     let _ = std::fs::write(&path, &file.data);
                 }
             }
@@ -219,6 +223,46 @@ mod tests {
         assert_eq!(braille_frame(10), '⠋');
         assert_eq!(braille_frame(11), '⠙');
         assert_eq!(braille_frame(20), '⠋');
+    }
+
+    #[test]
+    fn test_progressive_output_creates_subdirectories() {
+        use bnto_core::events::ProgressOutputFile;
+
+        let dir = std::env::temp_dir().join("bnto-test-progressive-subdirs");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let reporter = stderr_reporter(noop_logger(), Some(dir.to_str().unwrap().to_string()));
+
+        reporter.emit(PipelineEvent::IterationCompleted {
+            node_id: "loop-1".to_string(),
+            iteration: 0,
+            total_iterations: 1,
+            duration_ms: 100,
+            files_produced: 2,
+            output_files: vec![
+                ProgressOutputFile {
+                    name: "Alpha Legion/part1.mp4".to_string(),
+                    data: b"video1".to_vec(),
+                    mime_type: "video/mp4".to_string(),
+                },
+                ProgressOutputFile {
+                    name: "top.txt".to_string(),
+                    data: b"flat".to_vec(),
+                    mime_type: "text/plain".to_string(),
+                },
+            ],
+        });
+
+        assert!(dir.join("Alpha Legion").join("part1.mp4").exists());
+        assert_eq!(
+            std::fs::read(dir.join("Alpha Legion/part1.mp4")).unwrap(),
+            b"video1"
+        );
+        assert!(dir.join("top.txt").exists());
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     fn noop_logger() -> Arc<dyn Logger> {

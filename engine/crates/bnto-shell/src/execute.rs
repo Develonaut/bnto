@@ -302,17 +302,19 @@ fn process_file_mode(
 /// Read all files from a directory (recursively) as OutputFile entries.
 ///
 /// Commands like yt-dlp create subdirectories in the output dir, so we
-/// walk the entire tree to find all produced files.
+/// walk the entire tree to find all produced files. Filenames preserve
+/// relative paths from the root dir (e.g. `"subdir/video.mp4"`).
 fn collect_output_files(
     dir: &std::path::Path,
     max_output_mb: u64,
 ) -> Result<Vec<OutputFile>, BntoError> {
     let mut files = Vec::new();
-    collect_output_files_recursive(dir, max_output_mb, &mut files)?;
+    collect_output_files_recursive(dir, dir, max_output_mb, &mut files)?;
     Ok(files)
 }
 
 fn collect_output_files_recursive(
+    root_dir: &std::path::Path,
     dir: &std::path::Path,
     max_output_mb: u64,
     files: &mut Vec<OutputFile>,
@@ -324,16 +326,21 @@ fn collect_output_files_recursive(
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
-            collect_output_files_recursive(&path, max_output_mb, files)?;
+            collect_output_files_recursive(root_dir, &path, max_output_mb, files)?;
             continue;
         }
         if !path.is_file() {
             continue;
         }
+        // Preserve relative path from root so subdirectory structure is retained.
         let filename = path
-            .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "output".to_string());
+            .strip_prefix(root_dir)
+            .map(|rel| rel.to_string_lossy().into_owned())
+            .unwrap_or_else(|_| {
+                path.file_name()
+                    .map(|n| n.to_string_lossy().into_owned())
+                    .unwrap_or_else(|| "output".to_string())
+            });
 
         // Check file size via metadata before reading into memory.
         // This prevents allocating gigabytes for a file that exceeds the limit.
@@ -849,7 +856,7 @@ mod tests {
     }
 
     #[test]
-    fn test_collect_output_files_finds_files_in_subdirectories() {
+    fn test_collect_output_files_preserves_subdirectory_in_filename() {
         let dir = std::env::temp_dir().join("bnto-test-collect-subdirs");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("subdir")).unwrap();
@@ -861,13 +868,13 @@ mod tests {
 
         let names: Vec<&str> = files.iter().map(|f| f.filename.as_str()).collect();
         assert!(names.contains(&"file.txt"));
-        assert!(names.contains(&"video.mp4"));
+        assert!(names.contains(&"subdir/video.mp4"));
 
         let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
-    fn test_collect_output_files_finds_deeply_nested() {
+    fn test_collect_output_files_preserves_deeply_nested_path() {
         let dir = std::env::temp_dir().join("bnto-test-collect-deep");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(dir.join("a").join("b")).unwrap();
@@ -875,7 +882,29 @@ mod tests {
 
         let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert_eq!(files.len(), 1);
-        assert_eq!(files[0].filename, "deep.mp4");
+        assert_eq!(files[0].filename, "a/b/deep.mp4");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_collect_output_files_multiple_subdirs_preserve_structure() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-multi-subdirs");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("Alpha Legion")).unwrap();
+        std::fs::create_dir_all(dir.join("Suboden Khan")).unwrap();
+        std::fs::write(dir.join("Alpha Legion").join("part1.mp4"), b"vid1").unwrap();
+        std::fs::write(dir.join("Suboden Khan").join("part2.mp4"), b"vid2").unwrap();
+
+        let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
+        assert_eq!(files.len(), 2);
+
+        let mut names: Vec<&str> = files.iter().map(|f| f.filename.as_str()).collect();
+        names.sort();
+        assert_eq!(
+            names,
+            vec!["Alpha Legion/part1.mp4", "Suboden Khan/part2.mp4"]
+        );
 
         let _ = std::fs::remove_dir_all(&dir);
     }
