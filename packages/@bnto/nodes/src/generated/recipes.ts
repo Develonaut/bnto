@@ -2005,7 +2005,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
               "{{output_dir}}/%(title)s.%(ext)s",
             ],
             command: "yt-dlp",
-            maxOutputSize: 2048,
+            maxOutputSize: 10240,
             outputMode: "file",
           },
           position: {
