@@ -137,6 +137,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-generate-thumbnails",
         "label": "Thumbnails",
         "zip": true,
         "autoDownload": true

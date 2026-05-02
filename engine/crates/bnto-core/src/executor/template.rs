@@ -100,16 +100,32 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
 }
 
 /// Resolve {{ctx.*}} properties from ProcessContext.
+///
+/// Path-related variables live under the `paths.*` sub-namespace:
+///   - `paths.home_dir`   → ~/.bnto/
+///   - `paths.output_dir` → ~/.bnto/output/
+///   - `paths.work_dir`   → current working directory
+///   - `paths.temp_dir`   → system temp directory
+///
+/// Old flat names (`work_dir`, `temp_dir`) are kept as backward-compat aliases.
 fn resolve_ctx(key: &str, process_ctx: &dyn ProcessContext) -> Option<Value> {
     match key {
-        "work_dir" => process_ctx
+        // --- Paths namespace ---
+        "paths.home_dir" => process_ctx
+            .home_dir()
+            .map(|p| Value::String(p.to_string_lossy().into_owned())),
+        "paths.output_dir" => process_ctx
+            .output_dir()
+            .map(|p| Value::String(p.to_string_lossy().into_owned())),
+        "paths.work_dir" | "work_dir" => process_ctx
             .work_dir()
             .ok()
             .map(|p| Value::String(p.to_string_lossy().into_owned())),
-        "temp_dir" => {
+        "paths.temp_dir" | "temp_dir" => {
             let dir = std::env::temp_dir();
             Some(Value::String(dir.to_string_lossy().into_owned()))
         }
+        // --- Flat namespace ---
         "platform" => Some(Value::String(current_platform().to_string())),
         "date" | "time" | "timestamp" => {
             let (y, m, d, hh, mm, ss) = now_civil();
@@ -343,10 +359,12 @@ mod tests {
             .collect()
     }
 
-    /// Test context that returns controlled values for env vars and work_dir.
+    /// Test context that returns controlled values for env vars and paths.
     struct MockContext {
         env_vars: BTreeMap<String, String>,
         work_dir: PathBuf,
+        home_dir: PathBuf,
+        output_dir: PathBuf,
     }
 
     impl MockContext {
@@ -354,6 +372,8 @@ mod tests {
             Self {
                 env_vars: BTreeMap::new(),
                 work_dir: PathBuf::from("/mock/work"),
+                home_dir: PathBuf::from("/mock/home/.bnto"),
+                output_dir: PathBuf::from("/mock/home/.bnto/output"),
             }
         }
 
@@ -375,6 +395,12 @@ mod tests {
         }
         fn work_dir(&self) -> Result<&Path, crate::BntoError> {
             Ok(&self.work_dir)
+        }
+        fn home_dir(&self) -> Option<&Path> {
+            Some(&self.home_dir)
+        }
+        fn output_dir(&self) -> Option<PathBuf> {
+            Some(self.output_dir.clone())
         }
     }
 
@@ -651,6 +677,142 @@ mod tests {
         let mock = MockContext::new();
         let result = resolve_ctx_templates("", &mock);
         assert_eq!(result, "");
+    }
+
+    #[test]
+    fn resolve_ctx_templates_paths_namespace() {
+        let mock = MockContext::new();
+        let result = resolve_ctx_templates("{{ctx.paths.output_dir}}/{{ctx.date}}-compress", &mock);
+        assert!(result.starts_with("/mock/home/.bnto/output/"));
+        assert!(result.ends_with("-compress"));
+        assert!(!result.contains("{{"));
+    }
+
+    // --- {{ctx.paths.*}} organized namespace ---
+
+    #[test]
+    fn ctx_paths_home_dir_resolves() {
+        let params = make_params(&[("dir", json!("{{ctx.paths.home_dir}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["dir"], json!("/mock/home/.bnto"));
+    }
+
+    #[test]
+    fn ctx_paths_output_dir_resolves() {
+        let params = make_params(&[("dir", json!("{{ctx.paths.output_dir}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["dir"], json!("/mock/home/.bnto/output"));
+    }
+
+    #[test]
+    fn ctx_paths_work_dir_resolves() {
+        let params = make_params(&[("dir", json!("{{ctx.paths.work_dir}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["dir"], json!("/mock/work"));
+    }
+
+    #[test]
+    fn ctx_paths_work_dir_alias() {
+        // Old flat form still works.
+        let params = make_params(&[
+            ("old", json!("{{ctx.work_dir}}")),
+            ("new", json!("{{ctx.paths.work_dir}}")),
+        ]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["old"], resolved["new"]);
+    }
+
+    #[test]
+    fn ctx_paths_temp_dir_resolves() {
+        let params = make_params(&[("dir", json!("{{ctx.paths.temp_dir}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        let val = resolved["dir"].as_str().unwrap();
+        assert!(!val.is_empty());
+        assert!(!val.contains("{{"));
+    }
+
+    #[test]
+    fn ctx_paths_temp_dir_alias() {
+        // Old flat form still works.
+        let params = make_params(&[
+            ("old", json!("{{ctx.temp_dir}}")),
+            ("new", json!("{{ctx.paths.temp_dir}}")),
+        ]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["old"], resolved["new"]);
+    }
+
+    #[test]
+    fn ctx_paths_unknown_left_asis() {
+        let params = make_params(&[("x", json!("{{ctx.paths.unknown}}"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["x"], json!("{{ctx.paths.unknown}}"));
+    }
+
+    #[test]
+    fn ctx_paths_output_dir_in_interpolation() {
+        let params = make_params(&[("dir", json!("{{ctx.paths.output_dir}}/{{ctx.date}}-images"))]);
+        let mock = MockContext::new();
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &mock,
+            node_outputs: &empty_outputs(),
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        let val = resolved["dir"].as_str().unwrap();
+        assert!(val.starts_with("/mock/home/.bnto/output/"));
+        assert!(val.ends_with("-images"));
+        assert!(!val.contains("{{"));
     }
 
     #[test]

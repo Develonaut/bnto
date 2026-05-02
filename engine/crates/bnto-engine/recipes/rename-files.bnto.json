@@ -72,6 +72,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-rename-files",
         "label": "Renamed Files",
         "zip": true,
         "autoDownload": true

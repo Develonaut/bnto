@@ -94,9 +94,18 @@
           "label": "Output Format",
           "description": "Video container format",
           "options": [
-            { "value": "mp4", "label": "MP4 (H.264)" },
-            { "value": "webm", "label": "WebM (VP9)" },
-            { "value": "mkv", "label": "MKV (Matroska)" }
+            {
+              "value": "mp4",
+              "label": "MP4 (H.264)"
+            },
+            {
+              "value": "webm",
+              "label": "WebM (VP9)"
+            },
+            {
+              "value": "mkv",
+              "label": "MKV (Matroska)"
+            }
           ],
           "default": "mp4",
           "order": 1
@@ -105,9 +114,18 @@
           "type": "enum",
           "label": "Video Codec",
           "options": [
-            { "value": "h264", "label": "H.264" },
-            { "value": "vp9", "label": "VP9" },
-            { "value": "av1", "label": "AV1" }
+            {
+              "value": "h264",
+              "label": "H.264"
+            },
+            {
+              "value": "vp9",
+              "label": "VP9"
+            },
+            {
+              "value": "av1",
+              "label": "AV1"
+            }
           ],
           "default": "h264",
           "order": 2
@@ -116,9 +134,18 @@
           "type": "enum",
           "label": "Audio Codec",
           "options": [
-            { "value": "m4a", "label": "M4A (AAC)" },
-            { "value": "opus", "label": "Opus" },
-            { "value": "mp3", "label": "MP3" }
+            {
+              "value": "m4a",
+              "label": "M4A (AAC)"
+            },
+            {
+              "value": "opus",
+              "label": "Opus"
+            },
+            {
+              "value": "mp3",
+              "label": "MP3"
+            }
           ],
           "default": "m4a",
           "order": 3
@@ -128,10 +155,22 @@
           "label": "Browser Cookies",
           "description": "Use cookies from a browser for authenticated content (Patreon, private videos)",
           "options": [
-            { "value": "", "label": "None" },
-            { "value": "chrome", "label": "Chrome" },
-            { "value": "firefox", "label": "Firefox" },
-            { "value": "safari", "label": "Safari" }
+            {
+              "value": "",
+              "label": "None"
+            },
+            {
+              "value": "chrome",
+              "label": "Chrome"
+            },
+            {
+              "value": "firefox",
+              "label": "Firefox"
+            },
+            {
+              "value": "safari",
+              "label": "Safari"
+            }
           ],
           "default": "",
           "order": 4
@@ -141,10 +180,22 @@
           "label": "Quality Cap",
           "description": "Maximum video resolution (best available if unset)",
           "options": [
-            { "value": "", "label": "Best available" },
-            { "value": "1080", "label": "1080p" },
-            { "value": "720", "label": "720p" },
-            { "value": "480", "label": "480p" }
+            {
+              "value": "",
+              "label": "Best available"
+            },
+            {
+              "value": "1080",
+              "label": "1080p"
+            },
+            {
+              "value": "720",
+              "label": "720p"
+            },
+            {
+              "value": "480",
+              "label": "480p"
+            }
           ],
           "default": "",
           "order": 5
@@ -154,10 +205,22 @@
           "label": "Subtitles",
           "description": "Download and embed subtitles in the selected language",
           "options": [
-            { "value": "", "label": "None" },
-            { "value": "en", "label": "English" },
-            { "value": "all", "label": "All languages" },
-            { "value": "en,es,fr,de,ja", "label": "Common (EN/ES/FR/DE/JA)" }
+            {
+              "value": "",
+              "label": "None"
+            },
+            {
+              "value": "en",
+              "label": "English"
+            },
+            {
+              "value": "all",
+              "label": "All languages"
+            },
+            {
+              "value": "en,es,fr,de,ja",
+              "label": "Common (EN/ES/FR/DE/JA)"
+            }
           ],
           "default": "",
           "order": 6
@@ -167,8 +230,14 @@
           "label": "Embed Thumbnail",
           "description": "Embed the video thumbnail in the output file",
           "options": [
-            { "value": "", "label": "No" },
-            { "value": "--embed-thumbnail", "label": "Yes" }
+            {
+              "value": "",
+              "label": "No"
+            },
+            {
+              "value": "--embed-thumbnail",
+              "label": "Yes"
+            }
           ],
           "default": "",
           "order": 7
@@ -178,8 +247,14 @@
           "label": "SponsorBlock",
           "description": "Remove sponsor segments from YouTube videos",
           "options": [
-            { "value": "", "label": "Keep all" },
-            { "value": "--sponsorblock-remove=default", "label": "Remove sponsors" }
+            {
+              "value": "",
+              "label": "Keep all"
+            },
+            {
+              "value": "--sponsorblock-remove=default",
+              "label": "Remove sponsors"
+            }
           ],
           "default": "",
           "order": 8
@@ -200,6 +275,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-download-video",
         "label": "Downloaded Video",
         "zip": true,
         "autoDownload": true

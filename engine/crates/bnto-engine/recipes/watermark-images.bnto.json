@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser — files never leave your machine.",
+    "description": "Add a logo or watermark to images. Position, size, and opacity are fully configurable. Runs in your browser \u2014 files never leave your machine.",
     "category": "image",
     "tags": ["PNG", "JPEG", "WebP", "Configurable position", "Adjustable opacity", "Browser-based"]
   },
@@ -78,6 +78,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-watermark-images",
         "label": "Watermarked Images",
         "zip": true,
         "autoDownload": true

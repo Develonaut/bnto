@@ -70,7 +70,6 @@ pub fn spawn_pipeline(
     definition_json: String,
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
-    output_dir_override: Option<String>,
 ) -> mpsc::Receiver<BridgeEvent> {
     let (tx, rx) = mpsc::channel();
 
@@ -81,7 +80,6 @@ pub fn spawn_pipeline(
             &definition_json,
             &selected_files,
             &param_overrides,
-            output_dir_override.as_deref(),
         );
     });
 
@@ -95,7 +93,6 @@ fn run_bridge(
     definition_json: &str,
     selected_files: &[PathBuf],
     param_overrides: &HashMap<String, String>,
-    output_dir_override: Option<&str>,
 ) {
     // Resolve input mode to handle URL/Text recipes differently.
     let input_mode = serde_json::from_str::<PipelineDefinition>(definition_json)
@@ -148,23 +145,16 @@ fn run_bridge(
         }
     };
 
-    // Resolve output directory using the priority chain:
-    // 1. User-configured TUI output dir (same slot as CLI --output)
-    // 2. Recipe's output node directory param (with {{ctx.*}} resolved)
-    // 3. Default: temp dir
-    let output_dir = match output_dir_override {
-        Some(dir) if !dir.is_empty() => PathBuf::from(dir).join(format!("bnto-{slug}")),
-        _ => {
-            // Check recipe's output node for a directory param.
-            let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
-                .ok()
-                .and_then(|def| bnto_core::resolve_output_directory(&def))
-                .map(|d| bnto_core::resolve_ctx_templates(&d, &ctx));
-            match recipe_dir {
-                Some(dir) => PathBuf::from(dir),
-                None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
-            }
-        }
+    // Resolve output directory:
+    // 1. Recipe's output node directory param (with {{ctx.*}} resolved)
+    // 2. Fall back to temp dir
+    let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
+        .ok()
+        .and_then(|def| bnto_core::resolve_output_directory(&def))
+        .map(|d| bnto_core::resolve_ctx_templates(&d, &ctx));
+    let output_dir = match recipe_dir {
+        Some(dir) => PathBuf::from(dir),
+        None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
     };
     let _ = std::fs::remove_dir_all(&output_dir);
     let _ = std::fs::create_dir_all(&output_dir);

@@ -15,6 +15,7 @@ use std::path::PathBuf;
 /// ~/.bnto/
 /// ├── config.toml
 /// ├── recipes/
+/// ├── output/
 /// ├── state/
 /// │   ├── trusted.json
 /// │   ├── logs/
@@ -74,6 +75,11 @@ impl BntoPaths {
         self.home.join("state").join("logs")
     }
 
+    /// Path to the default output directory for recipe results.
+    pub fn output_dir(&self) -> PathBuf {
+        self.home.join("output")
+    }
+
     /// Path to the cache directory.
     pub fn cache_dir(&self) -> PathBuf {
         self.home.join("cache")
@@ -95,6 +101,7 @@ impl BntoPaths {
     pub fn ensure_dirs(&self) -> Result<(), std::io::Error> {
         std::fs::create_dir_all(&self.home)?;
         std::fs::create_dir_all(self.recipes_dir())?;
+        std::fs::create_dir_all(self.output_dir())?;
         std::fs::create_dir_all(self.home.join("state"))?;
         std::fs::create_dir_all(self.logs_dir())?;
         std::fs::create_dir_all(self.cache_dir())?;
@@ -175,6 +182,13 @@ mod tests {
     }
 
     #[test]
+    fn output_dir_under_home() {
+        let tmp = tempfile::tempdir().unwrap();
+        let paths = paths_from_root(tmp.path());
+        assert_eq!(paths.output_dir(), tmp.path().join("output"));
+    }
+
+    #[test]
     fn cache_dir_under_home() {
         let tmp = tempfile::tempdir().unwrap();
         let paths = paths_from_root(tmp.path());
@@ -189,6 +203,7 @@ mod tests {
 
         assert!(paths.home.is_dir());
         assert!(paths.recipes_dir().is_dir());
+        assert!(paths.output_dir().is_dir());
         assert!(paths.home.join("state").is_dir());
         assert!(paths.logs_dir().is_dir());
         assert!(paths.cache_dir().is_dir());

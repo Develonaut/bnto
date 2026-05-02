@@ -39,6 +39,18 @@ pub trait ProcessContext: Send + Sync {
 
     /// Get the working directory for this execution.
     fn work_dir(&self) -> Result<&Path, BntoError>;
+
+    /// Get the bnto home directory (~/.bnto/ by default).
+    /// Returns `None` in browser (WASM) — filesystem paths don't apply.
+    fn home_dir(&self) -> Option<&Path> {
+        None
+    }
+
+    /// Get the default output directory for recipe results (~/.bnto/output/).
+    /// Returns `None` in browser (WASM) — filesystem paths don't apply.
+    fn output_dir(&self) -> Option<PathBuf> {
+        None
+    }
 }
 
 /// No-op context for browser (WASM) execution.
@@ -128,5 +140,17 @@ mod tests {
                 .to_string()
                 .contains("not available in browser")
         );
+    }
+
+    #[test]
+    fn test_noop_context_home_dir_returns_none() {
+        let ctx = NoopContext;
+        assert!(ctx.home_dir().is_none());
+    }
+
+    #[test]
+    fn test_noop_context_output_dir_returns_none() {
+        let ctx = NoopContext;
+        assert!(ctx.output_dir().is_none());
     }
 }

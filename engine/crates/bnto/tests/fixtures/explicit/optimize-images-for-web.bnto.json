@@ -137,6 +137,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-optimize-images-for-web",
         "label": "Optimized Images",
         "zip": true,
         "autoDownload": true

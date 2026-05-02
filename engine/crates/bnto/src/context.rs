@@ -21,34 +21,56 @@ use bnto_core::errors::BntoError;
 /// 3. User dotenv at `~/.bnto/.env`
 pub struct NativeContext {
     work_dir: PathBuf,
+    /// Bnto home directory (~/.bnto/).
+    home_dir: PathBuf,
+    /// Default output directory (~/.bnto/output/).
+    output_dir: PathBuf,
     /// Key-value pairs from the project-level `.env` file.
     project_env: HashMap<String, String>,
-    /// Key-value pairs from the user-level `~/.config/bnto/.env` file.
+    /// Key-value pairs from the user-level `~/.bnto/.env` file.
     user_env: HashMap<String, String>,
 }
 
 impl NativeContext {
-    /// Create a context rooted at the given working directory.
+    /// Create a context rooted at the given working directory with resolved paths.
     #[allow(dead_code)]
-    pub fn new(work_dir: PathBuf) -> Self {
+    pub fn new(work_dir: PathBuf, paths: &crate::storage::BntoPaths) -> Self {
         let project_env = load_dotenv_file(&work_dir.join(".env"));
         let user_env = load_user_dotenv();
         Self {
             work_dir,
+            home_dir: paths.home.clone(),
+            output_dir: paths.output_dir(),
             project_env,
             user_env,
         }
     }
 
     /// Create a context using the current working directory.
+    ///
+    /// Resolves bnto paths from `BntoPaths::resolve()`. If paths
+    /// can't be determined, home_dir/output_dir fall back to temp dir.
     pub fn current_dir() -> Result<Self, BntoError> {
         let work_dir = std::env::current_dir().map_err(|e| {
             BntoError::ProcessingFailed(format!("Failed to get current directory: {e}"))
         })?;
         let project_env = load_dotenv_file(&work_dir.join(".env"));
         let user_env = load_user_dotenv();
+        let (home_dir, output_dir) = match crate::storage::BntoPaths::resolve() {
+            Some(p) => {
+                let output = p.output_dir();
+                (p.home, output)
+            }
+            None => {
+                let tmp = std::env::temp_dir().join("bnto");
+                let output = tmp.join("output");
+                (tmp, output)
+            }
+        };
         Ok(Self {
             work_dir,
+            home_dir,
+            output_dir,
             project_env,
             user_env,
         })
@@ -215,6 +237,14 @@ impl ProcessContext for NativeContext {
     fn work_dir(&self) -> Result<&Path, BntoError> {
         Ok(&self.work_dir)
     }
+
+    fn home_dir(&self) -> Option<&Path> {
+        Some(&self.home_dir)
+    }
+
+    fn output_dir(&self) -> Option<PathBuf> {
+        Some(self.output_dir.clone())
+    }
 }
 
 #[cfg(test)]
@@ -362,6 +392,13 @@ mod tests {
         assert!(vars.is_empty());
     }
 
+    /// Helper: create a BntoPaths rooted at the given directory.
+    fn test_paths(root: &std::path::Path) -> crate::storage::BntoPaths {
+        crate::storage::BntoPaths {
+            home: root.to_path_buf(),
+        }
+    }
+
     #[test]
     fn native_context_reads_project_dotenv() {
         let tmp = tempfile::tempdir().unwrap();
@@ -371,7 +408,8 @@ mod tests {
         )
         .unwrap();
 
-        let ctx = NativeContext::new(tmp.path().to_path_buf());
+        let paths = test_paths(tmp.path());
+        let ctx = NativeContext::new(tmp.path().to_path_buf(), &paths);
         // Should resolve from project .env (system env won't have this key).
         assert_eq!(
             ctx.env_var("BNTO_TEST_PROJECT_KEY"),
@@ -385,7 +423,8 @@ mod tests {
         // PATH is always set in the system environment.
         std::fs::write(tmp.path().join(".env"), "PATH=overridden\n").unwrap();
 
-        let ctx = NativeContext::new(tmp.path().to_path_buf());
+        let paths = test_paths(tmp.path());
+        let ctx = NativeContext::new(tmp.path().to_path_buf(), &paths);
         // System env should win — PATH should NOT be "overridden".
         let val = ctx.env_var("PATH").unwrap();
         assert_ne!(val, "overridden", "System env should take priority");
@@ -397,6 +436,8 @@ mod tests {
         // with injected dotenv maps, without touching real env vars.
         let ctx = NativeContext {
             work_dir: PathBuf::from("/tmp"),
+            home_dir: PathBuf::from("/tmp/bnto"),
+            output_dir: PathBuf::from("/tmp/bnto/output"),
             project_env: [("KEY".to_string(), "project".to_string())]
                 .into_iter()
                 .collect(),
@@ -415,11 +456,37 @@ mod tests {
     fn env_var_falls_through_to_user_env() {
         let ctx = NativeContext {
             work_dir: PathBuf::from("/tmp"),
+            home_dir: PathBuf::from("/tmp/bnto"),
+            output_dir: PathBuf::from("/tmp/bnto/output"),
             project_env: HashMap::new(),
             user_env: [("USER_ONLY_KEY".to_string(), "user_val".to_string())]
                 .into_iter()
                 .collect(),
         };
         assert_eq!(ctx.env_var("USER_ONLY_KEY"), Some("user_val".to_string()),);
+    }
+
+    #[test]
+    fn home_dir_returns_configured_path() {
+        let ctx = NativeContext {
+            work_dir: PathBuf::from("/tmp"),
+            home_dir: PathBuf::from("/custom/bnto"),
+            output_dir: PathBuf::from("/custom/bnto/output"),
+            project_env: HashMap::new(),
+            user_env: HashMap::new(),
+        };
+        assert_eq!(ctx.home_dir(), Some(Path::new("/custom/bnto")),);
+    }
+
+    #[test]
+    fn output_dir_returns_configured_path() {
+        let ctx = NativeContext {
+            work_dir: PathBuf::from("/tmp"),
+            home_dir: PathBuf::from("/custom/bnto"),
+            output_dir: PathBuf::from("/custom/bnto/output"),
+            project_env: HashMap::new(),
+            user_env: HashMap::new(),
+        };
+        assert_eq!(ctx.output_dir(), Some(PathBuf::from("/custom/bnto/output")),);
     }
 }
