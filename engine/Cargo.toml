@@ -61,3 +61,15 @@ lto = true
 codegen-units = 1
 # Strip debug symbols from final binary.
 strip = true
+
+[profile.fast]
+# Fast iteration profile for local development.
+# Same optimizations as release but trades binary size for compile speed:
+# - codegen-units = 16 (parallel LLVM, ~8x faster codegen)
+# - thin LTO (cross-crate optimization without the full-LTO cost)
+# - opt-level = 2 (speed over size — fine for local use)
+# Use via: cargo build --profile fast --package bnto
+inherits = "release"
+opt-level = 2
+lto = "thin"
+codegen-units = 16
