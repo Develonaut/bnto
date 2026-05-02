@@ -98,8 +98,12 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         format!("Processing {}...", &file_name),
     );
 
+    // Convert FileData to bytes for the processor. Path variant reads from disk.
+    let data = file.data.into_bytes().map_err(|e| {
+        BntoError::ProcessingFailed(format!("Failed to read input file {}: {e}", &file_name))
+    })?;
     let input = NodeInput {
-        data: file.data,
+        data,
         filename: file_name.clone(),
         mime_type: Some(file.mime_type),
         params: params.clone(),
@@ -243,12 +247,17 @@ fn process_batch<F: Fn() -> u64 + Copy>(
 
     let batch_files: Vec<BatchFile> = files
         .into_iter()
-        .map(|f| BatchFile {
-            data: f.data,
-            filename: f.name,
-            mime_type: Some(f.mime_type),
+        .map(|f| {
+            let data = f.data.into_bytes().map_err(|e| {
+                BntoError::ProcessingFailed(format!("Failed to read input file {}: {e}", f.name))
+            })?;
+            Ok(BatchFile {
+                data,
+                filename: f.name,
+                mime_type: Some(f.mime_type),
+            })
         })
-        .collect();
+        .collect::<Result<Vec<_>, BntoError>>()?;
 
     let batch_input = BatchInput {
         files: batch_files,
@@ -266,17 +275,8 @@ fn process_batch<F: Fn() -> u64 + Copy>(
         format!("Completed batch of {} files", file_count),
     );
 
-    let metadata = output.metadata;
     let mut output_files = Vec::with_capacity(output.files.len());
-    for f in output.files {
-        output_files.push(PipelineFile {
-            name: f.filename,
-            data: f.data,
-            mime_type: f.mime_type,
-            metadata: metadata.clone(),
-        });
-    }
-
+    collect_output(output, &mut output_files);
     Ok(NodeExecutionResult {
         files_processed: file_count,
         output_files,

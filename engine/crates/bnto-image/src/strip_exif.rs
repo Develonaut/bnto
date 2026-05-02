@@ -7,7 +7,7 @@
 use bnto_core::DEFAULT_QUALITY;
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use bnto_encode::ImageFormat;
@@ -110,7 +110,7 @@ impl NodeProcessor for StripExif {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: stripped_data,
+                data: FileData::Bytes(stripped_data),
                 filename: output_filename,
                 mime_type: format.mime_type().to_string(),
                 metadata: serde_json::Map::new(),
@@ -147,6 +147,14 @@ mod tests {
     use super::*;
     use crate::test_utils::{create_test_jpeg, inject_exif_orientation};
     use bnto_core::NoopContext;
+
+    /// Extract bytes from FileData. Panics on FileData::Path (never produced by image processors).
+    fn file_bytes(data: &FileData) -> &[u8] {
+        match data {
+            FileData::Bytes(b) => b,
+            FileData::Path(_) => panic!("Expected FileData::Bytes"),
+        }
+    }
 
     fn make_input(data: Vec<u8>, filename: &str) -> NodeInput {
         NodeInput {
@@ -208,8 +216,8 @@ mod tests {
         assert_eq!(output.files[0].filename, "photo-stripped.jpg");
         assert_eq!(output.files[0].mime_type, "image/jpeg");
         // Output should be a valid JPEG (magic bytes FF D8)
-        assert_eq!(output.files[0].data[0], 0xFF);
-        assert_eq!(output.files[0].data[1], 0xD8);
+        assert_eq!(file_bytes(&output.files[0].data)[0], 0xFF);
+        assert_eq!(file_bytes(&output.files[0].data)[1], 0xD8);
     }
 
     #[test]
@@ -225,7 +233,7 @@ mod tests {
 
         // The re-encoded JPEG should NOT contain an APP1 (EXIF) marker.
         // APP1 marker = FF E1. Scan the output for it after the SOI (FF D8).
-        let data = &output.files[0].data;
+        let data = file_bytes(&output.files[0].data);
         let has_exif = data
             .windows(2)
             .skip(1) // skip SOI
@@ -249,7 +257,7 @@ mod tests {
             .unwrap();
 
         // Decode the output to verify orientation was applied
-        let result_img = image::load_from_memory(&output.files[0].data).unwrap();
+        let result_img = image::load_from_memory(file_bytes(&output.files[0].data)).unwrap();
         assert_eq!(
             result_img.width(),
             40,
@@ -274,7 +282,10 @@ mod tests {
         assert_eq!(output.files[0].filename, "screenshot-stripped.png");
         assert_eq!(output.files[0].mime_type, "image/png");
         // Valid PNG magic bytes
-        assert_eq!(&output.files[0].data[..4], &[0x89, 0x50, 0x4E, 0x47]);
+        assert_eq!(
+            &file_bytes(&output.files[0].data)[..4],
+            &[0x89, 0x50, 0x4E, 0x47]
+        );
     }
 
     // --- WebP processing ---
@@ -292,7 +303,7 @@ mod tests {
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].filename, "image-stripped.webp");
         assert_eq!(output.files[0].mime_type, "image/webp");
-        assert_eq!(&output.files[0].data[..4], b"RIFF");
+        assert_eq!(&file_bytes(&output.files[0].data)[..4], b"RIFF");
     }
 
     // --- Quality parameter ---
@@ -318,10 +329,10 @@ mod tests {
             .unwrap();
 
         assert!(
-            low.files[0].data.len() < high.files[0].data.len(),
+            file_bytes(&low.files[0].data).len() < file_bytes(&high.files[0].data).len(),
             "Low quality ({}) should produce smaller output than high quality ({})",
-            low.files[0].data.len(),
-            high.files[0].data.len()
+            file_bytes(&low.files[0].data).len(),
+            file_bytes(&high.files[0].data).len()
         );
     }
 

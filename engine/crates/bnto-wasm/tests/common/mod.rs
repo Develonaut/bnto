@@ -1,6 +1,7 @@
 // Shared helpers for recipe integration tests.
 #![allow(dead_code)]
 
+use bnto_core::processor::FileData;
 use bnto_core::{PipelineDefinition, PipelineFile};
 
 /// A tiny valid JPEG (smallest possible -- 2x2 pixel, ~600 bytes).
@@ -29,10 +30,15 @@ pub fn parse(json: &str) -> PipelineDefinition {
 pub fn file(name: &str, data: &[u8], mime: &str) -> PipelineFile {
     PipelineFile {
         name: name.to_string(),
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         mime_type: mime.to_string(),
         metadata: serde_json::Map::new(),
     }
+}
+
+/// Extract bytes from FileData (panics if Path variant, which tests never produce).
+pub fn file_bytes(data: &FileData) -> Vec<u8> {
+    data.clone().into_bytes().expect("test: should have bytes")
 }
 
 /// Fake time source -- deterministic, returns 1000ms always.

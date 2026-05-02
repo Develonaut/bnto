@@ -2,7 +2,7 @@
 use super::*;
 use crate::context::{NoopContext, ProcessContext};
 use crate::events::RecordingReporter;
-use crate::processor::{NodeOutput, OutputFile};
+use crate::processor::{FileData, NodeOutput, OutputFile};
 
 // =========================================================================
 // Mock Processors for Testing
@@ -24,7 +24,7 @@ impl crate::processor::NodeProcessor for EchoProcessor {
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: FileData::Bytes(input.data),
                 filename: input.filename,
                 mime_type: input
                     .mime_type
@@ -52,7 +52,7 @@ impl crate::processor::NodeProcessor for UpperCaseProcessor {
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: FileData::Bytes(input.data),
                 filename: input.filename.to_uppercase(),
                 mime_type: input
                     .mime_type
@@ -105,7 +105,7 @@ impl crate::processor::NodeProcessor for SlowProcessor {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: FileData::Bytes(input.data),
                 filename: input.filename,
                 mime_type: input
                     .mime_type
@@ -137,13 +137,13 @@ impl crate::processor::NodeProcessor for DoubleProcessor {
         Ok(NodeOutput {
             files: vec![
                 OutputFile {
-                    data: input.data.clone(),
+                    data: FileData::Bytes(input.data.clone()),
                     filename: format!("{}-a", input.filename),
                     mime_type: mime.clone(),
                     metadata: serde_json::Map::new(),
                 },
                 OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: format!("{}-b", input.filename),
                     mime_type: mime,
                     metadata: serde_json::Map::new(),
@@ -190,7 +190,7 @@ impl crate::processor::NodeProcessor for SourceProcessor {
             .unwrap_or("generated.bin");
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: format!("downloaded-from:{}", url).into_bytes(),
+                data: FileData::Bytes(format!("downloaded-from:{}", url).into_bytes()),
                 filename: format!("{}.mp4", url.rsplit('/').next().unwrap_or("output")),
                 mime_type: "video/mp4".to_string(),
                 metadata: serde_json::Map::new(),
@@ -238,7 +238,7 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: compressed_data,
+                data: FileData::Bytes(compressed_data),
                 filename: input.filename,
                 mime_type: input
                     .mime_type
@@ -254,10 +254,18 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
 // Test Helpers
 // =========================================================================
 
+/// Extract bytes from FileData::Bytes, panicking on FileData::Path.
+fn file_data_bytes(data: &FileData) -> &[u8] {
+    match data {
+        FileData::Bytes(b) => b,
+        FileData::Path(p) => panic!("expected FileData::Bytes, got FileData::Path({:?})", p),
+    }
+}
+
 fn make_file(name: &str, data: &[u8]) -> PipelineFile {
     PipelineFile {
         name: name.to_string(),
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         mime_type: "application/octet-stream".to_string(),
         metadata: serde_json::Map::new(),
     }

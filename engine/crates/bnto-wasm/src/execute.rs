@@ -18,7 +18,16 @@ fn file_result_to_js(file: &bnto_core::PipelineFileResult) -> Result<js_sys::Obj
     js_sys::Reflect::set(&obj, &"name".into(), &JsValue::from_str(&file.name))
         .map_err(|_| JsValue::from_str("Failed to set result file name"))?;
 
-    let data = js_sys::Uint8Array::from(file.data.as_slice());
+    // Extract bytes — Path variant is unreachable in WASM (shell-command never runs in browser).
+    let bytes = match &file.data {
+        bnto_core::processor::FileData::Bytes(b) => b.as_slice(),
+        bnto_core::processor::FileData::Path(_) => {
+            return Err(JsValue::from_str(
+                "FileData::Path is not supported in WASM — shell-command is native-only",
+            ));
+        }
+    };
+    let data = js_sys::Uint8Array::from(bytes);
     js_sys::Reflect::set(&obj, &"data".into(), &data)
         .map_err(|_| JsValue::from_str("Failed to set result file data"))?;
 
@@ -123,7 +132,7 @@ fn extract_single_file(file_obj: &JsValue, index: u32) -> Result<PipelineFile, J
 
     Ok(PipelineFile {
         name,
-        data,
+        data: bnto_core::processor::FileData::Bytes(data),
         mime_type,
         metadata: serde_json::Map::new(),
     })

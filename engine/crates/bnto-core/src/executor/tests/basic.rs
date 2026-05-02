@@ -35,7 +35,7 @@ fn test_io_only_pipeline_is_passthrough() {
 
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "test.txt");
-    assert_eq!(result.files[0].data, b"hello");
+    assert_eq!(result.files[0].data, FileData::Bytes(b"hello".to_vec()));
 }
 
 #[test]
@@ -57,7 +57,10 @@ fn test_single_node_single_file() {
         execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
-    assert_eq!(result.files[0].data, b"hello world");
+    assert_eq!(
+        result.files[0].data,
+        FileData::Bytes(b"hello world".to_vec())
+    );
 }
 
 #[test]
@@ -83,9 +86,9 @@ fn test_single_node_multiple_files() {
         execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 3);
-    assert_eq!(result.files[0].data, b"aaa");
-    assert_eq!(result.files[1].data, b"bbb");
-    assert_eq!(result.files[2].data, b"ccc");
+    assert_eq!(result.files[0].data, FileData::Bytes(b"aaa".to_vec()));
+    assert_eq!(result.files[1].data, FileData::Bytes(b"bbb".to_vec()));
+    assert_eq!(result.files[2].data, FileData::Bytes(b"ccc".to_vec()));
 }
 
 #[test]

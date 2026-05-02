@@ -176,7 +176,7 @@ fn test_recipe_compress_images_single_file() {
     // Loop runs once (1 file), EchoProcessor passes it through.
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "photo.jpg");
-    assert_eq!(result.files[0].data, b"jpeg-data");
+    assert_eq!(result.files[0].data, FileData::Bytes(b"jpeg-data".to_vec()));
 }
 
 #[test]

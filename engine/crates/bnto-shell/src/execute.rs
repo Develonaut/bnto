@@ -16,7 +16,7 @@
 // validation, env var sanitization).
 
 use bnto_core::metadata::{InputCardinality, ParameterDef, ParameterType};
-use bnto_core::processor::{NodeInput, NodeOutput, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, OutputFile};
 use bnto_core::{
     BntoError, NodeCategory, NodeMetadata, NodeProcessor, ProcessContext, ProgressReporter,
 };
@@ -227,7 +227,7 @@ fn process_stdout_mode(
 
     Ok(NodeOutput {
         files: vec![OutputFile {
-            data: output_bytes,
+            data: FileData::Bytes(output_bytes),
             filename: output_filename,
             mime_type: "application/octet-stream".to_string(),
             metadata: serde_json::Map::new(),
@@ -278,12 +278,13 @@ fn process_file_mode(
         )));
     }
 
-    // Clean up temp dir after reading files.
-    let _ = std::fs::remove_dir_all(&output_dir);
+    // Don't delete temp dir — files are referenced by path (FileData::Path).
+    // Consumers move files out via write_to() / rename(). Empty temp dirs
+    // are cleaned by the OS. This avoids reading multi-GB files into memory.
 
     progress.report(100, "Done");
 
-    let total_bytes: usize = files.iter().map(|f| f.data.len()).sum();
+    let total_bytes: u64 = files.iter().map(|f| f.data.len().unwrap_or(0)).sum();
     let mut metadata = serde_json::Map::new();
     metadata.insert("command".into(), command.into());
     metadata.insert("outputMode".into(), "file".into());
@@ -299,11 +300,14 @@ fn process_file_mode(
     Ok(NodeOutput { files, metadata })
 }
 
-/// Read all files from a directory (recursively) as OutputFile entries.
+/// Collect all files from a directory (recursively) as OutputFile entries.
 ///
 /// Commands like yt-dlp create subdirectories in the output dir, so we
 /// walk the entire tree to find all produced files. Filenames preserve
 /// relative paths from the root dir (e.g. `"subdir/video.mp4"`).
+///
+/// Returns `FileData::Path` references — files are NOT read into memory.
+/// Consumers move them to the final destination via `write_to()` (rename).
 fn collect_output_files(
     dir: &std::path::Path,
     max_output_mb: u64,
@@ -342,8 +346,7 @@ fn collect_output_files_recursive(
                     .unwrap_or_else(|| "output".to_string())
             });
 
-        // Check file size via metadata before reading into memory.
-        // This prevents allocating gigabytes for a file that exceeds the limit.
+        // Check file size via metadata — validates without loading into memory.
         let file_size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
         let limit = validate::max_output_bytes(max_output_mb) as u64;
         if file_size > limit {
@@ -355,13 +358,10 @@ fn collect_output_files_recursive(
             )));
         }
 
-        let data = std::fs::read(&path).map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to read output file {filename}: {e}"))
-        })?;
-
+        // Return a path reference — file stays on disk, not read into memory.
         let mime = mime_from_extension(&filename);
         files.push(OutputFile {
-            data,
+            data: FileData::Path(path.to_path_buf()),
             filename,
             mime_type: mime,
             metadata: serde_json::Map::new(),
@@ -832,7 +832,7 @@ mod tests {
     }
 
     #[test]
-    fn test_collect_output_files_reads_dir() {
+    fn test_collect_output_files_returns_path_variant() {
         let dir = std::env::temp_dir().join("bnto-test-collect-output");
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
@@ -851,6 +851,15 @@ mod tests {
         assert_eq!(mp4.mime_type, "video/mp4");
         let json = files.iter().find(|f| f.filename == "info.json").unwrap();
         assert_eq!(json.mime_type, "application/json");
+
+        // Verify FileData::Path variant — files stay on disk, not read into memory.
+        for file in &files {
+            assert!(
+                matches!(&file.data, FileData::Path(_)),
+                "collect_output_files should return FileData::Path, got Bytes for {}",
+                file.filename,
+            );
+        }
 
         let _ = std::fs::remove_dir_all(&dir);
     }

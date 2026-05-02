@@ -16,7 +16,7 @@ use bnto_core::metadata::{
     Constraints, InputCardinality, NodeCategory, NodeMetadata, OptionEntry, ParameterDef,
     ParameterType,
 };
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use bnto_encode::ImageFormat;
@@ -386,7 +386,7 @@ impl NodeProcessor for OverlayImage {
         Ok(NodeOutput {
             files: vec![OutputFile {
                 filename: output_filename,
-                data: output_data,
+                data: FileData::Bytes(output_data),
                 mime_type: format.mime_type().to_string(),
                 metadata: serde_json::Map::new(),
             }],
@@ -455,6 +455,14 @@ mod tests {
     use bnto_core::NoopContext;
     use image::{DynamicImage, Rgba, RgbaImage};
     use std::io::Cursor;
+
+    /// Extract bytes from FileData. Panics on FileData::Path (never produced by image processors).
+    fn file_bytes(data: &FileData) -> &[u8] {
+        match data {
+            FileData::Bytes(b) => b,
+            FileData::Path(_) => panic!("Expected FileData::Bytes"),
+        }
+    }
 
     fn noop_progress() -> ProgressReporter {
         ProgressReporter::new_noop()
@@ -583,7 +591,7 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Jpeg),
         );
         assert!(output.files[0].filename.contains("-overlay"));
@@ -629,7 +637,8 @@ mod tests {
             .unwrap();
 
         assert_ne!(
-            out_tl.files[0].data, out_br.files[0].data,
+            file_bytes(&out_tl.files[0].data),
+            file_bytes(&out_br.files[0].data),
             "Different positions should produce different outputs"
         );
     }
@@ -674,7 +683,8 @@ mod tests {
             .unwrap();
 
         assert_ne!(
-            out_full.files[0].data, out_half.files[0].data,
+            file_bytes(&out_full.files[0].data),
+            file_bytes(&out_half.files[0].data),
             "Different opacity should produce different outputs"
         );
     }
@@ -713,7 +723,8 @@ mod tests {
             .unwrap();
 
         assert_ne!(
-            out_small.files[0].data, out_large.files[0].data,
+            file_bytes(&out_small.files[0].data),
+            file_bytes(&out_large.files[0].data),
             "Different sizes should produce different outputs"
         );
     }
@@ -758,7 +769,8 @@ mod tests {
             .unwrap();
 
         assert_ne!(
-            out_a.files[0].data, out_b.files[0].data,
+            file_bytes(&out_a.files[0].data),
+            file_bytes(&out_b.files[0].data),
             "Different offsets should produce different outputs"
         );
     }
@@ -851,7 +863,7 @@ mod tests {
             .process(input, &noop_progress(), &NoopContext)
             .unwrap();
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Png),
         );
     }
@@ -876,7 +888,7 @@ mod tests {
             .process(input, &noop_progress(), &NoopContext)
             .unwrap();
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::WebP),
         );
     }

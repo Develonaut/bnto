@@ -97,7 +97,7 @@ mod tests {
     use super::*;
     use crate::context::ProcessContext;
     use crate::errors::BntoError;
-    use crate::processor::{NodeInput, NodeOutput, OutputFile};
+    use crate::processor::{FileData, NodeInput, NodeOutput, OutputFile};
     use crate::progress::ProgressReporter;
 
     // --- Mock Processor for Testing ---
@@ -129,7 +129,7 @@ mod tests {
         ) -> Result<NodeOutput, BntoError> {
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: input.filename,
                     mime_type: input
                         .mime_type

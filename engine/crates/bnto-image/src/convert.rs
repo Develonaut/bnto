@@ -6,7 +6,7 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use bnto_encode::ImageFormat;
@@ -203,7 +203,7 @@ fn build_convert_output(
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data,
+            data: FileData::Bytes(data),
             filename: ConvertImageFormat::output_filename(filename, target),
             mime_type: target.mime_type().to_string(),
             metadata: serde_json::Map::new(),
@@ -258,6 +258,14 @@ mod tests {
     use super::*;
     use crate::svg;
     use bnto_core::NoopContext;
+
+    /// Extract bytes from FileData. Panics on FileData::Path (never produced by image processors).
+    fn file_bytes(data: &FileData) -> &[u8] {
+        match data {
+            FileData::Bytes(b) => b,
+            FileData::Path(_) => panic!("Expected FileData::Bytes"),
+        }
+    }
 
     // =========================================================================
     // Test Helpers
@@ -556,11 +564,18 @@ mod tests {
 
         // Verify the output is actually PNG by checking magic bytes.
         // PNG starts with: 89 50 4E 47 (which is ".PNG" in ASCII).
-        assert!(file.data.len() > 8, "PNG output should have data");
-        assert_eq!(file.data[0], 0x89, "PNG should start with 0x89");
-        assert_eq!(file.data[1], 0x50, "PNG byte 2 should be 'P'");
-        assert_eq!(file.data[2], 0x4E, "PNG byte 3 should be 'N'");
-        assert_eq!(file.data[3], 0x47, "PNG byte 4 should be 'G'");
+        assert!(
+            file_bytes(&file.data).len() > 8,
+            "PNG output should have data"
+        );
+        assert_eq!(
+            file_bytes(&file.data)[0],
+            0x89,
+            "PNG should start with 0x89"
+        );
+        assert_eq!(file_bytes(&file.data)[1], 0x50, "PNG byte 2 should be 'P'");
+        assert_eq!(file_bytes(&file.data)[2], 0x4E, "PNG byte 3 should be 'N'");
+        assert_eq!(file_bytes(&file.data)[3], 0x47, "PNG byte 4 should be 'G'");
 
         // Check metadata reports the conversion.
         assert_eq!(
@@ -593,10 +608,13 @@ mod tests {
         assert_eq!(file.mime_type, "image/jpeg");
 
         // Verify JPEG magic bytes: FF D8 FF.
-        assert!(file.data.len() > 3, "JPEG output should have data");
-        assert_eq!(file.data[0], 0xFF);
-        assert_eq!(file.data[1], 0xD8);
-        assert_eq!(file.data[2], 0xFF);
+        assert!(
+            file_bytes(&file.data).len() > 3,
+            "JPEG output should have data"
+        );
+        assert_eq!(file_bytes(&file.data)[0], 0xFF);
+        assert_eq!(file_bytes(&file.data)[1], 0xD8);
+        assert_eq!(file_bytes(&file.data)[2], 0xFF);
     }
 
     #[test]
@@ -616,15 +634,18 @@ mod tests {
         assert_eq!(file.mime_type, "image/webp");
 
         // Verify WebP magic bytes: RIFF....WEBP
-        assert!(file.data.len() > 12, "WebP output should have data");
-        assert_eq!(file.data[0], b'R');
-        assert_eq!(file.data[1], b'I');
-        assert_eq!(file.data[2], b'F');
-        assert_eq!(file.data[3], b'F');
-        assert_eq!(file.data[8], b'W');
-        assert_eq!(file.data[9], b'E');
-        assert_eq!(file.data[10], b'B');
-        assert_eq!(file.data[11], b'P');
+        assert!(
+            file_bytes(&file.data).len() > 12,
+            "WebP output should have data"
+        );
+        assert_eq!(file_bytes(&file.data)[0], b'R');
+        assert_eq!(file_bytes(&file.data)[1], b'I');
+        assert_eq!(file_bytes(&file.data)[2], b'F');
+        assert_eq!(file_bytes(&file.data)[3], b'F');
+        assert_eq!(file_bytes(&file.data)[8], b'W');
+        assert_eq!(file_bytes(&file.data)[9], b'E');
+        assert_eq!(file_bytes(&file.data)[10], b'B');
+        assert_eq!(file_bytes(&file.data)[11], b'P');
     }
 
     #[test]
@@ -642,8 +663,8 @@ mod tests {
         assert_eq!(file.mime_type, "image/png");
 
         // Verify PNG magic bytes.
-        assert_eq!(file.data[0], 0x89);
-        assert_eq!(file.data[1], 0x50);
+        assert_eq!(file_bytes(&file.data)[0], 0x89);
+        assert_eq!(file_bytes(&file.data)[1], 0x50);
     }
 
     #[test]
@@ -663,8 +684,8 @@ mod tests {
         assert_eq!(file.mime_type, "image/jpeg");
 
         // Should still be valid JPEG.
-        assert_eq!(file.data[0], 0xFF);
-        assert_eq!(file.data[1], 0xD8);
+        assert_eq!(file_bytes(&file.data)[0], 0xFF);
+        assert_eq!(file_bytes(&file.data)[1], 0xD8);
     }
 
     #[test]
@@ -719,14 +740,14 @@ mod tests {
         let output_low = processor
             .process(input_low, &progress, &NoopContext)
             .unwrap();
-        let size_low = output_low.files[0].data.len();
+        let size_low = file_bytes(&output_low.files[0].data).len();
 
         // High quality (100).
         let input_high = make_input(TEST_PNG, "img.png", format_quality_params("jpeg", 100));
         let output_high = processor
             .process(input_high, &progress, &NoopContext)
             .unwrap();
-        let size_high = output_high.files[0].data.len();
+        let size_high = file_bytes(&output_high.files[0].data).len();
 
         // Higher quality should produce a larger (or equal) file.
         assert!(
@@ -786,8 +807,8 @@ mod tests {
             .process(input_q90, &progress, &NoopContext)
             .unwrap();
 
-        let size_q30 = output_q30.files[0].data.len();
-        let size_q90 = output_q90.files[0].data.len();
+        let size_q30 = file_bytes(&output_q30.files[0].data).len();
+        let size_q90 = file_bytes(&output_q90.files[0].data).len();
 
         assert!(
             size_q30 < size_q90,
@@ -819,7 +840,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "portrait.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_data = &result.files[0].data;
+        let output_data = file_bytes(&result.files[0].data);
 
         // Decode the PNG output and check dimensions.
         let output_img = decode_with_orientation(output_data).unwrap();
@@ -838,7 +859,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "portrait.jpg", format_params("webp"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_data = &result.files[0].data;
+        let output_data = file_bytes(&result.files[0].data);
 
         let output_img = decode_with_orientation(output_data).unwrap();
         assert_eq!(output_img.width(), 40);
@@ -855,7 +876,7 @@ mod tests {
         let input = make_input(&jpeg, "landscape.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_data = &result.files[0].data;
+        let output_data = file_bytes(&result.files[0].data);
 
         let output_img = decode_with_orientation(output_data).unwrap();
         assert_eq!(output_img.width(), 60);
@@ -880,7 +901,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped-h.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 60, "Flip H preserves width");
         assert_eq!(output_img.height(), 40, "Flip H preserves height");
     }
@@ -896,7 +917,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped-v.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 60, "Flip V preserves width");
         assert_eq!(output_img.height(), 40, "Flip V preserves height");
     }
@@ -913,7 +934,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot270-flip-h.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270+FlipH swaps to 60 tall");
     }
@@ -930,7 +951,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot90-flip-h.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot90+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot90+FlipH swaps to 60 tall");
     }
@@ -946,7 +967,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot270.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");
     }
@@ -962,7 +983,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot180.jpg", format_params("png"));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 60, "Rot180 preserves width");
         assert_eq!(output_img.height(), 40, "Rot180 preserves height");
     }
@@ -1025,11 +1046,11 @@ mod tests {
         assert_eq!(file.mime_type, "image/png");
 
         // PNG magic bytes
-        assert!(file.data.len() > 8);
-        assert_eq!(file.data[0], 0x89);
-        assert_eq!(file.data[1], 0x50);
-        assert_eq!(file.data[2], 0x4E);
-        assert_eq!(file.data[3], 0x47);
+        assert!(file_bytes(&file.data).len() > 8);
+        assert_eq!(file_bytes(&file.data)[0], 0x89);
+        assert_eq!(file_bytes(&file.data)[1], 0x50);
+        assert_eq!(file_bytes(&file.data)[2], 0x4E);
+        assert_eq!(file_bytes(&file.data)[3], 0x47);
     }
 
     #[test]
@@ -1046,9 +1067,9 @@ mod tests {
         assert_eq!(file.mime_type, "image/jpeg");
 
         // JPEG magic bytes
-        assert_eq!(file.data[0], 0xFF);
-        assert_eq!(file.data[1], 0xD8);
-        assert_eq!(file.data[2], 0xFF);
+        assert_eq!(file_bytes(&file.data)[0], 0xFF);
+        assert_eq!(file_bytes(&file.data)[1], 0xD8);
+        assert_eq!(file_bytes(&file.data)[2], 0xFF);
     }
 
     #[test]
@@ -1065,14 +1086,14 @@ mod tests {
         assert_eq!(file.mime_type, "image/webp");
 
         // WebP magic bytes: RIFF....WEBP
-        assert_eq!(file.data[0], b'R');
-        assert_eq!(file.data[1], b'I');
-        assert_eq!(file.data[2], b'F');
-        assert_eq!(file.data[3], b'F');
-        assert_eq!(file.data[8], b'W');
-        assert_eq!(file.data[9], b'E');
-        assert_eq!(file.data[10], b'B');
-        assert_eq!(file.data[11], b'P');
+        assert_eq!(file_bytes(&file.data)[0], b'R');
+        assert_eq!(file_bytes(&file.data)[1], b'I');
+        assert_eq!(file_bytes(&file.data)[2], b'F');
+        assert_eq!(file_bytes(&file.data)[3], b'F');
+        assert_eq!(file_bytes(&file.data)[8], b'W');
+        assert_eq!(file_bytes(&file.data)[9], b'E');
+        assert_eq!(file_bytes(&file.data)[10], b'B');
+        assert_eq!(file_bytes(&file.data)[11], b'P');
     }
 
     #[test]
@@ -1083,7 +1104,7 @@ mod tests {
         let input = make_input(TEST_SVG, "icon.svg", format_params("png"));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let img = image::load_from_memory(&output.files[0].data).unwrap();
+        let img = image::load_from_memory(file_bytes(&output.files[0].data)).unwrap();
         assert_eq!(img.width(), 100, "SVG 100x100 should produce 100px wide");
         assert_eq!(img.height(), 100, "SVG 100x100 should produce 100px tall");
     }
@@ -1133,8 +1154,8 @@ mod tests {
         let file = &result.unwrap().files[0];
         assert_eq!(file.filename, "mascot.png");
         // PNG magic bytes
-        assert_eq!(file.data[0], 0x89);
-        assert_eq!(file.data[1], 0x50);
+        assert_eq!(file_bytes(&file.data)[0], 0x89);
+        assert_eq!(file_bytes(&file.data)[1], 0x50);
     }
 
     #[test]

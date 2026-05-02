@@ -37,7 +37,9 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                     if let Some(parent) = path.parent() {
                         let _ = std::fs::create_dir_all(parent);
                     }
-                    let _ = std::fs::write(&path, &file.data);
+                    // write_to() uses rename() for Path variant (O(1)),
+                    // std::fs::write() for Bytes variant.
+                    let _ = file.data.write_to(&path);
                 }
             }
         }
@@ -244,12 +246,12 @@ mod tests {
             output_files: vec![
                 ProgressOutputFile {
                     name: "Alpha Legion/part1.mp4".to_string(),
-                    data: b"video1".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"video1".to_vec()),
                     mime_type: "video/mp4".to_string(),
                 },
                 ProgressOutputFile {
                     name: "top.txt".to_string(),
-                    data: b"flat".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"flat".to_vec()),
                     mime_type: "text/plain".to_string(),
                 },
             ],

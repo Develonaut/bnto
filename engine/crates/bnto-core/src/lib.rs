@@ -70,6 +70,11 @@ pub mod editor;
 /// Browser gets `NoopLogger`, CLI gets `FileLogger`.
 pub mod logging;
 
+/// File content abstraction — in-memory bytes or on-disk path reference.
+/// Large files (shell-command outputs) stay on disk as path references to
+/// avoid reading multi-GB files into memory.
+pub mod file_data;
+
 /// Simple dotenv parser — loads KEY=VALUE pairs from `.env` files.
 /// No crate dependency, handles comments, quotes, and `export` prefix.
 pub mod dotenv;
@@ -96,6 +101,7 @@ pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
 pub use executor::template::resolve_ctx_templates;
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
+pub use file_data::FileData;
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
     Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo,

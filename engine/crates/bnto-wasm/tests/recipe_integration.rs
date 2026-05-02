@@ -3,7 +3,7 @@
 mod common;
 
 use bnto_core::{NoopContext, PipelineReporter, execute_pipeline};
-use common::{SMALL_JPEG, SMALL_PNG, fake_now, file, parse, real_registry};
+use common::{SMALL_JPEG, SMALL_PNG, fake_now, file, file_bytes, parse, real_registry};
 
 // --- Compress Images -- full recipe integration ---
 
@@ -38,16 +38,17 @@ fn compress_images_recipe_produces_smaller_output() {
         .expect("compress pipeline should succeed");
 
     assert_eq!(result.files.len(), 1, "should output 1 file");
-    assert!(result.files[0].data.len() >= 2, "output should have data");
+    let bytes = file_bytes(&result.files[0].data);
+    assert!(bytes.len() >= 2, "output should have data");
     assert_eq!(
-        &result.files[0].data[0..2],
+        &bytes[0..2],
         &[0xFF, 0xD8],
         "output should be a valid JPEG (magic bytes)"
     );
     assert!(
-        result.files[0].data.len() < input_size,
+        bytes.len() < input_size,
         "compressed JPEG at q=50 ({} bytes) should be smaller than input ({} bytes)",
-        result.files[0].data.len(),
+        bytes.len(),
         input_size
     );
 }
@@ -89,7 +90,7 @@ fn compress_images_recipe_handles_batch() {
     assert_eq!(result.files.len(), 2, "batch should output 2 files");
     for f in &result.files {
         assert!(
-            !f.data.is_empty(),
+            !f.data.is_empty().expect("should read length"),
             "output file '{}' should have data",
             f.name
         );
@@ -140,7 +141,7 @@ fn compress_images_metadata_includes_size_stats() {
     let compressed_size = metadata["compressedSize"].as_u64().unwrap();
     assert_eq!(
         compressed_size,
-        result.files[0].data.len() as u64,
+        result.files[0].data.len().expect("should read length"),
         "compressedSize should match the output data length"
     );
 
@@ -184,8 +185,9 @@ fn resize_images_recipe_produces_output() {
         .expect("resize pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);
-    assert!(result.files[0].data.len() >= 2);
-    assert_eq!(&result.files[0].data[0..2], &[0xFF, 0xD8]);
+    let bytes = file_bytes(&result.files[0].data);
+    assert!(bytes.len() >= 2);
+    assert_eq!(&bytes[0..2], &[0xFF, 0xD8]);
 }
 
 // --- Convert Image Format -- full recipe integration ---
@@ -220,9 +222,10 @@ fn convert_image_format_recipe_produces_png() {
         .expect("convert pipeline should succeed");
 
     assert_eq!(result.files.len(), 1);
-    assert!(result.files[0].data.len() >= 4);
+    let bytes = file_bytes(&result.files[0].data);
+    assert!(bytes.len() >= 4);
     assert_eq!(
-        &result.files[0].data[0..4],
+        &bytes[0..4],
         &[0x89, 0x50, 0x4E, 0x47],
         "output should be a valid PNG (magic bytes)"
     );

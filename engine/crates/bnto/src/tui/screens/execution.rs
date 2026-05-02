@@ -92,7 +92,7 @@ pub struct ExecutionModel {
 const MAX_OUTPUT_LINES: usize = 50;
 
 /// Messages the execution screen can handle.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum ExecutionMessage {
     /// Pipeline started — initialize file and node tracking.

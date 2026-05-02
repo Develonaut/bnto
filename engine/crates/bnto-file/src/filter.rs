@@ -7,7 +7,7 @@
 use bnto_core::metadata::{
     Constraints, NodeCategory, NodeMetadata, OptionEntry, ParameterDef, ParameterType,
 };
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
@@ -61,7 +61,7 @@ impl NodeProcessor for FileFilter {
             // File matches — pass it through unchanged.
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: input.filename,
                     mime_type: input
                         .mime_type
@@ -669,7 +669,8 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            output.files[0].data, original_data,
+            output.files[0].data.clone().into_bytes().unwrap(),
+            original_data,
             "Data should pass through unchanged"
         );
     }

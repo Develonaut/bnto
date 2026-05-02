@@ -28,7 +28,7 @@ fn test_source_node_executes_once_with_no_files() {
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "video.mp4");
     assert!(
-        String::from_utf8_lossy(&result.files[0].data)
+        String::from_utf8_lossy(file_data_bytes(&result.files[0].data))
             .contains("downloaded-from:https://example.com/video")
     );
 }

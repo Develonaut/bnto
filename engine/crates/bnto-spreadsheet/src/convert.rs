@@ -6,7 +6,7 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 /// The spreadsheet-convert node processor. Stateless — config comes from `NodeInput.params`.
@@ -73,7 +73,7 @@ impl NodeProcessor for ConvertFormat {
         progress.report(100, "Done!");
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: json_bytes,
+                data: FileData::Bytes(json_bytes),
                 filename: output_filename,
                 mime_type: "application/json".to_string(),
                 metadata: serde_json::Map::new(),
@@ -339,7 +339,12 @@ mod tests {
     }
 
     fn output_json(output: &NodeOutput) -> serde_json::Value {
-        serde_json::from_slice(&output.files[0].data).expect("Output should be valid JSON")
+        let bytes = output.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("Should read bytes");
+        serde_json::from_slice(&bytes).expect("Output should be valid JSON")
     }
 
     fn process_ok(input: NodeInput) -> NodeOutput {
@@ -604,7 +609,8 @@ mod tests {
     fn test_compact_output_by_default() {
         let csv = "name\nAlice\n";
         let output = process_ok(make_input(csv));
-        let text = String::from_utf8(output.files[0].data.clone()).unwrap();
+        let bytes = output.files[0].data.clone().into_bytes().unwrap();
+        let text = String::from_utf8(bytes).unwrap();
 
         // Compact JSON has no newlines within the array
         assert!(!text.contains('\n'), "Compact output should be single line");
@@ -616,7 +622,8 @@ mod tests {
         let mut params = serde_json::Map::new();
         params.insert("pretty".into(), serde_json::json!(true));
         let output = process_ok(make_input_with_params(csv, params));
-        let text = String::from_utf8(output.files[0].data.clone()).unwrap();
+        let bytes = output.files[0].data.clone().into_bytes().unwrap();
+        let text = String::from_utf8(bytes).unwrap();
 
         assert!(text.contains('\n'), "Pretty output should have newlines");
         assert!(text.contains("  "), "Pretty output should have indentation");
@@ -627,12 +634,12 @@ mod tests {
         let csv = "name,age\nAlice,30\nBob,25\n";
 
         let compact = process_ok(make_input(csv));
-        let compact_size = compact.files[0].data.len();
+        let compact_size = compact.files[0].data.len().unwrap();
 
         let mut params = serde_json::Map::new();
         params.insert("pretty".into(), serde_json::json!(true));
         let pretty = process_ok(make_input_with_params(csv, params));
-        let pretty_size = pretty.files[0].data.len();
+        let pretty_size = pretty.files[0].data.len().unwrap();
 
         assert!(
             pretty_size > compact_size,

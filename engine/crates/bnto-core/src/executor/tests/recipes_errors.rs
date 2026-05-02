@@ -29,7 +29,7 @@ fn test_recipe_with_only_io_nodes_passthrough() {
         execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
 
     assert_eq!(result.files.len(), 1);
-    assert_eq!(result.files[0].data, b"hello");
+    assert_eq!(result.files[0].data, FileData::Bytes(b"hello".to_vec()));
 }
 
 #[test]

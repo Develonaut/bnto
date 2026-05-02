@@ -346,7 +346,11 @@ fn run_recipe(
     print_run_banner(recipe_path, &raw_json, &prepared);
 
     let file_count = prepared.files.len();
-    let total_bytes: u64 = prepared.files.iter().map(|f| f.data.len() as u64).sum();
+    let total_bytes: u64 = prepared
+        .files
+        .iter()
+        .map(|f| f.data.len().unwrap_or(0))
+        .sum();
     let param_names: Vec<String> = param_overrides
         .iter()
         .filter_map(|p| p.split('=').next().map(|k| k.to_string()))

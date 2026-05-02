@@ -123,7 +123,7 @@ impl std::fmt::Debug for AppModel {
 }
 
 /// Messages that drive screen transitions.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum AppMessage {
     /// User selected a recipe in the browser.
