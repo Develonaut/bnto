@@ -150,8 +150,17 @@ fn main() {
     let cli = Cli::parse();
     telemetry::init();
 
+    // Resolve paths, create dirs, run pending migrations — before anything else.
+    let paths = match storage::ensure_ready() {
+        Ok(p) => Some(p),
+        Err(e) => {
+            eprintln!("{} storage init: {e}", "Warning:".yellow());
+            None
+        }
+    };
+
     // Session logger — shared across all commands.
-    let logger = create_logger();
+    let logger = create_logger(&paths);
 
     let cmd_name = match &cli.command {
         Some(Command::Run { .. }) => "run",
@@ -209,7 +218,7 @@ fn main() {
         }
         Some(Command::Tui { recipe, theme, new }) => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui(&theme, recipe, new, &logger);
+            launch_tui(&theme, recipe, new, &logger, paths);
         }
         Some(Command::Telemetry { action }) => match action {
             TelemetryAction::Enable => {
@@ -224,22 +233,29 @@ fn main() {
         },
         None => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui("los-angeles", None, false, &logger);
+            launch_tui("los-angeles", None, false, &logger, paths);
         }
     }
 
     logger.flush();
 }
 
-/// Create the session logger. Falls back to NoopLogger if paths can't be resolved.
-fn create_logger() -> Arc<dyn Logger> {
-    storage::BntoPaths::resolve()
+/// Create the session logger. Falls back to NoopLogger if paths unavailable.
+fn create_logger(paths: &Option<storage::BntoPaths>) -> Arc<dyn Logger> {
+    paths
+        .as_ref()
         .and_then(|p| FileLogger::new(&p.logs_dir(), LogLevel::Debug))
         .map(|fl| Arc::new(fl) as Arc<dyn Logger>)
         .unwrap_or_else(|| Arc::new(NoopLogger))
 }
 
-fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool, logger: &Arc<dyn Logger>) {
+fn launch_tui(
+    theme_str: &str,
+    recipe_path: Option<String>,
+    new: bool,
+    logger: &Arc<dyn Logger>,
+    paths: Option<storage::BntoPaths>,
+) {
     let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
         Ok(v) => v,
         Err(e) => {
@@ -256,7 +272,7 @@ fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool, logger: &
         }
     });
     let start = std::time::Instant::now();
-    if let Err(e) = tui::launch_tui(variant, recipe_json, new, logger) {
+    if let Err(e) = tui::launch_tui(variant, recipe_json, new, logger, paths) {
         eprintln!("{} {e}", "TUI error:".red());
         process::exit(1);
     }

@@ -120,11 +120,6 @@ impl TomlConfig {
     pub fn output_dir(&self) -> Option<&str> {
         self.paths.output.as_deref().filter(|s| !s.is_empty())
     }
-
-    /// Effective recipes directory override — None means use BntoPaths default.
-    pub fn recipes_dir_override(&self) -> Option<&str> {
-        self.paths.recipes.as_deref().filter(|s| !s.is_empty())
-    }
 }
 
 #[cfg(test)]
@@ -235,15 +230,6 @@ mod tests {
             config.output_dir().is_none(),
             "empty string treated as None"
         );
-    }
-
-    #[test]
-    fn recipes_dir_override_accessor() {
-        let mut config = TomlConfig::default();
-        assert!(config.recipes_dir_override().is_none());
-
-        config.paths.recipes = Some("/custom".into());
-        assert_eq!(config.recipes_dir_override(), Some("/custom"));
     }
 
     #[test]

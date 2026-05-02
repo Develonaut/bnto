@@ -235,8 +235,7 @@ impl AppModel {
         let registry = create_registry();
 
         // List library recipes for the home screen pane.
-        let recipes_dir = effective_recipes_dir(&toml_config, &paths);
-        let library_names = list_library_recipes(&recipes_dir);
+        let library_names = list_library_recipes(&paths.recipes_dir());
 
         // Determine initial screen and state.
         let (screen, detail, editor) = if new_recipe {
@@ -289,18 +288,6 @@ impl AppModel {
             registry,
         }
     }
-}
-
-/// Resolve the effective recipes directory.
-///
-/// Uses the config override if set and valid, otherwise falls back
-/// to the default `~/.bnto/recipes/`.
-pub fn effective_recipes_dir(config: &TomlConfig, paths: &BntoPaths) -> std::path::PathBuf {
-    config
-        .recipes_dir_override()
-        .map(std::path::PathBuf::from)
-        .filter(|p| p.is_dir())
-        .unwrap_or_else(|| paths.recipes_dir())
 }
 
 /// Pure state transition — the heart of the TEA pattern.
@@ -1226,7 +1213,7 @@ mod tests {
         let app = update(default_model(), AppMessage::OpenSettings);
         assert_eq!(app.screen, Screen::Settings);
         assert!(app.settings.is_some());
-        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 4);
+        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 3);
     }
 
     #[test]
@@ -1443,61 +1430,19 @@ mod tests {
     // --- Settings persistence: path preservation across saves ---
 
     #[test]
-    fn theme_changed_preserves_both_path_settings() {
+    fn theme_changed_preserves_output_dir() {
         let mut app = default_model();
-        app.toml_config.paths.recipes = Some("/recipes".into());
         app.toml_config.paths.output = Some("/output".into());
         app.screen = Screen::Settings;
 
         let app = update(app, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
         assert_eq!(app.toml_config.tui.theme, "tokyo");
-        assert_eq!(app.toml_config.paths.recipes, Some("/recipes".into()));
         assert_eq!(app.toml_config.paths.output, Some("/output".into()));
     }
 
     #[test]
-    fn settings_path_confirmed_for_recipes_dir_preserves_output_dir() {
-        // Simulate: config already has output, user changes only recipes dir.
+    fn settings_path_confirmed_for_output_dir() {
         let mut app = update(default_model(), AppMessage::OpenSettings);
-        app.toml_config.paths.output = Some("/existing-output".into());
-        app.settings = app.settings.map(|mut s| {
-            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "output_dir") {
-                f.value = "/existing-output".to_string();
-            }
-            s
-        });
-        app.screen = Screen::Picker {
-            slug: "recipes_dir".into(),
-            from: DetailOrigin::Home,
-        };
-        app.settings_picker_field = Some("recipes_dir".into());
-        app.picker = Some(PickerModel::from_dir(
-            "recipes_dir",
-            &std::path::PathBuf::from("/new-recipes"),
-        ));
-
-        let app = update(app, AppMessage::SettingsPathConfirmed);
-        assert_eq!(app.screen, Screen::Settings);
-        // recipes_dir updated to picker's current_dir.
-        assert!(app.toml_config.paths.recipes.is_some());
-        // output preserved — not clobbered.
-        assert_eq!(
-            app.toml_config.paths.output,
-            Some("/existing-output".into())
-        );
-    }
-
-    #[test]
-    fn settings_path_confirmed_for_output_dir_preserves_recipes_dir() {
-        // Symmetric: config has recipes dir, user changes only output dir.
-        let mut app = update(default_model(), AppMessage::OpenSettings);
-        app.toml_config.paths.recipes = Some("/existing-recipes".into());
-        app.settings = app.settings.map(|mut s| {
-            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "recipes_dir") {
-                f.value = "/existing-recipes".to_string();
-            }
-            s
-        });
         app.screen = Screen::Picker {
             slug: "output_dir".into(),
             from: DetailOrigin::Home,
@@ -1509,33 +1454,23 @@ mod tests {
         ));
 
         let app = update(app, AppMessage::SettingsPathConfirmed);
-        assert_eq!(
-            app.toml_config.paths.recipes,
-            Some("/existing-recipes".into())
-        );
+        assert_eq!(app.screen, Screen::Settings);
         assert!(app.toml_config.paths.output.is_some());
     }
 
     #[test]
-    fn settings_roundtrip_both_paths_survive_reload() {
-        // Full roundtrip: load config with both paths → open settings → verify fields.
+    fn settings_roundtrip_output_dir_survives_reload() {
+        // Full roundtrip: load config with output dir → open settings → verify field.
         let mut app = default_model();
         app.toml_config.tui.theme = "tokyo".to_string();
-        app.toml_config.paths.recipes = Some("/recipes".into());
         app.toml_config.paths.output = Some("/output".into());
         let app = update(app, AppMessage::OpenSettings);
         let settings = app.settings.as_ref().expect("settings created");
-        let rd = settings
-            .fields
-            .iter()
-            .find(|f| f.key == "recipes_dir")
-            .unwrap();
         let od = settings
             .fields
             .iter()
             .find(|f| f.key == "output_dir")
             .unwrap();
-        assert_eq!(rd.value, "/recipes");
         assert_eq!(od.value, "/output");
     }
 

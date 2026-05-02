@@ -61,6 +61,7 @@ pub fn launch_tui(
     recipe_json: Option<String>,
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
+    paths: Option<crate::storage::BntoPaths>,
 ) -> io::Result<()> {
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -74,7 +75,14 @@ pub fn launch_tui(
     logger.flush(); // Flush the init entry even if setup fails.
     let mut terminal = terminal?;
 
-    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe, logger);
+    let result = run_loop(
+        &mut terminal,
+        variant,
+        recipe_json,
+        new_recipe,
+        logger,
+        paths,
+    );
     logger.flush();
     restore_terminal(&mut terminal)?;
     result
@@ -114,8 +122,12 @@ fn run_loop(
     recipe_json: Option<String>,
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
+    paths: Option<crate::storage::BntoPaths>,
 ) -> io::Result<()> {
-    let mut model = AppModel::new(variant, recipe_json, new_recipe);
+    let mut model = match paths {
+        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
+        None => AppModel::new(variant, recipe_json, new_recipe),
+    };
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
 
@@ -501,13 +513,13 @@ mod tests {
     #[test]
     fn settings_enter_opens_picker_on_editable_field() {
         let mut model = settings_model();
-        // Focus on field 1 (recipes_dir, editable).
+        // Focus on field 1 (output_dir, editable).
         model.settings.as_mut().unwrap().focused = 1;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
             Some(AppMessage::OpenSettingsPicker {
-                field_key: "recipes_dir".into()
+                field_key: "output_dir".into()
             })
         );
     }
@@ -536,12 +548,12 @@ mod tests {
     #[test]
     fn settings_left_right_toggles_telemetry_on_telemetry_field() {
         let mut model = settings_model();
-        // Focus on field 3 (telemetry, non-editable toggle).
+        // Focus on field 2 (telemetry, non-editable toggle).
         let settings = model.settings.as_mut().unwrap();
-        settings.focused = 3;
+        settings.focused = 2;
         // Explicitly set value to "On" — don't rely on TelemetryConfig::load()
         // which can be polluted by other tests writing to the global config file.
-        settings.fields[3].value = "On".to_string();
+        settings.fields[2].value = "On".to_string();
         // Value is "On", so right should toggle to Off.
         let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
@@ -559,7 +571,7 @@ mod tests {
     #[test]
     fn settings_enter_on_telemetry_field_returns_none() {
         let mut model = settings_model();
-        model.settings.as_mut().unwrap().focused = 3;
+        model.settings.as_mut().unwrap().focused = 2;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), None);
     }
