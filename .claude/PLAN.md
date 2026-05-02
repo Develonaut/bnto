@@ -937,6 +937,20 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ---
 
+### Triage: `{{ctx.recipe.id}}` template variable for output directories
+
+**Priority: Triage.** Add a `{{ctx.recipe.id}}` template variable so recipe output directories can use a universal template (`{{ctx.paths.output_dir}}/{{ctx.date}}-{{ctx.recipe.id}}`) instead of hardcoding the slug 20 times. Requires threading recipe metadata (`id`, `name`) through `PipelineDefinition` → `PipelineContext` → `TemplateContext` — currently lost during `Definition` → `PipelineDefinition` conversion. Would also give user-created recipes automatic meaningful output dirs.
+
+See PR #500 discussion for exploration of the data flow.
+
+---
+
+### Triage: Node processor memory performance audit
+
+**Priority: Triage.** Audit every processor in `bnto-image`, `bnto-csv`, `bnto-file`, `bnto-vector`, `bnto-shell` for memory-intensive patterns: unnecessary full-file reads into `Vec<u8>`, data cloning in hot paths, streaming/path-based opportunities, and peak memory under large inputs. Use the `FileData` enum pattern from the shell-command zero-copy plan as a reference for fixes.
+
+---
+
 ## Reference
 
 | Document                                   | Purpose                                                                      |

@@ -105,7 +105,7 @@ These are enforced in detail by the universal rules files (auto-loaded) and scop
 
 1. **Layered Architecture:** CLI links engine directly. Web: `Apps → @bnto/core → Engine (Rust→WASM)`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
 2. **API Abstraction:** UI code NEVER calls Convex, Tauri, or Go directly. Always through `@bnto/core` hooks.
-3. **Bento Box Principle:** One thing per file/function/package. Files < 250 lines, functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
+3. **Bento Box Principle:** One thing per file/function/package. TS files < 250 lines, Rust files < 400 prod lines (excluding `#[cfg(test)]`), functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
 4. **Co-location:** `@bnto/ui` (Motorway design system) and `@bnto/editor` extracted as packages (March 2026). Page-level components remain in `apps/web`.
 5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Tauri) and swaps adapters. Components never know which backend they're talking to.
 
