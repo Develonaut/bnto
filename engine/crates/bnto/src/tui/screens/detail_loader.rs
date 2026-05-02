@@ -14,25 +14,6 @@ use super::detail::{DetailFocus, DetailModel, ParamEntry};
 use super::detail_fields::fields_to_params;
 use super::picker::PickerModel;
 
-/// Build a detail model from a recipe slug using engine metadata.
-///
-/// Looks up the recipe via `builtin_recipe_by_slug`, parses its definition
-/// JSON, walks the node list to resolve processors and collect params.
-/// Convenience wrapper for tests that don't need to specify a start directory.
-pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
-    let recipe = bnto_engine::recipes::builtin_recipe_by_slug(slug)?;
-    let entry = CatalogEntry {
-        slug: recipe.slug.clone(),
-        name: recipe.name.clone(),
-        description: recipe.description.clone(),
-        category: recipe.category.clone(),
-        tags: recipe.tags.clone(),
-        definition_json: recipe.definition_json.to_string(),
-        source: RecipeSource::Bundled,
-    };
-    load_detail_from_entry(&entry, registry, None)
-}
-
 /// Build a detail model from a catalog entry with an explicit start directory.
 ///
 /// Parses the entry's definition JSON, walks the node list to find processor
@@ -329,6 +310,13 @@ mod tests {
 
     fn registry() -> NodeRegistry {
         bnto_engine::create_registry()
+    }
+
+    /// Test convenience: resolve a slug through the catalog and load its detail.
+    fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve(slug)?;
+        load_detail_from_entry(entry, registry, None)
     }
 
     // --- compress-images: Number control ---

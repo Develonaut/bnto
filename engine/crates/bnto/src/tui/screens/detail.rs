@@ -118,14 +118,15 @@ impl DetailModel {
         }
     }
 
-    /// Build a detail model from a recipe slug using engine metadata.
+    /// Build a detail model from a recipe slug using the catalog.
     ///
-    /// Convenience wrapper for tests and simple callers that don't need
-    /// to specify a start directory. Production code uses
-    /// `detail_loader::load_detail_from_entry()` directly.
-    #[allow(dead_code)]
+    /// Convenience wrapper for tests that don't need to specify a start directory.
+    /// Production code uses `detail_loader::load_detail_from_entry()` directly.
+    #[cfg(test)]
     pub fn from_slug(slug: &str, registry: &bnto_core::registry::NodeRegistry) -> Option<Self> {
-        super::detail_loader::load_detail(slug, registry)
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve(slug)?;
+        super::detail_loader::load_detail_from_entry(entry, registry, None)
     }
 
     /// Confirm the current configuration — returns param overrides + selected files.

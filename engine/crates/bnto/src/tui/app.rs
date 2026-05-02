@@ -443,10 +443,11 @@ fn open_path(path: &str) -> Result<(), std::io::Error> {
 /// slugs or parse failures.
 #[cfg(test)]
 fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
-    let Some(recipe) = bnto_engine::recipes::builtin_recipe_by_slug(slug) else {
+    let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+    let Some(entry) = catalog.resolve(slug) else {
         return bnto_core::InputMode::FileUpload;
     };
-    let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(recipe.definition_json)
+    let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(&entry.definition_json)
     else {
         return bnto_core::InputMode::FileUpload;
     };
@@ -1751,11 +1752,10 @@ mod tests {
         // Write a recipe file so the library has entries.
         let recipes_dir = paths.recipes_dir();
         let _ = std::fs::create_dir_all(&recipes_dir);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
         std::fs::write(
             recipes_dir.join("compress-images.bnto.json"),
-            bnto_engine::recipes::builtin_recipe_by_slug("compress-images")
-                .unwrap()
-                .definition_json,
+            &catalog.resolve("compress-images").unwrap().definition_json,
         )
         .unwrap();
 
@@ -1935,11 +1935,10 @@ mod tests {
         // Write a recipe file.
         let recipes_dir = paths.recipes_dir();
         let _ = std::fs::create_dir_all(&recipes_dir);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
         std::fs::write(
             recipes_dir.join("compress-images.bnto.json"),
-            bnto_engine::recipes::builtin_recipe_by_slug("compress-images")
-                .unwrap()
-                .definition_json,
+            &catalog.resolve("compress-images").unwrap().definition_json,
         )
         .unwrap();
         // Navigate to library.
