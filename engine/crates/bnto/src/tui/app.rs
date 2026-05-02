@@ -1735,6 +1735,46 @@ mod tests {
         );
     }
 
+    #[test]
+    fn library_confirm_loads_non_builtin_recipe() {
+        let (_tmp, paths) = test_paths_with_dir();
+        // Write a custom recipe that isn't a builtin.
+        let recipes_dir = paths.recipes_dir();
+        let _ = std::fs::create_dir_all(&recipes_dir);
+        let custom_json = r#"{
+            "name": "Custom Only",
+            "description": "Not a builtin",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {"mode": "file-upload"}},
+                {"id": "compress", "type": "image-compress", "parameters": {"quality": 90}},
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        std::fs::write(recipes_dir.join("custom-only.bnto.json"), custom_json).unwrap();
+
+        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+        app = update(app, AppMessage::OpenLibrary);
+        assert!(app.library.as_ref().is_some_and(|l| !l.entries.is_empty()));
+
+        let app = update(app, AppMessage::LibraryConfirm);
+        assert!(
+            matches!(
+                app.screen,
+                Screen::Detail {
+                    from: DetailOrigin::Library,
+                    ..
+                }
+            ),
+            "expected Detail from Library, got {:?}",
+            app.screen
+        );
+        assert!(
+            app.detail.is_some(),
+            "detail should load from library file even when not a builtin"
+        );
+        assert_eq!(app.detail.as_ref().unwrap().name, "Custom Only");
+    }
+
     // --- Add to Library ---
 
     #[test]
