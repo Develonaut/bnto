@@ -25,7 +25,9 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
                 if *total_nodes == 1 { "" } else { "s" }
             );
         }
-        PipelineEvent::IterationStarted { .. } => {
+        PipelineEvent::IterationStarted { .. }
+        | PipelineEvent::IterationCompleted { .. }
+        | PipelineEvent::IterationFailed { .. } => {
             // Handled by the TUI; CLI stderr reporter ignores iteration events.
         }
         PipelineEvent::NodeStarted {

@@ -6,6 +6,7 @@ use crate::errors::BntoError;
 use crate::events::PipelineEvent;
 use crate::pipeline::{PipelineDefinition, PipelineFile, PipelineNode, is_io_node};
 
+use super::loop_config::parse_loop_config;
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef, run_node_chain};
 
 /// Passthrough result — returns input files unchanged with zero processing.
@@ -47,7 +48,14 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
     };
 
     match node.node_type.as_str() {
-        "loop" => execute_loop(ctx, &node.id, &sub_definition, files, file_offset),
+        "loop" => execute_loop(
+            ctx,
+            &node.id,
+            &node.params,
+            &sub_definition,
+            files,
+            file_offset,
+        ),
         "group" | "parallel" => execute_group(ctx, &node.id, &sub_definition, files, file_offset),
         _ => Ok(passthrough(files)),
     }
@@ -58,15 +66,22 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     container_id: &str,
+    loop_params: &serde_json::Map<String, serde_json::Value>,
     sub_definition: &PipelineDefinition,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
+    // Parse config for future use (continue-on-error, progressive output).
+    // Currently unused — FailFast is the only behavior. PR 3 activates this.
+    let _config = parse_loop_config(loop_params);
+
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
     let total_iterations = files.len();
 
     for (i, file) in files.into_iter().enumerate() {
+        let iter_start = (ctx.now_ms)();
+
         ctx.reporter.emit(PipelineEvent::IterationStarted {
             node_id: container_id.to_string(),
             iteration: i,
@@ -88,8 +103,19 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
             parent_node_id: Some(container_id.to_string()),
         };
         let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i)?;
+
+        let iter_duration = (ctx.now_ms)() - iter_start;
+        let files_produced = result.output_files.len();
         total_processed += result.files_processed;
         all_output_files.extend(result.output_files);
+
+        ctx.reporter.emit(PipelineEvent::IterationCompleted {
+            node_id: container_id.to_string(),
+            iteration: i,
+            total_iterations,
+            duration_ms: iter_duration,
+            files_produced,
+        });
     }
 
     Ok(NodeExecutionResult {
