@@ -140,13 +140,14 @@ impl PickerModel {
         }
     }
 
-    /// Build a picker from a recipe slug — resolves extensions from engine metadata.
+    /// Build a picker from a recipe — resolves extensions from definition JSON.
     pub fn from_slug(
         slug: &str,
         dir: &std::path::Path,
         registry: &bnto_core::registry::NodeRegistry,
+        definition_json: &str,
     ) -> Self {
-        let extensions = super::picker_loader::extensions_for_recipe(slug, registry);
+        let extensions = super::picker_loader::extensions_for_recipe(definition_json, registry);
         let entries = super::picker_loader::load_entries(dir, &extensions, false);
         Self {
             slug: slug.to_string(),

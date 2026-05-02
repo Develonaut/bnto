@@ -7,74 +7,31 @@ use bnto_core::metadata::ParameterType;
 use bnto_core::pipeline::PipelineNode;
 use bnto_core::registry::NodeRegistry;
 use bnto_core::{InputMode, PipelineDefinition};
-use bnto_engine::recipes::builtin_recipe_by_slug;
+
+use crate::catalog::{CatalogEntry, RecipeSource};
 
 use super::detail::{DetailFocus, DetailModel, ParamEntry};
 use super::detail_fields::fields_to_params;
 use super::picker::PickerModel;
 
-/// Build a detail model from a recipe slug using engine metadata.
+/// Build a detail model from a catalog entry with an explicit start directory.
 ///
-/// Looks up the recipe, parses its definition JSON, walks the node list
-/// to find processor nodes, then resolves each via the registry to get
-/// parameter metadata. Skips input/output nodes (not user-configurable).
+/// Parses the entry's definition JSON, walks the node list to find processor
+/// nodes, resolves each via the registry for parameter metadata.
+/// Skips input/output nodes (not user-configurable).
 ///
 /// For file-mode recipes, creates an embedded `PickerModel` starting at
 /// the given `start_dir`. For URL/text-mode, no picker is created.
-pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
-    load_detail_with_dir(slug, registry, None)
-}
-
-/// Build a detail model with an explicit start directory for the embedded picker.
-pub fn load_detail_with_dir(
-    slug: &str,
+pub fn load_detail_from_entry(
+    entry: &CatalogEntry,
     registry: &NodeRegistry,
     start_dir: Option<&std::path::Path>,
 ) -> Option<DetailModel> {
-    let recipe = builtin_recipe_by_slug(slug)?;
-    build_detail_from_json(
-        slug,
-        &recipe.name,
-        &recipe.description,
-        recipe.definition_json,
-        registry,
-        start_dir,
-    )
-}
-
-/// Build a detail model from a library recipe file on disk.
-///
-/// Used for user-saved recipes that may not exist as builtins (e.g. removed
-/// recipes, custom creations). Falls back to builtin lookup if the file
-/// can't be read.
-pub fn load_detail_from_library(
-    slug: &str,
-    recipes_dir: &std::path::Path,
-    registry: &NodeRegistry,
-    start_dir: Option<&std::path::Path>,
-) -> Option<DetailModel> {
-    let path = recipes_dir.join(format!("{slug}.bnto.json"));
-    let json_str = std::fs::read_to_string(&path).ok()?;
-    let top: serde_json::Value = serde_json::from_str(&json_str).ok()?;
-    let name = top["name"].as_str().unwrap_or(slug).to_string();
-    let description = top["description"].as_str().unwrap_or("").to_string();
-    build_detail_from_json(slug, &name, &description, &json_str, registry, start_dir)
-}
-
-/// Shared logic: parse definition JSON and build a DetailModel.
-fn build_detail_from_json(
-    slug: &str,
-    name: &str,
-    description: &str,
-    definition_json: &str,
-    registry: &NodeRegistry,
-    start_dir: Option<&std::path::Path>,
-) -> Option<DetailModel> {
-    let def_json: serde_json::Value = serde_json::from_str(definition_json).ok()?;
+    let def_json: serde_json::Value = serde_json::from_str(&entry.definition_json).ok()?;
     let nodes = def_json["nodes"].as_array()?;
 
     // Parse typed definition for field declarations and input mode.
-    let pipeline_def = serde_json::from_str::<PipelineDefinition>(definition_json).ok();
+    let pipeline_def = serde_json::from_str::<PipelineDefinition>(&entry.definition_json).ok();
 
     // If any node declares fields, use those instead of extracting from processors.
     let field_params = pipeline_def
@@ -109,17 +66,19 @@ fn build_detail_from_json(
             let dir = start_dir.map(std::path::PathBuf::from).unwrap_or_else(|| {
                 std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
             });
-            let picker = PickerModel::from_slug(slug, &dir, registry);
+            let picker =
+                PickerModel::from_slug(&entry.slug, &dir, registry, &entry.definition_json);
             (DetailFocus::Input, Some(picker))
         }
         InputMode::Url | InputMode::Text => (DetailFocus::Params, None),
     };
 
     Some(DetailModel {
-        slug: slug.to_string(),
-        name: name.to_string(),
-        description: description.to_string(),
-        definition_json: definition_json.to_string(),
+        slug: entry.slug.clone(),
+        name: entry.name.clone(),
+        description: entry.description.clone(),
+        is_bundled: entry.source == RecipeSource::Bundled,
+        definition_json: entry.definition_json.clone(),
         params,
         form,
         focus,
@@ -324,6 +283,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         slug: "custom".to_string(),
         name,
         description,
+        is_bundled: false,
         definition_json: json.to_string(),
         params,
         form,
@@ -350,6 +310,13 @@ mod tests {
 
     fn registry() -> NodeRegistry {
         bnto_engine::create_registry()
+    }
+
+    /// Test convenience: resolve a slug through the catalog and load its detail.
+    fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve(slug)?;
+        load_detail_from_entry(entry, registry, None)
     }
 
     // --- compress-images: Number control ---
@@ -489,18 +456,18 @@ mod tests {
         );
     }
 
-    // --- All built-in recipes load without panic ---
+    // --- All catalog recipes load without panic ---
 
     #[test]
-    fn all_builtin_recipes_load() {
+    fn all_catalog_recipes_load() {
         let registry = registry();
-        let recipes = bnto_engine::recipes::builtin_recipes();
-        for recipe in &recipes {
-            let result = load_detail(&recipe.slug, &registry);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        for entry in catalog.all() {
+            let result = load_detail_from_entry(entry, &registry, None);
             assert!(
                 result.is_some(),
                 "Failed to load detail for recipe '{}'",
-                recipe.slug
+                entry.slug
             );
         }
     }
@@ -508,15 +475,15 @@ mod tests {
     #[test]
     fn all_loaded_params_have_labels() {
         let registry = registry();
-        let recipes = bnto_engine::recipes::builtin_recipes();
-        for recipe in &recipes {
-            let detail = load_detail(&recipe.slug, &registry).unwrap();
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        for entry in catalog.all() {
+            let detail = load_detail_from_entry(entry, &registry, None).unwrap();
             for param in &detail.params {
                 assert!(
                     !param.label.is_empty(),
                     "param '{}' in recipe '{}' has empty label",
                     param.name,
-                    recipe.slug
+                    entry.slug
                 );
             }
         }
@@ -715,124 +682,10 @@ mod tests {
 
     #[test]
     fn download_video_recipe_json_parses() {
-        let recipe = builtin_recipe_by_slug("download-video").unwrap();
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve("download-video").unwrap();
         let def: PipelineDefinition =
-            serde_json::from_str(recipe.definition_json).expect("should parse");
+            serde_json::from_str(&entry.definition_json).expect("should parse");
         assert!(def.nodes.len() >= 2);
-    }
-
-    // --- Library recipe loading (from disk) ---
-
-    fn write_library_recipe(dir: &std::path::Path, slug: &str, json: &str) {
-        std::fs::create_dir_all(dir).unwrap();
-        std::fs::write(dir.join(format!("{slug}.bnto.json")), json).unwrap();
-    }
-
-    #[test]
-    fn load_library_recipe_from_disk() {
-        let tmp = tempfile::tempdir().unwrap();
-        let json = r#"{
-            "name": "My Custom Recipe",
-            "description": "A custom library recipe",
-            "nodes": [
-                {"id": "input", "type": "input", "parameters": {"mode": "file-upload"}},
-                {"id": "compress", "type": "image-compress", "parameters": {"quality": 90}},
-                {"id": "output", "type": "output", "parameters": {}}
-            ]
-        }"#;
-        write_library_recipe(tmp.path(), "my-custom", json);
-
-        let detail = load_detail_from_library("my-custom", tmp.path(), &registry(), None);
-        assert!(detail.is_some(), "should load library recipe from disk");
-        let detail = detail.unwrap();
-        assert_eq!(detail.slug, "my-custom");
-        assert_eq!(detail.name, "My Custom Recipe");
-        assert_eq!(detail.description, "A custom library recipe");
-        assert!(
-            !detail.params.is_empty(),
-            "should have params from processor"
-        );
-    }
-
-    #[test]
-    fn load_library_recipe_missing_file_returns_none() {
-        let tmp = tempfile::tempdir().unwrap();
-        let detail = load_detail_from_library("nonexistent", tmp.path(), &registry(), None);
-        assert!(detail.is_none());
-    }
-
-    #[test]
-    fn load_library_recipe_invalid_json_returns_none() {
-        let tmp = tempfile::tempdir().unwrap();
-        write_library_recipe(tmp.path(), "broken", "{bad json");
-        let detail = load_detail_from_library("broken", tmp.path(), &registry(), None);
-        assert!(detail.is_none());
-    }
-
-    #[test]
-    fn load_library_recipe_with_fields() {
-        let tmp = tempfile::tempdir().unwrap();
-        let json = r#"{
-            "name": "Field Recipe",
-            "nodes": [
-                {"id": "input", "type": "input", "parameters": {}},
-                {
-                    "id": "proc",
-                    "type": "shell-command",
-                    "parameters": {"command": "echo"},
-                    "fields": {
-                        "format": {"type":"enum","label":"Format","options":[{"value":"mp4","label":"MP4"}],"default":"mp4"}
-                    }
-                },
-                {"id": "output", "type": "output", "parameters": {}}
-            ]
-        }"#;
-        write_library_recipe(tmp.path(), "field-recipe", json);
-
-        let detail = load_detail_from_library("field-recipe", tmp.path(), &registry(), None);
-        assert!(detail.is_some());
-        let detail = detail.unwrap();
-        assert_eq!(detail.params.len(), 1);
-        assert_eq!(detail.params[0].name, "format");
-    }
-
-    #[test]
-    fn load_library_recipe_url_mode_has_no_picker() {
-        let tmp = tempfile::tempdir().unwrap();
-        let json = r#"{
-            "name": "URL Recipe",
-            "nodes": [
-                {"id": "input", "type": "input", "parameters": {"mode": "url", "label": "URL"}},
-                {"id": "proc", "type": "shell-command", "parameters": {"command": "curl"}},
-                {"id": "output", "type": "output", "parameters": {}}
-            ]
-        }"#;
-        write_library_recipe(tmp.path(), "url-recipe", json);
-
-        let detail = load_detail_from_library("url-recipe", tmp.path(), &registry(), None);
-        assert!(detail.is_some());
-        let detail = detail.unwrap();
-        assert!(
-            detail.input_picker.is_none(),
-            "URL mode should not have a picker"
-        );
-        assert_eq!(detail.params[0].name, "url");
-    }
-
-    #[test]
-    fn builtin_recipe_saved_to_library_still_loads() {
-        let tmp = tempfile::tempdir().unwrap();
-        // Simulate adding a builtin recipe to library, then removing it from builtins.
-        let recipe = builtin_recipe_by_slug("compress-images").unwrap();
-        write_library_recipe(tmp.path(), "compress-images", recipe.definition_json);
-
-        let detail = load_detail_from_library("compress-images", tmp.path(), &registry(), None);
-        assert!(detail.is_some());
-        let detail = detail.unwrap();
-        assert_eq!(detail.slug, "compress-images");
-        assert!(
-            detail.params.iter().any(|p| p.name == "quality"),
-            "should have quality param from processor"
-        );
     }
 }

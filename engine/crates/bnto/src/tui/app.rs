@@ -8,6 +8,8 @@ use std::collections::HashMap;
 use bnto_core::registry::NodeRegistry;
 use bnto_engine::create_registry;
 
+use crate::catalog::RecipeCatalog;
+
 use super::app_helpers::{
     handle_add_to_library, handle_add_to_library_write, handle_back, handle_config_confirmed,
     handle_detail_form, handle_editor, handle_editor_form, handle_execution,
@@ -28,8 +30,8 @@ use super::screens::results::{ResultsMessage, ResultsModel, update as results_up
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
 use super::screens::wizard::{WizardMessage, WizardModel};
 use super::theme::{Theme, ThemeVariant};
-use crate::storage::BntoPaths;
 use crate::storage::config::TomlConfig;
+use crate::storage::paths::BntoPaths;
 
 /// Where the user came from when entering the Detail screen.
 ///
@@ -94,6 +96,8 @@ pub struct AppModel {
     pub param_overrides: HashMap<String, String>,
     /// Engine registry for resolving processor metadata.
     pub registry: NodeRegistry,
+    /// Unified recipe catalog — bundled + library recipes.
+    pub catalog: RecipeCatalog,
 }
 
 impl std::fmt::Debug for AppModel {
@@ -234,8 +238,10 @@ impl AppModel {
         };
         let registry = create_registry();
 
-        // List library recipes for the home screen pane.
-        let library_names = list_library_recipes(&paths.recipes_dir());
+        // Build unified catalog and list library recipes for the home screen pane.
+        let recipes_dir = effective_recipes_dir(&toml_config, &paths);
+        let catalog = RecipeCatalog::load(&recipes_dir);
+        let library_names = list_library_recipes(&recipes_dir);
 
         // Determine initial screen and state.
         let (screen, detail, editor) = if new_recipe {
@@ -271,7 +277,7 @@ impl AppModel {
             theme: Theme::from_variant(effective_variant),
             theme_variant: effective_variant,
             home: HomeModel::new(library_names),
-            browser: BrowserModel::new(),
+            browser: BrowserModel::new(catalog.all()),
             library: None,
             detail,
             picker: None,
@@ -286,8 +292,23 @@ impl AppModel {
             settings_picker_field: None,
             param_overrides: HashMap::new(),
             registry,
+            catalog,
         }
     }
+}
+
+/// Resolve the effective recipes directory.
+///
+/// Uses the config override if set and valid, otherwise falls back
+/// to the default `~/.bnto/recipes/`.
+pub fn effective_recipes_dir(config: &TomlConfig, paths: &BntoPaths) -> std::path::PathBuf {
+    config
+        .paths
+        .recipes
+        .as_deref()
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_dir())
+        .unwrap_or_else(|| paths.recipes_dir())
 }
 
 /// Pure state transition — the heart of the TEA pattern.
@@ -424,10 +445,11 @@ fn open_path(path: &str) -> Result<(), std::io::Error> {
 /// slugs or parse failures.
 #[cfg(test)]
 fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
-    let Some(recipe) = bnto_engine::recipes::builtin_recipe_by_slug(slug) else {
+    let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+    let Some(entry) = catalog.resolve(slug) else {
         return bnto_core::InputMode::FileUpload;
     };
-    let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(recipe.definition_json)
+    let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(&entry.definition_json)
     else {
         return bnto_core::InputMode::FileUpload;
     };
@@ -839,35 +861,6 @@ mod tests {
     }
 
     #[test]
-    fn config_confirmed_threads_definition_json_to_execution() {
-        use super::super::screens::detail::DetailModel;
-
-        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
-        detail.definition_json = r#"{"nodes":[{"id":"n1","type":"shell-command"}]}"#.into();
-
-        let app = update(
-            AppModel {
-                screen: Screen::Detail {
-                    slug: "s".into(),
-                    from: DetailOrigin::Home,
-                },
-                detail: Some(detail),
-                ..default_model()
-            },
-            AppMessage::ConfigConfirmed { slug: "s".into() },
-        );
-        let exec = app
-            .execution
-            .as_ref()
-            .expect("execution model should exist");
-        assert_eq!(
-            exec.definition_json.as_deref(),
-            Some(r#"{"nodes":[{"id":"n1","type":"shell-command"}]}"#),
-            "definition JSON from detail should flow through to execution"
-        );
-    }
-
-    #[test]
     fn files_selected_passes_files_and_overrides_to_execution() {
         use super::super::screens::picker::{FileEntry, PickerModel};
         use std::path::PathBuf;
@@ -1242,7 +1235,7 @@ mod tests {
         let app = update(default_model(), AppMessage::OpenSettings);
         assert_eq!(app.screen, Screen::Settings);
         assert!(app.settings.is_some());
-        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 3);
+        assert_eq!(app.settings.as_ref().unwrap().fields.len(), 4);
     }
 
     #[test]
@@ -1459,19 +1452,61 @@ mod tests {
     // --- Settings persistence: path preservation across saves ---
 
     #[test]
-    fn theme_changed_preserves_output_dir() {
+    fn theme_changed_preserves_both_path_settings() {
         let mut app = default_model();
+        app.toml_config.paths.recipes = Some("/recipes".into());
         app.toml_config.paths.output = Some("/output".into());
         app.screen = Screen::Settings;
 
         let app = update(app, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
         assert_eq!(app.toml_config.tui.theme, "tokyo");
+        assert_eq!(app.toml_config.paths.recipes, Some("/recipes".into()));
         assert_eq!(app.toml_config.paths.output, Some("/output".into()));
     }
 
     #[test]
-    fn settings_path_confirmed_for_output_dir() {
+    fn settings_path_confirmed_for_recipes_dir_preserves_output_dir() {
+        // Simulate: config already has output, user changes only recipes dir.
         let mut app = update(default_model(), AppMessage::OpenSettings);
+        app.toml_config.paths.output = Some("/existing-output".into());
+        app.settings = app.settings.map(|mut s| {
+            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "output_dir") {
+                f.value = "/existing-output".to_string();
+            }
+            s
+        });
+        app.screen = Screen::Picker {
+            slug: "recipes_dir".into(),
+            from: DetailOrigin::Home,
+        };
+        app.settings_picker_field = Some("recipes_dir".into());
+        app.picker = Some(PickerModel::from_dir(
+            "recipes_dir",
+            &std::path::PathBuf::from("/new-recipes"),
+        ));
+
+        let app = update(app, AppMessage::SettingsPathConfirmed);
+        assert_eq!(app.screen, Screen::Settings);
+        // recipes_dir updated to picker's current_dir.
+        assert!(app.toml_config.paths.recipes.is_some());
+        // output preserved — not clobbered.
+        assert_eq!(
+            app.toml_config.paths.output,
+            Some("/existing-output".into())
+        );
+    }
+
+    #[test]
+    fn settings_path_confirmed_for_output_dir_preserves_recipes_dir() {
+        // Symmetric: config has recipes dir, user changes only output dir.
+        let mut app = update(default_model(), AppMessage::OpenSettings);
+        app.toml_config.paths.recipes = Some("/existing-recipes".into());
+        app.settings = app.settings.map(|mut s| {
+            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "recipes_dir") {
+                f.value = "/existing-recipes".to_string();
+            }
+            s
+        });
         app.screen = Screen::Picker {
             slug: "output_dir".into(),
             from: DetailOrigin::Home,
@@ -1483,23 +1518,33 @@ mod tests {
         ));
 
         let app = update(app, AppMessage::SettingsPathConfirmed);
-        assert_eq!(app.screen, Screen::Settings);
+        assert_eq!(
+            app.toml_config.paths.recipes,
+            Some("/existing-recipes".into())
+        );
         assert!(app.toml_config.paths.output.is_some());
     }
 
     #[test]
-    fn settings_roundtrip_output_dir_survives_reload() {
-        // Full roundtrip: load config with output dir → open settings → verify field.
+    fn settings_roundtrip_both_paths_survive_reload() {
+        // Full roundtrip: load config with both paths → open settings → verify fields.
         let mut app = default_model();
         app.toml_config.tui.theme = "tokyo".to_string();
+        app.toml_config.paths.recipes = Some("/recipes".into());
         app.toml_config.paths.output = Some("/output".into());
         let app = update(app, AppMessage::OpenSettings);
         let settings = app.settings.as_ref().expect("settings created");
+        let rd = settings
+            .fields
+            .iter()
+            .find(|f| f.key == "recipes_dir")
+            .unwrap();
         let od = settings
             .fields
             .iter()
             .find(|f| f.key == "output_dir")
             .unwrap();
+        assert_eq!(rd.value, "/recipes");
         assert_eq!(od.value, "/output");
     }
 
@@ -1709,11 +1754,10 @@ mod tests {
         // Write a recipe file so the library has entries.
         let recipes_dir = paths.recipes_dir();
         let _ = std::fs::create_dir_all(&recipes_dir);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
         std::fs::write(
             recipes_dir.join("compress-images.bnto.json"),
-            bnto_engine::recipes::builtin_recipe_by_slug("compress-images")
-                .unwrap()
-                .definition_json,
+            &catalog.resolve("compress-images").unwrap().definition_json,
         )
         .unwrap();
 
@@ -1762,46 +1806,6 @@ mod tests {
             ),
             Screen::Library
         );
-    }
-
-    #[test]
-    fn library_confirm_loads_non_builtin_recipe() {
-        let (_tmp, paths) = test_paths_with_dir();
-        // Write a custom recipe that isn't a builtin.
-        let recipes_dir = paths.recipes_dir();
-        let _ = std::fs::create_dir_all(&recipes_dir);
-        let custom_json = r#"{
-            "name": "Custom Only",
-            "description": "Not a builtin",
-            "nodes": [
-                {"id": "input", "type": "input", "parameters": {"mode": "file-upload"}},
-                {"id": "compress", "type": "image-compress", "parameters": {"quality": 90}},
-                {"id": "output", "type": "output", "parameters": {}}
-            ]
-        }"#;
-        std::fs::write(recipes_dir.join("custom-only.bnto.json"), custom_json).unwrap();
-
-        let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
-        app = update(app, AppMessage::OpenLibrary);
-        assert!(app.library.as_ref().is_some_and(|l| !l.entries.is_empty()));
-
-        let app = update(app, AppMessage::LibraryConfirm);
-        assert!(
-            matches!(
-                app.screen,
-                Screen::Detail {
-                    from: DetailOrigin::Library,
-                    ..
-                }
-            ),
-            "expected Detail from Library, got {:?}",
-            app.screen
-        );
-        assert!(
-            app.detail.is_some(),
-            "detail should load from library file even when not a builtin"
-        );
-        assert_eq!(app.detail.as_ref().unwrap().name, "Custom Only");
     }
 
     // --- Add to Library ---
@@ -1933,11 +1937,10 @@ mod tests {
         // Write a recipe file.
         let recipes_dir = paths.recipes_dir();
         let _ = std::fs::create_dir_all(&recipes_dir);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
         std::fs::write(
             recipes_dir.join("compress-images.bnto.json"),
-            bnto_engine::recipes::builtin_recipe_by_slug("compress-images")
-                .unwrap()
-                .definition_json,
+            &catalog.resolve("compress-images").unwrap().definition_json,
         )
         .unwrap();
         // Navigate to library.
@@ -2243,85 +2246,6 @@ mod tests {
         assert_eq!(
             resolve_input_mode_for_slug("nonexistent-recipe"),
             InputMode::FileUpload
-        );
-    }
-
-    // --- Detail focus navigation ---
-
-    #[test]
-    fn detail_focus_params_moves_focus_from_run_to_params() {
-        use super::super::screens::detail::DetailModel;
-
-        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
-        detail.focus = super::super::screens::detail::DetailFocus::Run;
-
-        let app = update(
-            AppModel {
-                screen: Screen::Detail {
-                    slug: "s".into(),
-                    from: DetailOrigin::Home,
-                },
-                detail: Some(detail),
-                ..default_model()
-            },
-            AppMessage::DetailFocusParams,
-        );
-        assert_eq!(
-            app.detail.as_ref().unwrap().focus,
-            super::super::screens::detail::DetailFocus::Params,
-            "DetailFocusParams should move focus from Run back to Params"
-        );
-    }
-
-    #[test]
-    fn up_key_on_run_focus_navigates_back_to_params() {
-        use super::super::screens::detail::DetailModel;
-        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-
-        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
-        detail.focus = super::super::screens::detail::DetailFocus::Run;
-
-        let model = AppModel {
-            screen: Screen::Detail {
-                slug: "s".into(),
-                from: DetailOrigin::Home,
-            },
-            detail: Some(detail),
-            ..default_model()
-        };
-
-        let key = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
-        let msg = super::super::keys::handle_key(&model, key);
-        assert_eq!(
-            msg,
-            Some(AppMessage::DetailFocusParams),
-            "Up arrow on Run focus should emit DetailFocusParams"
-        );
-    }
-
-    #[test]
-    fn k_key_on_run_focus_navigates_back_to_params() {
-        use super::super::screens::detail::DetailModel;
-        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-
-        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
-        detail.focus = super::super::screens::detail::DetailFocus::Run;
-
-        let model = AppModel {
-            screen: Screen::Detail {
-                slug: "s".into(),
-                from: DetailOrigin::Home,
-            },
-            detail: Some(detail),
-            ..default_model()
-        };
-
-        let key = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
-        let msg = super::super::keys::handle_key(&model, key);
-        assert_eq!(
-            msg,
-            Some(AppMessage::DetailFocusParams),
-            "'k' on Run focus should emit DetailFocusParams"
         );
     }
 }

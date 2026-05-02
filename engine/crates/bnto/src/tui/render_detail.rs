@@ -63,9 +63,8 @@ fn detail_lines<'a>(
 ) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 
-    // Recipe header
-    let source = trust::classify_source(&detail.slug);
-    let badge = trust::trust_badge(&source, false);
+    // Recipe header — trust badge from catalog source.
+    let badge = trust::trust_badge(detail.is_bundled, false);
     lines.push(Line::from(vec![
         Span::styled(detail.name.as_str(), theme.heading()),
         Span::raw("  "),

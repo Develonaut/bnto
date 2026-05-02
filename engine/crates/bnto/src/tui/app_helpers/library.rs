@@ -76,15 +76,16 @@ pub(crate) fn handle_add_to_library(model: AppModel) -> AppModel {
     handle_add_to_library_write(model, &slug, false)
 }
 
-/// Write a built-in recipe to the user's library directory.
+/// Write a recipe to the user's library directory using browser data.
 pub(crate) fn handle_add_to_library_write(
     model: AppModel,
     slug: &str,
     _overwrite: bool,
 ) -> AppModel {
-    let recipe = match bnto_engine::recipes::builtin_recipe_by_slug(slug) {
-        Some(r) => r,
-        None => {
+    let recipe = model.browser.selected_recipe();
+    let (definition_json, name) = match recipe {
+        Some(r) if r.slug == slug => (r.definition_json.clone(), r.name.clone()),
+        _ => {
             return AppModel {
                 status_message: Some(format!("Unknown recipe: {slug}")),
                 ..model
@@ -94,11 +95,8 @@ pub(crate) fn handle_add_to_library_write(
 
     let dest = model.paths.recipes_dir().join(format!("{slug}.bnto.json"));
     let status_message =
-        match crate::storage::atomic::atomic_write(&dest, recipe.definition_json.as_bytes()) {
-            Ok(()) => {
-                let name = recipe.name;
-                Some(format!("Added '{name}' to library"))
-            }
+        match crate::storage::atomic::atomic_write(&dest, definition_json.as_bytes()) {
+            Ok(()) => Some(format!("Added '{name}' to library")),
             Err(e) => Some(format!("Failed to save: {e}")),
         };
 
@@ -147,9 +145,6 @@ pub(crate) fn handle_library(model: AppModel, msg: &LibraryMessage) -> AppModel 
 }
 
 /// Confirm a library selection and navigate to detail.
-///
-/// Tries loading from the library file on disk first (handles recipes
-/// that aren't builtins), then falls back to builtin lookup.
 pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
     let slug = model
         .library
@@ -158,16 +153,12 @@ pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
         .map(|s| s.slug);
     match slug {
         Some(slug) => {
+            // Resolve the recipe from the catalog to get definition_json.
+            let entry = model.catalog.resolve(&slug);
             let start_dir = resolve_start_dir();
-            let detail = super::super::screens::detail_loader::load_detail_from_library(
-                &slug,
-                &model.paths.recipes_dir(),
-                &model.registry,
-                Some(&start_dir),
-            )
-            .or_else(|| {
-                super::super::screens::detail_loader::load_detail_with_dir(
-                    &slug,
+            let detail = entry.and_then(|e| {
+                super::super::screens::detail_loader::load_detail_from_entry(
+                    e,
                     &model.registry,
                     Some(&start_dir),
                 )

@@ -63,7 +63,9 @@ pub struct DetailModel {
     pub name: String,
     /// Recipe description.
     pub description: String,
-    /// Raw recipe definition JSON (threaded to the execution bridge).
+    /// Whether this recipe is bundled (for trust badge display).
+    pub is_bundled: bool,
+    /// Raw definition JSON (threaded to execution bridge).
     pub definition_json: String,
     /// Original param entries (kept for visible_when evaluation + confirm).
     pub params: Vec<ParamEntry>,
@@ -106,7 +108,8 @@ impl DetailModel {
             slug: slug.to_string(),
             name: name.to_string(),
             description: description.to_string(),
-            definition_json: String::from(r#"{"nodes":[]}"#),
+            is_bundled: true,
+            definition_json: String::new(),
             params,
             form,
             focus: DetailFocus::Params,
@@ -115,14 +118,15 @@ impl DetailModel {
         }
     }
 
-    /// Build a detail model from a recipe slug using engine metadata.
+    /// Build a detail model from a recipe slug using the catalog.
     ///
-    /// Convenience wrapper for tests and simple callers that don't need
-    /// to specify a start directory. Production code uses
-    /// `detail_loader::load_detail_with_dir()` directly.
-    #[allow(dead_code)]
+    /// Convenience wrapper for tests that don't need to specify a start directory.
+    /// Production code uses `detail_loader::load_detail_from_entry()` directly.
+    #[cfg(test)]
     pub fn from_slug(slug: &str, registry: &bnto_core::registry::NodeRegistry) -> Option<Self> {
-        super::detail_loader::load_detail(slug, registry)
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve(slug)?;
+        super::detail_loader::load_detail_from_entry(entry, registry, None)
     }
 
     /// Confirm the current configuration — returns param overrides + selected files.

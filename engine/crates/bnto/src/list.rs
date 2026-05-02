@@ -1,8 +1,8 @@
-// Recipe listing — formats built-in recipes for `bnto list` output.
+// Recipe listing — formats recipes for `bnto list` output.
 
 use std::collections::BTreeMap;
 
-use bnto_engine::recipes::BuiltinRecipe;
+use crate::catalog::CatalogEntry;
 
 /// A group of recipes sharing a category, ready for display.
 #[derive(Debug)]
@@ -42,17 +42,17 @@ pub fn print_recipe_list(groups: &[RecipeGroup]) {
 
 /// Group recipes by category, sorted alphabetically within each group.
 /// Categories are sorted alphabetically. Returns groups ready for display.
-pub fn group_recipes(recipes: Vec<BuiltinRecipe>) -> Vec<RecipeGroup> {
+pub fn group_recipes(entries: &[CatalogEntry]) -> Vec<RecipeGroup> {
     let mut by_category: BTreeMap<String, Vec<RecipeEntry>> = BTreeMap::new();
 
-    for recipe in recipes {
+    for entry in entries {
         by_category
-            .entry(recipe.category)
+            .entry(entry.category.clone())
             .or_default()
             .push(RecipeEntry {
-                slug: recipe.slug,
-                name: recipe.name,
-                description: recipe.description,
+                slug: entry.slug.clone(),
+                name: entry.name.clone(),
+                description: entry.description.clone(),
             });
     }
 
@@ -68,7 +68,9 @@ pub fn group_recipes(recipes: Vec<BuiltinRecipe>) -> Vec<RecipeGroup> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::catalog::{RecipeCatalog, RecipeSource};
     use std::fmt::Write;
+    use std::path::Path;
 
     /// Format grouped recipes as plain text (no ANSI colors) for test assertions.
     fn format_recipe_list(groups: &[RecipeGroup]) -> String {
@@ -85,14 +87,15 @@ mod tests {
         out
     }
 
-    fn make_recipe(slug: &str, name: &str, desc: &str, category: &str) -> BuiltinRecipe {
-        BuiltinRecipe {
+    fn make_entry(slug: &str, name: &str, desc: &str, category: &str) -> CatalogEntry {
+        CatalogEntry {
             slug: slug.to_string(),
             name: name.to_string(),
             description: desc.to_string(),
             category: category.to_string(),
             tags: vec![],
-            definition_json: "{}",
+            definition_json: "{}".to_string(),
+            source: RecipeSource::Bundled,
         }
     }
 
@@ -100,22 +103,22 @@ mod tests {
 
     #[test]
     fn test_group_recipes_groups_by_category() {
-        let recipes = vec![
-            make_recipe(
+        let entries = vec![
+            make_entry(
                 "compress-images",
                 "Compress Images",
                 "Compress image files",
                 "image",
             ),
-            make_recipe("clean-csv", "Clean CSV", "Clean CSV files", "spreadsheet"),
-            make_recipe(
+            make_entry("clean-csv", "Clean CSV", "Clean CSV files", "spreadsheet"),
+            make_entry(
                 "resize-images",
                 "Resize Images",
                 "Resize image files",
                 "image",
             ),
         ];
-        let groups = group_recipes(recipes);
+        let groups = group_recipes(&entries);
 
         assert_eq!(groups.len(), 2, "Should have 2 categories");
         assert_eq!(groups[0].category, "image");
@@ -124,11 +127,11 @@ mod tests {
 
     #[test]
     fn test_group_recipes_sorts_within_category() {
-        let recipes = vec![
-            make_recipe("resize-images", "Resize Images", "Resize", "image"),
-            make_recipe("compress-images", "Compress Images", "Compress", "image"),
+        let entries = vec![
+            make_entry("resize-images", "Resize Images", "Resize", "image"),
+            make_entry("compress-images", "Compress Images", "Compress", "image"),
         ];
-        let groups = group_recipes(recipes);
+        let groups = group_recipes(&entries);
 
         assert_eq!(groups.len(), 1);
         assert_eq!(groups[0].recipes[0].slug, "compress-images");
@@ -137,31 +140,31 @@ mod tests {
 
     #[test]
     fn test_group_recipes_categories_sorted_alphabetically() {
-        let recipes = vec![
-            make_recipe("dl-video", "Download Video", "Download", "video"),
-            make_recipe("clean-csv", "Clean CSV", "Clean", "spreadsheet"),
-            make_recipe("rename-files", "Rename Files", "Rename", "file"),
-            make_recipe("compress-images", "Compress Images", "Compress", "image"),
+        let entries = vec![
+            make_entry("dl-video", "Download Video", "Download", "video"),
+            make_entry("clean-csv", "Clean CSV", "Clean", "spreadsheet"),
+            make_entry("rename-files", "Rename Files", "Rename", "file"),
+            make_entry("compress-images", "Compress Images", "Compress", "image"),
         ];
-        let groups = group_recipes(recipes);
+        let groups = group_recipes(&entries);
         let cats: Vec<&str> = groups.iter().map(|g| g.category.as_str()).collect();
         assert_eq!(cats, ["file", "image", "spreadsheet", "video"]);
     }
 
     #[test]
     fn test_group_recipes_empty_input() {
-        let groups = group_recipes(vec![]);
+        let groups = group_recipes(&[]);
         assert!(groups.is_empty());
     }
 
     #[test]
     fn test_group_recipes_preserves_all_entries() {
-        let recipes = vec![
-            make_recipe("a", "A", "desc a", "cat1"),
-            make_recipe("b", "B", "desc b", "cat1"),
-            make_recipe("c", "C", "desc c", "cat2"),
+        let entries = vec![
+            make_entry("a", "A", "desc a", "cat1"),
+            make_entry("b", "B", "desc b", "cat1"),
+            make_entry("c", "C", "desc c", "cat2"),
         ];
-        let groups = group_recipes(recipes);
+        let groups = group_recipes(&entries);
         let total: usize = groups.iter().map(|g| g.recipes.len()).sum();
         assert_eq!(total, 3);
     }
@@ -222,15 +225,18 @@ mod tests {
         assert!(output.is_empty() || output.trim().is_empty());
     }
 
-    // --- Integration: group then format the real built-in recipes ---
+    // --- Integration: group then format all catalog recipes ---
 
     #[test]
-    fn test_all_builtin_recipes_appear_in_output() {
-        let recipes = bnto_engine::recipes::builtin_recipes();
-        let expected_count = recipes.len();
-        let groups = group_recipes(recipes);
+    fn test_all_catalog_recipes_appear_in_output() {
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let groups = group_recipes(catalog.all());
         let total: usize = groups.iter().map(|g| g.recipes.len()).sum();
-        assert_eq!(total, expected_count, "All recipes must appear in groups");
+        assert_eq!(
+            total,
+            catalog.all().len(),
+            "All recipes must appear in groups"
+        );
 
         let output = format_recipe_list(&groups);
         assert!(!output.is_empty(), "Formatted output must not be empty");

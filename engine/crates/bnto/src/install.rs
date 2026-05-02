@@ -5,15 +5,16 @@
 
 use colored::Colorize;
 
+use crate::catalog::RecipeCatalog;
 use crate::context;
 use crate::package_manager::{self, PackageManager};
 
 /// Run the install command for a single recipe or all recipes.
-pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool) {
+pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &RecipeCatalog) {
     let registry = bnto_engine::create_registry();
     let ctx = crate::unwrap_or_exit(context::NativeContext::current_dir());
 
-    let (deps, label) = collect_deps(recipe_slug, all, &registry);
+    let (deps, label) = collect_deps(recipe_slug, all, &registry, catalog);
 
     if deps.is_empty() {
         println!(
@@ -50,6 +51,7 @@ fn collect_deps(
     recipe_slug: Option<&str>,
     all: bool,
     registry: &bnto_core::NodeRegistry,
+    catalog: &RecipeCatalog,
 ) -> (Vec<bnto_core::metadata::Dependency>, String) {
     if all {
         let deps = bnto_engine::deps::collect_all_dependencies(registry);
@@ -68,7 +70,7 @@ fn collect_deps(
         );
         std::process::exit(1);
     });
-    let recipe_json = read_recipe_json(slug);
+    let recipe_json = read_recipe_json(slug, catalog);
     let def: bnto_core::PipelineDefinition = crate::unwrap_or_exit(
         serde_json::from_str(&recipe_json).map_err(|e| format!("Invalid recipe JSON: {e}")),
     );
@@ -204,10 +206,10 @@ fn verify_installs(
     }
 }
 
-/// Look up recipe JSON — try built-in slug first, then disk path.
-fn read_recipe_json(slug: &str) -> String {
-    if let Some(recipe) = bnto_engine::recipes::builtin_recipe_by_slug(slug) {
-        return recipe.definition_json.to_string();
+/// Look up recipe JSON — try catalog slug first, then disk path.
+fn read_recipe_json(slug: &str, catalog: &RecipeCatalog) -> String {
+    if let Some(entry) = catalog.resolve(slug) {
+        return entry.definition_json.clone();
     }
     match std::fs::read_to_string(slug) {
         Ok(json) => json,
@@ -333,9 +335,9 @@ mod tests {
     }
 
     #[test]
-    fn read_recipe_json_builtin() {
-        // download-video is a built-in recipe that has dependencies.
-        let json = read_recipe_json("download-video");
+    fn read_recipe_json_from_catalog() {
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let json = read_recipe_json("download-video", &catalog);
         assert!(json.contains("download-video") || json.contains("shell-command"));
     }
 }

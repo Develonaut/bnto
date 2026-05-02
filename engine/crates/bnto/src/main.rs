@@ -12,6 +12,7 @@
 //        bnto migrate <path> [--dry-run]
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
+pub mod catalog;
 mod context;
 mod doctor;
 mod dry_run;
@@ -36,6 +37,7 @@ use bnto_core::logging::{LogEntry, LogLevel, Logger, NoopLogger};
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 
+use catalog::RecipeCatalog;
 use logging::FileLogger;
 
 /// bnto — run recipes from the command line.
@@ -69,10 +71,10 @@ enum Command {
         yes: bool,
     },
 
-    /// List available built-in recipes.
+    /// List available recipes (built-in and library).
     List,
 
-    /// Show details about a built-in recipe.
+    /// Show details about a recipe.
     Info {
         /// Recipe slug (e.g. compress-images).
         recipe: String,
@@ -162,6 +164,12 @@ fn main() {
     // Session logger — shared across all commands.
     let logger = create_logger(&paths);
 
+    // Build unified recipe catalog — bundled + user library.
+    let library_dir = storage::paths::BntoPaths::resolve()
+        .map(|p| p.recipes_dir())
+        .unwrap_or_default();
+    let catalog = RecipeCatalog::load(&library_dir);
+
     let cmd_name = match &cli.command {
         Some(Command::Run { .. }) => "run",
         Some(Command::List) => "list",
@@ -190,27 +198,27 @@ fn main() {
             yes,
         }) => {
             telemetry::capture(telemetry::events::cli_command("run"));
-            run_recipe(&recipe, &inputs, &output, &param, yes, &logger);
+            run_recipe(&recipe, &inputs, &output, &param, yes, &logger, &catalog);
         }
         Some(Command::List) => {
             telemetry::capture(telemetry::events::cli_command("list"));
-            list_recipes();
+            list_recipes(&catalog);
         }
         Some(Command::Info { recipe }) => {
             telemetry::capture(telemetry::events::cli_command("info"));
-            show_info(&recipe);
+            show_info(&recipe, &catalog);
         }
         Some(Command::DryRun { recipe, param }) => {
             telemetry::capture(telemetry::events::cli_command("dry-run"));
-            show_dry_run(&recipe, &param);
+            show_dry_run(&recipe, &param, &catalog);
         }
         Some(Command::Install { recipe, yes, all }) => {
             telemetry::capture(telemetry::events::cli_command("install"));
-            install::run_install(recipe.as_deref(), yes, all);
+            install::run_install(recipe.as_deref(), yes, all, &catalog);
         }
         Some(Command::Doctor) => {
             telemetry::capture(telemetry::events::cli_command("doctor"));
-            doctor::run_doctor();
+            doctor::run_doctor(&catalog);
         }
         Some(Command::Migrate { path, dry_run }) => {
             telemetry::capture(telemetry::events::cli_command("migrate"));
@@ -280,10 +288,10 @@ fn launch_tui(
     telemetry::capture(telemetry::events::cli_tui_session(duration_ms, theme_str));
 }
 
-/// Read recipe JSON — try built-in slug first, then disk path.
-fn read_recipe(path: &str) -> String {
-    if let Some(recipe) = bnto_engine::recipes::builtin_recipe_by_slug(path) {
-        return recipe.definition_json.to_string();
+/// Read recipe JSON — try catalog slug first, then disk path.
+fn read_recipe(path: &str, catalog: &RecipeCatalog) -> String {
+    if let Some(entry) = catalog.resolve(path) {
+        return entry.definition_json.clone();
     }
     match std::fs::read_to_string(path) {
         Ok(json) => json,
@@ -316,9 +324,10 @@ fn run_recipe(
     param_overrides: &[String],
     skip_consent: bool,
     logger: &Arc<dyn Logger>,
+    catalog: &RecipeCatalog,
 ) {
-    let raw_json = read_recipe(recipe_path);
-    check_trust(recipe_path, &raw_json, skip_consent);
+    let raw_json = read_recipe(recipe_path, catalog);
+    check_trust(recipe_path, &raw_json, skip_consent, catalog);
     let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
     print_run_banner(recipe_path, &raw_json, &prepared);
 
@@ -397,10 +406,10 @@ fn extract_recipe_name(raw_json: &str, fallback: &str) -> String {
 
 /// Check trust level for a recipe and prompt for consent if needed.
 ///
-/// Built-in recipes are always trusted. Local recipes with shell-command
+/// Bundled recipes are always trusted. Non-bundled recipes with shell-command
 /// nodes require first-run consent, cached per definition hash.
-fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool) {
-    let source = trust::classify_source(recipe_arg);
+fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog: &RecipeCatalog) {
+    let is_bundled = catalog.is_bundled(recipe_arg);
     let def: bnto_core::PipelineDefinition = match serde_json::from_str(raw_json) {
         Ok(d) => d,
         Err(_) => return, // Let later validation handle parse errors.
@@ -415,7 +424,7 @@ fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool) {
         .map(|p| trust::TrustStore::load(p))
         .unwrap_or_default();
 
-    let level = trust::trust_level(&source, has_shell, &store, &hash);
+    let level = trust::trust_level(is_bundled, has_shell, &store, &hash);
 
     if level == trust::TrustLevel::Trusted || skip_consent {
         return;
@@ -452,14 +461,13 @@ pub(crate) fn unwrap_or_exit<T, E: std::fmt::Display>(result: Result<T, E>) -> T
     }
 }
 
-fn list_recipes() {
-    let recipes = bnto_engine::recipes::builtin_recipes();
-    let groups = list::group_recipes(recipes);
+fn list_recipes(catalog: &RecipeCatalog) {
+    let groups = list::group_recipes(catalog.all());
     list::print_recipe_list(&groups);
 }
 
-fn show_info(slug: &str) {
-    let Some(recipe_info) = info::get_recipe_info(slug) else {
+fn show_info(slug: &str, catalog: &RecipeCatalog) {
+    let Some(recipe_info) = info::get_recipe_info(slug, catalog) else {
         eprintln!("{} Unknown recipe: {slug}", "Error:".red());
         eprintln!("Run {} to see available recipes.", "bnto list".cyan());
         process::exit(1);
@@ -467,8 +475,8 @@ fn show_info(slug: &str) {
     info::print_recipe_info(slug, &recipe_info);
 }
 
-fn show_dry_run(slug: &str, param_overrides: &[String]) {
-    let Some(result) = dry_run::dry_run_recipe(slug, param_overrides) else {
+fn show_dry_run(slug: &str, param_overrides: &[String], catalog: &RecipeCatalog) {
+    let Some(result) = dry_run::dry_run_recipe(slug, param_overrides, catalog) else {
         eprintln!("{} Unknown recipe: {slug}", "Error:".red());
         eprintln!("Run {} to see available recipes.", "bnto list".cyan());
         process::exit(1);

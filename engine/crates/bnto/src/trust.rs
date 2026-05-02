@@ -1,31 +1,22 @@
 // Recipe trust classification and consent management.
 //
-// Recipes are classified by source (built-in vs local file) and whether
-// they contain shell-command nodes. Built-in recipes are always trusted.
-// Local recipes with shell-command nodes require first-run consent, cached
-// per definition hash in `BntoPaths::state/trusted.json`.
+// Recipes are classified by whether they're bundled (always trusted) or
+// non-bundled (may need consent for shell commands). Non-bundled recipes
+// with shell-command nodes require first-run consent, cached per
+// definition hash in `BntoPaths::state/trusted.json`.
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use bnto_core::PipelineNode;
 
-/// Where the recipe came from.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RecipeSource {
-    /// Shipped with the bnto binary — audited, always trusted.
-    BuiltIn,
-    /// Loaded from a local `.bnto.json` file.
-    LocalFile(PathBuf),
-}
-
 /// Trust level determines whether consent is needed before execution.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TrustLevel {
-    /// Safe to run without prompting (built-in, or no shell commands).
+    /// Safe to run without prompting (bundled, or no shell commands).
     Trusted,
     /// First time seeing this recipe — prompt for consent.
     FirstRun,
@@ -81,15 +72,6 @@ impl TrustStore {
     }
 }
 
-/// Classify a recipe argument as built-in or local file.
-pub fn classify_source(recipe_arg: &str) -> RecipeSource {
-    if bnto_engine::recipes::builtin_recipe_by_slug(recipe_arg).is_some() {
-        RecipeSource::BuiltIn
-    } else {
-        RecipeSource::LocalFile(PathBuf::from(recipe_arg))
-    }
-}
-
 /// Check whether any node in the tree is a shell-command processor.
 pub fn has_shell_commands(nodes: &[PipelineNode]) -> bool {
     for node in nodes {
@@ -106,21 +88,21 @@ pub fn has_shell_commands(nodes: &[PipelineNode]) -> bool {
 }
 
 /// Determine trust level for a recipe.
+///
+/// `is_bundled` comes from the catalog — bundled recipes are always trusted.
 pub fn trust_level(
-    source: &RecipeSource,
+    is_bundled: bool,
     has_shell: bool,
     store: &TrustStore,
     hash: &str,
 ) -> TrustLevel {
-    match source {
-        RecipeSource::BuiltIn => TrustLevel::Trusted,
-        RecipeSource::LocalFile(_) => {
-            if !has_shell || store.is_approved(hash) {
-                TrustLevel::Trusted
-            } else {
-                TrustLevel::FirstRun
-            }
-        }
+    if is_bundled {
+        return TrustLevel::Trusted;
+    }
+    if !has_shell || store.is_approved(hash) {
+        TrustLevel::Trusted
+    } else {
+        TrustLevel::FirstRun
     }
 }
 
@@ -180,17 +162,14 @@ fn collect_names_recursive(nodes: &[PipelineNode], names: &mut Vec<String>) {
     }
 }
 
-/// Format a trust level as a display label for the TUI.
-pub fn trust_badge(source: &RecipeSource, has_shell: bool) -> &'static str {
-    match source {
-        RecipeSource::BuiltIn => "built-in",
-        RecipeSource::LocalFile(_) => {
-            if has_shell {
-                "local (shell)"
-            } else {
-                "local"
-            }
-        }
+/// Format a trust badge for display in the TUI.
+pub fn trust_badge(is_bundled: bool, has_shell: bool) -> &'static str {
+    if is_bundled {
+        "built-in"
+    } else if has_shell {
+        "local (shell)"
+    } else {
+        "local"
     }
 }
 
@@ -206,28 +185,6 @@ fn now_iso8601() -> String {
 mod tests {
     use super::*;
     use serde_json::json;
-
-    // --- classify_source ---
-
-    #[test]
-    fn classify_builtin_slug() {
-        assert_eq!(classify_source("compress-images"), RecipeSource::BuiltIn,);
-    }
-
-    #[test]
-    fn classify_local_path() {
-        let source = classify_source("./my-recipe.bnto.json");
-        assert!(matches!(source, RecipeSource::LocalFile(_)));
-        if let RecipeSource::LocalFile(p) = source {
-            assert_eq!(p, PathBuf::from("./my-recipe.bnto.json"));
-        }
-    }
-
-    #[test]
-    fn classify_unknown_slug_is_local() {
-        let source = classify_source("nonexistent-recipe");
-        assert!(matches!(source, RecipeSource::LocalFile(_)));
-    }
 
     // --- has_shell_commands ---
 
@@ -271,50 +228,44 @@ mod tests {
     // --- trust_level ---
 
     #[test]
-    fn builtin_no_shell_is_trusted() {
+    fn bundled_no_shell_is_trusted() {
         let store = TrustStore::default();
         assert_eq!(
-            trust_level(&RecipeSource::BuiltIn, false, &store, "hash"),
+            trust_level(true, false, &store, "hash"),
             TrustLevel::Trusted,
         );
     }
 
     #[test]
-    fn builtin_with_shell_is_trusted() {
+    fn bundled_with_shell_is_trusted() {
+        let store = TrustStore::default();
+        assert_eq!(trust_level(true, true, &store, "hash"), TrustLevel::Trusted,);
+    }
+
+    #[test]
+    fn non_bundled_no_shell_is_trusted() {
         let store = TrustStore::default();
         assert_eq!(
-            trust_level(&RecipeSource::BuiltIn, true, &store, "hash"),
+            trust_level(false, false, &store, "hash"),
             TrustLevel::Trusted,
         );
     }
 
     #[test]
-    fn local_no_shell_is_trusted() {
+    fn non_bundled_with_shell_first_run() {
         let store = TrustStore::default();
-        let source = RecipeSource::LocalFile("recipe.bnto.json".into());
         assert_eq!(
-            trust_level(&source, false, &store, "hash"),
-            TrustLevel::Trusted,
-        );
-    }
-
-    #[test]
-    fn local_with_shell_first_run() {
-        let store = TrustStore::default();
-        let source = RecipeSource::LocalFile("recipe.bnto.json".into());
-        assert_eq!(
-            trust_level(&source, true, &store, "hash"),
+            trust_level(false, true, &store, "hash"),
             TrustLevel::FirstRun,
         );
     }
 
     #[test]
-    fn local_with_shell_approved() {
+    fn non_bundled_with_shell_approved() {
         let mut store = TrustStore::default();
         store.approve("abc123".into());
-        let source = RecipeSource::LocalFile("recipe.bnto.json".into());
         assert_eq!(
-            trust_level(&source, true, &store, "abc123"),
+            trust_level(false, true, &store, "abc123"),
             TrustLevel::Trusted,
         );
     }
@@ -427,20 +378,18 @@ mod tests {
     // --- trust_badge ---
 
     #[test]
-    fn badge_builtin() {
-        assert_eq!(trust_badge(&RecipeSource::BuiltIn, false), "built-in");
-        assert_eq!(trust_badge(&RecipeSource::BuiltIn, true), "built-in");
+    fn badge_bundled() {
+        assert_eq!(trust_badge(true, false), "built-in");
+        assert_eq!(trust_badge(true, true), "built-in");
     }
 
     #[test]
-    fn badge_local_no_shell() {
-        let source = RecipeSource::LocalFile("r.bnto.json".into());
-        assert_eq!(trust_badge(&source, false), "local");
+    fn badge_non_bundled_no_shell() {
+        assert_eq!(trust_badge(false, false), "local");
     }
 
     #[test]
-    fn badge_local_with_shell() {
-        let source = RecipeSource::LocalFile("r.bnto.json".into());
-        assert_eq!(trust_badge(&source, true), "local (shell)");
+    fn badge_non_bundled_with_shell() {
+        assert_eq!(trust_badge(false, true), "local (shell)");
     }
 }

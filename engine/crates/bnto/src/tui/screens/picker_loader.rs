@@ -115,14 +115,10 @@ fn matches_extensions(name: &str, extensions: &[String]) -> bool {
 /// Walks the recipe's node list, finds processor nodes, resolves their
 /// `metadata().accepts` MIME types, and converts to file extensions.
 pub fn extensions_for_recipe(
-    slug: &str,
+    definition_json: &str,
     registry: &bnto_core::registry::NodeRegistry,
 ) -> Vec<String> {
-    let recipe = match bnto_engine::recipes::builtin_recipe_by_slug(slug) {
-        Some(r) => r,
-        None => return Vec::new(),
-    };
-    let def: serde_json::Value = match serde_json::from_str(recipe.definition_json) {
+    let def: serde_json::Value = match serde_json::from_str(definition_json) {
         Ok(v) => v,
         Err(_) => return Vec::new(),
     };
@@ -233,7 +229,9 @@ mod tests {
     #[test]
     fn extensions_for_compress_images() {
         let registry = bnto_engine::create_registry();
-        let exts = extensions_for_recipe("compress-images", &registry);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve("compress-images").unwrap();
+        let exts = extensions_for_recipe(&entry.definition_json, &registry);
         assert!(
             exts.contains(&"jpg".to_string()) || exts.contains(&"jpeg".to_string()),
             "compress-images should accept JPEG, got: {exts:?}"
@@ -245,9 +243,9 @@ mod tests {
     }
 
     #[test]
-    fn extensions_for_unknown_recipe_returns_empty() {
+    fn extensions_for_invalid_json_returns_empty() {
         let registry = bnto_engine::create_registry();
-        let exts = extensions_for_recipe("nonexistent-recipe", &registry);
+        let exts = extensions_for_recipe("not valid json", &registry);
         assert!(exts.is_empty());
     }
 

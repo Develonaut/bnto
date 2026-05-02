@@ -177,35 +177,27 @@ pub(crate) fn handle_editor_form(model: AppModel, form_msg: tonkotsu::FormMessag
 
 /// Clone a browser recipe into the editor.
 pub(crate) fn handle_open_editor_from_browser(model: AppModel) -> AppModel {
-    let slug = model.browser.confirm().map(|r| r.slug);
-    match slug {
-        Some(slug) => {
-            let recipe = bnto_engine::recipes::builtin_recipe_by_slug(&slug);
-            match recipe {
-                Some(r) => {
-                    let def: Result<bnto_core::definition::Definition, _> =
-                        serde_json::from_str(r.definition_json);
-                    match def {
-                        Ok(def) => {
-                            let source = bnto_core::editor::EditorSource::Predefined(slug);
-                            let editor_model =
-                                bnto_core::editor::EditorModel::from_definition(&def, source);
-                            AppModel {
-                                screen: Screen::Editor {
-                                    from: DetailOrigin::Browser,
-                                },
-                                editor: Some(EditorScreenModel::new(editor_model)),
-                                ..model
-                            }
-                        }
-                        Err(e) => AppModel {
-                            status_message: Some(format!("Failed to parse recipe: {e}")),
-                            ..model
+    let recipe = model.browser.selected_recipe();
+    match recipe {
+        Some(r) => {
+            let def: Result<bnto_core::definition::Definition, _> =
+                serde_json::from_str(&r.definition_json);
+            let slug = r.slug.clone();
+            match def {
+                Ok(def) => {
+                    let source = bnto_core::editor::EditorSource::Predefined(slug);
+                    let editor_model =
+                        bnto_core::editor::EditorModel::from_definition(&def, source);
+                    AppModel {
+                        screen: Screen::Editor {
+                            from: DetailOrigin::Browser,
                         },
+                        editor: Some(EditorScreenModel::new(editor_model)),
+                        ..model
                     }
                 }
-                None => AppModel {
-                    status_message: Some(format!("Unknown recipe: {slug}")),
+                Err(e) => AppModel {
+                    status_message: Some(format!("Failed to parse recipe: {e}")),
                     ..model
                 },
             }
