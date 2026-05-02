@@ -194,7 +194,7 @@ mod tests {
     use bnto_core::context::ProcessContext;
     use bnto_core::errors::BntoError;
     use bnto_core::metadata::{Dependency, InputCardinality, NodeCategory, NodeMetadata};
-    use bnto_core::processor::{NodeInput, NodeOutput, OutputFile};
+    use bnto_core::processor::{FileData, NodeInput, NodeOutput, OutputFile};
     use bnto_core::progress::ProgressReporter;
     use std::path::{Path, PathBuf};
 
@@ -215,7 +215,7 @@ mod tests {
         ) -> Result<NodeOutput, BntoError> {
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: input.filename,
                     mime_type: "video/mp4".to_string(),
                     metadata: serde_json::Map::new(),
@@ -259,7 +259,7 @@ mod tests {
         ) -> Result<NodeOutput, BntoError> {
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: input.filename,
                     mime_type: "video/mp4".to_string(),
                     metadata: serde_json::Map::new(),
@@ -312,7 +312,7 @@ mod tests {
         ) -> Result<NodeOutput, BntoError> {
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: input.filename,
                     mime_type: "application/octet-stream".to_string(),
                     metadata: serde_json::Map::new(),

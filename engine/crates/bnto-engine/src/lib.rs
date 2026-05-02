@@ -117,6 +117,7 @@ pub fn run_pipeline(
 mod tests {
     use super::*;
     use bnto_core::NoopContext;
+    use bnto_core::processor::FileData;
 
     #[test]
     fn test_browser_registry_has_all_processors() {
@@ -183,7 +184,7 @@ mod tests {
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "test.jpg".to_string(),
-            data: test_image.to_vec(),
+            data: FileData::Bytes(test_image.to_vec()),
             mime_type: "image/jpeg".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -193,7 +194,7 @@ mod tests {
             run_pipeline(json, files, &reporter, &NoopContext).expect("Pipeline should succeed");
 
         assert_eq!(result.files.len(), 1);
-        assert!(!result.files[0].data.is_empty());
+        assert!(!result.files[0].data.is_empty().expect("should read length"));
     }
 
     #[test]
@@ -202,7 +203,7 @@ mod tests {
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
-            data: test_image.to_vec(),
+            data: FileData::Bytes(test_image.to_vec()),
             mime_type: "image/jpeg".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -212,7 +213,7 @@ mod tests {
             run_pipeline(json, files, &reporter, &NoopContext).expect("compress-images recipe");
 
         assert_eq!(result.files.len(), 1);
-        assert!(!result.files[0].data.is_empty());
+        assert!(!result.files[0].data.is_empty().expect("should read length"));
     }
 
     #[test]
@@ -221,7 +222,7 @@ mod tests {
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
-            data: test_image.to_vec(),
+            data: FileData::Bytes(test_image.to_vec()),
             mime_type: "image/jpeg".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -239,7 +240,7 @@ mod tests {
         let csv_data = include_bytes!("../../../../test-fixtures/csv/messy.csv");
         let files = vec![PipelineFile {
             name: "data.csv".to_string(),
-            data: csv_data.to_vec(),
+            data: FileData::Bytes(csv_data.to_vec()),
             mime_type: "text/csv".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -255,7 +256,7 @@ mod tests {
         let json = include_str!("../recipes/rename-files.bnto.json");
         let files = vec![PipelineFile {
             name: "document.txt".to_string(),
-            data: b"hello world".to_vec(),
+            data: FileData::Bytes(b"hello world".to_vec()),
             mime_type: "text/plain".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -278,7 +279,7 @@ mod tests {
         let csv_data = include_bytes!("../../../../test-fixtures/csv/simple.csv");
         let files = vec![PipelineFile {
             name: "data.csv".to_string(),
-            data: csv_data.to_vec(),
+            data: FileData::Bytes(csv_data.to_vec()),
             mime_type: "text/csv".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -299,13 +300,13 @@ mod tests {
         let files = vec![
             PipelineFile {
                 name: "a.csv".to_string(),
-                data: csv_a.to_vec(),
+                data: FileData::Bytes(csv_a.to_vec()),
                 mime_type: "text/csv".to_string(),
                 metadata: serde_json::Map::new(),
             },
             PipelineFile {
                 name: "b.csv".to_string(),
-                data: csv_b.to_vec(),
+                data: FileData::Bytes(csv_b.to_vec()),
                 mime_type: "text/csv".to_string(),
                 metadata: serde_json::Map::new(),
             },
@@ -315,7 +316,12 @@ mod tests {
         let result = run_pipeline(json, files, &reporter, &NoopContext).expect("merge-csv recipe");
 
         assert_eq!(result.files.len(), 1);
-        let output = String::from_utf8_lossy(&result.files[0].data);
+        let bytes = result.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("should have bytes");
+        let output = String::from_utf8_lossy(&bytes);
         assert!(output.contains("Alice"));
         assert!(output.contains("Bob"));
     }
@@ -326,7 +332,7 @@ mod tests {
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
-            data: test_image.to_vec(),
+            data: FileData::Bytes(test_image.to_vec()),
             mime_type: "image/jpeg".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -335,7 +341,7 @@ mod tests {
         let result = run_pipeline(json, files, &reporter, &NoopContext).expect("strip-exif recipe");
 
         assert_eq!(result.files.len(), 1);
-        assert!(!result.files[0].data.is_empty());
+        assert!(!result.files[0].data.is_empty().expect("should read length"));
     }
 
     #[test]
@@ -364,7 +370,7 @@ mod tests {
         let test_image = include_bytes!("../../../../test-fixtures/images/small.jpg");
         let files = vec![PipelineFile {
             name: "photo.jpg".to_string(),
-            data: test_image.to_vec(),
+            data: FileData::Bytes(test_image.to_vec()),
             mime_type: "image/jpeg".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -374,7 +380,7 @@ mod tests {
             run_pipeline(&json, files, &reporter, &NoopContext).expect("watermark-images recipe");
 
         assert_eq!(result.files.len(), 1);
-        assert!(!result.files[0].data.is_empty());
+        assert!(!result.files[0].data.is_empty().expect("should read length"));
     }
 
     #[test]
@@ -383,7 +389,7 @@ mod tests {
         let test_svg = include_bytes!("../../../../test-fixtures/vector/verbose.svg");
         let files = vec![PipelineFile {
             name: "icon.svg".to_string(),
-            data: test_svg.to_vec(),
+            data: FileData::Bytes(test_svg.to_vec()),
             mime_type: "image/svg+xml".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -393,10 +399,15 @@ mod tests {
             run_pipeline(json, files, &reporter, &NoopContext).expect("optimize-svg recipe");
 
         assert_eq!(result.files.len(), 1);
+        let bytes = result.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("should have bytes");
         // Output should be smaller than input (editor cruft removed)
-        assert!(result.files[0].data.len() < test_svg.len());
+        assert!(bytes.len() < test_svg.len());
         // Output should still be valid SVG (starts with <svg)
-        let output = String::from_utf8_lossy(&result.files[0].data);
+        let output = String::from_utf8_lossy(&bytes);
         assert!(
             output.contains("<svg"),
             "Output should contain <svg element"
@@ -446,7 +457,7 @@ mod tests {
         let test_svg = include_bytes!("../../../../test-fixtures/images/small.svg");
         let files = vec![PipelineFile {
             name: "icon.svg".to_string(),
-            data: test_svg.to_vec(),
+            data: FileData::Bytes(test_svg.to_vec()),
             mime_type: "image/svg+xml".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -457,7 +468,12 @@ mod tests {
         assert_eq!(result.files.len(), 1);
         assert!(result.files[0].name.ends_with(".png"));
         // PNG magic bytes
-        assert!(result.files[0].data.starts_with(&[0x89, 0x50, 0x4E, 0x47]));
+        let bytes = result.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("should have bytes");
+        assert!(bytes.starts_with(&[0x89, 0x50, 0x4E, 0x47]));
     }
 
     #[test]
@@ -466,7 +482,7 @@ mod tests {
         let test_svg = include_bytes!("../../../../test-fixtures/images/small.svg");
         let files = vec![PipelineFile {
             name: "icon.svg".to_string(),
-            data: test_svg.to_vec(),
+            data: FileData::Bytes(test_svg.to_vec()),
             mime_type: "image/svg+xml".to_string(),
             metadata: serde_json::Map::new(),
         }];
@@ -478,7 +494,12 @@ mod tests {
         assert_eq!(result.files.len(), 1);
         assert!(result.files[0].name.ends_with(".jpg"));
         // JPEG magic bytes
-        assert!(result.files[0].data.starts_with(&[0xFF, 0xD8, 0xFF]));
+        let bytes = result.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("should have bytes");
+        assert!(bytes.starts_with(&[0xFF, 0xD8, 0xFF]));
     }
 
     #[test]

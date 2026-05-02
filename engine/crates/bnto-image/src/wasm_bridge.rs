@@ -94,12 +94,14 @@ fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
 
     // --- Step 5: Set the "data" property (Uint8Array of raw bytes) ---
     //
-    // `js_sys::Uint8Array::from(file.data.as_slice())` creates a JS
-    // Uint8Array that COPIES the bytes from WASM linear memory into
-    // the JS heap. This is necessary because the WASM memory might
-    // be resized (invalidating any views into it) before JS reads
-    // the data.
-    let uint8 = js_sys::Uint8Array::from(file.data.as_slice());
+    // In WASM context, file data is always the Bytes variant.
+    // `into_bytes()` extracts the Vec<u8> (no-op for Bytes, would read
+    // from disk for Path — but Path never appears in WASM).
+    let bytes = file
+        .data
+        .into_bytes()
+        .map_err(|e| JsValue::from_str(&format!("Failed to read file data: {e}")))?;
+    let uint8 = js_sys::Uint8Array::from(bytes.as_slice());
     js_sys::Reflect::set(&result, &"data".into(), &uint8)
         .map_err(|_| JsValue::from_str("Failed to set data on result object"))?;
 

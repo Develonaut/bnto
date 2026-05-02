@@ -6,7 +6,9 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{
+    BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
+};
 use bnto_core::progress::ProgressReporter;
 
 /// The spreadsheet-merge node processor. Stateless — config comes from params.
@@ -58,7 +60,7 @@ impl NodeProcessor for MergeSpreadsheets {
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: FileData::Bytes(input.data),
                 filename: input.filename,
                 mime_type: input.mime_type.unwrap_or_else(|| "text/csv".to_string()),
                 metadata: serde_json::Map::new(),
@@ -108,7 +110,7 @@ impl NodeProcessor for MergeSpreadsheets {
         progress.report(100, "Done!");
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: output_bytes,
+                data: FileData::Bytes(output_bytes),
                 filename: "merged.csv".to_string(),
                 mime_type: "text/csv".to_string(),
                 metadata: serde_json::Map::new(),
@@ -417,7 +419,12 @@ mod tests {
     }
 
     fn output_csv_text(output: &NodeOutput) -> String {
-        String::from_utf8(output.files[0].data.clone()).expect("Output should be valid UTF-8")
+        let bytes = output.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("Should read bytes");
+        String::from_utf8(bytes).expect("Output should be valid UTF-8")
     }
 
     fn count_data_rows(csv_text: &str) -> usize {
@@ -687,7 +694,9 @@ mod tests {
             .unwrap();
 
         // Outputs should differ — union has more columns
-        assert_ne!(out1.files[0].data, out2.files[0].data);
+        let bytes1 = out1.files[0].data.clone().into_bytes().unwrap();
+        let bytes2 = out2.files[0].data.clone().into_bytes().unwrap();
+        assert_ne!(bytes1, bytes2);
     }
 
     #[test]

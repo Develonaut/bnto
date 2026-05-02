@@ -6,7 +6,7 @@
 // filesystem access needed since all info comes from the input bytes.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, ParameterDef, ParameterType};
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
@@ -88,7 +88,7 @@ impl NodeProcessor for FileMetadata {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: FileData::Bytes(input.data),
                 filename: input.filename,
                 mime_type: input.mime_type.unwrap_or(mime_type),
                 metadata: serde_json::Map::new(),
@@ -400,7 +400,7 @@ mod tests {
         let input = make_input(data, "file.bin", serde_json::Map::new());
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
-        assert_eq!(output.files[0].data, data);
+        assert_eq!(output.files[0].data.clone().into_bytes().unwrap(), data);
         assert_eq!(output.files[0].filename, "file.bin");
     }
 

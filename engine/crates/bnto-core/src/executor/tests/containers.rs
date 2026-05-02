@@ -503,7 +503,11 @@ fn test_loop_progressive_output_events_carry_files() {
                 "Progressive mode should attach output files to events"
             );
             assert!(!output_files.is_empty());
-            assert_eq!(output_files[0].data.len(), 3, "File data should be present");
+            assert_eq!(
+                file_data_bytes(&output_files[0].data).len(),
+                3,
+                "File data should be present"
+            );
         }
     }
 }
@@ -541,7 +545,7 @@ fn test_loop_progressive_output_files_have_correct_metadata() {
     if let PipelineEvent::IterationCompleted { output_files, .. } = completed {
         assert_eq!(output_files.len(), 1);
         assert_eq!(output_files[0].name, "HELLO.TXT");
-        assert_eq!(output_files[0].data, b"hello");
+        assert_eq!(output_files[0].data, FileData::Bytes(b"hello".to_vec()));
         assert_eq!(output_files[0].mime_type, "application/octet-stream");
     }
 }

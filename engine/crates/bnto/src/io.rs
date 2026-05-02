@@ -15,7 +15,7 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 
     Ok(PipelineFile {
         name,
-        data,
+        data: bnto_core::processor::FileData::Bytes(data),
         mime_type,
         metadata: serde_json::Map::new(),
     })
@@ -25,6 +25,9 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 ///
 /// File names may contain subdirectory separators (e.g. `"subdir/video.mp4"`).
 /// Parent directories are created automatically before writing.
+///
+/// Uses `FileData::write_to()` which renames (O(1)) for path-referenced files
+/// and writes bytes for in-memory files.
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), String> {
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
@@ -34,7 +37,8 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), St
             std::fs::create_dir_all(parent)
                 .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
         }
-        std::fs::write(&out_path, &file.data)
+        file.data
+            .write_to(&out_path)
             .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))?;
     }
 
@@ -92,6 +96,7 @@ mod tests {
     #[test]
     fn test_write_results_creates_subdirectories() {
         use bnto_core::PipelineFileResult;
+        use bnto_core::processor::FileData;
 
         let dir = std::env::temp_dir().join("bnto-test-write-subdirs");
         let _ = std::fs::remove_dir_all(&dir);
@@ -100,19 +105,19 @@ mod tests {
             files: vec![
                 PipelineFileResult {
                     name: "top.txt".to_string(),
-                    data: b"top-level".to_vec(),
+                    data: FileData::Bytes(b"top-level".to_vec()),
                     mime_type: "text/plain".to_string(),
                     metadata: serde_json::Map::new(),
                 },
                 PipelineFileResult {
                     name: "group/nested.mp4".to_string(),
-                    data: b"video-data".to_vec(),
+                    data: FileData::Bytes(b"video-data".to_vec()),
                     mime_type: "video/mp4".to_string(),
                     metadata: serde_json::Map::new(),
                 },
                 PipelineFileResult {
                     name: "a/b/deep.txt".to_string(),
-                    data: b"deep-data".to_vec(),
+                    data: FileData::Bytes(b"deep-data".to_vec()),
                     mime_type: "text/plain".to_string(),
                     metadata: serde_json::Map::new(),
                 },

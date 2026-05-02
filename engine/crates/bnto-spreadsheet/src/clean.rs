@@ -5,7 +5,7 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 /// The spreadsheet-clean node processor. Stateless — config comes from `NodeInput.params`.
@@ -113,7 +113,7 @@ fn build_clean_output(
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data,
+            data: FileData::Bytes(data),
             filename: generate_output_filename(input_filename),
             mime_type: "text/csv".to_string(),
             metadata: serde_json::Map::new(),
@@ -380,7 +380,12 @@ mod tests {
     /// The output is raw bytes — we convert back to a String for easy
     /// assertion comparisons in tests.
     fn output_csv_text(output: &NodeOutput) -> String {
-        String::from_utf8(output.files[0].data.clone()).expect("Output should be valid UTF-8")
+        let bytes = output.files[0]
+            .data
+            .clone()
+            .into_bytes()
+            .expect("Should read bytes");
+        String::from_utf8(bytes).expect("Output should be valid UTF-8")
     }
 
     /// Count the number of data rows (excluding the header) in CSV text.

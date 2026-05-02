@@ -6,7 +6,7 @@
 use bnto_core::DEFAULT_QUALITY;
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_encode::ImageFormat;
 
@@ -79,7 +79,7 @@ impl NodeProcessor for VectorRasterize {
         progress.report(100, "Rasterization complete");
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: encoded,
+                data: FileData::Bytes(encoded),
                 filename: output_name,
                 mime_type: target_format.mime_type().to_string(),
                 metadata: serde_json::Map::new(),
@@ -331,7 +331,9 @@ mod tests {
             .expect("SVG to PNG should succeed");
 
         assert_eq!(output.files.len(), 1);
-        let data = &output.files[0].data;
+        let FileData::Bytes(ref data) = output.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
         // PNG magic bytes: 0x89 P N G
         assert!(data.len() > 8);
         assert_eq!(&data[..4], &[0x89, b'P', b'N', b'G']);
@@ -348,7 +350,9 @@ mod tests {
             .expect("SVG to JPEG should succeed");
 
         assert_eq!(output.files.len(), 1);
-        let data = &output.files[0].data;
+        let FileData::Bytes(ref data) = output.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
         // JPEG magic: 0xFF 0xD8
         assert!(data.len() > 2);
         assert_eq!(&data[..2], &[0xFF, 0xD8]);
@@ -365,7 +369,9 @@ mod tests {
             .expect("SVG to WebP should succeed");
 
         assert_eq!(output.files.len(), 1);
-        let data = &output.files[0].data;
+        let FileData::Bytes(ref data) = output.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
         // RIFF....WEBP header
         assert!(data.len() > 12);
         assert_eq!(&data[..4], b"RIFF");
@@ -388,9 +394,15 @@ mod tests {
             .process(input_high, &reporter, &NoopContext)
             .unwrap();
 
+        let FileData::Bytes(ref low_data) = output_low.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
+        let FileData::Bytes(ref high_data) = output_high.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
         assert_ne!(
-            output_low.files[0].data.len(),
-            output_high.files[0].data.len(),
+            low_data.len(),
+            high_data.len(),
             "Different quality levels should produce different file sizes"
         );
     }

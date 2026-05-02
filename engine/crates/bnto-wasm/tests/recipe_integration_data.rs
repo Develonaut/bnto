@@ -3,7 +3,7 @@
 mod common;
 
 use bnto_core::{NoopContext, PipelineReporter, execute_pipeline};
-use common::{MESSY_CSV, SIMPLE_CSV, fake_now, file, parse, real_registry};
+use common::{MESSY_CSV, SIMPLE_CSV, fake_now, file, file_bytes, parse, real_registry};
 
 // --- Clean CSV -- full recipe integration ---
 
@@ -38,13 +38,13 @@ fn clean_csv_recipe_produces_cleaned_output() {
 
     assert_eq!(result.files.len(), 1);
 
-    let output_str =
-        std::str::from_utf8(&result.files[0].data).expect("cleaned CSV should be valid UTF-8");
+    let bytes = file_bytes(&result.files[0].data);
+    let output_str = std::str::from_utf8(&bytes).expect("cleaned CSV should be valid UTF-8");
 
     assert!(
-        result.files[0].data.len() <= MESSY_CSV.len(),
+        bytes.len() <= MESSY_CSV.len(),
         "cleaned CSV ({} bytes) should not be larger than input ({} bytes)",
-        result.files[0].data.len(),
+        bytes.len(),
         MESSY_CSV.len()
     );
 
@@ -85,8 +85,8 @@ fn rename_csv_columns_recipe_produces_output() {
 
     assert_eq!(result.files.len(), 1);
 
-    let output_str =
-        std::str::from_utf8(&result.files[0].data).expect("renamed CSV should be valid UTF-8");
+    let bytes = file_bytes(&result.files[0].data);
+    let output_str = std::str::from_utf8(&bytes).expect("renamed CSV should be valid UTF-8");
 
     let first_line = output_str.lines().next().unwrap_or("");
     assert!(
@@ -141,6 +141,6 @@ fn rename_files_recipe_applies_prefix() {
     }
 
     // Data should be unchanged (rename only affects filenames, not content).
-    assert_eq!(result.files[0].data, b"hello world");
-    assert_eq!(result.files[1].data, b"# Title");
+    assert_eq!(file_bytes(&result.files[0].data), b"hello world");
+    assert_eq!(file_bytes(&result.files[1].data), b"# Title");
 }

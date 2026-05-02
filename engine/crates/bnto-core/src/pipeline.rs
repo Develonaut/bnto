@@ -141,16 +141,17 @@ pub struct PipelineNode {
 
 /// A file that enters the pipeline for processing.
 ///
-/// This is the engine's internal file representation — it holds raw bytes,
-/// not a browser File object or filesystem path. The adapter layer
-/// (WASM bridge, CLI, Tauri) converts from its native file type to this.
+/// This is the engine's internal file representation. Small files (images,
+/// CSVs) carry in-memory bytes. Large files from shell-command carry a
+/// disk path reference. The adapter layer (WASM bridge, CLI, Tauri)
+/// converts from its native file type to this.
 #[derive(Debug, Clone)]
 pub struct PipelineFile {
     /// The filename (e.g., "photo.jpg", "data.csv").
     pub name: String,
 
-    /// The raw file data as bytes.
-    pub data: Vec<u8>,
+    /// The file content — in-memory bytes or a path on disk.
+    pub data: crate::processor::FileData,
 
     /// The MIME type (e.g., "image/jpeg", "text/csv").
     pub mime_type: String,
@@ -171,8 +172,8 @@ pub struct PipelineFileResult {
     /// The filename of the output (e.g., "photo-compressed.jpg").
     pub name: String,
 
-    /// The processed file data as bytes.
-    pub data: Vec<u8>,
+    /// The file content — in-memory bytes or a path on disk.
+    pub data: crate::processor::FileData,
 
     /// The MIME type of the output.
     pub mime_type: String,

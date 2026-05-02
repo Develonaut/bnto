@@ -166,6 +166,10 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
 
 /// Convert iteration output files to `ProgressOutputFile` for event emission.
 /// Returns an empty vec in deferred mode (default) to avoid cloning file data.
+///
+/// For `Path` variant files, this clones only the ~50-byte PathBuf reference,
+/// not the multi-GB file content. The consumer (CLI progress reporter, TUI bridge)
+/// uses `write_to()` to move the file to its destination.
 fn build_progress_files(
     persistence: &OutputPersistence,
     files: &[PipelineFile],

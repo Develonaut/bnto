@@ -7,7 +7,7 @@
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::metadata::*;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use super::{OptimizeConfig, optimize_svg};
@@ -114,7 +114,7 @@ impl NodeProcessor for OptimizeSvg {
         progress.report(100, "SVG optimization complete");
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: optimized.into_bytes(),
+                data: FileData::Bytes(optimized.into_bytes()),
                 filename: input.filename,
                 mime_type: "image/svg+xml".to_string(),
                 metadata: serde_json::Map::new(),
@@ -257,10 +257,13 @@ mod tests {
         let output = OptimizeSvg.process(input, &reporter, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
+        let FileData::Bytes(ref data) = output.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
         assert!(
-            output.files[0].data.len() < input_size,
+            data.len() < input_size,
             "Output ({}) should be smaller than input ({input_size})",
-            output.files[0].data.len(),
+            data.len(),
         );
     }
 
@@ -308,8 +311,14 @@ mod tests {
             .process(make_input(params), &reporter, &NoopContext)
             .unwrap();
 
+        let FileData::Bytes(ref default_data) = out_default.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
+        let FileData::Bytes(ref comments_data) = out_comments.files[0].data else {
+            panic!("expected FileData::Bytes");
+        };
         assert_ne!(
-            out_default.files[0].data, out_comments.files[0].data,
+            default_data, comments_data,
             "Different params should produce different output"
         );
     }

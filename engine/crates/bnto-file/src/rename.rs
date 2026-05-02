@@ -10,7 +10,9 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{
+    BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
+};
 use bnto_core::progress::ProgressReporter;
 use regex::Regex;
 
@@ -135,7 +137,7 @@ fn build_rename_output(
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data,
+            data: FileData::Bytes(data),
             filename,
             mime_type: "application/octet-stream".to_string(),
             metadata: serde_json::Map::new(),
@@ -923,7 +925,10 @@ mod tests {
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
-        assert_eq!(output.files[0].data, original_data);
+        assert_eq!(
+            output.files[0].data.clone().into_bytes().unwrap(),
+            original_data
+        );
     }
 
     #[test]
@@ -1461,7 +1466,10 @@ mod tests {
             params: string_param("sanitize", "slugify"),
         };
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        assert_eq!(output.files[0].data, b"original content");
+        assert_eq!(
+            output.files[0].data.clone().into_bytes().unwrap(),
+            b"original content"
+        );
     }
 
     #[test]

@@ -5,7 +5,7 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use image::imageops::FilterType;
@@ -295,7 +295,7 @@ fn build_resize_output(
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data,
+            data: FileData::Bytes(data),
             filename: ResizeImages::output_filename(input_filename, format),
             mime_type: format.mime_type().to_string(),
             metadata: serde_json::Map::new(),
@@ -417,6 +417,14 @@ mod tests {
     use bnto_core::NoopContext;
     use bnto_core::processor::NodeInput;
     use bnto_core::progress::ProgressReporter;
+
+    /// Extract bytes from FileData. Panics on FileData::Path (never produced by image processors).
+    fn file_bytes(data: &FileData) -> &[u8] {
+        match data {
+            FileData::Bytes(b) => b,
+            FileData::Path(_) => panic!("Expected FileData::Bytes"),
+        }
+    }
 
     // =========================================================================
     // Test Fixtures — Real images from the shared test-fixtures directory
@@ -817,7 +825,7 @@ mod tests {
         assert_eq!(output.files[0].mime_type, "image/jpeg");
 
         // Verify the output is a valid JPEG with correct dimensions
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 50);
         assert_eq!(h, 50); // 1:1 aspect ratio preserved
     }
@@ -830,7 +838,7 @@ mod tests {
         let input = make_input(TEST_JPEG, "test.jpg", dims_params(60, 40));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 60);
         assert_eq!(h, 40);
     }
@@ -846,7 +854,7 @@ mod tests {
         assert_eq!(output.files[0].filename, "test-resized.png");
         assert_eq!(output.files[0].mime_type, "image/png");
 
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 50);
         assert_eq!(h, 50);
     }
@@ -862,7 +870,7 @@ mod tests {
         assert_eq!(output.files[0].filename, "test-resized.webp");
         assert_eq!(output.files[0].mime_type, "image/webp");
 
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 50);
         assert_eq!(h, 50);
     }
@@ -875,7 +883,7 @@ mod tests {
         let input = make_input(TEST_JPEG, "test.jpg", height_params(50));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(h, 50);
         assert_eq!(w, 50); // 1:1 aspect ratio
     }
@@ -888,7 +896,7 @@ mod tests {
         let input = make_input(TEST_JPEG, "test.jpg", width_params(200));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 200);
         assert_eq!(h, 200);
     }
@@ -901,7 +909,7 @@ mod tests {
         let input = make_input(TEST_MEDIUM_JPEG, "photo.jpg", width_params(200));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 200);
         assert_eq!(h, 200);
     }
@@ -979,7 +987,7 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         // Should produce valid output (quality affects file size, not dimensions)
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 50);
         assert_eq!(h, 50);
     }
@@ -992,7 +1000,7 @@ mod tests {
         let input = make_input(TEST_JPEG, "test.jpg", dims_params(100, 100));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 100);
         assert_eq!(h, 100);
     }
@@ -1005,7 +1013,7 @@ mod tests {
         let input = make_input(TEST_JPEG, "test.jpg", dims_params(1, 1));
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&output.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
         assert_eq!(w, 1);
         assert_eq!(h, 1);
     }
@@ -1035,8 +1043,8 @@ mod tests {
             .process(input_q90, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
 
-        let size_q30 = output_q30.files[0].data.len();
-        let size_q90 = output_q90.files[0].data.len();
+        let size_q30 = file_bytes(&output_q30.files[0].data).len();
+        let size_q90 = file_bytes(&output_q90.files[0].data).len();
 
         assert!(
             size_q30 < size_q90,
@@ -1071,7 +1079,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "portrait.jpg", width_params(20));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
 
         assert_eq!(w, 20, "Resized width should be 20");
         assert_eq!(
@@ -1093,7 +1101,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "portrait.jpg", height_params(30));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
 
         assert_eq!(w, 20, "Width should maintain 2:3 aspect ratio");
         assert_eq!(h, 30, "Height should be 30 as requested");
@@ -1111,7 +1119,7 @@ mod tests {
         let input = make_input(&jpeg, "landscape.jpg", width_params(30));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
 
         assert_eq!(w, 30);
         assert_eq!(h, 20, "Height should preserve 3:2 landscape aspect ratio");
@@ -1167,7 +1175,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped-h.jpg", width_params(30));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
         assert_eq!(w, 30, "Flip H: width=30");
         assert_eq!(h, 20, "Flip H: aspect 3:2 preserved → height=20");
     }
@@ -1184,7 +1192,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped-v.jpg", width_params(30));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
         assert_eq!(w, 30, "Flip V: width=30");
         assert_eq!(h, 20, "Flip V: aspect 3:2 preserved → height=20");
     }
@@ -1201,7 +1209,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot270-flip-h.jpg", width_params(20));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
         assert_eq!(w, 20, "Rot270+FlipH: width=20");
         assert_eq!(h, 30, "Rot270+FlipH: aspect 2:3 → height=30");
     }
@@ -1218,7 +1226,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot90-flip-h.jpg", width_params(20));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
         assert_eq!(w, 20, "Rot90+FlipH: width=20");
         assert_eq!(h, 30, "Rot90+FlipH: aspect 2:3 → height=30");
     }
@@ -1235,7 +1243,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot270.jpg", width_params(20));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
         assert_eq!(w, 20, "Rot270: width=20");
         assert_eq!(h, 30, "Rot270: aspect 2:3 → height=30");
     }
@@ -1252,7 +1260,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot180.jpg", width_params(30));
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let (w, h) = get_image_dimensions(&result.files[0].data);
+        let (w, h) = get_image_dimensions(file_bytes(&result.files[0].data));
         assert_eq!(w, 30, "Rot180: width=30");
         assert_eq!(h, 20, "Rot180: aspect 3:2 preserved → height=20");
     }

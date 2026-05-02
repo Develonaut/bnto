@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 /// The spreadsheet-rename node processor. Stateless — config comes from `NodeInput.params`.
@@ -97,7 +97,7 @@ fn build_rename_output(
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data,
+            data: FileData::Bytes(data),
             filename: build_output_filename(input_filename),
             mime_type: "text/csv".to_string(),
             metadata: serde_json::Map::new(),
@@ -299,7 +299,8 @@ mod tests {
             .files
             .first()
             .expect("Should have at least one output file");
-        String::from_utf8(file.data.clone()).expect("Output should be valid UTF-8")
+        let bytes = file.data.clone().into_bytes().expect("Should read bytes");
+        String::from_utf8(bytes).expect("Output should be valid UTF-8")
     }
 
     // --- Core Functionality Tests ---

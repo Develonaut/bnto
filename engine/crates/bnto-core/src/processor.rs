@@ -7,6 +7,9 @@ use crate::errors::BntoError;
 use crate::metadata::{NodeCategory, NodeMetadata};
 use crate::progress::ProgressReporter;
 
+// Re-export FileData so `processor::FileData` still works for existing imports.
+pub use crate::file_data::FileData;
+
 // =============================================================================
 // Input and Output Types
 // =============================================================================
@@ -47,8 +50,8 @@ pub struct NodeOutput {
 
 /// A single output file produced by a node.
 pub struct OutputFile {
-    /// The raw file data (bytes) of the processed output.
-    pub data: Vec<u8>,
+    /// The file content — in-memory bytes or a path on disk.
+    pub data: FileData,
 
     /// The filename for this output (e.g., "photo-compressed.jpg").
     pub filename: String,
@@ -222,7 +225,7 @@ mod tests {
             // Just echo the input data back as output.
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: input.data,
+                    data: FileData::Bytes(input.data),
                     filename: input.filename,
                     mime_type: input
                         .mime_type
@@ -281,7 +284,7 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
-        assert_eq!(output.files[0].data, b"hello world");
+        assert!(matches!(&output.files[0].data, FileData::Bytes(d) if d == b"hello world"));
         assert_eq!(output.files[0].filename, "test.txt");
     }
 
@@ -338,9 +341,9 @@ mod tests {
         // Default batch falls back to per-file: 2 inputs → 2 outputs.
         assert_eq!(output.files.len(), 2);
         assert_eq!(output.files[0].filename, "a.txt");
-        assert_eq!(output.files[0].data, b"file1");
+        assert!(matches!(&output.files[0].data, FileData::Bytes(d) if d == b"file1"));
         assert_eq!(output.files[1].filename, "b.txt");
-        assert_eq!(output.files[1].data, b"file2");
+        assert!(matches!(&output.files[1].data, FileData::Bytes(d) if d == b"file2"));
     }
 
     #[test]

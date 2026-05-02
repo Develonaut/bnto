@@ -5,7 +5,7 @@
 // File data passes through unchanged — this is a placement node.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, OptionEntry, ParameterDef, ParameterType};
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 use std::path::Path;
@@ -131,7 +131,7 @@ impl NodeProcessor for FileCopy {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: FileData::Bytes(input.data),
                 filename: output_filename,
                 mime_type: input
                     .mime_type
@@ -468,7 +468,8 @@ mod tests {
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
         assert_eq!(
-            output.files[0].data, data,
+            output.files[0].data.clone().into_bytes().unwrap(),
+            data,
             "Data should pass through unchanged"
         );
     }

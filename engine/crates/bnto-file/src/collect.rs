@@ -5,7 +5,7 @@
 // outputs individual matched files as pipeline entries.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, ParameterDef, ParameterType};
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 use std::path::Path;
@@ -112,7 +112,7 @@ impl NodeProcessor for FileCollect {
             let mime_type = guess_mime_type(&output_name);
 
             output_files.push(OutputFile {
-                data,
+                data: FileData::Bytes(data),
                 filename: output_name,
                 mime_type,
                 metadata: serde_json::Map::new(),
@@ -483,7 +483,8 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].filename, "data.csv");
-        let content = String::from_utf8_lossy(&output.files[0].data);
+        let bytes = output.files[0].data.clone().into_bytes().unwrap();
+        let content = String::from_utf8_lossy(&bytes);
         assert!(content.contains("a,b"), "Should read actual file content");
     }
 

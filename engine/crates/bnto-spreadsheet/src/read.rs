@@ -6,7 +6,7 @@
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 const DEFAULT_MAX_ROWS: u64 = 100_000;
@@ -205,7 +205,7 @@ fn build_row_files(stem: &str, headers: &[String], rows: &[Vec<String>]) -> Vec<
                 metadata.insert(header.clone(), serde_json::Value::String(value));
             }
             OutputFile {
-                data: Vec::new(),
+                data: FileData::Bytes(Vec::new()),
                 filename: format!("{stem}_row{i}.csv"),
                 mime_type: "text/csv".to_string(),
                 metadata,
@@ -416,7 +416,10 @@ mod tests {
         let output = process_ok(make_input(csv));
 
         for file in &output.files {
-            assert!(file.data.is_empty(), "row files should have empty data");
+            assert!(
+                file.data.is_empty().unwrap(),
+                "row files should have empty data"
+            );
         }
     }
 

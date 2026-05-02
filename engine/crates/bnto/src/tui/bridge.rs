@@ -330,7 +330,7 @@ pub fn write_progressive_files(output_dir: &str, files: &[bnto_core::events::Pro
     let dir = std::path::Path::new(output_dir);
     for file in files {
         let path = dir.join(&file.name);
-        let _ = std::fs::write(&path, &file.data);
+        let _ = file.data.write_to(&path);
     }
 }
 
@@ -360,6 +360,7 @@ pub fn build_output_files(output_dir: &str, file_metadata: &[FileResultMeta]) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::FileData;
     use std::fs;
 
     #[test]
@@ -372,7 +373,7 @@ mod tests {
         let result = bnto_core::pipeline::PipelineResult {
             files: vec![bnto_core::pipeline::PipelineFileResult {
                 name: "photo.jpg".into(),
-                data: vec![],
+                data: FileData::Bytes(vec![]),
                 mime_type: "image/jpeg".into(),
                 metadata,
             }],
@@ -390,7 +391,7 @@ mod tests {
         let result = bnto_core::pipeline::PipelineResult {
             files: vec![bnto_core::pipeline::PipelineFileResult {
                 name: "file.txt".into(),
-                data: vec![],
+                data: FileData::Bytes(vec![]),
                 mime_type: "text/plain".into(),
                 metadata: serde_json::Map::new(),
             }],
@@ -411,7 +412,7 @@ mod tests {
         let result = bnto_core::pipeline::PipelineResult {
             files: vec![bnto_core::pipeline::PipelineFileResult {
                 name: "file.txt".into(),
-                data: vec![],
+                data: FileData::Bytes(vec![]),
                 mime_type: "text/plain".into(),
                 metadata,
             }],

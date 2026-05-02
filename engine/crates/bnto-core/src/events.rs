@@ -25,12 +25,12 @@ pub struct NodeInfo {
 ///
 /// The `data` field is `#[serde(skip)]` so WASM JSON serialization
 /// doesn't try to serialize multi-GB video files.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProgressOutputFile {
     pub name: String,
     #[serde(skip)]
-    pub data: Vec<u8>,
+    pub data: crate::processor::FileData,
     pub mime_type: String,
 }
 
@@ -397,7 +397,7 @@ mod tests {
             files_produced: 1,
             output_files: vec![ProgressOutputFile {
                 name: "video.mp4".to_string(),
-                data: vec![0u8; 100],
+                data: crate::processor::FileData::Bytes(vec![0u8; 100]),
                 mime_type: "video/mp4".to_string(),
             }],
         };
@@ -412,7 +412,7 @@ mod tests {
     fn test_progress_output_file_serializes_without_data() {
         let file = ProgressOutputFile {
             name: "video.mp4".to_string(),
-            data: vec![0u8; 1024],
+            data: crate::processor::FileData::Bytes(vec![0u8; 1024]),
             mime_type: "video/mp4".to_string(),
         };
         let json = serde_json::to_value(&file).unwrap();

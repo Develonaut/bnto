@@ -9,7 +9,7 @@ use std::io::Cursor;
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use image::codecs::jpeg::JpegEncoder;
@@ -173,7 +173,7 @@ impl NodeProcessor for CompressImages {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: compressed_data,
+                data: FileData::Bytes(compressed_data),
                 filename: output_filename,
                 mime_type: format.mime_type().to_string(),
                 metadata: serde_json::Map::new(),
@@ -296,6 +296,14 @@ mod tests {
     use bnto_core::NoopContext;
     use bnto_core::processor::NodeInput;
     use bnto_core::progress::ProgressReporter;
+
+    /// Extract bytes from FileData. Panics on FileData::Path (never produced by image processors).
+    fn file_bytes(data: &FileData) -> &[u8] {
+        match data {
+            FileData::Bytes(b) => b,
+            FileData::Path(_) => panic!("Expected FileData::Bytes"),
+        }
+    }
 
     // =========================================================================
     // Test Fixtures — Real images from our shared test-fixtures directory
@@ -423,7 +431,7 @@ mod tests {
 
         let out_file = &output.files[0];
         assert_eq!(
-            ImageFormat::from_magic_bytes(&out_file.data),
+            ImageFormat::from_magic_bytes(file_bytes(&out_file.data)),
             Some(ImageFormat::Jpeg),
             "Output should be a valid JPEG"
         );
@@ -449,7 +457,7 @@ mod tests {
         let original_size = TEST_MEDIUM_JPEG.len();
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let compressed_size = output.files[0].data.len();
+        let compressed_size = file_bytes(&output.files[0].data).len();
 
         assert!(
             compressed_size < original_size,
@@ -475,10 +483,11 @@ mod tests {
             .unwrap();
 
         assert!(
-            output_q20.files[0].data.len() < output_q80.files[0].data.len(),
+            file_bytes(&output_q20.files[0].data).len()
+                < file_bytes(&output_q80.files[0].data).len(),
             "Quality 20 ({} bytes) should be smaller than quality 80 ({} bytes)",
-            output_q20.files[0].data.len(),
-            output_q80.files[0].data.len()
+            file_bytes(&output_q20.files[0].data).len(),
+            file_bytes(&output_q80.files[0].data).len()
         );
     }
 
@@ -509,7 +518,7 @@ mod tests {
 
         let out_file = &output.files[0];
         assert_eq!(
-            ImageFormat::from_magic_bytes(&out_file.data),
+            ImageFormat::from_magic_bytes(file_bytes(&out_file.data)),
             Some(ImageFormat::Png),
             "Output should be a valid PNG"
         );
@@ -525,7 +534,7 @@ mod tests {
         let original_size = TEST_MEDIUM_PNG.len();
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        let compressed_size = output.files[0].data.len();
+        let compressed_size = file_bytes(&output.files[0].data).len();
 
         assert!(
             compressed_size < original_size,
@@ -561,8 +570,8 @@ mod tests {
             .process(input_q20, &noop_progress(), &NoopContext)
             .unwrap();
 
-        let size_q80 = output_q80.files[0].data.len();
-        let size_q20 = output_q20.files[0].data.len();
+        let size_q80 = file_bytes(&output_q80.files[0].data).len();
+        let size_q20 = file_bytes(&output_q20.files[0].data).len();
 
         assert!(
             size_q20 < size_q80,
@@ -593,7 +602,7 @@ mod tests {
 
         let out_file = &output.files[0];
         assert_eq!(
-            ImageFormat::from_magic_bytes(&out_file.data),
+            ImageFormat::from_magic_bytes(file_bytes(&out_file.data)),
             Some(ImageFormat::WebP),
             "Output should be a valid WebP"
         );
@@ -612,7 +621,7 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::WebP),
             "WebP output should be valid even with quality param"
         );
@@ -1286,15 +1295,15 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Jpeg),
             "Quality 1 output should still be a valid JPEG"
         );
 
         assert!(
-            output.files[0].data.len() < TEST_MEDIUM_JPEG.len(),
+            file_bytes(&output.files[0].data).len() < TEST_MEDIUM_JPEG.len(),
             "Quality 1 ({} bytes) should be smaller than original ({} bytes)",
-            output.files[0].data.len(),
+            file_bytes(&output.files[0].data).len(),
             TEST_MEDIUM_JPEG.len()
         );
     }
@@ -1311,13 +1320,13 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Jpeg),
             "Quality 100 output should be a valid JPEG"
         );
 
         assert!(
-            !output.files[0].data.is_empty(),
+            !file_bytes(&output.files[0].data).is_empty(),
             "Quality 100 output should not be empty"
         );
     }
@@ -1336,8 +1345,8 @@ mod tests {
             .process(input_q100, &noop_progress(), &NoopContext)
             .unwrap();
 
-        let size_q1 = output_q1.files[0].data.len();
-        let size_q100 = output_q100.files[0].data.len();
+        let size_q1 = file_bytes(&output_q1.files[0].data).len();
+        let size_q100 = file_bytes(&output_q100.files[0].data).len();
 
         assert!(
             size_q1 < size_q100,
@@ -1355,24 +1364,18 @@ mod tests {
         let input_q50 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 50);
         let input_q100 = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
 
-        let size_q1 = processor
+        let out_q1 = processor
             .process(input_q1, &noop_progress(), &NoopContext)
-            .unwrap()
-            .files[0]
-            .data
-            .len();
-        let size_q50 = processor
+            .unwrap();
+        let size_q1 = file_bytes(&out_q1.files[0].data).len();
+        let out_q50 = processor
             .process(input_q50, &noop_progress(), &NoopContext)
-            .unwrap()
-            .files[0]
-            .data
-            .len();
-        let size_q100 = processor
+            .unwrap();
+        let size_q50 = file_bytes(&out_q50.files[0].data).len();
+        let out_q100 = processor
             .process(input_q100, &noop_progress(), &NoopContext)
-            .unwrap()
-            .files[0]
-            .data
-            .len();
+            .unwrap();
+        let size_q100 = file_bytes(&out_q100.files[0].data).len();
 
         assert!(
             size_q1 <= size_q50,
@@ -1465,7 +1468,7 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Jpeg),
             "Compressed 1x1 should still be a valid JPEG"
         );
@@ -1499,7 +1502,7 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Png),
             "Compressed 1x1 should still be a valid PNG"
         );
@@ -1529,7 +1532,7 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::WebP),
             "Compressed 1x1 should still be a valid WebP"
         );
@@ -1555,7 +1558,7 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Jpeg),
             "Output should be a valid JPEG even at 1x1 / quality 1"
         );
@@ -1575,7 +1578,7 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(
-            ImageFormat::from_magic_bytes(&output.files[0].data),
+            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
             Some(ImageFormat::Jpeg),
             "Output should be a valid JPEG even at 1x1 / quality 100"
         );
@@ -1597,7 +1600,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "portrait.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_data = &result.files[0].data;
+        let output_data = file_bytes(&result.files[0].data);
 
         let output_img = decode_with_orientation(output_data).unwrap();
 
@@ -1623,7 +1626,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_data = &result.files[0].data;
+        let output_data = file_bytes(&result.files[0].data);
 
         let output_img = decode_with_orientation(output_data).unwrap();
         assert_eq!(output_img.width(), 60);
@@ -1639,7 +1642,7 @@ mod tests {
         let input = make_input(&jpeg, "landscape.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_data = &result.files[0].data;
+        let output_data = file_bytes(&result.files[0].data);
 
         let output_img = decode_with_orientation(output_data).unwrap();
         assert_eq!(output_img.width(), 60);
@@ -1660,7 +1663,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped-h.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 60, "Flip H preserves width");
         assert_eq!(output_img.height(), 40, "Flip H preserves height");
     }
@@ -1675,7 +1678,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "flipped-v.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 60, "Flip V preserves width");
         assert_eq!(output_img.height(), 40, "Flip V preserves height");
     }
@@ -1690,7 +1693,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot270-flip-h.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270+FlipH swaps to 60 tall");
     }
@@ -1705,7 +1708,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot90-flip-h.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot90+FlipH swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot90+FlipH swaps to 60 tall");
     }
@@ -1720,7 +1723,7 @@ mod tests {
         let input = make_input(&exif_jpeg, "rot270.jpg");
 
         let result = processor.process(input, &progress, &NoopContext).unwrap();
-        let output_img = decode_with_orientation(&result.files[0].data).unwrap();
+        let output_img = decode_with_orientation(file_bytes(&result.files[0].data)).unwrap();
         assert_eq!(output_img.width(), 40, "Rot270 swaps to 40 wide");
         assert_eq!(output_img.height(), 60, "Rot270 swaps to 60 tall");
     }
