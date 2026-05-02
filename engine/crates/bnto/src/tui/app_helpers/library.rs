@@ -147,6 +147,9 @@ pub(crate) fn handle_library(model: AppModel, msg: &LibraryMessage) -> AppModel 
 }
 
 /// Confirm a library selection and navigate to detail.
+///
+/// Tries loading from the library file on disk first (handles recipes
+/// that aren't builtins), then falls back to builtin lookup.
 pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
     let slug = model
         .library
@@ -156,11 +159,19 @@ pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
     match slug {
         Some(slug) => {
             let start_dir = resolve_start_dir();
-            let detail = super::super::screens::detail_loader::load_detail_with_dir(
+            let detail = super::super::screens::detail_loader::load_detail_from_library(
                 &slug,
+                &model.paths.recipes_dir(),
                 &model.registry,
                 Some(&start_dir),
-            );
+            )
+            .or_else(|| {
+                super::super::screens::detail_loader::load_detail_with_dir(
+                    &slug,
+                    &model.registry,
+                    Some(&start_dir),
+                )
+            });
             AppModel {
                 screen: Screen::Detail {
                     slug,
