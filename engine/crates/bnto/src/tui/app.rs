@@ -17,8 +17,6 @@ use super::app_helpers::{
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
     handle_wizard_form, load_editor_from_json,
 };
-use super::config::TuiConfig;
-use super::migration::migrate_if_needed;
 use super::paths::BntoPaths;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::DetailModel;
@@ -84,11 +82,9 @@ pub struct AppModel {
     pub editor: Option<EditorScreenModel>,
     /// Wizard screen state — populated when creating a recipe via wizard.
     pub wizard: Option<WizardModel>,
-    /// Persistent config loaded from disk (old JSON format, for compatibility).
-    pub config: TuiConfig,
-    /// TOML-based config (new format) — used for saves.
+    /// TOML-based persistent config.
     pub toml_config: TomlConfig,
-    /// Resolved storage paths (XDG-compliant).
+    /// Resolved storage paths (~/.bnto/ home).
     pub paths: BntoPaths,
     /// Transient status bar message (e.g. "Settings saved" or "Failed to save").
     pub status_message: Option<String>,
@@ -211,18 +207,15 @@ impl AppModel {
     /// If `new_recipe` is true, opens a blank editor.
     pub fn new(variant: ThemeVariant, recipe_json: Option<String>, new_recipe: bool) -> Self {
         let paths = BntoPaths::resolve().unwrap_or_else(|| BntoPaths {
-            config: std::path::PathBuf::from(".bnto/config"),
-            data: std::path::PathBuf::from(".bnto/data"),
-            state: std::path::PathBuf::from(".bnto/state"),
-            cache: std::path::PathBuf::from(".bnto/cache"),
+            home: std::path::PathBuf::from(".bnto"),
         });
         Self::with_paths(variant, recipe_json, new_recipe, paths)
     }
 
     /// Create a new app with explicit storage paths.
     ///
-    /// Loads TOML config from `paths.config_file()`, running migration
-    /// from old JSON format if needed. Falls back to defaults on any error.
+    /// Loads TOML config from `paths.config_file()`. Falls back to
+    /// defaults on any error.
     pub fn with_paths(
         variant: ThemeVariant,
         recipe_json: Option<String>,
@@ -231,31 +224,22 @@ impl AppModel {
     ) -> Self {
         let _ = paths.ensure_dirs();
 
-        // Try migration from old JSON config, then load TOML.
-        migrate_if_needed(&paths);
         let toml_config = TomlConfig::load(&paths);
-
-        // Build a TuiConfig from TOML values for backward compatibility.
-        let config = TuiConfig {
-            theme: toml_config.tui.theme.clone(),
-            default_path: toml_config.picker.default_path.clone(),
-            output_dir: toml_config.output.dir.clone(),
-        };
 
         // CLI --theme flag overrides saved config.
         let effective_variant = if variant != ThemeVariant::LosAngeles {
             variant
         } else {
-            ThemeVariant::from_str_lossy(&config.theme).unwrap_or(variant)
+            ThemeVariant::from_str_lossy(&toml_config.tui.theme).unwrap_or(variant)
         };
         let registry = create_registry();
 
         // List library recipes for the home screen pane.
-        let library_names = list_library_recipes(&paths.data);
+        let recipes_dir = effective_recipes_dir(&toml_config, &paths);
+        let library_names = list_library_recipes(&recipes_dir);
 
         // Determine initial screen and state.
         let (screen, detail, editor) = if new_recipe {
-            // --new flag: blank editor.
             let editor_model = bnto_core::editor::EditorModel::new();
             (
                 Screen::Editor {
@@ -265,7 +249,6 @@ impl AppModel {
                 Some(EditorScreenModel::new(editor_model)),
             )
         } else if let Some(json) = recipe_json {
-            // File arg: try strict Definition deserialization first, then lenient fallback.
             match load_editor_from_json(&json) {
                 Ok(editor_model) => (
                     Screen::Editor {
@@ -298,7 +281,6 @@ impl AppModel {
             settings: None,
             editor,
             wizard: None,
-            config,
             toml_config,
             paths,
             status_message: None,
@@ -307,6 +289,18 @@ impl AppModel {
             registry,
         }
     }
+}
+
+/// Resolve the effective recipes directory.
+///
+/// Uses the config override if set and valid, otherwise falls back
+/// to the default `~/.bnto/recipes/`.
+pub fn effective_recipes_dir(config: &TomlConfig, paths: &BntoPaths) -> std::path::PathBuf {
+    config
+        .recipes_dir_override()
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_dir())
+        .unwrap_or_else(|| paths.recipes_dir())
 }
 
 /// Pure state transition — the heart of the TEA pattern.
@@ -351,7 +345,7 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             model
         }
         AppMessage::OpenSettings => {
-            let settings = SettingsModel::from_config(&model.config);
+            let settings = SettingsModel::from_toml_config(&model.toml_config);
             AppModel {
                 screen: Screen::Settings,
                 settings: Some(settings),
@@ -459,21 +453,12 @@ mod tests {
     use bnto_core::InputMode;
 
     /// Build test paths in a unique temp directory.
-    ///
-    /// Pre-creates dirs and a default config.toml so `migrate_if_needed()`
-    /// is always skipped — otherwise migration reads from the real system
-    /// config dir and poisons test state.
     fn test_paths() -> BntoPaths {
         use std::sync::atomic::{AtomicU32, Ordering};
         static COUNTER: AtomicU32 = AtomicU32::new(0);
         let id = COUNTER.fetch_add(1, Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!("bnto-test-{id}"));
-        let paths = BntoPaths {
-            config: root.join("config"),
-            data: root.join("data"),
-            state: root.join("state"),
-            cache: root.join("cache"),
-        };
+        let paths = BntoPaths { home: root };
         let _ = paths.ensure_dirs();
         let _ = TomlConfig::default().save(&paths);
         paths
@@ -506,11 +491,7 @@ mod tests {
     fn default_model_uses_isolated_paths() {
         let app = default_model();
         let config_path = app.paths.config_file();
-        let real_config = dirs::home_dir()
-            .unwrap()
-            .join(".config")
-            .join("bnto")
-            .join("config.toml");
+        let real_config = dirs::home_dir().unwrap().join(".bnto").join("config.toml");
         assert_ne!(
             config_path, real_config,
             "test models must never write to the real config directory"
@@ -1273,7 +1254,7 @@ mod tests {
             },
             AppMessage::ThemeChanged(ThemeVariant::Monaco),
         );
-        assert_eq!(app.config.theme, "monaco");
+        assert_eq!(app.toml_config.tui.theme, "monaco");
     }
 
     #[test]
@@ -1464,55 +1445,56 @@ mod tests {
     #[test]
     fn theme_changed_preserves_both_path_settings() {
         let mut app = default_model();
-        app.config.default_path = Some("/photos".into());
-        app.config.output_dir = Some("/output".into());
+        app.toml_config.paths.recipes = Some("/recipes".into());
+        app.toml_config.paths.output = Some("/output".into());
         app.screen = Screen::Settings;
 
         let app = update(app, AppMessage::ThemeChanged(ThemeVariant::Tokyo));
-        assert_eq!(app.config.theme, "tokyo");
-        assert_eq!(app.config.default_path, Some("/photos".into()));
-        assert_eq!(app.config.output_dir, Some("/output".into()));
+        assert_eq!(app.toml_config.tui.theme, "tokyo");
+        assert_eq!(app.toml_config.paths.recipes, Some("/recipes".into()));
+        assert_eq!(app.toml_config.paths.output, Some("/output".into()));
     }
 
     #[test]
-    fn settings_path_confirmed_for_default_path_preserves_output_dir() {
-        // Simulate: config already has output_dir, user changes only default_path.
+    fn settings_path_confirmed_for_recipes_dir_preserves_output_dir() {
+        // Simulate: config already has output, user changes only recipes dir.
         let mut app = update(default_model(), AppMessage::OpenSettings);
-        // Inject existing output_dir into both config and settings model.
-        app.config.output_dir = Some("/existing-output".into());
+        app.toml_config.paths.output = Some("/existing-output".into());
         app.settings = app.settings.map(|mut s| {
             if let Some(f) = s.fields.iter_mut().find(|f| f.key == "output_dir") {
                 f.value = "/existing-output".to_string();
             }
             s
         });
-        // Set up picker for default_path.
         app.screen = Screen::Picker {
-            slug: "default_path".into(),
+            slug: "recipes_dir".into(),
             from: DetailOrigin::Home,
         };
-        app.settings_picker_field = Some("default_path".into());
+        app.settings_picker_field = Some("recipes_dir".into());
         app.picker = Some(PickerModel::from_dir(
-            "default_path",
-            &std::path::PathBuf::from("/new-default"),
+            "recipes_dir",
+            &std::path::PathBuf::from("/new-recipes"),
         ));
 
         let app = update(app, AppMessage::SettingsPathConfirmed);
         assert_eq!(app.screen, Screen::Settings);
-        // default_path updated to picker's current_dir.
-        assert!(app.config.default_path.is_some());
-        // output_dir preserved — not clobbered by the default_path save.
-        assert_eq!(app.config.output_dir, Some("/existing-output".into()));
+        // recipes_dir updated to picker's current_dir.
+        assert!(app.toml_config.paths.recipes.is_some());
+        // output preserved — not clobbered.
+        assert_eq!(
+            app.toml_config.paths.output,
+            Some("/existing-output".into())
+        );
     }
 
     #[test]
-    fn settings_path_confirmed_for_output_dir_preserves_default_path() {
-        // Symmetric: config has default_path, user changes only output_dir.
+    fn settings_path_confirmed_for_output_dir_preserves_recipes_dir() {
+        // Symmetric: config has recipes dir, user changes only output dir.
         let mut app = update(default_model(), AppMessage::OpenSettings);
-        app.config.default_path = Some("/existing-default".into());
+        app.toml_config.paths.recipes = Some("/existing-recipes".into());
         app.settings = app.settings.map(|mut s| {
-            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "default_path") {
-                f.value = "/existing-default".to_string();
+            if let Some(f) = s.fields.iter_mut().find(|f| f.key == "recipes_dir") {
+                f.value = "/existing-recipes".to_string();
             }
             s
         });
@@ -1527,33 +1509,33 @@ mod tests {
         ));
 
         let app = update(app, AppMessage::SettingsPathConfirmed);
-        assert_eq!(app.config.default_path, Some("/existing-default".into()));
-        assert!(app.config.output_dir.is_some());
+        assert_eq!(
+            app.toml_config.paths.recipes,
+            Some("/existing-recipes".into())
+        );
+        assert!(app.toml_config.paths.output.is_some());
     }
 
     #[test]
     fn settings_roundtrip_both_paths_survive_reload() {
         // Full roundtrip: load config with both paths → open settings → verify fields.
-        let config = TuiConfig {
-            theme: "tokyo".to_string(),
-            default_path: Some("/photos".into()),
-            output_dir: Some("/output".into()),
-        };
         let mut app = default_model();
-        app.config = config;
+        app.toml_config.tui.theme = "tokyo".to_string();
+        app.toml_config.paths.recipes = Some("/recipes".into());
+        app.toml_config.paths.output = Some("/output".into());
         let app = update(app, AppMessage::OpenSettings);
         let settings = app.settings.as_ref().expect("settings created");
-        let dp = settings
+        let rd = settings
             .fields
             .iter()
-            .find(|f| f.key == "default_path")
+            .find(|f| f.key == "recipes_dir")
             .unwrap();
         let od = settings
             .fields
             .iter()
             .find(|f| f.key == "output_dir")
             .unwrap();
-        assert_eq!(dp.value, "/photos");
+        assert_eq!(rd.value, "/recipes");
         assert_eq!(od.value, "/output");
     }
 
@@ -1610,17 +1592,10 @@ mod tests {
 
     /// Like `test_paths()` but returns the TempDir handle to keep it
     /// alive for tests that read from disk after a save.
-    ///
-    /// Pre-creates a default config.toml so `migrate_if_needed()` is
-    /// always skipped — otherwise migration reads from the real system
-    /// config dir and poisons test state.
     fn test_paths_with_dir() -> (tempfile::TempDir, BntoPaths) {
         let tmp = tempfile::tempdir().unwrap();
         let paths = BntoPaths {
-            config: tmp.path().join("config"),
-            data: tmp.path().join("data"),
-            state: tmp.path().join("state"),
-            cache: tmp.path().join("cache"),
+            home: tmp.path().to_path_buf(),
         };
         paths.ensure_dirs().unwrap();
         TomlConfig::default().save(&paths).unwrap();
@@ -1637,7 +1612,7 @@ mod tests {
     fn app_model_has_paths_field() {
         let (_tmp, paths) = test_paths_with_dir();
         let app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths.clone());
-        assert_eq!(app.paths.config, paths.config);
+        assert_eq!(app.paths.home, paths.home);
     }
 
     #[test]
@@ -1661,10 +1636,7 @@ mod tests {
         // Create paths pointing to a read-only location to force save failure.
         let tmp = tempfile::tempdir().unwrap();
         let paths = BntoPaths {
-            config: tmp.path().join("nonexistent").join("deep").join("config"),
-            data: tmp.path().join("data"),
-            state: tmp.path().join("state"),
-            cache: tmp.path().join("cache"),
+            home: tmp.path().join("nonexistent").join("deep"),
         };
         // DON'T create config dir — save will fail because parent doesn't exist
         // Wait, atomic_write creates parent dirs. Let's use a truly read-only path.
@@ -1702,7 +1674,7 @@ mod tests {
 
         // Verify the config was saved to disk via TOML.
         let loaded = TomlConfig::load(&paths);
-        assert_eq!(loaded.output.dir, Some("/tmp".into()));
+        assert_eq!(loaded.paths.output, Some("/tmp".into()));
     }
 
     #[test]
@@ -2085,12 +2057,8 @@ mod tests {
     fn editor_save_error_shows_status_message() {
         // Use a path that doesn't exist and can't be created.
         let paths = BntoPaths {
-            config: std::path::PathBuf::from("/nonexistent/config"),
-            data: std::path::PathBuf::from("/nonexistent/data"),
-            state: std::path::PathBuf::from("/nonexistent/state"),
-            cache: std::path::PathBuf::from("/nonexistent/cache"),
+            home: std::path::PathBuf::from("/nonexistent"),
         };
-        let _ = TomlConfig::default().save(&paths);
         let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         let mut editor = bnto_core::editor::EditorModel::new();
         editor.recipe_name = "Will Fail".to_string();

@@ -1,7 +1,6 @@
 // Navigation helpers — back-screen resolution, state cleanup on screen exit.
 
 use super::super::app::{AppModel, DetailOrigin, Screen};
-use super::super::config::TuiConfig;
 use super::super::screens::home::{HomeModel, list_library_recipes};
 
 /// Check if the form's focus is on the last visible field.
@@ -122,13 +121,8 @@ pub(crate) fn back_screen_for_editor(from: DetailOrigin) -> Screen {
 }
 
 /// Resolve the starting directory for file pickers.
-pub(crate) fn resolve_start_dir(config: &TuiConfig) -> std::path::PathBuf {
-    config
-        .default_path
-        .as_ref()
-        .map(std::path::PathBuf::from)
-        .filter(|p| p.is_dir())
-        .unwrap_or_else(|| {
-            std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
-        })
+///
+/// Returns the current working directory (or "." as fallback).
+pub(crate) fn resolve_start_dir() -> std::path::PathBuf {
+    std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
 }

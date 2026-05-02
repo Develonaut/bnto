@@ -7,11 +7,9 @@ pub mod app;
 mod app_helpers;
 pub mod atomic;
 mod bridge;
-pub mod config;
 pub mod event;
 pub mod format;
 mod keys;
-pub mod migration;
 pub mod palette;
 pub mod paths;
 mod render;
@@ -192,7 +190,7 @@ fn run_loop(
                 slug.clone(),
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
-                model.config.output_dir.clone(),
+                model.toml_config.output_dir().map(String::from),
             ));
             execution_start = Some(Instant::now());
         }
@@ -320,7 +318,6 @@ mod tests {
 
     use super::*;
     use app::{AppMessage, Screen};
-    use config::TuiConfig;
     use screens::browser::BrowserMessage;
     use screens::execution::ExecutionMessage;
     use screens::home::HomeMessage;
@@ -334,12 +331,7 @@ mod tests {
         static COUNTER: AtomicU32 = AtomicU32::new(0);
         let id = COUNTER.fetch_add(1, Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!("bnto-mod-test-{id}"));
-        let p = paths::BntoPaths {
-            config: root.join("config"),
-            data: root.join("data"),
-            state: root.join("state"),
-            cache: root.join("cache"),
-        };
+        let p = paths::BntoPaths { home: root };
         let _ = p.ensure_dirs();
         let _ = toml_config::TomlConfig::default().save(&p);
         p
@@ -474,7 +466,7 @@ mod tests {
         let mut model = default_model();
         model.screen = Screen::Settings;
         model.theme_variant = ThemeVariant::LosAngeles;
-        model.settings = Some(SettingsModel::from_config(&TuiConfig::default()));
+        model.settings = Some(SettingsModel::from_toml_config(&model.toml_config));
         model
     }
 
@@ -512,13 +504,13 @@ mod tests {
     #[test]
     fn settings_enter_opens_picker_on_editable_field() {
         let mut model = settings_model();
-        // Focus on field 1 (default_path, editable).
+        // Focus on field 1 (recipes_dir, editable).
         model.settings.as_mut().unwrap().focused = 1;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
             Some(AppMessage::OpenSettingsPicker {
-                field_key: "default_path".into()
+                field_key: "recipes_dir".into()
             })
         );
     }

@@ -6,8 +6,6 @@ use super::super::theme::{Theme, ThemeVariant};
 
 /// Handle theme change — persist via TOML and update settings display.
 pub(crate) fn handle_theme_changed(model: AppModel, variant: ThemeVariant) -> AppModel {
-    let mut config = model.config.clone();
-    config.theme = variant.as_slug().to_string();
     let mut toml_config = model.toml_config.clone();
     toml_config.tui.theme = variant.as_slug().to_string();
     let status_message = match toml_config.save(&model.paths) {
@@ -23,7 +21,6 @@ pub(crate) fn handle_theme_changed(model: AppModel, variant: ThemeVariant) -> Ap
     AppModel {
         theme: Theme::from_variant(variant),
         theme_variant: variant,
-        config,
         toml_config,
         settings,
         status_message,
@@ -98,14 +95,10 @@ pub(crate) fn handle_settings_path_confirmed(model: AppModel) -> AppModel {
         }
         s
     });
-    let config = settings
-        .as_ref()
-        .map(|s| s.to_config(model.theme_variant))
-        .unwrap_or_else(|| model.config.clone());
     let mut toml_config = model.toml_config.clone();
-    toml_config.tui.theme = config.theme.clone();
-    toml_config.output.dir = config.output_dir.clone();
-    toml_config.picker.default_path = config.default_path.clone();
+    if let Some(s) = &settings {
+        s.apply_to_config(&mut toml_config, model.theme_variant);
+    }
     let status_message = match toml_config.save(&model.paths) {
         Ok(()) => None,
         Err(e) => Some(format!("Failed to save: {e}")),
@@ -115,7 +108,6 @@ pub(crate) fn handle_settings_path_confirmed(model: AppModel) -> AppModel {
         picker: None,
         settings_picker_field: None,
         settings,
-        config,
         toml_config,
         status_message,
         ..model

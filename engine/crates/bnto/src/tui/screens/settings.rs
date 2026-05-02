@@ -3,8 +3,8 @@
 // Path fields open the file picker for directory browsing (Enter).
 // Theme field cycles with left/right arrows.
 
-use super::super::config::TuiConfig;
 use super::super::theme::ThemeVariant;
+use super::super::toml_config::TomlConfig;
 use crate::telemetry;
 
 /// A single configurable field in the settings screen.
@@ -41,27 +41,27 @@ pub enum SettingsMessage {
 }
 
 impl SettingsModel {
-    /// Create a settings model from the current config.
-    pub fn from_config(config: &TuiConfig) -> Self {
+    /// Create a settings model from the TOML config.
+    pub fn from_toml_config(config: &TomlConfig) -> Self {
         let fields = vec![
             SettingsField {
                 key: "theme",
                 label: "Theme",
-                value: config.theme.clone(),
+                value: config.tui.theme.clone(),
                 description: "Color theme (use arrow keys to cycle)",
                 editable: false,
             },
             SettingsField {
-                key: "default_path",
-                label: "Default Path",
-                value: config.default_path.clone().unwrap_or_default(),
-                description: "Default file picker start directory (Enter to browse)",
+                key: "recipes_dir",
+                label: "Recipes Directory",
+                value: config.paths.recipes.clone().unwrap_or_default(),
+                description: "Where your recipes live (Enter to browse)",
                 editable: true,
             },
             SettingsField {
                 key: "output_dir",
                 label: "Output Directory",
-                value: config.output_dir.clone().unwrap_or_default(),
+                value: config.paths.output.clone().unwrap_or_default(),
                 description: "Recipe output directory (Enter to browse)",
                 editable: true,
             },
@@ -85,27 +85,23 @@ impl SettingsModel {
         self.fields.get(self.focused).is_some_and(|f| f.editable)
     }
 
-    /// Apply current settings back to a TuiConfig.
-    pub fn to_config(&self, variant: ThemeVariant) -> TuiConfig {
-        let default_path = self
+    /// Apply current settings back to a partial TomlConfig update.
+    pub fn apply_to_config(&self, config: &mut TomlConfig, variant: ThemeVariant) {
+        config.tui.theme = variant.as_slug().to_string();
+
+        config.paths.recipes = self
             .fields
             .iter()
-            .find(|f| f.key == "default_path")
+            .find(|f| f.key == "recipes_dir")
             .map(|f| f.value.clone())
             .filter(|v| !v.is_empty());
 
-        let output_dir = self
+        config.paths.output = self
             .fields
             .iter()
             .find(|f| f.key == "output_dir")
             .map(|f| f.value.clone())
             .filter(|v| !v.is_empty());
-
-        TuiConfig {
-            theme: variant.as_slug().to_string(),
-            default_path,
-            output_dir,
-        }
     }
 }
 
@@ -144,17 +140,32 @@ mod tests {
     use super::*;
 
     fn default_settings() -> SettingsModel {
-        SettingsModel::from_config(&TuiConfig::default())
+        SettingsModel::from_toml_config(&TomlConfig::default())
     }
 
     #[test]
-    fn new_creates_four_fields() {
+    fn four_settings_fields() {
         let m = default_settings();
         assert_eq!(m.fields.len(), 4);
         assert_eq!(m.fields[0].key, "theme");
-        assert_eq!(m.fields[1].key, "default_path");
+        assert_eq!(m.fields[1].key, "recipes_dir");
         assert_eq!(m.fields[2].key, "output_dir");
         assert_eq!(m.fields[3].key, "telemetry");
+    }
+
+    #[test]
+    fn no_default_path_field() {
+        let m = default_settings();
+        assert!(
+            m.fields.iter().all(|f| f.key != "default_path"),
+            "default_path field should not exist"
+        );
+    }
+
+    #[test]
+    fn recipes_dir_field_is_editable() {
+        let m = default_settings();
+        assert!(m.fields[1].editable);
     }
 
     #[test]
@@ -206,46 +217,54 @@ mod tests {
     }
 
     #[test]
-    fn to_config_maps_fields_to_config() {
+    fn apply_to_config_maps_fields() {
         let mut m = default_settings();
-        m.fields[1].value = "/photos".to_string();
+        m.fields[1].value = "/recipes".to_string();
         m.fields[2].value = "/output".to_string();
-        let config = m.to_config(ThemeVariant::Tokyo);
-        assert_eq!(config.theme, "tokyo");
-        assert_eq!(config.default_path, Some("/photos".to_string()));
-        assert_eq!(config.output_dir, Some("/output".to_string()));
+        let mut config = TomlConfig::default();
+        m.apply_to_config(&mut config, ThemeVariant::Tokyo);
+        assert_eq!(config.tui.theme, "tokyo");
+        assert_eq!(config.paths.recipes, Some("/recipes".to_string()));
+        assert_eq!(config.paths.output, Some("/output".to_string()));
     }
 
     #[test]
-    fn to_config_empty_strings_become_none() {
+    fn apply_to_config_empty_strings_become_none() {
         let m = default_settings();
-        let config = m.to_config(ThemeVariant::LosAngeles);
-        assert!(config.default_path.is_none());
-        assert!(config.output_dir.is_none());
+        let mut config = TomlConfig::default();
+        m.apply_to_config(&mut config, ThemeVariant::LosAngeles);
+        assert!(config.paths.recipes.is_none());
+        assert!(config.paths.output.is_none());
     }
 
     #[test]
-    fn to_config_preserves_output_dir_when_only_default_path_changed() {
+    fn apply_preserves_output_when_only_recipes_changed() {
         let mut m = default_settings();
-        // Simulate: user previously set output_dir, now only changes default_path.
         m.fields[2].value = "/existing-output".to_string();
-        m.fields[1].value = "/new-default".to_string();
-        let config = m.to_config(ThemeVariant::LosAngeles);
-        assert_eq!(config.default_path, Some("/new-default".to_string()));
-        assert_eq!(config.output_dir, Some("/existing-output".to_string()));
+        m.fields[1].value = "/new-recipes".to_string();
+        let mut config = TomlConfig::default();
+        m.apply_to_config(&mut config, ThemeVariant::LosAngeles);
+        assert_eq!(config.paths.recipes, Some("/new-recipes".to_string()));
+        assert_eq!(config.paths.output, Some("/existing-output".to_string()));
     }
 
     #[test]
-    fn from_config_roundtrips_all_fields() {
-        let config = TuiConfig {
-            theme: "tokyo".to_string(),
-            default_path: Some("/photos".to_string()),
-            output_dir: Some("/output".to_string()),
+    fn from_toml_config_roundtrips() {
+        let config = TomlConfig {
+            tui: super::super::super::toml_config::TuiSection {
+                theme: "tokyo".into(),
+            },
+            paths: super::super::super::toml_config::PathsSection {
+                recipes: Some("/recipes".into()),
+                output: Some("/output".into()),
+            },
+            ..TomlConfig::default()
         };
-        let model = SettingsModel::from_config(&config);
-        let roundtripped = model.to_config(ThemeVariant::Tokyo);
-        assert_eq!(roundtripped.theme, "tokyo");
-        assert_eq!(roundtripped.default_path, config.default_path);
-        assert_eq!(roundtripped.output_dir, config.output_dir);
+        let model = SettingsModel::from_toml_config(&config);
+        let mut roundtripped = TomlConfig::default();
+        model.apply_to_config(&mut roundtripped, ThemeVariant::Tokyo);
+        assert_eq!(roundtripped.tui.theme, "tokyo");
+        assert_eq!(roundtripped.paths.recipes, config.paths.recipes);
+        assert_eq!(roundtripped.paths.output, config.paths.output);
     }
 }

@@ -19,7 +19,7 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
     match model.home.confirm() {
         HomeConfirmResult::Navigate(screen) => match screen {
             Screen::Settings => {
-                let settings = SettingsModel::from_config(&model.config);
+                let settings = SettingsModel::from_toml_config(&model.toml_config);
                 AppModel {
                     screen: Screen::Settings,
                     settings: Some(settings),
@@ -52,7 +52,7 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
             }
             let clamped = idx.min(model.browser.recipes.len() - 1);
             let slug = model.browser.recipes[clamped].slug.clone();
-            let start_dir = resolve_start_dir(&model.config);
+            let start_dir = resolve_start_dir();
             let detail = super::super::screens::detail_loader::load_detail_with_dir(
                 &slug,
                 &model.registry,
@@ -128,7 +128,7 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
 
 /// Navigate to a recipe's detail screen from the browser.
 pub(crate) fn handle_recipe_selected(model: AppModel, slug: String) -> AppModel {
-    let start_dir = resolve_start_dir(&model.config);
+    let start_dir = resolve_start_dir();
     let detail = super::super::screens::detail_loader::load_detail_with_dir(
         &slug,
         &model.registry,
@@ -213,7 +213,7 @@ pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppMod
             Screen::Execution { slug, from } => (slug.clone(), *from),
             _ => (String::new(), DetailOrigin::Home),
         };
-        let start_dir = resolve_start_dir(&model.config);
+        let start_dir = resolve_start_dir();
         let detail = super::super::screens::detail_loader::load_detail_with_dir(
             &slug,
             &model.registry,
