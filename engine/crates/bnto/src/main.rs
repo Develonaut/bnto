@@ -24,6 +24,7 @@ pub mod logging;
 mod migrate;
 mod package_manager;
 mod progress;
+pub mod storage;
 pub mod telemetry;
 mod trust;
 mod tui;
@@ -232,7 +233,7 @@ fn main() {
 
 /// Create the session logger. Falls back to NoopLogger if paths can't be resolved.
 fn create_logger() -> Arc<dyn Logger> {
-    tui::paths::BntoPaths::resolve()
+    storage::BntoPaths::resolve()
         .and_then(|p| FileLogger::new(&p.logs_dir(), LogLevel::Debug))
         .map(|fl| Arc::new(fl) as Arc<dyn Logger>)
         .unwrap_or_else(|| Arc::new(NoopLogger))
@@ -391,7 +392,7 @@ fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool) {
     let has_shell = trust::has_shell_commands(&def.nodes);
     let hash = trust::definition_hash(raw_json);
 
-    let trust_path = tui::paths::BntoPaths::resolve().map(|p| p.trusted_file());
+    let trust_path = storage::BntoPaths::resolve().map(|p| p.trusted_file());
 
     let store = trust_path
         .as_ref()

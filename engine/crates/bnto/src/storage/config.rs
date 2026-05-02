@@ -1,4 +1,4 @@
-// TOML-based config for the TUI.
+// TOML-based config for bnto.
 //
 // Schema-versioned. Fields use serde(default) so new fields can be
 // added without breaking existing config files.
@@ -11,7 +11,7 @@ use super::paths::BntoPaths;
 /// Current config schema version. Bump when the TOML structure changes.
 const CURRENT_VERSION: u32 = 2;
 
-/// Persistent TUI settings in TOML format.
+/// Persistent settings in TOML format.
 ///
 /// All fields have defaults so partial or empty config files
 /// deserialize without error. The `version` field enables future
@@ -170,7 +170,6 @@ mod tests {
     fn paths_section_omits_none() {
         let config = TomlConfig::default();
         let serialized = toml::to_string_pretty(&config).unwrap();
-        // Empty PathsSection should still appear but with no keys.
         assert!(!serialized.contains("recipes ="));
         assert!(!serialized.contains("output ="));
     }
@@ -215,7 +214,6 @@ mod tests {
 
     #[test]
     fn serde_default_fields() {
-        // Minimal TOML with only version — all others should default.
         let minimal = "version = 2\n";
         let config: TomlConfig = toml::from_str(minimal).unwrap();
         assert_eq!(config.tui.theme, "los-angeles");
@@ -276,8 +274,6 @@ mod tests {
 
     #[test]
     fn v1_config_loads_with_defaults_for_new_fields() {
-        // A v1 config with old [output] and [picker] sections.
-        // These will be ignored (unknown fields) and new [paths] defaults apply.
         let v1_toml = r#"
 version = 1
 
@@ -295,7 +291,6 @@ enabled = false
 "#;
         let config: TomlConfig = toml::from_str(v1_toml).unwrap();
         assert_eq!(config.tui.theme, "tokyo");
-        // Old sections are silently ignored — paths section gets defaults.
         assert!(config.paths.recipes.is_none());
         assert!(config.paths.output.is_none());
         assert!(!config.telemetry.enabled);

@@ -5,13 +5,11 @@
 
 pub mod app;
 mod app_helpers;
-pub mod atomic;
 mod bridge;
 pub mod event;
 pub mod format;
 mod keys;
 pub mod palette;
-pub mod paths;
 mod render;
 mod render_detail;
 mod render_editor;
@@ -28,7 +26,6 @@ mod render_wizard;
 pub mod screen;
 pub mod screens;
 pub mod theme;
-pub mod toml_config;
 pub mod widgets;
 
 use std::io;
@@ -326,14 +323,14 @@ mod tests {
     use screens::settings::SettingsModel;
     use tonkotsu::FormMessage;
 
-    fn test_paths() -> paths::BntoPaths {
+    fn test_paths() -> crate::storage::BntoPaths {
         use std::sync::atomic::{AtomicU32, Ordering};
         static COUNTER: AtomicU32 = AtomicU32::new(0);
         let id = COUNTER.fetch_add(1, Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!("bnto-mod-test-{id}"));
-        let p = paths::BntoPaths { home: root };
+        let p = crate::storage::BntoPaths { home: root };
         let _ = p.ensure_dirs();
-        let _ = toml_config::TomlConfig::default().save(&p);
+        let _ = crate::storage::config::TomlConfig::default().save(&p);
         p
     }
 
