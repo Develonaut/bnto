@@ -40,6 +40,20 @@ impl BntoPaths {
         Some(Self { home })
     }
 
+    /// Apply a config home override if set.
+    ///
+    /// Call after loading config from the default home. If `paths.home`
+    /// is set in the config, returns a new `BntoPaths` rooted there.
+    /// All derived paths (recipes, logs, cache) follow the new root.
+    pub fn with_config_override(self, config: &super::config::TomlConfig) -> Self {
+        match config.paths.home.as_deref().filter(|s| !s.is_empty()) {
+            Some(home) => Self {
+                home: PathBuf::from(home),
+            },
+            None => self,
+        }
+    }
+
     /// Path to the main config file.
     pub fn config_file(&self) -> PathBuf {
         self.home.join("config.toml")
@@ -188,5 +202,35 @@ mod tests {
         paths
             .ensure_dirs()
             .expect("second call should also succeed");
+    }
+
+    #[test]
+    fn with_config_override_applies_custom_home() {
+        let original = paths_from_root(std::path::Path::new("/default"));
+        let mut config = crate::storage::config::TomlConfig::default();
+        config.paths.home = Some("/custom/bnto".into());
+        let overridden = original.with_config_override(&config);
+        assert_eq!(overridden.home, std::path::PathBuf::from("/custom/bnto"));
+        assert_eq!(
+            overridden.recipes_dir(),
+            std::path::PathBuf::from("/custom/bnto/recipes")
+        );
+    }
+
+    #[test]
+    fn with_config_override_keeps_default_when_none() {
+        let original = paths_from_root(std::path::Path::new("/default"));
+        let config = crate::storage::config::TomlConfig::default();
+        let same = original.with_config_override(&config);
+        assert_eq!(same.home, std::path::PathBuf::from("/default"));
+    }
+
+    #[test]
+    fn with_config_override_ignores_empty_string() {
+        let original = paths_from_root(std::path::Path::new("/default"));
+        let mut config = crate::storage::config::TomlConfig::default();
+        config.paths.home = Some(String::new());
+        let same = original.with_config_override(&config);
+        assert_eq!(same.home, std::path::PathBuf::from("/default"));
     }
 }

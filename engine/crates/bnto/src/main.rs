@@ -155,7 +155,11 @@ fn main() {
 
     // Resolve paths, create dirs, run pending migrations — before anything else.
     let paths = match storage::ensure_ready() {
-        Ok(p) => Some(p),
+        Ok(p) => {
+            // Apply config home override so all derived paths follow it.
+            let config = storage::config::TomlConfig::load(&p);
+            Some(p.with_config_override(&config))
+        }
         Err(e) => {
             eprintln!("{} storage init: {e}", "Warning:".yellow());
             None
@@ -166,9 +170,7 @@ fn main() {
     let logger = create_logger(&paths);
 
     // Build unified recipe catalog — bundled + user library.
-    let library_dir = storage::paths::BntoPaths::resolve()
-        .map(|p| p.recipes_dir())
-        .unwrap_or_default();
+    let library_dir = paths.as_ref().map(|p| p.recipes_dir()).unwrap_or_default();
     let catalog = RecipeCatalog::load(&library_dir);
 
     let cmd_name = match &cli.command {

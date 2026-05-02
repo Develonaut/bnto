@@ -42,8 +42,6 @@ pub enum SettingsMessage {
 
 impl SettingsModel {
     /// Create a settings model from the TOML config.
-    ///
-    /// Recipes directory defaults to `~/.bnto/recipes/` but is configurable.
     pub fn from_toml_config(config: &TomlConfig) -> Self {
         let fields = vec![
             SettingsField {
@@ -54,17 +52,10 @@ impl SettingsModel {
                 editable: false,
             },
             SettingsField {
-                key: "recipes_dir",
-                label: "Recipes Directory",
-                value: config.paths.recipes.clone().unwrap_or_default(),
-                description: "Custom recipes directory (Enter to browse)",
-                editable: true,
-            },
-            SettingsField {
-                key: "output_dir",
-                label: "Output Directory",
-                value: config.paths.output.clone().unwrap_or_default(),
-                description: "Recipe output directory (Enter to browse)",
+                key: "home_path",
+                label: "Home Path",
+                value: config.paths.home.clone().unwrap_or_default(),
+                description: "Where bnto stores recipes, logs, and cache (Enter to browse)",
                 editable: true,
             },
             SettingsField {
@@ -91,17 +82,10 @@ impl SettingsModel {
     pub fn apply_to_config(&self, config: &mut TomlConfig, variant: ThemeVariant) {
         config.tui.theme = variant.as_slug().to_string();
 
-        config.paths.recipes = self
+        config.paths.home = self
             .fields
             .iter()
-            .find(|f| f.key == "recipes_dir")
-            .map(|f| f.value.clone())
-            .filter(|v| !v.is_empty());
-
-        config.paths.output = self
-            .fields
-            .iter()
-            .find(|f| f.key == "output_dir")
+            .find(|f| f.key == "home_path")
             .map(|f| f.value.clone())
             .filter(|v| !v.is_empty());
     }
@@ -146,22 +130,12 @@ mod tests {
     }
 
     #[test]
-    fn four_settings_fields() {
+    fn three_settings_fields() {
         let m = default_settings();
-        assert_eq!(m.fields.len(), 4);
+        assert_eq!(m.fields.len(), 3);
         assert_eq!(m.fields[0].key, "theme");
-        assert_eq!(m.fields[1].key, "recipes_dir");
-        assert_eq!(m.fields[2].key, "output_dir");
-        assert_eq!(m.fields[3].key, "telemetry");
-    }
-
-    #[test]
-    fn recipes_dir_field_exists() {
-        let m = default_settings();
-        assert!(
-            m.fields.iter().any(|f| f.key == "recipes_dir"),
-            "recipes_dir field should exist in settings"
-        );
+        assert_eq!(m.fields[1].key, "home_path");
+        assert_eq!(m.fields[2].key, "telemetry");
     }
 
     #[test]
@@ -171,27 +145,21 @@ mod tests {
     }
 
     #[test]
-    fn recipes_dir_field_is_editable() {
+    fn home_path_field_is_editable() {
         let m = default_settings();
         assert!(m.fields[1].editable);
     }
 
     #[test]
-    fn output_dir_field_is_editable() {
-        let m = default_settings();
-        assert!(m.fields[2].editable);
-    }
-
-    #[test]
     fn telemetry_field_is_not_editable() {
         let m = default_settings();
-        assert!(!m.fields[3].editable);
+        assert!(!m.fields[2].editable);
     }
 
     #[test]
     fn telemetry_field_shows_on_or_off() {
         let m = default_settings();
-        let value = &m.fields[3].value;
+        let value = &m.fields[2].value;
         assert!(value == "On" || value == "Off");
     }
 
@@ -205,7 +173,7 @@ mod tests {
     #[test]
     fn focus_next_wraps() {
         let mut m = default_settings();
-        m.focused = 3;
+        m.focused = 2;
         let m = update(m, SettingsMessage::FocusNext);
         assert_eq!(m.focused, 0);
     }
@@ -214,38 +182,35 @@ mod tests {
     fn focus_prev_wraps() {
         let m = default_settings();
         let m = update(m, SettingsMessage::FocusPrev);
-        assert_eq!(m.focused, 3);
+        assert_eq!(m.focused, 2);
     }
 
     #[test]
-    fn apply_to_config_maps_fields() {
+    fn apply_to_config_maps_home_path() {
         let mut m = default_settings();
-        m.fields[1].value = "/recipes".to_string();
-        m.fields[2].value = "/output".to_string();
+        m.fields[1].value = "/custom/bnto".to_string();
         let mut config = TomlConfig::default();
         m.apply_to_config(&mut config, ThemeVariant::Tokyo);
         assert_eq!(config.tui.theme, "tokyo");
-        assert_eq!(config.paths.recipes, Some("/recipes".to_string()));
-        assert_eq!(config.paths.output, Some("/output".to_string()));
+        assert_eq!(config.paths.home, Some("/custom/bnto".to_string()));
     }
 
     #[test]
-    fn apply_empty_output_becomes_none() {
+    fn apply_empty_home_becomes_none() {
         let m = default_settings();
         let mut config = TomlConfig::default();
         m.apply_to_config(&mut config, ThemeVariant::LosAngeles);
-        assert!(config.paths.output.is_none());
+        assert!(config.paths.home.is_none());
     }
 
     #[test]
-    fn from_toml_config_roundtrips_output() {
+    fn from_toml_config_roundtrips_home() {
         let config = TomlConfig {
             tui: crate::storage::config::TuiSection {
                 theme: "tokyo".into(),
             },
             paths: crate::storage::config::PathsSection {
-                recipes: None,
-                output: Some("/output".into()),
+                home: Some("/custom".into()),
             },
             ..TomlConfig::default()
         };
@@ -253,6 +218,6 @@ mod tests {
         let mut roundtripped = TomlConfig::default();
         model.apply_to_config(&mut roundtripped, ThemeVariant::Tokyo);
         assert_eq!(roundtripped.tui.theme, "tokyo");
-        assert_eq!(roundtripped.paths.output, config.paths.output);
+        assert_eq!(roundtripped.paths.home, config.paths.home);
     }
 }
