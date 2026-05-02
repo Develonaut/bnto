@@ -14,7 +14,8 @@ Like a traditional Japanese bento box where each compartment serves a specific p
 
 ### Size Limits
 
-- **Files:** Target 50-100 lines. Hard cap at 250 -- no exceptions. If a file approaches 150 lines, look for extraction opportunities
+- **Files (TypeScript):** Target 50-100 lines. Hard cap at 250 -- no exceptions. If a file approaches 150 lines, look for extraction opportunities
+- **Files (Rust):** Hard cap at 400 production lines (excluding `#[cfg(test)]` blocks). Rust files naturally run larger than TS due to co-located tests, explicit error handling, and match arms. The 250-line TS limit doesn't translate 1:1
 - **Functions:** < 20 lines. No escape hatch
 - **Components:** One exported component per file. Target 50-100 lines of JSX + logic. If a component has more than 2-3 sub-components defined in the same file, break into a folder with barrel export
 - **Hooks:** One exported hook per file
