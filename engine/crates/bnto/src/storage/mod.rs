@@ -66,8 +66,8 @@ mod tests {
         ensure_ready_with(&paths).unwrap();
 
         assert!(paths.config_file().exists());
-        // Version should still be 2 after second run.
+        // Version should still be current after second run.
         let config = config::TomlConfig::load(&paths);
-        assert_eq!(config.version, 2);
+        assert_eq!(config.version, 3);
     }
 }

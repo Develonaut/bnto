@@ -913,6 +913,30 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ---
 
+### Triage: bulk-video-download output routing
+
+**Priority: Triage.** The bulk-video-download recipe currently hardcodes the download path in the shell-command's `-o` arg. Instead, the output node's `directory` param should control where files end up, and the shell-command should write to `{{output_dir}}` (engine-managed temp). The loop's `progressive` output mode should populate the Downloads folder incrementally as iterations complete. Investigate whether the output node + progressive output pipeline is sufficient, or if yt-dlp's `-o` needs a special path for its own subdirectory structure (`{{item.group}}/`).
+
+`/Users/Ryan/.bnto/recipes/bulk-video-download.bnto.json`
+
+---
+
+### Triage: BntoPaths audit — no rogue path building
+
+**Priority: Triage.** Audit entire codebase for path formation that bypasses `BntoPaths`. All derivation of bnto home, recipes, logs, cache, and state dirs must go through `BntoPaths` module — no hardcoded `~/.bnto/`, no manual `PathBuf::from` construction outside `BntoPaths`. Fix any violations.
+
+`engine/crates/bnto/src/storage/paths.rs`, grep for `.join("recipes")`, `.join(".bnto")`, `home_dir()` outside `BntoPaths`
+
+---
+
+### Triage: Home path change — offer to migrate data
+
+**Priority: Triage.** When a user changes the Home Path setting in the TUI, prompt them: "Do you want to move your existing data from `<old path>` to `<new path>`?" If yes, move the contents of the old home (recipes, state, cache) to the new location. If no, just update the config pointer. Prevents orphaned data and avoids users needing to manually copy files.
+
+`engine/crates/bnto/src/tui/screens/settings.rs`, `engine/crates/bnto/src/tui/app_helpers/`
+
+---
+
 ## Reference
 
 | Document                                   | Purpose                                                                      |

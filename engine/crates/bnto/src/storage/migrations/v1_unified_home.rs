@@ -119,14 +119,13 @@ fn migrate_config_values(old: &OldPaths, paths: &BntoPaths) -> Result<(), Migrat
     let old_contents = std::fs::read_to_string(&old_config)?;
     let old_parsed: V1Config = toml::from_str(&old_contents).unwrap_or_default();
 
-    // Build v2 config from old values.
+    // Build v3 config from old values.
+    // Note: v1's [output] dir and [picker] default_path are dropped — recipes
+    // now own their output directory via the `directory` parameter.
     let mut new = super::super::config::TomlConfig::default();
 
     if let Some(theme) = old_parsed.tui.and_then(|t| t.theme) {
         new.tui.theme = theme;
-    }
-    if let Some(dir) = old_parsed.output.and_then(|o| o.dir) {
-        new.paths.output = Some(dir);
     }
     if let Some(enabled) = old_parsed.telemetry.and_then(|t| t.enabled) {
         new.telemetry.enabled = enabled;
@@ -163,6 +162,7 @@ fn copy_trusted_json(old: &OldPaths, paths: &BntoPaths) -> Result<(), MigrationE
 #[derive(serde::Deserialize, Default)]
 struct V1Config {
     tui: Option<V1Tui>,
+    #[allow(dead_code)]
     output: Option<V1Output>,
     #[allow(dead_code)]
     picker: Option<V1Picker>,
@@ -175,6 +175,7 @@ struct V1Tui {
 }
 
 #[derive(serde::Deserialize)]
+#[allow(dead_code)]
 struct V1Output {
     dir: Option<String>,
 }
@@ -285,7 +286,8 @@ enabled = false
 
         let config = super::super::super::config::TomlConfig::load(&new_paths);
         assert_eq!(config.tui.theme, "tokyo");
-        assert_eq!(config.paths.output, Some("/my/output".to_string()));
+        // v1's [output] dir is dropped — recipes own their output directory now.
+        assert!(config.paths.home.is_none());
         assert!(!config.telemetry.enabled);
     }
 

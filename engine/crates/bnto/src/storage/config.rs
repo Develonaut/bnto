@@ -9,7 +9,7 @@ use super::atomic::atomic_write;
 use super::paths::BntoPaths;
 
 /// Current config schema version. Bump when the TOML structure changes.
-const CURRENT_VERSION: u32 = 2;
+const CURRENT_VERSION: u32 = 3;
 
 /// Persistent settings in TOML format.
 ///
@@ -44,12 +44,10 @@ pub struct TuiSection {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct PathsSection {
-    /// Custom recipes directory (None = ~/.bnto/recipes/).
+    /// Custom bnto home directory (None = ~/.bnto/).
+    /// All derived paths (recipes, logs, cache) follow this root.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub recipes: Option<String>,
-    /// Custom output directory (None = system temp).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub output: Option<String>,
+    pub home: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -115,11 +113,6 @@ impl TomlConfig {
             .map_err(|e| std::io::Error::other(format!("TOML serialize: {e}")))?;
         atomic_write(&path, toml_str.as_bytes())
     }
-
-    /// Effective output directory — config override or None (= system temp).
-    pub fn output_dir(&self) -> Option<&str> {
-        self.paths.output.as_deref().filter(|s| !s.is_empty())
-    }
 }
 
 #[cfg(test)]
@@ -136,37 +129,33 @@ mod tests {
     }
 
     #[test]
-    fn default_has_version_2() {
+    fn default_has_version_3() {
         let config = TomlConfig::default();
-        assert_eq!(config.version, 2);
+        assert_eq!(config.version, 3);
         assert_eq!(config.tui.theme, "los-angeles");
-        assert!(config.paths.recipes.is_none());
-        assert!(config.paths.output.is_none());
+        assert!(config.paths.home.is_none());
         assert!(config.telemetry.enabled);
     }
 
     #[test]
-    fn paths_section_serializes() {
+    fn paths_home_serializes() {
         let config = TomlConfig {
             paths: PathsSection {
-                recipes: Some("/my/recipes".into()),
-                output: Some("/my/output".into()),
+                home: Some("/my/bnto".into()),
             },
             ..TomlConfig::default()
         };
 
         let serialized = toml::to_string_pretty(&config).unwrap();
         assert!(serialized.contains("[paths]"));
-        assert!(serialized.contains("recipes = \"/my/recipes\""));
-        assert!(serialized.contains("output = \"/my/output\""));
+        assert!(serialized.contains("home = \"/my/bnto\""));
     }
 
     #[test]
     fn paths_section_omits_none() {
         let config = TomlConfig::default();
         let serialized = toml::to_string_pretty(&config).unwrap();
-        assert!(!serialized.contains("recipes ="));
-        assert!(!serialized.contains("output ="));
+        assert!(!serialized.contains("home ="));
     }
 
     #[test]
@@ -178,8 +167,7 @@ mod tests {
                 theme: "tokyo".into(),
             },
             paths: PathsSection {
-                recipes: Some("/recipes".into()),
-                output: Some("/output".into()),
+                home: Some("/custom/bnto".into()),
             },
             telemetry: TelemetrySection { enabled: false },
             ..TomlConfig::default()
@@ -202,34 +190,18 @@ mod tests {
         let config = TomlConfig::default();
         let serialized = toml::to_string_pretty(&config).unwrap();
         assert!(
-            serialized.contains("version = 2"),
-            "serialized TOML should contain version = 2, got:\n{serialized}"
+            serialized.contains("version = 3"),
+            "serialized TOML should contain version = 3, got:\n{serialized}"
         );
     }
 
     #[test]
     fn serde_default_fields() {
-        let minimal = "version = 2\n";
+        let minimal = "version = 3\n";
         let config: TomlConfig = toml::from_str(minimal).unwrap();
         assert_eq!(config.tui.theme, "los-angeles");
-        assert!(config.paths.recipes.is_none());
-        assert!(config.paths.output.is_none());
+        assert!(config.paths.home.is_none());
         assert!(config.telemetry.enabled);
-    }
-
-    #[test]
-    fn output_dir_accessor() {
-        let mut config = TomlConfig::default();
-        assert!(config.output_dir().is_none());
-
-        config.paths.output = Some("/tmp/out".into());
-        assert_eq!(config.output_dir(), Some("/tmp/out"));
-
-        config.paths.output = Some(String::new());
-        assert!(
-            config.output_dir().is_none(),
-            "empty string treated as None"
-        );
     }
 
     #[test]
@@ -237,13 +209,12 @@ mod tests {
         let (_tmp, paths) = test_paths();
 
         let config = TomlConfig {
-            version: 2,
+            version: 3,
             tui: TuiSection {
                 theme: "tokyo".into(),
             },
             paths: PathsSection {
-                recipes: Some("/recipes".into()),
-                output: Some("/out".into()),
+                home: Some("/custom".into()),
             },
             telemetry: TelemetrySection { enabled: false },
         };
@@ -251,11 +222,31 @@ mod tests {
         config.save(&paths).unwrap();
         let loaded = TomlConfig::load(&paths);
 
-        assert_eq!(loaded.version, 2);
+        assert_eq!(loaded.version, 3);
         assert_eq!(loaded.tui.theme, "tokyo");
-        assert_eq!(loaded.paths.recipes, Some("/recipes".into()));
-        assert_eq!(loaded.paths.output, Some("/out".into()));
+        assert_eq!(loaded.paths.home, Some("/custom".into()));
         assert!(!loaded.telemetry.enabled);
+    }
+
+    #[test]
+    fn v2_config_loads_ignoring_old_path_fields() {
+        let v2_toml = r#"
+version = 2
+
+[tui]
+theme = "tokyo"
+
+[paths]
+recipes = "/old/recipes"
+output = "/old/output"
+
+[telemetry]
+enabled = false
+"#;
+        let config: TomlConfig = toml::from_str(v2_toml).unwrap();
+        assert_eq!(config.tui.theme, "tokyo");
+        assert!(config.paths.home.is_none());
+        assert!(!config.telemetry.enabled);
     }
 
     #[test]
@@ -277,8 +268,7 @@ enabled = false
 "#;
         let config: TomlConfig = toml::from_str(v1_toml).unwrap();
         assert_eq!(config.tui.theme, "tokyo");
-        assert!(config.paths.recipes.is_none());
-        assert!(config.paths.output.is_none());
+        assert!(config.paths.home.is_none());
         assert!(!config.telemetry.enabled);
     }
 }

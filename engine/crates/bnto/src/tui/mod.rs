@@ -217,7 +217,7 @@ fn run_loop(
                 exec.definition_json.clone(),
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
-                model.toml_config.output_dir().map(String::from),
+                None, // output dir resolved by recipe's directory param or temp fallback
             ));
             execution_start = Some(Instant::now());
         }
@@ -545,13 +545,13 @@ mod tests {
     #[test]
     fn settings_enter_opens_picker_on_editable_field() {
         let mut model = settings_model();
-        // Focus on field 2 (output_dir, editable).
-        model.settings.as_mut().unwrap().focused = 2;
+        // Focus on field 1 (home_path, editable).
+        model.settings.as_mut().unwrap().focused = 1;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
             Some(AppMessage::OpenSettingsPicker {
-                field_key: "output_dir".into()
+                field_key: "home_path".into()
             })
         );
     }
@@ -580,12 +580,12 @@ mod tests {
     #[test]
     fn settings_left_right_toggles_telemetry_on_telemetry_field() {
         let mut model = settings_model();
-        // Focus on field 3 (telemetry, non-editable toggle).
+        // Focus on field 2 (telemetry, non-editable toggle).
         let settings = model.settings.as_mut().unwrap();
-        settings.focused = 3;
+        settings.focused = 2;
         // Explicitly set value to "On" — don't rely on TelemetryConfig::load()
         // which can be polluted by other tests writing to the global config file.
-        settings.fields[3].value = "On".to_string();
+        settings.fields[2].value = "On".to_string();
         // Value is "On", so right should toggle to Off.
         let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
@@ -603,7 +603,7 @@ mod tests {
     #[test]
     fn settings_enter_on_telemetry_field_returns_none() {
         let mut model = settings_model();
-        model.settings.as_mut().unwrap().focused = 3;
+        model.settings.as_mut().unwrap().focused = 2;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), None);
     }
