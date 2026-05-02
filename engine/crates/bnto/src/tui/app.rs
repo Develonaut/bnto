@@ -19,7 +19,6 @@ use super::app_helpers::{
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
     handle_wizard_form, load_editor_from_json,
 };
-use super::paths::BntoPaths;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::DetailModel;
 use super::screens::editor::{EditorMessage, EditorScreenModel};
@@ -31,7 +30,8 @@ use super::screens::results::{ResultsMessage, ResultsModel, update as results_up
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
 use super::screens::wizard::{WizardMessage, WizardModel};
 use super::theme::{Theme, ThemeVariant};
-use super::toml_config::TomlConfig;
+use crate::storage::config::TomlConfig;
+use crate::storage::paths::BntoPaths;
 
 /// Where the user came from when entering the Detail screen.
 ///
@@ -303,7 +303,9 @@ impl AppModel {
 /// to the default `~/.bnto/recipes/`.
 pub fn effective_recipes_dir(config: &TomlConfig, paths: &BntoPaths) -> std::path::PathBuf {
     config
-        .recipes_dir_override()
+        .paths
+        .recipes
+        .as_deref()
         .map(std::path::PathBuf::from)
         .filter(|p| p.is_dir())
         .unwrap_or_else(|| paths.recipes_dir())
@@ -1690,7 +1692,7 @@ mod tests {
 
         // Pre-save a TOML config.
         let config = TomlConfig {
-            tui: crate::tui::toml_config::TuiSection {
+            tui: crate::storage::config::TuiSection {
                 theme: "tokyo".into(),
             },
             ..TomlConfig::default()

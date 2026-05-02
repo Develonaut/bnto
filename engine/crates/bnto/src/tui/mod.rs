@@ -5,13 +5,11 @@
 
 pub mod app;
 mod app_helpers;
-pub mod atomic;
 mod bridge;
 pub mod event;
 pub mod format;
 mod keys;
 pub mod palette;
-pub mod paths;
 mod render;
 mod render_detail;
 mod render_editor;
@@ -28,7 +26,6 @@ mod render_wizard;
 pub mod screen;
 pub mod screens;
 pub mod theme;
-pub mod toml_config;
 pub mod widgets;
 
 use std::io;
@@ -64,6 +61,7 @@ pub fn launch_tui(
     recipe_json: Option<String>,
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
+    paths: Option<crate::storage::BntoPaths>,
 ) -> io::Result<()> {
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -77,7 +75,14 @@ pub fn launch_tui(
     logger.flush(); // Flush the init entry even if setup fails.
     let mut terminal = terminal?;
 
-    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe, logger);
+    let result = run_loop(
+        &mut terminal,
+        variant,
+        recipe_json,
+        new_recipe,
+        logger,
+        paths,
+    );
     logger.flush();
     restore_terminal(&mut terminal)?;
     result
@@ -117,8 +122,12 @@ fn run_loop(
     recipe_json: Option<String>,
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
+    paths: Option<crate::storage::BntoPaths>,
 ) -> io::Result<()> {
-    let mut model = AppModel::new(variant, recipe_json, new_recipe);
+    let mut model = match paths {
+        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
+        None => AppModel::new(variant, recipe_json, new_recipe),
+    };
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
 
@@ -327,14 +336,14 @@ mod tests {
     use screens::settings::SettingsModel;
     use tonkotsu::FormMessage;
 
-    fn test_paths() -> paths::BntoPaths {
+    fn test_paths() -> crate::storage::BntoPaths {
         use std::sync::atomic::{AtomicU32, Ordering};
         static COUNTER: AtomicU32 = AtomicU32::new(0);
         let id = COUNTER.fetch_add(1, Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!("bnto-mod-test-{id}"));
-        let p = paths::BntoPaths { home: root };
+        let p = crate::storage::BntoPaths { home: root };
         let _ = p.ensure_dirs();
-        let _ = toml_config::TomlConfig::default().save(&p);
+        let _ = crate::storage::config::TomlConfig::default().save(&p);
         p
     }
 
@@ -505,13 +514,13 @@ mod tests {
     #[test]
     fn settings_enter_opens_picker_on_editable_field() {
         let mut model = settings_model();
-        // Focus on field 1 (recipes_dir, editable).
-        model.settings.as_mut().unwrap().focused = 1;
+        // Focus on field 2 (output_dir, editable).
+        model.settings.as_mut().unwrap().focused = 2;
         let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
         assert_eq!(
             handle_key(&model, key),
             Some(AppMessage::OpenSettingsPicker {
-                field_key: "recipes_dir".into()
+                field_key: "output_dir".into()
             })
         );
     }

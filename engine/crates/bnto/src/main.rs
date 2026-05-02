@@ -25,6 +25,7 @@ pub mod logging;
 mod migrate;
 mod package_manager;
 mod progress;
+pub mod storage;
 pub mod telemetry;
 mod trust;
 mod tui;
@@ -151,11 +152,20 @@ fn main() {
     let cli = Cli::parse();
     telemetry::init();
 
+    // Resolve paths, create dirs, run pending migrations — before anything else.
+    let paths = match storage::ensure_ready() {
+        Ok(p) => Some(p),
+        Err(e) => {
+            eprintln!("{} storage init: {e}", "Warning:".yellow());
+            None
+        }
+    };
+
     // Session logger — shared across all commands.
-    let logger = create_logger();
+    let logger = create_logger(&paths);
 
     // Build unified recipe catalog — bundled + user library.
-    let library_dir = tui::paths::BntoPaths::resolve()
+    let library_dir = storage::paths::BntoPaths::resolve()
         .map(|p| p.recipes_dir())
         .unwrap_or_default();
     let catalog = RecipeCatalog::load(&library_dir);
@@ -216,7 +226,7 @@ fn main() {
         }
         Some(Command::Tui { recipe, theme, new }) => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui(&theme, recipe, new, &logger);
+            launch_tui(&theme, recipe, new, &logger, paths);
         }
         Some(Command::Telemetry { action }) => match action {
             TelemetryAction::Enable => {
@@ -231,22 +241,29 @@ fn main() {
         },
         None => {
             telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui("los-angeles", None, false, &logger);
+            launch_tui("los-angeles", None, false, &logger, paths);
         }
     }
 
     logger.flush();
 }
 
-/// Create the session logger. Falls back to NoopLogger if paths can't be resolved.
-fn create_logger() -> Arc<dyn Logger> {
-    tui::paths::BntoPaths::resolve()
+/// Create the session logger. Falls back to NoopLogger if paths unavailable.
+fn create_logger(paths: &Option<storage::BntoPaths>) -> Arc<dyn Logger> {
+    paths
+        .as_ref()
         .and_then(|p| FileLogger::new(&p.logs_dir(), LogLevel::Debug))
         .map(|fl| Arc::new(fl) as Arc<dyn Logger>)
         .unwrap_or_else(|| Arc::new(NoopLogger))
 }
 
-fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool, logger: &Arc<dyn Logger>) {
+fn launch_tui(
+    theme_str: &str,
+    recipe_path: Option<String>,
+    new: bool,
+    logger: &Arc<dyn Logger>,
+    paths: Option<storage::BntoPaths>,
+) {
     let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
         Ok(v) => v,
         Err(e) => {
@@ -263,7 +280,7 @@ fn launch_tui(theme_str: &str, recipe_path: Option<String>, new: bool, logger: &
         }
     });
     let start = std::time::Instant::now();
-    if let Err(e) = tui::launch_tui(variant, recipe_json, new, logger) {
+    if let Err(e) = tui::launch_tui(variant, recipe_json, new, logger, paths) {
         eprintln!("{} {e}", "TUI error:".red());
         process::exit(1);
     }
@@ -400,7 +417,7 @@ fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog: &R
     let has_shell = trust::has_shell_commands(&def.nodes);
     let hash = trust::definition_hash(raw_json);
 
-    let trust_path = tui::paths::BntoPaths::resolve().map(|p| p.trusted_file());
+    let trust_path = storage::BntoPaths::resolve().map(|p| p.trusted_file());
 
     let store = trust_path
         .as_ref()

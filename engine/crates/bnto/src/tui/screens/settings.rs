@@ -1,10 +1,10 @@
 // Settings screen — TEA state + transitions for TUI configuration.
 //
-// Path fields open the file picker for directory browsing (Enter).
+// Output dir opens the file picker for directory browsing (Enter).
 // Theme field cycles with left/right arrows.
 
 use super::super::theme::ThemeVariant;
-use super::super::toml_config::TomlConfig;
+use crate::storage::config::TomlConfig;
 use crate::telemetry;
 
 /// A single configurable field in the settings screen.
@@ -42,6 +42,8 @@ pub enum SettingsMessage {
 
 impl SettingsModel {
     /// Create a settings model from the TOML config.
+    ///
+    /// Recipes directory defaults to `~/.bnto/recipes/` but is configurable.
     pub fn from_toml_config(config: &TomlConfig) -> Self {
         let fields = vec![
             SettingsField {
@@ -55,7 +57,7 @@ impl SettingsModel {
                 key: "recipes_dir",
                 label: "Recipes Directory",
                 value: config.paths.recipes.clone().unwrap_or_default(),
-                description: "Where your recipes live (Enter to browse)",
+                description: "Custom recipes directory (Enter to browse)",
                 editable: true,
             },
             SettingsField {
@@ -154,12 +156,18 @@ mod tests {
     }
 
     #[test]
-    fn no_default_path_field() {
+    fn recipes_dir_field_exists() {
         let m = default_settings();
         assert!(
-            m.fields.iter().all(|f| f.key != "default_path"),
-            "default_path field should not exist"
+            m.fields.iter().any(|f| f.key == "recipes_dir"),
+            "recipes_dir field should exist in settings"
         );
+    }
+
+    #[test]
+    fn theme_field_is_not_editable() {
+        let m = default_settings();
+        assert!(!m.fields[0].editable);
     }
 
     #[test]
@@ -169,9 +177,9 @@ mod tests {
     }
 
     #[test]
-    fn theme_field_is_not_editable() {
+    fn output_dir_field_is_editable() {
         let m = default_settings();
-        assert!(!m.fields[0].editable);
+        assert!(m.fields[2].editable);
     }
 
     #[test]
@@ -185,13 +193,6 @@ mod tests {
         let m = default_settings();
         let value = &m.fields[3].value;
         assert!(value == "On" || value == "Off");
-    }
-
-    #[test]
-    fn path_fields_are_editable() {
-        let m = default_settings();
-        assert!(m.fields[1].editable);
-        assert!(m.fields[2].editable);
     }
 
     #[test]
@@ -229,33 +230,21 @@ mod tests {
     }
 
     #[test]
-    fn apply_to_config_empty_strings_become_none() {
+    fn apply_empty_output_becomes_none() {
         let m = default_settings();
         let mut config = TomlConfig::default();
         m.apply_to_config(&mut config, ThemeVariant::LosAngeles);
-        assert!(config.paths.recipes.is_none());
         assert!(config.paths.output.is_none());
     }
 
     #[test]
-    fn apply_preserves_output_when_only_recipes_changed() {
-        let mut m = default_settings();
-        m.fields[2].value = "/existing-output".to_string();
-        m.fields[1].value = "/new-recipes".to_string();
-        let mut config = TomlConfig::default();
-        m.apply_to_config(&mut config, ThemeVariant::LosAngeles);
-        assert_eq!(config.paths.recipes, Some("/new-recipes".to_string()));
-        assert_eq!(config.paths.output, Some("/existing-output".to_string()));
-    }
-
-    #[test]
-    fn from_toml_config_roundtrips() {
+    fn from_toml_config_roundtrips_output() {
         let config = TomlConfig {
-            tui: super::super::super::toml_config::TuiSection {
+            tui: crate::storage::config::TuiSection {
                 theme: "tokyo".into(),
             },
-            paths: super::super::super::toml_config::PathsSection {
-                recipes: Some("/recipes".into()),
+            paths: crate::storage::config::PathsSection {
+                recipes: None,
                 output: Some("/output".into()),
             },
             ..TomlConfig::default()
@@ -264,7 +253,6 @@ mod tests {
         let mut roundtripped = TomlConfig::default();
         model.apply_to_config(&mut roundtripped, ThemeVariant::Tokyo);
         assert_eq!(roundtripped.tui.theme, "tokyo");
-        assert_eq!(roundtripped.paths.recipes, config.paths.recipes);
         assert_eq!(roundtripped.paths.output, config.paths.output);
     }
 }

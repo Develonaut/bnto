@@ -45,7 +45,7 @@ pub(crate) fn handle_library_rename(model: &AppModel) -> Option<String> {
     };
     doc["name"] = serde_json::Value::String(new_name.clone());
     let updated = serde_json::to_string_pretty(&doc).unwrap_or_default();
-    match super::super::atomic::atomic_write(&path, updated.as_bytes()) {
+    match crate::storage::atomic::atomic_write(&path, updated.as_bytes()) {
         Ok(()) => Some(format!("Renamed to '{new_name}'")),
         Err(e) => Some(format!("Failed to rename: {e}")),
     }
@@ -94,11 +94,11 @@ pub(crate) fn handle_add_to_library_write(
     };
 
     let dest = model.paths.recipes_dir().join(format!("{slug}.bnto.json"));
-    let status_message = match super::super::atomic::atomic_write(&dest, definition_json.as_bytes())
-    {
-        Ok(()) => Some(format!("Added '{name}' to library")),
-        Err(e) => Some(format!("Failed to save: {e}")),
-    };
+    let status_message =
+        match crate::storage::atomic::atomic_write(&dest, definition_json.as_bytes()) {
+            Ok(()) => Some(format!("Added '{name}' to library")),
+            Err(e) => Some(format!("Failed to save: {e}")),
+        };
 
     // Refresh home screen library names.
     let library_names = list_library_recipes(&model.paths.recipes_dir());
