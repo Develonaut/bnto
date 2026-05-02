@@ -161,6 +161,21 @@ fn run_loop(
             });
         }
 
+        // Update browser viewport height from terminal size.
+        // Screen chrome: 2 (search bar + blank line).
+        if matches!(model.screen, app::Screen::Browser) {
+            let term_h = terminal.size()?.height;
+            let browser_height = render_layout::viewport_height(term_h, 2);
+            if browser_height > 0 {
+                model = update(
+                    model,
+                    AppMessage::Browser(screens::browser::BrowserMessage::Resize {
+                        height: browser_height,
+                    }),
+                );
+            }
+        }
+
         // Update picker viewport height from terminal size.
         // Screen chrome: 2 (dir path + blank line).
         if matches!(model.screen, app::Screen::Picker { .. }) {

@@ -52,7 +52,7 @@ impl RecipeCatalog {
             entries.extend(library_entries);
         }
 
-        entries.sort_by(|a, b| a.slug.cmp(&b.slug));
+        entries.sort_by(|a, b| a.category.cmp(&b.category).then(a.slug.cmp(&b.slug)));
         Self { entries }
     }
 
@@ -64,6 +64,14 @@ impl RecipeCatalog {
     /// Find a recipe by slug.
     pub fn resolve(&self, slug: &str) -> Option<&CatalogEntry> {
         self.entries.iter().find(|e| e.slug == slug)
+    }
+
+    /// Only bundled (predefined) recipes — excludes user library entries.
+    pub fn bundled(&self) -> Vec<&CatalogEntry> {
+        self.entries
+            .iter()
+            .filter(|e| e.source == RecipeSource::Bundled)
+            .collect()
     }
 
     /// Whether a slug is a bundled recipe (for trust classification only).
@@ -230,13 +238,33 @@ mod tests {
     }
 
     #[test]
-    fn catalog_entries_sorted_by_slug() {
+    fn catalog_entries_sorted_by_category_then_slug() {
         let tmp = tempfile::tempdir().unwrap();
         let catalog = RecipeCatalog::load(tmp.path());
-        let slugs: Vec<&str> = catalog.all().iter().map(|e| e.slug.as_str()).collect();
-        let mut sorted = slugs.clone();
+        let keys: Vec<(&str, &str)> = catalog
+            .all()
+            .iter()
+            .map(|e| (e.category.as_str(), e.slug.as_str()))
+            .collect();
+        let mut sorted = keys.clone();
         sorted.sort();
-        assert_eq!(slugs, sorted);
+        assert_eq!(keys, sorted);
+    }
+
+    #[test]
+    fn catalog_bundled_excludes_library_entries() {
+        let tmp = tempfile::tempdir().unwrap();
+        write_recipe(tmp.path(), "my-custom", "Custom", "custom");
+        let catalog = RecipeCatalog::load(tmp.path());
+        assert_eq!(catalog.all().len(), 21);
+        assert_eq!(catalog.bundled().len(), 20);
+        assert!(
+            catalog
+                .bundled()
+                .iter()
+                .all(|e| e.source == RecipeSource::Bundled),
+            "bundled() should only return bundled entries"
+        );
     }
 
     #[test]

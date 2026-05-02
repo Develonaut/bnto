@@ -5,6 +5,8 @@
 
 use crate::catalog::{CatalogEntry, RecipeSource};
 
+use super::viewport;
+
 /// Summary of a recipe for display in the browser list.
 #[derive(Debug, Clone)]
 pub struct RecipeSummary {
@@ -45,6 +47,10 @@ pub struct BrowserModel {
     pub search_query: String,
     /// Whether the search input is active (accepting text input).
     pub searching: bool,
+    /// First visible item index (scroll offset).
+    pub viewport_offset: usize,
+    /// Number of items visible in the viewport.
+    pub viewport_height: usize,
 }
 
 /// Messages the browser screen can handle.
@@ -64,6 +70,8 @@ pub enum BrowserMessage {
     ExitSearch,
     /// Clear the search query entirely.
     SearchClear,
+    /// Terminal resized — update viewport height.
+    Resize { height: usize },
 }
 
 /// The result of confirming a selection — the slug of the chosen recipe.
@@ -72,9 +80,9 @@ pub struct SelectionResult {
 }
 
 impl BrowserModel {
-    /// Create a new browser loaded with all catalog recipes.
-    pub fn new(entries: &[CatalogEntry]) -> Self {
-        let recipes: Vec<RecipeSummary> = entries.iter().map(Into::into).collect();
+    /// Create a new browser loaded with the given catalog recipes.
+    pub fn new(entries: &[&CatalogEntry]) -> Self {
+        let recipes: Vec<RecipeSummary> = entries.iter().map(|e| RecipeSummary::from(*e)).collect();
         let filtered = (0..recipes.len()).collect();
         Self {
             recipes,
@@ -82,6 +90,8 @@ impl BrowserModel {
             cursor: 0,
             search_query: String::new(),
             searching: false,
+            viewport_offset: 0,
+            viewport_height: 20,
         }
     }
 
@@ -101,6 +111,8 @@ impl BrowserModel {
             cursor: 0,
             search_query: String::new(),
             searching: false,
+            viewport_offset: 0,
+            viewport_height: 20,
         }
     }
 
@@ -119,6 +131,11 @@ pub fn update(mut model: BrowserModel, msg: BrowserMessage) -> BrowserModel {
         BrowserMessage::CursorDown => {
             if !model.filtered.is_empty() {
                 model.cursor = (model.cursor + 1) % model.filtered.len();
+                model.viewport_offset = viewport::ensure_cursor_visible(
+                    model.cursor,
+                    model.viewport_offset,
+                    model.viewport_height,
+                );
             }
         }
         BrowserMessage::CursorUp => {
@@ -128,6 +145,11 @@ pub fn update(mut model: BrowserModel, msg: BrowserMessage) -> BrowserModel {
                 } else {
                     model.cursor - 1
                 };
+                model.viewport_offset = viewport::ensure_cursor_visible(
+                    model.cursor,
+                    model.viewport_offset,
+                    model.viewport_height,
+                );
             }
         }
         BrowserMessage::SearchInput(ch) => {
@@ -147,6 +169,14 @@ pub fn update(mut model: BrowserModel, msg: BrowserMessage) -> BrowserModel {
         BrowserMessage::SearchClear => {
             model.search_query.clear();
             refilter(&mut model);
+        }
+        BrowserMessage::Resize { height } => {
+            model.viewport_height = height;
+            model.viewport_offset = viewport::ensure_cursor_visible(
+                model.cursor,
+                model.viewport_offset,
+                model.viewport_height,
+            );
         }
     }
     model
@@ -397,9 +427,9 @@ mod tests {
     // --- Integration: loads from catalog ---
 
     #[test]
-    fn new_loads_all_catalog_recipes() {
+    fn new_loads_bundled_catalog_recipes() {
         let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
-        let m = BrowserModel::new(catalog.all());
+        let m = BrowserModel::new(&catalog.bundled());
         assert_eq!(m.recipes.len(), 20);
         assert_eq!(m.filtered.len(), 20);
     }
@@ -415,5 +445,71 @@ mod tests {
     fn selected_recipe_returns_none_on_empty() {
         let m = BrowserModel::from_recipes(vec![]);
         assert!(m.selected_recipe().is_none());
+    }
+
+    // --- Viewport scrolling ---
+
+    fn big_browser() -> BrowserModel {
+        let recipes: Vec<RecipeSummary> = (0..30)
+            .map(|i| RecipeSummary {
+                slug: format!("recipe-{i:02}"),
+                name: format!("Recipe {i}"),
+                description: format!("Desc {i}"),
+                category: "test".into(),
+                is_bundled: true,
+                definition_json: "{}".into(),
+            })
+            .collect();
+        let mut m = BrowserModel::from_recipes(recipes);
+        m.viewport_height = 10;
+        m
+    }
+
+    #[test]
+    fn cursor_down_scrolls_viewport() {
+        let mut m = big_browser();
+        for _ in 0..10 {
+            m = update(m, BrowserMessage::CursorDown);
+        }
+        assert_eq!(m.cursor, 10);
+        assert!(m.viewport_offset > 0, "viewport should have scrolled");
+    }
+
+    #[test]
+    fn cursor_up_scrolls_viewport_back() {
+        let mut m = big_browser();
+        m.cursor = 15;
+        m.viewport_offset = 10;
+        m = update(m, BrowserMessage::CursorUp);
+        assert_eq!(m.cursor, 14);
+        assert_eq!(m.viewport_offset, 10);
+    }
+
+    #[test]
+    fn cursor_up_wrap_scrolls_to_bottom() {
+        let mut m = big_browser();
+        // cursor at 0, up wraps to last item
+        m = update(m, BrowserMessage::CursorUp);
+        assert_eq!(m.cursor, 29);
+        assert_eq!(m.viewport_offset, 20);
+    }
+
+    #[test]
+    fn resize_updates_viewport_height() {
+        let m = big_browser();
+        assert_eq!(m.viewport_height, 10);
+        let m = update(m, BrowserMessage::Resize { height: 15 });
+        assert_eq!(m.viewport_height, 15);
+    }
+
+    #[test]
+    fn resize_keeps_cursor_visible() {
+        let mut m = big_browser();
+        m.cursor = 25;
+        m.viewport_offset = 20;
+        let m = update(m, BrowserMessage::Resize { height: 5 });
+        assert_eq!(m.viewport_height, 5);
+        assert!(m.cursor >= m.viewport_offset);
+        assert!(m.cursor < m.viewport_offset + m.viewport_height);
     }
 }

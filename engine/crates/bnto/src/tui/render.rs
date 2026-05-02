@@ -59,9 +59,21 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
         lines.push(Line::from(""));
     }
 
-    // Group filtered recipes by category, preserving order
-    let mut current_category = String::new();
-    for (list_idx, &recipe_idx) in browser.filtered.iter().enumerate() {
+    // Slice to visible viewport
+    let offset = browser.viewport_offset;
+    let end = (offset + browser.viewport_height).min(browser.filtered.len());
+
+    // Seed category from the item before the viewport so the first visible
+    // item gets a header only when the category actually changes.
+    let mut current_category = if offset > 0 {
+        browser.recipes[browser.filtered[offset - 1]]
+            .category
+            .clone()
+    } else {
+        String::new()
+    };
+
+    for (vis_idx, &recipe_idx) in browser.filtered[offset..end].iter().enumerate() {
         let recipe = &browser.recipes[recipe_idx];
 
         if recipe.category != current_category {
@@ -75,7 +87,7 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
             )));
         }
 
-        let is_selected = list_idx == browser.cursor;
+        let is_selected = vis_idx + offset == browser.cursor;
         let marker = if is_selected { "▸ " } else { "  " };
         let name_style = if is_selected {
             theme.selected()
