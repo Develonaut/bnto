@@ -2216,4 +2216,83 @@ mod tests {
             InputMode::FileUpload
         );
     }
+
+    // --- Detail focus navigation ---
+
+    #[test]
+    fn detail_focus_params_moves_focus_from_run_to_params() {
+        use super::super::screens::detail::DetailModel;
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.focus = super::super::screens::detail::DetailFocus::Run;
+
+        let app = update(
+            AppModel {
+                screen: Screen::Detail {
+                    slug: "s".into(),
+                    from: DetailOrigin::Home,
+                },
+                detail: Some(detail),
+                ..default_model()
+            },
+            AppMessage::DetailFocusParams,
+        );
+        assert_eq!(
+            app.detail.as_ref().unwrap().focus,
+            super::super::screens::detail::DetailFocus::Params,
+            "DetailFocusParams should move focus from Run back to Params"
+        );
+    }
+
+    #[test]
+    fn up_key_on_run_focus_navigates_back_to_params() {
+        use super::super::screens::detail::DetailModel;
+        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.focus = super::super::screens::detail::DetailFocus::Run;
+
+        let model = AppModel {
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: DetailOrigin::Home,
+            },
+            detail: Some(detail),
+            ..default_model()
+        };
+
+        let key = KeyEvent::new(KeyCode::Up, KeyModifiers::NONE);
+        let msg = super::super::keys::handle_key(&model, key);
+        assert_eq!(
+            msg,
+            Some(AppMessage::DetailFocusParams),
+            "Up arrow on Run focus should emit DetailFocusParams"
+        );
+    }
+
+    #[test]
+    fn k_key_on_run_focus_navigates_back_to_params() {
+        use super::super::screens::detail::DetailModel;
+        use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+        let mut detail = DetailModel::from_test_data("s", "n", "d", vec![]);
+        detail.focus = super::super::screens::detail::DetailFocus::Run;
+
+        let model = AppModel {
+            screen: Screen::Detail {
+                slug: "s".into(),
+                from: DetailOrigin::Home,
+            },
+            detail: Some(detail),
+            ..default_model()
+        };
+
+        let key = KeyEvent::new(KeyCode::Char('k'), KeyModifiers::NONE);
+        let msg = super::super::keys::handle_key(&model, key);
+        assert_eq!(
+            msg,
+            Some(AppMessage::DetailFocusParams),
+            "'k' on Run focus should emit DetailFocusParams"
+        );
+    }
 }
