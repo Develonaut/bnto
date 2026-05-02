@@ -21,12 +21,12 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 26 registered node types.
+/// Return metadata for all 27 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
 pub fn all_node_types() -> Vec<NodeTypeInfo> {
-    let mut types = Vec::with_capacity(26);
+    let mut types = Vec::with_capacity(27);
     types.extend(control_node_types());
     types.extend(data_node_types());
     types.extend(file_node_types());
@@ -131,6 +131,15 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             false,
             "cli",
             "copy"
+        ),
+        node_type!(
+            "file-move",
+            "Move Files",
+            "Move output files to a destination directory with conflict handling.",
+            NodeCategory::File,
+            false,
+            "cli",
+            "move"
         ),
         node_type!(
             "file-filter",

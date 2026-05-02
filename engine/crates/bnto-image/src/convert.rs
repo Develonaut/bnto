@@ -117,13 +117,19 @@ impl NodeProcessor for ConvertImageFormat {
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let target_format = extract_target_format(&input)?;
-        let (img, format_label) = decode_input(&input, target_format, progress)?;
-        let converted = encode_to_target(&img, target_format, &input.params, progress)?;
-        let metadata = build_output_metadata(&format_label, target_format, &input.data, &converted);
+        let filename = input.filename;
+        let params = input.params;
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
+        let (img, format_label) = decode_input(&data, &filename, target_format, progress)?;
+        let converted = encode_to_target(&img, target_format, &params, progress)?;
+        let metadata = build_output_metadata(&format_label, target_format, &data, &converted);
         progress.report(100, "Conversion complete");
         Ok(build_convert_output(
             converted,
-            &input.filename,
+            &filename,
             target_format,
             metadata,
         ))
@@ -141,21 +147,22 @@ impl NodeProcessor for ConvertImageFormat {
 
 /// Decode input to a DynamicImage — SVG is rasterized, raster formats are decoded with EXIF.
 fn decode_input(
-    input: &NodeInput,
+    data: &[u8],
+    filename: &str,
     target_format: ImageFormat,
     progress: &ProgressReporter,
 ) -> Result<(image::DynamicImage, String), BntoError> {
-    if svg::is_svg(&input.data, &input.filename) {
+    if svg::is_svg(data, filename) {
         progress.report(5, &format!("Rasterizing SVG -> {:?}...", target_format));
-        let img = svg::rasterize_svg_to_image(&input.data)?;
+        let img = svg::rasterize_svg_to_image(data)?;
         return Ok((img, "Svg".to_string()));
     }
-    let input_format = detect_input_format(input)?;
+    let input_format = detect_input_format(data, filename)?;
     progress.report(
         5,
         &format!("Converting {:?} -> {:?}...", input_format, target_format),
     );
-    let img = ConvertImageFormat::decode_image(&input.data, progress)?;
+    let img = ConvertImageFormat::decode_image(data, progress)?;
     Ok((img, format!("{:?}", input_format)))
 }
 
@@ -172,12 +179,9 @@ fn extract_target_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
     ConvertImageFormat::parse_target_format(format_str)
 }
 
-fn detect_input_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
-    ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
-        BntoError::UnsupportedFormat(format!(
-            "Could not determine image format for '{}'",
-            input.filename
-        ))
+fn detect_input_format(data: &[u8], filename: &str) -> Result<ImageFormat, BntoError> {
+    ImageFormat::detect(data, filename).ok_or_else(|| {
+        BntoError::UnsupportedFormat(format!("Could not determine image format for '{filename}'"))
     })
 }
 
@@ -278,7 +282,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params,

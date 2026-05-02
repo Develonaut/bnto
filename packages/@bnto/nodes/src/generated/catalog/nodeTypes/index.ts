@@ -11,6 +11,7 @@ import { fileCollectNodeType } from "./fileCollect";
 import { fileCopyNodeType } from "./fileCopy";
 import { fileFilterNodeType } from "./fileFilter";
 import { fileMetadataNodeType } from "./fileMetadata";
+import { fileMoveNodeType } from "./fileMove";
 import { fileRenameNodeType } from "./fileRename";
 import { groupNodeType } from "./group";
 import { httpRequestNodeType } from "./httpRequest";
@@ -43,6 +44,7 @@ export const NODE_TYPES = {
   fileCopy: "file-copy",
   fileFilter: "file-filter",
   fileMetadata: "file-metadata",
+  fileMove: "file-move",
   fileRename: "file-rename",
   group: "group",
   httpRequest: "http-request",
@@ -79,6 +81,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "file-copy": fileCopyNodeType,
   "file-filter": fileFilterNodeType,
   "file-metadata": fileMetadataNodeType,
+  "file-move": fileMoveNodeType,
   "file-rename": fileRenameNodeType,
   group: groupNodeType,
   "http-request": httpRequestNodeType,

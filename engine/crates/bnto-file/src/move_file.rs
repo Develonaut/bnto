@@ -1,45 +1,50 @@
-// file-copy — Place output files in a destination directory.
+// file-move — Move output files to a destination directory.
 //
-// CLI-only processor: writes files to the filesystem. Supports conflict
-// resolution (skip/overwrite/rename) and optional directory creation.
-// File data passes through unchanged — this is a placement node.
+// CLI-only processor: moves files to the filesystem using rename() for
+// zero-copy O(1) moves when source and destination are on the same
+// filesystem. Falls back to copy+delete for cross-filesystem moves.
+// Supports conflict resolution (skip/overwrite/rename) and optional
+// directory creation.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, OptionEntry, ParameterDef, ParameterType};
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 use std::path::Path;
 
-/// File-copy processor — write files to a destination directory.
-pub struct FileCopy;
+/// File-move processor — move files to a destination directory.
+///
+/// Unlike file-copy, this uses `rename()` for zero-copy moves when possible.
+/// The output `FileData` is `Path(dest_path)`, pointing to the moved file.
+pub struct FileMove;
 
-impl FileCopy {
+impl FileMove {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for FileCopy {
+impl Default for FileMove {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl NodeProcessor for FileCopy {
+impl NodeProcessor for FileMove {
     fn name(&self) -> &str {
-        "file-copy"
+        "file-move"
     }
 
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
-            node_type: "file-copy".to_string(),
-            name: "Copy Files".to_string(),
-            description: "Place output files in a destination directory with conflict handling."
+            node_type: "file-move".to_string(),
+            name: "Move Files".to_string(),
+            description: "Move output files to a destination directory with conflict handling."
                 .to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["cli".to_string(), "desktop".to_string()],
-            parameters: build_copy_params(),
+            parameters: build_move_params(),
             input_cardinality: Default::default(), // PerFile
             requires: vec![],
         }
@@ -51,9 +56,8 @@ impl NodeProcessor for FileCopy {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        progress.report(0, "Copying file...");
+        progress.report(0, "Moving file...");
 
-        // Read destination from params (required).
         let destination = input
             .params
             .get("destination")
@@ -91,34 +95,31 @@ impl NodeProcessor for FileCopy {
             }
         }
 
-        // Build the full output path.
         let dest_path = dest_dir.join(&input.filename);
 
-        // Handle conflicts.
+        // Create parent directories for nested filenames (e.g. "group/video.mp4").
+        if let Some(parent) = dest_path.parent()
+            && !parent.exists()
+        {
+            std::fs::create_dir_all(parent).map_err(|e| {
+                BntoError::ProcessingFailed(format!(
+                    "Failed to create parent dir {}: {e}",
+                    parent.display()
+                ))
+            })?;
+        }
+
         let final_path = resolve_conflict(&dest_path, conflict)?;
 
-        // Write the file (if not skipped).
+        // Move the file (if not skipped).
         if let Some(path) = &final_path {
-            // Create parent directories if the filename contains subdirs.
-            if let Some(parent) = path.parent()
-                && !parent.exists()
-            {
-                std::fs::create_dir_all(parent).map_err(|e| {
-                    BntoError::ProcessingFailed(format!(
-                        "Failed to create parent dir {}: {e}",
-                        parent.display()
-                    ))
-                })?;
-            }
-
-            input.data.copy_to(path).map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to write {}: {e}", path.display()))
+            input.data.write_to(path).map_err(|e| {
+                BntoError::ProcessingFailed(format!("Failed to move {}: {e}", path.display()))
             })?;
         }
 
         progress.report(100, "Done");
 
-        // Pass the file through unchanged (the copy is a side effect).
         let output_filename = final_path
             .as_ref()
             .map(|p| {
@@ -129,9 +130,11 @@ impl NodeProcessor for FileCopy {
             })
             .unwrap_or_else(|| input.filename.clone());
 
+        let output_data = final_path.map(FileData::Path).unwrap_or(input.data);
+
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: input.data,
+                data: output_data,
                 filename: output_filename,
                 mime_type: input
                     .mime_type
@@ -145,12 +148,12 @@ impl NodeProcessor for FileCopy {
 
 // --- Parameter Definitions ---
 
-fn build_copy_params() -> Vec<ParameterDef> {
+fn build_move_params() -> Vec<ParameterDef> {
     vec![
         ParameterDef {
             name: "destination".to_string(),
             label: "Destination".to_string(),
-            description: "Directory path to copy files into.".to_string(),
+            description: "Directory path to move files into.".to_string(),
             param_type: ParameterType::String,
             placeholder: Some("./output".to_string()),
             ..Default::default()
@@ -200,14 +203,12 @@ fn resolve_conflict(
     conflict_mode: &str,
 ) -> Result<Option<std::path::PathBuf>, BntoError> {
     if !dest_path.exists() {
-        // No conflict — write to the target path.
         return Ok(Some(dest_path.to_path_buf()));
     }
 
     match conflict_mode {
         "overwrite" => Ok(Some(dest_path.to_path_buf())),
         "rename" => {
-            // Append a numeric suffix until we find a free name.
             let stem = dest_path
                 .file_stem()
                 .and_then(|s| s.to_str())
@@ -244,18 +245,17 @@ fn resolve_conflict(
 mod tests {
     use super::*;
     use bnto_core::context::NoopContext;
-    use bnto_core::processor::FileData;
     use bnto_core::progress::ProgressReporter;
     use std::fs;
     use tempfile::TempDir;
 
     fn make_input(
-        data: &[u8],
+        data: FileData,
         filename: &str,
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: FileData::Bytes(data.to_vec()),
+            data,
             filename: filename.to_string(),
             mime_type: None,
             params,
@@ -274,27 +274,27 @@ mod tests {
 
     #[test]
     fn test_name_returns_correct_key() {
-        assert_eq!(FileCopy::new().name(), "file-copy");
+        assert_eq!(FileMove::new().name(), "file-move");
     }
 
     #[test]
     fn test_metadata_is_cli_only() {
-        let meta = FileCopy::new().metadata();
+        let meta = FileMove::new().metadata();
         assert_eq!(meta.category, NodeCategory::File);
         assert!(!meta.platforms.contains(&"browser".to_string()));
         assert!(meta.platforms.contains(&"cli".to_string()));
     }
 
-    // --- Basic copy ---
+    // --- Move with Bytes data ---
 
     #[test]
-    fn test_copy_to_destination() {
+    fn test_move_bytes_to_destination() {
         let dest = TempDir::new().unwrap();
-        let processor = FileCopy::new();
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
-            b"file content",
+            FileData::Bytes(b"file content".to_vec()),
             "output.txt",
             params(&[(
                 "destination",
@@ -311,17 +311,61 @@ mod tests {
         assert_eq!(fs::read(&written).unwrap(), b"file content");
     }
 
-    // --- Create dirs ---
+    // --- Move with Path data (zero-copy) ---
 
     #[test]
-    fn test_copy_creates_destination_dir() {
-        let base = TempDir::new().unwrap();
-        let dest = base.path().join("new_subdir");
-        let processor = FileCopy::new();
+    fn test_move_path_to_destination() {
+        let src_dir = TempDir::new().unwrap();
+        let dest = TempDir::new().unwrap();
+
+        // Create a source file.
+        let src_file = src_dir.path().join("video.mp4");
+        fs::write(&src_file, b"video data").unwrap();
+
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
-            b"data",
+            FileData::Path(src_file.clone()),
+            "video.mp4",
+            params(&[(
+                "destination",
+                serde_json::json!(dest.path().to_str().unwrap()),
+            )]),
+        );
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(output.files.len(), 1);
+
+        // Source should be removed (moved).
+        assert!(
+            !src_file.exists(),
+            "Source file should be removed after move"
+        );
+
+        // Destination should have the file.
+        let dest_file = dest.path().join("video.mp4");
+        assert!(dest_file.exists(), "File should exist at destination");
+        assert_eq!(fs::read(&dest_file).unwrap(), b"video data");
+
+        // Output data should be a Path pointing to the destination.
+        assert!(
+            matches!(&output.files[0].data, FileData::Path(p) if p == &dest_file),
+            "Output should be FileData::Path pointing to destination"
+        );
+    }
+
+    // --- Create dirs ---
+
+    #[test]
+    fn test_move_creates_destination_dir() {
+        let base = TempDir::new().unwrap();
+        let dest = base.path().join("new_subdir");
+        let processor = FileMove::new();
+        let progress = ProgressReporter::new_noop();
+
+        let input = make_input(
+            FileData::Bytes(b"data".to_vec()),
             "file.txt",
             params(&[
                 ("destination", serde_json::json!(dest.to_str().unwrap())),
@@ -335,17 +379,17 @@ mod tests {
     }
 
     #[test]
-    fn test_copy_fails_without_create_dirs() {
-        let processor = FileCopy::new();
+    fn test_move_fails_without_create_dirs() {
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
-            b"data",
+            FileData::Bytes(b"data".to_vec()),
             "file.txt",
             params(&[
                 (
                     "destination",
-                    serde_json::json!("/tmp/nonexistent_bnto_test_dir_12345"),
+                    serde_json::json!("/tmp/nonexistent_bnto_move_test_dir_12345"),
                 ),
                 ("create_dirs", serde_json::json!(false)),
             ]),
@@ -361,16 +405,15 @@ mod tests {
     // --- Conflict resolution ---
 
     #[test]
-    fn test_copy_conflict_skip() {
+    fn test_move_conflict_skip() {
         let dest = TempDir::new().unwrap();
-        // Pre-create the file so there's a conflict.
         fs::write(dest.path().join("existing.txt"), b"old content").unwrap();
 
-        let processor = FileCopy::new();
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
-            b"new content",
+            FileData::Bytes(b"new content".to_vec()),
             "existing.txt",
             params(&[
                 (
@@ -390,15 +433,15 @@ mod tests {
     }
 
     #[test]
-    fn test_copy_conflict_overwrite() {
+    fn test_move_conflict_overwrite() {
         let dest = TempDir::new().unwrap();
         fs::write(dest.path().join("existing.txt"), b"old content").unwrap();
 
-        let processor = FileCopy::new();
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
-            b"new content",
+            FileData::Bytes(b"new content".to_vec()),
             "existing.txt",
             params(&[
                 (
@@ -417,15 +460,15 @@ mod tests {
     }
 
     #[test]
-    fn test_copy_conflict_rename() {
+    fn test_move_conflict_rename() {
         let dest = TempDir::new().unwrap();
         fs::write(dest.path().join("file.txt"), b"original").unwrap();
 
-        let processor = FileCopy::new();
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
-            b"new data",
+            FileData::Bytes(b"new data".to_vec()),
             "file.txt",
             params(&[
                 (
@@ -449,18 +492,17 @@ mod tests {
         );
     }
 
-    // --- Data passthrough ---
+    // --- Nested filenames ---
 
     #[test]
-    fn test_copy_passes_data_through() {
+    fn test_move_creates_parent_dirs_for_nested_filename() {
         let dest = TempDir::new().unwrap();
-        let processor = FileCopy::new();
+        let processor = FileMove::new();
         let progress = ProgressReporter::new_noop();
-        let data = b"original file data";
 
         let input = make_input(
-            data,
-            "file.bin",
+            FileData::Bytes(b"nested data".to_vec()),
+            "group/subdir/video.mp4",
             params(&[(
                 "destination",
                 serde_json::json!(dest.path().to_str().unwrap()),
@@ -468,11 +510,11 @@ mod tests {
         );
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
-        assert_eq!(
-            output.files[0].data.clone().into_bytes().unwrap(),
-            data,
-            "Data should pass through unchanged"
-        );
+        assert_eq!(output.files.len(), 1);
+
+        let nested = dest.path().join("group/subdir/video.mp4");
+        assert!(nested.exists(), "Nested directories should be created");
+        assert_eq!(fs::read(&nested).unwrap(), b"nested data");
     }
 
     // --- Pure function tests ---

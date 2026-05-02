@@ -158,15 +158,19 @@ impl NodeProcessor for CompressImages {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let format = ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
+        let format = ImageFormat::detect(&data, &input.filename).ok_or_else(|| {
             BntoError::UnsupportedFormat(format!(
                 "Could not determine image format for '{}'",
                 input.filename
             ))
         })?;
 
-        let original_size = input.data.len();
-        let compressed_data = self.compress_by_format(&input, format, progress)?;
+        let original_size = data.len();
+        let compressed_data = self.compress_by_format(&data, &input.params, format, progress)?;
         let compressed_size = compressed_data.len();
         let output_filename = Self::output_filename(&input.filename, format);
         let metadata = build_compression_metadata(original_size, compressed_size, format);
@@ -208,18 +212,18 @@ impl NodeProcessor for CompressImages {
 
 impl CompressImages {
     /// Dispatch compression to the format-specific method.
-    /// All paths now read and apply the quality parameter.
     fn compress_by_format(
         &self,
-        input: &NodeInput,
+        data: &[u8],
+        params: &serde_json::Map<String, serde_json::Value>,
         format: ImageFormat,
         progress: &ProgressReporter,
     ) -> Result<Vec<u8>, BntoError> {
-        let quality = Self::get_quality(&input.params);
+        let quality = Self::get_quality(params);
         match format {
             ImageFormat::Jpeg => {
                 progress.report(5, &format!("Compressing JPEG (quality: {quality})..."));
-                self.compress_jpeg(&input.data, quality, progress)
+                self.compress_jpeg(data, quality, progress)
             }
             ImageFormat::Png => {
                 let compression = Self::quality_to_compression(quality);
@@ -227,11 +231,11 @@ impl CompressImages {
                     5,
                     &format!("Optimizing PNG (quality: {quality}, compression: {compression})..."),
                 );
-                self.compress_png(&input.data, quality, progress)
+                self.compress_png(data, quality, progress)
             }
             ImageFormat::WebP => {
                 progress.report(5, "Compressing WebP (lossless)...");
-                self.compress_webp(&input.data, progress)
+                self.compress_webp(data, progress)
             }
         }
     }
@@ -332,7 +336,7 @@ mod tests {
     /// Create a test input with the given data, filename, and optional params.
     fn make_input(data: &[u8], filename: &str) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params: serde_json::Map::new(),
@@ -347,7 +351,7 @@ mod tests {
             serde_json::Value::Number(serde_json::Number::from(quality)),
         );
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params,

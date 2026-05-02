@@ -64,7 +64,11 @@ impl NodeProcessor for RenameColumns {
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Starting column rename...");
-        let csv_text = parse_utf8(&input.data)?;
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
+        let csv_text = parse_utf8(&data)?;
         let column_mapping = extract_column_mapping(&input.params);
 
         progress.report(20, "Parsed parameters...");
@@ -285,7 +289,7 @@ mod tests {
             serde_json::from_str(params_json).unwrap_or_default();
 
         NodeInput {
-            data: csv_text.as_bytes().to_vec(),
+            data: FileData::Bytes(csv_text.as_bytes().to_vec()),
             filename: "test.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params,
@@ -517,7 +521,7 @@ mod tests {
         // Create invalid UTF-8 bytes (0xFF 0xFE is not valid UTF-8).
         let bad_bytes: Vec<u8> = vec![0xFF, 0xFE, 0x00, 0x61];
         let input = NodeInput {
-            data: bad_bytes,
+            data: FileData::Bytes(bad_bytes),
             filename: "bad.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params: serde_json::Map::new(),

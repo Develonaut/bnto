@@ -113,7 +113,7 @@ impl NodeProcessor for RenameFiles {
             );
 
             let single_input = NodeInput {
-                data: file.data,
+                data: FileData::Bytes(file.data),
                 filename: file.filename,
                 mime_type: file.mime_type,
                 params,
@@ -131,13 +131,13 @@ impl NodeProcessor for RenameFiles {
 }
 
 fn build_rename_output(
-    data: Vec<u8>,
+    data: FileData,
     filename: String,
     metadata: serde_json::Map<String, serde_json::Value>,
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data: FileData::Bytes(data),
+            data,
             filename,
             mime_type: "application/octet-stream".to_string(),
             metadata: serde_json::Map::new(),
@@ -644,7 +644,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params,
@@ -1460,7 +1460,7 @@ mod tests {
         let processor = RenameFiles::new();
         let progress = noop_progress();
         let input = NodeInput {
-            data: b"original content".to_vec(),
+            data: FileData::Bytes(b"original content".to_vec()),
             filename: "Hello World.txt".to_string(),
             mime_type: None,
             params: string_param("sanitize", "slugify"),

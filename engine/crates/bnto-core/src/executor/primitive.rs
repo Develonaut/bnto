@@ -98,12 +98,10 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         format!("Processing {}...", &file_name),
     );
 
-    // Convert FileData to bytes for the processor. Path variant reads from disk.
-    let data = file.data.into_bytes().map_err(|e| {
-        BntoError::ProcessingFailed(format!("Failed to read input file {}: {e}", &file_name))
-    })?;
+    // Pass FileData through directly — processors that need bytes call into_bytes() themselves.
+    // This enables zero-copy moves for file-move and similar processors.
     let input = NodeInput {
-        data,
+        data: file.data,
         filename: file_name.clone(),
         mime_type: Some(file.mime_type),
         params: params.clone(),
@@ -206,7 +204,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
     );
 
     let input = NodeInput {
-        data: Vec::new(),
+        data: crate::processor::FileData::Bytes(Vec::new()),
         filename: String::new(),
         mime_type: None,
         params: resolved_params.clone(),

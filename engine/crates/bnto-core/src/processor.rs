@@ -16,9 +16,12 @@ pub use crate::file_data::FileData;
 
 /// The input data that a node receives for processing.
 pub struct NodeInput {
-    /// The raw file data (bytes). For an image, this is the JPEG/PNG/WebP
-    /// binary data. For a CSV, this is the UTF-8 text content as bytes.
-    pub data: Vec<u8>,
+    /// File content — in-memory bytes or a path on disk.
+    ///
+    /// Most processors call `input.data.into_bytes()` at the top of `process()`.
+    /// Processors that move/copy files can use `write_to()` / `copy_to()` directly
+    /// for zero-copy operations on `FileData::Path` variants.
+    pub data: FileData,
 
     /// The original filename (e.g., "photo.jpg", "data.csv").
     /// Used to determine the file format and to generate output filenames.
@@ -154,7 +157,7 @@ pub trait NodeProcessor {
             progress.report(pct, &format!("Processing file {} of {total}...", i + 1));
 
             let single_input = NodeInput {
-                data: file.data,
+                data: FileData::Bytes(file.data),
                 filename: file.filename,
                 mime_type: file.mime_type,
                 params: input.params.clone(),
@@ -225,7 +228,7 @@ mod tests {
             // Just echo the input data back as output.
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: FileData::Bytes(input.data),
+                    data: input.data,
                     filename: input.filename,
                     mime_type: input
                         .mime_type
@@ -260,7 +263,7 @@ mod tests {
     /// Helper to create a simple test input.
     fn make_test_input(data: &[u8], filename: &str) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params: serde_json::Map::new(),

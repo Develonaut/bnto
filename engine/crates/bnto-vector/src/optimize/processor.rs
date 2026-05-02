@@ -96,17 +96,21 @@ impl NodeProcessor for OptimizeSvg {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         let config = extract_config(&input.params);
 
         progress.report(10, "Parsing SVG...");
-        let input_str = std::str::from_utf8(&input.data)
+        let input_str = std::str::from_utf8(&data)
             .map_err(|e| BntoError::InvalidInput(format!("SVG is not valid UTF-8: {e}")))?;
 
         progress.report(30, "Optimizing SVG...");
         let optimized = optimize_svg(input_str, &config)
             .map_err(|e| BntoError::ProcessingFailed(format!("SVG optimization failed: {e}")))?;
 
-        let input_size = input.data.len();
+        let input_size = data.len();
         let output_size = optimized.len();
 
         let metadata = build_metadata(input_size, output_size);
@@ -193,7 +197,7 @@ mod tests {
 
     fn make_input(params: serde_json::Map<String, serde_json::Value>) -> NodeInput {
         NodeInput {
-            data: verbose_svg_bytes(),
+            data: FileData::Bytes(verbose_svg_bytes()),
             filename: "verbose.svg".to_string(),
             mime_type: Some("image/svg+xml".to_string()),
             params,
@@ -252,7 +256,7 @@ mod tests {
     #[test]
     fn test_process_produces_smaller_output() {
         let input = make_input(empty_params());
-        let input_size = input.data.len();
+        let input_size = input.data.len().unwrap() as usize;
         let reporter = ProgressReporter::new_noop();
         let output = OptimizeSvg.process(input, &reporter, &NoopContext).unwrap();
 
@@ -343,7 +347,7 @@ mod tests {
     #[test]
     fn test_process_invalid_utf8_returns_error() {
         let input = NodeInput {
-            data: vec![0xFF, 0xFE, 0x00],
+            data: FileData::Bytes(vec![0xFF, 0xFE, 0x00]),
             filename: "bad.svg".to_string(),
             mime_type: Some("image/svg+xml".to_string()),
             params: empty_params(),

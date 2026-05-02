@@ -72,12 +72,18 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual(["group", "loop", "parallel"]);
   });
 
-  it("server-only types are file-collect, file-copy, http-request, and shell-command", () => {
+  it("server-only types are file-collect, file-copy, file-move, http-request, and shell-command", () => {
     const serverOnly = Object.values(NODE_TYPE_INFO).filter(
       (i) => !i.platforms.includes("browser"),
     );
     const names = serverOnly.map((s) => s.name).sort();
-    expect(names).toEqual(["file-collect", "file-copy", "http-request", "shell-command"]);
+    expect(names).toEqual([
+      "file-collect",
+      "file-copy",
+      "file-move",
+      "http-request",
+      "shell-command",
+    ]);
   });
 });
 

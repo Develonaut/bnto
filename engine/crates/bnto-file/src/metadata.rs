@@ -52,13 +52,17 @@ impl NodeProcessor for FileMetadata {
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Extracting metadata...");
 
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         let include_hash = input
             .params
             .get("include_hash")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
-        let file_size = input.data.len();
+        let file_size = data.len();
         let extension = extract_extension(&input.filename);
         let mime_type = guess_mime_type(&input.filename);
 
@@ -80,7 +84,7 @@ impl NodeProcessor for FileMetadata {
         );
 
         if include_hash {
-            let hash = sha256_hex(&input.data);
+            let hash = sha256_hex(&data);
             metadata.insert("sha256".to_string(), serde_json::Value::String(hash));
         }
 
@@ -88,7 +92,7 @@ impl NodeProcessor for FileMetadata {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: FileData::Bytes(input.data),
+                data: FileData::Bytes(data),
                 filename: input.filename,
                 mime_type: input.mime_type.unwrap_or(mime_type),
                 metadata: serde_json::Map::new(),
@@ -255,7 +259,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params,
