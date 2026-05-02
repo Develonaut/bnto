@@ -335,16 +335,22 @@ fn collect_output_files_recursive(
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_else(|| "output".to_string());
 
+        // Check file size via metadata before reading into memory.
+        // This prevents allocating gigabytes for a file that exceeds the limit.
+        let file_size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+        let limit = validate::max_output_bytes(max_output_mb) as u64;
+        if file_size > limit {
+            return Err(BntoError::ProcessingFailed(format!(
+                "Output file '{}' is {} MB, exceeding the {} MB limit",
+                filename,
+                file_size / (1024 * 1024),
+                max_output_mb
+            )));
+        }
+
         let data = std::fs::read(&path).map_err(|e| {
             BntoError::ProcessingFailed(format!("Failed to read output file {filename}: {e}"))
         })?;
-
-        let limit = validate::max_output_bytes(max_output_mb);
-        if data.len() > limit {
-            return Err(BntoError::ProcessingFailed(format!(
-                "Output file '{filename}' exceeded {max_output_mb} MB limit"
-            )));
-        }
 
         let mime = mime_from_extension(&filename);
         files.push(OutputFile {
@@ -882,6 +888,42 @@ mod tests {
 
         let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert!(files.is_empty());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_collect_output_files_rejects_oversized_file() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-oversized");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        // 2 MB file with a 1 MB limit — should fail before reading into memory.
+        std::fs::write(dir.join("big.mp4"), vec![0u8; 2 * 1024 * 1024]).unwrap();
+
+        let result = collect_output_files(&dir, 1);
+        match result {
+            Err(e) => {
+                let msg = e.to_string();
+                assert!(msg.contains("big.mp4"), "Error should name the file");
+                assert!(msg.contains("1 MB limit"), "Error should state the limit");
+            }
+            Ok(_) => panic!("Expected error for oversized file"),
+        }
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_collect_output_files_accepts_file_under_limit() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-under-limit");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        // 512 KB file with a 1 MB limit — should succeed.
+        std::fs::write(dir.join("small.mp4"), vec![0u8; 512 * 1024]).unwrap();
+
+        let files = collect_output_files(&dir, 1).unwrap();
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].filename, "small.mp4");
 
         let _ = std::fs::remove_dir_all(&dir);
     }
