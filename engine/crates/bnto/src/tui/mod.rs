@@ -61,6 +61,7 @@ pub fn launch_tui(
     recipe_json: Option<String>,
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
+    paths: Option<crate::storage::BntoPaths>,
 ) -> io::Result<()> {
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -74,7 +75,14 @@ pub fn launch_tui(
     logger.flush(); // Flush the init entry even if setup fails.
     let mut terminal = terminal?;
 
-    let result = run_loop(&mut terminal, variant, recipe_json, new_recipe, logger);
+    let result = run_loop(
+        &mut terminal,
+        variant,
+        recipe_json,
+        new_recipe,
+        logger,
+        paths,
+    );
     logger.flush();
     restore_terminal(&mut terminal)?;
     result
@@ -114,8 +122,12 @@ fn run_loop(
     recipe_json: Option<String>,
     new_recipe: bool,
     logger: &Arc<dyn Logger>,
+    paths: Option<crate::storage::BntoPaths>,
 ) -> io::Result<()> {
-    let mut model = AppModel::new(variant, recipe_json, new_recipe);
+    let mut model = match paths {
+        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
+        None => AppModel::new(variant, recipe_json, new_recipe),
+    };
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
 
