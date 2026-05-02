@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use super::super::app::{AppModel, DetailOrigin, Screen};
 use super::super::screens::detail_bridge;
+use super::super::screens::detail_loader::load_detail_from_entry;
 use super::super::screens::editor::EditorScreenModel;
 use super::super::screens::execution::{
     ExecutionMessage, ExecutionModel, update as execution_update,
@@ -53,11 +54,9 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
             let clamped = idx.min(model.browser.recipes.len() - 1);
             let slug = model.browser.recipes[clamped].slug.clone();
             let start_dir = resolve_start_dir();
-            let detail = super::super::screens::detail_loader::load_detail_with_dir(
-                &slug,
-                &model.registry,
-                Some(&start_dir),
-            );
+            let entry = model.catalog.resolve(&slug);
+            let detail =
+                entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
             AppModel {
                 screen: Screen::Detail {
                     slug,
@@ -129,11 +128,8 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
 /// Navigate to a recipe's detail screen from the browser.
 pub(crate) fn handle_recipe_selected(model: AppModel, slug: String) -> AppModel {
     let start_dir = resolve_start_dir();
-    let detail = super::super::screens::detail_loader::load_detail_with_dir(
-        &slug,
-        &model.registry,
-        Some(&start_dir),
-    );
+    let entry = model.catalog.resolve(&slug);
+    let detail = entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
     AppModel {
         screen: Screen::Detail {
             slug,
@@ -159,7 +155,17 @@ pub(crate) fn handle_config_confirmed(model: AppModel, slug: String) -> AppModel
         .as_ref()
         .map(|r| r.files.clone())
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
+    let definition_json = model
+        .detail
+        .as_ref()
+        .map(|d| d.definition_json.clone())
+        .unwrap_or_default();
+    let execution = Some(ExecutionModel::with_inputs(
+        &slug,
+        files,
+        overrides,
+        definition_json,
+    ));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
@@ -181,7 +187,17 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
         .map(|r| r.files)
         .unwrap_or_default();
     let overrides = model.param_overrides.clone();
-    let execution = Some(ExecutionModel::with_inputs(&slug, files, overrides));
+    let definition_json = model
+        .detail
+        .as_ref()
+        .map(|d| d.definition_json.clone())
+        .unwrap_or_default();
+    let execution = Some(ExecutionModel::with_inputs(
+        &slug,
+        files,
+        overrides,
+        definition_json,
+    ));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
@@ -214,11 +230,9 @@ pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppMod
             _ => (String::new(), DetailOrigin::Home),
         };
         let start_dir = resolve_start_dir();
-        let detail = super::super::screens::detail_loader::load_detail_with_dir(
-            &slug,
-            &model.registry,
-            Some(&start_dir),
-        );
+        let entry = model.catalog.resolve(&slug);
+        let detail =
+            entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
         return AppModel {
             screen: Screen::Detail { slug, from },
             detail,

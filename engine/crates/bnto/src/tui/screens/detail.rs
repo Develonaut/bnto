@@ -63,6 +63,10 @@ pub struct DetailModel {
     pub name: String,
     /// Recipe description.
     pub description: String,
+    /// Whether this recipe is bundled (for trust badge display).
+    pub is_bundled: bool,
+    /// Raw definition JSON (threaded to execution bridge).
+    pub definition_json: String,
     /// Original param entries (kept for visible_when evaluation + confirm).
     pub params: Vec<ParamEntry>,
     /// Form model managing all field state, focus, and editing.
@@ -104,6 +108,8 @@ impl DetailModel {
             slug: slug.to_string(),
             name: name.to_string(),
             description: description.to_string(),
+            is_bundled: true,
+            definition_json: String::new(),
             params,
             form,
             focus: DetailFocus::Params,
@@ -116,7 +122,7 @@ impl DetailModel {
     ///
     /// Convenience wrapper for tests and simple callers that don't need
     /// to specify a start directory. Production code uses
-    /// `detail_loader::load_detail_with_dir()` directly.
+    /// `detail_loader::load_detail_from_entry()` directly.
     #[allow(dead_code)]
     pub fn from_slug(slug: &str, registry: &bnto_core::registry::NodeRegistry) -> Option<Self> {
         super::detail_loader::load_detail(slug, registry)

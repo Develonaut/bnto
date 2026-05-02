@@ -63,10 +63,8 @@ fn detail_lines<'a>(
 ) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 
-    // Recipe header — trust badge from slug.
-    // TODO(PR 2): get is_bundled from CatalogEntry instead of engine lookup.
-    let is_bundled = bnto_engine::recipes::builtin_recipe_by_slug(&detail.slug).is_some();
-    let badge = trust::trust_badge(is_bundled, false);
+    // Recipe header — trust badge from catalog source.
+    let badge = trust::trust_badge(detail.is_bundled, false);
     lines.push(Line::from(vec![
         Span::styled(detail.name.as_str(), theme.heading()),
         Span::raw("  "),

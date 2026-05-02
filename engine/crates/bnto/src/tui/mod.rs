@@ -188,6 +188,7 @@ fn run_loop(
         {
             bridge_rx = Some(bridge::spawn_pipeline(
                 slug.clone(),
+                exec.definition_json.clone(),
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
                 model.toml_config.output_dir().map(String::from),

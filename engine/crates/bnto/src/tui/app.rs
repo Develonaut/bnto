@@ -8,6 +8,8 @@ use std::collections::HashMap;
 use bnto_core::registry::NodeRegistry;
 use bnto_engine::create_registry;
 
+use crate::catalog::RecipeCatalog;
+
 use super::app_helpers::{
     handle_add_to_library, handle_add_to_library_write, handle_back, handle_config_confirmed,
     handle_detail_form, handle_editor, handle_editor_form, handle_execution,
@@ -94,6 +96,8 @@ pub struct AppModel {
     pub param_overrides: HashMap<String, String>,
     /// Engine registry for resolving processor metadata.
     pub registry: NodeRegistry,
+    /// Unified recipe catalog — bundled + library recipes.
+    pub catalog: RecipeCatalog,
 }
 
 impl std::fmt::Debug for AppModel {
@@ -234,8 +238,9 @@ impl AppModel {
         };
         let registry = create_registry();
 
-        // List library recipes for the home screen pane.
+        // Build unified catalog and list library recipes for the home screen pane.
         let recipes_dir = effective_recipes_dir(&toml_config, &paths);
+        let catalog = RecipeCatalog::load(&recipes_dir);
         let library_names = list_library_recipes(&recipes_dir);
 
         // Determine initial screen and state.
@@ -272,7 +277,7 @@ impl AppModel {
             theme: Theme::from_variant(effective_variant),
             theme_variant: effective_variant,
             home: HomeModel::new(library_names),
-            browser: BrowserModel::new(),
+            browser: BrowserModel::new(catalog.all()),
             library: None,
             detail,
             picker: None,
@@ -287,6 +292,7 @@ impl AppModel {
             settings_picker_field: None,
             param_overrides: HashMap::new(),
             registry,
+            catalog,
         }
     }
 }

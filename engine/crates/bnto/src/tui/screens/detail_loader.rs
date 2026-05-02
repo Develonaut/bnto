@@ -7,7 +7,8 @@ use bnto_core::metadata::ParameterType;
 use bnto_core::pipeline::PipelineNode;
 use bnto_core::registry::NodeRegistry;
 use bnto_core::{InputMode, PipelineDefinition};
-use bnto_engine::recipes::builtin_recipe_by_slug;
+
+use crate::catalog::{CatalogEntry, RecipeSource};
 
 use super::detail::{DetailFocus, DetailModel, ParamEntry};
 use super::detail_fields::fields_to_params;
@@ -15,28 +16,41 @@ use super::picker::PickerModel;
 
 /// Build a detail model from a recipe slug using engine metadata.
 ///
-/// Looks up the recipe, parses its definition JSON, walks the node list
-/// to find processor nodes, then resolves each via the registry to get
-/// parameter metadata. Skips input/output nodes (not user-configurable).
+/// Looks up the recipe via `builtin_recipe_by_slug`, parses its definition
+/// JSON, walks the node list to resolve processors and collect params.
+/// Convenience wrapper for tests that don't need to specify a start directory.
+pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
+    let recipe = bnto_engine::recipes::builtin_recipe_by_slug(slug)?;
+    let entry = CatalogEntry {
+        slug: recipe.slug.clone(),
+        name: recipe.name.clone(),
+        description: recipe.description.clone(),
+        category: recipe.category.clone(),
+        tags: recipe.tags.clone(),
+        definition_json: recipe.definition_json.to_string(),
+        source: RecipeSource::Bundled,
+    };
+    load_detail_from_entry(&entry, registry, None)
+}
+
+/// Build a detail model from a catalog entry with an explicit start directory.
+///
+/// Parses the entry's definition JSON, walks the node list to find processor
+/// nodes, resolves each via the registry for parameter metadata.
+/// Skips input/output nodes (not user-configurable).
 ///
 /// For file-mode recipes, creates an embedded `PickerModel` starting at
 /// the given `start_dir`. For URL/text-mode, no picker is created.
-pub fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
-    load_detail_with_dir(slug, registry, None)
-}
-
-/// Build a detail model with an explicit start directory for the embedded picker.
-pub fn load_detail_with_dir(
-    slug: &str,
+pub fn load_detail_from_entry(
+    entry: &CatalogEntry,
     registry: &NodeRegistry,
     start_dir: Option<&std::path::Path>,
 ) -> Option<DetailModel> {
-    let recipe = builtin_recipe_by_slug(slug)?;
-    let def_json: serde_json::Value = serde_json::from_str(recipe.definition_json).ok()?;
+    let def_json: serde_json::Value = serde_json::from_str(&entry.definition_json).ok()?;
     let nodes = def_json["nodes"].as_array()?;
 
     // Parse typed definition for field declarations and input mode.
-    let pipeline_def = serde_json::from_str::<PipelineDefinition>(recipe.definition_json).ok();
+    let pipeline_def = serde_json::from_str::<PipelineDefinition>(&entry.definition_json).ok();
 
     // If any node declares fields, use those instead of extracting from processors.
     let field_params = pipeline_def
@@ -71,16 +85,19 @@ pub fn load_detail_with_dir(
             let dir = start_dir.map(std::path::PathBuf::from).unwrap_or_else(|| {
                 std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
             });
-            let picker = PickerModel::from_slug(slug, &dir, registry);
+            let picker =
+                PickerModel::from_slug(&entry.slug, &dir, registry, &entry.definition_json);
             (DetailFocus::Input, Some(picker))
         }
         InputMode::Url | InputMode::Text => (DetailFocus::Params, None),
     };
 
     Some(DetailModel {
-        slug: recipe.slug.clone(),
-        name: recipe.name.clone(),
-        description: recipe.description.clone(),
+        slug: entry.slug.clone(),
+        name: entry.name.clone(),
+        description: entry.description.clone(),
+        is_bundled: entry.source == RecipeSource::Bundled,
+        definition_json: entry.definition_json.clone(),
         params,
         form,
         focus,
@@ -285,6 +302,8 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         slug: "custom".to_string(),
         name,
         description,
+        is_bundled: false,
+        definition_json: json.to_string(),
         params,
         form,
         focus: DetailFocus::Params,
@@ -449,18 +468,18 @@ mod tests {
         );
     }
 
-    // --- All built-in recipes load without panic ---
+    // --- All catalog recipes load without panic ---
 
     #[test]
-    fn all_builtin_recipes_load() {
+    fn all_catalog_recipes_load() {
         let registry = registry();
-        let recipes = bnto_engine::recipes::builtin_recipes();
-        for recipe in &recipes {
-            let result = load_detail(&recipe.slug, &registry);
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        for entry in catalog.all() {
+            let result = load_detail_from_entry(entry, &registry, None);
             assert!(
                 result.is_some(),
                 "Failed to load detail for recipe '{}'",
-                recipe.slug
+                entry.slug
             );
         }
     }
@@ -468,15 +487,15 @@ mod tests {
     #[test]
     fn all_loaded_params_have_labels() {
         let registry = registry();
-        let recipes = bnto_engine::recipes::builtin_recipes();
-        for recipe in &recipes {
-            let detail = load_detail(&recipe.slug, &registry).unwrap();
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        for entry in catalog.all() {
+            let detail = load_detail_from_entry(entry, &registry, None).unwrap();
             for param in &detail.params {
                 assert!(
                     !param.label.is_empty(),
                     "param '{}' in recipe '{}' has empty label",
                     param.name,
-                    recipe.slug
+                    entry.slug
                 );
             }
         }
@@ -675,9 +694,10 @@ mod tests {
 
     #[test]
     fn download_video_recipe_json_parses() {
-        let recipe = builtin_recipe_by_slug("download-video").unwrap();
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let entry = catalog.resolve("download-video").unwrap();
         let def: PipelineDefinition =
-            serde_json::from_str(recipe.definition_json).expect("should parse");
+            serde_json::from_str(&entry.definition_json).expect("should parse");
         assert!(def.nodes.len() >= 2);
     }
 }

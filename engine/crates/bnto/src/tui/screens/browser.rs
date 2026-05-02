@@ -3,7 +3,7 @@
 // TEA pattern: BrowserModel (state) + BrowserMessage (events) + update() (pure transitions).
 // All state logic is testable with `cargo test` — no terminal needed.
 
-use bnto_engine::recipes::{BuiltinRecipe, builtin_recipes};
+use crate::catalog::{CatalogEntry, RecipeSource};
 
 /// Summary of a recipe for display in the browser list.
 #[derive(Debug, Clone)]
@@ -12,15 +12,22 @@ pub struct RecipeSummary {
     pub name: String,
     pub description: String,
     pub category: String,
+    /// Whether this recipe is bundled (for trust classification).
+    #[allow(dead_code)]
+    pub is_bundled: bool,
+    /// Raw definition JSON (threaded to detail/execution screens).
+    pub definition_json: String,
 }
 
-impl From<BuiltinRecipe> for RecipeSummary {
-    fn from(r: BuiltinRecipe) -> Self {
+impl From<&CatalogEntry> for RecipeSummary {
+    fn from(e: &CatalogEntry) -> Self {
         Self {
-            slug: r.slug,
-            name: r.name,
-            description: r.description,
-            category: r.category,
+            slug: e.slug.clone(),
+            name: e.name.clone(),
+            description: e.description.clone(),
+            category: e.category.clone(),
+            is_bundled: e.source == RecipeSource::Bundled,
+            definition_json: e.definition_json.clone(),
         }
     }
 }
@@ -65,9 +72,9 @@ pub struct SelectionResult {
 }
 
 impl BrowserModel {
-    /// Create a new browser loaded with all built-in recipes.
-    pub fn new() -> Self {
-        let recipes: Vec<RecipeSummary> = builtin_recipes().into_iter().map(Into::into).collect();
+    /// Create a new browser loaded with all catalog recipes.
+    pub fn new(entries: &[CatalogEntry]) -> Self {
+        let recipes: Vec<RecipeSummary> = entries.iter().map(Into::into).collect();
         let filtered = (0..recipes.len()).collect();
         Self {
             recipes,
@@ -76,6 +83,12 @@ impl BrowserModel {
             search_query: String::new(),
             searching: false,
         }
+    }
+
+    /// Get the currently selected recipe summary (at cursor position).
+    pub fn selected_recipe(&self) -> Option<&RecipeSummary> {
+        let &idx = self.filtered.get(self.cursor)?;
+        self.recipes.get(idx)
     }
 
     /// Create a browser from a provided recipe list (for testing).
@@ -176,30 +189,40 @@ mod tests {
                 name: "Compress Images".into(),
                 description: "Reduce image file size".into(),
                 category: "image".into(),
+                is_bundled: true,
+                definition_json: "{}".into(),
             },
             RecipeSummary {
                 slug: "resize-images".into(),
                 name: "Resize Images".into(),
                 description: "Change image dimensions".into(),
                 category: "image".into(),
+                is_bundled: true,
+                definition_json: "{}".into(),
             },
             RecipeSummary {
                 slug: "clean-csv".into(),
                 name: "Clean CSV".into(),
                 description: "Remove empty rows and columns".into(),
                 category: "spreadsheet".into(),
+                is_bundled: true,
+                definition_json: "{}".into(),
             },
             RecipeSummary {
                 slug: "rename-files".into(),
                 name: "Rename Files".into(),
                 description: "Batch rename files with patterns".into(),
                 category: "file".into(),
+                is_bundled: true,
+                definition_json: "{}".into(),
             },
             RecipeSummary {
                 slug: "download-video".into(),
                 name: "Download Video".into(),
                 description: "Download video from URL".into(),
                 category: "video".into(),
+                is_bundled: true,
+                definition_json: "{}".into(),
             },
         ]
     }
@@ -371,12 +394,26 @@ mod tests {
         assert!(m.confirm().is_none());
     }
 
-    // --- Integration: loads real recipes ---
+    // --- Integration: loads from catalog ---
 
     #[test]
-    fn new_loads_all_builtin_recipes() {
-        let m = BrowserModel::new();
+    fn new_loads_all_catalog_recipes() {
+        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let m = BrowserModel::new(catalog.all());
         assert_eq!(m.recipes.len(), 20);
         assert_eq!(m.filtered.len(), 20);
+    }
+
+    #[test]
+    fn selected_recipe_returns_current() {
+        let m = BrowserModel::from_recipes(sample_recipes());
+        let r = m.selected_recipe().unwrap();
+        assert_eq!(r.slug, "compress-images");
+    }
+
+    #[test]
+    fn selected_recipe_returns_none_on_empty() {
+        let m = BrowserModel::from_recipes(vec![]);
+        assert!(m.selected_recipe().is_none());
     }
 }

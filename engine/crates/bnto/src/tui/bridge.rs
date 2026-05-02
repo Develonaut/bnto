@@ -8,7 +8,6 @@ use std::thread;
 
 use bnto_core::events::{PipelineEvent, PipelineReporter};
 use bnto_core::{InputMode, PipelineDefinition, resolve_input_mode};
-use bnto_engine::recipes::builtin_recipe_by_slug;
 use bnto_engine::run_pipeline;
 
 use crate::context::NativeContext;
@@ -60,10 +59,11 @@ fn extract_file_metadata(result: &bnto_core::pipeline::PipelineResult) -> Vec<Fi
 /// Spawn a background thread that runs the pipeline for the given recipe.
 ///
 /// Returns a Receiver that the TUI event loop polls each tick.
-/// The thread resolves the recipe, prepares inputs, runs the engine,
+/// The thread runs the engine with the given definition JSON,
 /// writes output files, then sends a Done or Error event.
 pub fn spawn_pipeline(
     slug: String,
+    definition_json: String,
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
     output_dir_override: Option<String>,
@@ -74,6 +74,7 @@ pub fn spawn_pipeline(
         run_bridge(
             tx,
             &slug,
+            &definition_json,
             &selected_files,
             &param_overrides,
             output_dir_override.as_deref(),
@@ -87,21 +88,13 @@ pub fn spawn_pipeline(
 fn run_bridge(
     tx: mpsc::Sender<BridgeEvent>,
     slug: &str,
+    definition_json: &str,
     selected_files: &[PathBuf],
     param_overrides: &HashMap<String, String>,
     output_dir_override: Option<&str>,
 ) {
-    // Resolve the recipe from the embedded catalog.
-    let recipe = match builtin_recipe_by_slug(slug) {
-        Some(r) => r,
-        None => {
-            let _ = tx.send(BridgeEvent::Error(format!("Unknown recipe: {slug}")));
-            return;
-        }
-    };
-
     // Resolve input mode to handle URL/Text recipes differently.
-    let input_mode = serde_json::from_str::<PipelineDefinition>(recipe.definition_json)
+    let input_mode = serde_json::from_str::<PipelineDefinition>(definition_json)
         .map(|def| resolve_input_mode(&def))
         .unwrap_or_default();
 
@@ -134,7 +127,7 @@ fn run_bridge(
         .collect();
 
     // Prepare inputs (validates files, applies param overrides to definition).
-    let prepared = match input::prepare_inputs(recipe.definition_json, &args, &override_args) {
+    let prepared = match input::prepare_inputs(definition_json, &args, &override_args) {
         Ok(p) => p,
         Err(e) => {
             let _ = tx.send(BridgeEvent::Error(e));
