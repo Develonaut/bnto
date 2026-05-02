@@ -299,18 +299,34 @@ fn process_file_mode(
     Ok(NodeOutput { files, metadata })
 }
 
-/// Read all files from a directory as OutputFile entries.
+/// Read all files from a directory (recursively) as OutputFile entries.
+///
+/// Commands like yt-dlp create subdirectories in the output dir, so we
+/// walk the entire tree to find all produced files.
 fn collect_output_files(
     dir: &std::path::Path,
     max_output_mb: u64,
 ) -> Result<Vec<OutputFile>, BntoError> {
+    let mut files = Vec::new();
+    collect_output_files_recursive(dir, max_output_mb, &mut files)?;
+    Ok(files)
+}
+
+fn collect_output_files_recursive(
+    dir: &std::path::Path,
+    max_output_mb: u64,
+    files: &mut Vec<OutputFile>,
+) -> Result<(), BntoError> {
     let entries = std::fs::read_dir(dir).map_err(|e| {
         BntoError::ProcessingFailed(format!("Failed to read output directory: {e}"))
     })?;
 
-    let mut files = Vec::new();
     for entry in entries.flatten() {
         let path = entry.path();
+        if path.is_dir() {
+            collect_output_files_recursive(&path, max_output_mb, files)?;
+            continue;
+        }
         if !path.is_file() {
             continue;
         }
@@ -338,7 +354,7 @@ fn collect_output_files(
             metadata: serde_json::Map::new(),
         });
     }
-    Ok(files)
+    Ok(())
 }
 
 /// Derive MIME type from file extension for common media formats.
@@ -827,16 +843,33 @@ mod tests {
     }
 
     #[test]
-    fn test_collect_output_files_skips_directories() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-skip-dirs");
+    fn test_collect_output_files_finds_files_in_subdirectories() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-subdirs");
         let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
         std::fs::create_dir_all(dir.join("subdir")).unwrap();
         std::fs::write(dir.join("file.txt"), b"data").unwrap();
+        std::fs::write(dir.join("subdir").join("video.mp4"), vec![0u8; 50]).unwrap();
+
+        let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
+        assert_eq!(files.len(), 2);
+
+        let names: Vec<&str> = files.iter().map(|f| f.filename.as_str()).collect();
+        assert!(names.contains(&"file.txt"));
+        assert!(names.contains(&"video.mp4"));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_collect_output_files_finds_deeply_nested() {
+        let dir = std::env::temp_dir().join("bnto-test-collect-deep");
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("a").join("b")).unwrap();
+        std::fs::write(dir.join("a").join("b").join("deep.mp4"), vec![0u8; 10]).unwrap();
 
         let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert_eq!(files.len(), 1);
-        assert_eq!(files[0].filename, "file.txt");
+        assert_eq!(files[0].filename, "deep.mp4");
 
         let _ = std::fs::remove_dir_all(&dir);
     }
