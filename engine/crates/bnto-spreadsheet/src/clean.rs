@@ -55,8 +55,12 @@ impl NodeProcessor for CleanSpreadsheet {
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Parsing CSV...");
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         let config = CleanConfig::from_params(&input.params);
-        let csv_text = parse_csv_input(&input.data)?;
+        let csv_text = parse_csv_input(&data)?;
 
         progress.report(10, "Reading CSV records...");
         let (cleaned_headers, num_columns) = read_and_clean_headers(csv_text, config.trim)?;
@@ -355,7 +359,7 @@ mod tests {
     /// NodeInput struct every time, we just pass the CSV text.
     fn make_csv_input(csv_text: &str) -> NodeInput {
         NodeInput {
-            data: csv_text.as_bytes().to_vec(),
+            data: FileData::Bytes(csv_text.as_bytes().to_vec()),
             filename: "test.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params: serde_json::Map::new(),
@@ -368,7 +372,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: csv_text.as_bytes().to_vec(),
+            data: FileData::Bytes(csv_text.as_bytes().to_vec()),
             filename: "test.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params,
@@ -649,7 +653,7 @@ mod tests {
         let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
-            data: bad_bytes,
+            data: FileData::Bytes(bad_bytes),
             filename: "bad.csv".to_string(),
             mime_type: None,
             params: serde_json::Map::new(),
@@ -873,7 +877,7 @@ mod tests {
         let processor = CleanSpreadsheet::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
-            data: csv.as_bytes().to_vec(),
+            data: FileData::Bytes(csv.as_bytes().to_vec()),
             filename: "employees.csv".to_string(),
             mime_type: None,
             params: serde_json::Map::new(),

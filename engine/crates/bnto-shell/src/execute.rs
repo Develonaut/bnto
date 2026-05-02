@@ -675,7 +675,7 @@ mod tests {
         let processor = ShellCommand::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
-            data: vec![],
+            data: FileData::Bytes(vec![]),
             filename: "test.txt".to_string(),
             mime_type: None,
             params: {
@@ -699,7 +699,7 @@ mod tests {
         let processor = ShellCommand::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
-            data: vec![],
+            data: FileData::Bytes(vec![]),
             filename: "test.txt".to_string(),
             mime_type: None,
             params: serde_json::Map::new(),
@@ -713,7 +713,7 @@ mod tests {
         let processor = ShellCommand::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
-            data: vec![],
+            data: FileData::Bytes(vec![]),
             filename: "test.txt".to_string(),
             mime_type: None,
             params: {

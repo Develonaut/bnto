@@ -24,7 +24,7 @@ impl crate::processor::NodeProcessor for EchoProcessor {
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: FileData::Bytes(input.data),
+                data: input.data,
                 filename: input.filename,
                 mime_type: input
                     .mime_type
@@ -52,7 +52,7 @@ impl crate::processor::NodeProcessor for UpperCaseProcessor {
     ) -> Result<NodeOutput, BntoError> {
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: FileData::Bytes(input.data),
+                data: input.data,
                 filename: input.filename.to_uppercase(),
                 mime_type: input
                     .mime_type
@@ -105,7 +105,7 @@ impl crate::processor::NodeProcessor for SlowProcessor {
 
         Ok(NodeOutput {
             files: vec![OutputFile {
-                data: FileData::Bytes(input.data),
+                data: input.data,
                 filename: input.filename,
                 mime_type: input
                     .mime_type
@@ -137,13 +137,13 @@ impl crate::processor::NodeProcessor for DoubleProcessor {
         Ok(NodeOutput {
             files: vec![
                 OutputFile {
-                    data: FileData::Bytes(input.data.clone()),
+                    data: input.data.clone(),
                     filename: format!("{}-a", input.filename),
                     mime_type: mime.clone(),
                     metadata: serde_json::Map::new(),
                 },
                 OutputFile {
-                    data: FileData::Bytes(input.data),
+                    data: input.data,
                     filename: format!("{}-b", input.filename),
                     mime_type: mime,
                     metadata: serde_json::Map::new(),
@@ -215,8 +215,9 @@ impl crate::processor::NodeProcessor for MetadataProcessor {
         _progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let original_size = input.data.len() as u64;
-        let compressed_data = vec![0u8; input.data.len() / 2];
+        let data = input.data.into_bytes().expect("test data should be bytes");
+        let original_size = data.len() as u64;
+        let compressed_data = vec![0u8; data.len() / 2];
         let compressed_size = compressed_data.len() as u64;
         let ratio = compressed_size as f64 / original_size as f64;
 

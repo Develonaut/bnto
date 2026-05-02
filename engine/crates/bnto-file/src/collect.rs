@@ -287,7 +287,7 @@ mod tests {
     /// Helper: create a NodeInput pointing to a directory.
     fn dir_input(dir: &Path, params: serde_json::Map<String, serde_json::Value>) -> NodeInput {
         NodeInput {
-            data: vec![], // No data for directory input.
+            data: FileData::Bytes(vec![]), // No data for directory input.
             filename: dir.to_string_lossy().to_string(),
             mime_type: None,
             params,

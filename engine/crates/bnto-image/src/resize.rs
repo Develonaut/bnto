@@ -192,11 +192,15 @@ impl NodeProcessor for ResizeImages {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let format = detect_format(&input)?;
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
+        let format = detect_format(&data, &input.filename)?;
         let params = parse_resize_params(&input.params);
 
         progress.report(10, "Decoding image...");
-        let img = decode_with_orientation(&input.data)?;
+        let img = decode_with_orientation(&data)?;
         let (orig_w, orig_h) = (img.width(), img.height());
 
         let (final_w, final_h) = Self::calculate_dimensions(
@@ -215,7 +219,7 @@ impl NodeProcessor for ResizeImages {
             orig_h,
             final_w,
             final_h,
-            &input,
+            data.len(),
             &output_data,
             format,
         );
@@ -259,12 +263,9 @@ fn parse_resize_params(params: &serde_json::Map<String, serde_json::Value>) -> R
     }
 }
 
-fn detect_format(input: &NodeInput) -> Result<ImageFormat, BntoError> {
-    ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
-        BntoError::UnsupportedFormat(format!(
-            "Could not determine image format for '{}'",
-            input.filename
-        ))
+fn detect_format(data: &[u8], filename: &str) -> Result<ImageFormat, BntoError> {
+    ImageFormat::detect(data, filename).ok_or_else(|| {
+        BntoError::UnsupportedFormat(format!("Could not determine image format for '{filename}'"))
     })
 }
 
@@ -309,7 +310,7 @@ fn build_resize_metadata(
     orig_h: u32,
     new_w: u32,
     new_h: u32,
-    input: &NodeInput,
+    original_size: usize,
     output_data: &[u8],
     format: ImageFormat,
 ) -> serde_json::Map<String, serde_json::Value> {
@@ -320,7 +321,7 @@ fn build_resize_metadata(
     m.insert("newHeight".to_string(), new_h.into());
     m.insert(
         "originalSize".to_string(),
-        serde_json::Value::Number((input.data.len() as u64).into()),
+        serde_json::Value::Number((original_size as u64).into()),
     );
     m.insert(
         "newSize".to_string(),
@@ -449,7 +450,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params,

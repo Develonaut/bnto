@@ -15,6 +15,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "file-copy": "Copy Files",
   "file-filter": "Filter Files",
   "file-metadata": "File Metadata",
+  "file-move": "Move Files",
   "file-rename": "Rename Files",
   "http-request": "HTTP Request",
   "image-compress": "Compress Images",
@@ -28,7 +29,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-read": "Read CSV Rows",
   "spreadsheet-rename": "Rename CSV Columns",
-  "transform": "Transform",
+  transform: "Transform",
   "vector-optimize": "Optimize SVG",
   "vector-rasterize": "SVG to Image",
 };

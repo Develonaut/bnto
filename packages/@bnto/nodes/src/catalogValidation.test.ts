@@ -92,7 +92,7 @@ describe("catalog structure", () => {
 
   it("browser processors include browser in platforms", () => {
     // Non-browser processors (CLI/server/desktop only) are expected
-    const NON_BROWSER_TYPES = new Set(["file-collect", "file-copy", "shell-command"]);
+    const NON_BROWSER_TYPES = new Set(["file-collect", "file-copy", "file-move", "shell-command"]);
     for (const proc of PROCESSORS) {
       if (NON_BROWSER_TYPES.has(proc.nodeType)) {
         expect(proc.platforms).not.toContain("browser");

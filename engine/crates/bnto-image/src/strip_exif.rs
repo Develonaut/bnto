@@ -82,18 +82,22 @@ impl NodeProcessor for StripExif {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let format = ImageFormat::detect(&input.data, &input.filename).ok_or_else(|| {
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
+        let format = ImageFormat::detect(&data, &input.filename).ok_or_else(|| {
             BntoError::UnsupportedFormat(format!(
                 "Could not determine image format for '{}'",
                 input.filename
             ))
         })?;
 
-        let original_size = input.data.len();
+        let original_size = data.len();
         let quality = Self::get_quality(&input.params);
 
         progress.report(10, "Decoding image...");
-        let img = decode_with_orientation(&input.data)?;
+        let img = decode_with_orientation(&data)?;
 
         progress.report(50, "Re-encoding without EXIF...");
         let stripped_data = encode::encode_image(&img, format, quality)?;
@@ -158,7 +162,7 @@ mod tests {
 
     fn make_input(data: Vec<u8>, filename: &str) -> NodeInput {
         NodeInput {
-            data,
+            data: FileData::Bytes(data),
             filename: filename.to_string(),
             mime_type: Some("image/jpeg".to_string()),
             params: serde_json::Map::new(),
@@ -169,7 +173,7 @@ mod tests {
         let mut params = serde_json::Map::new();
         params.insert("quality".to_string(), serde_json::json!(quality));
         NodeInput {
-            data,
+            data: FileData::Bytes(data),
             filename: filename.to_string(),
             mime_type: Some("image/jpeg".to_string()),
             params,

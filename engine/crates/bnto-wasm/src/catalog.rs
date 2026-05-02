@@ -137,21 +137,21 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_eighteen_processors() {
-        // The native registry has 18 processors (15 browser + file-collect + file-copy + shell-command).
+    fn test_catalog_has_all_nineteen_processors() {
+        // The native registry has 19 processors (15 browser + file-collect + file-copy + file-move + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            18,
-            "Catalog should have exactly 18 processors"
+            19,
+            "Catalog should have exactly 19 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 18 expected processor type keys are present.
+        // Verify all 19 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -162,6 +162,7 @@ mod tests {
             "file-copy",
             "file-filter",
             "file-metadata",
+            "file-move",
             "file-rename",
             "image-compress",
             "image-resize",
@@ -195,7 +196,7 @@ mod tests {
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
-        let non_browser = ["file-collect", "file-copy", "shell-command"];
+        let non_browser = ["file-collect", "file-copy", "file-move", "shell-command"];
 
         for entry in &catalog {
             if non_browser.contains(&entry.node_type.as_str()) {
@@ -224,9 +225,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 26);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 27);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 18);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 19);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),

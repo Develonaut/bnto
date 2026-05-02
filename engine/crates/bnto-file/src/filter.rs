@@ -7,7 +7,7 @@
 use bnto_core::metadata::{
     Constraints, NodeCategory, NodeMetadata, OptionEntry, ParameterDef, ParameterType,
 };
-use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
@@ -53,7 +53,11 @@ impl NodeProcessor for FileFilter {
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Evaluating filter criteria...");
 
-        let passes = file_matches_criteria(&input.filename, input.data.len(), &input.params);
+        let file_size =
+            input.data.len().map_err(|e| {
+                BntoError::ProcessingFailed(format!("Failed to read file size: {e}"))
+            })? as usize;
+        let passes = file_matches_criteria(&input.filename, file_size, &input.params);
 
         progress.report(100, "Done");
 
@@ -61,7 +65,7 @@ impl NodeProcessor for FileFilter {
             // File matches — pass it through unchanged.
             Ok(NodeOutput {
                 files: vec![OutputFile {
-                    data: FileData::Bytes(input.data),
+                    data: input.data,
                     filename: input.filename,
                     mime_type: input
                         .mime_type
@@ -296,6 +300,7 @@ fn matches_size(file_size: usize, params: &serde_json::Map<String, serde_json::V
 mod tests {
     use super::*;
     use bnto_core::context::NoopContext;
+    use bnto_core::processor::FileData;
     use bnto_core::progress::ProgressReporter;
 
     /// Helper: create a NodeInput with the given data, filename, and params.
@@ -305,7 +310,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: None,
             params,

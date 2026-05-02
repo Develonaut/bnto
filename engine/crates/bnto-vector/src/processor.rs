@@ -59,9 +59,13 @@ impl NodeProcessor for VectorRasterize {
     ) -> Result<NodeOutput, BntoError> {
         let target_format = extract_target_format(&input)?;
         let quality = extract_quality(&input.params, target_format);
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
 
         progress.report(10, "Rasterizing SVG...");
-        let pixmap = rasterize_svg(&input.data, RasterizeOptions::default())
+        let pixmap = rasterize_svg(&data, RasterizeOptions::default())
             .map_err(|e| BntoError::ProcessingFailed(format!("SVG rasterization failed: {e}")))?;
 
         progress.report(50, "Converting to raster image...");
@@ -74,7 +78,7 @@ impl NodeProcessor for VectorRasterize {
         let encoded = bnto_encode::encode::encode_image(&img, target_format, quality)?;
 
         let output_name = output_filename(&input.filename, target_format);
-        let metadata = build_metadata(&input.data, &encoded, target_format);
+        let metadata = build_metadata(&data, &encoded, target_format);
 
         progress.report(100, "Rasterization complete");
         Ok(NodeOutput {
@@ -262,7 +266,7 @@ mod tests {
 
     fn make_input(params: serde_json::Map<String, serde_json::Value>) -> NodeInput {
         NodeInput {
-            data: fixture_svg(),
+            data: FileData::Bytes(fixture_svg()),
             filename: "icon.svg".to_string(),
             mime_type: Some("image/svg+xml".to_string()),
             params,
@@ -446,7 +450,7 @@ mod tests {
     #[test]
     fn test_invalid_svg_returns_error() {
         let input = NodeInput {
-            data: b"not valid svg data".to_vec(),
+            data: FileData::Bytes(b"not valid svg data".to_vec()),
             filename: "bad.svg".to_string(),
             mime_type: Some("image/svg+xml".to_string()),
             params: make_params("png", 80),
@@ -459,7 +463,7 @@ mod tests {
     #[test]
     fn test_empty_data_returns_error() {
         let input = NodeInput {
-            data: vec![],
+            data: FileData::Bytes(vec![]),
             filename: "empty.svg".to_string(),
             mime_type: Some("image/svg+xml".to_string()),
             params: make_params("png", 80),

@@ -20,6 +20,10 @@ pub mod collect;
 /// conflict resolution. CLI-only (requires filesystem access).
 pub mod copy;
 
+/// File-move node — move output files to a destination directory using
+/// zero-copy rename() when possible. CLI-only (requires filesystem access).
+pub mod move_file;
+
 /// File-metadata node — extract file metadata (size, extension, MIME
 /// type, hash) and attach to pipeline output. Browser-compatible.
 pub mod metadata;
@@ -31,4 +35,5 @@ pub use collect::FileCollect;
 pub use copy::FileCopy;
 pub use filter::FileFilter;
 pub use metadata::FileMetadata;
+pub use move_file::FileMove;
 pub use rename::RenameFiles;

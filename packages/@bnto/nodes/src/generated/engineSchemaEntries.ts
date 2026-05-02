@@ -12,6 +12,7 @@ import { fileCollectNodeSchema } from "./schemas/fileCollect";
 import { fileCopyNodeSchema } from "./schemas/fileCopy";
 import { fileFilterNodeSchema } from "./schemas/fileFilter";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
+import { fileMoveNodeSchema } from "./schemas/fileMove";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
 import { groupNodeSchema } from "./schemas/group";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
@@ -43,6 +44,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-copy": fileCopyNodeSchema,
   "file-filter": fileFilterNodeSchema,
   "file-metadata": fileMetadataNodeSchema,
+  "file-move": fileMoveNodeSchema,
   "file-rename": fileRenameNodeSchema,
   group: groupNodeSchema,
   "image-compress": imageCompressNodeSchema,
@@ -95,6 +97,15 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     max_size: { suffix: "bytes" },
   },
   "file-metadata": {},
+  "file-move": {
+    conflict: {
+      options: [
+        { value: "skip", label: "Skip" },
+        { value: "overwrite", label: "Overwrite" },
+        { value: "rename", label: "Rename (add suffix)" },
+      ],
+    },
+  },
   "file-rename": {
     sanitize: {
       options: [

@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use bnto_core::NoopContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::clean::CleanSpreadsheet;
@@ -150,7 +150,7 @@ pub fn clean_spreadsheet_combined(
     // borrowed reference to the JS Uint8Array's backing buffer — we
     // can't hold onto it while processing (the JS side might move it).
     let input = NodeInput {
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         filename: filename.to_string(),
         mime_type: None,
         params,
@@ -231,7 +231,7 @@ pub fn rename_spreadsheet_columns_combined(
     // "text/csv" explicitly. This ensures the output metadata correctly
     // reflects the CSV content type.
     let input = NodeInput {
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         filename: filename.to_string(),
         mime_type: Some("text/csv".to_string()),
         params,

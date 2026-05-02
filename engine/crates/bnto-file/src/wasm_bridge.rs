@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use bnto_core::NoopContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
+use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::filter::FileFilter;
@@ -153,7 +153,7 @@ pub fn rename_file_combined(
     // borrowed reference to the JS Uint8Array's backing buffer — we
     // can't hold onto it while processing (the JS side might move it).
     let input = NodeInput {
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         filename: filename.to_string(),
         mime_type: None,
         params,
@@ -209,7 +209,7 @@ pub fn filter_file_combined(
         serde_json::from_str(params_json).unwrap_or_default();
 
     let input = NodeInput {
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         filename: filename.to_string(),
         mime_type: None,
         params,
@@ -252,7 +252,7 @@ pub fn file_metadata_combined(
         serde_json::from_str(params_json).unwrap_or_default();
 
     let input = NodeInput {
-        data: data.to_vec(),
+        data: FileData::Bytes(data.to_vec()),
         filename: filename.to_string(),
         mime_type: None,
         params,

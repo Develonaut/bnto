@@ -55,8 +55,12 @@ impl NodeProcessor for ReadSpreadsheet {
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Parsing CSV...");
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         let config = ReadConfig::from_params(&input.params);
-        let csv_text = parse_and_strip_bom(&input.data)?;
+        let csv_text = parse_and_strip_bom(&data)?;
 
         progress.report(10, "Reading CSV...");
         let delimiter = resolve_delimiter(&config.delimiter);
@@ -307,7 +311,7 @@ mod tests {
 
     fn make_input(csv_text: &str) -> NodeInput {
         NodeInput {
-            data: csv_text.as_bytes().to_vec(),
+            data: FileData::Bytes(csv_text.as_bytes().to_vec()),
             filename: "data.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params: serde_json::Map::new(),
@@ -319,7 +323,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: csv_text.as_bytes().to_vec(),
+            data: FileData::Bytes(csv_text.as_bytes().to_vec()),
             filename: "data.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params,
@@ -328,7 +332,7 @@ mod tests {
 
     fn make_input_bytes(data: Vec<u8>) -> NodeInput {
         NodeInput {
-            data,
+            data: FileData::Bytes(data),
             filename: "data.csv".to_string(),
             mime_type: Some("text/csv".to_string()),
             params: serde_json::Map::new(),

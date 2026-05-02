@@ -330,12 +330,16 @@ impl NodeProcessor for OverlayImage {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
+        let data = input
+            .data
+            .into_bytes()
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         progress.report(0, "Decoding source image...");
 
-        let format = ImageFormat::detect(&input.data, &input.filename)
+        let format = ImageFormat::detect(&data, &input.filename)
             .ok_or_else(|| BntoError::UnsupportedFormat(input.filename.clone()))?;
 
-        let source = decode_with_orientation(&input.data)
+        let source = decode_with_orientation(&data)
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode image: {e}")))?;
 
         let (src_w, src_h) = source.dimensions();
@@ -376,7 +380,7 @@ impl NodeProcessor for OverlayImage {
         progress.report(80, "Encoding output...");
 
         let output_data = encode::encode_image(&composited, format, quality)?;
-        let original_size = input.data.len();
+        let original_size = data.len();
         let output_size = output_data.len();
 
         let output_filename = Self::output_filename(&input.filename, format);
@@ -518,7 +522,7 @@ mod tests {
 
     fn make_input(data: &[u8], filename: &str) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: Some("image/jpeg".to_string()),
             params: serde_json::Map::from_iter([(
@@ -534,7 +538,7 @@ mod tests {
         params: serde_json::Map<String, serde_json::Value>,
     ) -> NodeInput {
         NodeInput {
-            data: data.to_vec(),
+            data: FileData::Bytes(data.to_vec()),
             filename: filename.to_string(),
             mime_type: Some("image/jpeg".to_string()),
             params,
