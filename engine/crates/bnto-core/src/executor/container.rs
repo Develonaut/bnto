@@ -3,10 +3,10 @@
 // Loop runs children per-file; group/parallel run on the full batch.
 
 use crate::errors::BntoError;
-use crate::events::PipelineEvent;
+use crate::events::{PipelineEvent, ProgressOutputFile};
 use crate::pipeline::{PipelineDefinition, PipelineFile, PipelineNode, is_io_node};
 
-use super::loop_config::{OnErrorStrategy, parse_loop_config};
+use super::loop_config::{OnErrorStrategy, OutputPersistence, parse_loop_config};
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef, run_node_chain};
 
 /// Passthrough result — returns input files unchanged with zero processing.
@@ -99,6 +99,9 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                 let files_produced = exec_result.output_files.len();
                 total_processed += exec_result.files_processed;
                 warnings.extend(exec_result.warnings);
+
+                let progress_files =
+                    build_progress_files(&config.output_persistence, &exec_result.output_files);
                 all_output_files.extend(exec_result.output_files);
 
                 ctx.reporter.emit(PipelineEvent::IterationCompleted {
@@ -107,6 +110,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                     total_iterations,
                     duration_ms: iter_duration,
                     files_produced,
+                    output_files: progress_files,
                 });
             }
             Err(error) => {
@@ -139,6 +143,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                     total_iterations,
                     duration_ms: iter_duration,
                     files_produced: 0,
+                    output_files: Vec::new(),
                 });
             }
         }
@@ -157,6 +162,25 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
         output_files: all_output_files,
         warnings,
     })
+}
+
+/// Convert iteration output files to `ProgressOutputFile` for event emission.
+/// Returns an empty vec in deferred mode (default) to avoid cloning file data.
+fn build_progress_files(
+    persistence: &OutputPersistence,
+    files: &[PipelineFile],
+) -> Vec<ProgressOutputFile> {
+    match persistence {
+        OutputPersistence::Deferred => Vec::new(),
+        OutputPersistence::Progressive => files
+            .iter()
+            .map(|f| ProgressOutputFile {
+                name: f.name.clone(),
+                data: f.data.clone(),
+                mime_type: f.mime_type.clone(),
+            })
+            .collect(),
+    }
 }
 
 /// Build a PipelineContext for a single loop iteration.
