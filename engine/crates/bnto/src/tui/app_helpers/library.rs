@@ -155,7 +155,7 @@ pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
         .map(|s| s.slug);
     match slug {
         Some(slug) => {
-            let start_dir = resolve_start_dir(&model.config);
+            let start_dir = resolve_start_dir();
             let detail = super::super::screens::detail_loader::load_detail_with_dir(
                 &slug,
                 &model.registry,

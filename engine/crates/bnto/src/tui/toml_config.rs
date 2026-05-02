@@ -1,7 +1,7 @@
-// TOML-based config for the TUI — replaces the old JSON format.
+// TOML-based config for the TUI.
 //
-// Schema-versioned from day one. Fields use serde(default) so new
-// fields can be added without breaking existing config files.
+// Schema-versioned. Fields use serde(default) so new fields can be
+// added without breaking existing config files.
 
 use serde::{Deserialize, Serialize};
 
@@ -9,7 +9,7 @@ use super::atomic::atomic_write;
 use super::paths::BntoPaths;
 
 /// Current config schema version. Bump when the TOML structure changes.
-const CURRENT_VERSION: u32 = 1;
+const CURRENT_VERSION: u32 = 2;
 
 /// Persistent TUI settings in TOML format.
 ///
@@ -26,13 +26,9 @@ pub struct TomlConfig {
     #[serde(default)]
     pub tui: TuiSection,
 
-    /// Output directory settings.
+    /// Path overrides.
     #[serde(default)]
-    pub output: OutputSection,
-
-    /// File picker settings.
-    #[serde(default)]
-    pub picker: PickerSection,
+    pub paths: PathsSection,
 
     /// Telemetry consent settings.
     #[serde(default)]
@@ -47,17 +43,13 @@ pub struct TuiSection {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct OutputSection {
-    /// Output directory for recipe results (None = temp dir).
+pub struct PathsSection {
+    /// Custom recipes directory (None = ~/.bnto/recipes/).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub dir: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct PickerSection {
-    /// Default starting directory for the file picker.
+    pub recipes: Option<String>,
+    /// Custom output directory (None = system temp).
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub default_path: Option<String>,
+    pub output: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -100,8 +92,7 @@ impl Default for TomlConfig {
         Self {
             version: CURRENT_VERSION,
             tui: TuiSection::default(),
-            output: OutputSection::default(),
-            picker: PickerSection::default(),
+            paths: PathsSection::default(),
             telemetry: TelemetrySection::default(),
         }
     }
@@ -124,6 +115,16 @@ impl TomlConfig {
             .map_err(|e| std::io::Error::other(format!("TOML serialize: {e}")))?;
         atomic_write(&path, toml_str.as_bytes())
     }
+
+    /// Effective output directory — config override or None (= system temp).
+    pub fn output_dir(&self) -> Option<&str> {
+        self.paths.output.as_deref().filter(|s| !s.is_empty())
+    }
+
+    /// Effective recipes directory override — None means use BntoPaths default.
+    pub fn recipes_dir_override(&self) -> Option<&str> {
+        self.paths.recipes.as_deref().filter(|s| !s.is_empty())
+    }
 }
 
 #[cfg(test)]
@@ -132,119 +133,133 @@ mod tests {
 
     fn test_paths() -> (tempfile::TempDir, BntoPaths) {
         let tmp = tempfile::tempdir().unwrap();
-        unsafe { std::env::set_var("BNTO_HOME", tmp.path().as_os_str()) };
-        let paths = BntoPaths::resolve().unwrap();
-        unsafe { std::env::remove_var("BNTO_HOME") };
+        let paths = BntoPaths {
+            home: tmp.path().to_path_buf(),
+        };
         paths.ensure_dirs().unwrap();
         (tmp, paths)
     }
 
     #[test]
-    fn toml_config_default() {
+    fn default_has_version_2() {
         let config = TomlConfig::default();
-        assert_eq!(config.version, 1);
+        assert_eq!(config.version, 2);
         assert_eq!(config.tui.theme, "los-angeles");
-        assert!(config.output.dir.is_none());
-        assert!(config.picker.default_path.is_none());
+        assert!(config.paths.recipes.is_none());
+        assert!(config.paths.output.is_none());
         assert!(config.telemetry.enabled);
     }
 
     #[test]
-    fn toml_config_roundtrip() {
+    fn paths_section_serializes() {
         let config = TomlConfig {
-            version: 1,
-            tui: TuiSection {
-                theme: "tokyo".into(),
+            paths: PathsSection {
+                recipes: Some("/my/recipes".into()),
+                output: Some("/my/output".into()),
             },
-            output: OutputSection {
-                dir: Some("/tmp/out".into()),
-            },
-            picker: PickerSection {
-                default_path: Some("/photos".into()),
-            },
-            telemetry: TelemetrySection { enabled: false },
+            ..TomlConfig::default()
         };
 
         let serialized = toml::to_string_pretty(&config).unwrap();
-        let deserialized: TomlConfig = toml::from_str(&serialized).unwrap();
-        assert_eq!(config, deserialized);
+        assert!(serialized.contains("[paths]"));
+        assert!(serialized.contains("recipes = \"/my/recipes\""));
+        assert!(serialized.contains("output = \"/my/output\""));
     }
 
     #[test]
-    fn toml_config_save_load() {
+    fn paths_section_omits_none() {
+        let config = TomlConfig::default();
+        let serialized = toml::to_string_pretty(&config).unwrap();
+        // Empty PathsSection should still appear but with no keys.
+        assert!(!serialized.contains("recipes ="));
+        assert!(!serialized.contains("output ="));
+    }
+
+    #[test]
+    fn save_load_roundtrip() {
         let (_tmp, paths) = test_paths();
 
         let config = TomlConfig {
             tui: TuiSection {
-                theme: "monaco".into(),
+                theme: "tokyo".into(),
             },
-            output: OutputSection {
-                dir: Some("/output".into()),
+            paths: PathsSection {
+                recipes: Some("/recipes".into()),
+                output: Some("/output".into()),
             },
+            telemetry: TelemetrySection { enabled: false },
             ..TomlConfig::default()
         };
 
         config.save(&paths).unwrap();
         let loaded = TomlConfig::load(&paths);
-        assert_eq!(loaded.tui.theme, "monaco");
-        assert_eq!(loaded.output.dir, Some("/output".into()));
+        assert_eq!(loaded, config);
     }
 
     #[test]
-    fn toml_config_missing_file_returns_default() {
+    fn missing_file_returns_default() {
         let (_tmp, paths) = test_paths();
-        // Don't save anything — config file doesn't exist.
         let loaded = TomlConfig::load(&paths);
         assert_eq!(loaded, TomlConfig::default());
     }
 
     #[test]
-    fn toml_config_version_present() {
+    fn version_present_in_serialized() {
         let config = TomlConfig::default();
         let serialized = toml::to_string_pretty(&config).unwrap();
         assert!(
-            serialized.contains("version = 1"),
-            "serialized TOML should contain version = 1, got:\n{serialized}"
+            serialized.contains("version = 2"),
+            "serialized TOML should contain version = 2, got:\n{serialized}"
         );
     }
 
     #[test]
-    fn toml_config_serde_default_fields() {
-        // A minimal TOML with only the version field — all others should default.
-        let minimal = "version = 1\n";
+    fn serde_default_fields() {
+        // Minimal TOML with only version — all others should default.
+        let minimal = "version = 2\n";
         let config: TomlConfig = toml::from_str(minimal).unwrap();
         assert_eq!(config.tui.theme, "los-angeles");
-        assert!(config.output.dir.is_none());
-        assert!(config.picker.default_path.is_none());
+        assert!(config.paths.recipes.is_none());
+        assert!(config.paths.output.is_none());
         assert!(config.telemetry.enabled);
     }
 
     #[test]
-    fn load_calls_migration_when_no_config_exists() {
-        let (_tmp, paths) = test_paths();
+    fn output_dir_accessor() {
+        let mut config = TomlConfig::default();
+        assert!(config.output_dir().is_none());
 
-        // Write an old-format JSON config to the location dirs::config_dir()
-        // would return. Since we can't mock dirs::config_dir(), test that
-        // TomlConfig::load returns defaults (not crash) when migration finds
-        // nothing. The migration integration is tested in migration.rs.
-        let loaded = TomlConfig::load(&paths);
-        assert_eq!(loaded, TomlConfig::default());
+        config.paths.output = Some("/tmp/out".into());
+        assert_eq!(config.output_dir(), Some("/tmp/out"));
+
+        config.paths.output = Some(String::new());
+        assert!(
+            config.output_dir().is_none(),
+            "empty string treated as None"
+        );
     }
 
     #[test]
-    fn toml_config_preserves_all_fields() {
+    fn recipes_dir_override_accessor() {
+        let mut config = TomlConfig::default();
+        assert!(config.recipes_dir_override().is_none());
+
+        config.paths.recipes = Some("/custom".into());
+        assert_eq!(config.recipes_dir_override(), Some("/custom"));
+    }
+
+    #[test]
+    fn preserves_all_fields() {
         let (_tmp, paths) = test_paths();
 
         let config = TomlConfig {
-            version: 1,
+            version: 2,
             tui: TuiSection {
                 theme: "tokyo".into(),
             },
-            output: OutputSection {
-                dir: Some("/out".into()),
-            },
-            picker: PickerSection {
-                default_path: Some("/photos".into()),
+            paths: PathsSection {
+                recipes: Some("/recipes".into()),
+                output: Some("/out".into()),
             },
             telemetry: TelemetrySection { enabled: false },
         };
@@ -252,10 +267,37 @@ mod tests {
         config.save(&paths).unwrap();
         let loaded = TomlConfig::load(&paths);
 
-        assert_eq!(loaded.version, 1);
+        assert_eq!(loaded.version, 2);
         assert_eq!(loaded.tui.theme, "tokyo");
-        assert_eq!(loaded.output.dir, Some("/out".into()));
-        assert_eq!(loaded.picker.default_path, Some("/photos".into()));
+        assert_eq!(loaded.paths.recipes, Some("/recipes".into()));
+        assert_eq!(loaded.paths.output, Some("/out".into()));
         assert!(!loaded.telemetry.enabled);
+    }
+
+    #[test]
+    fn v1_config_loads_with_defaults_for_new_fields() {
+        // A v1 config with old [output] and [picker] sections.
+        // These will be ignored (unknown fields) and new [paths] defaults apply.
+        let v1_toml = r#"
+version = 1
+
+[tui]
+theme = "tokyo"
+
+[output]
+dir = "/old-output"
+
+[picker]
+default_path = "/old-default"
+
+[telemetry]
+enabled = false
+"#;
+        let config: TomlConfig = toml::from_str(v1_toml).unwrap();
+        assert_eq!(config.tui.theme, "tokyo");
+        // Old sections are silently ignored — paths section gets defaults.
+        assert!(config.paths.recipes.is_none());
+        assert!(config.paths.output.is_none());
+        assert!(!config.telemetry.enabled);
     }
 }
