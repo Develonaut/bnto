@@ -22,11 +22,18 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 }
 
 /// Write all result files to an output directory.
+///
+/// File names may contain subdirectory separators (e.g. `"subdir/video.mp4"`).
+/// Parent directories are created automatically before writing.
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), String> {
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
     for file in &result.files {
         let out_path = Path::new(output_dir).join(&file.name);
+        if let Some(parent) = out_path.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
+        }
         std::fs::write(&out_path, &file.data)
             .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))?;
     }
@@ -80,5 +87,50 @@ mod tests {
     fn test_guess_mime_unknown() {
         assert_eq!(guess_mime("file.xyz"), "application/octet-stream");
         assert_eq!(guess_mime("noext"), "application/octet-stream");
+    }
+
+    #[test]
+    fn test_write_results_creates_subdirectories() {
+        use bnto_core::PipelineFileResult;
+
+        let dir = std::env::temp_dir().join("bnto-test-write-subdirs");
+        let _ = std::fs::remove_dir_all(&dir);
+
+        let result = PipelineResult {
+            files: vec![
+                PipelineFileResult {
+                    name: "top.txt".to_string(),
+                    data: b"top-level".to_vec(),
+                    mime_type: "text/plain".to_string(),
+                    metadata: serde_json::Map::new(),
+                },
+                PipelineFileResult {
+                    name: "group/nested.mp4".to_string(),
+                    data: b"video-data".to_vec(),
+                    mime_type: "video/mp4".to_string(),
+                    metadata: serde_json::Map::new(),
+                },
+                PipelineFileResult {
+                    name: "a/b/deep.txt".to_string(),
+                    data: b"deep-data".to_vec(),
+                    mime_type: "text/plain".to_string(),
+                    metadata: serde_json::Map::new(),
+                },
+            ],
+            duration_ms: 0,
+            warnings: vec![],
+        };
+
+        write_results(&result, dir.to_str().unwrap()).unwrap();
+
+        assert!(dir.join("top.txt").exists());
+        assert!(dir.join("group").join("nested.mp4").exists());
+        assert!(dir.join("a").join("b").join("deep.txt").exists());
+        assert_eq!(
+            std::fs::read(dir.join("group/nested.mp4")).unwrap(),
+            b"video-data"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
