@@ -277,7 +277,7 @@ impl AppModel {
             theme: Theme::from_variant(effective_variant),
             theme_variant: effective_variant,
             home: HomeModel::new(library_names),
-            browser: BrowserModel::new(catalog.all()),
+            browser: BrowserModel::new(&catalog.bundled()),
             library: None,
             detail,
             picker: None,
