@@ -25,6 +25,9 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>) -> PipelineReporter {
                 if *total_nodes == 1 { "" } else { "s" }
             );
         }
+        PipelineEvent::IterationStarted { .. } => {
+            // Handled by the TUI; CLI stderr reporter ignores iteration events.
+        }
         PipelineEvent::NodeStarted {
             node_type,
             node_index,
@@ -227,6 +230,7 @@ mod tests {
             node_index: 0,
             total_nodes: 1,
             node_type: "image-compress".to_string(),
+            parent_node_id: None,
         });
         reporter.emit(PipelineEvent::FileProgress {
             node_id: "n1".to_string(),
@@ -246,6 +250,7 @@ mod tests {
             node_id: "n1".to_string(),
             duration_ms: 250,
             files_processed: 2,
+            parent_node_id: None,
         });
         reporter.emit(PipelineEvent::PipelineCompleted {
             duration_ms: 300,
@@ -266,6 +271,7 @@ mod tests {
             node_index: 0,
             total_nodes: 1,
             node_type: "shell-command".to_string(),
+            parent_node_id: None,
         });
         // CommandOutput events should not panic.
         reporter.emit(PipelineEvent::CommandOutput {
@@ -276,6 +282,7 @@ mod tests {
             node_id: "n1".to_string(),
             duration_ms: 5000,
             files_processed: 1,
+            parent_node_id: None,
         });
         reporter.emit(PipelineEvent::PipelineCompleted {
             duration_ms: 5100,
@@ -296,10 +303,12 @@ mod tests {
             node_index: 0,
             total_nodes: 1,
             node_type: "image-compress".to_string(),
+            parent_node_id: None,
         });
         reporter.emit(PipelineEvent::NodeFailed {
             node_id: "n1".to_string(),
             error: "Unsupported format".to_string(),
+            parent_node_id: None,
         });
         reporter.emit(PipelineEvent::PipelineFailed {
             node_id: "n1".to_string(),

@@ -3,6 +3,7 @@
 // Loop runs children per-file; group/parallel run on the full batch.
 
 use crate::errors::BntoError;
+use crate::events::PipelineEvent;
 use crate::pipeline::{PipelineDefinition, PipelineFile, PipelineNode, is_io_node};
 
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef, run_node_chain};
@@ -46,8 +47,8 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
     };
 
     match node.node_type.as_str() {
-        "loop" => execute_loop(ctx, &sub_definition, files, file_offset),
-        "group" | "parallel" => execute_group(ctx, &sub_definition, files, file_offset),
+        "loop" => execute_loop(ctx, &node.id, &sub_definition, files, file_offset),
+        "group" | "parallel" => execute_group(ctx, &node.id, &sub_definition, files, file_offset),
         _ => Ok(passthrough(files)),
     }
 }
@@ -56,14 +57,22 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 /// Sets `loop_item` from each file's metadata so child nodes can use `{{item.*}}`.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
+    container_id: &str,
     sub_definition: &PipelineDefinition,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
+    let total_iterations = files.len();
 
     for (i, file) in files.into_iter().enumerate() {
+        ctx.reporter.emit(PipelineEvent::IterationStarted {
+            node_id: container_id.to_string(),
+            iteration: i,
+            total_iterations,
+        });
+
         let item_data = if file.metadata.is_empty() {
             None
         } else {
@@ -76,6 +85,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
             pipeline_total_files: ctx.pipeline_total_files,
             now_ms: ctx.now_ms,
             loop_item: item_data,
+            parent_node_id: Some(container_id.to_string()),
         };
         let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i)?;
         total_processed += result.files_processed;
@@ -91,11 +101,21 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
 /// Run the sub-pipeline once on the full batch of files.
 fn execute_group<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
+    container_id: &str,
     sub_definition: &PipelineDefinition,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
-    let result = execute_sub_pipeline(ctx, sub_definition, files, file_offset)?;
+    let group_ctx = PipelineContext {
+        registry: ctx.registry,
+        reporter: ctx.reporter,
+        process_ctx: ctx.process_ctx,
+        pipeline_total_files: ctx.pipeline_total_files,
+        now_ms: ctx.now_ms,
+        loop_item: ctx.loop_item.clone(),
+        parent_node_id: Some(container_id.to_string()),
+    };
+    let result = execute_sub_pipeline(&group_ctx, sub_definition, files, file_offset)?;
     Ok(NodeExecutionResult {
         files_processed: result.files_processed,
         output_files: result.output_files,

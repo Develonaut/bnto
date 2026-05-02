@@ -47,6 +47,9 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     /// Current loop iteration's per-file metadata (CSV row columns, etc.).
     /// Set by loop containers from PipelineFile.metadata each iteration.
     loop_item: Option<serde_json::Map<String, serde_json::Value>>,
+    /// If executing inside a container, the container's node ID.
+    /// Used to set `parent_node_id` on child `NodeStarted` events.
+    parent_node_id: Option<String>,
 }
 
 /// Result of executing a single node or container sub-pipeline.
@@ -104,6 +107,7 @@ pub fn execute_pipeline(
         pipeline_total_files: files.len(),
         now_ms,
         loop_item: None,
+        parent_node_id: None,
     };
 
     let node_infos: Vec<NodeInfo> = processing_nodes
@@ -173,6 +177,7 @@ fn emit_node_failure<F: Fn() -> u64 + Copy>(
     ctx.reporter.emit(PipelineEvent::NodeFailed {
         node_id: node_id.to_string(),
         error: error_msg.clone(),
+        parent_node_id: ctx.parent_node_id.clone(),
     });
     ctx.reporter.emit(PipelineEvent::PipelineFailed {
         node_id: node_id.to_string(),
@@ -219,6 +224,7 @@ fn emit_node_started<F: Fn() -> u64 + Copy>(
         node_index,
         total_nodes,
         node_type: node.node_type.clone(),
+        parent_node_id: ctx.parent_node_id.clone(),
     });
 }
 
@@ -233,6 +239,7 @@ fn emit_node_completed<F: Fn() -> u64 + Copy>(
         node_id: node_id.to_string(),
         duration_ms,
         files_processed,
+        parent_node_id: ctx.parent_node_id.clone(),
     });
 }
 

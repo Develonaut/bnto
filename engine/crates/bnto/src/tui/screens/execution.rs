@@ -54,6 +54,12 @@ pub struct NodeProgress {
     pub files_processed: usize,
     /// Total files this node will process (set on first FileProgress).
     pub total_files: usize,
+    /// Current iteration (0-based) for loop containers.
+    pub iteration: Option<usize>,
+    /// Total iterations for loop containers.
+    pub total_iterations: Option<usize>,
+    /// Child nodes inside this container (loop/group).
+    pub children: Vec<NodeProgress>,
 }
 
 /// Execution screen state.
@@ -123,6 +129,24 @@ pub enum ExecutionMessage {
     },
     /// A line of stderr output from a running command.
     CommandOutput { node_id: String, line: String },
+    /// Loop iteration started — tracks iteration count.
+    IterationStarted {
+        node_id: String,
+        iteration: usize,
+        total_iterations: usize,
+    },
+    /// A child node inside a container started.
+    ChildNodeStarted {
+        parent_node_id: String,
+        node_id: String,
+        node_type: String,
+    },
+    /// A child node inside a container completed.
+    ChildNodeCompleted {
+        parent_node_id: String,
+        node_id: String,
+        duration_ms: u64,
+    },
     /// User pressed Esc to cancel.
     Cancel,
     /// Timer tick with current elapsed time.
@@ -190,6 +214,9 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                         status: NodeStatus::Pending,
                         files_processed: 0,
                         total_files: 0,
+                        iteration: None,
+                        total_iterations: None,
+                        children: Vec::new(),
                     })
                     .collect()
             } else {
@@ -200,6 +227,9 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                         status: NodeStatus::Pending,
                         files_processed: 0,
                         total_files: 0,
+                        iteration: None,
+                        total_iterations: None,
+                        children: Vec::new(),
                     })
                     .collect()
             };
@@ -262,6 +292,55 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             model.output_lines.push_back(line);
             while model.output_lines.len() > MAX_OUTPUT_LINES {
                 model.output_lines.pop_front();
+            }
+        }
+        ExecutionMessage::IterationStarted {
+            node_id,
+            iteration,
+            total_iterations,
+        } => {
+            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.iteration = Some(iteration);
+                node.total_iterations = Some(total_iterations);
+                // Reset children on new iteration — previous iteration's state is stale.
+                for child in &mut node.children {
+                    child.status = NodeStatus::Pending;
+                }
+            }
+        }
+        ExecutionMessage::ChildNodeStarted {
+            parent_node_id,
+            node_id,
+            node_type,
+        } => {
+            if let Some(parent) = model.nodes.iter_mut().find(|n| n.id == parent_node_id) {
+                // Upsert: reuse existing child entry or create a new one.
+                if let Some(child) = parent.children.iter_mut().find(|c| c.id == node_id) {
+                    child.status = NodeStatus::Active;
+                    child.node_type = node_type;
+                } else {
+                    parent.children.push(NodeProgress {
+                        id: node_id,
+                        node_type,
+                        status: NodeStatus::Active,
+                        files_processed: 0,
+                        total_files: 0,
+                        iteration: None,
+                        total_iterations: None,
+                        children: Vec::new(),
+                    });
+                }
+            }
+        }
+        ExecutionMessage::ChildNodeCompleted {
+            parent_node_id,
+            node_id,
+            duration_ms,
+        } => {
+            if let Some(parent) = model.nodes.iter_mut().find(|n| n.id == parent_node_id)
+                && let Some(child) = parent.children.iter_mut().find(|c| c.id == node_id)
+            {
+                child.status = NodeStatus::Completed { duration_ms };
             }
         }
         ExecutionMessage::OutputsReady { files, output_dir } => {
@@ -634,5 +713,217 @@ mod tests {
         assert_eq!(m.nodes[0].total_files, 0);
         assert_eq!(m.nodes[1].files_processed, 0);
         assert_eq!(m.nodes[1].total_files, 0);
+    }
+
+    // --- Iteration + child node tracking ---
+
+    #[test]
+    fn iteration_started_sets_iteration_count() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+                node_info: vec![("loop-1".into(), "loop".into())],
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::IterationStarted {
+                node_id: "loop-1".into(),
+                iteration: 2,
+                total_iterations: 15,
+            },
+        );
+        assert_eq!(m.nodes[0].iteration, Some(2));
+        assert_eq!(m.nodes[0].total_iterations, Some(15));
+    }
+
+    #[test]
+    fn iteration_started_resets_children() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+                node_info: vec![("loop-1".into(), "loop".into())],
+            },
+        );
+        // First iteration — child starts and completes.
+        let m = update(
+            m,
+            ExecutionMessage::IterationStarted {
+                node_id: "loop-1".into(),
+                iteration: 0,
+                total_iterations: 3,
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child".into(),
+                node_type: "shell-command".into(),
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeCompleted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child".into(),
+                duration_ms: 100,
+            },
+        );
+        assert_eq!(
+            m.nodes[0].children[0].status,
+            NodeStatus::Completed { duration_ms: 100 }
+        );
+
+        // Second iteration — children should reset to Pending.
+        let m = update(
+            m,
+            ExecutionMessage::IterationStarted {
+                node_id: "loop-1".into(),
+                iteration: 1,
+                total_iterations: 3,
+            },
+        );
+        assert_eq!(m.nodes[0].children[0].status, NodeStatus::Pending);
+    }
+
+    #[test]
+    fn child_node_started_adds_to_parent() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+                node_info: vec![("loop-1".into(), "loop".into())],
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child-a".into(),
+                node_type: "shell-command".into(),
+            },
+        );
+        assert_eq!(m.nodes[0].children.len(), 1);
+        assert_eq!(m.nodes[0].children[0].id, "child-a");
+        assert_eq!(m.nodes[0].children[0].node_type, "shell-command");
+        assert_eq!(m.nodes[0].children[0].status, NodeStatus::Active);
+    }
+
+    #[test]
+    fn child_node_started_upserts_existing() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+                node_info: vec![("loop-1".into(), "loop".into())],
+            },
+        );
+        // First time — creates child entry.
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child".into(),
+                node_type: "shell-command".into(),
+            },
+        );
+        // Second time — upserts, doesn't duplicate.
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child".into(),
+                node_type: "shell-command".into(),
+            },
+        );
+        assert_eq!(m.nodes[0].children.len(), 1);
+        assert_eq!(m.nodes[0].children[0].status, NodeStatus::Active);
+    }
+
+    #[test]
+    fn child_node_completed_marks_child_done() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+                node_info: vec![("loop-1".into(), "loop".into())],
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child".into(),
+                node_type: "transform".into(),
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeCompleted {
+                parent_node_id: "loop-1".into(),
+                node_id: "child".into(),
+                duration_ms: 42,
+            },
+        );
+        assert_eq!(
+            m.nodes[0].children[0].status,
+            NodeStatus::Completed { duration_ms: 42 }
+        );
+    }
+
+    #[test]
+    fn multiple_children_tracked_independently() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::PipelineStarted {
+                total_nodes: 1,
+                total_files: 1,
+                node_info: vec![("group-1".into(), "group".into())],
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "group-1".into(),
+                node_id: "a".into(),
+                node_type: "edit-fields".into(),
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeCompleted {
+                parent_node_id: "group-1".into(),
+                node_id: "a".into(),
+                duration_ms: 5,
+            },
+        );
+        let m = update(
+            m,
+            ExecutionMessage::ChildNodeStarted {
+                parent_node_id: "group-1".into(),
+                node_id: "b".into(),
+                node_type: "transform".into(),
+            },
+        );
+        assert_eq!(m.nodes[0].children.len(), 2);
+        assert_eq!(
+            m.nodes[0].children[0].status,
+            NodeStatus::Completed { duration_ms: 5 }
+        );
+        assert_eq!(m.nodes[0].children[1].status, NodeStatus::Active);
     }
 }

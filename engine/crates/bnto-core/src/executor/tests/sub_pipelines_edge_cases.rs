@@ -155,7 +155,7 @@ fn test_error_events_contain_useful_information() {
         .find(|e| matches!(e, PipelineEvent::NodeFailed { .. }))
         .expect("Should have NodeFailed event");
 
-    if let PipelineEvent::NodeFailed { node_id, error } = node_failed {
+    if let PipelineEvent::NodeFailed { node_id, error, .. } = node_failed {
         assert_eq!(
             node_id, "broken",
             "NodeFailed should reference the failing node"
