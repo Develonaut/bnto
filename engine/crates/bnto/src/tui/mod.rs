@@ -217,7 +217,6 @@ fn run_loop(
                 exec.definition_json.clone(),
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
-                None, // output dir resolved by recipe's directory param or temp fallback
             ));
             execution_start = Some(Instant::now());
         }

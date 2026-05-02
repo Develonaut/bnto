@@ -102,6 +102,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-compress-images",
             label: "Compressed Images",
             mode: "download",
             zip: true,
@@ -211,6 +212,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-resize-images",
             label: "Resized Images",
             mode: "download",
             zip: true,
@@ -319,6 +321,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-convert-image-format",
             label: "Converted Images",
             mode: "download",
             zip: true,
@@ -426,6 +429,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-rename-files",
             label: "Renamed Files",
             mode: "download",
             zip: true,
@@ -545,6 +549,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-clean-csv",
             label: "Cleaned CSV",
             mode: "download",
             zip: false,
@@ -662,6 +667,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-rename-csv-columns",
             label: "Renamed CSV",
             mode: "download",
             zip: false,
@@ -781,6 +787,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-csv-to-json",
             label: "JSON file",
             mode: "download",
             zip: false,
@@ -900,6 +907,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-merge-csv",
             label: "Merged CSV",
             mode: "download",
             zip: false,
@@ -1054,6 +1062,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-optimize-images-for-web",
             label: "Optimized Images",
             mode: "download",
             zip: true,
@@ -1208,6 +1217,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-generate-thumbnails",
             label: "Thumbnails",
             mode: "download",
             zip: true,
@@ -1338,6 +1348,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-compress-and-rename",
             label: "Compressed & Renamed",
             mode: "download",
             zip: true,
@@ -1489,6 +1500,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-standardize-csv",
             label: "Standardized CSV",
             mode: "download",
             zip: false,
@@ -1598,6 +1610,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-strip-exif",
             label: "Cleaned Images",
             mode: "download",
             zip: true,
@@ -1727,6 +1740,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-watermark-images",
             label: "Watermarked Images",
             mode: "download",
             zip: true,
@@ -2028,6 +2042,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-download-video",
             label: "Downloaded Video",
             mode: "download",
             zip: true,
@@ -2150,6 +2165,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-svg-to-png",
             label: "PNG Images",
             mode: "download",
             zip: true,
@@ -2260,6 +2276,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-svg-to-jpeg",
             label: "JPEG Images",
             mode: "download",
             zip: true,
@@ -2373,6 +2390,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-optimize-svg",
             label: "Optimized SVGs",
             mode: "download",
             zip: true,
@@ -2482,6 +2500,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-number-files",
             label: "Numbered Files",
             mode: "download",
             zip: true,
@@ -2591,6 +2610,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           outputPorts: [],
           parameters: {
             autoDownload: true,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-sanitize-filenames",
             label: "Sanitized Files",
             mode: "download",
             zip: true,

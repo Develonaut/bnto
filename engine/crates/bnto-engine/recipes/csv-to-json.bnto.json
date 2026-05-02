@@ -83,6 +83,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-csv-to-json",
         "label": "JSON file",
         "zip": false,
         "autoDownload": true

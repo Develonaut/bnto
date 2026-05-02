@@ -79,6 +79,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-clean-csv",
         "label": "Cleaned CSV",
         "zip": false,
         "autoDownload": true

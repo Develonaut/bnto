@@ -3,8 +3,13 @@
   "type": "group",
   "version": "1.0.0",
   "name": "Watermark Portrait Top Left",
-  "position": { "x": 0, "y": 0 },
-  "metadata": { "description": "Watermark portrait images with top-left overlay" },
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Watermark portrait images with top-left overlay"
+  },
   "parameters": {},
   "inputPorts": [],
   "outputPorts": [],
@@ -14,7 +19,10 @@
       "type": "input",
       "version": "1.0.0",
       "name": "Input",
-      "position": { "x": 0, "y": 100 },
+      "position": {
+        "x": 0,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "mode": "file-upload",
@@ -24,17 +32,32 @@
         "multiple": true
       },
       "inputPorts": [],
-      "outputPorts": [{ "id": "out-1", "name": "files" }]
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
     },
     {
       "id": "process-loop",
       "type": "loop",
       "version": "1.0.0",
       "name": "For Each",
-      "position": { "x": 250, "y": 100 },
+      "position": {
+        "x": 250,
+        "y": 100
+      },
       "metadata": {},
-      "parameters": { "mode": "forEach" },
-      "inputPorts": [{ "id": "in-1", "name": "items" }],
+      "parameters": {
+        "mode": "forEach"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
       "outputPorts": [],
       "nodes": [
         {
@@ -42,7 +65,10 @@
           "type": "image-overlay",
           "version": "1.0.0",
           "name": "Overlay",
-          "position": { "x": 0, "y": 0 },
+          "position": {
+            "x": 0,
+            "y": 0
+          },
           "metadata": {},
           "parameters": {
             "position": "top-left",
@@ -64,20 +90,37 @@
       "type": "output",
       "version": "1.0.0",
       "name": "Output",
-      "position": { "x": 500, "y": 100 },
+      "position": {
+        "x": 500,
+        "y": 100
+      },
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-watermark-portrait-top-left",
         "label": "Watermarked Images",
         "zip": true,
         "autoDownload": true
       },
-      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
       "outputPorts": []
     }
   ],
   "edges": [
-    { "id": "e1", "source": "input", "target": "process-loop" },
-    { "id": "e2", "source": "process-loop", "target": "output" }
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "process-loop"
+    },
+    {
+      "id": "e2",
+      "source": "process-loop",
+      "target": "output"
+    }
   ]
 }

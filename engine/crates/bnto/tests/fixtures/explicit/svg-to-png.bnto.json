@@ -92,6 +92,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-svg-to-png",
         "label": "PNG Images",
         "zip": true,
         "autoDownload": true

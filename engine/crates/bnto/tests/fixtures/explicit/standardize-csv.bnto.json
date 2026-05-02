@@ -105,6 +105,7 @@
       "metadata": {},
       "parameters": {
         "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-standardize-csv",
         "label": "Standardized CSV",
         "zip": false,
         "autoDownload": true
