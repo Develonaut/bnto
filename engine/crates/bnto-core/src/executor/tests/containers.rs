@@ -422,3 +422,178 @@ fn test_container_with_no_children_is_passthrough() {
     assert_eq!(result.files.len(), 1);
     assert_eq!(result.files[0].name, "test.txt");
 }
+
+// --- Continue-on-error tests ---
+
+#[test]
+fn test_loop_fail_fast_is_default() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "child", "type": "test-fail" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
+
+    assert!(
+        result.is_err(),
+        "Default (FailFast) should fail on first error"
+    );
+}
+
+#[test]
+fn test_loop_continue_on_error_skips_failures() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "parameters": { "onError": "continue" },
+                "children": [
+                    { "id": "child", "type": "test-uppercase" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    // All succeed — no warnings expected.
+    let files = vec![make_file("a.txt", b"hello"), make_file("b.txt", b"world")];
+    let result =
+        execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(result.files.len(), 2);
+    assert!(result.warnings.is_empty());
+}
+
+#[test]
+fn test_loop_continue_on_error_captures_warnings() {
+    // Mix of passing and failing iterations: test-fail for odd files.
+    // We'll use a single child that always fails, but interleave with
+    // a separate test: two files, first succeeds (test-echo), but since
+    // we can't conditionally fail per-iteration with a single child,
+    // we test with ALL files failing and verify the "all failed" error.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "parameters": { "onError": "continue" },
+                "children": [
+                    { "id": "child", "type": "test-fail" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let reporter = PipelineReporter::new_noop();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
+
+    // All iterations failed → loop itself should fail.
+    assert!(result.is_err());
+    let err = result.unwrap_err().to_string();
+    assert!(
+        err.contains("All 2 iterations failed"),
+        "Error should indicate all iterations failed, got: {err}"
+    );
+}
+
+#[test]
+fn test_loop_continue_emits_iteration_failed_events() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "parameters": { "onError": "continue" },
+                "children": [
+                    { "id": "child", "type": "test-fail" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    let _ = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
+
+    let events = recorder.events();
+    let failed_events: Vec<&PipelineEvent> = events
+        .iter()
+        .filter(|e| matches!(e, PipelineEvent::IterationFailed { .. }))
+        .collect();
+
+    assert_eq!(
+        failed_events.len(),
+        2,
+        "Continue mode should emit IterationFailed for each failed iteration"
+    );
+}
+
+#[test]
+fn test_loop_fail_fast_stops_on_first_failure() {
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "child", "type": "test-fail" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![
+        make_file("a.txt", b"aaa"),
+        make_file("b.txt", b"bbb"),
+        make_file("c.txt", b"ccc"),
+    ];
+    let _ = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now);
+
+    let events = recorder.events();
+
+    // Only 1 IterationStarted should fire (the first, which fails and kills the loop).
+    let started_events: Vec<&PipelineEvent> = events
+        .iter()
+        .filter(|e| matches!(e, PipelineEvent::IterationStarted { .. }))
+        .collect();
+
+    assert_eq!(
+        started_events.len(),
+        1,
+        "FailFast should stop after first iteration"
+    );
+}

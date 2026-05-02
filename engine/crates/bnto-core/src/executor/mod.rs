@@ -57,6 +57,8 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
 struct NodeExecutionResult {
     output_files: Vec<PipelineFile>,
     files_processed: usize,
+    /// Non-fatal warnings (e.g. skipped loop iterations with continue-on-error).
+    warnings: Vec<String>,
 }
 
 // --- Public API ---
@@ -71,7 +73,11 @@ fn filter_processing_nodes(definition: &PipelineDefinition) -> Vec<&PipelineNode
 }
 
 /// Convert final pipeline files to result format, preserving processor metadata.
-fn build_pipeline_result(files: Vec<PipelineFile>, duration_ms: u64) -> PipelineResult {
+fn build_pipeline_result(
+    files: Vec<PipelineFile>,
+    duration_ms: u64,
+    warnings: Vec<String>,
+) -> PipelineResult {
     let result_files = files
         .into_iter()
         .map(|f| PipelineFileResult {
@@ -84,6 +90,7 @@ fn build_pipeline_result(files: Vec<PipelineFile>, duration_ms: u64) -> Pipeline
     PipelineResult {
         files: result_files,
         duration_ms,
+        warnings,
     }
 }
 
@@ -125,7 +132,7 @@ pub fn execute_pipeline(
         nodes: node_infos,
     });
 
-    let (current_files, total_files_processed) = match definition.resolved_iteration() {
+    let (current_files, total_files_processed, warnings) = match definition.resolved_iteration() {
         IterationMode::Explicit => run_node_chain(&ctx, &processing_nodes, files, 0)?,
         IterationMode::Auto => auto_iteration::run_auto_iteration(&ctx, &processing_nodes, files)?,
     };
@@ -136,7 +143,7 @@ pub fn execute_pipeline(
         total_files_processed,
     });
 
-    Ok(build_pipeline_result(current_files, duration_ms))
+    Ok(build_pipeline_result(current_files, duration_ms, warnings))
 }
 
 /// Chain nodes sequentially, passing each node's output as the next node's input.
@@ -145,10 +152,11 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
     file_offset: usize,
-) -> Result<(Vec<PipelineFile>, usize), BntoError> {
+) -> Result<(Vec<PipelineFile>, usize, Vec<String>), BntoError> {
     let total_nodes = nodes.len();
     let mut current_files = files;
     let mut total_files_processed: usize = 0;
+    let mut all_warnings: Vec<String> = Vec::new();
 
     for (node_index, node) in nodes.iter().enumerate() {
         let result = execute_node(
@@ -160,10 +168,11 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
             file_offset,
         )?;
         total_files_processed += result.files_processed;
+        all_warnings.extend(result.warnings);
         current_files = result.output_files;
     }
 
-    Ok((current_files, total_files_processed))
+    Ok((current_files, total_files_processed, all_warnings))
 }
 
 // --- Internal: Node Dispatch ---
