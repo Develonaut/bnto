@@ -4,7 +4,7 @@
 // Theme field cycles with left/right arrows.
 
 use super::super::theme::ThemeVariant;
-use super::super::toml_config::TomlConfig;
+use crate::storage::config::TomlConfig;
 use crate::telemetry;
 
 /// A single configurable field in the settings screen.
@@ -251,10 +251,10 @@ mod tests {
     #[test]
     fn from_toml_config_roundtrips() {
         let config = TomlConfig {
-            tui: super::super::super::toml_config::TuiSection {
+            tui: crate::storage::config::TuiSection {
                 theme: "tokyo".into(),
             },
-            paths: super::super::super::toml_config::PathsSection {
+            paths: crate::storage::config::PathsSection {
                 recipes: Some("/recipes".into()),
                 output: Some("/output".into()),
             },

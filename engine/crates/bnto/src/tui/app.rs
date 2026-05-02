@@ -17,7 +17,6 @@ use super::app_helpers::{
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
     handle_wizard_form, load_editor_from_json,
 };
-use super::paths::BntoPaths;
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::DetailModel;
 use super::screens::editor::{EditorMessage, EditorScreenModel};
@@ -29,7 +28,8 @@ use super::screens::results::{ResultsMessage, ResultsModel, update as results_up
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
 use super::screens::wizard::{WizardMessage, WizardModel};
 use super::theme::{Theme, ThemeVariant};
-use super::toml_config::TomlConfig;
+use crate::storage::BntoPaths;
+use crate::storage::config::TomlConfig;
 
 /// Where the user came from when entering the Detail screen.
 ///
@@ -1683,7 +1683,7 @@ mod tests {
 
         // Pre-save a TOML config.
         let config = TomlConfig {
-            tui: crate::tui::toml_config::TuiSection {
+            tui: crate::storage::config::TuiSection {
                 theme: "tokyo".into(),
             },
             ..TomlConfig::default()

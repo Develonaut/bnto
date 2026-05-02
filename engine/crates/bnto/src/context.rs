@@ -2,7 +2,7 @@
 //
 // Provides real implementations for running external commands, creating
 // temp files, reading env vars, and accessing the working directory.
-// Env var resolution: system env > project .env > user ~/.config/bnto/.env.
+// Env var resolution: system env > project .env > user ~/.bnto/.env.
 
 use std::collections::HashMap;
 use std::io::BufRead;
@@ -18,7 +18,7 @@ use bnto_core::errors::BntoError;
 /// Env var resolution order (first match wins):
 /// 1. System environment (`std::env::var`)
 /// 2. Project `.env` file in the working directory
-/// 3. User dotenv at `~/.config/bnto/.env`
+/// 3. User dotenv at `~/.bnto/.env`
 pub struct NativeContext {
     work_dir: PathBuf,
     /// Key-value pairs from the project-level `.env` file.
@@ -63,26 +63,13 @@ fn load_dotenv_file(path: &Path) -> HashMap<String, String> {
     }
 }
 
-/// Load the user-level dotenv from `~/.config/bnto/.env`.
-/// Uses the same XDG logic as `BntoPaths` but avoids a dependency on the TUI module.
+/// Load the user-level dotenv from `~/.bnto/.env`.
 fn load_user_dotenv() -> HashMap<String, String> {
-    let config_dir = resolve_user_config_dir();
-    match config_dir {
+    let home = crate::storage::BntoPaths::resolve().map(|p| p.home);
+    match home {
         Some(dir) => load_dotenv_file(&dir.join(".env")),
         None => HashMap::new(),
     }
-}
-
-/// Resolve the user config dir without depending on `BntoPaths` (TUI module).
-/// Priority: BNTO_CONFIG_DIR > XDG_CONFIG_HOME > ~/.config/bnto/.
-fn resolve_user_config_dir() -> Option<PathBuf> {
-    if let Some(dir) = std::env::var_os("BNTO_CONFIG_DIR") {
-        return Some(PathBuf::from(dir));
-    }
-    if let Some(xdg) = std::env::var_os("XDG_CONFIG_HOME") {
-        return Some(PathBuf::from(xdg).join("bnto"));
-    }
-    dirs::home_dir().map(|h| h.join(".config").join("bnto"))
 }
 
 impl ProcessContext for NativeContext {
@@ -218,7 +205,7 @@ impl ProcessContext for NativeContext {
         if let Some(val) = self.project_env.get(key) {
             return Some(val.clone());
         }
-        // 3. User dotenv (~/.config/bnto/.env) — global defaults.
+        // 3. User dotenv (~/.bnto/.env) — global defaults.
         if let Some(val) = self.user_env.get(key) {
             return Some(val.clone());
         }
