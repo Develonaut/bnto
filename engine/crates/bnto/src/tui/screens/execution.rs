@@ -84,6 +84,8 @@ pub struct ExecutionModel {
     pub output_dir: Option<String>,
     /// Rolling window of recent command output lines (stderr from child processes).
     pub output_lines: VecDeque<String>,
+    /// Non-fatal warnings from the pipeline (e.g. skipped loop iterations).
+    pub warnings: Vec<String>,
 }
 
 /// Maximum number of command output lines to retain in the rolling window.
@@ -126,6 +128,7 @@ pub enum ExecutionMessage {
     OutputsReady {
         files: Vec<OutputFile>,
         output_dir: Option<String>,
+        warnings: Vec<String>,
     },
     /// A line of stderr output from a running command.
     CommandOutput { node_id: String, line: String },
@@ -134,6 +137,23 @@ pub enum ExecutionMessage {
         node_id: String,
         iteration: usize,
         total_iterations: usize,
+    },
+    /// Loop iteration completed successfully.
+    IterationCompleted {
+        node_id: String,
+        iteration: usize,
+        total_iterations: usize,
+        duration_ms: u64,
+        files_produced: usize,
+        /// Output files from progressive mode (written to disk by the bridge).
+        output_files: Vec<bnto_core::events::ProgressOutputFile>,
+    },
+    /// Loop iteration failed (in continue-on-error mode, loop continues).
+    IterationFailed {
+        node_id: String,
+        iteration: usize,
+        total_iterations: usize,
+        error: String,
     },
     /// A child node inside a container started.
     ChildNodeStarted {
@@ -169,6 +189,7 @@ impl ExecutionModel {
             output_files: Vec::new(),
             output_dir: None,
             output_lines: VecDeque::new(),
+            warnings: Vec::new(),
         }
     }
 
@@ -308,6 +329,35 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                 }
             }
         }
+        ExecutionMessage::IterationCompleted {
+            node_id, iteration, ..
+        } => {
+            // Update iteration counter to reflect completion.
+            // Progressive output files are written to disk by the bridge,
+            // not handled here in the model update.
+            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.iteration = Some(iteration);
+            }
+        }
+        ExecutionMessage::IterationFailed {
+            node_id,
+            iteration,
+            error,
+            ..
+        } => {
+            // In continue mode the loop keeps going, so just update the counter.
+            // The error is visible via CommandOutput or warnings.
+            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
+                node.iteration = Some(iteration);
+            }
+            // Push the error into the output lines so the user can see it.
+            model
+                .output_lines
+                .push_back(format!("Iteration {iteration} failed: {error}"));
+            while model.output_lines.len() > MAX_OUTPUT_LINES {
+                model.output_lines.pop_front();
+            }
+        }
         ExecutionMessage::ChildNodeStarted {
             parent_node_id,
             node_id,
@@ -343,9 +393,14 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
                 child.status = NodeStatus::Completed { duration_ms };
             }
         }
-        ExecutionMessage::OutputsReady { files, output_dir } => {
+        ExecutionMessage::OutputsReady {
+            files,
+            output_dir,
+            warnings,
+        } => {
             model.output_files = files;
             model.output_dir = output_dir;
+            model.warnings = warnings;
         }
         ExecutionMessage::Cancel => {
             model.status = ExecutionStatus::Cancelled;
@@ -601,6 +656,7 @@ mod tests {
             ExecutionMessage::OutputsReady {
                 files: outputs.clone(),
                 output_dir: Some("/tmp/out".into()),
+                warnings: Vec::new(),
             },
         );
         assert_eq!(m.output_files, outputs);
