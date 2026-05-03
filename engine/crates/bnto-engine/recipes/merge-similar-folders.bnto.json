@@ -18,7 +18,6 @@
   "settings": {
     "iteration": "explicit"
   },
-  "requires": [],
   "nodes": [
     {
       "id": "input",
