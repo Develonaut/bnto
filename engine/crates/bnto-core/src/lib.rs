@@ -103,7 +103,10 @@ pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSou
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
-pub use executor::template::resolve_ctx_templates;
+pub use executor::template::{
+    build_input_metadata, build_node_outputs_for_input, resolve_ctx_templates,
+    resolve_node_templates,
+};
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use file_data::FileData;
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};

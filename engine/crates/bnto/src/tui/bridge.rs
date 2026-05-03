@@ -146,12 +146,16 @@ fn run_bridge(
     };
 
     // Resolve output directory:
-    // 1. Recipe's output node directory param (with {{ctx.*}} resolved)
+    // 1. Recipe's output node directory param (with {{ctx.*}} + {{node.*}} resolved)
     // 2. Fall back to temp dir
     let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
         .ok()
-        .and_then(|def| bnto_core::resolve_output_directory(&def))
-        .map(|d| bnto_core::resolve_ctx_templates(&d, &ctx));
+        .and_then(|def| {
+            let dir = bnto_core::resolve_output_directory(&def)?;
+            let resolved = bnto_core::resolve_ctx_templates(&dir, &ctx);
+            let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, &prepared.files);
+            Some(bnto_core::resolve_node_templates(&resolved, &node_outputs))
+        });
     let output_dir = match recipe_dir {
         Some(dir) => PathBuf::from(dir),
         None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),

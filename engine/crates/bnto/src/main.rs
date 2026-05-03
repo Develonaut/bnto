@@ -367,7 +367,12 @@ fn run_recipe(
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
 
     // Priority chain: explicit --output > recipe directory param > default "."
-    let output_dir = resolve_effective_output_dir(output_override, &prepared.definition_json, &ctx);
+    let output_dir = resolve_effective_output_dir(
+        output_override,
+        &prepared.definition_json,
+        &ctx,
+        &prepared.files,
+    );
 
     // Create output dir before pipeline so progressive output can write there.
     let _ = std::fs::create_dir_all(&output_dir);
@@ -408,12 +413,13 @@ fn run_recipe(
 
 /// Resolve the effective output directory using the priority chain:
 /// 1. Explicit `--output` flag (highest priority)
-/// 2. Recipe's output node `directory` parameter (with {{ctx.*}} templates resolved)
+/// 2. Recipe's output node `directory` parameter (with {{ctx.*}} + {{node.*}} templates resolved)
 /// 3. Default: current directory (".")
 fn resolve_effective_output_dir(
     output_override: Option<&str>,
     definition_json: &str,
     process_ctx: &dyn bnto_core::ProcessContext,
+    files: &[bnto_core::PipelineFile],
 ) -> String {
     // Explicit --output always wins.
     if let Some(dir) = output_override {
@@ -423,7 +429,10 @@ fn resolve_effective_output_dir(
     if let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(definition_json)
         && let Some(recipe_dir) = bnto_core::resolve_output_directory(&def)
     {
-        return bnto_core::resolve_ctx_templates(&recipe_dir, process_ctx);
+        // Two-pass: resolve {{ctx.*}} first, then {{node.*}} (input file metadata).
+        let resolved = bnto_core::resolve_ctx_templates(&recipe_dir, process_ctx);
+        let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, files);
+        return bnto_core::resolve_node_templates(&resolved, &node_outputs);
     }
     // Default: current directory.
     ".".to_string()
