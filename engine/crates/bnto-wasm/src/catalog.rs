@@ -242,8 +242,8 @@ mod tests {
         assert!(parsed["recipes"].is_array());
         assert_eq!(
             parsed["recipes"].as_array().unwrap().len(),
-            20,
-            "Catalog should include all 20 built-in recipes"
+            21,
+            "Catalog should include all 21 built-in recipes"
         );
     }
 

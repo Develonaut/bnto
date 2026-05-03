@@ -43,6 +43,7 @@ For EACH file you modified, verify against the Bento Box Principle (`code-standa
 - [ ] **Flat Named Exports**: ALL multi-part components use flat prefixed exports (`DialogTitle`, `CardHeader`), NOT `Object.assign` dot-notation (`Dialog.Title`, `Card.Header`). Dot-notation breaks React Server Components. If you see `Object.assign` compound patterns, convert to flat exports. Report PASS or FAIL with specific files.
 - [ ] **Primitives vs Business Components**: Generic in `primitives/`, domain-specific in `components/`.
 - [ ] **React Query `select` Rule**: Every `useQuery` that transforms data (`.map()`, `toFoo()`, spread) MUST do it inside `select`. Returning `data ? toFoo(data) : null` or `{ ...data, isLoading }` from the hook body creates new references every render -> infinite loops.
+- [ ] **Performance / Memory**: No unnecessary file reads into memory. Processors that don't modify content should use `FileData::Path` (zero-copy), not `FileData::Bytes`. See [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#filedata-selection).
 - [ ] **Cost Check**: No new paid services without explicit discussion.
 
 ## Step 3: TypeScript Compliance

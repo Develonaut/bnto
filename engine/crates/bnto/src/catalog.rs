@@ -167,7 +167,7 @@ mod tests {
     fn catalog_loads_bundled_recipes() {
         let tmp = tempfile::tempdir().unwrap();
         let catalog = RecipeCatalog::load(tmp.path());
-        assert_eq!(catalog.all().len(), 20);
+        assert_eq!(catalog.all().len(), 21);
     }
 
     #[test]
@@ -176,8 +176,8 @@ mod tests {
         write_recipe(tmp.path(), "my-custom", "My Custom", "custom");
         let catalog = RecipeCatalog::load(tmp.path());
 
-        // 20 bundled + 1 library
-        assert_eq!(catalog.all().len(), 21);
+        // 21 bundled + 1 library
+        assert_eq!(catalog.all().len(), 22);
         let custom = catalog.resolve("my-custom").expect("should find custom");
         assert_eq!(custom.name, "My Custom");
         assert!(matches!(custom.source, RecipeSource::Library(_)));
@@ -190,8 +190,8 @@ mod tests {
         write_recipe(tmp.path(), "compress-images", "My Compress", "image");
         let catalog = RecipeCatalog::load(tmp.path());
 
-        // Total should still be 20 (replaced, not added).
-        assert_eq!(catalog.all().len(), 20);
+        // Total should still be 21 (replaced, not added).
+        assert_eq!(catalog.all().len(), 21);
         let entry = catalog.resolve("compress-images").unwrap();
         assert_eq!(entry.name, "My Compress");
         assert!(matches!(entry.source, RecipeSource::Library(_)));
@@ -228,13 +228,13 @@ mod tests {
     fn catalog_empty_library_dir_still_has_bundled() {
         let tmp = tempfile::tempdir().unwrap();
         let catalog = RecipeCatalog::load(tmp.path());
-        assert_eq!(catalog.all().len(), 20);
+        assert_eq!(catalog.all().len(), 21);
     }
 
     #[test]
     fn catalog_missing_library_dir_still_has_bundled() {
         let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
-        assert_eq!(catalog.all().len(), 20);
+        assert_eq!(catalog.all().len(), 21);
     }
 
     #[test]
@@ -256,8 +256,8 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         write_recipe(tmp.path(), "my-custom", "Custom", "custom");
         let catalog = RecipeCatalog::load(tmp.path());
-        assert_eq!(catalog.all().len(), 21);
-        assert_eq!(catalog.bundled().len(), 20);
+        assert_eq!(catalog.all().len(), 22);
+        assert_eq!(catalog.bundled().len(), 21);
         assert!(
             catalog
                 .bundled()
@@ -274,8 +274,8 @@ mod tests {
         write_recipe(tmp.path(), "good", "Good Recipe", "test");
         let catalog = RecipeCatalog::load(tmp.path());
 
-        // 20 bundled + 1 valid library
-        assert_eq!(catalog.all().len(), 21);
+        // 21 bundled + 1 valid library
+        assert_eq!(catalog.all().len(), 22);
         assert!(catalog.resolve("good").is_some());
         assert!(catalog.resolve("bad").is_none());
     }

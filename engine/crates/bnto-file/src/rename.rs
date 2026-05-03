@@ -857,6 +857,68 @@ mod tests {
     }
 
     // =========================================================================
+    // Path-Aware Find/Replace Tests
+    // =========================================================================
+    //
+    // When file-collect outputs filenames with directory components
+    // (flatten=false), find/replace operates on the full relative path.
+    // This enables directory reorganization via regex.
+
+    #[test]
+    fn test_find_replace_restructures_directory_path() {
+        // "Krieg Artillery/VIDEO.mp4" → regex splits first word from rest
+        // → "Krieg/Artillery/VIDEO.mp4"
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("find", r"^(\w+)\s+([^/]+)/"), ("replace", "$1/$2/")]);
+        let input = make_input(b"data", "Krieg Artillery/VIDEO.mp4", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+
+        assert_eq!(output.files[0].filename, "Krieg/Artillery/VIDEO.mp4");
+    }
+
+    #[test]
+    fn test_find_replace_leaves_single_word_dirs_unchanged() {
+        // "Krieg/SOLDIER.mp4" has no space before the slash — regex doesn't match.
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("find", r"^(\w+)\s+([^/]+)/"), ("replace", "$1/$2/")]);
+        let input = make_input(b"data", "Krieg/SOLDIER.mp4", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+
+        assert_eq!(output.files[0].filename, "Krieg/SOLDIER.mp4");
+    }
+
+    #[test]
+    fn test_find_replace_handles_multi_word_suffix() {
+        // "Krieg Fire Horse/video.mp4" → "Krieg/Fire Horse/video.mp4"
+        // Only the first word becomes the parent; the rest is the subfolder.
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("find", r"^(\w+)\s+([^/]+)/"), ("replace", "$1/$2/")]);
+        let input = make_input(b"data", "Krieg Fire Horse/video.mp4", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+
+        assert_eq!(output.files[0].filename, "Krieg/Fire Horse/video.mp4");
+    }
+
+    #[test]
+    fn test_find_replace_path_no_directory_unchanged() {
+        // Flat filenames (no directory component) pass through unaffected.
+        let processor = RenameFiles::new();
+        let progress = noop_progress();
+        let params = string_params(&[("find", r"^(\w+)\s+([^/]+)/"), ("replace", "$1/$2/")]);
+        let input = make_input(b"data", "photo.jpg", params);
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+
+        assert_eq!(output.files[0].filename, "photo.jpg");
+    }
+
+    // =========================================================================
     // Case Transformation Tests
     // =========================================================================
 

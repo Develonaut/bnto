@@ -4,10 +4,30 @@ use std::path::Path;
 
 use bnto_core::{PipelineFile, PipelineResult};
 
-/// Read a file from disk into a PipelineFile.
+/// Read a file (or directory) from disk into a PipelineFile.
+///
+/// For regular files, reads bytes into memory. For directories, creates a
+/// synthetic entry with the absolute path as the name and empty data —
+/// processors like `file-collect` use the filename as the directory to traverse.
 pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
+    let p = Path::new(path);
+
+    if p.is_dir() {
+        let abs = p
+            .canonicalize()
+            .map_err(|e| format!("{e}"))?
+            .to_string_lossy()
+            .to_string();
+        return Ok(PipelineFile {
+            name: abs,
+            data: bnto_core::processor::FileData::Bytes(vec![]),
+            mime_type: "inode/directory".to_string(),
+            metadata: serde_json::Map::new(),
+        });
+    }
+
     let data = std::fs::read(path).map_err(|e| format!("{e}"))?;
-    let name = Path::new(path)
+    let name = p
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| path.to_string());
@@ -69,6 +89,22 @@ fn guess_mime(path: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_read_pipeline_file_directory() {
+        let dir = std::env::temp_dir().join("bnto-test-dir-input");
+        let _ = std::fs::create_dir_all(&dir);
+
+        let pf = read_pipeline_file(dir.to_str().unwrap()).unwrap();
+        assert!(pf.name.contains("bnto-test-dir-input"));
+        assert_eq!(pf.mime_type, "inode/directory");
+        assert!(
+            matches!(&pf.data, bnto_core::processor::FileData::Bytes(b) if b.is_empty()),
+            "Directory input should have empty bytes"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn test_guess_mime_jpeg() {

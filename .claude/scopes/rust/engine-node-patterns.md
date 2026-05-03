@@ -20,6 +20,7 @@ Write failing tests BEFORE implementing the processor.
 - [ ] **`metadata().input_cardinality`** — declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../../strategy/smart-iteration.md)
 - [ ] **`process()` parameter contract** — every param in `metadata()` is read and used in ALL code paths
 - [ ] **`validate()`** — validate param combinations that metadata constraints can't express
+- [ ] **`FileData` selection** — processors that don't modify file content MUST emit `FileData::Path` (zero-copy), not `FileData::Bytes`. See [FileData Selection](#filedata-selection) below
 - [ ] **Image processors use `encode::encode_image()`** — never custom encode functions
 - [ ] **Shared params use `common.rs`** — e.g., `quality_param_def()`, `image_accepts()`
 - [ ] **`name()` matches registry key** — `fn name()` returns the same string used in `registry.register()`. Convention: `category-operation` kebab-case (e.g., `"image-compress"`)
@@ -346,6 +347,38 @@ task check                                   # Full lint + test + build
 
 ---
 
+## FileData Selection
+
+**Processors that pass through files without modifying their content MUST use `FileData::Path`, not `FileData::Bytes`.** This is a performance-critical decision — `FileData::Path` enables zero-copy file moves via `rename()` (O(1)), while `FileData::Bytes` reads the entire file into RAM.
+
+```rust
+// BAD — reads a 2 GB video file into memory just to pass it downstream
+let data = std::fs::read(&full_path)?;
+output_files.push(OutputFile {
+    data: FileData::Bytes(data),  // 2 GB heap allocation
+    ..
+});
+
+// GOOD — path reference, zero memory overhead
+output_files.push(OutputFile {
+    data: FileData::Path(full_path),  // O(1), zero-copy on write
+    ..
+});
+```
+
+**When to use which:**
+
+| Variant           | Use when                                                                    | Examples                                                  |
+| ----------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `FileData::Path`  | Processor doesn't modify file content (collect, filter, rename, move, copy) | `file-collect`, `file-rename`, `file-move`, `file-filter` |
+| `FileData::Bytes` | Processor transforms content and produces new bytes                         | `image-compress`, `image-resize`, `spreadsheet-clean`     |
+
+**How it works downstream:** `FileData::Path` defers reading until needed. `write_to()` uses `rename()` for same-device moves (O(1)) and falls back to copy + delete for cross-device. `into_bytes()` reads from disk only when a downstream processor actually needs the content.
+
+**The rule:** If your processor's `process()` function doesn't call `input.data.into_bytes()` or otherwise consume the file content, its output should use `FileData::Path` to avoid unnecessary memory allocation.
+
+---
+
 ## Parameter Contract
 
 **Every parameter defined in `metadata()` MUST be read and used in ALL code paths of `process()`.** If a param only applies to some formats, document that in the param description and validate it in `validate()`.
@@ -420,21 +453,22 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 
 ## Common Violations
 
-| Violation                                                               | Fix                                                                   |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode             |
-| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                             |
-| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)      |
-| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values            |
-| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests            |
-| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion          |
-| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed     |
-| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                     |
-| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this            |
-| Recipe not in `builtin_recipes()`                                       | Add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`    |
-| README table stale                                                      | Run `task readme:generate` after adding/changing recipes              |
-| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`     |
-| `name()` doesn't match registry key                                     | Align to return the registry key (category-first: `"image-compress"`) |
-| Crate README missing processors                                         | Update the Processors table when adding/removing processors           |
-| Crate name doesn't match category                                       | Rename crate to match (e.g., `bnto-csv` → `bnto-spreadsheet`)         |
-| Processor file name doesn't match operation                             | Rename file to match (e.g., `csv_to_json.rs` → `convert.rs`)          |
+| Violation                                                               | Fix                                                                                |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Param defined in `metadata()` but not read in some `process()` branches | Wire the param through all branches, or use shared encode                          |
+| Duplicated encode functions across processors                           | Delete them, use `encode::encode_image()`                                          |
+| Default value in code differs from `metadata()` default                 | Use the constant from `bnto-core` (e.g., `DEFAULT_JPEG_QUALITY`)                   |
+| Test only checks output validity, not param sensitivity                 | Add a test comparing outputs at two different param values                         |
+| Missing golden test for new recipe                                      | Every recipe MUST have golden + explicit equivalence tests                         |
+| Test count not updated after adding processor                           | See Test Count Registry table above — update every assertion                       |
+| Generated files not committed                                           | Snapshot, TS catalog, recipe fixtures, golden files all committed                  |
+| NodeTypeInfo not added                                                  | Add to correct category function in `metadata.rs`                                  |
+| Recipe not in RECIPES array                                             | Add to `recipesCatalog.ts` — ALL surfaces derive from this                         |
+| Recipe not in `builtin_recipes()`                                       | Add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`                 |
+| README table stale                                                      | Run `task readme:generate` after adding/changing recipes                           |
+| Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`                  |
+| `name()` doesn't match registry key                                     | Align to return the registry key (category-first: `"image-compress"`)              |
+| Crate README missing processors                                         | Update the Processors table when adding/removing processors                        |
+| Crate name doesn't match category                                       | Rename crate to match (e.g., `bnto-csv` → `bnto-spreadsheet`)                      |
+| Processor file name doesn't match operation                             | Rename file to match (e.g., `csv_to_json.rs` → `convert.rs`)                       |
+| Pass-through processor uses `FileData::Bytes` instead of `Path`         | Use `FileData::Path` for zero-copy — see [FileData Selection](#filedata-selection) |

@@ -430,8 +430,8 @@ mod tests {
     fn new_loads_bundled_catalog_recipes() {
         let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
         let m = BrowserModel::new(&catalog.bundled());
-        assert_eq!(m.recipes.len(), 20);
-        assert_eq!(m.filtered.len(), 20);
+        assert_eq!(m.recipes.len(), 21);
+        assert_eq!(m.filtered.len(), 21);
     }
 
     #[test]

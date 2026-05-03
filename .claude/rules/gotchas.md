@@ -140,6 +140,25 @@ After renaming or moving packages in the monorepo, old `node_modules` symlinks c
 
 **Fix:** Delete `node_modules` in the affected packages and run `pnpm install`.
 
+## FileData::Bytes on Large Files Causes OOM
+
+Engine processors that read files into `FileData::Bytes` when they only need to pass them through the pipeline cause unnecessary memory pressure. A user processing a directory of 2 GB video files with `file-collect` + `file-rename` would load every file into RAM if the collect step uses `FileData::Bytes` — easily exhausting memory.
+
+**Symptoms:** OOM kills or excessive memory usage when processing large files or directories with many files. The pipeline succeeds on small test fixtures but fails on real workloads.
+
+**Fix:** Use `FileData::Path(path)` instead of `FileData::Bytes(std::fs::read(&path)?)` when the processor doesn't modify file content. `FileData::Path` defers reading until a downstream processor actually needs the bytes, and `write_to()` uses `rename()` (O(1)) instead of writing bytes to disk.
+
+```rust
+// BAD — reads entire file into memory for no reason
+let data = std::fs::read(&path)?;
+OutputFile { data: FileData::Bytes(data), .. }
+
+// GOOD — zero-copy path reference
+OutputFile { data: FileData::Path(path), .. }
+```
+
+**Rule of thumb:** If your processor's `process()` function doesn't call `input.data.into_bytes()`, its output should use `FileData::Path`. See [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#filedata-selection) for the full guide.
+
 ## No Object.assign Compound Components (RSC Incompatible)
 
 `Object.assign` dot-notation (`<Dialog.Content>`, `<Card.Header>`) does NOT work in React Server Components. Server components get "client reference" objects — sub-properties assigned via `Object.assign` are undefined at render time.
