@@ -332,9 +332,9 @@ fn apply_all_transformations(
     if let Some(mode) = get_string_param(params, "sanitize") {
         let separator = get_string_param(params, "separator").unwrap_or_else(|| "-".to_string());
         stem = match mode.as_str() {
-            "strip" => strip_non_ascii(&stem, &separator),
-            "normalize" => normalize_unicode(&stem),
-            _ => slugify(&stem, &separator),
+            "strip" => bnto_core::case::strip_non_ascii(&stem, &separator),
+            "normalize" => bnto_core::case::normalize_unicode(&stem),
+            _ => bnto_core::case::slug_with_separator(&stem, &separator),
         };
         let max_length = get_int_param(params, "max_length").unwrap_or(0);
         stem = apply_max_length(&stem, max_length);
@@ -416,58 +416,6 @@ fn build_rename_metadata(
     metadata
 }
 
-// --- Sanitize Functions ---
-
-/// Slugify: lowercase, replace non-alphanumeric with separator, collapse runs.
-fn slugify(stem: &str, separator: &str) -> String {
-    let lowered = stem.to_lowercase();
-    let mut result = String::with_capacity(lowered.len());
-    let mut prev_was_sep = true; // avoid leading separator
-
-    for ch in lowered.chars() {
-        if ch.is_ascii_alphanumeric() {
-            result.push(ch);
-            prev_was_sep = false;
-        } else if !prev_was_sep {
-            result.push_str(separator);
-            prev_was_sep = true;
-        }
-    }
-
-    if result.ends_with(separator) {
-        result.truncate(result.len() - separator.len());
-    }
-
-    result
-}
-
-/// Strip: remove all non-ASCII characters, replace spaces/punctuation with separator.
-fn strip_non_ascii(stem: &str, separator: &str) -> String {
-    let mut result = String::with_capacity(stem.len());
-    let mut prev_was_sep = true;
-
-    for ch in stem.chars() {
-        if ch.is_ascii_alphanumeric() {
-            result.push(ch);
-            prev_was_sep = false;
-        } else if ch.is_ascii() && !prev_was_sep {
-            result.push_str(separator);
-            prev_was_sep = true;
-        }
-    }
-
-    if result.ends_with(separator) {
-        result.truncate(result.len() - separator.len());
-    }
-
-    result
-}
-
-/// Normalize: apply Unicode NFC normalization (compose accented characters).
-fn normalize_unicode(stem: &str) -> String {
-    unicode_normalization::UnicodeNormalization::nfc(stem).collect()
-}
-
 /// Truncate stem to max_length characters. 0 means no limit.
 fn apply_max_length(stem: &str, max_length: usize) -> String {
     if max_length == 0 || stem.len() <= max_length {
@@ -510,23 +458,10 @@ fn apply_find_replace(stem: &str, find: &str, replace: &str) -> String {
 /// Apply case transformation: "lower", "upper", "title". Unknown values pass through.
 fn apply_case_transform(stem: &str, case: &str) -> String {
     match case {
-        "lower" => stem.to_lowercase(),
-        "upper" => stem.to_uppercase(),
-        "title" => to_title_case(stem),
+        "lower" => bnto_core::case::lower(stem),
+        "upper" => bnto_core::case::upper(stem),
+        "title" => bnto_core::case::capitalize(stem),
         _ => stem.to_string(),
-    }
-}
-
-/// Title case: first character uppercase, rest lowercase. Handles Unicode.
-fn to_title_case(s: &str) -> String {
-    let mut chars = s.chars();
-    match chars.next() {
-        None => String::new(),
-        Some(first) => {
-            let upper_first: String = first.to_uppercase().collect();
-            let lower_rest: String = chars.as_str().to_lowercase();
-            format!("{upper_first}{lower_rest}")
-        }
     }
 }
 
@@ -1125,12 +1060,12 @@ mod tests {
     // =========================================================================
 
     #[test]
-    fn test_to_title_case() {
-        assert_eq!(to_title_case("hello"), "Hello");
-        assert_eq!(to_title_case("PHOTO"), "Photo");
-        assert_eq!(to_title_case("hello world"), "Hello world");
-        assert_eq!(to_title_case(""), "");
-        assert_eq!(to_title_case("a"), "A");
+    fn test_capitalize() {
+        assert_eq!(bnto_core::case::capitalize("hello"), "Hello");
+        assert_eq!(bnto_core::case::capitalize("PHOTO"), "Photo");
+        assert_eq!(bnto_core::case::capitalize("hello world"), "Hello world");
+        assert_eq!(bnto_core::case::capitalize(""), "");
+        assert_eq!(bnto_core::case::capitalize("a"), "A");
     }
 
     #[test]
@@ -1562,18 +1497,33 @@ mod tests {
     // =========================================================================
 
     #[test]
-    fn test_slugify_fn() {
-        assert_eq!(slugify("Hello World", "-"), "hello-world");
-        assert_eq!(slugify("file (copy).bak", "-"), "file-copy-bak");
-        assert_eq!(slugify("ALLCAPS", "-"), "allcaps");
-        assert_eq!(slugify("already-clean", "-"), "already-clean");
+    fn test_slug_with_separator() {
+        assert_eq!(
+            bnto_core::case::slug_with_separator("Hello World", "-"),
+            "hello-world"
+        );
+        assert_eq!(
+            bnto_core::case::slug_with_separator("file (copy).bak", "-"),
+            "file-copy-bak"
+        );
+        assert_eq!(
+            bnto_core::case::slug_with_separator("ALLCAPS", "-"),
+            "allcaps"
+        );
+        assert_eq!(
+            bnto_core::case::slug_with_separator("already-clean", "-"),
+            "already-clean"
+        );
     }
 
     #[test]
-    fn test_strip_fn() {
-        assert_eq!(strip_non_ascii("hello", "-"), "hello");
-        assert_eq!(strip_non_ascii("café", "-"), "caf");
-        assert_eq!(strip_non_ascii("naïve résumé", "-"), "nave-rsum");
+    fn test_strip_non_ascii() {
+        assert_eq!(bnto_core::case::strip_non_ascii("hello", "-"), "hello");
+        assert_eq!(bnto_core::case::strip_non_ascii("café", "-"), "caf");
+        assert_eq!(
+            bnto_core::case::strip_non_ascii("naïve résumé", "-"),
+            "nave-rsum"
+        );
     }
 
     #[test]

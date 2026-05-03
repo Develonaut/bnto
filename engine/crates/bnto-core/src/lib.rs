@@ -10,6 +10,10 @@
 // --- Public Modules ---
 // These are the building blocks that node crates and the web app will use.
 
+/// Centralized string case/formatting — lower, upper, title, slug, deslug, etc.
+/// The Rust equivalent of JS's `change-case` library.
+pub mod case;
+
 /// Controlled system access for processors that need external tools.
 /// Browser gets `NoopContext`, CLI gets `NativeContext`, desktop gets `SandboxedContext`.
 pub mod context;
