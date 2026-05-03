@@ -97,22 +97,18 @@ impl NodeProcessor for FileCollect {
 
         progress.report(50, &format!("Found {} files", matched_files.len()));
 
-        // Read each matched file and produce output.
+        // Produce output with path references (zero-copy — no file reads).
         let total = matched_files.len();
         let mut output_files = Vec::with_capacity(total);
 
         for (i, (output_name, full_path)) in matched_files.into_iter().enumerate() {
             let pct = 50 + ((i as u32 * 50) / (total as u32).max(1));
-            progress.report(pct, &format!("Reading {}/{total}...", i + 1));
-
-            let data = std::fs::read(&full_path).map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to read {}: {e}", full_path.display()))
-            })?;
+            progress.report(pct, &format!("Collecting {}/{total}...", i + 1));
 
             let mime_type = guess_mime_type(&output_name);
 
             output_files.push(OutputFile {
-                data: FileData::Bytes(data),
+                data: FileData::Path(full_path),
                 filename: output_name,
                 mime_type,
                 metadata: serde_json::Map::new(),
@@ -470,7 +466,7 @@ mod tests {
     // --- File data reading ---
 
     #[test]
-    fn test_collect_reads_file_content() {
+    fn test_collect_outputs_path_references() {
         let test_dir = setup_test_dir();
         let processor = FileCollect::new();
         let progress = ProgressReporter::new_noop();
@@ -483,9 +479,20 @@ mod tests {
 
         assert_eq!(output.files.len(), 1);
         assert_eq!(output.files[0].filename, "data.csv");
+
+        // Verify output is a path reference, not in-memory bytes.
+        assert!(
+            matches!(&output.files[0].data, FileData::Path(_)),
+            "Collect should output FileData::Path for zero-copy moves"
+        );
+
+        // Path should resolve to actual file content.
         let bytes = output.files[0].data.clone().into_bytes().unwrap();
         let content = String::from_utf8_lossy(&bytes);
-        assert!(content.contains("a,b"), "Should read actual file content");
+        assert!(
+            content.contains("a,b"),
+            "Path should resolve to file content"
+        );
     }
 
     // --- MIME type guessing ---

@@ -168,6 +168,21 @@ pub fn run_explicit_recipe_ok_multi(
     (out, stderr)
 }
 
+/// Run a recipe with a directory input and assert it succeeds.
+pub fn run_recipe_ok_dir(slug: &str, input_dir: &std::path::Path) -> (tempfile::TempDir, String) {
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &recipe_path(slug), "--yes"])
+        .arg(input_dir.to_str().unwrap())
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    assert!(output.status.success(), "[dir/{slug}] stderr: {stderr}");
+    (out, stderr)
+}
+
 /// List output files in a temp directory.
 pub fn output_files(dir: &tempfile::TempDir) -> Vec<std::fs::DirEntry> {
     std::fs::read_dir(dir.path())

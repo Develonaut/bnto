@@ -1,0 +1,126 @@
+{
+  "id": "merge-similar-folders",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Merge Similar Folders",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Group and merge subfolders that share the same first word into a parent folder. CLI/desktop only.",
+    "category": "file",
+    "tags": ["Organize", "Merge", "Folders", "Cleanup"]
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "explicit"
+  },
+  "requires": [],
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Target Directory",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["*/*"],
+        "extensions": [],
+        "label": "directory to organize",
+        "multiple": false
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "directory"
+        }
+      ]
+    },
+    {
+      "id": "collect",
+      "type": "file-collect",
+      "version": "1.0.0",
+      "name": "Collect Files",
+      "position": {
+        "x": 200,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "pattern": "*",
+        "recursive": true,
+        "flatten": false
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Restructure Paths",
+      "position": {
+        "x": 400,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "find": "^(\\w+)\\s+([^/]+)/",
+        "replace": "$1/$2/"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Organized Files",
+      "position": {
+        "x": 600,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "download",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-merge-similar-folders",
+        "label": "Organized Files",
+        "zip": false,
+        "autoDownload": false
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "collect"
+    },
+    {
+      "id": "e2",
+      "source": "collect",
+      "target": "rename"
+    },
+    {
+      "id": "e3",
+      "source": "rename",
+      "target": "output"
+    }
+  ]
+}

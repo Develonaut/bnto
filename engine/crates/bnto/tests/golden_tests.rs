@@ -10,7 +10,8 @@ mod helpers;
 use golden_helpers::assert_golden;
 use helpers::{
     fixture_csv, fixture_image, fixture_overlay, fixture_vector, run_custom_recipe_ok,
-    run_explicit_recipe_ok, run_explicit_recipe_ok_multi, run_recipe_ok, run_recipe_ok_multi,
+    run_explicit_recipe_ok, run_explicit_recipe_ok_multi, run_recipe_ok, run_recipe_ok_dir,
+    run_recipe_ok_multi,
 };
 
 // --- Image Recipes ---
@@ -141,6 +142,30 @@ fn golden_number_files() {
 fn golden_sanitize_filenames() {
     let (out, _) = run_recipe_ok("sanitize-filenames", &fixture_image("small.jpg"));
     assert_golden("sanitize-filenames", &out);
+}
+
+#[test]
+fn golden_merge_similar_folders() {
+    // Create a test directory with multi-word folder names.
+    let fixture = tempfile::tempdir().unwrap();
+    let root = fixture.path();
+
+    // Folders that share "Krieg" prefix — should merge into Krieg/{suffix}.
+    let ka = root.join("Krieg Artillery");
+    std::fs::create_dir_all(&ka).unwrap();
+    std::fs::write(ka.join("howitzer.txt"), b"howitzer-data").unwrap();
+
+    let kt = root.join("Krieg Tank");
+    std::fs::create_dir_all(&kt).unwrap();
+    std::fs::write(kt.join("leman-russ.txt"), b"tank-data").unwrap();
+
+    // Single-word folder — no space, regex won't match, path stays unchanged.
+    let solo = root.join("Minka");
+    std::fs::create_dir_all(&solo).unwrap();
+    std::fs::write(solo.join("cadian.txt"), b"cadian-data").unwrap();
+
+    let (out, _) = run_recipe_ok_dir("merge-similar-folders", root);
+    assert_golden("merge-similar-folders", &out);
 }
 
 // --- CSV Recipes ---

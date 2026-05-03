@@ -2636,4 +2636,139 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       version: "1.0.0",
     },
   },
+  {
+    slug: "merge-similar-folders",
+    name: "Merge Similar Folders",
+    description:
+      "Group and merge subfolders that share the same first word into a parent folder. CLI/desktop only.",
+    category: "file",
+    tags: ["Organize", "Merge", "Folders", "Cleanup"] as const,
+    definition: {
+      edges: [
+        {
+          id: "e1",
+          source: "input",
+          target: "collect",
+        },
+        {
+          id: "e2",
+          source: "collect",
+          target: "rename",
+        },
+        {
+          id: "e3",
+          source: "rename",
+          target: "output",
+        },
+      ],
+      id: "merge-similar-folders",
+      inputPorts: [],
+      metadata: {
+        category: "file",
+        description:
+          "Group and merge subfolders that share the same first word into a parent folder. CLI/desktop only.",
+        tags: ["Organize", "Merge", "Folders", "Cleanup"],
+      },
+      name: "Merge Similar Folders",
+      nodes: [
+        {
+          id: "input",
+          inputPorts: [],
+          metadata: {},
+          name: "Target Directory",
+          outputPorts: [
+            {
+              id: "out-1",
+              name: "directory",
+            },
+          ],
+          parameters: {
+            accept: ["*/*"],
+            extensions: [],
+            label: "directory to organize",
+            mode: "file-upload",
+            multiple: false,
+          },
+          position: {
+            x: 0,
+            y: 100,
+          },
+          type: "input",
+          version: "1.0.0",
+        },
+        {
+          id: "collect",
+          inputPorts: [],
+          metadata: {},
+          name: "Collect Files",
+          outputPorts: [],
+          parameters: {
+            flatten: false,
+            pattern: "*",
+            recursive: true,
+          },
+          position: {
+            x: 200,
+            y: 100,
+          },
+          type: "file-collect",
+          version: "1.0.0",
+        },
+        {
+          id: "rename",
+          inputPorts: [],
+          metadata: {},
+          name: "Restructure Paths",
+          outputPorts: [],
+          parameters: {
+            find: "^(\\w+)\\s+([^/]+)/",
+            replace: "$1/$2/",
+          },
+          position: {
+            x: 400,
+            y: 100,
+          },
+          type: "file-rename",
+          version: "1.0.0",
+        },
+        {
+          id: "output",
+          inputPorts: [
+            {
+              id: "in-1",
+              name: "files",
+            },
+          ],
+          metadata: {},
+          name: "Organized Files",
+          outputPorts: [],
+          parameters: {
+            autoDownload: false,
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-merge-similar-folders",
+            label: "Organized Files",
+            mode: "download",
+            zip: false,
+          },
+          position: {
+            x: 600,
+            y: 100,
+          },
+          type: "output",
+          version: "1.0.0",
+        },
+      ],
+      outputPorts: [],
+      parameters: {},
+      position: {
+        x: 0,
+        y: 0,
+      },
+      requires: [],
+      settings: {
+        iteration: "explicit",
+      },
+      type: "group",
+      version: "1.0.0",
+    },
+  },
 ] as const;

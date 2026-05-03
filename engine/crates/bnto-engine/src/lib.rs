@@ -524,6 +524,9 @@ mod tests {
             include_str!("../recipes/svg-to-png.bnto.json"),
             include_str!("../recipes/svg-to-jpeg.bnto.json"),
             include_str!("../recipes/optimize-svg.bnto.json"),
+            include_str!("../recipes/number-files.bnto.json"),
+            include_str!("../recipes/sanitize-filenames.bnto.json"),
+            include_str!("../recipes/merge-similar-folders.bnto.json"),
         ];
 
         for (i, json) in recipes.iter().enumerate() {
