@@ -120,13 +120,19 @@ impl NodeProcessor for FileMove {
 
         progress.report(100, "Done");
 
+        // Preserve relative path structure (e.g. "group/video.mp4") so downstream
+        // nodes maintain subdirectories. Strip the dest_dir prefix to get the relative path.
         let output_filename = final_path
             .as_ref()
             .map(|p| {
-                p.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or(&input.filename)
-                    .to_string()
+                p.strip_prefix(dest_dir)
+                    .map(|rel| rel.to_string_lossy().into_owned())
+                    .unwrap_or_else(|_| {
+                        p.file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or(&input.filename)
+                            .to_string()
+                    })
             })
             .unwrap_or_else(|| input.filename.clone());
 
@@ -515,6 +521,43 @@ mod tests {
         let nested = dest.path().join("group/subdir/video.mp4");
         assert!(nested.exists(), "Nested directories should be created");
         assert_eq!(fs::read(&nested).unwrap(), b"nested data");
+
+        // Output filename must preserve relative path so downstream nodes
+        // maintain subdirectory structure (regression: was stripping to leaf only).
+        assert_eq!(
+            output.files[0].filename, "group/subdir/video.mp4",
+            "Output filename must preserve relative path"
+        );
+    }
+
+    #[test]
+    fn test_move_conflict_rename_preserves_relative_path() {
+        let dest = TempDir::new().unwrap();
+        let nested_dir = dest.path().join("group");
+        fs::create_dir_all(&nested_dir).unwrap();
+        fs::write(nested_dir.join("file.txt"), b"original").unwrap();
+
+        let processor = FileMove::new();
+        let progress = ProgressReporter::new_noop();
+
+        let input = make_input(
+            FileData::Bytes(b"new data".to_vec()),
+            "group/file.txt",
+            params(&[
+                (
+                    "destination",
+                    serde_json::json!(dest.path().to_str().unwrap()),
+                ),
+                ("conflict", serde_json::json!("rename")),
+            ]),
+        );
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        assert_eq!(
+            output.files[0].filename, "group/file_1.txt",
+            "Renamed output must preserve relative path"
+        );
+        assert!(nested_dir.join("file_1.txt").exists());
     }
 
     // --- Pure function tests ---
