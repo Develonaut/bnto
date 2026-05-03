@@ -2763,7 +2763,6 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         x: 0,
         y: 0,
       },
-      requires: [],
       settings: {
         iteration: "explicit",
       },
