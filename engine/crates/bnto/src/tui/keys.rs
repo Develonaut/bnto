@@ -7,6 +7,7 @@ use super::event;
 use super::screens::browser::BrowserMessage;
 use super::screens::detail::DetailFocus;
 use super::screens::detail_bridge;
+use super::screens::detail_scroll::DetailScrollMsg;
 use super::screens::editor::EditorMessage;
 use super::screens::editor_bridge;
 use super::screens::execution::{ExecutionMessage, ExecutionStatus};
@@ -237,6 +238,30 @@ fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     // Esc always goes back (when not editing a field).
     if key.code == KeyCode::Esc {
         return Some(AppMessage::Back);
+    }
+
+    // Whole-screen scroll keys — work in any detail section.
+    match key.code {
+        KeyCode::Char('J') | KeyCode::PageDown => {
+            return Some(AppMessage::DetailScroll(DetailScrollMsg::PageDown));
+        }
+        KeyCode::Char('K') | KeyCode::PageUp => {
+            return Some(AppMessage::DetailScroll(DetailScrollMsg::PageUp));
+        }
+        _ => {}
+    }
+
+    // g/G for top/bottom — only when NOT in Input section (conflicts with picker g/G).
+    if !matches!(detail.focus, DetailFocus::Input) {
+        match key.code {
+            KeyCode::Char('g') => {
+                return Some(AppMessage::DetailScroll(DetailScrollMsg::GoToTop));
+            }
+            KeyCode::Char('G') => {
+                return Some(AppMessage::DetailScroll(DetailScrollMsg::GoToBottom));
+            }
+            _ => {}
+        }
     }
 
     match detail.focus {

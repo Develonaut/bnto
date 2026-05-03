@@ -196,13 +196,12 @@ fn run_loop(
         if matches!(model.screen, app::Screen::Detail { .. }) {
             let term_h = terminal.size()?.height;
             let detail_height = render_layout::viewport_height(term_h, 2);
-            if detail_height > 0 {
-                model = update(
-                    model,
-                    AppMessage::DetailForm(tonkotsu::FormMessage::Resize {
-                        height: detail_height,
-                    }),
-                );
+            if detail_height > 0
+                && let Some(detail) = &mut model.detail
+            {
+                detail.viewport.set_height(detail_height);
+                let content_lines = detail.estimate_content_lines();
+                detail.viewport.set_content_height(content_lines);
             }
         }
 

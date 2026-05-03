@@ -10,6 +10,7 @@ pub mod detail;
 pub(crate) mod detail_bridge;
 mod detail_fields;
 pub(crate) mod detail_loader;
+pub mod detail_scroll;
 pub mod editor;
 pub(crate) mod editor_bridge;
 pub mod execution;

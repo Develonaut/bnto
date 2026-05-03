@@ -937,6 +937,14 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ---
 
+### Triage: Dry-run preview for file-processing recipes
+
+**Priority: Triage.** `bnto dry-run` only shows shell commands/dependencies (useful for shell-command recipes). File-processing recipes (merge-similar-folders, file-rename, etc.) need a dry-run mode that shows "file X would become Y" without writing anything. Should work in both CLI (`bnto dry-run merge-similar-folders /path/to/dir`) and TUI (pre-execution preview screen).
+
+`engine/crates/bnto/src/commands/dry_run.rs`, `engine/crates/bnto-engine/src/executor/`
+
+---
+
 ## Reference
 
 | Document                                   | Purpose                                                                      |
