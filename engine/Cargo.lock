@@ -167,6 +167,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "ts-rs",
+ "unicode-normalization",
  "wasm-bindgen-test",
 ]
 
@@ -204,7 +205,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "thiserror",
- "unicode-normalization",
  "wasm-bindgen",
  "wasm-bindgen-test",
  "web-sys",
