@@ -30,20 +30,19 @@ pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
     };
 
     let lines = detail_lines(detail, theme);
-    let total_lines = lines.len();
-    let scroll_offset = detail.form.scroll_offset;
+    let scroll_offset = detail.viewport.offset();
     let content = Paragraph::new(lines).scroll((scroll_offset as u16, 0));
     frame.render_widget(content, inner);
 
     // Overflow indicators
     let inner_width = inner.width as usize;
-    if inner_width > 1 {
-        if scroll_offset > 0 {
+    if inner_width > 1 && detail.viewport.overflows() {
+        if !detail.viewport.at_top() {
             let indicator = Paragraph::new("↑");
             let area = Rect::new(inner.x + inner.width.saturating_sub(2), inner.y, 1, 1);
             frame.render_widget(indicator, area);
         }
-        if total_lines > scroll_offset + (inner.height as usize) {
+        if !detail.viewport.at_bottom() {
             let indicator = Paragraph::new("↓");
             let area = Rect::new(
                 inner.x + inner.width.saturating_sub(2),
@@ -66,14 +65,15 @@ fn detail_lines<'a>(
     // Recipe header — trust badge from catalog source.
     let badge = trust::trust_badge(detail.is_bundled, false);
     lines.push(Line::from(vec![
+        Span::raw("  "),
         Span::styled(detail.name.as_str(), theme.heading()),
         Span::raw("  "),
         Span::styled(format!("[{badge}]"), theme.category()),
     ]));
-    lines.push(Line::from(Span::styled(
-        detail.description.as_str(),
-        theme.muted(),
-    )));
+    lines.push(Line::from(vec![
+        Span::raw("  "),
+        Span::styled(detail.description.as_str(), theme.muted()),
+    ]));
     lines.push(Line::from(""));
 
     // INPUT section — file picker (only for file-mode recipes)
@@ -146,10 +146,14 @@ fn detail_lines<'a>(
         lines.push(Line::from(Span::styled("  PARAMETERS", section_style)));
         lines.push(Line::from(""));
 
-        // Delegate field rendering to tonkotsu.
+        // Delegate field rendering to tonkotsu, then indent to match container padding.
         let form_theme = BntoFormTheme(theme);
         let form_lines = tonkotsu::render_form(&detail.form, &form_theme);
-        lines.extend(form_lines);
+        for line in form_lines {
+            let mut spans = vec![Span::raw("  ")];
+            spans.extend(line.spans);
+            lines.push(Line::from(spans));
+        }
     }
 
     // "Run" action — always present, focusable at the bottom

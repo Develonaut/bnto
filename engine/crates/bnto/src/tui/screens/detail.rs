@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use bnto_core::InputMode;
 use bnto_core::metadata::{ParamCondition, ParameterType};
-use tonkotsu::FormModel;
+use tonkotsu::{FormModel, Viewport};
 
 use super::picker::PickerModel;
 
@@ -78,6 +78,8 @@ pub struct DetailModel {
     pub input_mode: InputMode,
     /// Embedded file picker for file-mode recipes (None for URL/text-mode).
     pub input_picker: Option<PickerModel>,
+    /// Viewport for whole-screen scrolling (manages offset for all sections).
+    pub viewport: Viewport,
 }
 
 /// Result of confirming the detail screen — collected param overrides + files.
@@ -88,10 +90,96 @@ pub struct ConfigResult {
     pub files: Vec<std::path::PathBuf>,
 }
 
+/// Lines per field estimate for content height calculation.
+/// Each visible field takes ~3 lines (label + control + spacing).
+const LINES_PER_FIELD: usize = 3;
+
+/// Header lines: name + description + blank.
+const HEADER_LINES: usize = 3;
+
+/// Run button lines: blank + button.
+const RUN_LINES: usize = 2;
+
+/// Input section header lines: section label + path + blank.
+const INPUT_HEADER_LINES: usize = 3;
+
+/// Parameters section header: label + blank.
+const PARAMS_HEADER_LINES: usize = 2;
+
 impl DetailModel {
     /// Whether the "Run" action at the bottom is focused.
     pub fn is_run_focused(&self) -> bool {
         self.focus == DetailFocus::Run
+    }
+
+    /// Estimate total content lines for viewport height calculation.
+    ///
+    /// This is a lightweight approximation (~3 lines per visible field).
+    /// Exact line counts are only known at render time, but estimation is
+    /// sufficient for smooth scrolling behavior.
+    pub fn estimate_content_lines(&self) -> usize {
+        let mut lines = HEADER_LINES;
+
+        // Input section (file picker area — just the header when collapsed)
+        if self.input_picker.is_some() {
+            lines += INPUT_HEADER_LINES;
+            if self.focus == DetailFocus::Input {
+                let entry_count = self
+                    .input_picker
+                    .as_ref()
+                    .map(|p| p.entries.len().min(p.viewport_height))
+                    .unwrap_or(0);
+                lines += entry_count;
+            }
+            // Selection count line + blank
+            lines += 2;
+        }
+
+        // Parameters section
+        let visible_count = self
+            .params
+            .iter()
+            .filter(|p| is_param_visible(p, &self.params))
+            .count();
+        if visible_count > 0 {
+            lines += PARAMS_HEADER_LINES + visible_count * LINES_PER_FIELD;
+        } else {
+            lines += 1; // "No configurable parameters." line
+        }
+
+        // Run button
+        lines += RUN_LINES;
+
+        lines
+    }
+
+    /// Estimate the starting line for a given focus section.
+    pub fn estimate_section_line(&self, focus: DetailFocus) -> usize {
+        match focus {
+            DetailFocus::Input => HEADER_LINES,
+            DetailFocus::Params => {
+                let mut line = HEADER_LINES;
+                if self.input_picker.is_some() {
+                    line += INPUT_HEADER_LINES + 2; // header + count + blank
+                    if self.focus == DetailFocus::Input {
+                        let entry_count = self
+                            .input_picker
+                            .as_ref()
+                            .map(|p| p.entries.len().min(p.viewport_height))
+                            .unwrap_or(0);
+                        line += entry_count;
+                    }
+                }
+                line
+            }
+            DetailFocus::Run => self.estimate_content_lines().saturating_sub(RUN_LINES),
+        }
+    }
+
+    /// Estimate the line of the currently focused form field within the params section.
+    pub fn estimate_focused_field_line(&self) -> usize {
+        let params_start = self.estimate_section_line(DetailFocus::Params) + PARAMS_HEADER_LINES;
+        params_start + self.form.focused * LINES_PER_FIELD
     }
 
     /// Build a detail model from test data (no engine dependency).
@@ -103,7 +191,8 @@ impl DetailModel {
         params: Vec<ParamEntry>,
     ) -> Self {
         let fields = super::detail_bridge::params_to_fields(&params);
-        let form = FormModel::new(fields);
+        let mut form = FormModel::new(fields);
+        form.viewport_height = 0; // Disable tonkotsu internal viewport slicing
         Self {
             slug: slug.to_string(),
             name: name.to_string(),
@@ -115,6 +204,7 @@ impl DetailModel {
             focus: DetailFocus::Params,
             input_mode: InputMode::FileUpload,
             input_picker: None,
+            viewport: Viewport::new(),
         }
     }
 

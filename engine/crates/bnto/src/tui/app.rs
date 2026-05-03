@@ -21,6 +21,7 @@ use super::app_helpers::{
 };
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::DetailModel;
+use super::screens::detail_scroll::DetailScrollMsg;
 use super::screens::editor::{EditorMessage, EditorScreenModel};
 use super::screens::execution::{ExecutionMessage, ExecutionModel};
 use super::screens::home::{HomeMessage, HomeModel, list_library_recipes, update as home_update};
@@ -162,6 +163,8 @@ pub enum AppMessage {
     Browser(BrowserMessage),
     /// Forward a form message to the detail screen's FormModel.
     DetailForm(tonkotsu::FormMessage),
+    /// Scroll the detail screen viewport (whole-screen scroll).
+    DetailScroll(DetailScrollMsg),
     /// Forward a message to the detail screen's embedded picker.
     DetailPicker(PickerMessage),
     /// Move detail focus to Input section.
@@ -355,6 +358,20 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             AppModel { browser, ..model }
         }
         AppMessage::DetailForm(msg) => handle_detail_form(model, msg),
+        AppMessage::DetailScroll(msg) => {
+            let detail = model.detail.map(|mut d| {
+                match msg {
+                    DetailScrollMsg::ScrollDown => d.viewport.scroll_down(),
+                    DetailScrollMsg::ScrollUp => d.viewport.scroll_up(),
+                    DetailScrollMsg::PageDown => d.viewport.page_down(),
+                    DetailScrollMsg::PageUp => d.viewport.page_up(),
+                    DetailScrollMsg::GoToTop => d.viewport.go_to_top(),
+                    DetailScrollMsg::GoToBottom => d.viewport.go_to_bottom(),
+                }
+                d
+            });
+            AppModel { detail, ..model }
+        }
         AppMessage::DetailPicker(msg) => {
             let detail = model.detail.map(|mut d| {
                 if let Some(picker) = d.input_picker.take() {

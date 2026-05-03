@@ -54,7 +54,8 @@ pub fn load_detail_from_entry(
     }
 
     let fields = super::detail_bridge::params_to_fields(&params);
-    let form = tonkotsu::FormModel::new(fields);
+    let mut form = tonkotsu::FormModel::new(fields);
+    form.viewport_height = 0; // Disable tonkotsu internal viewport slicing — outer Viewport manages scroll
 
     let input_mode = pipeline_def
         .as_ref()
@@ -84,6 +85,7 @@ pub fn load_detail_from_entry(
         focus,
         input_mode,
         input_picker,
+        viewport: tonkotsu::Viewport::new(),
     })
 }
 
@@ -277,7 +279,8 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
     };
 
     let fields = super::detail_bridge::params_to_fields(&params);
-    let form = tonkotsu::FormModel::new(fields);
+    let mut form = tonkotsu::FormModel::new(fields);
+    form.viewport_height = 0;
 
     Ok(DetailModel {
         slug: "custom".to_string(),
@@ -290,6 +293,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         focus: DetailFocus::Params,
         input_mode: InputMode::FileUpload,
         input_picker: None,
+        viewport: tonkotsu::Viewport::new(),
     })
 }
 
