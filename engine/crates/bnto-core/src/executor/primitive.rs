@@ -135,7 +135,7 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     let tpl_ctx = super::template::TemplateContext {
         field_values: &field_values,
         process_ctx: ctx.process_ctx,
-        node_outputs: &std::collections::BTreeMap::new(),
+        node_outputs: &ctx.node_outputs,
         loop_item: &ctx.loop_item,
     };
     super::template::resolve_templates(&node.params, &tpl_ctx)

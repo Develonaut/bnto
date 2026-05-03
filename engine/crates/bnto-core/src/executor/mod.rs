@@ -51,6 +51,9 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     /// If executing inside a container, the container's node ID.
     /// Used to set `parent_node_id` on child `NodeStarted` events.
     parent_node_id: Option<String>,
+    /// Per-node output metadata for {{node.<id>.*}} templates.
+    /// Seeded with input file metadata before execution begins.
+    node_outputs: std::collections::BTreeMap<String, serde_json::Value>,
 }
 
 /// Result of executing a single node or container sub-pipeline.
@@ -108,6 +111,7 @@ pub fn execute_pipeline(
 ) -> Result<PipelineResult, BntoError> {
     let start_ms = now_ms();
     let processing_nodes = filter_processing_nodes(definition);
+    let node_outputs = template::build_node_outputs_for_input(&definition.nodes, &files);
     let ctx = PipelineContext {
         registry,
         reporter,
@@ -116,6 +120,7 @@ pub fn execute_pipeline(
         now_ms,
         loop_item: None,
         parent_node_id: None,
+        node_outputs,
     };
 
     let node_infos: Vec<NodeInfo> = processing_nodes

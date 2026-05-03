@@ -206,6 +206,7 @@ fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
         now_ms: ctx.now_ms,
         loop_item: item_data,
         parent_node_id: Some(container_id.to_string()),
+        node_outputs: ctx.node_outputs.clone(),
     }
 }
 
@@ -225,6 +226,7 @@ fn execute_group<F: Fn() -> u64 + Copy>(
         now_ms: ctx.now_ms,
         loop_item: ctx.loop_item.clone(),
         parent_node_id: Some(container_id.to_string()),
+        node_outputs: ctx.node_outputs.clone(),
     };
     execute_sub_pipeline(&group_ctx, sub_definition, files, file_offset)
 }

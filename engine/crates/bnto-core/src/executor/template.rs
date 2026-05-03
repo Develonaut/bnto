@@ -338,6 +338,64 @@ fn resolve_node_interpolation(result: &mut String, node_outputs: &BTreeMap<Strin
     }
 }
 
+// --- Input File Metadata ---
+
+use crate::pipeline::{PipelineFile, PipelineNode};
+
+/// Build the initial `node_outputs` map, seeded with input file metadata.
+///
+/// Finds the `input` node in the pipeline and populates its namespace
+/// from the first file's name. This enables `{{node.input.filename_title}}`
+/// and related templates before any processing starts.
+pub fn build_node_outputs_for_input(
+    nodes: &[PipelineNode],
+    files: &[PipelineFile],
+) -> BTreeMap<String, Value> {
+    let mut outputs = BTreeMap::new();
+    if let Some(input_node) = nodes.iter().find(|n| n.node_type == "input")
+        && let Some(first_file) = files.first()
+    {
+        outputs.insert(
+            input_node.id.clone(),
+            build_input_metadata(&first_file.name),
+        );
+    }
+    outputs
+}
+
+/// Build a JSON object with filename metadata for template resolution.
+///
+/// Produces `filename`, `filename_stem`, `filename_title`, and `filename_ext`
+/// from a filename string. `filename_title` applies deslug + title case,
+/// e.g. `"vehicles-and-monsters"` → `"Vehicles And Monsters"`.
+pub fn build_input_metadata(filename: &str) -> Value {
+    let path = std::path::Path::new(filename);
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or(filename);
+    let ext = path.extension().and_then(|s| s.to_str()).unwrap_or("");
+    serde_json::json!({
+        "filename": filename,
+        "filename_stem": stem,
+        "filename_title": crate::case::deslug_title(stem),
+        "filename_ext": ext,
+    })
+}
+
+/// Resolve `{{node.*}}` placeholders in a plain string.
+///
+/// Used outside the full template system — e.g. for output directory paths
+/// that need node-derived values before pipeline execution starts.
+pub fn resolve_node_templates(s: &str, node_outputs: &BTreeMap<String, Value>) -> String {
+    if !s.contains("{{node.") {
+        return s.to_string();
+    }
+    let mut result = s.to_string();
+    resolve_node_interpolation(&mut result, node_outputs);
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1072,5 +1130,184 @@ mod tests {
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("mp4_Beta"));
+    }
+
+    // --- build_input_metadata ---
+
+    #[test]
+    fn input_metadata_with_extension() {
+        let meta = build_input_metadata("vehicles-and-monsters.csv");
+        assert_eq!(meta["filename"], json!("vehicles-and-monsters.csv"));
+        assert_eq!(meta["filename_stem"], json!("vehicles-and-monsters"));
+        assert_eq!(meta["filename_title"], json!("Vehicles And Monsters"));
+        assert_eq!(meta["filename_ext"], json!("csv"));
+    }
+
+    #[test]
+    fn input_metadata_multi_dot_extension() {
+        let meta = build_input_metadata("archive.tar.gz");
+        assert_eq!(meta["filename"], json!("archive.tar.gz"));
+        assert_eq!(meta["filename_stem"], json!("archive.tar"));
+        assert_eq!(meta["filename_ext"], json!("gz"));
+    }
+
+    #[test]
+    fn input_metadata_no_extension() {
+        let meta = build_input_metadata("Makefile");
+        assert_eq!(meta["filename"], json!("Makefile"));
+        assert_eq!(meta["filename_stem"], json!("Makefile"));
+        assert_eq!(meta["filename_ext"], json!(""));
+    }
+
+    #[test]
+    fn input_metadata_deslug_title_transform() {
+        let meta = build_input_metadata("my_project-name.txt");
+        // deslug replaces both hyphens and underscores with spaces
+        assert_eq!(meta["filename_title"], json!("My Project Name"));
+    }
+
+    // --- build_node_outputs_for_input ---
+
+    use crate::pipeline::PipelineNode;
+
+    fn make_input_node(id: &str) -> PipelineNode {
+        PipelineNode {
+            id: id.to_string(),
+            node_type: "input".to_string(),
+            params: serde_json::Map::new(),
+            fields: BTreeMap::new(),
+            children: None,
+        }
+    }
+
+    fn make_processing_node(id: &str, node_type: &str) -> PipelineNode {
+        PipelineNode {
+            id: id.to_string(),
+            node_type: node_type.to_string(),
+            params: serde_json::Map::new(),
+            fields: BTreeMap::new(),
+            children: None,
+        }
+    }
+
+    fn make_pipeline_file(name: &str) -> PipelineFile {
+        PipelineFile {
+            name: name.to_string(),
+            data: crate::file_data::FileData::Bytes(Vec::new()),
+            mime_type: "text/plain".to_string(),
+            metadata: serde_json::Map::new(),
+        }
+    }
+
+    #[test]
+    fn node_outputs_for_input_finds_input_node() {
+        let nodes = vec![
+            make_input_node("input"),
+            make_processing_node("compress", "image-compress"),
+        ];
+        let files = vec![make_pipeline_file("photos.zip")];
+        let outputs = build_node_outputs_for_input(&nodes, &files);
+        assert!(outputs.contains_key("input"));
+        assert_eq!(outputs["input"]["filename"], json!("photos.zip"));
+    }
+
+    #[test]
+    fn node_outputs_for_input_empty_files() {
+        let nodes = vec![make_input_node("input")];
+        let files: Vec<PipelineFile> = Vec::new();
+        let outputs = build_node_outputs_for_input(&nodes, &files);
+        assert!(outputs.is_empty());
+    }
+
+    #[test]
+    fn node_outputs_for_input_no_input_node() {
+        let nodes = vec![make_processing_node("compress", "image-compress")];
+        let files = vec![make_pipeline_file("photo.jpg")];
+        let outputs = build_node_outputs_for_input(&nodes, &files);
+        assert!(outputs.is_empty());
+    }
+
+    #[test]
+    fn node_outputs_for_input_uses_first_file() {
+        let nodes = vec![make_input_node("input")];
+        let files = vec![
+            make_pipeline_file("first.csv"),
+            make_pipeline_file("second.csv"),
+        ];
+        let outputs = build_node_outputs_for_input(&nodes, &files);
+        assert_eq!(outputs["input"]["filename"], json!("first.csv"));
+    }
+
+    // --- resolve_node_templates (public function) ---
+
+    #[test]
+    fn resolve_node_templates_resolves_placeholders() {
+        let mut outputs = BTreeMap::new();
+        outputs.insert("input".to_string(), build_input_metadata("data-set.csv"));
+        let result = resolve_node_templates("/downloads/{{node.input.filename_title}}", &outputs);
+        assert_eq!(result, "/downloads/Data Set");
+    }
+
+    #[test]
+    fn resolve_node_templates_no_placeholders() {
+        let outputs = BTreeMap::new();
+        let result = resolve_node_templates("plain-string", &outputs);
+        assert_eq!(result, "plain-string");
+    }
+
+    #[test]
+    fn resolve_node_templates_empty_string() {
+        let outputs = BTreeMap::new();
+        let result = resolve_node_templates("", &outputs);
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn resolve_node_templates_multiple_placeholders() {
+        let mut outputs = BTreeMap::new();
+        outputs.insert(
+            "input".to_string(),
+            build_input_metadata("vehicles-and-monsters.csv"),
+        );
+        let result = resolve_node_templates(
+            "/downloads/{{node.input.filename_title}}/{{node.input.filename_ext}}",
+            &outputs,
+        );
+        assert_eq!(result, "/downloads/Vehicles And Monsters/csv");
+    }
+
+    // --- {{node.input.*}} through full resolve_templates ---
+
+    #[test]
+    fn node_input_filename_title_through_full_resolution() {
+        let mut outputs = BTreeMap::new();
+        outputs.insert(
+            "input".to_string(),
+            build_input_metadata("vehicles-and-monsters.csv"),
+        );
+        let params = make_params(&[("dest", json!("/downloads/{{node.input.filename_title}}"))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &outputs,
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["dest"], json!("/downloads/Vehicles And Monsters"));
+    }
+
+    #[test]
+    fn node_input_filename_stem_sole_placeholder() {
+        let mut outputs = BTreeMap::new();
+        outputs.insert("input".to_string(), build_input_metadata("my-data.csv"));
+        let params = make_params(&[("stem", json!("{{node.input.filename_stem}}"))]);
+        let ctx = TemplateContext {
+            field_values: &empty_fields(),
+            process_ctx: &NoopContext,
+            node_outputs: &outputs,
+            loop_item: &None,
+        };
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["stem"], json!("my-data"));
     }
 }
