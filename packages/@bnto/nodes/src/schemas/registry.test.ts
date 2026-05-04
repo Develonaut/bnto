@@ -165,11 +165,11 @@ describe("Zod schemas parse correctly", () => {
     }
   });
 
-  it("output defaults mode to download", () => {
+  it("output defaults mode to write", () => {
     const result = NODE_SCHEMAS["output"]!.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.mode).toBe("download");
+      expect(result.data.mode).toBe("write");
     }
   });
 });
@@ -200,10 +200,11 @@ describe("enum constants", () => {
     expect(INPUT_MODES).toContain("url");
   });
 
-  it("OUTPUT_MODES has 3 modes", () => {
-    expect(OUTPUT_MODES).toHaveLength(3);
-    expect(OUTPUT_MODES).toContain("download");
-    expect(OUTPUT_MODES).toContain("display");
-    expect(OUTPUT_MODES).toContain("preview");
+  it("OUTPUT_MODES has 4 modes", () => {
+    expect(OUTPUT_MODES).toHaveLength(4);
+    expect(OUTPUT_MODES).toContain("write");
+    expect(OUTPUT_MODES).toContain("overwrite");
+    expect(OUTPUT_MODES).toContain("message");
+    expect(OUTPUT_MODES).toContain("none");
   });
 });

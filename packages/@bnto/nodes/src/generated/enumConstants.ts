@@ -12,6 +12,6 @@ export const INPUT_MODES = ["file-upload", "text", "url"] as const;
 
 export const LOOP_MODES = ["forEach", "times", "while"] as const;
 
-export const OUTPUT_MODES = ["download", "display", "preview"] as const;
+export const OUTPUT_MODES = ["write", "overwrite", "message", "none"] as const;
 
 export const ERROR_STRATEGIES = ["failFast", "collectAll"] as const;

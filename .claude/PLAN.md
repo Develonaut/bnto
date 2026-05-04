@@ -943,6 +943,16 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 `engine/crates/bnto/src/commands/dry_run.rs`, `engine/crates/bnto-engine/src/executor/`
 
+### ~~Triage: Audit output node coupling to file writes~~ — DONE (PR #512)
+
+**Delivered.** Output node modes refactored: `download/display/preview` → `write/overwrite/message/none`. `file-move` processor removed. `WriteOutcome` enum in `io.rs` dispatches mode-aware output. `resolve_output_mode()` in `pipeline.rs`. CLI + TUI bridges respect mode. PR 1 of 2 (`refactor/output-node-modes`).
+
+### Triage: Audit node-to-node data passing architecture
+
+**Priority: Triage.** Nodes should hand off rich context (file path, metadata, what they did) to the next node rather than relying on implicit assumptions. Currently processors like file-rename do filesystem work (fs::rename) that may belong in the pipeline runner or output writer — nodes are doing secret file management instead of their one job. Need a deep review of: (1) what context flows between nodes (FileData, filename, metadata), (2) whether processors are doing filesystem work that belongs at a different layer, (3) the boundary between "process this data" and "manage where files live on disk", (4) namespace/context available to nodes. Related to "Audit output node coupling" backlog item above.
+
+`engine/crates/bnto-file/src/rename.rs`, `engine/crates/bnto-core/src/processor.rs`, `engine/crates/bnto-engine/src/pipeline/`
+
 ---
 
 ## Reference

@@ -146,6 +146,25 @@ pub fn extensions_for_recipe(
     extensions_from_mimes(&mimes)
 }
 
+/// Check if a recipe needs directory input (contains a `file-collect` node).
+///
+/// Recipes with `file-collect` nodes expect a directory path as input — the
+/// collector expands the directory into matching files. The picker should allow
+/// directory selection for these recipes.
+pub fn needs_directory_input(definition_json: &str) -> bool {
+    let def: serde_json::Value = match serde_json::from_str(definition_json) {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+    let nodes = match def["nodes"].as_array() {
+        Some(n) => n,
+        None => return false,
+    };
+    nodes
+        .iter()
+        .any(|node| node["type"].as_str() == Some("file-collect"))
+}
+
 /// Resolve a MIME type to file extensions.
 pub fn mime_to_extensions(mime: &str) -> &'static [&'static str] {
     match mime {
@@ -247,6 +266,23 @@ mod tests {
         let registry = bnto_engine::create_registry();
         let exts = extensions_for_recipe("not valid json", &registry);
         assert!(exts.is_empty());
+    }
+
+    #[test]
+    fn needs_directory_input_true_for_file_collect() {
+        let json = r#"{"nodes":[{"type":"input"},{"type":"file-collect"},{"type":"output"}]}"#;
+        assert!(needs_directory_input(json));
+    }
+
+    #[test]
+    fn needs_directory_input_false_without_file_collect() {
+        let json = r#"{"nodes":[{"type":"input"},{"type":"image-compress"},{"type":"output"}]}"#;
+        assert!(!needs_directory_input(json));
+    }
+
+    #[test]
+    fn needs_directory_input_false_for_invalid_json() {
+        assert!(!needs_directory_input("not valid json"));
     }
 
     #[cfg(unix)]

@@ -213,7 +213,7 @@ describe("definitionToGraph", () => {
     const inputNode = result.nodes.find((n) => n.id === "input")!;
     expect(inputNode.data.sublabel).toBe("File Upload");
     const outputNode = result.nodes.find((n) => n.id === "output")!;
-    expect(outputNode.data.sublabel).toBe("Download");
+    expect(outputNode.data.sublabel).toBe("Write");
   });
 
   it("sets category sublabel for processing nodes", () => {

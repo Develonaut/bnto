@@ -14,24 +14,24 @@ interface OutputRendererProps {
  * Generic output renderer — reads the output node from a recipe definition
  * and renders the appropriate result presentation.
  *
- * Phase 1: Only `download` mode is implemented. `display` and `preview` modes
- * render placeholder UI for forward compatibility.
+ * `write` mode renders download cards. `message` mode shows a summary.
+ * `none` mode renders nothing. `overwrite` is CLI-only (no browser UI).
  */
 export function OutputRenderer({ definition, results, onDownload }: OutputRendererProps) {
   const outputConfig = deriveOutputConfig(definition);
 
-  if (outputConfig.mode === "display" || outputConfig.mode === "preview") {
-    return <PlaceholderMode mode={outputConfig.mode} />;
+  if (outputConfig.mode === "message" || outputConfig.mode === "none") {
+    return <MessageMode mode={outputConfig.mode} />;
   }
 
-  // download mode (default)
+  // write mode (default) — also used for overwrite in browser context
   return <DownloadGrid results={results} onDownload={onDownload} />;
 }
 
-function PlaceholderMode({ mode }: { mode: string }) {
+function MessageMode({ mode }: { mode: string }) {
   return (
     <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
-      {mode === "display" ? "Display" : "Preview"} output mode coming soon
+      {mode === "message" ? "Message" : "No output"} mode — no files to download
     </div>
   );
 }

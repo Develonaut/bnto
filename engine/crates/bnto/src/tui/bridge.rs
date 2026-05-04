@@ -151,9 +151,24 @@ fn run_bridge(
         }
     };
 
+    // Resolve output mode from the recipe definition.
+    let mode = serde_json::from_str::<PipelineDefinition>(definition_json)
+        .map(|def| bnto_core::resolve_output_mode(&def))
+        .unwrap_or_else(|_| "write".to_string());
+
     // Preview mode skips output directory creation and file writes.
     let output_dir_str = if preview_mode {
         String::new()
+    } else if mode == "overwrite" {
+        // Overwrite mode doesn't need an output directory — files are renamed in place.
+        // Report the source directory for the results screen.
+        let dir_str = selected_files
+            .first()
+            .and_then(|p| p.parent())
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_else(|| ".".to_string());
+        let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
+        dir_str
     } else {
         // Resolve output directory:
         // 1. Recipe's output node directory param (with {{ctx.*}} + {{node.*}} resolved)
@@ -207,10 +222,10 @@ fn run_bridge(
         return;
     }
 
-    // Normal mode: write output files to disk.
+    // Normal mode: write output files using mode-aware dispatch.
     let file_metadata: Vec<FileResultMeta> = extract_file_metadata(&result);
 
-    if let Err(e) = io::write_results(&result, &output_dir_str) {
+    if let Err(e) = io::write_results_with_mode(&result, &mode, &output_dir_str) {
         let _ = tx.send(BridgeEvent::Error(e));
         return;
     }

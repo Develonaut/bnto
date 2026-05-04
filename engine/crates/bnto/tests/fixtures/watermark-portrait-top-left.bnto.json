@@ -54,7 +54,7 @@
       "position": { "x": 500, "y": 100 },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "label": "Watermarked Images",
         "zip": true,
         "autoDownload": true

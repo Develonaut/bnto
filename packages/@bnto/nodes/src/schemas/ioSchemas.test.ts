@@ -57,18 +57,18 @@ describe("outputNodeSchema", () => {
     expect(outputNodeSchema.nodeType).toBe("output");
   });
 
-  it("mode defaults to download via Zod", () => {
+  it("mode defaults to write via Zod", () => {
     const result = outputNodeSchema.schema.safeParse({});
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.mode).toBe("download");
+      expect(result.data.mode).toBe("write");
     }
   });
 
-  it("has download-specific params with visibleWhen in NodeParamField", () => {
+  it("has write-specific params with visibleWhen in NodeParamField", () => {
     const fields = getNodeParamFields("output")!;
-    const downloadParams = ["filename", "zip", "autoDownload"];
-    for (const name of downloadParams) {
+    const writeParams = ["filename", "zip", "autoDownload"];
+    for (const name of writeParams) {
       expect(outputNodeSchema.params[name]).toBeDefined();
       expect(fields[name]?.visibleWhen).toBeDefined();
     }
@@ -113,8 +113,8 @@ describe("input visibility rules", () => {
 });
 
 describe("output visibility rules", () => {
-  it("shows download params in download mode", () => {
-    const names = getVisibleParams("output", "mode", "download");
+  it("shows write params in write mode", () => {
+    const names = getVisibleParams("output", "mode", "write");
     expect(names).toContain("mode");
     expect(names).toContain("filename");
     expect(names).toContain("zip");
@@ -122,8 +122,8 @@ describe("output visibility rules", () => {
     expect(names).toContain("label"); // always visible — no visibleWhen
   });
 
-  it("hides download-specific params in display mode", () => {
-    const names = getVisibleParams("output", "mode", "display");
+  it("hides write-specific params in overwrite mode", () => {
+    const names = getVisibleParams("output", "mode", "overwrite");
     expect(names).toContain("mode");
     expect(names).toContain("label"); // always visible
     expect(names).not.toContain("filename");
@@ -131,11 +131,20 @@ describe("output visibility rules", () => {
     expect(names).not.toContain("autoDownload");
   });
 
-  it("hides download-specific params in preview mode", () => {
-    const names = getVisibleParams("output", "mode", "preview");
+  it("hides write-specific params in message mode", () => {
+    const names = getVisibleParams("output", "mode", "message");
     expect(names).toContain("mode");
     expect(names).toContain("label"); // always visible
     expect(names).not.toContain("zip");
+  });
+
+  it("hides write-specific params in none mode", () => {
+    const names = getVisibleParams("output", "mode", "none");
+    expect(names).toContain("mode");
+    expect(names).toContain("label"); // always visible
+    expect(names).not.toContain("filename");
+    expect(names).not.toContain("zip");
+    expect(names).not.toContain("autoDownload");
   });
 });
 

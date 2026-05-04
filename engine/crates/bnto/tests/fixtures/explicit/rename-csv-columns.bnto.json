@@ -76,7 +76,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-rename-csv-columns",
         "label": "Renamed CSV",
         "zip": false,

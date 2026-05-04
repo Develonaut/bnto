@@ -42,16 +42,6 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   "file-metadata": {
     include_hash: { type: "boolean", control: "switch", required: false },
   },
-  "file-move": {
-    destination: { type: "string", control: "text", required: false },
-    create_dirs: { type: "boolean", control: "switch", required: false },
-    conflict: {
-      type: "enum",
-      control: "select",
-      required: false,
-      enumValues: ["skip", "overwrite", "rename"] as const,
-    },
-  },
   "file-rename": {
     sanitize: {
       type: "enum",
@@ -161,7 +151,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       type: "enum",
       control: "select",
       required: false,
-      enumValues: ["download", "display", "preview"] as const,
+      enumValues: ["write", "overwrite", "message", "none"] as const,
     },
     directory: { type: "string", control: "text", required: false },
     filename: { type: "string", control: "text", required: false },

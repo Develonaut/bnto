@@ -72,7 +72,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-sanitize-filenames",
         "label": "Sanitized Files",
         "zip": true,

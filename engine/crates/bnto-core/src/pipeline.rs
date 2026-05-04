@@ -307,6 +307,42 @@ fn find_output_directory_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
 }
 
 // =============================================================================
+// Helper: Resolve output mode from recipe definition
+// =============================================================================
+
+/// Read the output node's `mode` parameter from a pipeline definition.
+///
+/// Returns the mode string ("write", "overwrite", "message", "none").
+/// Defaults to "write" if no output node or no mode param is found.
+pub fn resolve_output_mode(def: &PipelineDefinition) -> String {
+    find_output_mode_in_nodes(&def.nodes).unwrap_or_else(|| "write".to_string())
+}
+
+fn find_output_mode_in_nodes(nodes: &[PipelineNode]) -> Option<String> {
+    for node in nodes {
+        if node.node_type == "output" {
+            let mode = node
+                .params
+                .get("mode")
+                .and_then(|v| v.as_str())
+                .unwrap_or("write");
+            return if mode.is_empty() {
+                Some("write".to_string())
+            } else {
+                Some(mode.to_string())
+            };
+        }
+        // Recurse into container children
+        if let Some(children) = &node.children
+            && let Some(mode) = find_output_mode_in_nodes(children)
+        {
+            return Some(mode);
+        }
+    }
+    None
+}
+
+// =============================================================================
 // Helper: Check if a node type is an I/O marker
 // =============================================================================
 
@@ -641,7 +677,7 @@ mod tests {
                     "id": "output", "type": "output", "version": "1.0.0",
                     "name": "Compressed Images", "position": {"x": 500, "y": 100},
                     "metadata": {},
-                    "parameters": { "mode": "download", "zip": true },
+                    "parameters": { "mode": "write", "zip": true },
                     "inputPorts": [{"id": "in-1", "name": "files"}], "outputPorts": []
                 }
             ],
@@ -712,7 +748,7 @@ mod tests {
                     "id": "output", "type": "output", "version": "1.0.0",
                     "name": "Cleaned CSV", "position": {"x": 500, "y": 100},
                     "metadata": {},
-                    "parameters": { "mode": "download" },
+                    "parameters": { "mode": "write" },
                     "inputPorts": [{"id": "in-1", "name": "files"}], "outputPorts": []
                 }
             ],
@@ -1254,7 +1290,7 @@ mod tests {
             r#"{
                 "nodes": [
                     { "id": "in", "type": "input", "params": {} },
-                    { "id": "out", "type": "output", "params": { "mode": "download" } }
+                    { "id": "out", "type": "output", "params": { "mode": "write" } }
                 ]
             }"#,
         );
@@ -1306,6 +1342,65 @@ mod tests {
             resolve_output_directory(&def),
             Some("nested-dir".to_string())
         );
+    }
+
+    // --- resolve_output_mode Tests ---
+
+    #[test]
+    fn test_resolve_output_mode_returns_mode_from_output_node() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "out", "type": "output", "params": { "mode": "overwrite" } }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_mode(&def), "overwrite");
+    }
+
+    #[test]
+    fn test_resolve_output_mode_defaults_to_write() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "in", "type": "input", "params": {} },
+                    { "id": "proc", "type": "image-compress", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_mode(&def), "write");
+    }
+
+    #[test]
+    fn test_resolve_output_mode_defaults_when_no_mode_param() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "out", "type": "output", "params": { "directory": "foo" } }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_mode(&def), "write");
+    }
+
+    #[test]
+    fn test_resolve_output_mode_nested_in_container() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    {
+                        "id": "group-1",
+                        "type": "group",
+                        "params": {},
+                        "children": [
+                            { "id": "out", "type": "output", "params": { "mode": "none" } }
+                        ]
+                    }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_output_mode(&def), "none");
     }
 
     // --- InputMode Resolution Tests ---

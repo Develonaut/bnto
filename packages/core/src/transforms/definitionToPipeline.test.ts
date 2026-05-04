@@ -43,7 +43,7 @@ describe("definitionToPipeline", () => {
     const pipeline = definitionToPipeline(SIMPLE_DEF, { compress: { quality: 50 } });
 
     expect(pipeline.nodes[0]!.params).toEqual({ mode: "file-upload" });
-    expect(pipeline.nodes[2]!.params).toEqual({ mode: "download" });
+    expect(pipeline.nodes[2]!.params).toEqual({ mode: "write" });
   });
 
   it("preserves nested children for container nodes", () => {

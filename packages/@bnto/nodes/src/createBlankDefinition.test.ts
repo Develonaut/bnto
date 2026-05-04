@@ -62,10 +62,10 @@ describe("createBlankDefinition", () => {
     expect(inputNode.parameters.multiple).toBe(true);
   });
 
-  it("output node has download mode", () => {
+  it("output node has write mode", () => {
     const def = createBlankDefinition();
     const outputNode = def.nodes![1]!;
-    expect(outputNode.parameters.mode).toBe("download");
+    expect(outputNode.parameters.mode).toBe("write");
     expect(outputNode.parameters.zip).toBe(true);
     expect(outputNode.parameters.autoDownload).toBe(true);
   });

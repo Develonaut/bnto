@@ -1123,9 +1123,11 @@ mod tests {
             exec.param_overrides.get("compress:quality"),
             Some(&"55".to_string()),
         );
-        assert_eq!(
-            exec.param_overrides.get("compress:format"),
-            Some(&"jpeg".to_string()),
+        // Format was not modified (still matches default "jpeg"), so it should
+        // not appear as an override — only user-changed values are overrides.
+        assert!(
+            !exec.param_overrides.contains_key("compress:format"),
+            "unchanged params should not become overrides"
         );
         assert!(app.param_overrides.is_empty(), "bridge overrides cleared");
     }
@@ -2157,7 +2159,14 @@ mod tests {
     fn config_confirmed_url_mode_carries_overrides_to_execution() {
         let from = DetailOrigin::Home;
         let slug = "download-video";
-        let detail = DetailModel::from_slug(slug, &create_registry()).unwrap();
+        let mut detail = DetailModel::from_slug(slug, &create_registry()).unwrap();
+        // Modify one param so it differs from its default — only user-changed
+        // values become overrides.
+        assert!(
+            !detail.form.fields.is_empty(),
+            "recipe should have at least one param"
+        );
+        detail.form.fields[0].value = "user-edited-value".into();
         let app = update(
             AppModel {
                 screen: Screen::Detail {
@@ -2174,8 +2183,6 @@ mod tests {
             .execution
             .as_ref()
             .expect("execution model should exist");
-        // The download-video recipe has shell-command node with command, args params.
-        // All non-default values become overrides.
         assert!(!exec.param_overrides.is_empty() || !app.param_overrides.is_empty());
     }
 

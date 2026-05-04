@@ -10,9 +10,9 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for output node parameters. */
 export const outputParamsSchema = z.object({
   mode: z
-    .enum(["download", "display", "preview"] as const)
+    .enum(["write", "overwrite", "message", "none"] as const)
     .optional()
-    .default("download"),
+    .default("write"),
   directory: z.string().optional().default(""),
   filename: z.string().optional(),
   zip: z.boolean().optional().default(true),

@@ -45,7 +45,7 @@ pub(super) fn compress_images_json() -> &'static str {
                 "id": "output", "type": "output", "version": "1.0.0",
                 "name": "Compressed Images", "position": {"x": 500, "y": 100},
                 "metadata": {},
-                "parameters": { "mode": "download", "zip": true },
+                "parameters": { "mode": "write", "zip": true },
                 "inputPorts": [{"id": "in-1", "name": "files"}], "outputPorts": []
             }
         ],
@@ -95,7 +95,7 @@ pub(super) fn clean_csv_json() -> &'static str {
                 "id": "output", "type": "output", "version": "1.0.0",
                 "name": "Cleaned CSV", "position": {"x": 500, "y": 100},
                 "metadata": {},
-                "parameters": { "mode": "download" },
+                "parameters": { "mode": "write" },
                 "inputPorts": [{"id": "in-1", "name": "files"}], "outputPorts": []
             }
         ],
@@ -150,7 +150,7 @@ pub(super) fn rename_files_json() -> &'static str {
                 "id": "output", "type": "output", "version": "1.0.0",
                 "name": "Renamed Files", "position": {"x": 500, "y": 100},
                 "metadata": {},
-                "parameters": { "mode": "download", "zip": true },
+                "parameters": { "mode": "write", "zip": true },
                 "inputPorts": [{"id": "in-1", "name": "files"}], "outputPorts": []
             }
         ],

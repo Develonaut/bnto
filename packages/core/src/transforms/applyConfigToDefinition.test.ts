@@ -15,7 +15,7 @@ describe("applyConfigToDefinition", () => {
     const result = applyConfigToDefinition(SIMPLE_DEF, { compress: { quality: 50 } });
 
     expect(result.nodes![0]!.parameters).toEqual({ mode: "file-upload" });
-    expect(result.nodes![2]!.parameters).toEqual({ mode: "download" });
+    expect(result.nodes![2]!.parameters).toEqual({ mode: "write" });
   });
 
   it("preserves full Definition shape (ports, metadata, position)", () => {

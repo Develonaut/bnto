@@ -71,7 +71,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-strip-exif",
         "label": "Cleaned Images",
         "zip": true,

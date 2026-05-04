@@ -11,7 +11,7 @@ import type { Definition } from "@bnto/registry";
 
 interface OutputConfig {
   /** How results are delivered. */
-  mode: "download" | "display" | "preview";
+  mode: "write" | "overwrite" | "message" | "none";
   /** Whether to auto-zip multiple output files. */
   zip: boolean;
   /** Whether to auto-download on completion. */
@@ -23,7 +23,7 @@ interface OutputConfig {
 }
 
 const DEFAULTS: OutputConfig = {
-  mode: "download",
+  mode: "write",
   zip: true,
   autoDownload: true,
   label: "Results",
@@ -33,7 +33,7 @@ const DEFAULTS: OutputConfig = {
  * Derives output delivery config from a definition's output node.
  *
  * Returns the output mode, zip preference, auto-download flag, and label.
- * If no output node is found, returns sensible defaults (download mode,
+ * If no output node is found, returns sensible defaults (write mode,
  * zip enabled, auto-download on).
  */
 export function deriveOutputConfig(definition: Definition): OutputConfig {
@@ -41,7 +41,7 @@ export function deriveOutputConfig(definition: Definition): OutputConfig {
   if (!outputNode) return DEFAULTS;
 
   const params = outputNode.parameters;
-  const mode = (params.mode as OutputConfig["mode"] | undefined) ?? "download";
+  const mode = (params.mode as OutputConfig["mode"] | undefined) ?? "write";
   const zip = (params.zip as boolean | undefined) ?? true;
   const autoDownload = (params.autoDownload as boolean | undefined) ?? true;
   const label = (params.label as string | undefined) ?? "Results";

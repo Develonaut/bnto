@@ -90,7 +90,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-compress-images",
         "label": "Compressed Images",
         "zip": true,

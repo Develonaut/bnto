@@ -12,7 +12,6 @@ import { fileCollectNodeSchema } from "./schemas/fileCollect";
 import { fileCopyNodeSchema } from "./schemas/fileCopy";
 import { fileFilterNodeSchema } from "./schemas/fileFilter";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
-import { fileMoveNodeSchema } from "./schemas/fileMove";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
 import { groupNodeSchema } from "./schemas/group";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
@@ -44,7 +43,6 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-copy": fileCopyNodeSchema,
   "file-filter": fileFilterNodeSchema,
   "file-metadata": fileMetadataNodeSchema,
-  "file-move": fileMoveNodeSchema,
   "file-rename": fileRenameNodeSchema,
   group: groupNodeSchema,
   "image-compress": imageCompressNodeSchema,
@@ -97,15 +95,6 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     max_size: { suffix: "bytes" },
   },
   "file-metadata": {},
-  "file-move": {
-    conflict: {
-      options: [
-        { value: "skip", label: "Skip" },
-        { value: "overwrite", label: "Overwrite" },
-        { value: "rename", label: "Rename (add suffix)" },
-      ],
-    },
-  },
   "file-rename": {
     sanitize: {
       options: [
@@ -280,15 +269,16 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     mode: {
       control: "select",
       options: [
-        { value: "download", label: "Download" },
-        { value: "display", label: "Display" },
-        { value: "preview", label: "Preview" },
+        { value: "write", label: "Write" },
+        { value: "overwrite", label: "Overwrite" },
+        { value: "message", label: "Message" },
+        { value: "none", label: "None" },
       ],
     },
-    directory: { visibleWhen: { param: "mode", equals: "download" } },
-    filename: { visibleWhen: { param: "mode", equals: "download" } },
-    zip: { control: "switch", visibleWhen: { param: "mode", equals: "download" } },
-    autoDownload: { control: "switch", visibleWhen: { param: "mode", equals: "download" } },
+    directory: { visibleWhen: { param: "mode", equals: "write" } },
+    filename: { visibleWhen: { param: "mode", equals: "write" } },
+    zip: { control: "switch", visibleWhen: { param: "mode", equals: "write" } },
+    autoDownload: { control: "switch", visibleWhen: { param: "mode", equals: "write" } },
   },
   parallel: {
     errorStrategy: {

@@ -91,7 +91,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-convert-image-format",
         "label": "Converted Images",
         "zip": true,

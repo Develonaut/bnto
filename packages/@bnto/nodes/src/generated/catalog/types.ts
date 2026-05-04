@@ -11,7 +11,6 @@ export type NodeTypeName =
   | "file-copy"
   | "file-filter"
   | "file-metadata"
-  | "file-move"
   | "file-rename"
   | "group"
   | "http-request"
