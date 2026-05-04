@@ -145,27 +145,24 @@ fn golden_sanitize_filenames() {
 }
 
 #[test]
-fn golden_merge_similar_folders() {
-    // Create a test directory with multi-word folder names.
+fn golden_flatten_folders() {
     let fixture = tempfile::tempdir().unwrap();
     let root = fixture.path();
 
-    // Folders that share "Krieg" prefix — should merge into Krieg/{suffix}.
-    let ka = root.join("Krieg Artillery");
-    std::fs::create_dir_all(&ka).unwrap();
-    std::fs::write(ka.join("howitzer.txt"), b"howitzer-data").unwrap();
+    // Nested directory structure to flatten.
+    let deep = root.join("photos").join("vacation");
+    std::fs::create_dir_all(&deep).unwrap();
+    std::fs::write(deep.join("beach.txt"), b"beach-data").unwrap();
 
-    let kt = root.join("Krieg Tank");
-    std::fs::create_dir_all(&kt).unwrap();
-    std::fs::write(kt.join("leman-russ.txt"), b"tank-data").unwrap();
+    let docs = root.join("docs");
+    std::fs::create_dir_all(&docs).unwrap();
+    std::fs::write(docs.join("readme.txt"), b"readme-data").unwrap();
 
-    // Single-word folder — no space, regex won't match, path stays unchanged.
-    let solo = root.join("Minka");
-    std::fs::create_dir_all(&solo).unwrap();
-    std::fs::write(solo.join("cadian.txt"), b"cadian-data").unwrap();
+    // Top-level file — should also appear in output.
+    std::fs::write(root.join("notes.txt"), b"notes-data").unwrap();
 
-    let (out, _) = run_recipe_ok_dir("merge-similar-folders", root);
-    assert_golden("merge-similar-folders", &out);
+    let (out, _) = run_recipe_ok_dir("flatten-folders", root);
+    assert_golden("flatten-folders", &out);
 }
 
 // --- CSV Recipes ---
