@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-vector"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "SVG rasterization for Bnto engine — parses SVG and renders to pixels"
 license = "MIT"
@@ -24,8 +24,8 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.2" }
-bnto-encode = { path = "../bnto-encode", version = "0.1.2" }
+bnto-core = { path = "../bnto-core", version = "0.1.3" }
+bnto-encode = { path = "../bnto-encode", version = "0.1.3" }
 resvg = "0.47"
 usvg = "0.47"
 tiny-skia = "0.12"
