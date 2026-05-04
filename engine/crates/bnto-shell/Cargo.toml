@@ -10,6 +10,7 @@ description = "Shell command processor for Bnto engine — execute external CLI 
 license = "MIT"
 repository = "https://github.com/Develonaut/bnto"
 homepage = "https://bnto.io"
+readme = "README.md"
 keywords = ["cli", "shell", "command", "pipeline", "processor"]
 categories = ["command-line-utilities"]
 
