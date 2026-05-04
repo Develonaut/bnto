@@ -25,16 +25,20 @@ describe("getNodeSublabel", () => {
   });
 
   // --- Output modes ---
-  it("returns 'Download' for output download mode", () => {
-    expect(getNodeSublabel("output", { mode: "download" })).toBe("Download");
+  it("returns 'Write' for output write mode", () => {
+    expect(getNodeSublabel("output", { mode: "write" })).toBe("Write");
   });
 
-  it("returns 'Display' for output display mode", () => {
-    expect(getNodeSublabel("output", { mode: "display" })).toBe("Display");
+  it("returns 'Overwrite' for output overwrite mode", () => {
+    expect(getNodeSublabel("output", { mode: "overwrite" })).toBe("Overwrite");
   });
 
-  it("returns 'Preview' for output preview mode", () => {
-    expect(getNodeSublabel("output", { mode: "preview" })).toBe("Preview");
+  it("returns 'Message' for output message mode", () => {
+    expect(getNodeSublabel("output", { mode: "message" })).toBe("Message");
+  });
+
+  it("returns 'None' for output none mode", () => {
+    expect(getNodeSublabel("output", { mode: "none" })).toBe("None");
   });
 
   it("returns 'Output' when output has no mode", () => {

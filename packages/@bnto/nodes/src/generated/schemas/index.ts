@@ -12,8 +12,6 @@ export { fileFilterParamsSchema, fileFilterNodeSchema } from "./fileFilter";
 export type { FileFilterParams } from "./fileFilter";
 export { fileMetadataParamsSchema, fileMetadataNodeSchema } from "./fileMetadata";
 export type { FileMetadataParams } from "./fileMetadata";
-export { fileMoveParamsSchema, fileMoveNodeSchema } from "./fileMove";
-export type { FileMoveParams } from "./fileMove";
 export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
 export type { FileRenameParams } from "./fileRename";
 export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";

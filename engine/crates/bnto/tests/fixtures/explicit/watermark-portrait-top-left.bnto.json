@@ -96,7 +96,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-watermark-portrait-top-left",
         "label": "Watermarked Images",
         "zip": true,

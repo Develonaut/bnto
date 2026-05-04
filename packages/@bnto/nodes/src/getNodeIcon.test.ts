@@ -35,16 +35,20 @@ describe("getNodeIcon", () => {
 
   // --- Output node icons (mode-aware) ---
 
-  it("returns 'download' for output download mode", () => {
-    expect(getNodeIcon("output", { mode: "download" })).toBe("download");
+  it("returns 'download' for output write mode", () => {
+    expect(getNodeIcon("output", { mode: "write" })).toBe("download");
   });
 
-  it("returns 'monitor' for output display mode", () => {
-    expect(getNodeIcon("output", { mode: "display" })).toBe("monitor");
+  it("returns 'replace' for output overwrite mode", () => {
+    expect(getNodeIcon("output", { mode: "overwrite" })).toBe("replace");
   });
 
-  it("returns 'eye' for output preview mode", () => {
-    expect(getNodeIcon("output", { mode: "preview" })).toBe("eye");
+  it("returns 'message-square' for output message mode", () => {
+    expect(getNodeIcon("output", { mode: "message" })).toBe("message-square");
+  });
+
+  it("returns 'circle-off' for output none mode", () => {
+    expect(getNodeIcon("output", { mode: "none" })).toBe("circle-off");
   });
 
   it("falls back to 'download' for unknown output mode", () => {

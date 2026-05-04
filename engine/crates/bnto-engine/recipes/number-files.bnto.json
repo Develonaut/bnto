@@ -73,7 +73,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-number-files",
         "label": "Numbered Files",
         "zip": true,

@@ -92,7 +92,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-resize-images",
         "label": "Resized Images",
         "zip": true,

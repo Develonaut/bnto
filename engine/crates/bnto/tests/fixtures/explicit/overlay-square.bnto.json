@@ -96,7 +96,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-overlay-square",
         "label": "Overlaid Images",
         "zip": true,

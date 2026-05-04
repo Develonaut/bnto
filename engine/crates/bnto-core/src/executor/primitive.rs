@@ -99,7 +99,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     );
 
     // Pass FileData through directly — processors that need bytes call into_bytes() themselves.
-    // This enables zero-copy moves for file-move and similar processors.
+    // This enables zero-copy for file-rename and similar processors.
     let input = NodeInput {
         data: file.data,
         filename: file_name.clone(),

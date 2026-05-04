@@ -50,6 +50,8 @@ pub struct PickerModel {
     pub searching: bool,
     /// Whether to show file metadata columns (permissions, symlink target).
     pub show_metadata: bool,
+    /// Whether directories can be selected (e.g., recipes with `file-collect` nodes).
+    pub allow_dirs: bool,
 }
 
 /// Messages the picker screen can handle.
@@ -117,6 +119,7 @@ impl PickerModel {
             query: String::new(),
             searching: false,
             show_metadata: false,
+            allow_dirs: false,
         }
     }
 
@@ -137,6 +140,7 @@ impl PickerModel {
             query: String::new(),
             searching: false,
             show_metadata: false,
+            allow_dirs: false,
         }
     }
 
@@ -148,6 +152,7 @@ impl PickerModel {
         definition_json: &str,
     ) -> Self {
         let extensions = super::picker_loader::extensions_for_recipe(definition_json, registry);
+        let allow_dirs = super::picker_loader::needs_directory_input(definition_json);
         let entries = super::picker_loader::load_entries(dir, &extensions, false);
         Self {
             slug: slug.to_string(),
@@ -163,6 +168,7 @@ impl PickerModel {
             query: String::new(),
             searching: false,
             show_metadata: false,
+            allow_dirs,
         }
     }
 
@@ -182,14 +188,20 @@ impl PickerModel {
     }
 
     /// Collect selected file paths for execution.
+    ///
+    /// When `allow_dirs` is true and nothing is explicitly selected, returns
+    /// the current directory — matching the natural flow of navigating into
+    /// a target folder and confirming.
     pub fn confirm(&self) -> Option<PickerResult> {
         if self.selected.is_empty() {
+            if self.allow_dirs {
+                return Some(PickerResult {
+                    files: vec![self.current_dir.clone()],
+                });
+            }
             return None;
         }
         let files: Vec<PathBuf> = self.selected.iter().cloned().collect();
-        if files.is_empty() {
-            return None;
-        }
         Some(PickerResult { files })
     }
 }
@@ -359,10 +371,29 @@ mod tests {
     }
 
     #[test]
-    fn toggle_select_ignores_directories() {
+    fn toggle_select_ignores_directories_by_default() {
         let m = picker(); // cursor = 0, which is a dir
         let m = update(m, PickerMessage::ToggleSelect);
         assert!(m.selected.is_empty());
+    }
+
+    #[test]
+    fn toggle_select_allows_directories_when_allow_dirs() {
+        let mut m = picker();
+        m.allow_dirs = true;
+        // cursor = 0, which is a dir ("docs")
+        let m = update(m, PickerMessage::ToggleSelect);
+        assert!(m.selected.contains(&PathBuf::from("/home/user/docs")));
+    }
+
+    #[test]
+    fn toggle_select_deselects_directory_when_allow_dirs() {
+        let mut m = picker();
+        m.allow_dirs = true;
+        m.selected.insert(PathBuf::from("/home/user/docs"));
+        // cursor = 0, which is the "docs" dir
+        let m = update(m, PickerMessage::ToggleSelect);
+        assert!(!m.selected.contains(&PathBuf::from("/home/user/docs")));
     }
 
     // --- Select all ---
@@ -385,12 +416,41 @@ mod tests {
         assert!(m.selected.is_empty());
     }
 
+    #[test]
+    fn select_all_includes_dirs_when_allow_dirs() {
+        let mut m = picker();
+        m.allow_dirs = true;
+        let m = update(m, PickerMessage::SelectAll);
+        assert_eq!(m.selected.len(), 4); // 2 dirs + 2 files
+        assert!(m.selected.contains(&PathBuf::from("/home/user/docs")));
+        assert!(m.selected.contains(&PathBuf::from("/home/user/photos")));
+        assert!(m.selected.contains(&PathBuf::from("/home/user/cat.jpg")));
+        assert!(m.selected.contains(&PathBuf::from("/home/user/dog.png")));
+    }
+
     // --- Confirm ---
 
     #[test]
     fn confirm_returns_none_when_no_files_selected() {
-        let m = picker();
+        let m = picker(); // allow_dirs = false
         assert!(m.confirm().is_none());
+    }
+
+    #[test]
+    fn confirm_returns_current_dir_when_allow_dirs_and_nothing_selected() {
+        let mut m = picker();
+        m.allow_dirs = true;
+        let result = m.confirm().expect("should return current dir");
+        assert_eq!(result.files, vec![PathBuf::from("/home/user")]);
+    }
+
+    #[test]
+    fn confirm_returns_explicit_selection_over_current_dir() {
+        let mut m = picker();
+        m.allow_dirs = true;
+        m.selected.insert(PathBuf::from("/home/user/docs"));
+        let result = m.confirm().expect("should return explicit selection");
+        assert_eq!(result.files, vec![PathBuf::from("/home/user/docs")]);
     }
 
     #[test]

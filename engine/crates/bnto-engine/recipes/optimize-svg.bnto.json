@@ -75,7 +75,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-optimize-svg",
         "label": "Optimized SVGs",
         "zip": true,

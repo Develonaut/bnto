@@ -132,15 +132,15 @@ describe("getVisibleParams", () => {
     expect(names).not.toContain("extensions");
   });
 
-  it("evaluates visibleWhen on output node (download mode)", () => {
-    const names = getVisibleParams("output", "mode", "download");
+  it("evaluates visibleWhen on output node (write mode)", () => {
+    const names = getVisibleParams("output", "mode", "write");
     expect(names).toContain("filename");
     expect(names).toContain("zip");
     expect(names).toContain("autoDownload");
   });
 
-  it("excludes download-only params for output display mode", () => {
-    const names = getVisibleParams("output", "mode", "display");
+  it("excludes write-only params for output overwrite mode", () => {
+    const names = getVisibleParams("output", "mode", "overwrite");
     expect(names).not.toContain("filename");
     expect(names).not.toContain("zip");
     expect(names).not.toContain("autoDownload");

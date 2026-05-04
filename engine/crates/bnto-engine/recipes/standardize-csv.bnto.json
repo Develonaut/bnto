@@ -109,7 +109,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-standardize-csv",
         "label": "Standardized CSV",
         "zip": false,

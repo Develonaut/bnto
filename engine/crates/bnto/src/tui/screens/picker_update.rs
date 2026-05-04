@@ -44,7 +44,10 @@ pub fn update(mut model: PickerModel, msg: PickerMessage) -> PickerModel {
             model
         }
         PickerMessage::ToggleSelect => {
-            if model.entries.is_empty() || model.entries[model.cursor].is_dir {
+            if model.entries.is_empty() {
+                return model;
+            }
+            if model.entries[model.cursor].is_dir && !model.allow_dirs {
                 return model;
             }
             let path = model.entries[model.cursor].path.clone();
@@ -146,7 +149,7 @@ pub fn update(mut model: PickerModel, msg: PickerMessage) -> PickerModel {
             let file_paths: BTreeSet<PathBuf> = model
                 .entries
                 .iter()
-                .filter(|e| !e.is_dir)
+                .filter(|e| !e.is_dir || model.allow_dirs)
                 .map(|e| e.path.clone())
                 .collect();
             if model.selected == file_paths {

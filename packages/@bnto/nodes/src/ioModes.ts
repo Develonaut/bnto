@@ -19,9 +19,10 @@ const INPUT_MODES: Record<InputParams["mode"], IoModeInfo> = {
 };
 
 const OUTPUT_MODES: Record<OutputParams["mode"], IoModeInfo> = {
-  download: { icon: "download", label: "Download" },
-  display: { icon: "monitor", label: "Display" },
-  preview: { icon: "eye", label: "Preview" },
+  write: { icon: "download", label: "Write" },
+  overwrite: { icon: "replace", label: "Overwrite" },
+  message: { icon: "message-square", label: "Message" },
+  none: { icon: "circle-off", label: "None" },
 };
 
 export { INPUT_MODES, OUTPUT_MODES };

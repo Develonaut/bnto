@@ -75,7 +75,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "label": "Watermarked Images",
         "zip": true,
         "autoDownload": true

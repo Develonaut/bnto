@@ -28,8 +28,8 @@ function toIconMap(modes: Record<string, { icon: string }>): Record<string, stri
  * Returns the Lucide icon name for a node given its type and params.
  *
  * For I/O nodes, the icon reflects the configured mode (file-upload,
- * text, url, download, display, preview). For processing nodes, the
- * icon is the static value from NODE_TYPE_INFO.
+ * text, url, write, overwrite, message, none). For processing nodes,
+ * the icon is the static value from NODE_TYPE_INFO.
  */
 export function getNodeIcon(nodeType: NodeTypeName, params?: Record<string, unknown>): string {
   const io = IO_ICON_LOOKUP[nodeType];

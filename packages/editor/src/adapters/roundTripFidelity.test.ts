@@ -230,7 +230,7 @@ describe("round-trip fidelity", () => {
           name: "Output",
           position: { x: 500, y: 100 },
           metadata: {},
-          parameters: { mode: "download" },
+          parameters: { mode: "write" },
           inputPorts: [{ id: "in-1", name: "files" }],
           outputPorts: [],
         },

@@ -41,7 +41,7 @@ export const SIMPLE_DEF: Definition = {
       name: "Output",
       position: { x: 400, y: 0 },
       metadata: {},
-      parameters: { mode: "download" },
+      parameters: { mode: "write" },
       inputPorts: [{ id: "in-1", name: "files" }],
       outputPorts: [],
     },

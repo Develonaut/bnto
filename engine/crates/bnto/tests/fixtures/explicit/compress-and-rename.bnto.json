@@ -112,7 +112,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-compress-and-rename",
         "label": "Compressed & Renamed",
         "zip": true,

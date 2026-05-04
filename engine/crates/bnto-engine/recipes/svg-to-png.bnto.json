@@ -72,7 +72,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-svg-to-png",
         "label": "PNG Images",
         "zip": true,

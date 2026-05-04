@@ -183,7 +183,7 @@ fn input_params() -> Vec<ParameterDef> {
 // --- output ---
 
 fn output_params() -> Vec<ParameterDef> {
-    let download = "download";
+    let write = "write";
     vec![
         ParameterDef {
             name: "mode".to_string(),
@@ -191,12 +191,13 @@ fn output_params() -> Vec<ParameterDef> {
             description: "How results are delivered to the user.".to_string(),
             param_type: ParameterType::Enum {
                 options: vec![
-                    option("download", "Download"),
-                    option("display", "Display"),
-                    option("preview", "Preview"),
+                    option("write", "Write"),
+                    option("overwrite", "Overwrite"),
+                    option("message", "Message"),
+                    option("none", "None"),
                 ],
             },
-            default: Some(serde_json::json!("download")),
+            default: Some(serde_json::json!("write")),
             control: Some("select".to_string()),
             ..Default::default()
         },
@@ -209,7 +210,7 @@ fn output_params() -> Vec<ParameterDef> {
             param_type: ParameterType::String,
             default: Some(serde_json::json!("")),
             placeholder: Some("{{ctx.date}}-bulk-download".to_string()),
-            visible_when: Some(visible_when("mode", download)),
+            visible_when: Some(visible_when("mode", write)),
             ..Default::default()
         },
         ParameterDef {
@@ -218,7 +219,7 @@ fn output_params() -> Vec<ParameterDef> {
             description: "Filename template for output files.".to_string(),
             param_type: ParameterType::String,
             placeholder: Some("compressed-{{name}}".to_string()),
-            visible_when: Some(visible_when("mode", download)),
+            visible_when: Some(visible_when("mode", write)),
             ..Default::default()
         },
         ParameterDef {
@@ -228,7 +229,7 @@ fn output_params() -> Vec<ParameterDef> {
             param_type: ParameterType::Boolean,
             default: Some(serde_json::json!(true)),
             control: Some("switch".to_string()),
-            visible_when: Some(visible_when("mode", download)),
+            visible_when: Some(visible_when("mode", write)),
             ..Default::default()
         },
         ParameterDef {
@@ -246,7 +247,7 @@ fn output_params() -> Vec<ParameterDef> {
             param_type: ParameterType::Boolean,
             default: Some(serde_json::json!(true)),
             control: Some("switch".to_string()),
-            visible_when: Some(visible_when("mode", download)),
+            visible_when: Some(visible_when("mode", write)),
             ..Default::default()
         },
     ]
@@ -601,38 +602,38 @@ mod tests {
     }
 
     #[test]
-    fn output_mode_has_three_option_labels() {
+    fn output_mode_has_four_options() {
         let params = output_params();
         let mode = get_param(&params, "mode");
         let ParameterType::Enum { options } = &mode.param_type else {
             panic!("expected Enum param_type for output.mode");
         };
-        let pairs: Vec<(&str, &str)> = options
-            .iter()
-            .map(|o| (o.value.as_str(), o.label.as_str()))
-            .collect();
-        assert_eq!(
-            pairs,
-            vec![
-                ("download", "Download"),
-                ("display", "Display"),
-                ("preview", "Preview"),
-            ]
-        );
+        assert_eq!(options.len(), 4);
+        assert_eq!(options[0].value, "write");
+        assert_eq!(options[1].value, "overwrite");
+        assert_eq!(options[2].value, "message");
+        assert_eq!(options[3].value, "none");
     }
 
     #[test]
-    fn output_download_fields_visible_when_mode_download() {
+    fn output_mode_defaults_to_write() {
         let params = output_params();
-        let download_cond = Some(ParamCondition::Single(ParamConditionEntry {
+        let mode = get_param(&params, "mode");
+        assert_eq!(mode.default, Some(serde_json::json!("write")));
+    }
+
+    #[test]
+    fn output_write_fields_visible_when_mode_write() {
+        let params = output_params();
+        let write_cond = Some(ParamCondition::Single(ParamConditionEntry {
             param: "mode".to_string(),
-            equals: "download".to_string(),
+            equals: "write".to_string(),
         }));
         for name in ["directory", "filename", "zip", "autoDownload"] {
             let p = get_param(&params, name);
             assert_eq!(
-                p.visible_when, download_cond,
-                "`{}` should be visible only when mode=download",
+                p.visible_when, write_cond,
+                "`{}` should be visible only when mode=write",
                 name
             );
         }

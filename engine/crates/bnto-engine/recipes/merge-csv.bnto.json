@@ -82,7 +82,7 @@
       },
       "metadata": {},
       "parameters": {
-        "mode": "download",
+        "mode": "write",
         "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-merge-csv",
         "label": "Merged CSV",
         "zip": false,

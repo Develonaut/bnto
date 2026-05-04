@@ -118,7 +118,7 @@ pub use metadata::{
 pub use pipeline::{
     InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
     PipelineResult, PipelineSettings, first_processing_node_id, resolve_input_mode,
-    resolve_output_directory,
+    resolve_output_directory, resolve_output_mode,
 };
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;

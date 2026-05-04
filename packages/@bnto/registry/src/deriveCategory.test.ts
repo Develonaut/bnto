@@ -56,7 +56,7 @@ describe("deriveCategory", () => {
           name: "Output",
           position: { x: 0, y: 0 },
           metadata: {},
-          parameters: { mode: "download" },
+          parameters: { mode: "write" },
           inputPorts: [],
           outputPorts: [],
         },

@@ -11,7 +11,7 @@ describe("deriveOutputConfig", () => {
   it("returns defaults for a blank definition", () => {
     const def = createBlankDefinition();
     const result = deriveOutputConfig(def);
-    expect(result.mode).toBe("download");
+    expect(result.mode).toBe("write");
     expect(result.zip).toBe(true);
     expect(result.autoDownload).toBe(true);
     expect(result.label).toBe("Output Files");
@@ -31,25 +31,25 @@ describe("deriveOutputConfig", () => {
       outputPorts: [],
     };
     const result = deriveOutputConfig(def);
-    expect(result.mode).toBe("download");
+    expect(result.mode).toBe("write");
     expect(result.zip).toBe(true);
   });
 
   it("reads mode from output node", () => {
     const def = createBlankDefinition();
     const outputNode = def.nodes!.find((n) => n.type === "output")!;
-    outputNode.parameters = { mode: "display", label: "Preview" };
+    outputNode.parameters = { mode: "overwrite", label: "Renamed" };
 
     const result = deriveOutputConfig(def);
-    expect(result.mode).toBe("display");
-    expect(result.label).toBe("Preview");
+    expect(result.mode).toBe("overwrite");
+    expect(result.label).toBe("Renamed");
   });
 
   it("reads zip and autoDownload from output node", () => {
     const def = createBlankDefinition();
     const outputNode = def.nodes!.find((n) => n.type === "output")!;
     outputNode.parameters = {
-      mode: "download",
+      mode: "write",
       zip: false,
       autoDownload: true,
       label: "Compressed Images",
@@ -65,7 +65,7 @@ describe("deriveOutputConfig", () => {
     const def = createBlankDefinition();
     const outputNode = def.nodes!.find((n) => n.type === "output")!;
     outputNode.parameters = {
-      mode: "download",
+      mode: "write",
       filename: "compressed-{{name}}",
     };
 
@@ -79,7 +79,7 @@ describe("deriveOutputConfig", () => {
     outputNode.parameters = {};
 
     const result = deriveOutputConfig(def);
-    expect(result.mode).toBe("download");
+    expect(result.mode).toBe("write");
     expect(result.zip).toBe(true);
     expect(result.autoDownload).toBe(true);
     expect(result.label).toBe("Results");

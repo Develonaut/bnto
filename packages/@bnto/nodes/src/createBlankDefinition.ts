@@ -4,7 +4,7 @@
  * Returns a root group node with input and output child nodes,
  * no processing nodes, no edges between them. The input node defaults
  * to file-upload mode accepting any file. The output node defaults
- * to download mode.
+ * to write mode.
  *
  * Users start here and add processing nodes between input and output.
  */

@@ -320,19 +320,40 @@ fn read_recipe(path: &str, catalog: &RecipeCatalog) -> String {
     }
 }
 
-/// Write pipeline results to disk, print summary and any warnings.
-fn write_output(result: &bnto_core::PipelineResult, output_dir: &str) {
-    if let Err(e) = io::write_results(result, output_dir) {
-        eprintln!("{} {e}", "Error writing output:".red());
-        process::exit(1);
-    }
-    let n = result.files.len();
+/// Write pipeline results using mode-aware output, print summary and any warnings.
+fn write_output(result: &bnto_core::PipelineResult, mode: &str, output_dir: &str) {
+    let outcome = match io::write_results_with_mode(result, mode, output_dir) {
+        Ok(o) => o,
+        Err(e) => {
+            eprintln!("{} {e}", "Error writing output:".red());
+            process::exit(1);
+        }
+    };
+
     let duration = format_duration(result.duration_ms);
-    eprintln!(
-        "\n{} {n} file{} written to {output_dir}/ in {duration}",
-        "Done.".green().bold(),
-        if n == 1 { "" } else { "s" },
-    );
+    match outcome {
+        io::WriteOutcome::Written { dir, count } => {
+            eprintln!(
+                "\n{} {count} file{} written to {dir}/ in {duration}",
+                "Done.".green().bold(),
+                if count == 1 { "" } else { "s" },
+            );
+        }
+        io::WriteOutcome::Overwritten { count } => {
+            eprintln!(
+                "\n{} {count} file{} renamed in place in {duration}",
+                "Done.".green().bold(),
+                if count == 1 { "" } else { "s" },
+            );
+        }
+        io::WriteOutcome::Message { summary } => {
+            eprintln!("\n{} {summary}", "Done.".green().bold());
+        }
+        io::WriteOutcome::None => {
+            eprintln!("\n{} in {duration}", "Done.".green().bold());
+        }
+    }
+
     for warning in &result.warnings {
         eprintln!("  {} {warning}", "Warning:".yellow().bold());
     }
@@ -373,6 +394,11 @@ fn run_recipe(
     let start = std::time::Instant::now();
     let ctx = unwrap_or_exit(context::NativeContext::current_dir());
 
+    // Resolve output mode from the recipe definition.
+    let mode = serde_json::from_str::<bnto_core::PipelineDefinition>(&prepared.definition_json)
+        .map(|def| bnto_core::resolve_output_mode(&def))
+        .unwrap_or_else(|_| "write".to_string());
+
     // Priority chain: explicit --output > recipe directory param > default "."
     let output_dir = resolve_effective_output_dir(
         output_override,
@@ -382,8 +408,16 @@ fn run_recipe(
     );
 
     // Create output dir before pipeline so progressive output can write there.
-    let _ = std::fs::create_dir_all(&output_dir);
-    let reporter = progress::stderr_reporter(Arc::clone(logger), Some(output_dir.clone()));
+    // Skip for overwrite mode (files stay in their source directories).
+    if mode != "overwrite" {
+        let _ = std::fs::create_dir_all(&output_dir);
+    }
+    let progressive_dir = if mode == "overwrite" {
+        None
+    } else {
+        Some(output_dir.clone())
+    };
+    let reporter = progress::stderr_reporter(Arc::clone(logger), progressive_dir);
     match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
         Ok(result) => {
             let elapsed_us = start.elapsed().as_micros() as u64;
@@ -402,7 +436,7 @@ fn run_recipe(
                 true,
                 &param_names,
             ));
-            write_output(&result, &output_dir);
+            write_output(&result, &mode, &output_dir);
         }
         Err(e) => {
             logger.log(LogEntry {

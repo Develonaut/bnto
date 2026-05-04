@@ -232,6 +232,12 @@ impl DetailModel {
             .filter(|(_, p)| is_param_visible(p, &self.params))
             .filter_map(|(i, p)| {
                 let value = self.form.fields.get(i).map(|f| f.value.clone())?;
+                // Skip params where the value matches the default — the user
+                // didn't change them, so injecting them would override the
+                // recipe's own params with empty/default values.
+                if value == p.default {
+                    return None;
+                }
                 let key = format!("{}:{}", p.node_id, p.name);
                 Some((key, value))
             })
@@ -239,7 +245,16 @@ impl DetailModel {
         let files = self
             .input_picker
             .as_ref()
-            .map(|p| p.selected.iter().cloned().collect())
+            .map(|p| {
+                if p.selected.is_empty() && p.allow_dirs {
+                    // Recipe expects a directory — use the current browsed directory
+                    // when nothing is explicitly selected. This matches the natural
+                    // flow of navigating INTO the target folder and pressing Run.
+                    vec![p.current_dir.clone()]
+                } else {
+                    p.selected.iter().cloned().collect()
+                }
+            })
             .unwrap_or_default();
         ConfigResult { overrides, files }
     }
@@ -422,16 +437,31 @@ mod tests {
 
     #[test]
     fn confirm_returns_all_param_overrides() {
-        let m = detail();
+        let mut m = detail();
+        // Simulate user-modified values (different from defaults).
+        m.form.fields[0].value = "60".into();
+        m.form.fields[1].value = "png".into();
+        m.form.fields[2].value = "false".into();
         let result = m.confirm();
         assert_eq!(result.overrides.len(), 3);
         assert_eq!(
             result.overrides.get("compress-image:quality"),
-            Some(&"80".to_string())
+            Some(&"60".to_string())
         );
         assert_eq!(
             result.overrides.get("compress-image:format"),
-            Some(&"jpeg".to_string())
+            Some(&"png".to_string())
+        );
+    }
+
+    #[test]
+    fn confirm_skips_unmodified_params() {
+        let m = detail();
+        // No modifications — all form values match defaults.
+        let result = m.confirm();
+        assert!(
+            result.overrides.is_empty(),
+            "params matching their defaults should not be included as overrides"
         );
     }
 
@@ -454,7 +484,11 @@ mod tests {
             conditional_param("width", "800", Some(single_condition("mode", "resize"))),
             conditional_param("format", "jpeg", None),
         ];
-        let m = DetailModel::from_test_data("s", "n", "d", params);
+        let mut m = DetailModel::from_test_data("s", "n", "d", params);
+        // Simulate user-modified values so they differ from defaults.
+        m.form.fields[0].value = "compress-hard".into();
+        m.form.fields[1].value = "1024".into(); // modified but hidden
+        m.form.fields[2].value = "png".into();
         let result = m.confirm();
         assert_eq!(result.overrides.len(), 2, "hidden param excluded");
         assert!(!result.overrides.contains_key("n:width"));
@@ -468,10 +502,44 @@ mod tests {
             conditional_param("mode", "resize", None),
             conditional_param("width", "800", Some(single_condition("mode", "resize"))),
         ];
-        let m = DetailModel::from_test_data("s", "n", "d", params);
+        let mut m = DetailModel::from_test_data("s", "n", "d", params);
+        // Simulate user-modified values so they differ from defaults.
+        m.form.fields[0].value = "fit".into();
+        m.form.fields[1].value = "1024".into();
         let result = m.confirm();
         assert_eq!(result.overrides.len(), 2, "matching condition → included");
         assert!(result.overrides.contains_key("n:width"));
+    }
+
+    #[test]
+    fn confirm_uses_current_dir_when_allow_dirs_and_nothing_selected() {
+        use crate::tui::screens::picker::{FileEntry, PickerModel};
+        use std::path::PathBuf;
+
+        let mut m = detail();
+        let mut picker = PickerModel::from_test_data(
+            "strip-folder-prefix",
+            PathBuf::from("/videos/ork"),
+            vec![FileEntry {
+                name: "clip.mp4".into(),
+                is_dir: false,
+                path: PathBuf::from("/videos/ork/clip.mp4"),
+                size: Some(1000),
+                permissions: None,
+                symlink_target: None,
+            }],
+            vec![],
+        );
+        picker.allow_dirs = true;
+        // Nothing selected — user just navigated into the directory.
+        m.input_picker = Some(picker);
+
+        let result = m.confirm();
+        assert_eq!(
+            result.files,
+            vec![PathBuf::from("/videos/ork")],
+            "should fall back to current dir for dir-mode recipes"
+        );
     }
 
     // --- is_run_focused ---
