@@ -54,6 +54,10 @@ pub(crate) fn handle_back(model: AppModel) -> AppModel {
         Screen::Results { .. } => None,
         _ => model.results,
     };
+    let preview = match &model.screen {
+        Screen::Preview { .. } => None,
+        _ => model.preview,
+    };
     let settings = match &model.screen {
         Screen::Settings => None,
         _ => model.settings,
@@ -74,6 +78,7 @@ pub(crate) fn handle_back(model: AppModel) -> AppModel {
         picker,
         execution,
         results,
+        preview,
         settings,
         editor,
         wizard,
@@ -105,6 +110,10 @@ pub(crate) fn back_screen(current: &Screen) -> Screen {
         },
         Screen::Execution { .. } => Screen::Home,
         Screen::Results { .. } => Screen::Home,
+        Screen::Preview { slug, from } => Screen::Detail {
+            slug: slug.clone(),
+            from: *from,
+        },
         Screen::Settings => Screen::Home,
         Screen::Editor { from } => back_screen_for_editor(*from),
         Screen::Wizard { from } => back_screen_for_editor(*from),

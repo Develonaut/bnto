@@ -14,6 +14,7 @@ use super::screens::execution::{ExecutionMessage, ExecutionStatus};
 use super::screens::home::HomeMessage;
 use super::screens::library::LibraryMessage;
 use super::screens::picker::PickerMessage;
+use super::screens::preview::PreviewMessage;
 use super::screens::results::ResultsMessage;
 use super::screens::settings::SettingsMessage;
 use super::screens::wizard::{WizardMessage, WizardStep};
@@ -93,6 +94,7 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         Screen::Picker { .. } => handle_picker_key(model, key),
         Screen::Execution { .. } => handle_execution_key(model, key),
         Screen::Results { .. } => handle_results_key(model, key),
+        Screen::Preview { .. } => handle_preview_key(model, key),
         Screen::Editor { .. } => handle_editor_key(model, key),
         Screen::Wizard { .. } => handle_wizard_key(model, key),
     }
@@ -357,6 +359,8 @@ fn handle_detail_run_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> 
 
     match key.code {
         KeyCode::Enter | KeyCode::Tab => Some(AppMessage::ConfigConfirmed { slug: slug() }),
+        // p → preview mode (run without writes, show file transformations).
+        KeyCode::Char('p') => Some(AppMessage::PreviewRequested { slug: slug() }),
         // Up/k/Shift+Tab → go back to Params section.
         KeyCode::BackTab | KeyCode::Up | KeyCode::Char('k') => Some(AppMessage::DetailFocusParams),
         _ => None,
@@ -469,6 +473,21 @@ fn handle_results_key(_model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
         KeyCode::Char('o') => Some(AppMessage::OpenFile),
         KeyCode::Char('O') => Some(AppMessage::OpenFolder),
         KeyCode::Char('r') => Some(AppMessage::RunAnother),
+        _ => None,
+    }
+}
+
+/// Handle key events on the Preview screen.
+fn handle_preview_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let preview = model.preview.as_ref()?;
+
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => Some(AppMessage::Preview(PreviewMessage::CursorDown)),
+        KeyCode::Char('k') | KeyCode::Up => Some(AppMessage::Preview(PreviewMessage::CursorUp)),
+        // Enter → confirm: re-run pipeline with writes.
+        KeyCode::Enter => Some(AppMessage::PreviewConfirm {
+            slug: preview.slug.clone(),
+        }),
         _ => None,
     }
 }

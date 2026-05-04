@@ -86,6 +86,8 @@ pub struct ExecutionModel {
     pub output_lines: VecDeque<String>,
     /// Non-fatal warnings from the pipeline (e.g. skipped loop iterations).
     pub warnings: Vec<String>,
+    /// When true, pipeline runs without writing output — results go to Preview screen.
+    pub preview_mode: bool,
 }
 
 /// Maximum number of command output lines to retain in the rolling window.
@@ -190,6 +192,7 @@ impl ExecutionModel {
             output_dir: None,
             output_lines: VecDeque::new(),
             warnings: Vec::new(),
+            preview_mode: false,
         }
     }
 
@@ -205,6 +208,19 @@ impl ExecutionModel {
             param_overrides,
             definition_json,
             ..Self::new(slug)
+        }
+    }
+
+    /// Create a preview-mode execution model — pipeline runs without writing output.
+    pub fn with_preview(
+        slug: &str,
+        selected_files: Vec<PathBuf>,
+        param_overrides: HashMap<String, String>,
+        definition_json: String,
+    ) -> Self {
+        Self {
+            preview_mode: true,
+            ..Self::with_inputs(slug, selected_files, param_overrides, definition_json)
         }
     }
 }

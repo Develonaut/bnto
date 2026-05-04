@@ -16,7 +16,8 @@ pub(crate) use editor::{
 };
 pub(crate) use home_detail::{
     handle_config_confirmed, handle_detail_form, handle_execution, handle_execution_complete,
-    handle_files_selected, handle_home_confirm, handle_recipe_selected,
+    handle_files_selected, handle_home_confirm, handle_preview_confirm, handle_preview_requested,
+    handle_recipe_selected,
 };
 pub(crate) use library::{
     handle_add_to_library, handle_add_to_library_write, handle_library, handle_library_confirm,

@@ -21,6 +21,7 @@ mod render_home_panes;
 mod render_layout;
 mod render_library;
 mod render_picker;
+mod render_preview;
 mod render_results;
 mod render_wizard;
 pub mod screen;
@@ -216,6 +217,7 @@ fn run_loop(
                 exec.definition_json.clone(),
                 exec.selected_files.clone(),
                 exec.param_overrides.clone(),
+                exec.preview_mode,
             ));
             execution_start = Some(Instant::now());
         }
@@ -245,29 +247,62 @@ fn run_loop(
                         duration_ms,
                         file_metadata,
                         warnings,
+                        preview_data,
                     } => {
-                        let outputs = bridge::build_output_files(&output_dir, &file_metadata);
-                        let slug = match &model.screen {
-                            app::Screen::Execution { slug, .. } => slug.clone(),
-                            _ => String::new(),
+                        let (slug, from) = match &model.screen {
+                            app::Screen::Execution { slug, from } => (slug.clone(), *from),
+                            _ => (String::new(), app::DetailOrigin::Home),
                         };
-                        let model = update(
-                            model,
-                            AppMessage::Execution(ExecutionMessage::OutputsReady {
-                                files: outputs,
-                                output_dir: Some(output_dir),
-                                warnings,
-                            }),
-                        );
-                        let model = update(
-                            model,
-                            AppMessage::Execution(ExecutionMessage::PipelineCompleted {
+                        let is_preview = model.execution.as_ref().is_some_and(|e| e.preview_mode);
+
+                        if is_preview {
+                            // Preview mode: build PreviewModel from extracted data.
+                            let (selected_files, param_overrides, definition_json) = model
+                                .execution
+                                .as_ref()
+                                .map(|e| {
+                                    (
+                                        e.selected_files.clone(),
+                                        e.param_overrides.clone(),
+                                        e.definition_json.clone(),
+                                    )
+                                })
+                                .unwrap_or_default();
+                            let preview = screens::preview::PreviewModel::new(
+                                &slug,
+                                preview_data,
                                 duration_ms,
-                                total_files_processed: file_count,
-                            }),
-                        );
-                        // Auto-transition to results screen.
-                        update(model, AppMessage::ExecutionComplete { slug })
+                                warnings,
+                                selected_files,
+                                param_overrides,
+                                definition_json,
+                            );
+                            AppModel {
+                                screen: app::Screen::Preview { slug, from },
+                                execution: None,
+                                preview: Some(preview),
+                                ..model
+                            }
+                        } else {
+                            // Normal mode: build outputs and transition to Results.
+                            let outputs = bridge::build_output_files(&output_dir, &file_metadata);
+                            let model = update(
+                                model,
+                                AppMessage::Execution(ExecutionMessage::OutputsReady {
+                                    files: outputs,
+                                    output_dir: Some(output_dir),
+                                    warnings,
+                                }),
+                            );
+                            let model = update(
+                                model,
+                                AppMessage::Execution(ExecutionMessage::PipelineCompleted {
+                                    duration_ms,
+                                    total_files_processed: file_count,
+                                }),
+                            );
+                            update(model, AppMessage::ExecutionComplete { slug })
+                        }
                     }
                     BridgeEvent::Error(err) => update(
                         model,
@@ -1481,5 +1516,116 @@ mod tests {
         let model = results_model();
         let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
         assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
+    }
+
+    // --- Preview key handling ---
+
+    fn preview_model() -> AppModel {
+        use crate::dry_run::files::FilePreview;
+        use screens::preview::PreviewModel;
+        use std::collections::HashMap;
+
+        let entries = vec![
+            FilePreview {
+                original: "VIDEO： Movie.mp4".into(),
+                result: "Movie.mp4".into(),
+            },
+            FilePreview {
+                original: "VIDEO： Concert.mp4".into(),
+                result: "Concert.mp4".into(),
+            },
+        ];
+
+        AppModel {
+            screen: Screen::Preview {
+                slug: "strip-video-prefix".into(),
+                from: app::DetailOrigin::Browser,
+            },
+            preview: Some(PreviewModel::new(
+                "strip-video-prefix",
+                entries,
+                245,
+                vec![],
+                vec![],
+                HashMap::new(),
+                String::new(),
+            )),
+            ..default_model()
+        }
+    }
+
+    #[test]
+    fn preview_j_moves_cursor_down() {
+        use screens::preview::PreviewMessage;
+        let model = preview_model();
+        let key = KeyEvent::new(KeyCode::Char('j'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Preview(PreviewMessage::CursorDown))
+        );
+    }
+
+    #[test]
+    fn preview_k_moves_cursor_up() {
+        use screens::preview::PreviewMessage;
+        let model = preview_model();
+        let key = KeyEvent::new(KeyCode::Char('k'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::Preview(PreviewMessage::CursorUp))
+        );
+    }
+
+    #[test]
+    fn preview_enter_confirms() {
+        let model = preview_model();
+        let key = KeyEvent::new(KeyCode::Enter, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::PreviewConfirm {
+                slug: "strip-video-prefix".into()
+            })
+        );
+    }
+
+    #[test]
+    fn preview_esc_goes_back() {
+        let model = preview_model();
+        let key = KeyEvent::new(KeyCode::Esc, crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Back));
+    }
+
+    #[test]
+    fn preview_q_quits() {
+        let model = preview_model();
+        let key = KeyEvent::new(KeyCode::Char('q'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(handle_key(&model, key), Some(AppMessage::Quit));
+    }
+
+    #[test]
+    fn detail_p_key_triggers_preview() {
+        let mut model = detail_model();
+        model.detail.as_mut().unwrap().focus = super::screens::detail::DetailFocus::Run;
+        let key = KeyEvent::new(KeyCode::Char('p'), crossterm::event::KeyModifiers::NONE);
+        assert_eq!(
+            handle_key(&model, key),
+            Some(AppMessage::PreviewRequested {
+                slug: "compress-images".into()
+            })
+        );
+    }
+
+    #[test]
+    fn preview_back_returns_to_detail() {
+        let model = preview_model();
+        let model = update(model, AppMessage::Back);
+        assert!(matches!(
+            model.screen,
+            Screen::Detail {
+                slug,
+                from: app::DetailOrigin::Browser,
+            } if slug == "strip-video-prefix"
+        ));
+        assert!(model.preview.is_none());
     }
 }

@@ -5,7 +5,7 @@
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto list
 //        bnto info <recipe>
-//        bnto dry-run <recipe> [--param key=value]
+//        bnto dry-run <recipe> [files...] [--param key=value]
 //        bnto install <recipe> [--yes]
 //        bnto install --all [--yes]
 //        bnto doctor
@@ -15,7 +15,7 @@
 pub mod catalog;
 mod context;
 mod doctor;
-mod dry_run;
+pub mod dry_run;
 mod info;
 mod input;
 mod install;
@@ -81,10 +81,13 @@ enum Command {
         recipe: String,
     },
 
-    /// Dry-run: show exactly which commands a recipe will execute without running.
+    /// Dry-run: preview what a recipe will do without executing or writing.
     DryRun {
         /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
         recipe: String,
+
+        /// Input files or directories (enables file transformation preview).
+        inputs: Vec<String>,
 
         /// Override a field value. Format: key=value or nodeId:key=value
         #[arg(short = 'p', long = "param")]
@@ -219,9 +222,13 @@ fn main() {
             telemetry::capture(telemetry::events::cli_command("info"));
             show_info(&recipe, &catalog);
         }
-        Some(Command::DryRun { recipe, param }) => {
+        Some(Command::DryRun {
+            recipe,
+            inputs,
+            param,
+        }) => {
             telemetry::capture(telemetry::events::cli_command("dry-run"));
-            show_dry_run(&recipe, &param, &catalog);
+            show_dry_run(&recipe, &inputs, &param, &catalog);
         }
         Some(Command::Install { recipe, yes, all }) => {
             telemetry::capture(telemetry::events::cli_command("install"));
@@ -531,8 +538,13 @@ fn show_info(slug: &str, catalog: &RecipeCatalog) {
     info::print_recipe_info(slug, &recipe_info);
 }
 
-fn show_dry_run(slug: &str, param_overrides: &[String], catalog: &RecipeCatalog) {
-    let Some(result) = dry_run::dry_run_recipe(slug, param_overrides, catalog) else {
+fn show_dry_run(
+    slug: &str,
+    inputs: &[String],
+    param_overrides: &[String],
+    catalog: &RecipeCatalog,
+) {
+    let Some(result) = dry_run::dry_run_recipe(slug, inputs, param_overrides, catalog) else {
         eprintln!("{} Unknown recipe: {slug}", "Error:".red());
         eprintln!("Run {} to see available recipes.", "bnto list".cyan());
         process::exit(1);
