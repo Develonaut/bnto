@@ -45,6 +45,8 @@ tasks:
       - task: ui:lint
       - echo "=== theme codegen check ==="
       - task: theme:check
+      - echo "=== docs validation ==="
+      - task: docs:validate
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -89,6 +91,12 @@ tasks:
     dir: ./engine
     cmds:
       - BLESS=1 cargo test --package bnto -- golden
+
+  # Documentation validation
+  docs:validate:
+    desc: Validate crate README documentation is complete
+    cmds:
+      - npx tsx scripts/validate-docs.ts
 
   # README recipe table codegen (registry → README.md)
   readme:generate:

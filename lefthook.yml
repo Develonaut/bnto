@@ -12,9 +12,14 @@ pre-commit:
       priority: 2
       run: pnpm --filter @bnto/nodes test
 
+    docs-validate:
+      glob: "engine/**/*.{rs,toml}"
+      priority: 3
+      run: npx tsx scripts/validate-docs.ts
+
     rust-fmt:
       glob: "engine/**/*.rs"
-      priority: 3
+      priority: 4
       run: cd engine && cargo fmt
       stage_fixed: true
 
