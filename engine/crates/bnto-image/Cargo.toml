@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-image"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "Image processing node for Bnto WASM engine — compress, resize, convert"
 license = "MIT"
@@ -24,8 +24,8 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.2" }
-bnto-encode = { path = "../bnto-encode", version = "0.1.2" }
+bnto-core = { path = "../bnto-core", version = "0.1.3" }
+bnto-encode = { path = "../bnto-encode", version = "0.1.3" }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
@@ -36,7 +36,7 @@ serde_json = { workspace = true }
 # Image processing — pure Rust codecs (JPEG, PNG, WebP). No C deps.
 # CRITICAL: default-features = false disables `rayon` which doesn't work in single-threaded WASM.
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
-bnto-vector = { path = "../bnto-vector", version = "0.1.2" }
+bnto-vector = { path = "../bnto-vector", version = "0.1.3" }
 base64 = { workspace = true }
 
 # PNG quantization — median cut + Floyd-Steinberg dithering for indexed PNGs.

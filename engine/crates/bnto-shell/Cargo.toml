@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-shell"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "Shell command processor for Bnto engine — execute external CLI tools"
 license = "MIT"
@@ -17,5 +17,5 @@ categories = ["command-line-utilities"]
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.2" }
+bnto-core = { path = "../bnto-core", version = "0.1.3" }
 serde_json = { workspace = true }

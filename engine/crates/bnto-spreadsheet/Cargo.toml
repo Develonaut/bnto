@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-spreadsheet"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 description = "Spreadsheet processing nodes for Bnto engine — clean, convert, merge, rename"
 license = "MIT"
@@ -24,7 +24,7 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.2" }
+bnto-core = { path = "../bnto-core", version = "0.1.3" }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
