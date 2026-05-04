@@ -15,9 +15,10 @@ use super::app_helpers::{
     handle_detail_form, handle_editor, handle_editor_form, handle_execution,
     handle_execution_complete, handle_files_selected, handle_home_confirm, handle_library,
     handle_library_confirm, handle_open_editor_from_browser, handle_open_editor_from_library,
-    handle_open_library, handle_open_settings_picker, handle_open_wizard, handle_recipe_selected,
-    handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
-    handle_wizard_form, load_editor_from_json,
+    handle_open_library, handle_open_settings_picker, handle_open_wizard, handle_preview_confirm,
+    handle_preview_requested, handle_recipe_selected, handle_settings_path_confirmed,
+    handle_telemetry_toggled, handle_theme_changed, handle_wizard, handle_wizard_form,
+    load_editor_from_json,
 };
 use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
 use super::screens::detail::DetailModel;
@@ -27,6 +28,7 @@ use super::screens::execution::{ExecutionMessage, ExecutionModel};
 use super::screens::home::{HomeMessage, HomeModel, list_library_recipes, update as home_update};
 use super::screens::library::{LibraryMessage, LibraryModel};
 use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
+use super::screens::preview::{PreviewMessage, PreviewModel, update as preview_update};
 use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
 use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
 use super::screens::wizard::{WizardMessage, WizardModel};
@@ -55,6 +57,7 @@ pub enum Screen {
     Picker { slug: String, from: DetailOrigin },
     Execution { slug: String, from: DetailOrigin },
     Results { slug: String },
+    Preview { slug: String, from: DetailOrigin },
     Settings,
     Editor { from: DetailOrigin },
     Wizard { from: DetailOrigin },
@@ -79,6 +82,8 @@ pub struct AppModel {
     pub execution: Option<ExecutionModel>,
     /// Results screen state — populated when pipeline completes.
     pub results: Option<ResultsModel>,
+    /// Preview screen state — populated after preview-mode pipeline run.
+    pub preview: Option<PreviewModel>,
     /// Settings screen state — populated when on settings screen.
     pub settings: Option<SettingsModel>,
     /// Editor screen state — populated when editing a recipe.
@@ -113,6 +118,7 @@ impl std::fmt::Debug for AppModel {
             .field("picker", &self.picker.as_ref().map(|p| &p.slug))
             .field("execution", &self.execution.as_ref().map(|e| &e.status))
             .field("results", &self.results.as_ref().map(|r| &r.slug))
+            .field("preview", &self.preview.as_ref().map(|p| &p.slug))
             .field("settings", &self.settings.is_some())
             .field("editor", &self.editor.is_some())
             .field("wizard", &self.wizard.is_some())
@@ -177,6 +183,12 @@ pub enum AppMessage {
     Execution(ExecutionMessage),
     /// Forward a message to the results screen.
     Results(ResultsMessage),
+    /// Forward a message to the preview screen.
+    Preview(PreviewMessage),
+    /// User requested preview mode from the detail screen (p key on Run).
+    PreviewRequested { slug: String },
+    /// User confirmed the preview — re-run with writes.
+    PreviewConfirm { slug: String },
     /// Forward a message to the settings screen.
     Settings(SettingsMessage),
     /// Forward a message to the editor screen.
@@ -288,6 +300,7 @@ impl AppModel {
             picker: None,
             execution: None,
             results: None,
+            preview: None,
             settings: None,
             editor,
             wizard: None,
@@ -404,6 +417,12 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             let results = model.results.map(|r| results_update(r, msg));
             AppModel { results, ..model }
         }
+        AppMessage::Preview(msg) => {
+            let preview = model.preview.map(|p| preview_update(p, msg));
+            AppModel { preview, ..model }
+        }
+        AppMessage::PreviewRequested { slug } => handle_preview_requested(model, slug),
+        AppMessage::PreviewConfirm { slug } => handle_preview_confirm(model, slug),
         AppMessage::Settings(msg) => {
             let settings = model.settings.map(|s| settings_update(s, msg));
             AppModel { settings, ..model }

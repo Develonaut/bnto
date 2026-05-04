@@ -18,6 +18,7 @@ impl Screen {
             Self::Picker { .. } => "File Picker",
             Self::Execution { .. } => "Running",
             Self::Results { .. } => "Results",
+            Self::Preview { .. } => "Preview",
             Self::Settings => "Settings",
             Self::Editor { .. } => "Editor",
             Self::Wizard { .. } => "Wizard",
@@ -34,6 +35,7 @@ impl Screen {
             Self::Picker { .. } => "picker",
             Self::Execution { .. } => "execution",
             Self::Results { .. } => "results",
+            Self::Preview { .. } => "preview",
             Self::Settings => "settings",
             Self::Editor { .. } => "editor",
             Self::Wizard { .. } => "wizard",
@@ -89,6 +91,7 @@ impl Screen {
                 ("r", "run another"),
                 ("q", "quit"),
             ],
+            Self::Preview { .. } => vec![("↑↓", "navigate"), ("Enter", "confirm"), ("Esc", "back")],
             Self::Settings => vec![
                 ("↑↓", "navigate"),
                 ("◂▸", "theme"),

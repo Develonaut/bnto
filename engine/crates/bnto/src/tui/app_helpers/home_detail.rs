@@ -232,6 +232,72 @@ pub(crate) fn handle_execution_complete(model: AppModel, slug: String) -> AppMod
     }
 }
 
+/// Start preview mode — same as config_confirmed but with preview_mode flag.
+pub(crate) fn handle_preview_requested(model: AppModel, slug: String) -> AppModel {
+    let from = match &model.screen {
+        Screen::Detail { from, .. } => *from,
+        _ => DetailOrigin::Home,
+    };
+    let config_result = model.detail.as_ref().map(|d| d.confirm());
+    let overrides = config_result
+        .as_ref()
+        .map(|r| r.overrides.clone())
+        .unwrap_or_default();
+    let files = config_result
+        .as_ref()
+        .map(|r| r.files.clone())
+        .unwrap_or_default();
+    let definition_json = model
+        .detail
+        .as_ref()
+        .map(|d| d.definition_json.clone())
+        .unwrap_or_default();
+    let execution = Some(ExecutionModel::with_preview(
+        &slug,
+        files,
+        overrides,
+        definition_json,
+    ));
+    AppModel {
+        screen: Screen::Execution { slug, from },
+        execution,
+        param_overrides: HashMap::new(),
+        ..model
+    }
+}
+
+/// Confirm preview — re-run with writes using the stored inputs.
+pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel {
+    let from = match &model.screen {
+        Screen::Preview { from, .. } => *from,
+        _ => DetailOrigin::Home,
+    };
+    let (files, overrides, definition_json) = model
+        .preview
+        .as_ref()
+        .map(|p| {
+            (
+                p.selected_files.clone(),
+                p.param_overrides.clone(),
+                p.definition_json.clone(),
+            )
+        })
+        .unwrap_or_default();
+    let execution = Some(ExecutionModel::with_inputs(
+        &slug,
+        files,
+        overrides,
+        definition_json,
+    ));
+    AppModel {
+        screen: Screen::Execution { slug, from },
+        execution,
+        preview: None,
+        param_overrides: HashMap::new(),
+        ..model
+    }
+}
+
 /// Handle execution messages — cancel navigates back to detail.
 pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppModel {
     if matches!(msg, ExecutionMessage::Cancel) {

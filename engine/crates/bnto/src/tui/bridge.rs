@@ -11,6 +11,7 @@ use bnto_core::{InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::run_pipeline;
 
 use crate::context::NativeContext;
+use crate::dry_run::files::FilePreview;
 use crate::input;
 use crate::io;
 
@@ -33,6 +34,8 @@ pub enum BridgeEvent {
         duration_ms: u64,
         file_metadata: Vec<FileResultMeta>,
         warnings: Vec<String>,
+        /// File transformation previews (populated in preview mode only).
+        preview_data: Vec<FilePreview>,
     },
     /// Pipeline or setup failed with an error message.
     Error(String),
@@ -70,6 +73,7 @@ pub fn spawn_pipeline(
     definition_json: String,
     selected_files: Vec<PathBuf>,
     param_overrides: HashMap<String, String>,
+    preview_mode: bool,
 ) -> mpsc::Receiver<BridgeEvent> {
     let (tx, rx) = mpsc::channel();
 
@@ -80,6 +84,7 @@ pub fn spawn_pipeline(
             &definition_json,
             &selected_files,
             &param_overrides,
+            preview_mode,
         );
     });
 
@@ -93,6 +98,7 @@ fn run_bridge(
     definition_json: &str,
     selected_files: &[PathBuf],
     param_overrides: &HashMap<String, String>,
+    preview_mode: bool,
 ) {
     // Resolve input mode to handle URL/Text recipes differently.
     let input_mode = serde_json::from_str::<PipelineDefinition>(definition_json)
@@ -145,26 +151,32 @@ fn run_bridge(
         }
     };
 
-    // Resolve output directory:
-    // 1. Recipe's output node directory param (with {{ctx.*}} + {{node.*}} resolved)
-    // 2. Fall back to temp dir
-    let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
-        .ok()
-        .and_then(|def| {
-            let dir = bnto_core::resolve_output_directory(&def)?;
-            let resolved = bnto_core::resolve_ctx_templates(&dir, &ctx);
-            let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, &prepared.files);
-            Some(bnto_core::resolve_node_templates(&resolved, &node_outputs))
-        });
-    let output_dir = match recipe_dir {
-        Some(dir) => PathBuf::from(dir),
-        None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
+    // Preview mode skips output directory creation and file writes.
+    let output_dir_str = if preview_mode {
+        String::new()
+    } else {
+        // Resolve output directory:
+        // 1. Recipe's output node directory param (with {{ctx.*}} + {{node.*}} resolved)
+        // 2. Fall back to temp dir
+        let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
+            .ok()
+            .and_then(|def| {
+                let dir = bnto_core::resolve_output_directory(&def)?;
+                let resolved = bnto_core::resolve_ctx_templates(&dir, &ctx);
+                let node_outputs =
+                    bnto_core::build_node_outputs_for_input(&def.nodes, &prepared.files);
+                Some(bnto_core::resolve_node_templates(&resolved, &node_outputs))
+            });
+        let output_dir = match recipe_dir {
+            Some(dir) => PathBuf::from(dir),
+            None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
+        };
+        let _ = std::fs::remove_dir_all(&output_dir);
+        let _ = std::fs::create_dir_all(&output_dir);
+        let dir_str = output_dir.to_string_lossy().into_owned();
+        let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
+        dir_str
     };
-    let _ = std::fs::remove_dir_all(&output_dir);
-    let _ = std::fs::create_dir_all(&output_dir);
-    let output_dir_str = output_dir.to_string_lossy().into_owned();
-
-    let _ = tx.send(BridgeEvent::OutputDir(output_dir_str.clone()));
 
     // Create a reporter that sends engine events to the TUI via the channel.
     let progress_tx = tx.clone();
@@ -181,7 +193,21 @@ fn run_bridge(
         }
     };
 
-    // Extract per-file metadata before writing (writing consumes data).
+    // Preview mode: extract file previews, skip writing.
+    if preview_mode {
+        let previews = crate::dry_run::files::extract_previews(&result);
+        let _ = tx.send(BridgeEvent::Done {
+            output_dir: output_dir_str,
+            file_count: result.files.len(),
+            duration_ms: result.duration_ms,
+            file_metadata: vec![],
+            warnings: result.warnings,
+            preview_data: previews,
+        });
+        return;
+    }
+
+    // Normal mode: write output files to disk.
     let file_metadata: Vec<FileResultMeta> = extract_file_metadata(&result);
 
     if let Err(e) = io::write_results(&result, &output_dir_str) {
@@ -195,6 +221,7 @@ fn run_bridge(
         duration_ms: result.duration_ms,
         file_metadata,
         warnings: result.warnings,
+        preview_data: vec![],
     });
 }
 
