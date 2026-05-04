@@ -512,11 +512,10 @@ jobs:
           publish bnto-core
           sleep 15
 
-          # Layer 1: depends on bnto-core
+          # Layer 1: depends on bnto-core only
           publish bnto-encode
           publish bnto-spreadsheet
           publish bnto-file
-          publish bnto-image
           publish bnto-shell
           sleep 15
 
@@ -524,11 +523,15 @@ jobs:
           publish bnto-vector
           sleep 15
 
+          # Layer 3: depends on bnto-core + bnto-encode + bnto-vector
+          publish bnto-image
+          sleep 15
+
           # Standalone (no bnto deps)
           publish tonkotsu
           sleep 15
 
-          # Layer 3: depends on all node crates
+          # Layer 4: depends on all node crates
           publish bnto-engine
           sleep 15
 
