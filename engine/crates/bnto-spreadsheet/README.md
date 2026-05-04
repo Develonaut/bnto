@@ -4,7 +4,7 @@ Spreadsheet processing nodes. Clean, convert, merge, and rename columns.
 
 ## Overview
 
-`bnto-spreadsheet` provides four `NodeProcessor` implementations for spreadsheet transformation. Uses the pure-Rust `csv` crate for parsing and writing. Runs in the browser via WASM or natively for desktop/CLI.
+`bnto-spreadsheet` provides five `NodeProcessor` implementations for spreadsheet transformation. Uses the pure-Rust `csv` crate for parsing and writing. Runs in the browser via WASM or natively for desktop/CLI.
 
 ## Processors
 
@@ -14,6 +14,7 @@ Spreadsheet processing nodes. Clean, convert, merge, and rename columns.
 | `ConvertFormat`     | `spreadsheet-convert` | Convert CSV to JSON                                                      |
 | `MergeSpreadsheets` | `spreadsheet-merge`   | Merge multiple CSV files into one                                        |
 | `RenameColumns`     | `spreadsheet-rename`  | Rename columns via a map of `oldName → newName`                          |
+| `ReadSpreadsheet`   | `spreadsheet-read`    | Read CSV rows with configurable headers, delimiter, and row limit        |
 
 ## Directory Structure
 
@@ -23,6 +24,7 @@ src/
 ├── clean.rs            # CleanSpreadsheet processor + metadata
 ├── convert.rs          # ConvertFormat processor + metadata
 ├── merge.rs            # MergeSpreadsheets processor + metadata
+├── read.rs             # ReadSpreadsheet processor + metadata
 ├── rename.rs           # RenameColumns processor + metadata
 └── wasm_bridge.rs      # #[wasm_bindgen] bridge functions
 tests/

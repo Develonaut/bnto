@@ -238,8 +238,8 @@ bnto/
 │   ├── crates/
 │   │   ├── bnto-core/           # Core library (types, traits, progress)
 │   │   ├── bnto-image/          # Image compression/resize/convert
-│   │   ├── bnto-csv/            # CSV clean/rename columns
-│   │   ├── bnto-file/           # File rename
+│   │   ├── bnto-spreadsheet/    # CSV clean/rename/convert/merge/read
+│   │   ├── bnto-file/           # File rename/filter/collect/copy/metadata
 │   │   ├── bnto-shell/          # Shell command execution
 │   │   ├── bnto-vector/         # SVG processing (rasterize, optimize)
 │   │   ├── bnto-engine/         # Shared registry + pipeline runner + recipe catalog
