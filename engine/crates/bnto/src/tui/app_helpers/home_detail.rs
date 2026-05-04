@@ -1,6 +1,7 @@
 // Home, detail, and execution helpers — recipe selection, config confirm, execution flow.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use super::super::app::{AppModel, DetailOrigin, Screen};
 use super::super::screens::detail_bridge;
@@ -150,8 +151,16 @@ pub(crate) fn handle_recipe_selected(model: AppModel, slug: String) -> AppModel 
     }
 }
 
-/// Confirm config and start execution with the detail screen's settings.
-pub(crate) fn handle_config_confirmed(model: AppModel, slug: String) -> AppModel {
+/// Extract detail config and start execution with the given builder.
+///
+/// Shared by `handle_config_confirmed` (normal run) and
+/// `handle_preview_requested` (preview mode) — only the
+/// `ExecutionModel` constructor differs.
+fn start_from_detail(
+    model: AppModel,
+    slug: String,
+    builder: fn(&str, Vec<PathBuf>, HashMap<String, String>, String) -> ExecutionModel,
+) -> AppModel {
     let from = match &model.screen {
         Screen::Detail { from, .. } => *from,
         _ => DetailOrigin::Home,
@@ -170,18 +179,18 @@ pub(crate) fn handle_config_confirmed(model: AppModel, slug: String) -> AppModel
         .as_ref()
         .map(|d| d.definition_json.clone())
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(
-        &slug,
-        files,
-        overrides,
-        definition_json,
-    ));
+    let execution = Some(builder(&slug, files, overrides, definition_json));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
         param_overrides: HashMap::new(),
         ..model
     }
+}
+
+/// Confirm config and start execution with the detail screen's settings.
+pub(crate) fn handle_config_confirmed(model: AppModel, slug: String) -> AppModel {
+    start_from_detail(model, slug, ExecutionModel::with_inputs)
 }
 
 /// Confirm file selection and start execution.
@@ -234,36 +243,7 @@ pub(crate) fn handle_execution_complete(model: AppModel, slug: String) -> AppMod
 
 /// Start preview mode — same as config_confirmed but with preview_mode flag.
 pub(crate) fn handle_preview_requested(model: AppModel, slug: String) -> AppModel {
-    let from = match &model.screen {
-        Screen::Detail { from, .. } => *from,
-        _ => DetailOrigin::Home,
-    };
-    let config_result = model.detail.as_ref().map(|d| d.confirm());
-    let overrides = config_result
-        .as_ref()
-        .map(|r| r.overrides.clone())
-        .unwrap_or_default();
-    let files = config_result
-        .as_ref()
-        .map(|r| r.files.clone())
-        .unwrap_or_default();
-    let definition_json = model
-        .detail
-        .as_ref()
-        .map(|d| d.definition_json.clone())
-        .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_preview(
-        &slug,
-        files,
-        overrides,
-        definition_json,
-    ));
-    AppModel {
-        screen: Screen::Execution { slug, from },
-        execution,
-        param_overrides: HashMap::new(),
-        ..model
-    }
+    start_from_detail(model, slug, ExecutionModel::with_preview)
 }
 
 /// Confirm preview — re-run with writes using the stored inputs.
