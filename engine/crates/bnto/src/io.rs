@@ -46,8 +46,8 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 /// File names may contain subdirectory separators (e.g. `"subdir/video.mp4"`).
 /// Parent directories are created automatically before writing.
 ///
-/// Uses `FileData::write_to()` which renames (O(1)) for path-referenced files
-/// and writes bytes for in-memory files.
+/// Uses `FileData::copy_to()` which copies for path-referenced files
+/// and writes bytes for in-memory files. Source files are never modified.
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), String> {
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
@@ -58,7 +58,7 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), St
                 .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
         }
         file.data
-            .write_to(&out_path)
+            .copy_to(&out_path)
             .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))?;
     }
 
@@ -127,6 +127,44 @@ mod tests {
     fn test_guess_mime_unknown() {
         assert_eq!(guess_mime("file.xyz"), "application/octet-stream");
         assert_eq!(guess_mime("noext"), "application/octet-stream");
+    }
+
+    #[test]
+    fn test_write_results_preserves_source_for_path_refs() {
+        use bnto_core::PipelineFileResult;
+        use bnto_core::processor::FileData;
+
+        let tmp = std::env::temp_dir().join("bnto-test-write-preserves-src");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+
+        // Create a source file that the pipeline references by path.
+        let src_file = tmp.join("original.txt");
+        std::fs::write(&src_file, b"keep me").unwrap();
+
+        let out_dir = tmp.join("output");
+        let result = PipelineResult {
+            files: vec![PipelineFileResult {
+                name: "renamed.txt".to_string(),
+                data: FileData::Path(src_file.clone()),
+                mime_type: "text/plain".to_string(),
+                metadata: serde_json::Map::new(),
+            }],
+            duration_ms: 0,
+            warnings: vec![],
+        };
+
+        write_results(&result, out_dir.to_str().unwrap()).unwrap();
+
+        // Output file exists with correct content.
+        assert_eq!(
+            std::fs::read(out_dir.join("renamed.txt")).unwrap(),
+            b"keep me"
+        );
+        // Source file is preserved — not moved or deleted.
+        assert!(src_file.exists(), "Source file must survive write_results");
+
+        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
