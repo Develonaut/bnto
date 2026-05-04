@@ -2637,12 +2637,12 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     },
   },
   {
-    slug: "merge-similar-folders",
-    name: "Merge Similar Folders",
+    slug: "flatten-folders",
+    name: "Flatten Folders",
     description:
-      "Group and merge subfolders that share the same first word into a parent folder. CLI/desktop only.",
+      "Collect all files from nested subdirectories into a single flat output folder. CLI/desktop only.",
     category: "file",
-    tags: ["Organize", "Merge", "Folders", "Cleanup"] as const,
+    tags: ["Organize", "Flatten", "Folders", "Cleanup"] as const,
     definition: {
       edges: [
         {
@@ -2653,29 +2653,24 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         {
           id: "e2",
           source: "collect",
-          target: "rename",
-        },
-        {
-          id: "e3",
-          source: "rename",
           target: "output",
         },
       ],
-      id: "merge-similar-folders",
+      id: "flatten-folders",
       inputPorts: [],
       metadata: {
         category: "file",
         description:
-          "Group and merge subfolders that share the same first word into a parent folder. CLI/desktop only.",
-        tags: ["Organize", "Merge", "Folders", "Cleanup"],
+          "Collect all files from nested subdirectories into a single flat output folder. CLI/desktop only.",
+        tags: ["Organize", "Flatten", "Folders", "Cleanup"],
       },
-      name: "Merge Similar Folders",
+      name: "Flatten Folders",
       nodes: [
         {
           id: "input",
           inputPorts: [],
           metadata: {},
-          name: "Target Directory",
+          name: "Source Directory",
           outputPorts: [
             {
               id: "out-1",
@@ -2685,7 +2680,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           parameters: {
             accept: ["*/*"],
             extensions: [],
-            label: "directory to organize",
+            label: "directory to flatten",
             mode: "file-upload",
             multiple: false,
           },
@@ -2700,10 +2695,10 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           id: "collect",
           inputPorts: [],
           metadata: {},
-          name: "Collect Files",
+          name: "Collect All Files",
           outputPorts: [],
           parameters: {
-            flatten: false,
+            flatten: true,
             pattern: "*",
             recursive: true,
           },
@@ -2715,23 +2710,6 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           version: "1.0.0",
         },
         {
-          id: "rename",
-          inputPorts: [],
-          metadata: {},
-          name: "Restructure Paths",
-          outputPorts: [],
-          parameters: {
-            find: "^(\\w+)\\s+([^/]+)/",
-            replace: "$1/$2/",
-          },
-          position: {
-            x: 400,
-            y: 100,
-          },
-          type: "file-rename",
-          version: "1.0.0",
-        },
-        {
           id: "output",
           inputPorts: [
             {
@@ -2740,17 +2718,17 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
             },
           ],
           metadata: {},
-          name: "Organized Files",
+          name: "Flattened Files",
           outputPorts: [],
           parameters: {
             autoDownload: false,
-            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-merge-similar-folders",
-            label: "Organized Files",
+            directory: "{{ctx.paths.output_dir}}/{{ctx.date}}-flatten-folders",
+            label: "Flattened Files",
             mode: "write",
             zip: false,
           },
           position: {
-            x: 600,
+            x: 400,
             y: 100,
           },
           type: "output",

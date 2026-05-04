@@ -36,7 +36,7 @@ const RECIPE_DEFINITIONS: &[&str] = &[
     include_str!("../recipes/optimize-svg.bnto.json"),
     include_str!("../recipes/number-files.bnto.json"),
     include_str!("../recipes/sanitize-filenames.bnto.json"),
-    include_str!("../recipes/merge-similar-folders.bnto.json"),
+    include_str!("../recipes/flatten-folders.bnto.json"),
 ];
 
 /// Returns all built-in recipes, embedded at compile time.

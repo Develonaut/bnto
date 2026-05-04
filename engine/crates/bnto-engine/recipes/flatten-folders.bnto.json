@@ -1,16 +1,16 @@
 {
-  "id": "merge-similar-folders",
+  "id": "flatten-folders",
   "type": "group",
   "version": "1.0.0",
-  "name": "Merge Similar Folders",
+  "name": "Flatten Folders",
   "position": {
     "x": 0,
     "y": 0
   },
   "metadata": {
-    "description": "Group and merge subfolders that share the same first word into a parent folder. CLI/desktop only.",
+    "description": "Collect all files from nested subdirectories into a single flat output folder. CLI/desktop only.",
     "category": "file",
-    "tags": ["Organize", "Merge", "Folders", "Cleanup"]
+    "tags": ["Organize", "Flatten", "Folders", "Cleanup"]
   },
   "parameters": {},
   "inputPorts": [],
@@ -23,7 +23,7 @@
       "id": "input",
       "type": "input",
       "version": "1.0.0",
-      "name": "Target Directory",
+      "name": "Source Directory",
       "position": {
         "x": 0,
         "y": 100
@@ -33,7 +33,7 @@
         "mode": "file-upload",
         "accept": ["*/*"],
         "extensions": [],
-        "label": "directory to organize",
+        "label": "directory to flatten",
         "multiple": false
       },
       "inputPorts": [],
@@ -48,7 +48,7 @@
       "id": "collect",
       "type": "file-collect",
       "version": "1.0.0",
-      "name": "Collect Files",
+      "name": "Collect All Files",
       "position": {
         "x": 200,
         "y": 100
@@ -57,24 +57,7 @@
       "parameters": {
         "pattern": "*",
         "recursive": true,
-        "flatten": false
-      },
-      "inputPorts": [],
-      "outputPorts": []
-    },
-    {
-      "id": "rename",
-      "type": "file-rename",
-      "version": "1.0.0",
-      "name": "Restructure Paths",
-      "position": {
-        "x": 400,
-        "y": 100
-      },
-      "metadata": {},
-      "parameters": {
-        "find": "^(\\w+)\\s+([^/]+)/",
-        "replace": "$1/$2/"
+        "flatten": true
       },
       "inputPorts": [],
       "outputPorts": []
@@ -83,16 +66,16 @@
       "id": "output",
       "type": "output",
       "version": "1.0.0",
-      "name": "Organized Files",
+      "name": "Flattened Files",
       "position": {
-        "x": 600,
+        "x": 400,
         "y": 100
       },
       "metadata": {},
       "parameters": {
         "mode": "write",
-        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-merge-similar-folders",
-        "label": "Organized Files",
+        "directory": "{{ctx.paths.output_dir}}/{{ctx.date}}-flatten-folders",
+        "label": "Flattened Files",
         "zip": false,
         "autoDownload": false
       },
@@ -114,11 +97,6 @@
     {
       "id": "e2",
       "source": "collect",
-      "target": "rename"
-    },
-    {
-      "id": "e3",
-      "source": "rename",
       "target": "output"
     }
   ]
