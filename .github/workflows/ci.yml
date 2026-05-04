@@ -194,6 +194,26 @@ jobs:
       - name: "Test: @bnto/web"
         run: pnpm --filter @bnto/web run test
 
+  # ── Documentation completeness ──
+  docs:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate documentation
+        run: npx tsx scripts/validate-docs.ts
+
   # ── Validate release workflow matches workspace crates ──
   crate-publish-check:
     name: Crate Publish List
@@ -208,7 +228,7 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [detect-changes, rust, typescript, crate-publish-check]
+    needs: [detect-changes, rust, typescript, crate-publish-check, docs]
     if: always()
     steps:
       - name: Check job results
@@ -216,10 +236,17 @@ jobs:
           rust="${{ needs.rust.result }}"
           ts="${{ needs.typescript.result }}"
           crates="${{ needs.crate-publish-check.result }}"
+          docs="${{ needs.docs.result }}"
           engine="${{ needs.detect-changes.outputs.engine }}"
           web="${{ needs.detect-changes.outputs.web }}"
 
           failed=0
+
+          # Documentation validation is always required
+          if [ "$docs" != "success" ]; then
+            echo "FAILED: Documentation Validation = $docs"
+            failed=1
+          fi
 
           # Crate publish list is always required
           if [ "$crates" != "success" ]; then
@@ -244,6 +271,7 @@ jobs:
           fi
 
           echo "CI Gate passed."
+          echo "  Docs:       $docs"
           echo "  Crates:     $crates"
           echo "  Rust:       $rust (engine_changed: $engine)"
           echo "  TypeScript: $ts (web_changed: $web)"
