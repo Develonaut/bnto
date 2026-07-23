@@ -26,6 +26,7 @@ mod render_results;
 mod render_wizard;
 pub mod screen;
 pub mod screens;
+mod strip_ansi;
 pub mod theme;
 pub mod widgets;
 

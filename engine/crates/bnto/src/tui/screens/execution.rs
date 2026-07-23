@@ -326,7 +326,11 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             model.error = Some(error);
         }
         ExecutionMessage::CommandOutput { line, .. } => {
-            model.output_lines.push_back(line);
+            // Tools like patreon-dl colorize unconditionally — strip escape
+            // codes so the output pane shows text, not literal `[32m…`.
+            model
+                .output_lines
+                .push_back(crate::tui::strip_ansi::strip_ansi(&line));
             while model.output_lines.len() > MAX_OUTPUT_LINES {
                 model.output_lines.pop_front();
             }
@@ -691,6 +695,19 @@ mod tests {
         );
         assert_eq!(m.output_lines.len(), 1);
         assert_eq!(m.output_lines[0], "[download] 50%");
+    }
+
+    #[test]
+    fn command_output_strips_ansi_codes() {
+        let m = ExecutionModel::new("s");
+        let m = update(
+            m,
+            ExecutionMessage::CommandOutput {
+                node_id: "n".into(),
+                line: "\u{1b}[32minfo:\u{1b}[39m PostDownloader: done".into(),
+            },
+        );
+        assert_eq!(m.output_lines[0], "info: PostDownloader: done");
     }
 
     #[test]
