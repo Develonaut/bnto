@@ -95,7 +95,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         node_id,
         global_file_index,
         0,
-        format!("Processing {}...", &file_name),
+        format!("Processing {}...", file_name),
     );
 
     // Pass FileData through directly — processors that need bytes call into_bytes() themselves.
@@ -116,7 +116,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         node_id,
         global_file_index,
         100,
-        format!("Completed {}", &file_name),
+        format!("Completed {}", file_name),
     );
     collect_output(output, output_files);
     Ok(())
