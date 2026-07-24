@@ -24,6 +24,7 @@ mod list;
 pub mod logging;
 mod migrate;
 mod package_manager;
+mod process_registry;
 mod progress;
 pub mod storage;
 pub mod telemetry;
@@ -155,6 +156,14 @@ enum TelemetryAction {
 fn main() {
     let cli = Cli::parse();
     telemetry::init();
+
+    // Kill spawned command trees (shell-command children + grandchildren) on
+    // SIGINT/SIGTERM — they run in their own process groups, so the terminal's
+    // Ctrl+C no longer reaches them on its own.
+    let _ = ctrlc::set_handler(|| {
+        process_registry::global().terminate_all();
+        process::exit(130);
+    });
 
     // Resolve paths, create dirs, run pending migrations — before anything else.
     let paths = match storage::ensure_ready() {

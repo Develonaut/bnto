@@ -8,10 +8,13 @@ use std::collections::HashMap;
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 use bnto_core::context::ProcessContext;
 use bnto_core::dotenv::parse_dotenv;
 use bnto_core::errors::BntoError;
+
+use crate::process_registry::ProcessRegistry;
 
 /// Native context for CLI execution with full system access.
 ///
@@ -29,6 +32,9 @@ pub struct NativeContext {
     project_env: HashMap<String, String>,
     /// Key-value pairs from the user-level `~/.bnto/.env` file.
     user_env: HashMap<String, String>,
+    /// Live process groups of spawned commands, killable from cancel/quit
+    /// paths. Defaults to the process-wide registry.
+    registry: Arc<ProcessRegistry>,
 }
 
 impl NativeContext {
@@ -43,6 +49,7 @@ impl NativeContext {
             output_dir: paths.output_dir(),
             project_env,
             user_env,
+            registry: crate::process_registry::global(),
         }
     }
 
@@ -73,7 +80,21 @@ impl NativeContext {
             output_dir,
             project_env,
             user_env,
+            registry: crate::process_registry::global(),
         })
+    }
+
+    /// Prepare a command in its own process group so cancel/quit/signal
+    /// paths can kill the whole spawned tree via `kill(-pgid, …)`.
+    fn group_command(&self, cmd: &str, args: &[&str]) -> Command {
+        let mut command = Command::new(cmd);
+        command.args(args).current_dir(&self.work_dir);
+        #[cfg(unix)]
+        {
+            use std::os::unix::process::CommandExt;
+            command.process_group(0);
+        }
+        command
     }
 }
 
@@ -96,11 +117,18 @@ fn load_user_dotenv() -> HashMap<String, String> {
 
 impl ProcessContext for NativeContext {
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
-        let output = Command::new(cmd)
-            .args(args)
-            .current_dir(&self.work_dir)
-            .output()
+        let child = self
+            .group_command(cmd, args)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
+        let pgid = child.id();
+        self.registry.register(pgid);
+        let result = child.wait_with_output();
+        self.registry.deregister(pgid);
+        let output = result
+            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to wait for '{cmd}': {e}")))?;
 
         if output.status.success() {
             Ok(output.stdout)
@@ -120,13 +148,14 @@ impl ProcessContext for NativeContext {
         args: &[&str],
         on_output: &dyn Fn(&str),
     ) -> Result<Vec<u8>, BntoError> {
-        let mut child = Command::new(cmd)
-            .args(args)
-            .current_dir(&self.work_dir)
+        let mut child = self
+            .group_command(cmd, args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
+        let pgid = child.id();
+        self.registry.register(pgid);
 
         // Stream stdout line-by-line on a background thread, calling the
         // callback AND collecting raw bytes. This lets tools like yt-dlp
@@ -183,8 +212,9 @@ impl ProcessContext for NativeContext {
             }
         }
 
-        let status = child
-            .wait()
+        let wait_result = child.wait();
+        self.registry.deregister(pgid);
+        let status = wait_result
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to wait for '{cmd}': {e}")))?;
 
         let stdout_bytes = stdout_handle.join().map_err(|_| {
@@ -366,6 +396,66 @@ mod tests {
         );
     }
 
+    /// Helper: context with an isolated registry so kill-tests can't
+    /// interfere with other tests' children via the global registry.
+    fn ctx_with_registry(registry: Arc<ProcessRegistry>) -> NativeContext {
+        NativeContext {
+            work_dir: std::env::temp_dir(),
+            home_dir: std::env::temp_dir(),
+            output_dir: std::env::temp_dir(),
+            project_env: HashMap::new(),
+            user_env: HashMap::new(),
+            registry,
+        }
+    }
+
+    #[test]
+    fn streaming_deregisters_group_after_completion() {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+        let result = ctx.run_command_streaming("echo", &["done"], &|_| {});
+        assert!(result.is_ok());
+        assert!(
+            registry.active().is_empty(),
+            "group must be deregistered after the child is reaped"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn terminate_all_unblocks_streaming_command() {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+
+        let handle = std::thread::spawn(move || {
+            // Backgrounded sleep = grandchild; only a group kill reaps it.
+            ctx.run_command_streaming("sh", &["-c", "sleep 30 & wait"], &|_| {})
+        });
+
+        // Wait for the child to be registered (spawn is quick).
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while registry.active().is_empty() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "child never registered"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        let pgid = registry.active()[0];
+
+        let start = std::time::Instant::now();
+        registry.terminate_all();
+        let result = handle.join().expect("streaming thread panicked");
+
+        assert!(result.is_err(), "killed command must report failure");
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(5),
+            "run_command_streaming must unblock promptly after group kill"
+        );
+        let alive = unsafe { libc::kill(-(pgid as i32), 0) };
+        assert_eq!(alive, -1, "whole process group must be dead");
+    }
+
     #[test]
     fn test_native_context_work_dir() {
         let ctx = NativeContext::current_dir().unwrap();
@@ -444,6 +534,7 @@ mod tests {
             user_env: [("KEY".to_string(), "user".to_string())]
                 .into_iter()
                 .collect(),
+            registry: Arc::new(ProcessRegistry::new()),
         };
         assert_eq!(
             ctx.env_var("KEY"),
@@ -462,6 +553,7 @@ mod tests {
             user_env: [("USER_ONLY_KEY".to_string(), "user_val".to_string())]
                 .into_iter()
                 .collect(),
+            registry: Arc::new(ProcessRegistry::new()),
         };
         assert_eq!(ctx.env_var("USER_ONLY_KEY"), Some("user_val".to_string()),);
     }
@@ -474,6 +566,7 @@ mod tests {
             output_dir: PathBuf::from("/custom/bnto/output"),
             project_env: HashMap::new(),
             user_env: HashMap::new(),
+            registry: Arc::new(ProcessRegistry::new()),
         };
         assert_eq!(ctx.home_dir(), Some(Path::new("/custom/bnto")),);
     }
@@ -486,6 +579,7 @@ mod tests {
             output_dir: PathBuf::from("/custom/bnto/output"),
             project_env: HashMap::new(),
             user_env: HashMap::new(),
+            registry: Arc::new(ProcessRegistry::new()),
         };
         assert_eq!(ctx.output_dir(), Some(PathBuf::from("/custom/bnto/output")),);
     }

@@ -342,6 +342,9 @@ fn run_loop(
                 bridge_rx = None;
                 execution_start = None;
                 progressive_output_dir = None;
+                // Abandoning a run must kill its spawned command tree —
+                // dropping the receiver alone leaves children running.
+                crate::process_registry::global().terminate_all();
             }
         }
 
@@ -375,6 +378,10 @@ fn run_loop(
             }
         }
     }
+
+    // Quitting mid-execution must not orphan spawned commands (no-op when
+    // nothing is running).
+    crate::process_registry::global().terminate_all();
 
     logger.log(LogEntry {
         level: LogLevel::Info,
