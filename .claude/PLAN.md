@@ -955,6 +955,22 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ---
 
+### Triage: Unresolved {{fields.*}} templates pass through silently at runtime
+
+**Priority: Triage.** Fields resolve per-node only (`collect_field_values(&node.fields, …)`), so a node referencing another node's field receives the literal placeholder string — the download-patreon library recipe's flatten/upload steps no-op'd silently with exit 0. `bnto dry-run` already asserts no unresolved `{{fields.*}}` remain, but live execution doesn't. Fix options: resolve fields recipe-globally (group-level merge), or fail loudly at execution when an arg still contains `{{fields.` after resolution.
+
+`engine/crates/bnto-core/src/executor/primitive.rs:133`, `engine/crates/bnto-core/src/executor/resolve.rs:99`, `engine/crates/bnto/src/dry_run/mod.rs:141`
+
+---
+
+### Triage: shell-command timeout parameter is a no-op
+
+**Priority: Triage.** The `timeout` param is parsed then bound to `_timeout` and never enforced (`bnto-shell/src/execute.rs:95`); `DEFAULT_TIMEOUT_SECS` in `validate.rs:52` is defined but unused. A hung external command blocks the pipeline forever. Enforcement belongs in `run_command_streaming` (kill the process group on deadline — builds on the ProcessRegistry from PR #520).
+
+`engine/crates/bnto-shell/src/execute.rs:95`, `engine/crates/bnto/src/context.rs`
+
+---
+
 ## Reference
 
 | Document                                   | Purpose                                                                      |
