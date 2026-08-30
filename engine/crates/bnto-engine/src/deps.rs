@@ -81,7 +81,8 @@ pub fn collect_all_dependencies(registry: &NodeRegistry) -> Vec<Dependency> {
 /// Check whether each dependency's binary is available on the system
 /// and whether its version satisfies any declared constraint.
 ///
-/// Uses `which <binary>` to probe the PATH. If the dependency has a
+/// Probes the PATH with the platform's lookup command
+/// (`which` on Unix, `where` on Windows). If the dependency has a
 /// non-empty `version` constraint, runs `<binary> --version` and
 /// validates the output against the constraint.
 pub fn check_dependencies(
@@ -90,7 +91,9 @@ pub fn check_dependencies(
 ) -> Vec<DependencyStatus> {
     deps.iter()
         .map(|dep| {
-            let found = ctx.run_command("which", &[&dep.binary]).is_ok();
+            let found = ctx
+                .run_command(bnto_core::probe_command(), &[&dep.binary])
+                .is_ok();
 
             // Only check version if the binary exists and has a constraint.
             let (installed_version, version_satisfied) = if found && !dep.version.is_empty() {
@@ -648,7 +651,7 @@ mod tests {
 
     impl ProcessContext for VersionedContext {
         fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
-            if cmd == "which" {
+            if cmd == bnto_core::probe_command() {
                 Ok(b"/usr/local/bin/found".to_vec())
             } else {
                 Ok(self.version_output.as_bytes().to_vec())
@@ -820,5 +823,43 @@ mod tests {
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("REQUIRED_KEY"));
         assert!(!msg.contains("OPTIONAL_KEY"));
+    }
+
+    // --- probe command wiring ---
+
+    /// Mock context that records the command used to probe for binaries.
+    struct RecordingContext {
+        probed_with: std::sync::Mutex<Vec<String>>,
+    }
+
+    impl ProcessContext for RecordingContext {
+        fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            self.probed_with.lock().unwrap().push(cmd.to_string());
+            Err(BntoError::ProcessingFailed("not found".to_string()))
+        }
+        fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
+            Err(BntoError::ProcessingFailed("not available".to_string()))
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&Path, BntoError> {
+            Err(BntoError::ProcessingFailed("not available".to_string()))
+        }
+    }
+
+    /// Guards against regressing to a hardcoded `which`, which does not
+    /// exist on Windows and made every dependency look missing there.
+    #[test]
+    fn test_check_deps_probes_with_platform_command() {
+        let ctx = RecordingContext {
+            probed_with: std::sync::Mutex::new(Vec::new()),
+        };
+        check_dependencies(&[ytdlp_dep()], &ctx);
+
+        let probed = ctx.probed_with.lock().unwrap();
+        assert_eq!(probed.len(), 1);
+        assert_eq!(probed[0], bnto_core::probe_command());
+        assert_ne!(probed[0], "", "probe command must not be empty");
     }
 }

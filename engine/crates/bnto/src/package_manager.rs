@@ -38,7 +38,10 @@ pub fn detect(ctx: &dyn ProcessContext) -> Option<PackageManager> {
         ("choco", PackageManager::Choco),
     ];
     for (binary, pm) in candidates {
-        if ctx.run_command("which", &[binary]).is_ok() {
+        if ctx
+            .run_command(bnto_core::probe_command(), &[binary])
+            .is_ok()
+        {
             return Some(pm);
         }
     }
