@@ -124,7 +124,7 @@ fn run_bridge(
                 args.push(text);
             }
         }
-        InputMode::FileUpload => {}
+        InputMode::FileUpload | InputMode::None => {}
     }
 
     // Convert remaining param overrides to "key=value" strings.

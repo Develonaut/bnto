@@ -193,11 +193,12 @@ describe("enum constants", () => {
     expect(ERROR_STRATEGIES).toHaveLength(2);
   });
 
-  it("INPUT_MODES has 3 modes", () => {
-    expect(INPUT_MODES).toHaveLength(3);
+  it("INPUT_MODES has 4 modes", () => {
+    expect(INPUT_MODES).toHaveLength(4);
     expect(INPUT_MODES).toContain("file-upload");
     expect(INPUT_MODES).toContain("text");
     expect(INPUT_MODES).toContain("url");
+    expect(INPUT_MODES).toContain("none");
   });
 
   it("OUTPUT_MODES has 4 modes", () => {
