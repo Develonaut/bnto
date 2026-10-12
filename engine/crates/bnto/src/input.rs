@@ -1,6 +1,6 @@
 // Mode-aware input preparation for the CLI.
 //
-// Reads the recipe's input mode (file-upload, url, text) and prepares
+// Reads the recipe's input mode (file-upload, url, text, none) and prepares
 // the right inputs for the engine. Handles --param overrides via
 // type-safe mutation on PipelineDefinition.
 
@@ -23,6 +23,7 @@ pub struct PreparedInput {
 /// - **file-upload**: loads files from disk paths
 /// - **url**: validates URL, injects into processing node's params, empty files
 /// - **text**: injects text into processing node's params, empty files
+/// - **none**: takes no input — config comes from node fields only
 ///
 /// Applies `--param` overrides after mode-specific preparation.
 pub fn prepare_inputs(
@@ -79,6 +80,7 @@ pub fn prepare_inputs(
             inject_param(&mut def, node_id, "text", &serde_json::Value::String(text))?;
             vec![]
         }
+        InputMode::None => vec![],
     };
 
     apply_param_overrides(&mut def, param_overrides, processing_node_id.as_deref())?;
@@ -98,6 +100,7 @@ pub fn mode_label(definition_json: &str) -> &'static str {
     match def.map(|d| resolve_input_mode(&d)) {
         Ok(InputMode::Url) => "URL input",
         Ok(InputMode::Text) => "text input",
+        Ok(InputMode::None) => "no input",
         _ => "files",
     }
 }
@@ -469,6 +472,48 @@ mod tests {
         let result = prepare_inputs(json, &[], &[]);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("URL"));
+    }
+
+    #[test]
+    fn test_prepare_inputs_none_mode_needs_no_args() {
+        let json = r#"{
+            "formatVersion": "1.0.0",
+            "nodes": [
+                { "id": "in", "type": "input", "params": { "mode": "none" } },
+                { "id": "run", "type": "shell-command", "params": { "command": "date" } }
+            ]
+        }"#;
+        let result = prepare_inputs(json, &[], &[]).expect("none mode should not require args");
+        assert!(
+            result.files.is_empty(),
+            "none mode should produce no input files"
+        );
+    }
+
+    #[test]
+    fn test_prepare_inputs_none_mode_applies_param_overrides() {
+        let json = r#"{
+            "formatVersion": "1.0.0",
+            "nodes": [
+                { "id": "in", "type": "input", "params": { "mode": "none" } },
+                { "id": "run", "type": "shell-command", "params": { "timeout": 60 } }
+            ]
+        }"#;
+        let result = prepare_inputs(json, &[], &["timeout=5".to_string()]).unwrap();
+        let def: PipelineDefinition = serde_json::from_str(&result.definition_json).unwrap();
+        assert_eq!(def.nodes[1].params["timeout"], 5);
+    }
+
+    #[test]
+    fn test_mode_label_none() {
+        let json = r#"{
+            "formatVersion": "1.0.0",
+            "nodes": [
+                { "id": "in", "type": "input", "params": { "mode": "none" } },
+                { "id": "run", "type": "shell-command", "params": {} }
+            ]
+        }"#;
+        assert_eq!(mode_label(json), "no input");
     }
 
     // --- apply_overrides tests ---

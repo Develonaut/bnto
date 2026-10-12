@@ -86,6 +86,7 @@ fn input_params() -> Vec<ParameterDef> {
                     option("file-upload", "File Upload"),
                     option("text", "Text"),
                     option("url", "URL"),
+                    option("none", "No Input"),
                 ],
             },
             default: Some(serde_json::json!("file-upload")),
@@ -494,7 +495,7 @@ mod tests {
     }
 
     #[test]
-    fn input_mode_has_three_option_labels() {
+    fn input_mode_has_expected_option_labels() {
         let params = input_params();
         let mode = get_param(&params, "mode");
         let ParameterType::Enum { options } = &mode.param_type else {
@@ -510,6 +511,7 @@ mod tests {
                 ("file-upload", "File Upload"),
                 ("text", "Text"),
                 ("url", "URL"),
+                ("none", "No Input"),
             ]
         );
     }

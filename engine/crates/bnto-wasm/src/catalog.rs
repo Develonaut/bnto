@@ -331,7 +331,7 @@ mod tests {
             .iter()
             .map(|o| o["label"].as_str().unwrap())
             .collect();
-        assert_eq!(labels, vec!["File Upload", "Text", "URL"]);
+        assert_eq!(labels, vec!["File Upload", "Text", "URL", "No Input"]);
     }
 
     /// Generate the catalog snapshot file at `engine/catalog.snapshot.json`.

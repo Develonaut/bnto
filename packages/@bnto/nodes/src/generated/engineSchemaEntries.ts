@@ -211,6 +211,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "file-upload", label: "File Upload" },
         { value: "text", label: "Text" },
         { value: "url", label: "URL" },
+        { value: "none", label: "No Input" },
       ],
     },
     accept: { control: "tagPicker", visibleWhen: { param: "mode", equals: "file-upload" } },
