@@ -9,6 +9,8 @@ use std::collections::HashSet;
 use std::sync::{Arc, LazyLock, Mutex};
 
 /// Grace period between SIGTERM and SIGKILL when terminating groups.
+/// Only the unix kill path uses it; tests reference it on every platform.
+#[cfg(any(unix, test))]
 const TERM_GRACE_MS: u64 = 300;
 
 /// Tracks the process-group IDs of live spawned commands.
