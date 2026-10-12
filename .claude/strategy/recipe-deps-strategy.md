@@ -246,11 +246,12 @@ Run `bnto doctor` to check all dependencies.
 - Implement: run `<binary> --version`, parse output, validate against semver constraint
 - Fail pre-flight if version too old
 
-#### 6. Per-platform install hints
+#### 6. Per-platform install hints — Shipped
 
-- Detect user's OS and show the right package manager command
-- `Dependency` struct gains `install_hints: Map<Platform, String>` (or per-platform struct)
-- Today everything says `brew install` — should adapt
+- `Dependency` gains optional `installHints: { macos?, linux?, windows? }` (`bnto-core/src/metadata/install_hints.rs`)
+- `Dependency::host_install_hint()` picks the compile-target platform's hint, falling back to the generic `installHint` (WASM/BSD, or platform unset)
+- `bnto run` pre-flight, `bnto doctor`, `bnto info` and `bnto install` all display the host hint
+- Recipe authors set exact package IDs per platform (e.g. `winget install yt-dlp.yt-dlp`), since IDs differ between package managers
 
 #### 7. Recipe variables & template expressions
 
