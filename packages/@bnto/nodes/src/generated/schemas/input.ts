@@ -10,7 +10,7 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for input node parameters. */
 export const inputParamsSchema = z.object({
   mode: z
-    .enum(["file-upload", "text", "url"] as const)
+    .enum(["file-upload", "text", "url", "none"] as const)
     .optional()
     .default("file-upload"),
   accept: z.array(z.string()).optional(),

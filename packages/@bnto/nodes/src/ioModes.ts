@@ -16,6 +16,7 @@ const INPUT_MODES: Record<InputParams["mode"], IoModeInfo> = {
   "file-upload": { icon: "file-up", label: "File Upload" },
   text: { icon: "text-cursor-input", label: "Text Input" },
   url: { icon: "link", label: "URL" },
+  none: { icon: "circle-off", label: "No Input" },
 };
 
 const OUTPUT_MODES: Record<OutputParams["mode"], IoModeInfo> = {

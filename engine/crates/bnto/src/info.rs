@@ -31,10 +31,18 @@ pub fn print_recipe_info(slug: &str, info: &RecipeInfo) {
         info.node_types.join(", ").cyan()
     );
     print_dependencies(&info.dependencies);
-    println!(
-        "\n{}",
-        format!("Run with: bnto run {slug} <files...>").dimmed()
-    );
+    println!("\n{}", run_hint(slug, &info.input_mode).dimmed());
+}
+
+/// Usage hint tailored to the recipe's input mode — a `none` recipe takes
+/// no trailing argument at all, so suggesting `<files...>` is misleading.
+fn run_hint(slug: &str, input_mode: &str) -> String {
+    match input_mode {
+        "none" => format!("Run with: bnto run {slug}"),
+        "url" => format!("Run with: bnto run {slug} <url>"),
+        "text" => format!("Run with: bnto run {slug} <text>"),
+        _ => format!("Run with: bnto run {slug} <files...>"),
+    }
 }
 
 /// Print dependency details.
@@ -68,6 +76,7 @@ pub fn get_recipe_info(slug: &str, catalog: &RecipeCatalog) -> Option<RecipeInfo
         InputMode::FileUpload => "file-upload",
         InputMode::Url => "url",
         InputMode::Text => "text",
+        InputMode::None => "none",
     };
 
     let registry = bnto_engine::create_registry();
@@ -324,6 +333,35 @@ mod tests {
         assert!(
             !output.contains("yt-dlp"),
             "Should not mention deps when none exist"
+        );
+    }
+
+    #[test]
+    fn run_hint_omits_argument_for_none_mode() {
+        assert_eq!(
+            run_hint("keep-awake", "none"),
+            "Run with: bnto run keep-awake"
+        );
+    }
+
+    #[test]
+    fn run_hint_uses_url_for_url_mode() {
+        assert_eq!(
+            run_hint("download-video", "url"),
+            "Run with: bnto run download-video <url>"
+        );
+    }
+
+    #[test]
+    fn run_hint_uses_text_for_text_mode() {
+        assert_eq!(run_hint("echo", "text"), "Run with: bnto run echo <text>");
+    }
+
+    #[test]
+    fn run_hint_defaults_to_files() {
+        assert_eq!(
+            run_hint("compress-images", "file-upload"),
+            "Run with: bnto run compress-images <files...>"
         );
     }
 }

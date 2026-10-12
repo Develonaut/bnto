@@ -86,7 +86,7 @@ pub fn update_demo(mut model: DemoModel, msg: DemoMessage) -> DemoModel {
 
 /// Drain pending form effects and fulfill them with filesystem I/O.
 fn drain_effects(model: &mut DemoModel) {
-    let effects: Vec<FormEffect> = model.form.pending_effects.drain(..).collect();
+    let effects = std::mem::take(&mut model.form.pending_effects);
     for effect in effects {
         match effect {
             FormEffect::LoadDirectory {

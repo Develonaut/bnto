@@ -8,7 +8,7 @@ export const GROUP_MODES = ["sequential", "parallel"] as const;
 
 export const IMAGE_FORMATS = ["jpeg", "png", "webp"] as const;
 
-export const INPUT_MODES = ["file-upload", "text", "url"] as const;
+export const INPUT_MODES = ["file-upload", "text", "url", "none"] as const;
 
 export const LOOP_MODES = ["forEach", "times", "while"] as const;
 

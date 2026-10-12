@@ -162,7 +162,7 @@ fn pixmap_to_dynamic_image(
 /// Blend RGBA pixels over a white background, setting alpha to 255.
 /// result_rgb = src_rgb * src_alpha + 255 * (1 - src_alpha)
 fn composite_over_white(data: &mut [u8]) {
-    for chunk in data.chunks_exact_mut(4) {
+    for chunk in data.as_chunks_mut::<4>().0 {
         let a = chunk[3] as f32 / 255.0;
         chunk[0] = (chunk[0] as f32 * a + 255.0 * (1.0 - a)) as u8;
         chunk[1] = (chunk[1] as f32 * a + 255.0 * (1.0 - a)) as u8;
@@ -174,7 +174,7 @@ fn composite_over_white(data: &mut [u8]) {
 /// Unpremultiply RGBA pixels — tiny-skia uses premultiplied alpha,
 /// but the image crate expects straight (non-premultiplied) alpha.
 fn unpremultiply_alpha(data: &mut [u8]) {
-    for chunk in data.chunks_exact_mut(4) {
+    for chunk in data.as_chunks_mut::<4>().0 {
         let alpha = chunk[3];
         if alpha == 0 || alpha == 255 {
             continue;
