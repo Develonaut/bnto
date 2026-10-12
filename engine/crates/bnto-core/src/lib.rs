@@ -14,6 +14,10 @@
 /// The Rust equivalent of JS's `change-case` library.
 pub mod case;
 
+/// Platform-aware probing for whether a binary exists on PATH.
+/// Resolves `which` on Unix and `where` on Windows.
+pub mod binary_probe;
+
 /// Controlled system access for processors that need external tools.
 /// Browser gets `NoopContext`, CLI gets `NativeContext`, desktop gets `SandboxedContext`.
 pub mod context;
@@ -96,6 +100,7 @@ pub mod version;
 // These `pub use` statements let users import directly from the crate root.
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
+pub use binary_probe::probe_command;
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;
