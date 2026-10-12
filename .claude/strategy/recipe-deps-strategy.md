@@ -116,7 +116,7 @@ pub fn collect_pipeline_dependencies(
 ### 3. Everything downstream works unchanged
 
 - `check_pipeline_dependencies()` — already consumes the output of `collect_pipeline_dependencies()`
-- `bnto doctor` — uses `collect_all_dependencies()` which reads processor metadata. Optionally enhanced to also scan built-in recipe definitions
+- `bnto doctor` — uses `collect_catalog_dependencies()`, which merges processor metadata with the recipe-level `requires` of every catalog recipe (built-in and user library)
 - `bnto info` — already calls `collect_pipeline_dependencies()`, so recipe-level deps surface automatically
 - TUI detail screen — already shows deps via the info path
 

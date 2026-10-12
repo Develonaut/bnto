@@ -78,6 +78,26 @@ pub fn collect_all_dependencies(registry: &NodeRegistry) -> Vec<Dependency> {
     deps
 }
 
+/// Collect unique dependencies from all registered processors plus the
+/// recipe-level `requires` of every given definition.
+///
+/// Recipes built on generic nodes like `shell-command` declare their deps
+/// only at the recipe level, so processor metadata alone misses them.
+/// Processor deps come first; recipe deps are deduplicated by binary name.
+pub fn collect_catalog_dependencies(
+    registry: &NodeRegistry,
+    definitions: &[PipelineDefinition],
+) -> Vec<Dependency> {
+    let mut deps = collect_all_dependencies(registry);
+    let mut seen: HashSet<String> = deps.iter().map(|d| d.binary.clone()).collect();
+    for dep in definitions.iter().flat_map(|def| &def.requires) {
+        if seen.insert(dep.binary.clone()) {
+            deps.push(dep.clone());
+        }
+    }
+    deps
+}
+
 /// Check whether each dependency's binary is available on the system
 /// and whether its version satisfies any declared constraint.
 ///
@@ -550,6 +570,43 @@ mod tests {
         registry.register("no-deps", Box::new(NoDepsProcessor));
         let deps = collect_all_dependencies(&registry);
         assert_eq!(deps.len(), 2); // ffmpeg + yt-dlp (deduplicated)
+    }
+
+    // --- collect_catalog_dependencies ---
+
+    #[test]
+    fn test_collect_catalog_includes_recipe_level_requires() {
+        // download-video's deps live only in recipe-level `requires`
+        // (shell-command declares none), so processor metadata alone misses them.
+        let registry = NodeRegistry::new();
+        let defs = vec![make_definition_with_requires(
+            &["shell-command"],
+            vec![ytdlp_dep(), ffmpeg_dep()],
+        )];
+        let deps = collect_catalog_dependencies(&registry, &defs);
+        let binaries: Vec<_> = deps.iter().map(|d| d.binary.as_str()).collect();
+        assert_eq!(binaries, vec!["yt-dlp", "ffmpeg"]);
+    }
+
+    #[test]
+    fn test_collect_catalog_without_recipes_matches_processor_deps() {
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let deps = collect_catalog_dependencies(&registry, &[]);
+        assert_eq!(deps, collect_all_dependencies(&registry));
+    }
+
+    #[test]
+    fn test_collect_catalog_deduplicates_across_processors_and_recipes() {
+        let mut registry = NodeRegistry::new();
+        registry.register("video-transcode", Box::new(FfmpegProcessor));
+        let defs = vec![
+            make_definition_with_requires(&[], vec![ytdlp_dep(), ffmpeg_dep()]),
+            make_definition_with_requires(&[], vec![ytdlp_dep()]),
+        ];
+        let deps = collect_catalog_dependencies(&registry, &defs);
+        let binaries: Vec<_> = deps.iter().map(|d| d.binary.as_str()).collect();
+        assert_eq!(binaries, vec!["ffmpeg", "yt-dlp"]);
     }
 
     // --- check_dependencies ---
