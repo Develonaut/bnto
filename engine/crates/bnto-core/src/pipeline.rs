@@ -211,6 +211,10 @@ pub enum InputMode {
     Url,
     /// User provides text content. CLI accepts a text string.
     Text,
+    /// Recipe takes no input at all — all configuration comes from node
+    /// fields. Used by utility recipes (session managers, system toggles)
+    /// where there is nothing to feed in.
+    None,
 }
 
 /// Walk the definition to find the input node and read its `mode` param.
@@ -225,6 +229,7 @@ fn find_input_mode_in_nodes(nodes: &[PipelineNode]) -> InputMode {
             return match node.params.get("mode").and_then(|v| v.as_str()) {
                 Some("url") => InputMode::Url,
                 Some("text") => InputMode::Text,
+                Some("none") => InputMode::None,
                 _ => InputMode::FileUpload,
             };
         }
@@ -1448,6 +1453,42 @@ mod tests {
             }"#,
         );
         assert_eq!(resolve_input_mode(&def), InputMode::Text);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_none() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    { "id": "in", "type": "input", "params": { "mode": "none" } },
+                    { "id": "proc", "type": "shell-command", "params": {} },
+                    { "id": "out", "type": "output", "params": {} }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::None);
+    }
+
+    #[test]
+    fn test_resolve_input_mode_none_inside_container() {
+        let def = parse_definition(
+            r#"{
+                "formatVersion": "1.0.0",
+                "nodes": [
+                    {
+                        "id": "grp",
+                        "type": "group",
+                        "params": {},
+                        "children": [
+                            { "id": "in", "type": "input", "params": { "mode": "none" } },
+                            { "id": "proc", "type": "shell-command", "params": {} }
+                        ]
+                    }
+                ]
+            }"#,
+        );
+        assert_eq!(resolve_input_mode(&def), InputMode::None);
     }
 
     #[test]

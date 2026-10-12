@@ -71,7 +71,7 @@ pub fn load_detail_from_entry(
                 PickerModel::from_slug(&entry.slug, &dir, registry, &entry.definition_json);
             (DetailFocus::Input, Some(picker))
         }
-        InputMode::Url | InputMode::Text => (DetailFocus::Params, None),
+        InputMode::Url | InputMode::Text | InputMode::None => (DetailFocus::Params, None),
     };
 
     Some(DetailModel {
@@ -585,6 +585,15 @@ mod tests {
     }
 
     #[test]
+    fn extract_input_param_returns_none_for_none_mode() {
+        let node = input_node("none", None, None);
+        assert!(
+            extract_input_param(&node, "input").is_none(),
+            "none mode takes no input, so it must not surface a text control"
+        );
+    }
+
+    #[test]
     fn extract_input_param_returns_none_for_missing_mode() {
         let node = serde_json::json!({"id": "input", "type": "input", "parameters": {}});
         assert!(extract_input_param(&node, "input").is_none());
@@ -652,6 +661,70 @@ mod tests {
         assert_eq!(model.params.len(), 1);
         assert_eq!(model.params[0].name, "format");
         assert_eq!(model.params[0].label, "Format");
+    }
+
+    /// Build a synthetic catalog entry so tests can exercise the real
+    /// `load_detail_from_entry` path with arbitrary recipe JSON.
+    fn entry_from_json(slug: &str, json: &str) -> CatalogEntry {
+        CatalogEntry {
+            slug: slug.to_string(),
+            name: slug.to_string(),
+            description: String::new(),
+            category: "system".to_string(),
+            tags: vec![],
+            definition_json: json.to_string(),
+            source: RecipeSource::Library(std::path::PathBuf::from("/tmp/keep-awake.bnto.json")),
+        }
+    }
+
+    #[test]
+    fn none_mode_recipe_focuses_params_and_skips_picker() {
+        let json = r#"{
+            "name": "Keep Awake",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {"mode": "none"}},
+                {
+                    "id": "proc",
+                    "type": "shell-command",
+                    "parameters": {"command": "caffeinate"},
+                    "fields": {
+                        "action": {"type":"enum","label":"Action","options":[{"value":"start","label":"Start"}],"default":"start"}
+                    }
+                },
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        let entry = entry_from_json("keep-awake", json);
+        let model = load_detail_from_entry(&entry, &registry(), None).unwrap();
+        assert_eq!(model.input_mode, InputMode::None);
+        assert_eq!(model.focus, DetailFocus::Params);
+        assert!(
+            model.input_picker.is_none(),
+            "none mode must not build a file picker"
+        );
+        assert!(
+            model.params.iter().all(|p| p.node_id != "input"),
+            "none mode must not surface an input control"
+        );
+    }
+
+    #[test]
+    fn text_mode_recipe_still_surfaces_input_control() {
+        let json = r#"{
+            "name": "Text Recipe",
+            "nodes": [
+                {"id": "input", "type": "input", "parameters": {"mode": "text", "label": "Command"}},
+                {"id": "proc", "type": "shell-command", "parameters": {"command": "echo"}},
+                {"id": "output", "type": "output", "parameters": {}}
+            ]
+        }"#;
+        let entry = entry_from_json("text-recipe", json);
+        let model = load_detail_from_entry(&entry, &registry(), None).unwrap();
+        assert_eq!(model.input_mode, InputMode::Text);
+        assert!(
+            model.params.iter().any(|p| p.node_id == "input"),
+            "text mode must still surface its input control"
+        );
     }
 
     #[test]

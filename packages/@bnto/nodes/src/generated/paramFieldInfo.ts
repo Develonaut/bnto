@@ -124,7 +124,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       type: "enum",
       control: "select",
       required: false,
-      enumValues: ["file-upload", "text", "url"] as const,
+      enumValues: ["file-upload", "text", "url", "none"] as const,
     },
     accept: { type: "array", control: "tagPicker", required: false },
     extensions: { type: "array", control: "tagPicker", required: false },
