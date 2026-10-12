@@ -48,7 +48,7 @@ fn print_dep_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool 
             println!("  {} {}", "MISSING".red().bold(), status.dependency.binary);
             println!(
                 "         Install: {}",
-                status.dependency.install_hint.cyan()
+                status.dependency.host_install_hint().cyan()
             );
             if !status.dependency.homepage.is_empty() {
                 println!("         Homepage: {}", status.dependency.homepage);
@@ -63,7 +63,10 @@ fn print_dep_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool 
                 installed,
                 status.dependency.version
             );
-            println!("         Update: {}", status.dependency.install_hint.cyan());
+            println!(
+                "         Update: {}",
+                status.dependency.host_install_hint().cyan()
+            );
         } else {
             let version_info = match &status.installed_version {
                 Some(v) => format!(" ({})", v.dimmed()),

@@ -21,12 +21,22 @@
   "requires": [
     {
       "binary": "yt-dlp",
-      "installHint": "brew install yt-dlp",
+      "installHint": "see https://github.com/yt-dlp/yt-dlp#installation",
+      "installHints": {
+        "macos": "brew install yt-dlp",
+        "linux": "pipx install yt-dlp",
+        "windows": "winget install yt-dlp.yt-dlp"
+      },
       "homepage": "https://github.com/yt-dlp/yt-dlp"
     },
     {
       "binary": "ffmpeg",
-      "installHint": "brew install ffmpeg",
+      "installHint": "see https://ffmpeg.org/download.html",
+      "installHints": {
+        "macos": "brew install ffmpeg",
+        "linux": "sudo apt install ffmpeg",
+        "windows": "winget install Gyan.FFmpeg"
+      },
       "homepage": "https://ffmpeg.org"
     }
   ],

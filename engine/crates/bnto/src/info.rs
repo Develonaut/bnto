@@ -59,8 +59,8 @@ fn print_dependencies(deps: &[Dependency]) {
             format!(" ({})", dep.version)
         };
         println!("    {}{version}", dep.binary.yellow());
-        if !dep.install_hint.is_empty() {
-            println!("      Install: {}", dep.install_hint);
+        if !dep.host_install_hint().is_empty() {
+            println!("      Install: {}", dep.host_install_hint());
         }
     }
 }
@@ -143,8 +143,8 @@ mod tests {
                     write!(out, "({})", dep.version).ok();
                 }
                 writeln!(out).ok();
-                if !dep.install_hint.is_empty() {
-                    writeln!(out, "      Install: {}", dep.install_hint).ok();
+                if !dep.host_install_hint().is_empty() {
+                    writeln!(out, "      Install: {}", dep.host_install_hint()).ok();
                 }
             }
         }
@@ -295,6 +295,7 @@ mod tests {
                 binary: "yt-dlp".to_string(),
                 version: String::new(),
                 install_hint: "brew install yt-dlp".to_string(),
+                install_hints: Default::default(),
                 homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
             }],
             input_mode: "url".to_string(),

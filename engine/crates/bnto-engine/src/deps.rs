@@ -136,7 +136,7 @@ pub fn check_pipeline_dependencies(
 
     for s in &statuses {
         if !s.found {
-            let hint = &s.dependency.install_hint;
+            let hint = s.dependency.host_install_hint();
             messages.push(format!("  - {} (install: {})", s.dependency.binary, hint));
         } else if s.version_satisfied == Some(false) {
             let installed = s.installed_version.as_deref().unwrap_or("unknown");
@@ -238,6 +238,7 @@ mod tests {
                     binary: "ffmpeg".to_string(),
                     version: ">=6.0".to_string(),
                     install_hint: "brew install ffmpeg".to_string(),
+                    install_hints: Default::default(),
                     homepage: "https://ffmpeg.org".to_string(),
                 }],
             }
@@ -283,12 +284,14 @@ mod tests {
                         binary: "yt-dlp".to_string(),
                         version: String::new(),
                         install_hint: "brew install yt-dlp".to_string(),
+                        install_hints: Default::default(),
                         homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
                     },
                     Dependency {
                         binary: "ffmpeg".to_string(),
                         version: ">=6.0".to_string(),
                         install_hint: "brew install ffmpeg".to_string(),
+                        install_hints: Default::default(),
                         homepage: "https://ffmpeg.org".to_string(),
                     },
                 ],
@@ -382,6 +385,7 @@ mod tests {
             binary: "yt-dlp".to_string(),
             version: String::new(),
             install_hint: "brew install yt-dlp".to_string(),
+            install_hints: Default::default(),
             homepage: String::new(),
         }
     }
@@ -391,6 +395,7 @@ mod tests {
             binary: "ffmpeg".to_string(),
             version: ">=6.0".to_string(),
             install_hint: "brew install ffmpeg".to_string(),
+            install_hints: Default::default(),
             homepage: "https://ffmpeg.org".to_string(),
         }
     }
@@ -533,6 +538,22 @@ mod tests {
         assert!(err_msg.contains("brew install yt-dlp"));
     }
 
+    #[test]
+    fn test_check_pipeline_dependencies_uses_host_platform_hint() {
+        let mut dep = ytdlp_dep();
+        dep.install_hints = bnto_core::InstallHints {
+            macos: "macos-hint".to_string(),
+            linux: "linux-hint".to_string(),
+            windows: "windows-hint".to_string(),
+        };
+        let expected = dep.host_install_hint().to_string();
+        let def = make_definition_with_requires(&[], vec![dep]);
+        let err = check_pipeline_dependencies(&def, &NodeRegistry::new(), &AllMissingContext)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains(&format!("(install: {expected})")), "{err}");
+    }
+
     // --- collect_all_dependencies ---
 
     #[test]
@@ -560,6 +581,7 @@ mod tests {
             binary: "ffmpeg".to_string(),
             version: String::new(),
             install_hint: "brew install ffmpeg".to_string(),
+            install_hints: Default::default(),
             homepage: String::new(),
         }];
         let statuses = check_dependencies(&deps, &AllMissingContext);
@@ -573,6 +595,7 @@ mod tests {
             binary: "ffmpeg".to_string(),
             version: String::new(),
             install_hint: "brew install ffmpeg".to_string(),
+            install_hints: Default::default(),
             homepage: String::new(),
         }];
         let statuses = check_dependencies(&deps, &AllFoundContext);

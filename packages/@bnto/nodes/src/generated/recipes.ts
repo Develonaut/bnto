@@ -2065,12 +2065,22 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         {
           binary: "yt-dlp",
           homepage: "https://github.com/yt-dlp/yt-dlp",
-          installHint: "brew install yt-dlp",
+          installHint: "see https://github.com/yt-dlp/yt-dlp#installation",
+          installHints: {
+            linux: "pipx install yt-dlp",
+            macos: "brew install yt-dlp",
+            windows: "winget install yt-dlp.yt-dlp",
+          },
         },
         {
           binary: "ffmpeg",
           homepage: "https://ffmpeg.org",
-          installHint: "brew install ffmpeg",
+          installHint: "see https://ffmpeg.org/download.html",
+          installHints: {
+            linux: "sudo apt install ffmpeg",
+            macos: "brew install ffmpeg",
+            windows: "winget install Gyan.FFmpeg",
+          },
         },
       ],
       settings: {

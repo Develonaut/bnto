@@ -111,9 +111,9 @@ pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use file_data::FileData;
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
-    Constraints, Dependency, InputCardinality, NodeCategory, NodeMetadata, NodeTypeInfo,
-    ParamCondition, ParamConditionEntry, ParameterDef, ParameterType, all_node_types,
-    io_container::io_container_param_defs, node_type_params,
+    Constraints, Dependency, HostPlatform, InputCardinality, InstallHints, NodeCategory,
+    NodeMetadata, NodeTypeInfo, ParamCondition, ParamConditionEntry, ParameterDef, ParameterType,
+    all_node_types, io_container::io_container_param_defs, node_type_params,
 };
 pub use pipeline::{
     InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,

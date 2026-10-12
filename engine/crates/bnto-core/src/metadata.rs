@@ -12,12 +12,16 @@ use ts_rs::TS;
 /// output, loop, group, parallel, transform, edit-fields).
 pub mod io_container;
 
+/// Per-platform install hints for external dependencies.
+pub mod install_hints;
+
 /// Per-category node type definitions and the aggregated registry.
 pub mod node_types;
 
 /// Parameter schema types — ParameterDef, Constraints, ParameterType, etc.
 pub mod parameters;
 
+pub use install_hints::{HostPlatform, InstallHints};
 // Re-export parameter types at this level for backward compatibility.
 pub use node_types::{all_node_types, node_type_params};
 pub use parameters::{
@@ -100,9 +104,27 @@ pub struct Dependency {
     pub binary: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub version: String,
+    /// Generic install hint, used when no platform-specific hint applies.
     pub install_hint: String,
+    /// Optional per-platform overrides of the generic hint.
+    #[serde(default, skip_serializing_if = "InstallHints::is_empty")]
+    pub install_hints: InstallHints,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub homepage: String,
+}
+
+impl Dependency {
+    /// Install hint for `platform`, falling back to the generic `install_hint`.
+    pub fn install_hint_for(&self, platform: Option<HostPlatform>) -> &str {
+        platform
+            .and_then(|p| self.install_hints.for_platform(p))
+            .unwrap_or(&self.install_hint)
+    }
+
+    /// Install hint for the platform this binary is running on.
+    pub fn host_install_hint(&self) -> &str {
+        self.install_hint_for(HostPlatform::current())
+    }
 }
 
 // --- NodeMetadata ---
@@ -221,6 +243,7 @@ mod tests {
             binary: "yt-dlp".to_string(),
             version: ">=2024.0.0".to_string(),
             install_hint: "brew install yt-dlp".to_string(),
+            install_hints: Default::default(),
             homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
         };
         let json = serde_json::to_string(&original).unwrap();
@@ -234,6 +257,7 @@ mod tests {
             binary: "curl".to_string(),
             version: String::new(),
             install_hint: "brew install curl".to_string(),
+            install_hints: Default::default(),
             homepage: String::new(),
         };
         let json = serde_json::to_string(&dep).unwrap();
@@ -244,6 +268,57 @@ mod tests {
         );
         assert!(json.contains("binary"));
         assert!(json.contains("installHint"));
+        assert!(
+            !json.contains("installHints"),
+            "Empty installHints should be omitted"
+        );
+    }
+
+    // --- Per-platform install hints ---
+
+    fn ytdlp_with_windows_hint() -> Dependency {
+        serde_json::from_str(
+            r#"{
+                "binary": "yt-dlp",
+                "installHint": "brew install yt-dlp",
+                "installHints": { "windows": "winget install yt-dlp.yt-dlp" }
+            }"#,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn test_install_hint_for_uses_platform_hint() {
+        let dep = ytdlp_with_windows_hint();
+        assert_eq!(
+            dep.install_hint_for(Some(HostPlatform::Windows)),
+            "winget install yt-dlp.yt-dlp"
+        );
+    }
+
+    #[test]
+    fn test_install_hint_for_falls_back_when_platform_unset() {
+        let dep = ytdlp_with_windows_hint();
+        assert_eq!(
+            dep.install_hint_for(Some(HostPlatform::Linux)),
+            "brew install yt-dlp"
+        );
+    }
+
+    #[test]
+    fn test_install_hint_for_falls_back_without_host_platform() {
+        assert_eq!(
+            ytdlp_with_windows_hint().install_hint_for(None),
+            "brew install yt-dlp"
+        );
+    }
+
+    #[test]
+    fn test_dependency_without_install_hints_still_parses() {
+        let dep: Dependency =
+            serde_json::from_str(r#"{ "binary": "curl", "installHint": "brew install curl" }"#)
+                .unwrap();
+        assert!(dep.install_hints.is_empty());
     }
 
     // --- NodeTypeInfo Tests ---
@@ -603,6 +678,7 @@ mod tests {
             binary: "yt-dlp".to_string(),
             version: ">=2023.01.01".to_string(),
             install_hint: "brew install yt-dlp".to_string(),
+            install_hints: Default::default(),
             homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
         };
         let json = serde_json::to_string(&dep).unwrap();
@@ -619,6 +695,7 @@ mod tests {
             binary: "ffmpeg".to_string(),
             version: String::new(),
             install_hint: "brew install ffmpeg".to_string(),
+            install_hints: Default::default(),
             homepage: String::new(),
         };
         let json = serde_json::to_string(&dep).unwrap();
@@ -637,6 +714,7 @@ mod tests {
             binary: "yt-dlp".to_string(),
             version: ">=2023.01.01".to_string(),
             install_hint: "brew install yt-dlp".to_string(),
+            install_hints: Default::default(),
             homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
         };
         let b = a.clone();
@@ -678,6 +756,7 @@ mod tests {
                 binary: "yt-dlp".to_string(),
                 version: ">=2023.01.01".to_string(),
                 install_hint: "brew install yt-dlp".to_string(),
+                install_hints: Default::default(),
                 homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
             }],
         };

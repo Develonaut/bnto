@@ -108,7 +108,7 @@ fn print_install_plan(
                 "  {} {} ({})",
                 "→".cyan(),
                 status.dependency.binary,
-                status.dependency.install_hint.dimmed()
+                status.dependency.host_install_hint().dimmed()
             );
         }
     }
@@ -293,6 +293,7 @@ mod tests {
             binary: binary.to_string(),
             version: String::new(),
             install_hint: format!("brew install {binary}"),
+            install_hints: Default::default(),
             homepage: String::new(),
         }
     }
