@@ -13,7 +13,7 @@ For browser execution, all node crates compile into a single `.wasm` binary (`bn
 ```
 engine/
 ├── Cargo.toml                # Workspace root: shared deps, WASM-optimized profiles
-├── rust-toolchain.toml       # Pinned stable toolchain + wasm32-unknown-unknown target
+├── rust-toolchain.toml       # Pinned Rust version (1.98) + wasm32-unknown-unknown target
 ├── catalog.snapshot.json     # Generated node catalog (consumed by @bnto/nodes codegen)
 ├── .cargo/config.toml        # Cargo aliases (fmt-check, lint)
 └── crates/
