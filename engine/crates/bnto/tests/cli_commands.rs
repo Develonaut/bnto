@@ -175,6 +175,18 @@ fn test_doctor_command() {
     );
 }
 
+#[test]
+fn test_doctor_checks_recipe_level_dependencies() {
+    // yt-dlp is declared only in download-video's recipe-level `requires`
+    // (shell-command declares no deps), so it must come from recipe scanning.
+    let output = Command::new(bnto_bin()).arg("doctor").output().unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("yt-dlp"),
+        "Doctor should check download-video's yt-dlp dependency, got: {stdout}"
+    );
+}
+
 // --- Error Cases ---
 
 #[test]
