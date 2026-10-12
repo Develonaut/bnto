@@ -15,10 +15,15 @@
 
 [toolchain]
 
-# "stable" means the latest stable Rust release. Rust releases a new
-# stable version every 6 weeks. We use stable (not "nightly") because
-# all the WASM features we need are already stabilized.
-channel = "stable"
+# An exact stable release, not the floating "stable" channel. Each new
+# Rust release (every 6 weeks) can add clippy lints that fail CI's
+# `-D warnings` gate on untouched code, blocking unrelated PRs. Pinning
+# makes upgrades deliberate.
+#
+# TO BUMP: change this AND every `dtolnay/rust-toolchain@<version>` in
+# .github/workflows/ (ci.yml, release.yml) in one PR, fixing any new
+# clippy lints in that same PR.
+channel = "1.98"
 
 # These are the components (tools) we want installed alongside the compiler:
 # - "rustfmt" formats Rust code (like Prettier for JS)
