@@ -29,10 +29,17 @@ jobs:
 
       - name: Determine changed surfaces
         id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          PREV_TAG=$(git tag --sort=-v:refname | grep -v "^${GITHUB_REF_NAME}$" | head -1)
+          # Baseline = the last stable release that actually shipped (has a
+          # published GitHub Release), not merely the previous tag: a tag whose
+          # release gate failed deployed and published nothing, so diffing
+          # against it would hide everything it never shipped.
+          PREV_TAG=$(gh release list --exclude-drafts --exclude-pre-releases --limit 50 \
+            --json tagName -q '.[].tagName' | grep -v "^${GITHUB_REF_NAME}$" | head -1)
           if [ -z "$PREV_TAG" ]; then
-            echo "No previous tag found — running full pipeline"
+            echo "No previous shipped release found — running full pipeline"
             echo "engine=true" >> "$GITHUB_OUTPUT"
             echo "web=true" >> "$GITHUB_OUTPUT"
             echo "convex=true" >> "$GITHUB_OUTPUT"
