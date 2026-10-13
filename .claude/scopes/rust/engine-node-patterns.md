@@ -29,16 +29,16 @@ Write failing tests BEFORE implementing the processor.
 
 #### Required Unit Tests
 
-| Test category        | What to verify                                                            |
-| -------------------- | ------------------------------------------------------------------------- |
-| **Trait basics**     | `name()` returns correct string, `validate()` passes with no params       |
-| **Happy path**       | Valid input → valid output (correct format, non-empty, correct MIME type) |
-| **Parameterized**    | Different param values produce measurably different outputs               |
-| **Output filename**  | Correct suffix/prefix applied (e.g., `-compressed`, `-stripped`)          |
-| **Output metadata**  | `NodeOutput.metadata` contains expected keys (sizes, format, etc.)        |
-| **Error handling**   | Unsupported format, corrupt input, empty data, truncated files            |
-| **Edge cases**       | 1x1 pixel images, single-byte files, boundary param values (min/max)      |
-| **EXIF orientation** | (image processors) Orientation correction preserved through pipeline      |
+| Test category        | What to verify                                                                                                                                                                                                         |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Trait basics**     | `name()` returns correct string, `validate()` passes with no params                                                                                                                                                    |
+| **Happy path**       | Valid input → valid output (correct format, non-empty, correct MIME type)                                                                                                                                              |
+| **Parameterized**    | Different param values produce measurably different outputs                                                                                                                                                            |
+| **Output filename**  | Correct suffix/prefix applied (e.g., `-compressed`, `-stripped`). Names built from a relative path use `bnto_core::slash_path` (`/` on every OS) — see [gotchas.md](../../rules/gotchas.md#windows-portability-engine) |
+| **Output metadata**  | `NodeOutput.metadata` contains expected keys (sizes, format, etc.)                                                                                                                                                     |
+| **Error handling**   | Unsupported format, corrupt input, empty data, truncated files                                                                                                                                                         |
+| **Edge cases**       | 1x1 pixel images, single-byte files, boundary param values (min/max)                                                                                                                                                   |
+| **EXIF orientation** | (image processors) Orientation correction preserved through pipeline                                                                                                                                                   |
 
 ### Phase 2: Engine Registration
 
