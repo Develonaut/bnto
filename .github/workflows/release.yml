@@ -103,6 +103,36 @@ jobs:
       - name: WASM integration tests (bnto-image)
         run: wasm-pack test --node crates/bnto-image
 
+  # ── Job 1a (Windows): Rust CI (fmt + lint + test) ──
+  # Mirrors ci.yml's rust-windows job. Like the Linux job above, it always
+  # runs on a release (no change detection) and the gate always requires it.
+  rust-windows:
+    name: "Rust Engine (Windows: fmt + lint + test)"
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v5
+
+      # Version, components and targets all come from engine/rust-toolchain.toml
+      # (the single source of truth); rustup installs whatever it pins.
+      - name: Install Rust toolchain (engine/rust-toolchain.toml)
+        run: rustup toolchain install && rustup show active-toolchain
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
   # ── Job 1b: TypeScript CI (build + lint + test) ──
   typescript:
     name: TypeScript (build + lint + test)
@@ -204,12 +234,13 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [detect-changes, rust, typescript]
+    needs: [detect-changes, rust, rust-windows, typescript]
     if: always()
     steps:
       - name: Check job results
         run: |
           rust="${{ needs.rust.result }}"
+          rust_windows="${{ needs.rust-windows.result }}"
           ts="${{ needs.typescript.result }}"
           web="${{ needs.detect-changes.outputs.web }}"
           detect="${{ needs.detect-changes.result }}"
@@ -227,13 +258,18 @@ jobs:
             exit 1
           fi
 
+          if [ "$rust_windows" != "success" ]; then
+            echo "Rust CI (Windows) failed: $rust_windows"
+            exit 1
+          fi
+
           # TypeScript is only required when web files changed
           if [ "$web" = "true" ] && [ "$ts" != "success" ]; then
             echo "TypeScript CI failed: $ts"
             exit 1
           fi
 
-          echo "CI Gate passed (Rust: $rust, TypeScript: $ts, web_changed: $web)"
+          echo "CI Gate passed (Rust: $rust, Rust Windows: $rust_windows, TypeScript: $ts, web_changed: $web)"
 
   # ── Job 2: Deploy Vercel Preview (web changes only) ──
   deploy-preview:

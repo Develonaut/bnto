@@ -9,6 +9,8 @@ use bnto_core::{PipelineEvent, PipelineReporter};
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 
+use crate::progress_indent::{self, StepDepths};
+
 /// Create a reporter that prints colored progress events to stderr
 /// and logs command output through the session logger.
 ///
@@ -19,6 +21,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
     // Safe because the reporter is only called from a single thread.
     let bar: RefCell<Option<ProgressBar>> = RefCell::new(None);
     let spinner_tick: RefCell<usize> = RefCell::new(0);
+    let depths: RefCell<StepDepths> = RefCell::new(StepDepths::default());
 
     PipelineReporter::new(move |event: PipelineEvent| match &event {
         PipelineEvent::PipelineStarted { total_nodes, .. } => {
@@ -44,17 +47,22 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             }
         }
         PipelineEvent::NodeStarted {
+            node_id,
             node_type,
             node_index,
             total_nodes,
-            ..
+            parent_node_id,
         } => {
             if let Some(b) = bar.borrow_mut().take() {
                 b.finish_and_clear();
             }
+            let depth = depths
+                .borrow_mut()
+                .start(node_id, parent_node_id.as_deref());
             eprintln!(
-                "  {} {}",
-                format!("[{}/{}]", node_index + 1, total_nodes).dimmed(),
+                "{}{} {}",
+                progress_indent::step_indent(depth),
+                progress_indent::step_counter(*node_index, *total_nodes).dimmed(),
                 node_type.cyan(),
             );
         }
@@ -78,6 +86,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             pb.set_message(message.clone());
         }
         PipelineEvent::NodeCompleted {
+            node_id,
             duration_ms,
             files_processed,
             ..
@@ -87,7 +96,8 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             }
             let duration = format_duration_short(*duration_ms);
             eprintln!(
-                "        {} {} file{} in {duration}",
+                "{}{} {} file{} in {duration}",
+                progress_indent::status_indent(depths.borrow().depth(node_id)),
                 "done".green(),
                 files_processed,
                 if *files_processed == 1 { "" } else { "s" },
@@ -97,7 +107,11 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             if let Some(b) = bar.borrow_mut().take() {
                 b.finish_and_clear();
             }
-            eprintln!("  {} {node_id}: {error}", "FAILED".red().bold());
+            eprintln!(
+                "{}{} {node_id}: {error}",
+                progress_indent::step_indent(depths.borrow().depth(node_id)),
+                "FAILED".red().bold()
+            );
         }
         PipelineEvent::PipelineFailed { error, .. } => {
             if let Some(b) = bar.borrow_mut().take() {

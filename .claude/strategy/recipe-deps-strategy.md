@@ -1,7 +1,7 @@
 # Recipe-Level Dependency Declarations
 
 **Created:** April 22, 2026
-**Status:** Core shipped — recipe-level `requires`, `shell-command`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), and per-platform install hints in `info`/`doctor`/run pre-flight (#531). Open: `bnto install` does not use per-platform hints yet (§4, §6); recipe variables (§7)
+**Status:** Core shipped — recipe-level `requires`, `shell-command`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), per-platform install hints in `info`/`doctor`/run pre-flight (#531), and `bnto install` running the host install hint (§4). Open: recipe variables (§7)
 **Updated:** October 13, 2026
 **Related:** [engine-expansion.md](engine-expansion.md), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md), [PLAN.md](../PLAN.md)
 
@@ -52,7 +52,7 @@ Without recipe-level `requires`, the connector-as-recipe architecture is blind t
 | `check_pipeline_dependencies()`   | Shipped | `bnto-engine/src/deps.rs` — run pre-flight                                                                                     |
 | `bnto doctor`                     | Shipped | `bnto/src/doctor.rs` — `run_doctor`                                                                                            |
 | `bnto info <recipe>`              | Shipped | `bnto/src/info.rs` — `print_dependencies`                                                                                      |
-| `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install` (runs `<pm> install <binary>`; ignores `installHints`)                                   |
+| `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install`; steps in `install_plan.rs`, `--yes` rule in `install_trust.rs` (§4)                     |
 | `shell-command` node              | Shipped | `bnto-shell` crate — `ShellCommand`                                                                                            |
 
 ---
@@ -257,27 +257,33 @@ Dependency requirements not met:
 
 ### Follow-ups (ordered backlog, each unblocks the next)
 
-#### 4. `bnto install <recipe>` command — Shipped, not hint-aware
+#### 4. `bnto install <recipe>` command — Shipped
 
-- Auto-install recipe dependencies
-- Reads `requires` from recipe definition
-- Detects OS/package manager (`brew`, `apt`, `choco`, `pacman`)
-- Runs install commands with user confirmation
-- Falls back to manual install hints
-- **Current behavior:** detects `brew`, `apt`, `pacman`, or `choco` (`bnto/src/package_manager.rs`) and runs `<pm> install <binary>` built from the binary name. It does not read `installHints`, so a package whose ID differs from its binary name fails to resolve, and `winget` (which the shipped Windows hints target, e.g. `winget install Gyan.FFmpeg`) is not a detected package manager. The host hint is printed only when no package manager is detected
-- **Open:** run the host `installHints` entry (with confirmation) instead of synthesizing `<pm> install <binary>`. Also, `bnto install --all` collects processor deps only (`collect_all_dependencies`), so it misses recipe-level `requires`; `bnto doctor` uses `collect_catalog_dependencies` and does not
+- Reads `requires` from the recipe definition plus processor deps; `--all` uses `collect_catalog_dependencies` (same set as `bnto doctor`)
+- **Decision — run the host install hint.** Each missing dependency gets one step (`bnto/src/install_plan.rs` — `InstallStep::plan`):
+  1. The dependency has an `installHints` entry for the host platform → run that exact command line through the platform shell (`sh -c` on Unix, `cmd /C` on Windows) via `ProcessContext::run_command`. This is how package IDs that differ from the binary name (`winget install Gyan.FFmpeg`, `pipx install yt-dlp`) install correctly
+  2. Otherwise, a detected package manager (`brew` → `apt` → `pacman` → `choco`) runs `<pm> install <binary>` as an argument vector (no shell)
+  3. Otherwise the step is manual: the plan prints the hint and nothing runs. The generic `installHint` is prose (often a URL) and is never executed
+- The plan always prints the exact command each step will run before any prompt or execution, and each command is echoed again as it runs. Declining (or EOF on stdin) runs nothing
+- If no step is runnable, `bnto install` prints the hints and exits 1. Post-install verification re-probes every missing binary, so hint-based installs are verified the same way as package-manager installs
+- **Decision — `--yes` and author-written commands.** Host hints are shell command lines written by the recipe author, so the recipe source is the trust boundary (the same line `trust.rs` draws for `shell-command` nodes). `--yes` skips the prompt only when the commands come from a trusted source (`bnto/src/install_trust.rs`):
+  - a bundled recipe slug → trusted (hints are reviewed in this repo and ship in the binary)
+  - a library recipe or `.bnto.json` path → not trusted: `--yes` still prints the commands, explains why, and prompts. Non-interactive runs (closed stdin) therefore decline instead of executing an unreviewed shell command
+  - `--all` → trusted unless a non-bundled catalog recipe declares `requires`
+  - `<pm> install <binary>` steps keep the old behavior (`--yes` skips the prompt): they are a fixed argument vector, not a shell line
+  - Why not let `--yes` run everything: a downloaded recipe could set `installHints.linux` to `curl … | sh`, and `bnto install that.bnto.json --yes` in a script would run it without anyone reading it. Why not ignore hints from untrusted recipes: their exact package IDs are the point of the feature; showing the command and asking keeps them usable
 
 #### 5. Version constraint enforcement — Shipped
 
 - `check_dependencies()` calls `bnto_core::check_version` when `Dependency.version` is non-empty: runs `<binary> --version`, parses it, validates against the constraint
 - Pre-flight fails and `bnto doctor` reports `OUTDATED` when the installed version is too old
 
-#### 6. Per-platform install hints — Shipped (display only, #531)
+#### 6. Per-platform install hints — Shipped (#531; `bnto install` runs them, §4)
 
 - `Dependency` gains optional `installHints: { macos?, linux?, windows? }` (`bnto-core/src/metadata/install_hints.rs`)
 - `Dependency::host_install_hint()` picks the compile-target platform's hint, falling back to the generic `installHint` (WASM/BSD, or platform unset)
 - `bnto run` pre-flight, `bnto doctor`, and `bnto info` display the host hint
-- **Open:** `bnto install` does not use them yet — it still runs `<pm> install <binary>` and shows the host hint only when no package manager is detected (see §4)
+- `bnto install` runs the host platform's hint (not the generic fallback) and falls back to `<pm> install <binary>` when the host has none (§4)
 - Recipe authors set exact package IDs per platform (e.g. `winget install yt-dlp.yt-dlp`), since IDs differ between package managers
 
 #### 7. Recipe variables & template expressions
@@ -311,3 +317,5 @@ Same pattern as GitHub Actions (`uses: actions/setup-node@v4`), Docker (`FROM py
 3. **`shell-command` does not use `sh -c`.** Command and args are split explicitly via `ProcessContext::run_command()`. No shell injection vector. The processor validates that `command` is not empty and that the binary exists on PATH before execution.
 
 4. **`bnto-video` crate deletion is safe.** The crate has no external consumers (not published separately). The `video-download` processor is only used by the built-in recipe. Converting the recipe to `shell-command` + recipe-level `requires` replaces all functionality.
+
+5. **`bnto install` runs host install hints through the shell.** Unlike `shell-command` (decision 3), an install hint is a whole command line (`sudo apt install ffmpeg`), so it runs via `sh -c` / `cmd /C`. The exact string is always printed first, and `--yes` only auto-runs hints from bundled recipes (see §4).

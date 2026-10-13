@@ -111,6 +111,20 @@ The executor emits structured progress events. Each event has a `pipeline_id`, `
 
 In the browser, `bnto-wasm` bridges these events to a JS callback. `@bnto/core` maps them to Zustand store updates or DOM-direct attribute changes (for high-frequency `FileProgress` events).
 
+### CLI progress display
+
+**Decision (October 2026):** the CLI reporter (`bnto/src/progress.rs`, layout in `progress_indent.rs`) numbers top-level steps against the pipeline and indents container children under their container, keeping the container-relative `node_index`/`total_nodes` the engine reports for events with `parent_node_id` set. Each nesting level adds one indent step (depth is tracked from parent ids); `done` and `FAILED` lines follow the same indent.
+
+```
+  [2/3] loop
+      [1/1] echo
+            done 1 file in 3ms
+        done 1 file in 4ms
+  [3/3] next
+```
+
+The TUI already nests child nodes under their container (`ExecutionMessage::ChildNodeStarted` in `tui/screens/execution.rs`), one level deep.
+
 ---
 
 ## Relationship to Recipe Definitions

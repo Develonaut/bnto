@@ -14,18 +14,6 @@ pub enum PackageManager {
     Choco,
 }
 
-impl PackageManager {
-    /// Human-readable name for display.
-    pub fn name(self) -> &'static str {
-        match self {
-            Self::Brew => "Homebrew",
-            Self::Apt => "apt",
-            Self::Pacman => "pacman",
-            Self::Choco => "Chocolatey",
-        }
-    }
-}
-
 /// Detect the first available package manager on the system.
 ///
 /// Looks up candidates via `ctx.find_binary()` in preference order:
@@ -214,13 +202,5 @@ mod tests {
             display_command(PackageManager::Apt, "ffmpeg"),
             "sudo apt install -y ffmpeg"
         );
-    }
-
-    #[test]
-    fn name_returns_human_readable() {
-        assert_eq!(PackageManager::Brew.name(), "Homebrew");
-        assert_eq!(PackageManager::Apt.name(), "apt");
-        assert_eq!(PackageManager::Pacman.name(), "pacman");
-        assert_eq!(PackageManager::Choco.name(), "Chocolatey");
     }
 }

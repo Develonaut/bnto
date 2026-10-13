@@ -43,7 +43,12 @@ bnto info compress-images
 
 # Check external dependencies (processor and recipe-level `requires`)
 bnto doctor
+
+# Install a recipe's missing dependencies (prints each exact command, then asks)
+bnto install download-video
 ```
+
+`bnto install` runs the recipe's `installHints` command for this OS (e.g. `winget install Gyan.FFmpeg`) through the platform shell; without one it falls back to the detected package manager (`brew`/`apt`/`pacman`/`choco install <binary>`), or prints the hint when nothing can run. `--yes` skips the prompt for bundled recipes only — commands written by library or file recipes are always shown and confirmed.
 
 ## TUI Architecture
 
@@ -92,9 +97,13 @@ src/
 +-- doctor.rs              # `bnto doctor` command (processor + recipe-level dependency checks)
 +-- info.rs                # `bnto info` command (recipe details)
 +-- input.rs               # Input preparation (files, URLs, param overrides)
++-- install.rs             # `bnto install` command (plan, confirm, run, verify)
++-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
++-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (indicatif bars)
++-- progress_indent.rs     # Step layout: container children indented, container-relative numbers
 +-- tui/
     +-- mod.rs             # TUI entry point, event loop, terminal setup/teardown
     +-- app.rs             # App state machine (Screen enum, AppModel, update())
