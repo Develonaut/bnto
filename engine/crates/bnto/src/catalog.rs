@@ -61,6 +61,14 @@ impl RecipeCatalog {
         &self.entries
     }
 
+    /// Parse every entry's definition, skipping any that fail to parse.
+    pub fn definitions(&self) -> Vec<bnto_core::PipelineDefinition> {
+        self.entries
+            .iter()
+            .filter_map(|entry| serde_json::from_str(&entry.definition_json).ok())
+            .collect()
+    }
+
     /// Find a recipe by slug.
     pub fn resolve(&self, slug: &str) -> Option<&CatalogEntry> {
         self.entries.iter().find(|e| e.slug == slug)
@@ -265,6 +273,22 @@ mod tests {
                 .all(|e| e.source == RecipeSource::Bundled),
             "bundled() should only return bundled entries"
         );
+    }
+
+    #[test]
+    fn catalog_definitions_parses_every_bundled_recipe() {
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
+        assert_eq!(catalog.definitions().len(), 21);
+    }
+
+    #[test]
+    fn catalog_definitions_skips_unparsable_recipes() {
+        let tmp = tempfile::tempdir().unwrap();
+        // Valid JSON (so the catalog loads it) but not a valid definition.
+        std::fs::write(tmp.path().join("odd.bnto.json"), r#"{"nodes":"x"}"#).unwrap();
+        let catalog = RecipeCatalog::load(tmp.path());
+        assert_eq!(catalog.all().len(), 22);
+        assert_eq!(catalog.definitions().len(), 21);
     }
 
     #[test]
