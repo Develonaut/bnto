@@ -4,4 +4,17 @@
  * Install commands keyed by platform. Empty entries mean "no specific
  * hint" and defer to the dependency's generic `installHint`.
  */
-export type InstallHints = { macos?: string; linux?: string; windows?: string };
+export type InstallHints = {
+  /**
+   * Install command for macOS (e.g. `brew install yt-dlp`).
+   */
+  macos?: string;
+  /**
+   * Install command for Linux (e.g. `sudo apt install yt-dlp`).
+   */
+  linux?: string;
+  /**
+   * Install command for Windows (e.g. `winget install yt-dlp.yt-dlp`).
+   */
+  windows?: string;
+};

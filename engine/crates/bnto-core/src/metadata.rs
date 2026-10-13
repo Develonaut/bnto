@@ -105,6 +105,8 @@ pub struct Dependency {
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub version: String,
     /// Generic install hint, used when no platform-specific hint applies.
+    /// Optional: a dependency may carry only per-platform hints.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub install_hint: String,
     /// Optional per-platform overrides of the generic hint.
     #[serde(default, skip_serializing_if = "InstallHints::is_empty")]
@@ -113,12 +115,19 @@ pub struct Dependency {
     pub homepage: String,
 }
 
+/// Shown when a dependency has neither a hint for the host platform nor a
+/// generic `install_hint`.
+pub const GENERIC_INSTALL_HINT: &str =
+    "no install hint available; install it and make sure it is on your PATH";
+
 impl Dependency {
-    /// Install hint for `platform`, falling back to the generic `install_hint`.
+    /// Install hint for `platform`, falling back to the generic `install_hint`,
+    /// then to [`GENERIC_INSTALL_HINT`] when neither is set.
     pub fn install_hint_for(&self, platform: Option<HostPlatform>) -> &str {
         platform
             .and_then(|p| self.install_hints.for_platform(p))
-            .unwrap_or(&self.install_hint)
+            .or((!self.install_hint.is_empty()).then_some(self.install_hint.as_str()))
+            .unwrap_or(GENERIC_INSTALL_HINT)
     }
 
     /// Install hint for the platform this binary is running on.
@@ -950,5 +959,41 @@ mod tests {
                 "expected serialized param to contain {needle}; got: {json}"
             );
         }
+    }
+
+    // --- Dependency install hints ---
+
+    #[test]
+    fn dependency_with_only_platform_hints_deserializes() {
+        let dep: Dependency = serde_json::from_str(
+            r#"{ "binary": "yt-dlp", "installHints": { "macos": "brew install yt-dlp" } }"#,
+        )
+        .unwrap();
+        assert!(dep.install_hint.is_empty());
+        assert_eq!(dep.install_hints.macos, "brew install yt-dlp");
+        assert_eq!(
+            dep.install_hint_for(Some(HostPlatform::MacOs)),
+            "brew install yt-dlp"
+        );
+    }
+
+    #[test]
+    fn dependency_without_any_hint_falls_back_to_generic_message() {
+        let dep: Dependency = serde_json::from_str(
+            r#"{ "binary": "yt-dlp", "installHints": { "macos": "brew install yt-dlp" } }"#,
+        )
+        .unwrap();
+        assert_eq!(
+            dep.install_hint_for(Some(HostPlatform::Windows)),
+            GENERIC_INSTALL_HINT
+        );
+        assert_eq!(dep.install_hint_for(None), GENERIC_INSTALL_HINT);
+    }
+
+    #[test]
+    fn dependency_omits_empty_install_hint_when_serialized() {
+        let dep: Dependency = serde_json::from_str(r#"{ "binary": "git" }"#).unwrap();
+        let json = serde_json::to_string(&dep).unwrap();
+        assert_eq!(json, r#"{"binary":"git"}"#);
     }
 }
