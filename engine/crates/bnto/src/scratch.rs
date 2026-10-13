@@ -23,7 +23,9 @@ impl RunScratch {
     pub fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
         let mut dir = self.dir.lock().unwrap_or_else(|e| e.into_inner());
         if dir.is_none() {
-            *dir = Some(create_scratch_dir()?);
+            let created = create_scratch_dir()?;
+            lock_live().push(created.path().to_path_buf());
+            *dir = Some(created);
         }
         let root = dir.as_ref().map(TempDir::path).expect("created above");
         persisted_temp_file(Some(root), suffix)
@@ -35,6 +37,44 @@ impl RunScratch {
         let dir = self.dir.lock().unwrap_or_else(|e| e.into_inner());
         dir.as_ref().map(|d| d.path().to_path_buf())
     }
+}
+
+impl Drop for RunScratch {
+    /// Unregister before the `TempDir` field deletes the directory.
+    fn drop(&mut self) {
+        let dir = self.dir.get_mut().unwrap_or_else(|e| e.into_inner());
+        if let Some(path) = dir.as_ref().map(TempDir::path) {
+            lock_live().retain(|live| live != path);
+        }
+    }
+}
+
+/// Scratch dirs that exist right now. `process::exit` (the Ctrl+C path)
+/// skips destructors, so the signal handler removes these itself.
+static LIVE_DIRS: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
+
+fn lock_live() -> std::sync::MutexGuard<'static, Vec<PathBuf>> {
+    LIVE_DIRS.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+/// Delete every live scratch dir. Called from the signal handler after
+/// child processes are killed, so nothing still holds their files open.
+pub fn remove_live_dirs() {
+    let dirs = std::mem::take(&mut *lock_live());
+    remove_dirs(&dirs);
+}
+
+/// Remove each dir and its contents; `remove_dir_all` deletes symlinks
+/// without following them, so nothing outside a dir is touched.
+fn remove_dirs(dirs: &[PathBuf]) {
+    for dir in dirs {
+        let _ = std::fs::remove_dir_all(dir);
+    }
+}
+
+#[cfg(test)]
+fn live_dirs() -> Vec<PathBuf> {
+    lock_live().clone()
 }
 
 /// A fresh, uniquely named directory owned by this run.
@@ -63,6 +103,30 @@ pub fn persisted_temp_file(dir: Option<&Path>, suffix: &str) -> Result<PathBuf, 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // --- Interrupt cleanup ---
+
+    #[test]
+    fn test_scratch_dir_is_live_until_dropped() {
+        let scratch = RunScratch::default();
+        scratch.temp_file("-output").unwrap();
+        let dir = scratch.path().unwrap();
+        assert!(live_dirs().contains(&dir));
+        drop(scratch);
+        assert!(!live_dirs().contains(&dir));
+    }
+
+    #[test]
+    fn test_remove_dirs_deletes_scratch_and_contents() {
+        // What the Ctrl+C handler does for each live dir before exiting,
+        // since `process::exit` skips the scratch's own drop.
+        let scratch = RunScratch::default();
+        let file = scratch.temp_file("-output").unwrap();
+        let dir = scratch.path().unwrap();
+        std::fs::create_dir_all(file.with_extension("d")).unwrap();
+        remove_dirs(std::slice::from_ref(&dir));
+        assert!(!dir.exists());
+    }
 
     #[test]
     fn test_no_dir_until_first_temp_file() {
