@@ -69,7 +69,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Motorway design system: Grid, LinearProgress, ToolbarProgress, RadioGroup, NavButton, RadialSlider, surface system, Pressable + Surface composition
 - [x] Per-instance browser execution stores: Factory pattern, `core.wasm.createExecution()`, no state leaks
 - [x] Sprint 3 pre-work: Anonymous→password userId preservation, FIXME cleanup, Knip audit, naming audit, codebase standards review, schema analytics fields
-- [x] GitHub Actions CI: Rust (fmt + clippy + unit + WASM) + TypeScript (build + lint + test) + CI Gate
+- [x] GitHub Actions CI: Rust (fmt + clippy + unit + WASM) + Rust on Windows (fmt + clippy + test, PR #532) + TypeScript (build + lint + test) + CI Gate
 - [x] convexQuery skip guards: All adapter functions use `"skip"` for falsy IDs (PR #23)
 - [x] Format versioning + Zod node validation (Sprint 4G): `.bnto.json` format version constant, schema versioning, Zod parameter schemas for all node types, schema-driven config panel with registry-based controls
 - [x] Editor production route (Sprint 5 W1-W2): `/editor` route, recipe loading by ID (`?recipe={id}`), compartment node redesign (icons + category colors), "Open in Editor" clone-on-click nav integration
@@ -107,6 +107,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - [x] Release v0.5.0 (April 2026): 15 predefined recipes, video-download node, extra args pass-through, dependency system
 - [x] Vector format support (April 2026): `bnto-vector` crate, svg-to-png, svg-to-jpeg, optimize-svg recipes. 18 total recipes
 - [x] Sprint 14 Engine Hardening (April 2026): Bento Box audit, TUI execution progress, TOCTOU fix, `bnto dry-run`, `bnto install`, Node.js 24 Actions. v0.12.0 released
+- [x] No-input recipes (October 2026): input `mode: "none"` resolves to `InputMode::None` — no positional args, no file picker, source node runs once (PRs #526, #533)
 
 ---
 
@@ -661,7 +662,7 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 1. ~~**`bnto install <recipe>`**~~ — **Done.** Sprint 14 Wave 2 (PR #453)
 2. ~~**Version constraint enforcement**~~ — **→ Sprint 16 Wave 3**
-3. **Per-platform install hints** — Detect OS, show correct package manager command (`apt`, `choco`, `pacman`)
+3. ~~**Per-platform install hints**~~ — **Done (display only).** `installHints: { macos, linux, windows }` on `Dependency`, shown by `bnto info`, `bnto doctor`, and the run pre-flight (PR #531). `bnto install` does not use them yet — it still runs `<pm> install <binary>`
 4. ~~**Template expression expansion**~~ — **→ Sprint 16 Wave 4** (`{{env.*}}`, `{{ctx.*}}`, `{{node.<id>.*}}`)
 
 ### Growth: Product Hunt Launch

@@ -159,6 +159,31 @@ OutputFile { data: FileData::Path(path), .. }
 
 **Rule of thumb:** If your processor's `process()` function doesn't call `input.data.into_bytes()`, its output should use `FileData::Path`. See [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#filedata-selection) for the full guide.
 
+## Windows Portability (Engine)
+
+CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-windows` job, required by the CI Gate). Code and tests that assume Unix break there. Rules:
+
+- **Output names from relative paths use `bnto_core::slash_path`.** File names travel between nodes and downstream nodes split them on `/` (e.g. `file-filter` matches against `filename.rsplit('/')` in `bnto-file/src/filter.rs`). `rel.to_string_lossy()` yields `a\b.mp4` on Windows, so the filter sees the whole string as the name. `file-collect` and `shell-command` already use `slash_path`.
+
+  ```rust
+  // BAD — `\` separators on Windows
+  let name = rel.to_string_lossy().into_owned();
+  // GOOD — `/` on every OS
+  let name = bnto_core::slash_path(rel);
+  ```
+
+- **No `/nonexistent`-style absolute paths in tests.** On Windows `/nonexistent` resolves to `C:\nonexistent` and may be creatable, so "can't be created" tests write outside the sandbox and pass or fail by accident. To get a path that can't be created, put it under a regular file in a temp dir:
+
+  ```rust
+  let tmp = tempfile::tempdir().unwrap();
+  let file = tmp.path().join("not-a-dir");
+  std::fs::write(&file, b"").unwrap();
+  let bad_path = file.join("logs"); // cannot be created on any OS
+  ```
+
+- **Tests don't spawn `sh` or `echo` directly.** On Windows `echo` is a `cmd` built-in, not a program, and `sh` is not guaranteed on PATH. Run the script through the platform shell — see the `shell()` test helper in `bnto/src/context.rs` (`cmd /c` on Windows, `sh -c` elsewhere). Trim captured lines before asserting: `cmd` keeps the space before a redirect (`echo err >&2` prints `err `).
+- **Gate items that only one OS reads.** A constant or function used only inside a `#[cfg(unix)]` path is dead code on Windows, and clippy `-D warnings` fails there. Gate it to match its readers, e.g. `#[cfg(any(unix, test))]` on `TERM_GRACE_MS` in `bnto/src/process_registry.rs`.
+
 ## No Object.assign Compound Components (RSC Incompatible)
 
 `Object.assign` dot-notation (`<Dialog.Content>`, `<Card.Header>`) does NOT work in React Server Components. Server components get "client reference" objects — sub-properties assigned via `Object.assign` are undefined at render time.

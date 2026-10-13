@@ -38,10 +38,10 @@ bnto run compress-images photo.jpg --param quality=50
 # List available built-in recipes
 bnto list
 
-# Show details about a recipe
+# Show details about a recipe (dependencies show this OS's install hint)
 bnto info compress-images
 
-# Check external dependencies
+# Check external dependencies (processor and recipe-level `requires`)
 bnto doctor
 ```
 
@@ -89,7 +89,7 @@ The TUI uses the same Motorway color palette as the web app, adapted for termina
 src/
 +-- main.rs                # CLI entry point (clap parser)
 +-- context.rs             # NativeContext for system access (commands, temp files, env)
-+-- doctor.rs              # `bnto doctor` command (dependency checks)
++-- doctor.rs              # `bnto doctor` command (processor + recipe-level dependency checks)
 +-- info.rs                # `bnto info` command (recipe details)
 +-- input.rs               # Input preparation (files, URLs, param overrides)
 +-- io.rs                  # File I/O (read inputs, write pipeline results)

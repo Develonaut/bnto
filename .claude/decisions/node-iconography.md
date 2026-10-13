@@ -33,6 +33,7 @@ const INPUT_MODE_ICONS: Record<InputParams["mode"], string> = {
   "file-upload": "file-up",
   text: "text-cursor-input",
   url: "link",
+  none: "circle-off",
 };
 
 const OUTPUT_MODE_ICONS: Record<OutputParams["mode"], string> = {
@@ -84,6 +85,7 @@ export function getNodeSubLabel(nodeType: string, params?: Record<string, unknow
       "file-upload": "File Upload",
       text: "Text Input",
       url: "URL",
+      none: "No Input",
     };
     return modeLabels[params?.mode as string] ?? "Input";
   }
@@ -114,6 +116,7 @@ export function getNodeSubLabel(nodeType: string, params?: Record<string, unknow
 | Input  | `file-upload` | `file-up`           | File moving upward into the system |
 | Input  | `text`        | `text-cursor-input` | Text entry metaphor                |
 | Input  | `url`         | `link`              | URL = link                         |
+| Input  | `none`        | `circle-off`        | Recipe takes no input (#526)       |
 | Output | `download`    | `download`          | Files coming down to user          |
 | Output | `display`     | `monitor`           | Shown on screen                    |
 | Output | `preview`     | `eye`               | Look at it                         |
@@ -180,4 +183,4 @@ Rejected — unnecessary complexity. Lucide covers all current needs. Custom SVG
 
 - `getNodeIcon` is the single source of truth for what icon a node shows. Never compute the icon directly in a component.
 - I/O node icons are always derived from params. Never hardcode `file-up` or `download` in a component.
-- Adding a new input mode or output mode requires: (1) updating `INPUT_MODES`/`OUTPUT_MODES` in the schema, (2) adding the entry to `INPUT_MODE_ICONS`/`OUTPUT_MODE_ICONS` in `getNodeIcon.ts`, (3) adding the label to `getNodeSubLabel.ts`.
+- Adding a new input mode or output mode requires: (1) adding the option to the `mode` enum in the engine (`input_params()` / output params in `engine/crates/bnto-core/src/metadata/io_container.rs`) and regenerating the TypeScript schemas, (2) adding an `{ icon, label }` entry to `INPUT_MODES`/`OUTPUT_MODES` in `packages/@bnto/nodes/src/ioModes.ts` — the single source both `getNodeIcon` and `getNodeSublabel` read from. The `Record<InputParams["mode"], …>` type makes a missing entry a compile error.

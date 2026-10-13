@@ -1,7 +1,8 @@
 # Recipe-Level Dependency Declarations
 
 **Created:** April 22, 2026
-**Status:** Design — ready for implementation
+**Status:** Core shipped — recipe-level `requires`, `shell-command`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), and per-platform install hints in `info`/`doctor`/run pre-flight (#531). Open: `bnto install` does not use per-platform hints yet (§4, §6); recipe variables (§7)
+**Updated:** October 13, 2026
 **Related:** [engine-expansion.md](engine-expansion.md), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md), [PLAN.md](../PLAN.md)
 
 ---
@@ -39,16 +40,20 @@ Without recipe-level `requires`, the connector-as-recipe architecture is blind t
 
 ## Current State
 
-| Component                         | Status      | Location                            |
-| --------------------------------- | ----------- | ----------------------------------- |
-| `Dependency` struct               | Shipped     | `bnto-core/src/metadata.rs:633-646` |
-| `NodeMetadata::requires`          | Shipped     | `bnto-core/src/metadata.rs:675-676` |
-| `collect_pipeline_dependencies()` | Shipped     | `bnto-engine/src/deps.rs:20-28`     |
-| `check_pipeline_dependencies()`   | Shipped     | `bnto-engine/src/deps.rs:90-119`    |
-| `bnto doctor`                     | Shipped     | `bnto/src/doctor.rs`                |
-| `bnto info <recipe>`              | Shipped     | `bnto/src/info.rs`                  |
-| `PipelineDefinition.requires`     | **Missing** | `bnto-core/src/pipeline.rs:58-68`   |
-| `shell-command` node              | **Missing** | Not implemented                     |
+| Component                         | Status  | Location (symbol)                                                                                                              |
+| --------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `Dependency` struct               | Shipped | `bnto-core/src/metadata.rs` — `Dependency`                                                                                     |
+| Per-platform install hints        | Shipped | `bnto-core/src/metadata/install_hints.rs` — `InstallHints`, `HostPlatform`; `Dependency::host_install_hint()`                  |
+| `NodeMetadata::requires`          | Shipped | `bnto-core/src/metadata.rs` — `NodeMetadata`                                                                                   |
+| `PipelineDefinition.requires`     | Shipped | `bnto-core/src/pipeline.rs` — `PipelineDefinition`                                                                             |
+| `collect_pipeline_dependencies()` | Shipped | `bnto-engine/src/deps.rs`                                                                                                      |
+| `collect_catalog_dependencies()`  | Shipped | `bnto-engine/src/deps.rs` — processor deps plus every catalog recipe's `requires` (#530)                                       |
+| `check_dependencies()`            | Shipped | `bnto-engine/src/deps.rs` — probes PATH with the host platform's lookup (#525), checks versions via `bnto_core::check_version` |
+| `check_pipeline_dependencies()`   | Shipped | `bnto-engine/src/deps.rs` — run pre-flight                                                                                     |
+| `bnto doctor`                     | Shipped | `bnto/src/doctor.rs` — `run_doctor`                                                                                            |
+| `bnto info <recipe>`              | Shipped | `bnto/src/info.rs` — `print_dependencies`                                                                                      |
+| `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install` (runs `<pm> install <binary>`; ignores `installHints`)                                   |
+| `shell-command` node              | Shipped | `bnto-shell` crate — `ShellCommand`                                                                                            |
 
 ---
 
@@ -69,19 +74,29 @@ pub struct PipelineDefinition {
 }
 ```
 
-The `Dependency` struct already exists and already derives `Deserialize` (needs adding) and `Serialize`. Recipe JSON gains a top-level `requires` array:
+Recipe JSON has a top-level `requires` array. `installHint` is the generic fallback; `installHints` holds exact per-platform commands (package IDs differ between package managers), and an unset platform falls back to `installHint`. This is the shape `download-video.bnto.json` ships with:
 
 ```json
 {
   "requires": [
     {
       "binary": "yt-dlp",
-      "installHint": "brew install yt-dlp",
+      "installHint": "see https://github.com/yt-dlp/yt-dlp#installation",
+      "installHints": {
+        "macos": "brew install yt-dlp",
+        "linux": "pipx install yt-dlp",
+        "windows": "winget install yt-dlp.yt-dlp"
+      },
       "homepage": "https://github.com/yt-dlp/yt-dlp"
     },
     {
       "binary": "ffmpeg",
-      "installHint": "brew install ffmpeg",
+      "installHint": "see https://ffmpeg.org/download.html",
+      "installHints": {
+        "macos": "brew install ffmpeg",
+        "linux": "sudo apt install ffmpeg",
+        "windows": "winget install Gyan.FFmpeg"
+      },
       "homepage": "https://ffmpeg.org"
     }
   ],
@@ -149,8 +164,16 @@ Rewrite `download-video.bnto.json` to use `shell-command` + recipe-level `requir
 {
   "id": "download-video",
   "requires": [
-    { "binary": "yt-dlp", "installHint": "brew install yt-dlp" },
-    { "binary": "ffmpeg", "installHint": "brew install ffmpeg" }
+    {
+      "binary": "yt-dlp",
+      "installHint": "see https://github.com/yt-dlp/yt-dlp#installation",
+      "installHints": { "macos": "brew install yt-dlp", "windows": "winget install yt-dlp.yt-dlp" }
+    },
+    {
+      "binary": "ffmpeg",
+      "installHint": "see https://ffmpeg.org/download.html",
+      "installHints": { "macos": "brew install ffmpeg", "windows": "winget install Gyan.FFmpeg" }
+    }
   ],
   "nodes": [
     { "id": "input", "type": "input", "parameters": { "mode": "url" } },
@@ -173,6 +196,8 @@ Delete `bnto-video` crate entirely — no customers, no backward compat needed. 
 
 ## User Experience
 
+Output below is from a macOS host. `info`, `doctor`, and the run pre-flight print the host platform's `installHints` entry (falling back to `installHint`), so the same recipe shows `winget install ...` on Windows.
+
 ```
 $ bnto info download-video
 
@@ -184,8 +209,10 @@ Download video from URLs using yt-dlp.
   Nodes:      shell-command
 
   Dependencies:
-    yt-dlp (install: brew install yt-dlp)
-    ffmpeg (install: brew install ffmpeg)
+    yt-dlp
+      Install: brew install yt-dlp
+    ffmpeg
+      Install: brew install ffmpeg
 
   Run with: bnto run download-video <url>
 ```
@@ -193,11 +220,9 @@ Download video from URLs using yt-dlp.
 ```
 $ bnto run download-video https://youtube.com/watch?v=xyz
 
-Missing required dependencies:
+Dependency requirements not met:
   - yt-dlp (install: brew install yt-dlp)
   - ffmpeg (install: brew install ffmpeg)
-
-Run `bnto doctor` to check all dependencies.
 ```
 
 ---
@@ -232,25 +257,27 @@ Run `bnto doctor` to check all dependencies.
 
 ### Follow-ups (ordered backlog, each unblocks the next)
 
-#### 4. `bnto install <recipe>` command
+#### 4. `bnto install <recipe>` command — Shipped, not hint-aware
 
 - Auto-install recipe dependencies
 - Reads `requires` from recipe definition
 - Detects OS/package manager (`brew`, `apt`, `choco`, `pacman`)
 - Runs install commands with user confirmation
 - Falls back to manual install hints
+- **Current behavior:** detects `brew`, `apt`, `pacman`, or `choco` (`bnto/src/package_manager.rs`) and runs `<pm> install <binary>` built from the binary name. It does not read `installHints`, so a package whose ID differs from its binary name fails to resolve, and `winget` (which the shipped Windows hints target, e.g. `winget install Gyan.FFmpeg`) is not a detected package manager. The host hint is printed only when no package manager is detected
+- **Open:** run the host `installHints` entry (with confirmation) instead of synthesizing `<pm> install <binary>`. Also, `bnto install --all` collects processor deps only (`collect_all_dependencies`), so it misses recipe-level `requires`; `bnto doctor` uses `collect_catalog_dependencies` and does not
 
-#### 5. Version constraint enforcement
+#### 5. Version constraint enforcement — Shipped
 
-- The `Dependency.version` field exists but is unused
-- Implement: run `<binary> --version`, parse output, validate against semver constraint
-- Fail pre-flight if version too old
+- `check_dependencies()` calls `bnto_core::check_version` when `Dependency.version` is non-empty: runs `<binary> --version`, parses it, validates against the constraint
+- Pre-flight fails and `bnto doctor` reports `OUTDATED` when the installed version is too old
 
-#### 6. Per-platform install hints — Shipped
+#### 6. Per-platform install hints — Shipped (display only, #531)
 
 - `Dependency` gains optional `installHints: { macos?, linux?, windows? }` (`bnto-core/src/metadata/install_hints.rs`)
 - `Dependency::host_install_hint()` picks the compile-target platform's hint, falling back to the generic `installHint` (WASM/BSD, or platform unset)
-- `bnto run` pre-flight, `bnto doctor`, `bnto info` and `bnto install` all display the host hint
+- `bnto run` pre-flight, `bnto doctor`, and `bnto info` display the host hint
+- **Open:** `bnto install` does not use them yet — it still runs `<pm> install <binary>` and shows the host hint only when no package manager is detected (see §4)
 - Recipe authors set exact package IDs per platform (e.g. `winget install yt-dlp.yt-dlp`), since IDs differ between package managers
 
 #### 7. Recipe variables & template expressions
