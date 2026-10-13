@@ -15,20 +15,31 @@
 // See that module for the full threat model (shell denylist, path
 // validation, env var sanitization).
 
-use bnto_core::metadata::{InputCardinality, ParameterDef, ParameterType};
-use bnto_core::processor::{FileData, NodeInput, NodeOutput, OutputFile};
+use bnto_core::metadata::InputCardinality;
+use bnto_core::processor::{NodeInput, NodeOutput};
 use bnto_core::{
     BntoError, NodeCategory, NodeMetadata, NodeProcessor, ProcessContext, ProgressReporter,
 };
 
+pub use crate::args::flatten_conditional_args;
+use crate::args::resolve_input_placeholders;
+use crate::file_mode::process_file_mode;
+use crate::parameters::build_parameters;
+use crate::stdout_mode::process_stdout_mode;
 use crate::validate::{self, DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
-/// Placeholder in args that gets replaced with the temp output directory path.
-const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
+// Items the tests below exercise directly.
+#[cfg(test)]
+use crate::file_mode::OUTPUT_DIR_PLACEHOLDER;
+#[cfg(test)]
+use crate::output_files::{collect_output_files, mime_from_extension};
+#[cfg(test)]
+use crate::stdout_mode::make_output_filename;
+#[cfg(test)]
+use bnto_core::processor::FileData;
 
-/// Placeholder in args for URL/text input injected by the CLI's input preparation.
-const URL_PLACEHOLDER: &str = "{{url}}";
-const INPUT_PLACEHOLDER: &str = "{{input}}";
+/// JSON params of a node, as the processor receives them.
+type Params = serde_json::Map<String, serde_json::Value>;
 
 /// Shell command processor — runs external CLI tools.
 pub struct ShellCommand;
@@ -77,56 +88,20 @@ impl NodeProcessor for ShellCommand {
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let command = input
-            .params
-            .get("command")
-            .and_then(serde_json::Value::as_str)
-            .ok_or_else(|| {
-                BntoError::InvalidInput("'command' parameter is required".to_string())
-            })?;
-
-        let mut args: Vec<String> = input
-            .params
-            .get("args")
-            .and_then(serde_json::Value::as_array)
-            .map(|arr| flatten_conditional_args(arr))
-            .unwrap_or_default();
-
-        let _timeout = input
-            .params
-            .get("timeout")
-            .and_then(serde_json::Value::as_u64)
-            .unwrap_or(DEFAULT_TIMEOUT_SECS);
-
-        // Sanitize env vars — strip dangerous ones silently
-        let _env = input
-            .params
-            .get("env")
-            .and_then(serde_json::Value::as_object)
-            .map(validate::sanitize_env)
-            .unwrap_or_default();
-
+        let params = &input.params;
+        let command = required_command(params)?;
+        let mut args = flattened_args(params);
+        // Parsed (env sanitized) but not yet applied to the spawned command.
+        let _timeout = u64_param(params, "timeout", DEFAULT_TIMEOUT_SECS);
+        let _env = sanitized_env(params);
         // Security check: reject shell interpreters and path-based commands
         validate::validate_command(command).map_err(BntoError::InvalidInput)?;
-
         // Resolve {{url}} and {{input}} placeholders from injected params.
         // The CLI injects "url" or "text" params for URL/Text mode recipes.
-        resolve_input_placeholders(&mut args, &input.params);
-
-        let max_output_mb = input
-            .params
-            .get("maxOutputSize")
-            .and_then(serde_json::Value::as_u64)
-            .unwrap_or(DEFAULT_MAX_OUTPUT_MB);
-
-        let output_mode = input
-            .params
-            .get("outputMode")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("stdout");
-
-        match output_mode {
-            "file" => process_file_mode(command, &args, &input, progress, ctx, max_output_mb),
+        resolve_input_placeholders(&mut args, params);
+        let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
+        match params.get("outputMode").and_then(serde_json::Value::as_str) {
+            Some("file") => process_file_mode(command, &args, &input, progress, ctx, max_output_mb),
             _ => process_stdout_mode(command, &args, &input, progress, ctx, max_output_mb),
         }
     }
@@ -150,418 +125,38 @@ impl NodeProcessor for ShellCommand {
     }
 }
 
-/// Resolve `{{url}}` and `{{input}}` placeholders in args from injected params.
-///
-/// The CLI's input preparation injects `"url"` or `"text"` into the node's
-/// params for URL/Text mode recipes. If no placeholder exists in the args
-/// but a `url` param is present, append the URL as the last argument.
-fn resolve_input_placeholders(
-    args: &mut Vec<String>,
-    params: &serde_json::Map<String, serde_json::Value>,
-) {
-    let url = params
-        .get("url")
+/// The required `command` param.
+fn required_command(params: &Params) -> Result<&str, BntoError> {
+    params
+        .get("command")
         .and_then(serde_json::Value::as_str)
-        .unwrap_or("");
-    let text = params
-        .get("text")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("");
-
-    // The input value is whichever was injected (url or text).
-    let input_val = if !url.is_empty() { url } else { text };
-
-    let has_url_placeholder = args.iter().any(|a| a.contains(URL_PLACEHOLDER));
-    let has_input_placeholder = args.iter().any(|a| a.contains(INPUT_PLACEHOLDER));
-
-    // Substitute placeholders in existing args.
-    for arg in args.iter_mut() {
-        if arg.contains(URL_PLACEHOLDER) && !url.is_empty() {
-            *arg = arg.replace(URL_PLACEHOLDER, url);
-        }
-        if arg.contains(INPUT_PLACEHOLDER) && !input_val.is_empty() {
-            *arg = arg.replace(INPUT_PLACEHOLDER, input_val);
-        }
-    }
-
-    // If no placeholder was found but a URL was injected, append it.
-    // This is the common case: `yt-dlp <args...> <url>`
-    if !has_url_placeholder && !has_input_placeholder && !url.is_empty() {
-        args.push(url.to_string());
-    }
+        .ok_or_else(|| BntoError::InvalidInput("'command' parameter is required".to_string()))
 }
 
-/// Stdout mode: capture command stdout as a single output file.
-fn process_stdout_mode(
-    command: &str,
-    args: &[String],
-    input: &NodeInput,
-    progress: &ProgressReporter,
-    ctx: &dyn ProcessContext,
-    max_output_mb: u64,
-) -> Result<NodeOutput, BntoError> {
-    progress.report(10, &format!("Running {command}..."));
-
-    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    let output_bytes = ctx.run_command_streaming(command, &arg_refs, &|line| {
-        progress.report_output(line);
-    })?;
-
-    let limit = validate::max_output_bytes(max_output_mb);
-    if output_bytes.len() > limit {
-        return Err(BntoError::ProcessingFailed(format!(
-            "Command output exceeded {max_output_mb} MB limit"
-        )));
-    }
-
-    progress.report(100, "Done");
-
-    let output_filename = make_output_filename(command, &input.filename);
-
-    let mut metadata = serde_json::Map::new();
-    metadata.insert("command".into(), command.into());
-    metadata.insert(
-        "outputBytes".into(),
-        serde_json::Number::from(output_bytes.len()).into(),
-    );
-
-    Ok(NodeOutput {
-        files: vec![OutputFile {
-            data: FileData::Bytes(output_bytes),
-            filename: output_filename,
-            mime_type: "application/octet-stream".to_string(),
-            metadata: serde_json::Map::new(),
-        }],
-        metadata,
-    })
+/// The `args` param with conditional groups flattened (empty when unset).
+fn flattened_args(params: &Params) -> Vec<String> {
+    params
+        .get("args")
+        .and_then(serde_json::Value::as_array)
+        .map(|arr| flatten_conditional_args(arr))
+        .unwrap_or_default()
 }
 
-/// File mode: run command in a temp dir, collect written files as output.
-/// Replaces `{{output_dir}}` in args with the temp directory path.
-fn process_file_mode(
-    command: &str,
-    args: &[String],
-    _input: &NodeInput,
-    progress: &ProgressReporter,
-    ctx: &dyn ProcessContext,
-    max_output_mb: u64,
-) -> Result<NodeOutput, BntoError> {
-    // Create a temp directory for the command's output files.
-    let temp_dir = ctx.temp_file("-output")?;
-    let output_dir = temp_dir.with_extension("d");
-    std::fs::create_dir_all(&output_dir).map_err(|e| {
-        BntoError::ProcessingFailed(format!("Failed to create output directory: {e}"))
-    })?;
-    let dir_str = output_dir.to_string_lossy();
-
-    // Substitute {{output_dir}} placeholder in args.
-    let resolved_args: Vec<String> = args
-        .iter()
-        .map(|a| a.replace(OUTPUT_DIR_PLACEHOLDER, &dir_str))
-        .collect();
-
-    progress.report(10, &format!("Running {command}..."));
-
-    let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
-    // Run the command with stderr streaming — stdout is captured but unused.
-    let _stdout = ctx.run_command_streaming(command, &arg_refs, &|line| {
-        progress.report_output(line);
-    })?;
-
-    progress.report(80, "Collecting output files...");
-
-    let files = collect_output_files(&output_dir, max_output_mb)?;
-
-    if files.is_empty() {
-        return Err(BntoError::ProcessingFailed(format!(
-            "Command '{command}' produced no output files in {dir_str}"
-        )));
-    }
-
-    // Don't delete temp dir — files are referenced by path (FileData::Path).
-    // Consumers move files out via write_to() / rename(). Empty temp dirs
-    // are cleaned by the OS. This avoids reading multi-GB files into memory.
-
-    progress.report(100, "Done");
-
-    let total_bytes: u64 = files.iter().map(|f| f.data.len().unwrap_or(0)).sum();
-    let mut metadata = serde_json::Map::new();
-    metadata.insert("command".into(), command.into());
-    metadata.insert("outputMode".into(), "file".into());
-    metadata.insert(
-        "outputBytes".into(),
-        serde_json::Number::from(total_bytes).into(),
-    );
-    metadata.insert(
-        "fileCount".into(),
-        serde_json::Number::from(files.len()).into(),
-    );
-
-    Ok(NodeOutput { files, metadata })
+/// A numeric param, or `default` when unset.
+fn u64_param(params: &Params, key: &str, default: u64) -> u64 {
+    params
+        .get(key)
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(default)
 }
 
-/// Collect all files from a directory (recursively) as OutputFile entries.
-///
-/// Commands like yt-dlp create subdirectories in the output dir, so we
-/// walk the entire tree to find all produced files. Filenames preserve
-/// relative paths from the root dir (e.g. `"subdir/video.mp4"`).
-///
-/// Returns `FileData::Path` references — files are NOT read into memory.
-/// Consumers move them to the final destination via `write_to()` (rename).
-fn collect_output_files(
-    dir: &std::path::Path,
-    max_output_mb: u64,
-) -> Result<Vec<OutputFile>, BntoError> {
-    let mut files = Vec::new();
-    collect_output_files_recursive(dir, dir, max_output_mb, &mut files)?;
-    Ok(files)
-}
-
-fn collect_output_files_recursive(
-    root_dir: &std::path::Path,
-    dir: &std::path::Path,
-    max_output_mb: u64,
-    files: &mut Vec<OutputFile>,
-) -> Result<(), BntoError> {
-    let entries = std::fs::read_dir(dir).map_err(|e| {
-        BntoError::ProcessingFailed(format!("Failed to read output directory: {e}"))
-    })?;
-
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            collect_output_files_recursive(root_dir, &path, max_output_mb, files)?;
-            continue;
-        }
-        if !path.is_file() {
-            continue;
-        }
-        // Preserve relative path from root so subdirectory structure is retained.
-        let filename = path
-            .strip_prefix(root_dir)
-            .map(bnto_core::slash_path)
-            .unwrap_or_else(|_| {
-                path.file_name()
-                    .map(|n| n.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| "output".to_string())
-            });
-
-        // Check file size via metadata — validates without loading into memory.
-        let file_size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
-        let limit = validate::max_output_bytes(max_output_mb) as u64;
-        if file_size > limit {
-            return Err(BntoError::ProcessingFailed(format!(
-                "Output file '{}' is {} MB, exceeding the {} MB limit",
-                filename,
-                file_size / (1024 * 1024),
-                max_output_mb
-            )));
-        }
-
-        // Return a path reference — file stays on disk, not read into memory.
-        let mime = mime_from_extension(&filename);
-        files.push(OutputFile {
-            data: FileData::Path(path.to_path_buf()),
-            filename,
-            mime_type: mime,
-            metadata: serde_json::Map::new(),
-        });
-    }
-    Ok(())
-}
-
-/// Derive MIME type from file extension for common media formats.
-fn mime_from_extension(filename: &str) -> String {
-    let ext = filename
-        .rsplit_once('.')
-        .map(|(_, e)| e.to_lowercase())
-        .unwrap_or_default();
-
-    match ext.as_str() {
-        "mp4" => "video/mp4",
-        "webm" => "video/webm",
-        "mkv" => "video/x-matroska",
-        "mp3" => "audio/mpeg",
-        "m4a" => "audio/mp4",
-        "ogg" | "opus" => "audio/ogg",
-        "wav" => "audio/wav",
-        "flac" => "audio/flac",
-        "json" => "application/json",
-        "txt" | "log" => "text/plain",
-        _ => "application/octet-stream",
-    }
-    .to_string()
-}
-
-/// Flatten a resolved `args` array that may contain conditional groups.
-///
-/// After template resolution, the args array can contain:
-/// - **Flat string**: included if non-empty, dropped if `""`
-/// - **Nested array**: ALL elements must be non-empty strings → flattened
-///   into parent; if ANY element is `""` → entire group dropped
-/// - **Other types**: dropped (backward compat)
-///
-/// This enables conditional flag groups in recipes:
-/// ```json
-/// "args": ["--always", ["--cookies-from-browser", "{{fields.browser}}"], "{{fields.thumbnail}}"]
-/// ```
-/// When `browser=""`: `["--always"]`
-/// When `browser="chrome"`: `["--always", "--cookies-from-browser", "chrome"]`
-pub fn flatten_conditional_args(args: &[serde_json::Value]) -> Vec<String> {
-    let mut result = Vec::new();
-    for item in args {
-        match item {
-            serde_json::Value::String(s) if !s.is_empty() => {
-                result.push(s.clone());
-            }
-            serde_json::Value::Array(group) => {
-                let strings: Vec<&str> =
-                    group.iter().filter_map(serde_json::Value::as_str).collect();
-                // All elements must be present strings AND non-empty.
-                let all_non_empty =
-                    strings.len() == group.len() && strings.iter().all(|s| !s.is_empty());
-                if all_non_empty {
-                    result.extend(strings.into_iter().map(String::from));
-                }
-            }
-            _ => {}
-        }
-    }
-    result
-}
-
-/// Generate a filename for stdout mode output.
-fn make_output_filename(command: &str, input_filename: &str) -> String {
-    if input_filename.is_empty() {
-        format!("{command}-output")
-    } else {
-        let stem = input_filename
-            .rsplit_once('.')
-            .map(|(s, _)| s)
-            .unwrap_or(input_filename);
-        format!("{stem}-{command}-output")
-    }
-}
-
-fn build_parameters() -> Vec<ParameterDef> {
-    vec![
-        ParameterDef {
-            name: "command".to_string(),
-            label: "Command".to_string(),
-            description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH."
-                .to_string(),
-            param_type: ParameterType::String,
-            default: None,
-            constraints: None,
-            placeholder: Some("ffmpeg".to_string()),
-            visible_when: None,
-            required_when: None,
-            surfaceable: true,
-            group: None,
-            suffix: None,
-            control: None,
-            accept: None,
-            presets: None,
-            inverted: None,
-        },
-        ParameterDef {
-            name: "args".to_string(),
-            label: "Arguments".to_string(),
-            description: "Command arguments as an array of strings.".to_string(),
-            param_type: ParameterType::String,
-            default: None,
-            constraints: None,
-            placeholder: None,
-            visible_when: None,
-            required_when: None,
-            surfaceable: true,
-            group: None,
-            suffix: None,
-            control: Some("tagPicker".to_string()),
-            accept: None,
-            presets: None,
-            inverted: None,
-        },
-        ParameterDef {
-            name: "outputMode".to_string(),
-            label: "Output Mode".to_string(),
-            description: "How to collect output. 'stdout' captures command output. \
-                'file' reads files written by the command to a temp directory \
-                (use {{output_dir}} in args to inject the path)."
-                .to_string(),
-            param_type: ParameterType::String,
-            default: Some(serde_json::Value::String("stdout".to_string())),
-            constraints: None,
-            placeholder: None,
-            visible_when: None,
-            required_when: None,
-            surfaceable: true,
-            group: None,
-            suffix: None,
-            control: None,
-            accept: None,
-            presets: None,
-            inverted: None,
-        },
-        ParameterDef {
-            name: "timeout".to_string(),
-            label: "Timeout".to_string(),
-            description: "Maximum execution time in seconds. Default: 300.".to_string(),
-            param_type: ParameterType::Number,
-            default: Some(serde_json::Value::Number(serde_json::Number::from(
-                DEFAULT_TIMEOUT_SECS,
-            ))),
-            constraints: None,
-            placeholder: None,
-            visible_when: None,
-            required_when: None,
-            surfaceable: true,
-            group: None,
-            suffix: Some("seconds".to_string()),
-            control: None,
-            accept: None,
-            presets: None,
-            inverted: None,
-        },
-        ParameterDef {
-            name: "maxOutputSize".to_string(),
-            label: "Max Output Size".to_string(),
-            description: "Maximum size per output file in megabytes. Default: 100 MB.".to_string(),
-            param_type: ParameterType::Number,
-            default: Some(serde_json::Value::Number(serde_json::Number::from(
-                DEFAULT_MAX_OUTPUT_MB,
-            ))),
-            constraints: None,
-            placeholder: None,
-            visible_when: None,
-            required_when: None,
-            surfaceable: true,
-            group: None,
-            suffix: Some("MB".to_string()),
-            control: None,
-            accept: None,
-            presets: None,
-            inverted: None,
-        },
-        ParameterDef {
-            name: "env".to_string(),
-            label: "Environment".to_string(),
-            description: "Additional environment variables for the command.".to_string(),
-            param_type: ParameterType::Object,
-            default: None,
-            constraints: None,
-            placeholder: None,
-            visible_when: None,
-            required_when: None,
-            surfaceable: false,
-            group: None,
-            suffix: None,
-            control: None,
-            accept: None,
-            presets: None,
-            inverted: None,
-        },
-    ]
+/// Env vars with dangerous entries stripped silently.
+fn sanitized_env(params: &Params) -> Params {
+    params
+        .get("env")
+        .and_then(serde_json::Value::as_object)
+        .map(validate::sanitize_env)
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
