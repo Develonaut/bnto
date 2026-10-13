@@ -509,6 +509,21 @@ mod tests {
         );
     }
 
+    /// Block until `registry` holds a child (spawn is quick), returning its id.
+    fn wait_until_registered(registry: &ProcessRegistry) -> u32 {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        while registry.active().is_empty() {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "child never registered"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        registry.active()[0]
+    }
+
+    // Unix-only: drives `sh` and probes the process group with `kill(-pgid, 0)`.
+    // The Windows twin below covers the taskkill path.
     #[cfg(unix)]
     #[test]
     fn terminate_all_unblocks_streaming_command() {
@@ -519,17 +534,7 @@ mod tests {
             // Backgrounded sleep = grandchild; only a group kill reaps it.
             ctx.run_command_streaming("sh", &["-c", "sleep 30 & wait"], &|_| {})
         });
-
-        // Wait for the child to be registered (spawn is quick).
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
-        while registry.active().is_empty() {
-            assert!(
-                std::time::Instant::now() < deadline,
-                "child never registered"
-            );
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        let pgid = registry.active()[0];
+        let pgid = wait_until_registered(&registry);
 
         let start = std::time::Instant::now();
         registry.terminate_all();
@@ -542,6 +547,29 @@ mod tests {
         );
         let alive = unsafe { libc::kill(-(pgid as i32), 0) };
         assert_eq!(alive, -1, "whole process group must be dead");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn terminate_all_unblocks_streaming_command_on_windows() {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+
+        // ~30s on its own; only a tree kill makes it return early.
+        let handle = std::thread::spawn(move || {
+            ctx.run_command_streaming("ping", &["-n", "30", "127.0.0.1"], &|_| {})
+        });
+        wait_until_registered(&registry);
+
+        let start = std::time::Instant::now();
+        registry.terminate_all();
+        let result = handle.join().expect("streaming thread panicked");
+
+        assert!(result.is_err(), "killed command must report failure");
+        assert!(
+            start.elapsed() < std::time::Duration::from_secs(5),
+            "run_command_streaming must unblock promptly after taskkill"
+        );
     }
 
     #[test]
