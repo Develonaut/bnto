@@ -144,7 +144,7 @@ fn run_bridge(
 
     // Create a native context for the current working directory.
     let ctx = match NativeContext::current_dir() {
-        Ok(c) => c,
+        Ok(c) => c.with_dry_run(preview_mode),
         Err(e) => {
             let _ = tx.send(BridgeEvent::Error(format!("{e}")));
             return;
@@ -225,7 +225,7 @@ fn run_bridge(
     // Normal mode: write output files using mode-aware dispatch.
     let file_metadata: Vec<FileResultMeta> = extract_file_metadata(&result);
 
-    if let Err(e) = io::write_results_with_mode(&result, &mode, &output_dir_str) {
+    if let Err(e) = io::write_results_with_mode(&result, &mode, &output_dir_str, false) {
         let _ = tx.send(BridgeEvent::Error(e));
         return;
     }

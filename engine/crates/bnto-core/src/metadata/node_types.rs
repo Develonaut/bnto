@@ -301,7 +301,8 @@ fn system_node_types() -> Vec<NodeTypeInfo> {
     vec![node_type!(
         "shell-command",
         "Shell Command",
-        "Execute shell commands with stall detection, retry, and streaming output.",
+        "Execute shell commands with stall detection, retry, and streaming output. \
+         Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
         NodeCategory::System,
         false,
         "server",

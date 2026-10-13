@@ -20,8 +20,13 @@ enum Outcome {
 }
 
 /// Copy `input` to `dest_path` if the target is missing or older, and report
-/// the outcome per file. Path data only: bytes carry no source time.
-pub(crate) fn process_newer(input: NodeInput, dest_path: &Path) -> Result<NodeOutput, BntoError> {
+/// the outcome per file; a dry run decides the same and writes nothing.
+/// Path data only: bytes carry no source time.
+pub(crate) fn process_newer(
+    input: NodeInput,
+    dest_path: &Path,
+    dry_run: bool,
+) -> Result<NodeOutput, BntoError> {
     let FileData::Path(src) = &input.data else {
         return Err(BntoError::InvalidInput(
             "conflict \"newer\" needs a source file on disk; bytes have no modification time"
@@ -35,7 +40,7 @@ pub(crate) fn process_newer(input: NodeInput, dest_path: &Path) -> Result<NodeOu
         )));
     }
     let outcome = decide(src, dest_path, tolerance_ms(&input.params)?)?;
-    if outcome == Outcome::Copied {
+    if outcome == Outcome::Copied && !dry_run {
         overwrite_in_place(src, dest_path)?;
     }
     Ok(passthrough_output(input, outcome))

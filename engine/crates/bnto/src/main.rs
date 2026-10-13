@@ -3,6 +3,7 @@
 // Usage: bnto run <recipe> <file1> [file2 ...]
 //        bnto run <recipe> <url>  (for url-mode recipes)
 //        bnto run <recipe> <file1> --param quality=50
+//        bnto run <recipe> <file1> --dry-run  (run every node, write nothing)
 //        bnto list
 //        bnto info <recipe>
 //        bnto dry-run <recipe> [files...] [--param key=value]
@@ -71,6 +72,11 @@ enum Command {
         /// Skip trust consent prompt for local recipes with shell commands.
         #[arg(long)]
         yes: bool,
+
+        /// Run every node but write nothing; the summary says what would have
+        /// been written. shell-command nodes still run.
+        #[arg(long)]
+        dry_run: bool,
     },
 
     /// List available recipes (built-in and library).
@@ -211,6 +217,7 @@ fn main() {
             output,
             param,
             yes,
+            dry_run,
         }) => {
             telemetry::capture(telemetry::events::cli_command("run"));
             run_recipe(
@@ -218,7 +225,7 @@ fn main() {
                 &inputs,
                 output.as_deref(),
                 &param,
-                yes,
+                RunFlags { yes, dry_run },
                 &logger,
                 &catalog,
             );
@@ -330,8 +337,8 @@ fn read_recipe(path: &str, catalog: &RecipeCatalog) -> String {
 }
 
 /// Write pipeline results using mode-aware output, print summary and any warnings.
-fn write_output(result: &bnto_core::PipelineResult, mode: &str, output_dir: &str) {
-    let outcome = match io::write_results_with_mode(result, mode, output_dir) {
+fn write_output(result: &bnto_core::PipelineResult, mode: &str, output_dir: &str, dry_run: bool) {
+    let outcome = match io::write_results_with_mode(result, mode, output_dir, dry_run) {
         Ok(o) => o,
         Err(e) => {
             eprintln!("{} {e}", "Error writing output:".red());
@@ -339,34 +346,54 @@ fn write_output(result: &bnto_core::PipelineResult, mode: &str, output_dir: &str
         }
     };
 
+    // Warnings and totals print first so the Done line is always last.
+    for warning in &result.warnings {
+        eprintln!("  {} {warning}", "Warning:".yellow().bold());
+    }
+    io::warn_files_left_as_newer(result);
+    io::print_copy_totals(result, dry_run);
+
     let duration = format_duration(result.duration_ms);
+    let (written, renamed, tag) = if dry_run {
+        (
+            "would be written",
+            "would be renamed in place",
+            " (dry run)",
+        )
+    } else {
+        ("written", "renamed in place", "")
+    };
     match outcome {
         io::WriteOutcome::Written { dir, count } => {
             eprintln!(
-                "\n{} {count} file{} written to {dir}/ in {duration}",
+                "\n{} {count} file{} {written} to {dir}/ in {duration}{tag}",
                 "Done.".green().bold(),
                 if count == 1 { "" } else { "s" },
             );
         }
         io::WriteOutcome::Overwritten { count } => {
             eprintln!(
-                "\n{} {count} file{} renamed in place in {duration}",
+                "\n{} {count} file{} {renamed} in {duration}{tag}",
                 "Done.".green().bold(),
                 if count == 1 { "" } else { "s" },
             );
         }
         io::WriteOutcome::Message { summary } => {
-            eprintln!("\n{} {summary}", "Done.".green().bold());
+            eprintln!("\n{} {summary}{tag}", "Done.".green().bold());
         }
         io::WriteOutcome::None => {
-            eprintln!("\n{} in {duration}", "Done.".green().bold());
+            eprintln!("\n{} in {duration}{tag}", "Done.".green().bold());
         }
     }
+}
 
-    for warning in &result.warnings {
-        eprintln!("  {} {warning}", "Warning:".yellow().bold());
-    }
-    io::warn_files_left_as_newer(result);
+/// The `bnto run` switches that change what a run does.
+#[derive(Clone, Copy)]
+struct RunFlags {
+    /// `--yes`: skip the trust consent prompt.
+    yes: bool,
+    /// `--dry-run`: run every node, write nothing.
+    dry_run: bool,
 }
 
 fn run_recipe(
@@ -374,12 +401,13 @@ fn run_recipe(
     inputs: &[String],
     output_override: Option<&str>,
     param_overrides: &[String],
-    skip_consent: bool,
+    flags: RunFlags,
     logger: &Arc<dyn Logger>,
     catalog: &RecipeCatalog,
 ) {
+    let RunFlags { yes, dry_run } = flags;
     let raw_json = read_recipe(recipe_path, catalog);
-    check_trust(recipe_path, &raw_json, skip_consent, catalog);
+    check_trust(recipe_path, &raw_json, yes, catalog);
     let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
     print_run_banner(recipe_path, &raw_json, &prepared);
 
@@ -402,7 +430,8 @@ fn run_recipe(
     });
 
     let start = std::time::Instant::now();
-    let ctx = unwrap_or_exit(context::NativeContext::current_dir());
+    let ctx =
+        unwrap_or_exit(context::NativeContext::current_dir().map(|c| c.with_dry_run(dry_run)));
 
     // Resolve output mode from the recipe definition.
     let mode = serde_json::from_str::<bnto_core::PipelineDefinition>(&prepared.definition_json)
@@ -419,10 +448,11 @@ fn run_recipe(
 
     // Create output dir before pipeline so progressive output can write there.
     // Skip for overwrite mode (files stay in their source directories).
-    if mode != "overwrite" {
+    // A dry run writes nothing, so the progressive reporter gets no directory either.
+    if mode != "overwrite" && !dry_run {
         let _ = std::fs::create_dir_all(&output_dir);
     }
-    let progressive_dir = if mode == "overwrite" {
+    let progressive_dir = if mode == "overwrite" || dry_run {
         None
     } else {
         Some(output_dir.clone())
@@ -446,7 +476,7 @@ fn run_recipe(
                 true,
                 &param_names,
             ));
-            write_output(&result, &mode, &output_dir);
+            write_output(&result, &mode, &output_dir, dry_run);
         }
         Err(e) => {
             logger.log(LogEntry {

@@ -59,6 +59,12 @@ pub trait ProcessContext: Send + Sync {
     fn output_dir(&self) -> Option<PathBuf> {
         None
     }
+
+    /// True on a dry run: a node that writes decides what it would do and
+    /// writes nothing. Defaults to false.
+    fn dry_run(&self) -> bool {
+        false
+    }
 }
 
 /// No-op context for browser (WASM) execution.
@@ -159,6 +165,11 @@ mod tests {
     fn test_noop_context_home_dir_returns_none() {
         let ctx = NoopContext;
         assert!(ctx.home_dir().is_none());
+    }
+
+    #[test]
+    fn test_noop_context_dry_run_is_false() {
+        assert!(!NoopContext.dry_run());
     }
 
     #[test]

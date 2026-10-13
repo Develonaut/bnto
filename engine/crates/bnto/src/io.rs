@@ -49,15 +49,10 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 /// Uses `FileData::copy_to()` which copies for path-referenced files
 /// and writes bytes for in-memory files. Source files are never modified.
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), String> {
+    check_file_names(result)?;
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
     for file in &result.files {
-        if file.name.is_empty() {
-            return Err(
-                "Pipeline produced a file with an empty name — cannot write to output directory"
-                    .to_string(),
-            );
-        }
         let out_path = Path::new(output_dir).join(&file.name);
         if let Some(parent) = out_path.parent() {
             std::fs::create_dir_all(parent)
@@ -68,6 +63,17 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), St
             .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))?;
     }
 
+    Ok(())
+}
+
+/// Fail on a result file with no name, for a real write and a dry run alike.
+fn check_file_names(result: &PipelineResult) -> Result<(), String> {
+    if result.files.iter().any(|f| f.name.is_empty()) {
+        return Err(
+            "Pipeline produced a file with an empty name — cannot write to output directory"
+                .to_string(),
+        );
+    }
     Ok(())
 }
 
@@ -94,20 +100,27 @@ pub enum WriteOutcome {
 /// - `overwrite`: Rename source files in place (requires `FileData::Path`).
 /// - `message`: No file writes, returns a summary.
 /// - `none`: No output action.
+///
+/// On a `dry_run` nothing is written or renamed; the outcome is what a real
+/// run would report.
 pub fn write_results_with_mode(
     result: &PipelineResult,
     mode: &str,
     output_dir: &str,
+    dry_run: bool,
 ) -> Result<WriteOutcome, String> {
     match mode {
         "write" => {
-            write_results(result, output_dir)?;
+            check_file_names(result)?;
+            if !dry_run {
+                write_results(result, output_dir)?;
+            }
             Ok(WriteOutcome::Written {
                 dir: output_dir.to_string(),
                 count: result.files.len(),
             })
         }
-        "overwrite" => overwrite_in_place(result),
+        "overwrite" => overwrite_in_place(result, dry_run),
         "message" => {
             let summary = if result.files.is_empty() {
                 "No output files produced.".to_string()
@@ -123,7 +136,7 @@ pub fn write_results_with_mode(
 
 /// Rename source files in place — the file at `FileData::Path(src)` gets
 /// renamed to the pipeline's output filename in the same directory.
-fn overwrite_in_place(result: &PipelineResult) -> Result<WriteOutcome, String> {
+fn overwrite_in_place(result: &PipelineResult, dry_run: bool) -> Result<WriteOutcome, String> {
     use bnto_core::processor::FileData;
 
     let mut count = 0;
@@ -150,8 +163,11 @@ fn overwrite_in_place(result: &PipelineResult) -> Result<WriteOutcome, String> {
             continue;
         }
 
-        std::fs::rename(src, &dest)
-            .map_err(|e| format!("Cannot rename {} → {}: {e}", src.display(), dest.display()))?;
+        if !dry_run {
+            std::fs::rename(src, &dest).map_err(|e| {
+                format!("Cannot rename {} → {}: {e}", src.display(), dest.display())
+            })?;
+        }
         count += 1;
     }
 
@@ -167,6 +183,34 @@ pub fn files_left_as_newer(result: &PipelineResult) -> Vec<&str> {
         .filter(|f| f.metadata.get("skipped_newer").and_then(|v| v.as_i64()) == Some(1))
         .map(|f| f.name.as_str())
         .collect()
+}
+
+/// Per-file `file-copy` outcomes summed: (copied, up to date, newer at the
+/// destination). `None` when no file carries any of the three flags.
+pub fn copy_totals(result: &PipelineResult) -> Option<(usize, usize, usize)> {
+    let keys = ["copied", "up_to_date", "skipped_newer"];
+    let count = |key: &str| {
+        result
+            .files
+            .iter()
+            .filter(|f| f.metadata.get(key).and_then(|v| v.as_i64()) == Some(1))
+            .count()
+    };
+    let seen = result
+        .files
+        .iter()
+        .any(|f| keys.iter().any(|k| f.metadata.contains_key(*k)));
+    seen.then(|| (count(keys[0]), count(keys[1]), count(keys[2])))
+}
+
+/// Print one `Copy:` line from `copy_totals`; a dry run says `would be copied`.
+pub fn print_copy_totals(result: &PipelineResult, dry_run: bool) {
+    if let Some((copied, up_to_date, newer)) = copy_totals(result) {
+        let verb = if dry_run { "would be copied" } else { "copied" };
+        eprintln!(
+            "  Copy: {copied} {verb}, {up_to_date} up to date, {newer} newer at the destination"
+        );
+    }
 }
 
 /// Print one warning line naming the files `files_left_as_newer` finds.
@@ -272,6 +316,30 @@ mod tests {
     }
 
     #[test]
+    fn test_copy_totals_none_without_flags() {
+        assert_eq!(copy_totals(&result_with_flags(&[("a", None)])), None);
+        assert_eq!(copy_totals(&result_with_flags(&[])), None);
+    }
+
+    #[test]
+    fn test_copy_totals_sums_mixed_flags() {
+        let mut result = result_with_flags(&[("a", Some(1)), ("b", Some(0)), ("c", None)]);
+        result.files[1].metadata.insert("copied".into(), 1.into());
+        result.files[2].metadata.insert("copied".into(), 1.into());
+        result.files[2]
+            .metadata
+            .insert("up_to_date".into(), 1.into());
+        assert_eq!(copy_totals(&result), Some((2, 1, 1)));
+    }
+
+    #[test]
+    fn test_dry_run_write_mode_errors_on_empty_filename() {
+        let result = make_result_with_bytes(b"data", "");
+        let err = write_results_with_mode(&result, "write", "out", true).unwrap_err();
+        assert!(err.contains("empty name"), "Error: {err}");
+    }
+
+    #[test]
     fn test_files_left_as_newer_empty_result() {
         assert!(files_left_as_newer(&result_with_flags(&[])).is_empty());
     }
@@ -339,7 +407,8 @@ mod tests {
         let out_dir = tmp.join("output");
         let result = make_result_with_path(src_file.clone(), "output.txt");
 
-        let outcome = write_results_with_mode(&result, "write", out_dir.to_str().unwrap()).unwrap();
+        let outcome =
+            write_results_with_mode(&result, "write", out_dir.to_str().unwrap(), false).unwrap();
 
         assert!(matches!(outcome, WriteOutcome::Written { count: 1, .. }));
         assert_eq!(std::fs::read(out_dir.join("output.txt")).unwrap(), b"hello");
@@ -359,7 +428,7 @@ mod tests {
         std::fs::write(&old_file, b"important data").unwrap();
 
         let result = make_result_with_path(old_file.clone(), "new-name.txt");
-        let outcome = write_results_with_mode(&result, "overwrite", "").unwrap();
+        let outcome = write_results_with_mode(&result, "overwrite", "", false).unwrap();
 
         assert_eq!(outcome, WriteOutcome::Overwritten { count: 1 });
         assert!(!old_file.exists(), "Old file should be gone");
@@ -381,7 +450,7 @@ mod tests {
         std::fs::write(&file, b"content").unwrap();
 
         let result = make_result_with_path(file.clone(), "same.txt");
-        let outcome = write_results_with_mode(&result, "overwrite", "").unwrap();
+        let outcome = write_results_with_mode(&result, "overwrite", "", false).unwrap();
 
         assert_eq!(outcome, WriteOutcome::Overwritten { count: 1 });
         assert!(file.exists(), "File should still exist");
@@ -393,7 +462,7 @@ mod tests {
     #[test]
     fn test_overwrite_mode_errors_on_bytes_data() {
         let result = make_result_with_bytes(b"data", "anything.txt");
-        let err = write_results_with_mode(&result, "overwrite", "").unwrap_err();
+        let err = write_results_with_mode(&result, "overwrite", "", false).unwrap_err();
         assert!(
             err.contains("Overwrite mode requires FileData::Path"),
             "Error: {err}"
@@ -407,7 +476,8 @@ mod tests {
         std::fs::create_dir_all(&tmp).unwrap();
 
         let result = make_result_with_bytes(b"data", "file.txt");
-        let outcome = write_results_with_mode(&result, "message", tmp.to_str().unwrap()).unwrap();
+        let outcome =
+            write_results_with_mode(&result, "message", tmp.to_str().unwrap(), false).unwrap();
 
         assert!(matches!(outcome, WriteOutcome::Message { .. }));
         // No files should have been written.
@@ -424,7 +494,8 @@ mod tests {
         std::fs::create_dir_all(&tmp).unwrap();
 
         let result = make_result_with_bytes(b"data", "file.txt");
-        let outcome = write_results_with_mode(&result, "none", tmp.to_str().unwrap()).unwrap();
+        let outcome =
+            write_results_with_mode(&result, "none", tmp.to_str().unwrap(), false).unwrap();
 
         assert_eq!(outcome, WriteOutcome::None);
         let entries: Vec<_> = std::fs::read_dir(&tmp).unwrap().collect();
@@ -444,7 +515,7 @@ mod tests {
 
         // Pipeline output has a directory prefix — overwrite should only use the leaf.
         let result = make_result_with_path(src.clone(), "group/renamed.txt");
-        let outcome = write_results_with_mode(&result, "overwrite", "").unwrap();
+        let outcome = write_results_with_mode(&result, "overwrite", "", false).unwrap();
 
         assert_eq!(outcome, WriteOutcome::Overwritten { count: 1 });
         assert!(!src.exists());
@@ -454,6 +525,51 @@ mod tests {
         );
 
         let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_dry_run_write_mode_writes_nothing_and_counts() {
+        let tmp = std::env::temp_dir().join("bnto-test-dry-write");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+        let src = tmp.join("source.txt");
+        std::fs::write(&src, b"hello").unwrap();
+        let out_dir = tmp.join("output");
+        let result = make_result_with_path(src, "output.txt");
+
+        let outcome =
+            write_results_with_mode(&result, "write", out_dir.to_str().unwrap(), true).unwrap();
+
+        assert!(matches!(outcome, WriteOutcome::Written { count: 1, .. }));
+        assert!(!out_dir.exists(), "dry run must not create the output dir");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_dry_run_overwrite_mode_leaves_source_and_counts() {
+        let tmp = std::env::temp_dir().join("bnto-test-dry-overwrite");
+        let _ = std::fs::remove_dir_all(&tmp);
+        std::fs::create_dir_all(&tmp).unwrap();
+        let old_file = tmp.join("old-name.txt");
+        std::fs::write(&old_file, b"data").unwrap();
+        let result = make_result_with_path(old_file.clone(), "new-name.txt");
+
+        let outcome = write_results_with_mode(&result, "overwrite", "", true).unwrap();
+
+        assert_eq!(outcome, WriteOutcome::Overwritten { count: 1 });
+        assert!(old_file.exists(), "dry run must not rename the source");
+        assert!(!tmp.join("new-name.txt").exists());
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn test_dry_run_overwrite_mode_still_errors_on_bytes_data() {
+        let result = make_result_with_bytes(b"data", "anything.txt");
+        let err = write_results_with_mode(&result, "overwrite", "", true).unwrap_err();
+        assert!(
+            err.contains("Overwrite mode requires FileData::Path"),
+            "Error: {err}"
+        );
     }
 
     // --- Existing tests ---

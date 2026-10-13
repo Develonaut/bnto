@@ -36,6 +36,8 @@ pub struct NativeContext {
     /// Live process groups of spawned commands, killable from cancel/quit
     /// paths. Defaults to the process-wide registry.
     registry: Arc<ProcessRegistry>,
+    /// Set by `bnto run --dry-run`: writing nodes decide and write nothing.
+    dry_run: bool,
 }
 
 impl NativeContext {
@@ -51,6 +53,7 @@ impl NativeContext {
             project_env,
             user_env,
             registry: crate::process_registry::global(),
+            dry_run: false,
         }
     }
 
@@ -82,7 +85,14 @@ impl NativeContext {
             project_env,
             user_env,
             registry: crate::process_registry::global(),
+            dry_run: false,
         })
+    }
+
+    /// Mark this context as a dry run (see `ProcessContext::dry_run`).
+    pub fn with_dry_run(mut self, dry_run: bool) -> Self {
+        self.dry_run = dry_run;
+        self
     }
 
     /// Prepare a command in its own process group so cancel/quit/signal
@@ -135,6 +145,10 @@ fn load_user_dotenv() -> HashMap<String, String> {
 }
 
 impl ProcessContext for NativeContext {
+    fn dry_run(&self) -> bool {
+        self.dry_run
+    }
+
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
         let child = self
             .group_command(cmd, args)
@@ -493,6 +507,7 @@ mod tests {
             project_env: HashMap::new(),
             user_env: HashMap::new(),
             registry,
+            dry_run: false,
         }
     }
 
@@ -651,6 +666,7 @@ mod tests {
                 .into_iter()
                 .collect(),
             registry: Arc::new(ProcessRegistry::new()),
+            dry_run: false,
         };
         assert_eq!(
             ctx.env_var("KEY"),
@@ -670,6 +686,7 @@ mod tests {
                 .into_iter()
                 .collect(),
             registry: Arc::new(ProcessRegistry::new()),
+            dry_run: false,
         };
         assert_eq!(ctx.env_var("USER_ONLY_KEY"), Some("user_val".to_string()),);
     }
@@ -683,6 +700,7 @@ mod tests {
             project_env: HashMap::new(),
             user_env: HashMap::new(),
             registry: Arc::new(ProcessRegistry::new()),
+            dry_run: false,
         };
         assert_eq!(ctx.home_dir(), Some(Path::new("/custom/bnto")),);
     }
@@ -696,7 +714,15 @@ mod tests {
             project_env: HashMap::new(),
             user_env: HashMap::new(),
             registry: Arc::new(ProcessRegistry::new()),
+            dry_run: false,
         };
         assert_eq!(ctx.output_dir(), Some(PathBuf::from("/custom/bnto/output")),);
+    }
+
+    #[test]
+    fn test_with_dry_run_sets_dry_run() {
+        let ctx = NativeContext::current_dir().unwrap();
+        assert!(!ctx.dry_run());
+        assert!(ctx.with_dry_run(true).dry_run());
     }
 }
