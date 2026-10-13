@@ -5,7 +5,7 @@
 
 [package]
 name = "tonkotsu"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version.workspace = true
 description = "Rich terminal forms for ratatui — TextInput, Select, Confirm, Number, TextArea, FilePath with pure-function rendering"
