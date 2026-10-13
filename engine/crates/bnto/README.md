@@ -92,7 +92,14 @@ The TUI uses the same Motorway color palette as the web app, adapted for termina
 
 ```
 src/
-+-- main.rs                # CLI entry point (clap parser)
++-- main.rs                # CLI entry point (storage, logger, catalog, dispatch)
++-- cli.rs                 # clap definitions for every subcommand
++-- dispatch.rs            # Routes a parsed subcommand to its implementation
++-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
++-- run_output.rs          # Writes run results and prints the summary
++-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
++-- inspect.rs             # `bnto list` / `info` / `dry-run`
++-- launch.rs              # `bnto tui` launcher
 +-- context.rs             # NativeContext for system access (commands, temp files, env)
 +-- doctor.rs              # `bnto doctor` command (processor + recipe-level dependency checks)
 +-- info.rs                # `bnto info` command (recipe details)
@@ -107,11 +114,13 @@ src/
 +-- tui/
     +-- mod.rs             # TUI entry point, event loop, terminal setup/teardown
     +-- app.rs             # App state machine (Screen enum, AppModel, update())
+    +-- app/               # AppMessage enum and AppModel construction
     +-- bridge.rs          # Pipeline execution bridge (engine -> TUI progress)
+    +-- bridge/            # Engine event mapping and output-file helpers
     +-- config.rs          # Persistent settings (theme, output dir)
     +-- event.rs           # Terminal event polling
     +-- format.rs          # File size and path formatting
-    +-- keys.rs            # Key-to-message mapping (global + per-screen)
+    +-- keys/              # Key-to-message mapping (router + one file per screen)
     +-- palette.rs         # Generated color constants from theme/palette.toml
     +-- render.rs          # Root render dispatcher
     +-- render_detail.rs   # Detail screen renderer
