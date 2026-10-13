@@ -748,6 +748,46 @@ mod tests {
         }
     }
 
+    /// Context that really spawns commands, to prove the probe works on the host.
+    struct HostContext;
+
+    impl ProcessContext for HostContext {
+        fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            let out = std::process::Command::new(cmd)
+                .args(args)
+                .output()
+                .map_err(|e| BntoError::ProcessingFailed(e.to_string()))?;
+            if out.status.success() {
+                Ok(out.stdout)
+            } else {
+                Err(BntoError::ProcessingFailed(format!("{cmd} failed")))
+            }
+        }
+        fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&Path, BntoError> {
+            Err(BntoError::ProcessingFailed("mock".to_string()))
+        }
+    }
+
+    #[test]
+    fn test_preflight_finds_git_on_host() {
+        let git = Dependency {
+            binary: "git".to_string(),
+            version: String::new(),
+            install_hint: String::new(),
+            install_hints: Default::default(),
+            homepage: String::new(),
+        };
+        let def = make_definition_with_requires(&["input", "output"], vec![git]);
+        let result = check_pipeline_dependencies(&def, &NodeRegistry::new(), &HostContext);
+        assert!(result.is_ok(), "{result:?}");
+    }
+
     #[test]
     fn test_check_deps_version_satisfied() {
         let ctx = VersionedContext::new("ffmpeg version 6.1.1 Copyright");

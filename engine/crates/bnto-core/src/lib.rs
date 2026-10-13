@@ -91,6 +91,9 @@ pub mod dotenv;
 /// Recipes declare what secrets they need; the engine validates before execution.
 pub mod secrets;
 
+/// Relative paths as output-file names, `/`-separated on every OS.
+pub mod slash_path;
+
 /// Version constraint checking for external dependencies.
 /// Parses `--version` output, extracts version numbers, validates against
 /// constraint strings like `">=6.0"`.
@@ -129,6 +132,7 @@ pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;
 pub use secrets::SecretDef;
+pub use slash_path::slash_path;
 pub use version::{VersionCheckResult, VersionConstraint, check_version};
 
 // =============================================================================

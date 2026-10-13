@@ -2018,10 +2018,11 @@ mod tests {
 
     #[test]
     fn editor_save_error_shows_status_message() {
-        // Use a path that doesn't exist and can't be created.
-        let paths = BntoPaths {
-            home: std::path::PathBuf::from("/nonexistent"),
-        };
+        // A home that is a regular file: `recipes/` cannot be created under it.
+        let tmp = tempfile::tempdir().unwrap();
+        let home = tmp.path().join("not-a-dir");
+        std::fs::write(&home, b"").unwrap();
+        let paths = BntoPaths { home };
         let mut app = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
         let mut editor = bnto_core::editor::EditorModel::new();
         editor.recipe_name = "Will Fail".to_string();
