@@ -4,6 +4,7 @@ import type { Definition } from "@bnto/core";
 import { deriveAcceptedTypes, NODE_TYPE_INFO } from "@bnto/core";
 import { FileUpload, FileUploadDropzone, toDropzoneAccept } from "@bnto/ui";
 import { DropzoneContent } from "./DropzoneContent";
+import { NoInputMode } from "./NoInputMode";
 import { PlaceholderInputMode } from "./PlaceholderInputMode";
 
 interface InputRendererProps {
@@ -24,6 +25,7 @@ export function InputRenderer({ definition, files, onFilesChange, disabled }: In
 
   if (mode === "text") return <PlaceholderInputMode label="Text input mode coming soon" />;
   if (mode === "url") return <PlaceholderInputMode label="URL input mode coming soon" />;
+  if (mode === "none") return <NoInputMode />;
 
   return (
     <FileUpload
