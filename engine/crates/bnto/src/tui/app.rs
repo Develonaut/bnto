@@ -20,7 +20,9 @@ use super::app_helpers::{
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
     handle_wizard_form,
 };
-pub use super::app_message::AppMessage;
+mod init;
+mod message;
+
 use super::screens::browser::{BrowserModel, update as browser_update};
 use super::screens::detail::{DetailFocus, DetailModel};
 use super::screens::editor::EditorScreenModel;
@@ -35,6 +37,7 @@ use super::screens::wizard::WizardModel;
 use super::theme::{Theme, ThemeVariant};
 use crate::storage::config::TomlConfig;
 use crate::storage::paths::BntoPaths;
+pub use message::AppMessage;
 
 // Message types and the registry constructor the tests below build with.
 #[cfg(test)]

@@ -5,8 +5,6 @@
 
 pub mod app;
 mod app_helpers;
-mod app_init;
-mod app_message;
 mod bridge;
 pub mod event;
 pub mod format;

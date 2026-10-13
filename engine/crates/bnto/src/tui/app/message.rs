@@ -1,17 +1,17 @@
 // TUI messages — every event that can drive an `AppModel` transition.
 
-use super::screens::browser::BrowserMessage;
-use super::screens::detail_scroll::DetailScrollMsg;
-use super::screens::editor::EditorMessage;
-use super::screens::execution::ExecutionMessage;
-use super::screens::home::HomeMessage;
-use super::screens::library::LibraryMessage;
-use super::screens::picker::PickerMessage;
-use super::screens::preview::PreviewMessage;
-use super::screens::results::ResultsMessage;
-use super::screens::settings::SettingsMessage;
-use super::screens::wizard::WizardMessage;
-use super::theme::ThemeVariant;
+use super::super::screens::browser::BrowserMessage;
+use super::super::screens::detail_scroll::DetailScrollMsg;
+use super::super::screens::editor::EditorMessage;
+use super::super::screens::execution::ExecutionMessage;
+use super::super::screens::home::HomeMessage;
+use super::super::screens::library::LibraryMessage;
+use super::super::screens::picker::PickerMessage;
+use super::super::screens::preview::PreviewMessage;
+use super::super::screens::results::ResultsMessage;
+use super::super::screens::settings::SettingsMessage;
+use super::super::screens::wizard::WizardMessage;
+use super::super::theme::ThemeVariant;
 
 /// Messages that drive screen transitions.
 #[derive(Debug, Clone, PartialEq)]

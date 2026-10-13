@@ -8,12 +8,12 @@ use crate::catalog::RecipeCatalog;
 use crate::storage::config::TomlConfig;
 use crate::storage::paths::BntoPaths;
 
-use super::app::{AppModel, DetailOrigin, Screen};
-use super::app_helpers::load_editor_from_json;
-use super::screens::browser::BrowserModel;
-use super::screens::editor::EditorScreenModel;
-use super::screens::home::{HomeModel, list_library_recipes};
-use super::theme::{Theme, ThemeVariant};
+use super::super::app_helpers::load_editor_from_json;
+use super::super::screens::browser::BrowserModel;
+use super::super::screens::editor::EditorScreenModel;
+use super::super::screens::home::{HomeModel, list_library_recipes};
+use super::super::theme::{Theme, ThemeVariant};
+use super::{AppModel, DetailOrigin, Screen};
 
 impl AppModel {
     /// Create a new app using platform-default paths.
