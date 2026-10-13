@@ -9,7 +9,12 @@
 // Native-only: registered behind `#[cfg(feature = "native")]` in
 // bnto-engine. Browser (WASM) gets NoopContext which blocks execution.
 
+mod args;
 pub mod execute;
+mod file_mode;
+mod output_files;
+mod parameters;
+mod stdout_mode;
 pub mod validate;
 
 pub use execute::ShellCommand;

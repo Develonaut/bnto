@@ -41,9 +41,14 @@ After template resolution, empty strings drop silently, and nested arrays where 
 
 ```
 src/
-├── lib.rs        # Public exports
-├── execute.rs    # ShellCommand processor + output modes
-└── validate.rs   # Security validation (command denylist, env sanitization)
+├── lib.rs           # Public exports
+├── execute.rs       # ShellCommand processor (param parsing, mode dispatch)
+├── args.rs          # Conditional arg groups + {{url}}/{{input}} placeholders
+├── stdout_mode.rs   # "stdout" output mode
+├── file_mode.rs     # "file" output mode ({{output_dir}} temp dir)
+├── output_files.rs  # Collects written files as path references
+├── parameters.rs    # Node parameter schema
+└── validate.rs      # Security validation (command denylist, env sanitization)
 ```
 
 ## Development

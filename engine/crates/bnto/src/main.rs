@@ -14,15 +14,20 @@
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
 pub mod catalog;
+mod cli;
+mod consent;
 mod context;
+mod dispatch;
 mod doctor;
 pub mod dry_run;
 mod info;
 mod input;
+mod inspect;
 mod install;
 mod install_plan;
 mod install_trust;
 mod io;
+mod launch;
 mod list;
 pub mod logging;
 mod migrate;
@@ -30,6 +35,8 @@ mod package_manager;
 mod process_registry;
 mod progress;
 mod progress_indent;
+mod run;
+mod run_output;
 pub mod storage;
 pub mod telemetry;
 mod trust;
@@ -39,143 +46,51 @@ use std::process;
 use std::sync::Arc;
 
 use bnto_core::logging::{LogEntry, LogLevel, Logger, NoopLogger};
-use clap::{Parser, Subcommand};
+use clap::Parser;
 use colored::Colorize;
 
 use catalog::RecipeCatalog;
+use cli::Cli;
+use dispatch::Session;
 use logging::FileLogger;
-
-/// bnto — run recipes from the command line.
-#[derive(Parser)]
-#[command(name = "bnto", version, about = "Run .bnto.json recipes")]
-struct Cli {
-    #[command(subcommand)]
-    command: Option<Command>,
-}
-
-#[derive(Subcommand)]
-enum Command {
-    /// Execute a recipe against input files or a URL.
-    Run {
-        /// Recipe slug (e.g. compress-images) or path to a .bnto.json file.
-        recipe: String,
-
-        /// Input files, URL, or text (depends on recipe input mode).
-        inputs: Vec<String>,
-
-        /// Output directory. Overrides recipe-defined output directory.
-        /// Defaults to recipe's directory param, or current directory if unset.
-        #[arg(short, long)]
-        output: Option<String>,
-
-        /// Override a node parameter. Format: key=value or nodeId:key=value
-        #[arg(short = 'p', long = "param")]
-        param: Vec<String>,
-
-        /// Skip trust consent prompt for local recipes with shell commands.
-        #[arg(long)]
-        yes: bool,
-
-        /// Run every node but write nothing; the summary says what would have
-        /// been written. shell-command nodes still run.
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// List available recipes (built-in and library).
-    List,
-
-    /// Show details about a recipe.
-    Info {
-        /// Recipe slug (e.g. compress-images).
-        recipe: String,
-    },
-
-    /// Dry-run: preview what a recipe will do without executing or writing.
-    DryRun {
-        /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
-        recipe: String,
-
-        /// Input files or directories (enables file transformation preview).
-        inputs: Vec<String>,
-
-        /// Override a field value. Format: key=value or nodeId:key=value
-        #[arg(short = 'p', long = "param")]
-        param: Vec<String>,
-    },
-
-    /// Install external dependencies for a recipe.
-    Install {
-        /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
-        recipe: Option<String>,
-
-        /// Skip confirmation prompt.
-        #[arg(long)]
-        yes: bool,
-
-        /// Install dependencies for all built-in recipes.
-        #[arg(long)]
-        all: bool,
-    },
-
-    /// Check that all external dependencies are installed.
-    Doctor,
-
-    /// Launch the interactive terminal UI.
-    Tui {
-        /// Path to a .bnto.json recipe file to open directly.
-        recipe: Option<String>,
-
-        /// Color theme: los-angeles (default), tokyo (dark), monaco (sunset).
-        #[arg(long, default_value = "los-angeles")]
-        theme: String,
-
-        /// Start with a blank recipe in the editor.
-        #[arg(long)]
-        new: bool,
-    },
-
-    /// Migrate .bnto.json files across breaking parameter changes.
-    Migrate {
-        /// Path to a .bnto.json file or directory containing recipe files.
-        path: String,
-
-        /// Preview changes without modifying files.
-        #[arg(long)]
-        dry_run: bool,
-    },
-
-    /// Manage anonymous telemetry settings.
-    Telemetry {
-        #[command(subcommand)]
-        action: TelemetryAction,
-    },
-}
-
-#[derive(Subcommand)]
-enum TelemetryAction {
-    /// Enable anonymous telemetry.
-    Enable,
-    /// Disable anonymous telemetry.
-    Disable,
-    /// Show current telemetry status.
-    Status,
-}
 
 fn main() {
     let cli = Cli::parse();
     telemetry::init();
 
-    // Kill spawned command trees (shell-command children + grandchildren) on
-    // SIGINT/SIGTERM — they run in their own process groups, so the terminal's
-    // Ctrl+C no longer reaches them on its own.
+    install_signal_handler();
+
+    let paths = init_storage();
+    // Session logger — shared across all commands.
+    let logger = create_logger(&paths);
+    // Build unified recipe catalog — bundled + user library.
+    let library_dir = paths.as_ref().map(|p| p.recipes_dir()).unwrap_or_default();
+    let catalog = RecipeCatalog::load(&library_dir);
+
+    let cmd_name = cli.command.as_ref().map_or("tui", cli::Command::name);
+    log_command(&logger, cmd_name);
+    let session = Session {
+        logger: Arc::clone(&logger),
+        catalog,
+        paths,
+    };
+    dispatch::dispatch(cli.command, session);
+    logger.flush();
+}
+
+/// Kill spawned command trees (shell-command children + grandchildren) on
+/// SIGINT/SIGTERM — they run in their own process groups, so the terminal's
+/// Ctrl+C no longer reaches them on its own.
+fn install_signal_handler() {
     let _ = ctrlc::set_handler(|| {
         process_registry::global().terminate_all();
         process::exit(130);
     });
+}
 
-    // Resolve paths, create dirs, run pending migrations — before anything else.
-    let paths = match storage::ensure_ready() {
+/// Resolve paths, create dirs, run pending migrations — before anything else.
+fn init_storage() -> Option<storage::BntoPaths> {
+    match storage::ensure_ready() {
         Ok(p) => {
             // Apply config home override so all derived paths follow it.
             let config = storage::config::TomlConfig::load(&p);
@@ -185,104 +100,7 @@ fn main() {
             eprintln!("{} storage init: {e}", "Warning:".yellow());
             None
         }
-    };
-
-    // Session logger — shared across all commands.
-    let logger = create_logger(&paths);
-
-    // Build unified recipe catalog — bundled + user library.
-    let library_dir = paths.as_ref().map(|p| p.recipes_dir()).unwrap_or_default();
-    let catalog = RecipeCatalog::load(&library_dir);
-
-    let cmd_name = match &cli.command {
-        Some(Command::Run { .. }) => "run",
-        Some(Command::List) => "list",
-        Some(Command::Info { .. }) => "info",
-        Some(Command::DryRun { .. }) => "dry-run",
-        Some(Command::Install { .. }) => "install",
-        Some(Command::Doctor) => "doctor",
-        Some(Command::Migrate { .. }) => "migrate",
-        Some(Command::Tui { .. }) => "tui",
-        Some(Command::Telemetry { .. }) => "telemetry",
-        None => "tui",
-    };
-    logger.log(LogEntry {
-        level: LogLevel::Info,
-        target: "cli",
-        message: format!("command: {cmd_name}"),
-        elapsed_us: None,
-    });
-
-    match cli.command {
-        Some(Command::Run {
-            recipe,
-            inputs,
-            output,
-            param,
-            yes,
-            dry_run,
-        }) => {
-            telemetry::capture(telemetry::events::cli_command("run"));
-            run_recipe(
-                &recipe,
-                &inputs,
-                output.as_deref(),
-                &param,
-                RunFlags { yes, dry_run },
-                &logger,
-                &catalog,
-            );
-        }
-        Some(Command::List) => {
-            telemetry::capture(telemetry::events::cli_command("list"));
-            list_recipes(&catalog);
-        }
-        Some(Command::Info { recipe }) => {
-            telemetry::capture(telemetry::events::cli_command("info"));
-            show_info(&recipe, &catalog);
-        }
-        Some(Command::DryRun {
-            recipe,
-            inputs,
-            param,
-        }) => {
-            telemetry::capture(telemetry::events::cli_command("dry-run"));
-            show_dry_run(&recipe, &inputs, &param, &catalog);
-        }
-        Some(Command::Install { recipe, yes, all }) => {
-            telemetry::capture(telemetry::events::cli_command("install"));
-            install::run_install(recipe.as_deref(), yes, all, &catalog);
-        }
-        Some(Command::Doctor) => {
-            telemetry::capture(telemetry::events::cli_command("doctor"));
-            doctor::run_doctor(&catalog);
-        }
-        Some(Command::Migrate { path, dry_run }) => {
-            telemetry::capture(telemetry::events::cli_command("migrate"));
-            migrate::run_migrate(&path, dry_run);
-        }
-        Some(Command::Tui { recipe, theme, new }) => {
-            telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui(&theme, recipe, new, &logger, paths);
-        }
-        Some(Command::Telemetry { action }) => match action {
-            TelemetryAction::Enable => {
-                telemetry::set_enabled(true);
-                eprintln!("Telemetry enabled.");
-            }
-            TelemetryAction::Disable => {
-                telemetry::set_enabled(false);
-                eprintln!("Telemetry disabled.");
-            }
-            TelemetryAction::Status => telemetry::print_status(),
-        },
-        None => {
-            telemetry::capture(telemetry::events::cli_command("tui"));
-            launch_tui("los-angeles", None, false, &logger, paths);
-        }
     }
-
-    logger.flush();
 }
 
 /// Create the session logger. Falls back to NoopLogger if paths unavailable.
@@ -294,300 +112,14 @@ fn create_logger(paths: &Option<storage::BntoPaths>) -> Arc<dyn Logger> {
         .unwrap_or_else(|| Arc::new(NoopLogger))
 }
 
-fn launch_tui(
-    theme_str: &str,
-    recipe_path: Option<String>,
-    new: bool,
-    logger: &Arc<dyn Logger>,
-    paths: Option<storage::BntoPaths>,
-) {
-    let variant = match tui::theme::ThemeVariant::from_str_lossy(theme_str) {
-        Ok(v) => v,
-        Err(e) => {
-            eprintln!("{} {e}", "Error:".red());
-            process::exit(1);
-        }
-    };
-    // Read recipe JSON from disk if a path was provided.
-    let recipe_json = recipe_path.map(|path| match std::fs::read_to_string(&path) {
-        Ok(json) => json,
-        Err(e) => {
-            eprintln!("{} Cannot read recipe file '{}': {e}", "Error:".red(), path);
-            process::exit(1);
-        }
-    });
-    let start = std::time::Instant::now();
-    if let Err(e) = tui::launch_tui(variant, recipe_json, new, logger, paths) {
-        eprintln!("{} {e}", "TUI error:".red());
-        process::exit(1);
-    }
-    let duration_ms = start.elapsed().as_millis() as u64;
-    telemetry::capture(telemetry::events::cli_tui_session(duration_ms, theme_str));
-}
-
-/// Read recipe JSON — try catalog slug first, then disk path.
-fn read_recipe(path: &str, catalog: &RecipeCatalog) -> String {
-    if let Some(entry) = catalog.resolve(path) {
-        return entry.definition_json.clone();
-    }
-    match std::fs::read_to_string(path) {
-        Ok(json) => json,
-        Err(e) => {
-            eprintln!("{} {e}", "Error reading recipe:".red());
-            process::exit(1);
-        }
-    }
-}
-
-/// Write pipeline results using mode-aware output, print summary and any warnings.
-fn write_output(result: &bnto_core::PipelineResult, mode: &str, output_dir: &str, dry_run: bool) {
-    let outcome = match io::write_results_with_mode(result, mode, output_dir, dry_run) {
-        Ok(o) => o,
-        Err(e) => {
-            eprintln!("{} {e}", "Error writing output:".red());
-            process::exit(1);
-        }
-    };
-
-    // Warnings and totals print first so the Done line is always last.
-    for warning in &result.warnings {
-        eprintln!("  {} {warning}", "Warning:".yellow().bold());
-    }
-    io::warn_files_left_as_newer(result);
-    io::print_copy_totals(result, dry_run);
-
-    let duration = format_duration(result.duration_ms);
-    let (written, renamed, tag) = if dry_run {
-        (
-            "would be written",
-            "would be renamed in place",
-            " (dry run)",
-        )
-    } else {
-        ("written", "renamed in place", "")
-    };
-    match outcome {
-        io::WriteOutcome::Written { dir, count } => {
-            eprintln!(
-                "\n{} {count} file{} {written} to {dir}/ in {duration}{tag}",
-                "Done.".green().bold(),
-                if count == 1 { "" } else { "s" },
-            );
-        }
-        io::WriteOutcome::Overwritten { count } => {
-            eprintln!(
-                "\n{} {count} file{} {renamed} in {duration}{tag}",
-                "Done.".green().bold(),
-                if count == 1 { "" } else { "s" },
-            );
-        }
-        io::WriteOutcome::Message { summary } => {
-            eprintln!("\n{} {summary}{tag}", "Done.".green().bold());
-        }
-        io::WriteOutcome::None => {
-            eprintln!("\n{} in {duration}{tag}", "Done.".green().bold());
-        }
-    }
-}
-
-/// The `bnto run` switches that change what a run does.
-#[derive(Clone, Copy)]
-struct RunFlags {
-    /// `--yes`: skip the trust consent prompt.
-    yes: bool,
-    /// `--dry-run`: run every node, write nothing.
-    dry_run: bool,
-}
-
-fn run_recipe(
-    recipe_path: &str,
-    inputs: &[String],
-    output_override: Option<&str>,
-    param_overrides: &[String],
-    flags: RunFlags,
-    logger: &Arc<dyn Logger>,
-    catalog: &RecipeCatalog,
-) {
-    let RunFlags { yes, dry_run } = flags;
-    let raw_json = read_recipe(recipe_path, catalog);
-    check_trust(recipe_path, &raw_json, yes, catalog);
-    let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
-    print_run_banner(recipe_path, &raw_json, &prepared);
-
-    let file_count = prepared.files.len();
-    let total_bytes: u64 = prepared
-        .files
-        .iter()
-        .map(|f| f.data.len().unwrap_or(0))
-        .sum();
-    let param_names: Vec<String> = param_overrides
-        .iter()
-        .filter_map(|p| p.split('=').next().map(|k| k.to_string()))
-        .collect();
-
+/// Record which subcommand this session runs.
+fn log_command(logger: &Arc<dyn Logger>, cmd_name: &str) {
     logger.log(LogEntry {
         level: LogLevel::Info,
         target: "cli",
-        message: format!("run: recipe={recipe_path} files={file_count} bytes={total_bytes}"),
+        message: format!("command: {cmd_name}"),
         elapsed_us: None,
     });
-
-    let start = std::time::Instant::now();
-    let ctx =
-        unwrap_or_exit(context::NativeContext::current_dir().map(|c| c.with_dry_run(dry_run)));
-
-    // Resolve output mode from the recipe definition.
-    let mode = serde_json::from_str::<bnto_core::PipelineDefinition>(&prepared.definition_json)
-        .map(|def| bnto_core::resolve_output_mode(&def))
-        .unwrap_or_else(|_| "write".to_string());
-
-    // Priority chain: explicit --output > recipe directory param > default "."
-    let output_dir = resolve_effective_output_dir(
-        output_override,
-        &prepared.definition_json,
-        &ctx,
-        &prepared.files,
-    );
-
-    // Create output dir before pipeline so progressive output can write there.
-    // Skip for overwrite mode (files stay in their source directories).
-    // A dry run writes nothing, so the progressive reporter gets no directory either.
-    if mode != "overwrite" && !dry_run {
-        let _ = std::fs::create_dir_all(&output_dir);
-    }
-    let progressive_dir = if mode == "overwrite" || dry_run {
-        None
-    } else {
-        Some(output_dir.clone())
-    };
-    let reporter = progress::stderr_reporter(Arc::clone(logger), progressive_dir);
-    match bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
-        Ok(result) => {
-            let elapsed_us = start.elapsed().as_micros() as u64;
-            logger.log(LogEntry {
-                level: LogLevel::Info,
-                target: "cli",
-                message: format!("run complete: {} output files", result.files.len()),
-                elapsed_us: Some(elapsed_us),
-            });
-            telemetry::capture(telemetry::events::cli_recipe_run_with_params(
-                recipe_path,
-                result.duration_ms,
-                file_count,
-                total_bytes,
-                result.files.len(),
-                true,
-                &param_names,
-            ));
-            write_output(&result, &mode, &output_dir, dry_run);
-        }
-        Err(e) => {
-            logger.log(LogEntry {
-                level: LogLevel::Error,
-                target: "cli",
-                message: format!("run failed: {e}"),
-                elapsed_us: None,
-            });
-            telemetry::capture(telemetry::events::cli_error("run", &e.to_string()));
-            eprintln!("{} {e}", "Pipeline failed:".red());
-            process::exit(1);
-        }
-    }
-}
-
-/// Resolve the effective output directory using the priority chain:
-/// 1. Explicit `--output` flag (highest priority)
-/// 2. Recipe's output node `directory` parameter (with {{ctx.*}} + {{node.*}} templates resolved)
-/// 3. Default: current directory (".")
-fn resolve_effective_output_dir(
-    output_override: Option<&str>,
-    definition_json: &str,
-    process_ctx: &dyn bnto_core::ProcessContext,
-    files: &[bnto_core::PipelineFile],
-) -> String {
-    // Explicit --output always wins.
-    if let Some(dir) = output_override {
-        return dir.to_string();
-    }
-    // Try recipe's output node directory param.
-    if let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(definition_json)
-        && let Some(recipe_dir) = bnto_core::resolve_output_directory(&def)
-    {
-        // Two-pass: resolve {{ctx.*}} first, then {{node.*}} (input file metadata).
-        let resolved = bnto_core::resolve_ctx_templates(&recipe_dir, process_ctx);
-        let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, files);
-        return bnto_core::resolve_node_templates(&resolved, &node_outputs);
-    }
-    // Default: current directory.
-    ".".to_string()
-}
-
-fn print_run_banner(recipe_path: &str, raw_json: &str, prepared: &input::PreparedInput) {
-    let label = input::mode_label(raw_json);
-    if prepared.files.is_empty() {
-        eprintln!("{} with {label}...", recipe_path.bold());
-    } else {
-        let count = prepared.files.len();
-        eprintln!(
-            "{} with {count} file{}...",
-            recipe_path.bold(),
-            if count == 1 { "" } else { "s" }
-        );
-    }
-}
-
-/// Extract recipe name from raw JSON, falling back to the CLI argument.
-fn extract_recipe_name(raw_json: &str, fallback: &str) -> String {
-    serde_json::from_str::<serde_json::Value>(raw_json)
-        .ok()
-        .and_then(|v| v["name"].as_str().map(String::from))
-        .unwrap_or_else(|| fallback.to_string())
-}
-
-/// Check trust level for a recipe and prompt for consent if needed.
-///
-/// Bundled recipes are always trusted. Non-bundled recipes with shell-command
-/// nodes require first-run consent, cached per definition hash.
-fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog: &RecipeCatalog) {
-    let is_bundled = catalog.is_bundled(recipe_arg);
-    let def: bnto_core::PipelineDefinition = match serde_json::from_str(raw_json) {
-        Ok(d) => d,
-        Err(_) => return, // Let later validation handle parse errors.
-    };
-    let has_shell = trust::has_shell_commands(&def.nodes);
-    let hash = trust::definition_hash(raw_json);
-
-    let trust_path = storage::BntoPaths::resolve().map(|p| p.trusted_file());
-
-    let store = trust_path
-        .as_ref()
-        .map(|p| trust::TrustStore::load(p))
-        .unwrap_or_default();
-
-    let level = trust::trust_level(is_bundled, has_shell, &store, &hash);
-
-    if level == trust::TrustLevel::Trusted || skip_consent {
-        return;
-    }
-
-    // FirstRun — prompt for consent.
-    let recipe_name = extract_recipe_name(raw_json, recipe_arg);
-    let cmd_names = trust::collect_shell_command_names(&def.nodes);
-    if !trust::prompt_consent(&recipe_name, &cmd_names) {
-        eprintln!("{} Execution cancelled.", "Aborted:".red().bold());
-        eprintln!(
-            "Run {} to inspect the commands first.",
-            format!("bnto dry-run {recipe_arg}").cyan()
-        );
-        process::exit(1);
-    }
-
-    // Cache approval.
-    if let Some(path) = trust_path {
-        let mut store = trust::TrustStore::load(&path);
-        store.approve(hash);
-        let _ = store.save(&path);
-    }
 }
 
 /// Unwrap a Result or print the error to stderr and exit.
@@ -598,60 +130,5 @@ pub(crate) fn unwrap_or_exit<T, E: std::fmt::Display>(result: Result<T, E>) -> T
             eprintln!("{} {e}", "Error:".red());
             process::exit(1);
         }
-    }
-}
-
-fn list_recipes(catalog: &RecipeCatalog) {
-    let groups = list::group_recipes(catalog.all());
-    list::print_recipe_list(&groups);
-}
-
-fn show_info(slug: &str, catalog: &RecipeCatalog) {
-    let Some(recipe_info) = info::get_recipe_info(slug, catalog) else {
-        eprintln!("{} Unknown recipe: {slug}", "Error:".red());
-        eprintln!("Run {} to see available recipes.", "bnto list".cyan());
-        process::exit(1);
-    };
-    info::print_recipe_info(slug, &recipe_info);
-}
-
-fn show_dry_run(
-    slug: &str,
-    inputs: &[String],
-    param_overrides: &[String],
-    catalog: &RecipeCatalog,
-) {
-    let Some(result) = dry_run::dry_run_recipe(slug, inputs, param_overrides, catalog) else {
-        eprintln!("{} Unknown recipe: {slug}", "Error:".red());
-        eprintln!("Run {} to see available recipes.", "bnto list".cyan());
-        process::exit(1);
-    };
-    dry_run::print_dry_run(slug, &result);
-}
-
-/// Format milliseconds into a human-readable duration string.
-fn format_duration(ms: u64) -> String {
-    if ms < 1000 {
-        format!("{ms}ms")
-    } else {
-        format!("{:.1}s", ms as f64 / 1000.0)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_format_duration_millis() {
-        assert_eq!(format_duration(42), "42ms");
-        assert_eq!(format_duration(999), "999ms");
-    }
-
-    #[test]
-    fn test_format_duration_seconds() {
-        assert_eq!(format_duration(1000), "1.0s");
-        assert_eq!(format_duration(1500), "1.5s");
-        assert_eq!(format_duration(12345), "12.3s");
     }
 }

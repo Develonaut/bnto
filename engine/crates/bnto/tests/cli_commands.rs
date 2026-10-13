@@ -464,6 +464,72 @@ fn test_dry_run_subcommand_copies_nothing() {
     assert_eq!(mtime, past, "destination mtime changed");
 }
 
+/// Put the shell-command fixture into a fresh library (dry-run resolves slugs only).
+fn library_with_shell_recipe() -> tempfile::TempDir {
+    let home = temp_output_dir();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    std::fs::copy(
+        custom_recipe_path("shell-file-input"),
+        library.join("shell-file-input.bnto.json"),
+    )
+    .unwrap();
+    home
+}
+
+#[test]
+fn test_dry_run_with_inputs_requires_consent_for_shell_recipe() {
+    // Guards: a dry run with inputs executes the pipeline, so an untrusted
+    // shell-command recipe needs the same consent as `bnto run`.
+    let home = library_with_shell_recipe();
+    let output = Command::new(bnto_bin())
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "shell-file-input", &fixture_image("small.jpg")])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("Execution cancelled"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("bnto dry-run shell-file-input"),
+        "stderr: {stderr}"
+    );
+    assert!(stderr.contains("without input files"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_dry_run_with_inputs_and_yes_skips_consent() {
+    let home = library_with_shell_recipe();
+    let output = Command::new(bnto_bin())
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "shell-file-input", "--yes"])
+        .arg(fixture_image("small.jpg"))
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!stderr.contains("Allow execution"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_dry_run_without_inputs_never_prompts() {
+    // Static analysis runs nothing, so it stays the safe way to inspect commands.
+    let home = library_with_shell_recipe();
+    let output = Command::new(bnto_bin())
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "shell-file-input"])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!stderr.contains("Allow execution"), "stderr: {stderr}");
+    assert!(stdout.contains("git"), "stdout: {stdout}");
+}
+
 // --- URL Mode ---
 
 #[test]

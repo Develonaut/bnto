@@ -15,9 +15,12 @@ use crate::dry_run::files::FilePreview;
 use crate::input;
 use crate::io;
 
-use super::app::AppMessage;
-use super::screens::execution::ExecutionMessage;
-use super::screens::results::OutputFile;
+mod events;
+mod output;
+
+pub use events::map_pipeline_event;
+use output::extract_file_metadata;
+pub use output::{FileResultMeta, build_output_files, write_progressive_files};
 
 /// Message sent from the bridge thread back to the TUI event loop.
 #[derive(Debug)]
@@ -41,26 +44,13 @@ pub enum BridgeEvent {
     Error(String),
 }
 
-/// Per-file metadata extracted from engine results before writing to disk.
-#[derive(Debug, Clone)]
-pub struct FileResultMeta {
-    pub name: String,
-    pub original_size: Option<u64>,
-}
-
-/// Extract per-file metadata (original size) from the engine's PipelineResult.
-fn extract_file_metadata(result: &bnto_core::pipeline::PipelineResult) -> Vec<FileResultMeta> {
-    result
-        .files
-        .iter()
-        .map(|f| {
-            let original_size = f.metadata.get("originalSize").and_then(|v| v.as_u64());
-            FileResultMeta {
-                name: f.name.clone(),
-                original_size,
-            }
-        })
-        .collect()
+/// Everything one bridge run needs, owned by the worker thread.
+struct BridgeJob {
+    slug: String,
+    definition_json: String,
+    selected_files: Vec<PathBuf>,
+    param_overrides: HashMap<String, String>,
+    preview_mode: bool,
 }
 
 /// Spawn a background thread that runs the pipeline for the given recipe.
@@ -76,162 +66,180 @@ pub fn spawn_pipeline(
     preview_mode: bool,
 ) -> mpsc::Receiver<BridgeEvent> {
     let (tx, rx) = mpsc::channel();
-
-    thread::spawn(move || {
-        run_bridge(
-            tx,
-            &slug,
-            &definition_json,
-            &selected_files,
-            &param_overrides,
-            preview_mode,
-        );
-    });
-
+    let job = BridgeJob {
+        slug,
+        definition_json,
+        selected_files,
+        param_overrides,
+        preview_mode,
+    };
+    thread::spawn(move || run_bridge(tx, &job));
     rx
 }
 
 /// Inner bridge logic — runs synchronously on the spawned thread.
-fn run_bridge(
-    tx: mpsc::Sender<BridgeEvent>,
-    slug: &str,
-    definition_json: &str,
-    selected_files: &[PathBuf],
-    param_overrides: &HashMap<String, String>,
-    preview_mode: bool,
-) {
-    // Resolve input mode to handle URL/Text recipes differently.
-    let input_mode = serde_json::from_str::<PipelineDefinition>(definition_json)
-        .map(|def| resolve_input_mode(&def))
-        .unwrap_or_default();
+/// Any failure is reported to the TUI as a single `Error` event.
+fn run_bridge(tx: mpsc::Sender<BridgeEvent>, job: &BridgeJob) {
+    if let Err(e) = try_run_bridge(&tx, job) {
+        let _ = tx.send(BridgeEvent::Error(e));
+    }
+}
 
-    // For URL/Text mode, extract the value from param overrides and
-    // pass it as a positional arg (prepare_inputs expects it there).
-    let mut args: Vec<String> = selected_files
+/// Prepare inputs, run the pipeline, then write (or preview) the results.
+fn try_run_bridge(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob) -> Result<(), String> {
+    let (args, override_args) = input_args(job);
+    // Prepare inputs (validates files, applies param overrides to definition).
+    let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
+    let ctx = NativeContext::current_dir()
+        .map_err(|e| format!("{e}"))?
+        .with_dry_run(job.preview_mode);
+    let mode = resolve_mode(&job.definition_json);
+    let output_dir = resolve_output_dir(tx, job, &mode, &ctx, &prepared.files);
+    let reporter = channel_reporter(tx);
+    // Run the pipeline (blocking — this is why we're on a background thread).
+    let result = run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx)
+        .map_err(|e| format!("{e}"))?;
+    if job.preview_mode {
+        send_preview_done(tx, output_dir, result);
+        return Ok(());
+    }
+    // Normal mode: write output files using mode-aware dispatch.
+    let file_metadata = extract_file_metadata(&result);
+    io::write_results_with_mode(&result, &mode, &output_dir, false)?;
+    send_done(tx, output_dir, result, file_metadata);
+    Ok(())
+}
+
+/// Positional args and `key=value` overrides for `prepare_inputs`.
+///
+/// For URL/Text mode, the value moves from the param overrides into the
+/// positional args (prepare_inputs expects it there).
+fn input_args(job: &BridgeJob) -> (Vec<String>, Vec<String>) {
+    let mut args: Vec<String> = job
+        .selected_files
         .iter()
         .map(|p| p.to_string_lossy().into_owned())
         .collect();
-    let mut remaining_overrides = param_overrides.clone();
-
-    match input_mode {
-        InputMode::Url => {
-            if let Some(url) = extract_override_value(&mut remaining_overrides, "url") {
-                args.push(url);
-            }
-        }
-        InputMode::Text => {
-            if let Some(text) = extract_override_value(&mut remaining_overrides, "text") {
-                args.push(text);
-            }
-        }
-        InputMode::FileUpload | InputMode::None => {}
+    let mut remaining_overrides = job.param_overrides.clone();
+    let param = match recipe_input_mode(&job.definition_json) {
+        InputMode::Url => Some("url"),
+        InputMode::Text => Some("text"),
+        InputMode::FileUpload | InputMode::None => None,
+    };
+    if let Some(value) = param.and_then(|p| extract_override_value(&mut remaining_overrides, p)) {
+        args.push(value);
     }
-
-    // Convert remaining param overrides to "key=value" strings.
-    let override_args: Vec<String> = remaining_overrides
+    let override_args = remaining_overrides
         .iter()
         .map(|(k, v)| format!("{k}={v}"))
         .collect();
+    (args, override_args)
+}
 
-    // Prepare inputs (validates files, applies param overrides to definition).
-    let prepared = match input::prepare_inputs(definition_json, &args, &override_args) {
-        Ok(p) => p,
-        Err(e) => {
-            let _ = tx.send(BridgeEvent::Error(e));
-            return;
-        }
-    };
+/// The recipe's input mode (FileUpload when the JSON doesn't parse).
+fn recipe_input_mode(definition_json: &str) -> InputMode {
+    serde_json::from_str::<PipelineDefinition>(definition_json)
+        .map(|def| resolve_input_mode(&def))
+        .unwrap_or_default()
+}
 
-    // Create a native context for the current working directory.
-    let ctx = match NativeContext::current_dir() {
-        Ok(c) => c.with_dry_run(preview_mode),
-        Err(e) => {
-            let _ = tx.send(BridgeEvent::Error(format!("{e}")));
-            return;
-        }
-    };
-
-    // Resolve output mode from the recipe definition.
-    let mode = serde_json::from_str::<PipelineDefinition>(definition_json)
+/// Resolve the output mode from the recipe definition.
+fn resolve_mode(definition_json: &str) -> String {
+    serde_json::from_str::<PipelineDefinition>(definition_json)
         .map(|def| bnto_core::resolve_output_mode(&def))
-        .unwrap_or_else(|_| "write".to_string());
+        .unwrap_or_else(|_| "write".to_string())
+}
 
-    // Preview mode skips output directory creation and file writes.
-    let output_dir_str = if preview_mode {
-        String::new()
-    } else if mode == "overwrite" {
-        // Overwrite mode doesn't need an output directory — files are renamed in place.
-        // Report the source directory for the results screen.
-        let dir_str = selected_files
-            .first()
-            .and_then(|p| p.parent())
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_else(|| ".".to_string());
-        let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
-        dir_str
+/// Resolve the output directory and announce it to the TUI.
+///
+/// Preview mode writes nothing (empty string, no event). Overwrite mode
+/// reports the source directory, since files are renamed in place.
+fn resolve_output_dir(
+    tx: &mpsc::Sender<BridgeEvent>,
+    job: &BridgeJob,
+    mode: &str,
+    ctx: &NativeContext,
+    files: &[bnto_core::PipelineFile],
+) -> String {
+    if job.preview_mode {
+        return String::new();
+    }
+    let dir_str = if mode == "overwrite" {
+        source_dir(&job.selected_files)
     } else {
-        // Resolve output directory:
-        // 1. Recipe's output node directory param (with {{ctx.*}} + {{node.*}} resolved)
-        // 2. Fall back to temp dir
-        let recipe_dir = serde_json::from_str::<PipelineDefinition>(definition_json)
-            .ok()
-            .and_then(|def| {
-                let dir = bnto_core::resolve_output_directory(&def)?;
-                let resolved = bnto_core::resolve_ctx_templates(&dir, &ctx);
-                let node_outputs =
-                    bnto_core::build_node_outputs_for_input(&def.nodes, &prepared.files);
-                Some(bnto_core::resolve_node_templates(&resolved, &node_outputs))
-            });
-        let output_dir = match recipe_dir {
-            Some(dir) => PathBuf::from(dir),
-            None => std::env::temp_dir().join(format!("bnto-tui-{slug}")),
-        };
-        let _ = std::fs::remove_dir_all(&output_dir);
-        let _ = std::fs::create_dir_all(&output_dir);
-        let dir_str = output_dir.to_string_lossy().into_owned();
-        let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
-        dir_str
+        fresh_output_dir(job, ctx, files)
     };
+    let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
+    dir_str
+}
 
-    // Create a reporter that sends engine events to the TUI via the channel.
-    let progress_tx = tx.clone();
-    let reporter = PipelineReporter::new(move |event| {
-        let _ = progress_tx.send(BridgeEvent::Progress(event));
-    });
+/// Directory of the first selected file (or ".").
+fn source_dir(selected_files: &[PathBuf]) -> String {
+    selected_files
+        .first()
+        .and_then(|p| p.parent())
+        .map(|p| p.to_string_lossy().into_owned())
+        .unwrap_or_else(|| ".".to_string())
+}
 
-    // Run the pipeline (blocking — this is why we're on a background thread).
-    let result = match run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx) {
-        Ok(r) => r,
-        Err(e) => {
-            let _ = tx.send(BridgeEvent::Error(format!("{e}")));
-            return;
-        }
-    };
-
-    // Preview mode: extract file previews, skip writing.
-    if preview_mode {
-        let previews = crate::dry_run::files::extract_previews(&result);
-        let _ = tx.send(BridgeEvent::Done {
-            output_dir: output_dir_str,
-            file_count: result.files.len(),
-            duration_ms: result.duration_ms,
-            file_metadata: vec![],
-            warnings: result.warnings,
-            preview_data: previews,
+/// Recreate the output directory: the recipe's output node directory param
+/// (with {{ctx.*}} + {{node.*}} resolved), else a per-recipe temp dir.
+fn fresh_output_dir(
+    job: &BridgeJob,
+    ctx: &NativeContext,
+    files: &[bnto_core::PipelineFile],
+) -> String {
+    let recipe_dir = serde_json::from_str::<PipelineDefinition>(&job.definition_json)
+        .ok()
+        .and_then(|def| {
+            let dir = bnto_core::resolve_output_directory(&def)?;
+            let resolved = bnto_core::resolve_ctx_templates(&dir, ctx);
+            let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, files);
+            Some(bnto_core::resolve_node_templates(&resolved, &node_outputs))
         });
-        return;
-    }
+    let output_dir = match recipe_dir {
+        Some(dir) => PathBuf::from(dir),
+        None => std::env::temp_dir().join(format!("bnto-tui-{}", job.slug)),
+    };
+    let _ = std::fs::remove_dir_all(&output_dir);
+    let _ = std::fs::create_dir_all(&output_dir);
+    output_dir.to_string_lossy().into_owned()
+}
 
-    // Normal mode: write output files using mode-aware dispatch.
-    let file_metadata: Vec<FileResultMeta> = extract_file_metadata(&result);
+/// A reporter that forwards engine events to the TUI via the channel.
+fn channel_reporter(tx: &mpsc::Sender<BridgeEvent>) -> PipelineReporter {
+    let progress_tx = tx.clone();
+    PipelineReporter::new(move |event| {
+        let _ = progress_tx.send(BridgeEvent::Progress(event));
+    })
+}
 
-    if let Err(e) = io::write_results_with_mode(&result, &mode, &output_dir_str, false) {
-        let _ = tx.send(BridgeEvent::Error(e));
-        return;
-    }
-
+/// Preview mode: extract file previews, skip writing.
+fn send_preview_done(
+    tx: &mpsc::Sender<BridgeEvent>,
+    output_dir: String,
+    result: bnto_core::pipeline::PipelineResult,
+) {
+    let previews = crate::dry_run::files::extract_previews(&result);
     let _ = tx.send(BridgeEvent::Done {
-        output_dir: output_dir_str,
+        output_dir,
+        file_count: result.files.len(),
+        duration_ms: result.duration_ms,
+        file_metadata: vec![],
+        warnings: result.warnings,
+        preview_data: previews,
+    });
+}
+
+/// Report a finished, written run.
+fn send_done(
+    tx: &mpsc::Sender<BridgeEvent>,
+    output_dir: String,
+    result: bnto_core::pipeline::PipelineResult,
+    file_metadata: Vec<FileResultMeta>,
+) {
+    let _ = tx.send(BridgeEvent::Done {
+        output_dir,
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
         file_metadata,
@@ -253,154 +261,6 @@ fn extract_override_value(
         .find(|k| k.ends_with(&format!(":{param_name}")))
         .cloned();
     key.and_then(|k| overrides.remove(&k))
-}
-
-/// Map an engine PipelineEvent to a TUI AppMessage.
-pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
-    match event {
-        PipelineEvent::PipelineStarted {
-            total_nodes,
-            total_files,
-            nodes,
-        } => AppMessage::Execution(ExecutionMessage::PipelineStarted {
-            total_nodes,
-            total_files,
-            node_info: nodes.into_iter().map(|n| (n.id, n.node_type)).collect(),
-        }),
-        PipelineEvent::NodeStarted {
-            node_id,
-            node_type,
-            parent_node_id,
-            ..
-        } => {
-            if let Some(parent_id) = parent_node_id {
-                AppMessage::Execution(ExecutionMessage::ChildNodeStarted {
-                    parent_node_id: parent_id,
-                    node_id,
-                    node_type,
-                })
-            } else {
-                AppMessage::Execution(ExecutionMessage::NodeStarted { node_id, node_type })
-            }
-        }
-        PipelineEvent::FileProgress {
-            node_id,
-            file_index,
-            total_files,
-            percent,
-            message,
-        } => AppMessage::Execution(ExecutionMessage::FileProgress {
-            node_id,
-            file_index,
-            total_files,
-            percent,
-            message,
-        }),
-        PipelineEvent::NodeCompleted {
-            node_id,
-            duration_ms,
-            parent_node_id,
-            ..
-        } => {
-            if let Some(parent_id) = parent_node_id {
-                AppMessage::Execution(ExecutionMessage::ChildNodeCompleted {
-                    parent_node_id: parent_id,
-                    node_id,
-                    duration_ms,
-                })
-            } else {
-                AppMessage::Execution(ExecutionMessage::NodeCompleted {
-                    node_id,
-                    duration_ms,
-                })
-            }
-        }
-        PipelineEvent::NodeFailed { node_id, error, .. } => {
-            AppMessage::Execution(ExecutionMessage::NodeFailed { node_id, error })
-        }
-        PipelineEvent::PipelineCompleted {
-            duration_ms,
-            total_files_processed,
-        } => AppMessage::Execution(ExecutionMessage::PipelineCompleted {
-            duration_ms,
-            total_files_processed,
-        }),
-        PipelineEvent::PipelineFailed { node_id, error } => {
-            AppMessage::Execution(ExecutionMessage::PipelineFailed { node_id, error })
-        }
-        PipelineEvent::CommandOutput { node_id, line } => {
-            AppMessage::Execution(ExecutionMessage::CommandOutput { node_id, line })
-        }
-        PipelineEvent::IterationStarted {
-            node_id,
-            iteration,
-            total_iterations,
-        } => AppMessage::Execution(ExecutionMessage::IterationStarted {
-            node_id,
-            iteration,
-            total_iterations,
-        }),
-        PipelineEvent::IterationCompleted {
-            node_id,
-            iteration,
-            total_iterations,
-            duration_ms,
-            files_produced,
-            output_files,
-        } => AppMessage::Execution(ExecutionMessage::IterationCompleted {
-            node_id,
-            iteration,
-            total_iterations,
-            duration_ms,
-            files_produced,
-            output_files,
-        }),
-        PipelineEvent::IterationFailed {
-            node_id,
-            iteration,
-            total_iterations,
-            error,
-        } => AppMessage::Execution(ExecutionMessage::IterationFailed {
-            node_id,
-            iteration,
-            total_iterations,
-            error,
-        }),
-    }
-}
-
-/// Write progressive output files from an iteration to the output directory.
-/// Called from the TUI event loop when an `IterationCompleted` event
-/// carries file data (progressive output mode).
-pub fn write_progressive_files(output_dir: &str, files: &[bnto_core::events::ProgressOutputFile]) {
-    let dir = std::path::Path::new(output_dir);
-    for file in files {
-        let path = dir.join(&file.name);
-        let _ = file.data.write_to(&path);
-    }
-}
-
-/// Read output files from the bridge's output directory, merging engine metadata.
-pub fn build_output_files(output_dir: &str, file_metadata: &[FileResultMeta]) -> Vec<OutputFile> {
-    let dir = std::path::Path::new(output_dir);
-    let mut outputs = Vec::new();
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            let size_bytes = entry.metadata().map(|m| m.len()).unwrap_or(0);
-            // Match by filename to get original_size from engine metadata.
-            let original_size = file_metadata
-                .iter()
-                .find(|m| m.name == name)
-                .and_then(|m| m.original_size);
-            outputs.push(OutputFile {
-                name,
-                size_bytes,
-                original_size,
-            });
-        }
-    }
-    outputs
 }
 
 #[cfg(test)]
