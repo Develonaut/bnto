@@ -346,6 +346,9 @@ mod tests {
     ///
     /// This is an "ignored" test — it only runs when explicitly requested.
     /// It writes to a file, which isn't something normal tests should do.
+    ///
+    /// This output is the file's canonical format: the snapshot is listed in
+    /// `.prettierignore` so every regeneration path yields the same bytes.
     #[test]
     #[ignore]
     fn generate_catalog_snapshot() {
@@ -360,7 +363,7 @@ mod tests {
             .unwrap()
             .join("catalog.snapshot.json");
 
-        std::fs::write(&snapshot_path, &json).unwrap();
+        std::fs::write(&snapshot_path, format!("{json}\n")).unwrap();
         println!("Wrote catalog snapshot to: {}", snapshot_path.display());
         println!("{}", json);
     }

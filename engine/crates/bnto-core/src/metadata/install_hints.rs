@@ -2,7 +2,8 @@
 //
 // Package managers and package IDs differ by OS (`brew install yt-dlp` vs
 // `winget install yt-dlp.yt-dlp`), so a single hint string can't serve
-// every platform. Unset platforms fall back to `Dependency::install_hint`.
+// every platform. Unset platforms fall back to `Dependency::install_hint`,
+// then to `GENERIC_INSTALL_HINT`.
 
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts")]
@@ -44,10 +45,13 @@ impl HostPlatform {
 )]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct InstallHints {
+    /// Install command for macOS (e.g. `brew install yt-dlp`).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub macos: String,
+    /// Install command for Linux (e.g. `sudo apt install yt-dlp`).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub linux: String,
+    /// Install command for Windows (e.g. `winget install yt-dlp.yt-dlp`).
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub windows: String,
 }

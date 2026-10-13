@@ -9,8 +9,9 @@ export type Dependency = {
   version?: string;
   /**
    * Generic install hint, used when no platform-specific hint applies.
+   * Optional: a dependency may carry only per-platform hints.
    */
-  installHint: string;
+  installHint?: string;
   /**
    * Optional per-platform overrides of the generic hint.
    */
