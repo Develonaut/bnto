@@ -182,3 +182,15 @@ import { Dialog, DialogContent, DialogTitle } from "@bnto/ui";
 ```
 
 **If you see `Object.assign` compound patterns anywhere in the codebase, convert them to flat exports.**
+
+## Rust Toolchain Is Pinned
+
+`engine/rust-toolchain.toml` pins an exact stable release (e.g. `channel = "1.98"`), not the floating `stable` channel. It is the **single source of truth**: local `cargo` picks it up automatically, and the CI and release workflows install it with `rustup toolchain install` (no version in any workflow file). Every Rust release can add clippy lints that fail the `-D warnings` gate on untouched code, so new lints arrive only through a deliberate bump PR, never as a surprise on an unrelated one.
+
+**Bump checklist (one PR):**
+
+1. Change `channel` in `engine/rust-toolchain.toml`. Nothing else holds the version.
+2. Run `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` on **Linux and Windows** (CI runs both). Some lints and `cfg` paths are platform-specific.
+3. Fix every new lint in the same PR.
+
+**MSRV vs pinned toolchain.** `rust-version` in `engine/Cargo.toml` `[workspace.package]` is the *minimum* compiler the crates build on, which is what `cargo install bnto` users need. The pinned toolchain is what contributors and CI *use*, and it's usually newer. Bumping the toolchain doesn't change the MSRV. Raise `rust-version` only when code starts using a newer language feature or std API (verify with `rustup toolchain install <ver> --profile minimal && cargo +<ver> check --workspace --all-targets`).

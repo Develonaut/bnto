@@ -20,9 +20,10 @@
 # `-D warnings` gate on untouched code, blocking unrelated PRs. Pinning
 # makes upgrades deliberate.
 #
-# TO BUMP: change this AND every `dtolnay/rust-toolchain@<version>` in
-# .github/workflows/ (ci.yml, release.yml) in one PR, fixing any new
-# clippy lints in that same PR.
+# This file is the ONLY place the version lives: CI and release workflows
+# install the toolchain from it with `rustup toolchain install`. To bump,
+# change `channel` and fix any new clippy lints in the same PR. See
+# "Rust Toolchain Is Pinned" in .claude/rules/gotchas.md.
 channel = "1.98"
 
 # These are the components (tools) we want installed alongside the compiler:
