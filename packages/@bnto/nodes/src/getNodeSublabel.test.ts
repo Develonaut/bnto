@@ -19,6 +19,10 @@ describe("getNodeSublabel", () => {
     expect(getNodeSublabel("input", { mode: "url" })).toBe("URL");
   });
 
+  it("returns 'No Input' for input none mode", () => {
+    expect(getNodeSublabel("input", { mode: "none" })).toBe("No Input");
+  });
+
   it("returns 'Input' when input has no mode", () => {
     expect(getNodeSublabel("input")).toBe("Input");
     expect(getNodeSublabel("input", {})).toBe("Input");

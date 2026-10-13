@@ -21,6 +21,10 @@ describe("getNodeIcon", () => {
     expect(getNodeIcon("input", { mode: "url" })).toBe("link");
   });
 
+  it("returns 'circle-off' for input none mode", () => {
+    expect(getNodeIcon("input", { mode: "none" })).toBe("circle-off");
+  });
+
   it("falls back to 'file-up' for unknown input mode", () => {
     expect(getNodeIcon("input", { mode: "unknown-mode" })).toBe("file-up");
   });
