@@ -176,8 +176,12 @@ mod tests {
     }
 
     #[test]
-    fn returns_none_for_nonexistent_dir() {
-        let bad_path = std::path::PathBuf::from("/nonexistent/deep/path/logs");
+    fn returns_none_when_dir_cannot_be_created() {
+        // A directory cannot be created under a regular file, on any OS.
+        let tmp = tempfile::tempdir().unwrap();
+        let file = tmp.path().join("not-a-dir");
+        std::fs::write(&file, b"").unwrap();
+        let bad_path = file.join("logs");
         assert!(FileLogger::new(&bad_path, LogLevel::Trace).is_none());
     }
 }

@@ -281,10 +281,20 @@ impl ProcessContext for NativeContext {
 mod tests {
     use super::*;
 
+    /// The platform shell and the args that run `script` through it.
+    fn shell(script: &str) -> (&'static str, [&str; 2]) {
+        if cfg!(windows) {
+            ("cmd", ["/c", script])
+        } else {
+            ("sh", ["-c", script])
+        }
+    }
+
     #[test]
     fn test_native_context_run_command_echo() {
         let ctx = NativeContext::current_dir().unwrap();
-        let result = ctx.run_command("echo", &["hello"]);
+        let (cmd, args) = shell("echo hello");
+        let result = ctx.run_command(cmd, &args);
         assert!(result.is_ok());
         let stdout = result.unwrap();
         let output = String::from_utf8_lossy(&stdout);
@@ -346,10 +356,10 @@ mod tests {
     fn run_command_streaming_captures_both_streams() {
         let ctx = NativeContext::current_dir().unwrap();
         let lines = std::cell::RefCell::new(Vec::new());
-        let result =
-            ctx.run_command_streaming("sh", &["-c", "echo err >&2 && echo out"], &|line| {
-                lines.borrow_mut().push(line.to_string())
-            });
+        let (cmd, args) = shell("echo err >&2 && echo out");
+        let result = ctx.run_command_streaming(cmd, &args, &|line| {
+            lines.borrow_mut().push(line.trim().to_string())
+        });
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), b"out\n");
         let captured = lines.borrow();
@@ -367,7 +377,8 @@ mod tests {
     fn run_command_streaming_returns_stdout() {
         let ctx = NativeContext::current_dir().unwrap();
         let lines = std::cell::RefCell::new(Vec::new());
-        let result = ctx.run_command_streaming("echo", &["hello"], &|line| {
+        let (cmd, args) = shell("echo hello");
+        let result = ctx.run_command_streaming(cmd, &args, &|line| {
             lines.borrow_mut().push(line.to_string())
         });
         assert!(result.is_ok());
@@ -379,10 +390,10 @@ mod tests {
     fn run_command_streaming_error_includes_stderr() {
         let ctx = NativeContext::current_dir().unwrap();
         let lines = std::cell::RefCell::new(Vec::new());
-        let result =
-            ctx.run_command_streaming("sh", &["-c", "echo fail-info >&2 && exit 1"], &|line| {
-                lines.borrow_mut().push(line.to_string())
-            });
+        let (cmd, args) = shell("echo fail-info >&2 && exit 1");
+        let result = ctx.run_command_streaming(cmd, &args, &|line| {
+            lines.borrow_mut().push(line.trim().to_string())
+        });
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(
@@ -413,7 +424,8 @@ mod tests {
     fn streaming_deregisters_group_after_completion() {
         let registry = Arc::new(ProcessRegistry::new());
         let ctx = ctx_with_registry(registry.clone());
-        let result = ctx.run_command_streaming("echo", &["done"], &|_| {});
+        let (cmd, args) = shell("echo done");
+        let result = ctx.run_command_streaming(cmd, &args, &|_| {});
         assert!(result.is_ok());
         assert!(
             registry.active().is_empty(),

@@ -83,6 +83,35 @@ jobs:
       - name: WASM integration tests (bnto-image)
         run: wasm-pack test --node crates/bnto-image
 
+  # ── Rust CI on Windows (only when engine files changed) ──
+  rust-windows:
+    name: Rust Engine (Windows: fmt + lint + test)
+    runs-on: windows-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.engine == 'true'
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@1.98
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
   # ── TypeScript CI (only when web files changed) ──
   typescript:
     name: TypeScript (build + lint + test)
@@ -228,12 +257,13 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    needs: [detect-changes, rust, typescript, crate-publish-check, docs]
+    needs: [detect-changes, rust, rust-windows, typescript, crate-publish-check, docs]
     if: always()
     steps:
       - name: Check job results
         run: |
           rust="${{ needs.rust.result }}"
+          rust_windows="${{ needs.rust-windows.result }}"
           ts="${{ needs.typescript.result }}"
           crates="${{ needs.crate-publish-check.result }}"
           docs="${{ needs.docs.result }}"
@@ -260,6 +290,12 @@ jobs:
             failed=1
           fi
 
+          # Windows Rust is required when engine files changed
+          if [ "$engine" = "true" ] && [ "$rust_windows" != "success" ]; then
+            echo "FAILED: Rust Engine (Windows) = $rust_windows (engine files changed)"
+            failed=1
+          fi
+
           # TypeScript is required when web files changed
           if [ "$web" = "true" ] && [ "$ts" != "success" ]; then
             echo "FAILED: TypeScript = $ts (web files changed)"
@@ -274,6 +310,7 @@ jobs:
           echo "  Docs:       $docs"
           echo "  Crates:     $crates"
           echo "  Rust:       $rust (engine_changed: $engine)"
+          echo "  Rust (Win): $rust_windows (engine_changed: $engine)"
           echo "  TypeScript: $ts (web_changed: $web)"
 
   # NOTE: Convex production deploy moved to release.yml (runs after release gate passes).

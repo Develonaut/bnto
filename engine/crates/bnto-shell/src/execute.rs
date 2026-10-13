@@ -339,7 +339,7 @@ fn collect_output_files_recursive(
         // Preserve relative path from root so subdirectory structure is retained.
         let filename = path
             .strip_prefix(root_dir)
-            .map(|rel| rel.to_string_lossy().into_owned())
+            .map(bnto_core::slash_path)
             .unwrap_or_else(|_| {
                 path.file_name()
                     .map(|n| n.to_string_lossy().into_owned())

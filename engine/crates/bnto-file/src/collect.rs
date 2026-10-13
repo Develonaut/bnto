@@ -198,10 +198,7 @@ fn walk_directory(
                     file_name.to_string()
                 } else {
                     // Preserve the path relative to the base directory.
-                    path.strip_prefix(base_dir)
-                        .unwrap_or(&path)
-                        .to_string_lossy()
-                        .to_string()
+                    bnto_core::slash_path(path.strip_prefix(base_dir).unwrap_or(&path))
                 };
 
                 results.push((output_name, path));
@@ -419,11 +416,8 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files.len(), 1);
-        assert!(
-            output.files[0].filename.contains("subfolder"),
-            "No-flatten should preserve relative path, got: {}",
-            output.files[0].filename
-        );
+        // `/` on every OS, so name filters downstream split it the same way.
+        assert_eq!(output.files[0].filename, "subfolder/image.png");
     }
 
     // --- No matches ---
