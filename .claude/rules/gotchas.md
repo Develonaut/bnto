@@ -182,7 +182,7 @@ CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-w
   ```
 
 - **Tests don't spawn `sh` or `echo` directly.** On Windows `echo` is a `cmd` built-in, not a program, and `sh` is not guaranteed on PATH. Run the script through the platform shell — see the `shell()` test helper in `bnto/src/context.rs` (`cmd /c` on Windows, `sh -c` elsewhere). Trim captured lines before asserting: `cmd` keeps the space before a redirect (`echo err >&2` prints `err `).
-- **Gate items that only one OS reads.** A constant or function used only inside a `#[cfg(unix)]` path is dead code on Windows, and clippy `-D warnings` fails there. Gate it to match its readers, e.g. `#[cfg(any(unix, test))]` on `TERM_GRACE_MS` in `bnto/src/process_registry.rs`.
+- **Gate items that only one OS reads.** A constant or function used only inside a `#[cfg(unix)]` path is dead code on Windows, and clippy `-D warnings` fails there. Move it inside the `#[cfg(unix)]` function that reads it, or gate its declaration to match its readers (e.g. `#[cfg(any(unix, test))]`).
 
 ## No Object.assign Compound Components (RSC Incompatible)
 
