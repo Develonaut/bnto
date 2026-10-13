@@ -134,7 +134,11 @@
       },
       "conflict": {
         "label": "Conflict Resolution",
-        "description": "What to do when a file with the same name already exists."
+        "description": "What to do when a file with the same name already exists. \"newer\" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes."
+      },
+      "tolerance_ms": {
+        "label": "Time Tolerance",
+        "description": "Modified-time gap treated as equal in \"newer\" mode; FAT and Google Drive round times."
       }
     },
     "fileFilter": {

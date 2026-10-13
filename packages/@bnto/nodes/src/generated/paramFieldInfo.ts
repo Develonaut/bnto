@@ -24,8 +24,9 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       type: "enum",
       control: "select",
       required: false,
-      enumValues: ["skip", "overwrite", "rename"] as const,
+      enumValues: ["skip", "overwrite", "rename", "newer"] as const,
     },
+    tolerance_ms: { type: "number", control: "number", required: false, min: 0 },
   },
   "file-filter": {
     extensions: { type: "string", control: "text", required: false },

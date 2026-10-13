@@ -14,7 +14,7 @@ File operation nodes. Rename, filter, collect, copy, and inspect files.
 | `FileFilter`   | `file-filter`   | Drop files that don't match extension, glob/regex pattern, or size criteria           | browser, cli    |
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, SHA-256 hash)                     | browser, cli    |
 | `FileCollect`  | `file-collect`  | Traverse a directory and collect files matching a glob pattern into the pipeline      | cli             |
-| `FileCopy`     | `file-copy`     | Place output files in a destination directory with conflict handling                  | cli             |
+| `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer | cli             |
 
 ## Directory Structure
 
@@ -26,6 +26,7 @@ src/
 ├── metadata.rs       # FileMetadata processor + metadata
 ├── collect.rs        # FileCollect processor + metadata (native-only)
 ├── copy.rs           # FileCopy processor + metadata (native-only)
+├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
 └── wasm_bridge.rs    # #[wasm_bindgen] bridge functions
 ```
 

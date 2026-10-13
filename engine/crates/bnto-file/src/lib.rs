@@ -20,6 +20,9 @@ pub mod collect;
 /// conflict resolution. CLI-only (requires filesystem access).
 pub mod copy;
 
+/// The `newer` conflict mode of file-copy (time-compared, in-place copy).
+mod copy_newer;
+
 /// File-metadata node — extract file metadata (size, extension, MIME
 /// type, hash) and attach to pipeline output. Browser-compatible.
 pub mod metadata;

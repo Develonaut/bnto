@@ -99,12 +99,13 @@ The "point at a folder" primitive. Accepts a directory path and glob pattern, ou
 
 Place output files in a specific destination directory.
 
-| Param                | Type    | Description                                            |
-| -------------------- | ------- | ------------------------------------------------------ |
-| `destination`        | string  | Output directory path                                  |
-| `create_dirs`        | boolean | Create destination if missing (default: true)          |
-| `conflict`           | enum    | `skip`, `overwrite`, `rename` (default: `skip`)        |
-| `preserve_structure` | boolean | Maintain relative directory structure (default: false) |
+| Param                | Type    | Description                                              |
+| -------------------- | ------- | -------------------------------------------------------- |
+| `destination`        | string  | Output directory path                                    |
+| `create_dirs`        | boolean | Create destination if missing (default: true)            |
+| `conflict`           | enum    | `skip`, `overwrite`, `rename`, `newer` (default: `skip`) |
+| `tolerance_ms`       | number  | `newer` only: mtime gap treated as equal (default: 2000) |
+| `preserve_structure` | boolean | Maintain relative directory structure (default: false)   |
 
 **Platform:** Native-only (CLI/desktop) — writes to filesystem.
 

@@ -158,6 +158,49 @@ fn overwrite_in_place(result: &PipelineResult) -> Result<WriteOutcome, String> {
     Ok(WriteOutcome::Overwritten { count })
 }
 
+/// Names of result files that `file-copy` left because the destination copy
+/// was newer (its `skipped_newer` metadata flag is 1).
+pub fn files_left_as_newer(result: &PipelineResult) -> Vec<&str> {
+    result
+        .files
+        .iter()
+        .filter(|f| f.metadata.get("skipped_newer").and_then(|v| v.as_i64()) == Some(1))
+        .map(|f| f.name.as_str())
+        .collect()
+}
+
+/// Print one warning line naming the files `files_left_as_newer` finds.
+pub fn warn_files_left_as_newer(result: &PipelineResult) {
+    use colored::Colorize;
+
+    let newer = files_left_as_newer(result);
+    if !newer.is_empty() {
+        let warning = "Warning:".yellow().bold();
+        eprintln!("  {warning} {}", newer_warning_text(&newer));
+    }
+}
+
+/// How many names the warning lists before folding the rest into `…and N more`.
+const MAX_NAMES_LISTED: usize = 10;
+
+/// `N file(s) newer at the destination, left: a, b`, names capped.
+fn newer_warning_text(newer: &[&str]) -> String {
+    let noun = if newer.len() == 1 { "file" } else { "files" };
+    let mut names = newer
+        .iter()
+        .take(MAX_NAMES_LISTED)
+        .copied()
+        .collect::<Vec<_>>()
+        .join(", ");
+    if newer.len() > MAX_NAMES_LISTED {
+        names.push_str(&format!(", …and {} more", newer.len() - MAX_NAMES_LISTED));
+    }
+    format!(
+        "{} {noun} newer at the destination, left: {names}",
+        newer.len()
+    )
+}
+
 /// Guess MIME type from file extension.
 fn guess_mime(path: &str) -> String {
     let ext = Path::new(path)
@@ -209,6 +252,77 @@ mod tests {
             duration_ms: 0,
             warnings: vec![],
         }
+    }
+
+    // --- files_left_as_newer tests ---
+
+    fn result_with_flags(files: &[(&str, Option<i64>)]) -> PipelineResult {
+        let mut result = make_result_with_bytes(b"", "unused");
+        result.files = files
+            .iter()
+            .map(|(name, flag)| {
+                let mut f = make_result_with_bytes(b"", name).files.remove(0);
+                if let Some(v) = flag {
+                    f.metadata.insert("skipped_newer".into(), (*v).into());
+                }
+                f
+            })
+            .collect();
+        result
+    }
+
+    #[test]
+    fn test_files_left_as_newer_empty_result() {
+        assert!(files_left_as_newer(&result_with_flags(&[])).is_empty());
+    }
+
+    #[test]
+    fn test_files_left_as_newer_one_flagged() {
+        let r = result_with_flags(&[("a.txt", Some(0)), ("b.txt", Some(1))]);
+        assert_eq!(files_left_as_newer(&r), vec!["b.txt"]);
+    }
+
+    #[test]
+    fn test_files_left_as_newer_several_flagged_in_order() {
+        let r = result_with_flags(&[("a.txt", Some(1)), ("b.txt", Some(0)), ("c.txt", Some(1))]);
+        assert_eq!(files_left_as_newer(&r), vec!["a.txt", "c.txt"]);
+    }
+
+    #[test]
+    fn test_files_left_as_newer_ignores_files_without_the_key() {
+        let r = result_with_flags(&[("a.txt", None), ("b.txt", None)]);
+        assert!(files_left_as_newer(&r).is_empty());
+    }
+
+    #[test]
+    fn test_newer_warning_text_singular_and_plural() {
+        assert_eq!(
+            newer_warning_text(&["a.txt"]),
+            "1 file newer at the destination, left: a.txt"
+        );
+        assert_eq!(
+            newer_warning_text(&["a.txt", "b.txt"]),
+            "2 files newer at the destination, left: a.txt, b.txt"
+        );
+    }
+
+    #[test]
+    fn test_newer_warning_text_caps_the_name_list() {
+        let names: Vec<String> = (1..=12).map(|i| format!("f{i}.txt")).collect();
+        let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+        let text = newer_warning_text(&refs);
+        assert!(text.starts_with("12 files newer at the destination, left: f1.txt"));
+        assert!(text.contains("f10.txt"));
+        assert!(!text.contains("f11.txt"));
+        assert!(text.ends_with(", …and 2 more"));
+    }
+
+    #[test]
+    fn test_newer_warning_text_cap_boundary() {
+        let names: Vec<String> = (1..=11).map(|i| format!("f{i}.txt")).collect();
+        let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+        assert!(newer_warning_text(&refs[..10]).ends_with("f10.txt"));
+        assert!(newer_warning_text(&refs).ends_with("f10.txt, …and 1 more"));
     }
 
     // --- write_results_with_mode tests ---
