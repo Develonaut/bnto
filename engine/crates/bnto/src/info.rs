@@ -15,7 +15,7 @@ pub struct RecipeInfo {
     pub category: String,
     pub node_types: Vec<String>,
     pub dependencies: Vec<Dependency>,
-    pub input_mode: String,
+    pub input_mode: InputMode,
 }
 
 /// Print recipe info to stdout with colored formatting.
@@ -31,17 +31,17 @@ pub fn print_recipe_info(slug: &str, info: &RecipeInfo) {
         info.node_types.join(", ").cyan()
     );
     print_dependencies(&info.dependencies);
-    println!("\n{}", run_hint(slug, &info.input_mode).dimmed());
+    println!("\n{}", run_hint(slug, info.input_mode).dimmed());
 }
 
 /// Usage hint tailored to the recipe's input mode — a `none` recipe takes
 /// no trailing argument at all, so suggesting `<files...>` is misleading.
-fn run_hint(slug: &str, input_mode: &str) -> String {
+fn run_hint(slug: &str, input_mode: InputMode) -> String {
     match input_mode {
-        "none" => format!("Run with: bnto run {slug}"),
-        "url" => format!("Run with: bnto run {slug} <url>"),
-        "text" => format!("Run with: bnto run {slug} <text>"),
-        _ => format!("Run with: bnto run {slug} <files...>"),
+        InputMode::None => format!("Run with: bnto run {slug}"),
+        InputMode::Url => format!("Run with: bnto run {slug} <url>"),
+        InputMode::Text => format!("Run with: bnto run {slug} <text>"),
+        InputMode::FileUpload => format!("Run with: bnto run {slug} <files...>"),
     }
 }
 
@@ -72,12 +72,7 @@ pub fn get_recipe_info(slug: &str, catalog: &RecipeCatalog) -> Option<RecipeInfo
     let def: PipelineDefinition = serde_json::from_str(&entry.definition_json).ok()?;
 
     let node_types = extract_node_types(&def);
-    let input_mode = match resolve_input_mode(&def) {
-        InputMode::FileUpload => "file-upload",
-        InputMode::Url => "url",
-        InputMode::Text => "text",
-        InputMode::None => "none",
-    };
+    let input_mode = resolve_input_mode(&def);
 
     let registry = bnto_engine::create_registry();
     let dependencies = collect_pipeline_dependencies(&def, &registry);
@@ -89,7 +84,7 @@ pub fn get_recipe_info(slug: &str, catalog: &RecipeCatalog) -> Option<RecipeInfo
         category: entry.category.clone(),
         node_types,
         dependencies,
-        input_mode: input_mode.to_string(),
+        input_mode,
     })
 }
 
@@ -193,11 +188,11 @@ mod tests {
 
         // file-upload recipes
         let info = get_recipe_info("compress-images", &c).unwrap();
-        assert_eq!(info.input_mode, "file-upload");
+        assert_eq!(info.input_mode, InputMode::FileUpload);
 
         // url-mode recipe
         let info = get_recipe_info("download-video", &c).unwrap();
-        assert_eq!(info.input_mode, "url");
+        assert_eq!(info.input_mode, InputMode::Url);
     }
 
     #[test]
@@ -247,7 +242,7 @@ mod tests {
             category: "image".to_string(),
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
-            input_mode: "file-upload".to_string(),
+            input_mode: InputMode::FileUpload,
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("Compress Images"));
@@ -262,7 +257,7 @@ mod tests {
             category: "image".to_string(),
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
-            input_mode: "file-upload".to_string(),
+            input_mode: InputMode::FileUpload,
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("image"));
@@ -277,7 +272,7 @@ mod tests {
             category: "image".to_string(),
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
-            input_mode: "file-upload".to_string(),
+            input_mode: InputMode::FileUpload,
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("image-compress"));
@@ -298,7 +293,7 @@ mod tests {
                 install_hints: Default::default(),
                 homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
             }],
-            input_mode: "url".to_string(),
+            input_mode: InputMode::Url,
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("yt-dlp"));
@@ -313,10 +308,10 @@ mod tests {
             category: "video".to_string(),
             node_types: vec!["shell-command".to_string()],
             dependencies: vec![],
-            input_mode: "url".to_string(),
+            input_mode: InputMode::Url,
         };
         let output = format_recipe_info(&info);
-        assert!(output.contains("url"));
+        assert!(output.contains("  Input:      url\n"));
     }
 
     #[test]
@@ -328,7 +323,7 @@ mod tests {
             category: "image".to_string(),
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
-            input_mode: "file-upload".to_string(),
+            input_mode: InputMode::FileUpload,
         };
         let output = format_recipe_info(&info);
         assert!(
@@ -340,7 +335,7 @@ mod tests {
     #[test]
     fn run_hint_omits_argument_for_none_mode() {
         assert_eq!(
-            run_hint("keep-awake", "none"),
+            run_hint("keep-awake", InputMode::None),
             "Run with: bnto run keep-awake"
         );
     }
@@ -348,20 +343,23 @@ mod tests {
     #[test]
     fn run_hint_uses_url_for_url_mode() {
         assert_eq!(
-            run_hint("download-video", "url"),
+            run_hint("download-video", InputMode::Url),
             "Run with: bnto run download-video <url>"
         );
     }
 
     #[test]
     fn run_hint_uses_text_for_text_mode() {
-        assert_eq!(run_hint("echo", "text"), "Run with: bnto run echo <text>");
+        assert_eq!(
+            run_hint("echo", InputMode::Text),
+            "Run with: bnto run echo <text>"
+        );
     }
 
     #[test]
-    fn run_hint_defaults_to_files() {
+    fn run_hint_uses_files_for_file_upload_mode() {
         assert_eq!(
-            run_hint("compress-images", "file-upload"),
+            run_hint("compress-images", InputMode::FileUpload),
             "Run with: bnto run compress-images <files...>"
         );
     }

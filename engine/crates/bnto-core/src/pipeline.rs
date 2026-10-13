@@ -200,22 +200,7 @@ pub struct PipelineResult {
 // InputMode — How data enters the recipe
 // =============================================================================
 
-/// How the recipe expects to receive its input data.
-/// Read from the input node's `mode` parameter.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum InputMode {
-    /// User uploads files (default). CLI reads file paths from disk.
-    #[default]
-    FileUpload,
-    /// User provides a URL. CLI accepts a URL string.
-    Url,
-    /// User provides text content. CLI accepts a text string.
-    Text,
-    /// Recipe takes no input at all — all configuration comes from node
-    /// fields. Used by utility recipes (session managers, system toggles)
-    /// where there is nothing to feed in.
-    None,
-}
+pub use crate::input_mode::InputMode;
 
 /// Walk the definition to find the input node and read its `mode` param.
 /// Returns `FileUpload` if no input node or no mode param is found.
@@ -226,12 +211,12 @@ pub fn resolve_input_mode(def: &PipelineDefinition) -> InputMode {
 fn find_input_mode_in_nodes(nodes: &[PipelineNode]) -> InputMode {
     for node in nodes {
         if node.node_type == "input" {
-            return match node.params.get("mode").and_then(|v| v.as_str()) {
-                Some("url") => InputMode::Url,
-                Some("text") => InputMode::Text,
-                Some("none") => InputMode::None,
-                _ => InputMode::FileUpload,
-            };
+            return node
+                .params
+                .get("mode")
+                .and_then(|v| v.as_str())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or_default();
         }
         // Recurse into container children
         if let Some(children) = &node.children {

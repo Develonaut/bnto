@@ -21,7 +21,7 @@ use super::picker::PickerModel;
 /// Skips input/output nodes (not user-configurable).
 ///
 /// For file-mode recipes, creates an embedded `PickerModel` starting at
-/// the given `start_dir`. For URL/text-mode, no picker is created.
+/// the given `start_dir`. For URL/text/none-mode, no picker is created.
 pub fn load_detail_from_entry(
     entry: &CatalogEntry,
     registry: &NodeRegistry,
@@ -158,15 +158,16 @@ fn find_input_param_in_nodes(nodes: &[serde_json::Value]) -> Option<ParamEntry> 
 ///
 /// Returns `Some(ParamEntry)` for url and text modes so the detail screen
 /// shows a text field for the user to enter a URL or text before running.
-/// Returns `None` for file-upload mode (handled by the file picker).
+/// Returns `None` for file-upload mode (handled by the file picker) and
+/// none mode (nothing to enter).
 fn extract_input_param(node: &serde_json::Value, node_id: &str) -> Option<ParamEntry> {
     let params = node["parameters"].as_object()?;
-    let mode = params.get("mode")?.as_str()?;
+    let mode: InputMode = params.get("mode")?.as_str()?.parse().ok()?;
 
     let (name, default_label) = match mode {
-        "url" => ("url", "URL"),
-        "text" => ("text", "Text"),
-        _ => return None,
+        InputMode::Url => ("url", "URL"),
+        InputMode::Text => ("text", "Text"),
+        InputMode::FileUpload | InputMode::None => return None,
     };
 
     let label = params

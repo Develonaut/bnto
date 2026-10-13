@@ -248,6 +248,32 @@ fn test_none_mode_shell_source_feeds_next_node() {
     assert!(!stderr.contains("[1/1]"), "stderr: {stderr}");
 }
 
+#[test]
+fn test_none_mode_rejects_positional_args() {
+    // Guards: a `none` recipe must not silently ignore positional args.
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args([
+            "run",
+            &custom_recipe_path("no-input-shell-source"),
+            "foo.txt",
+        ])
+        .args(["--yes", "-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("This recipe takes no input; got 1 argument(s)"),
+        "Expected no-input error, got: {stderr}"
+    );
+    assert!(
+        output_files(&out).is_empty(),
+        "No outputs should be written"
+    );
+}
+
 // --- URL Mode ---
 
 #[test]

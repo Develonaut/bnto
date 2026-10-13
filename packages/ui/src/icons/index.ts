@@ -21,6 +21,7 @@ export {
   ChevronRight as ChevronRightIcon,
   ChevronUp as ChevronUpIcon,
   CircleMinus as CircleMinusIcon,
+  CircleOff as CircleOffIcon,
   Cloud as CloudIcon,
   Coffee as CoffeeIcon,
   CloudOff as CloudOffIcon,
