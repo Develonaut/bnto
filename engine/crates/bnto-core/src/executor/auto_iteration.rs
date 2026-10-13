@@ -26,41 +26,49 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
     let mut all_warnings: Vec<String> = Vec::new();
 
     for run in &runs {
-        match run {
-            Run::PerFileSequence { start, len } => {
-                let seq = &nodes[*start..*start + *len];
-                let result = run_per_file_sequence(ctx, seq, current_files)?;
-                total_processed += result.files_processed;
-                all_warnings.extend(result.warnings);
-                current_files = result.output_files;
-            }
-            Run::Container { index } => {
-                let container = &nodes[*index..*index + 1];
-                let (output, processed, warnings) =
-                    run_node_chain(ctx, container, current_files, 0)?;
-                total_processed += processed;
-                all_warnings.extend(warnings);
-                current_files = output;
-            }
-            Run::Batch { index } => {
-                let batch_node = &nodes[*index..*index + 1];
-                let (output, processed, warnings) =
-                    run_node_chain(ctx, batch_node, current_files, 0)?;
-                total_processed += processed;
-                all_warnings.extend(warnings);
-                current_files = output;
-            }
-            Run::Source { index } => {
-                let source_node = &nodes[*index..*index + 1];
-                let (output, processed, warnings) = run_node_chain(ctx, source_node, vec![], 0)?;
-                total_processed += processed;
-                all_warnings.extend(warnings);
-                current_files = output;
-            }
-        }
+        let result = run_one(ctx, nodes, run, current_files)?;
+        total_processed += result.files_processed;
+        all_warnings.extend(result.warnings);
+        current_files = result.output_files;
     }
 
     Ok((current_files, total_processed, all_warnings))
+}
+
+/// Execute one run with the strategy its kind needs.
+fn run_one<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    nodes: &[&PipelineNode],
+    run: &Run,
+    files: Vec<PipelineFile>,
+) -> Result<NodeExecutionResult, BntoError> {
+    match run {
+        Run::PerFileSequence { start, len } => {
+            let seq = &nodes[*start..*start + *len];
+            run_per_file_sequence(ctx, seq, files, *start, nodes.len())
+        }
+        Run::Container { index } | Run::Batch { index } => {
+            run_single_node(ctx, nodes, *index, files)
+        }
+        Run::Source { index } => run_single_node(ctx, nodes, *index, vec![]),
+    }
+}
+
+/// Run the node at `index` as a one-node chain, numbered within the whole pipeline.
+fn run_single_node<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    nodes: &[&PipelineNode],
+    index: usize,
+    files: Vec<PipelineFile>,
+) -> Result<NodeExecutionResult, BntoError> {
+    let node = &nodes[index..index + 1];
+    let (output_files, files_processed, warnings) =
+        run_node_chain(ctx, node, files, 0, index, nodes.len())?;
+    Ok(NodeExecutionResult {
+        files_processed,
+        output_files,
+        warnings,
+    })
 }
 
 /// A contiguous run of nodes that share an execution strategy.
@@ -145,18 +153,22 @@ fn partition_into_runs(nodes: &[&PipelineNode], registry: &NodeRegistry) -> Vec<
 }
 
 /// Run a sequence of primitive nodes once per file, collecting all outputs.
-/// Same semantics as `execute_loop` in container.rs.
+/// Same semantics as `execute_loop` in container.rs. `first_index` is the
+/// sequence's first position within the pipeline of `total_nodes`.
 fn run_per_file_sequence<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
+    first_index: usize,
+    total_nodes: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
     let mut all_warnings: Vec<String> = Vec::new();
 
     for (i, file) in files.into_iter().enumerate() {
-        let (output, processed, warnings) = run_node_chain(ctx, nodes, vec![file], i)?;
+        let (output, processed, warnings) =
+            run_node_chain(ctx, nodes, vec![file], i, first_index, total_nodes)?;
         total_processed += processed;
         all_warnings.extend(warnings);
         all_output_files.extend(output);

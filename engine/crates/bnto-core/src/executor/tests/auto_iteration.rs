@@ -448,6 +448,120 @@ fn test_auto_mode_progress_events_correct() {
     );
 }
 
+/// `(node_id, node_index, total_nodes)` of every NodeStarted, in emit order.
+fn node_started_positions(events: &[PipelineEvent]) -> Vec<(String, usize, usize)> {
+    events
+        .iter()
+        .filter_map(|e| match e {
+            PipelineEvent::NodeStarted {
+                node_id,
+                node_index,
+                total_nodes,
+                ..
+            } => Some((node_id.clone(), *node_index, *total_nodes)),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn test_auto_mode_node_index_counts_whole_pipeline() {
+    // Each run is its own chain, but indices count against the whole pipeline.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/v" } },
+            { "id": "echo", "type": "test-echo" },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(
+        node_started_positions(&recorder.events()),
+        vec![("src".to_string(), 0, 2), ("echo".to_string(), 1, 2)]
+    );
+}
+
+#[test]
+fn test_auto_mode_node_index_offsets_per_file_sequence() {
+    // A per-file sequence after a source starts at its position in the pipeline.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "upper", "type": "test-uppercase" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/v" } },
+            { "id": "echo", "type": "test-echo" },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    let started = node_started_positions(&recorder.events());
+    let of = |id: &str| -> Vec<(usize, usize)> {
+        started
+            .iter()
+            .filter(|(n, _, _)| n == id)
+            .map(|(_, i, t)| (*i, *t))
+            .collect()
+    };
+    assert_eq!(of("upper"), vec![(0, 3), (0, 3)]);
+    assert_eq!(of("src"), vec![(1, 3)]);
+    assert_eq!(of("echo"), vec![(2, 3)]);
+}
+
+#[test]
+fn test_auto_mode_container_numbered_in_pipeline_children_in_container() {
+    // The container counts against the pipeline; its children against the container.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "src", "type": "test-source", "params": { "url": "https://example.com/v" } },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "child", "type": "test-echo" }
+                ]
+            },
+            { "id": "echo", "type": "test-echo" },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    execute_pipeline(&def, vec![], &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(
+        node_started_positions(&recorder.events()),
+        vec![
+            ("src".to_string(), 0, 3),
+            ("loop-1".to_string(), 1, 3),
+            ("child".to_string(), 0, 1),
+            ("echo".to_string(), 2, 3),
+        ]
+    );
+}
+
 // --- Edge Cases ---
 
 #[test]

@@ -138,7 +138,9 @@ pub fn execute_pipeline(
     });
 
     let (current_files, total_files_processed, warnings) = match definition.resolved_iteration() {
-        IterationMode::Explicit => run_node_chain(&ctx, &processing_nodes, files, 0)?,
+        IterationMode::Explicit => {
+            run_node_chain(&ctx, &processing_nodes, files, 0, 0, processing_nodes.len())?
+        }
         IterationMode::Auto => auto_iteration::run_auto_iteration(&ctx, &processing_nodes, files)?,
     };
 
@@ -152,23 +154,28 @@ pub fn execute_pipeline(
 }
 
 /// Chain nodes sequentially, passing each node's output as the next node's input.
+///
+/// `first_index` is the chain's first node position within the whole
+/// pipeline of `total_nodes`, so a chain that is a slice of the pipeline
+/// still reports pipeline-wide progress.
 fn run_node_chain<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
     file_offset: usize,
+    first_index: usize,
+    total_nodes: usize,
 ) -> Result<(Vec<PipelineFile>, usize, Vec<String>), BntoError> {
-    let total_nodes = nodes.len();
     let mut current_files = files;
     let mut total_files_processed: usize = 0;
     let mut all_warnings: Vec<String> = Vec::new();
 
-    for (node_index, node) in nodes.iter().enumerate() {
+    for (i, node) in nodes.iter().enumerate() {
         let result = execute_node(
             ctx,
             node,
             current_files,
-            node_index,
+            first_index + i,
             total_nodes,
             file_offset,
         )?;
