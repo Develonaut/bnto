@@ -1,9 +1,13 @@
 // Pipeline Executor — top-level orchestrator for pipeline execution.
 //
-// Walks nodes in order, chaining outputs to inputs. Split across three files:
-//   - `mod.rs` — public API, node dispatch, shared types
+// Walks nodes in order, chaining outputs to inputs. Split across seven files:
+//   - `mod.rs` — public API, node chaining and dispatch, shared types
+//   - `auto_iteration.rs` — implicit per-file loops for `iteration: "auto"`
 //   - `primitive.rs` — leaf node execution (image compress, file rename, etc.)
 //   - `container.rs` — container node execution (loop, group, parallel)
+//   - `loop_config.rs` — loop container params (error handling, persistence)
+//   - `resolve.rs` — `{{fields.*}}` template resolution
+//   - `template.rs` — multi-namespace template resolution (env, ctx, node, item)
 //
 // Pure Rust — no WASM deps. Works with `cargo test` natively.
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
@@ -54,6 +58,33 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     /// Per-node output metadata for {{node.<id>.*}} templates.
     /// Seeded with input file metadata before execution begins.
     node_outputs: std::collections::BTreeMap<String, serde_json::Value>,
+}
+
+/// Where a node chain sits among its sibling nodes, for `NodeStarted` numbering.
+///
+/// Auto-iteration runs a pipeline as several chains; each one is a slice of
+/// the pipeline and must report positions against the whole of it.
+#[derive(Clone, Copy)]
+struct ChainPosition {
+    /// Position of the chain's first node among its siblings.
+    first_index: usize,
+    /// Number of sibling processing nodes (pipeline-wide, or within a container).
+    total_nodes: usize,
+}
+
+impl ChainPosition {
+    /// A chain that covers every one of its `total_nodes` siblings.
+    fn whole(total_nodes: usize) -> Self {
+        Self::starting_at(0, total_nodes)
+    }
+
+    /// A chain whose first node is at `first_index` among `total_nodes` siblings.
+    fn starting_at(first_index: usize, total_nodes: usize) -> Self {
+        Self {
+            first_index,
+            total_nodes,
+        }
+    }
 }
 
 /// Result of executing a single node or container sub-pipeline.
@@ -111,8 +142,22 @@ pub fn execute_pipeline(
 ) -> Result<PipelineResult, BntoError> {
     let start_ms = now_ms();
     let processing_nodes = filter_processing_nodes(definition);
-    let node_outputs = template::build_node_outputs_for_input(&definition.nodes, &files);
-    let ctx = PipelineContext {
+    let ctx = build_root_context(definition, &files, registry, reporter, process_ctx, now_ms);
+    emit_pipeline_started(&ctx, &processing_nodes, files.len());
+    let result = run_processing_nodes(&ctx, definition, &processing_nodes, files)?;
+    Ok(finish_pipeline(&ctx, start_ms, result))
+}
+
+/// Build the top-level context, seeding node outputs from the input files.
+fn build_root_context<'a, F: Fn() -> u64 + Copy>(
+    definition: &PipelineDefinition,
+    files: &[PipelineFile],
+    registry: &'a NodeRegistry,
+    reporter: &'a PipelineReporter,
+    process_ctx: &'a dyn ProcessContext,
+    now_ms: F,
+) -> PipelineContext<'a, F> {
+    PipelineContext {
         registry,
         reporter,
         process_ctx,
@@ -120,63 +165,82 @@ pub fn execute_pipeline(
         now_ms,
         loop_item: None,
         parent_node_id: None,
-        node_outputs,
-    };
+        node_outputs: template::build_node_outputs_for_input(&definition.nodes, files),
+    }
+}
 
-    let node_infos: Vec<NodeInfo> = processing_nodes
+fn emit_pipeline_started<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    processing_nodes: &[&PipelineNode],
+    total_files: usize,
+) {
+    let nodes = processing_nodes
         .iter()
         .map(|n| NodeInfo {
             id: n.id.clone(),
             node_type: n.node_type.clone(),
         })
         .collect();
-
     ctx.reporter.emit(PipelineEvent::PipelineStarted {
         total_nodes: processing_nodes.len(),
-        total_files: files.len(),
-        nodes: node_infos,
+        total_files,
+        nodes,
     });
+}
 
-    let (current_files, total_files_processed, warnings) = match definition.resolved_iteration() {
+/// Run the top-level nodes with the definition's iteration strategy.
+fn run_processing_nodes<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    definition: &PipelineDefinition,
+    processing_nodes: &[&PipelineNode],
+    files: Vec<PipelineFile>,
+) -> Result<NodeExecutionResult, BntoError> {
+    match definition.resolved_iteration() {
         IterationMode::Explicit => {
-            run_node_chain(&ctx, &processing_nodes, files, 0, 0, processing_nodes.len())?
+            let position = ChainPosition::whole(processing_nodes.len());
+            run_node_chain(ctx, processing_nodes, files, 0, position)
         }
-        IterationMode::Auto => auto_iteration::run_auto_iteration(&ctx, &processing_nodes, files)?,
-    };
+        IterationMode::Auto => auto_iteration::run_auto_iteration(ctx, processing_nodes, files),
+    }
+}
 
+/// Emit PipelineCompleted and convert the final files into the result.
+fn finish_pipeline<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    start_ms: u64,
+    result: NodeExecutionResult,
+) -> PipelineResult {
     let duration_ms = (ctx.now_ms)() - start_ms;
     ctx.reporter.emit(PipelineEvent::PipelineCompleted {
         duration_ms,
-        total_files_processed,
+        total_files_processed: result.files_processed,
     });
-
-    Ok(build_pipeline_result(current_files, duration_ms, warnings))
+    build_pipeline_result(result.output_files, duration_ms, result.warnings)
 }
 
 /// Chain nodes sequentially, passing each node's output as the next node's input.
 ///
-/// `first_index` is the chain's first node position within the whole
-/// pipeline of `total_nodes`, so a chain that is a slice of the pipeline
-/// still reports pipeline-wide progress.
+/// `position` places the chain among its siblings, so a chain that is a
+/// slice of the pipeline still reports pipeline-wide progress.
 fn run_node_chain<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
     file_offset: usize,
-    first_index: usize,
-    total_nodes: usize,
-) -> Result<(Vec<PipelineFile>, usize, Vec<String>), BntoError> {
+    position: ChainPosition,
+) -> Result<NodeExecutionResult, BntoError> {
     let mut current_files = files;
     let mut total_files_processed: usize = 0;
     let mut all_warnings: Vec<String> = Vec::new();
 
     for (i, node) in nodes.iter().enumerate() {
+        let node_index = position.first_index + i;
         let result = execute_node(
             ctx,
             node,
             current_files,
-            first_index + i,
-            total_nodes,
+            node_index,
+            position.total_nodes,
             file_offset,
         )?;
         total_files_processed += result.files_processed;
@@ -184,7 +248,11 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
         current_files = result.output_files;
     }
 
-    Ok((current_files, total_files_processed, all_warnings))
+    Ok(NodeExecutionResult {
+        output_files: current_files,
+        files_processed: total_files_processed,
+        warnings: all_warnings,
+    })
 }
 
 // --- Internal: Node Dispatch ---

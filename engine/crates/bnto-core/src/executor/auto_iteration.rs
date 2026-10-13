@@ -10,7 +10,7 @@ use crate::metadata::InputCardinality;
 use crate::pipeline::{PipelineFile, PipelineNode, is_container_node};
 use crate::registry::NodeRegistry;
 
-use super::{NodeExecutionResult, PipelineContext, run_node_chain};
+use super::{ChainPosition, NodeExecutionResult, PipelineContext, run_node_chain};
 
 /// Execute a flat node list with auto-iteration: contiguous per-file
 /// processors are wrapped in implicit per-file loops. Containers and
@@ -19,7 +19,7 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
-) -> Result<(Vec<PipelineFile>, usize, Vec<String>), BntoError> {
+) -> Result<NodeExecutionResult, BntoError> {
     let runs = partition_into_runs(nodes, ctx.registry);
     let mut current_files = files;
     let mut total_processed: usize = 0;
@@ -32,7 +32,11 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
         current_files = result.output_files;
     }
 
-    Ok((current_files, total_processed, all_warnings))
+    Ok(NodeExecutionResult {
+        output_files: current_files,
+        files_processed: total_processed,
+        warnings: all_warnings,
+    })
 }
 
 /// Execute one run with the strategy its kind needs.
@@ -45,7 +49,8 @@ fn run_one<F: Fn() -> u64 + Copy>(
     match run {
         Run::PerFileSequence { start, len } => {
             let seq = &nodes[*start..*start + *len];
-            run_per_file_sequence(ctx, seq, files, *start, nodes.len())
+            let position = ChainPosition::starting_at(*start, nodes.len());
+            run_per_file_sequence(ctx, seq, files, position)
         }
         Run::Container { index } | Run::Batch { index } => {
             run_single_node(ctx, nodes, *index, files)
@@ -62,13 +67,8 @@ fn run_single_node<F: Fn() -> u64 + Copy>(
     files: Vec<PipelineFile>,
 ) -> Result<NodeExecutionResult, BntoError> {
     let node = &nodes[index..index + 1];
-    let (output_files, files_processed, warnings) =
-        run_node_chain(ctx, node, files, 0, index, nodes.len())?;
-    Ok(NodeExecutionResult {
-        files_processed,
-        output_files,
-        warnings,
-    })
+    let position = ChainPosition::starting_at(index, nodes.len());
+    run_node_chain(ctx, node, files, 0, position)
 }
 
 /// A contiguous run of nodes that share an execution strategy.
@@ -153,25 +153,23 @@ fn partition_into_runs(nodes: &[&PipelineNode], registry: &NodeRegistry) -> Vec<
 }
 
 /// Run a sequence of primitive nodes once per file, collecting all outputs.
-/// Same semantics as `execute_loop` in container.rs. `first_index` is the
-/// sequence's first position within the pipeline of `total_nodes`.
+/// Same semantics as `execute_loop` in container.rs. `position` places the
+/// sequence within the pipeline.
 fn run_per_file_sequence<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
-    first_index: usize,
-    total_nodes: usize,
+    position: ChainPosition,
 ) -> Result<NodeExecutionResult, BntoError> {
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
     let mut all_warnings: Vec<String> = Vec::new();
 
     for (i, file) in files.into_iter().enumerate() {
-        let (output, processed, warnings) =
-            run_node_chain(ctx, nodes, vec![file], i, first_index, total_nodes)?;
-        total_processed += processed;
-        all_warnings.extend(warnings);
-        all_output_files.extend(output);
+        let result = run_node_chain(ctx, nodes, vec![file], i, position)?;
+        total_processed += result.files_processed;
+        all_warnings.extend(result.warnings);
+        all_output_files.extend(result.output_files);
     }
 
     Ok(NodeExecutionResult {

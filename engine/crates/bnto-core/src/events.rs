@@ -60,9 +60,12 @@ pub enum PipelineEvent {
     NodeStarted {
         /// The unique ID of the node (from the recipe definition).
         node_id: String,
-        /// Zero-based index of this node in the processing sequence.
+        /// Zero-based position of this node among the pipeline's processing
+        /// nodes — pipeline-wide even when auto-iteration splits the run.
+        /// When `parent_node_id` is set, the position is within that container.
         node_index: usize,
-        /// Total number of processing nodes in the pipeline.
+        /// Number of processing nodes in the pipeline, or in the parent
+        /// container when `parent_node_id` is set.
         total_nodes: usize,
         /// The type of node (e.g., "image-compress", "spreadsheet-clean").
         node_type: String,
