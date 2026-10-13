@@ -1,5 +1,7 @@
 // Render the file picker screen — breadcrumb path + search + file list with multi-select.
 
+use std::path::{Component, Path};
+
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
@@ -88,8 +90,9 @@ pub fn draw_picker(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
 ///
 /// Truncates from the left when the path is too wide, showing `…/` prefix.
 /// Home directory (`~`) abbreviation is applied when possible.
-fn render_breadcrumb(path: &std::path::Path, max_width: usize) -> String {
-    let display = abbreviate_home(path);
+fn render_breadcrumb(path: &Path, max_width: usize) -> String {
+    let segments = breadcrumb_segments(path);
+    let display = segments.join("/");
 
     // Leave room for the "  " prefix in the caller
     let available = max_width.saturating_sub(4);
@@ -98,11 +101,10 @@ fn render_breadcrumb(path: &std::path::Path, max_width: usize) -> String {
     }
 
     // Truncate from left: show "…/" + as many trailing segments as fit
-    let parts: Vec<&str> = display.split('/').collect();
     let mut result = String::new();
-    for part in parts.iter().rev() {
+    for part in segments.iter().rev() {
         let candidate = if result.is_empty() {
-            part.to_string()
+            part.clone()
         } else {
             format!("{part}/{result}")
         };
@@ -115,14 +117,34 @@ fn render_breadcrumb(path: &std::path::Path, max_width: usize) -> String {
     format!("…/{result}")
 }
 
-/// Replace the user's home directory with `~` for shorter display.
-fn abbreviate_home(path: &std::path::Path) -> String {
+/// Path segments for display, with the user's home directory shown as `~`.
+///
+/// Built from path components rather than by splitting `display()` output,
+/// so Windows `\` separators never end up inside a segment.
+fn breadcrumb_segments(path: &Path) -> Vec<String> {
     if let Some(home) = dirs::home_dir()
         && let Ok(relative) = path.strip_prefix(&home)
     {
-        return format!("~/{}", relative.display());
+        let mut segments = vec!["~".to_string()];
+        segments.extend(component_segments(relative));
+        return segments;
     }
-    path.display().to_string()
+    component_segments(path)
+}
+
+/// One string per component. A leading root becomes an empty segment so
+/// joining with `/` yields `/usr/bin`; after a drive prefix it is dropped
+/// so Windows paths read `C:/Users`.
+fn component_segments(path: &Path) -> Vec<String> {
+    let mut segments = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::RootDir if !segments.is_empty() => {}
+            Component::RootDir => segments.push(String::new()),
+            other => segments.push(other.as_os_str().to_string_lossy().into_owned()),
+        }
+    }
+    segments
 }
 
 #[cfg(test)]
@@ -162,5 +184,51 @@ mod tests {
             result.contains("final"),
             "should keep the last segment: {result}"
         );
+    }
+
+    /// An absolute path built with the host separator (`\` on Windows).
+    fn native_root() -> PathBuf {
+        if cfg!(windows) {
+            PathBuf::from(r"C:\")
+        } else {
+            PathBuf::from("/")
+        }
+    }
+
+    #[test]
+    fn breadcrumb_uses_slash_separators_on_every_os() {
+        let path = native_root().join("projects").join("bnto");
+        let result = render_breadcrumb(&path, 80);
+        assert!(
+            result.ends_with("/projects/bnto") && !result.contains('\\'),
+            "breadcrumb should join with `/`: {result}"
+        );
+    }
+
+    #[test]
+    fn breadcrumb_truncation_keeps_trailing_native_segments() {
+        let path = [
+            "very",
+            "long",
+            "deeply",
+            "nested",
+            "directory",
+            "structure",
+            "here",
+        ]
+        .iter()
+        .fold(native_root(), |p, seg| p.join(seg));
+        let result = render_breadcrumb(&path, 30);
+        assert!(
+            result.starts_with("…/") && result.ends_with("structure/here"),
+            "should keep trailing segments: {result}"
+        );
+    }
+
+    #[test]
+    fn breadcrumb_abbreviates_home_with_slashes() {
+        let Some(home) = dirs::home_dir() else { return };
+        let result = render_breadcrumb(&home.join("Code").join("bnto"), 80);
+        assert_eq!(result, "~/Code/bnto");
     }
 }
