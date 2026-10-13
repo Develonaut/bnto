@@ -131,7 +131,7 @@ fn require_package_manager(pm: Option<PackageManager>) -> PackageManager {
 fn confirm_or_exit(yes: bool, pm: PackageManager) {
     if !yes {
         eprint!("Install with {}? [Y/n] ", pm.name().cyan());
-        if !confirm_yes() {
+        if !confirm_yes(std::io::stdin().lock()) {
             eprintln!("Cancelled.");
             std::process::exit(1);
         }
@@ -234,11 +234,15 @@ fn run_install_command(
         .map_err(|e| e.to_string())
 }
 
-/// Read a single line from stdin and return true if it's empty or starts with 'y'/'Y'.
-fn confirm_yes() -> bool {
+/// Read a single line and return true if it's empty or "y"/"yes".
+///
+/// EOF (closed or non-interactive stdin) declines — only an explicit empty
+/// line takes the default, so piped/CI runs never install unprompted.
+fn confirm_yes(mut reader: impl std::io::BufRead) -> bool {
     let mut input = String::new();
-    if std::io::stdin().read_line(&mut input).is_err() {
-        return false;
+    match reader.read_line(&mut input) {
+        Ok(0) | Err(_) => return false,
+        Ok(_) => {}
     }
     let trimmed = input.trim();
     trimmed.is_empty() || trimmed.eq_ignore_ascii_case("y") || trimmed.eq_ignore_ascii_case("yes")
@@ -333,6 +337,28 @@ mod tests {
     fn run_install_command_failure() {
         let result = run_install_command(&AllMissingContext, PackageManager::Brew, "yt-dlp");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn confirm_declines_on_eof() {
+        // Closed/non-interactive stdin must never auto-approve an install.
+        assert!(!confirm_yes(&b""[..]));
+    }
+
+    #[test]
+    fn confirm_empty_line_defaults_to_yes() {
+        assert!(confirm_yes(&b"\n"[..]));
+    }
+
+    #[test]
+    fn confirm_accepts_y() {
+        assert!(confirm_yes(&b"y\n"[..]));
+        assert!(confirm_yes(&b"YES\n"[..]));
+    }
+
+    #[test]
+    fn confirm_rejects_n() {
+        assert!(!confirm_yes(&b"n\n"[..]));
     }
 
     #[test]
