@@ -526,6 +526,75 @@ fn test_auto_mode_node_index_offsets_per_file_sequence() {
 }
 
 #[test]
+fn test_auto_mode_multi_node_sequence_offset_after_barrier() {
+    // A multi-node per-file sequence that starts mid-pipeline numbers each
+    // node from its own position, for every file it iterates.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "batch", "type": "test-batch" },
+            { "id": "upper", "type": "test-uppercase" },
+            { "id": "echo", "type": "test-echo" },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(
+        node_started_positions(&recorder.events()),
+        vec![
+            ("batch".to_string(), 0, 3),
+            ("upper".to_string(), 1, 3),
+            ("echo".to_string(), 2, 3),
+            ("upper".to_string(), 1, 3),
+            ("echo".to_string(), 2, 3),
+        ]
+    );
+}
+
+#[test]
+fn test_auto_mode_batch_run_numbered_in_pipeline() {
+    // A batch node between per-file sequences runs once at its pipeline position.
+    let def = parse_def(
+        r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "upper", "type": "test-uppercase" },
+            { "id": "batch", "type": "test-batch" },
+            { "id": "echo", "type": "test-echo" },
+            { "id": "out", "type": "output" }
+        ],
+        "settings": { "iteration": "auto" }
+    }"#,
+    );
+    let registry = mock_registry();
+    let recorder = RecordingReporter::new();
+    let reporter = recorder.reporter();
+
+    let files = vec![make_file("a.txt", b"aaa"), make_file("b.txt", b"bbb")];
+    execute_pipeline(&def, files, &registry, &reporter, &NoopContext, fake_now).unwrap();
+
+    assert_eq!(
+        node_started_positions(&recorder.events()),
+        vec![
+            ("upper".to_string(), 0, 3),
+            ("upper".to_string(), 0, 3),
+            ("batch".to_string(), 1, 3),
+            ("echo".to_string(), 2, 3),
+            ("echo".to_string(), 2, 3),
+        ]
+    );
+}
+
+#[test]
 fn test_auto_mode_container_numbered_in_pipeline_children_in_container() {
     // The container counts against the pipeline; its children against the container.
     let def = parse_def(

@@ -223,6 +223,7 @@ fn test_missing_input_file() {
 #[test]
 fn test_none_mode_shell_source_feeds_next_node() {
     // Guards: a `none` recipe whose Source first node runs once and feeds the next node.
+    // The fixture runs `git` because it is on every CI runner (`echo` is a cmd builtin on Windows).
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
         .args(["run", &custom_recipe_path("no-input-shell-source"), "--yes"])
@@ -241,6 +242,10 @@ fn test_none_mode_shell_source_feeds_next_node() {
         content.starts_with("git version"),
         "Unexpected content: {content}"
     );
+    // Each run is its own chain, but steps count against the whole pipeline.
+    assert!(stderr.contains("[1/2] shell-command"), "stderr: {stderr}");
+    assert!(stderr.contains("[2/2] file-rename"), "stderr: {stderr}");
+    assert!(!stderr.contains("[1/1]"), "stderr: {stderr}");
 }
 
 // --- URL Mode ---
