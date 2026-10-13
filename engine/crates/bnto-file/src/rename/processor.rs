@@ -1,20 +1,20 @@
-// Rename Files Node — transform filenames in the browser.
+// RenameFiles — NodeProcessor wiring for `file-rename`.
 //
-// Browser version is a filename transformer: takes a file's current name,
-// applies transformation rules, and returns the same file data with the new name.
-//
-// Transformation order: sanitize -> find/replace -> case -> prefix -> suffix -> pattern.
-// Sanitize runs first (if set) to clean the raw filename before other transforms.
-// Pattern has "final say" — it overrides everything using template variables.
-// Counter: {{counter}} auto-increments per-file in batch mode.
+// Orchestrates the transform/naming/metadata modules and injects a
+// per-file `__counter` param in batch mode.
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
 use bnto_core::processor::{
-    BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
+    BatchFile, BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
 };
 use bnto_core::progress::ProgressReporter;
-use regex::Regex;
+
+use super::naming::{build_final_filename, split_filename};
+use super::param_access::get_int_param;
+use super::params::build_rename_parameters;
+use super::result_metadata::build_rename_metadata;
+use super::transform::apply_all_transformations;
 
 /// The rename-files node processor. Stateless — config comes from `NodeInput.params`.
 /// File data passes through unchanged; only the filename is modified.
@@ -65,11 +65,7 @@ impl NodeProcessor for RenameFiles {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        if input.filename.is_empty() {
-            return Err(BntoError::InvalidInput(
-                "Filename cannot be empty".to_string(),
-            ));
-        }
+        require_filename(&input.filename)?;
 
         progress.report(10, "Parsing filename...");
         let (original_stem, original_ext) = split_filename(&input.filename);
@@ -103,21 +99,7 @@ impl NodeProcessor for RenameFiles {
         for (i, file) in input.files.into_iter().enumerate() {
             let pct = ((i as u32) * 100) / (total as u32).max(1);
             progress.report(pct, &format!("Renaming file {} of {total}...", i + 1));
-
-            let mut params = input.params.clone();
-            // Inject the counter value for this file's position
-            let counter_value = counter_start + i;
-            params.insert(
-                "__counter".to_string(),
-                serde_json::Value::Number(serde_json::Number::from(counter_value)),
-            );
-
-            let single_input = NodeInput {
-                data: FileData::Bytes(file.data),
-                filename: file.filename,
-                mime_type: file.mime_type,
-                params,
-            };
+            let single_input = counted_input(file, &input.params, counter_start + i);
             let output = self.process(single_input, progress, ctx)?;
             all_files.extend(output.files);
             combined_metadata = output.metadata;
@@ -127,6 +109,34 @@ impl NodeProcessor for RenameFiles {
             files: all_files,
             metadata: combined_metadata,
         })
+    }
+}
+
+fn require_filename(filename: &str) -> Result<(), BntoError> {
+    if filename.is_empty() {
+        return Err(BntoError::InvalidInput(
+            "Filename cannot be empty".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+/// Wrap one batch file as a single-file input, injecting its `__counter` value.
+fn counted_input(
+    file: BatchFile,
+    params: &serde_json::Map<String, serde_json::Value>,
+    counter_value: usize,
+) -> NodeInput {
+    let mut params = params.clone();
+    params.insert(
+        "__counter".to_string(),
+        serde_json::Value::Number(serde_json::Number::from(counter_value)),
+    );
+    NodeInput {
+        data: FileData::Bytes(file.data),
+        filename: file.filename,
+        mime_type: file.mime_type,
+        params,
     }
 }
 
@@ -144,413 +154,6 @@ fn build_rename_output(
         }],
         metadata,
     }
-}
-
-// --- Metadata Parameter Definitions ---
-
-fn build_rename_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
-    vec![
-        rename_sanitize_param(),
-        rename_separator_param(),
-        rename_max_length_param(),
-        rename_string_param(
-            "find",
-            "Find",
-            "Text or regex pattern to search for in the filename",
-        ),
-        rename_string_param("replace", "Replace", "Replacement text (used with Find)"),
-        rename_case_param(),
-        rename_string_param("prefix", "Prefix", "Text to prepend to the filename"),
-        rename_string_param(
-            "suffix",
-            "Suffix",
-            "Text to append before the file extension",
-        ),
-        rename_pattern_param(),
-        rename_counter_start_param(),
-        rename_counter_pad_param(),
-        rename_extension_param(),
-    ]
-}
-
-/// A simple string parameter for the rename node.
-fn rename_string_param(name: &str, label: &str, desc: &str) -> bnto_core::metadata::ParameterDef {
-    bnto_core::metadata::ParameterDef {
-        name: name.to_string(),
-        label: label.to_string(),
-        description: desc.to_string(),
-        ..Default::default()
-    }
-}
-
-fn rename_case_param() -> bnto_core::metadata::ParameterDef {
-    use bnto_core::metadata::*;
-    ParameterDef {
-        name: "case".to_string(),
-        label: "Case".to_string(),
-        description: "Transform the filename to a specific case".to_string(),
-        param_type: ParameterType::Enum {
-            options: vec![
-                OptionEntry {
-                    value: "lower".to_string(),
-                    label: "lowercase".to_string(),
-                },
-                OptionEntry {
-                    value: "upper".to_string(),
-                    label: "UPPERCASE".to_string(),
-                },
-                OptionEntry {
-                    value: "title".to_string(),
-                    label: "Title Case".to_string(),
-                },
-            ],
-        },
-        ..Default::default()
-    }
-}
-
-fn rename_pattern_param() -> bnto_core::metadata::ParameterDef {
-    bnto_core::metadata::ParameterDef {
-        name: "pattern".to_string(),
-        label: "Pattern".to_string(),
-        description:
-            "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})"
-                .to_string(),
-        placeholder: Some("{{name}}-{{counter}}.{{ext}}".to_string()),
-        ..Default::default()
-    }
-}
-
-fn rename_counter_start_param() -> bnto_core::metadata::ParameterDef {
-    use bnto_core::metadata::*;
-    ParameterDef {
-        name: "counter_start".to_string(),
-        label: "Counter Start".to_string(),
-        description: "Starting number for the {{counter}} variable".to_string(),
-        param_type: ParameterType::Number,
-        default: Some(serde_json::Value::Number(serde_json::Number::from(1))),
-        constraints: Some(Constraints {
-            min: Some(0.0),
-            max: None,
-            required: false,
-        }),
-        ..Default::default()
-    }
-}
-
-fn rename_counter_pad_param() -> bnto_core::metadata::ParameterDef {
-    use bnto_core::metadata::*;
-    ParameterDef {
-        name: "counter_pad".to_string(),
-        label: "Counter Padding".to_string(),
-        description: "Zero-pad width for the counter (e.g., 3 → 001, 002)".to_string(),
-        param_type: ParameterType::Number,
-        default: Some(serde_json::Value::Number(serde_json::Number::from(0))),
-        constraints: Some(Constraints {
-            min: Some(0.0),
-            max: Some(10.0),
-            required: false,
-        }),
-        ..Default::default()
-    }
-}
-
-fn rename_extension_param() -> bnto_core::metadata::ParameterDef {
-    bnto_core::metadata::ParameterDef {
-        name: "extension".to_string(),
-        label: "Extension".to_string(),
-        description: "Replace the file extension (without dot)".to_string(),
-        placeholder: Some("png".to_string()),
-        ..Default::default()
-    }
-}
-
-fn rename_sanitize_param() -> bnto_core::metadata::ParameterDef {
-    use bnto_core::metadata::*;
-    ParameterDef {
-        name: "sanitize".to_string(),
-        label: "Sanitize".to_string(),
-        description: "Clean the filename before other transforms".to_string(),
-        param_type: ParameterType::Enum {
-            options: vec![
-                OptionEntry {
-                    value: "slugify".to_string(),
-                    label: "Slugify (web-safe)".to_string(),
-                },
-                OptionEntry {
-                    value: "strip".to_string(),
-                    label: "Strip non-ASCII".to_string(),
-                },
-                OptionEntry {
-                    value: "normalize".to_string(),
-                    label: "Normalize Unicode".to_string(),
-                },
-            ],
-        },
-        ..Default::default()
-    }
-}
-
-fn rename_separator_param() -> bnto_core::metadata::ParameterDef {
-    bnto_core::metadata::ParameterDef {
-        name: "separator".to_string(),
-        label: "Separator".to_string(),
-        description: "Character to replace spaces and special characters (used with Sanitize)"
-            .to_string(),
-        default: Some(serde_json::Value::String("-".to_string())),
-        ..Default::default()
-    }
-}
-
-fn rename_max_length_param() -> bnto_core::metadata::ParameterDef {
-    use bnto_core::metadata::*;
-    ParameterDef {
-        name: "max_length".to_string(),
-        label: "Max Length".to_string(),
-        description: "Maximum filename length after sanitize (0 = no limit)".to_string(),
-        param_type: ParameterType::Number,
-        default: Some(serde_json::Value::Number(serde_json::Number::from(0))),
-        constraints: Some(Constraints {
-            min: Some(0.0),
-            max: None,
-            required: false,
-        }),
-        ..Default::default()
-    }
-}
-
-// --- Transformation Pipeline ---
-
-/// Apply all transformations in order: sanitize -> find/replace -> case -> prefix -> suffix.
-fn apply_all_transformations(
-    original_stem: &str,
-    params: &serde_json::Map<String, serde_json::Value>,
-) -> String {
-    let mut stem = original_stem.to_string();
-
-    // Sanitize runs first — clean the raw filename before other transforms.
-    if let Some(mode) = get_string_param(params, "sanitize") {
-        let separator = get_string_param(params, "separator").unwrap_or_else(|| "-".to_string());
-        stem = match mode.as_str() {
-            "strip" => bnto_core::case::strip_non_ascii(&stem, &separator),
-            "normalize" => bnto_core::case::normalize_unicode(&stem),
-            _ => bnto_core::case::slug_with_separator(&stem, &separator),
-        };
-        let max_length = get_int_param(params, "max_length").unwrap_or(0);
-        stem = apply_max_length(&stem, max_length);
-    }
-
-    if let Some(find_str) = get_string_param(params, "find") {
-        let replace_str = get_string_param(params, "replace").unwrap_or_default();
-        stem = apply_find_replace(&stem, &find_str, &replace_str);
-    }
-
-    if let Some(case_str) = get_string_param(params, "case") {
-        stem = apply_case_transform(&stem, &case_str);
-    }
-
-    if let Some(prefix) = get_string_param(params, "prefix") {
-        stem = format!("{prefix}{stem}");
-    }
-
-    if let Some(suffix) = get_string_param(params, "suffix") {
-        stem = format!("{stem}{suffix}");
-    }
-
-    stem
-}
-
-/// If a pattern is provided, apply it (overriding the transformed stem).
-/// Otherwise reconstruct from transformed stem + resolved extension.
-fn build_final_filename(
-    stem: &str,
-    original_stem: &str,
-    original_ext: &str,
-    params: &serde_json::Map<String, serde_json::Value>,
-) -> String {
-    // Extension override: if "extension" param is set, use it instead of original
-    let ext = get_string_param(params, "extension")
-        .filter(|e| !e.is_empty())
-        .unwrap_or_else(|| original_ext.to_string());
-
-    if let Some(pattern) = get_string_param(params, "pattern") {
-        let index = get_string_param(params, "index").unwrap_or_else(|| "1".to_string());
-        let counter = format_counter(params);
-        let date = get_current_date();
-        apply_pattern(&pattern, original_stem, &ext, &index, &counter, &date)
-    } else if ext.is_empty() {
-        stem.to_string()
-    } else {
-        format!("{stem}.{ext}")
-    }
-}
-
-// --- Result Metadata ---
-
-fn build_rename_metadata(
-    original_filename: &str,
-    new_filename: &str,
-    params: &serde_json::Map<String, serde_json::Value>,
-) -> serde_json::Map<String, serde_json::Value> {
-    let mut metadata = serde_json::Map::new();
-    metadata.insert(
-        "originalFilename".to_string(),
-        serde_json::Value::String(original_filename.to_string()),
-    );
-    metadata.insert(
-        "newFilename".to_string(),
-        serde_json::Value::String(new_filename.to_string()),
-    );
-
-    let transforms = build_transforms_list(params);
-    metadata.insert(
-        "transformsApplied".to_string(),
-        serde_json::Value::Array(
-            transforms
-                .into_iter()
-                .map(serde_json::Value::String)
-                .collect(),
-        ),
-    );
-
-    metadata
-}
-
-/// Truncate stem to max_length characters. 0 means no limit.
-fn apply_max_length(stem: &str, max_length: usize) -> String {
-    if max_length == 0 || stem.len() <= max_length {
-        return stem.to_string();
-    }
-    stem.chars().take(max_length).collect()
-}
-
-// --- Helper Functions ---
-
-/// Split a filename into stem and extension on the last dot.
-/// ".gitignore" and "README" have no extension (empty string).
-fn split_filename(filename: &str) -> (&str, &str) {
-    match filename.rfind('.') {
-        Some(pos) if pos > 0 => (&filename[..pos], &filename[pos + 1..]),
-        _ => (filename, ""),
-    }
-}
-
-/// Extract a string param from the JSON map. Handles both string and number values.
-fn get_string_param(
-    params: &serde_json::Map<String, serde_json::Value>,
-    key: &str,
-) -> Option<String> {
-    params.get(key).and_then(|v| match v {
-        serde_json::Value::String(s) => Some(s.clone()),
-        serde_json::Value::Number(n) => Some(n.to_string()),
-        _ => None,
-    })
-}
-
-/// Apply find/replace. Tries regex first; falls back to literal if invalid regex.
-fn apply_find_replace(stem: &str, find: &str, replace: &str) -> String {
-    match Regex::new(find) {
-        Ok(re) => re.replace_all(stem, replace).to_string(),
-        Err(_) => stem.replace(find, replace),
-    }
-}
-
-/// Apply case transformation: "lower", "upper", "title". Unknown values pass through.
-fn apply_case_transform(stem: &str, case: &str) -> String {
-    match case {
-        "lower" => bnto_core::case::lower(stem),
-        "upper" => bnto_core::case::upper(stem),
-        "title" => bnto_core::case::capitalize(stem),
-        _ => stem.to_string(),
-    }
-}
-
-/// Apply a template pattern: {{name}}, {{ext}}, {{index}}, {{counter}}, {{date}}.
-fn apply_pattern(
-    pattern: &str,
-    name: &str,
-    ext: &str,
-    index: &str,
-    counter: &str,
-    date: &str,
-) -> String {
-    pattern
-        .replace("{{name}}", name)
-        .replace("{{ext}}", ext)
-        .replace("{{index}}", index)
-        .replace("{{counter}}", counter)
-        .replace("{{date}}", date)
-}
-
-/// Format the counter value with zero-padding.
-/// Reads `__counter` (injected by process_batch) or falls back to counter_start.
-fn format_counter(params: &serde_json::Map<String, serde_json::Value>) -> String {
-    let counter_value = get_int_param(params, "__counter")
-        .or_else(|| get_int_param(params, "counter_start"))
-        .unwrap_or(1);
-    let pad = get_int_param(params, "counter_pad").unwrap_or(0);
-
-    if pad > 0 {
-        format!("{:0>width$}", counter_value, width = pad)
-    } else {
-        counter_value.to_string()
-    }
-}
-
-/// Extract an integer param from the JSON map.
-fn get_int_param(params: &serde_json::Map<String, serde_json::Value>, key: &str) -> Option<usize> {
-    params.get(key).and_then(|v| match v {
-        serde_json::Value::Number(n) => n.as_u64().map(|n| n as usize),
-        serde_json::Value::String(s) => s.parse().ok(),
-        _ => None,
-    })
-}
-
-/// Get current date as YYYY-MM-DD. Uses js_sys::Date in WASM, fixed date in native tests.
-fn get_current_date() -> String {
-    #[cfg(target_arch = "wasm32")]
-    {
-        let date = js_sys::Date::new_0();
-        let year = date.get_full_year();
-        let month = date.get_month() + 1;
-        let day = date.get_date();
-        format!("{year:04}-{month:02}-{day:02}")
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        "2026-02-25".to_string()
-    }
-}
-
-/// Build a list of which transformations were applied, for metadata display.
-fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-    let mut transforms = Vec::new();
-    if params.contains_key("sanitize") {
-        transforms.push("sanitize".to_string());
-    }
-    if params.contains_key("find") {
-        transforms.push("find/replace".to_string());
-    }
-    if params.contains_key("case") {
-        transforms.push("case".to_string());
-    }
-    if params.contains_key("prefix") {
-        transforms.push("prefix".to_string());
-    }
-    if params.contains_key("suffix") {
-        transforms.push("suffix".to_string());
-    }
-    if params.contains_key("pattern") {
-        transforms.push("pattern".to_string());
-    }
-    if params.contains_key("extension") {
-        transforms.push("extension".to_string());
-    }
-    if params.contains_key("counter_start") || params.contains_key("counter_pad") {
-        transforms.push("counter".to_string());
-    }
-    transforms
 }
 
 // =============================================================================
@@ -616,40 +219,6 @@ mod tests {
     /// The no-op progress reporter — doesn't need a JS runtime.
     fn noop_progress() -> ProgressReporter {
         ProgressReporter::new_noop()
-    }
-
-    // =========================================================================
-    // split_filename Tests
-    // =========================================================================
-
-    #[test]
-    fn test_split_simple_filename() {
-        let (stem, ext) = split_filename("photo.jpg");
-        assert_eq!(stem, "photo");
-        assert_eq!(ext, "jpg");
-    }
-
-    #[test]
-    fn test_split_filename_multiple_dots() {
-        // "archive.tar.gz" — extension is the LAST part after the last dot.
-        let (stem, ext) = split_filename("archive.tar.gz");
-        assert_eq!(stem, "archive.tar");
-        assert_eq!(ext, "gz");
-    }
-
-    #[test]
-    fn test_split_filename_no_extension() {
-        let (stem, ext) = split_filename("README");
-        assert_eq!(stem, "README");
-        assert_eq!(ext, "");
-    }
-
-    #[test]
-    fn test_split_dotfile() {
-        // ".gitignore" starts with a dot — the whole thing is the stem.
-        let (stem, ext) = split_filename(".gitignore");
-        assert_eq!(stem, ".gitignore");
-        assert_eq!(ext, "");
     }
 
     // =========================================================================
@@ -1056,55 +625,6 @@ mod tests {
     }
 
     // =========================================================================
-    // Helper Function Tests
-    // =========================================================================
-
-    #[test]
-    fn test_capitalize() {
-        assert_eq!(bnto_core::case::capitalize("hello"), "Hello");
-        assert_eq!(bnto_core::case::capitalize("PHOTO"), "Photo");
-        assert_eq!(bnto_core::case::capitalize("hello world"), "Hello world");
-        assert_eq!(bnto_core::case::capitalize(""), "");
-        assert_eq!(bnto_core::case::capitalize("a"), "A");
-    }
-
-    #[test]
-    fn test_apply_pattern() {
-        let result = apply_pattern(
-            "{{date}}-{{name}}-{{index}}.{{ext}}",
-            "photo",
-            "jpg",
-            "3",
-            "1",
-            "2026-02-25",
-        );
-        assert_eq!(result, "2026-02-25-photo-3.jpg");
-    }
-
-    #[test]
-    fn test_apply_find_replace_literal_no_match() {
-        // When the find string doesn't match anything, return unchanged.
-        let result = apply_find_replace("hello", "xyz", "abc");
-        assert_eq!(result, "hello");
-    }
-
-    #[test]
-    fn test_apply_find_replace_all_occurrences() {
-        // Regex replace_all should replace ALL occurrences, not just the first.
-        let result = apply_find_replace("aaa-bbb-aaa", "aaa", "xxx");
-        assert_eq!(result, "xxx-bbb-xxx");
-    }
-
-    #[test]
-    fn test_get_current_date_format() {
-        let date = get_current_date();
-        // Should be YYYY-MM-DD format (10 characters, dashes at positions 4 and 7).
-        assert_eq!(date.len(), 10);
-        assert_eq!(&date[4..5], "-");
-        assert_eq!(&date[7..8], "-");
-    }
-
-    // =========================================================================
     // Counter Tests
     // =========================================================================
 
@@ -1315,40 +835,6 @@ mod tests {
     }
 
     // =========================================================================
-    // Counter Helper Tests
-    // =========================================================================
-
-    #[test]
-    fn test_format_counter_default() {
-        let params = serde_json::Map::new();
-        assert_eq!(format_counter(&params), "1");
-    }
-
-    #[test]
-    fn test_format_counter_with_padding() {
-        let mut params = serde_json::Map::new();
-        params.insert(
-            "__counter".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(7)),
-        );
-        params.insert(
-            "counter_pad".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(3)),
-        );
-        assert_eq!(format_counter(&params), "007");
-    }
-
-    #[test]
-    fn test_format_counter_no_padding() {
-        let mut params = serde_json::Map::new();
-        params.insert(
-            "__counter".to_string(),
-            serde_json::Value::Number(serde_json::Number::from(42)),
-        );
-        assert_eq!(format_counter(&params), "42");
-    }
-
-    // =========================================================================
     // Sanitize Mode Tests (merged from file-sanitize)
     // =========================================================================
 
@@ -1490,46 +976,5 @@ mod tests {
         let input = make_input(b"data", "Hello World.txt", params);
         let output = processor.process(input, &progress, &NoopContext).unwrap();
         assert_eq!(output.files[0].filename, "clean-hello-world.txt");
-    }
-
-    // =========================================================================
-    // Sanitize Helper Function Tests
-    // =========================================================================
-
-    #[test]
-    fn test_slug_with_separator() {
-        assert_eq!(
-            bnto_core::case::slug_with_separator("Hello World", "-"),
-            "hello-world"
-        );
-        assert_eq!(
-            bnto_core::case::slug_with_separator("file (copy).bak", "-"),
-            "file-copy-bak"
-        );
-        assert_eq!(
-            bnto_core::case::slug_with_separator("ALLCAPS", "-"),
-            "allcaps"
-        );
-        assert_eq!(
-            bnto_core::case::slug_with_separator("already-clean", "-"),
-            "already-clean"
-        );
-    }
-
-    #[test]
-    fn test_strip_non_ascii() {
-        assert_eq!(bnto_core::case::strip_non_ascii("hello", "-"), "hello");
-        assert_eq!(bnto_core::case::strip_non_ascii("café", "-"), "caf");
-        assert_eq!(
-            bnto_core::case::strip_non_ascii("naïve résumé", "-"),
-            "nave-rsum"
-        );
-    }
-
-    #[test]
-    fn test_apply_max_length_fn() {
-        assert_eq!(apply_max_length("hello", 3), "hel");
-        assert_eq!(apply_max_length("hi", 10), "hi");
-        assert_eq!(apply_max_length("test", 0), "test");
     }
 }

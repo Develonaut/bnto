@@ -21,7 +21,14 @@ File operation nodes. Rename, filter, collect, copy, and inspect files.
 ```
 src/
 ├── lib.rs            # Public exports
-├── rename.rs         # RenameFiles processor + metadata
+├── rename/           # RenameFiles processor (file-rename)
+│   ├── mod.rs              # Module wiring + re-export
+│   ├── processor.rs        # NodeProcessor impl, batch counter injection
+│   ├── params.rs           # Parameter schema (metadata)
+│   ├── param_access.rs     # Typed reads from the params map
+│   ├── transform.rs        # Sanitize, find/replace, case, prefix/suffix
+│   ├── naming.rs           # Stem/ext split, pattern templates, counters
+│   └── result_metadata.rs  # originalFilename/newFilename/transformsApplied
 ├── filter.rs         # FileFilter processor + metadata
 ├── metadata.rs       # FileMetadata processor + metadata
 ├── collect.rs        # FileCollect processor + metadata (native-only)

@@ -1,61 +1,25 @@
-// Image Overlay Node — composite an overlay image onto source images.
+// OverlayImage — NodeProcessor wiring for `image-overlay`.
 //
-// Decodes a base64-encoded overlay from params, resizes it relative to
-// the source image width, applies opacity, and composites at the chosen
-// position with configurable pixel offsets.
+// Decodes source + overlay, delegates compositing, and encodes the result
+// in the source format.
 
-use base64::Engine as _;
-use base64::engine::general_purpose::STANDARD as BASE64;
-use image::imageops::{self, FilterType};
-use image::{DynamicImage, GenericImageView, RgbaImage};
+use image::DynamicImage;
 
-use bnto_core::DEFAULT_QUALITY;
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::metadata::{
-    Constraints, InputCardinality, NodeCategory, NodeMetadata, OptionEntry, ParameterDef,
-    ParameterType,
-};
+use bnto_core::metadata::{InputCardinality, NodeCategory, NodeMetadata};
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 
 use bnto_encode::ImageFormat;
 
+use super::composite::composite_overlay;
+use super::param_defs::build_overlay_parameters;
+use super::params::{OverlaySettings, get_overlay_bytes};
+use super::validate::validate_params;
 use crate::common::image_accepts;
 use crate::encode;
 use crate::orientation::decode_with_orientation;
-
-const DEFAULT_SIZE: u64 = 25;
-const DEFAULT_OPACITY: u64 = 80;
-const DEFAULT_OFFSET_X: i64 = 0;
-const DEFAULT_OFFSET_Y: i64 = 0;
-const DEFAULT_POSITION: &str = "bottom-right";
-
-const POSITIONS: &[&str] = &[
-    "top-left",
-    "top-center",
-    "top-right",
-    "middle-left",
-    "center",
-    "middle-right",
-    "bottom-left",
-    "bottom-center",
-    "bottom-right",
-];
-
-fn position_label(value: &str) -> String {
-    value
-        .split('-')
-        .map(|word| {
-            let mut chars = word.chars();
-            match chars.next() {
-                Some(c) => c.to_uppercase().chain(chars).collect::<String>(),
-                None => String::new(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
-}
 
 pub struct OverlayImage;
 
@@ -68,134 +32,6 @@ impl Default for OverlayImage {
 impl OverlayImage {
     pub fn new() -> Self {
         Self
-    }
-
-    fn get_overlay_bytes(
-        params: &serde_json::Map<String, serde_json::Value>,
-    ) -> Result<Vec<u8>, BntoError> {
-        let b64 = params
-            .get("overlay")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| BntoError::InvalidInput("overlay parameter is required".to_string()))?;
-
-        // Strip optional data URI prefix (e.g., "data:image/png;base64,")
-        let raw = if let Some(idx) = b64.find(",") {
-            &b64[idx + 1..]
-        } else {
-            b64
-        };
-
-        BASE64.decode(raw).map_err(|e| {
-            BntoError::InvalidInput(format!("Invalid base64 in overlay parameter: {e}"))
-        })
-    }
-
-    fn get_position(params: &serde_json::Map<String, serde_json::Value>) -> &str {
-        params
-            .get("position")
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_POSITION)
-    }
-
-    fn get_size(params: &serde_json::Map<String, serde_json::Value>) -> u64 {
-        params
-            .get("size")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(DEFAULT_SIZE)
-            .clamp(1, 500)
-    }
-
-    fn get_opacity(params: &serde_json::Map<String, serde_json::Value>) -> u64 {
-        params
-            .get("opacity")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(DEFAULT_OPACITY)
-            .clamp(0, 100)
-    }
-
-    fn get_offset_x(params: &serde_json::Map<String, serde_json::Value>) -> i64 {
-        params
-            .get("offsetX")
-            .and_then(|v| v.as_i64())
-            .unwrap_or(DEFAULT_OFFSET_X)
-            .clamp(-500, 500)
-    }
-
-    fn get_offset_y(params: &serde_json::Map<String, serde_json::Value>) -> i64 {
-        params
-            .get("offsetY")
-            .and_then(|v| v.as_i64())
-            .unwrap_or(DEFAULT_OFFSET_Y)
-            .clamp(-500, 500)
-    }
-
-    fn get_quality(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
-        params
-            .get("quality")
-            .and_then(|v| v.as_u64())
-            .map(|q| q as u8)
-            .unwrap_or(DEFAULT_QUALITY)
-            .clamp(1, 100)
-    }
-
-    /// Resize overlay to target width (% of source), maintaining aspect ratio.
-    fn resize_overlay(overlay: &DynamicImage, target_width: u32) -> DynamicImage {
-        let (ov_w, ov_h) = overlay.dimensions();
-        if ov_w == 0 {
-            return overlay.clone();
-        }
-        let aspect = ov_h as f64 / ov_w as f64;
-        let target_height = (target_width as f64 * aspect).round().max(1.0) as u32;
-        overlay.resize_exact(target_width, target_height, FilterType::Lanczos3)
-    }
-
-    /// Apply opacity by multiplying each pixel's alpha channel.
-    fn apply_opacity(img: &DynamicImage, opacity: u64) -> RgbaImage {
-        let rgba = img.to_rgba8();
-        let factor = opacity as f64 / 100.0;
-        let mut result = rgba.clone();
-        for pixel in result.pixels_mut() {
-            pixel[3] = (pixel[3] as f64 * factor).round().clamp(0.0, 255.0) as u8;
-        }
-        result
-    }
-
-    /// Calculate top-left (x, y) for placing the overlay on the source image.
-    ///
-    /// Position names are gravity regions: "top-left" places the overlay
-    /// fully visible in the top-left corner with a 2% margin from the edges.
-    /// Offsets shift from there: positive = right/down, negative = left/up.
-    fn calculate_position(
-        position: &str,
-        src_w: u32,
-        src_h: u32,
-        wm_w: u32,
-        wm_h: u32,
-        offset_x: i64,
-        offset_y: i64,
-    ) -> (i64, i64) {
-        let sw = src_w as i64;
-        let sh = src_h as i64;
-        let ww = wm_w as i64;
-        let wh = wm_h as i64;
-
-        // 2% margin from edges, proportional to each axis.
-        let margin_x = (src_w as f64 * 0.02) as i64;
-        let margin_y = (src_h as f64 * 0.02) as i64;
-
-        let x = match position {
-            "top-left" | "middle-left" | "bottom-left" => margin_x,
-            "top-right" | "middle-right" | "bottom-right" => sw - ww - margin_x,
-            _ => (sw - ww) / 2, // center column
-        };
-
-        let y = match position {
-            "top-left" | "top-center" | "top-right" => margin_y,
-            "bottom-left" | "bottom-center" | "bottom-right" => sh - wh - margin_y,
-            _ => (sh - wh) / 2, // middle row
-        };
-
-        (x + offset_x, y + offset_y)
     }
 
     fn output_filename(input_filename: &str, format: ImageFormat) -> String {
@@ -217,109 +53,14 @@ impl NodeProcessor for OverlayImage {
         NodeMetadata {
             node_type: "image-overlay".to_string(),
             name: "Overlay Image".to_string(),
-            description: "Overlay an image onto source images at a configurable position, size, and opacity.".to_string(),
+            description:
+                "Overlay an image onto source images at a configurable position, size, and opacity."
+                    .to_string(),
             category: NodeCategory::Image,
             accepts: image_accepts(),
             platforms: vec!["browser".to_string()],
             input_cardinality: InputCardinality::PerFile,
-            parameters: vec![
-                ParameterDef {
-                    name: "overlay".to_string(),
-                    label: "Overlay Image".to_string(),
-                    description: "The image to overlay (base64-encoded).".to_string(),
-                    param_type: ParameterType::File {
-                        accept: vec![
-                            "image/png".to_string(),
-                            "image/jpeg".to_string(),
-                            "image/webp".to_string(),
-                        ],
-                    },
-                    constraints: Some(Constraints {
-                        min: None,
-                        max: None,
-                        required: true,
-                    }),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "position".to_string(),
-                    label: "Position".to_string(),
-                    description: "Where to place the overlay on the image.".to_string(),
-                    param_type: ParameterType::Enum {
-                        options: POSITIONS
-                            .iter()
-                            .map(|s| OptionEntry {
-                                value: s.to_string(),
-                                label: position_label(s),
-                            })
-                            .collect(),
-                    },
-                    default: Some(serde_json::Value::String(DEFAULT_POSITION.to_string())),
-                    control: Some("watermarkPreview".to_string()),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "size".to_string(),
-                    label: "Size".to_string(),
-                    description: "Overlay width as a percentage of the source image width."
-                        .to_string(),
-                    param_type: ParameterType::Number,
-                    default: Some(serde_json::Value::Number(DEFAULT_SIZE.into())),
-                    constraints: Some(Constraints {
-                        min: Some(1.0),
-                        max: Some(500.0),
-                        required: false,
-                    }),
-                    suffix: Some("%".to_string()),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "opacity".to_string(),
-                    label: "Opacity".to_string(),
-                    description: "Overlay transparency (0 = invisible, 100 = fully opaque)."
-                        .to_string(),
-                    param_type: ParameterType::Number,
-                    default: Some(serde_json::Value::Number(DEFAULT_OPACITY.into())),
-                    constraints: Some(Constraints {
-                        min: Some(0.0),
-                        max: Some(100.0),
-                        required: false,
-                    }),
-                    suffix: Some("%".to_string()),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "offsetX".to_string(),
-                    label: "Offset X".to_string(),
-                    description: "Horizontal pixel offset from the position. Positive = right, negative = left.".to_string(),
-                    param_type: ParameterType::Number,
-                    default: Some(serde_json::Value::Number(DEFAULT_OFFSET_X.into())),
-                    constraints: Some(Constraints {
-                        min: Some(-500.0),
-                        max: Some(500.0),
-                        required: false,
-                    }),
-                    group: Some("offset".to_string()),
-                    suffix: Some("px".to_string()),
-                    ..Default::default()
-                },
-                ParameterDef {
-                    name: "offsetY".to_string(),
-                    label: "Offset Y".to_string(),
-                    description: "Vertical pixel offset from the position. Positive = down, negative = up.".to_string(),
-                    param_type: ParameterType::Number,
-                    default: Some(serde_json::Value::Number(DEFAULT_OFFSET_Y.into())),
-                    constraints: Some(Constraints {
-                        min: Some(-500.0),
-                        max: Some(500.0),
-                        required: false,
-                    }),
-                    group: Some("offset".to_string()),
-                    suffix: Some("px".to_string()),
-                    ..Default::default()
-                },
-                crate::common::quality_param_def(),
-            ],
+            parameters: build_overlay_parameters(),
             requires: vec![],
         }
     }
@@ -335,127 +76,97 @@ impl NodeProcessor for OverlayImage {
             .into_bytes()
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         progress.report(0, "Decoding source image...");
-
-        let format = ImageFormat::detect(&data, &input.filename)
-            .ok_or_else(|| BntoError::UnsupportedFormat(input.filename.clone()))?;
-
-        let source = decode_with_orientation(&data)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode image: {e}")))?;
-
-        let (src_w, src_h) = source.dimensions();
+        let (format, source) = decode_source(&data, &input.filename)?;
 
         progress.report(20, "Decoding overlay...");
-
-        let wm_bytes = Self::get_overlay_bytes(&input.params)?;
-        let overlay = image::load_from_memory(&wm_bytes).map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to decode overlay image: {e}"))
-        })?;
-
-        let size = Self::get_size(&input.params);
-        let opacity = Self::get_opacity(&input.params);
-        let position = Self::get_position(&input.params);
-        let offset_x = Self::get_offset_x(&input.params);
-        let offset_y = Self::get_offset_y(&input.params);
-        let quality = Self::get_quality(&input.params);
-
-        progress.report(40, "Resizing overlay...");
-
-        let target_wm_width = ((src_w as f64 * size as f64) / 100.0).round().max(1.0) as u32;
-        let resized_wm = Self::resize_overlay(&overlay, target_wm_width);
-        let (wm_w, wm_h) = resized_wm.dimensions();
-
-        progress.report(50, "Applying opacity...");
-
-        let wm_rgba = Self::apply_opacity(&resized_wm, opacity);
-
-        progress.report(60, "Compositing overlay...");
-
-        let (pos_x, pos_y) =
-            Self::calculate_position(position, src_w, src_h, wm_w, wm_h, offset_x, offset_y);
-
-        let mut canvas = source.to_rgba8();
-        imageops::overlay(&mut canvas, &wm_rgba, pos_x, pos_y);
-        let composited = DynamicImage::ImageRgba8(canvas);
+        let overlay = decode_overlay(&input.params)?;
+        let settings = OverlaySettings::from_params(&input.params);
+        let (composited, wm_dims) = composite_overlay(&source, &overlay, &settings, progress);
 
         progress.report(80, "Encoding output...");
-
-        let output_data = encode::encode_image(&composited, format, quality)?;
-        let original_size = data.len();
-        let output_size = output_data.len();
-
+        let output_data = encode::encode_image(&composited, format, settings.quality)?;
+        let metadata = overlay_metadata(data.len(), output_data.len(), settings.position, wm_dims);
         let output_filename = Self::output_filename(&input.filename, format);
 
         progress.report(100, "Done");
-
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                filename: output_filename,
-                data: FileData::Bytes(output_data),
-                mime_type: format.mime_type().to_string(),
-                metadata: serde_json::Map::new(),
-            }],
-            metadata: serde_json::Map::from_iter([
-                (
-                    "originalSize".to_string(),
-                    serde_json::Value::Number((original_size as u64).into()),
-                ),
-                (
-                    "outputSize".to_string(),
-                    serde_json::Value::Number((output_size as u64).into()),
-                ),
-                (
-                    "position".to_string(),
-                    serde_json::Value::String(position.to_string()),
-                ),
-                (
-                    "overlaySize".to_string(),
-                    serde_json::Value::String(format!("{}x{}", wm_w, wm_h)),
-                ),
-            ]),
-        })
+        Ok(build_overlay_output(
+            output_data,
+            output_filename,
+            format,
+            metadata,
+        ))
     }
 
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-        let mut errors = Vec::new();
-
-        // Overlay image is required
-        if params.get("overlay").and_then(|v| v.as_str()).is_none() {
-            errors.push("overlay is required".to_string());
-        }
-
-        // Validate position enum
-        if let Some(pos) = params.get("position").and_then(|v| v.as_str())
-            && !POSITIONS.contains(&pos)
-        {
-            errors.push(format!("position must be one of: {}", POSITIONS.join(", ")));
-        }
-
-        // Validate numeric ranges
-        if let Some(size) = params.get("size").and_then(|v| v.as_u64())
-            && !(1..=500).contains(&size)
-        {
-            errors.push("size must be between 1 and 500".to_string());
-        }
-
-        if let Some(opacity) = params.get("opacity").and_then(|v| v.as_u64())
-            && opacity > 100
-        {
-            errors.push("opacity must be between 0 and 100".to_string());
-        }
-
-        if let Some(quality) = params.get("quality").and_then(|v| v.as_u64())
-            && !(1..=100).contains(&quality)
-        {
-            errors.push("quality must be between 1 and 100".to_string());
-        }
-
-        errors
+        validate_params(params)
     }
+}
+
+/// Detect the source format and decode it with EXIF orientation applied.
+fn decode_source(data: &[u8], filename: &str) -> Result<(ImageFormat, DynamicImage), BntoError> {
+    let format = ImageFormat::detect(data, filename)
+        .ok_or_else(|| BntoError::UnsupportedFormat(filename.to_string()))?;
+    let source = decode_with_orientation(data)
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode image: {e}")))?;
+    Ok((format, source))
+}
+
+fn decode_overlay(
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> Result<DynamicImage, BntoError> {
+    let wm_bytes = get_overlay_bytes(params)?;
+    image::load_from_memory(&wm_bytes)
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to decode overlay image: {e}")))
+}
+
+fn build_overlay_output(
+    data: Vec<u8>,
+    filename: String,
+    format: ImageFormat,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            filename,
+            data: FileData::Bytes(data),
+            mime_type: format.mime_type().to_string(),
+            metadata: serde_json::Map::new(),
+        }],
+        metadata,
+    }
+}
+
+fn overlay_metadata(
+    original_size: usize,
+    output_size: usize,
+    position: &str,
+    (wm_w, wm_h): (u32, u32),
+) -> serde_json::Map<String, serde_json::Value> {
+    serde_json::Map::from_iter([
+        (
+            "originalSize".to_string(),
+            serde_json::Value::Number((original_size as u64).into()),
+        ),
+        (
+            "outputSize".to_string(),
+            serde_json::Value::Number((output_size as u64).into()),
+        ),
+        (
+            "position".to_string(),
+            serde_json::Value::String(position.to_string()),
+        ),
+        (
+            "overlaySize".to_string(),
+            serde_json::Value::String(format!("{}x{}", wm_w, wm_h)),
+        ),
+    ])
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use base64::Engine as _;
+    use base64::engine::general_purpose::STANDARD as BASE64;
     use bnto_core::NoopContext;
     use image::{DynamicImage, Rgba, RgbaImage};
     use std::io::Cursor;
