@@ -137,13 +137,18 @@ src/
     |   |   +-- number.rs     # Arrow-key stepping with auto step size
     |   +-- detail.rs      # Recipe detail model + update
     |   +-- detail_loader.rs # Recipe detail loading + integration tests
-    |   +-- execution.rs   # Execution progress model + update
+    |   +-- editor.rs      # Recipe editor model + update (routes overlays first)
+    |   +-- editor/        # Node list ops, inline form sync, picker overlay, confirm prompts
+    |   +-- execution.rs   # Execution progress model
+    |   +-- execution/     # ExecutionMessage, update router, pipeline + node transitions
     |   +-- picker.rs      # File picker model + update
     |   +-- picker_update.rs # Picker key handling
     |   +-- picker_loader.rs # Async directory loading
     |   +-- results.rs     # Results display model + update
     |   +-- settings.rs    # Settings screen model + update
     |   +-- viewport.rs    # Scrollable viewport logic
+    |   +-- wizard.rs      # Guided recipe creation model + update
+    |   +-- wizard/        # Step transitions, category catalog, config form + editor hand-off
     |   +-- nav_history.rs # Directory navigation history
     +-- widgets/
         +-- help_bar.rs    # Contextual keybinding hints footer

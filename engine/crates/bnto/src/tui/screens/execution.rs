@@ -2,10 +2,18 @@
 //
 // TEA pattern: ExecutionModel (state) + ExecutionMessage (events) + update() (pure transitions).
 
+mod message;
+mod nodes;
+mod run;
+mod update;
+
 use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 
 use super::results::OutputFile;
+
+pub use message::ExecutionMessage;
+pub use update::update;
 
 /// Pipeline execution status.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -93,88 +101,6 @@ pub struct ExecutionModel {
 /// Maximum number of command output lines to retain in the rolling window.
 const MAX_OUTPUT_LINES: usize = 50;
 
-/// Messages the execution screen can handle.
-#[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
-pub enum ExecutionMessage {
-    /// Pipeline started — initialize file and node tracking.
-    PipelineStarted {
-        total_nodes: usize,
-        total_files: usize,
-        /// Pre-populated node metadata (id, type) so the UI shows real
-        /// node types immediately instead of placeholder "node-0".
-        node_info: Vec<(String, String)>,
-    },
-    /// A processing node began execution.
-    NodeStarted { node_id: String, node_type: String },
-    /// Progress update for a file within a node.
-    FileProgress {
-        node_id: String,
-        file_index: usize,
-        total_files: usize,
-        percent: u32,
-        message: String,
-    },
-    /// A node completed successfully.
-    NodeCompleted { node_id: String, duration_ms: u64 },
-    /// A node failed.
-    NodeFailed { node_id: String, error: String },
-    /// Entire pipeline completed.
-    PipelineCompleted {
-        duration_ms: u64,
-        total_files_processed: usize,
-    },
-    /// Pipeline failed.
-    PipelineFailed { node_id: String, error: String },
-    /// Output files ready after pipeline writes results to disk.
-    OutputsReady {
-        files: Vec<OutputFile>,
-        output_dir: Option<String>,
-        warnings: Vec<String>,
-    },
-    /// A line of stderr output from a running command.
-    CommandOutput { node_id: String, line: String },
-    /// Loop iteration started — tracks iteration count.
-    IterationStarted {
-        node_id: String,
-        iteration: usize,
-        total_iterations: usize,
-    },
-    /// Loop iteration completed successfully.
-    IterationCompleted {
-        node_id: String,
-        iteration: usize,
-        total_iterations: usize,
-        duration_ms: u64,
-        files_produced: usize,
-        /// Output files from progressive mode (written to disk by the bridge).
-        output_files: Vec<bnto_core::events::ProgressOutputFile>,
-    },
-    /// Loop iteration failed (in continue-on-error mode, loop continues).
-    IterationFailed {
-        node_id: String,
-        iteration: usize,
-        total_iterations: usize,
-        error: String,
-    },
-    /// A child node inside a container started.
-    ChildNodeStarted {
-        parent_node_id: String,
-        node_id: String,
-        node_type: String,
-    },
-    /// A child node inside a container completed.
-    ChildNodeCompleted {
-        parent_node_id: String,
-        node_id: String,
-        duration_ms: u64,
-    },
-    /// User pressed Esc to cancel.
-    Cancel,
-    /// Timer tick with current elapsed time.
-    Tick { elapsed_ms: u64 },
-}
-
 impl ExecutionModel {
     /// Create a new idle execution model for the given recipe slug.
     pub fn new(slug: &str) -> Self {
@@ -225,211 +151,20 @@ impl ExecutionModel {
     }
 }
 
-/// Pure state transition for the execution screen.
-pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionModel {
-    match msg {
-        ExecutionMessage::PipelineStarted {
-            total_nodes,
-            total_files,
-            node_info,
-        } => {
-            model.status = ExecutionStatus::Running;
-            model.files = (0..total_files)
-                .map(|i| FileProgress {
-                    name: format!("file {}", i + 1),
-                    percent: 0,
-                    status: FileStatus::Waiting,
-                })
-                .collect();
-            // Use real node metadata when available, fall back to placeholders.
-            model.nodes = if node_info.len() == total_nodes {
-                node_info
-                    .into_iter()
-                    .map(|(id, node_type)| NodeProgress {
-                        id,
-                        node_type,
-                        status: NodeStatus::Pending,
-                        files_processed: 0,
-                        total_files: 0,
-                        iteration: None,
-                        total_iterations: None,
-                        children: Vec::new(),
-                    })
-                    .collect()
-            } else {
-                (0..total_nodes)
-                    .map(|i| NodeProgress {
-                        id: format!("node-{}", i),
-                        node_type: String::new(),
-                        status: NodeStatus::Pending,
-                        files_processed: 0,
-                        total_files: 0,
-                        iteration: None,
-                        total_iterations: None,
-                        children: Vec::new(),
-                    })
-                    .collect()
-            };
-        }
-        ExecutionMessage::NodeStarted { node_id, node_type } => {
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.status = NodeStatus::Active;
-                node.node_type = node_type;
-            }
-        }
-        ExecutionMessage::FileProgress {
-            node_id,
-            file_index,
-            total_files,
-            percent,
-            message,
-        } => {
-            if let Some(file) = model.files.get_mut(file_index) {
-                file.percent = percent;
-                file.status = FileStatus::Processing;
-                if !message.is_empty() {
-                    file.name = message;
-                }
-            }
-            // Track per-node file progress for inline count display.
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.total_files = total_files;
-                node.files_processed = file_index + 1;
-            }
-        }
-        ExecutionMessage::NodeCompleted {
-            node_id,
-            duration_ms,
-        } => {
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.status = NodeStatus::Completed { duration_ms };
-            }
-        }
-        ExecutionMessage::NodeFailed { node_id, error } => {
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.status = NodeStatus::Failed(error);
-            }
-        }
-        ExecutionMessage::PipelineCompleted { duration_ms, .. } => {
-            model.status = ExecutionStatus::Completed;
-            model.elapsed_ms = duration_ms;
-            // Mark all remaining files as done.
-            for file in &mut model.files {
-                if file.status == FileStatus::Processing || file.status == FileStatus::Waiting {
-                    file.status = FileStatus::Done;
-                    file.percent = 100;
-                }
-            }
-        }
-        ExecutionMessage::PipelineFailed { error, .. } => {
-            model.status = ExecutionStatus::Failed;
-            model.error = Some(error);
-        }
-        ExecutionMessage::CommandOutput { line, .. } => {
-            // Tools like patreon-dl colorize unconditionally — strip escape
-            // codes so the output pane shows text, not literal `[32m…`.
-            model
-                .output_lines
-                .push_back(crate::tui::strip_ansi::strip_ansi(&line));
-            while model.output_lines.len() > MAX_OUTPUT_LINES {
-                model.output_lines.pop_front();
-            }
-        }
-        ExecutionMessage::IterationStarted {
-            node_id,
-            iteration,
-            total_iterations,
-        } => {
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.iteration = Some(iteration);
-                node.total_iterations = Some(total_iterations);
-                // Reset children on new iteration — previous iteration's state is stale.
-                for child in &mut node.children {
-                    child.status = NodeStatus::Pending;
-                }
-            }
-        }
-        ExecutionMessage::IterationCompleted {
-            node_id, iteration, ..
-        } => {
-            // Update iteration counter to reflect completion.
-            // Progressive output files are written to disk by the bridge,
-            // not handled here in the model update.
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.iteration = Some(iteration);
-            }
-        }
-        ExecutionMessage::IterationFailed {
-            node_id,
-            iteration,
-            error,
-            ..
-        } => {
-            // In continue mode the loop keeps going, so just update the counter.
-            // The error is visible via CommandOutput or warnings.
-            if let Some(node) = model.nodes.iter_mut().find(|n| n.id == node_id) {
-                node.iteration = Some(iteration);
-            }
-            // Push the error into the output lines so the user can see it.
-            model
-                .output_lines
-                .push_back(format!("Iteration {iteration} failed: {error}"));
-            while model.output_lines.len() > MAX_OUTPUT_LINES {
-                model.output_lines.pop_front();
-            }
-        }
-        ExecutionMessage::ChildNodeStarted {
-            parent_node_id,
-            node_id,
+impl NodeProgress {
+    /// A fresh node entry with no file or iteration progress yet.
+    fn new(id: String, node_type: String, status: NodeStatus) -> Self {
+        Self {
+            id,
             node_type,
-        } => {
-            if let Some(parent) = model.nodes.iter_mut().find(|n| n.id == parent_node_id) {
-                // Upsert: reuse existing child entry or create a new one.
-                if let Some(child) = parent.children.iter_mut().find(|c| c.id == node_id) {
-                    child.status = NodeStatus::Active;
-                    child.node_type = node_type;
-                } else {
-                    parent.children.push(NodeProgress {
-                        id: node_id,
-                        node_type,
-                        status: NodeStatus::Active,
-                        files_processed: 0,
-                        total_files: 0,
-                        iteration: None,
-                        total_iterations: None,
-                        children: Vec::new(),
-                    });
-                }
-            }
-        }
-        ExecutionMessage::ChildNodeCompleted {
-            parent_node_id,
-            node_id,
-            duration_ms,
-        } => {
-            if let Some(parent) = model.nodes.iter_mut().find(|n| n.id == parent_node_id)
-                && let Some(child) = parent.children.iter_mut().find(|c| c.id == node_id)
-            {
-                child.status = NodeStatus::Completed { duration_ms };
-            }
-        }
-        ExecutionMessage::OutputsReady {
-            files,
-            output_dir,
-            warnings,
-        } => {
-            model.output_files = files;
-            model.output_dir = output_dir;
-            model.warnings = warnings;
-        }
-        ExecutionMessage::Cancel => {
-            model.status = ExecutionStatus::Cancelled;
-        }
-        ExecutionMessage::Tick { elapsed_ms } => {
-            model.elapsed_ms = elapsed_ms;
+            status,
+            files_processed: 0,
+            total_files: 0,
+            iteration: None,
+            total_iterations: None,
+            children: Vec::new(),
         }
     }
-    model
 }
 
 #[cfg(test)]

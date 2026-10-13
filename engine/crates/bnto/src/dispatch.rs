@@ -5,7 +5,7 @@ use std::sync::Arc;
 use bnto_core::logging::Logger;
 
 use crate::catalog::RecipeCatalog;
-use crate::cli::{Command, TelemetryAction};
+use crate::cli::{Command, RunArgs, TelemetryAction};
 use crate::inspect::{list_recipes, show_dry_run, show_info};
 use crate::launch::launch_tui;
 use crate::run::{RunFlags, run_recipe};
@@ -37,30 +37,10 @@ pub fn dispatch(command: Option<Command>, session: Session) {
 fn run_command(command: Command, session: Session) {
     let catalog = &session.catalog;
     match command {
-        Command::Run {
-            recipe,
-            inputs,
-            output,
-            param,
-            yes,
-            dry_run,
-        } => run_recipe(
-            &recipe,
-            &inputs,
-            output.as_deref(),
-            &param,
-            RunFlags { yes, dry_run },
-            &session.logger,
-            catalog,
-        ),
+        Command::Run(args) => run_from_args(args, &session),
         Command::List => list_recipes(catalog),
         Command::Info { recipe } => show_info(&recipe, catalog),
-        Command::DryRun {
-            recipe,
-            inputs,
-            param,
-            yes,
-        } => show_dry_run(&recipe, &inputs, &param, yes, catalog),
+        Command::DryRun(a) => show_dry_run(&a.recipe, &a.inputs, &a.param, a.yes, catalog),
         Command::Install { recipe, yes, all } => {
             install::run_install(recipe.as_deref(), yes, all, catalog)
         }
@@ -71,6 +51,23 @@ fn run_command(command: Command, session: Session) {
         }
         Command::Telemetry { action } => run_telemetry(action),
     }
+}
+
+/// `bnto run <recipe> [inputs...]`.
+fn run_from_args(args: RunArgs, session: &Session) {
+    let flags = RunFlags {
+        yes: args.yes,
+        dry_run: args.dry_run,
+    };
+    run_recipe(
+        &args.recipe,
+        &args.inputs,
+        args.output.as_deref(),
+        &args.param,
+        flags,
+        &session.logger,
+        &session.catalog,
+    );
 }
 
 /// `bnto telemetry enable|disable|status`.

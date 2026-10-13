@@ -62,6 +62,7 @@ src/
 ├── validators.rs     # Built-in validators (not_empty, min_len, range, pattern)
 ├── viewport.rs       # Scrollable content viewport
 ├── controls/         # Per-field-type input handling
+│   └── dispatch/     # Message routing by edit state (idle, select, multi-select, text, number)
 ├── widgets/          # Per-field-type rendering
 ├── demo.rs           # Kitchen-sink demo helpers
 └── bin/demo/         # tonkotsu-demo binary

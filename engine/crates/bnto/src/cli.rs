@@ -1,6 +1,6 @@
 // Command-line definition — the clap parser for every `bnto` subcommand.
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 
 /// bnto — run recipes from the command line.
 #[derive(Parser)]
@@ -14,31 +14,7 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Command {
     /// Execute a recipe against input files or a URL.
-    Run {
-        /// Recipe slug (e.g. compress-images) or path to a .bnto.json file.
-        recipe: String,
-
-        /// Input files, URL, or text (depends on recipe input mode).
-        inputs: Vec<String>,
-
-        /// Output directory. Overrides recipe-defined output directory.
-        /// Defaults to recipe's directory param, or current directory if unset.
-        #[arg(short, long)]
-        output: Option<String>,
-
-        /// Override a node parameter. Format: key=value or nodeId:key=value
-        #[arg(short = 'p', long = "param")]
-        param: Vec<String>,
-
-        /// Skip trust consent prompt for local recipes with shell commands.
-        #[arg(long)]
-        yes: bool,
-
-        /// Run every node but write nothing; the summary says what would have
-        /// been written. shell-command nodes still run.
-        #[arg(long)]
-        dry_run: bool,
-    },
+    Run(RunArgs),
 
     /// List available recipes (built-in and library).
     List,
@@ -50,22 +26,7 @@ pub enum Command {
     },
 
     /// Dry-run: preview what a recipe will do without executing or writing.
-    DryRun {
-        /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
-        recipe: String,
-
-        /// Input files or directories (enables file transformation preview).
-        inputs: Vec<String>,
-
-        /// Override a field value. Format: key=value or nodeId:key=value
-        #[arg(short = 'p', long = "param")]
-        param: Vec<String>,
-
-        /// Skip trust consent for local recipes with shell commands (when
-        /// inputs make the preview execute the pipeline).
-        #[arg(long)]
-        yes: bool,
-    },
+    DryRun(DryRunArgs),
 
     /// Install external dependencies for a recipe.
     Install {
@@ -115,6 +76,54 @@ pub enum Command {
     },
 }
 
+// Arguments for `bnto run`. No doc comment: clap would read it as help
+// text, and the `Command::Run` doc already provides it.
+#[derive(Args)]
+pub struct RunArgs {
+    /// Recipe slug (e.g. compress-images) or path to a .bnto.json file.
+    pub recipe: String,
+
+    /// Input files, URL, or text (depends on recipe input mode).
+    pub inputs: Vec<String>,
+
+    /// Output directory. Overrides recipe-defined output directory.
+    /// Defaults to recipe's directory param, or current directory if unset.
+    #[arg(short, long)]
+    pub output: Option<String>,
+
+    /// Override a node parameter. Format: key=value or nodeId:key=value
+    #[arg(short = 'p', long = "param")]
+    pub param: Vec<String>,
+
+    /// Skip trust consent prompt for local recipes with shell commands.
+    #[arg(long)]
+    pub yes: bool,
+
+    /// Run every node but write nothing; the summary says what would have
+    /// been written. shell-command nodes still run.
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+// Arguments for `bnto dry-run` (help text comes from `Command::DryRun`).
+#[derive(Args)]
+pub struct DryRunArgs {
+    /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
+    pub recipe: String,
+
+    /// Input files or directories (enables file transformation preview).
+    pub inputs: Vec<String>,
+
+    /// Override a field value. Format: key=value or nodeId:key=value
+    #[arg(short = 'p', long = "param")]
+    pub param: Vec<String>,
+
+    /// Skip trust consent for local recipes with shell commands (when
+    /// inputs make the preview execute the pipeline).
+    #[arg(long)]
+    pub yes: bool,
+}
+
 /// `bnto telemetry` subcommands.
 #[derive(Subcommand)]
 pub enum TelemetryAction {
@@ -130,10 +139,10 @@ impl Command {
     /// Subcommand name, used for logging and telemetry.
     pub fn name(&self) -> &'static str {
         match self {
-            Self::Run { .. } => "run",
+            Self::Run(_) => "run",
             Self::List => "list",
             Self::Info { .. } => "info",
-            Self::DryRun { .. } => "dry-run",
+            Self::DryRun(_) => "dry-run",
             Self::Install { .. } => "install",
             Self::Doctor => "doctor",
             Self::Migrate { .. } => "migrate",

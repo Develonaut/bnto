@@ -4,11 +4,21 @@
 // All mutations delegate to EditorModel (bnto-core) for undo/redo support.
 // The picker overlay reuses the Browser's search-and-filter pattern.
 
+mod confirm;
+mod form;
+mod list;
+mod picker;
+
 use bnto_core::editor::EditorModel;
-use bnto_core::metadata::{NodeTypeInfo, all_node_types};
 use bnto_core::registry::NodeRegistry;
 
-use super::editor_bridge::{self, ActiveNodeForm};
+use super::editor_bridge::ActiveNodeForm;
+
+pub use picker::PickerState;
+
+// Node type metadata the tests below build fixtures with.
+#[cfg(test)]
+use bnto_core::metadata::{NodeTypeInfo, all_node_types};
 
 /// TUI-specific messages for the editor screen.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -50,23 +60,6 @@ pub enum EditorMessage {
     PickerCursorUp,
 }
 
-/// A node type entry in the picker overlay.
-#[derive(Debug, Clone)]
-pub struct PickerEntry {
-    pub name: String,
-    pub label: String,
-    pub category: String,
-}
-
-/// Overlay state for the "add node" picker.
-#[derive(Debug, Clone)]
-pub struct PickerState {
-    pub entries: Vec<PickerEntry>,
-    pub filtered: Vec<usize>,
-    pub cursor: usize,
-    pub query: String,
-}
-
 /// The editor screen's TUI state — wraps the core EditorModel with
 /// screen-specific UI state (picker overlay, delete confirmation, inline form).
 #[derive(Debug, Clone)]
@@ -93,56 +86,6 @@ impl EditorScreenModel {
     }
 }
 
-impl PickerState {
-    /// Build the picker from the full node type registry.
-    fn from_node_types(types: &[NodeTypeInfo]) -> Self {
-        let entries: Vec<PickerEntry> = types
-            .iter()
-            .map(|t| PickerEntry {
-                name: t.name.clone(),
-                label: t.label.clone(),
-                category: format!("{:?}", t.category).to_lowercase(),
-            })
-            .collect();
-        let filtered = (0..entries.len()).collect();
-        Self {
-            entries,
-            filtered,
-            cursor: 0,
-            query: String::new(),
-        }
-    }
-
-    /// Rebuild the filtered list after a query change.
-    fn refilter(&mut self) {
-        let q = self.query.to_lowercase();
-        self.filtered = self
-            .entries
-            .iter()
-            .enumerate()
-            .filter(|(_, e)| {
-                q.is_empty()
-                    || e.label.to_lowercase().contains(&q)
-                    || e.name.to_lowercase().contains(&q)
-                    || e.category.contains(&q)
-            })
-            .map(|(i, _)| i)
-            .collect();
-        // Clamp cursor to new bounds.
-        if !self.filtered.is_empty() {
-            self.cursor = self.cursor.min(self.filtered.len() - 1);
-        } else {
-            self.cursor = 0;
-        }
-    }
-
-    /// Return the selected entry's node type name, if any.
-    fn selected_type(&self) -> Option<&str> {
-        let &idx = self.filtered.get(self.cursor)?;
-        Some(&self.entries[idx].name)
-    }
-}
-
 /// Result from the editor update — either stay on editor or navigate away.
 #[derive(Debug, Clone, PartialEq)]
 pub enum EditorAction {
@@ -157,322 +100,29 @@ pub enum EditorAction {
 }
 
 /// Pure state transition for the editor screen.
+///
+/// Overlays capture input first (picker, delete confirm, dirty-exit
+/// confirm), then form messages go to the inline form, and everything
+/// else operates on the node list.
 pub fn update(
     mut model: EditorScreenModel,
     msg: EditorMessage,
     registry: &NodeRegistry,
 ) -> (EditorScreenModel, EditorAction) {
-    // If a picker is open, route messages there first.
     if model.picker.is_some() {
-        return update_picker(model, msg);
+        return picker::update_picker(model, msg);
     }
-
-    // Delete confirmation captures specific keys.
     if model.confirming_delete {
-        return update_delete_confirm(model, msg);
+        return confirm::update_delete_confirm(model, msg);
     }
-
-    // Dirty-exit confirmation captures specific keys.
     if model.confirming_dirty_exit {
-        return update_dirty_confirm(model, msg);
+        return confirm::update_dirty_confirm(model, msg);
     }
-
-    // Form messages delegate to the active form.
     if let EditorMessage::Form(form_msg) = msg {
-        return update_form(model, form_msg, registry);
+        return form::update_form(model, form_msg, registry);
     }
-
-    let action = match msg {
-        EditorMessage::CursorDown => {
-            sync_and_clear_form(&mut model);
-            if !model.editor.nodes.is_empty() {
-                let current = model.editor.selected_index.unwrap_or(0);
-                let next = if current + 1 >= model.editor.nodes.len() {
-                    0
-                } else {
-                    current + 1
-                };
-                model.editor.selected_index = Some(next);
-            }
-            rebuild_form_if_expanded(&mut model, registry);
-            EditorAction::None
-        }
-        EditorMessage::CursorUp => {
-            sync_and_clear_form(&mut model);
-            if !model.editor.nodes.is_empty() {
-                let current = model.editor.selected_index.unwrap_or(0);
-                let prev = if current == 0 {
-                    model.editor.nodes.len() - 1
-                } else {
-                    current - 1
-                };
-                model.editor.selected_index = Some(prev);
-            }
-            rebuild_form_if_expanded(&mut model, registry);
-            EditorAction::None
-        }
-        EditorMessage::ExpandToggle => {
-            if let Some(idx) = model.editor.selected_index
-                && idx < model.editor.nodes.len()
-            {
-                let was_expanded = model.editor.nodes[idx].expanded;
-                model.editor.nodes[idx].expanded = !was_expanded;
-                if was_expanded {
-                    // Collapsing: sync any pending edits and clear form.
-                    sync_and_clear_form(&mut model);
-                } else {
-                    // Expanding: build form for the node.
-                    model.active_form =
-                        editor_bridge::build_form(&model.editor.nodes[idx], idx, registry);
-                }
-            }
-            EditorAction::None
-        }
-        EditorMessage::MoveDown => {
-            sync_and_clear_form(&mut model);
-            if let Some(idx) = model.editor.selected_index
-                && idx + 1 < model.editor.nodes.len()
-            {
-                model.editor.reorder(idx, idx + 1);
-            }
-            EditorAction::None
-        }
-        EditorMessage::MoveUp => {
-            sync_and_clear_form(&mut model);
-            if let Some(idx) = model.editor.selected_index
-                && idx > 0
-            {
-                model.editor.reorder(idx, idx - 1);
-            }
-            EditorAction::None
-        }
-        EditorMessage::DeleteRequest => {
-            sync_and_clear_form(&mut model);
-            if model.editor.selected_index.is_some() && !model.editor.nodes.is_empty() {
-                model.confirming_delete = true;
-            }
-            EditorAction::None
-        }
-        EditorMessage::Undo => {
-            model.active_form = None;
-            model.editor.undo();
-            rebuild_form_if_expanded(&mut model, registry);
-            EditorAction::None
-        }
-        EditorMessage::Redo => {
-            model.active_form = None;
-            model.editor.redo();
-            rebuild_form_if_expanded(&mut model, registry);
-            EditorAction::None
-        }
-        EditorMessage::OpenPicker => {
-            sync_and_clear_form(&mut model);
-            let types = all_node_types();
-            model.picker = Some(PickerState::from_node_types(&types));
-            EditorAction::None
-        }
-        EditorMessage::Save => {
-            sync_and_clear_form(&mut model);
-            EditorAction::Save
-        }
-        EditorMessage::Back => {
-            sync_and_clear_form(&mut model);
-            if model.editor.dirty {
-                model.confirming_dirty_exit = true;
-                EditorAction::None
-            } else {
-                EditorAction::Back
-            }
-        }
-        // Dirty-confirm messages when no overlay is active — no-op.
-        EditorMessage::DirtySave | EditorMessage::DirtyDiscard | EditorMessage::DirtyCancel => {
-            EditorAction::None
-        }
-        // Form/picker/delete messages when no overlay is active — no-op.
-        EditorMessage::Form(_)
-        | EditorMessage::PickerInput(_)
-        | EditorMessage::PickerBackspace
-        | EditorMessage::PickerClear
-        | EditorMessage::PickerSelect
-        | EditorMessage::PickerCancel
-        | EditorMessage::PickerCursorDown
-        | EditorMessage::PickerCursorUp
-        | EditorMessage::DeleteConfirm
-        | EditorMessage::DeleteCancel => EditorAction::None,
-    };
-
+    let action = list::update_list(&mut model, msg, registry);
     (model, action)
-}
-
-/// Handle a form message for the active inline form.
-fn update_form(
-    mut model: EditorScreenModel,
-    msg: tonkotsu::FormMessage,
-    registry: &NodeRegistry,
-) -> (EditorScreenModel, EditorAction) {
-    if let Some(ref mut active) = model.active_form {
-        let was_editing = editor_bridge::is_editing(active);
-        editor_bridge::apply_form_message(active, msg);
-        let is_editing_now = editor_bridge::is_editing(active);
-
-        // On commit (was editing → now idle), sync values to EditorModel.
-        if was_editing && !is_editing_now {
-            let idx = active.node_index;
-            let updates = editor_bridge::collect_param_updates(active);
-            for (key, value) in updates {
-                model.editor.update_param(idx, &key, value);
-            }
-            // Rebuild form from updated EditorModel to keep in sync.
-            if let Some(node) = model.editor.nodes.get(idx) {
-                model.active_form = editor_bridge::build_form(node, idx, registry);
-            }
-        }
-    }
-    (model, EditorAction::None)
-}
-
-/// Sync pending form edits to EditorModel and clear the active form.
-fn sync_and_clear_form(model: &mut EditorScreenModel) {
-    if let Some(active) = model.active_form.take() {
-        let idx = active.node_index;
-        let updates = editor_bridge::collect_param_updates(&active);
-        // Only push undo if values actually changed.
-        let node = &model.editor.nodes[idx];
-        let changed = updates.iter().any(|(k, v)| node.params.get(k) != Some(v));
-        if changed {
-            for (key, value) in updates {
-                model.editor.update_param(idx, &key, value);
-            }
-        }
-    }
-}
-
-/// Rebuild the active form if the selected node is expanded.
-fn rebuild_form_if_expanded(model: &mut EditorScreenModel, registry: &NodeRegistry) {
-    if let Some(idx) = model.editor.selected_index
-        && let Some(node) = model.editor.nodes.get(idx)
-        && node.expanded
-    {
-        model.active_form = editor_bridge::build_form(node, idx, registry);
-        return;
-    }
-    model.active_form = None;
-}
-
-/// Handle messages while the picker overlay is active.
-fn update_picker(
-    mut model: EditorScreenModel,
-    msg: EditorMessage,
-) -> (EditorScreenModel, EditorAction) {
-    match msg {
-        EditorMessage::PickerInput(ch) => {
-            if let Some(picker) = &mut model.picker {
-                picker.query.push(ch);
-                picker.refilter();
-            }
-        }
-        EditorMessage::PickerBackspace => {
-            if let Some(picker) = &mut model.picker {
-                picker.query.pop();
-                picker.refilter();
-            }
-        }
-        EditorMessage::PickerClear => {
-            if let Some(picker) = &mut model.picker {
-                picker.query.clear();
-                picker.refilter();
-            }
-        }
-        EditorMessage::PickerCursorDown => {
-            if let Some(picker) = &mut model.picker
-                && !picker.filtered.is_empty()
-            {
-                picker.cursor = (picker.cursor + 1) % picker.filtered.len();
-            }
-        }
-        EditorMessage::PickerCursorUp => {
-            if let Some(picker) = &mut model.picker
-                && !picker.filtered.is_empty()
-            {
-                picker.cursor = if picker.cursor == 0 {
-                    picker.filtered.len() - 1
-                } else {
-                    picker.cursor - 1
-                };
-            }
-        }
-        EditorMessage::PickerSelect => {
-            let selected = model
-                .picker
-                .as_ref()
-                .and_then(|p| p.selected_type())
-                .map(|s| s.to_string());
-            if let Some(type_name) = selected {
-                let info = all_node_types().into_iter().find(|t| t.name == type_name);
-                if let Some(info) = info {
-                    model.editor.add_node(&type_name, &info);
-                }
-            }
-            model.picker = None;
-        }
-        EditorMessage::PickerCancel => {
-            model.picker = None;
-        }
-        // Non-picker messages close the picker and are ignored.
-        _ => {
-            model.picker = None;
-        }
-    }
-    (model, EditorAction::None)
-}
-
-/// Handle messages during delete confirmation.
-fn update_delete_confirm(
-    mut model: EditorScreenModel,
-    msg: EditorMessage,
-) -> (EditorScreenModel, EditorAction) {
-    match msg {
-        EditorMessage::DeleteConfirm => {
-            if let Some(idx) = model.editor.selected_index {
-                model.editor.remove_node(idx);
-            }
-            model.confirming_delete = false;
-        }
-        EditorMessage::DeleteCancel => {
-            model.confirming_delete = false;
-        }
-        // Any other message cancels the confirmation.
-        _ => {
-            model.confirming_delete = false;
-        }
-    }
-    (model, EditorAction::None)
-}
-
-/// Handle messages during dirty-exit confirmation ("Save? y/n/Esc").
-fn update_dirty_confirm(
-    mut model: EditorScreenModel,
-    msg: EditorMessage,
-) -> (EditorScreenModel, EditorAction) {
-    match msg {
-        EditorMessage::DirtySave => {
-            model.confirming_dirty_exit = false;
-            (model, EditorAction::SaveAndBack)
-        }
-        EditorMessage::DirtyDiscard => {
-            model.confirming_dirty_exit = false;
-            (model, EditorAction::Back)
-        }
-        EditorMessage::DirtyCancel => {
-            model.confirming_dirty_exit = false;
-            (model, EditorAction::None)
-        }
-        // Any other message cancels the confirmation.
-        _ => {
-            model.confirming_dirty_exit = false;
-            (model, EditorAction::None)
-        }
-    }
 }
 
 #[cfg(test)]
