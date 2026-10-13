@@ -6,6 +6,7 @@
  */
 
 import { collectUrls } from "./collectUrls";
+import { indexNowOutcome, type EndpointResult } from "./indexNowOutcome";
 
 const INDEXNOW_ENDPOINTS = [
   "https://api.indexnow.org/indexnow",
@@ -28,23 +29,37 @@ async function main() {
 
   const body = JSON.stringify({ host: HOST, key, urlList: urls });
 
-  const results = await Promise.allSettled(
-    INDEXNOW_ENDPOINTS.map(async (endpoint) => {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
-      console.log(`  ${endpoint}: ${res.status} ${res.statusText}`);
-      return { endpoint, status: res.status };
-    }),
-  );
+  const results = await Promise.all(INDEXNOW_ENDPOINTS.map((endpoint) => submit(endpoint, body)));
+  report(indexNowOutcome(results));
+}
 
-  const failures = results.filter((r) => r.status === "rejected");
-  if (failures.length > 0) {
-    console.error(`${failures.length} endpoint(s) failed`);
-    process.exitCode = 1;
+/** POST the batch to one endpoint; network errors become a result, not a throw. */
+async function submit(endpoint: string, body: string): Promise<EndpointResult> {
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+    console.log(`  ${endpoint}: ${res.status} ${res.statusText}`);
+    return { endpoint, status: res.status };
+  } catch (e) {
+    const error = e instanceof Error ? (e.cause?.toString() ?? e.message) : String(e);
+    console.log(`  ${endpoint}: ${error}`);
+    return { endpoint, error };
   }
+}
+
+/** Warn on partial failure (IndexNow shares submissions); fail only if none got through. */
+function report({ level, failed }: ReturnType<typeof indexNowOutcome>) {
+  if (level === "ok") return;
+  const detail = failed.join("; ");
+  if (level === "warn") {
+    console.log(`::warning::IndexNow: ${failed.length} endpoint(s) failed (${detail})`);
+    return;
+  }
+  console.error(`IndexNow: every endpoint failed (${detail})`);
+  process.exitCode = 1;
 }
 
 main();
