@@ -1,5 +1,6 @@
 // `bnto doctor` — check external dependencies and recipe secrets.
 
+use bnto_engine::deps::DependencyStatus;
 use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
@@ -13,31 +14,42 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
     // Parse once; an unparsable recipe is itself an issue (it can't run).
     let recipes = parse_catalog(catalog);
     let mut has_issues = print_parse_failures(&recipes.invalid);
+    has_issues |= check_binaries(&registry, &recipes.definitions, &ctx);
+    // `|=` (not `||`) so the secrets check always runs and prints.
+    has_issues |= check_all_recipe_secrets(&recipes, &ctx);
+    report_outcome(has_issues);
+}
 
-    // Check binary dependencies.
-    let deps = bnto_engine::deps::collect_catalog_dependencies(&registry, &recipes.definitions);
+/// Check binary dependencies across all recipes. Returns true on any issue.
+fn check_binaries(
+    registry: &bnto_core::NodeRegistry,
+    definitions: &[bnto_core::PipelineDefinition],
+    ctx: &dyn bnto_core::ProcessContext,
+) -> bool {
+    let deps = bnto_engine::deps::collect_catalog_dependencies(registry, definitions);
     if deps.is_empty() {
         println!("{} All processors are self-contained.", "ok".green().bold());
-    } else {
-        let statuses = bnto_engine::deps::check_dependencies(&deps, &ctx);
-        if print_dep_statuses(&statuses) {
-            has_issues = true;
-        }
+        return false;
     }
+    let statuses = bnto_engine::deps::check_dependencies(&deps, ctx);
+    print_dep_statuses(&statuses)
+}
 
-    // Check secrets for all known recipes that declare them.
-    if check_all_recipe_secrets(&recipes, &ctx) {
-        has_issues = true;
-    }
-
+/// Print the final verdict, exiting non-zero when any check failed.
+fn report_outcome(has_issues: bool) {
     if has_issues {
         eprintln!(
-            "\n{}",
+            "
+{}",
             "Some checks failed. See above for details.".yellow()
         );
         std::process::exit(1);
     }
-    println!("\n{}", "All checks passed.".green());
+    println!(
+        "
+{}",
+        "All checks passed.".green()
+    );
 }
 
 /// Catalog recipes parsed once. `slugs[i]` names `definitions[i]`; the
@@ -85,48 +97,70 @@ fn print_parse_failures(invalid: &[(String, String)]) -> bool {
 }
 
 /// Print each dependency status line. Returns true if any have issues.
-fn print_dep_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool {
+fn print_dep_statuses(statuses: &[DependencyStatus]) -> bool {
+    println!(
+        "{}
+",
+        "Checking external dependencies...".bold()
+    );
     let mut has_issues = false;
-    println!("{}\n", "Checking external dependencies...".bold());
     for status in statuses {
-        if !status.found {
-            has_issues = true;
-            println!("  {} {}", "MISSING".red().bold(), status.dependency.binary);
-            println!(
-                "         Install: {}",
-                status.dependency.host_install_hint().cyan()
-            );
-            if !status.dependency.homepage.is_empty() {
-                println!("         Homepage: {}", status.dependency.homepage);
-            }
-        } else if status.version_satisfied == Some(false) {
-            has_issues = true;
-            let installed = status.installed_version.as_deref().unwrap_or("unknown");
-            println!(
-                "  {} {} (installed: {}, requires: {})",
-                "OUTDATED".yellow().bold(),
-                status.dependency.binary,
-                installed,
-                status.dependency.version
-            );
-            println!(
-                "         Update: {}",
-                status.dependency.host_install_hint().cyan()
-            );
-        } else {
-            let version_info = match &status.installed_version {
-                Some(v) => format!(" ({})", v.dimmed()),
-                None => String::new(),
-            };
-            println!(
-                "  {} {}{}",
-                "ok".green(),
-                status.dependency.binary,
-                version_info
-            );
-        }
+        has_issues |= print_dep_status(status);
     }
     has_issues
+}
+
+/// Print one dependency's status line(s). Returns true if it has an issue.
+fn print_dep_status(status: &DependencyStatus) -> bool {
+    if !status.found {
+        print_missing(status);
+        true
+    } else if status.version_satisfied == Some(false) {
+        print_outdated(status);
+        true
+    } else {
+        print_found(status);
+        false
+    }
+}
+
+fn print_missing(status: &DependencyStatus) {
+    println!("  {} {}", "MISSING".red().bold(), status.dependency.binary);
+    println!(
+        "         Install: {}",
+        status.dependency.host_install_hint().cyan()
+    );
+    if !status.dependency.homepage.is_empty() {
+        println!("         Homepage: {}", status.dependency.homepage);
+    }
+}
+
+fn print_outdated(status: &DependencyStatus) {
+    let installed = status.installed_version.as_deref().unwrap_or("unknown");
+    println!(
+        "  {} {} (installed: {}, requires: {})",
+        "OUTDATED".yellow().bold(),
+        status.dependency.binary,
+        installed,
+        status.dependency.version
+    );
+    println!(
+        "         Update: {}",
+        status.dependency.host_install_hint().cyan()
+    );
+}
+
+fn print_found(status: &DependencyStatus) {
+    let version_info = match &status.installed_version {
+        Some(v) => format!(" ({})", v.dimmed()),
+        None => String::new(),
+    };
+    println!(
+        "  {} {}{}",
+        "ok".green(),
+        status.dependency.binary,
+        version_info
+    );
 }
 
 /// Check secrets across all catalog recipes that declare them.

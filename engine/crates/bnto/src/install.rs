@@ -3,10 +3,11 @@
 // Detects the system's package manager, shows what needs to be installed,
 // prompts for confirmation, runs the install commands, and verifies success.
 
+use bnto_engine::deps::DependencyStatus;
 use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
-use crate::context;
+use crate::context::{self, NativeContext};
 use crate::package_manager::{self, PackageManager};
 
 /// Run the install command for a single recipe or all recipes.
@@ -15,7 +16,6 @@ pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &Re
     let ctx = crate::unwrap_or_exit(context::NativeContext::current_dir());
 
     let (deps, label) = collect_deps(recipe_slug, all, &registry, catalog);
-
     if deps.is_empty() {
         println!(
             "{} {} has no external dependencies.",
@@ -24,10 +24,13 @@ pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &Re
         );
         return;
     }
-
     let statuses = bnto_engine::deps::check_dependencies(&deps, &ctx);
-    let missing: Vec<_> = statuses.iter().filter(|s| !s.found).collect();
+    install_missing(&statuses, &label, yes, &ctx);
+}
 
+/// Plan, confirm, install and verify whichever dependencies are missing.
+fn install_missing(statuses: &[DependencyStatus], label: &str, yes: bool, ctx: &NativeContext) {
+    let missing: Vec<_> = statuses.iter().filter(|s| !s.found).collect();
     if missing.is_empty() {
         println!(
             "{} All dependencies for {} are already installed.",
@@ -36,14 +39,13 @@ pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &Re
         );
         return;
     }
-
-    let pm = package_manager::detect(&ctx);
-    print_install_plan(&missing, pm, &label);
+    let pm = package_manager::detect(ctx);
+    print_install_plan(&missing, pm, label);
 
     let pm = require_package_manager(pm);
     confirm_or_exit(yes, pm);
-    execute_installs(&ctx, pm, &missing);
-    verify_installs(&missing, &ctx);
+    execute_installs(ctx, pm, &missing);
+    verify_installs(&missing, ctx);
 }
 
 /// Resolve which dependencies to check — single recipe or all recipes.
@@ -57,25 +59,28 @@ fn collect_deps(
         let deps = collect_all_recipe_deps(registry, catalog);
         return (deps, "all recipes".to_string());
     }
-    let slug = recipe_slug.unwrap_or_else(|| {
-        eprintln!(
-            "{} Provide a recipe slug or use {}.",
-            "Error:".red(),
-            "--all".cyan()
-        );
-        eprintln!(
-            "Usage: {} or {}",
-            "bnto install <recipe>".cyan(),
-            "bnto install --all".cyan()
-        );
-        std::process::exit(1);
-    });
+    let slug = recipe_slug.unwrap_or_else(|| exit_missing_slug());
     let recipe_json = read_recipe_json(slug, catalog);
     let def: bnto_core::PipelineDefinition = crate::unwrap_or_exit(
         serde_json::from_str(&recipe_json).map_err(|e| format!("Invalid recipe JSON: {e}")),
     );
     let deps = bnto_engine::deps::collect_pipeline_dependencies(&def, registry);
     (deps, slug.to_string())
+}
+
+/// Explain that a recipe slug (or `--all`) is required, then exit.
+fn exit_missing_slug() -> ! {
+    eprintln!(
+        "{} Provide a recipe slug or use {}.",
+        "Error:".red(),
+        "--all".cyan()
+    );
+    eprintln!(
+        "Usage: {} or {}",
+        "bnto install <recipe>".cyan(),
+        "bnto install --all".cyan()
+    );
+    std::process::exit(1);
 }
 
 /// Dependencies for every catalog recipe — recipe-level `requires` plus
@@ -88,40 +93,47 @@ fn collect_all_recipe_deps(
 }
 
 /// Print the list of missing dependencies and how they'll be installed.
-fn print_install_plan(
-    missing: &[&bnto_engine::deps::DependencyStatus],
-    pm: Option<PackageManager>,
-    label: &str,
-) {
-    let noun = if missing.len() == 1 {
-        "dependency"
-    } else {
-        "dependencies"
-    };
+fn print_install_plan(missing: &[&DependencyStatus], pm: Option<PackageManager>, label: &str) {
     println!(
-        "\n{} {} missing {} for {}:\n",
+        "
+{} {} missing {} for {}:
+",
         "Install".bold(),
         missing.len(),
-        noun,
+        dependency_noun(missing.len()),
         label
     );
     for status in missing {
-        if let Some(pm) = pm {
-            println!(
-                "  {} {}",
-                "→".cyan(),
-                package_manager::display_command(pm, &status.dependency.binary)
-            );
-        } else {
-            println!(
-                "  {} {} ({})",
-                "→".cyan(),
-                status.dependency.binary,
-                status.dependency.host_install_hint().dimmed()
-            );
-        }
+        print_plan_line(status, pm);
     }
     println!();
+}
+
+/// One plan line: the package-manager command, or the manual hint.
+fn print_plan_line(status: &DependencyStatus, pm: Option<PackageManager>) {
+    let binary = &status.dependency.binary;
+    match pm {
+        Some(pm) => println!(
+            "  {} {}",
+            "→".cyan(),
+            package_manager::display_command(pm, binary)
+        ),
+        None => println!(
+            "  {} {} ({})",
+            "→".cyan(),
+            binary,
+            status.dependency.host_install_hint().dimmed()
+        ),
+    }
+}
+
+/// "dependency" or "dependencies" for `count`.
+fn dependency_noun(count: usize) -> &'static str {
+    if count == 1 {
+        "dependency"
+    } else {
+        "dependencies"
+    }
 }
 
 /// Exit with an error if no package manager was detected.
@@ -151,68 +163,79 @@ fn confirm_or_exit(yes: bool, pm: PackageManager) {
 fn execute_installs(
     ctx: &dyn bnto_core::context::ProcessContext,
     pm: PackageManager,
-    missing: &[&bnto_engine::deps::DependencyStatus],
+    missing: &[&DependencyStatus],
 ) {
-    let mut failed = Vec::new();
-    for status in missing {
-        let binary = &status.dependency.binary;
-        eprintln!(
-            "{} {}",
-            "Running:".dimmed(),
-            package_manager::display_command(pm, binary)
-        );
-        if let Err(e) = run_install_command(ctx, pm, binary) {
-            eprintln!("  {} {e}", "failed:".red());
-            failed.push(binary.as_str());
-        }
-    }
+    let failed: Vec<&str> = missing
+        .iter()
+        .map(|status| status.dependency.binary.as_str())
+        .filter(|binary| !install_one(ctx, pm, binary))
+        .collect();
     if !failed.is_empty() {
-        let noun = if failed.len() == 1 {
-            "dependency"
-        } else {
-            "dependencies"
-        };
-        eprintln!(
-            "\n{} {} {} failed to install: {}",
-            "Error:".red(),
-            failed.len(),
-            noun,
-            failed.join(", ")
-        );
-        std::process::exit(1);
+        exit_install_failed(&failed);
     }
 }
 
-/// Re-check that previously missing dependencies are now found.
-fn verify_installs(
-    missing: &[&bnto_engine::deps::DependencyStatus],
+/// Run one install command, reporting it. Returns true on success.
+fn install_one(
     ctx: &dyn bnto_core::context::ProcessContext,
-) {
+    pm: PackageManager,
+    binary: &str,
+) -> bool {
+    eprintln!(
+        "{} {}",
+        "Running:".dimmed(),
+        package_manager::display_command(pm, binary)
+    );
+    match run_install_command(ctx, pm, binary) {
+        Ok(()) => true,
+        Err(e) => {
+            eprintln!("  {} {e}", "failed:".red());
+            false
+        }
+    }
+}
+
+/// Report which installs failed, then exit.
+fn exit_install_failed(failed: &[&str]) -> ! {
+    eprintln!(
+        "
+{} {} {} failed to install: {}",
+        "Error:".red(),
+        failed.len(),
+        dependency_noun(failed.len()),
+        failed.join(", ")
+    );
+    std::process::exit(1);
+}
+
+/// Re-check that previously missing dependencies are now found.
+fn verify_installs(missing: &[&DependencyStatus], ctx: &dyn bnto_core::context::ProcessContext) {
     let deps: Vec<_> = missing.iter().map(|s| s.dependency.clone()).collect();
     let recheck = bnto_engine::deps::check_dependencies(&deps, ctx);
     let still_missing: Vec<_> = recheck.iter().filter(|s| !s.found).collect();
-    if still_missing.is_empty() {
-        println!(
-            "\n{} All dependencies installed successfully.",
-            "ok".green().bold()
-        );
-    } else {
-        let noun = if still_missing.len() == 1 {
-            "dependency"
-        } else {
-            "dependencies"
-        };
-        eprintln!(
-            "\n{} {} {} still not found after install:",
-            "Warning:".yellow(),
-            still_missing.len(),
-            noun
-        );
-        for s in &still_missing {
-            eprintln!("  {} {}", "MISSING".red(), s.dependency.binary);
-        }
-        std::process::exit(1);
+    if !still_missing.is_empty() {
+        exit_still_missing(&still_missing);
     }
+    println!(
+        "
+{} All dependencies installed successfully.",
+        "ok".green().bold()
+    );
+}
+
+/// List dependencies that are still missing after install, then exit.
+fn exit_still_missing(still_missing: &[&DependencyStatus]) -> ! {
+    eprintln!(
+        "
+{} {} {} still not found after install:",
+        "Warning:".yellow(),
+        still_missing.len(),
+        dependency_noun(still_missing.len())
+    );
+    for s in still_missing {
+        eprintln!("  {} {}", "MISSING".red(), s.dependency.binary);
+    }
+    std::process::exit(1);
 }
 
 /// Look up recipe JSON — try catalog slug first, then disk path.
