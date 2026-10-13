@@ -54,7 +54,7 @@ fn collect_deps(
     catalog: &RecipeCatalog,
 ) -> (Vec<bnto_core::metadata::Dependency>, String) {
     if all {
-        let deps = bnto_engine::deps::collect_all_dependencies(registry);
+        let deps = collect_all_recipe_deps(registry, catalog);
         return (deps, "all recipes".to_string());
     }
     let slug = recipe_slug.unwrap_or_else(|| {
@@ -76,6 +76,15 @@ fn collect_deps(
     );
     let deps = bnto_engine::deps::collect_pipeline_dependencies(&def, registry);
     (deps, slug.to_string())
+}
+
+/// Dependencies for every catalog recipe — recipe-level `requires` plus
+/// processor-declared deps, deduplicated by binary.
+fn collect_all_recipe_deps(
+    registry: &bnto_core::NodeRegistry,
+    catalog: &RecipeCatalog,
+) -> Vec<bnto_core::metadata::Dependency> {
+    bnto_engine::deps::collect_catalog_dependencies(registry, &catalog.definitions())
 }
 
 /// Print the list of missing dependencies and how they'll be installed.
@@ -131,7 +140,7 @@ fn require_package_manager(pm: Option<PackageManager>) -> PackageManager {
 fn confirm_or_exit(yes: bool, pm: PackageManager) {
     if !yes {
         eprint!("Install with {}? [Y/n] ", pm.name().cyan());
-        if !confirm_yes() {
+        if !confirm_yes(std::io::stdin().lock()) {
             eprintln!("Cancelled.");
             std::process::exit(1);
         }
@@ -234,11 +243,15 @@ fn run_install_command(
         .map_err(|e| e.to_string())
 }
 
-/// Read a single line from stdin and return true if it's empty or starts with 'y'/'Y'.
-fn confirm_yes() -> bool {
+/// Read a single line and return true if it's empty or "y"/"yes".
+///
+/// EOF (closed or non-interactive stdin) declines — only an explicit empty
+/// line takes the default, so piped/CI runs never install unprompted.
+fn confirm_yes(mut reader: impl std::io::BufRead) -> bool {
     let mut input = String::new();
-    if std::io::stdin().read_line(&mut input).is_err() {
-        return false;
+    match reader.read_line(&mut input) {
+        Ok(0) | Err(_) => return false,
+        Ok(_) => {}
     }
     let trimmed = input.trim();
     trimmed.is_empty() || trimmed.eq_ignore_ascii_case("y") || trimmed.eq_ignore_ascii_case("yes")
@@ -252,12 +265,15 @@ mod tests {
     use bnto_core::metadata::Dependency;
     use std::path::{Path, PathBuf};
 
-    /// Context where `which` succeeds for everything (all deps found).
+    /// Context where every binary lookup succeeds (all deps found).
     struct AllFoundContext;
 
     impl ProcessContext for AllFoundContext {
         fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
             Ok(b"/usr/local/bin/found".to_vec())
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            Some(PathBuf::from("/usr/local/bin").join(name))
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("n/a".into()))
@@ -270,7 +286,7 @@ mod tests {
         }
     }
 
-    /// Context where `which` fails for everything (all deps missing).
+    /// Context where every binary lookup fails (all deps missing).
     struct AllMissingContext;
 
     impl ProcessContext for AllMissingContext {
@@ -333,6 +349,38 @@ mod tests {
     fn run_install_command_failure() {
         let result = run_install_command(&AllMissingContext, PackageManager::Brew, "yt-dlp");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn all_deps_include_recipe_level_requires() {
+        // yt-dlp is declared only in download-video's recipe-level `requires`
+        // (no processor declares it), so it must come from recipe scanning.
+        let registry = bnto_engine::create_registry();
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let deps = collect_all_recipe_deps(&registry, &catalog);
+        assert!(deps.iter().any(|d| d.binary == "yt-dlp"), "got: {deps:?}");
+    }
+
+    #[test]
+    fn confirm_declines_on_eof() {
+        // Closed/non-interactive stdin must never auto-approve an install.
+        assert!(!confirm_yes(&b""[..]));
+    }
+
+    #[test]
+    fn confirm_empty_line_defaults_to_yes() {
+        assert!(confirm_yes(&b"\n"[..]));
+    }
+
+    #[test]
+    fn confirm_accepts_y() {
+        assert!(confirm_yes(&b"y\n"[..]));
+        assert!(confirm_yes(&b"YES\n"[..]));
+    }
+
+    #[test]
+    fn confirm_rejects_n() {
+        assert!(!confirm_yes(&b"n\n"[..]));
     }
 
     #[test]

@@ -189,6 +189,28 @@ fn test_doctor_checks_recipe_level_dependencies() {
     );
 }
 
+#[test]
+fn test_doctor_warns_about_unparsable_recipe() {
+    // Valid JSON loads into the catalog, but isn't a valid definition.
+    let home = tempfile::tempdir().unwrap();
+    let recipes = home.path().join("recipes");
+    std::fs::create_dir_all(&recipes).unwrap();
+    std::fs::write(recipes.join("broken.bnto.json"), r#"{"nodes":"x"}"#).unwrap();
+
+    let output = Command::new(bnto_bin())
+        .arg("doctor")
+        .env("BNTO_HOME", home.path())
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("Could not parse recipe") && stdout.contains("broken"),
+        "Doctor should name the unparsable recipe, got: {stdout}"
+    );
+    assert!(!stdout.contains("All checks passed"), "got: {stdout}");
+    assert!(!output.status.success());
+}
+
 // --- Error Cases ---
 
 #[test]
