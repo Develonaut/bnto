@@ -268,6 +268,12 @@ impl ProcessContext for NativeContext {
         Ok(&self.work_dir)
     }
 
+    /// Resolves against the process PATH (not `.env` files) because that
+    /// is the PATH spawned commands inherit.
+    fn find_binary(&self, name: &str) -> Option<PathBuf> {
+        bnto_core::find_on_path(name, &std::env::var_os("PATH")?)
+    }
+
     fn home_dir(&self) -> Option<&Path> {
         Some(&self.home_dir)
     }
@@ -306,6 +312,21 @@ mod tests {
         let ctx = NativeContext::current_dir().unwrap();
         let result = ctx.run_command("bnto_nonexistent_binary_xyz", &[]);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_find_binary_agrees_with_run_command() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let (cmd, args) = shell("echo hello");
+        let found = ctx.find_binary(cmd).expect("platform shell on PATH");
+        assert!(found.is_absolute(), "{found:?}");
+        assert!(ctx.run_command(cmd, &args).is_ok());
+    }
+
+    #[test]
+    fn test_find_binary_missing_returns_none() {
+        let ctx = NativeContext::current_dir().unwrap();
+        assert!(ctx.find_binary("bnto_nonexistent_binary_xyz").is_none());
     }
 
     #[test]
