@@ -25,9 +25,22 @@ src/
 ├── lib.rs            # Public exports + re-exports from bnto-encode
 ├── common.rs         # Shared helpers (accepts list, quality param extraction)
 ├── compress.rs       # CompressImages processor
-├── resize.rs         # ResizeImages processor
+├── resize/           # ResizeImages processor (image-resize)
+│   ├── mod.rs              # Module wiring + re-export
+│   ├── processor.rs        # NodeProcessor impl, decode/resize/encode
+│   ├── dimensions.rs       # Target dimension math, bounds, filter choice
+│   ├── params.rs           # Typed param reads + ResizeParams
+│   ├── param_defs.rs       # Parameter schema (metadata)
+│   └── validate.rs         # Static param validation
 ├── convert.rs        # ConvertImageFormat processor (incl. SVG input)
-├── overlay.rs        # OverlayImage processor
+├── overlay/          # OverlayImage processor (image-overlay)
+│   ├── mod.rs              # Module wiring + re-export
+│   ├── processor.rs        # NodeProcessor impl, decode/encode, output metadata
+│   ├── composite.rs        # Scale, opacity, and blend onto the source
+│   ├── positioning.rs      # Gravity regions, edge margin, offsets
+│   ├── params.rs           # Defaults, positions, clamped param reads
+│   ├── param_defs.rs       # Parameter schema (metadata)
+│   └── validate.rs         # Static param validation
 ├── strip_exif.rs     # StripExif processor
 ├── svg.rs            # SVG detection and rasterization (convert-only)
 ├── orientation.rs    # EXIF orientation handling
