@@ -36,6 +36,7 @@ pub fn show_dry_run(
         && !inputs.is_empty()
     {
         check_trust(slug, &entry.definition_json, yes, catalog);
+        dry_run::print_shell_note(&entry.definition_json);
     }
     let Some(result) = dry_run::dry_run_recipe(slug, inputs, param_overrides, catalog) else {
         exit_unknown_recipe(slug);

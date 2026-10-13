@@ -245,9 +245,8 @@ mod tests {
     fn test_progressive_output_creates_subdirectories() {
         use bnto_core::events::ProgressOutputFile;
 
-        let dir = std::env::temp_dir().join("bnto-test-progressive-subdirs");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let reporter = stderr_reporter(noop_logger(), Some(dir.to_str().unwrap().to_string()));
 
@@ -277,8 +276,6 @@ mod tests {
             b"video1"
         );
         assert!(dir.join("top.txt").exists());
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     fn noop_logger() -> Arc<dyn Logger> {

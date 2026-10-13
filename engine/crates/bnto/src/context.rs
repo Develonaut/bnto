@@ -16,6 +16,7 @@ use bnto_core::dotenv::parse_dotenv;
 use bnto_core::errors::BntoError;
 
 use crate::process_registry::ProcessRegistry;
+use crate::scratch::{RunScratch, persisted_temp_file};
 
 /// Native context for CLI execution with full system access.
 ///
@@ -38,6 +39,9 @@ pub struct NativeContext {
     registry: Arc<ProcessRegistry>,
     /// Set by `bnto run --dry-run`: writing nodes decide and write nothing.
     dry_run: bool,
+    /// Holds a dry run's temp files; dropping the context deletes them,
+    /// since no output step will move them away.
+    scratch: RunScratch,
 }
 
 impl NativeContext {
@@ -54,6 +58,7 @@ impl NativeContext {
             user_env,
             registry: crate::process_registry::global(),
             dry_run: false,
+            scratch: RunScratch::default(),
         }
     }
 
@@ -86,6 +91,7 @@ impl NativeContext {
             user_env,
             registry: crate::process_registry::global(),
             dry_run: false,
+            scratch: RunScratch::default(),
         })
     }
 
@@ -270,15 +276,14 @@ impl ProcessContext for NativeContext {
         }
     }
 
+    /// A real run's temp files persist for the output step to move; a dry
+    /// run's go in the scratch dir, removed when this context drops.
     fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
-        tempfile::Builder::new()
-            .prefix("bnto-")
-            .suffix(suffix)
-            .tempfile()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to create temp file: {e}")))?
-            .into_temp_path()
-            .keep()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to persist temp file: {e}")))
+        if self.dry_run {
+            self.scratch.temp_file(suffix)
+        } else {
+            persisted_temp_file(None, suffix)
+        }
     }
 
     fn env_var(&self, key: &str) -> Option<String> {
@@ -429,6 +434,32 @@ mod tests {
     }
 
     #[test]
+    fn test_dry_run_temp_file_removed_when_context_drops() {
+        let ctx = NativeContext::current_dir().unwrap().with_dry_run(true);
+        let path = ctx.temp_file("-output").unwrap();
+        let out_dir = path.with_extension("d");
+        std::fs::create_dir_all(&out_dir).unwrap();
+        std::fs::write(out_dir.join("note.txt"), b"x").unwrap();
+        assert!(path.exists());
+        drop(ctx);
+        assert!(!path.exists(), "dry-run temp file must not outlive the run");
+        assert!(
+            !out_dir.exists(),
+            "dry-run output dir must not outlive the run"
+        );
+    }
+
+    #[test]
+    fn test_real_run_temp_file_survives_context_drop() {
+        // The output step moves a real run's temp files after the pipeline.
+        let ctx = NativeContext::current_dir().unwrap();
+        let path = ctx.temp_file(".txt").unwrap();
+        drop(ctx);
+        assert!(path.exists(), "real-run temp file must persist");
+        std::fs::remove_file(&path).ok();
+    }
+
+    #[test]
     fn test_native_context_env_var_path() {
         let ctx = NativeContext::current_dir().unwrap();
         let result = ctx.env_var("PATH");
@@ -508,6 +539,7 @@ mod tests {
             user_env: HashMap::new(),
             registry,
             dry_run: false,
+            scratch: RunScratch::default(),
         }
     }
 
@@ -667,6 +699,7 @@ mod tests {
                 .collect(),
             registry: Arc::new(ProcessRegistry::new()),
             dry_run: false,
+            scratch: RunScratch::default(),
         };
         assert_eq!(
             ctx.env_var("KEY"),
@@ -687,6 +720,7 @@ mod tests {
                 .collect(),
             registry: Arc::new(ProcessRegistry::new()),
             dry_run: false,
+            scratch: RunScratch::default(),
         };
         assert_eq!(ctx.env_var("USER_ONLY_KEY"), Some("user_val".to_string()),);
     }
@@ -701,6 +735,7 @@ mod tests {
             user_env: HashMap::new(),
             registry: Arc::new(ProcessRegistry::new()),
             dry_run: false,
+            scratch: RunScratch::default(),
         };
         assert_eq!(ctx.home_dir(), Some(Path::new("/custom/bnto")),);
     }
@@ -715,6 +750,7 @@ mod tests {
             user_env: HashMap::new(),
             registry: Arc::new(ProcessRegistry::new()),
             dry_run: false,
+            scratch: RunScratch::default(),
         };
         assert_eq!(ctx.output_dir(), Some(PathBuf::from("/custom/bnto/output")),);
     }

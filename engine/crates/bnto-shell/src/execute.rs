@@ -428,9 +428,8 @@ mod tests {
 
     #[test]
     fn test_collect_output_files_returns_path_variant() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-output");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         std::fs::write(dir.join("video.mp4"), vec![0u8; 100]).unwrap();
         std::fs::write(dir.join("info.json"), b"{}").unwrap();
 
@@ -455,14 +454,12 @@ mod tests {
                 file.filename,
             );
         }
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_collect_output_files_preserves_subdirectory_in_filename() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-subdirs");
-        let _ = std::fs::remove_dir_all(&dir);
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         std::fs::create_dir_all(dir.join("subdir")).unwrap();
         std::fs::write(dir.join("file.txt"), b"data").unwrap();
         std::fs::write(dir.join("subdir").join("video.mp4"), vec![0u8; 50]).unwrap();
@@ -473,28 +470,24 @@ mod tests {
         let names: Vec<&str> = files.iter().map(|f| f.filename.as_str()).collect();
         assert!(names.contains(&"file.txt"));
         assert!(names.contains(&"subdir/video.mp4"));
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_collect_output_files_preserves_deeply_nested_path() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-deep");
-        let _ = std::fs::remove_dir_all(&dir);
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         std::fs::create_dir_all(dir.join("a").join("b")).unwrap();
         std::fs::write(dir.join("a").join("b").join("deep.mp4"), vec![0u8; 10]).unwrap();
 
         let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].filename, "a/b/deep.mp4");
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_collect_output_files_multiple_subdirs_preserve_structure() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-multi-subdirs");
-        let _ = std::fs::remove_dir_all(&dir);
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         std::fs::create_dir_all(dir.join("Alpha Legion")).unwrap();
         std::fs::create_dir_all(dir.join("Suboden Khan")).unwrap();
         std::fs::write(dir.join("Alpha Legion").join("part1.mp4"), b"vid1").unwrap();
@@ -509,27 +502,21 @@ mod tests {
             names,
             vec!["Alpha Legion/part1.mp4", "Suboden Khan/part2.mp4"]
         );
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_collect_output_files_empty_dir() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-empty");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let files = collect_output_files(&dir, DEFAULT_MAX_OUTPUT_MB).unwrap();
         assert!(files.is_empty());
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_collect_output_files_rejects_oversized_file() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-oversized");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         // 2 MB file with a 1 MB limit — should fail before reading into memory.
         std::fs::write(dir.join("big.mp4"), vec![0u8; 2 * 1024 * 1024]).unwrap();
 
@@ -542,23 +529,18 @@ mod tests {
             }
             Ok(_) => panic!("Expected error for oversized file"),
         }
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_collect_output_files_accepts_file_under_limit() {
-        let dir = std::env::temp_dir().join("bnto-test-collect-under-limit");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         // 512 KB file with a 1 MB limit — should succeed.
         std::fs::write(dir.join("small.mp4"), vec![0u8; 512 * 1024]).unwrap();
 
         let files = collect_output_files(&dir, 1).unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].filename, "small.mp4");
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

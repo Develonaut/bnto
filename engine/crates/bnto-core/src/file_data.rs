@@ -88,23 +88,20 @@ mod tests {
 
     #[test]
     fn test_filedata_bytes_write_to() {
-        let dir = std::env::temp_dir().join("bnto-test-filedata-bytes");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let data = FileData::Bytes(b"hello world".to_vec());
         let dest = dir.join("output.txt");
         data.write_to(&dest).unwrap();
 
         assert_eq!(std::fs::read(&dest).unwrap(), b"hello world");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_filedata_path_write_to_renames() {
-        let dir = std::env::temp_dir().join("bnto-test-filedata-path");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let src = dir.join("source.bin");
         std::fs::write(&src, b"file content").unwrap();
@@ -116,7 +113,6 @@ mod tests {
         assert_eq!(std::fs::read(&dest).unwrap(), b"file content");
         // Source should be gone (renamed).
         assert!(!src.exists());
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -127,16 +123,14 @@ mod tests {
 
     #[test]
     fn test_filedata_path_len() {
-        let dir = std::env::temp_dir().join("bnto-test-filedata-len");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let path = dir.join("sized.bin");
         std::fs::write(&path, vec![0u8; 1024]).unwrap();
 
         let data = FileData::Path(path);
         assert_eq!(data.len().unwrap(), 1024);
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -147,23 +141,20 @@ mod tests {
 
     #[test]
     fn test_filedata_bytes_copy_to() {
-        let dir = std::env::temp_dir().join("bnto-test-filedata-bytes-copy");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let data = FileData::Bytes(b"copy me".to_vec());
         let dest = dir.join("copied.txt");
         data.copy_to(&dest).unwrap();
 
         assert_eq!(std::fs::read(&dest).unwrap(), b"copy me");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn test_filedata_path_copy_to_preserves_source() {
-        let dir = std::env::temp_dir().join("bnto-test-filedata-path-copy");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let src = dir.join("source.bin");
         std::fs::write(&src, b"original content").unwrap();
@@ -174,7 +165,6 @@ mod tests {
 
         assert_eq!(std::fs::read(&dest).unwrap(), b"original content");
         assert!(src.exists(), "Source should still exist after copy_to");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -185,15 +175,13 @@ mod tests {
 
     #[test]
     fn test_filedata_path_into_bytes() {
-        let dir = std::env::temp_dir().join("bnto-test-filedata-into");
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
 
         let path = dir.join("read-me.bin");
         std::fs::write(&path, b"disk content").unwrap();
 
         let data = FileData::Path(path);
         assert_eq!(data.into_bytes().unwrap(), b"disk content");
-        let _ = std::fs::remove_dir_all(&dir);
     }
 }

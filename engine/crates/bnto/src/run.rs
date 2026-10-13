@@ -11,7 +11,7 @@ use colored::Colorize;
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
 use crate::run_output::write_output;
-use crate::{context, input, progress, telemetry, unwrap_or_exit};
+use crate::{context, dry_run, input, progress, telemetry, unwrap_or_exit};
 
 /// The `bnto run` switches that change what a run does.
 #[derive(Clone, Copy)]
@@ -60,8 +60,15 @@ pub fn run_recipe(
     );
     let target = run_target(output_override, flags.dry_run, &prepared, &ctx);
     let reporter = progress::stderr_reporter(Arc::clone(logger), progressive_dir(&target));
+    if flags.dry_run {
+        dry_run::print_shell_note(&prepared.definition_json);
+    }
     let def_json = &prepared.definition_json;
-    match bnto_engine::run_pipeline(def_json, prepared.files, &reporter, &ctx) {
+    let outcome = bnto_engine::run_pipeline(def_json, prepared.files, &reporter, &ctx);
+    // Dropping the context deletes a dry run's temp files; do it before the
+    // exits below, which skip destructors.
+    drop(ctx);
+    match outcome {
         Ok(result) => finish_run(logger, &stats, start, &result, &target),
         Err(e) => fail_run(logger, &e),
     }

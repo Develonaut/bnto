@@ -249,6 +249,7 @@ version = "0.1.3"
 dependencies = [
  "bnto-core",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

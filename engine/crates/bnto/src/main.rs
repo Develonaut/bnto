@@ -37,6 +37,7 @@ mod progress;
 mod progress_indent;
 mod run;
 mod run_output;
+mod scratch;
 pub mod storage;
 pub mod telemetry;
 mod trust;
