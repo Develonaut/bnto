@@ -102,6 +102,11 @@ enum Command {
         /// Override a field value. Format: key=value or nodeId:key=value
         #[arg(short = 'p', long = "param")]
         param: Vec<String>,
+
+        /// Skip trust consent for local recipes with shell commands (when
+        /// inputs make the preview execute the pipeline).
+        #[arg(long)]
+        yes: bool,
     },
 
     /// Install external dependencies for a recipe.
@@ -245,9 +250,10 @@ fn main() {
             recipe,
             inputs,
             param,
+            yes,
         }) => {
             telemetry::capture(telemetry::events::cli_command("dry-run"));
-            show_dry_run(&recipe, &inputs, &param, &catalog);
+            show_dry_run(&recipe, &inputs, &param, yes, &catalog);
         }
         Some(Command::Install { recipe, yes, all }) => {
             telemetry::capture(telemetry::events::cli_command("install"));
@@ -576,7 +582,7 @@ fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog: &R
     if !trust::prompt_consent(&recipe_name, &cmd_names) {
         eprintln!("{} Execution cancelled.", "Aborted:".red().bold());
         eprintln!(
-            "Run {} to inspect the commands first.",
+            "Run {} (without input files) to inspect the commands without running them.",
             format!("bnto dry-run {recipe_arg}").cyan()
         );
         process::exit(1);
@@ -619,8 +625,16 @@ fn show_dry_run(
     slug: &str,
     inputs: &[String],
     param_overrides: &[String],
+    yes: bool,
     catalog: &RecipeCatalog,
 ) {
+    // With inputs the preview executes the pipeline (shell commands
+    // included), so it needs the same consent as `bnto run`.
+    if let Some(entry) = catalog.resolve(slug)
+        && !inputs.is_empty()
+    {
+        check_trust(slug, &entry.definition_json, yes, catalog);
+    }
     let Some(result) = dry_run::dry_run_recipe(slug, inputs, param_overrides, catalog) else {
         eprintln!("{} Unknown recipe: {slug}", "Error:".red());
         eprintln!("Run {} to see available recipes.", "bnto list".cyan());

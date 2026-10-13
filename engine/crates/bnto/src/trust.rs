@@ -127,7 +127,7 @@ pub fn prompt_consent(recipe_name: &str, shell_commands: &[String]) -> bool {
     }
     eprintln!();
     eprintln!("  Recipe: {recipe_name}");
-    eprintln!("  Run `bnto dry-run <recipe>` to inspect the full command details.");
+    eprintln!("  Run `bnto dry-run <recipe>` without input files to inspect the full commands.");
     eprintln!();
     eprint!("  Allow execution? [y/N] ");
     let _ = std::io::stderr().flush();
