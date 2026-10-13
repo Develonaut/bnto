@@ -13,6 +13,12 @@ import {
   GitForkIcon,
   BoxIcon,
   StampIcon,
+  FolderSearchIcon,
+  CopyIcon,
+  FunnelIcon,
+  FileTextIcon,
+  TableIcon,
+  FileMinusCornerIcon,
   // I/O contextual icons (from getNodeIcon)
   FileUpIcon,
   TextCursorInputIcon,
@@ -20,6 +26,9 @@ import {
   DownloadIcon,
   MonitorIcon,
   EyeIcon,
+  CircleOffIcon,
+  ReplaceIcon,
+  MessageSquareIcon,
 } from "@bnto/ui";
 
 /**
@@ -41,6 +50,12 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   "git-fork": GitForkIcon,
   box: BoxIcon,
   stamp: StampIcon,
+  "folder-search": FolderSearchIcon,
+  copy: CopyIcon,
+  filter: FunnelIcon,
+  "file-text": FileTextIcon,
+  table: TableIcon,
+  "file-minus-2": FileMinusCornerIcon,
   // I/O contextual icons (from getNodeIcon)
   "file-up": FileUpIcon,
   "text-cursor-input": TextCursorInputIcon,
@@ -48,6 +63,9 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   download: DownloadIcon,
   monitor: MonitorIcon,
   eye: EyeIcon,
+  "circle-off": CircleOffIcon,
+  replace: ReplaceIcon,
+  "message-square": MessageSquareIcon,
 };
 
 export { ICON_COMPONENTS };

@@ -106,6 +106,11 @@ export {
   Crop as CropIcon,
   ListChecks as ListChecksIcon,
   Stamp as StampIcon,
+  FolderSearch as FolderSearchIcon,
+  Funnel as FunnelIcon,
+  FileMinusCorner as FileMinusCornerIcon,
+  Replace as ReplaceIcon,
+  MessageSquare as MessageSquareIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";
