@@ -104,7 +104,7 @@ pub fn mode_label(definition_json: &str) -> &'static str {
         Ok(InputMode::Url) => "URL input",
         Ok(InputMode::Text) => "text input",
         Ok(InputMode::None) => "no input",
-        _ => "files",
+        Ok(InputMode::FileUpload) | Err(_) => "files",
     }
 }
 

@@ -53,6 +53,9 @@ pub mod executor;
 /// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
 pub mod pipeline;
 
+/// `InputMode` and its wire-string form (the input node's `mode` param).
+pub mod input_mode;
+
 /// The NodeProcessor trait — the contract every node type must implement.
 /// If you're building a new node (like image compression), you implement this.
 pub mod processor;
