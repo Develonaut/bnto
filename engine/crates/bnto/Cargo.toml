@@ -6,6 +6,7 @@
 name = "bnto"
 version = "0.1.5"
 edition = "2024"
+rust-version.workspace = true
 description = "CLI for running .bnto.json recipes — compress images, clean CSVs, rename files"
 license = "MIT"
 repository = "https://github.com/Develonaut/bnto"
