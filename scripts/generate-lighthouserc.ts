@@ -39,10 +39,14 @@ const settings: Record<string, unknown> = {
   chromeFlags: "--no-sandbox --disable-gpu",
 };
 
-// Bypass Vercel Deployment Protection for preview URLs
+// Bypass Vercel Deployment Protection for preview URLs, and skip the Vercel
+// Toolbar Vercel injects into previews: its vercel.live script sets
+// third-party cookies and logs console errors, which fail Best Practices
+// for every page even though production never serves it.
 if (bypassSecret) {
   settings.extraHeaders = JSON.stringify({
     "x-vercel-protection-bypass": bypassSecret,
+    "x-vercel-skip-toolbar": "1",
   });
 }
 
