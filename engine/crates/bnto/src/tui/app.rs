@@ -6,35 +6,44 @@
 use std::collections::HashMap;
 
 use bnto_core::registry::NodeRegistry;
-use bnto_engine::create_registry;
 
 use crate::catalog::RecipeCatalog;
 
 use super::app_helpers::{
     handle_add_to_library, handle_add_to_library_write, handle_back, handle_config_confirmed,
-    handle_detail_form, handle_editor, handle_editor_form, handle_execution,
-    handle_execution_complete, handle_files_selected, handle_home_confirm, handle_library,
-    handle_library_confirm, handle_open_editor_from_browser, handle_open_editor_from_library,
-    handle_open_library, handle_open_settings_picker, handle_open_wizard, handle_preview_confirm,
-    handle_preview_requested, handle_recipe_selected, handle_settings_path_confirmed,
-    handle_telemetry_toggled, handle_theme_changed, handle_wizard, handle_wizard_form,
-    load_editor_from_json,
+    handle_detail_focus, handle_detail_form, handle_detail_picker, handle_detail_scroll,
+    handle_editor, handle_editor_form, handle_execution, handle_execution_complete,
+    handle_files_selected, handle_home_confirm, handle_library, handle_library_confirm,
+    handle_open_editor_from_browser, handle_open_editor_from_library, handle_open_file,
+    handle_open_folder, handle_open_library, handle_open_settings_picker, handle_open_wizard,
+    handle_preview_confirm, handle_preview_requested, handle_recipe_selected,
+    handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
+    handle_wizard_form,
 };
-use super::screens::browser::{BrowserMessage, BrowserModel, update as browser_update};
-use super::screens::detail::DetailModel;
-use super::screens::detail_scroll::DetailScrollMsg;
-use super::screens::editor::{EditorMessage, EditorScreenModel};
-use super::screens::execution::{ExecutionMessage, ExecutionModel};
-use super::screens::home::{HomeMessage, HomeModel, list_library_recipes, update as home_update};
-use super::screens::library::{LibraryMessage, LibraryModel};
-use super::screens::picker::{PickerMessage, PickerModel, update as picker_update};
-use super::screens::preview::{PreviewMessage, PreviewModel, update as preview_update};
-use super::screens::results::{ResultsMessage, ResultsModel, update as results_update};
-use super::screens::settings::{SettingsMessage, SettingsModel, update as settings_update};
-use super::screens::wizard::{WizardMessage, WizardModel};
+pub use super::app_message::AppMessage;
+use super::screens::browser::{BrowserModel, update as browser_update};
+use super::screens::detail::{DetailFocus, DetailModel};
+use super::screens::editor::EditorScreenModel;
+use super::screens::execution::ExecutionModel;
+use super::screens::home::{HomeModel, update as home_update};
+use super::screens::library::LibraryModel;
+use super::screens::picker::{PickerModel, update as picker_update};
+use super::screens::preview::{PreviewModel, update as preview_update};
+use super::screens::results::{ResultsModel, update as results_update};
+use super::screens::settings::{SettingsModel, update as settings_update};
+use super::screens::wizard::WizardModel;
 use super::theme::{Theme, ThemeVariant};
 use crate::storage::config::TomlConfig;
 use crate::storage::paths::BntoPaths;
+
+// Message types and the registry constructor the tests below build with.
+#[cfg(test)]
+use super::screens::{
+    editor::EditorMessage, execution::ExecutionMessage, home::HomeMessage, results::ResultsMessage,
+    settings::SettingsMessage,
+};
+#[cfg(test)]
+use bnto_engine::create_registry;
 
 /// Where the user came from when entering the Detail screen.
 ///
@@ -129,285 +138,61 @@ impl std::fmt::Debug for AppModel {
     }
 }
 
-/// Messages that drive screen transitions.
-#[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
-pub enum AppMessage {
-    /// User selected a recipe in the browser.
-    RecipeSelected { slug: String },
-    /// User confirmed config and moves to file picker.
-    ConfigConfirmed { slug: String },
-    /// User selected files and starts execution.
-    FilesSelected { slug: String },
-    /// Execution finished, show results.
-    ExecutionComplete { slug: String },
-    /// Navigate back one screen.
-    Back,
-    /// User wants to run another recipe (from results).
-    RunAnother,
-    /// Open the settings screen.
-    OpenSettings,
-    /// User selected a new theme in settings.
-    ThemeChanged(ThemeVariant),
-    /// User toggled telemetry on/off in settings.
-    TelemetryToggled(bool),
-    /// Forward a message to the home screen.
-    Home(HomeMessage),
-    /// User confirmed the home screen selection.
-    HomeConfirm,
-    /// Navigate to the Library screen.
-    OpenLibrary,
-    /// Forward a message to the library screen.
-    Library(LibraryMessage),
-    /// User confirmed a library selection.
-    LibraryConfirm,
-    /// Add the currently focused browser recipe to the user's library.
-    AddToLibrary,
-    /// User confirmed overwriting an existing library recipe.
-    AddToLibraryConfirm { slug: String },
-    /// Forward a message to the browser screen.
-    Browser(BrowserMessage),
-    /// Forward a form message to the detail screen's FormModel.
-    DetailForm(tonkotsu::FormMessage),
-    /// Scroll the detail screen viewport (whole-screen scroll).
-    DetailScroll(DetailScrollMsg),
-    /// Forward a message to the detail screen's embedded picker.
-    DetailPicker(PickerMessage),
-    /// Move detail focus to Input section.
-    DetailFocusInput,
-    /// Move detail focus to Params section.
-    DetailFocusParams,
-    /// Forward a message to the picker screen.
-    Picker(PickerMessage),
-    /// Forward a message to the execution screen.
-    Execution(ExecutionMessage),
-    /// Forward a message to the results screen.
-    Results(ResultsMessage),
-    /// Forward a message to the preview screen.
-    Preview(PreviewMessage),
-    /// User requested preview mode from the detail screen (p key on Run).
-    PreviewRequested { slug: String },
-    /// User confirmed the preview — re-run with writes.
-    PreviewConfirm { slug: String },
-    /// Forward a message to the settings screen.
-    Settings(SettingsMessage),
-    /// Forward a message to the editor screen.
-    Editor(EditorMessage),
-    /// Forward a form message to the editor's inline form.
-    EditorForm(tonkotsu::FormMessage),
-    /// Forward a message to the wizard screen.
-    Wizard(WizardMessage),
-    /// Forward a form message to the wizard's inline form.
-    WizardForm(tonkotsu::FormMessage),
-    /// Open the wizard for guided recipe creation.
-    OpenWizard,
-    /// Open the editor for a predefined recipe (clone into editor).
-    OpenEditorFromBrowser,
-    /// Open the editor for a library recipe (edit in place).
-    OpenEditorFromLibrary,
-    /// Open the file picker from settings to browse for a directory.
-    OpenSettingsPicker { field_key: String },
-    /// Confirm the current picker directory as the settings field value.
-    SettingsPathConfirmed,
-    /// Open the currently selected output file in the default app.
-    OpenFile,
-    /// Open the output folder in the system file manager.
-    OpenFolder,
-    /// Quit the application.
-    Quit,
-}
-
-impl AppModel {
-    /// Create a new app using platform-default paths.
-    ///
-    /// Loads persisted config from disk. The `variant` argument is the
-    /// CLI override — if `None`, uses the config's saved theme.
-    /// If `recipe_json` is Some, opens the recipe in the editor.
-    /// If `new_recipe` is true, opens a blank editor.
-    pub fn new(variant: ThemeVariant, recipe_json: Option<String>, new_recipe: bool) -> Self {
-        let paths = BntoPaths::resolve().unwrap_or_else(|| BntoPaths {
-            home: std::path::PathBuf::from(".bnto"),
-        });
-        Self::with_paths(variant, recipe_json, new_recipe, paths)
-    }
-
-    /// Create a new app with explicit storage paths.
-    ///
-    /// Loads TOML config from `paths.config_file()`. Falls back to
-    /// defaults on any error.
-    pub fn with_paths(
-        variant: ThemeVariant,
-        recipe_json: Option<String>,
-        new_recipe: bool,
-        paths: BntoPaths,
-    ) -> Self {
-        let _ = paths.ensure_dirs();
-
-        let toml_config = TomlConfig::load(&paths);
-
-        // CLI --theme flag overrides saved config.
-        let effective_variant = if variant != ThemeVariant::LosAngeles {
-            variant
-        } else {
-            ThemeVariant::from_str_lossy(&toml_config.tui.theme).unwrap_or(variant)
-        };
-        let registry = create_registry();
-
-        // Apply config home override — if paths.home is set, use that as the root.
-        let paths = paths.with_config_override(&toml_config);
-
-        // Build unified catalog and list library recipes for the home screen pane.
-        let catalog = RecipeCatalog::load(&paths.recipes_dir());
-        let library_names = list_library_recipes(&paths.recipes_dir());
-
-        // Determine initial screen and state.
-        let (screen, detail, editor) = if new_recipe {
-            let editor_model = bnto_core::editor::EditorModel::new();
-            (
-                Screen::Editor {
-                    from: DetailOrigin::Home,
-                },
-                None,
-                Some(EditorScreenModel::new(editor_model)),
-            )
-        } else if let Some(json) = recipe_json {
-            match load_editor_from_json(&json) {
-                Ok(editor_model) => (
-                    Screen::Editor {
-                        from: DetailOrigin::Home,
-                    },
-                    None,
-                    Some(EditorScreenModel::new(editor_model)),
-                ),
-                Err(e) => {
-                    eprintln!("Warning: {e} — starting on home screen.");
-                    (Screen::Home, None, None)
-                }
-            }
-        } else {
-            (Screen::Home, None, None)
-        };
-
-        Self {
-            screen,
-            should_quit: false,
-            theme: Theme::from_variant(effective_variant),
-            theme_variant: effective_variant,
-            home: HomeModel::new(library_names),
-            browser: BrowserModel::new(&catalog.bundled()),
-            library: None,
-            detail,
-            picker: None,
-            execution: None,
-            results: None,
-            preview: None,
-            settings: None,
-            editor,
-            wizard: None,
-            toml_config,
-            paths,
-            status_message: None,
-            settings_picker_field: None,
-            param_overrides: HashMap::new(),
-            registry,
-            catalog,
-        }
-    }
-}
-
 /// Pure state transition — the heart of the TEA pattern.
 /// Takes current state + message, returns the next state.
+///
+/// Routing is split in three tiers: screen flow here, per-screen message
+/// forwarding in `update_screen`, and recipe authoring and settings in
+/// `update_authoring`.
 pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::RecipeSelected { slug } => handle_recipe_selected(model, slug),
         AppMessage::ConfigConfirmed { slug } => handle_config_confirmed(model, slug),
         AppMessage::FilesSelected { slug } => handle_files_selected(model, slug),
         AppMessage::ExecutionComplete { slug } => handle_execution_complete(model, slug),
-        AppMessage::Home(msg) => {
-            let home = home_update(model.home, msg);
-            AppModel { home, ..model }
-        }
         AppMessage::HomeConfirm => handle_home_confirm(model),
         AppMessage::OpenLibrary => handle_open_library(model),
-        AppMessage::Library(ref msg) => handle_library(model, msg),
         AppMessage::LibraryConfirm => handle_library_confirm(model),
         AppMessage::AddToLibrary => handle_add_to_library(model),
         AppMessage::AddToLibraryConfirm { slug } => handle_add_to_library_write(model, &slug, true),
         AppMessage::Back => handle_back(model),
-        AppMessage::RunAnother => AppModel {
-            screen: Screen::Browser,
+        AppMessage::RunAnother => with_screen(model, Screen::Browser),
+        AppMessage::OpenFile => handle_open_file(model),
+        AppMessage::OpenFolder => handle_open_folder(model),
+        AppMessage::PreviewRequested { slug } => handle_preview_requested(model, slug),
+        AppMessage::PreviewConfirm { slug } => handle_preview_confirm(model, slug),
+        AppMessage::Quit => AppModel {
+            should_quit: true,
             ..model
         },
-        AppMessage::OpenFile => {
-            if let Some(results) = &model.results
-                && let Some(dir) = &results.output_dir
-                && let Some(file) = results.outputs.get(results.cursor)
-            {
-                let path = std::path::Path::new(dir).join(&file.name);
-                let _ = open_path(path.to_string_lossy().as_ref());
-            }
-            model
-        }
-        AppMessage::OpenFolder => {
-            if let Some(results) = &model.results
-                && let Some(dir) = &results.output_dir
-            {
-                let _ = open_path(dir);
-            }
-            model
-        }
-        AppMessage::OpenSettings => {
-            let settings = SettingsModel::from_toml_config(&model.toml_config);
-            AppModel {
-                screen: Screen::Settings,
-                settings: Some(settings),
-                ..model
-            }
-        }
-        AppMessage::ThemeChanged(variant) => handle_theme_changed(model, variant),
-        AppMessage::TelemetryToggled(enabled) => handle_telemetry_toggled(model, enabled),
-        AppMessage::Browser(msg) => {
-            let browser = browser_update(model.browser, msg);
-            AppModel { browser, ..model }
-        }
+        msg => update_screen(model, msg),
+    }
+}
+
+/// Forward a message to the screen model it belongs to.
+fn update_screen(model: AppModel, msg: AppMessage) -> AppModel {
+    match msg {
+        AppMessage::Home(msg) => AppModel {
+            home: home_update(model.home, msg),
+            ..model
+        },
+        AppMessage::Library(ref msg) => handle_library(model, msg),
+        AppMessage::Browser(msg) => AppModel {
+            browser: browser_update(model.browser, msg),
+            ..model
+        },
         AppMessage::DetailForm(msg) => handle_detail_form(model, msg),
-        AppMessage::DetailScroll(msg) => {
-            let detail = model.detail.map(|mut d| {
-                match msg {
-                    DetailScrollMsg::ScrollDown => d.viewport.scroll_down(),
-                    DetailScrollMsg::ScrollUp => d.viewport.scroll_up(),
-                    DetailScrollMsg::PageDown => d.viewport.page_down(),
-                    DetailScrollMsg::PageUp => d.viewport.page_up(),
-                    DetailScrollMsg::GoToTop => d.viewport.go_to_top(),
-                    DetailScrollMsg::GoToBottom => d.viewport.go_to_bottom(),
-                }
-                d
-            });
-            AppModel { detail, ..model }
-        }
-        AppMessage::DetailPicker(msg) => {
-            let detail = model.detail.map(|mut d| {
-                if let Some(picker) = d.input_picker.take() {
-                    d.input_picker = Some(picker_update(picker, msg));
-                }
-                d
-            });
-            AppModel { detail, ..model }
-        }
-        AppMessage::DetailFocusInput => {
-            let detail = model.detail.map(|mut d| {
-                d.focus = super::screens::detail::DetailFocus::Input;
-                d
-            });
-            AppModel { detail, ..model }
-        }
-        AppMessage::DetailFocusParams => {
-            let detail = model.detail.map(|mut d| {
-                d.focus = super::screens::detail::DetailFocus::Params;
-                d
-            });
-            AppModel { detail, ..model }
-        }
+        AppMessage::DetailScroll(msg) => handle_detail_scroll(model, msg),
+        AppMessage::DetailPicker(msg) => handle_detail_picker(model, msg),
+        AppMessage::DetailFocusInput => handle_detail_focus(model, DetailFocus::Input),
+        AppMessage::DetailFocusParams => handle_detail_focus(model, DetailFocus::Params),
+        msg => update_screen_models(model, msg),
+    }
+}
+
+/// Forward picker, execution, results and preview messages.
+fn update_screen_models(model: AppModel, msg: AppMessage) -> AppModel {
+    match msg {
         AppMessage::Picker(msg) => {
             let picker = model.picker.map(|p| picker_update(p, msg));
             AppModel { picker, ..model }
@@ -421,12 +206,31 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
             let preview = model.preview.map(|p| preview_update(p, msg));
             AppModel { preview, ..model }
         }
-        AppMessage::PreviewRequested { slug } => handle_preview_requested(model, slug),
-        AppMessage::PreviewConfirm { slug } => handle_preview_confirm(model, slug),
+        msg => update_authoring(model, msg),
+    }
+}
+
+/// Recipe authoring (editor, wizard) and settings messages.
+fn update_authoring(model: AppModel, msg: AppMessage) -> AppModel {
+    match msg {
+        AppMessage::OpenSettings => handle_open_settings(model),
         AppMessage::Settings(msg) => {
             let settings = model.settings.map(|s| settings_update(s, msg));
             AppModel { settings, ..model }
         }
+        AppMessage::ThemeChanged(variant) => handle_theme_changed(model, variant),
+        AppMessage::TelemetryToggled(enabled) => handle_telemetry_toggled(model, enabled),
+        AppMessage::OpenSettingsPicker { field_key } => {
+            handle_open_settings_picker(model, field_key)
+        }
+        AppMessage::SettingsPathConfirmed => handle_settings_path_confirmed(model),
+        msg => update_editing(model, msg),
+    }
+}
+
+/// Editor and wizard messages — the last routing tier.
+fn update_editing(model: AppModel, msg: AppMessage) -> AppModel {
+    match msg {
         AppMessage::Editor(msg) => handle_editor(model, msg),
         AppMessage::EditorForm(form_msg) => handle_editor_form(model, form_msg),
         AppMessage::Wizard(msg) => handle_wizard(model, msg),
@@ -434,32 +238,23 @@ pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
         AppMessage::OpenWizard => handle_open_wizard(model),
         AppMessage::OpenEditorFromBrowser => handle_open_editor_from_browser(model),
         AppMessage::OpenEditorFromLibrary => handle_open_editor_from_library(model),
-        AppMessage::OpenSettingsPicker { field_key } => {
-            handle_open_settings_picker(model, field_key)
-        }
-        AppMessage::SettingsPathConfirmed => handle_settings_path_confirmed(model),
-        AppMessage::Quit => AppModel {
-            should_quit: true,
-            ..model
-        },
+        other => unreachable!("message handled by an earlier update tier: {other:?}"),
     }
 }
 
-/// Open a file or directory using the platform default handler.
-fn open_path(path: &str) -> Result<(), std::io::Error> {
-    #[cfg(target_os = "macos")]
-    {
-        std::process::Command::new("open").arg(path).spawn()?;
+/// Switch to `screen`, keeping everything else.
+fn with_screen(model: AppModel, screen: Screen) -> AppModel {
+    AppModel { screen, ..model }
+}
+
+/// Open the settings screen with the persisted config loaded.
+fn handle_open_settings(model: AppModel) -> AppModel {
+    let settings = SettingsModel::from_toml_config(&model.toml_config);
+    AppModel {
+        screen: Screen::Settings,
+        settings: Some(settings),
+        ..model
     }
-    #[cfg(target_os = "linux")]
-    {
-        std::process::Command::new("xdg-open").arg(path).spawn()?;
-    }
-    #[cfg(target_os = "windows")]
-    {
-        std::process::Command::new("explorer").arg(path).spawn()?;
-    }
-    Ok(())
 }
 
 /// Resolve the input mode for a built-in recipe slug.
