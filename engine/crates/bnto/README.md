@@ -101,6 +101,7 @@ src/
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- launch.rs              # `bnto tui` launcher
 +-- context.rs             # NativeContext for system access (commands, temp files, env)
++-- scratch.rs             # Per-run scratch dir holding a dry run's temp files (removed on drop)
 +-- doctor.rs              # `bnto doctor` command (processor + recipe-level dependency checks)
 +-- info.rs                # `bnto info` command (recipe details)
 +-- input.rs               # Input preparation (files, URLs, param overrides)

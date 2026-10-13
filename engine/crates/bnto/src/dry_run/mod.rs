@@ -10,6 +10,7 @@
 pub mod files;
 mod format;
 mod shell;
+mod shell_note;
 
 use bnto_core::{Dependency, PipelineDefinition};
 use bnto_engine::deps::collect_pipeline_dependencies;
@@ -19,6 +20,7 @@ use files::FilePreview;
 use shell::ShellCommandInfo;
 
 pub use format::print_dry_run;
+pub use shell_note::print_shell_note;
 
 /// Unified dry-run result combining static analysis and pipeline preview.
 #[derive(Debug)]

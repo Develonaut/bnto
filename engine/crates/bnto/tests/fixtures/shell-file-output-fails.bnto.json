@@ -1,0 +1,95 @@
+{
+  "id": "shell-file-output-fails",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Shell File Output Fails",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "A file-mode shell command that writes nothing, so the run fails after its temp output dir exists."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "write",
+      "type": "shell-command",
+      "version": "1.0.0",
+      "name": "Write Note",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "command": "git",
+        "args": [
+          "--version"
+        ],
+        "outputMode": "file"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "write"
+    },
+    {
+      "id": "e2",
+      "source": "write",
+      "target": "output"
+    }
+  ]
+}

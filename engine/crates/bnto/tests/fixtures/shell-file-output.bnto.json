@@ -1,0 +1,93 @@
+{
+  "id": "shell-file-output",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Shell File Output",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "A none-mode recipe whose shell command writes a file into its output dir, for temp-file hygiene tests."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "write",
+      "type": "shell-command",
+      "version": "1.0.0",
+      "name": "Write Note",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "command": "git",
+        "args": ["config", "--file", "{{output_dir}}/note.cfg", "bnto.test", "yes"],
+        "outputMode": "file"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "write"
+    },
+    {
+      "id": "e2",
+      "source": "write",
+      "target": "output"
+    }
+  ]
+}
