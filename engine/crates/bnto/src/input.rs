@@ -23,7 +23,7 @@ pub struct PreparedInput {
 /// - **file-upload**: loads files from disk paths
 /// - **url**: validates URL, injects into processing node's params, empty files
 /// - **text**: injects text into processing node's params, empty files
-/// - **none**: takes no input — config comes from node fields only
+/// - **none**: takes no input — rejects positional args; config comes from node fields only
 ///
 /// Applies `--param` overrides after mode-specific preparation.
 pub fn prepare_inputs(
@@ -80,7 +80,10 @@ pub fn prepare_inputs(
             inject_param(&mut def, node_id, "text", &serde_json::Value::String(text))?;
             vec![]
         }
-        InputMode::None => vec![],
+        InputMode::None => {
+            reject_args_for_none_mode(args)?;
+            vec![]
+        }
     };
 
     apply_param_overrides(&mut def, param_overrides, processing_node_id.as_deref())?;
@@ -103,6 +106,17 @@ pub fn mode_label(definition_json: &str) -> &'static str {
         Ok(InputMode::None) => "no input",
         _ => "files",
     }
+}
+
+/// Reject positional args for no-input recipes so they aren't silently dropped.
+fn reject_args_for_none_mode(args: &[String]) -> Result<(), String> {
+    if args.is_empty() {
+        return Ok(());
+    }
+    Err(format!(
+        "This recipe takes no input; got {} argument(s)",
+        args.len()
+    ))
 }
 
 /// Check if a string looks like an HTTP(S) URL.
@@ -488,6 +502,20 @@ mod tests {
             result.files.is_empty(),
             "none mode should produce no input files"
         );
+    }
+
+    #[test]
+    fn test_prepare_inputs_none_mode_rejects_args() {
+        let json = r#"{
+            "formatVersion": "1.0.0",
+            "nodes": [
+                { "id": "in", "type": "input", "params": { "mode": "none" } },
+                { "id": "run", "type": "shell-command", "params": { "command": "date" } }
+            ]
+        }"#;
+        let args = vec!["foo.txt".to_string(), "bar.txt".to_string()];
+        let err = prepare_inputs(json, &args, &[]).unwrap_err();
+        assert_eq!(err, "This recipe takes no input; got 2 argument(s)");
     }
 
     #[test]
