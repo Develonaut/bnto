@@ -252,12 +252,15 @@ mod tests {
     use bnto_core::metadata::Dependency;
     use std::path::{Path, PathBuf};
 
-    /// Context where `which` succeeds for everything (all deps found).
+    /// Context where every binary lookup succeeds (all deps found).
     struct AllFoundContext;
 
     impl ProcessContext for AllFoundContext {
         fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
             Ok(b"/usr/local/bin/found".to_vec())
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            Some(PathBuf::from("/usr/local/bin").join(name))
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("n/a".into()))
@@ -270,7 +273,7 @@ mod tests {
         }
     }
 
-    /// Context where `which` fails for everything (all deps missing).
+    /// Context where every binary lookup fails (all deps missing).
     struct AllMissingContext;
 
     impl ProcessContext for AllMissingContext {

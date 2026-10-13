@@ -1,6 +1,6 @@
 // Package manager detection and install command generation.
 //
-// Probes the host system's PATH for known package managers and builds
+// Looks up known package managers on the host PATH and builds
 // the correct install invocation for each one.
 
 use bnto_core::context::ProcessContext;
@@ -28,7 +28,8 @@ impl PackageManager {
 
 /// Detect the first available package manager on the system.
 ///
-/// Probes in preference order: brew → apt → pacman → choco.
+/// Looks up candidates via `ctx.find_binary()` in preference order:
+/// brew → apt → pacman → choco.
 /// Returns `None` if no known package manager is found.
 pub fn detect(ctx: &dyn ProcessContext) -> Option<PackageManager> {
     let candidates = [
@@ -37,15 +38,10 @@ pub fn detect(ctx: &dyn ProcessContext) -> Option<PackageManager> {
         ("pacman", PackageManager::Pacman),
         ("choco", PackageManager::Choco),
     ];
-    for (binary, pm) in candidates {
-        if ctx
-            .run_command(bnto_core::probe_command(), &[binary])
-            .is_ok()
-        {
-            return Some(pm);
-        }
-    }
-    None
+    candidates
+        .into_iter()
+        .find(|(binary, _)| ctx.find_binary(binary).is_some())
+        .map(|(_, pm)| pm)
 }
 
 /// Build the install command for a given package manager and binary name.
@@ -85,31 +81,38 @@ mod tests {
     use super::*;
     use bnto_core::errors::BntoError;
     use std::path::{Path, PathBuf};
+    use std::sync::Mutex;
 
-    /// Mock context where only specific binaries are "found" by `which`.
+    /// Mock context where only specific binaries are found on PATH.
+    /// Records every lookup and refuses to spawn anything.
     struct SelectiveContext {
         found: Vec<String>,
+        looked_up: Mutex<Vec<String>>,
     }
 
     impl SelectiveContext {
         fn with(binaries: &[&str]) -> Self {
             Self {
                 found: binaries.iter().map(|s| s.to_string()).collect(),
+                looked_up: Mutex::new(Vec::new()),
             }
         }
         fn none() -> Self {
-            Self { found: vec![] }
+            Self::with(&[])
+        }
+        fn lookups(&self) -> Vec<String> {
+            self.looked_up.lock().unwrap().clone()
         }
     }
 
     impl ProcessContext for SelectiveContext {
-        fn run_command(&self, _cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
-            if let Some(binary) = args.first()
-                && self.found.contains(&binary.to_string())
-            {
-                return Ok(format!("/usr/bin/{binary}").into_bytes());
-            }
-            Err(BntoError::ProcessingFailed("not found".into()))
+        fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            Err(BntoError::ProcessingFailed(format!("spawned {cmd}")))
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            self.looked_up.lock().unwrap().push(name.to_string());
+            let found = self.found.iter().any(|b| b == name);
+            found.then(|| PathBuf::from("/usr/bin").join(name))
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("n/a".into()))
@@ -156,6 +159,21 @@ mod tests {
     fn detect_prefers_brew_over_apt() {
         let ctx = SelectiveContext::with(&["brew", "apt"]);
         assert_eq!(detect(&ctx), Some(PackageManager::Brew));
+        assert_eq!(ctx.lookups(), vec!["brew"]);
+    }
+
+    #[test]
+    fn detect_looks_up_candidates_in_preference_order() {
+        let ctx = SelectiveContext::none();
+        detect(&ctx);
+        assert_eq!(ctx.lookups(), vec!["brew", "apt", "pacman", "choco"]);
+    }
+
+    #[test]
+    fn detect_stops_at_first_found() {
+        let ctx = SelectiveContext::with(&["pacman", "choco"]);
+        assert_eq!(detect(&ctx), Some(PackageManager::Pacman));
+        assert_eq!(ctx.lookups(), vec!["brew", "apt", "pacman"]);
     }
 
     #[test]

@@ -40,6 +40,14 @@ pub trait ProcessContext: Send + Sync {
     /// Get the working directory for this execution.
     fn work_dir(&self) -> Result<&Path, BntoError>;
 
+    /// Locate the executable `run_command(name, ..)` would spawn, without
+    /// spawning anything. Returns `None` when it can't be found — always in
+    /// the browser (WASM), which has no processes.
+    fn find_binary(&self, name: &str) -> Option<PathBuf> {
+        let _ = name;
+        None
+    }
+
     /// Get the bnto home directory (~/.bnto/ by default).
     /// Returns `None` in browser (WASM) — filesystem paths don't apply.
     fn home_dir(&self) -> Option<&Path> {
@@ -140,6 +148,11 @@ mod tests {
                 .to_string()
                 .contains("not available in browser")
         );
+    }
+
+    #[test]
+    fn test_noop_context_find_binary_returns_none() {
+        assert!(NoopContext.find_binary("git").is_none());
     }
 
     #[test]

@@ -1,6 +1,7 @@
 // Dependency checker — verifies that external tools required by processors
-// are available on the host system. WASM has no shell, so this module is
-// only useful in CLI/desktop contexts where ProcessContext is a NativeContext.
+// or declared in a recipe's `requires` are available on the host system.
+// WASM has no processes, so this module is only useful in CLI/desktop
+// contexts where ProcessContext is a NativeContext.
 
 use bnto_core::{BntoError, Dependency, NodeRegistry, PipelineDefinition};
 use std::collections::HashSet;
@@ -101,8 +102,8 @@ pub fn collect_catalog_dependencies(
 /// Check whether each dependency's binary is available on the system
 /// and whether its version satisfies any declared constraint.
 ///
-/// Probes the PATH with the platform's lookup command
-/// (`which` on Unix, `where` on Windows). If the dependency has a
+/// Looks each binary up via `ctx.find_binary()`, which resolves it the
+/// same way `run_command` would spawn it. If the dependency has a
 /// non-empty `version` constraint, runs `<binary> --version` and
 /// validates the output against the constraint.
 pub fn check_dependencies(
@@ -111,9 +112,7 @@ pub fn check_dependencies(
 ) -> Vec<DependencyStatus> {
     deps.iter()
         .map(|dep| {
-            let found = ctx
-                .run_command(bnto_core::probe_command(), &[&dep.binary])
-                .is_ok();
+            let found = ctx.find_binary(&dep.binary).is_some();
 
             // Only check version if the binary exists and has a constraint.
             let (installed_version, version_satisfied) = if found && !dep.version.is_empty() {
@@ -348,7 +347,7 @@ mod tests {
         }
     }
 
-    /// Mock context where `which` always fails (simulates missing deps).
+    /// Mock context where every binary lookup fails (simulates missing deps).
     struct AllMissingContext;
 
     impl ProcessContext for AllMissingContext {
@@ -366,12 +365,15 @@ mod tests {
         }
     }
 
-    /// Mock context where `which` always succeeds.
+    /// Mock context where every binary lookup succeeds.
     struct AllFoundContext;
 
     impl ProcessContext for AllFoundContext {
         fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
             Ok(b"/usr/local/bin/found".to_vec())
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            Some(PathBuf::from("/usr/local/bin").join(name))
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("not available".to_string()))
@@ -715,8 +717,8 @@ mod tests {
 
     // --- Version constraint integration ---
 
-    /// Mock context that returns a path for `which` and version output
-    /// for `<binary> --version`. Simulates a system with ffmpeg 6.1.1.
+    /// Mock context where every binary is found and `<binary> --version`
+    /// prints the given output.
     struct VersionedContext {
         version_output: String,
     }
@@ -730,12 +732,11 @@ mod tests {
     }
 
     impl ProcessContext for VersionedContext {
-        fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
-            if cmd == bnto_core::probe_command() {
-                Ok(b"/usr/local/bin/found".to_vec())
-            } else {
-                Ok(self.version_output.as_bytes().to_vec())
-            }
+        fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            Ok(self.version_output.as_bytes().to_vec())
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            Some(PathBuf::from("/usr/local/bin").join(name))
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("mock".to_string()))
@@ -748,20 +749,17 @@ mod tests {
         }
     }
 
-    /// Context that really spawns commands, to prove the probe works on the host.
+    /// Context that resolves binaries against the real host PATH, to prove
+    /// the lookup works on every CI platform. Spawning is refused so the
+    /// check can't regress to shelling out to `which` / `where`.
     struct HostContext;
 
     impl ProcessContext for HostContext {
-        fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
-            let out = std::process::Command::new(cmd)
-                .args(args)
-                .output()
-                .map_err(|e| BntoError::ProcessingFailed(e.to_string()))?;
-            if out.status.success() {
-                Ok(out.stdout)
-            } else {
-                Err(BntoError::ProcessingFailed(format!("{cmd} failed")))
-            }
+        fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            Err(BntoError::ProcessingFailed(format!("spawned {cmd}")))
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            bnto_core::find_on_path(name, &std::env::var_os("PATH")?)
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("mock".to_string()))
@@ -945,17 +943,23 @@ mod tests {
         assert!(!msg.contains("OPTIONAL_KEY"));
     }
 
-    // --- probe command wiring ---
+    // --- binary lookup wiring ---
 
-    /// Mock context that records the command used to probe for binaries.
+    /// Mock context that records binary lookups and any spawned commands.
+    #[derive(Default)]
     struct RecordingContext {
-        probed_with: std::sync::Mutex<Vec<String>>,
+        looked_up: std::sync::Mutex<Vec<String>>,
+        spawned: std::sync::Mutex<Vec<String>>,
     }
 
     impl ProcessContext for RecordingContext {
         fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
-            self.probed_with.lock().unwrap().push(cmd.to_string());
+            self.spawned.lock().unwrap().push(cmd.to_string());
             Err(BntoError::ProcessingFailed("not found".to_string()))
+        }
+        fn find_binary(&self, name: &str) -> Option<PathBuf> {
+            self.looked_up.lock().unwrap().push(name.to_string());
+            None
         }
         fn temp_file(&self, _suffix: &str) -> Result<PathBuf, BntoError> {
             Err(BntoError::ProcessingFailed("not available".to_string()))
@@ -968,18 +972,15 @@ mod tests {
         }
     }
 
-    /// Guards against regressing to a hardcoded `which`, which does not
-    /// exist on Windows and made every dependency look missing there.
+    /// Guards against regressing to spawning `which` / `where`, which
+    /// disagree with how `Command::new` actually resolves programs.
     #[test]
-    fn test_check_deps_probes_with_platform_command() {
-        let ctx = RecordingContext {
-            probed_with: std::sync::Mutex::new(Vec::new()),
-        };
-        check_dependencies(&[ytdlp_dep()], &ctx);
+    fn test_check_deps_looks_up_binary_without_spawning() {
+        let ctx = RecordingContext::default();
+        let statuses = check_dependencies(&[ytdlp_dep()], &ctx);
 
-        let probed = ctx.probed_with.lock().unwrap();
-        assert_eq!(probed.len(), 1);
-        assert_eq!(probed[0], bnto_core::probe_command());
-        assert_ne!(probed[0], "", "probe command must not be empty");
+        assert!(!statuses[0].found);
+        assert_eq!(*ctx.looked_up.lock().unwrap(), vec!["yt-dlp".to_string()]);
+        assert!(ctx.spawned.lock().unwrap().is_empty());
     }
 }
