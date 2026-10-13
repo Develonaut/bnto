@@ -262,6 +262,7 @@ jobs:
     steps:
       - name: Check job results
         run: |
+          detect="${{ needs.detect-changes.result }}"
           rust="${{ needs.rust.result }}"
           rust_windows="${{ needs.rust-windows.result }}"
           ts="${{ needs.typescript.result }}"
@@ -271,6 +272,14 @@ jobs:
           web="${{ needs.detect-changes.outputs.web }}"
 
           failed=0
+
+          # Change detection is always required. If it fails, the engine/web
+          # flags are empty, every surface job skips, and the checks below
+          # would read those skips as "nothing changed" and pass.
+          if [ "$detect" != "success" ]; then
+            echo "FAILED: Detect Changes = $detect"
+            failed=1
+          fi
 
           # Documentation validation is always required
           if [ "$docs" != "success" ]; then
@@ -307,6 +316,7 @@ jobs:
           fi
 
           echo "CI Gate passed."
+          echo "  Detect:     $detect"
           echo "  Docs:       $docs"
           echo "  Crates:     $crates"
           echo "  Rust:       $rust (engine_changed: $engine)"
