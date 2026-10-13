@@ -9,9 +9,10 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { RECIPES } from "../src/recipesCatalog";
 
-const SCRIPT_DIR = dirname(import.meta.url.replace("file://", ""));
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const README_PATH = resolve(SCRIPT_DIR, "../../../../README.md");
 
 const BEGIN_MARKER = "<!-- BEGIN AUTO-GENERATED RECIPES TABLE -->";

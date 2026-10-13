@@ -21,10 +21,11 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync } from "node:fs";
 import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // --- Paths ---
 
-const ROOT = resolve(dirname(import.meta.url.replace("file://", "")), "../../../..");
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
 const CATALOG_PATH = resolve(ROOT, "engine/catalog.snapshot.json");
 const GENERATED_DIR = resolve(ROOT, "packages/@bnto/nodes/src/generated");
 const CATALOG_DIR = resolve(GENERATED_DIR, "catalog");
