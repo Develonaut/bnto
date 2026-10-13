@@ -1,0 +1,114 @@
+{
+  "id": "no-input-shell-source",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "No-Input Shell Source",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "A none-mode recipe whose first node is a shell command that feeds the next node."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "git",
+      "type": "shell-command",
+      "version": "1.0.0",
+      "name": "Git Version",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "command": "git",
+        "args": ["--version"],
+        "outputMode": "stdout"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Rename",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "prefix": "checked-"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 750,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "git"
+    },
+    {
+      "id": "e2",
+      "source": "git",
+      "target": "rename"
+    },
+    {
+      "id": "e3",
+      "source": "rename",
+      "target": "output"
+    }
+  ]
+}
