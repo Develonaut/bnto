@@ -54,7 +54,7 @@ fn collect_deps(
     catalog: &RecipeCatalog,
 ) -> (Vec<bnto_core::metadata::Dependency>, String) {
     if all {
-        let deps = bnto_engine::deps::collect_all_dependencies(registry);
+        let deps = collect_all_recipe_deps(registry, catalog);
         return (deps, "all recipes".to_string());
     }
     let slug = recipe_slug.unwrap_or_else(|| {
@@ -76,6 +76,15 @@ fn collect_deps(
     );
     let deps = bnto_engine::deps::collect_pipeline_dependencies(&def, registry);
     (deps, slug.to_string())
+}
+
+/// Dependencies for every catalog recipe — recipe-level `requires` plus
+/// processor-declared deps, deduplicated by binary.
+fn collect_all_recipe_deps(
+    registry: &bnto_core::NodeRegistry,
+    catalog: &RecipeCatalog,
+) -> Vec<bnto_core::metadata::Dependency> {
+    bnto_engine::deps::collect_catalog_dependencies(registry, &catalog.definitions())
 }
 
 /// Print the list of missing dependencies and how they'll be installed.
@@ -333,6 +342,16 @@ mod tests {
     fn run_install_command_failure() {
         let result = run_install_command(&AllMissingContext, PackageManager::Brew, "yt-dlp");
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn all_deps_include_recipe_level_requires() {
+        // yt-dlp is declared only in download-video's recipe-level `requires`
+        // (no processor declares it), so it must come from recipe scanning.
+        let registry = bnto_engine::create_registry();
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let deps = collect_all_recipe_deps(&registry, &catalog);
+        assert!(deps.iter().any(|d| d.binary == "yt-dlp"), "got: {deps:?}");
     }
 
     #[test]

@@ -13,7 +13,7 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
     let mut has_issues = false;
 
     // Check binary dependencies.
-    let definitions = catalog_definitions(catalog);
+    let definitions = catalog.definitions();
     let deps = bnto_engine::deps::collect_catalog_dependencies(&registry, &definitions);
     if deps.is_empty() {
         println!("{} All processors are self-contained.", "ok".green().bold());
@@ -37,15 +37,6 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
         std::process::exit(1);
     }
     println!("\n{}", "All checks passed.".green());
-}
-
-/// Parse every catalog recipe's definition, skipping any that fail to parse.
-fn catalog_definitions(catalog: &RecipeCatalog) -> Vec<bnto_core::PipelineDefinition> {
-    catalog
-        .all()
-        .iter()
-        .filter_map(|entry| serde_json::from_str(&entry.definition_json).ok())
-        .collect()
 }
 
 /// Print each dependency status line. Returns true if any have issues.
