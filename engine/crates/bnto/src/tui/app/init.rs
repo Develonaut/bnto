@@ -42,13 +42,26 @@ impl AppModel {
         let _ = paths.ensure_dirs();
         let toml_config = TomlConfig::load(&paths);
         let effective_variant = effective_variant(variant, &toml_config);
-        let registry = create_registry();
         // Apply config home override — if paths.home is set, use that as the root.
         let paths = paths.with_config_override(&toml_config);
+        let editor = initial_editor(new_recipe, recipe_json);
+        Self::assemble(effective_variant, toml_config, paths, editor)
+    }
+
+    /// Build the model on its launch screen: every screen but Home and
+    /// Browser closed, plus the catalog and library list for the Home pane.
+    ///
+    /// One line per field — the length is the field list, not logic.
+    fn assemble(
+        effective_variant: ThemeVariant,
+        toml_config: TomlConfig,
+        paths: BntoPaths,
+        editor: Option<EditorScreenModel>,
+    ) -> Self {
+        let registry = create_registry();
         // Build unified catalog and list library recipes for the home screen pane.
         let catalog = RecipeCatalog::load(&paths.recipes_dir());
         let library_names = list_library_recipes(&paths.recipes_dir());
-        let editor = initial_editor(new_recipe, recipe_json);
         let screen = initial_screen(editor.is_some());
 
         Self {
