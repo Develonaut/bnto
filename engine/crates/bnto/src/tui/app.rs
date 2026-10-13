@@ -285,10 +285,12 @@ mod tests {
 
     /// Build test paths in a unique temp directory.
     fn test_paths() -> BntoPaths {
-        use std::sync::atomic::{AtomicU32, Ordering};
-        static COUNTER: AtomicU32 = AtomicU32::new(0);
-        let id = COUNTER.fetch_add(1, Ordering::Relaxed);
-        let root = std::env::temp_dir().join(format!("bnto-test-{id}"));
+        // Kept on disk, as before: the model holds only the path.
+        let root = tempfile::Builder::new()
+            .prefix("bnto-test-")
+            .tempdir()
+            .unwrap()
+            .keep();
         let paths = BntoPaths { home: root };
         let _ = paths.ensure_dirs();
         let _ = TomlConfig::default().save(&paths);

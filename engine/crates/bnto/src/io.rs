@@ -397,9 +397,8 @@ mod tests {
 
     #[test]
     fn test_write_mode_copies_files_to_output_dir() {
-        let tmp = std::env::temp_dir().join("bnto-test-write-mode-copy");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         let src_file = tmp.join("source.txt");
         std::fs::write(&src_file, b"hello").unwrap();
@@ -414,15 +413,12 @@ mod tests {
         assert_eq!(std::fs::read(out_dir.join("output.txt")).unwrap(), b"hello");
         // Source still exists (write = copy semantics).
         assert!(src_file.exists());
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
     fn test_overwrite_mode_renames_source_file_in_place() {
-        let tmp = std::env::temp_dir().join("bnto-test-overwrite-rename");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         let old_file = tmp.join("old-name.txt");
         std::fs::write(&old_file, b"important data").unwrap();
@@ -436,15 +432,12 @@ mod tests {
             std::fs::read(tmp.join("new-name.txt")).unwrap(),
             b"important data"
         );
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
     fn test_overwrite_mode_noop_when_name_unchanged() {
-        let tmp = std::env::temp_dir().join("bnto-test-overwrite-noop");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         let file = tmp.join("same.txt");
         std::fs::write(&file, b"content").unwrap();
@@ -455,8 +448,6 @@ mod tests {
         assert_eq!(outcome, WriteOutcome::Overwritten { count: 1 });
         assert!(file.exists(), "File should still exist");
         assert_eq!(std::fs::read(&file).unwrap(), b"content");
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
@@ -471,9 +462,8 @@ mod tests {
 
     #[test]
     fn test_message_mode_writes_no_files() {
-        let tmp = std::env::temp_dir().join("bnto-test-message-mode");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         let result = make_result_with_bytes(b"data", "file.txt");
         let outcome =
@@ -483,15 +473,12 @@ mod tests {
         // No files should have been written.
         let entries: Vec<_> = std::fs::read_dir(&tmp).unwrap().collect();
         assert_eq!(entries.len(), 0);
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
     fn test_none_mode_writes_no_files() {
-        let tmp = std::env::temp_dir().join("bnto-test-none-mode");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         let result = make_result_with_bytes(b"data", "file.txt");
         let outcome =
@@ -500,15 +487,12 @@ mod tests {
         assert_eq!(outcome, WriteOutcome::None);
         let entries: Vec<_> = std::fs::read_dir(&tmp).unwrap().collect();
         assert_eq!(entries.len(), 0);
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
     fn test_overwrite_mode_strips_directory_from_filename() {
-        let tmp = std::env::temp_dir().join("bnto-test-overwrite-nested");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         let src = tmp.join("original.txt");
         std::fs::write(&src, b"nested content").unwrap();
@@ -523,15 +507,12 @@ mod tests {
             std::fs::read(tmp.join("renamed.txt")).unwrap(),
             b"nested content"
         );
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
     fn test_dry_run_write_mode_writes_nothing_and_counts() {
-        let tmp = std::env::temp_dir().join("bnto-test-dry-write");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
         let src = tmp.join("source.txt");
         std::fs::write(&src, b"hello").unwrap();
         let out_dir = tmp.join("output");
@@ -542,14 +523,12 @@ mod tests {
 
         assert!(matches!(outcome, WriteOutcome::Written { count: 1, .. }));
         assert!(!out_dir.exists(), "dry run must not create the output dir");
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
     fn test_dry_run_overwrite_mode_leaves_source_and_counts() {
-        let tmp = std::env::temp_dir().join("bnto-test-dry-overwrite");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
         let old_file = tmp.join("old-name.txt");
         std::fs::write(&old_file, b"data").unwrap();
         let result = make_result_with_path(old_file.clone(), "new-name.txt");
@@ -559,7 +538,6 @@ mod tests {
         assert_eq!(outcome, WriteOutcome::Overwritten { count: 1 });
         assert!(old_file.exists(), "dry run must not rename the source");
         assert!(!tmp.join("new-name.txt").exists());
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
@@ -576,8 +554,11 @@ mod tests {
 
     #[test]
     fn test_read_pipeline_file_directory() {
-        let dir = std::env::temp_dir().join("bnto-test-dir-input");
-        let _ = std::fs::create_dir_all(&dir);
+        let temp = tempfile::Builder::new()
+            .prefix("bnto-test-dir-input")
+            .tempdir()
+            .unwrap();
+        let dir = temp.path().to_path_buf();
 
         let pf = read_pipeline_file(dir.to_str().unwrap()).unwrap();
         assert!(pf.name.contains("bnto-test-dir-input"));
@@ -586,8 +567,6 @@ mod tests {
             matches!(&pf.data, bnto_core::processor::FileData::Bytes(b) if b.is_empty()),
             "Directory input should have empty bytes"
         );
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -618,9 +597,8 @@ mod tests {
         use bnto_core::PipelineFileResult;
         use bnto_core::processor::FileData;
 
-        let tmp = std::env::temp_dir().join("bnto-test-write-preserves-src");
-        let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(&tmp).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let tmp = temp.path().to_path_buf();
 
         // Create a source file that the pipeline references by path.
         let src_file = tmp.join("original.txt");
@@ -647,8 +625,6 @@ mod tests {
         );
         // Source file is preserved — not moved or deleted.
         assert!(src_file.exists(), "Source file must survive write_results");
-
-        let _ = std::fs::remove_dir_all(&tmp);
     }
 
     #[test]
@@ -656,8 +632,9 @@ mod tests {
         use bnto_core::PipelineFileResult;
         use bnto_core::processor::FileData;
 
-        let dir = std::env::temp_dir().join("bnto-test-write-subdirs");
-        let _ = std::fs::remove_dir_all(&dir);
+        // write_results must create the output dir itself, so it starts absent.
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().join("out");
 
         let result = PipelineResult {
             files: vec![
@@ -693,7 +670,5 @@ mod tests {
             std::fs::read(dir.join("group/nested.mp4")).unwrap(),
             b"video-data"
         );
-
-        let _ = std::fs::remove_dir_all(&dir);
     }
 }

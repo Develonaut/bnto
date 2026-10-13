@@ -409,10 +409,12 @@ mod tests {
     use tonkotsu::FormMessage;
 
     fn test_paths() -> crate::storage::BntoPaths {
-        use std::sync::atomic::{AtomicU32, Ordering};
-        static COUNTER: AtomicU32 = AtomicU32::new(0);
-        let id = COUNTER.fetch_add(1, Ordering::Relaxed);
-        let root = std::env::temp_dir().join(format!("bnto-mod-test-{id}"));
+        // Kept on disk, as before: the model holds only the path.
+        let root = tempfile::Builder::new()
+            .prefix("bnto-mod-test-")
+            .tempdir()
+            .unwrap()
+            .keep();
         let p = crate::storage::BntoPaths { home: root };
         let _ = p.ensure_dirs();
         let _ = crate::storage::config::TomlConfig::default().save(&p);

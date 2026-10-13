@@ -331,9 +331,8 @@ mod tests {
 
     #[test]
     fn build_output_files_merges_metadata() {
-        let dir = std::env::temp_dir().join("bnto-test-bridge-merge");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         fs::write(dir.join("photo.jpg"), vec![0u8; 290]).unwrap();
 
         let meta = vec![FileResultMeta {
@@ -344,8 +343,6 @@ mod tests {
         assert_eq!(outputs.len(), 1);
         assert_eq!(outputs[0].original_size, Some(780));
         assert_eq!(outputs[0].size_bytes, 290);
-
-        let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -374,9 +371,8 @@ mod tests {
 
     #[test]
     fn build_output_files_handles_unmatched() {
-        let dir = std::env::temp_dir().join("bnto-test-bridge-unmatched");
-        let _ = fs::remove_dir_all(&dir);
-        fs::create_dir_all(&dir).unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().to_path_buf();
         fs::write(dir.join("other.txt"), vec![0u8; 100]).unwrap();
 
         let meta = vec![FileResultMeta {
@@ -386,7 +382,5 @@ mod tests {
         let outputs = build_output_files(&dir.to_string_lossy(), &meta);
         assert_eq!(outputs.len(), 1);
         assert_eq!(outputs[0].original_size, None);
-
-        let _ = fs::remove_dir_all(&dir);
     }
 }
