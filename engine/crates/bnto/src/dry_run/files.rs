@@ -52,7 +52,10 @@ pub fn run_preview(
         })
         .collect();
 
-    let ctx = NativeContext::current_dir().map_err(|e| format!("{e}"))?;
+    // A preview never writes: file-copy decides but copies nothing.
+    let ctx = NativeContext::current_dir()
+        .map_err(|e| format!("{e}"))?
+        .with_dry_run(true);
     let reporter = PipelineReporter::new_noop();
 
     bnto_engine::run_pipeline(&prepared.definition_json, stub_files, &reporter, &ctx)

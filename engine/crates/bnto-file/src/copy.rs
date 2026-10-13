@@ -53,7 +53,7 @@ impl NodeProcessor for FileCopy {
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
-        _ctx: &dyn ProcessContext,
+        ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Copying file...");
 
@@ -78,15 +78,22 @@ impl NodeProcessor for FileCopy {
 
         let dest_dir = Path::new(destination);
 
-        // Create destination directory if needed.
+        // A dry run decides each file against the destination as it stands, so two
+        // inputs sharing a destination name both decide against the empty slot
+        // (a real run sees the first one's file).
+        let dry_run = ctx.dry_run();
+
+        // Create destination directory if needed (a dry run creates nothing).
         if !dest_dir.exists() {
             if create_dirs {
-                std::fs::create_dir_all(dest_dir).map_err(|e| {
-                    BntoError::ProcessingFailed(format!(
-                        "Failed to create directory {}: {e}",
-                        dest_dir.display()
-                    ))
-                })?;
+                if !dry_run {
+                    std::fs::create_dir_all(dest_dir).map_err(|e| {
+                        BntoError::ProcessingFailed(format!(
+                            "Failed to create directory {}: {e}",
+                            dest_dir.display()
+                        ))
+                    })?;
+                }
             } else {
                 return Err(BntoError::InvalidInput(format!(
                     "Destination directory does not exist: {}",
@@ -99,7 +106,7 @@ impl NodeProcessor for FileCopy {
         let dest_path = dest_dir.join(&input.filename);
 
         if conflict == "newer" {
-            let output = process_newer(input, &dest_path)?;
+            let output = process_newer(input, &dest_path, dry_run)?;
             progress.report(100, "Done");
             return Ok(output);
         }
@@ -108,7 +115,7 @@ impl NodeProcessor for FileCopy {
         let final_path = resolve_conflict(&dest_path, conflict)?;
 
         // Write the file (if not skipped).
-        if let Some(path) = &final_path {
+        if let Some(path) = final_path.as_ref().filter(|_| !dry_run) {
             // Create parent directories if the filename contains subdirs.
             if let Some(parent) = path.parent()
                 && !parent.exists()
@@ -825,5 +832,130 @@ mod tests {
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
         assert!(out.files[0].metadata.is_empty());
+    }
+
+    // --- dry run: same decision, nothing written ---
+
+    struct DryRun;
+
+    impl ProcessContext for DryRun {
+        fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            NoopContext.run_command(cmd, args)
+        }
+        fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
+            NoopContext.temp_file(suffix)
+        }
+        fn env_var(&self, key: &str) -> Option<String> {
+            NoopContext.env_var(key)
+        }
+        fn work_dir(&self) -> Result<&Path, BntoError> {
+            NoopContext.work_dir()
+        }
+        fn dry_run(&self) -> bool {
+            true
+        }
+    }
+
+    /// Where the destination stands before the copy.
+    #[derive(Clone, Copy)]
+    enum Dest {
+        NoDir,
+        EmptyDir,
+        /// A target `out.txt` with this mtime in ms.
+        Target(i64),
+    }
+
+    /// Every entry of a destination dir as (name, bytes, mtime); `None` if the dir is missing.
+    type Snapshot = Option<Vec<(String, Vec<u8>, i64)>>;
+
+    fn snapshot(dir: &Path) -> Snapshot {
+        let entries = fs::read_dir(dir).ok()?;
+        let mut all: Vec<_> = entries
+            .map(|e| {
+                let p = e.unwrap().path();
+                let name = p.file_name().unwrap().to_str().unwrap().to_string();
+                (name, fs::read(&p).unwrap(), mtime_ms(&p))
+            })
+            .collect();
+        all.sort();
+        Some(all)
+    }
+
+    /// Run one twin (a fresh fixture) and return the output with the destination before and after.
+    fn run_twin(
+        mode: &str,
+        dest: Dest,
+        ctx: &dyn ProcessContext,
+    ) -> (NodeOutput, Snapshot, Snapshot) {
+        let (_root, src, dest_dir) = newer_fixture(100_000);
+        match dest {
+            Dest::NoDir => {}
+            Dest::EmptyDir => fs::create_dir_all(&dest_dir).unwrap(),
+            Dest::Target(ms) => {
+                put_target(&dest_dir, ms);
+            }
+        }
+        let before = snapshot(&dest_dir);
+        let input = NodeInput {
+            data: FileData::Path(src),
+            filename: "out.txt".to_string(),
+            mime_type: None,
+            params: params(&[
+                ("destination", serde_json::json!(dest_dir.to_str().unwrap())),
+                ("conflict", serde_json::json!(mode)),
+            ]),
+        };
+        let out = FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), ctx)
+            .unwrap();
+        (out, before, snapshot(&dest_dir))
+    }
+
+    #[test]
+    fn test_dry_run_decides_like_a_real_run_and_writes_nothing() {
+        let cases = [
+            ("skip", Dest::NoDir),
+            ("skip", Dest::Target(10_000)),
+            ("overwrite", Dest::NoDir),
+            ("overwrite", Dest::Target(10_000)),
+            ("rename", Dest::EmptyDir),
+            ("rename", Dest::Target(10_000)),
+            ("newer", Dest::NoDir),
+            ("newer", Dest::Target(10_000)),
+            ("newer", Dest::Target(100_000)),
+            ("newer", Dest::Target(500_000)),
+        ];
+        for (mode, dest) in cases {
+            let (real, _, _) = run_twin(mode, dest, &NoopContext);
+            let (dry, before, after) = run_twin(mode, dest, &DryRun);
+            assert_eq!(before, after, "{mode}: dry run changed the destination");
+            assert_eq!(dry.files[0].filename, real.files[0].filename, "{mode}");
+            assert_eq!(dry.files[0].metadata, real.files[0].metadata, "{mode}");
+        }
+    }
+
+    #[test]
+    fn test_dry_run_leaves_a_missing_destination_dir_missing() {
+        let (_, _, after) = run_twin("skip", Dest::NoDir, &DryRun);
+        assert!(after.is_none());
+    }
+
+    #[test]
+    fn test_dry_run_still_errors_on_a_missing_dir_without_create_dirs() {
+        let root = TempDir::new().unwrap();
+        let missing = root.path().join("missing");
+        let input = make_input(
+            b"x",
+            "a.txt",
+            params(&[
+                ("destination", serde_json::json!(missing.to_str().unwrap())),
+                ("create_dirs", serde_json::json!(false)),
+            ]),
+        );
+        let err = FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), &DryRun)
+            .err()
+            .expect("missing dir must fail");
+        assert!(matches!(err, BntoError::InvalidInput(_)), "{err:?}");
     }
 }

@@ -10,7 +10,8 @@ import type { NodeTypeInfo } from "../types";
 export const shellCommandNodeType: NodeTypeInfo = {
   name: "shell-command",
   label: "Shell Command",
-  description: "Execute shell commands with stall detection, retry, and streaming output.",
+  description:
+    "Execute shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
   category: "system",
   isContainer: false,
   platforms: ["server"] as const,

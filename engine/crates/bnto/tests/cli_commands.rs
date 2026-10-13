@@ -356,6 +356,114 @@ fn test_file_copy_newer_warns_about_newer_destination_file() {
     assert!(stderr.contains("report.txt"), "stderr: {stderr}");
 }
 
+#[test]
+fn test_run_dry_run_writes_nothing() {
+    // Guards: --dry-run runs the recipe but creates no destination or output
+    // directory, and the summary says what would have been written.
+    let src_dir = temp_output_dir();
+    let dest_root = temp_output_dir();
+    let out_root = temp_output_dir();
+    let src = src_dir.path().join("report.txt");
+    std::fs::write(&src, "from source").unwrap();
+    let dest = dest_root.path().join("not-yet");
+    let out = out_root.path().join("not-yet");
+
+    let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("file-copy-newer")])
+        .arg(src_dir.path())
+        .args(["--yes", "--dry-run", "-p", &dest_param])
+        .args(["-o", out.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!dest.exists(), "destination was created");
+    assert!(!out.exists(), "output dir was created");
+    assert_eq!(std::fs::read_to_string(&src).unwrap(), "from source");
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
+    assert!(last.contains("(dry run)"), "last line: {last}");
+    assert!(last.contains("would be written"), "last line: {last}");
+    assert!(stderr.contains("1 would be copied"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_run_dry_run_keeps_warning_before_the_summary() {
+    // Guards: a newer destination file is warned about, and the (dry run)
+    // summary is still the last line.
+    let src_dir = temp_output_dir();
+    let dest_dir = temp_output_dir();
+    let out_root = temp_output_dir();
+    std::fs::write(src_dir.path().join("report.txt"), "from source").unwrap();
+    let kept = dest_dir.path().join("report.txt");
+    std::fs::write(&kept, "kept at destination").unwrap();
+    let now = filetime::FileTime::now();
+    let newer = filetime::FileTime::from_unix_time(now.unix_seconds() + 10, 0);
+    filetime::set_file_mtime(&kept, newer).unwrap();
+
+    let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
+    let out = out_root.path().join("not-yet");
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("file-copy-newer")])
+        .arg(src_dir.path())
+        .args(["--yes", "--dry-run", "-p", &dest_param])
+        .args(["-o", out.to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(
+        stderr.contains("newer at the destination, left"),
+        "stderr: {stderr}"
+    );
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
+    assert!(last.contains("(dry run)"), "last line: {last}");
+}
+
+#[test]
+fn test_dry_run_subcommand_copies_nothing() {
+    // Guards: `bnto dry-run` runs file-copy as a dry run, so an older
+    // destination file keeps its bytes and mtime.
+    let src_dir = temp_output_dir();
+    let dest_dir = temp_output_dir();
+    std::fs::write(src_dir.path().join("report.txt"), "from source").unwrap();
+    let old = dest_dir.path().join("report.txt");
+    std::fs::write(&old, "old at destination").unwrap();
+    let past = filetime::FileTime::from_unix_time(1_000_000_000, 0);
+    filetime::set_file_mtime(&old, past).unwrap();
+
+    // `dry-run` resolves catalog slugs only, so the fixture goes into a library.
+    let home = temp_output_dir();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    std::fs::copy(
+        custom_recipe_path("file-copy-newer"),
+        library.join("file-copy-newer.bnto.json"),
+    )
+    .unwrap();
+
+    let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
+    let output = Command::new(bnto_bin())
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "file-copy-newer"])
+        .arg(src_dir.path())
+        .args(["-p", &dest_param])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "stderr: {stderr}");
+    // The preview must have run, or an untouched destination proves nothing.
+    assert!(!stderr.contains("preview failed"), "stderr: {stderr}");
+    assert!(stdout.contains("report.txt"), "stdout: {stdout}");
+    assert_eq!(std::fs::read_to_string(&old).unwrap(), "old at destination");
+    let mtime = filetime::FileTime::from_last_modification_time(&std::fs::metadata(&old).unwrap());
+    assert_eq!(mtime, past, "destination mtime changed");
+}
+
 // --- URL Mode ---
 
 #[test]
