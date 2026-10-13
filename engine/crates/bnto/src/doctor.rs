@@ -10,11 +10,12 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
     let registry = bnto_engine::create_registry();
     let ctx = crate::unwrap_or_exit(context::NativeContext::current_dir());
 
-    let mut has_issues = false;
+    // Parse once; an unparsable recipe is itself an issue (it can't run).
+    let recipes = parse_catalog(catalog);
+    let mut has_issues = print_parse_failures(&recipes.invalid);
 
     // Check binary dependencies.
-    let definitions = catalog_definitions(catalog);
-    let deps = bnto_engine::deps::collect_catalog_dependencies(&registry, &definitions);
+    let deps = bnto_engine::deps::collect_catalog_dependencies(&registry, &recipes.definitions);
     if deps.is_empty() {
         println!("{} All processors are self-contained.", "ok".green().bold());
     } else {
@@ -25,7 +26,7 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
     }
 
     // Check secrets for all known recipes that declare them.
-    if check_all_recipe_secrets(catalog, &ctx) {
+    if check_all_recipe_secrets(&recipes, &ctx) {
         has_issues = true;
     }
 
@@ -39,13 +40,48 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
     println!("\n{}", "All checks passed.".green());
 }
 
-/// Parse every catalog recipe's definition, skipping any that fail to parse.
-fn catalog_definitions(catalog: &RecipeCatalog) -> Vec<bnto_core::PipelineDefinition> {
-    catalog
-        .all()
-        .iter()
-        .filter_map(|entry| serde_json::from_str(&entry.definition_json).ok())
-        .collect()
+/// Catalog recipes parsed once. `slugs[i]` names `definitions[i]`; the
+/// definitions stay a plain slice so dependency collection can borrow them.
+struct ParsedRecipes {
+    slugs: Vec<String>,
+    definitions: Vec<bnto_core::PipelineDefinition>,
+    /// `(slug, parse error)` for recipes that failed to parse.
+    invalid: Vec<(String, String)>,
+}
+
+/// Parse every catalog recipe exactly once, keeping failures for reporting.
+fn parse_catalog(catalog: &RecipeCatalog) -> ParsedRecipes {
+    let mut parsed = ParsedRecipes {
+        slugs: Vec::new(),
+        definitions: Vec::new(),
+        invalid: Vec::new(),
+    };
+    for entry in catalog.all() {
+        match serde_json::from_str(&entry.definition_json) {
+            Ok(def) => {
+                parsed.slugs.push(entry.slug.clone());
+                parsed.definitions.push(def);
+            }
+            Err(e) => parsed.invalid.push((entry.slug.clone(), e.to_string())),
+        }
+    }
+    parsed
+}
+
+/// Warn about each recipe that failed to parse. Returns true if any did.
+fn print_parse_failures(invalid: &[(String, String)]) -> bool {
+    for (slug, err) in invalid {
+        println!(
+            "{} Could not parse recipe {}: {}",
+            "Warning:".yellow().bold(),
+            slug,
+            err
+        );
+    }
+    if !invalid.is_empty() {
+        println!();
+    }
+    !invalid.is_empty()
 }
 
 /// Print each dependency status line. Returns true if any have issues.
@@ -95,14 +131,11 @@ fn print_dep_statuses(statuses: &[bnto_engine::deps::DependencyStatus]) -> bool 
 
 /// Check secrets across all catalog recipes that declare them.
 /// Returns true if any required secrets are missing.
-fn check_all_recipe_secrets(catalog: &RecipeCatalog, ctx: &dyn bnto_core::ProcessContext) -> bool {
+fn check_all_recipe_secrets(recipes: &ParsedRecipes, ctx: &dyn bnto_core::ProcessContext) -> bool {
     let mut has_missing = false;
     let mut checked_any = false;
 
-    for entry in catalog.all() {
-        let def: Result<bnto_core::PipelineDefinition, _> =
-            serde_json::from_str(&entry.definition_json);
-        let Ok(def) = def else { continue };
+    for (slug, def) in recipes.slugs.iter().zip(&recipes.definitions) {
         if def.secrets.is_empty() {
             continue;
         }
@@ -112,7 +145,7 @@ fn check_all_recipe_secrets(catalog: &RecipeCatalog, ctx: &dyn bnto_core::Proces
             checked_any = true;
         }
 
-        has_missing |= print_recipe_secret_status(&entry.slug, &def, ctx);
+        has_missing |= print_recipe_secret_status(slug, def, ctx);
     }
 
     has_missing
@@ -141,4 +174,38 @@ fn print_recipe_secret_status(
         }
     }
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn parse_catalog_parses_every_bundled_recipe() {
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
+        let recipes = parse_catalog(&catalog);
+        assert_eq!(recipes.definitions.len(), 21);
+        assert_eq!(recipes.slugs.len(), 21);
+        assert!(recipes.invalid.is_empty());
+    }
+
+    #[test]
+    fn parse_catalog_reports_unparsable_recipe() {
+        let tmp = tempfile::tempdir().unwrap();
+        // Valid JSON (so the catalog loads it) but not a valid definition.
+        std::fs::write(tmp.path().join("broken.bnto.json"), r#"{"nodes":"x"}"#).unwrap();
+        let catalog = RecipeCatalog::load(tmp.path());
+        let recipes = parse_catalog(&catalog);
+        assert_eq!(recipes.definitions.len(), 21);
+        assert_eq!(recipes.invalid.len(), 1);
+        assert_eq!(recipes.invalid[0].0, "broken");
+        assert!(!recipes.invalid[0].1.is_empty());
+    }
+
+    #[test]
+    fn parse_failures_count_as_issues() {
+        assert!(!print_parse_failures(&[]));
+        assert!(print_parse_failures(&[("x".into(), "bad".into())]));
+    }
 }
