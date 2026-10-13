@@ -16,6 +16,14 @@ members = [
 ]
 resolver = "2"
 
+# Package metadata shared by every crate (`<field>.workspace = true`).
+[workspace.package]
+# Minimum supported Rust version for `cargo install bnto` and library users.
+# This is the oldest compiler the code builds on, not the toolchain CI and
+# contributors use (that's pinned in rust-toolchain.toml). Raise it when code
+# starts using a newer std API, e.g. bnto-vector's `as_chunks_mut` (1.88).
+rust-version = "1.88"
+
 # Shared dependency versions — crates reference these with `{ workspace = true }`.
 [workspace.dependencies]
 wasm-bindgen = "0.2"

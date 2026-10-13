@@ -9,11 +9,6 @@
 use std::collections::HashSet;
 use std::sync::{Arc, LazyLock, Mutex};
 
-/// Grace period between SIGTERM and SIGKILL when terminating groups.
-/// Only the unix kill path uses it; tests reference it on every platform.
-#[cfg(any(unix, test))]
-const TERM_GRACE_MS: u64 = 300;
-
 /// Tracks the process-group IDs of live spawned commands.
 ///
 /// Children are spawned with `process_group(0)`, so each child's PID is also
@@ -63,6 +58,8 @@ impl ProcessRegistry {
 /// SIGTERM each group, wait the grace period, then SIGKILL stragglers.
 #[cfg(unix)]
 fn kill_trees(groups: &[u32]) {
+    /// Grace period between SIGTERM and SIGKILL.
+    const TERM_GRACE_MS: u64 = 300;
     for pgid in groups {
         unsafe { libc::kill(-(*pgid as i32), libc::SIGTERM) };
     }
@@ -85,9 +82,6 @@ fn kill_trees(pids: &[u32]) {
             .status();
     }
 }
-
-#[cfg(not(any(unix, windows)))]
-fn kill_trees(_groups: &[u32]) {}
 
 /// The process-wide registry used by `NativeContext` by default and by the
 /// signal handler / TUI quit path to kill children on the way out.
@@ -114,11 +108,13 @@ mod tests {
 
     #[test]
     fn terminate_all_on_empty_registry_is_noop() {
+        // Well under the unix SIGTERM->SIGKILL grace period (300ms) and any
+        // taskkill spawn, so either kill path running would trip it.
+        const NOOP_BOUND_MS: u128 = 100;
         let reg = ProcessRegistry::new();
         let start = std::time::Instant::now();
         reg.terminate_all();
-        // Must not sleep the grace period when there is nothing to kill.
-        assert!(start.elapsed().as_millis() < TERM_GRACE_MS as u128);
+        assert!(start.elapsed().as_millis() < NOOP_BOUND_MS);
     }
 
     #[cfg(unix)]
