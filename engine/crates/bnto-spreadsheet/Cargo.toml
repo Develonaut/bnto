@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-spreadsheet"
-version = "0.1.3"
+version = "0.2.0"
 edition = "2024"
 rust-version.workspace = true
 description = "Spreadsheet processing nodes for Bnto engine — clean, convert, merge, rename"
@@ -25,7 +25,7 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.1.3" }
+bnto-core = { path = "../bnto-core", version = "0.2.0" }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
