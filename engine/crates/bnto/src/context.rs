@@ -5,6 +5,7 @@
 // Env var resolution: system env > project .env > user ~/.bnto/.env.
 
 use std::collections::HashMap;
+use std::ffi::{OsStr, OsString};
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -87,7 +88,8 @@ impl NativeContext {
     /// Prepare a command in its own process group so cancel/quit/signal
     /// paths can kill the whole spawned tree via `kill(-pgid, …)`.
     fn group_command(&self, cmd: &str, args: &[&str]) -> Command {
-        let mut command = Command::new(cmd);
+        let path_var = std::env::var_os("PATH");
+        let mut command = Command::new(spawn_program(cmd, path_var.as_deref()));
         command.args(args).current_dir(&self.work_dir);
         #[cfg(unix)]
         {
@@ -96,6 +98,23 @@ impl NativeContext {
         }
         command
     }
+}
+
+/// Program to hand `Command::new` on Windows: the PATH-resolved file, so a
+/// `.cmd` / `.bat` shim (npm's global tools) runs through cmd.exe with std's
+/// argument escaping. Unresolved names pass through for std's own search.
+#[cfg(windows)]
+fn spawn_program(cmd: &str, path_var: Option<&OsStr>) -> OsString {
+    path_var
+        .and_then(|path| bnto_core::find_on_path(cmd, path))
+        .map_or_else(|| OsString::from(cmd), PathBuf::into_os_string)
+}
+
+/// Unix `execvp` already runs PATH scripts with a shebang, so the name
+/// passes through unchanged.
+#[cfg(not(windows))]
+fn spawn_program(cmd: &str, _path_var: Option<&OsStr>) -> OsString {
+    OsString::from(cmd)
 }
 
 /// Load and parse a `.env` file, returning an empty map if it doesn't exist.
@@ -327,6 +346,42 @@ mod tests {
     fn test_find_binary_missing_returns_none() {
         let ctx = NativeContext::current_dir().unwrap();
         assert!(ctx.find_binary("bnto_nonexistent_binary_xyz").is_none());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_spawn_program_resolves_cmd_shim_on_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let shim = dir.path().join("greet.cmd");
+        std::fs::write(&shim, "@echo hi %~1\r\n").unwrap();
+        let path = std::env::join_paths([dir.path()]).unwrap();
+        assert_eq!(
+            spawn_program("greet", Some(path.as_os_str())),
+            shim.into_os_string()
+        );
+    }
+
+    #[test]
+    fn test_spawn_program_falls_back_to_bare_name() {
+        // Unresolved names go to std unchanged, keeping its own search.
+        let path = std::ffi::OsString::new();
+        assert_eq!(spawn_program("nope", Some(path.as_os_str())), "nope");
+        assert_eq!(spawn_program("nope", None), "nope");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn test_run_command_runs_cmd_shim_with_quoted_args() {
+        // std runs a `.cmd` path through cmd.exe and escapes its arguments,
+        // which is what makes npm-installed tools spawnable on Windows.
+        let dir = tempfile::tempdir().unwrap();
+        let shim = dir.path().join("greet.cmd");
+        std::fs::write(&shim, "@echo hi %~1\r\n").unwrap();
+        let ctx = NativeContext::current_dir().unwrap();
+        let out = ctx
+            .run_command(shim.to_str().unwrap(), &["two words"])
+            .unwrap();
+        assert_eq!(String::from_utf8_lossy(&out).trim(), "hi two words");
     }
 
     #[test]
