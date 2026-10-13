@@ -4,7 +4,9 @@ mod helpers;
 
 use std::process::Command;
 
-use helpers::{bnto_bin, fixture_image, output_files, recipe_path, temp_output_dir};
+use helpers::{
+    bnto_bin, custom_recipe_path, fixture_image, output_files, recipe_path, temp_output_dir,
+};
 
 // --- Help & List ---
 
@@ -214,6 +216,31 @@ fn test_missing_input_file() {
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(stderr.contains("no valid input files"));
+}
+
+// --- No-Input Mode ---
+
+#[test]
+fn test_none_mode_shell_source_feeds_next_node() {
+    // Guards: a `none` recipe whose Source first node runs once and feeds the next node.
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("no-input-shell-source"), "--yes"])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1, "Expected one output file, got: {files:?}");
+    assert_eq!(files[0].file_name().to_string_lossy(), "checked-git-output");
+    let content = std::fs::read_to_string(files[0].path()).unwrap();
+    assert!(
+        content.starts_with("git version"),
+        "Unexpected content: {content}"
+    );
 }
 
 // --- URL Mode ---
