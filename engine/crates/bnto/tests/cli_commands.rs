@@ -274,6 +274,45 @@ fn test_none_mode_rejects_positional_args() {
     );
 }
 
+// --- File Copy: newer ---
+
+#[test]
+fn test_file_copy_newer_warns_about_newer_destination_file() {
+    // Guards: a destination file newer than the source is left and named on stderr.
+    // A directory source goes through file-collect so the copy sees a path, not bytes.
+    let src_dir = temp_output_dir();
+    let dest_dir = temp_output_dir();
+    let out = temp_output_dir();
+    let src = src_dir.path().join("report.txt");
+    let kept = dest_dir.path().join("report.txt");
+    std::fs::write(&src, "from source").unwrap();
+    std::fs::write(&kept, "kept at destination").unwrap();
+    let now = filetime::FileTime::now();
+    let newer = filetime::FileTime::from_unix_time(now.unix_seconds() + 10, 0);
+    filetime::set_file_mtime(&kept, newer).unwrap();
+
+    let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("file-copy-newer")])
+        .arg(src_dir.path())
+        .args(["--yes", "-p", &dest_param])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(&kept).unwrap(),
+        "kept at destination"
+    );
+    assert!(
+        stderr.contains("newer at the destination, left"),
+        "stderr: {stderr}"
+    );
+    assert!(stderr.contains("report.txt"), "stderr: {stderr}");
+}
+
 // --- URL Mode ---
 
 #[test]

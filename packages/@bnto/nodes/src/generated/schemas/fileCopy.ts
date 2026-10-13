@@ -12,9 +12,10 @@ export const fileCopyParamsSchema = z.object({
   destination: z.string().optional(),
   create_dirs: z.boolean().optional().default(true),
   conflict: z
-    .enum(["skip", "overwrite", "rename"] as const)
+    .enum(["skip", "overwrite", "rename", "newer"] as const)
     .optional()
     .default("skip"),
+  tolerance_ms: z.number().min(0).optional().default(2000),
 });
 
 /** Inferred TypeScript type for file-copy node parameters. */
@@ -37,7 +38,13 @@ export const fileCopyNodeSchema: NodeSchema = {
     },
     conflict: {
       label: "Conflict Resolution",
-      description: "What to do when a file with the same name already exists.",
+      description:
+        'What to do when a file with the same name already exists. "newer" copies only when the destination is missing or older than the source (path input only), keeps the source\'s modified time, and never deletes.',
+    },
+    tolerance_ms: {
+      label: "Time Tolerance",
+      description:
+        'Modified-time gap treated as equal in "newer" mode; FAT and Google Drive round times.',
     },
   },
 };

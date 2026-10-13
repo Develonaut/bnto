@@ -39,6 +39,8 @@ tempfile = "3"
 csv = "1.3"
 sha2 = "0.10"
 regex = "1"
+# Set a copied file's modification time (file-copy `newer` mode); unsupported on wasm32 (never called there).
+filetime = "0.2.29"
 unicode-normalization = "0.1"
 # Low-level PNG encoder for writing indexed (8-bit palette) PNGs after color quantization.
 # The `image` crate always writes truecolor — we need `png` directly for palette-based output.

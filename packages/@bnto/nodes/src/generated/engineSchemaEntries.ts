@@ -81,8 +81,10 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "skip", label: "Skip" },
         { value: "overwrite", label: "Overwrite" },
         { value: "rename", label: "Rename (add suffix)" },
+        { value: "newer", label: "Newer only (keep time)" },
       ],
     },
+    tolerance_ms: { suffix: "ms", visibleWhen: { param: "conflict", equals: "newer" } },
   },
   "file-filter": {
     pattern_mode: {

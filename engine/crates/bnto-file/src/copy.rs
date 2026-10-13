@@ -1,10 +1,14 @@
 // file-copy — Place output files in a destination directory.
 //
 // CLI-only processor: writes files to the filesystem. Supports conflict
-// resolution (skip/overwrite/rename) and optional directory creation.
+// resolution (skip/overwrite/rename/newer) and optional directory creation.
 // File data passes through unchanged — this is a placement node.
 
-use bnto_core::metadata::{NodeCategory, NodeMetadata, OptionEntry, ParameterDef, ParameterType};
+use crate::copy_newer::{DEFAULT_TOLERANCE_MS, process_newer};
+use bnto_core::metadata::{
+    Constraints, NodeCategory, NodeMetadata, OptionEntry, ParamCondition, ParamConditionEntry,
+    ParameterDef, ParameterType,
+};
 use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
@@ -94,6 +98,12 @@ impl NodeProcessor for FileCopy {
         // Build the full output path.
         let dest_path = dest_dir.join(&input.filename);
 
+        if conflict == "newer" {
+            let output = process_newer(input, &dest_path)?;
+            progress.report(100, "Done");
+            return Ok(output);
+        }
+
         // Handle conflicts.
         let final_path = resolve_conflict(&dest_path, conflict)?;
 
@@ -167,7 +177,11 @@ fn build_copy_params() -> Vec<ParameterDef> {
         ParameterDef {
             name: "conflict".to_string(),
             label: "Conflict Resolution".to_string(),
-            description: "What to do when a file with the same name already exists.".to_string(),
+            description:
+                "What to do when a file with the same name already exists. \"newer\" copies \
+                          only when the destination is missing or older than the source (path \
+                          input only), keeps the source's modified time, and never deletes."
+                    .to_string(),
             param_type: ParameterType::Enum {
                 options: vec![
                     OptionEntry {
@@ -182,9 +196,33 @@ fn build_copy_params() -> Vec<ParameterDef> {
                         value: "rename".to_string(),
                         label: "Rename (add suffix)".to_string(),
                     },
+                    OptionEntry {
+                        value: "newer".to_string(),
+                        label: "Newer only (keep time)".to_string(),
+                    },
                 ],
             },
             default: Some(serde_json::json!("skip")),
+            ..Default::default()
+        },
+        ParameterDef {
+            name: "tolerance_ms".to_string(),
+            label: "Time Tolerance".to_string(),
+            description: "Modified-time gap treated as equal in \"newer\" mode; FAT and Google \
+                          Drive round times."
+                .to_string(),
+            param_type: ParameterType::Number,
+            default: Some(serde_json::json!(DEFAULT_TOLERANCE_MS)),
+            constraints: Some(Constraints {
+                min: Some(0.0),
+                max: None,
+                required: false,
+            }),
+            suffix: Some("ms".to_string()),
+            visible_when: Some(ParamCondition::Single(ParamConditionEntry {
+                param: "conflict".to_string(),
+                equals: "newer".to_string(),
+            })),
             ..Default::default()
         },
     ]
@@ -494,5 +532,298 @@ mod tests {
 
         let result = resolve_conflict(&path, "skip").unwrap();
         assert_eq!(result, None, "Skip should return None for existing file");
+    }
+
+    // --- conflict: "newer" ---
+
+    use filetime::{FileTime, set_file_mtime};
+    use std::path::{Path, PathBuf};
+
+    fn ft(ms: i64) -> FileTime {
+        FileTime::from_unix_time(ms / 1000, ((ms % 1000) * 1_000_000) as u32)
+    }
+
+    fn mtime_ms(p: &Path) -> i64 {
+        let t = FileTime::from_last_modification_time(&fs::metadata(p).unwrap());
+        t.unix_seconds() * 1000 + (t.nanoseconds() / 1_000_000) as i64
+    }
+
+    /// Source with `src_ms` mtime, plus a destination dir (file lands at `dest/name`).
+    fn newer_fixture(src_ms: i64) -> (TempDir, PathBuf, PathBuf) {
+        let root = TempDir::new().unwrap();
+        let src = root.path().join("src.txt");
+        fs::write(&src, b"new bytes").unwrap();
+        set_file_mtime(&src, ft(src_ms)).unwrap();
+        let dest = root.path().join("dest");
+        (root, src, dest)
+    }
+
+    fn run_newer(src: &Path, dest: &Path) -> Result<NodeOutput, BntoError> {
+        let input = NodeInput {
+            data: FileData::Path(src.to_path_buf()),
+            filename: "out.txt".to_string(),
+            mime_type: None,
+            params: params(&[
+                ("destination", serde_json::json!(dest.to_str().unwrap())),
+                ("conflict", serde_json::json!("newer")),
+            ]),
+        };
+        FileCopy::new().process(input, &ProgressReporter::new_noop(), &NoopContext)
+    }
+
+    fn flags(out: &NodeOutput) -> (i64, i64, i64) {
+        let m = &out.files[0].metadata;
+        let g = |k: &str| m.get(k).and_then(|v| v.as_i64()).unwrap();
+        (g("copied"), g("up_to_date"), g("skipped_newer"))
+    }
+
+    fn put_target(dest: &Path, ms: i64) -> PathBuf {
+        fs::create_dir_all(dest).unwrap();
+        let t = dest.join("out.txt");
+        fs::write(&t, b"old bytes").unwrap();
+        set_file_mtime(&t, ft(ms)).unwrap();
+        t
+    }
+
+    #[test]
+    fn test_newer_missing_target_is_copied_and_folder_made() {
+        let (_root, src, dest) = newer_fixture(10_000);
+        assert!(!dest.exists());
+        let out = run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(dest.join("out.txt")).unwrap(), b"new bytes");
+        assert_eq!(flags(&out), (1, 0, 0));
+    }
+
+    #[test]
+    fn test_newer_source_overwrites_and_target_takes_source_mtime() {
+        let (_root, src, dest) = newer_fixture(100_000);
+        let t = put_target(&dest, 10_000);
+        let out = run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&t).unwrap(), b"new bytes");
+        assert_eq!(mtime_ms(&t) / 1000, 100);
+        assert_eq!(flags(&out), (1, 0, 0));
+    }
+
+    #[test]
+    fn test_newer_tolerance_boundary() {
+        // Target older than the source by 2001 ms copies; 2000 and 1999 do not.
+        for (older_by, copies) in [(2001, true), (2000, false), (1999, false), (0, false)] {
+            let (_root, src, dest) = newer_fixture(10_000);
+            let t = put_target(&dest, 10_000 - older_by);
+            let out = run_newer(&src, &dest).unwrap();
+            let want: &[u8] = if copies { b"new bytes" } else { b"old bytes" };
+            assert_eq!(fs::read(&t).unwrap(), want, "older_by={older_by}");
+            let expect = if copies { (1, 0, 0) } else { (0, 1, 0) };
+            assert_eq!(flags(&out), expect, "older_by={older_by}");
+        }
+    }
+
+    #[test]
+    fn test_newer_target_newer_than_source_is_kept() {
+        let (_root, src, dest) = newer_fixture(10_000);
+        let t = put_target(&dest, 12_001);
+        let out = run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&t).unwrap(), b"old bytes");
+        assert_eq!(flags(&out), (0, 0, 1));
+        // Within tolerance the other way is up_to_date, not skipped_newer.
+        set_file_mtime(&t, ft(12_000)).unwrap();
+        assert_eq!(flags(&run_newer(&src, &dest).unwrap()), (0, 1, 0));
+    }
+
+    #[test]
+    fn test_newer_rejects_a_negative_or_fractional_tolerance() {
+        for bad in [serde_json::json!(-5000), serde_json::json!(1.5)] {
+            let (_root, src, dest) = newer_fixture(10_000);
+            let t = put_target(&dest, 13_000);
+            let input = NodeInput {
+                data: FileData::Path(src),
+                filename: "out.txt".to_string(),
+                mime_type: None,
+                params: params(&[
+                    ("destination", serde_json::json!(dest.to_str().unwrap())),
+                    ("conflict", serde_json::json!("newer")),
+                    ("tolerance_ms", bad.clone()),
+                ]),
+            };
+            let result =
+                FileCopy::new().process(input, &ProgressReporter::new_noop(), &NoopContext);
+            assert!(
+                matches!(result, Err(BntoError::InvalidInput(_))),
+                "tolerance {bad}"
+            );
+            assert_eq!(fs::read(&t).unwrap(), b"old bytes", "tolerance {bad}");
+        }
+    }
+
+    #[test]
+    fn test_newer_tolerance_param_is_honoured() {
+        // 500 and 500.0 (what the TUI and `{{fields.x}}` defaults emit) behave alike.
+        for tolerance in [serde_json::json!(500), serde_json::json!(500.0)] {
+            let (_root, src, dest) = newer_fixture(10_000);
+            let t = put_target(&dest, 9_000);
+            let input = NodeInput {
+                data: FileData::Path(src),
+                filename: "out.txt".to_string(),
+                mime_type: None,
+                params: params(&[
+                    ("destination", serde_json::json!(dest.to_str().unwrap())),
+                    ("conflict", serde_json::json!("newer")),
+                    ("tolerance_ms", tolerance.clone()),
+                ]),
+            };
+            let out = FileCopy::new()
+                .process(input, &ProgressReporter::new_noop(), &NoopContext)
+                .unwrap();
+            assert_eq!(fs::read(&t).unwrap(), b"new bytes", "tolerance {tolerance}");
+            assert_eq!(flags(&out), (1, 0, 0), "tolerance {tolerance}");
+        }
+    }
+
+    #[test]
+    fn test_newer_float_tolerance_of_2000_is_accepted_and_acts_as_2000() {
+        // Older by 2000 ms is inside a 2000 ms tolerance, so it is left alone.
+        let (_root, src, dest) = newer_fixture(10_000);
+        let t = put_target(&dest, 8_000);
+        let input = NodeInput {
+            data: FileData::Path(src),
+            filename: "out.txt".to_string(),
+            mime_type: None,
+            params: params(&[
+                ("destination", serde_json::json!(dest.to_str().unwrap())),
+                ("conflict", serde_json::json!("newer")),
+                ("tolerance_ms", serde_json::json!(2000.0)),
+            ]),
+        };
+        let out = FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        assert_eq!(fs::read(&t).unwrap(), b"old bytes");
+        assert_eq!(flags(&out), (0, 1, 0));
+    }
+
+    #[test]
+    fn test_newer_directory_at_destination_is_invalid_input() {
+        let (_root, src, dest) = newer_fixture(10_000);
+        fs::create_dir_all(dest.join("out.txt")).unwrap();
+        let err = run_newer(&src, &dest).err().expect("a directory must fail");
+        let BntoError::InvalidInput(msg) = err else {
+            panic!("expected InvalidInput, got {err:?}");
+        };
+        assert!(msg.contains("is a directory, not a file"), "{msg}");
+    }
+
+    #[test]
+    fn test_newer_tolerance_is_only_visible_for_newer() {
+        let meta = FileCopy::new().metadata();
+        let param = meta
+            .parameters
+            .iter()
+            .find(|p| p.name == "tolerance_ms")
+            .unwrap();
+        assert_eq!(
+            param.visible_when,
+            Some(ParamCondition::Single(ParamConditionEntry {
+                param: "conflict".to_string(),
+                equals: "newer".to_string(),
+            }))
+        );
+    }
+
+    #[test]
+    fn test_newer_replaces_read_only_target() {
+        let (_root, src, dest) = newer_fixture(100_000);
+        let t = put_target(&dest, 10_000);
+        let mut perms = fs::metadata(&t).unwrap().permissions();
+        perms.set_readonly(true);
+        fs::set_permissions(&t, perms).unwrap();
+        run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&t).unwrap(), b"new bytes");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_newer_adds_owner_write_only_when_a_group_may_write() {
+        use std::os::unix::fs::PermissionsExt;
+        let (_root, src, dest) = newer_fixture(100_000);
+        let t = put_target(&dest, 10_000);
+        fs::set_permissions(&t, fs::Permissions::from_mode(0o464)).unwrap();
+        run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&t).unwrap(), b"new bytes");
+        assert_eq!(
+            fs::metadata(&t).unwrap().permissions().mode() & 0o777,
+            0o664
+        );
+    }
+
+    #[test]
+    fn test_newer_source_error_names_the_source() {
+        let (root, _src, dest) = newer_fixture(10_000);
+        let missing = root.path().join("gone.txt");
+        let Err(err) = run_newer(&missing, &dest) else {
+            panic!("a missing source should fail");
+        };
+        let err = err.to_string();
+        assert!(
+            err.contains("gone.txt"),
+            "error should name the source: {err}"
+        );
+    }
+
+    #[test]
+    fn test_newer_overwrites_in_place_through_a_hard_link() {
+        let (_root, src, dest) = newer_fixture(100_000);
+        let t = put_target(&dest, 10_000);
+        let link = dest.join("link.txt");
+        fs::hard_link(&t, &link).unwrap();
+        run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&link).unwrap(), b"new bytes");
+    }
+
+    #[test]
+    fn test_newer_never_deletes_destination_only_files() {
+        let (_root, src, dest) = newer_fixture(100_000);
+        put_target(&dest, 10_000);
+        let extra = dest.join("only-here.txt");
+        fs::write(&extra, b"keep").unwrap();
+        run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&extra).unwrap(), b"keep");
+    }
+
+    #[test]
+    fn test_newer_with_bytes_data_is_invalid_input() {
+        let dest = TempDir::new().unwrap();
+        let input = make_input(
+            b"data",
+            "out.txt",
+            params(&[
+                (
+                    "destination",
+                    serde_json::json!(dest.path().to_str().unwrap()),
+                ),
+                ("conflict", serde_json::json!("newer")),
+            ]),
+        );
+        let err = FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .err()
+            .expect("bytes + newer must fail");
+        assert!(matches!(err, BntoError::InvalidInput(_)), "{err:?}");
+    }
+
+    #[test]
+    fn test_other_modes_emit_no_newer_metadata() {
+        let dest = TempDir::new().unwrap();
+        let input = make_input(
+            b"x",
+            "a.txt",
+            params(&[(
+                "destination",
+                serde_json::json!(dest.path().to_str().unwrap()),
+            )]),
+        );
+        let out = FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        assert!(out.files[0].metadata.is_empty());
     }
 }

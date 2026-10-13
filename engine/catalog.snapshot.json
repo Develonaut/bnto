@@ -110,7 +110,7 @@
         {
           "name": "conflict",
           "label": "Conflict Resolution",
-          "description": "What to do when a file with the same name already exists.",
+          "description": "What to do when a file with the same name already exists. \"newer\" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes.",
           "paramType": {
             "type": "enum",
             "options": [
@@ -125,11 +125,34 @@
               {
                 "value": "rename",
                 "label": "Rename (add suffix)"
+              },
+              {
+                "value": "newer",
+                "label": "Newer only (keep time)"
               }
             ]
           },
           "default": "skip",
           "surfaceable": true
+        },
+        {
+          "name": "tolerance_ms",
+          "label": "Time Tolerance",
+          "description": "Modified-time gap treated as equal in \"newer\" mode; FAT and Google Drive round times.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 2000,
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "visibleWhen": {
+            "param": "conflict",
+            "equals": "newer"
+          },
+          "surfaceable": true,
+          "suffix": "ms"
         }
       ]
     },
@@ -1843,7 +1866,7 @@
         {
           "name": "conflict",
           "label": "Conflict Resolution",
-          "description": "What to do when a file with the same name already exists.",
+          "description": "What to do when a file with the same name already exists. \"newer\" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes.",
           "paramType": {
             "type": "enum",
             "options": [
@@ -1858,11 +1881,34 @@
               {
                 "value": "rename",
                 "label": "Rename (add suffix)"
+              },
+              {
+                "value": "newer",
+                "label": "Newer only (keep time)"
               }
             ]
           },
           "default": "skip",
           "surfaceable": true
+        },
+        {
+          "name": "tolerance_ms",
+          "label": "Time Tolerance",
+          "description": "Modified-time gap treated as equal in \"newer\" mode; FAT and Google Drive round times.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 2000,
+          "constraints": {
+            "min": 0.0,
+            "required": false
+          },
+          "visibleWhen": {
+            "param": "conflict",
+            "equals": "newer"
+          },
+          "surfaceable": true,
+          "suffix": "ms"
         }
       ],
       "inputCardinality": "perFile"

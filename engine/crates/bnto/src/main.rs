@@ -366,6 +366,7 @@ fn write_output(result: &bnto_core::PipelineResult, mode: &str, output_dir: &str
     for warning in &result.warnings {
         eprintln!("  {} {warning}", "Warning:".yellow().bold());
     }
+    io::warn_files_left_as_newer(result);
 }
 
 fn run_recipe(

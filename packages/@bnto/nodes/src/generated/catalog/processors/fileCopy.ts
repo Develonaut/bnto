@@ -32,10 +32,20 @@ export const fileCopyProcessor: ProcessorDef = {
     {
       name: "conflict",
       label: "Conflict Resolution",
-      description: "What to do when a file with the same name already exists.",
+      description:
+        'What to do when a file with the same name already exists. "newer" copies only when the destination is missing or older than the source (path input only), keeps the source\'s modified time, and never deletes.',
       type: "enum" as const,
-      options: ["skip", "overwrite", "rename"] as const,
+      options: ["skip", "overwrite", "rename", "newer"] as const,
       default: "skip",
+    },
+    {
+      name: "tolerance_ms",
+      label: "Time Tolerance",
+      description:
+        'Modified-time gap treated as equal in "newer" mode; FAT and Google Drive round times.',
+      type: "number" as const,
+      default: 2000,
+      constraints: { min: 0, required: false },
     },
   ],
   inputCardinality: "perFile" as const,
