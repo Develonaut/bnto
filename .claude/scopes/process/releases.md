@@ -51,6 +51,10 @@ Tag pushed (v*.*.*)
 
 **Workflow file:** `.github/workflows/release.yml`
 
+**WASM bundle:** the release's Rust job builds the web app's WASM with `wasm-pack build --release` and both Vercel deploys use that artifact, so production never ships the dev build that the lefthook pre-commit commits to `apps/web/public/wasm/`. Because the bundle comes from `engine/`, engine changes count as web changes for deploy gating.
+
+**Change baseline:** a release is diffed against the newest stable tag with a published GitHub Release (the last one that actually shipped), not the previous tag, so a tag whose gate failed never hides its changes from the next one.
+
 ---
 
 ## Version Numbering
