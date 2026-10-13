@@ -212,6 +212,15 @@ jobs:
           rust="${{ needs.rust.result }}"
           ts="${{ needs.typescript.result }}"
           web="${{ needs.detect-changes.outputs.web }}"
+          detect="${{ needs.detect-changes.result }}"
+
+          # Change detection is always required. If it fails, the web flag is
+          # empty and the TypeScript check below would read its skip as
+          # "web unchanged" and pass.
+          if [ "$detect" != "success" ]; then
+            echo "Detect Changes failed: $detect"
+            exit 1
+          fi
 
           if [ "$rust" != "success" ]; then
             echo "Rust CI failed: $rust"
