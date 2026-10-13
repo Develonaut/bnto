@@ -27,7 +27,7 @@ git push origin v1.0.0
 ```
 Tag pushed (v*.*.*)
   │
-  ├─ CI Gate (Rust fmt/clippy/test + TypeScript build/lint/test)
+  ├─ CI Gate (Rust fmt/clippy/test on Linux + Windows + TypeScript build/lint/test)
   │
   ├─ Deploy Vercel Preview (vercel deploy --prebuilt)
   │

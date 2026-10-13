@@ -5,7 +5,8 @@ mod helpers;
 use std::process::Command;
 
 use helpers::{
-    bnto_bin, custom_recipe_path, fixture_image, output_files, recipe_path, temp_output_dir,
+    bnto_bin, custom_recipe_path, fixture_image, output_files, recipe_path, run_explicit_recipe_ok,
+    temp_output_dir,
 };
 
 // --- Help & List ---
@@ -268,6 +269,26 @@ fn test_none_mode_shell_source_feeds_next_node() {
     assert!(stderr.contains("[1/2] shell-command"), "stderr: {stderr}");
     assert!(stderr.contains("[2/2] file-rename"), "stderr: {stderr}");
     assert!(!stderr.contains("[1/1]"), "stderr: {stderr}");
+}
+
+// --- Progress Layout ---
+
+#[test]
+fn test_container_children_indent_under_their_container() {
+    // Guards: loop children are indented under the loop with loop-relative numbers.
+    let (_out, stderr) = run_explicit_recipe_ok("compress-and-rename", &fixture_image("small.jpg"));
+    let expected = "  [1/1] loop
+      [1/2] image-compress
+";
+    assert!(stderr.contains(expected), "stderr: {stderr}");
+    assert!(
+        stderr.contains(
+            "
+      [2/2] file-rename
+"
+        ),
+        "stderr: {stderr}"
+    );
 }
 
 #[test]
