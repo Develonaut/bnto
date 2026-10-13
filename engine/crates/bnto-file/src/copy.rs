@@ -740,6 +740,35 @@ mod tests {
         assert_eq!(fs::read(&t).unwrap(), b"new bytes");
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn test_newer_adds_owner_write_only_when_a_group_may_write() {
+        use std::os::unix::fs::PermissionsExt;
+        let (_root, src, dest) = newer_fixture(100_000);
+        let t = put_target(&dest, 10_000);
+        fs::set_permissions(&t, fs::Permissions::from_mode(0o464)).unwrap();
+        run_newer(&src, &dest).unwrap();
+        assert_eq!(fs::read(&t).unwrap(), b"new bytes");
+        assert_eq!(
+            fs::metadata(&t).unwrap().permissions().mode() & 0o777,
+            0o664
+        );
+    }
+
+    #[test]
+    fn test_newer_source_error_names_the_source() {
+        let (root, _src, dest) = newer_fixture(10_000);
+        let missing = root.path().join("gone.txt");
+        let Err(err) = run_newer(&missing, &dest) else {
+            panic!("a missing source should fail");
+        };
+        let err = err.to_string();
+        assert!(
+            err.contains("gone.txt"),
+            "error should name the source: {err}"
+        );
+    }
+
     #[test]
     fn test_newer_overwrites_in_place_through_a_hard_link() {
         let (_root, src, dest) = newer_fixture(100_000);
