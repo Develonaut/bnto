@@ -200,6 +200,32 @@ impl crate::processor::NodeProcessor for SourceProcessor {
     }
 }
 
+/// Batch processor — receives every file at once. The default
+/// `process_batch` echoes each file, so only the cardinality matters.
+struct BatchEchoProcessor;
+
+impl crate::processor::NodeProcessor for BatchEchoProcessor {
+    fn name(&self) -> &str {
+        "batch-echo"
+    }
+
+    fn metadata(&self) -> crate::metadata::NodeMetadata {
+        crate::metadata::NodeMetadata {
+            input_cardinality: crate::metadata::InputCardinality::Batch,
+            ..crate::processor::NodeProcessor::metadata(&EchoProcessor)
+        }
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        crate::processor::NodeProcessor::process(&EchoProcessor, input, progress, ctx)
+    }
+}
+
 /// Simulates compression: halves data size and attaches size metadata.
 /// Used to verify metadata survives through the pipeline.
 struct MetadataProcessor;
@@ -282,6 +308,7 @@ fn mock_registry() -> NodeRegistry {
     registry.register("test-double", Box::new(DoubleProcessor));
     registry.register("test-metadata", Box::new(MetadataProcessor));
     registry.register("test-source", Box::new(SourceProcessor));
+    registry.register("test-batch", Box::new(BatchEchoProcessor));
     registry
 }
 
