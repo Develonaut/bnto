@@ -1235,3 +1235,92 @@ fn test_lookup_keep_then_rename_fails_on_a_file_without_a_row() {
     assert!(lib.join("Pack/Kick 01.wav").exists());
     assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
 }
+
+// --- Spreadsheet Export ---
+
+#[test]
+fn test_export_records_a_dry_run_rename_and_renames_nothing() {
+    // Guards: collect → lookup → rename → export → overwrite on a dry run
+    // writes the record CSV (new name, the row's columns) and touches no file.
+    let (root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let record = root.path().join("record.csv");
+    let params = [
+        table_param(&table),
+        format!("export:path={}", record.to_str().unwrap()),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-export", &lib, &params, true);
+    assert!(ok, "stderr: {stderr}");
+    assert!(
+        lib.join("Pack/Kick 01.wav").exists(),
+        "dry run renamed a file"
+    );
+    assert!(!lib.join("Pack/DRUMKick_Kick 01.wav").exists());
+
+    let text = std::fs::read_to_string(&record).unwrap();
+    let mut reader = csv::Reader::from_reader(text.as_bytes());
+    let headers: Vec<String> = reader
+        .headers()
+        .unwrap()
+        .iter()
+        .map(str::to_string)
+        .collect();
+    for column in ["file", "name", "new_name", "catid"] {
+        assert!(
+            headers.contains(&column.to_string()),
+            "missing {column}: {headers:?}"
+        );
+    }
+    let rows: Vec<csv::StringRecord> = reader.records().map(Result::unwrap).collect();
+    assert_eq!(rows.len(), 2);
+    let at = |name: &str| headers.iter().position(|h| h == name).unwrap();
+    let kick = rows.iter().find(|r| &r[at("catid")] == "DRUMKick").unwrap();
+    assert_eq!(&kick[at("file")], "DRUMKick_Kick 01.wav");
+    assert_eq!(&kick[at("name")], "Pack/Kick 01.wav");
+    assert!(stderr.contains("2 rows"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_export_into_a_missing_folder_fails_and_renames_nothing() {
+    let (root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let record = root.path().join("no-such-folder").join("record.csv");
+    let params = [
+        table_param(&table),
+        format!("export:path={}", record.to_str().unwrap()),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-export", &lib, &params, false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("record.csv"), "stderr: {stderr}");
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+}
+
+#[test]
+fn test_export_record_drives_the_undo() {
+    // Guards: a real run renames and records; the record, keyed on the new
+    // name with `{{item.name}}`, puts every file back.
+    let (root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let record = root.path().join("record.csv");
+    let forward = [
+        table_param(&table),
+        format!("export:path={}", record.to_str().unwrap()),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-export", &lib, &forward, false);
+    assert!(ok, "stderr: {stderr}");
+    assert!(lib.join("Pack/sub/GUNMech_Glock 01.wav").exists());
+
+    let undo = [
+        table_param(&record),
+        "lookup:key_column=file".to_string(),
+        "lookup:match_on=filename".to_string(),
+        "rename:pattern={{item.name}}".to_string(),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &undo, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/sub/Glock 45 Mag Out 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/Kick 01.wav")).unwrap(),
+        "kick"
+    );
+}

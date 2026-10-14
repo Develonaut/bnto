@@ -192,6 +192,11 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     },
     pretty: { type: "boolean", control: "switch", required: false },
   },
+  "spreadsheet-export": {
+    path: { type: "string", control: "text", required: true },
+    name_column: { type: "string", control: "text", required: false },
+    overwrite: { type: "boolean", control: "switch", required: false },
+  },
   "spreadsheet-lookup": {
     table: { type: "string", control: "text", required: true },
     key_column: { type: "string", control: "text", required: false },

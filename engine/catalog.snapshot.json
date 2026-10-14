@@ -1559,6 +1559,52 @@
       ]
     },
     {
+      "name": "spreadsheet-export",
+      "label": "Export Items as CSV",
+      "description": "Write the files passing through, with their metadata, as one CSV row each.",
+      "category": "spreadsheet",
+      "isContainer": false,
+      "platforms": [
+        "cli"
+      ],
+      "icon": "table",
+      "params": [
+        {
+          "name": "path",
+          "label": "CSV Path",
+          "description": "File to write, one row per file passing through; its folder must exist",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "items.csv",
+          "surfaceable": true
+        },
+        {
+          "name": "name_column",
+          "label": "Name Column",
+          "description": "Header of the first column, which holds each file's name",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "file",
+          "surfaceable": true
+        },
+        {
+          "name": "overwrite",
+          "label": "Overwrite",
+          "description": "Replace a CSV already at the path; off keeps it (it may be an earlier run's record) and fails the run",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "spreadsheet-lookup",
       "label": "Look Up Rows",
       "description": "Attach the CSV row whose key matches each file's name to that file.",
@@ -2946,6 +2992,53 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "spreadsheet-export",
+      "name": "Export Items as CSV",
+      "description": "Write the files passing through, with their metadata, as one CSV row each",
+      "category": "spreadsheet",
+      "accepts": [],
+      "platforms": [
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "path",
+          "label": "CSV Path",
+          "description": "File to write, one row per file passing through; its folder must exist",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "items.csv",
+          "surfaceable": true
+        },
+        {
+          "name": "name_column",
+          "label": "Name Column",
+          "description": "Header of the first column, which holds each file's name",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "file",
+          "surfaceable": true
+        },
+        {
+          "name": "overwrite",
+          "label": "Overwrite",
+          "description": "Replace a CSV already at the path; off keeps it (it may be an earlier run's record) and fails the run",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "spreadsheet-lookup",

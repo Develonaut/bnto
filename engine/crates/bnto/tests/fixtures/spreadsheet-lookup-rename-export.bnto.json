@@ -1,0 +1,103 @@
+{
+  "id": "spreadsheet-lookup-rename-export",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Spreadsheet Lookup Rename Export",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Collects a directory's files, looks each up in a CSV table, renames it in place to the row's new_name, and writes a record CSV of the run. Table and record paths are set with param overrides."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "collect",
+      "type": "file-collect",
+      "version": "1.0.0",
+      "name": "Collect",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "flatten": false
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "lookup",
+      "type": "spreadsheet-lookup",
+      "version": "1.0.0",
+      "name": "Lookup",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "table": "mapping.csv",
+        "unmatched": "fail"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Rename",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "pattern": "{{item.new_name}}"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "export",
+      "type": "spreadsheet-export",
+      "version": "1.0.0",
+      "name": "Export",
+      "position": { "x": 500, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "path": "record.csv"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 625, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "overwrite"
+      },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "collect" },
+    { "id": "e2", "source": "collect", "target": "lookup" },
+    { "id": "e3", "source": "lookup", "target": "rename" },
+    { "id": "e-export", "source": "rename", "target": "export" },
+    { "id": "e-out", "source": "export", "target": "output" }
+  ]
+}

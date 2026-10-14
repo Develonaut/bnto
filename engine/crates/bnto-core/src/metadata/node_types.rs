@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 27 registered node types.
+/// Return metadata for all 28 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -275,6 +275,15 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "sheet"
+        ),
+        node_type!(
+            "spreadsheet-export",
+            "Export Items as CSV",
+            "Write the files passing through, with their metadata, as one CSV row each.",
+            NodeCategory::Spreadsheet,
+            false,
+            "cli",
+            "table"
         ),
         node_type!(
             "spreadsheet-lookup",

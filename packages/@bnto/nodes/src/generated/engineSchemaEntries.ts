@@ -26,6 +26,7 @@ import { parallelNodeSchema } from "./schemas/parallel";
 import { shellCommandNodeSchema } from "./schemas/shellCommand";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
+import { spreadsheetExportNodeSchema } from "./schemas/spreadsheetExport";
 import { spreadsheetLookupNodeSchema } from "./schemas/spreadsheetLookup";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetReadNodeSchema } from "./schemas/spreadsheetRead";
@@ -58,6 +59,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "shell-command": shellCommandNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
+  "spreadsheet-export": spreadsheetExportNodeSchema,
   "spreadsheet-lookup": spreadsheetLookupNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
   "spreadsheet-read": spreadsheetReadNodeSchema,
@@ -310,6 +312,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
       ],
     },
   },
+  "spreadsheet-export": {},
   "spreadsheet-lookup": {
     match_on: {
       options: [

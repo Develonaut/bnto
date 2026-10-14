@@ -81,6 +81,10 @@
       "label": "CSV to JSON",
       "description": "Convert CSV data to JSON format with configurable delimiters."
     },
+    "spreadsheetExport": {
+      "label": "Export Items as CSV",
+      "description": "Write the files passing through, with their metadata, as one CSV row each."
+    },
     "spreadsheetLookup": {
       "label": "Look Up Rows",
       "description": "Attach the CSV row whose key matches each file's name to that file."
@@ -346,6 +350,21 @@
       "pretty": {
         "label": "Pretty Print",
         "description": "Format output JSON with indentation"
+      }
+    },
+    "spreadsheetExport": {
+      "path": {
+        "label": "CSV Path",
+        "description": "File to write, one row per file passing through; its folder must exist",
+        "placeholder": "items.csv"
+      },
+      "name_column": {
+        "label": "Name Column",
+        "description": "Header of the first column, which holds each file's name"
+      },
+      "overwrite": {
+        "label": "Overwrite",
+        "description": "Replace a CSV already at the path; off keeps it (it may be an earlier run's record) and fails the run"
       }
     },
     "spreadsheetLookup": {

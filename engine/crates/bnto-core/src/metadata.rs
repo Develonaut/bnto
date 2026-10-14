@@ -333,9 +333,9 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_27_entries() {
+    fn test_all_node_types_returns_28_entries() {
         let types = all_node_types();
-        assert_eq!(types.len(), 27, "Should have exactly 27 node types");
+        assert_eq!(types.len(), 28, "Should have exactly 28 node types");
     }
 
     #[test]
@@ -353,7 +353,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 27, "All node type names should be unique");
+        assert_eq!(names.len(), 28, "All node type names should be unique");
     }
 
     #[test]
@@ -396,6 +396,7 @@ mod tests {
                 "file-copy",
                 "http-request",
                 "shell-command",
+                "spreadsheet-export",
                 "spreadsheet-lookup",
             ]
         );
