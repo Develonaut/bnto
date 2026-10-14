@@ -22,6 +22,20 @@ describe("deriveFileResultProps", () => {
     expect(result.extension).toBe("pdf");
   });
 
+  it("measures original size and savings against the uploaded file", () => {
+    const result = deriveFileResultProps(
+      mockResult({ blobSize: 250, metadata: { originalSize: 300, inputSize: 1000 } }),
+    );
+    expect(result.originalSize).toBe("1 KB");
+    expect(result.savings).toBe("-75%");
+  });
+
+  it("shows no comparison when no node reported sizes, even with an upload size", () => {
+    const result = deriveFileResultProps(mockResult({ metadata: { inputSize: 1000 } }));
+    expect(result.originalSize).toBeUndefined();
+    expect(result.savings).toBeUndefined();
+  });
+
   it("handles files without extension", () => {
     const result = deriveFileResultProps(mockResult({ filename: "Makefile" }));
     expect(result.extension).toBeNull();

@@ -33,12 +33,7 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
         .unwrap_or_else(|| path.to_string());
     let mime_type = guess_mime(path);
 
-    Ok(PipelineFile {
-        name,
-        data: bnto_core::processor::FileData::Bytes(data),
-        mime_type,
-        metadata: serde_json::Map::new(),
-    })
+    Ok(PipelineFile::input(name, data, mime_type))
 }
 
 /// Write all result files to an output directory.

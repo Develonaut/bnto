@@ -11,8 +11,10 @@
 
 /** Typed metadata from the Rust WASM engine's processor output. */
 export interface ProcessorMetadata {
-  /** Original file size in bytes (before processing). */
+  /** Size in bytes of the input to the node that reported it. */
   originalSize?: number;
+  /** Size in bytes of the uploaded file, recorded as it entered the pipeline. */
+  inputSize?: number;
   /** Compressed/processed file size in bytes. */
   compressedSize?: number;
   /** Compression ratio as a percentage (0-100). Higher = more compression. */
