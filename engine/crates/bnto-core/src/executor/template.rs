@@ -18,7 +18,8 @@ pub struct TemplateContext<'a> {
     pub process_ctx: &'a dyn ProcessContext,
     /// Per-node output params from previously executed nodes.
     pub node_outputs: &'a BTreeMap<String, Value>,
-    /// Current loop iteration's per-file metadata for {{item.*}} templates.
+    /// The {{item.*}} source: the metadata of the file being processed, under the
+    /// innermost loop's item. `None` when there is neither.
     pub loop_item: &'a Option<serde_json::Map<String, Value>>,
 }
 

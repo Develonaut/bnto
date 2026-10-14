@@ -252,6 +252,35 @@ mod tests {
     }
 
     #[test]
+    fn test_flat_recipe_renames_from_metadata_an_earlier_node_attached() {
+        // file-metadata attaches `extension`; file-rename reads it per file.
+        let json = r#"{
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "input", "type": "input" },
+                { "id": "meta", "type": "file-metadata" },
+                { "id": "rename", "type": "file-rename",
+                  "parameters": { "pattern": "{{item.extension}}-{{name}}.{{ext}}" } },
+                { "id": "output", "type": "output" }
+            ]
+        }"#;
+        let file = |name: &str| PipelineFile {
+            name: name.to_string(),
+            data: FileData::Bytes(b"x".to_vec()),
+            mime_type: "text/plain".to_string(),
+            metadata: serde_json::Map::new(),
+        };
+
+        let reporter = PipelineReporter::new_noop();
+        let files = vec![file("notes.txt"), file("data.csv")];
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("pipeline should succeed");
+
+        let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
+        assert_eq!(names, vec!["txt-notes.txt", "csv-data.csv"]);
+    }
+
+    #[test]
     fn test_generated_rename_files_recipe() {
         let json = include_str!("../recipes/rename-files.bnto.json");
         let files = vec![PipelineFile {
