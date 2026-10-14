@@ -352,19 +352,17 @@ fn process_batch<F: Fn() -> u64 + Copy>(
         format!("Processing batch of {} files...", file_count),
     );
 
+    // Data passes through as-is: a disk reference stays a reference, and
+    // processors that need bytes read them (`FileData::to_bytes`).
     let batch_files: Vec<BatchFile> = files
         .into_iter()
-        .map(|f| {
-            let data = f.data.into_bytes().map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to read input file {}: {e}", f.name))
-            })?;
-            Ok(BatchFile {
-                data,
-                filename: f.name,
-                mime_type: Some(f.mime_type),
-            })
+        .map(|f| BatchFile {
+            data: f.data,
+            filename: f.name,
+            mime_type: Some(f.mime_type),
+            metadata: f.metadata,
         })
-        .collect::<Result<Vec<_>, BntoError>>()?;
+        .collect();
 
     let batch_input = BatchInput {
         files: batch_files,

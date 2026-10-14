@@ -80,11 +80,50 @@ impl FileData {
             FileData::Path(path) => std::fs::read(path),
         }
     }
+
+    /// Read file content without consuming it: borrowed for `Bytes`, read
+    /// from disk for `Path`. For processors that hold files by reference
+    /// (batch input) and need the bytes of some of them.
+    pub fn to_bytes(&self) -> Result<std::borrow::Cow<'_, [u8]>, std::io::Error> {
+        match self {
+            FileData::Bytes(data) => Ok(std::borrow::Cow::Borrowed(data)),
+            FileData::Path(path) => std::fs::read(path).map(std::borrow::Cow::Owned),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_to_bytes_borrows_bytes_and_reads_a_path() {
+        let data = FileData::Bytes(b"in memory".to_vec());
+        assert!(matches!(
+            data.to_bytes().unwrap(),
+            std::borrow::Cow::Borrowed(b"in memory")
+        ));
+
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("on-disk.txt");
+        std::fs::write(&path, b"on disk").unwrap();
+        let data = FileData::Path(path);
+        assert_eq!(&*data.to_bytes().unwrap(), b"on disk");
+        assert!(
+            matches!(data, FileData::Path(_)),
+            "to_bytes leaves the reference in place"
+        );
+    }
+
+    #[test]
+    fn test_to_bytes_names_a_missing_file_error() {
+        let temp = tempfile::tempdir().unwrap();
+        assert!(
+            FileData::Path(temp.path().join("gone.txt"))
+                .to_bytes()
+                .is_err()
+        );
+    }
 
     #[test]
     fn test_filedata_bytes_write_to() {

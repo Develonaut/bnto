@@ -133,7 +133,7 @@ fn counted_input(
         serde_json::Value::Number(serde_json::Number::from(counter_value)),
     );
     NodeInput {
-        data: FileData::Bytes(file.data),
+        data: file.data,
         filename: file.filename,
         mime_type: file.mime_type,
         params,
@@ -685,19 +685,22 @@ mod tests {
         let batch = BatchInput {
             files: vec![
                 BatchFile {
-                    data: b"a".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"a".to_vec()),
                     filename: "a.jpg".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: b"b".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"b".to_vec()),
                     filename: "b.jpg".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: b"c".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"c".to_vec()),
                     filename: "c.jpg".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
             ],
             params,
@@ -726,14 +729,16 @@ mod tests {
         let batch = BatchInput {
             files: vec![
                 BatchFile {
-                    data: b"a".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"a".to_vec()),
                     filename: "a.jpg".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: b"b".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"b".to_vec()),
                     filename: "b.jpg".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
             ],
             params,
@@ -761,14 +766,16 @@ mod tests {
         let batch = BatchInput {
             files: vec![
                 BatchFile {
-                    data: b"a".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"a".to_vec()),
                     filename: "a.txt".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: b"b".to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(b"b".to_vec()),
                     filename: "b.txt".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
             ],
             params,
