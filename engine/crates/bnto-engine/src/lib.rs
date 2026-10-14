@@ -283,6 +283,12 @@ mod tests {
 
         let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
         assert_eq!(names, vec!["txt-notes.txt", "csv-data.csv"]);
+
+        // Metadata accumulates: file-metadata's keys survive the rename,
+        // alongside what file-rename attached.
+        let meta = &result.files[0].metadata;
+        assert_eq!(meta["extension"], "txt");
+        assert_eq!(meta["newFilename"], "txt-notes.txt");
     }
 
     #[test]

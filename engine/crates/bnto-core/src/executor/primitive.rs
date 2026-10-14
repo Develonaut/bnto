@@ -62,14 +62,22 @@ fn emit_file_progress<F: Fn() -> u64 + Copy>(
 }
 
 /// Collect processor output files into the pipeline result vector.
-/// Uses per-file metadata when non-empty, falling back to shared NodeOutput.metadata.
-fn collect_output(output: crate::processor::NodeOutput, output_files: &mut Vec<PipelineFile>) {
+/// Each file's metadata is `inherited` (what the input file carried) with the
+/// node's own metadata on top: its per-file metadata when non-empty, else the
+/// shared NodeOutput.metadata. The node wins a shared key.
+fn collect_output(
+    output: crate::processor::NodeOutput,
+    inherited: &serde_json::Map<String, serde_json::Value>,
+    output_files: &mut Vec<PipelineFile>,
+) {
     for f in output.files {
-        let metadata = if f.metadata.is_empty() {
+        let own = if f.metadata.is_empty() {
             output.metadata.clone()
         } else {
             f.metadata
         };
+        let mut metadata = inherited.clone();
+        metadata.extend(own);
         output_files.push(PipelineFile {
             name: f.filename,
             data: f.data,
@@ -90,6 +98,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     output_files: &mut Vec<PipelineFile>,
 ) -> Result<(), BntoError> {
     let file_name = file.name;
+    let inherited = file.metadata;
     emit_file_progress(
         ctx,
         node_id,
@@ -118,7 +127,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         100,
         format!("Completed {}", file_name),
     );
-    collect_output(output, output_files);
+    collect_output(output, &inherited, output_files);
     Ok(())
 }
 
@@ -188,8 +197,8 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     resolve_with(ctx, node, &node_field_values(node), &ctx.loop_item, None)
 }
 
-/// The `{{item.*}}` source for one file: the file's own metadata (what the
-/// node before attached), under the innermost loop's item. The loop item wins
+/// The `{{item.*}}` source for one file: the file's own metadata (what every
+/// earlier node attached), under the innermost loop's item. The loop item wins
 /// a shared key, so a loop over CSV rows keeps reading its row's columns.
 fn file_item(loop_item: &Option<Params>, file: &PipelineFile) -> Option<Params> {
     if file.metadata.is_empty() {
@@ -316,7 +325,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
     emit_file_progress(ctx, &node.id, file_offset, 100, "Complete".to_string());
 
     let mut output_files = Vec::new();
-    collect_output(output, &mut output_files);
+    collect_output(output, &serde_json::Map::new(), &mut output_files);
     Ok(NodeExecutionResult {
         files_processed: 0,
         output_files,
@@ -374,7 +383,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
     );
 
     let mut output_files = Vec::with_capacity(output.files.len());
-    collect_output(output, &mut output_files);
+    collect_output(output, &serde_json::Map::new(), &mut output_files);
     Ok(NodeExecutionResult {
         files_processed: file_count,
         output_files,
