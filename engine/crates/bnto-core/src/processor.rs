@@ -81,14 +81,21 @@ pub struct BatchInput {
 
 /// A single file within a batch input.
 pub struct BatchFile {
-    /// The raw file data (bytes).
-    pub data: Vec<u8>,
+    /// The file content as it arrived: in-memory bytes or a path on disk.
+    /// A reference stays a reference, so a batch node never loads files it
+    /// only lists; call `to_bytes()` / `into_bytes()` when the bytes matter.
+    pub data: FileData,
 
     /// The original filename.
     pub filename: String,
 
     /// The MIME type, if known.
     pub mime_type: Option<String>,
+
+    /// Per-file metadata the file carries from earlier nodes (lookup rows,
+    /// flags, the upload's size). A batch node that passes files through
+    /// copies it onto its outputs.
+    pub metadata: serde_json::Map<String, serde_json::Value>,
 }
 
 // =============================================================================
@@ -157,7 +164,7 @@ pub trait NodeProcessor {
             progress.report(pct, &format!("Processing file {} of {total}...", i + 1));
 
             let single_input = NodeInput {
-                data: FileData::Bytes(file.data),
+                data: file.data,
                 filename: file.filename,
                 mime_type: file.mime_type,
                 params: input.params.clone(),
@@ -324,14 +331,16 @@ mod tests {
         let input = BatchInput {
             files: vec![
                 BatchFile {
-                    data: b"file1".to_vec(),
+                    data: FileData::Bytes(b"file1".to_vec()),
                     filename: "a.txt".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: b"file2".to_vec(),
+                    data: FileData::Bytes(b"file2".to_vec()),
                     filename: "b.txt".to_string(),
                     mime_type: None,
+                    metadata: serde_json::Map::new(),
                 },
             ],
             params: serde_json::Map::new(),
@@ -370,9 +379,10 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = BatchInput {
             files: vec![BatchFile {
-                data: b"data".to_vec(),
+                data: FileData::Bytes(b"data".to_vec()),
                 filename: "test.txt".to_string(),
                 mime_type: None,
+                metadata: serde_json::Map::new(),
             }],
             params: serde_json::Map::new(),
         };

@@ -341,6 +341,7 @@ fn fake_now() -> u64 {
 
 mod auto_iteration;
 mod basic;
+mod batch_input;
 mod containers;
 mod errors;
 mod item_templates;

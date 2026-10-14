@@ -200,7 +200,10 @@ fn parse_all_files(input: &BatchInput) -> Result<Vec<ParsedCsv>, BntoError> {
     let mut parsed = Vec::with_capacity(input.files.len());
 
     for file in &input.files {
-        let csv_text = std::str::from_utf8(&file.data).map_err(|e| {
+        let bytes = file.data.to_bytes().map_err(|e| {
+            BntoError::ProcessingFailed(format!("Failed to read '{}': {e}", file.filename))
+        })?;
+        let csv_text = std::str::from_utf8(&bytes).map_err(|e| {
             BntoError::InvalidInput(format!("File '{}' is not valid UTF-8: {e}", file.filename))
         })?;
 
@@ -392,13 +395,56 @@ mod tests {
             files: files
                 .into_iter()
                 .map(|(name, content)| BatchFile {
-                    data: content.as_bytes().to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(content.as_bytes().to_vec()),
                     filename: name.to_string(),
                     mime_type: Some("text/csv".to_string()),
+                    metadata: serde_json::Map::new(),
                 })
                 .collect(),
             params: serde_json::Map::new(),
         }
+    }
+
+    #[test]
+    fn test_merge_reads_csvs_given_as_disk_references() {
+        let tmp = tempfile::tempdir().unwrap();
+        let files = [
+            (
+                "a.csv",
+                "id,name
+1,a
+",
+            ),
+            (
+                "b.csv",
+                "id,name
+2,b
+",
+            ),
+        ]
+        .into_iter()
+        .map(|(name, content)| {
+            let path = tmp.path().join(name);
+            std::fs::write(&path, content).unwrap();
+            BatchFile {
+                data: bnto_core::processor::FileData::Path(path),
+                filename: name.to_string(),
+                mime_type: Some("text/csv".to_string()),
+                metadata: serde_json::Map::new(),
+            }
+        })
+        .collect();
+        let input = BatchInput {
+            files,
+            params: serde_json::Map::new(),
+        };
+        let progress = ProgressReporter::new_noop();
+        let out = MergeSpreadsheets::new()
+            .process_batch(input, &progress, &NoopContext)
+            .unwrap();
+        let merged = out.files[0].data.to_bytes().unwrap();
+        let text = String::from_utf8_lossy(&merged);
+        assert!(text.contains("1,a") && text.contains("2,b"), "{text}");
     }
 
     fn make_batch_with_params(
@@ -409,9 +455,10 @@ mod tests {
             files: files
                 .into_iter()
                 .map(|(name, content)| BatchFile {
-                    data: content.as_bytes().to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(content.as_bytes().to_vec()),
                     filename: name.to_string(),
                     mime_type: Some("text/csv".to_string()),
+                    metadata: serde_json::Map::new(),
                 })
                 .collect(),
             params,
@@ -782,9 +829,10 @@ mod tests {
         let progress = ProgressReporter::new_noop();
         let input = BatchInput {
             files: vec![BatchFile {
-                data: vec![0xFF, 0xFE, 0x00],
+                data: bnto_core::processor::FileData::Bytes(vec![0xFF, 0xFE, 0x00]),
                 filename: "bad.csv".to_string(),
                 mime_type: Some("text/csv".to_string()),
+                metadata: serde_json::Map::new(),
             }],
             params: serde_json::Map::new(),
         };
@@ -853,14 +901,16 @@ mod tests {
         let input = BatchInput {
             files: vec![
                 BatchFile {
-                    data: csv1.to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(csv1.to_vec()),
                     filename: "simple1.csv".to_string(),
                     mime_type: Some("text/csv".to_string()),
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: csv2.to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(csv2.to_vec()),
                     filename: "simple2.csv".to_string(),
                     mime_type: Some("text/csv".to_string()),
+                    metadata: serde_json::Map::new(),
                 },
             ],
             params: serde_json::Map::new(),
@@ -891,14 +941,16 @@ mod tests {
         let input = BatchInput {
             files: vec![
                 BatchFile {
-                    data: csv_data.to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(csv_data.to_vec()),
                     filename: "simple1.csv".to_string(),
                     mime_type: Some("text/csv".to_string()),
+                    metadata: serde_json::Map::new(),
                 },
                 BatchFile {
-                    data: csv_data.to_vec(),
+                    data: bnto_core::processor::FileData::Bytes(csv_data.to_vec()),
                     filename: "simple2.csv".to_string(),
                     mime_type: Some("text/csv".to_string()),
+                    metadata: serde_json::Map::new(),
                 },
             ],
             params,

@@ -242,9 +242,10 @@ fn test_metadata_accumulates_inside_a_loop() {
 }
 
 #[test]
-fn test_a_batch_node_does_not_inherit_yet() {
-    // Batch input carries no metadata today, so a batch node's output starts
-    // fresh. Pins the current limit until batch input carries metadata.
+fn test_a_batch_node_output_carries_only_what_it_sets() {
+    // A batch node receives each file's metadata (see batch_input.rs) and
+    // decides what its outputs carry; the executor doesn't copy it for them.
+    // The default per-file fallback (batch-echo) sets none.
     let def = r#"{
         "settings": { "iteration": "auto" },
         "nodes": [
