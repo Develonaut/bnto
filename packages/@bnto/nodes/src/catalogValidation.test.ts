@@ -13,6 +13,7 @@ import { imageCompressParamsSchema } from "./generated/schemas/imageCompress";
 import { imageResizeParamsSchema } from "./generated/schemas/imageResize";
 import { IMAGE_FORMATS } from "./generated/enumConstants";
 import { spreadsheetCleanParamsSchema } from "./generated/schemas/spreadsheetClean";
+import { spreadsheetLookupParamsSchema } from "./generated/schemas/spreadsheetLookup";
 import { fileRenameParamsSchema } from "./generated/schemas/fileRename";
 import { imageOverlayParamsSchema } from "./generated/schemas/imageOverlay";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
@@ -86,13 +87,19 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-metadata")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-read")).toBe(true);
+    expect(PROCESSOR_MAP.has("spreadsheet-lookup")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-optimize")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-rasterize")).toBe(true);
   });
 
   it("browser processors include browser in platforms", () => {
     // Non-browser processors (CLI/server/desktop only) are expected
-    const NON_BROWSER_TYPES = new Set(["file-collect", "file-copy", "shell-command"]);
+    const NON_BROWSER_TYPES = new Set([
+      "file-collect",
+      "file-copy",
+      "shell-command",
+      "spreadsheet-lookup",
+    ]);
     for (const proc of PROCESSORS) {
       if (NON_BROWSER_TYPES.has(proc.nodeType)) {
         expect(proc.platforms).not.toContain("browser");
@@ -128,6 +135,14 @@ describe("engine defaults flow through to schemas", () => {
     expect(zodTrimDefault).toBe(engineDefaults.trimWhitespace);
     expect(zodEmptyDefault).toBe(engineDefaults.removeEmptyRows);
     expect(zodDedupDefault).toBe(engineDefaults.removeDuplicates);
+  });
+
+  it("spreadsheet-lookup defaults match engine", () => {
+    const engineDefaults = getProcessorDefaults("spreadsheet-lookup");
+    const shape = spreadsheetLookupParamsSchema.shape;
+    expect(shape.key_column.parse(undefined)).toBe(engineDefaults.key_column);
+    expect(shape.match_on.parse(undefined)).toBe(engineDefaults.match_on);
+    expect(shape.unmatched.parse(undefined)).toBe(engineDefaults.unmatched);
   });
 
   it("file-rename case options match engine", () => {

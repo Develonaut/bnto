@@ -28,6 +28,7 @@ describe("NODE_TYPES", () => {
     expect(NODE_TYPES.output).toBe("output");
     expect(NODE_TYPES.parallel).toBe("parallel");
     expect(NODE_TYPES.spreadsheetClean).toBe("spreadsheet-clean");
+    expect(NODE_TYPES.spreadsheetLookup).toBe("spreadsheet-lookup");
     expect(NODE_TYPES.spreadsheetRename).toBe("spreadsheet-rename");
     expect(NODE_TYPES.transform).toBe("transform");
   });
@@ -72,12 +73,18 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual(["group", "loop", "parallel"]);
   });
 
-  it("server-only types are file-collect, file-copy, http-request, and shell-command", () => {
+  it("server-only types are file-collect, file-copy, http-request, shell-command, and spreadsheet-lookup", () => {
     const serverOnly = Object.values(NODE_TYPE_INFO).filter(
       (i) => !i.platforms.includes("browser"),
     );
     const names = serverOnly.map((s) => s.name).sort();
-    expect(names).toEqual(["file-collect", "file-copy", "http-request", "shell-command"]);
+    expect(names).toEqual([
+      "file-collect",
+      "file-copy",
+      "http-request",
+      "shell-command",
+      "spreadsheet-lookup",
+    ]);
   });
 });
 

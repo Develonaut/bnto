@@ -1,0 +1,74 @@
+{
+  "id": "spreadsheet-lookup",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Spreadsheet Lookup",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Collects a directory's files and looks each up in a CSV table by its relative path. The table is set with a param override."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "collect",
+      "type": "file-collect",
+      "version": "1.0.0",
+      "name": "Collect",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "flatten": false
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "lookup",
+      "type": "spreadsheet-lookup",
+      "version": "1.0.0",
+      "name": "Lookup",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "table": "mapping.csv"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "overwrite"
+      },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "collect" },
+    { "id": "e2", "source": "collect", "target": "lookup" },
+    { "id": "e-out", "source": "lookup", "target": "output" }
+  ]
+}

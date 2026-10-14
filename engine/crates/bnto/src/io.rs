@@ -229,20 +229,62 @@ const MAX_NAMES_LISTED: usize = 10;
 
 /// `N file(s) newer at the destination, left: a, b`, names capped.
 fn newer_warning_text(newer: &[&str]) -> String {
-    let noun = if newer.len() == 1 { "file" } else { "files" };
-    let mut names = newer
+    format!(
+        "{} newer at the destination, left: {}",
+        count_files(newer.len()),
+        capped_names(newer)
+    )
+}
+
+/// Names of result files that `spreadsheet-lookup` found no row for (its
+/// `unmatched` metadata flag is 1).
+pub fn files_without_a_row(result: &PipelineResult) -> Vec<&str> {
+    result
+        .files
+        .iter()
+        .filter(|f| f.metadata.get("unmatched").and_then(|v| v.as_i64()) == Some(1))
+        .map(|f| f.name.as_str())
+        .collect()
+}
+
+/// Print one warning line naming the files `files_without_a_row` finds.
+pub fn warn_files_without_a_row(result: &PipelineResult) {
+    use colored::Colorize;
+
+    let unmatched = files_without_a_row(result);
+    if !unmatched.is_empty() {
+        let warning = "Warning:".yellow().bold();
+        eprintln!("  {warning} {}", no_row_warning_text(&unmatched));
+    }
+}
+
+/// `N file(s) had no row in the lookup table: a, b`, names capped.
+fn no_row_warning_text(unmatched: &[&str]) -> String {
+    format!(
+        "{} had no row in the lookup table: {}",
+        count_files(unmatched.len()),
+        capped_names(unmatched)
+    )
+}
+
+/// `1 file` / `N files`.
+fn count_files(n: usize) -> String {
+    let noun = if n == 1 { "file" } else { "files" };
+    format!("{n} {noun}")
+}
+
+/// Names joined by `, `, folding past `MAX_NAMES_LISTED` into `…and N more`.
+fn capped_names(names: &[&str]) -> String {
+    let mut listed = names
         .iter()
         .take(MAX_NAMES_LISTED)
         .copied()
         .collect::<Vec<_>>()
         .join(", ");
-    if newer.len() > MAX_NAMES_LISTED {
-        names.push_str(&format!(", …and {} more", newer.len() - MAX_NAMES_LISTED));
+    if names.len() > MAX_NAMES_LISTED {
+        listed.push_str(&format!(", …and {} more", names.len() - MAX_NAMES_LISTED));
     }
-    format!(
-        "{} {noun} newer at the destination, left: {names}",
-        newer.len()
-    )
+    listed
 }
 
 /// Guess MIME type from file extension.
@@ -391,6 +433,39 @@ mod tests {
         let refs: Vec<&str> = names.iter().map(String::as_str).collect();
         assert!(newer_warning_text(&refs[..10]).ends_with("f10.txt"));
         assert!(newer_warning_text(&refs).ends_with("f10.txt, …and 1 more"));
+    }
+
+    fn result_with_unmatched(names: &[(&str, bool)]) -> PipelineResult {
+        let mut result = result_with_flags(&[]);
+        for (name, unmatched) in names {
+            let mut file = make_result_with_bytes(b"x", name).files.remove(0);
+            if *unmatched {
+                file.metadata.insert("unmatched".into(), 1.into());
+            }
+            result.files.push(file);
+        }
+        result
+    }
+
+    #[test]
+    fn test_files_without_a_row_lists_flagged_files_in_order() {
+        let r = result_with_unmatched(&[("a.wav", true), ("b.wav", false), ("c.wav", true)]);
+        assert_eq!(files_without_a_row(&r), vec!["a.wav", "c.wav"]);
+    }
+
+    #[test]
+    fn test_no_row_warning_text_singular_plural_and_cap() {
+        assert_eq!(
+            no_row_warning_text(&["a.wav"]),
+            "1 file had no row in the lookup table: a.wav"
+        );
+        assert_eq!(
+            no_row_warning_text(&["a.wav", "b.wav"]),
+            "2 files had no row in the lookup table: a.wav, b.wav"
+        );
+        let names: Vec<String> = (1..=12).map(|i| format!("f{i}.wav")).collect();
+        let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+        assert!(no_row_warning_text(&refs).ends_with("f10.wav, …and 2 more"));
     }
 
     // --- write_results_with_mode tests ---

@@ -192,6 +192,22 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     },
     pretty: { type: "boolean", control: "switch", required: false },
   },
+  "spreadsheet-lookup": {
+    table: { type: "string", control: "text", required: true },
+    key_column: { type: "string", control: "text", required: false },
+    match_on: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["path", "filename"] as const,
+    },
+    unmatched: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["keep", "drop", "fail"] as const,
+    },
+  },
   "spreadsheet-merge": {
     headerHandling: {
       type: "enum",

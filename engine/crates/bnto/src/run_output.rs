@@ -26,6 +26,7 @@ pub fn write_output(
         eprintln!("  {} {warning}", "Warning:".yellow().bold());
     }
     io::warn_files_left_as_newer(result);
+    io::warn_files_without_a_row(result);
     io::print_copy_totals(result, dry_run);
     print_done(outcome, result.duration_ms, dry_run);
 }

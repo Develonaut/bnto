@@ -1,0 +1,18 @@
+/**
+ * AUTO-GENERATED from engine/catalog.snapshot.json - DO NOT EDIT.
+ * Run `task nodes:generate` to regenerate after engine changes.
+ * Engine catalog v1.0.0
+ */
+
+import type { NodeTypeInfo } from "../types";
+
+/** Node type info for spreadsheet-lookup. */
+export const spreadsheetLookupNodeType: NodeTypeInfo = {
+  name: "spreadsheet-lookup",
+  label: "Look Up Rows",
+  description: "Attach the CSV row whose key matches each file's name to that file.",
+  category: "spreadsheet",
+  isContainer: false,
+  platforms: ["cli"] as const,
+  icon: "table",
+};

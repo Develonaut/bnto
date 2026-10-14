@@ -81,6 +81,10 @@
       "label": "CSV to JSON",
       "description": "Convert CSV data to JSON format with configurable delimiters."
     },
+    "spreadsheetLookup": {
+      "label": "Look Up Rows",
+      "description": "Attach the CSV row whose key matches each file's name to that file."
+    },
     "spreadsheetMerge": {
       "label": "Merge CSV",
       "description": "Combine multiple CSV files into one with header reconciliation and deduplication."
@@ -342,6 +346,25 @@
       "pretty": {
         "label": "Pretty Print",
         "description": "Format output JSON with indentation"
+      }
+    },
+    "spreadsheetLookup": {
+      "table": {
+        "label": "Table",
+        "description": "Path of the CSV (with a header row) to look each file up in",
+        "placeholder": "mapping.csv"
+      },
+      "key_column": {
+        "label": "Key Column",
+        "description": "Table column matched against each file; a key may appear on one row only"
+      },
+      "match_on": {
+        "label": "Match On",
+        "description": "Which part of the file's name must equal the key exactly"
+      },
+      "unmatched": {
+        "label": "Unmatched Files",
+        "description": "What happens to a file with no row: keep it (flagged unmatched: 1), drop it, or fail the run"
       }
     },
     "spreadsheetMerge": {
