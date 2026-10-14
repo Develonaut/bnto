@@ -18,6 +18,7 @@ pub mod loop_config;
 mod primitive;
 pub mod resolve;
 pub mod template;
+mod unfilled_items;
 
 use crate::context::ProcessContext;
 use crate::errors::BntoError;

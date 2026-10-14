@@ -83,6 +83,29 @@ fn file_with_metadata(name: &str, metadata: serde_json::Value) -> PipelineFile {
     }
 }
 
+fn run(def_json: &str, files: Vec<PipelineFile>) -> Result<PipelineResult, BntoError> {
+    let def = parse_def(def_json);
+    let reporter = PipelineReporter::new_noop();
+    execute_pipeline(
+        &def,
+        files,
+        &item_registry(),
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+}
+
+fn run_error(def_json: &str, files: Vec<PipelineFile>) -> String {
+    match run(def_json, files) {
+        Ok(result) => panic!(
+            "expected an error, got files {:?}",
+            result.files.iter().map(|f| &f.name).collect::<Vec<_>>()
+        ),
+        Err(e) => e.to_string(),
+    }
+}
+
 fn run_names(def_json: &str, files: Vec<PipelineFile>) -> Vec<String> {
     let def = parse_def(def_json);
     let reporter = PipelineReporter::new_noop();
@@ -198,8 +221,9 @@ fn test_inside_a_loop_the_loop_item_stays_visible_under_file_metadata() {
 }
 
 #[test]
-fn test_missing_item_key_resolves_empty_when_the_file_has_metadata() {
-    let names = run_names(
+fn test_missing_item_key_fails_naming_the_node_key_and_file() {
+    // A name built from a value that isn't there must never be used.
+    let err = run_error(
         r#"{
         "settings": { "iteration": "auto" },
         "nodes": [
@@ -209,15 +233,15 @@ fn test_missing_item_key_resolves_empty_when_the_file_has_metadata() {
             { "id": "out", "type": "output" }
         ]
     }"#,
-        vec![make_file("a.txt", b"a")],
+        vec![make_file("Pack/a.txt", b"a")],
     );
-    assert_eq!(names, vec!["x.txt"]);
+    assert!(err.contains("'name'"), "{err}");
+    assert!(err.contains("{{item.nope}}"), "{err}");
+    assert!(err.contains("Pack/a.txt"), "{err}");
 }
-
 #[test]
-fn test_item_is_left_as_written_when_no_metadata_exists() {
-    // Unchanged from before: nothing to resolve against, so nothing is erased.
-    let names = run_names(
+fn test_item_fails_when_the_file_has_no_metadata() {
+    let err = run_error(
         r#"{
         "settings": { "iteration": "auto" },
         "nodes": [
@@ -228,9 +252,50 @@ fn test_item_is_left_as_written_when_no_metadata_exists() {
     }"#,
         vec![make_file("a.txt", b"a")],
     );
-    assert_eq!(names, vec!["{{item.new_name}}"]);
+    assert!(
+        err.contains("{{item.new_name}}") && err.contains("a.txt"),
+        "{err}"
+    );
 }
 
+#[test]
+fn test_one_unfilled_file_fails_the_whole_run() {
+    // b.txt's metadata lacks `row`, so the run fails instead of naming it ".txt".
+    let err = run_error(
+        r#"{
+        "settings": { "iteration": "auto" },
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "name", "type": "test-name", "parameters": { "name": "{{item.row}}.txt" } },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+        vec![
+            file_with_metadata("a.txt", serde_json::json!({ "row": "first" })),
+            file_with_metadata("b.txt", serde_json::json!({ "other": "x" })),
+        ],
+    );
+    assert!(
+        err.contains("{{item.row}}") && err.contains("b.txt"),
+        "{err}"
+    );
+}
+
+#[test]
+fn test_params_without_item_templates_are_unaffected_by_missing_metadata() {
+    let names = run_names(
+        r#"{
+        "settings": { "iteration": "auto" },
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "name", "type": "test-name", "parameters": { "name": "fixed.txt" } },
+            { "id": "out", "type": "output" }
+        ]
+    }"#,
+        vec![make_file("a.txt", b"a")],
+    );
+    assert_eq!(names, vec!["fixed.txt"]);
+}
 #[test]
 fn test_inside_a_loop_the_loop_item_wins_a_shared_key() {
     // A loop over CSV rows keeps reading its row's column even when a child
@@ -276,9 +341,9 @@ fn test_top_level_without_auto_iteration_resolves_per_file() {
 #[test]
 fn test_item_reads_only_what_the_node_before_attached() {
     // Each node's output metadata replaces the file's metadata, so `new_name`
-    // from `tag` is gone after `test-metadata`. Pins today's limit until
-    // per-file metadata accumulates across nodes.
-    let names = run_names(
+    // from `tag` is gone after `test-metadata` and the reference fails. Pins
+    // today's limit until per-file metadata accumulates across nodes.
+    let err = run_error(
         r#"{
         "settings": { "iteration": "auto" },
         "nodes": [
@@ -291,5 +356,5 @@ fn test_item_reads_only_what_the_node_before_attached() {
     }"#,
         vec![make_file("a.txt", b"aaaa")],
     );
-    assert_eq!(names, vec!["x"]);
+    assert!(err.contains("{{item.new_name}}"), "{err}");
 }
