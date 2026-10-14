@@ -1085,3 +1085,153 @@ fn test_overwrite_refuses_two_files_onto_one_name_and_renames_nothing() {
     );
     assert!(!lib.path().join("same.wav").exists());
 }
+
+// --- Spreadsheet Lookup ---
+
+/// A library of two files in nested folders, and a mapping table (outside
+/// it) giving each a new name. Returns (temp root, library dir, table path).
+fn lookup_fixture(rows: &str) -> (tempfile::TempDir, std::path::PathBuf, std::path::PathBuf) {
+    let root = temp_output_dir();
+    let lib = root.path().join("lib");
+    std::fs::create_dir_all(lib.join("Pack/sub")).unwrap();
+    std::fs::write(lib.join("Pack/sub/Glock 45 Mag Out 01.wav"), "glock").unwrap();
+    std::fs::write(lib.join("Pack/Kick 01.wav"), "kick").unwrap();
+    let table = root.path().join("mapping.csv");
+    std::fs::write(&table, format!("name,new_name,catid\n{rows}")).unwrap();
+    (root, lib, table)
+}
+
+const BOTH_ROWS: &str = "Pack/sub/Glock 45 Mag Out 01.wav,GUNMech_Glock 01.wav,GUNMech\n\
+                         Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n";
+
+/// Run a fixture recipe on `lib` with `-p` overrides; returns (success, stderr).
+fn run_lookup_recipe(
+    recipe: &str,
+    lib: &std::path::Path,
+    params: &[String],
+    dry_run: bool,
+) -> (bool, String) {
+    let mut cmd = Command::new(bnto_bin());
+    cmd.args(["run", &custom_recipe_path(recipe)])
+        .arg(lib)
+        .arg("--yes");
+    for p in params {
+        cmd.args(["-p", p]);
+    }
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    let output = cmd.output().unwrap();
+    (
+        output.status.success(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    )
+}
+
+fn table_param(table: &std::path::Path) -> String {
+    format!("lookup:table={}", table.to_str().unwrap())
+}
+
+#[test]
+fn test_lookup_then_rename_renames_in_place_and_undoes_from_the_same_table() {
+    // Guards: collect → spreadsheet-lookup → file-rename `{{item.new_name}}`
+    // renames each file in its folder, and the same table keyed on new_name
+    // with `{{item.name}}` puts every name back.
+    let (_root, lib, table) = lookup_fixture(BOTH_ROWS);
+    let (ok, stderr) = run_lookup_recipe(
+        "spreadsheet-lookup-rename",
+        &lib,
+        &[table_param(&table)],
+        false,
+    );
+    assert!(ok, "stderr: {stderr}");
+    assert!(
+        lib.join("Pack/sub/GUNMech_Glock 01.wav").exists(),
+        "stderr: {stderr}"
+    );
+    assert!(lib.join("Pack/DRUMKick_Kick 01.wav").exists());
+    assert!(!lib.join("Pack/Kick 01.wav").exists());
+
+    let undo = [
+        table_param(&table),
+        "lookup:key_column=new_name".to_string(),
+        "lookup:match_on=filename".to_string(),
+        "rename:pattern={{item.name}}".to_string(),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &undo, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/sub/Glock 45 Mag Out 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/Kick 01.wav")).unwrap(),
+        "kick"
+    );
+    assert!(!lib.join("Pack/DRUMKick_Kick 01.wav").exists());
+}
+
+#[test]
+fn test_lookup_unmatched_fail_stops_the_run_before_any_rename() {
+    // Guards: with `unmatched: fail` one file without a row fails the run,
+    // naming it, and no file is renamed.
+    let (_root, lib, table) = lookup_fixture("Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n");
+    let (ok, stderr) = run_lookup_recipe(
+        "spreadsheet-lookup-rename",
+        &lib,
+        &[table_param(&table)],
+        false,
+    );
+    assert!(!ok, "stderr: {stderr}");
+    assert!(
+        stderr.contains("Pack/sub/Glock 45 Mag Out 01.wav"),
+        "stderr: {stderr}"
+    );
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+}
+
+#[test]
+fn test_lookup_names_files_without_a_row_on_a_real_and_a_dry_run() {
+    // Guards: kept unmatched files are named in the summary, dry run too.
+    let (_root, lib, table) = lookup_fixture("Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n");
+    for dry_run in [false, true] {
+        let (ok, stderr) =
+            run_lookup_recipe("spreadsheet-lookup", &lib, &[table_param(&table)], dry_run);
+        assert!(ok, "stderr: {stderr}");
+        assert!(
+            stderr.contains(
+                "1 file had no row in the lookup table: Pack/sub/Glock 45 Mag Out 01.wav"
+            ),
+            "dry_run={dry_run} stderr: {stderr}"
+        );
+    }
+    assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
+}
+
+#[test]
+fn test_lookup_missing_table_fails_naming_it() {
+    let (root, lib, _table) = lookup_fixture(BOTH_ROWS);
+    let missing = root.path().join("missing.csv");
+    let (ok, stderr) =
+        run_lookup_recipe("spreadsheet-lookup", &lib, &[table_param(&missing)], false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("missing.csv"), "stderr: {stderr}");
+}
+
+#[test]
+fn test_lookup_keep_then_rename_fails_on_a_file_without_a_row() {
+    // Guards: a kept unmatched file has no `new_name`, so the rename fails
+    // naming it instead of renaming it to the literal "{{item.new_name}}"
+    // (where two such files would overwrite each other). Nothing is renamed.
+    let (_root, lib, table) = lookup_fixture("Pack/Kick 01.wav,DRUMKick_Kick 01.wav,DRUMKick\n");
+    let params = [table_param(&table), "lookup:unmatched=keep".to_string()];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &params, false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("{{item.new_name}}"), "stderr: {stderr}");
+    assert!(
+        stderr.contains("Pack/sub/Glock 45 Mag Out 01.wav"),
+        "stderr: {stderr}"
+    );
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+    assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
+}

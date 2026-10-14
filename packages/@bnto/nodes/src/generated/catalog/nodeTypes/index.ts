@@ -26,6 +26,7 @@ import { parallelNodeType } from "./parallel";
 import { shellCommandNodeType } from "./shellCommand";
 import { spreadsheetCleanNodeType } from "./spreadsheetClean";
 import { spreadsheetConvertNodeType } from "./spreadsheetConvert";
+import { spreadsheetLookupNodeType } from "./spreadsheetLookup";
 import { spreadsheetMergeNodeType } from "./spreadsheetMerge";
 import { spreadsheetReadNodeType } from "./spreadsheetRead";
 import { spreadsheetRenameNodeType } from "./spreadsheetRename";
@@ -58,6 +59,7 @@ export const NODE_TYPES = {
   shellCommand: "shell-command",
   spreadsheetClean: "spreadsheet-clean",
   spreadsheetConvert: "spreadsheet-convert",
+  spreadsheetLookup: "spreadsheet-lookup",
   spreadsheetMerge: "spreadsheet-merge",
   spreadsheetRead: "spreadsheet-read",
   spreadsheetRename: "spreadsheet-rename",
@@ -94,6 +96,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "shell-command": shellCommandNodeType,
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
+  "spreadsheet-lookup": spreadsheetLookupNodeType,
   "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-read": spreadsheetReadNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,

@@ -19,6 +19,7 @@ import { imageStripExifProcessor } from "./imageStripExif";
 import { shellCommandProcessor } from "./shellCommand";
 import { spreadsheetCleanProcessor } from "./spreadsheetClean";
 import { spreadsheetConvertProcessor } from "./spreadsheetConvert";
+import { spreadsheetLookupProcessor } from "./spreadsheetLookup";
 import { spreadsheetMergeProcessor } from "./spreadsheetMerge";
 import { spreadsheetReadProcessor } from "./spreadsheetRead";
 import { spreadsheetRenameProcessor } from "./spreadsheetRename";
@@ -39,6 +40,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   shellCommandProcessor,
   spreadsheetCleanProcessor,
   spreadsheetConvertProcessor,
+  spreadsheetLookupProcessor,
   spreadsheetMergeProcessor,
   spreadsheetReadProcessor,
   spreadsheetRenameProcessor,

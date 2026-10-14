@@ -26,6 +26,7 @@ import { parallelNodeSchema } from "./schemas/parallel";
 import { shellCommandNodeSchema } from "./schemas/shellCommand";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
+import { spreadsheetLookupNodeSchema } from "./schemas/spreadsheetLookup";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetReadNodeSchema } from "./schemas/spreadsheetRead";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
@@ -57,6 +58,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "shell-command": shellCommandNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
+  "spreadsheet-lookup": spreadsheetLookupNodeSchema,
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
   "spreadsheet-read": spreadsheetReadNodeSchema,
   "spreadsheet-rename": spreadsheetRenameNodeSchema,
@@ -305,6 +307,21 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "semicolon", label: "Semicolon" },
         { value: "tab", label: "Tab" },
         { value: "pipe", label: "Pipe" },
+      ],
+    },
+  },
+  "spreadsheet-lookup": {
+    match_on: {
+      options: [
+        { value: "path", label: "Path (relative folders included)" },
+        { value: "filename", label: "Filename only" },
+      ],
+    },
+    unmatched: {
+      options: [
+        { value: "keep", label: "Keep and flag" },
+        { value: "drop", label: "Drop" },
+        { value: "fail", label: "Fail the run" },
       ],
     },
   },

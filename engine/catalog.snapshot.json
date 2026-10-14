@@ -1559,6 +1559,86 @@
       ]
     },
     {
+      "name": "spreadsheet-lookup",
+      "label": "Look Up Rows",
+      "description": "Attach the CSV row whose key matches each file's name to that file.",
+      "category": "spreadsheet",
+      "isContainer": false,
+      "platforms": [
+        "cli"
+      ],
+      "icon": "table",
+      "params": [
+        {
+          "name": "table",
+          "label": "Table",
+          "description": "Path of the CSV (with a header row) to look each file up in",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "mapping.csv",
+          "surfaceable": true
+        },
+        {
+          "name": "key_column",
+          "label": "Key Column",
+          "description": "Table column matched against each file; a key may appear on one row only",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "name",
+          "surfaceable": true
+        },
+        {
+          "name": "match_on",
+          "label": "Match On",
+          "description": "Which part of the file's name must equal the key exactly",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "path",
+                "label": "Path (relative folders included)"
+              },
+              {
+                "value": "filename",
+                "label": "Filename only"
+              }
+            ]
+          },
+          "default": "path",
+          "surfaceable": true
+        },
+        {
+          "name": "unmatched",
+          "label": "Unmatched Files",
+          "description": "What happens to a file with no row: keep it (flagged unmatched: 1), drop it, or fail the run",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "keep",
+                "label": "Keep and flag"
+              },
+              {
+                "value": "drop",
+                "label": "Drop"
+              },
+              {
+                "value": "fail",
+                "label": "Fail the run"
+              }
+            ]
+          },
+          "default": "keep",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "spreadsheet-merge",
       "label": "Merge CSV",
       "description": "Combine multiple CSV files into one with header reconciliation and deduplication.",
@@ -2862,6 +2942,87 @@
             "type": "boolean"
           },
           "default": false,
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "spreadsheet-lookup",
+      "name": "Look Up Rows",
+      "description": "Attach the CSV row whose key matches each file's name to that file",
+      "category": "spreadsheet",
+      "accepts": [],
+      "platforms": [
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "table",
+          "label": "Table",
+          "description": "Path of the CSV (with a header row) to look each file up in",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "mapping.csv",
+          "surfaceable": true
+        },
+        {
+          "name": "key_column",
+          "label": "Key Column",
+          "description": "Table column matched against each file; a key may appear on one row only",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "name",
+          "surfaceable": true
+        },
+        {
+          "name": "match_on",
+          "label": "Match On",
+          "description": "Which part of the file's name must equal the key exactly",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "path",
+                "label": "Path (relative folders included)"
+              },
+              {
+                "value": "filename",
+                "label": "Filename only"
+              }
+            ]
+          },
+          "default": "path",
+          "surfaceable": true
+        },
+        {
+          "name": "unmatched",
+          "label": "Unmatched Files",
+          "description": "What happens to a file with no row: keep it (flagged unmatched: 1), drop it, or fail the run",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "keep",
+                "label": "Keep and flag"
+              },
+              {
+                "value": "drop",
+                "label": "Drop"
+              },
+              {
+                "value": "fail",
+                "label": "Fail the run"
+              }
+            ]
+          },
+          "default": "keep",
           "surfaceable": true
         }
       ],

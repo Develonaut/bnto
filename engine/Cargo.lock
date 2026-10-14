@@ -262,6 +262,7 @@ dependencies = [
  "js-sys",
  "serde",
  "serde_json",
+ "tempfile",
  "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-test",
