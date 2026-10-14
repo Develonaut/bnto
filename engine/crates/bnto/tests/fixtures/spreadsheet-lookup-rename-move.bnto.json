@@ -1,0 +1,101 @@
+{
+  "id": "spreadsheet-lookup-rename-move",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Spreadsheet Lookup Rename Move",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Collects a directory's files, looks each up in a CSV table, gives it the row's new_name (a path such as Gun/Mech/shot.wav), and moves it to that path under the destination folder. Table and destination are set with param overrides."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "collect",
+      "type": "file-collect",
+      "version": "1.0.0",
+      "name": "Collect",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "flatten": false
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "lookup",
+      "type": "spreadsheet-lookup",
+      "version": "1.0.0",
+      "name": "Lookup",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "table": "mapping.csv",
+        "unmatched": "fail"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Rename",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "pattern": "{{item.new_name}}"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "move",
+      "type": "file-move",
+      "version": "1.0.0",
+      "name": "Move",
+      "position": { "x": 500, "y": 100 },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 625, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "collect" },
+    { "id": "e2", "source": "collect", "target": "lookup" },
+    { "id": "e3", "source": "lookup", "target": "rename" },
+    { "id": "e-move", "source": "rename", "target": "move" },
+    { "id": "e-out", "source": "move", "target": "output" }
+  ]
+}

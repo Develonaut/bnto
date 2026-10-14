@@ -15,6 +15,7 @@ import { IMAGE_FORMATS } from "./generated/enumConstants";
 import { spreadsheetCleanParamsSchema } from "./generated/schemas/spreadsheetClean";
 import { spreadsheetExportParamsSchema } from "./generated/schemas/spreadsheetExport";
 import { spreadsheetLookupParamsSchema } from "./generated/schemas/spreadsheetLookup";
+import { fileMoveParamsSchema } from "./generated/schemas/fileMove";
 import { fileRenameParamsSchema } from "./generated/schemas/fileRename";
 import { imageOverlayParamsSchema } from "./generated/schemas/imageOverlay";
 import { CURRENT_FORMAT_VERSION } from "./formatVersion";
@@ -84,6 +85,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
     expect(PROCESSOR_MAP.has("file-collect")).toBe(true);
     expect(PROCESSOR_MAP.has("file-copy")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-move")).toBe(true);
     expect(PROCESSOR_MAP.has("file-filter")).toBe(true);
     expect(PROCESSOR_MAP.has("file-metadata")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
@@ -99,6 +101,7 @@ describe("catalog structure", () => {
     const NON_BROWSER_TYPES = new Set([
       "file-collect",
       "file-copy",
+      "file-move",
       "shell-command",
       "spreadsheet-export",
       "spreadsheet-lookup",
@@ -138,6 +141,13 @@ describe("engine defaults flow through to schemas", () => {
     expect(zodTrimDefault).toBe(engineDefaults.trimWhitespace);
     expect(zodEmptyDefault).toBe(engineDefaults.removeEmptyRows);
     expect(zodDedupDefault).toBe(engineDefaults.removeDuplicates);
+  });
+
+  it("file-move defaults match engine", () => {
+    const engineDefaults = getProcessorDefaults("file-move");
+    expect(fileMoveParamsSchema.shape.create_dirs.parse(undefined)).toBe(
+      engineDefaults.create_dirs,
+    );
   });
 
   it("spreadsheet-export defaults match engine", () => {

@@ -10,6 +10,7 @@ import { fileCollectProcessor } from "./fileCollect";
 import { fileCopyProcessor } from "./fileCopy";
 import { fileFilterProcessor } from "./fileFilter";
 import { fileMetadataProcessor } from "./fileMetadata";
+import { fileMoveProcessor } from "./fileMove";
 import { fileRenameProcessor } from "./fileRename";
 import { imageCompressProcessor } from "./imageCompress";
 import { imageConvertProcessor } from "./imageConvert";
@@ -32,6 +33,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   fileCopyProcessor,
   fileFilterProcessor,
   fileMetadataProcessor,
+  fileMoveProcessor,
   fileRenameProcessor,
   imageCompressProcessor,
   imageConvertProcessor,

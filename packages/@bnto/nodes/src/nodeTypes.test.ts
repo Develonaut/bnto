@@ -16,6 +16,7 @@ describe("NODE_TYPES", () => {
 
   it("maps camelCase keys to kebab-case type names", () => {
     expect(NODE_TYPES.editFields).toBe("edit-fields");
+    expect(NODE_TYPES.fileMove).toBe("file-move");
     expect(NODE_TYPES.fileRename).toBe("file-rename");
     expect(NODE_TYPES.httpRequest).toBe("http-request");
     expect(NODE_TYPES.shellCommand).toBe("shell-command");
@@ -74,7 +75,7 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual(["group", "loop", "parallel"]);
   });
 
-  it("server-only types are file-collect, file-copy, http-request, shell-command, and the spreadsheet export and lookup", () => {
+  it("server-only types are the file collect, copy, and move, http-request, shell-command, and the spreadsheet export and lookup", () => {
     const serverOnly = Object.values(NODE_TYPE_INFO).filter(
       (i) => !i.platforms.includes("browser"),
     );
@@ -82,6 +83,7 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual([
       "file-collect",
       "file-copy",
+      "file-move",
       "http-request",
       "shell-command",
       "spreadsheet-export",

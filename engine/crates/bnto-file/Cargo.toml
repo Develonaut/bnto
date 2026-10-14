@@ -34,6 +34,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 regex = { workspace = true }
 filetime = { workspace = true }
+same-file = { workspace = true }
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }

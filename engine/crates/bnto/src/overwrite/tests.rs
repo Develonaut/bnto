@@ -2,9 +2,9 @@ use std::path::Path;
 
 use bnto_core::processor::FileData;
 use bnto_core::{PipelineFileResult, PipelineResult};
+use bnto_file::relocate::{Move, run_in_order};
 
 use super::overwrite_in_place;
-use super::plan::Move;
 
 /// A temp dir holding `files` (name → content).
 fn dir_with(files: &[(&str, &str)]) -> tempfile::TempDir {
@@ -268,18 +268,6 @@ fn test_bytes_data_is_refused() {
     );
 }
 
-#[test]
-fn test_refusal_lists_at_most_ten_conflicts() {
-    let conflicts: Vec<String> = (0..12).map(|i| format!("conflict {i}")).collect();
-    let text = super::conflicts::refusal_text(&conflicts);
-    assert!(text.contains("12 conflicts"), "{text}");
-    assert!(
-        text.contains("conflict 9") && !text.contains("conflict 10"),
-        "{text}"
-    );
-    assert!(text.ends_with("…and 2 more"), "{text}");
-}
-
 // --- Failure partway through ---
 
 #[test]
@@ -296,7 +284,7 @@ fn test_a_failure_partway_says_how_far_it_got() {
             dest: tmp.path().join("y.wav"),
         },
     ];
-    let err = super::execute::run_in_order(moves).unwrap_err();
+    let err = run_in_order(moves).unwrap_err();
     assert!(err.contains("b.wav"), "{err}");
     assert!(err.contains("1 of 2 renames ran"), "{err}");
     assert_eq!(read(tmp.path(), "x.wav"), "A");
@@ -309,7 +297,7 @@ fn test_a_file_that_appears_after_planning_is_never_replaced() {
         src: tmp.path().join("a.wav"),
         dest: tmp.path().join("late.wav"),
     }];
-    let err = super::execute::run_in_order(moves).unwrap_err();
+    let err = run_in_order(moves).unwrap_err();
     assert!(err.contains("now exists"), "{err}");
     assert_eq!(read(tmp.path(), "late.wav"), "LATE");
     assert_eq!(read(tmp.path(), "a.wav"), "A");

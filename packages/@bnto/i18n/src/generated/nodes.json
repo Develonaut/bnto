@@ -21,6 +21,10 @@
       "label": "File Metadata",
       "description": "Extract file metadata (size, extension, MIME type, hash) and attach to output."
     },
+    "fileMove": {
+      "label": "Move Files",
+      "description": "Move files into folders under a destination, by the path in each file's name."
+    },
     "fileRename": {
       "label": "Rename Files",
       "description": "Transform filenames using patterns, find/replace, case rules, counters, and sanitization."
@@ -177,6 +181,17 @@
       "include_hash": {
         "label": "Include Hash",
         "description": "Compute and include a SHA-256 hash of the file content."
+      }
+    },
+    "fileMove": {
+      "destination": {
+        "label": "Destination",
+        "description": "Folder to move files under. Each file's name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and \"..\" are refused.",
+        "placeholder": "./sorted"
+      },
+      "create_dirs": {
+        "label": "Create Folders",
+        "description": "Create missing folders under the destination. Off refuses the run when a folder is missing."
       }
     },
     "fileRename": {

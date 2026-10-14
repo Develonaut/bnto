@@ -150,6 +150,7 @@ version = "0.2.0"
 dependencies = [
  "bnto-core",
  "bnto-engine",
+ "bnto-file",
  "bnto-shell",
  "clap",
  "colored",
@@ -161,7 +162,6 @@ dependencies = [
  "indicatif",
  "libc",
  "ratatui",
- "same-file",
  "serde",
  "serde_json",
  "sha2",
@@ -216,6 +216,7 @@ dependencies = [
  "filetime",
  "js-sys",
  "regex",
+ "same-file",
  "serde",
  "serde_json",
  "tempfile",

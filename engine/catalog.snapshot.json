@@ -269,6 +269,39 @@
       ]
     },
     {
+      "name": "file-move",
+      "label": "Move Files",
+      "description": "Move files into folders under a destination, by the path in each file's name.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "cli"
+      ],
+      "icon": "folder-open",
+      "params": [
+        {
+          "name": "destination",
+          "label": "Destination",
+          "description": "Folder to move files under. Each file's name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and \"..\" are refused.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "./sorted",
+          "surfaceable": true
+        },
+        {
+          "name": "create_dirs",
+          "label": "Create Folders",
+          "description": "Create missing folders under the destination. Off refuses the run when a folder is missing.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "file-rename",
       "label": "Rename Files",
       "description": "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
@@ -2209,6 +2242,40 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "file-move",
+      "name": "Move Files",
+      "description": "Move files into folders under a destination, by the path in each file's name; refuses the whole run if any move would replace a file.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "destination",
+          "label": "Destination",
+          "description": "Folder to move files under. Each file's name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and \"..\" are refused.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "./sorted",
+          "surfaceable": true
+        },
+        {
+          "name": "create_dirs",
+          "label": "Create Folders",
+          "description": "Create missing folders under the destination. Off refuses the run when a folder is missing.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "file-rename",

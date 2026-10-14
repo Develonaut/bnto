@@ -1,4 +1,4 @@
-// Refuses a rename plan that would replace a file.
+// Finds the moves in a plan that would replace a file.
 //
 // Names are compared case-folded to find candidates (two names that differ
 // only in case are one file on Windows and macOS); whether a target is really
@@ -7,21 +7,18 @@
 
 use std::collections::HashMap;
 
-use super::plan::{Move, refused};
-use super::{key, occupied, same_file};
+use super::{Move, key, occupied, same_file};
 
-/// How many conflicts the refusal lists before folding the rest into a count.
-const MAX_CONFLICTS_LISTED: usize = 10;
+/// How many items a listing shows before folding the rest into a count.
+const MAX_LISTED: usize = 10;
 
-/// Fail, listing every conflict, when the plan would replace any file.
-pub(super) fn refuse_conflicts(moves: &[Move]) -> Result<(), String> {
+/// Every way the plan would replace a file; empty when it's safe to run.
+/// Pass only real moves: a move onto its own path reads as a conflict.
+pub fn conflicts(moves: &[Move]) -> Vec<String> {
     let mut conflicts = case_twins(moves);
     conflicts.extend(shared_targets(moves));
     conflicts.extend(occupied_targets(moves));
-    if conflicts.is_empty() {
-        return Ok(());
-    }
-    Err(refusal_text(&conflicts))
+    conflicts
 }
 
 /// Moving sources whose names differ only in case. They're distinct files
@@ -84,22 +81,17 @@ fn sources(group: &[&Move]) -> String {
     names.join(", ")
 }
 
-pub(super) fn refusal_text(conflicts: &[String]) -> String {
-    let mut lines: Vec<String> = conflicts
+/// "3 conflicts" and one indented line per item, at most ten of them.
+/// `nouns` is the (singular, plural) word for an item.
+pub fn listing(items: &[String], nouns: (&str, &str)) -> String {
+    let mut lines: Vec<String> = items
         .iter()
-        .take(MAX_CONFLICTS_LISTED)
+        .take(MAX_LISTED)
         .map(|c| format!("  {c}"))
         .collect();
-    if conflicts.len() > MAX_CONFLICTS_LISTED {
-        lines.push(format!(
-            "  …and {} more",
-            conflicts.len() - MAX_CONFLICTS_LISTED
-        ));
+    if items.len() > MAX_LISTED {
+        lines.push(format!("  …and {} more", items.len() - MAX_LISTED));
     }
-    let noun = if conflicts.len() == 1 {
-        "conflict"
-    } else {
-        "conflicts"
-    };
-    refused(&format!("{} {noun}\n{}", conflicts.len(), lines.join("\n")))
+    let noun = if items.len() == 1 { nouns.0 } else { nouns.1 };
+    format!("{} {noun}\n{}", items.len(), lines.join("\n"))
 }

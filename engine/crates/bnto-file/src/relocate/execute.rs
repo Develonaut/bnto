@@ -1,18 +1,19 @@
-// Runs an accepted rename plan in an order that keeps every file.
+// Runs an accepted move plan in an order that keeps every file.
 //
 // A move waits until the move vacating its target has run (a→b, b→c runs
 // b→c first). A cycle (a→b, b→a) is broken by parking one file under a
-// temporary name. Each rename re-checks its target first, by file identity,
-// so a file that appeared after planning is never replaced.
+// temporary name. Each move re-checks its target first, by file identity,
+// so a file that appeared after planning is never replaced. Every move is a
+// rename: across drives it fails rather than copying.
 
 use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use super::plan::Move;
-use super::{key, occupied, same_file};
+use super::{Move, key, occupied, same_file};
 
-/// Run the moves; on failure, say how far the run got and what it left.
-pub(super) fn run_in_order(moves: Vec<Move>) -> Result<(), String> {
+/// Run the moves, creating each target's folder; on failure, say how far the
+/// run got and what it left. Check the plan with `conflicts` first.
+pub fn run_in_order(moves: Vec<Move>) -> Result<(), String> {
     let total = moves.len();
     let mut runner = Runner {
         pending: moves.into_iter().map(|m| (key(&m.src), m)).collect(),
@@ -118,10 +119,14 @@ impl Runner {
 fn guarded_rename(src: &Path, dest: &Path) -> Result<(), String> {
     if occupied(dest) && !same_file(src, dest) {
         return Err(format!(
-            "Overwrite stopped: {} now exists, so {} was not renamed onto it",
+            "Stopped: {} now exists, so {} was not moved onto it",
             dest.display(),
             src.display()
         ));
+    }
+    if let Some(folder) = dest.parent() {
+        std::fs::create_dir_all(folder)
+            .map_err(|e| format!("Cannot create {}: {e}", folder.display()))?;
     }
     std::fs::rename(src, dest)
         .map_err(|e| format!("Cannot rename {} → {}: {e}", src.display(), dest.display()))

@@ -43,6 +43,10 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   "file-metadata": {
     include_hash: { type: "boolean", control: "switch", required: false },
   },
+  "file-move": {
+    destination: { type: "string", control: "text", required: false },
+    create_dirs: { type: "boolean", control: "switch", required: false },
+  },
   "file-rename": {
     sanitize: {
       type: "enum",
