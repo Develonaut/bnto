@@ -339,22 +339,21 @@ fn test_top_level_without_auto_iteration_resolves_per_file() {
 }
 
 #[test]
-fn test_item_reads_only_what_the_node_before_attached() {
-    // Each node's output metadata replaces the file's metadata, so `new_name`
-    // from `tag` is gone after `test-metadata` and the reference fails. Pins
-    // today's limit until per-file metadata accumulates across nodes.
-    let err = run_error(
+fn test_item_reads_what_any_earlier_node_attached() {
+    // `test-metadata` adds its own keys; `new_name` from `tag` two nodes
+    // earlier is still on the file.
+    let names = run_names(
         r#"{
         "settings": { "iteration": "auto" },
         "nodes": [
             { "id": "in", "type": "input" },
             { "id": "tag", "type": "test-tag" },
             { "id": "meta", "type": "test-metadata" },
-            { "id": "name", "type": "test-name", "parameters": { "name": "x{{item.new_name}}" } },
+            { "id": "name", "type": "test-name", "parameters": { "name": "{{item.new_name}}" } },
             { "id": "out", "type": "output" }
         ]
     }"#,
         vec![make_file("a.txt", b"aaaa")],
     );
-    assert!(err.contains("{{item.new_name}}"), "{err}");
+    assert_eq!(names, vec!["renamed-a.txt"]);
 }

@@ -64,8 +64,10 @@ pub fn run_preview(
 
 /// Extract file previews from a completed pipeline result.
 ///
-/// Reads `originalFilename` / `newFilename` metadata set by the rename
-/// processor. Files without rename metadata show result name only.
+/// The original name comes from `originalFilename` metadata set by the rename
+/// processor; the result is always the file's final name. Metadata accumulates
+/// across nodes, so a rename's `newFilename` can be stale after a later node
+/// renames the file again (e.g. image-convert changing the extension).
 pub fn extract_previews(result: &PipelineResult) -> Vec<FilePreview> {
     result
         .files
@@ -78,16 +80,9 @@ pub fn extract_previews(result: &PipelineResult) -> Vec<FilePreview> {
                 .unwrap_or(&f.name)
                 .to_string();
 
-            let result_name = f
-                .metadata
-                .get("newFilename")
-                .and_then(|v| v.as_str())
-                .unwrap_or(&f.name)
-                .to_string();
-
             FilePreview {
                 original,
-                result: result_name,
+                result: f.name.clone(),
             }
         })
         .collect()
@@ -105,6 +100,24 @@ mod tests {
             duration_ms: 100,
             warnings: Vec::new(),
         }
+    }
+
+    #[test]
+    fn extract_previews_uses_the_final_name_over_a_stale_new_filename() {
+        // file-rename → image-convert: rename's newFilename survives, but the
+        // file's final name has the converted extension.
+        let mut metadata = serde_json::Map::new();
+        metadata.insert("originalFilename".into(), "IMG_1.png".into());
+        metadata.insert("newFilename".into(), "vacation.png".into());
+        let result = make_result(vec![bnto_core::pipeline::PipelineFileResult {
+            name: "vacation.webp".into(),
+            data: bnto_core::processor::FileData::Bytes(vec![]),
+            mime_type: "image/webp".into(),
+            metadata,
+        }]);
+        let previews = extract_previews(&result);
+        assert_eq!(previews[0].original, "IMG_1.png");
+        assert_eq!(previews[0].result, "vacation.webp");
     }
 
     #[test]

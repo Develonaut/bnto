@@ -25,7 +25,7 @@ A key may appear on one row only; rows with an empty key are skipped. Keys are c
 
 A file with no row is handled per `unmatched`:
 
-- `keep` (default): passes on flagged `unmatched: 1`. The CLI names those files after the run, on a dry run too, when nothing after the lookup replaces the file's metadata. Run the lookup on its own to list every file without a row.
+- `keep` (default): passes on flagged `unmatched: 1` (a matched file carries `unmatched: 0`). The CLI names those files after the run, on a dry run too. In a rename chain the rename fails on the first such file instead, so run the lookup on its own to list every file without a row.
 - `drop`: left out of the output.
 - `fail`: fails the run, naming the file.
 

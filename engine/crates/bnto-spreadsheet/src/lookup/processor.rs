@@ -62,7 +62,7 @@ impl NodeProcessor for SpreadsheetLookup {
 
         progress.report(50, "Looking up row...");
         let output = match table.get(lookup_key(&input.filename, params.match_on)) {
-            Some(row) => pass_through(input, row.clone()),
+            Some(row) => pass_through(input, matched_row(row)),
             None => no_row_output(input, &params)?,
         };
         progress.report(100, "Done");
@@ -85,6 +85,14 @@ fn lookup_key(filename: &str, match_on: MatchOn) -> &str {
         MatchOn::Path => filename,
         MatchOn::Filename => filename.rsplit('/').next().unwrap_or(filename),
     }
+}
+
+/// The row's columns, plus `unmatched: 0`. A file's metadata accumulates
+/// across nodes, so the 0 clears a flag an earlier lookup set.
+fn matched_row(row: &Row) -> Row {
+    let mut metadata = row.clone();
+    metadata.insert("unmatched".to_string(), 0.into());
+    metadata
 }
 
 fn unmatched_flag() -> Row {
@@ -179,7 +187,7 @@ mod tests {
         assert_eq!(file.metadata["pack"], "Guns");
         assert_eq!(file.metadata["name"], "Pack/sub/Glock 45 Mag Out 01.wav");
         assert_eq!(file.mime_type, "audio/wav");
-        assert!(!file.metadata.contains_key("unmatched"));
+        assert_eq!(file.metadata["unmatched"], 0);
     }
 
     #[test]

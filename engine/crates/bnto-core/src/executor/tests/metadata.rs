@@ -148,3 +148,136 @@ fn test_echo_processor_preserves_empty_metadata() {
         "Echo processor should produce empty metadata"
     );
 }
+
+// =========================================================================
+// Per-file metadata accumulates across nodes
+// =========================================================================
+
+fn file_carrying(name: &str, data: &[u8], metadata: serde_json::Value) -> PipelineFile {
+    PipelineFile {
+        metadata: metadata.as_object().unwrap().clone(),
+        ..make_file(name, data)
+    }
+}
+
+fn run_one_file(def_json: &str, file: PipelineFile) -> serde_json::Map<String, serde_json::Value> {
+    let def = parse_def(def_json);
+    let reporter = PipelineReporter::new_noop();
+    let result = execute_pipeline(
+        &def,
+        vec![file],
+        &mock_registry(),
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap();
+    result.files.into_iter().next().unwrap().metadata
+}
+
+const ECHO: &str = r#"{
+    "settings": { "iteration": "auto" },
+    "nodes": [
+        { "id": "in", "type": "input" },
+        { "id": "proc", "type": "test-echo" },
+        { "id": "out", "type": "output" }
+    ]
+}"#;
+
+const COMPRESS: &str = r#"{
+    "settings": { "iteration": "auto" },
+    "nodes": [
+        { "id": "in", "type": "input" },
+        { "id": "proc", "type": "test-metadata" },
+        { "id": "out", "type": "output" }
+    ]
+}"#;
+
+#[test]
+fn test_a_node_that_attaches_nothing_keeps_the_files_metadata() {
+    let meta = run_one_file(
+        ECHO,
+        file_carrying("a.txt", b"a", serde_json::json!({ "row": "r1" })),
+    );
+    assert_eq!(meta["row"], "r1");
+}
+
+#[test]
+fn test_a_node_adds_its_metadata_to_what_the_file_carries() {
+    let file = file_carrying("a.jpg", &[0u8; 100], serde_json::json!({ "pack": "Guns" }));
+    let meta = run_one_file(COMPRESS, file);
+    assert_eq!(meta["pack"], "Guns");
+    assert_eq!(meta["compressedSize"], 50);
+}
+
+#[test]
+fn test_a_nodes_value_wins_a_shared_key() {
+    let file = file_carrying(
+        "a.jpg",
+        &[0u8; 100],
+        serde_json::json!({ "originalSize": 7 }),
+    );
+    assert_eq!(run_one_file(COMPRESS, file)["originalSize"], 100);
+}
+
+#[test]
+fn test_metadata_accumulates_inside_a_loop() {
+    let def = r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [
+                    { "id": "proc", "type": "test-metadata" },
+                    { "id": "echo", "type": "test-echo" }
+                ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#;
+    let file = file_carrying("a.jpg", &[0u8; 100], serde_json::json!({ "row": "r1" }));
+    let meta = run_one_file(def, file);
+    assert_eq!(meta["row"], "r1");
+    assert_eq!(meta["compressedSize"], 50);
+}
+
+#[test]
+fn test_a_batch_node_does_not_inherit_yet() {
+    // Batch input carries no metadata today, so a batch node's output starts
+    // fresh. Pins the current limit until batch input carries metadata.
+    let def = r#"{
+        "settings": { "iteration": "auto" },
+        "nodes": [
+            { "id": "in", "type": "input" },
+            { "id": "batch", "type": "test-batch" },
+            { "id": "out", "type": "output" }
+        ]
+    }"#;
+    let meta = run_one_file(
+        def,
+        file_carrying("a.txt", b"a", serde_json::json!({ "row": "r1" })),
+    );
+    assert!(!meta.contains_key("row"), "{meta:?}");
+}
+
+#[test]
+fn test_inside_a_loop_a_childs_value_still_wins_on_the_file() {
+    // The loop item wins for {{item.*}} reads; the file's own metadata keeps
+    // what the child set.
+    let def = r#"{
+        "nodes": [
+            { "id": "in", "type": "input" },
+            {
+                "id": "loop-1", "type": "loop",
+                "children": [ { "id": "proc", "type": "test-metadata" } ]
+            },
+            { "id": "out", "type": "output" }
+        ]
+    }"#;
+    let file = file_carrying(
+        "a.jpg",
+        &[0u8; 100],
+        serde_json::json!({ "originalSize": 7 }),
+    );
+    assert_eq!(run_one_file(def, file)["originalSize"], 100);
+}
