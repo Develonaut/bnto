@@ -122,23 +122,59 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     Ok(())
 }
 
+type Params = serde_json::Map<String, serde_json::Value>;
+type FieldValues = std::collections::BTreeMap<String, serde_json::Value>;
+
+/// A node's `{{fields.*}}` values. They don't vary per file, so compute once.
+fn node_field_values(node: PipelineNodeRef) -> FieldValues {
+    if node.fields.is_empty() {
+        return FieldValues::new();
+    }
+    super::resolve::collect_field_values(&node.fields, &FieldValues::new())
+}
+
 /// Resolve all template namespaces in node params (fields, env, ctx, node, item).
+/// `item` is the `{{item.*}}` source for this resolution.
+fn resolve_with<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    node: PipelineNodeRef,
+    field_values: &FieldValues,
+    item: &Option<Params>,
+) -> Params {
+    let tpl_ctx = super::template::TemplateContext {
+        field_values,
+        process_ctx: ctx.process_ctx,
+        node_outputs: &ctx.node_outputs,
+        loop_item: item,
+    };
+    super::template::resolve_templates(&node.params, &tpl_ctx)
+}
+
+/// Resolve a node's params once, against the enclosing loop's item.
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
-) -> serde_json::Map<String, serde_json::Value> {
-    let field_values = if node.fields.is_empty() {
-        std::collections::BTreeMap::new()
-    } else {
-        super::resolve::collect_field_values(&node.fields, &std::collections::BTreeMap::new())
-    };
-    let tpl_ctx = super::template::TemplateContext {
-        field_values: &field_values,
-        process_ctx: ctx.process_ctx,
-        node_outputs: &ctx.node_outputs,
-        loop_item: &ctx.loop_item,
-    };
-    super::template::resolve_templates(&node.params, &tpl_ctx)
+) -> Params {
+    resolve_with(ctx, node, &node_field_values(node), &ctx.loop_item)
+}
+
+/// The `{{item.*}}` source for one file: the file's own metadata (what the
+/// node before attached), under the innermost loop's item. The loop item wins
+/// a shared key, so a loop over CSV rows keeps reading its row's columns.
+fn file_item(loop_item: &Option<Params>, file: &PipelineFile) -> Option<Params> {
+    if file.metadata.is_empty() {
+        return loop_item.clone();
+    }
+    let mut item = file.metadata.clone();
+    if let Some(loop_item) = loop_item {
+        item.extend(loop_item.clone());
+    }
+    Some(item)
+}
+
+/// True when any param references `{{item.*}}`, so it must resolve per file.
+fn mentions_item(params: &Params) -> bool {
+    params.values().any(|v| v.to_string().contains("{{item."))
 }
 
 /// Execute a primitive (leaf) node on a batch of files.
@@ -153,37 +189,45 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     let processor = resolve_processor(ctx, node)?;
-    let cardinality = processor.metadata().input_cardinality;
-    let local_file_count = files.len();
-    let resolved_params = resolve_node_params(ctx, node);
-
-    match cardinality {
+    match processor.metadata().input_cardinality {
         InputCardinality::Batch => {
-            process_batch(ctx, processor, node, &resolved_params, files, file_offset)
+            let params = resolve_node_params(ctx, node);
+            process_batch(ctx, processor, node, &params, files, file_offset)
         }
         InputCardinality::Source => {
-            process_source(ctx, processor, node, &resolved_params, file_offset)
+            let params = resolve_node_params(ctx, node);
+            process_source(ctx, processor, node, &params, file_offset)
         }
-        InputCardinality::PerFile => {
-            let mut output_files: Vec<PipelineFile> = Vec::with_capacity(local_file_count);
-            for (file_index, file) in files.into_iter().enumerate() {
-                process_single_file(
-                    ctx,
-                    processor,
-                    &node.id,
-                    &resolved_params,
-                    file,
-                    file_offset + file_index,
-                    &mut output_files,
-                )?;
-            }
-            Ok(NodeExecutionResult {
-                files_processed: local_file_count,
-                output_files,
-                warnings: Vec::new(),
-            })
-        }
+        InputCardinality::PerFile => process_per_file(ctx, processor, node, files, file_offset),
     }
+}
+
+/// Run a per-file processor on each file. Params that reference `{{item.*}}`
+/// resolve per file against that file's item; others resolve once.
+fn process_per_file<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    processor: &dyn crate::processor::NodeProcessor,
+    node: PipelineNodeRef,
+    files: Vec<PipelineFile>,
+    file_offset: usize,
+) -> Result<NodeExecutionResult, BntoError> {
+    let file_count = files.len();
+    let field_values = node_field_values(node);
+    let shared = (!mentions_item(&node.params))
+        .then(|| resolve_with(ctx, node, &field_values, &ctx.loop_item));
+    let mut output_files = Vec::with_capacity(file_count);
+    for (i, file) in files.into_iter().enumerate() {
+        let params = shared.clone().unwrap_or_else(|| {
+            resolve_with(ctx, node, &field_values, &file_item(&ctx.loop_item, &file))
+        });
+        let (id, index) = (&node.id, file_offset + i);
+        process_single_file(ctx, processor, id, &params, file, index, &mut output_files)?;
+    }
+    Ok(NodeExecutionResult {
+        files_processed: file_count,
+        output_files,
+        warnings: Vec::new(),
+    })
 }
 
 /// Run a source processor once with empty input data.

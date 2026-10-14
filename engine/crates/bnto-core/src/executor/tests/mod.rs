@@ -343,6 +343,7 @@ mod auto_iteration;
 mod basic;
 mod containers;
 mod errors;
+mod item_templates;
 mod metadata;
 mod progress;
 mod recipes;
