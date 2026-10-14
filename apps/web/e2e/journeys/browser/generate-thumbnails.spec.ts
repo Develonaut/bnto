@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import { test, expect } from "../../fixtures";
 import {
@@ -21,6 +22,13 @@ import {
 
 test.use({ expectedErrors: ["CONVEX_UNAUTH"] });
 
+/** Bytes as the results list formats them (decimal, k=1000, one decimal). */
+function formatBytes(bytes: number): string {
+  const units = ["B", "KB", "MB", "GB"];
+  const i = bytes === 0 ? 0 : Math.floor(Math.log(bytes) / Math.log(1000));
+  return `${parseFloat((bytes / Math.pow(1000, i)).toFixed(1))} ${units[i]}`;
+}
+
 test.describe("generate-thumbnails — browser execution @browser", () => {
   test("single JPEG: resize + convert + rename lifecycle, verify dimensions", async ({ page }) => {
     await navigateToRecipe(page, "generate-thumbnails", "Generate Thumbnails Online Free");
@@ -40,6 +48,10 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     });
 
     assertWebPBytes(buffer);
+
+    // "Original" is the uploaded photo, not the resized image convert saw.
+    const uploadBytes = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "small.jpg")).size;
+    await expect(outputFile.getByTestId("original-size")).toHaveText(formatBytes(uploadBytes));
 
     // Verify thumbnail dimensions — default resize is 150px width
     // small.jpg is 100x100, so resized width clamps to 100 (smaller than target)
