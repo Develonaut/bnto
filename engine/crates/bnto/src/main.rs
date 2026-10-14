@@ -31,6 +31,7 @@ mod launch;
 mod list;
 pub mod logging;
 mod migrate;
+mod overwrite;
 mod package_manager;
 mod process_registry;
 mod progress;

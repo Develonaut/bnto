@@ -120,7 +120,8 @@ pub fn write_results_with_mode(
                 count: result.files.len(),
             })
         }
-        "overwrite" => overwrite_in_place(result, dry_run),
+        "overwrite" => crate::overwrite::overwrite_in_place(result, dry_run)
+            .map(|count| WriteOutcome::Overwritten { count }),
         "message" => {
             let summary = if result.files.is_empty() {
                 "No output files produced.".to_string()
@@ -132,46 +133,6 @@ pub fn write_results_with_mode(
         }
         _ => Ok(WriteOutcome::None),
     }
-}
-
-/// Rename source files in place — the file at `FileData::Path(src)` gets
-/// renamed to the pipeline's output filename in the same directory.
-fn overwrite_in_place(result: &PipelineResult, dry_run: bool) -> Result<WriteOutcome, String> {
-    use bnto_core::processor::FileData;
-
-    let mut count = 0;
-    for file in &result.files {
-        let FileData::Path(src) = &file.data else {
-            return Err("Overwrite mode requires FileData::Path (CLI-only). \
-                 Cannot overwrite in-memory data."
-                .to_string());
-        };
-
-        // Derive the target filename (strip any directory separators — only leaf name matters).
-        let leaf_name = Path::new(&file.name)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or(&file.name);
-
-        // Target lives in the same directory as the source file.
-        let src_dir = src.parent().unwrap_or(Path::new("."));
-        let dest = src_dir.join(leaf_name);
-
-        // No-op if source and dest are the same path.
-        if src == &dest {
-            count += 1;
-            continue;
-        }
-
-        if !dry_run {
-            std::fs::rename(src, &dest).map_err(|e| {
-                format!("Cannot rename {} → {}: {e}", src.display(), dest.display())
-            })?;
-        }
-        count += 1;
-    }
-
-    Ok(WriteOutcome::Overwritten { count })
 }
 
 /// Names of result files that `file-copy` left because the destination copy
