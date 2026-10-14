@@ -13,6 +13,7 @@ import { imageCompressParamsSchema } from "./generated/schemas/imageCompress";
 import { imageResizeParamsSchema } from "./generated/schemas/imageResize";
 import { IMAGE_FORMATS } from "./generated/enumConstants";
 import { spreadsheetCleanParamsSchema } from "./generated/schemas/spreadsheetClean";
+import { spreadsheetExportParamsSchema } from "./generated/schemas/spreadsheetExport";
 import { spreadsheetLookupParamsSchema } from "./generated/schemas/spreadsheetLookup";
 import { fileRenameParamsSchema } from "./generated/schemas/fileRename";
 import { imageOverlayParamsSchema } from "./generated/schemas/imageOverlay";
@@ -88,6 +89,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-read")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-lookup")).toBe(true);
+    expect(PROCESSOR_MAP.has("spreadsheet-export")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-optimize")).toBe(true);
     expect(PROCESSOR_MAP.has("vector-rasterize")).toBe(true);
   });
@@ -98,6 +100,7 @@ describe("catalog structure", () => {
       "file-collect",
       "file-copy",
       "shell-command",
+      "spreadsheet-export",
       "spreadsheet-lookup",
     ]);
     for (const proc of PROCESSORS) {
@@ -135,6 +138,16 @@ describe("engine defaults flow through to schemas", () => {
     expect(zodTrimDefault).toBe(engineDefaults.trimWhitespace);
     expect(zodEmptyDefault).toBe(engineDefaults.removeEmptyRows);
     expect(zodDedupDefault).toBe(engineDefaults.removeDuplicates);
+  });
+
+  it("spreadsheet-export defaults match engine", () => {
+    const engineDefaults = getProcessorDefaults("spreadsheet-export");
+    expect(spreadsheetExportParamsSchema.shape.overwrite.parse(undefined)).toBe(
+      engineDefaults.overwrite,
+    );
+    expect(spreadsheetExportParamsSchema.shape.name_column.parse(undefined)).toBe(
+      engineDefaults.name_column,
+    );
   });
 
   it("spreadsheet-lookup defaults match engine", () => {

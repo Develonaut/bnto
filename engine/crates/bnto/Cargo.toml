@@ -44,4 +44,5 @@ ctrlc = { workspace = true }
 libc = { workspace = true }
 
 [dev-dependencies]
+csv = { workspace = true }
 filetime = { workspace = true }

@@ -76,6 +76,10 @@ pub fn create_registry() -> NodeRegistry {
         registry.register("file-collect", Box::new(bnto_file::FileCollect::new()));
         registry.register("file-copy", Box::new(bnto_file::FileCopy::new()));
         registry.register(
+            "spreadsheet-export",
+            Box::new(bnto_spreadsheet::SpreadsheetExport::new()),
+        );
+        registry.register(
             "spreadsheet-lookup",
             Box::new(bnto_spreadsheet::SpreadsheetLookup::new()),
         );
@@ -159,9 +163,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (15) + file-collect + file-copy + spreadsheet-lookup
-        // + shell-command (4) = 19
-        assert_eq!(registry.len(), 19);
+        // Full registry = browser (15) + file-collect + file-copy + spreadsheet-export
+        // + spreadsheet-lookup + shell-command (5) = 20
+        assert_eq!(registry.len(), 20);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),

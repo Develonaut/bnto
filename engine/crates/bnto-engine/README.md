@@ -34,6 +34,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `file-metadata`       | `bnto-file`        | `FileMetadata`       |
 | `file-collect`        | `bnto-file`        | `FileCollect`        |
 | `file-copy`           | `bnto-file`        | `FileCopy`           |
+| `spreadsheet-export`  | `bnto-spreadsheet` | `SpreadsheetExport`  |
 | `spreadsheet-lookup`  | `bnto-spreadsheet` | `SpreadsheetLookup`  |
 | `spreadsheet-read`    | `bnto-spreadsheet` | `ReadSpreadsheet`    |
 | `shell-command`       | `bnto-shell`       | `ShellCommand`       |

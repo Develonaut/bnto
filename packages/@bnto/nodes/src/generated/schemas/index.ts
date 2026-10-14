@@ -30,6 +30,8 @@ export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spre
 export type { SpreadsheetCleanParams } from "./spreadsheetClean";
 export { spreadsheetConvertParamsSchema, spreadsheetConvertNodeSchema } from "./spreadsheetConvert";
 export type { SpreadsheetConvertParams } from "./spreadsheetConvert";
+export { spreadsheetExportParamsSchema, spreadsheetExportNodeSchema } from "./spreadsheetExport";
+export type { SpreadsheetExportParams } from "./spreadsheetExport";
 export { spreadsheetLookupParamsSchema, spreadsheetLookupNodeSchema } from "./spreadsheetLookup";
 export type { SpreadsheetLookupParams } from "./spreadsheetLookup";
 export { spreadsheetMergeParamsSchema, spreadsheetMergeNodeSchema } from "./spreadsheetMerge";

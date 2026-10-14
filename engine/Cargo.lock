@@ -154,6 +154,7 @@ dependencies = [
  "clap",
  "colored",
  "crossterm",
+ "csv",
  "ctrlc",
  "dirs",
  "filetime",

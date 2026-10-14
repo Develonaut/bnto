@@ -1,10 +1,10 @@
 # bnto-spreadsheet
 
-Spreadsheet processing nodes. Clean, convert, merge, look up, read, and rename columns.
+Spreadsheet processing nodes. Clean, convert, export, merge, look up, read, and rename columns.
 
 ## Overview
 
-`bnto-spreadsheet` provides six `NodeProcessor` implementations for spreadsheet work. Uses the pure-Rust `csv` crate for parsing and writing. Runs in the browser via WASM or natively for desktop/CLI; `spreadsheet-lookup` is native-only because it reads its table from disk.
+`bnto-spreadsheet` provides seven `NodeProcessor` implementations for spreadsheet work. Uses the pure-Rust `csv` crate for parsing and writing. Runs in the browser via WASM or natively for desktop/CLI; `spreadsheet-lookup` and `spreadsheet-export` are native-only because they read or write a file on disk.
 
 ## Processors
 
@@ -12,6 +12,7 @@ Spreadsheet processing nodes. Clean, convert, merge, look up, read, and rename c
 | ------------------- | --------------------- | ------------------------------------------------------------------------------ | ------------ |
 | `CleanSpreadsheet`  | `spreadsheet-clean`   | Remove empty rows, trim whitespace, deduplicate rows (each configurable)       | browser, cli |
 | `ConvertFormat`     | `spreadsheet-convert` | Convert CSV to JSON                                                            | browser, cli |
+| `SpreadsheetExport` | `spreadsheet-export`  | Write the files passing through, with their metadata, as one CSV row each      | cli          |
 | `SpreadsheetLookup` | `spreadsheet-lookup`  | Attach the CSV row whose key matches each file's name to that file as metadata | cli          |
 | `MergeSpreadsheets` | `spreadsheet-merge`   | Merge multiple CSV files into one                                              | browser, cli |
 | `RenameColumns`     | `spreadsheet-rename`  | Rename columns via a map of `oldName → newName`                                | browser, cli |
@@ -41,6 +42,18 @@ file-collect (flatten: false) → spreadsheet-lookup (key_column: new_name, matc
   → file-rename (pattern: "{{item.name}}") → output (mode: overwrite)
 ```
 
+## Exporting Items
+
+`spreadsheet-export` writes the files passing through as a CSV at `path` and passes them on unchanged; it never reads file content. One row per file: `name_column` (default `file`) holds the file's pipeline name, then every metadata key seen across the files, in the order first seen (alphabetical within one file), with an empty cell where a file lacks a key. Arrays and objects are written as JSON. It's a batch node, so it writes once per run, and the run output names the path and row count.
+
+- **The folder must exist**, and a relative `path` resolves against the current directory. Keep the CSV outside a folder the recipe collects, or the next run collects it too.
+- **An existing file is kept** and fails the run, since it may be an earlier run's record; set `overwrite` to replace it. The CSV is written to a temporary file and renamed into place, so an interrupted write never leaves half a record.
+- **A dry run writes it too**: it's a report, not a change to the files, and the run output says "(dry run)".
+- **It records what the run planned.** It runs before `output`, so if `output` fails partway, the CSV lists renames that didn't all land.
+- Names that start with `=`, `+`, `-` or `@` may open as formulas in a spreadsheet app; the CSV keeps them as written so bnto reads them back exactly.
+
+After `spreadsheet-lookup` and `file-rename`, the CSV is the run's record: each file's new name (`file`), the row's columns (`name`, `new_name`, …) and `unmatched`. It drives the undo: `spreadsheet-lookup` with `table` set to the record, `key_column: file` and `match_on: filename`, then `file-rename` with `pattern: "{{item.name}}"`. An undo that also exports needs another `name_column`, since its files carry the record's `file` column.
+
 ## Directory Structure
 
 ```
@@ -48,6 +61,11 @@ src/
 ├── lib.rs              # Public exports
 ├── clean.rs            # CleanSpreadsheet processor + metadata
 ├── convert.rs          # ConvertFormat processor + metadata
+├── export/             # SpreadsheetExport processor (spreadsheet-export)
+│   ├── mod.rs              # Module wiring + re-export
+│   ├── processor.rs        # NodeProcessor impl, CSV write, pass-through
+│   ├── params.rs           # Parameter schema and typed reads
+│   └── table.rs            # Header union and row building
 ├── lookup/             # SpreadsheetLookup processor (spreadsheet-lookup)
 │   ├── mod.rs              # Module wiring + re-export
 │   ├── processor.rs        # NodeProcessor impl, unmatched handling
