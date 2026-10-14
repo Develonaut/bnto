@@ -127,8 +127,8 @@ pub use metadata::{
     all_node_types, io_container::io_container_param_defs, node_type_params,
 };
 pub use pipeline::{
-    InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
-    PipelineResult, PipelineSettings, first_processing_node_id, resolve_input_mode,
+    INPUT_SIZE_KEY, InputMode, IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult,
+    PipelineNode, PipelineResult, PipelineSettings, first_processing_node_id, resolve_input_mode,
     resolve_output_directory, resolve_output_mode,
 };
 pub use processor::{BatchFile, BatchInput, NodeProcessor};

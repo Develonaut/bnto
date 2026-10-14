@@ -1,4 +1,5 @@
 import type { BrowserFileResult } from "../types/browser";
+import { getOriginalSize } from "./getOriginalSize";
 
 /**
  * Sum the bytes saved across a set of browser execution results.
@@ -7,7 +8,7 @@ import type { BrowserFileResult } from "../types/browser";
  */
 function computeTotalSaved(results: BrowserFileResult[]): number {
   return results.reduce((acc, r) => {
-    const orig = r.metadata.originalSize as number | undefined;
+    const orig = getOriginalSize(r.metadata);
     return orig != null ? acc + (orig - r.blob.size) : acc;
   }, 0);
 }

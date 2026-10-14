@@ -11,12 +11,20 @@ pub struct FileResultMeta {
 }
 
 /// Extract per-file metadata (original size) from the engine's PipelineResult.
+/// A size is shown only when a node reported one (`originalSize`), and is
+/// then the file's size as it entered the pipeline when known: a middle
+/// step's `originalSize` is that step's input, not the user's file.
 pub fn extract_file_metadata(result: &bnto_core::pipeline::PipelineResult) -> Vec<FileResultMeta> {
     result
         .files
         .iter()
         .map(|f| {
-            let original_size = f.metadata.get("originalSize").and_then(|v| v.as_u64());
+            let reported = f.metadata.get("originalSize").and_then(|v| v.as_u64());
+            let input = f
+                .metadata
+                .get(bnto_core::INPUT_SIZE_KEY)
+                .and_then(|v| v.as_u64());
+            let original_size = reported.map(|r| input.unwrap_or(r));
             FileResultMeta {
                 name: f.name.clone(),
                 original_size,

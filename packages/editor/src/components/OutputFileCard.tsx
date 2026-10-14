@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { getPercentSmaller } from "@bnto/core";
 import type { BrowserFileResult } from "@bnto/core";
 import {
   Button,
@@ -43,7 +44,7 @@ function OutputFileCard({ result, onDownload }: OutputFileCardProps) {
 }
 
 function OutputFileInfo({ result }: { result: BrowserFileResult }) {
-  const { originalSize, compressionRatio } = result.metadata;
+  const percentSmaller = getPercentSmaller(result);
   return (
     <Row className="min-w-0 flex-1 gap-3">
       <IconBadge variant="primary" size="lg">
@@ -53,9 +54,7 @@ function OutputFileInfo({ result }: { result: BrowserFileResult }) {
         <span className="truncate text-sm font-semibold">{result.filename}</span>
         <span className="truncate text-xs text-muted-foreground">
           {formatFileSize(result.blob.size)}
-          {originalSize != null && compressionRatio != null && (
-            <span> &middot; {Math.round(compressionRatio)}% smaller</span>
-          )}
+          {percentSmaller != null && <span> &middot; {percentSmaller}% smaller</span>}
         </span>
       </Stack>
     </Row>

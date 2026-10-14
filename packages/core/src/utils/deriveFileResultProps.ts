@@ -1,4 +1,5 @@
 import type { BrowserFileResult } from "../types/browser";
+import { getOriginalSize } from "./getOriginalSize";
 import { parseFilename } from "./parseFilename";
 
 interface FileResultDisplay {
@@ -16,7 +17,7 @@ interface FileResultDisplay {
  * FileList consumers need except the download callback (which is consumer-specific).
  */
 function deriveFileResultProps(result: BrowserFileResult): FileResultDisplay {
-  const origBytes = result.metadata.originalSize as number | undefined;
+  const origBytes = getOriginalSize(result.metadata);
   const outputBytes = result.blob.size;
 
   const hasOriginal = origBytes != null;

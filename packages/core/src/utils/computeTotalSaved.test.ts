@@ -29,6 +29,12 @@ describe("computeTotalSaved", () => {
     expect(computeTotalSaved(results)).toBe(0);
   });
 
+  it("measures savings against the uploaded file when its size is known", () => {
+    const result = makeResult(200, 300);
+    result.metadata.inputSize = 1000;
+    expect(computeTotalSaved([result])).toBe(800);
+  });
+
   it("skips results without originalSize and sums the rest", () => {
     const results = [
       makeResult(600, 1000), // saved 400

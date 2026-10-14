@@ -159,8 +159,26 @@ pub struct PipelineFile {
     /// Metadata from the processor that created this file.
     /// Carries through the pipeline so the final result includes
     /// stats like compression ratio, original size, etc.
-    /// Empty for files that haven't been processed yet (inputs).
+    /// An input file carries only its [`INPUT_SIZE_KEY`] (see [`PipelineFile::input`]).
     pub metadata: serde_json::Map<String, serde_json::Value>,
+}
+
+/// Metadata key holding a file's size in bytes as it entered the pipeline, so
+/// result views compare against the upload rather than a middle step's input.
+pub const INPUT_SIZE_KEY: &str = "inputSize";
+
+impl PipelineFile {
+    /// An input file of in-memory bytes, its size recorded under [`INPUT_SIZE_KEY`].
+    pub fn input(name: String, data: Vec<u8>, mime_type: String) -> Self {
+        let mut metadata = serde_json::Map::new();
+        metadata.insert(INPUT_SIZE_KEY.to_string(), data.len().into());
+        Self {
+            name,
+            data: crate::processor::FileData::Bytes(data),
+            mime_type,
+            metadata,
+        }
+    }
 }
 
 /// A single output file produced by the pipeline.
@@ -358,6 +376,13 @@ mod tests {
 
     fn parse_definition(json: &str) -> PipelineDefinition {
         serde_json::from_str(json).unwrap()
+    }
+
+    #[test]
+    fn test_input_file_records_its_size() {
+        let file = PipelineFile::input("a.jpg".into(), vec![0u8; 42], "image/jpeg".into());
+        assert_eq!(file.metadata[INPUT_SIZE_KEY], 42);
+        assert_eq!(file.metadata.len(), 1);
     }
 
     // --- Deserialization Tests ---

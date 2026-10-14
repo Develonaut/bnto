@@ -292,6 +292,33 @@ mod tests {
         assert_eq!(meta[0].original_size, Some(780_000));
     }
 
+    fn result_with(metadata: serde_json::Value) -> bnto_core::pipeline::PipelineResult {
+        bnto_core::pipeline::PipelineResult {
+            files: vec![bnto_core::pipeline::PipelineFileResult {
+                name: "thumb.webp".into(),
+                data: FileData::Bytes(vec![]),
+                mime_type: "image/webp".into(),
+                metadata: metadata.as_object().unwrap().clone(),
+            }],
+            duration_ms: 100,
+            warnings: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn extract_metadata_prefers_the_input_size() {
+        // resize → convert: convert's originalSize is the resized image.
+        let result = result_with(serde_json::json!({ "originalSize": 300, "inputSize": 900 }));
+        assert_eq!(extract_file_metadata(&result)[0].original_size, Some(900));
+    }
+
+    #[test]
+    fn extract_metadata_ignores_an_input_size_alone() {
+        // No node reported sizes (a rename), so no comparison is shown.
+        let result = result_with(serde_json::json!({ "inputSize": 900 }));
+        assert_eq!(extract_file_metadata(&result)[0].original_size, None);
+    }
+
     #[test]
     fn extract_metadata_handles_missing() {
         let result = bnto_core::pipeline::PipelineResult {

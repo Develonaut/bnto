@@ -58,6 +58,8 @@ export { stashFilesForTransfer, claimTransferredFiles } from "./fileTransfer";
 // ── Utils (pure functions) ────────────────────────────────────────────────
 export { computeTotalSaved } from "./utils/computeTotalSaved";
 export { deriveFileResultProps } from "./utils/deriveFileResultProps";
+export { getOriginalSize } from "./utils/getOriginalSize";
+export { getPercentSmaller } from "./utils/getPercentSmaller";
 export { bucketFileSize } from "./lib/bucketFileSize";
 export { categorizeError } from "./lib/categorizeError";
 export type { FileResultDisplay } from "./utils/deriveFileResultProps";

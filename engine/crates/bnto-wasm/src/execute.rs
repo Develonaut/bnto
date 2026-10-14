@@ -130,12 +130,7 @@ fn extract_single_file(file_obj: &JsValue, index: u32) -> Result<PipelineFile, J
         .and_then(|v| v.as_string())
         .unwrap_or_else(|| "application/octet-stream".to_string());
 
-    Ok(PipelineFile {
-        name,
-        data: bnto_core::processor::FileData::Bytes(data),
-        mime_type,
-        metadata: serde_json::Map::new(),
-    })
+    Ok(PipelineFile::input(name, data, mime_type))
 }
 
 #[cfg(test)]
