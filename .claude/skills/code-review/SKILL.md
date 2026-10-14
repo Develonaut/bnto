@@ -164,6 +164,7 @@ Skip if no styling/animation changes.
 Skip if no Rust files changed.
 
 - [ ] **Bento Box**: One concept per file/module, one purpose per function
+- [ ] **Generic nodes**: A new node or param is a single-purpose, generic building block, not use-case logic added to an existing node. A param that reshapes the node "when X is set" is a second node. See [generic-building-block-nodes.md](../../decisions/generic-building-block-nodes.md)
 - [ ] **Error handling**: `Result<T, E>` used. No bare `.unwrap()` — use `?` or descriptive `.expect()`
 - [ ] **Parameter contract**: Every param in `metadata()` read and used in ALL `process()` code paths
 - [ ] **Shared encoding**: Image processors use `encode::encode_image()`, not custom encode functions
