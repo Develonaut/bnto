@@ -22,6 +22,7 @@ path = "src/main.rs"
 [dependencies]
 bnto-core = { path = "../bnto-core", version = "0.2.0" }
 bnto-engine = { path = "../bnto-engine", version = "0.2.0", features = ["native"] }
+bnto-file = { path = "../bnto-file", version = "0.2.0" }
 bnto-shell = { path = "../bnto-shell", version = "0.2.0" }
 tonkotsu = { path = "../tonkotsu", version = "0.1.1" }
 clap = { workspace = true }
@@ -36,7 +37,6 @@ tempfile = { workspace = true }
 toml = { workspace = true }
 ureq = { workspace = true }
 uuid = { workspace = true }
-same-file = { workspace = true }
 sha2 = { workspace = true }
 ctrlc = { workspace = true }
 

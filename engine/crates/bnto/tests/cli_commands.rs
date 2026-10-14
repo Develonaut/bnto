@@ -1324,3 +1324,94 @@ fn test_export_record_drives_the_undo() {
         "kick"
     );
 }
+
+// --- File Move ---
+
+const SUBJECT_ROWS: &str = "Pack/sub/Glock 45 Mag Out 01.wav,Pistol/Mag/GUNMech_Glock 01.wav,GUNMech\n\
+                            Pack/Kick 01.wav,Drums/Kick/DRUMKick_Kick 01.wav,DRUMKick\n";
+
+fn move_param(lib: &std::path::Path) -> String {
+    format!("move:destination={}", lib.to_str().unwrap())
+}
+
+#[test]
+fn test_move_sorts_files_into_a_subject_tree_and_undoes_from_the_same_table() {
+    // Guards: collect → lookup → rename `{{item.new_name}}` → file-move puts
+    // each file at its row's path under the collected folder, and the same
+    // table read the other way (key new_name, `{{item.name}}`) puts it back.
+    let (_root, lib, table) = lookup_fixture(SUBJECT_ROWS);
+    let forward = [table_param(&table), move_param(&lib)];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &forward, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pistol/Mag/GUNMech_Glock 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Drums/Kick/DRUMKick_Kick 01.wav")).unwrap(),
+        "kick"
+    );
+    assert!(!lib.join("Pack/Kick 01.wav").exists());
+    assert!(stderr.contains("Moved 2 files"), "stderr: {stderr}");
+
+    let undo = [
+        table_param(&table),
+        "lookup:key_column=new_name".to_string(),
+        "rename:pattern={{item.name}}".to_string(),
+        move_param(&lib),
+    ];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &undo, false);
+    assert!(ok, "stderr: {stderr}");
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/sub/Glock 45 Mag Out 01.wav")).unwrap(),
+        "glock"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.join("Pack/Kick 01.wav")).unwrap(),
+        "kick"
+    );
+    assert!(!lib.join("Drums/Kick/DRUMKick_Kick 01.wav").exists());
+}
+
+#[test]
+fn test_move_dry_run_moves_nothing() {
+    let (_root, lib, table) = lookup_fixture(SUBJECT_ROWS);
+    let params = [table_param(&table), move_param(&lib)];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, true);
+    assert!(ok, "stderr: {stderr}");
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+    assert!(!lib.join("Drums").exists(), "dry run created a folder");
+}
+
+#[test]
+fn test_move_refuses_two_files_onto_one_path_and_moves_nothing() {
+    // Guards: #571's check covers moves; the whole run is refused, dry run too.
+    let rows = "Pack/sub/Glock 45 Mag Out 01.wav,Pistol/same.wav,GUNMech\n\
+                Pack/Kick 01.wav,Pistol/same.wav,DRUMKick\n";
+    let (_root, lib, table) = lookup_fixture(rows);
+    let params = [table_param(&table), move_param(&lib)];
+    for dry_run in [true, false] {
+        let (ok, stderr) =
+            run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, dry_run);
+        assert!(!ok, "dry_run={dry_run} stderr: {stderr}");
+        assert!(
+            stderr.contains("File move refused, nothing moved"),
+            "stderr: {stderr}"
+        );
+    }
+    assert!(lib.join("Pack/Kick 01.wav").exists());
+    assert!(!lib.join("Pistol").exists());
+}
+
+#[test]
+fn test_move_refuses_a_path_out_of_the_destination() {
+    let rows = "Pack/sub/Glock 45 Mag Out 01.wav,Pistol/a.wav,GUNMech\n\
+                Pack/Kick 01.wav,../escaped.wav,DRUMKick\n";
+    let (root, lib, table) = lookup_fixture(rows);
+    let params = [table_param(&table), move_param(&lib)];
+    let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename-move", &lib, &params, false);
+    assert!(!ok, "stderr: {stderr}");
+    assert!(stderr.contains("\"..\""), "stderr: {stderr}");
+    assert!(!root.path().join("escaped.wav").exists());
+    assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
+}
