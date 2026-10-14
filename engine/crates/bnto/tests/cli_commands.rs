@@ -1045,6 +1045,47 @@ fn test_migrate_directory() {
     );
 }
 
+// --- Output: overwrite ---
+
+fn run_overwrite_rename(lib: &std::path::Path, pattern: &str, dry_run: bool) -> (bool, String) {
+    let pattern_param = format!("rename:pattern={pattern}");
+    let mut cmd = Command::new(bnto_bin());
+    cmd.args(["run", &custom_recipe_path("file-rename-overwrite")])
+        .arg(lib)
+        .args(["--yes", "-p", &pattern_param]);
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    let output = cmd.output().unwrap();
+    (
+        output.status.success(),
+        String::from_utf8_lossy(&output.stderr).to_string(),
+    )
+}
+
+#[test]
+fn test_overwrite_refuses_two_files_onto_one_name_and_renames_nothing() {
+    // Guards: before the plan check, the second rename silently replaced the
+    // first file.
+    let lib = temp_output_dir();
+    std::fs::write(lib.path().join("a.wav"), "A").unwrap();
+    std::fs::write(lib.path().join("b.wav"), "B").unwrap();
+    for dry_run in [true, false] {
+        let (ok, stderr) = run_overwrite_rename(lib.path(), "same.{{ext}}", dry_run);
+        assert!(!ok, "dry_run={dry_run} stderr: {stderr}");
+        assert!(stderr.contains("Overwrite refused"), "stderr: {stderr}");
+    }
+    assert_eq!(
+        std::fs::read_to_string(lib.path().join("a.wav")).unwrap(),
+        "A"
+    );
+    assert_eq!(
+        std::fs::read_to_string(lib.path().join("b.wav")).unwrap(),
+        "B"
+    );
+    assert!(!lib.path().join("same.wav").exists());
+}
+
 // --- Spreadsheet Lookup ---
 
 /// A library of two files in nested folders, and a mapping table (outside

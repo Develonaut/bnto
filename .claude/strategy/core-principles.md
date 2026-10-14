@@ -47,6 +47,7 @@ One compartment is a bento box. Ninety-nine compartments is still a bento box. T
 - Every node does one thing well. Nodes compose into flows. Flows compose into larger flows.
 - Single responsibility everywhere. No grab bags. Composable pieces over integrated blobs.
 - The simplest Bnto is one node. The most complex is just more nodes, not a different product.
+- A user's problem is solved by combining generic nodes, never by adding use-case logic to one. See [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md).
 
 Think small, build small. A focused thing built well compounds.
 
