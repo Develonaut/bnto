@@ -165,7 +165,7 @@
     {
       "name": "file-filter",
       "label": "Filter Files",
-      "description": "Drop files that don't match extension, pattern, or size criteria.",
+      "description": "Keep or drop files by extension, name or path pattern, and size.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -211,6 +211,36 @@
             ]
           },
           "default": "glob",
+          "surfaceable": true
+        },
+        {
+          "name": "match",
+          "label": "Match Against",
+          "description": "What the name pattern is tested against: the file's name, or its whole relative path (folders separated by /).",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "name",
+                "label": "File name"
+              },
+              {
+                "value": "path",
+                "label": "Relative path"
+              }
+            ]
+          },
+          "default": "name",
+          "surfaceable": true
+        },
+        {
+          "name": "keep",
+          "label": "Keep Matches",
+          "description": "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
           "surfaceable": true
         },
         {
@@ -2137,7 +2167,7 @@
     {
       "nodeType": "file-filter",
       "name": "Filter Files",
-      "description": "Keep only files matching extension, name pattern, or size criteria. Non-matching files are dropped from the pipeline.",
+      "description": "Keep or drop files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -2183,6 +2213,36 @@
             ]
           },
           "default": "glob",
+          "surfaceable": true
+        },
+        {
+          "name": "match",
+          "label": "Match Against",
+          "description": "What the name pattern is tested against: the file's name, or its whole relative path (folders separated by /).",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "name",
+                "label": "File name"
+              },
+              {
+                "value": "path",
+                "label": "Relative path"
+              }
+            ]
+          },
+          "default": "name",
+          "surfaceable": true
+        },
+        {
+          "name": "keep",
+          "label": "Keep Matches",
+          "description": "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
           "surfaceable": true
         },
         {

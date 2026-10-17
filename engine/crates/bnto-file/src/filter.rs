@@ -35,13 +35,22 @@ impl NodeProcessor for FileFilter {
         NodeMetadata {
             node_type: "file-filter".to_string(),
             name: "Filter Files".to_string(),
-            description: "Keep only files matching extension, name pattern, or size criteria. Non-matching files are dropped from the pipeline.".to_string(),
+            description: "Keep or drop files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).".to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string(), "cli".to_string()],
             parameters: build_filter_params(),
             input_cardinality: Default::default(), // PerFile
             requires: vec![],
+        }
+    }
+
+    fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+        match params.get("match").and_then(|v| v.as_str()) {
+            None | Some("name") | Some("path") => Vec::new(),
+            Some(other) => vec![format!(
+                "match must be \"name\" or \"path\", got \"{other}\""
+            )],
         }
     }
 
@@ -57,7 +66,9 @@ impl NodeProcessor for FileFilter {
             input.data.len().map_err(|e| {
                 BntoError::ProcessingFailed(format!("Failed to read file size: {e}"))
             })? as usize;
-        let passes = file_matches_criteria(&input.filename, file_size, &input.params);
+        // `keep: false` inverts the filter: matching files are the ones dropped.
+        let passes = file_matches_criteria(&input.filename, file_size, &input.params)
+            == keeps_matches(&input.params);
 
         progress.report(100, "Done");
 
@@ -121,6 +132,33 @@ fn build_filter_params() -> Vec<ParameterDef> {
                 ],
             },
             default: Some(serde_json::json!("glob")),
+            ..Default::default()
+        },
+        ParameterDef {
+            name: "match".to_string(),
+            label: "Match Against".to_string(),
+            description: "What the name pattern is tested against: the file's name, or its whole relative path (folders separated by /).".to_string(),
+            param_type: ParameterType::Enum {
+                options: vec![
+                    OptionEntry {
+                        value: "name".to_string(),
+                        label: "File name".to_string(),
+                    },
+                    OptionEntry {
+                        value: "path".to_string(),
+                        label: "Relative path".to_string(),
+                    },
+                ],
+            },
+            default: Some(serde_json::json!("name")),
+            ..Default::default()
+        },
+        ParameterDef {
+            name: "keep".to_string(),
+            label: "Keep Matches".to_string(),
+            description: "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept.".to_string(),
+            param_type: ParameterType::Boolean,
+            default: Some(serde_json::json!(true)),
             ..Default::default()
         },
         ParameterDef {
@@ -234,16 +272,32 @@ fn matches_name_pattern(
         .and_then(|v| v.as_str())
         .unwrap_or("glob");
 
-    // Extract just the filename part (no directory path).
-    let name_only = filename.rsplit('/').next().unwrap_or(filename);
+    let target = pattern_target(filename, params);
 
     match mode {
         "regex" => match regex::Regex::new(pattern) {
-            Ok(re) => re.is_match(name_only),
+            Ok(re) => re.is_match(target),
             Err(_) => false, // Invalid regex = no match.
         },
-        _ => glob_match(pattern, name_only),
+        _ => glob_match(pattern, target),
     }
+}
+
+/// The part of the filename the pattern tests: the last segment by default,
+/// or the whole `/`-separated relative path when `match` is `path`.
+fn pattern_target<'a>(
+    filename: &'a str,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> &'a str {
+    match params.get("match").and_then(|v| v.as_str()) {
+        Some("path") => filename,
+        _ => filename.rsplit('/').next().unwrap_or(filename),
+    }
+}
+
+/// Whether matching files are kept (`keep`, default true) or dropped.
+fn keeps_matches(params: &serde_json::Map<String, serde_json::Value>) -> bool {
+    params.get("keep").and_then(|v| v.as_bool()).unwrap_or(true)
 }
 
 /// Simple glob matching with `*` (any chars) and `?` (single char).
@@ -714,6 +768,126 @@ mod tests {
             0,
             "Invalid regex should not match anything"
         );
+    }
+
+    // --- match / keep ---
+
+    /// Whether `filename` survives the filter with these params.
+    fn passes(filename: &str, p: &serde_json::Map<String, serde_json::Value>) -> bool {
+        let input = make_input(b"data", filename, p.clone());
+        let progress = ProgressReporter::new_noop();
+        let output = FileFilter::new()
+            .process(input, &progress, &NoopContext)
+            .unwrap();
+        output.files.len() == 1
+    }
+
+    /// Drop anything under a `node_modules`, `build` or `.cache` folder at any
+    /// depth, and any `.tmp` file.
+    fn drop_folders_params() -> serde_json::Map<String, serde_json::Value> {
+        params(&[
+            (
+                "name_pattern",
+                serde_json::json!(r"(?i)(^|/)(node_modules|build|\.cache)(/|$)|\.tmp$"),
+            ),
+            ("pattern_mode", serde_json::json!("regex")),
+            ("match", serde_json::json!("path")),
+            ("keep", serde_json::json!(false)),
+        ])
+    }
+
+    #[test]
+    fn test_match_path_keep_false_drops_matching_paths() {
+        let p = drop_folders_params();
+        assert!(!passes("a/Node_Modules/x.js", &p));
+        assert!(!passes("build/y", &p));
+        assert!(!passes("b/.cache/z.bin", &p));
+        assert!(!passes("m.tmp", &p));
+    }
+
+    #[test]
+    fn test_match_path_keep_false_keeps_non_matching_paths() {
+        let p = drop_folders_params();
+        assert!(passes("m.txt", &p));
+        assert!(passes("builder/x", &p));
+        assert!(passes("src/build.rs", &p));
+    }
+
+    #[test]
+    fn test_match_path_tests_the_whole_relative_path() {
+        let p = params(&[
+            ("name_pattern", serde_json::json!("^docs/")),
+            ("pattern_mode", serde_json::json!("regex")),
+            ("match", serde_json::json!("path")),
+        ]);
+        assert!(passes("docs/readme.md", &p));
+        assert!(!passes("src/readme.md", &p));
+    }
+
+    #[test]
+    fn test_match_path_with_glob() {
+        let p = params(&[
+            ("name_pattern", serde_json::json!("docs/*")),
+            ("match", serde_json::json!("path")),
+        ]);
+        assert!(passes("docs/readme.md", &p));
+        assert!(!passes("readme.md", &p));
+    }
+
+    #[test]
+    fn test_match_defaults_to_name() {
+        let p = params(&[
+            ("name_pattern", serde_json::json!("^docs/")),
+            ("pattern_mode", serde_json::json!("regex")),
+        ]);
+        assert!(
+            !passes("docs/readme.md", &p),
+            "name mode sees only readme.md"
+        );
+    }
+
+    #[test]
+    fn test_keep_false_drops_what_every_criterion_matches() {
+        let p = params(&[
+            ("extensions", serde_json::json!("jpg")),
+            ("keep", serde_json::json!(false)),
+        ]);
+        assert!(!passes("photo.jpg", &p));
+        assert!(passes("notes.txt", &p));
+    }
+
+    #[test]
+    fn test_keep_true_is_the_default() {
+        let p = params(&[("extensions", serde_json::json!("jpg"))]);
+        assert!(passes("photo.jpg", &p));
+        assert!(!passes("notes.txt", &p));
+    }
+
+    #[test]
+    fn test_validate_refuses_unknown_match() {
+        let p = params(&[("match", serde_json::json!("folder"))]);
+        let errors = FileFilter::new().validate(&p);
+        assert_eq!(errors.len(), 1);
+        assert!(
+            errors[0].contains("match"),
+            "error names the param: {errors:?}"
+        );
+    }
+
+    #[test]
+    fn test_validate_accepts_name_and_path() {
+        for mode in ["name", "path"] {
+            let p = params(&[("match", serde_json::json!(mode))]);
+            assert!(FileFilter::new().validate(&p).is_empty(), "{mode}");
+        }
+    }
+
+    #[test]
+    fn test_metadata_declares_match_and_keep() {
+        let meta = FileFilter::new().metadata();
+        let names: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
+        assert!(names.contains(&"match"));
+        assert!(names.contains(&"keep"));
     }
 
     // --- Pure function tests ---

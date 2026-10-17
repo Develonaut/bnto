@@ -11,7 +11,7 @@ export const fileFilterProcessor: ProcessorDef = {
   nodeType: "file-filter",
   name: "Filter Files",
   description:
-    "Keep only files matching extension, name pattern, or size criteria. Non-matching files are dropped from the pipeline.",
+    "Keep or drop files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).",
   category: "file",
   accepts: [] as const,
   platforms: ["browser", "cli"] as const,
@@ -39,6 +39,23 @@ export const fileFilterProcessor: ProcessorDef = {
       type: "enum" as const,
       options: ["glob", "regex"] as const,
       default: "glob",
+    },
+    {
+      name: "match",
+      label: "Match Against",
+      description:
+        "What the name pattern is tested against: the file's name, or its whole relative path (folders separated by /).",
+      type: "enum" as const,
+      options: ["name", "path"] as const,
+      default: "name",
+    },
+    {
+      name: "keep",
+      label: "Keep Matches",
+      description:
+        "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept.",
+      type: "boolean" as const,
+      default: true,
     },
     {
       name: "min_size",

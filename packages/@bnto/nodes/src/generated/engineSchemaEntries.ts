@@ -99,6 +99,12 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "regex", label: "Regex" },
       ],
     },
+    match: {
+      options: [
+        { value: "name", label: "File name" },
+        { value: "path", label: "Relative path" },
+      ],
+    },
     min_size: { suffix: "bytes" },
     max_size: { suffix: "bytes" },
   },

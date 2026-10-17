@@ -144,7 +144,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-filter",
             "Filter Files",
-            "Drop files that don't match extension, pattern, or size criteria.",
+            "Keep or drop files by extension, name or path pattern, and size.",
             NodeCategory::File,
             false,
             "browser",

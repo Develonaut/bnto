@@ -15,6 +15,11 @@ export const fileFilterParamsSchema = z.object({
     .enum(["glob", "regex"] as const)
     .optional()
     .default("glob"),
+  match: z
+    .enum(["name", "path"] as const)
+    .optional()
+    .default("name"),
+  keep: z.boolean().optional().default(true),
   min_size: z.number().min(0).optional().default(0),
   max_size: z.number().min(0).optional().default(0),
 });
@@ -43,6 +48,16 @@ export const fileFilterNodeSchema: NodeSchema = {
     pattern_mode: {
       label: "Pattern Mode",
       description: "How to interpret the name pattern.",
+    },
+    match: {
+      label: "Match Against",
+      description:
+        "What the name pattern is tested against: the file's name, or its whole relative path (folders separated by /).",
+    },
+    keep: {
+      label: "Keep Matches",
+      description:
+        "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept.",
     },
     min_size: {
       label: "Minimum Size",
