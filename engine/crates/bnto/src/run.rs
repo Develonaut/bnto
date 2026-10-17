@@ -11,15 +11,17 @@ use colored::Colorize;
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
 use crate::run_output::write_output;
-use crate::{context, dry_run, input, progress, telemetry, unwrap_or_exit};
+use crate::{context, dry_run, input, progress, telemetry, unwrap_or_exit, vars};
 
 /// The `bnto run` switches that change what a run does.
 #[derive(Clone, Copy)]
-pub struct RunFlags {
+pub struct RunFlags<'a> {
     /// `--yes`: skip the trust consent prompt.
     pub yes: bool,
     /// `--dry-run`: run every node, write nothing.
     pub dry_run: bool,
+    /// `--vars`: files of run vars for `{{vars.KEY}}`.
+    pub vars: &'a [String],
 }
 
 /// Input facts recorded for logging and telemetry.
@@ -49,7 +51,8 @@ pub fn run_recipe(
 ) {
     let raw_json = read_recipe(recipe_path, catalog);
     check_trust(recipe_path, &raw_json, flags.yes, catalog);
-    let prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
+    let mut prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
+    prepared.definition_json = resolve_vars(&prepared.definition_json, flags.vars);
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides);
     log_run_start(logger, &stats);
@@ -180,6 +183,14 @@ fn finish_run(
         &stats.param_names,
     ));
     write_output(result, &target.mode, &target.output_dir, target.dry_run);
+}
+
+/// Resolve `{{vars.*}}` before any node runs; an unset key ends the run.
+fn resolve_vars(definition_json: &str, var_paths: &[String]) -> String {
+    vars::apply(definition_json, var_paths).unwrap_or_else(|msg| {
+        eprintln!("{} {msg}", "Pipeline failed:".red());
+        process::exit(1);
+    })
 }
 
 /// Log and report a failed run, then exit.

@@ -43,6 +43,7 @@ pub mod storage;
 pub mod telemetry;
 mod trust;
 mod tui;
+mod vars;
 
 use std::process;
 use std::sync::Arc;

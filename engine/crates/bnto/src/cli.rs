@@ -103,6 +103,11 @@ pub struct RunArgs {
     /// been written. shell-command nodes still run.
     #[arg(long)]
     pub dry_run: bool,
+
+    /// JSON file of run vars for {{vars.KEY}} placeholders. Repeatable;
+    /// later files win, and BNTO_VAR_<KEY> beats every file.
+    #[arg(long = "vars", value_name = "FILE")]
+    pub vars: Vec<String>,
 }
 
 // Arguments for `bnto dry-run` (help text comes from `Command::DryRun`).

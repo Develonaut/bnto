@@ -1,0 +1,111 @@
+{
+  "id": "file-copy-vars",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File Copy Vars",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Collects a directory's files and copies them under a destination named by the Out run var."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "collect",
+      "type": "file-collect",
+      "version": "1.0.0",
+      "name": "Collect",
+      "position": {
+        "x": 125,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "copy",
+      "type": "file-copy",
+      "version": "1.0.0",
+      "name": "Copy",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "destination": "{{vars.Out}}/Art"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "collect"
+    },
+    {
+      "id": "e1b",
+      "source": "collect",
+      "target": "copy"
+    },
+    {
+      "id": "e2",
+      "source": "copy",
+      "target": "output"
+    }
+  ]
+}

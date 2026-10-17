@@ -94,6 +94,9 @@ pub mod dotenv;
 /// Recipes declare what secrets they need; the engine validates before execution.
 pub mod secrets;
 
+/// Caller-supplied `{{vars.KEY}}` values, resolved once before a run.
+pub mod vars;
+
 /// Relative paths as output-file names, `/`-separated on every OS.
 pub mod slash_path;
 

@@ -58,6 +58,7 @@ fn run_from_args(args: RunArgs, session: &Session) {
     let flags = RunFlags {
         yes: args.yes,
         dry_run: args.dry_run,
+        vars: &args.vars,
     };
     run_recipe(
         &args.recipe,
