@@ -21,6 +21,8 @@ pub struct TemplateContext<'a> {
     /// The {{item.*}} source: the metadata of the file being processed, under the
     /// innermost loop's item. `None` when there is neither.
     pub loop_item: &'a Option<serde_json::Map<String, Value>>,
+    /// The run's start (Unix epoch ms) for `{{ctx.started}}`; `None` outside a run.
+    pub run_started_ms: Option<u64>,
 }
 
 /// Resolve all template namespaces in params: fields, env, ctx, node, item.
@@ -90,7 +92,7 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
             let val = ctx.process_ctx.env_var(key).unwrap_or_default();
             Some(Value::String(val))
         }
-        "ctx" => resolve_ctx(key, ctx.process_ctx),
+        "ctx" => resolve_ctx(key, ctx.process_ctx, ctx.run_started_ms),
         "item" => ctx.loop_item.as_ref().and_then(|m| m.get(key).cloned()),
         p if p.starts_with("node.") => {
             let node_id = &p[5..]; // strip "node."
@@ -109,7 +111,11 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
 ///   - `paths.temp_dir`   → system temp directory
 ///
 /// Old flat names (`work_dir`, `temp_dir`) are kept as backward-compat aliases.
-fn resolve_ctx(key: &str, process_ctx: &dyn ProcessContext) -> Option<Value> {
+fn resolve_ctx(
+    key: &str,
+    process_ctx: &dyn ProcessContext,
+    run_started_ms: Option<u64>,
+) -> Option<Value> {
     match key {
         // --- Paths namespace ---
         "paths.home_dir" => process_ctx
@@ -128,8 +134,9 @@ fn resolve_ctx(key: &str, process_ctx: &dyn ProcessContext) -> Option<Value> {
         }
         // --- Flat namespace ---
         "platform" => Some(Value::String(current_platform().to_string())),
+        "started" => run_started_ms.map(|ms| Value::String(super::civil_time::rfc3339_utc(ms))),
         "date" | "time" | "timestamp" => {
-            let (y, m, d, hh, mm, ss) = now_civil();
+            let (y, m, d, hh, mm, ss) = super::civil_time::now_civil();
             let val = match key {
                 "date" => format!("{y:04}-{m:02}-{d:02}"),
                 "time" => format!("{hh:02}-{mm:02}-{ss:02}"),
@@ -142,47 +149,6 @@ fn resolve_ctx(key: &str, process_ctx: &dyn ProcessContext) -> Option<Value> {
     }
 }
 
-/// Convert current wall-clock time to civil (year, month, day, hour, min, sec).
-///
-/// Uses Howard Hinnant's civil calendar algorithm on the Unix epoch.
-/// No `chrono` dependency — pure arithmetic. `SystemTime::now()` works in
-/// WASM (backed by `Date.now()`).
-fn now_civil() -> (i32, u32, u32, u32, u32, u32) {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs();
-
-    epoch_to_civil(secs)
-}
-
-/// Convert Unix epoch seconds to (year, month, day, hour, minute, second) in UTC.
-///
-/// Hinnant's algorithm: http://howardhinnant.github.io/date_algorithms.html
-fn epoch_to_civil(epoch_secs: u64) -> (i32, u32, u32, u32, u32, u32) {
-    let total_secs = epoch_secs;
-    let day_secs = (total_secs % 86400) as u32;
-    let hh = day_secs / 3600;
-    let mm = (day_secs % 3600) / 60;
-    let ss = day_secs % 60;
-
-    // Days since epoch, shifted so day 0 = 0000-03-01
-    let z = (total_secs / 86400) as i64 + 719468;
-    let era = if z >= 0 { z } else { z - 146096 } / 146097;
-    let doe = (z - era * 146097) as u32; // day of era [0, 146096]
-    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
-    let y = yoe as i64 + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y = if m <= 2 { y + 1 } else { y };
-
-    (y as i32, m, d, hh, mm, ss)
-}
-
 /// Resolve only `{{ctx.*}}` variables in a string.
 ///
 /// The environment (CLI, TUI) calls this to expand template variables in
@@ -193,7 +159,7 @@ pub fn resolve_ctx_templates(s: &str, ctx: &dyn ProcessContext) -> String {
         return s.to_string();
     }
     let mut result = s.to_string();
-    resolve_ctx_interpolation(&mut result, ctx);
+    resolve_ctx_interpolation(&mut result, ctx, None);
     result
 }
 
@@ -267,7 +233,7 @@ fn resolve_string(s: &str, ctx: &TemplateContext) -> Value {
     resolve_env_interpolation(&mut result, ctx.process_ctx);
 
     // Resolve {{ctx.*}}
-    resolve_ctx_interpolation(&mut result, ctx.process_ctx);
+    resolve_ctx_interpolation(&mut result, ctx.process_ctx, ctx.run_started_ms);
 
     // Resolve {{item.*}}
     resolve_item_interpolation(&mut result, ctx.loop_item);
@@ -291,12 +257,16 @@ fn resolve_env_interpolation(result: &mut String, process_ctx: &dyn ProcessConte
 }
 
 /// Replace all `{{ctx.KEY}}` occurrences in-place via string interpolation.
-fn resolve_ctx_interpolation(result: &mut String, process_ctx: &dyn ProcessContext) {
+fn resolve_ctx_interpolation(
+    result: &mut String,
+    process_ctx: &dyn ProcessContext,
+    run_started_ms: Option<u64>,
+) {
     while let Some(start) = result.find("{{ctx.") {
         let rest = &result[start + 6..];
         let Some(end) = rest.find("}}") else { break };
         let key = &result[start + 6..start + 6 + end];
-        let val = resolve_ctx(key, process_ctx)
+        let val = resolve_ctx(key, process_ctx, run_started_ms)
             .map(|v| value_to_string(&v))
             .unwrap_or_default();
         let placeholder = format!("{{{{ctx.{key}}}}}");
@@ -404,6 +374,41 @@ mod tests {
     use serde_json::json;
     use std::path::{Path, PathBuf};
 
+    // --- {{ctx.started}} ---
+
+    fn started_ctx<'a>(
+        fields: &'a BTreeMap<String, Value>,
+        outputs: &'a BTreeMap<String, Value>,
+        started: Option<u64>,
+    ) -> TemplateContext<'a> {
+        TemplateContext {
+            field_values: fields,
+            process_ctx: &NoopContext,
+            node_outputs: outputs,
+            loop_item: &None,
+            run_started_ms: started,
+        }
+    }
+
+    #[test]
+    fn test_ctx_started_resolves_the_run_start_as_rfc3339() {
+        let (fields, outputs) = (BTreeMap::new(), BTreeMap::new());
+        let ctx = started_ctx(&fields, &outputs, Some(1_700_000_000_123));
+        let params = json!({ "a": "{{ctx.started}}", "b": "after {{ctx.started}}" });
+        let resolved = resolve_templates(params.as_object().unwrap(), &ctx);
+        assert_eq!(resolved["a"], "2023-11-14T22:13:20.123Z");
+        assert_eq!(resolved["b"], "after 2023-11-14T22:13:20.123Z");
+    }
+
+    #[test]
+    fn test_ctx_started_stays_unresolved_outside_a_run() {
+        let (fields, outputs) = (BTreeMap::new(), BTreeMap::new());
+        let ctx = started_ctx(&fields, &outputs, None);
+        let params = json!({ "a": "{{ctx.started}}" });
+        let resolved = resolve_templates(params.as_object().unwrap(), &ctx);
+        assert_eq!(resolved["a"], "{{ctx.started}}");
+    }
+
     fn make_params(pairs: &[(&str, Value)]) -> serde_json::Map<String, Value> {
         pairs
             .iter()
@@ -482,6 +487,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["format"], json!("mp4"));
@@ -496,6 +502,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["quality"], json!(80));
@@ -510,6 +517,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{fields.missing}}"));
@@ -526,6 +534,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["home"], json!("/Users/test"));
@@ -540,6 +549,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!(""));
@@ -554,6 +564,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["path"], json!("/Users/test/output"));
@@ -570,6 +581,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["dir"], json!("/mock/work"));
@@ -584,6 +596,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let os = resolved["os"].as_str().unwrap();
@@ -602,6 +615,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let tmp = resolved["tmp"].as_str().unwrap();
@@ -624,6 +638,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["d"].as_str().unwrap();
@@ -646,6 +661,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["t"].as_str().unwrap();
@@ -670,6 +686,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["ts"].as_str().unwrap();
@@ -699,6 +716,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["dir"].as_str().unwrap();
@@ -758,6 +776,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["dir"], json!("/mock/home/.bnto"));
@@ -772,6 +791,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["dir"], json!("/mock/home/.bnto/output"));
@@ -786,6 +806,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["dir"], json!("/mock/work"));
@@ -804,6 +825,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["old"], resolved["new"]);
@@ -818,6 +840,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["dir"].as_str().unwrap();
@@ -838,6 +861,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["old"], resolved["new"]);
@@ -852,6 +876,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{ctx.paths.unknown}}"));
@@ -866,6 +891,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["dir"].as_str().unwrap();
@@ -883,6 +909,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{ctx.bogus}}"));
@@ -900,6 +927,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["fmt"], json!("webp"));
@@ -913,6 +941,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{node.missing.prop}}"));
@@ -928,6 +957,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{node.compress.missing}}"));
@@ -944,6 +974,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         let val = resolved["cmd"].as_str().unwrap();
@@ -962,6 +993,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("hello-world"));
@@ -975,6 +1007,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["n"], json!(42));
@@ -990,6 +1023,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["args"], json!(["--dir", "/test", "-v"]));
@@ -1004,6 +1038,7 @@ mod tests {
             process_ctx: &mock,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["config"]["dir"], json!("/test"));
@@ -1017,6 +1052,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["cmd"], json!("yt-dlp"));
@@ -1032,6 +1068,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["label"], json!("Format: webp"));
@@ -1057,6 +1094,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["url"], json!("https://example.com/video"));
@@ -1071,6 +1109,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["count"], json!(42));
@@ -1086,6 +1125,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("{{item.missing}}"));
@@ -1099,6 +1139,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["url"], json!("{{item.url}}"));
@@ -1113,6 +1154,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["path"], json!("dir/Alpha/out"));
@@ -1128,6 +1170,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &empty_outputs(),
             loop_item: &item,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["x"], json!("mp4_Beta"));
@@ -1292,6 +1335,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["dest"], json!("/downloads/Vehicles And Monsters"));
@@ -1307,6 +1351,7 @@ mod tests {
             process_ctx: &NoopContext,
             node_outputs: &outputs,
             loop_item: &None,
+            run_started_ms: None,
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["stem"], json!("my-data"));

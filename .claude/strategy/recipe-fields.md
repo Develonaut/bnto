@@ -170,13 +170,14 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 
 ### Active Namespaces
 
-| Namespace        | Source                                      | Example                   | Resolved By                                                |
-| ---------------- | ------------------------------------------- | ------------------------- | ---------------------------------------------------------- |
-| `{{fields.*}}`   | Field values (user-configured or defaults)  | `{{fields.format}}`       | Engine, before node execution                              |
-| `{{output_dir}}` | Engine execution context                    | `{{output_dir}}/file.mp4` | Shell-command processor                                    |
-| `{{url}}`        | Input node URL value                        | `{{url}}`                 | Shell-command processor                                    |
-| `{{input}}`      | Input node text value                       | `{{input}}`               | Shell-command processor                                    |
-| `{{vars.*}}`     | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`      | Consumer (CLI), before the run; an unset key fails the run |
+| Namespace         | Source                                      | Example                    | Resolved By                                                |
+| ----------------- | ------------------------------------------- | -------------------------- | ---------------------------------------------------------- |
+| `{{fields.*}}`    | Field values (user-configured or defaults)  | `{{fields.format}}`        | Engine, before node execution                              |
+| `{{output_dir}}`  | Engine execution context                    | `{{output_dir}}/file.mp4`  | Shell-command processor                                    |
+| `{{url}}`         | Input node URL value                        | `{{url}}`                  | Shell-command processor                                    |
+| `{{input}}`       | Input node text value                       | `{{input}}`                | Shell-command processor                                    |
+| `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run; an unset key fails the run |
+| `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms       | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                   |
 
 ### Future Namespaces (Not Implemented)
 

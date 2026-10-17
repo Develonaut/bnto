@@ -351,6 +351,7 @@ mod recipes;
 mod recipes_containers;
 mod recipes_errors;
 mod recipes_events;
+mod run_started;
 mod sub_pipelines;
 mod sub_pipelines_containers;
 mod sub_pipelines_edge_cases;

@@ -104,6 +104,7 @@ fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
         process_ctx: &noop,
         node_outputs: &empty_outputs,
         loop_item: &None,
+        run_started_ms: None,
     };
     let resolved_params = resolve_templates(&node.params, &tpl_ctx);
 
