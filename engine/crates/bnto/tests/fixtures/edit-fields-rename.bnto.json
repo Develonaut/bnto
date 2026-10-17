@@ -1,0 +1,82 @@
+{
+  "id": "edit-fields-rename",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Edit Fields Rename",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Reads a CSV into one item per row, sets each row's label and link from its other columns, and names each row file after its label."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": { "mode": "file-upload", "multiple": true },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "rows",
+      "type": "spreadsheet-read",
+      "version": "1.0.0",
+      "name": "Rows",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "label",
+      "type": "edit-fields",
+      "version": "1.0.0",
+      "name": "Label",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "values": {
+          "label": "{{item.first}}-{{item.last}}",
+          "link": "https://example.com/people/{{item.meta.id}}"
+        }
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Rename",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": { "pattern": "{{item.label}}.txt" },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 500, "y": 100 },
+      "metadata": {},
+      "parameters": { "mode": "write" },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "rows" },
+    { "id": "e2", "source": "rows", "target": "label" },
+    { "id": "e3", "source": "label", "target": "rename" },
+    { "id": "e-out", "source": "rename", "target": "output" }
+  ]
+}

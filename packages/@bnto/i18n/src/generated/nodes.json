@@ -7,7 +7,7 @@
     },
     "editFields": {
       "label": "Edit Fields",
-      "description": "Set field values from static values or template expressions."
+      "description": "Set fields on each item from templates over its other fields; files pass through."
     },
     "fileCollect": {
       "label": "Collect Files",
@@ -151,6 +151,16 @@
       "message": {
         "label": "Message",
         "description": "Put before the reasons when the check fails, so the failure says what was checked."
+      }
+    },
+    "editFields": {
+      "values": {
+        "label": "Values",
+        "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}; one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run."
+      },
+      "keepOnlySet": {
+        "label": "Keep Only Set Fields",
+        "description": "When on, each item keeps only the fields set in values; every other field it carried is dropped."
       }
     },
     "fileCollect": {

@@ -32,6 +32,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `vector-optimize`     | `bnto-vector`      | `OptimizeSvg`        |
 | `assert`              | `bnto-core`        | `control::Assert`    |
 | `report`              | `bnto-core`        | `control::Report`    |
+| `edit-fields`         | `bnto-core`        | `data::EditFields`   |
 | `file-filter`         | `bnto-file`        | `FileFilter`         |
 | `file-metadata`       | `bnto-file`        | `FileMetadata`       |
 | `file-render`         | `bnto-file`        | `FileRender`         |

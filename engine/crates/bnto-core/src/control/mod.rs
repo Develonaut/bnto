@@ -6,7 +6,7 @@ pub mod assert;
 pub mod report;
 
 mod pass_through;
-mod placeholder;
+pub(crate) mod placeholder;
 
 pub use assert::Assert;
 pub use report::Report;

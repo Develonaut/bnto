@@ -38,6 +38,7 @@ pub fn create_browser_registry() -> NodeRegistry {
     );
     registry.register("assert", Box::new(bnto_core::control::Assert::new()));
     registry.register("report", Box::new(bnto_core::control::Report::new()));
+    registry.register("edit-fields", Box::new(bnto_core::data::EditFields::new()));
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
     registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
@@ -135,11 +136,12 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 18);
+        assert_eq!(registry.len(), 19);
 
         let expected = [
             "assert",
             "report",
+            "edit-fields",
             "file-filter",
             "file-metadata",
             "file-rename",
@@ -171,9 +173,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (18) + file-collect + file-copy + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 25
-        assert_eq!(registry.len(), 25);
+        // Full registry = browser (19) + file-collect + file-copy + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 26
+        assert_eq!(registry.len(), 26);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -399,6 +401,68 @@ mod tests {
             modified < started,
             "an old file sorts before this run's start"
         );
+    }
+
+    /// A CSV whose rows are people, read into one item per row.
+    fn people_csv() -> PipelineFile {
+        PipelineFile {
+            name: "people.csv".to_string(),
+            data: FileData::Bytes(b"first,last\nAda,Lovelace\nGrace,Hopper\n".to_vec()),
+            mime_type: "text/csv".to_string(),
+            metadata: serde_json::Map::new(),
+        }
+    }
+
+    /// Run read rows -> `edit` (an edit-fields node's JSON, or a loop around
+    /// one) -> rename each row file to `{{item.label}}.txt`.
+    fn run_edit_and_rename(edit: &str) -> Result<PipelineResult, BntoError> {
+        let json = format!(
+            r#"{{
+            "settings": {{ "iteration": "auto" }},
+            "nodes": [
+                {{ "id": "input", "type": "input" }},
+                {{ "id": "rows", "type": "spreadsheet-read" }},
+                {edit},
+                {{ "id": "rename", "type": "file-rename",
+                  "parameters": {{ "pattern": "{{{{item.label}}}}.txt" }} }},
+                {{ "id": "output", "type": "output" }}
+            ]
+        }}"#
+        );
+        let reporter = PipelineReporter::new_noop();
+        run_pipeline(&json, vec![people_csv()], &reporter, &NoopContext)
+    }
+
+    const EDIT_LABEL: &str = r#"{ "id": "edit", "type": "edit-fields",
+        "parameters": { "values": { "label": "{{item.first}}-{{item.last}}" } } }"#;
+
+    #[test]
+    fn test_a_later_node_reads_a_field_edit_fields_set() {
+        let result = run_edit_and_rename(EDIT_LABEL).expect("pipeline should succeed");
+        let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
+        assert_eq!(names, vec!["Ada-Lovelace.txt", "Grace-Hopper.txt"]);
+        assert_eq!(result.files[0].metadata["label"], "Ada-Lovelace");
+        assert_eq!(result.files[0].metadata["first"], "Ada");
+    }
+
+    #[test]
+    fn test_edit_fields_inside_a_loop_sets_each_items_field() {
+        let looped = format!(r#"{{ "id": "each", "type": "loop", "children": [{EDIT_LABEL}] }}"#);
+        let result = run_edit_and_rename(&looped).expect("pipeline should succeed");
+        let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
+        assert_eq!(names, vec!["Ada-Lovelace.txt", "Grace-Hopper.txt"]);
+    }
+
+    #[test]
+    fn test_an_unknown_field_in_edit_fields_fails_the_run_naming_it() {
+        let edit = r#"{ "id": "edit", "type": "edit-fields",
+            "parameters": { "values": { "label": "{{item.first}} {{item.middle}}" } } }"#;
+        let Err(err) = run_edit_and_rename(edit) else {
+            panic!("an unknown field should fail the run");
+        };
+        let msg = err.to_string();
+        assert!(msg.contains("\"middle\""), "{msg}");
+        assert!(msg.contains("people_row"), "{msg}");
     }
 
     #[test]

@@ -1,0 +1,33 @@
+{
+  "id": "check-edit-fields-bad",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Edit Fields Bad",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "no-values",
+      "type": "edit-fields",
+      "parameters": {}
+    },
+    {
+      "id": "not-a-map",
+      "type": "edit-fields",
+      "parameters": { "values": "{{item.first}}" }
+    },
+    {
+      "id": "fine",
+      "type": "edit-fields",
+      "parameters": { "values": { "label": "{{item.first}} {{item.last}}" } }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "write" }
+    }
+  ]
+}

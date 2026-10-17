@@ -45,7 +45,7 @@ pub fn all_node_types() -> Vec<NodeTypeInfo> {
 ///
 /// Processor node types carry their params on `NodeMetadata::parameters`
 /// (collected from the registry). Structural / declarative node types
-/// (input, output, loop, group, parallel, transform, edit-fields) declare
+/// (input, output, loop, group, parallel, transform) declare
 /// their params in `metadata::io_container`, which this accessor exposes
 /// through a single lookup by type name.
 ///
@@ -112,7 +112,7 @@ fn data_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "edit-fields",
             "Edit Fields",
-            "Set field values from static values or template expressions.",
+            "Set fields on each item from templates over its other fields; files pass through.",
             NodeCategory::Data,
             false,
             "browser",

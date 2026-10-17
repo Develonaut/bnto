@@ -1,4 +1,5 @@
-// `{{<namespace>.KEY}}` placeholders a control node fills itself.
+// `{{<namespace>.KEY}}` placeholders a batch node (assert, report, edit-fields)
+// fills itself.
 //
 // The executor resolves a batch node's params once, with no item, so the
 // placeholders it can't fill there (`{{item.*}}`, report's `{{entry.*}}`)
@@ -8,7 +9,7 @@
 use serde_json::{Map, Value};
 
 /// The per-file namespace: `{{item.KEY}}` reads the incoming file's metadata.
-pub(super) const ITEM: &str = "item";
+pub(crate) const ITEM: &str = "item";
 
 const CLOSE: &str = "}}";
 
@@ -18,13 +19,13 @@ fn open(namespace: &str) -> String {
 }
 
 /// Whether `text` reads any `{{<namespace>.KEY}}`.
-pub(super) fn reads(text: &str, namespace: &str) -> bool {
+pub(crate) fn reads(text: &str, namespace: &str) -> bool {
     text.contains(&open(namespace))
 }
 
 /// `text` with every `{{<namespace>.KEY}}` replaced from `values`, or the
 /// first key `values` doesn't have.
-pub(super) fn resolve(
+pub(crate) fn resolve(
     text_in: &str,
     namespace: &str,
     values: &Map<String, Value>,
@@ -46,7 +47,7 @@ pub(super) fn resolve(
 }
 
 /// A value as text: strings as written, other JSON (numbers, lists) as JSON.
-pub(super) fn text(value: &Value) -> String {
+pub(crate) fn text(value: &Value) -> String {
     match value {
         Value::String(s) => s.clone(),
         Value::Null => String::new(),

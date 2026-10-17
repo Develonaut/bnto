@@ -1,6 +1,6 @@
-// Parameters for the `transform` and `edit-fields` data nodes.
+// Parameters for the `transform` data node.
 
-use super::helpers::{param, required};
+use super::helpers::param;
 use crate::metadata::{ParameterDef, ParameterType};
 
 /// Parameters for the `transform` node.
@@ -22,29 +22,6 @@ pub(super) fn transform_params() -> Vec<ParameterDef> {
         ParameterDef {
             control: Some("keyValue".to_string()),
             ..param("mappings", "Mappings", mappings_desc, ParameterType::Object)
-        },
-    ]
-}
-
-/// Parameters for the `edit-fields` node.
-pub(super) fn edit_fields_params() -> Vec<ParameterDef> {
-    let values_desc = "Map of field names to values. Values can be static or template expressions (e.g., {{.record.name}}).";
-    let keep_desc = "When true, only output fields that are explicitly set in values.";
-    vec![
-        ParameterDef {
-            constraints: Some(required(true)),
-            control: Some("keyValue".to_string()),
-            ..param("values", "Values", values_desc, ParameterType::Object)
-        },
-        ParameterDef {
-            default: Some(serde_json::json!(false)),
-            control: Some("switch".to_string()),
-            ..param(
-                "keepOnlySet",
-                "Keep Only Set Fields",
-                keep_desc,
-                ParameterType::Boolean,
-            )
         },
     ]
 }

@@ -19,7 +19,7 @@ struct CatalogEnvelope {
 
 /// A node-type entry in the catalog, joining `NodeTypeInfo` with the param
 /// definitions the engine knows for that type. For non-processor types
-/// (input, output, loop, group, parallel, transform, edit-fields) params
+/// (input, output, loop, group, parallel, transform) params
 /// come from `bnto_core::node_type_params`. For processor types they come
 /// from the registry's `NodeMetadata::parameters`. Types with no declared
 /// params (e.g. `http-request`) omit the field.
@@ -137,22 +137,22 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_twenty_five_processors() {
-        // The native registry has 25 processors (18 browser + file-collect + file-copy +
+    fn test_catalog_has_all_twenty_six_processors() {
+        // The native registry has 26 processors (19 browser + file-collect + file-copy +
         // file-list + file-move + spreadsheet-export + spreadsheet-lookup + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            25,
-            "Catalog should have exactly 25 processors"
+            26,
+            "Catalog should have exactly 26 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 25 expected processor type keys are present.
+        // Verify all 26 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -161,6 +161,7 @@ mod tests {
         let expected = [
             "assert",
             "report",
+            "edit-fields",
             "file-collect",
             "file-copy",
             "file-list",
@@ -243,7 +244,7 @@ mod tests {
         assert!(parsed["nodeTypes"].is_array());
         assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 33);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 25);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 26);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),
@@ -265,9 +266,11 @@ mod tests {
 
     #[test]
     fn test_catalog_node_types_include_params_for_io_and_containers() {
-        // The 7 non-processor engine-defined node types must carry their
+        // The 6 non-processor engine-defined node types must carry their
         // parameter definitions directly on each `nodeTypes` entry — that's
         // the point of PR 2 (engine as the single source of truth).
+        // edit-fields was one of them; its params now come from its
+        // processor and still land on its entry.
         let envelope = build_test_envelope();
         let json = serde_json::to_string(&envelope).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();

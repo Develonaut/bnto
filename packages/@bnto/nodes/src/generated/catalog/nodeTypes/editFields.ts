@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const editFieldsNodeType: NodeTypeInfo = {
   name: "edit-fields",
   label: "Edit Fields",
-  description: "Set field values from static values or template expressions.",
+  description: "Set fields on each item from templates over its other fields; files pass through.",
   category: "data",
   isContainer: false,
   platforms: ["browser"] as const,

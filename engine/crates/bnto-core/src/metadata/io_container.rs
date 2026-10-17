@@ -1,5 +1,5 @@
-// Parameter definitions for the 7 engine-defined IO / container / data node
-// types: input, output, loop, group, parallel, transform, edit-fields.
+// Parameter definitions for the 6 engine-defined IO / container / data node
+// types: input, output, loop, group, parallel, transform.
 //
 // These types don't have `NodeProcessor` implementations (they're structural /
 // declarative). Their parameter schemas live here so the engine stays the
@@ -18,12 +18,12 @@ mod loop_node;
 mod output;
 
 use concurrency::{group_params, parallel_params};
-use data::{edit_fields_params, transform_params};
+use data::transform_params;
 use input::input_params;
 use loop_node::loop_params;
 use output::output_params;
 
-/// Return a map of node type → parameter definitions for the 7 engine-defined
+/// Return a map of node type → parameter definitions for the 6 engine-defined
 /// non-processor node types. Callers look up by type name (`"input"`, etc.).
 pub fn io_container_param_defs() -> HashMap<&'static str, Vec<ParameterDef>> {
     HashMap::from([
@@ -33,7 +33,6 @@ pub fn io_container_param_defs() -> HashMap<&'static str, Vec<ParameterDef>> {
         ("group", group_params()),
         ("parallel", parallel_params()),
         ("transform", transform_params()),
-        ("edit-fields", edit_fields_params()),
     ])
 }
 
@@ -52,29 +51,25 @@ mod tests {
     // --- Top-level map ---
 
     #[test]
-    fn io_container_param_defs_has_seven_entries() {
+    fn io_container_param_defs_has_six_entries() {
         let defs = io_container_param_defs();
         assert_eq!(
             defs.len(),
-            7,
-            "should cover exactly the 7 engine-defined non-processor node types"
+            6,
+            "should cover exactly the 6 engine-defined non-processor node types"
         );
     }
 
     #[test]
     fn io_container_param_defs_has_expected_keys() {
         let defs = io_container_param_defs();
-        for key in [
-            "input",
-            "output",
-            "loop",
-            "group",
-            "parallel",
-            "transform",
-            "edit-fields",
-        ] {
+        for key in ["input", "output", "loop", "group", "parallel", "transform"] {
             assert!(defs.contains_key(key), "missing key `{}`", key);
         }
+        assert!(
+            !defs.contains_key("edit-fields"),
+            "edit-fields is a processor; its params come from its metadata"
+        );
     }
 
     // --- input ---
@@ -413,25 +408,6 @@ mod tests {
         let mappings = get_param(&params, "mappings");
         assert_eq!(mappings.param_type, ParameterType::Object);
         assert_eq!(mappings.control.as_deref(), Some("keyValue"));
-    }
-
-    // --- edit-fields ---
-
-    #[test]
-    fn edit_fields_values_is_required_object_with_key_value_control() {
-        let params = edit_fields_params();
-        let values = get_param(&params, "values");
-        assert_eq!(values.param_type, ParameterType::Object);
-        assert_eq!(values.control.as_deref(), Some("keyValue"));
-        assert_eq!(values.constraints.as_ref().map(|c| c.required), Some(true));
-    }
-
-    #[test]
-    fn edit_fields_keep_only_set_defaults_to_false_switch() {
-        let params = edit_fields_params();
-        let k = get_param(&params, "keepOnlySet");
-        assert_eq!(k.default, Some(serde_json::json!(false)));
-        assert_eq!(k.control.as_deref(), Some("switch"));
     }
 
     // --- Round-trip ---
