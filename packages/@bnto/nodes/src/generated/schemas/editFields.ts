@@ -25,11 +25,12 @@ export const editFieldsNodeSchema: NodeSchema = {
     values: {
       label: "Values",
       description:
-        "Map of field names to values. Values can be static or template expressions (e.g., {{.record.name}}).",
+        "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}; one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
     },
     keepOnlySet: {
       label: "Keep Only Set Fields",
-      description: "When true, only output fields that are explicitly set in values.",
+      description:
+        "When on, each item keeps only the fields set in values; every other field it carried is dropped.",
     },
   },
 };

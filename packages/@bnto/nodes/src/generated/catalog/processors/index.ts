@@ -7,6 +7,7 @@
 import type { ProcessorDef } from "../types";
 
 import { assertProcessor } from "./assert";
+import { editFieldsProcessor } from "./editFields";
 import { fileCollectProcessor } from "./fileCollect";
 import { fileCopyProcessor } from "./fileCopy";
 import { fileFilterProcessor } from "./fileFilter";
@@ -34,6 +35,7 @@ import { vectorRasterizeProcessor } from "./vectorRasterize";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
   assertProcessor,
+  editFieldsProcessor,
   fileCollectProcessor,
   fileCopyProcessor,
   fileFilterProcessor,

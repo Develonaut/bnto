@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 /// Parameter definitions for structural/declarative node types (input,
-/// output, loop, group, parallel, transform, edit-fields).
+/// output, loop, group, parallel, transform).
 pub mod io_container;
 
 /// Per-platform install hints for external dependencies.

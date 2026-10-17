@@ -72,7 +72,7 @@
     {
       "name": "edit-fields",
       "label": "Edit Fields",
-      "description": "Set field values from static values or template expressions.",
+      "description": "Set fields on each item from templates over its other fields; files pass through.",
       "category": "data",
       "isContainer": false,
       "platforms": [
@@ -83,7 +83,7 @@
         {
           "name": "values",
           "label": "Values",
-          "description": "Map of field names to values. Values can be static or template expressions (e.g., {{.record.name}}).",
+          "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}; one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
           "paramType": {
             "type": "object"
           },
@@ -96,7 +96,7 @@
         {
           "name": "keepOnlySet",
           "label": "Keep Only Set Fields",
-          "description": "When true, only output fields that are explicitly set in values.",
+          "description": "When on, each item keeps only the fields set in values; every other field it carried is dropped.",
           "paramType": {
             "type": "boolean"
           },
@@ -2358,6 +2358,45 @@
             "type": "string"
           },
           "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
+    },
+    {
+      "nodeType": "edit-fields",
+      "name": "Edit Fields",
+      "description": "Set fields on each item from static values or templates over its other fields, such as {{item.first}} {{item.last}}; files pass through unchanged.",
+      "category": "data",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "values",
+          "label": "Values",
+          "description": "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}; one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
+          "paramType": {
+            "type": "object"
+          },
+          "constraints": {
+            "required": true
+          },
+          "surfaceable": true,
+          "control": "keyValue"
+        },
+        {
+          "name": "keepOnlySet",
+          "label": "Keep Only Set Fields",
+          "description": "When on, each item keeps only the fields set in values; every other field it carried is dropped.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true,
+          "control": "switch"
         }
       ],
       "inputCardinality": "batch"

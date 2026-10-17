@@ -56,6 +56,9 @@ pub mod check;
 /// Control nodes (assert, report) that steer a run rather than transform files.
 pub mod control;
 
+/// Data nodes (edit-fields) that change the fields items carry.
+pub mod data;
+
 /// Pipeline definition types — what the engine receives to execute.
 /// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
 pub mod pipeline;

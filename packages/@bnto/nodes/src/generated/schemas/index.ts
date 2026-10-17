@@ -6,6 +6,8 @@
 
 export { assertParamsSchema, assertNodeSchema } from "./assert";
 export type { AssertParams } from "./assert";
+export { editFieldsParamsSchema, editFieldsNodeSchema } from "./editFields";
+export type { EditFieldsParams } from "./editFields";
 export { fileCollectParamsSchema, fileCollectNodeSchema } from "./fileCollect";
 export type { FileCollectParams } from "./fileCollect";
 export { fileCopyParamsSchema, fileCopyNodeSchema } from "./fileCopy";
@@ -54,8 +56,6 @@ export { vectorOptimizeParamsSchema, vectorOptimizeNodeSchema } from "./vectorOp
 export type { VectorOptimizeParams } from "./vectorOptimize";
 export { vectorRasterizeParamsSchema, vectorRasterizeNodeSchema } from "./vectorRasterize";
 export type { VectorRasterizeParams } from "./vectorRasterize";
-export { editFieldsParamsSchema, editFieldsNodeSchema } from "./editFields";
-export type { EditFieldsParams } from "./editFields";
 export { groupParamsSchema, groupNodeSchema } from "./group";
 export type { GroupParams } from "./group";
 export { inputParamsSchema, inputNodeSchema } from "./input";
