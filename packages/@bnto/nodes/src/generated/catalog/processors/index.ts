@@ -9,6 +9,7 @@ import type { ProcessorDef } from "../types";
 import { fileCollectProcessor } from "./fileCollect";
 import { fileCopyProcessor } from "./fileCopy";
 import { fileFilterProcessor } from "./fileFilter";
+import { fileListProcessor } from "./fileList";
 import { fileMetadataProcessor } from "./fileMetadata";
 import { fileMoveProcessor } from "./fileMove";
 import { fileRenameProcessor } from "./fileRename";
@@ -32,6 +33,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   fileCollectProcessor,
   fileCopyProcessor,
   fileFilterProcessor,
+  fileListProcessor,
   fileMetadataProcessor,
   fileMoveProcessor,
   fileRenameProcessor,

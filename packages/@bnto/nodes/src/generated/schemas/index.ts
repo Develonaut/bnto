@@ -10,6 +10,8 @@ export { fileCopyParamsSchema, fileCopyNodeSchema } from "./fileCopy";
 export type { FileCopyParams } from "./fileCopy";
 export { fileFilterParamsSchema, fileFilterNodeSchema } from "./fileFilter";
 export type { FileFilterParams } from "./fileFilter";
+export { fileListParamsSchema, fileListNodeSchema } from "./fileList";
+export type { FileListParams } from "./fileList";
 export { fileMetadataParamsSchema, fileMetadataNodeSchema } from "./fileMetadata";
 export type { FileMetadataParams } from "./fileMetadata";
 export { fileMoveParamsSchema, fileMoveNodeSchema } from "./fileMove";

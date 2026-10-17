@@ -17,6 +17,10 @@
       "label": "Filter Files",
       "description": "Keep or drop files by extension, name or path pattern, and size."
     },
+    "fileList": {
+      "label": "List Files",
+      "description": "Turn lists of paths into files under a base folder; missing paths are counted."
+    },
     "fileMetadata": {
       "label": "File Metadata",
       "description": "Extract file metadata (size, extension, MIME type, hash) and attach to output."
@@ -183,6 +187,17 @@
       "max_size": {
         "label": "Maximum Size",
         "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit."
+      }
+    },
+    "fileList": {
+      "paths": {
+        "label": "Paths",
+        "description": "Paths to list, relative to the base folder, added to any read from input files (one per line, or NUL-separated)."
+      },
+      "base": {
+        "label": "Base Folder",
+        "description": "Folder the listed paths are relative to. Defaults to the working directory; absolute paths and \"..\" are refused.",
+        "placeholder": "."
       }
     },
     "fileMetadata": {

@@ -14,6 +14,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "file-collect": "Collect Files",
   "file-copy": "Copy Files",
   "file-filter": "Filter Files",
+  "file-list": "List Files",
   "file-metadata": "File Metadata",
   "file-move": "Move Files",
   "file-rename": "Rename Files",

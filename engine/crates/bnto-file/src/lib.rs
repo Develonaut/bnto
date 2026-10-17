@@ -1,7 +1,7 @@
 // bnto-file — File operation nodes.
 //
 // Browser-capable: filter, rename, metadata (no filesystem access).
-// CLI-only: collect, copy, move (require filesystem access).
+// CLI-only: collect, copy, list, move (require filesystem access).
 
 /// File-filter node — drop files that don't match extension, pattern,
 /// or size criteria. Non-matching files produce empty output.
@@ -19,6 +19,11 @@ pub mod collect;
 /// File-copy node — write output files to a destination directory with
 /// conflict resolution. CLI-only (requires filesystem access).
 pub mod copy;
+
+/// File-list node — turn lists of paths (from input files or a param) into
+/// path references under a base folder; missing paths are skipped and counted.
+/// CLI-only (requires filesystem access).
+pub mod list;
 
 /// The `newer` conflict mode of file-copy (time-compared, in-place copy).
 mod copy_newer;
@@ -42,6 +47,7 @@ pub mod wasm_bridge;
 pub use collect::FileCollect;
 pub use copy::FileCopy;
 pub use filter::FileFilter;
+pub use list::FileList;
 pub use metadata::FileMetadata;
 pub use r#move::FileMove;
 pub use rename::RenameFiles;

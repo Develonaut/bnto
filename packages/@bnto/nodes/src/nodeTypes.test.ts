@@ -75,7 +75,7 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual(["group", "loop", "parallel"]);
   });
 
-  it("server-only types are the file collect, copy, and move, http-request, shell-command, and the spreadsheet export and lookup", () => {
+  it("server-only types are the file collect, copy, list, and move, http-request, shell-command, and the spreadsheet export and lookup", () => {
     const serverOnly = Object.values(NODE_TYPE_INFO).filter(
       (i) => !i.platforms.includes("browser"),
     );
@@ -83,6 +83,7 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual([
       "file-collect",
       "file-copy",
+      "file-list",
       "file-move",
       "http-request",
       "shell-command",

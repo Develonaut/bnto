@@ -10,6 +10,7 @@ import { editFieldsNodeType } from "./editFields";
 import { fileCollectNodeType } from "./fileCollect";
 import { fileCopyNodeType } from "./fileCopy";
 import { fileFilterNodeType } from "./fileFilter";
+import { fileListNodeType } from "./fileList";
 import { fileMetadataNodeType } from "./fileMetadata";
 import { fileMoveNodeType } from "./fileMove";
 import { fileRenameNodeType } from "./fileRename";
@@ -45,6 +46,7 @@ export const NODE_TYPES = {
   fileCollect: "file-collect",
   fileCopy: "file-copy",
   fileFilter: "file-filter",
+  fileList: "file-list",
   fileMetadata: "file-metadata",
   fileMove: "file-move",
   fileRename: "file-rename",
@@ -84,6 +86,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "file-collect": fileCollectNodeType,
   "file-copy": fileCopyNodeType,
   "file-filter": fileFilterNodeType,
+  "file-list": fileListNodeType,
   "file-metadata": fileMetadataNodeType,
   "file-move": fileMoveNodeType,
   "file-rename": fileRenameNodeType,

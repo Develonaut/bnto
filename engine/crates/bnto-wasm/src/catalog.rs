@@ -137,22 +137,22 @@ mod tests {
     }
 
     #[test]
-    fn test_catalog_has_all_twenty_one_processors() {
-        // The native registry has 21 processors (15 browser + file-collect + file-copy +
-        // file-move + spreadsheet-export + spreadsheet-lookup + shell-command).
+    fn test_catalog_has_all_twenty_two_processors() {
+        // The native registry has 22 processors (15 browser + file-collect + file-copy +
+        // file-list + file-move + spreadsheet-export + spreadsheet-lookup + shell-command).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         assert_eq!(
             catalog.len(),
-            21,
-            "Catalog should have exactly 21 processors"
+            22,
+            "Catalog should have exactly 22 processors"
         );
     }
 
     #[test]
     fn test_catalog_contains_expected_node_types() {
-        // Verify all 21 expected processor type keys are present.
+        // Verify all 22 expected processor type keys are present.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -161,6 +161,7 @@ mod tests {
         let expected = [
             "file-collect",
             "file-copy",
+            "file-list",
             "file-move",
             "file-filter",
             "file-metadata",
@@ -195,14 +196,15 @@ mod tests {
     #[test]
     fn test_browser_processors_support_browser_platform() {
         // All processors except native-only ones should include "browser".
-        // file-collect, file-copy, file-move, spreadsheet-export, spreadsheet-lookup, and
-        // shell-command need filesystem access.
+        // file-collect, file-copy, file-list, file-move, spreadsheet-export, spreadsheet-lookup,
+        // and shell-command need filesystem access.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
         let non_browser = [
             "file-collect",
             "file-copy",
+            "file-list",
             "file-move",
             "spreadsheet-export",
             "spreadsheet-lookup",
@@ -236,9 +238,9 @@ mod tests {
         // Verify top-level structure.
         assert!(parsed["version"].is_string());
         assert!(parsed["nodeTypes"].is_array());
-        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 29);
+        assert_eq!(parsed["nodeTypes"].as_array().unwrap().len(), 30);
         assert!(parsed["processors"].is_array());
-        assert_eq!(parsed["processors"].as_array().unwrap().len(), 21);
+        assert_eq!(parsed["processors"].as_array().unwrap().len(), 22);
         // The definitionSchema should be present as a JSON object.
         assert!(
             parsed["definitionSchema"].is_object(),

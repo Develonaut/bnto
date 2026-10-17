@@ -1,0 +1,136 @@
+{
+  "id": "shell-list-copy",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Shell List Copy",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Lists a git repo's tracked files with `git ls-files -z`, turns the list into files, and copies them to a destination set with a param override."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "ls",
+      "type": "shell-command",
+      "version": "1.0.0",
+      "name": "List Tracked Files",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "command": "git",
+        "args": [
+          "ls-files",
+          "-z"
+        ],
+        "outputMode": "stdout"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "list",
+      "type": "file-list",
+      "version": "1.0.0",
+      "name": "List",
+      "position": {
+        "x": 375,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "copy",
+      "type": "file-copy",
+      "version": "1.0.0",
+      "name": "Copy",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "destination": "."
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 750,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "ls"
+    },
+    {
+      "id": "e2",
+      "source": "ls",
+      "target": "list"
+    },
+    {
+      "id": "e3",
+      "source": "list",
+      "target": "copy"
+    },
+    {
+      "id": "e4",
+      "source": "copy",
+      "target": "output"
+    }
+  ]
+}

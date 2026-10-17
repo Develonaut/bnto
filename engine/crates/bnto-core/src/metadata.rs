@@ -333,9 +333,9 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_29_entries() {
+    fn test_all_node_types_returns_30_entries() {
         let types = all_node_types();
-        assert_eq!(types.len(), 29, "Should have exactly 29 node types");
+        assert_eq!(types.len(), 30, "Should have exactly 30 node types");
     }
 
     #[test]
@@ -353,7 +353,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 29, "All node type names should be unique");
+        assert_eq!(names.len(), 30, "All node type names should be unique");
     }
 
     #[test]
@@ -394,6 +394,7 @@ mod tests {
             vec![
                 "file-collect",
                 "file-copy",
+                "file-list",
                 "file-move",
                 "http-request",
                 "shell-command",

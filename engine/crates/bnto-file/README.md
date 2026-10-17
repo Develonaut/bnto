@@ -15,6 +15,7 @@ File operation nodes. Rename, filter, collect, copy, and inspect files.
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, SHA-256 hash)                     | browser, cli    |
 | `FileCollect`  | `file-collect`  | Traverse a directory and collect files matching a glob pattern into the pipeline      | cli             |
 | `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer | cli             |
+| `FileList`     | `file-list`     | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder; missing paths skipped and counted | cli |
 | `FileMove`     | `file-move`     | Move files into folders under a destination by the path in each name; rename only, refuses any run that would replace a file | cli |
 
 ## Directory Structure
@@ -35,6 +36,10 @@ src/
 ├── collect.rs        # FileCollect processor + metadata (native-only)
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
+├── list/             # FileList processor (file-list, native-only)
+│   ├── mod.rs              # NodeProcessor impl (batch), outputs + missing metadata
+│   ├── params.rs           # Parameter schema + typed reads
+│   └── entries.rs          # List splitting; refuses absolute, drive, `..`
 ├── move/             # FileMove processor (file-move, native-only)
 │   ├── mod.rs              # NodeProcessor impl (batch), outputs
 │   ├── params.rs           # Parameter schema + typed reads

@@ -276,6 +276,38 @@
       ]
     },
     {
+      "name": "file-list",
+      "label": "List Files",
+      "description": "Turn lists of paths into files under a base folder; missing paths are counted.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "cli"
+      ],
+      "icon": "file-text",
+      "params": [
+        {
+          "name": "paths",
+          "label": "Paths",
+          "description": "Paths to list, relative to the base folder, added to any read from input files (one per line, or NUL-separated).",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "base",
+          "label": "Base Folder",
+          "description": "Folder the listed paths are relative to. Defaults to the working directory; absolute paths and \"..\" are refused.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": ".",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "file-metadata",
       "label": "File Metadata",
       "description": "Extract file metadata (size, extension, MIME type, hash) and attach to output.",
@@ -2277,6 +2309,39 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "file-list",
+      "name": "List Files",
+      "description": "Turn lists of paths into files: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "paths",
+          "label": "Paths",
+          "description": "Paths to list, relative to the base folder, added to any read from input files (one per line, or NUL-separated).",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "base",
+          "label": "Base Folder",
+          "description": "Folder the listed paths are relative to. Defaults to the working directory; absolute paths and \"..\" are refused.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": ".",
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "file-metadata",

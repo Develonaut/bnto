@@ -47,6 +47,10 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     min_size: { type: "number", control: "number", required: false, min: 0 },
     max_size: { type: "number", control: "number", required: false, min: 0 },
   },
+  "file-list": {
+    paths: { type: "record", control: "keyValue", required: false },
+    base: { type: "string", control: "text", required: false },
+  },
   "file-metadata": {
     include_hash: { type: "boolean", control: "switch", required: false },
   },
