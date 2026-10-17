@@ -447,6 +447,64 @@ fn test_shell_list_feeds_file_list_then_copy_keeps_folders() {
     assert!(!dest.path().join("untracked.txt").exists());
 }
 
+/// Run `file-list-collect-copy` with `Root` from a `--vars` file and the
+/// copy destination from a param override.
+fn run_list_collect_copy(root: &std::path::Path, dest: &std::path::Path) -> std::process::Output {
+    let vars_dir = temp_output_dir();
+    let vars_file = vars_dir.path().join("vars.json");
+    let body = serde_json::json!({ "Root": root.to_str().unwrap() }).to_string();
+    std::fs::write(&vars_file, body).unwrap();
+    let out = temp_output_dir();
+    let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
+    let recipe = custom_recipe_path("file-list-collect-copy");
+    Command::new(bnto_bin())
+        .args(["run", &recipe, "--yes"])
+        .args(["--vars", vars_file.to_str().unwrap(), "-p", &dest_param])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn test_file_list_folder_feeds_collect_then_copy_keeps_relative_names() {
+    // Guards: file-collect walks the folder file-list references, so a
+    // no-input recipe copies everything under a folder its vars name.
+    let root = temp_output_dir();
+    let folder = root.path().join("docs").join("drafts");
+    std::fs::create_dir_all(folder.join("nested")).unwrap();
+    std::fs::write(folder.join("a.txt"), "top").unwrap();
+    std::fs::write(folder.join("nested").join("b.txt"), "deep").unwrap();
+    std::fs::write(root.path().join("outside.txt"), "skip").unwrap();
+
+    let dest = temp_output_dir();
+    let output = run_list_collect_copy(root.path(), dest.path());
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let read = |rel: &[&str]| {
+        let path = rel.iter().fold(dest.path().to_path_buf(), |p, s| p.join(s));
+        std::fs::read_to_string(path).unwrap()
+    };
+    assert_eq!(read(&["a.txt"]), "top");
+    assert_eq!(read(&["nested", "b.txt"]), "deep");
+    assert!(!dest.path().join("outside.txt").exists());
+}
+
+#[test]
+fn test_file_list_missing_folder_copies_nothing_and_passes() {
+    // Guards: a folder missing on this machine is skipped by file-list, so
+    // file-collect never runs and the run still passes.
+    let root = temp_output_dir();
+    let dest = temp_output_dir();
+    let output = run_list_collect_copy(root.path(), dest.path());
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("1 missing"), "stderr: {stderr}");
+    let copied = std::fs::read_dir(dest.path()).unwrap().count();
+    assert_eq!(copied, 0, "nothing should be copied");
+}
+
 // --- File Copy: newer ---
 
 #[test]
