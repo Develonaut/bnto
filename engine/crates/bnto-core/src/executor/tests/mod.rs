@@ -346,6 +346,7 @@ mod containers;
 mod errors;
 mod item_templates;
 mod metadata;
+mod node_outputs;
 mod progress;
 mod recipes;
 mod recipes_containers;

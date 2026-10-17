@@ -93,6 +93,10 @@ Container nodes control how files flow through their children.
 
 Non-container nodes are leaves -- they receive files and transform them via their `NodeProcessor`.
 
+### Node Output Metadata
+
+After a leaf node runs, the executor records its node-level `NodeOutput.metadata` under its node id, and every later node in the run reads it through `{{node.<id>.<key>}}`. Records flow the way files do: along a chain, out of a group to the nodes after it, and out of a loop as every iteration's records merged in order (iterations don't see each other's). A per-file node's record merges its files' metadata in file order. See [recipe-fields.md](recipe-fields.md#node-output-references) for the template rules.
+
 ---
 
 ## Progress Event Taxonomy

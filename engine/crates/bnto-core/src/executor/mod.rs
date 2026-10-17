@@ -1,11 +1,13 @@
 // Pipeline Executor — top-level orchestrator for pipeline execution.
 //
-// Walks nodes in order, chaining outputs to inputs. Split across seven files:
+// Walks nodes in order, chaining outputs to inputs. Split across these files:
 //   - `mod.rs` — public API, node chaining and dispatch, shared types
 //   - `auto_iteration.rs` — implicit per-file loops for `iteration: "auto"`
 //   - `primitive.rs` — leaf node execution (image compress, file rename, etc.)
+//   - `leaf_output.rs` — a leaf node's output files and node record
 //   - `container.rs` — container node execution (loop, group, parallel)
 //   - `loop_config.rs` — loop container params (error handling, persistence)
+//   - `node_outputs.rs` — each node's output metadata, for `{{node.<id>.*}}`
 //   - `resolve.rs` — `{{fields.*}}` template resolution
 //   - `template.rs` — multi-namespace template resolution (env, ctx, node, item)
 //
@@ -14,7 +16,9 @@
 
 mod auto_iteration;
 mod container;
+mod leaf_output;
 pub mod loop_config;
+pub mod node_outputs;
 mod primitive;
 pub mod resolve;
 pub mod template;
@@ -28,6 +32,7 @@ use crate::pipeline::{
     PipelineResult, is_container_node, is_io_node,
 };
 use crate::registry::NodeRegistry;
+use node_outputs::{NodeOutputs, NodeRecords};
 
 #[cfg(test)]
 use crate::processor::NodeInput;
@@ -58,9 +63,26 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     /// If executing inside a container, the container's node ID.
     /// Used to set `parent_node_id` on child `NodeStarted` events.
     parent_node_id: Option<String>,
-    /// Per-node output metadata for {{node.<id>.*}} templates.
+    /// Output metadata of the nodes run so far, for {{node.<id>.*}} templates.
     /// Seeded with input file metadata before execution begins.
-    node_outputs: std::collections::BTreeMap<String, serde_json::Value>,
+    node_outputs: NodeOutputs<'a>,
+}
+
+impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
+    /// The same context over a new, empty layer of node output records.
+    fn layer(&self) -> PipelineContext<'_, F> {
+        PipelineContext {
+            registry: self.registry,
+            reporter: self.reporter,
+            process_ctx: self.process_ctx,
+            pipeline_total_files: self.pipeline_total_files,
+            now_ms: self.now_ms,
+            started_ms: self.started_ms,
+            loop_item: self.loop_item.clone(),
+            parent_node_id: self.parent_node_id.clone(),
+            node_outputs: self.node_outputs.layer(),
+        }
+    }
 }
 
 /// Where a node chain sits among its sibling nodes, for `NodeStarted` numbering.
@@ -96,6 +118,8 @@ struct NodeExecutionResult {
     files_processed: usize,
     /// Non-fatal warnings (e.g. skipped loop iterations with continue-on-error).
     warnings: Vec<String>,
+    /// Output metadata the node (or a container's children) recorded, by node id.
+    node_outputs: NodeRecords,
 }
 
 // --- Public API ---
@@ -161,6 +185,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
 ) -> PipelineContext<'a, F> {
     // Read once: every node of the run sees this as `{{ctx.started}}`.
     let started_ms = now_ms();
+    let seed = template::build_node_outputs_for_input(&definition.nodes, files);
     PipelineContext {
         registry,
         reporter,
@@ -170,7 +195,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
         started_ms,
         loop_item: None,
         parent_node_id: None,
-        node_outputs: template::build_node_outputs_for_input(&definition.nodes, files),
+        node_outputs: NodeOutputs::root(seed),
     }
 }
 
@@ -226,7 +251,9 @@ fn finish_pipeline<F: Fn() -> u64 + Copy>(
 /// Chain nodes sequentially, passing each node's output as the next node's input.
 ///
 /// `position` places the chain among its siblings, so a chain that is a
-/// slice of the pipeline still reports pipeline-wide progress.
+/// slice of the pipeline still reports pipeline-wide progress. Each node
+/// records its output metadata in the chain's layer, which every later node
+/// in the chain reads; the result carries what the chain recorded.
 fn run_node_chain<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
@@ -234,6 +261,7 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
     file_offset: usize,
     position: ChainPosition,
 ) -> Result<NodeExecutionResult, BntoError> {
+    let mut chain_ctx = ctx.layer();
     let mut current_files = files;
     let mut total_files_processed: usize = 0;
     let mut all_warnings: Vec<String> = Vec::new();
@@ -241,7 +269,7 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
     for (i, node) in nodes.iter().enumerate() {
         let node_index = position.first_index + i;
         let result = execute_node(
-            ctx,
+            &chain_ctx,
             node,
             current_files,
             node_index,
@@ -250,6 +278,7 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
         )?;
         total_files_processed += result.files_processed;
         all_warnings.extend(result.warnings);
+        chain_ctx.node_outputs.add(result.node_outputs);
         current_files = result.output_files;
     }
 
@@ -257,6 +286,7 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
         output_files: current_files,
         files_processed: total_files_processed,
         warnings: all_warnings,
+        node_outputs: chain_ctx.node_outputs.into_own(),
     })
 }
 

@@ -286,13 +286,13 @@ bnto run ./bulk-video-download.bnto.json manifest.csv \
 
 ### What exists today
 
-| Component                 | Status      | Notes                                                                              |
-| ------------------------- | ----------- | ---------------------------------------------------------------------------------- |
-| `shell-command` processor | **Exists**  | Can run yt-dlp with args, conditional groups, field templates                      |
-| Field template system     | **Exists**  | `{{fields.*}}` substitution in node params                                         |
-| `bnto-csv` crate          | **Exists**  | But only transforms CSV bytes (clean, rename, convert) — doesn't emit rows as data |
-| Loop container            | **Exists**  | But only iterates over input files, not structured data                            |
-| Node-to-node templates    | **Partial** | `{{node.<id>.*}}` syntax parsed but `node_outputs` always empty                    |
+| Component                 | Status     | Notes                                                                              |
+| ------------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| `shell-command` processor | **Exists** | Can run yt-dlp with args, conditional groups, field templates                      |
+| Field template system     | **Exists** | `{{fields.*}}` substitution in node params                                         |
+| `bnto-csv` crate          | **Exists** | But only transforms CSV bytes (clean, rename, convert) — doesn't emit rows as data |
+| Loop container            | **Exists** | But only iterates over input files, not structured data                            |
+| Node-to-node templates    | **Exists** | `{{node.<id>.*}}` reads an earlier node's output metadata                          |
 
 ### What's missing (in priority order)
 

@@ -10,14 +10,16 @@ use serde_json::Value;
 
 use crate::context::ProcessContext;
 
+use super::node_outputs::NodeOutputSource;
+
 /// All template namespace sources bundled for resolution.
 pub struct TemplateContext<'a> {
     /// Field values from node field definitions + user overrides.
     pub field_values: &'a BTreeMap<String, Value>,
     /// System access for env vars and working directory.
     pub process_ctx: &'a dyn ProcessContext,
-    /// Per-node output params from previously executed nodes.
-    pub node_outputs: &'a BTreeMap<String, Value>,
+    /// Output metadata of the nodes that ran before this one, by node id.
+    pub node_outputs: &'a dyn NodeOutputSource,
     /// The {{item.*}} source: the metadata of the file being processed, under the
     /// innermost loop's item. `None` when there is neither.
     pub loop_item: &'a Option<serde_json::Map<String, Value>>,
@@ -180,9 +182,9 @@ fn current_platform() -> &'static str {
 fn resolve_node_ref(
     node_id: &str,
     prop: &str,
-    node_outputs: &BTreeMap<String, Value>,
+    node_outputs: &dyn NodeOutputSource,
 ) -> Option<Value> {
-    let output = node_outputs.get(node_id)?;
+    let output = node_outputs.node_output(node_id)?;
     match output {
         Value::Object(map) => map.get(prop).cloned(),
         _ => None,
@@ -293,7 +295,7 @@ fn resolve_item_interpolation(
 }
 
 /// Replace all `{{node.<id>.<prop>}}` occurrences in-place via string interpolation.
-fn resolve_node_interpolation(result: &mut String, node_outputs: &BTreeMap<String, Value>) {
+fn resolve_node_interpolation(result: &mut String, node_outputs: &dyn NodeOutputSource) {
     while let Some(start) = result.find("{{node.") {
         let rest = &result[start + 7..];
         let Some(end) = rest.find("}}") else { break };

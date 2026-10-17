@@ -902,7 +902,7 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ### Triage: Data-Driven Loop Iteration (O(1) Memory)
 
-**Priority: Triage.** Replace N-files row iteration with `NodeOutput.data` + lazy iteration in loop container. Track node outputs in `run_node_chain`, loop queries upstream structured data and iterates without materializing all files upfront. Also fixes dormant `{{node.*}}` template system (`node_outputs` always empty today). Prerequisite: `spreadsheet-read` processor ships first with pragmatic N-files approach.
+**Priority: Triage.** Replace N-files row iteration with `NodeOutput.data` + lazy iteration in loop container. Track node outputs in `run_node_chain`, loop queries upstream structured data and iterates without materializing all files upfront. (`{{node.<id>.*}}` already reads each earlier node's output metadata; the structured `NodeOutput.data` side is what's left.) Prerequisite: `spreadsheet-read` processor ships first with pragmatic N-files approach.
 
 `engine/crates/bnto-core/src/executor/container.rs`, `engine/crates/bnto-core/src/executor/mod.rs`, `engine/crates/bnto-core/src/processor.rs`
 

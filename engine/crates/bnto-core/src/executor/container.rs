@@ -7,6 +7,7 @@ use crate::events::{PipelineEvent, ProgressOutputFile};
 use crate::pipeline::{PipelineDefinition, PipelineFile};
 
 use super::loop_config::{OnErrorStrategy, OutputPersistence, parse_loop_config};
+use super::node_outputs::{NodeRecords, merge_records};
 use super::{
     ChainPosition, NodeExecutionResult, PipelineContext, PipelineNodeRef, filter_processing_nodes,
     run_node_chain,
@@ -18,6 +19,7 @@ fn passthrough(files: Vec<PipelineFile>) -> NodeExecutionResult {
         files_processed: 0,
         output_files: files,
         warnings: Vec::new(),
+        node_outputs: NodeRecords::new(),
     }
 }
 
@@ -70,6 +72,11 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 ///
 /// When `onError: "continue"`, failed iterations are skipped with a warning
 /// instead of killing the entire loop. If ALL iterations fail, the loop fails.
+///
+/// Iterations are independent: children read the output metadata recorded
+/// before the loop and by earlier siblings in their own iteration, never by
+/// another iteration. Nodes after the loop read every successful iteration's
+/// records merged in order, so a later iteration wins a key both set.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     container_id: &str,
@@ -83,6 +90,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
     let mut warnings: Vec<String> = Vec::new();
+    let mut records = NodeRecords::new();
 
     for (i, file) in files.into_iter().enumerate() {
         let iter_start = (ctx.now_ms)();
@@ -102,6 +110,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                 let files_produced = exec_result.output_files.len();
                 total_processed += exec_result.files_processed;
                 warnings.extend(exec_result.warnings);
+                merge_records(&mut records, exec_result.node_outputs);
 
                 let progress_files =
                     build_progress_files(&config.output_persistence, &exec_result.output_files);
@@ -164,6 +173,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
         files_processed: total_processed,
         output_files: all_output_files,
         warnings,
+        node_outputs: records,
     })
 }
 
@@ -202,15 +212,9 @@ fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
         Some(file.metadata.clone())
     };
     PipelineContext {
-        registry: ctx.registry,
-        reporter: ctx.reporter,
-        process_ctx: ctx.process_ctx,
-        pipeline_total_files: ctx.pipeline_total_files,
-        now_ms: ctx.now_ms,
-        started_ms: ctx.started_ms,
         loop_item: item_data,
         parent_node_id: Some(container_id.to_string()),
-        node_outputs: ctx.node_outputs.clone(),
+        ..ctx.layer()
     }
 }
 
@@ -223,15 +227,8 @@ fn execute_group<F: Fn() -> u64 + Copy>(
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     let group_ctx = PipelineContext {
-        registry: ctx.registry,
-        reporter: ctx.reporter,
-        process_ctx: ctx.process_ctx,
-        pipeline_total_files: ctx.pipeline_total_files,
-        now_ms: ctx.now_ms,
-        started_ms: ctx.started_ms,
-        loop_item: ctx.loop_item.clone(),
         parent_node_id: Some(container_id.to_string()),
-        node_outputs: ctx.node_outputs.clone(),
+        ..ctx.layer()
     };
     execute_sub_pipeline(&group_ctx, sub_definition, files, file_offset)
 }
