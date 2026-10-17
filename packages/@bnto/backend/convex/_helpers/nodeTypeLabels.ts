@@ -25,6 +25,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "image-overlay": "Overlay Image",
   "image-resize": "Resize Images",
   "image-strip-exif": "Strip EXIF",
+  "report": "Report",
   "shell-command": "Shell Command",
   "spreadsheet-clean": "Clean CSV",
   "spreadsheet-convert": "CSV to JSON",

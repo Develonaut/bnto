@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 31 registered node types.
+/// Return metadata for all 32 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -95,6 +95,15 @@ fn control_node_types() -> Vec<NodeTypeInfo> {
             "browser",
             "git-fork"
         ),
+        node_type!(
+            "report",
+            "Report",
+            "Print a templated line to the run's output; files pass through unchanged.",
+            NodeCategory::Control,
+            false,
+            "browser",
+            "message-square"
+        ),
     ]
 }
 
@@ -144,7 +153,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-list",
             "List Files",
-            "Turn lists of paths into files under a base folder; missing paths are counted.",
+            "Turn lists of paths into files under a base folder; every path is listed, found or missing.",
             NodeCategory::File,
             false,
             "cli",

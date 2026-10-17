@@ -1,0 +1,108 @@
+{
+  "id": "report-entries",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Report Entries",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Lists named files under a root set by the Root run var, and prints a line per listed path, found or missing, without failing the run."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "opt",
+      "type": "file-list",
+      "version": "1.0.0",
+      "name": "List",
+      "position": {
+        "x": 125,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": [
+          "a.txt",
+          "gone.txt",
+          "sub/b.txt"
+        ]
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "show",
+      "type": "report",
+      "version": "1.0.0",
+      "name": "Show",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "each": "{{node.opt.entries}}",
+        "message": "{{entry.status}}: {{entry.full_path}}"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 375,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "opt"
+    },
+    {
+      "id": "e2",
+      "source": "opt",
+      "target": "show"
+    },
+    {
+      "id": "e3",
+      "source": "show",
+      "target": "output"
+    }
+  ]
+}

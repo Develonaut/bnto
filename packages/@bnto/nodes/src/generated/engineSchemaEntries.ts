@@ -26,6 +26,7 @@ import { inputNodeSchema } from "./schemas/input";
 import { loopNodeSchema } from "./schemas/loop";
 import { outputNodeSchema } from "./schemas/output";
 import { parallelNodeSchema } from "./schemas/parallel";
+import { reportNodeSchema } from "./schemas/report";
 import { shellCommandNodeSchema } from "./schemas/shellCommand";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
@@ -62,6 +63,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   loop: loopNodeSchema,
   output: outputNodeSchema,
   parallel: parallelNodeSchema,
+  report: reportNodeSchema,
   "shell-command": shellCommandNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
@@ -320,6 +322,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
       ],
     },
   },
+  report: {},
   "shell-command": {
     args: { control: "tagPicker" },
     timeout: { suffix: "seconds" },

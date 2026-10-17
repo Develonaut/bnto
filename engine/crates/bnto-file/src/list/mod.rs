@@ -4,21 +4,22 @@
 // or NUL-separated, as `git ls-files -z` or `find -print0` print them) and
 // from its `paths` param; both are relative to `base`. Each path that exists
 // becomes a path reference named by that relative path, so later nodes keep
-// its folders. A missing path is skipped and counted, not an error; a path
-// that would leave `base` refuses the run.
+// its folders, with its `full_path` in its metadata. A missing path is skipped
+// and counted, not an error; a path that would leave `base` refuses the run.
+// The node's `entries` keep every path in listed order, found or missing.
 
 mod entries;
+mod listed;
 mod params;
 
 use std::path::{Path, PathBuf};
 
 use bnto_core::metadata::{InputCardinality, NodeCategory, NodeMetadata};
-use bnto_core::processor::{
-    BatchFile, BatchInput, FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile,
-};
+use bnto_core::processor::{BatchFile, BatchInput, NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
+use listed::Listed;
 use params::{ListParams, build_list_parameters};
 
 /// File-list processor — path lists in, path references out.
@@ -46,7 +47,8 @@ impl NodeProcessor for FileList {
             node_type: "file-list".to_string(),
             name: "List Files".to_string(),
             description: "Turn lists of paths into files: each listed path under a base folder \
-                          that exists joins the pipeline; missing ones are skipped and counted."
+                          that exists joins the pipeline; missing ones are skipped and counted. \
+                          `entries` lists every path in order with its full path and status."
                 .to_string(),
             category: NodeCategory::File,
             accepts: vec![],
@@ -93,10 +95,13 @@ impl NodeProcessor for FileList {
         raw.extend(params.paths);
         let names =
             entries::checked_names(raw).map_err(|bad| BntoError::InvalidInput(refused(&bad)))?;
-        let (found, missing): (Vec<String>, Vec<String>) =
-            names.into_iter().partition(|name| base.join(name).exists());
-        progress.report_output(&summary(found.len(), missing.len(), &base));
-        Ok(outputs(&base, found, missing))
+        let listed: Vec<Listed> = names
+            .into_iter()
+            .map(|name| Listed::check(&base, name))
+            .collect();
+        let found = listed.iter().filter(|l| l.found).count();
+        progress.report_output(&summary(found, listed.len() - found, &base));
+        Ok(outputs(listed))
     }
 }
 
@@ -140,21 +145,24 @@ fn summary(found: usize, missing: usize, base: &Path) -> String {
     text
 }
 
-/// A path reference per found path; `missing` and `missing_count` in the
-/// node's metadata.
-fn outputs(base: &Path, found: Vec<String>, missing: Vec<String>) -> NodeOutput {
-    let files = found
+/// A path reference per found path; `entries` (every path, in order),
+/// `missing` and `missing_count` in the node's metadata.
+fn outputs(listed: Vec<Listed>) -> NodeOutput {
+    let entries: Vec<serde_json::Value> = listed.iter().map(Listed::entry).collect();
+    let missing: Vec<String> = listed
+        .iter()
+        .filter(|l| !l.found)
+        .map(|l| l.name.clone())
+        .collect();
+    let files = listed
         .into_iter()
-        .map(|name| OutputFile {
-            data: FileData::Path(base.join(&name)),
-            mime_type: "application/octet-stream".to_string(),
-            filename: name,
-            metadata: serde_json::Map::new(),
-        })
+        .filter(|l| l.found)
+        .map(Listed::into_output)
         .collect();
     let mut metadata = serde_json::Map::new();
     metadata.insert("missing_count".to_string(), missing.len().into());
     metadata.insert("missing".to_string(), missing.into());
+    metadata.insert("entries".to_string(), entries.into());
     NodeOutput { files, metadata }
 }
 

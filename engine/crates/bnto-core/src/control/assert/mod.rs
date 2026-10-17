@@ -7,14 +7,15 @@
 // file is named in the one error. A dry run checks nothing.
 
 mod compare;
-mod item;
 mod params;
 
 use crate::metadata::{InputCardinality, NodeCategory, NodeMetadata};
-use crate::processor::{BatchFile, BatchInput, NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use crate::processor::{BatchFile, BatchInput, NodeInput, NodeOutput, NodeProcessor};
 use crate::progress::ProgressReporter;
 use crate::{BntoError, ProcessContext};
 
+use super::pass_through::pass_through;
+use super::placeholder::{self, ITEM};
 use params::{AssertParams, build_assert_parameters};
 
 /// Assert processor — a comparison that fails the run when it doesn't hold.
@@ -59,6 +60,10 @@ impl NodeProcessor for Assert {
 
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         AssertParams::read(params).err().into_iter().collect()
+    }
+
+    fn resolves_items(&self) -> bool {
+        true
     }
 
     /// Required by the trait; the executor always runs this node as a batch.
@@ -107,7 +112,7 @@ impl NodeProcessor for Assert {
 /// Every reason the check fails: once, or once per file when it reads
 /// `{{item.*}}` (no files, nothing to check).
 fn failures(params: &AssertParams, files: &[BatchFile]) -> Vec<String> {
-    if !(item::reads_item(&params.value) || item::reads_item(&params.expected)) {
+    if !(placeholder::reads(&params.value, ITEM) || placeholder::reads(&params.expected, ITEM)) {
         return compare::compare(&params.value, params.op, &params.expected)
             .err()
             .into_iter()
@@ -122,32 +127,14 @@ fn failures(params: &AssertParams, files: &[BatchFile]) -> Vec<String> {
 /// Why the check fails for one file, named by it; `None` when it holds.
 fn file_failure(params: &AssertParams, file: &BatchFile) -> Option<String> {
     let resolve = |text: &str| {
-        item::resolve(text, &file.metadata).map_err(|key| format!("has no item \"{key}\""))
+        placeholder::resolve(text, ITEM, &file.metadata)
+            .map_err(|key| format!("has no item \"{key}\""))
     };
     let checked = resolve(&params.value).and_then(|value| {
         let expected = resolve(&params.expected)?;
         compare::compare(&value, params.op, &expected)
     });
     checked.err().map(|why| format!("{}: {why}", file.filename))
-}
-
-/// The files as they arrived, metadata and all.
-fn pass_through(files: Vec<BatchFile>) -> NodeOutput {
-    let files = files
-        .into_iter()
-        .map(|f| OutputFile {
-            data: f.data,
-            filename: f.filename,
-            mime_type: f
-                .mime_type
-                .unwrap_or_else(|| "application/octet-stream".to_string()),
-            metadata: f.metadata,
-        })
-        .collect();
-    NodeOutput {
-        files,
-        metadata: serde_json::Map::new(),
-    }
 }
 
 #[cfg(test)]

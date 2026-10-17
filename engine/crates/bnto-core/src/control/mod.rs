@@ -2,5 +2,11 @@
 
 /// Assert node — fail the run when a comparison doesn't hold.
 pub mod assert;
+/// Report node — print a templated line to the run's output.
+pub mod report;
+
+mod pass_through;
+mod placeholder;
 
 pub use assert::Assert;
+pub use report::Report;

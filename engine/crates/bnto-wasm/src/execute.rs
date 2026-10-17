@@ -138,10 +138,11 @@ mod tests {
     #[test]
     fn test_shared_registry_has_all_processors() {
         let registry = bnto_engine::create_browser_registry();
-        assert_eq!(registry.len(), 16);
+        assert_eq!(registry.len(), 17);
 
         let types = [
             "assert",
+            "report",
             "file-filter",
             "file-metadata",
             "file-rename",

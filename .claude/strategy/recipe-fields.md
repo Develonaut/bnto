@@ -179,6 +179,14 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 | `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run; an unset key fails the run |
 | `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms       | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                   |
 | `{{node.<id>.*}}` | An earlier node's output metadata           | `{{node.step1.count}}`     | Engine, before each node runs (see below)                  |
+| `{{entry.*}}`     | One entry of a `report` node's `each` list  | `{{entry.status}}`         | The `report` node, once per entry (see below)              |
+
+### Per-Entry References
+
+`report`'s `each` param takes a list, usually a sole `{{node.<id>.<key>}}` such as `{{node.opt.entries}}` (a `file-list`'s every path, in listed order). The node prints its `message` once per entry, and `{{entry.<key>}}` in the message reads that entry's field: `{{entry.status}}: {{entry.full_path}}`. An entry that is a plain value (text, a number) is `{{entry}}`, and `{{entry}}` on an object entry prints it as JSON.
+
+- **Recipe mistakes fail the run.** An `each` that doesn't resolve to a list, an entry without a key the message reads, `{{entry}}` with no `each`, or one message reading both `{{entry}}` and `{{item.*}}`.
+- **Per file instead.** Without `each`, a message that reads `{{item.<key>}}` prints once per incoming file, from that file's metadata. `report` and `assert` resolve `{{item.*}}` themselves per file (`NodeProcessor::resolves_items`), so outside a loop the engine hands those to them as written instead of refusing them.
 
 ### Node Output References
 

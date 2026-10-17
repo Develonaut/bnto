@@ -23,7 +23,7 @@
     },
     "fileList": {
       "label": "List Files",
-      "description": "Turn lists of paths into files under a base folder; missing paths are counted."
+      "description": "Turn lists of paths into files under a base folder; every path is listed, found or missing."
     },
     "fileMetadata": {
       "label": "File Metadata",
@@ -80,6 +80,10 @@
     "parallel": {
       "label": "Parallel",
       "description": "Execute tasks concurrently with configurable worker pool and error strategy."
+    },
+    "report": {
+      "label": "Report",
+      "description": "Print a templated line to the run's output; files pass through unchanged."
     },
     "shellCommand": {
       "label": "Shell Command",
@@ -359,6 +363,17 @@
       "quality": {
         "label": "Quality",
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
+    "report": {
+      "message": {
+        "label": "Message",
+        "description": "The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each."
+      },
+      "each": {
+        "label": "For Each",
+        "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template.",
+        "placeholder": "{{node.<id>.<key>}}"
       }
     },
     "shellCommand": {
