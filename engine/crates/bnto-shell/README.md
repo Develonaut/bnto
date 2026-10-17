@@ -25,6 +25,7 @@ All commands pass through `validate.rs` before execution:
 
 - **Shell denylist**: bash, sh, zsh, powershell, and other shell interpreters are rejected. Commands must be bare binary names (e.g., `ffmpeg`, not `bash -c "ffmpeg ..."`).
 - **Path validation**: absolute paths, relative paths, and parent traversal are rejected. Commands are resolved via PATH by the OS.
+- **`search_path`** (optional): a list of folders to find the command in, in order, instead of PATH. The command is still a bare, validated name, the shell denylist still applies, and PATH is not consulted as a fallback, so a wrong folder fails naming the folders. The command runs by its resolved full path and the child's environment (PATH included) is unchanged. Relative folders are under the working directory. The consent prompt shows the folders as written (`Build.bat (from {{env.ROOT}}/bin)`), so approving a recipe approves where its tools come from.
 - **Environment sanitization**: `LD_PRELOAD`, `DYLD_*`, `PATH`, `HOME`, `SHELL`, `TMPDIR` are silently stripped from recipe-provided env vars.
 
 ## Conditional Args
@@ -48,6 +49,7 @@ src/
 ├── file_mode.rs     # "file" output mode ({{output_dir}} temp dir)
 ├── output_files.rs  # Collects written files as path references
 ├── parameters.rs    # Node parameter schema
+├── search_path.rs   # `search_path`: find a bare command in named folders, not PATH
 └── validate.rs      # Security validation (command denylist, env sanitization)
 ```
 

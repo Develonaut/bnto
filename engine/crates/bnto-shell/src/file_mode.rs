@@ -14,6 +14,7 @@ pub(crate) const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
 /// Replaces `{{output_dir}}` in args with the temp directory path.
 pub(crate) fn process_file_mode(
     command: &str,
+    program: &str,
     args: &[String],
     _input: &NodeInput,
     progress: &ProgressReporter,
@@ -26,7 +27,7 @@ pub(crate) fn process_file_mode(
     progress.report(10, &format!("Running {command}..."));
     let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
     // Run the command with stderr streaming — stdout is captured but unused.
-    let _stdout = ctx.run_command_streaming(command, &arg_refs, &|line| {
+    let _stdout = ctx.run_command_streaming(program, &arg_refs, &|line| {
         progress.report_output(line);
     })?;
     progress.report(80, "Collecting output files...");

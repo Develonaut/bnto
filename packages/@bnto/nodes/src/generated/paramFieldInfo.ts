@@ -203,6 +203,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     timeout: { type: "number", control: "number", required: false },
     maxOutputSize: { type: "number", control: "number", required: false },
     env: { type: "record", control: "keyValue", required: false },
+    search_path: { type: "record", control: "keyValue", required: false },
   },
   "spreadsheet-clean": {
     trimWhitespace: { type: "boolean", control: "switch", required: false },

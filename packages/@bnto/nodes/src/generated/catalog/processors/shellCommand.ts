@@ -57,6 +57,14 @@ export const shellCommandProcessor: ProcessorDef = {
       type: "object" as const,
       surfaceable: false,
     },
+    {
+      name: "search_path",
+      label: "Search Path",
+      description:
+        "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory.",
+      type: "object" as const,
+      surfaceable: false,
+    },
   ],
   inputCardinality: "source" as const,
 };

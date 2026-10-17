@@ -551,6 +551,82 @@ fn test_assert_fails_the_run_naming_every_missing_path() {
     );
 }
 
+// --- Shell search_path ---
+
+/// A tools folder holding a `greet` program that prints "greeted", and a
+/// `--vars` file pointing `Tools` at it.
+fn greet_tools(with_greet: bool) -> tempfile::TempDir {
+    let tools = temp_output_dir();
+    if with_greet {
+        write_greet(tools.path());
+    }
+    let vars = serde_json::json!({ "Tools": tools.path().to_str().unwrap() }).to_string();
+    std::fs::write(tools.path().join("vars.json"), vars).unwrap();
+    tools
+}
+
+#[cfg(windows)]
+fn write_greet(dir: &std::path::Path) {
+    std::fs::write(
+        dir.join("greet.bat"),
+        "@echo greeted
+",
+    )
+    .unwrap();
+}
+
+#[cfg(unix)]
+fn write_greet(dir: &std::path::Path) {
+    use std::os::unix::fs::PermissionsExt;
+    let path = dir.join("greet");
+    std::fs::write(
+        &path,
+        "#!/bin/sh
+echo greeted
+",
+    )
+    .unwrap();
+    std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755)).unwrap();
+}
+
+fn run_greet(tools: &tempfile::TempDir, out: &tempfile::TempDir) -> std::process::Output {
+    let vars = tools.path().join("vars.json");
+    Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("shell-search-path"), "--yes"])
+        .args([
+            "--vars",
+            vars.to_str().unwrap(),
+            "-o",
+            out.path().to_str().unwrap(),
+        ])
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn test_shell_command_runs_a_tool_found_in_search_path() {
+    let (tools, out) = (greet_tools(true), temp_output_dir());
+    let output = run_greet(&tools, &out);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let files = output_files(&out);
+    assert_eq!(files.len(), 1, "stderr: {stderr}");
+    let content = std::fs::read_to_string(files[0].path()).unwrap();
+    assert_eq!(content.trim(), "greeted");
+}
+
+#[test]
+fn test_shell_command_fails_when_search_path_lacks_the_tool() {
+    let (tools, out) = (greet_tools(false), temp_output_dir());
+    let output = run_greet(&tools, &out);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    assert!(
+        stderr.contains("'greet' was not found in search_path"),
+        "stderr: {stderr}"
+    );
+}
+
 // --- File Copy: newer ---
 
 #[test]

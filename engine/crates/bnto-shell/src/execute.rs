@@ -25,6 +25,7 @@ pub use crate::args::flatten_conditional_args;
 use crate::args::resolve_input_placeholders;
 use crate::file_mode::process_file_mode;
 use crate::parameters::build_parameters;
+use crate::search_path;
 use crate::stdout_mode::process_stdout_mode;
 use crate::validate::{self, DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
@@ -73,6 +74,9 @@ impl NodeProcessor for ShellCommand {
             }
         }
 
+        if let Err(e) = search_path::read_search_path(params.get("search_path")) {
+            errors.push(e);
+        }
         if let Some(timeout) = params.get("timeout").and_then(serde_json::Value::as_u64)
             && timeout == 0
         {
@@ -96,13 +100,30 @@ impl NodeProcessor for ShellCommand {
         let _env = sanitized_env(params);
         // Security check: reject shell interpreters and path-based commands
         validate::validate_command(command).map_err(BntoError::InvalidInput)?;
+        let program = resolved_program(command, params, ctx)?;
         // Resolve {{url}} and {{input}} placeholders from injected params.
         // The CLI injects "url" or "text" params for URL/Text mode recipes.
         resolve_input_placeholders(&mut args, params);
         let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
         match params.get("outputMode").and_then(serde_json::Value::as_str) {
-            Some("file") => process_file_mode(command, &args, &input, progress, ctx, max_output_mb),
-            _ => process_stdout_mode(command, &args, &input, progress, ctx, max_output_mb),
+            Some("file") => process_file_mode(
+                command,
+                &program,
+                &args,
+                &input,
+                progress,
+                ctx,
+                max_output_mb,
+            ),
+            _ => process_stdout_mode(
+                command,
+                &program,
+                &args,
+                &input,
+                progress,
+                ctx,
+                max_output_mb,
+            ),
         }
     }
 
@@ -131,6 +152,20 @@ fn required_command(params: &Params) -> Result<&str, BntoError> {
         .get("command")
         .and_then(serde_json::Value::as_str)
         .ok_or_else(|| BntoError::InvalidInput("'command' parameter is required".to_string()))
+}
+
+/// What to spawn: the command's full path from `search_path` when set,
+/// else the bare name for PATH resolution.
+fn resolved_program(
+    command: &str,
+    params: &Params,
+    ctx: &dyn ProcessContext,
+) -> Result<String, BntoError> {
+    let folders = search_path::read_search_path(params.get("search_path"))
+        .map_err(BntoError::InvalidInput)?;
+    let found = search_path::resolve_command(command, &folders, ctx.work_dir().ok())
+        .map_err(BntoError::InvalidInput)?;
+    Ok(found.map_or_else(|| command.to_string(), |p| p.to_string_lossy().into_owned()))
 }
 
 /// The `args` param with conditional groups flattened (empty when unset).
@@ -247,6 +282,107 @@ mod tests {
         let errors = processor.validate(&params);
         assert!(!errors.is_empty());
         assert!(errors[0].contains("shell interpreter"));
+    }
+
+    // --- search_path ---
+
+    #[test]
+    fn test_validate_refuses_a_search_path_that_is_not_folders() {
+        let mut params = serde_json::Map::new();
+        params.insert("command".into(), serde_json::json!("tool"));
+        params.insert("search_path".into(), serde_json::json!([1]));
+        let errors = ShellCommand::new().validate(&params);
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("search_path"), "{errors:?}");
+    }
+
+    #[test]
+    fn test_validate_keeps_refusing_shells_with_a_search_path() {
+        let mut params = serde_json::Map::new();
+        params.insert("command".into(), serde_json::json!("cmd"));
+        params.insert(
+            "search_path".into(),
+            serde_json::json!(["C:/Windows/System32"]),
+        );
+        let errors = ShellCommand::new().validate(&params);
+        assert!(
+            errors.iter().any(|e| e.contains("shell interpreter")),
+            "{errors:?}"
+        );
+    }
+
+    /// Records the program it was asked to run and returns "ok" as stdout.
+    struct Recording(std::sync::Mutex<Vec<String>>);
+
+    impl ProcessContext for Recording {
+        fn run_command(&self, cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            self.0.lock().unwrap().push(cmd.to_string());
+            Ok(b"ok".to_vec())
+        }
+        fn temp_file(&self, s: &str) -> Result<std::path::PathBuf, BntoError> {
+            NoopContext.temp_file(s)
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&std::path::Path, BntoError> {
+            NoopContext.work_dir()
+        }
+    }
+
+    fn search_path_input(dir: &std::path::Path) -> NodeInput {
+        let mut params = serde_json::Map::new();
+        params.insert("command".into(), serde_json::json!("tool.bat"));
+        params.insert(
+            "search_path".into(),
+            serde_json::json!([dir.to_str().unwrap()]),
+        );
+        NodeInput {
+            data: FileData::Bytes(vec![]),
+            filename: String::new(),
+            mime_type: None,
+            params,
+        }
+    }
+
+    #[test]
+    fn test_process_runs_the_command_found_in_search_path_by_full_path() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("tool.bat"), b"").unwrap();
+        let ctx = Recording(Default::default());
+        let progress = ProgressReporter::new_noop();
+        let output = ShellCommand::new()
+            .process(search_path_input(dir.path()), &progress, &ctx)
+            .unwrap();
+        // Named after the bare command, never the full path it ran from.
+        assert_eq!(output.files[0].filename, "tool.bat-output");
+        assert_eq!(output.metadata["command"], "tool.bat");
+        let ran = ctx.0.lock().unwrap().clone();
+        let expected = dir.path().join("tool.bat").to_string_lossy().into_owned();
+        assert_eq!(ran, [expected]);
+    }
+
+    #[test]
+    fn test_process_fails_when_search_path_lacks_the_command() {
+        let dir = tempfile::tempdir().unwrap();
+        let ctx = Recording(Default::default());
+        let progress = ProgressReporter::new_noop();
+        let err = ShellCommand::new()
+            .process(search_path_input(dir.path()), &progress, &ctx)
+            .err()
+            .expect("should fail");
+        assert!(
+            err.to_string().contains("not found in search_path"),
+            "{err}"
+        );
+        assert!(ctx.0.lock().unwrap().is_empty(), "nothing should run");
+    }
+
+    #[test]
+    fn test_search_path_param_is_internal_and_listed() {
+        let meta = ShellCommand::new().metadata();
+        let param = meta.parameters.iter().find(|p| p.name == "search_path");
+        assert!(!param.expect("search_path should exist").surfaceable);
     }
 
     #[test]
