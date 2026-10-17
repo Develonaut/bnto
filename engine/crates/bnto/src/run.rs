@@ -1,7 +1,6 @@
 // `bnto run` — resolve a recipe, gate it on consent, execute it through the
 // engine with progress on stderr, then write and summarize the results.
 
-use std::process;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -11,7 +10,8 @@ use colored::Colorize;
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
 use crate::run_output::write_output;
-use crate::{context, dry_run, input, progress, telemetry, unwrap_or_exit, vars};
+use crate::run_verdict::RunVerdict;
+use crate::{context, dry_run, input, progress, telemetry, vars};
 
 /// The `bnto run` switches that change what a run does.
 #[derive(Clone, Copy)]
@@ -22,6 +22,8 @@ pub struct RunFlags<'a> {
     pub dry_run: bool,
     /// `--vars`: files of run vars for `{{vars.KEY}}`.
     pub vars: &'a [String],
+    /// `--json`: also print the run summary as one JSON line on stdout.
+    pub json: bool,
 }
 
 /// Input facts recorded for logging and telemetry.
@@ -49,46 +51,51 @@ pub fn run_recipe(
     logger: &Arc<dyn Logger>,
     catalog: &RecipeCatalog,
 ) {
-    let raw_json = read_recipe(recipe_path, catalog);
+    let verdict = RunVerdict::new(flags.json);
+    let raw_json = read_recipe(recipe_path, catalog, &verdict);
     check_trust(recipe_path, &raw_json, flags.yes, catalog);
-    let mut prepared = unwrap_or_exit(input::prepare_inputs(&raw_json, inputs, param_overrides));
-    prepared.definition_json = resolve_vars(&prepared.definition_json, flags.vars);
+    let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
+    let mut prepared = verdict.or_fail(prepared, "Error:");
+    prepared.definition_json = resolve_vars(&prepared.definition_json, flags.vars, &verdict);
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides);
     log_run_start(logger, &stats);
 
     let start = Instant::now();
-    let ctx = unwrap_or_exit(
-        context::NativeContext::current_dir().map(|c| c.with_dry_run(flags.dry_run)),
-    );
+    let ctx = context::NativeContext::current_dir().map(|c| c.with_dry_run(flags.dry_run));
+    let ctx = verdict.or_fail(ctx, "Error:");
     let target = run_target(output_override, flags.dry_run, &prepared, &ctx);
-    let reporter = progress::stderr_reporter(Arc::clone(logger), progressive_dir(&target));
-    if flags.dry_run {
-        dry_run::print_shell_note(&prepared.definition_json);
-    }
-    let def_json = &prepared.definition_json;
-    let outcome = bnto_engine::run_pipeline(def_json, prepared.files, &reporter, &ctx);
-    // Dropping the context deletes a dry run's temp files; do it before the
-    // exits below, which skip destructors.
-    drop(ctx);
-    match outcome {
-        Ok(result) => finish_run(logger, &stats, start, &result, &target),
-        Err(e) => fail_run(logger, &e),
+    match execute(prepared, ctx, &target, logger, &verdict) {
+        Ok(result) => finish_run(logger, &stats, start, &result, &target, &verdict),
+        Err(e) => fail_run(logger, &e, &verdict),
     }
 }
 
+/// Run the pipeline with progress on stderr, tallying nodes for the verdict.
+///
+/// Takes `ctx` by value: dropping it on return deletes a dry run's temp
+/// files before the exits that follow, which skip destructors.
+fn execute(
+    prepared: input::PreparedInput,
+    ctx: context::NativeContext,
+    target: &RunTarget,
+    logger: &Arc<dyn Logger>,
+    verdict: &RunVerdict,
+) -> Result<bnto_core::PipelineResult, bnto_core::BntoError> {
+    let stderr = progress::stderr_reporter(Arc::clone(logger), progressive_dir(target));
+    let reporter = verdict.tallying(stderr);
+    if target.dry_run {
+        dry_run::print_shell_note(&prepared.definition_json);
+    }
+    bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx)
+}
+
 /// Read recipe JSON — try catalog slug first, then disk path.
-fn read_recipe(path: &str, catalog: &RecipeCatalog) -> String {
+fn read_recipe(path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
     if let Some(entry) = catalog.resolve(path) {
         return entry.definition_json.clone();
     }
-    match std::fs::read_to_string(path) {
-        Ok(json) => json,
-        Err(e) => {
-            eprintln!("{} {e}", "Error reading recipe:".red());
-            process::exit(1);
-        }
-    }
+    verdict.or_fail(std::fs::read_to_string(path), "Error reading recipe:")
 }
 
 /// Collect file count, byte total and overridden param names.
@@ -166,6 +173,7 @@ fn finish_run(
     start: Instant,
     result: &bnto_core::PipelineResult,
     target: &RunTarget,
+    verdict: &RunVerdict,
 ) {
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -182,19 +190,22 @@ fn finish_run(
         true,
         &stats.param_names,
     ));
-    write_output(result, &target.mode, &target.output_dir, target.dry_run);
+    write_output(
+        result,
+        &target.mode,
+        &target.output_dir,
+        target.dry_run,
+        verdict,
+    );
 }
 
 /// Resolve `{{vars.*}}` before any node runs; an unset key ends the run.
-fn resolve_vars(definition_json: &str, var_paths: &[String]) -> String {
-    vars::apply(definition_json, var_paths).unwrap_or_else(|msg| {
-        eprintln!("{} {msg}", "Pipeline failed:".red());
-        process::exit(1);
-    })
+fn resolve_vars(definition_json: &str, var_paths: &[String], verdict: &RunVerdict) -> String {
+    verdict.or_fail(vars::apply(definition_json, var_paths), "Pipeline failed:")
 }
 
 /// Log and report a failed run, then exit.
-fn fail_run(logger: &Arc<dyn Logger>, e: &bnto_core::BntoError) -> ! {
+fn fail_run(logger: &Arc<dyn Logger>, e: &bnto_core::BntoError, verdict: &RunVerdict) -> ! {
     logger.log(LogEntry {
         level: LogLevel::Error,
         target: "cli",
@@ -202,8 +213,7 @@ fn fail_run(logger: &Arc<dyn Logger>, e: &bnto_core::BntoError) -> ! {
         elapsed_us: None,
     });
     telemetry::capture(telemetry::events::cli_error("run", &e.to_string()));
-    eprintln!("{} {e}", "Pipeline failed:".red());
-    process::exit(1);
+    verdict.fail("Pipeline failed:", e)
 }
 
 /// Resolve the effective output directory using the priority chain:

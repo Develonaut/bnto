@@ -78,6 +78,7 @@ src/
 ├── progress.rs           # ProgressReporter (target-agnostic closures)
 ├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
+├── run_summary.rs        # RunSummary (serializable run outcome) + NodeTally (per-node counts from events)
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS

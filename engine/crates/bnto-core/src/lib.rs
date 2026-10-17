@@ -101,6 +101,10 @@ pub mod secrets;
 /// Caller-supplied `{{vars.KEY}}` values, resolved once before a run.
 pub mod vars;
 
+/// A run's outcome as one serializable summary, plus per-node counts
+/// tallied from its pipeline events.
+pub mod run_summary;
+
 /// Relative paths as output-file names, `/`-separated on every OS.
 pub mod slash_path;
 
@@ -142,6 +146,7 @@ pub use pipeline::{
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;
+pub use run_summary::{NodeSummary, NodeTally, RunStatus, RunSummary};
 pub use secrets::SecretDef;
 pub use slash_path::slash_path;
 pub use version::{VersionCheckResult, VersionConstraint, check_version};
