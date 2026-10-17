@@ -1,0 +1,70 @@
+{
+  "id": "spreadsheet-read-json-rename",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Spreadsheet Read JSON Rename",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Reads a JSON array as one item per element and names each item after its nested meta.id field."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": false
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "read",
+      "type": "spreadsheet-read",
+      "version": "1.0.0",
+      "name": "Read",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Rename",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "pattern": "{{item.meta.id}}.txt"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "read" },
+    { "id": "e2", "source": "read", "target": "rename" },
+    { "id": "e-out", "source": "rename", "target": "output" }
+  ]
+}

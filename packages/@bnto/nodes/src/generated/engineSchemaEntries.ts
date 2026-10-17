@@ -361,6 +361,13 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     },
   },
   "spreadsheet-read": {
+    format: {
+      options: [
+        { value: "auto", label: "Auto" },
+        { value: "csv", label: "CSV" },
+        { value: "json", label: "JSON array" },
+      ],
+    },
     delimiter: {
       options: [
         { value: "comma", label: "Comma" },

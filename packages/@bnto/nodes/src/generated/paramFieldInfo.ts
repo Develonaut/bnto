@@ -250,6 +250,12 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     deduplicate: { type: "boolean", control: "switch", required: false },
   },
   "spreadsheet-read": {
+    format: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["auto", "csv", "json"] as const,
+    },
     hasHeaders: { type: "boolean", control: "switch", required: false },
     delimiter: {
       type: "enum",

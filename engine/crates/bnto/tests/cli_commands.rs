@@ -5,8 +5,8 @@ mod helpers;
 use std::process::Command;
 
 use helpers::{
-    bnto_bin, custom_recipe_path, fixture_image, output_files, recipe_path, run_explicit_recipe_ok,
-    temp_output_dir,
+    bnto_bin, custom_recipe_path, fixture_image, fixture_json, output_files, recipe_path,
+    run_custom_recipe_ok, run_explicit_recipe_ok, temp_output_dir,
 };
 
 // --- Help & List ---
@@ -1480,6 +1480,50 @@ fn test_overwrite_refuses_two_files_onto_one_name_and_renames_nothing() {
         "B"
     );
     assert!(!lib.path().join("same.wav").exists());
+}
+
+// --- Spreadsheet Read (JSON) ---
+
+#[test]
+fn test_read_json_array_names_each_item_from_a_nested_field() {
+    // Guards: spreadsheet-read turns each element into an item and
+    // flattens `meta.id`, which file-rename reads as `{{item.meta.id}}`.
+    let (out, stderr) =
+        run_custom_recipe_ok("spreadsheet-read-json-rename", &fixture_json("items.json"));
+    let mut names: Vec<String> = output_files(&out)
+        .iter()
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(
+        names,
+        vec!["alpha.txt", "beta.txt", "gamma.txt"],
+        "{stderr}"
+    );
+}
+
+#[test]
+fn test_read_json_that_is_not_an_array_fails_naming_the_file() {
+    let dir = temp_output_dir();
+    let file = dir.path().join("object.json");
+    std::fs::write(&file, r#"{"meta": {"id": "x"}}"#).unwrap();
+    let out = temp_output_dir();
+    let output = Command::new(bnto_bin())
+        .args([
+            "run",
+            &custom_recipe_path("spreadsheet-read-json-rename"),
+            "--yes",
+        ])
+        .arg(&file)
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("object.json"), "stderr: {stderr}");
+    assert!(stderr.contains("not a JSON array"), "stderr: {stderr}");
+    assert!(output_files(&out).is_empty());
 }
 
 // --- Spreadsheet Lookup ---

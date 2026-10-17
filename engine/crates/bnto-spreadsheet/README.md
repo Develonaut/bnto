@@ -16,7 +16,26 @@ Spreadsheet processing nodes. Clean, convert, export, merge, look up, read, and 
 | `SpreadsheetLookup` | `spreadsheet-lookup`  | Attach the CSV row whose key matches each file's name to that file as metadata | cli          |
 | `MergeSpreadsheets` | `spreadsheet-merge`   | Merge multiple CSV files into one                                              | browser, cli |
 | `RenameColumns`     | `spreadsheet-rename`  | Rename columns via a map of `oldName → newName`                                | browser, cli |
-| `ReadSpreadsheet`   | `spreadsheet-read`    | Read CSV rows with configurable headers, delimiter, and row limit              | browser, cli |
+| `ReadSpreadsheet`   | `spreadsheet-read`    | Read a CSV's rows or a JSON array's elements as one item each, with a row cap  | browser, cli |
+
+## Reading Rows
+
+`spreadsheet-read` turns a table file into one item per row: an empty file whose metadata holds the row's values, so a loop or a per-file node reads them with `{{item.<key>}}`. `format` picks the parser: `auto` (default) reads a `.json` file (any case) or one typed `application/json` as JSON and anything else as CSV; `csv` and `json` force one. Content isn't sniffed. Items are named `<stem>_row<i>.csv` or `.json`, and the node reports `rowCount` and `columnCount`. `maxRows` (default 100,000) caps both formats.
+
+**CSV:** each record is a row, its cells keyed by header (`col0`, `col1`, … with `hasHeaders: false`), every value a string. `delimiter` and `hasHeaders` apply to CSV only.
+
+**JSON:** the file must hold one top-level array; each element is a row, and an empty array gives no items. A file that isn't valid JSON or isn't an array fails the run, naming it.
+
+- An object's fields become keys, and **nested objects flatten into dotted keys**: `{"meta": {"id": "x"}}` gives `meta.id` = `"x"`, read as `{{item.meta.id}}`.
+- Values keep their JSON type (string, number, boolean, null).
+- An array, or an empty object, is a leaf: it's kept as JSON under its key (`tags` = `["a", "b"]`), not split by index.
+- An element that isn't an object (`"a"`, `2`, `[3]`) is kept under `value`.
+- Two fields that read as the same key (`{"a.b": 1, "a": {"b": 2}}`) fail the run, naming the file and key, rather than one silently winning.
+- `columnCount` is the number of distinct keys across all elements.
+
+```
+input (items.json) → spreadsheet-read → file-rename (pattern: "{{item.meta.id}}.txt") → output
+```
 
 ## Looking Up Rows
 
@@ -73,7 +92,14 @@ src/
 │   ├── table.rs            # CSV parsing and exact-key index
 │   └── source.rs           # Table loading, cached across a run
 ├── merge.rs            # MergeSpreadsheets processor + metadata
-├── read.rs             # ReadSpreadsheet processor + metadata
+├── read/               # ReadSpreadsheet processor (spreadsheet-read)
+│   ├── mod.rs              # Module wiring + re-export
+│   ├── processor.rs        # NodeProcessor impl, format dispatch, row cap
+│   ├── params.rs           # Parameter schema, typed reads, format choice
+│   ├── csv_rows.rs         # CSV records to rows
+│   ├── json_rows.rs        # JSON array elements to rows, nested fields flattened
+│   ├── table.rs            # Row items and node metadata
+│   └── json_tests.rs       # JSON reading tests
 ├── rename.rs           # RenameColumns processor + metadata
 └── wasm_bridge.rs      # #[wasm_bindgen] bridge functions
 tests/

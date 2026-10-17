@@ -1,15 +1,13 @@
-// CSV Row Reader — explode a CSV into one OutputFile per row.
-//
-// Each row becomes an OutputFile with empty `data` and column values
-// in `metadata`. Designed for loop containers: iterate over rows and
-// access per-row columns via `{{item.column_name}}` templates.
+// spreadsheet-read's NodeProcessor: parse the file, check the row cap, emit one item per row.
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
-use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
+use bnto_core::processor::{NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
-const DEFAULT_MAX_ROWS: u64 = 100_000;
+use super::params::{Format, ReadConfig, build_read_parameters, validate_params};
+use super::table::{Table, read_metadata, row_files};
+use super::{csv_rows, json_rows};
 
 /// The spreadsheet-read node processor. Stateless — config comes from `NodeInput.params`.
 pub struct ReadSpreadsheet;
@@ -37,15 +35,21 @@ impl NodeProcessor for ReadSpreadsheet {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "spreadsheet-read".to_string(),
-            name: "Read CSV Rows".to_string(),
-            description: "Explode a CSV into one item per row for loop iteration".to_string(),
+            name: "Read Rows".to_string(),
+            description: "Explode a CSV or a JSON array into one item per row for loop iteration. \
+                          Nested JSON fields read as dotted keys (meta.id)"
+                .to_string(),
             category: NodeCategory::Spreadsheet,
-            accepts: vec!["text/csv".to_string()],
+            accepts: vec!["text/csv".to_string(), "application/json".to_string()],
             platforms: vec!["browser".to_string()],
             parameters: build_read_parameters(),
             input_cardinality: InputCardinality::PerFile,
             requires: vec![],
         }
+    }
+
+    fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+        validate_params(params)
     }
 
     fn process(
@@ -54,184 +58,50 @@ impl NodeProcessor for ReadSpreadsheet {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        progress.report(0, "Parsing CSV...");
+        progress.report(0, "Reading rows...");
         let data = input
             .data
             .into_bytes()
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
-        let config = ReadConfig::from_params(&input.params);
-        let csv_text = parse_and_strip_bom(&data)?;
+        let config = ReadConfig::from_params(&input.params).map_err(BntoError::InvalidInput)?;
+        let format = config.format_for(&input.filename, input.mime_type.as_deref());
+        let table = match format {
+            Format::Csv => csv_rows::read(&data, &config)?,
+            Format::Json => json_rows::read(&data, &input.filename)?,
+        };
+        check_row_cap(
+            &table,
+            config.max_rows,
+            &source_label(format, &input.filename),
+        )?;
 
-        progress.report(10, "Reading CSV...");
-        let delimiter = resolve_delimiter(&config.delimiter);
+        progress.report(50, &format!("Building {} row files...", table.rows.len()));
+        let metadata = read_metadata(&table);
         let stem = file_stem(&input.filename);
-
-        let (headers, rows) = read_csv(csv_text, delimiter, config.has_headers)?;
-
-        if rows.len() as u64 > config.max_rows {
-            return Err(BntoError::InvalidInput(format!(
-                "CSV has {} rows, exceeds maxRows limit of {}. \
-                 Increase the maxRows parameter to process larger files.",
-                rows.len(),
-                config.max_rows
-            )));
-        }
-
-        progress.report(50, &format!("Building {} row files...", rows.len()));
-        let files = build_row_files(&stem, &headers, &rows);
-
-        progress.report(90, "Building result...");
-        let metadata = build_read_metadata(headers.len(), rows.len());
-
+        let files = row_files(&stem, format.extension(), format.mime_type(), table.rows);
         progress.report(100, "Done!");
         Ok(NodeOutput { files, metadata })
     }
 }
 
-// --- Configuration ---
-
-struct ReadConfig {
-    has_headers: bool,
-    delimiter: String,
-    max_rows: u64,
-}
-
-impl ReadConfig {
-    fn from_params(params: &serde_json::Map<String, serde_json::Value>) -> Self {
-        Self {
-            has_headers: params
-                .get("hasHeaders")
-                .and_then(|v| v.as_bool())
-                .unwrap_or(true),
-            delimiter: params
-                .get("delimiter")
-                .and_then(|v| v.as_str())
-                .unwrap_or("comma")
-                .to_string(),
-            max_rows: params
-                .get("maxRows")
-                .and_then(|v| v.as_u64())
-                .unwrap_or(DEFAULT_MAX_ROWS),
-        }
+/// How the row-cap error names what it read.
+fn source_label(format: Format, filename: &str) -> String {
+    match format {
+        Format::Csv => "CSV".to_string(),
+        Format::Json => format!("JSON array in {filename}"),
     }
 }
 
-// --- CSV Parsing (shared patterns from convert.rs) ---
-
-/// Validate UTF-8 and strip BOM if present.
-fn parse_and_strip_bom(data: &[u8]) -> Result<&str, BntoError> {
-    let data = if data.starts_with(&[0xEF, 0xBB, 0xBF]) {
-        &data[3..]
-    } else {
-        data
-    };
-
-    let text = std::str::from_utf8(data).map_err(|e| {
-        BntoError::InvalidInput(format!(
-            "File is not valid UTF-8 text (is this really a CSV?): {e}"
-        ))
-    })?;
-
-    if text.trim().is_empty() {
-        return Err(BntoError::InvalidInput(
-            "CSV file is empty — no data to read".to_string(),
-        ));
+/// Fail when the table has more rows than `maxRows` allows.
+fn check_row_cap(table: &Table, max_rows: u64, source: &str) -> Result<(), BntoError> {
+    if table.rows.len() as u64 <= max_rows {
+        return Ok(());
     }
-
-    Ok(text)
-}
-
-/// Map delimiter name to byte.
-fn resolve_delimiter(delimiter: &str) -> u8 {
-    match delimiter {
-        "comma" | "," => b',',
-        "semicolon" | ";" => b';',
-        "tab" | "\t" => b'\t',
-        "pipe" | "|" => b'|',
-        other if other.len() == 1 => other.as_bytes()[0],
-        _ => b',',
-    }
-}
-
-/// Read CSV text into headers + rows. When `has_headers` is false,
-/// generates synthetic column names (col0, col1, ...).
-fn read_csv(
-    csv_text: &str,
-    delimiter: u8,
-    has_headers: bool,
-) -> Result<(Vec<String>, Vec<Vec<String>>), BntoError> {
-    let mut reader = csv::ReaderBuilder::new()
-        .has_headers(has_headers)
-        .delimiter(delimiter)
-        .flexible(true)
-        .from_reader(csv_text.as_bytes());
-
-    let headers = if has_headers {
-        let raw = reader
-            .headers()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV headers: {e}")))?
-            .clone();
-        raw.iter().map(|h| h.trim().to_string()).collect()
-    } else {
-        Vec::new() // filled after first record
-    };
-
-    let mut rows = Vec::new();
-    let mut headers = headers;
-
-    for result in reader.records() {
-        let record = result
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read CSV row: {e}")))?;
-
-        // Generate synthetic headers from the first record when no headers
-        if !has_headers && headers.is_empty() {
-            headers = (0..record.len()).map(|i| format!("col{i}")).collect();
-        }
-
-        let row: Vec<String> = (0..headers.len())
-            .map(|i| record.get(i).unwrap_or("").to_string())
-            .collect();
-        rows.push(row);
-    }
-
-    Ok((headers, rows))
-}
-
-// --- Output Construction ---
-
-fn build_row_files(stem: &str, headers: &[String], rows: &[Vec<String>]) -> Vec<OutputFile> {
-    rows.iter()
-        .enumerate()
-        .map(|(i, row)| {
-            let mut metadata = serde_json::Map::new();
-            for (col_idx, header) in headers.iter().enumerate() {
-                let value = row.get(col_idx).cloned().unwrap_or_default();
-                metadata.insert(header.clone(), serde_json::Value::String(value));
-            }
-            OutputFile {
-                data: FileData::Bytes(Vec::new()),
-                filename: format!("{stem}_row{i}.csv"),
-                mime_type: "text/csv".to_string(),
-                metadata,
-            }
-        })
-        .collect()
-}
-
-fn build_read_metadata(
-    column_count: usize,
-    row_count: usize,
-) -> serde_json::Map<String, serde_json::Value> {
-    let mut metadata = serde_json::Map::new();
-    metadata.insert(
-        "columnCount".to_string(),
-        serde_json::Value::Number(column_count.into()),
-    );
-    metadata.insert(
-        "rowCount".to_string(),
-        serde_json::Value::Number(row_count.into()),
-    );
-    metadata
+    Err(BntoError::InvalidInput(format!(
+        "{source} has {} rows, exceeds maxRows limit of {max_rows}. \
+         Increase the maxRows parameter to process larger files.",
+        table.rows.len(),
+    )))
 }
 
 fn file_stem(filename: &str) -> String {
@@ -242,62 +112,6 @@ fn file_stem(filename: &str) -> String {
     }
 }
 
-// --- Metadata Parameter Definitions ---
-
-fn build_read_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
-    use bnto_core::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
-    vec![
-        ParameterDef {
-            name: "hasHeaders".to_string(),
-            label: "Has Headers".to_string(),
-            description: "First row contains column headers".to_string(),
-            param_type: ParameterType::Boolean,
-            default: Some(serde_json::json!(true)),
-            ..Default::default()
-        },
-        ParameterDef {
-            name: "delimiter".to_string(),
-            label: "Delimiter".to_string(),
-            description: "Column separator character".to_string(),
-            param_type: ParameterType::Enum {
-                options: vec![
-                    OptionEntry {
-                        value: "comma".to_string(),
-                        label: "Comma".to_string(),
-                    },
-                    OptionEntry {
-                        value: "semicolon".to_string(),
-                        label: "Semicolon".to_string(),
-                    },
-                    OptionEntry {
-                        value: "tab".to_string(),
-                        label: "Tab".to_string(),
-                    },
-                    OptionEntry {
-                        value: "pipe".to_string(),
-                        label: "Pipe".to_string(),
-                    },
-                ],
-            },
-            default: Some(serde_json::json!("comma")),
-            ..Default::default()
-        },
-        ParameterDef {
-            name: "maxRows".to_string(),
-            label: "Max Rows".to_string(),
-            description: "Maximum rows to process. Error if CSV exceeds this limit.".to_string(),
-            param_type: ParameterType::Number,
-            default: Some(serde_json::json!(100000)),
-            constraints: Some(Constraints {
-                min: Some(1.0),
-                max: Some(10_000_000.0),
-                required: false,
-            }),
-            ..Default::default()
-        },
-    ]
-}
-
 // =============================================================================
 // Tests
 // =============================================================================
@@ -306,6 +120,7 @@ fn build_read_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
 mod tests {
     use super::*;
     use bnto_core::NoopContext;
+    use bnto_core::processor::FileData;
 
     // --- Test Helpers ---
 
@@ -385,7 +200,7 @@ mod tests {
     #[test]
     fn test_metadata_accepts_csv() {
         let meta = ReadSpreadsheet::new().metadata();
-        assert_eq!(meta.accepts, vec!["text/csv"]);
+        assert!(meta.accepts.contains(&"text/csv".to_string()));
     }
 
     #[test]
@@ -565,7 +380,7 @@ mod tests {
     fn test_default_max_rows() {
         // Verify the default is 100k — just check the config
         let params = serde_json::Map::new();
-        let config = ReadConfig::from_params(&params);
+        let config = ReadConfig::from_params(&params).unwrap();
         assert_eq!(config.max_rows, 100_000);
     }
 
@@ -604,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_fixture_manifest() {
-        let data = include_bytes!("../../../../test-fixtures/csv/manifest.csv");
+        let data = include_bytes!("../../../../../test-fixtures/csv/manifest.csv");
         let output = process_ok(make_input_bytes(data.to_vec()));
 
         assert_eq!(output.files.len(), 3);
@@ -618,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_fixture_simple() {
-        let data = include_bytes!("../../../../test-fixtures/csv/simple.csv");
+        let data = include_bytes!("../../../../../test-fixtures/csv/simple.csv");
         let output = process_ok(make_input_bytes(data.to_vec()));
 
         assert_eq!(output.files.len(), 5);
@@ -627,7 +442,7 @@ mod tests {
 
     #[test]
     fn test_fixture_headers_only() {
-        let data = include_bytes!("../../../../test-fixtures/csv/headers-only.csv");
+        let data = include_bytes!("../../../../../test-fixtures/csv/headers-only.csv");
         let output = process_ok(make_input_bytes(data.to_vec()));
         assert_eq!(output.files.len(), 0);
     }

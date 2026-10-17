@@ -326,6 +326,37 @@ mod tests {
     }
 
     #[test]
+    fn test_a_later_node_reads_a_json_elements_nested_field_through_item() {
+        // spreadsheet-read flattens `{"meta": {"id": …}}` to `meta.id`, so
+        // file-rename's per-file template reads it as `{{item.meta.id}}`.
+        let json = r#"{
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "input", "type": "input" },
+                { "id": "read", "type": "spreadsheet-read" },
+                { "id": "rename", "type": "file-rename",
+                  "parameters": { "pattern": "{{item.meta.id}}-{{item.name}}.txt" } },
+                { "id": "output", "type": "output" }
+            ]
+        }"#;
+        let items = br#"[{"meta": {"id": "x"}, "name": "a"}, {"meta": {"id": "y"}, "name": "b"}]"#;
+        let file = PipelineFile {
+            name: "items.json".to_string(),
+            data: FileData::Bytes(items.to_vec()),
+            mime_type: "application/json".to_string(),
+            metadata: serde_json::Map::new(),
+        };
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(json, vec![file], &reporter, &NoopContext)
+            .expect("pipeline should succeed");
+
+        let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
+        assert_eq!(names, vec!["x-a.txt", "y-b.txt"]);
+        assert_eq!(result.files[0].metadata["meta.id"], "x");
+    }
+
+    #[test]
     fn test_a_later_node_reads_the_modified_time_file_metadata_attached() {
         // `{{item.modified}}` and `{{ctx.started}}` share one format.
         let json = r#"{

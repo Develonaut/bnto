@@ -1901,8 +1901,8 @@
     },
     {
       "name": "spreadsheet-read",
-      "label": "Read CSV Rows",
-      "description": "Explode a CSV into one item per row for loop iteration.",
+      "label": "Read Rows",
+      "description": "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -1911,9 +1911,33 @@
       "icon": "table",
       "params": [
         {
+          "name": "format",
+          "label": "Format",
+          "description": "How the file is read: auto picks JSON for a .json file and CSV otherwise",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "auto",
+                "label": "Auto"
+              },
+              {
+                "value": "csv",
+                "label": "CSV"
+              },
+              {
+                "value": "json",
+                "label": "JSON array"
+              }
+            ]
+          },
+          "default": "auto",
+          "surfaceable": true
+        },
+        {
           "name": "hasHeaders",
           "label": "Has Headers",
-          "description": "First row contains column headers",
+          "description": "First row contains column headers (CSV only)",
           "paramType": {
             "type": "boolean"
           },
@@ -1923,7 +1947,7 @@
         {
           "name": "delimiter",
           "label": "Delimiter",
-          "description": "Column separator character",
+          "description": "Column separator character (CSV only)",
           "paramType": {
             "type": "enum",
             "options": [
@@ -1951,7 +1975,7 @@
         {
           "name": "maxRows",
           "label": "Max Rows",
-          "description": "Maximum rows to process. Error if CSV exceeds this limit.",
+          "description": "Maximum rows (CSV rows or JSON array elements) to process. Error if the file has more.",
           "paramType": {
             "type": "number"
           },
@@ -3516,20 +3540,45 @@
     },
     {
       "nodeType": "spreadsheet-read",
-      "name": "Read CSV Rows",
-      "description": "Explode a CSV into one item per row for loop iteration",
+      "name": "Read Rows",
+      "description": "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id)",
       "category": "spreadsheet",
       "accepts": [
-        "text/csv"
+        "text/csv",
+        "application/json"
       ],
       "platforms": [
         "browser"
       ],
       "parameters": [
         {
+          "name": "format",
+          "label": "Format",
+          "description": "How the file is read: auto picks JSON for a .json file and CSV otherwise",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "auto",
+                "label": "Auto"
+              },
+              {
+                "value": "csv",
+                "label": "CSV"
+              },
+              {
+                "value": "json",
+                "label": "JSON array"
+              }
+            ]
+          },
+          "default": "auto",
+          "surfaceable": true
+        },
+        {
           "name": "hasHeaders",
           "label": "Has Headers",
-          "description": "First row contains column headers",
+          "description": "First row contains column headers (CSV only)",
           "paramType": {
             "type": "boolean"
           },
@@ -3539,7 +3588,7 @@
         {
           "name": "delimiter",
           "label": "Delimiter",
-          "description": "Column separator character",
+          "description": "Column separator character (CSV only)",
           "paramType": {
             "type": "enum",
             "options": [
@@ -3567,7 +3616,7 @@
         {
           "name": "maxRows",
           "label": "Max Rows",
-          "description": "Maximum rows to process. Error if CSV exceeds this limit.",
+          "description": "Maximum rows (CSV rows or JSON array elements) to process. Error if the file has more.",
           "paramType": {
             "type": "number"
           },

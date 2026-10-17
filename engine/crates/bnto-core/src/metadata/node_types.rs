@@ -287,8 +287,8 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         ),
         node_type!(
             "spreadsheet-read",
-            "Read CSV Rows",
-            "Explode a CSV into one item per row for loop iteration.",
+            "Read Rows",
+            "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).",
             NodeCategory::Spreadsheet,
             false,
             "browser",
