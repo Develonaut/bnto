@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::io::BufRead;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 
 use bnto_core::context::ProcessContext;
@@ -102,7 +102,8 @@ impl NativeContext {
     }
 
     /// Prepare a command in its own process group so cancel/quit/signal
-    /// paths can kill the whole spawned tree via `kill(-pgid, …)`.
+    /// paths can kill the whole spawned tree via `kill(-pgid, …)`. Windows
+    /// gets the same reach from the Job Object `spawn_tracked` adds.
     fn group_command(&self, cmd: &str, args: &[&str]) -> Command {
         let path_var = std::env::var_os("PATH");
         let mut command = Command::new(spawn_program(cmd, path_var.as_deref()));
@@ -113,6 +114,23 @@ impl NativeContext {
             command.process_group(0);
         }
         command
+    }
+
+    /// Spawn `command` and register its process group for cancel/quit kills.
+    #[cfg(unix)]
+    fn spawn_tracked(&self, command: &mut Command) -> std::io::Result<Child> {
+        let child = command.spawn()?;
+        self.registry.register(child.id());
+        Ok(child)
+    }
+
+    /// Spawn `command` in its own Job Object and register the job for
+    /// cancel/quit kills.
+    #[cfg(windows)]
+    fn spawn_tracked(&self, command: &mut Command) -> std::io::Result<Child> {
+        let (child, job) = crate::job_object::spawn_in_job(command)?;
+        self.registry.register(child.id(), job);
+        Ok(child)
     }
 }
 
@@ -156,14 +174,12 @@ impl ProcessContext for NativeContext {
     }
 
     fn run_command(&self, cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+        let mut command = self.group_command(cmd, args);
+        command.stdout(Stdio::piped()).stderr(Stdio::piped());
         let child = self
-            .group_command(cmd, args)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
+            .spawn_tracked(&mut command)
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
         let pgid = child.id();
-        self.registry.register(pgid);
         let result = child.wait_with_output();
         self.registry.deregister(pgid);
         let output = result
@@ -187,14 +203,12 @@ impl ProcessContext for NativeContext {
         args: &[&str],
         on_output: &dyn Fn(&str),
     ) -> Result<Vec<u8>, BntoError> {
+        let mut command = self.group_command(cmd, args);
+        command.stdout(Stdio::piped()).stderr(Stdio::piped());
         let mut child = self
-            .group_command(cmd, args)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
+            .spawn_tracked(&mut command)
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
         let pgid = child.id();
-        self.registry.register(pgid);
 
         // Stream stdout line-by-line on a background thread, calling the
         // callback AND collecting raw bytes. This lets tools like yt-dlp
@@ -570,7 +584,7 @@ mod tests {
     }
 
     // Unix-only: drives `sh` and probes the process group with `kill(-pgid, 0)`.
-    // The Windows twin below covers the taskkill path.
+    // The Windows twin below covers the Job Object path.
     #[cfg(unix)]
     #[test]
     fn terminate_all_unblocks_streaming_command() {
@@ -615,7 +629,96 @@ mod tests {
         assert!(result.is_err(), "killed command must report failure");
         assert!(
             start.elapsed() < std::time::Duration::from_secs(5),
-            "run_command_streaming must unblock promptly after taskkill"
+            "run_command_streaming must unblock promptly after the job kill"
+        );
+    }
+
+    /// Poll `done` for up to 10s; true once it holds.
+    #[cfg(windows)]
+    fn wait_until(done: impl Fn() -> bool) -> bool {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while std::time::Instant::now() < deadline {
+            if done() {
+                return true;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        done()
+    }
+
+    // The child exits on its own, so walking parent links from it (taskkill
+    // /T) can't reach the grandchild; only the child's job still holds it.
+    #[cfg(windows)]
+    #[test]
+    fn terminate_all_kills_orphaned_grandchild_on_windows() {
+        use crate::process_registry::tests::windows_pid_alive;
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+        let (tx, rx) = std::sync::mpsc::channel::<String>();
+
+        // `start /b` runs the grandchild on cmd's pipes: cmd exits at once,
+        // while the grandchild prints its PID and keeps the stream open.
+        let handle = std::thread::spawn(move || {
+            let (cmd, args) = shell("start /b powershell -NoProfile -Command $PID; Start-Sleep 30");
+            ctx.run_command_streaming(cmd, &args, &|line| {
+                let _ = tx.send(line.to_string());
+            })
+        });
+        let child = wait_until_registered(&registry);
+        let line = rx.recv_timeout(std::time::Duration::from_secs(20));
+        let grandchild: u32 = line.unwrap().trim().parse().unwrap();
+        assert!(wait_until(|| !windows_pid_alive(child)), "child must exit");
+
+        registry.terminate_all();
+        let killed = wait_until(|| !windows_pid_alive(grandchild));
+        if !killed {
+            // Clean up before failing so the stray grandchild can't linger.
+            let pid = grandchild.to_string();
+            let mut kill = Command::new("taskkill");
+            let _ = kill
+                .args(["/PID", &pid, "/F"])
+                .stdout(Stdio::null())
+                .status();
+        }
+        assert!(killed, "orphaned grandchild {grandchild} must be killed");
+        handle.join().expect("streaming thread panicked").unwrap();
+    }
+
+    // Matches unix: a command that finishes on its own leaves its background
+    // processes running. Only cancel (`terminate_all`) kills the tree.
+    #[cfg(windows)]
+    #[test]
+    fn finished_command_leaves_background_grandchild_running_on_windows() {
+        use crate::process_registry::tests::windows_pid_alive;
+        /// Long enough to catch a kill that lands as the command is reaped.
+        const SURVIVE_WAIT_MS: u64 = 1500;
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+
+        // Start-Process detaches the grandchild from our pipes, so the
+        // command prints its PID and exits while the grandchild sleeps on.
+        let script = "$p = Start-Process powershell -ArgumentList \
+                      '-NoProfile','-Command','Start-Sleep 30' \
+                      -PassThru -WindowStyle Hidden; $p.Id";
+        let out = ctx.run_command("powershell", &["-NoProfile", "-Command", script]);
+        let grandchild: u32 = String::from_utf8(out.unwrap())
+            .unwrap()
+            .trim()
+            .parse()
+            .unwrap();
+        assert!(registry.active().is_empty(), "command must be deregistered");
+
+        std::thread::sleep(std::time::Duration::from_millis(SURVIVE_WAIT_MS));
+        let alive = windows_pid_alive(grandchild);
+        let pid = grandchild.to_string();
+        let mut kill = Command::new("taskkill");
+        let _ = kill
+            .args(["/PID", &pid, "/F"])
+            .stdout(Stdio::null())
+            .status();
+        assert!(
+            alive,
+            "background grandchild {grandchild} must outlive its command"
         );
     }
 

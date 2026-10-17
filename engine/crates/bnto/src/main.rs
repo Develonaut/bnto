@@ -30,6 +30,8 @@ mod install;
 mod install_plan;
 mod install_trust;
 mod io;
+#[cfg(windows)]
+mod job_object;
 mod launch;
 mod list;
 pub mod logging;

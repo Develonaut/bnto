@@ -1,22 +1,33 @@
 // Process-group registry — tracks external commands spawned by NativeContext
 // so cancel/quit/signal paths can terminate the entire child process tree
 // (e.g. patreon-dl → patreon-dl-vimeo → yt-dlp), not just the direct child.
-// Unix signals the process group; Windows kills each child's tree with taskkill /T.
+// Unix signals the process group; Windows terminates each child's Job Object.
 //
 // A process-wide default registry exists (rather than plumbing an instance
 // through every layer) because OS signal handlers only have 'static access.
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, Mutex};
+
+#[cfg(windows)]
+use crate::job_object::JobObject;
+
+/// What the registry keeps per child besides its PID: nothing on unix, where
+/// the PID names the process group; on Windows, the job holding its tree.
+#[cfg(unix)]
+type Tree = ();
+#[cfg(windows)]
+type Tree = JobObject;
 
 /// Tracks the process-group IDs of live spawned commands.
 ///
 /// Children are spawned with `process_group(0)`, so each child's PID is also
 /// its process-group ID and killing `-pgid` reaps the whole tree. Windows has
-/// no process groups, so the registered PID is the tree root for `taskkill /T`.
+/// no process groups, so each child is spawned into its own Job Object, owned
+/// here under the child's PID until it is deregistered.
 #[derive(Default)]
 pub struct ProcessRegistry {
-    groups: Mutex<HashSet<u32>>,
+    groups: Mutex<HashMap<u32, Tree>>,
 }
 
 impl ProcessRegistry {
@@ -25,32 +36,64 @@ impl ProcessRegistry {
     }
 
     /// Record a live process group (the child's PID under `process_group(0)`).
+    #[cfg(unix)]
     pub fn register(&self, pgid: u32) {
-        self.groups.lock().unwrap().insert(pgid);
+        self.groups.lock().unwrap().insert(pgid, ());
+    }
+
+    /// Record a live child and take ownership of the job holding its tree.
+    #[cfg(windows)]
+    pub fn register(&self, pid: u32, job: JobObject) {
+        self.groups.lock().unwrap().insert(pid, job);
     }
 
     /// Remove a process group after its child has been reaped.
+    #[cfg(unix)]
     pub fn deregister(&self, pgid: u32) {
         self.groups.lock().unwrap().remove(&pgid);
     }
 
+    /// Remove a child after it has been reaped and release its job, so what
+    /// it left running in the background survives, as a process group does
+    /// on unix. Only `terminate_all` kills the tree.
+    #[cfg(windows)]
+    pub fn deregister(&self, pid: u32) {
+        let job = self.groups.lock().unwrap().remove(&pid);
+        if let Some(job) = job {
+            job.release();
+        }
+    }
+
     /// Snapshot of currently registered process groups.
     pub fn active(&self) -> Vec<u32> {
-        self.groups.lock().unwrap().iter().copied().collect()
+        self.groups.lock().unwrap().keys().copied().collect()
     }
 
     /// Terminate every registered process group: SIGTERM, a short grace
-    /// period, then SIGKILL for stragglers. On Windows, `taskkill /T /F`
-    /// kills each child's whole tree. Groups that already exited are
-    /// ignored (a dead group is a harmless ESRCH, a dead PID a failed taskkill).
+    /// period, then SIGKILL for stragglers. On Windows, terminating each
+    /// child's job kills its whole tree, even a grandchild whose parent
+    /// already exited. Groups that already exited are ignored (a dead group
+    /// is a harmless ESRCH, an emptied job a no-op).
     pub fn terminate_all(&self) {
         let groups = self.active();
         if groups.is_empty() {
             return;
         }
+        #[cfg(unix)]
         kill_trees(&groups);
+        #[cfg(windows)]
+        self.terminate_jobs(&groups);
         for pgid in &groups {
             self.deregister(*pgid);
+        }
+    }
+
+    /// `TerminateJobObject` the job of each child in `pids`.
+    #[cfg(windows)]
+    fn terminate_jobs(&self, pids: &[u32]) {
+        let jobs = self.groups.lock().unwrap();
+        for job in pids.iter().filter_map(|pid| jobs.get(pid)) {
+            job.terminate();
         }
     }
 }
@@ -69,20 +112,6 @@ fn kill_trees(groups: &[u32]) {
     }
 }
 
-/// `taskkill /T /F` each registered PID, the root of its child's tree.
-#[cfg(windows)]
-fn kill_trees(pids: &[u32]) {
-    use std::process::{Command, Stdio};
-    for pid in pids {
-        let _ = Command::new("taskkill")
-            .args(["/PID", &pid.to_string(), "/T", "/F"])
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status();
-    }
-}
-
 /// The process-wide registry used by `NativeContext` by default and by the
 /// signal handler / TUI quit path to kill children on the way out.
 pub fn global() -> Arc<ProcessRegistry> {
@@ -92,15 +121,23 @@ pub fn global() -> Arc<ProcessRegistry> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
+
+    /// Register a made-up PID; on Windows it needs an (empty) job to own.
+    fn register_fake(reg: &ProcessRegistry, pid: u32) {
+        #[cfg(unix)]
+        reg.register(pid);
+        #[cfg(windows)]
+        reg.register(pid, JobObject::new().unwrap());
+    }
 
     #[test]
     fn register_and_deregister_track_groups() {
         let reg = ProcessRegistry::new();
         assert!(reg.active().is_empty());
-        reg.register(1234);
-        reg.register(5678);
+        register_fake(&reg, 1234);
+        register_fake(&reg, 5678);
         assert_eq!(reg.active().len(), 2);
         reg.deregister(1234);
         assert_eq!(reg.active(), vec![5678]);
@@ -108,8 +145,8 @@ mod tests {
 
     #[test]
     fn terminate_all_on_empty_registry_is_noop() {
-        // Well under the unix SIGTERM->SIGKILL grace period (300ms) and any
-        // taskkill spawn, so either kill path running would trip it.
+        // Well under the unix SIGTERM->SIGKILL grace period (300ms), so the
+        // unix kill path running would trip it.
         const NOOP_BOUND_MS: u128 = 100;
         let reg = ProcessRegistry::new();
         let start = std::time::Instant::now();
@@ -145,7 +182,7 @@ mod tests {
     }
 
     #[cfg(windows)]
-    fn windows_pid_alive(pid: u32) -> bool {
+    pub(crate) fn windows_pid_alive(pid: u32) -> bool {
         let out = std::process::Command::new("tasklist")
             .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
             .output()
@@ -162,11 +199,11 @@ mod tests {
         // The hidden ping is a grandchild that only dies if the tree is killed.
         let script = "$p = Start-Process ping -ArgumentList '-n','30','127.0.0.1' \
                       -PassThru -WindowStyle Hidden; $p.Id; $p.WaitForExit()";
-        let mut child = Command::new("powershell")
+        let mut command = Command::new("powershell");
+        command
             .args(["-NoProfile", "-Command", script])
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap();
+            .stdout(Stdio::piped());
+        let (mut child, job) = crate::job_object::spawn_in_job(&mut command).unwrap();
         let mut line = String::new();
         BufReader::new(child.stdout.take().unwrap())
             .read_line(&mut line)
@@ -174,7 +211,7 @@ mod tests {
         let grandchild: u32 = line.trim().parse().unwrap();
 
         let reg = ProcessRegistry::new();
-        reg.register(child.id());
+        reg.register(child.id(), job);
         reg.terminate_all();
 
         let status = child.wait().unwrap();
@@ -193,7 +230,7 @@ mod tests {
     fn global_returns_same_registry() {
         let a = global();
         let b = global();
-        a.register(4242);
+        register_fake(&a, 4242);
         assert!(b.active().contains(&4242));
         a.deregister(4242);
         assert!(!b.active().contains(&4242));
