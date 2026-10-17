@@ -1,7 +1,9 @@
 // Pipeline Executor — top-level orchestrator for pipeline execution.
 //
 // Walks nodes in order, chaining outputs to inputs. Split across these files:
-//   - `mod.rs` — public API, node chaining and dispatch, shared types
+//   - `mod.rs` — public API, node dispatch, shared types
+//   - `chain.rs` — node chaining: each node's output feeds the next
+//   - `closing.rs` — after a failure: skip nodes, run `always` closing steps
 //   - `auto_iteration.rs` — implicit per-file loops for `iteration: "auto"`
 //   - `primitive.rs` — leaf node execution (image compress, file rename, etc.)
 //   - `leaf_output.rs` — a leaf node's output files and node record
@@ -17,6 +19,8 @@
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
 
 mod auto_iteration;
+mod chain;
+mod closing;
 mod container;
 mod count_keys;
 mod leaf_output;
@@ -36,6 +40,8 @@ use crate::pipeline::{
     is_container_node, is_io_node,
 };
 use crate::registry::NodeRegistry;
+use chain::run_node_chain;
+use closing::ChainFailure;
 use node_outputs::{CountKeys, NodeOutputs, NodeRecords};
 
 #[cfg(test)]
@@ -117,6 +123,11 @@ impl ChainPosition {
             total_nodes,
         }
     }
+
+    /// The rest of the chain, after its node at offset `i`.
+    fn after(self, i: usize) -> Self {
+        Self::starting_at(self.first_index + i + 1, self.total_nodes)
+    }
 }
 
 /// Result of executing a single node or container sub-pipeline.
@@ -164,8 +175,10 @@ pub fn execute_pipeline(
         now_ms,
     );
     emit_pipeline_started(&ctx, &processing_nodes, files.len());
-    let result = run_processing_nodes(&ctx, definition, &processing_nodes, files)?;
-    Ok(finish_pipeline(&ctx, ctx.started_ms, result))
+    match run_processing_nodes(&ctx, definition, &processing_nodes, files) {
+        Ok(result) => Ok(finish_pipeline(&ctx, ctx.started_ms, result)),
+        Err(failure) => Err(fail_pipeline(&ctx, failure)),
+    }
 }
 
 /// Build the top-level context, seeding node outputs from the input files.
@@ -220,7 +233,7 @@ fn run_processing_nodes<F: Fn() -> u64 + Copy>(
     definition: &PipelineDefinition,
     processing_nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
-) -> Result<NodeExecutionResult, BntoError> {
+) -> Result<NodeExecutionResult, ChainFailure> {
     match definition.resolved_iteration() {
         IterationMode::Explicit => {
             let position = ChainPosition::whole(processing_nodes.len());
@@ -244,67 +257,34 @@ fn finish_pipeline<F: Fn() -> u64 + Copy>(
     result::build_pipeline_result(result, duration_ms)
 }
 
-/// Chain nodes sequentially, passing each node's output as the next node's input.
-///
-/// `position` places the chain among its siblings, so a chain that is a
-/// slice of the pipeline still reports pipeline-wide progress. Each node
-/// records its output metadata in the chain's layer, which every later node
-/// in the chain reads; the result carries what the chain recorded.
-fn run_node_chain<F: Fn() -> u64 + Copy>(
+/// Emit PipelineFailed once, after every closing step ran, naming the
+/// top-level node whose failure is the verdict. Returns the verdict.
+fn fail_pipeline<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
-    nodes: &[&PipelineNode],
-    files: Vec<PipelineFile>,
-    file_offset: usize,
-    position: ChainPosition,
-) -> Result<NodeExecutionResult, BntoError> {
-    let mut chain_ctx = ctx.layer();
-    let mut current_files = files;
-    let mut total_files_processed: usize = 0;
-    let mut all_warnings: Vec<String> = Vec::new();
-
-    for (i, node) in nodes.iter().enumerate() {
-        let node_index = position.first_index + i;
-        let result = execute_node(
-            &chain_ctx,
-            node,
-            current_files,
-            node_index,
-            position.total_nodes,
-            file_offset,
-        )?;
-        total_files_processed += result.files_processed;
-        all_warnings.extend(result.warnings);
-        chain_ctx
-            .node_outputs
-            .add(result.node_outputs, ctx.count_keys);
-        current_files = result.output_files;
-    }
-
-    Ok(NodeExecutionResult {
-        output_files: current_files,
-        files_processed: total_files_processed,
-        warnings: all_warnings,
-        node_outputs: chain_ctx.node_outputs.into_own(),
-    })
+    failure: ChainFailure,
+) -> BntoError {
+    let node_id = failure.node_id.clone();
+    let error = failure.into_verdict();
+    ctx.reporter.emit(PipelineEvent::PipelineFailed {
+        node_id,
+        error: error.to_string(),
+    });
+    error
 }
 
 // --- Internal: Node Dispatch ---
 
-/// Emit failure events (NodeFailed + PipelineFailed) and return the error.
+/// Emit NodeFailed and return the error. The run's PipelineFailed comes
+/// later, from `fail_pipeline`, once the closing steps have run.
 fn emit_node_failure<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node_id: &str,
     error: BntoError,
 ) -> BntoError {
-    let error_msg = error.to_string();
     ctx.reporter.emit(PipelineEvent::NodeFailed {
         node_id: node_id.to_string(),
-        error: error_msg.clone(),
+        error: error.to_string(),
         parent_node_id: ctx.parent_node_id.clone(),
-    });
-    ctx.reporter.emit(PipelineEvent::PipelineFailed {
-        node_id: node_id.to_string(),
-        error: error_msg,
     });
     error
 }

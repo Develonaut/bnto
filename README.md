@@ -163,6 +163,8 @@ A recipe is a portable JSON file that describes a pipeline of nodes:
 
 The same `.bnto.json` runs in the CLI, browser, desktop, and server. Nodes are the building blocks: each one encapsulates a single capability. Recipes compose them into workflows. The engine handles execution, progress reporting, and error handling across every target.
 
+A node marked `"always": true` (beside its `id` and `type`) is a closing step, like `finally`: it still runs after an earlier step fails, on whatever the failed step handed over, such as the output a failed command printed. The run still fails with the first error. Use it to keep a tool's log when the tool fails, or to clean up whatever the result.
+
 ---
 
 ## The Bento Box

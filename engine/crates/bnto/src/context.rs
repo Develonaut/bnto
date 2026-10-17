@@ -168,6 +168,19 @@ fn load_user_dotenv() -> HashMap<String, String> {
     }
 }
 
+/// A non-zero exit, naming the command, its code and stderr, and keeping
+/// the stdout it printed so a failed step can still hand it over.
+fn command_failed(
+    cmd: &str,
+    status: std::process::ExitStatus,
+    stderr: &str,
+    stdout: Vec<u8>,
+) -> BntoError {
+    let code = status.code().unwrap_or(-1);
+    let message = format!("Command '{cmd}' failed (exit {code}): {}", stderr.trim());
+    BntoError::CommandFailed { message, stdout }
+}
+
 impl ProcessContext for NativeContext {
     fn dry_run(&self) -> bool {
         self.dry_run
@@ -189,11 +202,7 @@ impl ProcessContext for NativeContext {
             Ok(output.stdout)
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            Err(BntoError::ProcessingFailed(format!(
-                "Command '{cmd}' failed (exit {}): {}",
-                output.status.code().unwrap_or(-1),
-                stderr.trim()
-            )))
+            Err(command_failed(cmd, output.status, &stderr, output.stdout))
         }
     }
 
@@ -282,11 +291,7 @@ impl ProcessContext for NativeContext {
             Ok(stdout_bytes)
         } else {
             let stderr_text = stderr_lines.join("\n");
-            Err(BntoError::ProcessingFailed(format!(
-                "Command '{cmd}' failed (exit {}): {}",
-                status.code().unwrap_or(-1),
-                stderr_text.trim()
-            )))
+            Err(command_failed(cmd, status, &stderr_text, stdout_bytes))
         }
     }
 
@@ -540,6 +545,42 @@ mod tests {
             captured.contains(&"fail-info".to_string()),
             "callback should receive stderr"
         );
+    }
+
+    /// The stdout a failed command printed, from its `CommandFailed` error.
+    fn failed_stdout(result: Result<Vec<u8>, BntoError>) -> (String, String) {
+        match result {
+            Err(e @ BntoError::CommandFailed { .. }) => {
+                let message = e.to_string();
+                let BntoError::CommandFailed { stdout, .. } = e else {
+                    unreachable!()
+                };
+                (message, String::from_utf8_lossy(&stdout).trim().to_string())
+            }
+            other => panic!("expected CommandFailed, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn run_command_streaming_failure_keeps_stdout() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let (cmd, args) = shell("echo partial && exit 3");
+        let (message, stdout) = failed_stdout(ctx.run_command_streaming(cmd, &args, &|_| {}));
+        assert_eq!(stdout, "partial");
+        assert!(
+            message.starts_with("Processing failed: Command '"),
+            "{message}"
+        );
+        assert!(message.contains("failed (exit 3)"), "{message}");
+    }
+
+    #[test]
+    fn run_command_failure_keeps_stdout() {
+        let ctx = NativeContext::current_dir().unwrap();
+        let (cmd, args) = shell("echo partial && exit 3");
+        let (message, stdout) = failed_stdout(ctx.run_command(cmd, &args));
+        assert_eq!(stdout, "partial");
+        assert!(message.contains("failed (exit 3)"), "{message}");
     }
 
     /// Helper: context with an isolated registry so kill-tests can't

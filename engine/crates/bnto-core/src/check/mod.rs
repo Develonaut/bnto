@@ -2,7 +2,8 @@
 //
 // Walks the nodes the way the executor does (I/O markers skipped, container
 // children entered) and reports unknown node types, params a node's
-// `validate` refuses, and malformed `{{…}}` placeholders.
+// `validate` refuses, malformed `{{…}}` placeholders, and `always` on an
+// I/O marker, where it has no effect.
 
 mod placeholder;
 
@@ -50,8 +51,10 @@ pub fn check_pipeline(
 
 /// Check `nodes` in order, recursing into container children.
 fn check_nodes(nodes: &[PipelineNode], registry: &NodeRegistry, findings: &mut Vec<CheckFinding>) {
-    for node in nodes.iter().filter(|n| !is_io_node(&n.node_type)) {
-        if is_container_node(&node.node_type) {
+    for node in nodes {
+        if is_io_node(&node.node_type) {
+            findings.extend(io_always_finding(node));
+        } else if is_container_node(&node.node_type) {
             findings.extend(placeholder_findings(node));
             check_nodes(
                 node.children.as_deref().unwrap_or_default(),
@@ -81,6 +84,16 @@ fn processor_findings(node: &PipelineNode, registry: &NodeRegistry) -> Vec<Check
         .into_iter()
         .map(|message| finding(node, None, message))
         .collect()
+}
+
+/// `always` on an I/O marker: the executor never runs it, so a recipe that
+/// marks its output step expecting files to be written after a failure
+/// would be silently wrong. The closing steps themselves need the mark.
+fn io_always_finding(node: &PipelineNode) -> Option<CheckFinding> {
+    let message = "\"always\" has no effect on an input or output node; \
+                   mark the processing steps that should run after a failure";
+    node.always
+        .then(|| finding(node, None, message.to_string()))
 }
 
 /// Malformed placeholders anywhere in the node's params.

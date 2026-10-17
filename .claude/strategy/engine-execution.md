@@ -97,6 +97,25 @@ Non-container nodes are leaves -- they receive files and transform them via thei
 
 After a leaf node runs, the executor records its node-level `NodeOutput.metadata` under its node id, and every later node in the run reads it through `{{node.<id>.<key>}}`. Records flow the way files do: along a chain, out of a group to the nodes after it, and out of a loop as every iteration's records merged in order (iterations don't see each other's). A per-file node's record merges its files' metadata in file order. Keys a processor declares as counts (`NodeProcessor::count_keys`, e.g. file-copy's `copied`) add up instead of taking the later value, so the record holds totals for the whole node. The run's result carries every node's final record (`PipelineResult::node_metadata`), which `bnto run --json` reports per node. See [recipe-fields.md](recipe-fields.md#node-output-references) for the template rules.
 
+### Closing Steps (`always`)
+
+**Decision (October 2026):** a node can be marked `"always": true` on the node object, beside `id` / `type` / `parameters` (never inside `parameters`, which belong to the processor). It defaults to false. Like GitHub Actions `if: always()` or a `finally` block, it marks a closing step that runs even after an earlier step failed: keep a tool's log when the tool fails, clean up a temp file whatever the result.
+
+The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`):
+
+- **Passing run:** an `always` node runs in order like any node, once.
+- **After a failure:** the first failing node's error is recorded. Every later node in the chain that isn't `always` is skipped and emits no events. Each later `always` node runs, in order. The first one receives the files the failed step handed over; each next one receives the previous one's output, as any chain does. Closing steps record their `{{node.<id>.*}}` metadata like any node.
+- **A failed step's output:** a processor fails with files by returning `BntoError::with_output(error, NodeOutput)` (variant `FailedWithOutput`, which displays as the inner error). A per-file node's handed-over files are every file it made before failing plus what the failing call handed over. A step that fails without output (a bad param, a tool missing from `search_path`) hands over no files, and the closing steps start from none. `shell-command` uses this: a command that exits non-zero hands over its captured stdout in stdout mode (named and tagged as on success, within `maxOutputSize`), and the files it wrote in file mode. The native context reports a non-zero exit as `BntoError::CommandFailed { message, stdout }`, which keeps the stdout and displays exactly as the old `ProcessingFailed` message.
+- **Verdict:** the run's error is the first failure, unchanged, so the CLI still ends `Pipeline failed: <first error>` and exits 1. A closing step that also fails is joined after it (`BntoError::ClosingStepFailed`): `<first error>; closing step '<id>' also failed: <its error>`. Later closing steps still run, starting from the files the failed closing step handed over.
+
+**Scope:**
+
+- **Containers:** a group's or loop iteration's children follow the same rule among themselves. A failed container hands the enclosing chain the files its own chain ended with (the failed step's, or its last closing step's), so the enclosing chain's closing steps receive them. A container marked `always` runs as a closing step, its children normally. Loop `onError: "continue"` is unchanged: an iteration's closing steps run, then the iteration counts as failed.
+- **Auto-iteration:** a failure inside a run closes that run's own chain first (a per-file sequence closes the failing file's pass; other files' passes don't run, as before). The `always` nodes of every later run then run as one explicit chain on what it handed over, so a per-file closing step there gets all those files in one node call.
+- **I/O markers:** `always` on an `input` / `output` node has no effect; the output step writes nothing on a failed run. `bnto check` reports it.
+
+**Events:** closing steps emit `NodeStarted` / `NodeCompleted` / `NodeFailed` as usual, numbered by their position (so the CLI's step counter skips the skipped nodes). Skipped nodes emit nothing. `NodeFailed` is emitted for every failing node as before. `PipelineFailed` is emitted once per failed run, last, after every closing step: its `node_id` is the top-level node whose failure is the verdict (the container's id when the failure was inside one) and its `error` is the verdict message. Before closing steps, `PipelineFailed` was emitted at every node failure, including inside containers and in loop iterations that `onError: "continue"` then skipped.
+
 ---
 
 ## Progress Event Taxonomy
@@ -111,7 +130,7 @@ The executor emits structured progress events. Each event has a `pipeline_id`, `
 | `NodeCompleted`     | A node finishes successfully            | `node_id`, `files_processed`, `duration_ms`                            |
 | `NodeFailed`        | A node encounters an error              | `node_id`, `error`, `file_index` (if file-specific)                    |
 | `PipelineCompleted` | All nodes finished successfully         | `total_duration_ms`, `files_processed`                                 |
-| `PipelineFailed`    | Pipeline aborted due to error           | `failed_node_id`, `error`, `nodes_completed`                           |
+| `PipelineFailed`    | Once, last, when a run fails (after its closing steps) | `node_id` (top-level node whose failure is the verdict), `error` |
 
 In the browser, `bnto-wasm` bridges these events to a JS callback. `@bnto/core` maps them to Zustand store updates or DOM-direct attribute changes (for high-frequency `FileProgress` events).
 

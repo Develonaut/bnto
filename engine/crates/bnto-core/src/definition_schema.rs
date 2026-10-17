@@ -143,6 +143,7 @@ fn definition_properties() -> Value {
         "inputPorts": { "type": "array", "description": "Input connection ports.", "items": { "$ref": "#/$defs/Port" } },
         "outputPorts":{ "type": "array", "description": "Output connection ports.", "items": { "$ref": "#/$defs/Port" } },
         "settings":   { "$ref": "#/$defs/PipelineSettings" },
+        "always":     { "type": "boolean", "default": false, "description": "Closing step: run even after an earlier node in the same chain failed, like `finally`. The run still fails with the first error." },
         "nodes":      { "type": "array", "description": "Child nodes (recursive).", "items": { "$ref": "#/$defs/Definition" } },
         "edges":      { "type": "array", "description": "Connections between child nodes.", "items": { "$ref": "#/$defs/Edge" } }
     })
@@ -298,6 +299,14 @@ mod tests {
             props["settings"]["$ref"], "#/$defs/PipelineSettings",
             "settings should reference PipelineSettings"
         );
+    }
+
+    #[test]
+    fn test_definition_schema_has_always_boolean() {
+        let schema = definition_json_schema();
+        let always = &schema["$defs"]["Definition"]["properties"]["always"];
+        assert_eq!(always["type"], "boolean");
+        assert_eq!(always["default"], false);
     }
 
     #[test]

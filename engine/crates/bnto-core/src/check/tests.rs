@@ -241,3 +241,27 @@ fn test_finding_without_param_displays_node_only() {
         "node \"z\" (nope): unknown node type \"nope\""
     );
 }
+
+// --- always ---
+
+#[test]
+fn test_always_on_a_processing_node_passes() {
+    let findings = check(json!({ "nodes": [
+        { "id": "a", "type": "lenient" },
+        { "id": "b", "type": "lenient", "always": true },
+        { "id": "g", "type": "group", "always": true, "nodes": [{ "id": "c", "type": "lenient" }] }
+    ] }));
+    assert_eq!(findings, Vec::new());
+}
+
+#[test]
+fn test_always_on_an_io_node_is_reported() {
+    let findings = check(json!({ "nodes": [
+        { "id": "a", "type": "lenient" },
+        { "id": "out", "type": "output", "always": true }
+    ] }));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].node_id, "out");
+    assert_eq!(findings[0].param, None);
+    assert!(findings[0].message.contains("always"), "{findings:?}");
+}

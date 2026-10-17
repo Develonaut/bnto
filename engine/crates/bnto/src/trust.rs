@@ -204,6 +204,7 @@ mod tests {
             params: serde_json::Map::new(),
             children,
             fields: Default::default(),
+            always: false,
         }
     }
 
@@ -350,6 +351,7 @@ mod tests {
             params,
             children: None,
             fields: Default::default(),
+            always: false,
         }];
         assert_eq!(collect_shell_command_names(&nodes), vec!["yt-dlp"]);
     }
@@ -365,6 +367,7 @@ mod tests {
             params,
             children: None,
             fields: Default::default(),
+            always: false,
         }];
         assert_eq!(
             collect_shell_command_names(&nodes),
@@ -383,6 +386,7 @@ mod tests {
                 params,
                 children: None,
                 fields: Default::default(),
+                always: false,
             }
         };
         let nodes = vec![

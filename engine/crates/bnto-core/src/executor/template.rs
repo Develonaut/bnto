@@ -1222,6 +1222,7 @@ mod tests {
             node_type: "input".to_string(),
             params: serde_json::Map::new(),
             fields: BTreeMap::new(),
+            always: false,
             children: None,
         }
     }
@@ -1232,6 +1233,7 @@ mod tests {
             node_type: node_type.to_string(),
             params: serde_json::Map::new(),
             fields: BTreeMap::new(),
+            always: false,
             children: None,
         }
     }

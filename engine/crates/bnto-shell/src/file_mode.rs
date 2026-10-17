@@ -1,6 +1,6 @@
 // File output mode — run the command in a temp dir and collect what it writes.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use bnto_core::processor::{NodeInput, NodeOutput, OutputFile};
 use bnto_core::{BntoError, ProcessContext, ProgressReporter};
@@ -27,9 +27,11 @@ pub(crate) fn process_file_mode(
     progress.report(10, &format!("Running {command}..."));
     let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
     // Run the command with stderr streaming — stdout is captured but unused.
-    let _stdout = ctx.run_command_streaming(program, &arg_refs, &|line| {
-        progress.report_output(line);
-    })?;
+    let _stdout = ctx
+        .run_command_streaming(program, &arg_refs, &|line| {
+            progress.report_output(line);
+        })
+        .map_err(|e| hand_over_written(e, command, &output_dir, max_output_mb))?;
     progress.report(80, "Collecting output files...");
     let files = collect_output_files(&output_dir, max_output_mb)?;
     if files.is_empty() {
@@ -42,6 +44,26 @@ pub(crate) fn process_file_mode(
     // are cleaned by the OS. This avoids reading multi-GB files into memory.
     progress.report(100, "Done");
     Ok(file_output(command, files))
+}
+
+/// A command that exited non-zero still fails the step, but hands over the
+/// files it wrote before failing (a build log, say) as the step's output.
+fn hand_over_written(
+    error: BntoError,
+    command: &str,
+    output_dir: &Path,
+    max_output_mb: u64,
+) -> BntoError {
+    let BntoError::CommandFailed { message, .. } = error else {
+        return error;
+    };
+    let error = BntoError::ProcessingFailed(message);
+    match collect_output_files(output_dir, max_output_mb) {
+        Ok(files) if !files.is_empty() => {
+            BntoError::with_output(error, file_output(command, files))
+        }
+        _ => error,
+    }
 }
 
 /// Create a temp directory for the command's output files.
@@ -75,4 +97,27 @@ fn file_output(command: &str, files: Vec<OutputFile>) -> NodeOutput {
         serde_json::Number::from(files.len()).into(),
     );
     NodeOutput { files, metadata }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::failing_tool::{FailingTool, MESSAGE};
+
+    #[test]
+    fn test_failed_command_hands_over_the_files_it_wrote() {
+        let params = serde_json::json!({ "outputMode": "file", "args": ["{{output_dir}}"] });
+        let err = FailingTool::new().run(params).err().unwrap();
+        assert_eq!(err.to_string(), format!("Processing failed: {MESSAGE}"));
+        let output = err.into_parts().1.expect("written files handed over");
+        let names: Vec<&str> = output.files.iter().map(|f| f.filename.as_str()).collect();
+        assert_eq!(names, ["build.log"]);
+    }
+
+    #[test]
+    fn test_failed_command_that_wrote_nothing_hands_over_nothing() {
+        let params = serde_json::json!({ "outputMode": "file" });
+        let err = FailingTool::new().run(params).err().unwrap();
+        assert_eq!(err.to_string(), format!("Processing failed: {MESSAGE}"));
+        assert!(err.into_parts().1.is_none());
+    }
 }

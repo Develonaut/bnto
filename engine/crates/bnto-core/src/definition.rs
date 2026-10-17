@@ -77,6 +77,10 @@ pub struct Definition {
     /// When present, the TUI/editor renders these instead of raw processor params.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub fields: BTreeMap<String, crate::FieldDef>,
+    /// A closing step: runs even after an earlier node in its chain failed,
+    /// like `finally`. The run still fails with the first error.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub always: bool,
 }
 
 /// 2D coordinate for a node on the editor canvas.
@@ -202,6 +206,7 @@ mod tests {
             settings: None,
             requires: Vec::new(),
             fields: BTreeMap::new(),
+            always: false,
         }
     }
 
@@ -414,5 +419,19 @@ mod tests {
         }"#;
         let def: Definition = serde_json::from_str(raw).expect("accepts missing parameters");
         assert_eq!(def.parameters, json!({}));
+    }
+
+    #[test]
+    fn always_round_trips_and_is_omitted_when_false() {
+        let plain = serde_json::to_value(minimal_leaf("n1", "file-copy")).unwrap();
+        assert!(plain.get("always").is_none());
+        let closing = Definition {
+            always: true,
+            ..minimal_leaf("n2", "file-copy")
+        };
+        let json = serde_json::to_value(&closing).unwrap();
+        assert_eq!(json["always"], true);
+        let back: Definition = serde_json::from_value(json).unwrap();
+        assert!(back.always);
     }
 }

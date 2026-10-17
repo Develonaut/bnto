@@ -627,6 +627,92 @@ fn test_shell_command_fails_when_search_path_lacks_the_tool() {
     );
 }
 
+// --- Closing steps (`always`) ---
+
+/// The last non-empty stderr line of a run.
+fn last_stderr_line(output: &std::process::Output) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty());
+    last.unwrap_or_default().to_string()
+}
+
+#[test]
+fn test_always_step_keeps_a_failed_commands_stdout() {
+    // Guards: a command that exits non-zero hands its stdout to the closing
+    // step, which copies it, and the run still fails naming the command.
+    let work = temp_output_dir();
+    std::fs::write(work.path().join("before.txt"), "one\n").unwrap();
+    std::fs::write(work.path().join("after.txt"), "two\n").unwrap();
+    let (dest, out) = (temp_output_dir(), temp_output_dir());
+    let dest_param = format!("keep:destination={}", dest.path().to_str().unwrap());
+    let output = Command::new(bnto_bin())
+        .args([
+            "run",
+            &custom_recipe_path("shell-fails-keep-stdout"),
+            "--yes",
+        ])
+        .args(["-p", &dest_param, "-o", out.path().to_str().unwrap()])
+        .current_dir(work.path())
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_stderr_line(&output);
+    assert!(last.starts_with("Pipeline failed: "), "last line: {last}");
+    assert!(
+        last.contains("Command 'git' failed (exit 1)"),
+        "last line: {last}"
+    );
+    let kept = std::fs::read_to_string(dest.path().join("git-output")).unwrap();
+    assert!(
+        kept.contains("-one") && kept.contains("+two"),
+        "kept: {kept}"
+    );
+    assert!(
+        !work.path().join("git-output").exists(),
+        "publish was skipped"
+    );
+}
+
+#[test]
+fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
+    // Guards: a tool missing from search_path fails the step before anything
+    // runs; the closing steps still run, starting from no files.
+    let tools = temp_output_dir();
+    let root = temp_output_dir();
+    std::fs::write(root.path().join("leftover.txt"), "left behind").unwrap();
+    let vars = serde_json::json!({
+        "Tools": tools.path().to_str().unwrap(),
+        "Root": root.path().to_str().unwrap(),
+    });
+    let vars_file = root.path().join("vars.json");
+    std::fs::write(&vars_file, vars.to_string()).unwrap();
+    let (dest, out) = (temp_output_dir(), temp_output_dir());
+    let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
+    let output = Command::new(bnto_bin())
+        .args([
+            "run",
+            &custom_recipe_path("shell-missing-tool-cleanup"),
+            "--yes",
+        ])
+        .args(["--vars", vars_file.to_str().unwrap(), "-p", &dest_param])
+        .args(["-o", out.path().to_str().unwrap()])
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_stderr_line(&output);
+    assert!(last.starts_with("Pipeline failed: "), "last line: {last}");
+    assert!(
+        last.contains("'tool' was not found in search_path"),
+        "last line: {last}"
+    );
+    let copied = std::fs::read_to_string(dest.path().join("leftover.txt")).unwrap();
+    assert_eq!(copied, "left behind");
+}
+
 // --- File Copy: newer ---
 
 #[test]

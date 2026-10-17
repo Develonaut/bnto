@@ -1,0 +1,142 @@
+{
+  "id": "shell-missing-tool-cleanup",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Shell Missing Tool Cleanup",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Runs a tool from a search_path folder that lacks it, so the step fails before anything starts; closing steps still list a file and copy it to a destination."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "build",
+      "type": "shell-command",
+      "version": "1.0.0",
+      "name": "Build",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "command": "tool",
+        "outputMode": "stdout",
+        "search_path": [
+          "{{vars.Tools}}"
+        ]
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "list",
+      "type": "file-list",
+      "version": "1.0.0",
+      "name": "List Leftovers",
+      "position": {
+        "x": 375,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": [
+          "leftover.txt"
+        ]
+      },
+      "inputPorts": [],
+      "outputPorts": [],
+      "always": true
+    },
+    {
+      "id": "copy",
+      "type": "file-copy",
+      "version": "1.0.0",
+      "name": "Copy Leftovers",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "destination": "."
+      },
+      "inputPorts": [],
+      "outputPorts": [],
+      "always": true
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 750,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "build"
+    },
+    {
+      "id": "e2",
+      "source": "build",
+      "target": "list"
+    },
+    {
+      "id": "e3",
+      "source": "list",
+      "target": "copy"
+    },
+    {
+      "id": "e4",
+      "source": "copy",
+      "target": "output"
+    }
+  ]
+}

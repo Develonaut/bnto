@@ -5,11 +5,11 @@
 // output to explicit loop containers but without requiring recipe authors
 // to manually wrap their processors in loop/group nodes.
 
-use crate::errors::BntoError;
 use crate::metadata::InputCardinality;
 use crate::pipeline::{PipelineFile, PipelineNode, is_container_node};
 use crate::registry::NodeRegistry;
 
+use super::closing::ChainFailure;
 use super::node_outputs::{NodeRecords, merge_records};
 use super::{ChainPosition, NodeExecutionResult, PipelineContext, run_node_chain};
 
@@ -17,33 +17,34 @@ use super::{ChainPosition, NodeExecutionResult, PipelineContext, run_node_chain}
 /// processors are wrapped in implicit per-file loops. Containers and
 /// batch processors act as iteration barriers — they break the sequence.
 /// Like a chain, each run's output metadata is visible to every later run.
+///
+/// A failure inside a run closes that run's own chain first (a per-file
+/// sequence closes the failing file's pass); then the `always` nodes of
+/// every later run run as one explicit chain on what it handed over.
 pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
-) -> Result<NodeExecutionResult, BntoError> {
+) -> Result<NodeExecutionResult, ChainFailure> {
     let runs = partition_into_runs(nodes, ctx.registry);
     let mut auto_ctx = ctx.layer();
-    let mut current_files = files;
-    let mut total_processed: usize = 0;
-    let mut all_warnings: Vec<String> = Vec::new();
-
+    let mut chain = NodeExecutionResult::holding(files);
     for run in &runs {
-        let result = run_one(&auto_ctx, nodes, run, current_files)?;
-        total_processed += result.files_processed;
-        all_warnings.extend(result.warnings);
-        auto_ctx
-            .node_outputs
-            .add(result.node_outputs, ctx.count_keys);
-        current_files = result.output_files;
+        let files = std::mem::take(&mut chain.output_files);
+        match run_one(&auto_ctx, nodes, run, files) {
+            Ok(result) => {
+                let records = chain.then(result);
+                auto_ctx.node_outputs.add(records, ctx.count_keys);
+            }
+            Err(failure) => {
+                let end = run.end();
+                let position = ChainPosition::starting_at(end, nodes.len());
+                return Err(failure.close(&mut auto_ctx, &nodes[end..], 0, position));
+            }
+        }
     }
-
-    Ok(NodeExecutionResult {
-        output_files: current_files,
-        files_processed: total_processed,
-        warnings: all_warnings,
-        node_outputs: auto_ctx.node_outputs.into_own(),
-    })
+    chain.node_outputs = auto_ctx.node_outputs.into_own();
+    Ok(chain)
 }
 
 /// Execute one run with the strategy its kind needs.
@@ -52,7 +53,7 @@ fn run_one<F: Fn() -> u64 + Copy>(
     nodes: &[&PipelineNode],
     run: &Run,
     files: Vec<PipelineFile>,
-) -> Result<NodeExecutionResult, BntoError> {
+) -> Result<NodeExecutionResult, ChainFailure> {
     match run {
         Run::PerFileSequence { start, len } => {
             let seq = &nodes[*start..*start + *len];
@@ -72,7 +73,7 @@ fn run_single_node<F: Fn() -> u64 + Copy>(
     nodes: &[&PipelineNode],
     index: usize,
     files: Vec<PipelineFile>,
-) -> Result<NodeExecutionResult, BntoError> {
+) -> Result<NodeExecutionResult, ChainFailure> {
     let node = &nodes[index..index + 1];
     let position = ChainPosition::starting_at(index, nodes.len());
     run_node_chain(ctx, node, files, 0, position)
@@ -89,6 +90,16 @@ enum Run {
     Batch { index: usize },
     /// A source processor — runs once with no input files. Breaks per-file sequences.
     Source { index: usize },
+}
+
+impl Run {
+    /// Index of the first node after this run.
+    fn end(&self) -> usize {
+        match self {
+            Run::PerFileSequence { start, len } => start + len,
+            Run::Container { index } | Run::Batch { index } | Run::Source { index } => index + 1,
+        }
+    }
 }
 
 /// Check if a primitive node has batch cardinality by consulting the registry.
@@ -168,7 +179,7 @@ fn run_per_file_sequence<F: Fn() -> u64 + Copy>(
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
     position: ChainPosition,
-) -> Result<NodeExecutionResult, BntoError> {
+) -> Result<NodeExecutionResult, ChainFailure> {
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
     let mut all_warnings: Vec<String> = Vec::new();
