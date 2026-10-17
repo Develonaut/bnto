@@ -46,7 +46,12 @@ pub(crate) fn process_newer(
     Ok(passthrough_output(input, outcome))
 }
 
-/// The input file handed on unchanged, flagged with what happened to it.
+/// The keys `outcome_metadata` sets; file-copy declares them as count keys,
+/// so its node record adds them up into per-run totals.
+pub(crate) const OUTCOME_KEYS: [&str; 3] = ["copied", "up_to_date", "skipped_newer"];
+
+/// The input file handed on unchanged, flagged with what happened to it. The
+/// node-level metadata carries the same flags, as this call's counts.
 fn passthrough_output(input: NodeInput, outcome: Outcome) -> NodeOutput {
     let file = OutputFile {
         filename: input.filename,
@@ -56,9 +61,10 @@ fn passthrough_output(input: NodeInput, outcome: Outcome) -> NodeOutput {
         data: input.data,
         metadata: outcome_metadata(outcome),
     };
+    let metadata = file.metadata.clone();
     NodeOutput {
         files: vec![file],
-        metadata: serde_json::Map::new(),
+        metadata,
     }
 }
 
@@ -81,14 +87,11 @@ fn tolerance_ms(params: &serde_json::Map<String, serde_json::Value>) -> Result<u
 
 /// Per-file 0/1 flags: exactly one of the three is 1.
 fn outcome_metadata(outcome: Outcome) -> serde_json::Map<String, serde_json::Value> {
-    [
-        ("copied", Outcome::Copied),
-        ("up_to_date", Outcome::UpToDate),
-        ("skipped_newer", Outcome::SkippedNewer),
-    ]
-    .into_iter()
-    .map(|(key, o)| (key.to_string(), serde_json::json!(u8::from(o == outcome))))
-    .collect()
+    OUTCOME_KEYS
+        .into_iter()
+        .zip([Outcome::Copied, Outcome::UpToDate, Outcome::SkippedNewer])
+        .map(|(key, o)| (key.to_string(), serde_json::json!(u8::from(o == outcome))))
+        .collect()
 }
 
 fn mtime_ms(path: &Path) -> Result<i128, BntoError> {

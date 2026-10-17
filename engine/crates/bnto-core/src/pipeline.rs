@@ -212,7 +212,15 @@ pub struct PipelineResult {
 
     /// Non-fatal warnings collected during execution (e.g. skipped loop iterations).
     pub warnings: Vec<String>,
+
+    /// Each processing node's output metadata by node id, as `{{node.<id>.*}}`
+    /// read it at the end of the run: nodes inside containers included, `{}`
+    /// for a node that reported none. The input node's seeded record is left out.
+    pub node_metadata: NodeMetadataById,
 }
+
+/// Node id → that node's recorded output metadata.
+pub type NodeMetadataById = BTreeMap<String, serde_json::Map<String, serde_json::Value>>;
 
 // =============================================================================
 // InputMode — How data enters the recipe

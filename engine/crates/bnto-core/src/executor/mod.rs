@@ -8,6 +8,8 @@
 //   - `container.rs` — container node execution (loop, group, parallel)
 //   - `loop_config.rs` — loop container params (error handling, persistence)
 //   - `node_outputs.rs` — each node's output metadata, for `{{node.<id>.*}}`
+//   - `count_keys.rs` — which metadata keys each node adds up across runs
+//   - `result.rs` — the run's result: final files and every node's record
 //   - `resolve.rs` — `{{fields.*}}` template resolution
 //   - `template.rs` — multi-namespace template resolution (env, ctx, node, item)
 //
@@ -16,11 +18,13 @@
 
 mod auto_iteration;
 mod container;
+mod count_keys;
 mod leaf_output;
 pub mod loop_config;
 pub mod node_outputs;
 mod primitive;
 pub mod resolve;
+mod result;
 pub mod template;
 mod unfilled_items;
 
@@ -28,11 +32,11 @@ use crate::context::ProcessContext;
 use crate::errors::BntoError;
 use crate::events::{NodeInfo, PipelineEvent, PipelineReporter};
 use crate::pipeline::{
-    IterationMode, PipelineDefinition, PipelineFile, PipelineFileResult, PipelineNode,
-    PipelineResult, is_container_node, is_io_node,
+    IterationMode, PipelineDefinition, PipelineFile, PipelineNode, PipelineResult,
+    is_container_node, is_io_node,
 };
 use crate::registry::NodeRegistry;
-use node_outputs::{NodeOutputs, NodeRecords};
+use node_outputs::{CountKeys, NodeOutputs, NodeRecords};
 
 #[cfg(test)]
 use crate::processor::NodeInput;
@@ -66,6 +70,8 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     /// Output metadata of the nodes run so far, for {{node.<id>.*}} templates.
     /// Seeded with input file metadata before execution begins.
     node_outputs: NodeOutputs<'a>,
+    /// Each node's count keys, which merges of its records add up.
+    count_keys: &'a CountKeys,
 }
 
 impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
@@ -81,6 +87,7 @@ impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
             loop_item: self.loop_item.clone(),
             parent_node_id: self.parent_node_id.clone(),
             node_outputs: self.node_outputs.layer(),
+            count_keys: self.count_keys,
         }
     }
 }
@@ -133,28 +140,6 @@ fn filter_processing_nodes(definition: &PipelineDefinition) -> Vec<&PipelineNode
         .collect()
 }
 
-/// Convert final pipeline files to result format, preserving processor metadata.
-fn build_pipeline_result(
-    files: Vec<PipelineFile>,
-    duration_ms: u64,
-    warnings: Vec<String>,
-) -> PipelineResult {
-    let result_files = files
-        .into_iter()
-        .map(|f| PipelineFileResult {
-            name: f.name,
-            data: f.data,
-            mime_type: f.mime_type,
-            metadata: f.metadata,
-        })
-        .collect();
-    PipelineResult {
-        files: result_files,
-        duration_ms,
-        warnings,
-    }
-}
-
 /// Execute a complete pipeline: walk nodes, iterate files, chain outputs.
 ///
 /// Main entry point for the engine. `now_ms` is injected for testability
@@ -168,7 +153,16 @@ pub fn execute_pipeline(
     now_ms: impl Fn() -> u64 + Copy,
 ) -> Result<PipelineResult, BntoError> {
     let processing_nodes = filter_processing_nodes(definition);
-    let ctx = build_root_context(definition, &files, registry, reporter, process_ctx, now_ms);
+    let count_keys = count_keys::count_keys_for(&definition.nodes, registry);
+    let ctx = build_root_context(
+        definition,
+        &files,
+        registry,
+        reporter,
+        process_ctx,
+        &count_keys,
+        now_ms,
+    );
     emit_pipeline_started(&ctx, &processing_nodes, files.len());
     let result = run_processing_nodes(&ctx, definition, &processing_nodes, files)?;
     Ok(finish_pipeline(&ctx, ctx.started_ms, result))
@@ -181,6 +175,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
     registry: &'a NodeRegistry,
     reporter: &'a PipelineReporter,
     process_ctx: &'a dyn ProcessContext,
+    count_keys: &'a CountKeys,
     now_ms: F,
 ) -> PipelineContext<'a, F> {
     // Read once: every node of the run sees this as `{{ctx.started}}`.
@@ -196,6 +191,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
         loop_item: None,
         parent_node_id: None,
         node_outputs: NodeOutputs::root(seed),
+        count_keys,
     }
 }
 
@@ -245,7 +241,7 @@ fn finish_pipeline<F: Fn() -> u64 + Copy>(
         duration_ms,
         total_files_processed: result.files_processed,
     });
-    build_pipeline_result(result.output_files, duration_ms, result.warnings)
+    result::build_pipeline_result(result, duration_ms)
 }
 
 /// Chain nodes sequentially, passing each node's output as the next node's input.
@@ -278,7 +274,9 @@ fn run_node_chain<F: Fn() -> u64 + Copy>(
         )?;
         total_files_processed += result.files_processed;
         all_warnings.extend(result.warnings);
-        chain_ctx.node_outputs.add(result.node_outputs);
+        chain_ctx
+            .node_outputs
+            .add(result.node_outputs, ctx.count_keys);
         current_files = result.output_files;
     }
 

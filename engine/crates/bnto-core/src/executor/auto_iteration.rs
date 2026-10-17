@@ -32,7 +32,9 @@ pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
         let result = run_one(&auto_ctx, nodes, run, current_files)?;
         total_processed += result.files_processed;
         all_warnings.extend(result.warnings);
-        auto_ctx.node_outputs.add(result.node_outputs);
+        auto_ctx
+            .node_outputs
+            .add(result.node_outputs, ctx.count_keys);
         current_files = result.output_files;
     }
 
@@ -176,7 +178,7 @@ fn run_per_file_sequence<F: Fn() -> u64 + Copy>(
         let result = run_node_chain(ctx, nodes, vec![file], i, position)?;
         total_processed += result.files_processed;
         all_warnings.extend(result.warnings);
-        merge_records(&mut records, result.node_outputs);
+        merge_records(&mut records, result.node_outputs, ctx.count_keys);
         all_output_files.extend(result.output_files);
     }
 

@@ -280,6 +280,7 @@ mod tests {
             }],
             duration_ms: 0,
             warnings: vec![],
+            node_metadata: Default::default(),
         }
     }
 
@@ -293,6 +294,7 @@ mod tests {
             }],
             duration_ms: 0,
             warnings: vec![],
+            node_metadata: Default::default(),
         }
     }
 
@@ -645,6 +647,7 @@ mod tests {
             }],
             duration_ms: 0,
             warnings: vec![],
+            node_metadata: Default::default(),
         };
 
         write_results(&result, out_dir.to_str().unwrap()).unwrap();
@@ -690,6 +693,7 @@ mod tests {
             ],
             duration_ms: 0,
             warnings: vec![],
+            node_metadata: Default::default(),
         };
 
         write_results(&result, dir.to_str().unwrap()).unwrap();

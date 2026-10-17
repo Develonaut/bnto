@@ -14,7 +14,7 @@ File operation nodes. Rename, filter, collect, copy, and inspect files.
 | `FileFilter`   | `file-filter`   | Keep or drop files by extension, name or path pattern (glob/regex), and size          | browser, cli    |
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, modified time, SHA-256 hash)      | browser, cli    |
 | `FileCollect`  | `file-collect`  | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it | cli |
-| `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer | cli             |
+| `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals) | cli             |
 | `FileList`     | `file-list`     | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder; missing paths skipped and counted | cli |
 | `FileMove`     | `file-move`     | Move files into folders under a destination by the path in each name; rename only, refuses any run that would replace a file | cli |
 

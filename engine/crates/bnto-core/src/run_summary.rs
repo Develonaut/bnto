@@ -1,14 +1,14 @@
 // Run summary — one serializable verdict for a whole run, so a consumer's
 // human summary line and its machine-readable line come from the same values.
-// Per-node counts come from the run's pipeline events (`NodeTally`), since
-// `PipelineResult` carries only the final files.
+// Per-node file counts come from the run's pipeline events (`NodeTally`);
+// each node's output metadata comes from `PipelineResult::node_metadata`.
 
 use std::fmt::Display;
 
 use serde::Serialize;
 
 use crate::events::{NodeInfo, PipelineEvent};
-use crate::pipeline::PipelineResult;
+use crate::pipeline::{NodeMetadataById, PipelineResult};
 
 /// Whether a run succeeded.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -27,6 +27,9 @@ pub struct NodeSummary {
     pub node_type: String,
     /// Files the node processed, summed over every time it ran.
     pub files_processed: usize,
+    /// The node's recorded output metadata (what `{{node.<id>.*}}` reads);
+    /// `{}` when it recorded none or never ran.
+    pub metadata: serde_json::Map<String, serde_json::Value>,
 }
 
 impl NodeSummary {
@@ -35,6 +38,7 @@ impl NodeSummary {
             id: info.id.clone(),
             node_type: info.node_type.clone(),
             files_processed: 0,
+            metadata: serde_json::Map::new(),
         }
     }
 }
@@ -78,6 +82,16 @@ impl RunSummary {
     /// The same summary with `nodes` in place of its node list.
     pub fn with_nodes(self, nodes: Vec<NodeSummary>) -> Self {
         Self { nodes, ..self }
+    }
+
+    /// The same summary with each node's metadata looked up by id in `metadata`.
+    pub fn with_node_metadata(mut self, metadata: &NodeMetadataById) -> Self {
+        for node in &mut self.nodes {
+            if let Some(recorded) = metadata.get(&node.id) {
+                node.metadata = recorded.clone();
+            }
+        }
+        self
     }
 }
 
@@ -124,6 +138,7 @@ mod tests {
     use crate::errors::BntoError;
     use crate::pipeline::PipelineFileResult;
     use crate::processor::FileData;
+    use serde_json::Map;
 
     fn result_with(names: &[&str], duration_ms: u64) -> PipelineResult {
         let files = names
@@ -139,6 +154,7 @@ mod tests {
             files,
             duration_ms,
             warnings: vec![],
+            node_metadata: Default::default(),
         }
     }
 
@@ -170,7 +186,12 @@ mod tests {
             id: id.into(),
             node_type: node_type.into(),
             files_processed,
+            metadata: Map::new(),
         }
+    }
+
+    fn object(value: serde_json::Value) -> Map<String, serde_json::Value> {
+        value.as_object().unwrap().clone()
     }
 
     // --- RunSummary ---
@@ -235,10 +256,40 @@ mod tests {
                 "status": "pass",
                 "files_written": 1,
                 "duration_ms": 3,
-                "nodes": [{ "id": "copy", "node_type": "file-copy", "files_processed": 1 }],
+                "nodes": [{
+                    "id": "copy",
+                    "node_type": "file-copy",
+                    "files_processed": 1,
+                    "metadata": {}
+                }],
                 "error": null
             })
         );
+    }
+
+    #[test]
+    fn test_with_node_metadata_fills_each_node_by_id() {
+        let mut result = result_with(&["a"], 1);
+        let copied = object(serde_json::json!({ "copied": 3, "up_to_date": 1 }));
+        result.node_metadata.insert("copy".into(), copied.clone());
+        result.node_metadata.insert("inner".into(), Map::new());
+        let nodes = vec![
+            node("collect", "file-collect", 1),
+            node("copy", "file-copy", 4),
+        ];
+        let summary = RunSummary::from_result(&result, 1)
+            .with_nodes(nodes)
+            .with_node_metadata(&result.node_metadata);
+        assert_eq!(summary.nodes[0].metadata, Map::new());
+        assert_eq!(summary.nodes[1].metadata, copied);
+    }
+
+    #[test]
+    fn test_node_metadata_serializes_as_an_object() {
+        let mut copy = node("copy", "file-copy", 1);
+        copy.metadata = object(serde_json::json!({ "copied": 1 }));
+        let json = serde_json::to_value(&copy).unwrap();
+        assert_eq!(json["metadata"], serde_json::json!({ "copied": 1 }));
     }
 
     #[test]

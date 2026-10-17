@@ -66,7 +66,7 @@ bnto install download-video
 `--json` prints the run's summary as exactly one JSON line on stdout, whether the run passes or fails. Progress, warnings and the human summary line stay on stderr, unchanged, and the exit code is the same (0 on a pass, 1 on a failure). The human `Done.` / `Pipeline failed:` line is printed last on stderr, after every warning, and both it and the JSON line are built from the same summary.
 
 ```json
-{"status":"pass","files_written":1,"duration_ms":5,"nodes":[{"id":"collect","node_type":"file-collect","files_processed":1},{"id":"copy","node_type":"file-copy","files_processed":1}],"error":null}
+{"status":"pass","files_written":1,"duration_ms":5,"nodes":[{"id":"collect","node_type":"file-collect","files_processed":1,"metadata":{}},{"id":"copy","node_type":"file-copy","files_processed":1,"metadata":{"copied":1,"up_to_date":0,"skipped_newer":0}}],"error":null}
 ```
 
 | Field | Meaning |
@@ -74,7 +74,8 @@ bnto install download-video
 | `status` | `"pass"` or `"fail"` |
 | `files_written` | Files the output step wrote, or renamed in place in overwrite mode; `0` for `message` / `none` output and on a failure. On `--dry-run`, the files that would be written |
 | `duration_ms` | Pipeline time on a pass; time since the run started on a failure |
-| `nodes` | Top-level processing nodes in pipeline order: `id`, `node_type`, and `files_processed` summed over every time the node ran (nodes inside a container count toward the container). A node that never finished shows `0` |
+| `nodes` | Top-level processing nodes in pipeline order: `id`, `node_type`, `files_processed` summed over every time the node ran (nodes inside a container count toward the container), and `metadata`, the node's output record as `{{node.<id>.*}}` reads it at the end of the run. A node that never finished shows `0` and `{}` |
+| `nodes[].metadata` | What the node reported, as a JSON object; `{}` when it reported nothing (a container's own entry is always `{}`). Keys its processor declares as counts are totals for the whole node, e.g. file-copy in `newer` mode reports `copied`, `up_to_date` and `skipped_newer` (on `--dry-run`, `copied` counts the files that would be copied); other keys hold the last file's value. A failed run reports `{}` for every node |
 | `error` | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass |
 
 A run declined at the shell-command consent prompt prints no JSON line; pass `--yes` when scripting.

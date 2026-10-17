@@ -6,20 +6,31 @@ use crate::pipeline::PipelineFile;
 use crate::processor::NodeOutput;
 
 use super::NodeExecutionResult;
-use super::node_outputs::single;
+use super::node_outputs::{merge_record, single};
 
 type Params = serde_json::Map<String, serde_json::Value>;
 
 /// The files and node record of one primitive node's run.
-#[derive(Default)]
 pub(super) struct LeafOutput {
     files: Vec<PipelineFile>,
     /// Every call's `NodeOutput.metadata`, merged in call order: a per-file
-    /// node's later file wins a key that several files set.
+    /// node's later file wins a key that several files set, and its count
+    /// keys add up.
     record: Params,
+    /// The processor's count keys (`NodeProcessor::count_keys`).
+    count_keys: &'static [&'static str],
 }
 
 impl LeafOutput {
+    /// An empty output for a node whose processor adds up `count_keys`.
+    pub(super) fn counting(count_keys: &'static [&'static str]) -> Self {
+        Self {
+            files: Vec::new(),
+            record: Params::new(),
+            count_keys,
+        }
+    }
+
     /// Collect one call's output files, and merge its metadata into the record.
     /// Each file's metadata is `inherited` (what the input file carried) with the
     /// node's own metadata on top: its per-file metadata when non-empty, else the
@@ -40,7 +51,7 @@ impl LeafOutput {
                 metadata,
             });
         }
-        self.record.extend(output.metadata);
+        merge_record(&mut self.record, output.metadata, self.count_keys);
     }
 
     /// The node's result, its record filed under `node_id`.

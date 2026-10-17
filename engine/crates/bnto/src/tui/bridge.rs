@@ -285,6 +285,7 @@ mod tests {
             }],
             duration_ms: 100,
             warnings: Vec::new(),
+            node_metadata: Default::default(),
         };
         let meta = extract_file_metadata(&result);
         assert_eq!(meta.len(), 1);
@@ -302,6 +303,7 @@ mod tests {
             }],
             duration_ms: 100,
             warnings: Vec::new(),
+            node_metadata: Default::default(),
         }
     }
 
@@ -330,6 +332,7 @@ mod tests {
             }],
             duration_ms: 50,
             warnings: Vec::new(),
+            node_metadata: Default::default(),
         };
         let meta = extract_file_metadata(&result);
         assert_eq!(meta[0].original_size, None);
@@ -351,6 +354,7 @@ mod tests {
             }],
             duration_ms: 50,
             warnings: Vec::new(),
+            node_metadata: Default::default(),
         };
         let meta = extract_file_metadata(&result);
         assert_eq!(meta[0].original_size, None);
