@@ -36,6 +36,7 @@ pub fn create_browser_registry() -> NodeRegistry {
         "spreadsheet-rename",
         Box::new(bnto_spreadsheet::RenameColumns::new()),
     );
+    registry.register("assert", Box::new(bnto_core::control::Assert::new()));
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
     registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
@@ -132,9 +133,10 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 15);
+        assert_eq!(registry.len(), 16);
 
         let expected = [
+            "assert",
             "file-filter",
             "file-metadata",
             "file-rename",
@@ -165,9 +167,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (15) + file-collect + file-copy + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 22
-        assert_eq!(registry.len(), 22);
+        // Full registry = browser (16) + file-collect + file-copy + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 23
+        assert_eq!(registry.len(), 23);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),

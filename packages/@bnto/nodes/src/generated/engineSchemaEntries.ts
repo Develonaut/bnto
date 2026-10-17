@@ -7,6 +7,7 @@
 import type { NodeSchema } from "../schemas/types";
 import type { NodeParamFields } from "../schemas/types";
 
+import { assertNodeSchema } from "./schemas/assert";
 import { editFieldsNodeSchema } from "./schemas/editFields";
 import { fileCollectNodeSchema } from "./schemas/fileCollect";
 import { fileCopyNodeSchema } from "./schemas/fileCopy";
@@ -42,6 +43,7 @@ import { vectorRasterizeNodeSchema } from "./schemas/vectorRasterize";
  * The engine is the single source of truth. No hand-written overrides needed.
  */
 export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
+  assert: assertNodeSchema,
   "edit-fields": editFieldsNodeSchema,
   "file-collect": fileCollectNodeSchema,
   "file-copy": fileCopyNodeSchema,
@@ -78,6 +80,16 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
  * Generated from the engine catalog's nodeTypes[].params presentation fields.
  */
 export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
+  assert: {
+    op: {
+      options: [
+        { value: "equals", label: "Equals" },
+        { value: "not_equals", label: "Does not equal" },
+        { value: "after", label: "Is after (time)" },
+        { value: "before", label: "Is before (time)" },
+      ],
+    },
+  },
   "edit-fields": {
     values: { control: "keyValue" },
     keepOnlySet: { control: "switch" },

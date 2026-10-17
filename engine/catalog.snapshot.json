@@ -2,6 +2,74 @@
   "version": "1.0.0",
   "nodeTypes": [
     {
+      "name": "assert",
+      "label": "Assert",
+      "description": "Fail the run when a comparison doesn't hold; otherwise pass files through.",
+      "category": "control",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "circle-off",
+      "params": [
+        {
+          "name": "value",
+          "label": "Value",
+          "description": "What to check, usually a template such as {{node.<id>.<key>}} or {{item.<key>}}.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "op",
+          "label": "Comparison",
+          "description": "How value is compared to expected. after and before compare RFC 3339 times.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "equals",
+                "label": "Equals"
+              },
+              {
+                "value": "not_equals",
+                "label": "Does not equal"
+              },
+              {
+                "value": "after",
+                "label": "Is after (time)"
+              },
+              {
+                "value": "before",
+                "label": "Is before (time)"
+              }
+            ]
+          },
+          "default": "equals",
+          "surfaceable": true
+        },
+        {
+          "name": "expected",
+          "label": "Expected",
+          "description": "What the value is compared to.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "message",
+          "label": "Message",
+          "description": "Put before the reasons when the check fails, so the failure says what was checked.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "edit-fields",
       "label": "Edit Fields",
       "description": "Set field values from static values or template expressions.",
@@ -2070,6 +2138,76 @@
     }
   ],
   "processors": [
+    {
+      "nodeType": "assert",
+      "name": "Assert",
+      "description": "Fail the run when a comparison doesn't hold (equals, not equals, after, before); otherwise pass files through unchanged.",
+      "category": "control",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "value",
+          "label": "Value",
+          "description": "What to check, usually a template such as {{node.<id>.<key>}} or {{item.<key>}}.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "op",
+          "label": "Comparison",
+          "description": "How value is compared to expected. after and before compare RFC 3339 times.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "equals",
+                "label": "Equals"
+              },
+              {
+                "value": "not_equals",
+                "label": "Does not equal"
+              },
+              {
+                "value": "after",
+                "label": "Is after (time)"
+              },
+              {
+                "value": "before",
+                "label": "Is before (time)"
+              }
+            ]
+          },
+          "default": "equals",
+          "surfaceable": true
+        },
+        {
+          "name": "expected",
+          "label": "Expected",
+          "description": "What the value is compared to.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "message",
+          "label": "Message",
+          "description": "Put before the reasons when the check fails, so the failure says what was checked.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
+    },
     {
       "nodeType": "file-collect",
       "name": "Collect Files",

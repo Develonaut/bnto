@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 30 registered node types.
+/// Return metadata for all 31 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -59,6 +59,15 @@ pub fn node_type_params(type_name: &str) -> Option<Vec<ParameterDef>> {
 
 fn control_node_types() -> Vec<NodeTypeInfo> {
     vec![
+        node_type!(
+            "assert",
+            "Assert",
+            "Fail the run when a comparison doesn't hold; otherwise pass files through.",
+            NodeCategory::Control,
+            false,
+            "browser",
+            "circle-off"
+        ),
         node_type!(
             "group",
             "Group",
