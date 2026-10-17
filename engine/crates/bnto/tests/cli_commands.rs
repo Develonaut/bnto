@@ -317,6 +317,93 @@ fn test_none_mode_rejects_positional_args() {
     );
 }
 
+// --- Run vars ---
+
+/// A source dir holding `report.txt`, and a `--vars` file setting `Out`.
+fn vars_fixture(out: &std::path::Path) -> (tempfile::TempDir, tempfile::TempDir) {
+    let src_dir = temp_output_dir();
+    std::fs::write(src_dir.path().join("report.txt"), "from source").unwrap();
+    let vars_dir = temp_output_dir();
+    let body = serde_json::json!({ "Out": out.to_str().unwrap() }).to_string();
+    std::fs::write(vars_dir.path().join("vars.json"), body).unwrap();
+    (src_dir, vars_dir)
+}
+
+fn run_vars_recipe(
+    src: &std::path::Path,
+    extra: &[&str],
+    env: &[(&str, &str)],
+) -> std::process::Output {
+    let out = temp_output_dir();
+    let mut cmd = Command::new(bnto_bin());
+    cmd.args(["run", &custom_recipe_path("file-copy-vars")])
+        .arg(src)
+        .args(["--yes", "-o", out.path().to_str().unwrap()])
+        .args(extra);
+    for (k, v) in env {
+        cmd.env(k, v);
+    }
+    cmd.output().unwrap()
+}
+
+#[test]
+fn test_run_vars_file_resolves_a_destination() {
+    let dest = temp_output_dir();
+    let (src, vars) = vars_fixture(dest.path());
+    let vars_file = vars.path().join("vars.json");
+    let output = run_vars_recipe(src.path(), &["--vars", vars_file.to_str().unwrap()], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let copied = dest.path().join("Art").join("report.txt");
+    assert_eq!(std::fs::read_to_string(copied).unwrap(), "from source");
+}
+
+#[test]
+fn test_run_vars_environment_wins_over_the_file() {
+    let file_dest = temp_output_dir();
+    let env_dest = temp_output_dir();
+    let (src, vars) = vars_fixture(file_dest.path());
+    let vars_file = vars.path().join("vars.json");
+    let env_out = env_dest.path().to_str().unwrap();
+    let args = ["--vars", vars_file.to_str().unwrap()];
+    let output = run_vars_recipe(src.path(), &args, &[("BNTO_VAR_OUT", env_out)]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(env_dest.path().join("Art").join("report.txt").exists());
+    assert!(
+        !file_dest.path().join("Art").exists(),
+        "the file's value was used"
+    );
+}
+
+#[test]
+fn test_run_dry_run_takes_vars() {
+    let dest = temp_output_dir();
+    let (src, vars) = vars_fixture(dest.path());
+    let vars_file = vars.path().join("vars.json");
+    let args = ["--dry-run", "--vars", vars_file.to_str().unwrap()];
+    let output = run_vars_recipe(src.path(), &args, &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!dest.path().join("Art").exists(), "a dry run wrote");
+}
+
+#[test]
+fn test_run_unset_var_fails_before_any_node_runs() {
+    let (src, _vars) = vars_fixture(std::path::Path::new("unused"));
+    let output = run_vars_recipe(src.path(), &[], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
+    assert!(
+        last.contains(
+            "Pipeline failed: unresolved {{vars.Out}} (no --vars file or BNTO_VAR_OUT sets it)"
+        ),
+        "last line: {last}"
+    );
+    assert!(!stderr.contains("file-collect"), "a node ran: {stderr}");
+}
+
 // --- File Copy: newer ---
 
 #[test]

@@ -35,6 +35,10 @@ bnto run recipe.bnto.json *.jpg --output ./compressed
 # Override parameters
 bnto run compress-images photo.jpg --param quality=50
 
+# Fill {{vars.KEY}} placeholders from JSON files (repeatable; later files win,
+# and a BNTO_VAR_<KEY> environment variable beats every file)
+bnto run backup.bnto.json --vars machine.json
+
 # List available built-in recipes
 bnto list
 
@@ -97,6 +101,7 @@ src/
 +-- dispatch.rs            # Routes a parsed subcommand to its implementation
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
 +-- run_output.rs          # Writes run results and prints the summary
++-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
 +-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- launch.rs              # `bnto tui` launcher
