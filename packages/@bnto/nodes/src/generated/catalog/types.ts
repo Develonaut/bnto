@@ -10,6 +10,7 @@ export type NodeTypeName =
   | "edit-fields"
   | "file-collect"
   | "file-copy"
+  | "file-decode"
   | "file-filter"
   | "file-list"
   | "file-metadata"

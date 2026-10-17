@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 33 registered node types.
+/// Return metadata for all 34 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -167,6 +167,15 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             false,
             "cli",
             "folder-open"
+        ),
+        node_type!(
+            "file-decode",
+            "Decode Files",
+            "Decode each file's content from a text encoding (base64) into its bytes.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "arrow-left-right"
         ),
         node_type!(
             "file-filter",

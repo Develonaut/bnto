@@ -817,6 +817,49 @@ fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
     assert_eq!(copied, "left behind");
 }
 
+// --- File Decode ---
+
+/// Run the file-decode-json fixture on one file named `name` holding `text`.
+fn run_decode_json(name: &str, text: &str) -> std::process::Output {
+    let dir = temp_output_dir();
+    let file = dir.path().join(name);
+    std::fs::write(&file, text).unwrap();
+    Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("file-decode-json"), "--yes"])
+        .arg(&file)
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn test_file_decode_hands_its_decoded_json_to_spreadsheet_read() {
+    // `[{"name":"alpha","meta":{"size":1}},{"name":"beta","meta":{"size":2}}]`
+    // in base64, wrapped over two lines. Decoded as items.json, so
+    // spreadsheet-read's auto format reads it as a JSON array.
+    let encoded = "W3sibmFtZSI6ImFscGhhIiwibWV0YSI6eyJzaXpl\r\n\
+                   IjoxfX0seyJuYW1lIjoiYmV0YSIsIm1ldGEiOnsic2l6ZSI6Mn19XQ==\n";
+    let output = run_decode_json("items.b64", encoded);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(
+        stderr.contains("2 file(s): alpha-1.txt, beta-2.txt"),
+        "stderr: {stderr}"
+    );
+}
+
+#[test]
+fn test_file_decode_fails_the_run_naming_a_file_that_isnt_base64() {
+    let output = run_decode_json("broken.b64", r#"[{"name": "alpha"}]"#);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_line(&stderr);
+    assert!(last.contains("Pipeline failed:"), "last line: {last}");
+    assert!(
+        last.contains("broken.b64") && last.contains("not valid base64"),
+        "last line: {last}"
+    );
+}
+
 // --- File Copy: newer ---
 
 #[test]

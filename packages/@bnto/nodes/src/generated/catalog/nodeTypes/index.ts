@@ -10,6 +10,7 @@ import { assertNodeType } from "./assert";
 import { editFieldsNodeType } from "./editFields";
 import { fileCollectNodeType } from "./fileCollect";
 import { fileCopyNodeType } from "./fileCopy";
+import { fileDecodeNodeType } from "./fileDecode";
 import { fileFilterNodeType } from "./fileFilter";
 import { fileListNodeType } from "./fileList";
 import { fileMetadataNodeType } from "./fileMetadata";
@@ -49,6 +50,7 @@ export const NODE_TYPES = {
   editFields: "edit-fields",
   fileCollect: "file-collect",
   fileCopy: "file-copy",
+  fileDecode: "file-decode",
   fileFilter: "file-filter",
   fileList: "file-list",
   fileMetadata: "file-metadata",
@@ -92,6 +94,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "edit-fields": editFieldsNodeType,
   "file-collect": fileCollectNodeType,
   "file-copy": fileCopyNodeType,
+  "file-decode": fileDecodeNodeType,
   "file-filter": fileFilterNodeType,
   "file-list": fileListNodeType,
   "file-metadata": fileMetadataNodeType,

@@ -33,6 +33,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `assert`              | `bnto-core`        | `control::Assert`    |
 | `report`              | `bnto-core`        | `control::Report`    |
 | `edit-fields`         | `bnto-core`        | `data::EditFields`   |
+| `file-decode`         | `bnto-file`        | `FileDecode`         |
 | `file-filter`         | `bnto-file`        | `FileFilter`         |
 | `file-metadata`       | `bnto-file`        | `FileMetadata`       |
 | `file-render`         | `bnto-file`        | `FileRender`         |
