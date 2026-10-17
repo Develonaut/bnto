@@ -55,9 +55,12 @@ dirs = "6"
 ureq = "3"
 toml = "0.8"
 uuid = { version = "1", features = ["v4"] }
-# Child-process lifecycle: libc for process-group kill(2), ctrlc for
-# SIGINT/SIGTERM handlers that terminate spawned command trees on exit.
+# Child-process lifecycle: libc for process-group kill(2), windows-sys for
+# Job Objects (the Windows tree kill), ctrlc for SIGINT/SIGTERM handlers that
+# terminate spawned command trees on exit. windows-sys 0.61 matches the copy
+# clap, ctrlc, dirs and tempfile already pull in.
 libc = "0.2"
+windows-sys = "0.61"
 ctrlc = { version = "3", features = ["termination"] }
 # TypeScript binding generator. Used by bnto-core to emit document-shape types
 # (Definition, Edge, Port, etc.) to `packages/@bnto/nodes/src/generated/` so
