@@ -7,6 +7,7 @@
 //        bnto list
 //        bnto info <recipe>
 //        bnto dry-run <recipe> [files...] [--param key=value]
+//        bnto check <recipe file>...  (validate recipe files without running)
 //        bnto install <recipe> [--yes]
 //        bnto install --all [--yes]
 //        bnto doctor
@@ -14,6 +15,7 @@
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
 pub mod catalog;
+mod check;
 mod cli;
 mod consent;
 mod context;

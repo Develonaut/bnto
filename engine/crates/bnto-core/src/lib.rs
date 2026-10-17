@@ -49,6 +49,10 @@ pub mod metadata;
 /// This is the engine's brain. See `.claude/strategy/engine-execution.md`.
 pub mod executor;
 
+/// Recipe check — unknown node types, refused params and malformed
+/// placeholders, found without running anything.
+pub mod check;
+
 /// Pipeline definition types — what the engine receives to execute.
 /// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
 pub mod pipeline;
@@ -110,6 +114,7 @@ pub mod version;
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
 pub use binary_probe::find_on_path;
+pub use check::{CheckFinding, check_pipeline};
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;

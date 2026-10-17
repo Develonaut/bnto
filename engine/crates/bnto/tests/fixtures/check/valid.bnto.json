@@ -1,0 +1,35 @@
+{
+  "id": "check-valid",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Valid",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "each",
+      "type": "loop",
+      "parameters": {},
+      "nodes": [
+        {
+          "id": "keep-docs",
+          "type": "file-filter",
+          "parameters": { "name_pattern": "^docs/", "pattern_mode": "regex", "match": "path" }
+        },
+        {
+          "id": "copy",
+          "type": "file-copy",
+          "parameters": { "destination": "{{vars.Out}}/Docs" }
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "none" }
+    }
+  ]
+}
