@@ -42,10 +42,11 @@ let processor = registry.get("image", "compress")?;
 3. Chains output from one node as input to the next
 4. Handles container semantics (loop iterates per-file, group sequences children, parallel fans out)
 5. Emits `PipelineEvent`s for progress reporting
+6. After a node fails, skips the rest of its chain except closing steps (nodes marked `"always": true`), which run on the files the failed step handed over (`BntoError::with_output`); the run still fails with the first error, and `PipelineFailed` comes once, last. See `.claude/strategy/engine-execution.md#closing-steps-always`
 
 ### Recipe Check
 
-`check_pipeline()` checks a `PipelineDefinition` against a registry without running it, walking the nodes as the executor does (I/O nodes skipped, container children entered). Each `CheckFinding` names the node, its type and, where one is at fault, the param. It reports an unknown node type, each message the node's `validate()` returns, and a malformed placeholder: an unclosed `{{`, or a `{{namespace.` outside `fields`, `env`, `ctx`, `node`, `item` and `vars`. Placeholders are checked for form only, so no vars or inputs are needed.
+`check_pipeline()` checks a `PipelineDefinition` against a registry without running it, walking the nodes as the executor does (I/O nodes skipped, container children entered). Each `CheckFinding` names the node, its type and, where one is at fault, the param. It reports an unknown node type, each message the node's `validate()` returns, and a malformed placeholder: an unclosed `{{`, or a `{{namespace.` outside `fields`, `env`, `ctx`, `node`, `item` and `vars`. It also reports `always` on an I/O node, where it has no effect. Placeholders are checked for form only, so no vars or inputs are needed.
 
 ### PipelineEvent
 
@@ -87,6 +88,8 @@ src/
 ├── check/                # check_pipeline(): unknown types, validate() refusals, placeholder form
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic
+    ├── chain.rs          # Node chaining: each output feeds the next
+    ├── closing.rs        # After a failure: skip nodes, run `always` closing steps
     ├── primitive.rs      # Leaf node execution
     ├── container.rs      # Container execution (loop, group, parallel)
     └── tests/            # 13 test modules, 45+ tests

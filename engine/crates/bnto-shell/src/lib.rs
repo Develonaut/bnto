@@ -11,6 +11,8 @@
 
 mod args;
 pub mod execute;
+#[cfg(test)]
+mod failing_tool;
 mod file_mode;
 mod output_files;
 mod parameters;

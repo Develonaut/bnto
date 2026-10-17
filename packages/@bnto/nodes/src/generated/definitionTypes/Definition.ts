@@ -38,4 +38,9 @@ export type Definition = {
    * When present, the TUI/editor renders these instead of raw processor params.
    */
   fields?: { [key in string]: FieldDef };
+  /**
+   * A closing step: runs even after an earlier node in its chain failed,
+   * like `finally`. The run still fails with the first error.
+   */
+  always?: boolean;
 };

@@ -93,7 +93,10 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
 
     // Reporter that forwards command output lines to PipelineEvent::CommandOutput.
     let output_reporter = build_output_reporter(ctx, node_id);
-    let output = processor.process(input, &output_reporter, ctx.process_ctx)?;
+    let output = match processor.process(input, &output_reporter, ctx.process_ctx) {
+        Ok(output) => output,
+        Err(error) => return Err(out.fail(error, &inherited)),
+    };
 
     emit_file_progress(
         ctx,
@@ -235,7 +238,8 @@ fn process_per_file<F: Fn() -> u64 + Copy>(
     let shared = shared_params(ctx, node, &field_values)?;
     let mut out = LeafOutput::counting(processor.count_keys());
     for (i, file) in files.into_iter().enumerate() {
-        let params = params_for_file(ctx, node, &field_values, &shared, &file)?;
+        let params = params_for_file(ctx, node, &field_values, &shared, &file)
+            .map_err(|e| out.fail(e, &Params::new()))?;
         let (id, index) = (&node.id, file_offset + i);
         process_single_file(ctx, processor, id, &params, file, index, &mut out)?;
     }

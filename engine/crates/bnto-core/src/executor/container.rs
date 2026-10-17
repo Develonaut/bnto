@@ -235,7 +235,9 @@ fn execute_group<F: Fn() -> u64 + Copy>(
 }
 
 /// Execute a sub-pipeline (container children). Same as `execute_pipeline`
-/// but without PipelineStarted/PipelineCompleted events.
+/// but without PipelineStarted/PipelineCompleted events. The children
+/// follow the closing-step rule among themselves; a failed sub-pipeline's
+/// error hands its last files on to the enclosing chain.
 fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     definition: &PipelineDefinition,
@@ -245,4 +247,5 @@ fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
     let processing_nodes = filter_processing_nodes(definition);
     let position = ChainPosition::whole(processing_nodes.len());
     run_node_chain(ctx, &processing_nodes, files, file_offset, position)
+        .map_err(super::closing::ChainFailure::into_error)
 }

@@ -339,6 +339,7 @@ fn fake_now() -> u64 {
 // Test Submodules
 // =========================================================================
 
+mod always;
 mod auto_iteration;
 mod basic;
 mod batch_input;

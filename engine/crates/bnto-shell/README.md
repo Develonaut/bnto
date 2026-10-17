@@ -19,6 +19,8 @@ Native-only: registered behind `#[cfg(feature = "native")]` in `bnto-engine`. Br
 - **`stdout`** (default): captures command stdout as a single output file
 - **`file`**: runs command in a temp dir, collects written files as output. Use `{{output_dir}}` in args to inject the temp directory path. Designed for tools like yt-dlp and ffmpeg that write to disk. Output files use `FileData::Path` (zero-copy, not read into memory).
 
+A command that exits non-zero fails the step with `Processing failed: Command '<cmd>' failed (exit <code>): <stderr>`, but still hands over what it made (`BntoError::with_output`): its stdout in stdout mode (same name and metadata as on success, within `maxOutputSize`), or the files it wrote in file mode. A recipe's closing steps (nodes marked `"always": true`) receive them, so a tool's log survives the tool failing. A step that fails before the command starts (a refused command, a tool missing from `search_path`) hands over nothing.
+
 ## Security
 
 All commands pass through `validate.rs` before execution:
@@ -47,6 +49,7 @@ src/
 ├── args.rs          # Conditional arg groups + {{url}}/{{input}} placeholders
 ├── stdout_mode.rs   # "stdout" output mode
 ├── file_mode.rs     # "file" output mode ({{output_dir}} temp dir)
+├── failing_tool.rs  # (tests) a context whose command prints, writes a log, then exits non-zero
 ├── output_files.rs  # Collects written files as path references
 ├── parameters.rs    # Node parameter schema
 ├── search_path.rs   # `search_path`: find a bare command in named folders, not PATH

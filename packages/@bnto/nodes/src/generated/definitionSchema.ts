@@ -17,6 +17,12 @@ export const DEFINITION_JSON_SCHEMA = {
       additionalProperties: true,
       description: "A single node in a .bnto.json recipe. Can contain child nodes (recursive).",
       properties: {
+        always: {
+          default: false,
+          description:
+            "Closing step: run even after an earlier node in the same chain failed, like `finally`. The run still fails with the first error.",
+          type: "boolean",
+        },
         edges: {
           description: "Connections between child nodes.",
           items: {

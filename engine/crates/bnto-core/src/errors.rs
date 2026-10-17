@@ -8,6 +8,8 @@
 
 use thiserror::Error;
 
+use crate::processor::NodeOutput;
+
 /// All possible errors from Bnto WASM node operations.
 ///
 /// Each variant represents a different category of failure.
@@ -49,6 +51,66 @@ pub enum BntoError {
     /// we might exhaust it.
     #[error("Out of memory: {0}")]
     OutOfMemory(String),
+
+    // --- Failures That Carry More ---
+    /// An external command ran and exited non-zero. `stdout` is what it
+    /// printed, so a caller can still use it. Displays like `ProcessingFailed`.
+    #[error("Processing failed: {message}")]
+    CommandFailed { message: String, stdout: Vec<u8> },
+
+    /// A step failed but still handed over output (e.g. a failed command's
+    /// stdout), which the run's closing steps receive. Displays as the
+    /// underlying error. Build with [`BntoError::with_output`].
+    #[error("{}", .0.error)]
+    FailedWithOutput(Box<FailedOutput>),
+
+    /// A closing step (a node marked `always`) failed after an earlier step
+    /// had already failed the run. `first` stays the run's verdict.
+    #[error("{first}; closing step '{node_id}' also failed: {error}")]
+    ClosingStepFailed {
+        first: Box<BntoError>,
+        node_id: String,
+        error: Box<BntoError>,
+    },
+}
+
+/// The error and output of a step that failed after making files.
+pub struct FailedOutput {
+    pub error: BntoError,
+    pub output: NodeOutput,
+}
+
+// File bytes would flood a debug print, so show the file names only.
+impl std::fmt::Debug for FailedOutput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let names: Vec<&str> = self
+            .output
+            .files
+            .iter()
+            .map(|o| o.filename.as_str())
+            .collect();
+        f.debug_struct("FailedOutput")
+            .field("error", &self.error)
+            .field("files", &names)
+            .finish()
+    }
+}
+
+impl BntoError {
+    /// `error`, handing over `output` along with the failure. Replaces any
+    /// output `error` already carried.
+    pub fn with_output(error: BntoError, output: NodeOutput) -> Self {
+        let (error, _) = error.into_parts();
+        Self::FailedWithOutput(Box::new(FailedOutput { error, output }))
+    }
+
+    /// The error itself and the output it handed over, if any.
+    pub fn into_parts(self) -> (BntoError, Option<NodeOutput>) {
+        match self {
+            Self::FailedWithOutput(failed) => (failed.error, Some(failed.output)),
+            error => (error, None),
+        }
+    }
 }
 
 // =============================================================================
@@ -108,6 +170,62 @@ mod tests {
         // 5 GB in bytes
         let error = BntoError::FileTooLarge(5_000_000_000);
         assert_eq!(error.to_string(), "File too large: 5000000000 bytes");
+    }
+
+    fn log_output() -> NodeOutput {
+        NodeOutput {
+            files: vec![crate::processor::OutputFile {
+                data: crate::FileData::Bytes(b"log".to_vec()),
+                filename: "tool.log".to_string(),
+                mime_type: "text/plain".to_string(),
+                metadata: serde_json::Map::new(),
+            }],
+            metadata: serde_json::Map::new(),
+        }
+    }
+
+    #[test]
+    fn test_command_failed_displays_like_processing_failed() {
+        let error = BntoError::CommandFailed {
+            message: "Command 'tool' failed (exit 2): boom".to_string(),
+            stdout: b"partial".to_vec(),
+        };
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: Command 'tool' failed (exit 2): boom"
+        );
+    }
+
+    #[test]
+    fn test_failed_with_output_displays_as_its_error_and_splits_back() {
+        let inner = BntoError::ProcessingFailed("tool exited 2".to_string());
+        let error = BntoError::with_output(inner, log_output());
+        assert_eq!(error.to_string(), "Processing failed: tool exited 2");
+        assert!(format!("{error:?}").contains("tool.log"), "{error:?}");
+        let (error, output) = error.into_parts();
+        assert!(matches!(error, BntoError::ProcessingFailed(_)));
+        assert_eq!(output.unwrap().files[0].filename, "tool.log");
+    }
+
+    #[test]
+    fn test_into_parts_of_a_plain_error_has_no_output() {
+        let (error, output) = BntoError::Cancelled.into_parts();
+        assert!(matches!(error, BntoError::Cancelled));
+        assert!(output.is_none());
+    }
+
+    #[test]
+    fn test_closing_step_failed_names_both_first_failure_first() {
+        let error = BntoError::ClosingStepFailed {
+            first: Box::new(BntoError::ProcessingFailed("build broke".to_string())),
+            node_id: "cleanup".to_string(),
+            error: Box::new(BntoError::InvalidInput("no file".to_string())),
+        };
+        assert_eq!(
+            error.to_string(),
+            "Processing failed: build broke; closing step 'cleanup' also failed: \
+             Invalid input: no file"
+        );
     }
 
     #[test]

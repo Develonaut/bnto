@@ -133,6 +133,12 @@ pub struct PipelineNode {
     /// self-contained: its fields resolve into its own params.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub fields: BTreeMap<String, FieldDef>,
+
+    /// A closing step: runs even after an earlier node in its chain failed,
+    /// like `finally`, on the files the failed step handed over. The run
+    /// still fails with the first error. Defaults to false.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub always: bool,
 }
 
 // =============================================================================
@@ -650,6 +656,38 @@ mod tests {
         assert_eq!(def.nodes.len(), 1);
         assert_eq!(def.nodes[0].id, "compress-image");
         assert_eq!(def.nodes[0].params["quality"], 80);
+    }
+
+    #[test]
+    fn test_always_defaults_false_and_reads_from_the_node() {
+        let def = parse_definition(
+            r#"{ "nodes": [
+                { "id": "build", "type": "shell-command" },
+                { "id": "keep", "type": "file-copy", "always": true, "parameters": {} }
+            ] }"#,
+        );
+        assert!(!def.nodes[0].always);
+        assert!(def.nodes[1].always);
+        assert!(def.nodes[1].params.is_empty(), "not a processor param");
+    }
+
+    #[test]
+    fn test_always_omitted_when_false_on_serialization() {
+        let def = parse_definition(
+            r#"{ "nodes": [
+                { "id": "a", "type": "x" },
+                { "id": "b", "type": "x", "always": true }
+            ] }"#,
+        );
+        let json = serde_json::to_value(&def).unwrap();
+        assert!(json["nodes"][0].get("always").is_none());
+        assert_eq!(json["nodes"][1]["always"], true);
+    }
+
+    #[test]
+    fn test_always_must_be_a_boolean() {
+        let json = r#"{ "nodes": [ { "id": "a", "type": "x", "always": "yes" } ] }"#;
+        assert!(serde_json::from_str::<PipelineDefinition>(json).is_err());
     }
 
     // --- Full Recipe Deserialization Tests ---
