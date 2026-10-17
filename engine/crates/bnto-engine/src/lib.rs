@@ -41,6 +41,7 @@ pub fn create_browser_registry() -> NodeRegistry {
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
     registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
+    registry.register("file-render", Box::new(bnto_file::FileRender::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register(
         "spreadsheet-convert",
@@ -134,7 +135,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 17);
+        assert_eq!(registry.len(), 18);
 
         let expected = [
             "assert",
@@ -142,6 +143,7 @@ mod tests {
             "file-filter",
             "file-metadata",
             "file-rename",
+            "file-render",
             "image-compress",
             "image-resize",
             "image-convert",
@@ -169,9 +171,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (17) + file-collect + file-copy + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 24
-        assert_eq!(registry.len(), 24);
+        // Full registry = browser (18) + file-collect + file-copy + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 25
+        assert_eq!(registry.len(), 25);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),

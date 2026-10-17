@@ -92,6 +92,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-filter")).toBe(true);
     expect(PROCESSOR_MAP.has("file-metadata")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-render")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-read")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-lookup")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-export")).toBe(true);

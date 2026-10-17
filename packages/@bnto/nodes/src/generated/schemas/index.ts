@@ -20,6 +20,8 @@ export { fileMoveParamsSchema, fileMoveNodeSchema } from "./fileMove";
 export type { FileMoveParams } from "./fileMove";
 export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
 export type { FileRenameParams } from "./fileRename";
+export { fileRenderParamsSchema, fileRenderNodeSchema } from "./fileRender";
+export type { FileRenderParams } from "./fileRender";
 export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";
 export type { ImageCompressParams } from "./imageCompress";
 export { imageConvertParamsSchema, imageConvertNodeSchema } from "./imageConvert";

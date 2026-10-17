@@ -41,6 +41,10 @@ pub mod relocate;
 /// type, hash) and attach to pipeline output. Browser-compatible.
 pub mod metadata;
 
+/// File-render node — write one text file from a template over the items
+/// (a header, one block per item, a footer). Browser-compatible.
+pub mod render;
+
 /// WASM bridge — JS-callable functions for file operations.
 pub mod wasm_bridge;
 
@@ -51,3 +55,4 @@ pub use list::FileList;
 pub use metadata::FileMetadata;
 pub use r#move::FileMove;
 pub use rename::RenameFiles;
+pub use render::FileRender;

@@ -609,6 +609,52 @@ fn test_report_prints_a_line_per_incoming_file() {
     assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
 }
 
+// --- File render ---
+
+/// Run the csv-render-markdown fixture on a small CSV, writing to `out`.
+fn run_csv_render(out: &std::path::Path, dry_run: bool) -> std::process::Output {
+    let src = temp_output_dir();
+    let csv = src.path().join("tools.csv");
+    std::fs::write(&csv, "name,note\nhammer,nails\nsaw,cuts | rips\nlevel,\n").unwrap();
+    let mut cmd = Command::new(bnto_bin());
+    cmd.args(["run", &custom_recipe_path("csv-render-markdown"), "--yes"])
+        .arg(&csv)
+        .args(["-o", out.to_str().unwrap()]);
+    if dry_run {
+        cmd.arg("--dry-run");
+    }
+    cmd.output().unwrap()
+}
+
+#[test]
+fn test_file_render_writes_one_markdown_table_from_csv_rows() {
+    let out = temp_output_dir();
+    let output = run_csv_render(out.path(), false);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let names: Vec<_> = output_files(&out).iter().map(|e| e.file_name()).collect();
+    assert_eq!(names, vec!["report.md"]);
+    assert_eq!(
+        std::fs::read_to_string(out.path().join("report.md")).unwrap(),
+        "# Tools\n\n| Name | Note |\n| --- | --- |\n\
+         | hammer | nails |\n\
+         | saw | cuts \\| rips |\n\
+         | level |  |\n\
+         \n3 tools\n"
+    );
+}
+
+#[test]
+fn test_file_render_dry_run_writes_nothing() {
+    let out_root = temp_output_dir();
+    let out = out_root.path().join("out");
+    let output = run_csv_render(&out, true);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(!out.exists(), "output dir was created");
+    assert!(last_line(&stderr).contains("(dry run)"), "stderr: {stderr}");
+}
+
 // --- Shell search_path ---
 
 /// A tools folder holding a `greet` program that prints "greeted", and a

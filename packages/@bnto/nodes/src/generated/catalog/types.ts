@@ -15,6 +15,7 @@ export type NodeTypeName =
   | "file-metadata"
   | "file-move"
   | "file-rename"
+  | "file-render"
   | "group"
   | "http-request"
   | "image-compress"
