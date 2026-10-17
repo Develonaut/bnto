@@ -11,7 +11,7 @@ export const fileMetadataProcessor: ProcessorDef = {
   nodeType: "file-metadata",
   name: "File Metadata",
   description:
-    "Extract file metadata (size, extension, MIME type, hash) and attach it to the pipeline output.",
+    "Extract file metadata (size, extension, MIME type, modified time, hash) and attach it to the pipeline output.",
   category: "file",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

@@ -134,9 +134,9 @@ fn resolve_ctx(
         }
         // --- Flat namespace ---
         "platform" => Some(Value::String(current_platform().to_string())),
-        "started" => run_started_ms.map(|ms| Value::String(super::civil_time::rfc3339_utc(ms))),
+        "started" => run_started_ms.map(|ms| Value::String(crate::time::rfc3339_utc(ms))),
         "date" | "time" | "timestamp" => {
-            let (y, m, d, hh, mm, ss) = super::civil_time::now_civil();
+            let (y, m, d, hh, mm, ss) = crate::time::now_civil();
             let val = match key {
                 "date" => format!("{y:04}-{m:02}-{d:02}"),
                 "time" => format!("{hh:02}-{mm:02}-{ss:02}"),

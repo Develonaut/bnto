@@ -77,6 +77,7 @@ src/
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
+├── time.rs               # rfc3339_utc(): epoch ms -> RFC 3339 UTC, the one time format
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic
     ├── primitive.rs      # Leaf node execution
