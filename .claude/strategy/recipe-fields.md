@@ -178,14 +178,24 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 | `{{input}}`       | Input node text value                       | `{{input}}`                | Shell-command processor                                    |
 | `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run; an unset key fails the run |
 | `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms       | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                   |
+| `{{node.<id>.*}}` | An earlier node's output metadata           | `{{node.step1.count}}`     | Engine, before each node runs (see below)                  |
+
+### Node Output References
+
+`{{node.<id>.<key>}}` reads `<key>` from the output metadata of the node with id `<id>`, so a node can template off an earlier node's result (a batch node's counts, a list it reports).
+
+- **What a node records.** After a processing node runs, its node-level `NodeOutput.metadata` is recorded under its id. Batch and source nodes record their one output's metadata. A per-file node records every file's metadata merged in file order, so a later file wins a key several files set.
+- **Who can read it.** Only nodes that run after it in the same run. A reference to a node that hasn't run yet, or to a key it didn't set, behaves as any unknown placeholder: a sole placeholder stays as written, an interpolated one becomes empty.
+- **Types.** A sole placeholder (`"{{node.step1.names}}"`) keeps the JSON type: an array stays an array, a number a number. Interpolation (`"found {{node.step1.count}}"`) stringifies.
+- **Containers.** A child's record is visible to its later siblings and to every node after the container. Loop iterations are independent: a child reads what was recorded before the loop and by earlier siblings in its own iteration, never another iteration's. After the loop, the iterations' records are merged in order, so the last iteration wins a shared key. `iteration: "auto"` per-file runs behave the same way.
+- **The input node.** `{{node.<input id>.*}}` holds the first input file's `filename`, `filename_stem`, `filename_title` and `filename_ext`, seeded before any node runs. The CLI and TUI also resolve these in the output directory before the run; processing nodes' records don't exist yet there.
 
 ### Future Namespaces (Not Implemented)
 
-| Namespace         | Source                | Example               | Use Case              |
-| ----------------- | --------------------- | --------------------- | --------------------- |
-| `{{env.*}}`       | Environment variables | `{{env.HOME}}`        | User-specific paths   |
-| `{{meta.*}}`      | Recipe metadata       | `{{meta.name}}`       | Dynamic output naming |
-| `{{node.<id>.*}}` | Cross-node output     | `{{node.step1.path}}` | Multi-step pipelines  |
+| Namespace    | Source                | Example         | Use Case              |
+| ------------ | --------------------- | --------------- | --------------------- |
+| `{{env.*}}`  | Environment variables | `{{env.HOME}}`  | User-specific paths   |
+| `{{meta.*}}` | Recipe metadata       | `{{meta.name}}` | Dynamic output naming |
 
 ---
 
@@ -330,6 +340,6 @@ Empty node_id (`:key=value`) is rejected — recipe-level fields are deferred.
 ## Non-Goals (This Design)
 
 - **Expression evaluation** — `{{fields.format}}` is literal substitution, not an expression language. No `{{fields.width * 2}}` or conditionals.
-- **Cross-node references** — `{{node.step1.output}}` is a future namespace, not part of this design.
+- **Cross-node references** — `{{node.<id>.*}}` is its own namespace (see [Node Output References](#node-output-references)), not part of the fields design.
 - **Runtime field discovery** — fields are statically declared in recipe JSON, not computed at runtime.
 - **Nested fields** — no `{{fields.video.codec}}`. Flat namespace only.

@@ -9,6 +9,7 @@ use crate::pipeline::PipelineFile;
 use crate::processor::{BatchFile, BatchInput, NodeInput};
 use crate::progress::ProgressReporter;
 
+use super::leaf_output::LeafOutput;
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
 
 /// Build a ProgressReporter that forwards output lines to PipelineEvent::CommandOutput.
@@ -61,32 +62,6 @@ fn emit_file_progress<F: Fn() -> u64 + Copy>(
     });
 }
 
-/// Collect processor output files into the pipeline result vector.
-/// Each file's metadata is `inherited` (what the input file carried) with the
-/// node's own metadata on top: its per-file metadata when non-empty, else the
-/// shared NodeOutput.metadata. The node wins a shared key.
-fn collect_output(
-    output: crate::processor::NodeOutput,
-    inherited: &serde_json::Map<String, serde_json::Value>,
-    output_files: &mut Vec<PipelineFile>,
-) {
-    for f in output.files {
-        let own = if f.metadata.is_empty() {
-            output.metadata.clone()
-        } else {
-            f.metadata
-        };
-        let mut metadata = inherited.clone();
-        metadata.extend(own);
-        output_files.push(PipelineFile {
-            name: f.filename,
-            data: f.data,
-            mime_type: f.mime_type,
-            metadata,
-        });
-    }
-}
-
 /// Process a single file through a processor, emitting progress events.
 fn process_single_file<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
@@ -95,7 +70,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
     params: &serde_json::Map<String, serde_json::Value>,
     file: PipelineFile,
     global_file_index: usize,
-    output_files: &mut Vec<PipelineFile>,
+    out: &mut LeafOutput,
 ) -> Result<(), BntoError> {
     let file_name = file.name;
     let inherited = file.metadata;
@@ -127,7 +102,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         100,
         format!("Completed {}", file_name),
     );
-    collect_output(output, &inherited, output_files);
+    out.collect(output, &inherited);
     Ok(())
 }
 
@@ -244,6 +219,9 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
 
 /// Run a per-file processor on each file. Params that reference `{{item.*}}`
 /// resolve per file against that file's item; others resolve once.
+///
+/// The node's `{{node.<id>.*}}` record merges every call's node-level
+/// metadata in file order, so a later file wins a key that several set.
 fn process_per_file<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     processor: &dyn crate::processor::NodeProcessor,
@@ -254,17 +232,13 @@ fn process_per_file<F: Fn() -> u64 + Copy>(
     let file_count = files.len();
     let field_values = node_field_values(node);
     let shared = shared_params(ctx, node, &field_values)?;
-    let mut output_files = Vec::with_capacity(file_count);
+    let mut out = LeafOutput::default();
     for (i, file) in files.into_iter().enumerate() {
         let params = params_for_file(ctx, node, &field_values, &shared, &file)?;
         let (id, index) = (&node.id, file_offset + i);
-        process_single_file(ctx, processor, id, &params, file, index, &mut output_files)?;
+        process_single_file(ctx, processor, id, &params, file, index, &mut out)?;
     }
-    Ok(NodeExecutionResult {
-        files_processed: file_count,
-        output_files,
-        warnings: Vec::new(),
-    })
+    Ok(out.into_result(&node.id, file_count))
 }
 
 /// One resolution for every file, or `None` when the node reads `{{item.*}}`
@@ -325,13 +299,9 @@ fn process_source<F: Fn() -> u64 + Copy>(
 
     emit_file_progress(ctx, &node.id, file_offset, 100, "Complete".to_string());
 
-    let mut output_files = Vec::new();
-    collect_output(output, &serde_json::Map::new(), &mut output_files);
-    Ok(NodeExecutionResult {
-        files_processed: 0,
-        output_files,
-        warnings: Vec::new(),
-    })
+    let mut out = LeafOutput::default();
+    out.collect(output, &Params::new());
+    Ok(out.into_result(&node.id, 0))
 }
 
 /// Process all files at once through a batch processor.
@@ -381,11 +351,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
         format!("Completed batch of {} files", file_count),
     );
 
-    let mut output_files = Vec::with_capacity(output.files.len());
-    collect_output(output, &serde_json::Map::new(), &mut output_files);
-    Ok(NodeExecutionResult {
-        files_processed: file_count,
-        output_files,
-        warnings: Vec::new(),
-    })
+    let mut out = LeafOutput::default();
+    out.collect(output, &Params::new());
+    Ok(out.into_result(&node.id, file_count))
 }
