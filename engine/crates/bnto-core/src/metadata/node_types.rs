@@ -162,7 +162,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-metadata",
             "File Metadata",
-            "Extract file metadata (size, extension, MIME type, hash) and attach to output.",
+            "Extract file metadata (size, extension, MIME type, modified time, hash) and attach to output.",
             NodeCategory::File,
             false,
             "browser",

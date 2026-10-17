@@ -324,6 +324,47 @@ mod tests {
     }
 
     #[test]
+    fn test_a_later_node_reads_the_modified_time_file_metadata_attached() {
+        // `{{item.modified}}` and `{{ctx.started}}` share one format.
+        let json = r#"{
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "input", "type": "input" },
+                { "id": "meta", "type": "file-metadata" },
+                { "id": "rename", "type": "file-rename",
+                  "parameters": { "pattern": "{{item.modified}} {{ctx.started}}" } },
+                { "id": "output", "type": "output" }
+            ]
+        }"#;
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("a.txt");
+        std::fs::write(&path, b"x").unwrap();
+        let mtime = filetime::FileTime::from_unix_time(1_700_000_000, 123_000_000);
+        filetime::set_file_mtime(&path, mtime).unwrap();
+        let file = PipelineFile {
+            name: "a.txt".to_string(),
+            data: FileData::Path(path),
+            mime_type: "text/plain".to_string(),
+            metadata: serde_json::Map::new(),
+        };
+
+        let reporter = PipelineReporter::new_noop();
+        let result = run_pipeline(json, vec![file], &reporter, &NoopContext)
+            .expect("pipeline should succeed");
+
+        let name = &result.files[0].name;
+        let (modified, started) = name.split_once(' ').expect("two times");
+        assert_eq!(modified, "2023-11-14T22:13:20.123Z");
+        assert_eq!(result.files[0].metadata["modified"], modified);
+        let shape = |s: &str| s.chars().map(|c| c.is_ascii_digit()).collect::<Vec<_>>();
+        assert_eq!(shape(modified), shape(started), "{name}");
+        assert!(
+            modified < started,
+            "an old file sorts before this run's start"
+        );
+    }
+
+    #[test]
     fn test_generated_rename_files_recipe() {
         let json = include_str!("../recipes/rename-files.bnto.json");
         let files = vec![PipelineFile {

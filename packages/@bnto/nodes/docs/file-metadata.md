@@ -1,6 +1,6 @@
 # File Metadata Node
 
-> Extract file metadata (size, extension, MIME type, hash) and attach to output.
+> Extract file metadata (size, extension, MIME type, modified time, hash) and attach to output.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

@@ -13,7 +13,6 @@
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
 
 mod auto_iteration;
-mod civil_time;
 mod container;
 pub mod loop_config;
 mod primitive;

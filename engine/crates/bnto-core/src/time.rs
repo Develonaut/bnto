@@ -1,14 +1,16 @@
 // Civil (calendar) time in UTC from Unix epoch time, with no date crate.
 //
 // Templates format dates from these: `{{ctx.date}}`/`{{ctx.timestamp}}` from
-// the wall clock, `{{ctx.started}}` from the run's start.
+// the wall clock, `{{ctx.started}}` from the run's start. Nodes that report a
+// time (e.g. a file's modified time) use `rfc3339_utc` so it compares with
+// `{{ctx.started}}`.
 
 /// Convert current wall-clock time to civil (year, month, day, hour, min, sec).
 ///
 /// Uses Howard Hinnant's civil calendar algorithm on the Unix epoch.
 /// No `chrono` dependency — pure arithmetic. `SystemTime::now()` works in
 /// WASM (backed by `Date.now()`).
-pub(super) fn now_civil() -> (i32, u32, u32, u32, u32, u32) {
+pub(crate) fn now_civil() -> (i32, u32, u32, u32, u32, u32) {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     let secs = SystemTime::now()
@@ -46,7 +48,7 @@ fn epoch_to_civil(epoch_secs: u64) -> (i32, u32, u32, u32, u32, u32) {
 
 /// Unix epoch milliseconds as an RFC 3339 UTC time with milliseconds,
 /// e.g. `2026-10-17T15:22:56.123Z`.
-pub(super) fn rfc3339_utc(epoch_ms: u64) -> String {
+pub fn rfc3339_utc(epoch_ms: u64) -> String {
     let (y, m, d, hh, mm, ss) = epoch_to_civil(epoch_ms / 1000);
     let ms = epoch_ms % 1000;
     format!("{y:04}-{m:02}-{d:02}T{hh:02}:{mm:02}:{ss:02}.{ms:03}Z")

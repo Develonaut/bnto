@@ -10,7 +10,8 @@ import type { NodeTypeInfo } from "../types";
 export const fileMetadataNodeType: NodeTypeInfo = {
   name: "file-metadata",
   label: "File Metadata",
-  description: "Extract file metadata (size, extension, MIME type, hash) and attach to output.",
+  description:
+    "Extract file metadata (size, extension, MIME type, modified time, hash) and attach to output.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

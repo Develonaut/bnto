@@ -108,6 +108,10 @@ pub mod run_summary;
 /// Relative paths as output-file names, `/`-separated on every OS.
 pub mod slash_path;
 
+/// Civil (calendar) UTC time from epoch time, with no date crate.
+/// `rfc3339_utc` is the one format for times nodes and templates report.
+pub mod time;
+
 /// Version constraint checking for external dependencies.
 /// Parses `--version` output, extracts version numbers, validates against
 /// constraint strings like `">=6.0"`.

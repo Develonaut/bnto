@@ -2,8 +2,8 @@
 //
 // Pass-through enrichment node: file data flows unchanged, but the output
 // metadata map gains fields like file_size, extension, mime_type, and
-// an optional hash (SHA-256). Works in both browser and CLI — no
-// filesystem access needed since all info comes from the input bytes.
+// an optional hash (SHA-256). Works in both browser and CLI. A disk file
+// (CLI) also reports `modified`; in-memory bytes (browser) have no mtime.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, ParameterDef, ParameterType};
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
@@ -34,7 +34,7 @@ impl NodeProcessor for FileMetadata {
         NodeMetadata {
             node_type: "file-metadata".to_string(),
             name: "File Metadata".to_string(),
-            description: "Extract file metadata (size, extension, MIME type, hash) and attach it to the pipeline output.".to_string(),
+            description: "Extract file metadata (size, extension, MIME type, modified time, hash) and attach it to the pipeline output.".to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string(), "cli".to_string(), "desktop".to_string()],
@@ -52,6 +52,7 @@ impl NodeProcessor for FileMetadata {
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Extracting metadata...");
 
+        let modified = modified_time(&input.data);
         let data = input
             .data
             .into_bytes()
@@ -62,44 +63,69 @@ impl NodeProcessor for FileMetadata {
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
-        let file_size = data.len();
-        let extension = extract_extension(&input.filename);
-        let mime_type = guess_mime_type(&input.filename);
-
         progress.report(50, "Building metadata...");
-
-        let mut metadata = serde_json::Map::new();
-        metadata.insert(
-            "filename".to_string(),
-            serde_json::Value::String(input.filename.clone()),
-        );
-        metadata.insert("file_size".to_string(), serde_json::json!(file_size));
-        metadata.insert(
-            "extension".to_string(),
-            serde_json::Value::String(extension),
-        );
-        metadata.insert(
-            "mime_type".to_string(),
-            serde_json::Value::String(mime_type.clone()),
-        );
-
-        if include_hash {
-            let hash = sha256_hex(&data);
-            metadata.insert("sha256".to_string(), serde_json::Value::String(hash));
-        }
-
+        let metadata = build_metadata(&input.filename, &data, modified, include_hash);
         progress.report(100, "Done");
 
-        Ok(NodeOutput {
-            files: vec![OutputFile {
-                data: FileData::Bytes(data),
-                filename: input.filename,
-                mime_type: input.mime_type.unwrap_or(mime_type),
-                metadata: serde_json::Map::new(),
-            }],
-            metadata,
-        })
+        let mime_type = input
+            .mime_type
+            .unwrap_or_else(|| guess_mime_type(&input.filename));
+        Ok(pass_through(data, input.filename, mime_type, metadata))
     }
+}
+
+/// The metadata map for one file: name, size, extension, MIME type, plus
+/// `modified` when known and `sha256` when asked for.
+fn build_metadata(
+    filename: &str,
+    data: &[u8],
+    modified: Option<String>,
+    include_hash: bool,
+) -> serde_json::Map<String, serde_json::Value> {
+    let mut metadata = serde_json::Map::new();
+    metadata.insert("filename".to_string(), filename.into());
+    metadata.insert("file_size".to_string(), data.len().into());
+    metadata.insert("extension".to_string(), extract_extension(filename).into());
+    metadata.insert("mime_type".to_string(), guess_mime_type(filename).into());
+    if let Some(modified) = modified {
+        metadata.insert("modified".to_string(), modified.into());
+    }
+    if include_hash {
+        metadata.insert("sha256".to_string(), sha256_hex(data).into());
+    }
+    metadata
+}
+
+/// The input file, unchanged, with `metadata` attached to the output.
+fn pass_through(
+    data: Vec<u8>,
+    filename: String,
+    mime_type: String,
+    metadata: serde_json::Map<String, serde_json::Value>,
+) -> NodeOutput {
+    NodeOutput {
+        files: vec![OutputFile {
+            data: FileData::Bytes(data),
+            filename,
+            mime_type,
+            metadata: serde_json::Map::new(),
+        }],
+        metadata,
+    }
+}
+
+/// A disk file's modified time as RFC 3339 UTC, the `{{ctx.started}}` format.
+/// `None` for in-memory bytes, an unreadable mtime, or one before 1970.
+fn modified_time(data: &FileData) -> Option<String> {
+    let FileData::Path(path) = data else {
+        return None;
+    };
+    let mtime = std::fs::metadata(path).and_then(|m| m.modified()).ok()?;
+    let ms = mtime
+        .duration_since(std::time::UNIX_EPOCH)
+        .ok()?
+        .as_millis();
+    Some(bnto_core::time::rfc3339_utc(ms as u64))
 }
 
 // --- Parameter Definitions ---
@@ -391,6 +417,102 @@ mod tests {
             hash,
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         );
+    }
+
+    // --- Modified time ---
+
+    /// A disk file holding `data`, with its mtime set to `epoch_ms`.
+    fn disk_file(dir: &std::path::Path, data: &[u8], epoch_ms: i64) -> std::path::PathBuf {
+        let path = dir.join("on-disk.txt");
+        std::fs::write(&path, data).unwrap();
+        let mtime = filetime::FileTime::from_unix_time(
+            epoch_ms / 1000,
+            (epoch_ms % 1000) as u32 * 1_000_000,
+        );
+        filetime::set_file_mtime(&path, mtime).unwrap();
+        path
+    }
+
+    fn path_input(path: std::path::PathBuf) -> NodeInput {
+        NodeInput {
+            data: FileData::Path(path),
+            filename: "on-disk.txt".to_string(),
+            mime_type: None,
+            params: serde_json::Map::new(),
+        }
+    }
+
+    #[test]
+    fn test_disk_file_reports_its_modified_time() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"data", 1_700_000_000_123);
+
+        let output = FileMetadata::new()
+            .process(
+                path_input(path),
+                &ProgressReporter::new_noop(),
+                &NoopContext,
+            )
+            .unwrap();
+
+        assert_eq!(output.metadata["modified"], "2023-11-14T22:13:20.123Z");
+    }
+
+    #[test]
+    fn test_modified_matches_the_real_mtime_in_the_run_start_format() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("fresh.txt");
+        std::fs::write(&path, b"fresh").unwrap();
+        let mtime = std::fs::metadata(&path).unwrap().modified().unwrap();
+        let ms = mtime
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64;
+
+        let output = FileMetadata::new()
+            .process(
+                path_input(path),
+                &ProgressReporter::new_noop(),
+                &NoopContext,
+            )
+            .unwrap();
+
+        // The same formatter `{{ctx.started}}` uses, so the two compare.
+        assert_eq!(
+            output.metadata["modified"],
+            bnto_core::time::rfc3339_utc(ms)
+        );
+    }
+
+    #[test]
+    fn test_in_memory_bytes_have_no_modified_time() {
+        let input = make_input(b"data", "file.txt", serde_json::Map::new());
+
+        let output = FileMetadata::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+
+        assert!(output.metadata.get("modified").is_none());
+        assert_eq!(output.metadata["file_size"], 4);
+    }
+
+    #[test]
+    fn test_disk_file_keeps_its_other_fields() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"hello", 0);
+
+        let output = FileMetadata::new()
+            .process(
+                path_input(path),
+                &ProgressReporter::new_noop(),
+                &NoopContext,
+            )
+            .unwrap();
+
+        assert_eq!(output.metadata["modified"], "1970-01-01T00:00:00.000Z");
+        assert_eq!(output.metadata["file_size"], 5);
+        assert_eq!(output.metadata["extension"], "txt");
+        assert_eq!(output.files[0].data.clone().into_bytes().unwrap(), b"hello");
     }
 
     // --- Data passthrough ---
