@@ -404,6 +404,49 @@ fn test_run_unset_var_fails_before_any_node_runs() {
     assert!(!stderr.contains("file-collect"), "a node ran: {stderr}");
 }
 
+// --- File List ---
+
+#[test]
+fn test_shell_list_feeds_file_list_then_copy_keeps_folders() {
+    // Guards: a tool's NUL-separated path list (git ls-files -z) becomes the
+    // files themselves, and file-copy keeps their folders.
+    let repo = temp_output_dir();
+    let git = |args: &[&str]| {
+        let status = Command::new("git")
+            .args(args)
+            .current_dir(repo.path())
+            .status()
+            .unwrap();
+        assert!(status.success(), "git {args:?}");
+    };
+    std::fs::create_dir_all(repo.path().join("sub")).unwrap();
+    std::fs::write(repo.path().join("a.txt"), "top").unwrap();
+    std::fs::write(repo.path().join("sub").join("b.txt"), "nested").unwrap();
+    std::fs::write(repo.path().join("untracked.txt"), "skip").unwrap();
+    git(&["init", "-q"]);
+    git(&["add", "a.txt", "sub/b.txt"]);
+
+    let dest = temp_output_dir();
+    let out = temp_output_dir();
+    let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("shell-list-copy"), "--yes"])
+        .args(["-p", &dest_param, "-o", out.path().to_str().unwrap()])
+        .current_dir(repo.path())
+        .output()
+        .unwrap();
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let nested = dest.path().join("sub").join("b.txt");
+    assert_eq!(std::fs::read_to_string(nested).unwrap(), "nested");
+    assert_eq!(
+        std::fs::read_to_string(dest.path().join("a.txt")).unwrap(),
+        "top"
+    );
+    assert!(!dest.path().join("untracked.txt").exists());
+}
+
 // --- File Copy: newer ---
 
 #[test]

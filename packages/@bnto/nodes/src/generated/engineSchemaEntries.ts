@@ -11,6 +11,7 @@ import { editFieldsNodeSchema } from "./schemas/editFields";
 import { fileCollectNodeSchema } from "./schemas/fileCollect";
 import { fileCopyNodeSchema } from "./schemas/fileCopy";
 import { fileFilterNodeSchema } from "./schemas/fileFilter";
+import { fileListNodeSchema } from "./schemas/fileList";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
 import { fileMoveNodeSchema } from "./schemas/fileMove";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
@@ -45,6 +46,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-collect": fileCollectNodeSchema,
   "file-copy": fileCopyNodeSchema,
   "file-filter": fileFilterNodeSchema,
+  "file-list": fileListNodeSchema,
   "file-metadata": fileMetadataNodeSchema,
   "file-move": fileMoveNodeSchema,
   "file-rename": fileRenameNodeSchema,
@@ -108,6 +110,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     min_size: { suffix: "bytes" },
     max_size: { suffix: "bytes" },
   },
+  "file-list": {},
   "file-metadata": {},
   "file-move": {},
   "file-rename": {

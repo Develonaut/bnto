@@ -10,6 +10,7 @@ export type NodeTypeName =
   | "file-collect"
   | "file-copy"
   | "file-filter"
+  | "file-list"
   | "file-metadata"
   | "file-move"
   | "file-rename"
