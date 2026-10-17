@@ -1,0 +1,136 @@
+{
+  "id": "file-list-collect-copy",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Collect Copy",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Takes no input: lists a folder under the Root run var, collects every file under it with relative names, and copies them to a destination set with a param override."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "list",
+      "type": "file-list",
+      "version": "1.0.0",
+      "name": "List",
+      "position": {
+        "x": 125,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": [
+          "docs/drafts"
+        ]
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "collect",
+      "type": "file-collect",
+      "version": "1.0.0",
+      "name": "Collect",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "flatten": false
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "copy",
+      "type": "file-copy",
+      "version": "1.0.0",
+      "name": "Copy",
+      "position": {
+        "x": 375,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "destination": "."
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "list"
+    },
+    {
+      "id": "e2",
+      "source": "list",
+      "target": "collect"
+    },
+    {
+      "id": "e3",
+      "source": "collect",
+      "target": "copy"
+    },
+    {
+      "id": "e4",
+      "source": "copy",
+      "target": "output"
+    }
+  ]
+}

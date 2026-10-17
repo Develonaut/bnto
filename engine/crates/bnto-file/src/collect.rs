@@ -1,14 +1,16 @@
 // file-collect — Traverse directories and glob-match files into the pipeline.
 //
 // CLI-only processor: reads files from the filesystem via ProcessContext.
-// Takes a directory path as its "input file" (the filename IS the path),
-// outputs individual matched files as pipeline entries.
+// Walks the directory its input references: a disk reference's path (as
+// `file-list` emits a listed folder), else the input's filename (a CLI dir
+// input). Outputs each matched file as a pipeline entry, named relative to
+// the walked directory.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, ParameterDef, ParameterType};
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// File-collect processor — directory traversal + glob matching.
 pub struct FileCollect;
@@ -54,14 +56,11 @@ impl NodeProcessor for FileCollect {
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Collecting files...");
 
-        // The input "filename" is the directory path to traverse.
-        let dir_path = Path::new(&input.filename);
-
-        // Verify the directory exists.
-        if !dir_path.is_dir() {
+        let root = walk_root(&input);
+        if !root.is_dir() {
             return Err(BntoError::InvalidInput(format!(
                 "Not a directory: {}",
-                input.filename
+                root.display()
             )));
         }
 
@@ -87,8 +86,8 @@ impl NodeProcessor for FileCollect {
         // Walk the directory and collect matching files.
         let mut matched_files = Vec::new();
         walk_directory(
-            dir_path,
-            dir_path,
+            &root,
+            &root,
             pattern,
             recursive,
             flatten,
@@ -158,6 +157,16 @@ fn build_collect_params() -> Vec<ParameterDef> {
 
 // --- Core Logic ---
 
+/// The directory to walk: the one a disk reference points at (`file-list`
+/// names it by its relative path), else the input's filename (a CLI dir
+/// input carries its absolute path there, with no data).
+fn walk_root(input: &NodeInput) -> PathBuf {
+    match &input.data {
+        FileData::Path(path) => path.clone(),
+        _ => PathBuf::from(&input.filename),
+    }
+}
+
 /// Recursively walk a directory and collect files matching the glob pattern.
 ///
 /// `base_dir` is the root directory (for computing relative paths).
@@ -168,7 +177,7 @@ fn walk_directory(
     pattern: &str,
     recursive: bool,
     flatten: bool,
-    results: &mut Vec<(String, std::path::PathBuf)>,
+    results: &mut Vec<(String, PathBuf)>,
 ) -> Result<(), BntoError> {
     let entries = std::fs::read_dir(current_dir).map_err(|e| {
         BntoError::ProcessingFailed(format!(
@@ -455,6 +464,67 @@ mod tests {
         let result = processor.process(input, &progress, &NoopContext);
 
         assert!(result.is_err(), "Nonexistent directory should fail");
+    }
+
+    // --- Disk-reference input ---
+
+    /// An input that references `dir` on disk under a different name, as
+    /// `file-list` emits a listed folder.
+    fn reference_input(
+        dir: &Path,
+        name: &str,
+        params: serde_json::Map<String, serde_json::Value>,
+    ) -> NodeInput {
+        NodeInput {
+            data: FileData::Path(dir.to_path_buf()),
+            filename: name.to_string(),
+            mime_type: None,
+            params,
+        }
+    }
+
+    #[test]
+    fn test_collect_walks_the_referenced_dir() {
+        let test_dir = setup_test_dir();
+        let input = reference_input(
+            test_dir.path(),
+            "Some/Folder",
+            params(&[("flatten", serde_json::json!(false))]),
+        );
+        let output = FileCollect::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+
+        let mut names: Vec<&str> = output.files.iter().map(|f| f.filename.as_str()).collect();
+        names.sort_unstable();
+        assert_eq!(
+            names,
+            [
+                "data.csv",
+                "document.txt",
+                "photo.jpg",
+                "subfolder/image.png",
+                "subfolder/readme.txt"
+            ],
+            "names are relative to the walked folder, as for a CLI dir"
+        );
+    }
+
+    #[test]
+    fn test_collect_missing_referenced_dir_fails() {
+        let test_dir = setup_test_dir();
+        let gone = test_dir.path().join("gone");
+        let input = reference_input(&gone, "gone", serde_json::Map::new());
+        let Err(err) =
+            FileCollect::new().process(input, &ProgressReporter::new_noop(), &NoopContext)
+        else {
+            panic!("a missing referenced dir should fail");
+        };
+
+        assert!(
+            err.to_string().contains(&gone.display().to_string()),
+            "the error names the walked path: {err}"
+        );
     }
 
     // --- File data reading ---
