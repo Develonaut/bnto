@@ -1,0 +1,110 @@
+{
+  "id": "assert-references",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Assert References",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Lists named files under a root set by the Root run var, and fails the run naming every one that is missing."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "refs",
+      "type": "file-list",
+      "version": "1.0.0",
+      "name": "Refs",
+      "position": {
+        "x": 125,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": [
+          "a.txt",
+          "sub/b.txt",
+          "c.txt"
+        ]
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "check",
+      "type": "assert",
+      "version": "1.0.0",
+      "name": "Check",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "value": "{{node.refs.missing_count}}",
+        "op": "equals",
+        "expected": "0",
+        "message": "Missing references: {{node.refs.missing}}"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 375,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "refs"
+    },
+    {
+      "id": "e2",
+      "source": "refs",
+      "target": "check"
+    },
+    {
+      "id": "e3",
+      "source": "check",
+      "target": "output"
+    }
+  ]
+}

@@ -4,6 +4,8 @@
  * Engine catalog v1.0.0
  */
 
+export { assertParamsSchema, assertNodeSchema } from "./assert";
+export type { AssertParams } from "./assert";
 export { fileCollectParamsSchema, fileCollectNodeSchema } from "./fileCollect";
 export type { FileCollectParams } from "./fileCollect";
 export { fileCopyParamsSchema, fileCopyNodeSchema } from "./fileCopy";

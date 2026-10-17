@@ -1,6 +1,10 @@
 {
   "_generatedBy": "generate-from-catalog.ts - DO NOT EDIT manually. Engine catalog v1.0.0",
   "nodeTypes": {
+    "assert": {
+      "label": "Assert",
+      "description": "Fail the run when a comparison doesn't hold; otherwise pass files through."
+    },
     "editFields": {
       "label": "Edit Fields",
       "description": "Set field values from static values or template expressions."
@@ -123,6 +127,24 @@
     }
   },
   "params": {
+    "assert": {
+      "value": {
+        "label": "Value",
+        "description": "What to check, usually a template such as {{node.<id>.<key>}} or {{item.<key>}}."
+      },
+      "op": {
+        "label": "Comparison",
+        "description": "How value is compared to expected. after and before compare RFC 3339 times."
+      },
+      "expected": {
+        "label": "Expected",
+        "description": "What the value is compared to."
+      },
+      "message": {
+        "label": "Message",
+        "description": "Put before the reasons when the check fails, so the failure says what was checked."
+      }
+    },
     "fileCollect": {
       "pattern": {
         "label": "Pattern",
@@ -488,9 +510,9 @@
     }
   },
   "categories": {
+    "control": "Control",
     "data": "Data",
     "file": "File",
-    "control": "Control",
     "network": "Network",
     "image": "Image",
     "io": "Io",

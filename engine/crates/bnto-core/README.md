@@ -82,7 +82,8 @@ src/
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
-├── time.rs               # rfc3339_utc(): epoch ms -> RFC 3339 UTC, the one time format
+├── time.rs               # rfc3339_utc() / parse_rfc3339_utc(): epoch ms <-> RFC 3339 UTC
+├── control/              # Control processors: assert (fail the run when a comparison does not hold)
 ├── check/                # check_pipeline(): unknown types, validate() refusals, placeholder form
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic

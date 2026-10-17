@@ -6,6 +6,7 @@
 
 import type { ProcessorDef } from "../types";
 
+import { assertProcessor } from "./assert";
 import { fileCollectProcessor } from "./fileCollect";
 import { fileCopyProcessor } from "./fileCopy";
 import { fileFilterProcessor } from "./fileFilter";
@@ -30,6 +31,7 @@ import { vectorOptimizeProcessor } from "./vectorOptimize";
 import { vectorRasterizeProcessor } from "./vectorRasterize";
 
 export const PROCESSORS: readonly ProcessorDef[] = [
+  assertProcessor,
   fileCollectProcessor,
   fileCopyProcessor,
   fileFilterProcessor,

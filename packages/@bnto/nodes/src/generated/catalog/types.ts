@@ -6,6 +6,7 @@
 
 /** Union of all valid node type name strings. */
 export type NodeTypeName =
+  | "assert"
   | "edit-fields"
   | "file-collect"
   | "file-copy"

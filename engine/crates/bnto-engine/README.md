@@ -30,6 +30,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `image-overlay`       | `bnto-image`       | `OverlayImage`       |
 | `vector-rasterize`    | `bnto-vector`      | `VectorRasterize`    |
 | `vector-optimize`     | `bnto-vector`      | `OptimizeSvg`        |
+| `assert`              | `bnto-core`        | `control::Assert`    |
 | `file-filter`         | `bnto-file`        | `FileFilter`         |
 | `file-metadata`       | `bnto-file`        | `FileMetadata`       |
 | `file-collect`        | `bnto-file`        | `FileCollect`        |

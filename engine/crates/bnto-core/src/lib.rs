@@ -53,6 +53,9 @@ pub mod executor;
 /// placeholders, found without running anything.
 pub mod check;
 
+/// Control nodes (assert) that steer a run rather than transform files.
+pub mod control;
+
 /// Pipeline definition types — what the engine receives to execute.
 /// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
 pub mod pipeline;

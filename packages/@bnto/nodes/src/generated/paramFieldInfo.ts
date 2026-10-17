@@ -8,6 +8,17 @@ import type { NodeParamFieldInfo } from "../schemas/types";
 
 /** Pre-computed field info for all node parameters — replaces runtime Zod introspection. */
 export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamFieldInfo>> = {
+  assert: {
+    value: { type: "string", control: "text", required: false },
+    op: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["equals", "not_equals", "after", "before"] as const,
+    },
+    expected: { type: "string", control: "text", required: false },
+    message: { type: "string", control: "text", required: false },
+  },
   "edit-fields": {
     values: { type: "record", control: "keyValue", required: true },
     keepOnlySet: { type: "boolean", control: "switch", required: false },

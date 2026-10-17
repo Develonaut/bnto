@@ -6,6 +6,7 @@
 
 import type { NodeTypeName, NodeTypeInfo } from "../types";
 
+import { assertNodeType } from "./assert";
 import { editFieldsNodeType } from "./editFields";
 import { fileCollectNodeType } from "./fileCollect";
 import { fileCopyNodeType } from "./fileCopy";
@@ -42,6 +43,7 @@ import { vectorRasterizeNodeType } from "./vectorRasterize";
  * Maps camelCase keys to kebab-case type name strings.
  */
 export const NODE_TYPES = {
+  assert: "assert",
   editFields: "edit-fields",
   fileCollect: "file-collect",
   fileCopy: "file-copy",
@@ -82,6 +84,7 @@ export const NODE_TYPE_NAMES: readonly NodeTypeName[] = Object.values(NODE_TYPES
  * Maps node type name → info.
  */
 export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
+  assert: assertNodeType,
   "edit-fields": editFieldsNodeType,
   "file-collect": fileCollectNodeType,
   "file-copy": fileCopyNodeType,

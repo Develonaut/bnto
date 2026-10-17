@@ -505,6 +505,52 @@ fn test_file_list_missing_folder_copies_nothing_and_passes() {
     assert_eq!(copied, 0, "nothing should be copied");
 }
 
+// --- Assert ---
+
+/// Run the assert-references fixture against a root holding `present`.
+fn run_assert_references(present: &[&str]) -> std::process::Output {
+    let root = temp_output_dir();
+    for name in present {
+        let path = root.path().join(name);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, "ref").unwrap();
+    }
+    let vars = root.path().join("vars.json");
+    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    std::fs::write(&vars, body).unwrap();
+    Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("assert-references"), "--yes"])
+        .args(["--vars", vars.to_str().unwrap()])
+        .output()
+        .unwrap()
+}
+
+fn last_line(stderr: &str) -> &str {
+    stderr.lines().rev().find(|l| !l.trim().is_empty()).unwrap()
+}
+
+#[test]
+fn test_assert_holds_and_the_run_ends_done() {
+    let output = run_assert_references(&["a.txt", "sub/b.txt", "c.txt"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
+}
+
+#[test]
+fn test_assert_fails_the_run_naming_every_missing_path() {
+    let output = run_assert_references(&["a.txt"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
+    let last = last_line(&stderr);
+    assert!(last.contains("Pipeline failed:"), "last line: {last}");
+    assert!(last.contains("Missing references:"), "last line: {last}");
+    assert!(
+        last.contains("sub/b.txt") && last.contains("c.txt"),
+        "last line: {last}"
+    );
+}
+
 // --- File Copy: newer ---
 
 #[test]

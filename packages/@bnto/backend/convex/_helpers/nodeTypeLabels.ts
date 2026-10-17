@@ -10,6 +10,7 @@
 
 /** Node type name → display label for processing nodes (excludes I/O and containers). */
 export const NODE_TYPE_LABELS: Record<string, string> = {
+  "assert": "Assert",
   "edit-fields": "Edit Fields",
   "file-collect": "Collect Files",
   "file-copy": "Copy Files",
