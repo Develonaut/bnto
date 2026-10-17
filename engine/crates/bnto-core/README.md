@@ -43,6 +43,10 @@ let processor = registry.get("image", "compress")?;
 4. Handles container semantics (loop iterates per-file, group sequences children, parallel fans out)
 5. Emits `PipelineEvent`s for progress reporting
 
+### Recipe Check
+
+`check_pipeline()` checks a `PipelineDefinition` against a registry without running it, walking the nodes as the executor does (I/O nodes skipped, container children entered). Each `CheckFinding` names the node, its type and, where one is at fault, the param. It reports an unknown node type, each message the node's `validate()` returns, and a malformed placeholder: an unclosed `{{`, or a `{{namespace.` outside `fields`, `env`, `ctx`, `node`, `item` and `vars`. Placeholders are checked for form only, so no vars or inputs are needed.
+
 ### PipelineEvent
 
 Structured progress events consumed by the JS layer:
@@ -74,10 +78,12 @@ src/
 ├── progress.rs           # ProgressReporter (target-agnostic closures)
 ├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
+├── run_summary.rs        # RunSummary (serializable run outcome) + NodeTally (per-node counts from events)
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
 ├── time.rs               # rfc3339_utc(): epoch ms -> RFC 3339 UTC, the one time format
+├── check/                # check_pipeline(): unknown types, validate() refusals, placeholder form
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic
     ├── primitive.rs      # Leaf node execution

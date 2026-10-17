@@ -9,7 +9,7 @@ use crate::cli::{Command, RunArgs, TelemetryAction};
 use crate::inspect::{list_recipes, show_dry_run, show_info};
 use crate::launch::launch_tui;
 use crate::run::{RunFlags, run_recipe};
-use crate::{doctor, install, migrate, storage, telemetry};
+use crate::{check, doctor, install, migrate, storage, telemetry};
 
 /// Shared state every subcommand may need.
 pub struct Session {
@@ -41,6 +41,7 @@ fn run_command(command: Command, session: Session) {
         Command::List => list_recipes(catalog),
         Command::Info { recipe } => show_info(&recipe, catalog),
         Command::DryRun(a) => show_dry_run(&a.recipe, &a.inputs, &a.param, a.yes, catalog),
+        Command::Check { paths } => check::run_check(&paths),
         Command::Install { recipe, yes, all } => {
             install::run_install(recipe.as_deref(), yes, all, catalog)
         }
@@ -59,6 +60,7 @@ fn run_from_args(args: RunArgs, session: &Session) {
         yes: args.yes,
         dry_run: args.dry_run,
         vars: &args.vars,
+        json: args.json,
     };
     run_recipe(
         &args.recipe,

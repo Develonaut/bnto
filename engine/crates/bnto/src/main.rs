@@ -4,9 +4,11 @@
 //        bnto run <recipe> <url>  (for url-mode recipes)
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto run <recipe> <file1> --dry-run  (run every node, write nothing)
+//        bnto run <recipe> <file1> --json  (summary as one JSON line on stdout)
 //        bnto list
 //        bnto info <recipe>
 //        bnto dry-run <recipe> [files...] [--param key=value]
+//        bnto check <recipe file>...  (validate recipe files without running)
 //        bnto install <recipe> [--yes]
 //        bnto install --all [--yes]
 //        bnto doctor
@@ -14,6 +16,7 @@
 //        bnto tui [--theme <variant>]  (interactive TUI, beta)
 
 pub mod catalog;
+mod check;
 mod cli;
 mod consent;
 mod context;
@@ -38,6 +41,7 @@ mod progress;
 mod progress_indent;
 mod run;
 mod run_output;
+mod run_verdict;
 mod scratch;
 pub mod storage;
 pub mod telemetry;

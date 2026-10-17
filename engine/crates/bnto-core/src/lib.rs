@@ -49,6 +49,10 @@ pub mod metadata;
 /// This is the engine's brain. See `.claude/strategy/engine-execution.md`.
 pub mod executor;
 
+/// Recipe check — unknown node types, refused params and malformed
+/// placeholders, found without running anything.
+pub mod check;
+
 /// Pipeline definition types — what the engine receives to execute.
 /// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
 pub mod pipeline;
@@ -97,6 +101,10 @@ pub mod secrets;
 /// Caller-supplied `{{vars.KEY}}` values, resolved once before a run.
 pub mod vars;
 
+/// A run's outcome as one serializable summary, plus per-node counts
+/// tallied from its pipeline events.
+pub mod run_summary;
+
 /// Relative paths as output-file names, `/`-separated on every OS.
 pub mod slash_path;
 
@@ -114,6 +122,7 @@ pub mod version;
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
 pub use binary_probe::find_on_path;
+pub use check::{CheckFinding, check_pipeline};
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;
@@ -141,6 +150,7 @@ pub use pipeline::{
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;
+pub use run_summary::{NodeSummary, NodeTally, RunStatus, RunSummary};
 pub use secrets::SecretDef;
 pub use slash_path::slash_path;
 pub use version::{VersionCheckResult, VersionConstraint, check_version};

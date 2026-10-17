@@ -176,6 +176,32 @@ mod tests {
     }
 
     #[test]
+    fn test_check_refuses_a_file_filter_regex_that_does_not_compile() {
+        let definition: PipelineDefinition = serde_json::from_value(serde_json::json!({
+            "nodes": [{ "id": "only-docs", "type": "file-filter", "parameters": {
+                "name_pattern": "(", "pattern_mode": "regex"
+            } }]
+        }))
+        .unwrap();
+        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        assert_eq!(findings.len(), 1, "{findings:?}");
+        assert_eq!(findings[0].node_id, "only-docs");
+        assert!(findings[0].message.contains("name_pattern"));
+    }
+
+    #[test]
+    #[cfg(feature = "native")]
+    fn test_every_builtin_recipe_checks_clean() {
+        let registry = create_registry();
+        for recipe in recipes::builtin_recipes() {
+            let definition: PipelineDefinition =
+                serde_json::from_str(recipe.definition_json).unwrap();
+            let findings = bnto_core::check_pipeline(&definition, &registry);
+            assert!(findings.is_empty(), "{}: {findings:?}", recipe.slug);
+        }
+    }
+
+    #[test]
     fn test_run_pipeline_rejects_invalid_json() {
         let reporter = PipelineReporter::new_noop();
         let result = run_pipeline("not valid json", vec![], &reporter, &NoopContext);

@@ -46,12 +46,10 @@ impl NodeProcessor for FileFilter {
     }
 
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-        match params.get("match").and_then(|v| v.as_str()) {
-            None | Some("name") | Some("path") => Vec::new(),
-            Some(other) => vec![format!(
-                "match must be \"name\" or \"path\", got \"{other}\""
-            )],
-        }
+        [match_error(params), regex_error(params)]
+            .into_iter()
+            .flatten()
+            .collect()
     }
 
     fn process(
@@ -248,6 +246,42 @@ fn matches_extension(filename: &str, params: &serde_json::Map<String, serde_json
                 .to_string()
         })
         .any(|allowed| allowed == file_ext)
+}
+
+/// `match` must name what the pattern tests.
+fn match_error(params: &serde_json::Map<String, serde_json::Value>) -> Option<String> {
+    match params.get("match").and_then(|v| v.as_str()) {
+        None | Some("name") | Some("path") => None,
+        Some(other) => Some(format!(
+            "match must be \"name\" or \"path\", got \"{other}\""
+        )),
+    }
+}
+
+/// In regex mode `name_pattern` must compile; at run time a bad one would
+/// match nothing. A pattern holding a `{{` placeholder is only known once
+/// that resolves, so it isn't judged here.
+fn regex_error(params: &serde_json::Map<String, serde_json::Value>) -> Option<String> {
+    if params.get("pattern_mode").and_then(|v| v.as_str()) != Some("regex") {
+        return None;
+    }
+    let pattern = params.get("name_pattern").and_then(|v| v.as_str())?;
+    if pattern.contains("{{") {
+        return None;
+    }
+    let error = regex::Regex::new(pattern).err()?;
+    Some(format!(
+        "name_pattern \"{pattern}\" is not a valid regex: {}",
+        regex_reason(&error)
+    ))
+}
+
+/// The one-line reason from a regex error. Syntax errors render over several
+/// lines (pattern, caret, `error: …`); the last line carries the reason.
+fn regex_reason(error: &regex::Error) -> String {
+    let text = error.to_string();
+    let last = text.lines().last().unwrap_or_default().trim();
+    last.strip_prefix("error: ").unwrap_or(last).to_string()
 }
 
 /// Check if the filename matches the name pattern (glob or regex).
@@ -880,6 +914,47 @@ mod tests {
             let p = params(&[("match", serde_json::json!(mode))]);
             assert!(FileFilter::new().validate(&p).is_empty(), "{mode}");
         }
+    }
+
+    #[test]
+    fn test_validate_refuses_a_regex_that_does_not_compile() {
+        let p = params(&[
+            ("name_pattern", serde_json::json!("(")),
+            ("pattern_mode", serde_json::json!("regex")),
+        ]);
+        let errors = FileFilter::new().validate(&p);
+        assert_eq!(errors.len(), 1);
+        assert!(
+            errors[0].contains("name_pattern"),
+            "error names the param: {errors:?}"
+        );
+        assert!(errors[0].ends_with("unclosed group"), "{errors:?}");
+        assert!(!errors[0].contains('\n'), "one line: {errors:?}");
+    }
+
+    #[test]
+    fn test_validate_accepts_a_valid_regex() {
+        let p = params(&[
+            ("name_pattern", serde_json::json!(r"^img\d+\.png$")),
+            ("pattern_mode", serde_json::json!("regex")),
+        ]);
+        assert!(FileFilter::new().validate(&p).is_empty());
+    }
+
+    #[test]
+    fn test_validate_leaves_glob_patterns_alone() {
+        let p = params(&[("name_pattern", serde_json::json!("("))]);
+        assert!(FileFilter::new().validate(&p).is_empty());
+    }
+
+    #[test]
+    fn test_validate_skips_a_regex_that_holds_a_placeholder() {
+        // The value is only known once the placeholder resolves at run time.
+        let p = params(&[
+            ("name_pattern", serde_json::json!("^{{vars.Prefix}}")),
+            ("pattern_mode", serde_json::json!("regex")),
+        ]);
+        assert!(FileFilter::new().validate(&p).is_empty());
     }
 
     #[test]

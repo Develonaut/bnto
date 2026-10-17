@@ -28,6 +28,14 @@ pub enum Command {
     /// Dry-run: preview what a recipe will do without executing or writing.
     DryRun(DryRunArgs),
 
+    /// Check recipe files for unknown node types, refused parameters and
+    /// malformed placeholders, without running them.
+    Check {
+        /// Paths to .bnto.json files.
+        #[arg(required = true)]
+        paths: Vec<String>,
+    },
+
     /// Install external dependencies for a recipe.
     Install {
         /// Recipe slug (e.g. download-video) or path to a .bnto.json file.
@@ -108,6 +116,11 @@ pub struct RunArgs {
     /// later files win, and BNTO_VAR_<KEY> beats every file.
     #[arg(long = "vars", value_name = "FILE")]
     pub vars: Vec<String>,
+
+    /// Also print the run's summary as one JSON line on stdout, on success
+    /// and failure alike. stderr and exit codes are unchanged.
+    #[arg(long)]
+    pub json: bool,
 }
 
 // Arguments for `bnto dry-run` (help text comes from `Command::DryRun`).
@@ -148,6 +161,7 @@ impl Command {
             Self::List => "list",
             Self::Info { .. } => "info",
             Self::DryRun(_) => "dry-run",
+            Self::Check { .. } => "check",
             Self::Install { .. } => "install",
             Self::Doctor => "doctor",
             Self::Migrate { .. } => "migrate",
