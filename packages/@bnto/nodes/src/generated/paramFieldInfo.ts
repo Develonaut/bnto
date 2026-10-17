@@ -37,6 +37,13 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       required: false,
       enumValues: ["glob", "regex"] as const,
     },
+    match: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["name", "path"] as const,
+    },
+    keep: { type: "boolean", control: "switch", required: false },
     min_size: { type: "number", control: "number", required: false, min: 0 },
     max_size: { type: "number", control: "number", required: false, min: 0 },
   },
