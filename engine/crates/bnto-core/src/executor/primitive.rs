@@ -158,6 +158,7 @@ fn resolve_with<F: Fn() -> u64 + Copy>(
         process_ctx: ctx.process_ctx,
         node_outputs: &ctx.node_outputs,
         loop_item: item,
+        run_started_ms: Some(ctx.started_ms),
     };
     Ok(super::template::resolve_templates(&node.params, &tpl_ctx))
 }

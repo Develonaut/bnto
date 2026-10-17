@@ -13,6 +13,7 @@
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
 
 mod auto_iteration;
+mod civil_time;
 mod container;
 pub mod loop_config;
 mod primitive;
@@ -50,6 +51,8 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     pipeline_total_files: usize,
     /// Returns current time in ms (injected for testability in WASM).
     now_ms: F,
+    /// When the run started (from `now_ms`), for `{{ctx.started}}`.
+    started_ms: u64,
     /// Current loop iteration's per-file metadata (CSV row columns, etc.).
     /// Set by loop containers from PipelineFile.metadata each iteration.
     loop_item: Option<serde_json::Map<String, serde_json::Value>>,
@@ -141,12 +144,11 @@ pub fn execute_pipeline(
     process_ctx: &dyn ProcessContext,
     now_ms: impl Fn() -> u64 + Copy,
 ) -> Result<PipelineResult, BntoError> {
-    let start_ms = now_ms();
     let processing_nodes = filter_processing_nodes(definition);
     let ctx = build_root_context(definition, &files, registry, reporter, process_ctx, now_ms);
     emit_pipeline_started(&ctx, &processing_nodes, files.len());
     let result = run_processing_nodes(&ctx, definition, &processing_nodes, files)?;
-    Ok(finish_pipeline(&ctx, start_ms, result))
+    Ok(finish_pipeline(&ctx, ctx.started_ms, result))
 }
 
 /// Build the top-level context, seeding node outputs from the input files.
@@ -158,12 +160,15 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
     process_ctx: &'a dyn ProcessContext,
     now_ms: F,
 ) -> PipelineContext<'a, F> {
+    // Read once: every node of the run sees this as `{{ctx.started}}`.
+    let started_ms = now_ms();
     PipelineContext {
         registry,
         reporter,
         process_ctx,
         pipeline_total_files: files.len(),
         now_ms,
+        started_ms,
         loop_item: None,
         parent_node_id: None,
         node_outputs: template::build_node_outputs_for_input(&definition.nodes, files),
