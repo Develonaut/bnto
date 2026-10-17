@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 32 registered node types.
+/// Return metadata for all 33 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -194,6 +194,15 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "folder-open"
+        ),
+        node_type!(
+            "file-render",
+            "Render Text File",
+            "Write one text file from a template: a header, one row per item, then a footer.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "file-text"
         ),
     ]
 }

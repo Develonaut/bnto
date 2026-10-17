@@ -16,6 +16,7 @@ import { fileListNodeSchema } from "./schemas/fileList";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
 import { fileMoveNodeSchema } from "./schemas/fileMove";
 import { fileRenameNodeSchema } from "./schemas/fileRename";
+import { fileRenderNodeSchema } from "./schemas/fileRender";
 import { groupNodeSchema } from "./schemas/group";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
 import { imageConvertNodeSchema } from "./schemas/imageConvert";
@@ -53,6 +54,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-metadata": fileMetadataNodeSchema,
   "file-move": fileMoveNodeSchema,
   "file-rename": fileRenameNodeSchema,
+  "file-render": fileRenderNodeSchema,
   group: groupNodeSchema,
   "image-compress": imageCompressNodeSchema,
   "image-convert": imageConvertNodeSchema,
@@ -140,6 +142,17 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "lower", label: "lowercase" },
         { value: "upper", label: "UPPERCASE" },
         { value: "title", label: "Title Case" },
+      ],
+    },
+  },
+  "file-render": {
+    header: { control: "textarea" },
+    row: { control: "textarea" },
+    footer: { control: "textarea" },
+    escape: {
+      options: [
+        { value: "none", label: "None" },
+        { value: "markdown", label: "Markdown" },
       ],
     },
   },

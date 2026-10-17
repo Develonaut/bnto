@@ -93,6 +93,19 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     counter_pad: { type: "number", control: "slider", required: false, min: 0, max: 10 },
     extension: { type: "string", control: "text", required: false },
   },
+  "file-render": {
+    header: { type: "string", control: "textarea", required: false },
+    row: { type: "string", control: "textarea", required: true },
+    footer: { type: "string", control: "textarea", required: false },
+    separator: { type: "string", control: "text", required: false },
+    filename: { type: "string", control: "text", required: true },
+    escape: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["none", "markdown"] as const,
+    },
+  },
   group: {
     mode: {
       type: "enum",

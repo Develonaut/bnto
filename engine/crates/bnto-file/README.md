@@ -1,10 +1,10 @@
 # bnto-file
 
-File operation nodes. Rename, filter, collect, copy, and inspect files.
+File operation nodes. Rename, filter, collect, copy, inspect, and render files.
 
 ## Overview
 
-`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter the pipeline (filter), collect files from disk (collect), copy files to a destination (copy), or extract metadata. Runs in the browser via WASM (rename, filter, metadata) or natively for CLI/desktop (collect, copy).
+`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter the pipeline (filter), collect files from disk (collect), copy files to a destination (copy), extract metadata, or write one text file from the items (render). Runs in the browser via WASM (rename, filter, metadata, render) or natively for CLI/desktop (collect, copy).
 
 ## Processors
 
@@ -13,6 +13,7 @@ File operation nodes. Rename, filter, collect, copy, and inspect files.
 | `RenameFiles`  | `file-rename`   | Transform filenames via find/replace, case changes, prefix/suffix, pattern templates | browser, cli    |
 | `FileFilter`   | `file-filter`   | Keep or drop files by extension, name or path pattern (glob/regex), and size          | browser, cli    |
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, modified time, SHA-256 hash)      | browser, cli    |
+| `FileRender`   | `file-render`   | Write one in-memory text file (Markdown table, report) from a template: header, one row per item filled from `{{item.KEY}}` / `{{file}}`, footer; `{{count}}` anywhere; `escape: markdown` escapes values; a key an item lacks fails the run; `rows` in node metadata | browser, cli |
 | `FileCollect`  | `file-collect`  | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it | cli |
 | `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals) | cli             |
 | `FileList`     | `file-list`     | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder, each with its `full_path`; missing paths skipped and counted, and `entries` lists every path in order with its `full_path` and `status` (`found` / `missing`) | cli |
@@ -33,6 +34,11 @@ src/
 │   └── result_metadata.rs  # originalFilename/newFilename/transformsApplied
 ├── filter.rs         # FileFilter processor + metadata
 ├── metadata.rs       # FileMetadata processor + metadata
+├── render/           # FileRender processor (file-render)
+│   ├── mod.rs              # NodeProcessor impl (batch), layout, mime, rows metadata
+│   ├── params.rs           # Parameter schema + typed reads
+│   ├── fill.rs             # {{item.KEY}} / {{file}} per item, {{count}}
+│   └── escape.rs           # none | markdown escaping of filled values
 ├── collect.rs        # FileCollect processor + metadata (native-only)
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer

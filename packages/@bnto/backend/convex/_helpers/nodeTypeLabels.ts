@@ -19,6 +19,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "file-metadata": "File Metadata",
   "file-move": "Move Files",
   "file-rename": "Rename Files",
+  "file-render": "Render Text File",
   "http-request": "HTTP Request",
   "image-compress": "Compress Images",
   "image-convert": "Convert Image Format",

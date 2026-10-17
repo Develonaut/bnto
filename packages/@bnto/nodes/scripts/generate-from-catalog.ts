@@ -1018,6 +1018,11 @@ function formatDefault(p: RawParameter): string {
   return String(p.default);
 }
 
+/** Text safe inside a Markdown table cell: pipes escaped, line breaks as `\n`. */
+function tableCell(text: string): string {
+  return text.replace(/\|/g, "\\|").replace(/\r?\n/g, "\\n");
+}
+
 function generateNodeReadme(nodeType: RawNodeType, processor: RawProcessor | undefined): string {
   const lines: string[] = [];
   const platforms = nodeType.platforms.join(", ") || "none";
@@ -1053,7 +1058,7 @@ function generateNodeReadme(nodeType: RawNodeType, processor: RawProcessor | und
           ? param.paramType.options.map((o) => o.value).join(", ")
           : formatRange(param);
         lines.push(
-          `| ${param.name} | ${type} | ${formatDefault(param)} | ${range} | ${param.description} |`,
+          `| ${param.name} | ${type} | ${tableCell(formatDefault(param))} | ${range} | ${tableCell(param.description)} |`,
         );
       }
       lines.push("");

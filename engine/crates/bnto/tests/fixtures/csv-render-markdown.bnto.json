@@ -1,0 +1,76 @@
+{
+  "id": "csv-render-markdown",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "CSV Render Markdown",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Reads a CSV's rows and writes them as one Markdown table, report.md, to the output folder."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": false
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "rows",
+      "type": "spreadsheet-read",
+      "version": "1.0.0",
+      "name": "Rows",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "render",
+      "type": "file-render",
+      "version": "1.0.0",
+      "name": "Render",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "header": "# Tools\n\n| Name | Note |\n| --- | --- |",
+        "row": "| {{item.name}} | {{item.note}} |",
+        "footer": "\n{{count}} tools",
+        "filename": "report.md",
+        "escape": "markdown"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "rows" },
+    { "id": "e2", "source": "rows", "target": "render" },
+    { "id": "e-out", "source": "render", "target": "output" }
+  ]
+}
