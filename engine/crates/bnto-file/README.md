@@ -15,7 +15,7 @@ File operation nodes. Rename, filter, collect, copy, and inspect files.
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, modified time, SHA-256 hash)      | browser, cli    |
 | `FileCollect`  | `file-collect`  | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it | cli |
 | `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals) | cli             |
-| `FileList`     | `file-list`     | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder; missing paths skipped and counted | cli |
+| `FileList`     | `file-list`     | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder, each with its `full_path`; missing paths skipped and counted, and `entries` lists every path in order with its `full_path` and `status` (`found` / `missing`) | cli |
 | `FileMove`     | `file-move`     | Move files into folders under a destination by the path in each name; rename only, refuses any run that would replace a file | cli |
 
 ## Directory Structure
@@ -37,7 +37,8 @@ src/
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
 ├── list/             # FileList processor (file-list, native-only)
-│   ├── mod.rs              # NodeProcessor impl (batch), outputs + missing metadata
+│   ├── mod.rs              # NodeProcessor impl (batch), outputs + entries / missing metadata
+│   ├── listed.rs           # One listed path: name, `/`-separated full path, found or missing
 │   ├── params.rs           # Parameter schema + typed reads
 │   └── entries.rs          # List splitting; refuses absolute, drive, `..`
 ├── move/             # FileMove processor (file-move, native-only)

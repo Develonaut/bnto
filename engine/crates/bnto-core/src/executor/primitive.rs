@@ -131,6 +131,16 @@ fn resolve_with<F: Fn() -> u64 + Copy>(
     file: Option<&str>,
 ) -> Result<Params, BntoError> {
     require_filled_items(node, item, file)?;
+    Ok(resolve_templates(ctx, node, field_values, item))
+}
+
+/// Resolve all template namespaces, leaving an unfilled `{{item.*}}` as written.
+fn resolve_templates<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    node: PipelineNodeRef,
+    field_values: &FieldValues,
+    item: &Option<Params>,
+) -> Params {
     let tpl_ctx = super::template::TemplateContext {
         field_values,
         process_ctx: ctx.process_ctx,
@@ -138,7 +148,7 @@ fn resolve_with<F: Fn() -> u64 + Copy>(
         loop_item: item,
         run_started_ms: Some(ctx.started_ms),
     };
-    Ok(super::template::resolve_templates(&node.params, &tpl_ctx))
+    super::template::resolve_templates(&node.params, &tpl_ctx)
 }
 
 /// Error when a `{{item.*}}` param reference has nothing to fill it, naming
@@ -168,12 +178,19 @@ fn require_filled_items(
     )))
 }
 
-/// Resolve a node's params once, against the enclosing loop's item.
+/// Resolve a node's params once, against the enclosing loop's item. Outside
+/// a loop, a node that fills `{{item.*}}` itself, per file, gets those as
+/// written instead of refused.
 fn resolve_node_params<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,
+    processor: &dyn crate::processor::NodeProcessor,
 ) -> Result<Params, BntoError> {
-    resolve_with(ctx, node, &node_field_values(node), &ctx.loop_item, None)
+    let field_values = node_field_values(node);
+    if processor.resolves_items() && ctx.loop_item.is_none() {
+        return Ok(resolve_templates(ctx, node, &field_values, &None));
+    }
+    resolve_with(ctx, node, &field_values, &ctx.loop_item, None)
 }
 
 /// The `{{item.*}}` source for one file: the file's own metadata (what every
@@ -209,11 +226,11 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
     let processor = resolve_processor(ctx, node)?;
     match processor.metadata().input_cardinality {
         InputCardinality::Batch => {
-            let params = resolve_node_params(ctx, node)?;
+            let params = resolve_node_params(ctx, node, processor)?;
             process_batch(ctx, processor, node, &params, files, file_offset)
         }
         InputCardinality::Source => {
-            let params = resolve_node_params(ctx, node)?;
+            let params = resolve_node_params(ctx, node, processor)?;
             process_source(ctx, processor, node, &params, file_offset)
         }
         InputCardinality::PerFile => process_per_file(ctx, processor, node, files, file_offset),

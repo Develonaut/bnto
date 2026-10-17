@@ -3,6 +3,7 @@
 use serde_json::Value;
 
 use super::compare::Op;
+use crate::control::placeholder::text;
 use crate::metadata::{OptionEntry, ParameterDef, ParameterType};
 
 /// The node's params, read and checked.
@@ -47,15 +48,6 @@ impl AssertParams {
             self.op.name(),
             self.expected
         )
-    }
-}
-
-/// A param as text: strings as written, other JSON (numbers, lists) as JSON.
-pub(super) fn text(value: &Value) -> String {
-    match value {
-        Value::String(s) => s.clone(),
-        Value::Null => String::new(),
-        other => other.to_string(),
     }
 }
 

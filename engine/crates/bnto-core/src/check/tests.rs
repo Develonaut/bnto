@@ -84,7 +84,8 @@ fn test_valid_recipe_with_io_nodes_and_a_loop_passes() {
 fn test_every_known_namespace_passes_without_values() {
     let findings = check(one_node(json!({
         "a": "{{fields.x}}", "b": "{{env.HOME}}", "c": "{{ctx.date}}",
-        "d": "{{node.prev.name}}", "e": "{{item.new_name}}", "f": "{{vars.Out}}/Art"
+        "d": "{{node.prev.name}}", "e": "{{item.new_name}}", "f": "{{vars.Out}}/Art",
+        "g": "{{entry.status}}: {{entry}}"
     })));
     assert_eq!(findings, Vec::new());
 }

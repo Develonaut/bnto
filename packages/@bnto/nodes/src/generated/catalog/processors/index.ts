@@ -19,6 +19,7 @@ import { imageConvertProcessor } from "./imageConvert";
 import { imageOverlayProcessor } from "./imageOverlay";
 import { imageResizeProcessor } from "./imageResize";
 import { imageStripExifProcessor } from "./imageStripExif";
+import { reportProcessor } from "./report";
 import { shellCommandProcessor } from "./shellCommand";
 import { spreadsheetCleanProcessor } from "./spreadsheetClean";
 import { spreadsheetConvertProcessor } from "./spreadsheetConvert";
@@ -44,6 +45,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   imageOverlayProcessor,
   imageResizeProcessor,
   imageStripExifProcessor,
+  reportProcessor,
   shellCommandProcessor,
   spreadsheetCleanProcessor,
   spreadsheetConvertProcessor,

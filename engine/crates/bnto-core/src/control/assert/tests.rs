@@ -241,4 +241,6 @@ fn test_metadata_is_a_browser_capable_batch_control_node() {
     assert!(meta.platforms.contains(&"browser".to_string()));
     let params: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
     assert_eq!(params, ["value", "op", "expected", "message"]);
+    // It fills `{{item.*}}` itself, so the executor leaves those for it.
+    assert!(Assert::new().resolves_items());
 }

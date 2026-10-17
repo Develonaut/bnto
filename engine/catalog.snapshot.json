@@ -346,7 +346,7 @@
     {
       "name": "file-list",
       "label": "List Files",
-      "description": "Turn lists of paths into files under a base folder; missing paths are counted.",
+      "description": "Turn lists of paths into files under a base folder; every path is listed, found or missing.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -1554,6 +1554,38 @@
       ]
     },
     {
+      "name": "report",
+      "label": "Report",
+      "description": "Print a templated line to the run's output; files pass through unchanged.",
+      "category": "control",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "message-square",
+      "params": [
+        {
+          "name": "message",
+          "label": "Message",
+          "description": "The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "each",
+          "label": "For Each",
+          "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template.",
+          "paramType": {
+            "type": "object"
+          },
+          "placeholder": "{{node.<id>.<key>}}",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "shell-command",
       "label": "Shell Command",
       "description": "Execute shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
@@ -2460,7 +2492,7 @@
     {
       "nodeType": "file-list",
       "name": "List Files",
-      "description": "Turn lists of paths into files: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted.",
+      "description": "Turn lists of paths into files: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted. `entries` lists every path in order with its full path and status.",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3157,6 +3189,40 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "report",
+      "name": "Report",
+      "description": "Print a templated line to the run's output: once, once per file, or once per entry of a list; files pass through unchanged.",
+      "category": "control",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "message",
+          "label": "Message",
+          "description": "The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": true
+        },
+        {
+          "name": "each",
+          "label": "For Each",
+          "description": "A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template.",
+          "paramType": {
+            "type": "object"
+          },
+          "placeholder": "{{node.<id>.<key>}}",
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "shell-command",

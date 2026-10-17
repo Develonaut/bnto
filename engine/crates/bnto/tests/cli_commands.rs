@@ -551,6 +551,64 @@ fn test_assert_fails_the_run_naming_every_missing_path() {
     );
 }
 
+// --- Report ---
+
+/// Run the `fixture` recipe against a root holding `a.txt` and `sub/b.txt`
+/// (not `gone.txt`), and the root as text with `/` separators.
+fn run_report_fixture(fixture: &str) -> (std::process::Output, String) {
+    let root = temp_output_dir();
+    for name in ["a.txt", "sub/b.txt"] {
+        let path = root.path().join(name);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, "ref").unwrap();
+    }
+    let vars = root.path().join("vars.json");
+    let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
+    std::fs::write(&vars, body).unwrap();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path(fixture), "--yes"])
+        .args(["--vars", vars.to_str().unwrap()])
+        .output()
+        .unwrap();
+    let slashed = root.path().to_str().unwrap().replace('\\', "/");
+    (output, slashed)
+}
+
+/// The index of the first stderr line that contains `text`.
+fn line_index(stderr: &str, text: &str) -> usize {
+    stderr
+        .lines()
+        .position(|l| l.contains(text))
+        .unwrap_or_else(|| panic!("no line contains {text:?} in:\n{stderr}"))
+}
+
+#[test]
+fn test_report_prints_every_listed_path_in_order_and_ends_done() {
+    let (output, root) = run_report_fixture("report-entries");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let lines = [
+        format!("found: {root}/a.txt"),
+        format!("missing: {root}/gone.txt"),
+        format!("found: {root}/sub/b.txt"),
+    ];
+    let at: Vec<usize> = lines.iter().map(|l| line_index(&stderr, l)).collect();
+    assert!(at[0] < at[1] && at[1] < at[2], "out of order: {stderr}");
+    assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
+}
+
+#[test]
+fn test_report_prints_a_line_per_incoming_file() {
+    let (output, root) = run_report_fixture("report-files");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let first = line_index(&stderr, &format!("found {root}/a.txt (1 missing)"));
+    let second = line_index(&stderr, &format!("found {root}/sub/b.txt (1 missing)"));
+    assert!(first < second, "out of order: {stderr}");
+    assert!(!stderr.contains("gone.txt"), "stderr: {stderr}");
+    assert!(last_line(&stderr).contains("Done."), "stderr: {stderr}");
+}
+
 // --- Shell search_path ---
 
 /// A tools folder holding a `greet` program that prints "greeted", and a

@@ -196,6 +196,10 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       enumValues: ["failFast", "collectAll"] as const,
     },
   },
+  report: {
+    message: { type: "string", control: "text", required: false },
+    each: { type: "record", control: "keyValue", required: false },
+  },
   "shell-command": {
     command: { type: "string", control: "text", required: false },
     args: { type: "array", control: "tagPicker", required: false },

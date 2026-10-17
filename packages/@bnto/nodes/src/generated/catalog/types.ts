@@ -26,6 +26,7 @@ export type NodeTypeName =
   | "loop"
   | "output"
   | "parallel"
+  | "report"
   | "shell-command"
   | "spreadsheet-clean"
   | "spreadsheet-convert"

@@ -154,6 +154,16 @@ pub trait NodeProcessor {
         &[]
     }
 
+    /// True for a batch node that fills `{{item.*}}` in its params itself,
+    /// once per incoming file (assert, report). Outside a loop there is no
+    /// item to resolve them against once, so the executor hands them to the
+    /// node as written instead of refusing them.
+    ///
+    /// Default: false, so an unfilled `{{item.*}}` fails the node.
+    fn resolves_items(&self) -> bool {
+        false
+    }
+
     /// Process a batch of files together, producing combined output.
     ///
     /// Override this for processors with `InputCardinality::Batch` (merge, zip,
@@ -335,6 +345,11 @@ mod tests {
     #[test]
     fn test_default_count_keys_is_empty() {
         assert!(EchoProcessor.count_keys().is_empty());
+    }
+
+    #[test]
+    fn test_by_default_a_node_does_not_resolve_items() {
+        assert!(!EchoProcessor.resolves_items());
     }
 
     // --- Batch Processing Tests ---

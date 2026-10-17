@@ -1,5 +1,6 @@
 use super::*;
 use bnto_core::context::NoopContext;
+use bnto_core::processor::FileData;
 use serde_json::json;
 use std::path::Path;
 
@@ -144,6 +145,47 @@ fn test_nothing_missing_counts_zero() {
     let out = run(base.path(), vec![], json!({ "paths": ["a.txt"] })).unwrap();
     assert_eq!(out.metadata["missing"], json!([]));
     assert_eq!(out.metadata["missing_count"], json!(0));
+}
+
+// --- Entries and full paths ---
+
+/// `base` as text with `/` separators, as full paths are reported.
+fn slashed(base: &Path) -> String {
+    base.to_str().unwrap().replace('\\', "/")
+}
+
+#[test]
+fn test_entries_list_every_path_in_order_found_or_missing() {
+    let base = base_dir();
+    let root = slashed(base.path());
+    let extra = json!({ "paths": ["sub/b.txt", "gone.txt", "a.txt", "sub\\b.txt"] });
+    let out = run(base.path(), vec![], extra).unwrap();
+    let expected = json!([
+        { "path": "sub/b.txt", "full_path": format!("{root}/sub/b.txt"), "status": "found" },
+        { "path": "gone.txt", "full_path": format!("{root}/gone.txt"), "status": "missing" },
+        { "path": "a.txt", "full_path": format!("{root}/a.txt"), "status": "found" },
+    ]);
+    assert_eq!(out.metadata["entries"], expected);
+}
+
+#[test]
+fn test_entries_are_empty_when_nothing_is_listed() {
+    let base = base_dir();
+    let out = run(base.path(), vec![], json!({})).unwrap();
+    assert_eq!(out.metadata["entries"], json!([]));
+}
+
+#[test]
+fn test_each_output_file_carries_its_full_path() {
+    let base = base_dir();
+    let root = slashed(base.path());
+    let extra = json!({ "paths": ["a.txt", "sub/b.txt"] });
+    let out = run(base.path(), vec![], extra).unwrap();
+    assert_eq!(out.files[0].metadata["full_path"], format!("{root}/a.txt"));
+    assert_eq!(
+        out.files[1].metadata["full_path"],
+        format!("{root}/sub/b.txt")
+    );
 }
 
 // --- Params and metadata ---
