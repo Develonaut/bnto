@@ -23,7 +23,7 @@ Before adding a node or a param, ask:
 
 ## Worked Example: Renaming a Library from a Mapping CSV
 
-Dead Quiet needed ~8,300 SFX files renamed from a mapping table (DeadQuiet#964).
+A recipe needed ~8,300 sound-effect files renamed from a mapping table (a CSV of old name to new name).
 
 **Rejected:** a `rules` mode on `file-rename`, with a CSV of find/replace rows, first match wins, the row's columns as metadata, an `unmatched` flag and a CLI warning about it. It made `file-rename` two nodes behind one name. The editor couldn't show or hide the rules params cleanly, and the table lookup, the reusable part, was locked inside rename.
 
