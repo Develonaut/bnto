@@ -1603,3 +1603,78 @@ fn test_move_refuses_a_path_out_of_the_destination() {
     assert!(!root.path().join("escaped.wav").exists());
     assert!(lib.join("Pack/sub/Glock 45 Mag Out 01.wav").exists());
 }
+
+// --- Check ---
+
+fn check_fixture(name: &str) -> String {
+    custom_recipe_path(&format!("check/{name}"))
+}
+
+/// Run `bnto check` on `paths`: (exit ok, stdout lines).
+fn run_check(paths: &[String]) -> (bool, Vec<String>) {
+    let output = Command::new(bnto_bin())
+        .arg("check")
+        .args(paths)
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let lines = stdout.lines().map(str::to_string).collect();
+    (output.status.success(), lines)
+}
+
+#[test]
+fn test_check_passes_a_valid_recipe() {
+    let (ok, lines) = run_check(&[check_fixture("valid")]);
+    assert!(ok, "stdout: {lines:?}");
+    assert_eq!(lines, vec!["Check: PASS (1 recipe)".to_string()]);
+}
+
+#[test]
+fn test_check_fails_when_one_of_two_recipes_is_broken() {
+    let broken = check_fixture("broken");
+    let (ok, lines) = run_check(&[check_fixture("valid"), broken.clone()]);
+    assert!(!ok, "stdout: {lines:?}");
+    assert_eq!(
+        lines.last().map(String::as_str),
+        Some("Check: FAIL (3 findings)")
+    );
+    let findings = &lines[..lines.len() - 1];
+    assert_eq!(findings.len(), 3, "{findings:?}");
+    assert!(
+        findings.iter().all(|l| l.starts_with(&broken)),
+        "{findings:?}"
+    );
+    for expected in [
+        "\"only-docs\"",
+        "name_pattern",
+        "image-zap",
+        "\"copy\"",
+        "{{vars.Out",
+    ] {
+        assert!(
+            findings.iter().any(|l| l.contains(expected)),
+            "no finding names {expected}: {findings:?}"
+        );
+    }
+}
+
+#[test]
+fn test_check_reports_invalid_json_as_a_finding() {
+    let bad = check_fixture("invalid-json");
+    let (ok, lines) = run_check(&[bad.clone(), check_fixture("valid")]);
+    assert!(!ok, "stdout: {lines:?}");
+    assert_eq!(lines.len(), 2, "{lines:?}");
+    assert!(lines[0].starts_with(&bad), "{lines:?}");
+    assert!(lines[0].contains("invalid JSON"), "{lines:?}");
+    assert_eq!(lines[1], "Check: FAIL (1 finding)");
+}
+
+#[test]
+fn test_check_reports_an_unreadable_file_as_a_finding() {
+    let missing = check_fixture("does-not-exist");
+    let (ok, lines) = run_check(std::slice::from_ref(&missing));
+    assert!(!ok, "stdout: {lines:?}");
+    assert_eq!(lines.len(), 2, "{lines:?}");
+    assert!(lines[0].starts_with(&missing), "{lines:?}");
+    assert_eq!(lines[1], "Check: FAIL (1 finding)");
+}

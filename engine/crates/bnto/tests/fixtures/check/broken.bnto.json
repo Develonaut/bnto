@@ -1,0 +1,33 @@
+{
+  "id": "check-broken",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Broken",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "only-docs",
+      "type": "file-filter",
+      "parameters": { "name_pattern": "(", "pattern_mode": "regex" }
+    },
+    {
+      "id": "zap",
+      "type": "image-zap",
+      "parameters": {}
+    },
+    {
+      "id": "copy",
+      "type": "file-copy",
+      "parameters": { "destination": "{{vars.Out/Docs" }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "write" }
+    }
+  ]
+}
