@@ -1624,6 +1624,15 @@
             "type": "object"
           },
           "surfaceable": false
+        },
+        {
+          "name": "search_path",
+          "label": "Search Path",
+          "description": "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory.",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": false
         }
       ]
     },
@@ -3217,6 +3226,15 @@
           "name": "env",
           "label": "Environment",
           "description": "Additional environment variables for the command.",
+          "paramType": {
+            "type": "object"
+          },
+          "surfaceable": false
+        },
+        {
+          "name": "search_path",
+          "label": "Search Path",
+          "description": "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory.",
           "paramType": {
             "type": "object"
           },

@@ -154,11 +154,20 @@ fn collect_names_recursive(nodes: &[PipelineNode], names: &mut Vec<String>) {
         if node.node_type == "shell-command"
             && let Some(cmd) = node.params.get("command").and_then(|v| v.as_str())
         {
-            names.push(cmd.to_string());
+            names.push(shown_command(cmd, &node.params));
         }
         if let Some(children) = &node.children {
             collect_names_recursive(children, names);
         }
+    }
+}
+
+/// A command as consent shows it: with the folders it's found in when the
+/// node sets `search_path`, as written, so approving the recipe approves them.
+fn shown_command(cmd: &str, params: &serde_json::Map<String, serde_json::Value>) -> String {
+    match bnto_shell::search_path::read_search_path(params.get("search_path")) {
+        Ok(folders) if !folders.is_empty() => format!("{cmd} (from {})", folders.join(", ")),
+        _ => cmd.to_string(),
     }
 }
 
@@ -343,6 +352,24 @@ mod tests {
             fields: Default::default(),
         }];
         assert_eq!(collect_shell_command_names(&nodes), vec!["yt-dlp"]);
+    }
+
+    #[test]
+    fn collect_names_show_where_a_search_path_command_comes_from() {
+        let mut params = serde_json::Map::new();
+        params.insert("command".into(), json!("Build.bat"));
+        params.insert("search_path".into(), json!(["{{env.ROOT}}/bin", "tools"]));
+        let nodes = vec![PipelineNode {
+            id: "build".into(),
+            node_type: "shell-command".into(),
+            params,
+            children: None,
+            fields: Default::default(),
+        }];
+        assert_eq!(
+            collect_shell_command_names(&nodes),
+            vec!["Build.bat (from {{env.ROOT}}/bin, tools)"]
+        );
     }
 
     #[test]

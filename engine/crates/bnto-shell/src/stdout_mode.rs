@@ -5,9 +5,12 @@ use bnto_core::{BntoError, ProcessContext, ProgressReporter};
 
 use crate::validate;
 
-/// Stdout mode: capture command stdout as a single output file.
+/// Stdout mode: capture command stdout as a single output file. `program` is
+/// what runs (the full path from `search_path`, or `command` itself); the
+/// output is named after `command`.
 pub(crate) fn process_stdout_mode(
     command: &str,
+    program: &str,
     args: &[String],
     input: &NodeInput,
     progress: &ProgressReporter,
@@ -16,7 +19,7 @@ pub(crate) fn process_stdout_mode(
 ) -> Result<NodeOutput, BntoError> {
     progress.report(10, &format!("Running {command}..."));
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    let output_bytes = ctx.run_command_streaming(command, &arg_refs, &|line| {
+    let output_bytes = ctx.run_command_streaming(program, &arg_refs, &|line| {
         progress.report_output(line);
     })?;
     if output_bytes.len() > validate::max_output_bytes(max_output_mb) {

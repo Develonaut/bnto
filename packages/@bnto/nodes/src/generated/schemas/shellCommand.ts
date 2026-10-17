@@ -15,6 +15,7 @@ export const shellCommandParamsSchema = z.object({
   timeout: z.number().optional().default(300),
   maxOutputSize: z.number().optional().default(500),
   env: z.record(z.unknown()).optional(),
+  search_path: z.record(z.unknown()).optional(),
 });
 
 /** Inferred TypeScript type for shell-command node parameters. */
@@ -51,6 +52,12 @@ export const shellCommandNodeSchema: NodeSchema = {
     env: {
       label: "Environment",
       description: "Additional environment variables for the command.",
+      surfaceable: false,
+    },
+    search_path: {
+      label: "Search Path",
+      description:
+        "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory.",
       surfaceable: false,
     },
   },

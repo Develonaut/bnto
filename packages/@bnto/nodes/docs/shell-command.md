@@ -14,6 +14,7 @@
 | timeout | number | 300 | - | Maximum execution time in seconds. Default: 300. |
 | maxOutputSize | number | 500 | - | Maximum size per output file in megabytes. Default: 100 MB. |
 | env | object | - | - | Additional environment variables for the command. |
+| search_path | object | - | - | Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory. |
 
 ## Configuration Example
 

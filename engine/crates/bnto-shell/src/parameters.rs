@@ -16,6 +16,7 @@ pub(crate) fn build_parameters() -> Vec<ParameterDef> {
         timeout_param(),
         max_output_size_param(),
         env_param(),
+        search_path_param(),
     ]
 }
 
@@ -84,6 +85,18 @@ fn env_param() -> ParameterDef {
         name: "env".to_string(),
         label: "Environment".to_string(),
         description: "Additional environment variables for the command.".to_string(),
+        param_type: ParameterType::Object,
+        surfaceable: false,
+        ..Default::default()
+    }
+}
+
+fn search_path_param() -> ParameterDef {
+    ParameterDef {
+        name: "search_path".to_string(),
+        label: "Search Path".to_string(),
+        description: "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory."
+            .to_string(),
         param_type: ParameterType::Object,
         surfaceable: false,
         ..Default::default()

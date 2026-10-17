@@ -14,6 +14,7 @@ pub mod execute;
 mod file_mode;
 mod output_files;
 mod parameters;
+pub mod search_path;
 mod stdout_mode;
 pub mod validate;
 

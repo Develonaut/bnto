@@ -1,0 +1,86 @@
+{
+  "id": "shell-search-path",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Shell Search Path",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Runs a `greet` tool found in the folder the Tools run var names, not on PATH."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "greet",
+      "type": "shell-command",
+      "version": "1.0.0",
+      "name": "Greet",
+      "position": {
+        "x": 125,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "command": "greet",
+        "args": [],
+        "outputMode": "stdout",
+        "search_path": [
+          "{{vars.Tools}}"
+        ]
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 250,
+        "y": 100
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "greet"
+    },
+    {
+      "id": "e2",
+      "source": "greet",
+      "target": "output"
+    }
+  ]
+}
