@@ -221,7 +221,8 @@ pub(super) fn execute_primitive_node<F: Fn() -> u64 + Copy>(
 /// resolve per file against that file's item; others resolve once.
 ///
 /// The node's `{{node.<id>.*}}` record merges every call's node-level
-/// metadata in file order, so a later file wins a key that several set.
+/// metadata in file order, so a later file wins a key that several set and
+/// the processor's count keys add up.
 fn process_per_file<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     processor: &dyn crate::processor::NodeProcessor,
@@ -232,7 +233,7 @@ fn process_per_file<F: Fn() -> u64 + Copy>(
     let file_count = files.len();
     let field_values = node_field_values(node);
     let shared = shared_params(ctx, node, &field_values)?;
-    let mut out = LeafOutput::default();
+    let mut out = LeafOutput::counting(processor.count_keys());
     for (i, file) in files.into_iter().enumerate() {
         let params = params_for_file(ctx, node, &field_values, &shared, &file)?;
         let (id, index) = (&node.id, file_offset + i);
@@ -299,7 +300,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
 
     emit_file_progress(ctx, &node.id, file_offset, 100, "Complete".to_string());
 
-    let mut out = LeafOutput::default();
+    let mut out = LeafOutput::counting(processor.count_keys());
     out.collect(output, &Params::new());
     Ok(out.into_result(&node.id, 0))
 }
@@ -351,7 +352,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
         format!("Completed batch of {} files", file_count),
     );
 
-    let mut out = LeafOutput::default();
+    let mut out = LeafOutput::counting(processor.count_keys());
     out.collect(output, &Params::new());
     Ok(out.into_result(&node.id, file_count))
 }

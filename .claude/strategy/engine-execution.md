@@ -95,7 +95,7 @@ Non-container nodes are leaves -- they receive files and transform them via thei
 
 ### Node Output Metadata
 
-After a leaf node runs, the executor records its node-level `NodeOutput.metadata` under its node id, and every later node in the run reads it through `{{node.<id>.<key>}}`. Records flow the way files do: along a chain, out of a group to the nodes after it, and out of a loop as every iteration's records merged in order (iterations don't see each other's). A per-file node's record merges its files' metadata in file order. See [recipe-fields.md](recipe-fields.md#node-output-references) for the template rules.
+After a leaf node runs, the executor records its node-level `NodeOutput.metadata` under its node id, and every later node in the run reads it through `{{node.<id>.<key>}}`. Records flow the way files do: along a chain, out of a group to the nodes after it, and out of a loop as every iteration's records merged in order (iterations don't see each other's). A per-file node's record merges its files' metadata in file order. Keys a processor declares as counts (`NodeProcessor::count_keys`, e.g. file-copy's `copied`) add up instead of taking the later value, so the record holds totals for the whole node. The run's result carries every node's final record (`PipelineResult::node_metadata`), which `bnto run --json` reports per node. See [recipe-fields.md](recipe-fields.md#node-output-references) for the template rules.
 
 ---
 

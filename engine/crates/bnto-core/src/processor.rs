@@ -144,6 +144,16 @@ pub trait NodeProcessor {
         Vec::new()
     }
 
+    /// Keys of the node-level `NodeOutput.metadata` that count something per
+    /// call (e.g. files copied). When the node runs more than once — a per-file
+    /// node over several files, a loop's iterations — the executor adds these
+    /// up in the node's record instead of keeping the last call's value.
+    ///
+    /// Default: none, so every key keeps the last call's value.
+    fn count_keys(&self) -> &'static [&'static str] {
+        &[]
+    }
+
     /// Process a batch of files together, producing combined output.
     ///
     /// Override this for processors with `InputCardinality::Batch` (merge, zip,
@@ -320,6 +330,11 @@ mod tests {
         // The default validate() should return no errors.
         let errors = processor.validate(&params);
         assert!(errors.is_empty());
+    }
+
+    #[test]
+    fn test_default_count_keys_is_empty() {
+        assert!(EchoProcessor.count_keys().is_empty());
     }
 
     // --- Batch Processing Tests ---

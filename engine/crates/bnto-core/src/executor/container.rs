@@ -76,7 +76,8 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 /// Iterations are independent: children read the output metadata recorded
 /// before the loop and by earlier siblings in their own iteration, never by
 /// another iteration. Nodes after the loop read every successful iteration's
-/// records merged in order, so a later iteration wins a key both set.
+/// records merged in order, so a later iteration wins a key both set and a
+/// count key adds up.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     container_id: &str,
@@ -110,7 +111,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                 let files_produced = exec_result.output_files.len();
                 total_processed += exec_result.files_processed;
                 warnings.extend(exec_result.warnings);
-                merge_records(&mut records, exec_result.node_outputs);
+                merge_records(&mut records, exec_result.node_outputs, ctx.count_keys);
 
                 let progress_files =
                     build_progress_files(&config.output_persistence, &exec_result.output_files);

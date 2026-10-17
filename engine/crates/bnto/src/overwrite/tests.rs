@@ -30,6 +30,7 @@ fn result(dir: &Path, renames: &[(&str, &str)]) -> PipelineResult {
             .collect(),
         duration_ms: 0,
         warnings: vec![],
+        node_metadata: Default::default(),
     }
 }
 

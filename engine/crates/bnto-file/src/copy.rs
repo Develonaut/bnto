@@ -4,7 +4,7 @@
 // resolution (skip/overwrite/rename/newer) and optional directory creation.
 // File data passes through unchanged — this is a placement node.
 
-use crate::copy_newer::{DEFAULT_TOLERANCE_MS, process_newer};
+use crate::copy_newer::{DEFAULT_TOLERANCE_MS, OUTCOME_KEYS, process_newer};
 use bnto_core::metadata::{
     Constraints, NodeCategory, NodeMetadata, OptionEntry, ParamCondition, ParamConditionEntry,
     ParameterDef, ParameterType,
@@ -47,6 +47,11 @@ impl NodeProcessor for FileCopy {
             input_cardinality: Default::default(), // PerFile
             requires: vec![],
         }
+    }
+
+    /// `newer` mode's per-file outcome flags, added up over the node's files.
+    fn count_keys(&self) -> &'static [&'static str] {
+        &OUTCOME_KEYS
     }
 
     fn process(
@@ -590,6 +595,21 @@ mod tests {
         fs::write(&t, b"old bytes").unwrap();
         set_file_mtime(&t, ft(ms)).unwrap();
         t
+    }
+
+    #[test]
+    fn test_newer_reports_its_outcome_as_node_level_counts() {
+        let (_root, src, dest) = newer_fixture(10_000);
+        put_target(&dest, 12_001);
+        let out = run_newer(&src, &dest).unwrap();
+        assert_eq!(out.metadata, out.files[0].metadata);
+        assert_eq!(flags(&out), (0, 0, 1));
+    }
+
+    #[test]
+    fn test_copy_declares_its_outcome_flags_as_count_keys() {
+        let keys = FileCopy::new().count_keys();
+        assert_eq!(keys, ["copied", "up_to_date", "skipped_newer"]);
     }
 
     #[test]

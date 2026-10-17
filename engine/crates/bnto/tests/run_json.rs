@@ -154,3 +154,68 @@ fn test_run_with_a_warning_ends_stderr_with_done() {
         }
     }
 }
+
+#[test]
+fn test_failed_run_prints_its_verdict_once_as_the_last_line() {
+    for extra in [&[][..], &["--json"][..]] {
+        let (src, out, tmp) = (source_dir(), temp_output_dir(), temp_output_dir());
+        let output = run_copy(src.path(), &uncreatable(&tmp), out.path(), extra);
+        assert_eq!(output.status.code(), Some(1));
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let verdicts = stderr.matches("Pipeline failed:").count();
+        assert_eq!(verdicts, 1, "{extra:?}: {stderr}");
+        assert!(stderr.contains("FAILED copy:"), "{extra:?}: {stderr}");
+        let last = last_stderr_line(&output);
+        assert!(last.starts_with("Pipeline failed: "), "{extra:?}: {last}");
+    }
+}
+
+/// A fresh source dir holding `names`, each file's text its own name.
+fn source_with(names: &[&str]) -> tempfile::TempDir {
+    let src = temp_output_dir();
+    for name in names {
+        std::fs::write(src.path().join(name), name).unwrap();
+    }
+    src
+}
+
+/// The `nodes` entry with `id` in a summary.
+fn node<'a>(summary: &'a serde_json::Value, id: &str) -> &'a serde_json::Value {
+    let nodes = summary["nodes"].as_array().unwrap();
+    nodes.iter().find(|n| n["id"] == id).unwrap()
+}
+
+/// Files in `dest` whose text is their own name, i.e. the ones copied from `source_with`.
+fn copied_into(dest: &Path, names: &[&str]) -> usize {
+    let holds_own_name =
+        |n: &&&str| std::fs::read_to_string(dest.join(n)).ok().as_deref() == Some(**n);
+    names.iter().filter(holds_own_name).count()
+}
+
+#[test]
+fn test_run_json_reports_the_copy_nodes_counts_in_its_metadata() {
+    let names = ["a.txt", "b.txt", "c.txt"];
+    let (src, dest, out) = (source_with(&names), temp_output_dir(), temp_output_dir());
+    // c.txt is newer at the destination, so only a.txt and b.txt are copied.
+    let kept = dest.path().join("c.txt");
+    std::fs::write(&kept, "kept at destination").unwrap();
+    let now = filetime::FileTime::now().unix_seconds();
+    filetime::set_file_mtime(&kept, filetime::FileTime::from_unix_time(now + 10, 0)).unwrap();
+    let output = run_copy(src.path(), dest.path(), out.path(), &["--json"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let copied = copied_into(dest.path(), &names);
+    assert_eq!(copied, 2);
+    assert_eq!(
+        node(&single_json_line(&output), "copy")["metadata"],
+        serde_json::json!({ "copied": copied, "up_to_date": 0, "skipped_newer": 1 })
+    );
+}
+
+#[test]
+fn test_run_json_shows_empty_metadata_for_a_node_that_reported_none() {
+    let (src, dest, out) = (source_dir(), temp_output_dir(), temp_output_dir());
+    let output = run_copy(src.path(), dest.path(), out.path(), &["--json"]);
+    let summary = single_json_line(&output);
+    assert_eq!(node(&summary, "collect")["metadata"], serde_json::json!({}));
+}

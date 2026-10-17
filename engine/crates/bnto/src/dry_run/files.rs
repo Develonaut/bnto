@@ -99,6 +99,7 @@ mod tests {
             files,
             duration_ms: 100,
             warnings: Vec::new(),
+            node_metadata: Default::default(),
         }
     }
 

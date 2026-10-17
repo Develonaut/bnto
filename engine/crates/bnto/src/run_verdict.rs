@@ -38,7 +38,9 @@ impl RunVerdict {
 
     /// The passing summary of `result`, with the nodes tallied so far.
     pub fn passed(&self, result: &PipelineResult) -> RunSummary {
-        RunSummary::from_result(result, result.duration_ms).with_nodes(self.tally.borrow().nodes())
+        RunSummary::from_result(result, result.duration_ms)
+            .with_nodes(self.tally.borrow().nodes())
+            .with_node_metadata(&result.node_metadata)
     }
 
     /// Print `{label} {error}` as the last stderr line (and, with `--json`,
@@ -92,6 +94,7 @@ mod tests {
             files: vec![],
             duration_ms: 4,
             warnings: vec![],
+            node_metadata: Default::default(),
         };
         let summary = verdict.passed(&result);
         assert_eq!(*seen.borrow(), 1);

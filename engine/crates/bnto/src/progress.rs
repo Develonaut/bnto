@@ -113,11 +113,11 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                 "FAILED".red().bold()
             );
         }
-        PipelineEvent::PipelineFailed { error, .. } => {
+        // No line here: the run's verdict prints `Pipeline failed:` once, last.
+        PipelineEvent::PipelineFailed { .. } => {
             if let Some(b) = bar.borrow_mut().take() {
                 b.finish_and_clear();
             }
-            eprintln!("  {} {error}", "Pipeline failed:".red().bold());
         }
         PipelineEvent::PipelineCompleted {
             duration_ms,

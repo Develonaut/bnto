@@ -352,6 +352,7 @@ mod recipes;
 mod recipes_containers;
 mod recipes_errors;
 mod recipes_events;
+mod result_node_metadata;
 mod run_started;
 mod sub_pipelines;
 mod sub_pipelines_containers;
