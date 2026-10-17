@@ -39,6 +39,9 @@ bnto run compress-images photo.jpg --param quality=50
 # and a BNTO_VAR_<KEY> environment variable beats every file)
 bnto run backup.bnto.json --vars machine.json
 
+# Also print the run's summary as one JSON line on stdout (for scripts)
+bnto run backup.bnto.json --vars machine.json --yes --json
+
 # List available built-in recipes
 bnto list
 
@@ -51,6 +54,24 @@ bnto doctor
 # Install a recipe's missing dependencies (prints each exact command, then asks)
 bnto install download-video
 ```
+
+### `bnto run --json`
+
+`--json` prints the run's summary as exactly one JSON line on stdout, whether the run passes or fails. Progress, warnings and the human summary line stay on stderr, unchanged, and the exit code is the same (0 on a pass, 1 on a failure). The human `Done.` / `Pipeline failed:` line is printed last on stderr, after every warning, and both it and the JSON line are built from the same summary.
+
+```json
+{"status":"pass","files_written":1,"duration_ms":5,"nodes":[{"id":"collect","node_type":"file-collect","files_processed":1},{"id":"copy","node_type":"file-copy","files_processed":1}],"error":null}
+```
+
+| Field | Meaning |
+| --- | --- |
+| `status` | `"pass"` or `"fail"` |
+| `files_written` | Files the output step wrote, or renamed in place in overwrite mode; `0` for `message` / `none` output and on a failure. On `--dry-run`, the files that would be written |
+| `duration_ms` | Pipeline time on a pass; time since the run started on a failure |
+| `nodes` | Top-level processing nodes in pipeline order: `id`, `node_type`, and `files_processed` summed over every time the node ran (nodes inside a container count toward the container). A node that never finished shows `0` |
+| `error` | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass |
+
+A run declined at the shell-command consent prompt prints no JSON line; pass `--yes` when scripting.
 
 `bnto install` runs the recipe's `installHints` command for this OS (e.g. `winget install Gyan.FFmpeg`) through the platform shell; without one it falls back to the detected package manager (`brew`/`apt`/`pacman`/`choco install <binary>`), or prints the hint when nothing can run. `--yes` skips the prompt for bundled recipes only — commands written by library or file recipes are always shown and confirmed.
 
@@ -101,6 +122,7 @@ src/
 +-- dispatch.rs            # Routes a parsed subcommand to its implementation
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
 +-- run_output.rs          # Writes run results and prints the summary
++-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
 +-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
