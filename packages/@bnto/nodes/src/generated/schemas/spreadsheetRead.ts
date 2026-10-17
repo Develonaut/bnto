@@ -9,6 +9,10 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for spreadsheet-read node parameters. */
 export const spreadsheetReadParamsSchema = z.object({
+  format: z
+    .enum(["auto", "csv", "json"] as const)
+    .optional()
+    .default("auto"),
   hasHeaders: z.boolean().optional().default(true),
   delimiter: z
     .enum(["comma", "semicolon", "tab", "pipe"] as const)
@@ -26,17 +30,22 @@ export const spreadsheetReadNodeSchema: NodeSchema = {
   schemaVersion: 1,
   schema: spreadsheetReadParamsSchema,
   params: {
+    format: {
+      label: "Format",
+      description: "How the file is read: auto picks JSON for a .json file and CSV otherwise",
+    },
     hasHeaders: {
       label: "Has Headers",
-      description: "First row contains column headers",
+      description: "First row contains column headers (CSV only)",
     },
     delimiter: {
       label: "Delimiter",
-      description: "Column separator character",
+      description: "Column separator character (CSV only)",
     },
     maxRows: {
       label: "Max Rows",
-      description: "Maximum rows to process. Error if CSV exceeds this limit.",
+      description:
+        "Maximum rows (CSV rows or JSON array elements) to process. Error if the file has more.",
     },
   },
 };

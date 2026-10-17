@@ -104,6 +104,13 @@ pub fn fixture_csv(name: &str) -> String {
         .to_string()
 }
 
+pub fn fixture_json(name: &str) -> String {
+    repo_root()
+        .join(format!("test-fixtures/json/{name}"))
+        .to_string_lossy()
+        .to_string()
+}
+
 pub fn fixture_vector(name: &str) -> String {
     repo_root()
         .join(format!("test-fixtures/vector/{name}"))

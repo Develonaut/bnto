@@ -31,7 +31,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-export": "Export Items as CSV",
   "spreadsheet-lookup": "Look Up Rows",
   "spreadsheet-merge": "Merge CSV",
-  "spreadsheet-read": "Read CSV Rows",
+  "spreadsheet-read": "Read Rows",
   "spreadsheet-rename": "Rename CSV Columns",
   "transform": "Transform",
   "vector-optimize": "Optimize SVG",

@@ -1,0 +1,5 @@
+[
+  { "meta": { "id": "alpha" }, "title": "First", "tags": ["a", "b"] },
+  { "meta": { "id": "beta" }, "title": "Second", "tags": [] },
+  { "meta": { "id": "gamma" }, "title": "Third", "tags": ["c"] }
+]
