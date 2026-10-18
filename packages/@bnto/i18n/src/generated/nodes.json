@@ -137,6 +137,10 @@
       "label": "Rename CSV Columns",
       "description": "Rename column headers in a CSV file."
     },
+    "summarize": {
+      "label": "Summarize",
+      "description": "Group items by fields; output one item per group with its count and field totals."
+    },
     "transform": {
       "label": "Transform",
       "description": "Transform data using expressions (single value) or field mappings."
@@ -594,6 +598,18 @@
       "columns": {
         "label": "Column Mapping",
         "description": "Map of old column names to new names (e.g., {\"Name\": \"full_name\"})"
+      }
+    },
+    "summarize": {
+      "groupBy": {
+        "label": "Group By",
+        "description": "Metadata fields to group items by, separated by commas; items whose values print the same share a group. Groups keep the order their first item arrived in. Items missing a field (or with it null or empty) group together, with that field null. Leave empty to summarize every item as one group.",
+        "placeholder": "type, year"
+      },
+      "sum": {
+        "label": "Sum",
+        "description": "Numeric metadata fields to total per group, separated by commas; each total is written as sum_<field>. Numbers written as text count; blank values are skipped; any other value fails the run, naming the item.",
+        "placeholder": "file_size"
       }
     },
     "vectorOptimize": {

@@ -40,6 +40,7 @@ import { spreadsheetLookupNodeSchema } from "./schemas/spreadsheetLookup";
 import { spreadsheetMergeNodeSchema } from "./schemas/spreadsheetMerge";
 import { spreadsheetReadNodeSchema } from "./schemas/spreadsheetRead";
 import { spreadsheetRenameNodeSchema } from "./schemas/spreadsheetRename";
+import { summarizeNodeSchema } from "./schemas/summarize";
 import { transformNodeSchema } from "./schemas/transform";
 import { vectorOptimizeNodeSchema } from "./schemas/vectorOptimize";
 import { vectorRasterizeNodeSchema } from "./schemas/vectorRasterize";
@@ -82,6 +83,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "spreadsheet-merge": spreadsheetMergeNodeSchema,
   "spreadsheet-read": spreadsheetReadNodeSchema,
   "spreadsheet-rename": spreadsheetRenameNodeSchema,
+  summarize: summarizeNodeSchema,
   transform: transformNodeSchema,
   "vector-optimize": vectorOptimizeNodeSchema,
   "vector-rasterize": vectorRasterizeNodeSchema,
@@ -417,6 +419,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "spreadsheet-rename": {
     columns: { control: "keyValue" },
   },
+  summarize: {},
   transform: {
     expression: { control: "textarea" },
     mappings: { control: "keyValue" },

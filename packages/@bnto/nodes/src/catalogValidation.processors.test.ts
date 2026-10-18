@@ -195,3 +195,25 @@ describe("file-join", () => {
     expect(separator.default).toBe("");
   });
 });
+
+// =============================================================================
+// summarize
+// =============================================================================
+
+describe("summarize", () => {
+  const proc = PROCESSOR_MAP.get("summarize")!;
+
+  it("is a browser-capable batch data node with groupBy and sum params", () => {
+    expect(proc.category).toBe("data");
+    expect(proc.platforms).toContain("browser");
+    expect(proc.inputCardinality).toBe("batch");
+    expect(proc.parameters.map((p) => p.name)).toEqual(["groupBy", "sum"]);
+  });
+
+  it("groupBy and sum are optional text field lists", () => {
+    for (const param of proc.parameters) {
+      expect(param.type).toBe("string");
+      expect(param.constraints?.required ?? false).toBe(false);
+    }
+  });
+});

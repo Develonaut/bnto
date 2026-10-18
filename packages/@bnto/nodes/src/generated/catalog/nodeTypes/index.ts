@@ -40,6 +40,7 @@ import { spreadsheetLookupNodeType } from "./spreadsheetLookup";
 import { spreadsheetMergeNodeType } from "./spreadsheetMerge";
 import { spreadsheetReadNodeType } from "./spreadsheetRead";
 import { spreadsheetRenameNodeType } from "./spreadsheetRename";
+import { summarizeNodeType } from "./summarize";
 import { transformNodeType } from "./transform";
 import { vectorOptimizeNodeType } from "./vectorOptimize";
 import { vectorRasterizeNodeType } from "./vectorRasterize";
@@ -83,6 +84,7 @@ export const NODE_TYPES = {
   spreadsheetMerge: "spreadsheet-merge",
   spreadsheetRead: "spreadsheet-read",
   spreadsheetRename: "spreadsheet-rename",
+  summarize: "summarize",
   transform: "transform",
   vectorOptimize: "vector-optimize",
   vectorRasterize: "vector-rasterize",
@@ -130,6 +132,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "spreadsheet-merge": spreadsheetMergeNodeType,
   "spreadsheet-read": spreadsheetReadNodeType,
   "spreadsheet-rename": spreadsheetRenameNodeType,
+  summarize: summarizeNodeType,
   transform: transformNodeType,
   "vector-optimize": vectorOptimizeNodeType,
   "vector-rasterize": vectorRasterizeNodeType,

@@ -688,6 +688,54 @@ fn test_file_sort_orders_csv_rows_by_two_keys_with_blanks_last() {
     assert!(at.windows(2).all(|w| w[0] < w[1]), "out of order: {stderr}");
 }
 
+// --- Summarize ---
+
+#[test]
+fn test_summarize_prints_each_folders_count_and_total_size_in_first_seen_order() {
+    // spreadsheet-read → summarize (`groupBy: folder`, `sum: size`) → report,
+    // which prints a line per group. CSV sizes are text and still add up.
+    let dir = temp_output_dir();
+    let csv = dir.path().join("files.csv");
+    let rows = "name,folder,size\n\
+                a.md,docs,100\n\
+                b.png,img,1000\n\
+                c.md,docs,250\n\
+                d.png,img,24\n\
+                e.txt,docs,50\n";
+    std::fs::write(&csv, rows).unwrap();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("summarize-report"), "--yes"])
+        .arg(&csv)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let docs = line_index(&stderr, "folder docs: 3 files, 400 bytes");
+    let img = line_index(&stderr, "folder img: 2 files, 1024 bytes");
+    assert!(docs < img, "out of order: {stderr}");
+    assert_eq!(
+        stderr.matches(" bytes").count(),
+        2,
+        "one line per group: {stderr}"
+    );
+}
+
+#[test]
+fn test_summarize_fails_on_a_size_that_is_not_a_number() {
+    let dir = temp_output_dir();
+    let csv = dir.path().join("files.csv");
+    std::fs::write(&csv, "name,folder,size\na.md,docs,100\nb.md,docs,12 KB\n").unwrap();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("summarize-report"), "--yes"])
+        .arg(&csv)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("12 KB"), "stderr: {stderr}");
+    assert!(!stderr.contains("folder docs:"), "stderr: {stderr}");
+}
+
 // --- Shell search_path ---
 
 /// A tools folder holding a `greet` program that prints "greeted", and a

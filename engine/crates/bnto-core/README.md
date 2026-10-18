@@ -85,7 +85,7 @@ src/
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
 ├── time.rs               # rfc3339_utc() / parse_rfc3339_utc(): epoch ms <-> RFC 3339 UTC
 ├── control/              # Control processors: assert (fail the run when a comparison does not hold), report (print a templated line)
-├── data/                 # Data processors: edit-fields (set item fields from templates over the others)
+├── data/                 # Data processors: edit-fields (set item fields from templates over the others), summarize (one item per group, with its count and field totals)
 ├── check/                # check_pipeline(): unknown types, validate() refusals, placeholder form
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic

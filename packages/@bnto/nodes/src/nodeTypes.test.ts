@@ -25,6 +25,7 @@ describe("NODE_TYPES", () => {
     expect(NODE_TYPES.fileSort).toBe("file-sort");
     expect(NODE_TYPES.httpRequest).toBe("http-request");
     expect(NODE_TYPES.shellCommand).toBe("shell-command");
+    expect(NODE_TYPES.summarize).toBe("summarize");
     expect(NODE_TYPES.group).toBe("group");
     expect(NODE_TYPES.imageCompress).toBe("image-compress");
     expect(NODE_TYPES.imageResize).toBe("image-resize");

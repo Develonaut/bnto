@@ -40,6 +40,7 @@ export type NodeTypeName =
   | "spreadsheet-merge"
   | "spreadsheet-read"
   | "spreadsheet-rename"
+  | "summarize"
   | "transform"
   | "vector-optimize"
   | "vector-rasterize";
