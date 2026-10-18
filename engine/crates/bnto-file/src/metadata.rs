@@ -1,8 +1,8 @@
 // file-metadata — Extract and expose file metadata as pipeline output.
 //
 // Pass-through enrichment node: file data flows unchanged, but the output
-// metadata map gains fields like file_size, extension, mime_type, and
-// an optional hash (SHA-256). Works in both browser and CLI. A disk file
+// metadata map gains fields like folder, file_size, extension, mime_type,
+// and an optional hash (SHA-256). Works in both browser and CLI. A disk file
 // (CLI) also reports `modified`; in-memory bytes (browser) have no mtime.
 // A disk file is measured with a stat and passes on as a path; only the
 // hash reads its content.
@@ -36,7 +36,7 @@ impl NodeProcessor for FileMetadata {
         NodeMetadata {
             node_type: "file-metadata".to_string(),
             name: "File Metadata".to_string(),
-            description: "Extract file metadata (size, extension, MIME type, modified time, hash) and attach it to the pipeline output.".to_string(),
+            description: "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.".to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string(), "cli".to_string(), "desktop".to_string()],
@@ -102,11 +102,12 @@ fn measure(data: &FileData, include_hash: bool) -> Result<FileFacts, BntoError> 
     })
 }
 
-/// The metadata map for one file: name, size, extension, MIME type, plus
-/// `modified` when known and `sha256` when asked for.
+/// The metadata map for one file: name, folder, size, extension, MIME type,
+/// plus `modified` when known and `sha256` when asked for.
 fn build_metadata(filename: &str, facts: FileFacts) -> serde_json::Map<String, serde_json::Value> {
     let mut metadata = serde_json::Map::new();
     metadata.insert("filename".to_string(), filename.into());
+    metadata.insert("folder".to_string(), folder_of(filename).into());
     metadata.insert("file_size".to_string(), facts.size.into());
     metadata.insert("extension".to_string(), extract_extension(filename).into());
     metadata.insert("mime_type".to_string(), guess_mime_type(filename).into());
@@ -166,6 +167,17 @@ fn build_metadata_params() -> Vec<ParameterDef> {
 }
 
 // --- Helpers ---
+
+/// The folder part of an item's relative name, `/`-separated: `a/b/c.mp4`
+/// gives `a/b`; a top-level or plain name gives `""`. Taken from the name,
+/// never the disk path, so it's the same on every OS and in the browser.
+/// `\` counts as a separator too, so a name built on Windows still splits.
+fn folder_of(filename: &str) -> String {
+    let name = filename.replace('\\', "/");
+    name.rsplit_once('/')
+        .map(|(folder, _)| folder.to_string())
+        .unwrap_or_default()
+}
 
 /// Extract the file extension (lowercase, without dot).
 fn extract_extension(filename: &str) -> String {
@@ -389,6 +401,70 @@ mod tests {
 
         let name = output.metadata.get("filename").unwrap();
         assert_eq!(name.as_str().unwrap(), "report.csv");
+    }
+
+    // --- Folder ---
+
+    fn folder_for(data: FileData, filename: &str) -> serde_json::Value {
+        let input = NodeInput {
+            data,
+            filename: filename.to_string(),
+            mime_type: None,
+            params: serde_json::Map::new(),
+        };
+        let output = FileMetadata::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        output.metadata["folder"].clone()
+    }
+
+    #[test]
+    fn test_folder_is_the_parent_in_a_nested_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"data", 0);
+        assert_eq!(folder_for(FileData::Path(path), "a/b/c.txt"), "a/b");
+    }
+
+    #[test]
+    fn test_folder_of_a_top_level_name_is_empty() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"data", 0);
+        assert_eq!(folder_for(FileData::Path(path), "c.txt"), "");
+    }
+
+    #[test]
+    fn test_folder_from_a_backslash_name_uses_slashes() {
+        let bytes = FileData::Bytes(b"data".to_vec());
+        assert_eq!(folder_for(bytes, r"a\b\c.txt"), "a/b");
+    }
+
+    #[test]
+    fn test_in_memory_bytes_with_a_plain_name_have_an_empty_folder() {
+        let bytes = FileData::Bytes(b"data".to_vec());
+        assert_eq!(folder_for(bytes, "upload.txt"), "");
+    }
+
+    #[test]
+    fn test_in_memory_bytes_take_their_folder_from_the_name() {
+        // Same answer in the browser as on disk: the name decides.
+        let bytes = FileData::Bytes(b"data".to_vec());
+        assert_eq!(folder_for(bytes, "shots/day1/x.png"), "shots/day1");
+    }
+
+    #[test]
+    fn test_folder_leaves_filename_as_the_full_relative_name() {
+        let bytes = FileData::Bytes(b"data".to_vec());
+        let input = NodeInput {
+            data: bytes,
+            filename: "a/b/c.txt".to_string(),
+            mime_type: None,
+            params: serde_json::Map::new(),
+        };
+        let output = FileMetadata::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        assert_eq!(output.metadata["filename"], "a/b/c.txt");
+        assert_eq!(output.files[0].filename, "a/b/c.txt");
     }
 
     // --- Hash ---

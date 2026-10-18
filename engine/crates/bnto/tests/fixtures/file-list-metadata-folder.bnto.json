@@ -1,0 +1,34 @@
+{
+  "id": "file-list-metadata-folder",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Metadata Folder",
+  "metadata": {
+    "description": "Takes no input: lists three files at different depths under the Root run var and prints each one's folder from file-metadata."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "list",
+      "type": "file-list",
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": ["top.txt", "shots/mid.txt", "shots/day1/deep.txt"]
+      }
+    },
+    { "id": "meta", "type": "file-metadata" },
+    {
+      "id": "show",
+      "type": "report",
+      "parameters": { "message": "folder: [{{item.folder}}] {{item.filename}}" }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "list" },
+    { "id": "e2", "source": "list", "target": "meta" },
+    { "id": "e3", "source": "meta", "target": "show" },
+    { "id": "e4", "source": "show", "target": "output" }
+  ]
+}

@@ -479,7 +479,7 @@
     {
       "name": "file-metadata",
       "label": "File Metadata",
-      "description": "Extract file metadata (size, extension, MIME type, modified time, hash) and attach to output.",
+      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -2930,7 +2930,7 @@
     {
       "nodeType": "file-metadata",
       "name": "File Metadata",
-      "description": "Extract file metadata (size, extension, MIME type, modified time, hash) and attach it to the pipeline output.",
+      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
       "category": "file",
       "accepts": [],
       "platforms": [

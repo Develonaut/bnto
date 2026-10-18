@@ -424,6 +424,46 @@ mod tests {
         );
     }
 
+    #[test]
+    #[cfg(feature = "native")]
+    fn test_file_metadata_gives_each_listed_item_its_folder() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join("a").join("b")).unwrap();
+        let names = ["top.txt", "a/mid.txt", "a/b/deep.txt"];
+        for name in names {
+            std::fs::write(tmp.path().join(name), name).unwrap();
+        }
+        let json = serde_json::json!({
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+                { "id": "list", "type": "file-list",
+                  "parameters": { "base": tmp.path().to_str().unwrap(), "paths": names } },
+                { "id": "meta", "type": "file-metadata" },
+                { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+            ]
+        })
+        .to_string();
+
+        let reporter = PipelineReporter::new_noop();
+        let result =
+            run_pipeline(&json, vec![], &reporter, &NoopContext).expect("pipeline should succeed");
+
+        let folders: Vec<(&str, &serde_json::Value)> = result
+            .files
+            .iter()
+            .map(|f| (f.name.as_str(), &f.metadata["folder"]))
+            .collect();
+        assert_eq!(
+            folders,
+            vec![
+                ("top.txt", &serde_json::json!("")),
+                ("a/mid.txt", &serde_json::json!("a")),
+                ("a/b/deep.txt", &serde_json::json!("a/b")),
+            ]
+        );
+    }
+
     /// A CSV whose rows are people, read into one item per row.
     fn people_csv() -> PipelineFile {
         PipelineFile {
