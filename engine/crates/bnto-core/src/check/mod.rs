@@ -2,9 +2,10 @@
 //
 // Walks the nodes the way the executor does (I/O markers skipped, container
 // children entered) and reports unknown node types, params a node's
-// `validate` refuses, malformed `{{…}}` placeholders, and `always` on an
-// I/O marker, where it has no effect.
+// `validate` refuses, malformed `{{…}}` placeholders, `always` on an I/O
+// marker, where it has no effect, and every edge problem at every level.
 
+mod edges;
 mod placeholder;
 
 use std::collections::BTreeMap;
@@ -12,6 +13,7 @@ use std::collections::BTreeMap;
 use crate::executor::resolve::{collect_field_values, resolve_fields};
 use crate::pipeline::{PipelineDefinition, PipelineNode, is_container_node, is_io_node};
 use crate::registry::NodeRegistry;
+use edges::{Level, edge_findings};
 
 /// One problem `check_pipeline` found in a recipe.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,26 +47,48 @@ pub fn check_pipeline(
     registry: &NodeRegistry,
 ) -> Vec<CheckFinding> {
     let mut findings = Vec::new();
-    check_nodes(&definition.nodes, registry, &mut findings);
+    let root = Level {
+        nodes: &definition.nodes,
+        edges: &definition.edges,
+        owner: None,
+    };
+    let recipe = Recipe {
+        root: &definition.nodes,
+        registry,
+    };
+    check_level(&root, &recipe, &mut findings);
     findings
 }
 
-/// Check `nodes` in order, recursing into container children.
-fn check_nodes(nodes: &[PipelineNode], registry: &NodeRegistry, findings: &mut Vec<CheckFinding>) {
-    for node in nodes {
-        if is_io_node(&node.node_type) {
-            findings.extend(io_always_finding(node));
-        } else if is_container_node(&node.node_type) {
-            findings.extend(placeholder_findings(node));
-            check_nodes(
-                node.children.as_deref().unwrap_or_default(),
-                registry,
-                findings,
-            );
-        } else {
-            findings.extend(processor_findings(node, registry));
-            findings.extend(placeholder_findings(node));
-        }
+/// What every level's check needs from the whole recipe.
+struct Recipe<'a> {
+    root: &'a [PipelineNode],
+    registry: &'a NodeRegistry,
+}
+
+/// Check a level's edges, then its nodes in order, recursing into container
+/// children.
+fn check_level(level: &Level<'_>, recipe: &Recipe<'_>, findings: &mut Vec<CheckFinding>) {
+    findings.extend(edge_findings(level, recipe.root));
+    for node in level.nodes {
+        check_node(node, recipe, findings);
+    }
+}
+
+fn check_node(node: &PipelineNode, recipe: &Recipe<'_>, findings: &mut Vec<CheckFinding>) {
+    if is_io_node(&node.node_type) {
+        findings.extend(io_always_finding(node));
+    } else if is_container_node(&node.node_type) {
+        findings.extend(placeholder_findings(node));
+        let children = Level {
+            nodes: node.children.as_deref().unwrap_or_default(),
+            edges: &node.edges,
+            owner: Some(node),
+        };
+        check_level(&children, recipe, findings);
+    } else {
+        findings.extend(processor_findings(node, recipe.registry));
+        findings.extend(placeholder_findings(node));
     }
 }
 

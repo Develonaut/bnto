@@ -266,3 +266,237 @@ fn test_always_on_an_io_node_is_reported() {
     assert_eq!(findings[0].param, None);
     assert!(findings[0].message.contains("always"), "{findings:?}");
 }
+
+// --- Edges ---
+
+/// A root level `input`, `lenient` nodes `middle`, `output`, wired by
+/// `edges` as `[id, source, target]` triples.
+fn wired(middle: &[&str], edges: &[(&str, &str, &str)]) -> serde_json::Value {
+    let mut nodes = vec![json!({ "id": "input", "type": "input" })];
+    nodes.extend(
+        middle
+            .iter()
+            .map(|id| json!({ "id": id, "type": "lenient" })),
+    );
+    nodes.push(json!({ "id": "output", "type": "output" }));
+    json!({ "nodes": nodes, "edges": edge_list(edges) })
+}
+
+fn edge_list(edges: &[(&str, &str, &str)]) -> Vec<serde_json::Value> {
+    edges
+        .iter()
+        .map(|(id, s, t)| json!({ "id": id, "source": s, "target": t }))
+        .collect()
+}
+
+fn lines(findings: &[CheckFinding]) -> Vec<String> {
+    findings.iter().map(ToString::to_string).collect()
+}
+
+#[test]
+fn test_a_valid_edge_graph_passes() {
+    let findings = check(wired(
+        &["a", "b"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "b"),
+            ("e3", "b", "output"),
+        ],
+    ));
+    assert_eq!(findings, Vec::new());
+}
+
+#[test]
+fn test_a_cycle_is_one_finding_naming_its_path() {
+    let findings = check(wired(
+        &["a", "b"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "b"),
+            ("e3", "b", "a"),
+            ("e4", "b", "output"),
+        ],
+    ));
+    assert_eq!(
+        lines(&findings),
+        [r#"node "a" (lenient): edges form a cycle: a → b → a"#]
+    );
+}
+
+#[test]
+fn test_an_edge_to_an_unknown_node_is_reported_on_its_known_end() {
+    let findings = check(wired(
+        &["a"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "zz"),
+            ("e3", "a", "output"),
+        ],
+    ));
+    assert_eq!(
+        lines(&findings),
+        [r#"node "a" (lenient): edge "e2" connects to "zz", which is not a node in this recipe"#]
+    );
+}
+
+#[test]
+fn test_a_duplicate_edge_is_reported_on_its_source() {
+    let findings = check(wired(
+        &["a", "b"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "b"),
+            ("e3", "a", "b"),
+            ("e4", "b", "output"),
+        ],
+    ));
+    assert_eq!(
+        lines(&findings),
+        [r#"node "a" (lenient): edge "e3" repeats an earlier edge between the same two nodes"#]
+    );
+}
+
+#[test]
+fn test_an_edge_into_input_is_reported_on_its_source() {
+    let findings = check(wired(
+        &["a"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "output"),
+            ("e3", "a", "input"),
+        ],
+    ));
+    assert_eq!(
+        lines(&findings),
+        [r#"node "a" (lenient): edge "e3" leads into an input node"#]
+    );
+}
+
+#[test]
+fn test_an_edge_out_of_output_is_reported_on_its_target() {
+    let findings = check(wired(
+        &["a"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "output"),
+            ("e3", "output", "a"),
+        ],
+    ));
+    assert_eq!(
+        lines(&findings),
+        [r#"node "a" (lenient): edge "e3" leads out of an output node"#]
+    );
+}
+
+#[test]
+fn test_a_disconnected_node_is_one_finding_on_it() {
+    let findings = check(wired(
+        &["a", "b"],
+        &[("e1", "input", "a"), ("e2", "a", "output")],
+    ));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].node_id, "b");
+    assert_eq!(findings[0].node_type, "lenient");
+    assert!(findings[0].message.contains("no edge"), "{findings:?}");
+}
+
+#[test]
+fn test_every_edge_problem_at_a_level_is_reported() {
+    let findings = check(wired(
+        &["a", "b", "c", "d"],
+        &[
+            ("e1", "input", "a"),
+            ("e2", "a", "zz"),
+            ("e3", "a", "output"),
+            ("e4", "a", "output"),
+            ("e5", "c", "d"),
+            ("e6", "d", "c"),
+        ],
+    ));
+    let at: Vec<_> = findings.iter().map(|f| f.node_id.as_str()).collect();
+    assert_eq!(at, ["a", "a", "b", "c"], "{findings:?}");
+    for edge in ["\"e2\"", "\"e4\""] {
+        assert!(
+            findings.iter().any(|f| f.message.contains(edge)),
+            "{findings:?}"
+        );
+    }
+    assert!(findings[3].message.contains("c → d → c"), "{findings:?}");
+}
+
+#[test]
+fn test_a_root_edge_into_a_container_child_names_the_container() {
+    let findings = check(json!({
+        "nodes": [
+            { "id": "input", "type": "input" },
+            { "id": "a", "type": "lenient" },
+            { "id": "g", "type": "group", "nodes": [{ "id": "c", "type": "lenient" }] },
+            { "id": "output", "type": "output" }
+        ],
+        "edges": edge_list(&[
+            ("e1", "input", "a"), ("e2", "a", "g"), ("e3", "a", "c"), ("e4", "g", "output")
+        ])
+    }));
+    assert_eq!(
+        lines(&findings),
+        [concat!(
+            r#"node "a" (lenient): edge "e3" connects to "c", which is inside container "g"; "#,
+            "edges only connect nodes at the same level"
+        )]
+    );
+}
+
+#[test]
+fn test_a_container_edge_to_a_top_level_node_says_so() {
+    let findings = check(json!({
+        "nodes": [
+            { "id": "a", "type": "lenient" },
+            { "id": "g", "type": "loop",
+              "nodes": [{ "id": "c", "type": "lenient" }, { "id": "d", "type": "lenient" }],
+              "edges": edge_list(&[("ge1", "c", "d"), ("ge2", "d", "a")]) }
+        ]
+    }));
+    assert_eq!(
+        lines(&findings),
+        [concat!(
+            r#"node "d" (lenient): edge "ge2" connects to "a", which is a top-level node; "#,
+            "edges only connect nodes at the same level"
+        )]
+    );
+}
+
+#[test]
+fn test_edge_problems_inside_a_container_are_reported() {
+    let findings = check(json!({
+        "nodes": [{ "id": "g", "type": "group",
+            "nodes": [{ "id": "c", "type": "lenient" }, { "id": "d", "type": "lenient" }],
+            "edges": edge_list(&[("ge1", "c", "d"), ("ge2", "d", "c")]) }]
+    }));
+    assert_eq!(
+        lines(&findings),
+        [r#"node "c" (lenient): edges form a cycle: c → d → c"#]
+    );
+}
+
+#[test]
+fn test_an_edge_with_no_end_in_a_container_is_reported_on_the_container() {
+    let findings = check(json!({
+        "nodes": [{ "id": "g", "type": "group",
+            "nodes": [{ "id": "c", "type": "lenient" }],
+            "edges": edge_list(&[("ge1", "ghost", "phantom"), ("ge2", "c", "c2")]) }]
+    }));
+    let at: Vec<_> = findings.iter().map(|f| f.node_id.as_str()).collect();
+    assert_eq!(at, ["g", "c"], "{findings:?}");
+    assert!(findings[0].message.contains("\"ge1\""), "{findings:?}");
+}
+
+#[test]
+fn test_an_edge_with_no_end_at_the_root_is_reported_on_the_missing_id() {
+    let findings = check(json!({
+        "nodes": [{ "id": "a", "type": "lenient" }],
+        "edges": edge_list(&[("e1", "ghost", "phantom"), ("e2", "a", "a2")])
+    }));
+    assert_eq!(findings.len(), 2, "{findings:?}");
+    assert_eq!(findings[0].node_id, "ghost");
+    assert!(findings[0].message.contains("\"e1\""), "{findings:?}");
+}

@@ -61,14 +61,49 @@ pub fn level_flow<'a>(
     if edges.is_empty() {
         return Ok(Flow::Sequence(level.processing));
     }
-    validate_edges(&level, edges)?;
-    check_connected(nodes, edges)?;
-    let order = order::topological(&level.processing, edges)?;
+    let order = checked_order(&level, nodes, edges).map_err(|mut errors| errors.swap_remove(0))?;
     Ok(Flow::Graph(LevelGraph {
         inputs: inputs(&level, edges),
         outputs: outputs(&level, edges),
         order,
     }))
+}
+
+/// Every reason `level_flow` would refuse one level, in a fixed order: each
+/// edge's problem in `edges` order, then each disconnected node in `nodes`
+/// order, then one cycle. Empty when the level runs (or has no edges).
+///
+/// `level_flow` refuses with the first item, so a recipe `bnto check`
+/// passes is one the executor accepts. The cycle search only follows edges
+/// between processing nodes at this level. No unknown, into-`input` or
+/// out-of-`output` edge is one, and a repeated edge adds no new path, so it
+/// searches the valid subgraph. It names one cycle per level; another shows
+/// up once that one is fixed.
+pub fn level_errors(nodes: &[PipelineNode], edges: &[PipelineEdge]) -> Vec<GraphError> {
+    if edges.is_empty() {
+        return Vec::new();
+    }
+    checked_order(&Level::new(nodes), nodes, edges)
+        .err()
+        .unwrap_or_default()
+}
+
+/// The execution order, or every error at the level (never empty).
+fn checked_order<'a>(
+    level: &Level<'a>,
+    nodes: &[PipelineNode],
+    edges: &[PipelineEdge],
+) -> Result<Vec<&'a PipelineNode>, Vec<GraphError>> {
+    let mut errors = edge_errors(level, edges);
+    errors.extend(disconnected(nodes, edges));
+    match order::topological(&level.processing, edges) {
+        Ok(order) if errors.is_empty() => Ok(order),
+        Ok(_) => Err(errors),
+        Err(cycle) => {
+            errors.push(cycle);
+            Err(errors)
+        }
+    }
 }
 
 /// One level's nodes, indexed for edge lookups.
@@ -108,18 +143,22 @@ impl<'a> Level<'a> {
     }
 }
 
-/// Refuse edges to unknown ids, into `input`, out of `output`, or repeated.
-fn validate_edges(level: &Level<'_>, edges: &[PipelineEdge]) -> Result<(), GraphError> {
+/// Edges to unknown ids, into `input`, out of `output`, or repeated: at most
+/// one error per edge, in edge order. A bad edge never counts as the
+/// earlier edge a later one repeats.
+fn edge_errors(level: &Level<'_>, edges: &[PipelineEdge]) -> Vec<GraphError> {
     let mut seen = HashSet::new();
+    let mut errors = Vec::new();
     for edge in edges {
-        validate_edge(level, edge)?;
-        if !seen.insert((edge.source.as_str(), edge.target.as_str())) {
-            return Err(GraphError::DuplicateEdge {
+        if let Err(error) = validate_edge(level, edge) {
+            errors.push(error);
+        } else if !seen.insert((edge.source.as_str(), edge.target.as_str())) {
+            errors.push(GraphError::DuplicateEdge {
                 edge: edge.id.clone(),
             });
         }
     }
-    Ok(())
+    errors
 }
 
 /// Refuse one edge whose ends aren't siblings, or that enters `input` or
@@ -141,21 +180,17 @@ fn validate_edge(level: &Level<'_>, edge: &PipelineEdge) -> Result<(), GraphErro
     Ok(())
 }
 
-/// Refuse a processing or `output` node that no edge touches.
-fn check_connected(nodes: &[PipelineNode], edges: &[PipelineEdge]) -> Result<(), GraphError> {
+/// Each processing or `output` node that no edge touches, in `nodes` order.
+fn disconnected(nodes: &[PipelineNode], edges: &[PipelineEdge]) -> Vec<GraphError> {
     let touched: HashSet<&str> = edges
         .iter()
         .flat_map(|e| [e.source.as_str(), e.target.as_str()])
         .collect();
-    match nodes
+    nodes
         .iter()
-        .find(|n| n.node_type != INPUT && !touched.contains(n.id.as_str()))
-    {
-        Some(node) => Err(GraphError::Disconnected {
-            node: node.id.clone(),
-        }),
-        None => Ok(()),
-    }
+        .filter(|n| n.node_type != INPUT && !touched.contains(n.id.as_str()))
+        .map(|n| GraphError::Disconnected { node: n.id.clone() })
+        .collect()
 }
 
 /// Each processing node's sources in edge order. With no `input` node, the

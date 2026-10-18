@@ -1,0 +1,44 @@
+{
+  "id": "check-dangling-edge",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Dangling Edge",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "each",
+      "type": "loop",
+      "parameters": {},
+      "nodes": [
+        {
+          "id": "keep-docs",
+          "type": "file-filter",
+          "parameters": { "name_pattern": "^docs/", "pattern_mode": "regex", "match": "path" }
+        },
+        {
+          "id": "copy",
+          "type": "file-copy",
+          "parameters": { "destination": "{{vars.Out}}/Docs" }
+        }
+      ],
+      "edges": [
+        { "id": "le1", "source": "keep-docs", "target": "copy" },
+        { "id": "le2", "source": "copy", "target": "archive" }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "none" }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "each" },
+    { "id": "e2", "source": "input", "target": "copy" },
+    { "id": "e3", "source": "each", "target": "output" }
+  ]
+}

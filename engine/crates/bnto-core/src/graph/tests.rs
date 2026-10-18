@@ -340,3 +340,112 @@ fn an_output_node_touching_no_edge_is_refused() {
         }
     );
 }
+
+// --- Every error at a level ---
+
+fn errors(def: &PipelineDefinition) -> Vec<GraphError> {
+    level_errors(&def.nodes, &def.edges)
+}
+
+#[test]
+fn no_edges_have_no_errors() {
+    let def = level(&with_io(&[("a", "x"), ("b", "x")]), &[]);
+    assert_eq!(errors(&def), Vec::new());
+}
+
+#[test]
+fn a_valid_graph_has_no_errors() {
+    let def = level(
+        &with_io(&[("a", "x")]),
+        &[("e1", "input", "a"), ("e2", "a", "output")],
+    );
+    assert_eq!(errors(&def), Vec::new());
+}
+
+#[test]
+fn every_error_at_a_level_is_listed_edges_then_nodes_then_the_cycle() {
+    let def = level(
+        &with_io(&[("a", "x"), ("b", "x"), ("c", "x"), ("d", "x")]),
+        &[
+            ("e1", "a", "zz"),
+            ("e2", "a", "input"),
+            ("e3", "output", "a"),
+            ("e4", "input", "a"),
+            ("e5", "input", "a"),
+            ("e6", "c", "d"),
+            ("e7", "d", "c"),
+        ],
+    );
+    let expected = vec![
+        GraphError::UnknownNode {
+            edge: "e1".into(),
+            id: "zz".into(),
+        },
+        GraphError::IntoInput { edge: "e2".into() },
+        GraphError::FromOutput { edge: "e3".into() },
+        GraphError::DuplicateEdge { edge: "e5".into() },
+        GraphError::Disconnected { node: "b".into() },
+        GraphError::Cycle {
+            path: vec!["c".into(), "d".into(), "c".into()],
+        },
+    ];
+    assert_eq!(errors(&def), expected);
+}
+
+#[test]
+fn every_disconnected_node_is_listed_in_node_order() {
+    let def = level(
+        &with_io(&[("a", "x"), ("b", "x"), ("c", "x")]),
+        &[("e1", "input", "b")],
+    );
+    let expected: Vec<_> = ["a", "c", "output"]
+        .into_iter()
+        .map(|node| GraphError::Disconnected { node: node.into() })
+        .collect();
+    assert_eq!(errors(&def), expected);
+}
+
+#[test]
+fn a_cycle_is_still_found_beside_a_bad_edge_into_it() {
+    let def = level(
+        &[("a", "x"), ("b", "x")],
+        &[("e1", "ghost", "a"), ("e2", "a", "b"), ("e3", "b", "a")],
+    );
+    let expected = vec![
+        GraphError::UnknownNode {
+            edge: "e1".into(),
+            id: "ghost".into(),
+        },
+        GraphError::Cycle {
+            path: vec!["a".into(), "b".into(), "a".into()],
+        },
+    ];
+    assert_eq!(errors(&def), expected);
+}
+
+#[test]
+fn level_flow_refuses_with_the_first_listed_error() {
+    let defs = [
+        level(
+            &with_io(&[("a", "x"), ("b", "x")]),
+            &[
+                ("e1", "input", "a"),
+                ("e2", "a", "zz"),
+                ("e3", "a", "input"),
+            ],
+        ),
+        level(
+            &with_io(&[("a", "x"), ("b", "x")]),
+            &[("e1", "a", "b"), ("e2", "b", "a")],
+        ),
+        level(
+            &[("a", "x"), ("b", "x")],
+            &[("e1", "a", "b"), ("e2", "b", "a"), ("e3", "a", "b")],
+        ),
+    ];
+    for def in &defs {
+        let listed = errors(def);
+        assert!(listed.len() > 1, "{listed:?}");
+        assert_eq!(error(def), listed[0]);
+    }
+}
