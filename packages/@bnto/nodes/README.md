@@ -40,6 +40,8 @@ src/
 ├── definition.ts               # Definition, Edge, Port, Metadata interfaces
 ├── recipe.ts                   # Recipe, AcceptSpec interfaces
 ├── validate.ts                 # Structural validation
+├── validateEdgeGraph.ts        # Per-level edge graph rules (cycles, duplicates, I/O direction, disconnected)
+├── findEdgeCycle.ts            # Cycle finder for a level's edges
 └── index.ts                    # Public exports
 scripts/
 └── generate-from-catalog.ts    # Codegen script
