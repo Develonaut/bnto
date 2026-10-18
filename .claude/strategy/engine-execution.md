@@ -61,11 +61,11 @@ The executor receives a fully-resolved node graph (a `Definition` with all nodes
 
 ### Execution Steps
 
-1. **Resolve graph** -- topological sort of nodes based on edges. Detect cycles (error).
+1. **Resolve each level's flow** -- a level (the root, or a container's children) with edges is ordered topologically; one without edges runs in `nodes` order. Bad edges (a cycle, an unknown or other-level node, into `input`, out of `output`, a repeat, an unconnected node) fail the run before `PipelineStarted`. See [Edges and Data Flow](#edges-and-data-flow).
 2. **Identify I/O nodes** -- `input` and `output` nodes are structural markers. The executor reads their config (accepted types, output format) but does not "process" them.
-3. **Walk nodes in order** -- for each processing node, determine its container semantics and dispatch to the registered `NodeProcessor`.
+3. **Walk nodes in order** -- for each processing node, determine its container semantics and dispatch to the registered `NodeProcessor`, on the files its incoming edges carry.
 4. **Emit progress events** -- structured events at each stage (see taxonomy below).
-5. **Collect results** -- output bytes from the final processing node (or output node's predecessor) are returned to the caller.
+5. **Collect results** -- the files on the edges into `output` (in edge order) are returned to the caller; without edges, the last processing node's files.
 
 ### How NodeProcessor Fits
 
@@ -114,7 +114,26 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 - **Auto-iteration:** a failure inside a run closes that run's own chain first (a per-file sequence closes the failing file's pass; other files' passes don't run, as before). The `always` nodes of every later run then run as one explicit chain on what it handed over, so a per-file closing step there gets all those files in one node call.
 - **I/O markers:** `always` on an `input` / `output` node has no effect; the output step writes nothing on a failed run. `bnto check` reports it.
 
+- **Levels with edges:** after the first failure at a level, every step that hasn't run is skipped, branches that don't depend on the failure included, and passes its input through; `always` steps run in execution order on what their incoming edges carry. A closing step after a fan-in gets the failed branch's handed-over files and each skipped branch's input, in edge order. The level then hands over its output sources' files, so a failed group passes its sinks' files to the parent's closing steps (`executor/flow_closing.rs`).
+
 **Events:** closing steps emit `NodeStarted` / `NodeCompleted` / `NodeFailed` as usual, numbered by their position (so the CLI's step counter skips the skipped nodes). Skipped nodes emit nothing. `NodeFailed` is emitted for every failing node as before. `PipelineFailed` is emitted once per failed run, last, after every closing step: its `node_id` is the top-level node whose failure is the verdict (the container's id when the failure was inside one) and its `error` is the verdict message. Before closing steps, `PipelineFailed` was emitted at every node failure, including inside containers and in loop iterations that `onError: "continue"` then skipped.
+
+### Edges and Data Flow
+
+**Decision (October 2026):** the executor honors a recipe's `edges`. Before, it fed every node the previous node's output whatever the edges said, so a step couldn't start from no files (a `file-list` after another node read that node's files as path lists) and couldn't take files from two earlier steps. This works the way Node-RED, NiFi and n8n's Merge do. Built in #611 (graph model), #614 (executor), #616 (closing steps), #613 (`bnto check`) and #612 (TS validation).
+
+- **When:** each level (the root, or a container's children) follows its own `edges` when the list is non-empty. A missing or empty list runs in `nodes` order, as before. A level whose edges are the chain its nodes already form runs through exactly the old code path, so the change moved no bundled recipe, fixture or golden.
+- **Order:** topological, ties broken by `nodes` order.
+- **A step's input:** the outputs of every incoming edge, joined in the order the edges are listed in `edges` (not `nodes` order). List `notes → join` before `listing → join` to put the notes first.
+- **Fresh starts:** a step with no incoming edge starts with no files. At a level with an `input` node, edges out of `input` carry the run's files. At a level without one (container children), the first node with no incoming edge, in `nodes` order, gets the level's files (the loop iteration's file, or the group's batch).
+- **Fan-out:** one output feeding several steps is cloned for all but the last consumer in execution order, which takes it. A `FileData::Path` clone copies only the path, so the branches share the file on disk.
+- **A level's output:** at the root, the files on edges into `output`, in edge order; a step wired to nothing after it contributes no files (its `{{node.*}}` record is still kept). In a container, the outputs of its sinks (nodes with no outgoing edge), in `nodes` order.
+- **Refused before `PipelineStarted`**, and reported by `bnto check` from the same rules (`graph::level_errors` / `level_flow`): a cycle, an edge to an unknown node or one at another level, into `input`, out of `output`, a repeated edge, and a node no edge touches.
+- **Records:** a node reads `{{node.<id>.*}}` of any node that ran before it in execution order, at its level and enclosing ones.
+- **Auto-iteration:** a branching level runs as linear segments, each through the existing chain or auto-iteration code. Fan-in and fan-out points are barriers like batch nodes, so adding a branch to an auto recipe changes where its per-file passes split.
+- **Events:** `PipelineStarted.nodes` lists nodes in execution order, and `node_index` is the execution position.
+
+**Watch for:** a step that moves or deletes a shared file (`file-move`, `file-delete`, an overwriting output) takes it from branches that run after it. They then fail naming the missing file. A recipe saved by the frozen editor, which never writes edges, keeps its old edges when a node is added, so the run is refused, naming the unconnected node, until the editor wires edges.
 
 ---
 
@@ -122,15 +141,15 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 The executor emits structured progress events. Each event has a `pipeline_id`, `timestamp`, and event-specific data.
 
-| Event               | When                                    | Data                                                                   |
-| ------------------- | --------------------------------------- | ---------------------------------------------------------------------- |
-| `PipelineStarted`   | Execution begins                        | `pipeline_id`, `total_nodes`, `total_files`                            |
-| `NodeStarted`       | A node begins processing                | `node_id`, `node_type`                                                 |
-| `FileProgress`      | Progress on a single file within a node | `node_id`, `file_index`, `file_name`, `bytes_processed`, `bytes_total` |
-| `NodeCompleted`     | A node finishes successfully            | `node_id`, `files_processed`, `duration_ms`                            |
-| `NodeFailed`        | A node encounters an error              | `node_id`, `error`, `file_index` (if file-specific)                    |
-| `PipelineCompleted` | All nodes finished successfully         | `total_duration_ms`, `files_processed`                                 |
-| `PipelineFailed`    | Once, last, when a run fails (after its closing steps) | `node_id` (top-level node whose failure is the verdict), `error` |
+| Event               | When                                                   | Data                                                                   |
+| ------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `PipelineStarted`   | Execution begins                                       | `pipeline_id`, `total_nodes`, `total_files`                            |
+| `NodeStarted`       | A node begins processing                               | `node_id`, `node_type`                                                 |
+| `FileProgress`      | Progress on a single file within a node                | `node_id`, `file_index`, `file_name`, `bytes_processed`, `bytes_total` |
+| `NodeCompleted`     | A node finishes successfully                           | `node_id`, `files_processed`, `duration_ms`                            |
+| `NodeFailed`        | A node encounters an error                             | `node_id`, `error`, `file_index` (if file-specific)                    |
+| `PipelineCompleted` | All nodes finished successfully                        | `total_duration_ms`, `files_processed`                                 |
+| `PipelineFailed`    | Once, last, when a run fails (after its closing steps) | `node_id` (top-level node whose failure is the verdict), `error`       |
 
 In the browser, `bnto-wasm` bridges these events to a JS callback. `@bnto/core` maps them to Zustand store updates or DOM-direct attribute changes (for high-frequency `FileProgress` events).
 
@@ -156,7 +175,7 @@ The executor receives a `Definition` -- a self-describing node graph with metada
 
 - **I/O nodes are structural markers.** The executor reads `input` node config to know accepted file types and `output` node config to know the output format. It does not "run" them -- they declare the contract.
 - **The executor does not look up recipes.** It receives a fully-resolved graph. Whether the definition came from a predefined recipe, a user-created recipe, or a community marketplace is irrelevant.
-- **Edges define data flow.** The executor uses edges to build the topological order. Nodes without incoming edges (other than input) are roots. The executor walks the graph from input to output.
+- **Edges define data flow.** At a level with edges, the executor orders nodes topologically and routes files along the edges: a step gets its incoming edges' files in edge order, and a step without one starts empty. A level without edges runs in `nodes` order. See [Edges and Data Flow](#edges-and-data-flow).
 
 ---
 

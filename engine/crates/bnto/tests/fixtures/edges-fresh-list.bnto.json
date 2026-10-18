@@ -1,0 +1,27 @@
+{
+  "id": "edges-fresh-list",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Edges Fresh List",
+  "metadata": {
+    "description": "Takes no input: `emit` renders paths.txt naming listing.md, and `fresh`, a file-list with no incoming edge, lists only notes.md under the Root run var. Only fresh's files reach the output."
+  },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "emit",
+      "type": "file-render",
+      "parameters": { "filename": "paths.txt", "header": "listing.md", "row": "-" }
+    },
+    {
+      "id": "fresh",
+      "type": "file-list",
+      "parameters": { "base": "{{vars.Root}}", "paths": ["notes.md"] }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "emit" },
+    { "id": "e2", "source": "fresh", "target": "output" }
+  ]
+}

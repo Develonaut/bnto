@@ -1,6 +1,6 @@
 # Join Files Node
 
-> Join the files flowing in into one file, in arrival order, a separator between them.
+> Join the files flowing in into one file, in arrival order (edge order when several steps feed it), a separator between them.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

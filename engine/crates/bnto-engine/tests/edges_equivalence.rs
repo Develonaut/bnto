@@ -97,16 +97,11 @@ fn test_asset(rel: &str) -> PathBuf {
         .join(rel)
 }
 
-/// Every `.bnto.json` under `dir`, recursively, as (name, JSON). Skips
-/// `check/`: those fixtures feed `bnto check` and are broken on purpose
-/// (bad edges, bad JSON), so they say nothing about how a run behaves.
+/// Every `.bnto.json` under `dir`, recursively, as (name, JSON).
 fn fixtures_in(dir: &Path, out: &mut Vec<(String, String)>) {
     for entry in std::fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
         if path.is_dir() {
-            if path.file_name().is_some_and(|n| n == "check") {
-                continue;
-            }
             fixtures_in(&path, out);
         } else if path.to_string_lossy().ends_with(".bnto.json") {
             let json = std::fs::read_to_string(&path).unwrap();
@@ -134,6 +129,29 @@ fn strip_edges(value: &mut Value) {
     if let Some(Value::Array(nodes)) = object.get_mut("nodes") {
         nodes.iter_mut().for_each(strip_edges);
     }
+}
+
+/// Whether every level's edges are absent or exactly the chain its nodes
+/// already form, the definitions this test's claim is about. A fixture that
+/// branches, or is broken on purpose for `bnto check`, is skipped.
+fn edges_follow_node_order(level: &Value) -> bool {
+    let Some(nodes) = level["nodes"].as_array().or(level["children"].as_array()) else {
+        return true;
+    };
+    let ids: Vec<&str> = nodes.iter().filter_map(|n| n["id"].as_str()).collect();
+    let chain: Vec<(&str, &str)> = ids.windows(2).map(|w| (w[0], w[1])).collect();
+    let edges: Vec<(&str, &str)> = level["edges"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|e| {
+            (
+                e["source"].as_str().unwrap_or(""),
+                e["target"].as_str().unwrap_or(""),
+            )
+        })
+        .collect();
+    (edges.is_empty() || edges == chain) && nodes.iter().all(edges_follow_node_order)
 }
 
 fn has_edges(value: &Value) -> bool {
@@ -246,6 +264,9 @@ fn assert_equivalent_on(asset: Option<(&str, &str)>) -> (usize, usize) {
         let Some(def) = sandboxed(&json, &sandbox.root) else {
             continue;
         };
+        if !edges_follow_node_order(&def) {
+            continue;
+        }
         let mut stripped = def.clone();
         strip_edges(&mut stripped);
         let edged = run_once(&sandbox, &def, asset);

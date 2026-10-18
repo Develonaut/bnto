@@ -207,7 +207,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-join",
             "Join Files",
-            "Join the files flowing in into one file, in arrival order, a separator between them.",
+            "Join the files flowing in into one file, in arrival order (edge order when several steps feed it), a separator between them.",
             NodeCategory::File,
             false,
             "browser",
