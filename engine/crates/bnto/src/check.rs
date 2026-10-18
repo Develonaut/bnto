@@ -106,6 +106,23 @@ mod tests {
     }
 
     #[test]
+    fn test_every_edge_finding_names_the_file() {
+        let json = r#"{
+            "nodes": [{ "id": "a", "type": "file-filter" }, { "id": "b", "type": "file-filter" }],
+            "edges": [{ "id": "e1", "source": "a", "target": "b" },
+                      { "id": "e2", "source": "b", "target": "a" },
+                      { "id": "e3", "source": "a", "target": "nope" }]
+        }"#;
+        assert_eq!(
+            check(json),
+            vec![
+                r#"r.bnto.json: node "a" (file-filter): edge "e3" connects to "nope", which is not a node in this recipe"#,
+                r#"r.bnto.json: node "a" (file-filter): edges form a cycle: a → b → a"#,
+            ]
+        );
+    }
+
+    #[test]
     fn test_invalid_json_is_one_finding() {
         let lines = check("{ nope");
         assert_eq!(lines.len(), 1);

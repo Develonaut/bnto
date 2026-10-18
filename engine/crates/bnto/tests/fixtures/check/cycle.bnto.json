@@ -1,0 +1,34 @@
+{
+  "id": "check-cycle",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Cycle",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "keep-docs",
+      "type": "file-filter",
+      "parameters": { "name_pattern": "^docs/", "pattern_mode": "regex", "match": "path" }
+    },
+    {
+      "id": "copy",
+      "type": "file-copy",
+      "parameters": { "destination": "{{vars.Out}}/Docs" }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "none" }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "keep-docs" },
+    { "id": "e2", "source": "keep-docs", "target": "copy" },
+    { "id": "e3", "source": "copy", "target": "keep-docs" },
+    { "id": "e4", "source": "copy", "target": "output" }
+  ]
+}

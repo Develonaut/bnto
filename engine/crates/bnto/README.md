@@ -49,8 +49,9 @@ bnto list
 bnto info compress-images
 
 # Check recipe files without running them: unknown node types, parameters a
-# node refuses (e.g. a file-filter regex that doesn't compile) and malformed
-# {{…}} placeholders. Prints one line per finding, then
+# node refuses (e.g. a file-filter regex that doesn't compile), malformed
+# {{…}} placeholders, and every edge problem at every level (cycles, edges to
+# unknown or other-level nodes, unwired nodes). Prints one line per finding, then
 # `Check: PASS (<n> recipes)` (exit 0) or `Check: FAIL (<n> findings)` (exit 1)
 bnto check backup.bnto.json recipes/*.bnto.json
 

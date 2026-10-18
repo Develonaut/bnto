@@ -148,7 +148,7 @@ pub use executor::template::{
 };
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use file_data::FileData;
-pub use graph::{Flow, GraphError, LevelGraph, Source, level_flow};
+pub use graph::{Flow, GraphError, LevelGraph, Source, level_errors, level_flow};
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
     Constraints, Dependency, HostPlatform, InputCardinality, InstallHints, NodeCategory,

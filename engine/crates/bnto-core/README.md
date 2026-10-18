@@ -46,7 +46,7 @@ let processor = registry.get("image", "compress")?;
 
 ### Recipe Check
 
-`check_pipeline()` checks a `PipelineDefinition` against a registry without running it, walking the nodes as the executor does (I/O nodes skipped, container children entered). Each `CheckFinding` names the node, its type and, where one is at fault, the param. It reports an unknown node type, each message the node's `validate()` returns, and a malformed placeholder: an unclosed `{{`, or a `{{namespace.` outside `fields`, `env`, `ctx`, `node`, `item` and `vars`. It also reports `always` on an I/O node, where it has no effect. Placeholders are checked for form only, so no vars or inputs are needed.
+`check_pipeline()` checks a `PipelineDefinition` against a registry without running it, walking the nodes as the executor does (I/O nodes skipped, container children entered). Each `CheckFinding` names the node, its type and, where one is at fault, the param. It reports an unknown node type, each message the node's `validate()` returns, and a malformed placeholder: an unclosed `{{`, or a `{{namespace.` outside `fields`, `env`, `ctx`, `node`, `item` and `vars`. It also reports `always` on an I/O node, where it has no effect, and every edge problem at every level (the root and each container's children): a cycle (named as `a → b → a`), an edge to an unknown id or one at another level, a duplicate edge, an edge into `input` or out of `output`, and a node no edge touches. These come from `graph::level_errors()`, which lists every error `level_flow()` would refuse with (`level_flow` returns the first), so check and run never disagree. Each is reported on the node at fault and names the edge. Placeholders are checked for form only, so no vars or inputs are needed.
 
 ### PipelineEvent
 
@@ -88,7 +88,7 @@ src/
 ├── time.rs               # rfc3339_utc() / parse_rfc3339_utc(): epoch ms <-> RFC 3339 UTC
 ├── control/              # Control processors: assert (fail the run when a comparison does not hold), report (print a templated line)
 ├── data/                 # Data processors: edit-fields (set item fields from templates over the others), summarize (one item per group, with its count and field totals)
-├── check/                # check_pipeline(): unknown types, validate() refusals, placeholder form
+├── check/                # check_pipeline(): unknown types, validate() refusals, placeholder form, edges
 └── executor/
     ├── mod.rs            # Public API + node dispatch logic
     ├── chain.rs          # Node chaining: each output feeds the next
