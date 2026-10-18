@@ -1,10 +1,10 @@
 # bnto-file
 
-File operation nodes. Rename, filter, sort, decode, collect, copy, delete, inspect, and render files.
+File operation nodes. Rename, filter, sort, decode, collect, copy, delete, inspect, render, and join files.
 
 ## Overview
 
-`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter or reorder the pipeline (filter, sort), decode file content (decode), collect files from disk (collect), copy files to a destination (copy), delete the files flowing in (delete), extract metadata, or write one text file from the items (render). Runs in the browser via WASM (rename, filter, sort, decode, metadata, render) or natively for CLI/desktop (collect, copy, delete, list, move).
+`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter or reorder the pipeline (filter, sort), decode file content (decode), collect files from disk (collect), copy files to a destination (copy), delete the files flowing in (delete), extract metadata, write one text file from the items (render), or join the files flowing in into one (join). Runs in the browser via WASM (rename, filter, sort, decode, metadata, render, join) or natively for CLI/desktop (collect, copy, delete, list, move).
 
 ## Processors
 
@@ -16,6 +16,7 @@ File operation nodes. Rename, filter, sort, decode, collect, copy, delete, inspe
 | `FileSort`     | `file-sort`     | Reorder items by metadata fields (`by: "source, -title"`, `-` = descending, later fields break ties); stable, numbers numeric, text by code point (or `case: insensitive`), missing / null / empty values last in either direction; data and metadata untouched | browser, cli |
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, modified time, SHA-256 hash)      | browser, cli    |
 | `FileRender`   | `file-render`   | Write one in-memory text file (Markdown table, report) from a template: header, one row per item filled from `{{item.KEY}}` / `{{file}}`, footer; `{{count}}` anywhere; `escape: markdown` escapes values; a key an item lacks fails the run; `rows` in node metadata | browser, cli |
+| `FileJoin`     | `file-join`     | Join the files flowing in into one file named by `filename`, in arrival order (upstream steps choose and order them), `separator` (default none) between them; raw bytes; disk files stream into a temp file, never loaded whole; a disk file that's gone fails the run, naming it; zero files give an empty file; `joined` in node metadata | browser, cli |
 | `FileCollect`  | `file-collect`  | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it | cli |
 | `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals) | cli             |
 | `FileDelete`   | `file-delete`   | Delete the files flowing in (path references, e.g. from `file-list` / `file-filter`); each must resolve under `base` (no `..` or link escapes), a folder or in-memory item refuses the whole run before anything is deleted, a missing file is skipped; items pass through flagged `deleted` / `skipped`, totals in node metadata | cli |
@@ -51,6 +52,10 @@ src/
 │   ├── mod.rs              # NodeProcessor impl (batch), stable keyed sort
 │   ├── params.rs           # Parameter schema + `by` / `case` parsing
 │   └── key.rs              # One value's sort key; the total order over types
+├── join/             # FileJoin processor (file-join)
+│   ├── mod.rs              # NodeProcessor impl (batch), output file + joined count
+│   ├── params.rs           # Parameter schema + typed reads
+│   └── write.rs            # Missing-file check; in-memory or streamed-to-temp join
 ├── collect.rs        # FileCollect processor + metadata (native-only)
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer

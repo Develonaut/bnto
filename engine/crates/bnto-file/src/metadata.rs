@@ -4,6 +4,8 @@
 // metadata map gains fields like file_size, extension, mime_type, and
 // an optional hash (SHA-256). Works in both browser and CLI. A disk file
 // (CLI) also reports `modified`; in-memory bytes (browser) have no mtime.
+// A disk file is measured with a stat and passes on as a path; only the
+// hash reads its content.
 
 use bnto_core::metadata::{NodeCategory, NodeMetadata, ParameterDef, ParameterType};
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, OutputFile};
@@ -52,60 +54,82 @@ impl NodeProcessor for FileMetadata {
     ) -> Result<NodeOutput, BntoError> {
         progress.report(0, "Extracting metadata...");
 
-        let modified = modified_time(&input.data);
-        let data = input
-            .data
-            .into_bytes()
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to read input: {e}")))?;
         let include_hash = input
             .params
             .get("include_hash")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
+        let facts = measure(&input.data, include_hash)?;
 
         progress.report(50, "Building metadata...");
-        let metadata = build_metadata(&input.filename, &data, modified, include_hash);
+        let metadata = build_metadata(&input.filename, facts);
         progress.report(100, "Done");
 
         let mime_type = input
             .mime_type
             .unwrap_or_else(|| guess_mime_type(&input.filename));
-        Ok(pass_through(data, input.filename, mime_type, metadata))
+        Ok(pass_through(
+            input.data,
+            input.filename,
+            mime_type,
+            metadata,
+        ))
     }
+}
+
+/// What file-metadata learns about one file's data.
+struct FileFacts {
+    size: u64,
+    modified: Option<String>,
+    sha256: Option<String>,
+}
+
+/// Size and mtime come from the filesystem for a disk file, so a multi-GB
+/// file is never loaded. Only the hash needs the content, so only
+/// `include_hash` reads it.
+fn measure(data: &FileData, include_hash: bool) -> Result<FileFacts, BntoError> {
+    let read_failed =
+        |e: std::io::Error| BntoError::ProcessingFailed(format!("Failed to read input: {e}"));
+    let size = data.len().map_err(read_failed)?;
+    let sha256 = match include_hash {
+        true => Some(sha256_hex(&data.to_bytes().map_err(read_failed)?)),
+        false => None,
+    };
+    Ok(FileFacts {
+        size,
+        modified: modified_time(data),
+        sha256,
+    })
 }
 
 /// The metadata map for one file: name, size, extension, MIME type, plus
 /// `modified` when known and `sha256` when asked for.
-fn build_metadata(
-    filename: &str,
-    data: &[u8],
-    modified: Option<String>,
-    include_hash: bool,
-) -> serde_json::Map<String, serde_json::Value> {
+fn build_metadata(filename: &str, facts: FileFacts) -> serde_json::Map<String, serde_json::Value> {
     let mut metadata = serde_json::Map::new();
     metadata.insert("filename".to_string(), filename.into());
-    metadata.insert("file_size".to_string(), data.len().into());
+    metadata.insert("file_size".to_string(), facts.size.into());
     metadata.insert("extension".to_string(), extract_extension(filename).into());
     metadata.insert("mime_type".to_string(), guess_mime_type(filename).into());
-    if let Some(modified) = modified {
+    if let Some(modified) = facts.modified {
         metadata.insert("modified".to_string(), modified.into());
     }
-    if include_hash {
-        metadata.insert("sha256".to_string(), sha256_hex(data).into());
+    if let Some(sha256) = facts.sha256 {
+        metadata.insert("sha256".to_string(), sha256.into());
     }
     metadata
 }
 
-/// The input file, unchanged, with `metadata` attached to the output.
+/// The input file, unchanged (a disk file stays a path), with `metadata`
+/// attached to the output.
 fn pass_through(
-    data: Vec<u8>,
+    data: FileData,
     filename: String,
     mime_type: String,
     metadata: serde_json::Map<String, serde_json::Value>,
 ) -> NodeOutput {
     NodeOutput {
         files: vec![OutputFile {
-            data: FileData::Bytes(data),
+            data,
             filename,
             mime_type,
             metadata: serde_json::Map::new(),
@@ -514,6 +538,131 @@ mod tests {
         assert_eq!(output.metadata["file_size"], 5);
         assert_eq!(output.metadata["extension"], "txt");
         assert_eq!(output.files[0].data.clone().into_bytes().unwrap(), b"hello");
+    }
+
+    // --- Disk files are measured, not read ---
+
+    /// Holds `path` so this process can still stat it but not read it: an
+    /// exclusive handle on Windows, mode 000 elsewhere. `None` when the
+    /// file stays readable anyway (running as root), so the test can't tell.
+    #[cfg(any(unix, windows))]
+    struct Unreadable {
+        #[cfg(windows)]
+        _lock: std::fs::File,
+    }
+
+    #[cfg(windows)]
+    fn unreadable(path: &std::path::Path) -> Option<Unreadable> {
+        use std::os::windows::fs::OpenOptionsExt;
+        let lock = std::fs::OpenOptions::new()
+            .read(true)
+            .share_mode(0)
+            .open(path)
+            .unwrap();
+        std::fs::read(path)
+            .is_err()
+            .then_some(Unreadable { _lock: lock })
+    }
+
+    #[cfg(unix)]
+    fn unreadable(path: &std::path::Path) -> Option<Unreadable> {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o000)).unwrap();
+        std::fs::read(path).is_err().then_some(Unreadable {})
+    }
+
+    #[cfg(any(unix, windows))]
+    #[test]
+    fn test_disk_file_size_and_modified_come_from_its_metadata_not_its_content() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"twelve bytes", 1_700_000_000_123);
+        let Some(_guard) = unreadable(&path) else {
+            eprintln!("skipped: the file stays readable for this user");
+            return;
+        };
+
+        let output = FileMetadata::new()
+            .process(
+                path_input(path),
+                &ProgressReporter::new_noop(),
+                &NoopContext,
+            )
+            .expect("stat alone is enough for size and modified");
+
+        assert_eq!(output.metadata["file_size"], 12);
+        assert_eq!(output.metadata["modified"], "2023-11-14T22:13:20.123Z");
+    }
+
+    #[test]
+    fn test_disk_file_passes_through_as_a_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"data", 0);
+
+        let output = FileMetadata::new()
+            .process(
+                path_input(path.clone()),
+                &ProgressReporter::new_noop(),
+                &NoopContext,
+            )
+            .unwrap();
+
+        assert_eq!(output.files[0].data, FileData::Path(path));
+        assert_eq!(output.files[0].filename, "on-disk.txt");
+    }
+
+    #[test]
+    fn test_multi_gigabyte_file_is_measured_without_loading_it() {
+        // `set_len` makes a 3 GiB file without writing it (sparse on most
+        // Unix filesystems). Reading it would allocate 3 GiB; staying a
+        // `Path` on output shows it was never read.
+        const SIZE: u64 = 3 * 1024 * 1024 * 1024;
+        let tmp = tempfile::tempdir().unwrap();
+        let path = tmp.path().join("huge.bin");
+        std::fs::File::create(&path).unwrap().set_len(SIZE).unwrap();
+        let input = NodeInput {
+            data: FileData::Path(path.clone()),
+            filename: "huge.bin".to_string(),
+            mime_type: None,
+            params: serde_json::Map::new(),
+        };
+
+        let output = FileMetadata::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.metadata["file_size"], SIZE);
+        assert!(output.metadata.contains_key("modified"));
+        assert_eq!(output.files[0].data, FileData::Path(path));
+    }
+
+    #[test]
+    fn test_disk_file_hash_reads_the_content_and_still_passes_a_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let path = disk_file(tmp.path(), b"hello", 0);
+        let mut input = path_input(path.clone());
+        input.params = params(&[("include_hash", serde_json::json!(true))]);
+
+        let output = FileMetadata::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(
+            output.metadata["sha256"],
+            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        );
+        assert_eq!(output.files[0].data, FileData::Path(path));
+    }
+
+    #[test]
+    fn test_in_memory_bytes_stay_bytes() {
+        let input = make_input(b"in memory", "file.txt", serde_json::Map::new());
+
+        let output = FileMetadata::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].data, FileData::Bytes(b"in memory".to_vec()));
+        assert_eq!(output.metadata["file_size"], 9);
     }
 
     // --- Data passthrough ---

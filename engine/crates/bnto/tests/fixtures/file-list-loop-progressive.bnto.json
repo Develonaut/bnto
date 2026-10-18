@@ -1,0 +1,32 @@
+{
+  "id": "file-list-loop-progressive",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Loop Progressive",
+  "metadata": {
+    "description": "Takes no input: lists two files under the Root run var and passes each through a progressive loop, so every iteration's output is a path reference to the user's own file."
+  },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "list",
+      "type": "file-list",
+      "parameters": { "base": "{{vars.Root}}", "paths": ["a.txt", "b.txt"] }
+    },
+    {
+      "id": "each",
+      "type": "loop",
+      "parameters": { "mode": "forEach", "outputPersistence": "progressive" },
+      "nodes": [
+        { "id": "keep", "type": "file-filter", "parameters": { "extensions": "txt" } }
+      ],
+      "edges": []
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "list" },
+    { "id": "e2", "source": "list", "target": "each" },
+    { "id": "e3", "source": "each", "target": "output" }
+  ]
+}

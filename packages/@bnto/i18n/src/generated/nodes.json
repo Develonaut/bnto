@@ -29,6 +29,10 @@
       "label": "Filter Files",
       "description": "Keep or drop files by extension, name or path pattern, and size."
     },
+    "fileJoin": {
+      "label": "Join Files",
+      "description": "Join the files flowing in into one file, in arrival order, a separator between them."
+    },
     "fileList": {
       "label": "List Files",
       "description": "Turn lists of paths into files under a base folder; every path is listed, found or missing."
@@ -257,6 +261,17 @@
       "max_size": {
         "label": "Maximum Size",
         "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit."
+      }
+    },
+    "fileJoin": {
+      "filename": {
+        "label": "File Name",
+        "description": "Name of the joined file, e.g. README.md; its MIME type follows the extension. Reads run templates such as {{vars.X}}.",
+        "placeholder": "joined.txt"
+      },
+      "separator": {
+        "label": "Separator",
+        "description": "Put between files, as written (a newline, a blank line, ---). Not before the first or after the last. Empty joins them directly."
       }
     },
     "fileList": {

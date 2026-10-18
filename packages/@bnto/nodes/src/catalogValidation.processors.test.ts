@@ -173,3 +173,25 @@ describe("file-sort", () => {
     expect(caseP.default).toBe("sensitive");
   });
 });
+
+// =============================================================================
+// file-join
+// =============================================================================
+
+describe("file-join", () => {
+  const proc = PROCESSOR_MAP.get("file-join")!;
+
+  it("is a browser-capable batch node with filename and separator params", () => {
+    expect(proc.platforms).toContain("browser");
+    expect(proc.inputCardinality).toBe("batch");
+    expect(proc.parameters.map((p) => p.name)).toEqual(["filename", "separator"]);
+  });
+
+  it("filename is required text; separator defaults to nothing", () => {
+    const filename = proc.parameters.find((p) => p.name === "filename")!;
+    expect(filename.type).toBe("string");
+    expect(filename.constraints?.required).toBe(true);
+    const separator = proc.parameters.find((p) => p.name === "separator")!;
+    expect(separator.default).toBe("");
+  });
+});

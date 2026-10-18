@@ -611,9 +611,10 @@ mod tests {
         );
     }
 
-    /// Block until `registry` holds a child (spawn is quick), returning its id.
+    /// Block until `registry` holds a child, returning its id. Spawn is quick;
+    /// the long bound only absorbs a loaded machine.
     fn wait_until_registered(registry: &ProcessRegistry) -> u32 {
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
         while registry.active().is_empty() {
             assert!(
                 std::time::Instant::now() < deadline,
@@ -624,29 +625,43 @@ mod tests {
         registry.active()[0]
     }
 
+    /// How long a killed command may take to return. A kill normally lands in
+    /// well under a second; the slack absorbs a loaded machine. It stays far
+    /// below the commands' own ~300s runtime, so a pass still proves the kill
+    /// is what unblocked them.
+    const UNBLOCK_DEADLINE: std::time::Duration = std::time::Duration::from_secs(30);
+
+    /// Stream `cmd` on a thread, call `terminate_all` once it registers, and
+    /// return the registered id with the command's result. Panics if the
+    /// command is still blocked after `UNBLOCK_DEADLINE`.
+    fn kill_streaming_command(
+        cmd: &'static str,
+        args: &'static [&'static str],
+    ) -> (u32, Result<Vec<u8>, BntoError>) {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(ctx.run_command_streaming(cmd, args, &|_| {}));
+        });
+        let id = wait_until_registered(&registry);
+
+        registry.terminate_all();
+        match rx.recv_timeout(UNBLOCK_DEADLINE) {
+            Ok(result) => (id, result),
+            Err(err) => panic!("run_command_streaming must unblock after the kill: {err}"),
+        }
+    }
+
     // Unix-only: drives `sh` and probes the process group with `kill(-pgid, 0)`.
     // The Windows twin below covers the Job Object path.
     #[cfg(unix)]
     #[test]
     fn terminate_all_unblocks_streaming_command() {
-        let registry = Arc::new(ProcessRegistry::new());
-        let ctx = ctx_with_registry(registry.clone());
-
-        let handle = std::thread::spawn(move || {
-            // Backgrounded sleep = grandchild; only a group kill reaps it.
-            ctx.run_command_streaming("sh", &["-c", "sleep 30 & wait"], &|_| {})
-        });
-        let pgid = wait_until_registered(&registry);
-
-        let start = std::time::Instant::now();
-        registry.terminate_all();
-        let result = handle.join().expect("streaming thread panicked");
+        // Backgrounded sleep = grandchild; only a group kill reaps it.
+        let (pgid, result) = kill_streaming_command("sh", &["-c", "sleep 300 & wait"]);
 
         assert!(result.is_err(), "killed command must report failure");
-        assert!(
-            start.elapsed() < std::time::Duration::from_secs(5),
-            "run_command_streaming must unblock promptly after group kill"
-        );
         let alive = unsafe { libc::kill(-(pgid as i32), 0) };
         assert_eq!(alive, -1, "whole process group must be dead");
     }
@@ -654,24 +669,10 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn terminate_all_unblocks_streaming_command_on_windows() {
-        let registry = Arc::new(ProcessRegistry::new());
-        let ctx = ctx_with_registry(registry.clone());
-
-        // ~30s on its own; only a tree kill makes it return early.
-        let handle = std::thread::spawn(move || {
-            ctx.run_command_streaming("ping", &["-n", "30", "127.0.0.1"], &|_| {})
-        });
-        wait_until_registered(&registry);
-
-        let start = std::time::Instant::now();
-        registry.terminate_all();
-        let result = handle.join().expect("streaming thread panicked");
+        // ~300s on its own; only a tree kill makes it return early.
+        let (_, result) = kill_streaming_command("ping", &["-n", "300", "127.0.0.1"]);
 
         assert!(result.is_err(), "killed command must report failure");
-        assert!(
-            start.elapsed() < std::time::Duration::from_secs(5),
-            "run_command_streaming must unblock promptly after the job kill"
-        );
     }
 
     /// Poll `done` for up to 10s; true once it holds.

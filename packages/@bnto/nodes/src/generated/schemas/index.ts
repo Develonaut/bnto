@@ -18,6 +18,8 @@ export { fileDeleteParamsSchema, fileDeleteNodeSchema } from "./fileDelete";
 export type { FileDeleteParams } from "./fileDelete";
 export { fileFilterParamsSchema, fileFilterNodeSchema } from "./fileFilter";
 export type { FileFilterParams } from "./fileFilter";
+export { fileJoinParamsSchema, fileJoinNodeSchema } from "./fileJoin";
+export type { FileJoinParams } from "./fileJoin";
 export { fileListParamsSchema, fileListNodeSchema } from "./fileList";
 export type { FileListParams } from "./fileList";
 export { fileMetadataParamsSchema, fileMetadataNodeSchema } from "./fileMetadata";

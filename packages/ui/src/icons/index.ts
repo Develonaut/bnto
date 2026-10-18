@@ -112,6 +112,7 @@ export {
   Replace as ReplaceIcon,
   MessageSquare as MessageSquareIcon,
   ArrowUpDown as ArrowUpDownIcon,
+  Merge as MergeIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

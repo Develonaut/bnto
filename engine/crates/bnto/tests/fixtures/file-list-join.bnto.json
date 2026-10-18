@@ -1,0 +1,32 @@
+{
+  "id": "file-list-join",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Join",
+  "metadata": {
+    "description": "Takes no input: lists notes.md then listing.md under the Root run var and joins them, a newline between, into README.md."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "list",
+      "type": "file-list",
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": ["notes.md", "listing.md"]
+      }
+    },
+    {
+      "id": "join",
+      "type": "file-join",
+      "parameters": { "filename": "README.md", "separator": "\n" }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "list" },
+    { "id": "e2", "source": "list", "target": "join" },
+    { "id": "e3", "source": "join", "target": "output" }
+  ]
+}

@@ -409,6 +409,42 @@
       ]
     },
     {
+      "name": "file-join",
+      "label": "Join Files",
+      "description": "Join the files flowing in into one file, in arrival order, a separator between them.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "merge",
+      "params": [
+        {
+          "name": "filename",
+          "label": "File Name",
+          "description": "Name of the joined file, e.g. README.md; its MIME type follows the extension. Reads run templates such as {{vars.X}}.",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "joined.txt",
+          "surfaceable": true
+        },
+        {
+          "name": "separator",
+          "label": "Separator",
+          "description": "Put between files, as written (a newline, a blank line, ---). Not before the first or after the last. Empty joins them directly.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "file-list",
       "label": "List Files",
       "description": "Turn lists of paths into files under a base folder; every path is listed, found or missing.",
@@ -2819,6 +2855,44 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "file-join",
+      "name": "Join Files",
+      "description": "Join the files flowing in into one file, in the order they arrive, with an optional separator between them.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "filename",
+          "label": "File Name",
+          "description": "Name of the joined file, e.g. README.md; its MIME type follows the extension. Reads run templates such as {{vars.X}}.",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "joined.txt",
+          "surfaceable": true
+        },
+        {
+          "name": "separator",
+          "label": "Separator",
+          "description": "Put between files, as written (a newline, a blank line, ---). Not before the first or after the last. Empty joins them directly.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "",
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "file-list",
