@@ -39,7 +39,7 @@
     },
     "fileMetadata": {
       "label": "File Metadata",
-      "description": "Extract file metadata (size, extension, MIME type, modified time, hash) and attach to output."
+      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output."
     },
     "fileMove": {
       "label": "Move Files",

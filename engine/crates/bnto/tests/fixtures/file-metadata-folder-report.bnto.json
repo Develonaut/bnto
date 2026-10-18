@@ -1,0 +1,25 @@
+{
+  "id": "file-metadata-folder-report",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File Metadata Folder Report",
+  "metadata": {
+    "description": "Prints the folder file-metadata gives each file passed on the command line."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+    { "id": "meta", "type": "file-metadata" },
+    {
+      "id": "show",
+      "type": "report",
+      "parameters": { "message": "folder: [{{item.folder}}] {{item.filename}}" }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "meta" },
+    { "id": "e2", "source": "meta", "target": "show" },
+    { "id": "e3", "source": "show", "target": "output" }
+  ]
+}

@@ -11,7 +11,7 @@ export const fileMetadataNodeType: NodeTypeInfo = {
   name: "file-metadata",
   label: "File Metadata",
   description:
-    "Extract file metadata (size, extension, MIME type, modified time, hash) and attach to output.",
+    "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,
