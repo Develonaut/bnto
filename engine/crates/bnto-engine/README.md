@@ -35,6 +35,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `edit-fields`         | `bnto-core`        | `data::EditFields`   |
 | `file-decode`         | `bnto-file`        | `FileDecode`         |
 | `file-filter`         | `bnto-file`        | `FileFilter`         |
+| `file-join`           | `bnto-file`        | `FileJoin`           |
 | `file-metadata`       | `bnto-file`        | `FileMetadata`       |
 | `file-render`         | `bnto-file`        | `FileRender`         |
 | `file-sort`           | `bnto-file`        | `FileSort`           |

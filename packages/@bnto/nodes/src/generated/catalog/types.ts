@@ -13,6 +13,7 @@ export type NodeTypeName =
   | "file-decode"
   | "file-delete"
   | "file-filter"
+  | "file-join"
   | "file-list"
   | "file-metadata"
   | "file-move"

@@ -14,6 +14,7 @@ import { fileCopyNodeSchema } from "./schemas/fileCopy";
 import { fileDecodeNodeSchema } from "./schemas/fileDecode";
 import { fileDeleteNodeSchema } from "./schemas/fileDelete";
 import { fileFilterNodeSchema } from "./schemas/fileFilter";
+import { fileJoinNodeSchema } from "./schemas/fileJoin";
 import { fileListNodeSchema } from "./schemas/fileList";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
 import { fileMoveNodeSchema } from "./schemas/fileMove";
@@ -55,6 +56,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-decode": fileDecodeNodeSchema,
   "file-delete": fileDeleteNodeSchema,
   "file-filter": fileFilterNodeSchema,
+  "file-join": fileJoinNodeSchema,
   "file-list": fileListNodeSchema,
   "file-metadata": fileMetadataNodeSchema,
   "file-move": fileMoveNodeSchema,
@@ -136,6 +138,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     min_size: { suffix: "bytes" },
     max_size: { suffix: "bytes" },
   },
+  "file-join": {},
   "file-list": {},
   "file-metadata": {},
   "file-move": {},
