@@ -21,6 +21,7 @@ describe("NODE_TYPES", () => {
     expect(NODE_TYPES.fileMove).toBe("file-move");
     expect(NODE_TYPES.fileRename).toBe("file-rename");
     expect(NODE_TYPES.fileRender).toBe("file-render");
+    expect(NODE_TYPES.fileSort).toBe("file-sort");
     expect(NODE_TYPES.httpRequest).toBe("http-request");
     expect(NODE_TYPES.shellCommand).toBe("shell-command");
     expect(NODE_TYPES.group).toBe("group");

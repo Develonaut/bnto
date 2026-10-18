@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 35 registered node types.
+/// Return metadata for all 36 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -221,6 +221,15 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "file-text"
+        ),
+        node_type!(
+            "file-sort",
+            "Sort Files",
+            "Reorder items by one or more metadata fields, each ascending or descending.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "arrow-up-down"
         ),
     ]
 }

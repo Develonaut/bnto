@@ -28,6 +28,8 @@ export { fileRenameParamsSchema, fileRenameNodeSchema } from "./fileRename";
 export type { FileRenameParams } from "./fileRename";
 export { fileRenderParamsSchema, fileRenderNodeSchema } from "./fileRender";
 export type { FileRenderParams } from "./fileRender";
+export { fileSortParamsSchema, fileSortNodeSchema } from "./fileSort";
+export type { FileSortParams } from "./fileSort";
 export { imageCompressParamsSchema, imageCompressNodeSchema } from "./imageCompress";
 export type { ImageCompressParams } from "./imageCompress";
 export { imageConvertParamsSchema, imageConvertNodeSchema } from "./imageConvert";

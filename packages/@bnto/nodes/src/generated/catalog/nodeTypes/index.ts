@@ -18,6 +18,7 @@ import { fileMetadataNodeType } from "./fileMetadata";
 import { fileMoveNodeType } from "./fileMove";
 import { fileRenameNodeType } from "./fileRename";
 import { fileRenderNodeType } from "./fileRender";
+import { fileSortNodeType } from "./fileSort";
 import { groupNodeType } from "./group";
 import { httpRequestNodeType } from "./httpRequest";
 import { imageCompressNodeType } from "./imageCompress";
@@ -59,6 +60,7 @@ export const NODE_TYPES = {
   fileMove: "file-move",
   fileRename: "file-rename",
   fileRender: "file-render",
+  fileSort: "file-sort",
   group: "group",
   httpRequest: "http-request",
   imageCompress: "image-compress",
@@ -104,6 +106,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "file-move": fileMoveNodeType,
   "file-rename": fileRenameNodeType,
   "file-render": fileRenderNodeType,
+  "file-sort": fileSortNodeType,
   group: groupNodeType,
   "http-request": httpRequestNodeType,
   "image-compress": imageCompressNodeType,

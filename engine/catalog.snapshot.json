@@ -754,6 +754,52 @@
       ]
     },
     {
+      "name": "file-sort",
+      "label": "Sort Files",
+      "description": "Reorder items by one or more metadata fields, each ascending or descending.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "arrow-up-down",
+      "params": [
+        {
+          "name": "by",
+          "label": "Sort By",
+          "description": "Metadata fields to sort by, separated by commas; later fields break ties. A leading '-' sorts that field descending. Numbers sort numerically; items missing a field (or with it null or empty) go last.",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "source, -title",
+          "surfaceable": true
+        },
+        {
+          "name": "case",
+          "label": "Letter Case",
+          "description": "How text compares: as written, by Unicode code point (upper case before lower), or ignoring case.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "sensitive",
+                "label": "Case-sensitive"
+              },
+              {
+                "value": "insensitive",
+                "label": "Ignore case"
+              }
+            ]
+          },
+          "default": "sensitive",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "group",
       "label": "Group",
       "description": "Container for child nodes. Orchestrates sequential or parallel execution.",
@@ -3120,6 +3166,54 @@
             ]
           },
           "default": "none",
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
+    },
+    {
+      "nodeType": "file-sort",
+      "name": "Sort Files",
+      "description": "Reorder items by one or more metadata fields, each ascending or descending (`source, -title`). Stable; numbers sort numerically, missing values last. Data and metadata are untouched.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "by",
+          "label": "Sort By",
+          "description": "Metadata fields to sort by, separated by commas; later fields break ties. A leading '-' sorts that field descending. Numbers sort numerically; items missing a field (or with it null or empty) go last.",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "source, -title",
+          "surfaceable": true
+        },
+        {
+          "name": "case",
+          "label": "Letter Case",
+          "description": "How text compares: as written, by Unicode code point (upper case before lower), or ignoring case.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "sensitive",
+                "label": "Case-sensitive"
+              },
+              {
+                "value": "insensitive",
+                "label": "Ignore case"
+              }
+            ]
+          },
+          "default": "sensitive",
           "surfaceable": true
         }
       ],

@@ -49,6 +49,10 @@
       "label": "Render Text File",
       "description": "Write one text file from a template: a header, one row per item, then a footer."
     },
+    "fileSort": {
+      "label": "Sort Files",
+      "description": "Reorder items by one or more metadata fields, each ascending or descending."
+    },
     "group": {
       "label": "Group",
       "description": "Container for child nodes. Orchestrates sequential or parallel execution."
@@ -360,6 +364,17 @@
       "escape": {
         "label": "Escape Values",
         "description": "How values put into a row are escaped; the template text never is. markdown puts a backslash before \\ ` * _ [ ] < > | and turns line breaks into <br>, so a value can't break a table cell."
+      }
+    },
+    "fileSort": {
+      "by": {
+        "label": "Sort By",
+        "description": "Metadata fields to sort by, separated by commas; later fields break ties. A leading '-' sorts that field descending. Numbers sort numerically; items missing a field (or with it null or empty) go last.",
+        "placeholder": "source, -title"
+      },
+      "case": {
+        "label": "Letter Case",
+        "description": "How text compares: as written, by Unicode code point (upper case before lower), or ignoring case."
       }
     },
     "imageCompress": {
