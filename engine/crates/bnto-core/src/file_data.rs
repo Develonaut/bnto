@@ -7,15 +7,15 @@ use std::path::{Path, PathBuf};
 
 /// File content — either in-memory bytes or a path on disk.
 ///
-/// Small outputs (images, CSVs, renamed files) use `Bytes`. Large outputs
-/// from shell-command file mode use `Path` to avoid reading multi-GB files
-/// into memory. Consumers call `write_to()` which uses `rename()` (O(1))
-/// for the `Path` variant with a copy fallback for cross-device moves.
+/// Small outputs (images, CSVs) use `Bytes`. Files on disk (CLI argument
+/// files, `file-collect` results, shell-command file-mode outputs) use `Path`
+/// to avoid reading multi-GB files into memory. A `Path` may be the user's
+/// own file: write it out with `copy_to()`; `write_to()` moves it.
 #[derive(Debug, Clone, PartialEq)]
 pub enum FileData {
     /// In-memory file content (images, CSVs, small outputs).
     Bytes(Vec<u8>),
-    /// Reference to a file on disk (shell-command file-mode outputs).
+    /// Reference to a file on disk (CLI inputs, collected files, shell outputs).
     /// The file is NOT read into memory until `into_bytes()` is called.
     Path(PathBuf),
 }

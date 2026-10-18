@@ -40,7 +40,8 @@ pub fn write_progressive_files(output_dir: &str, files: &[bnto_core::events::Pro
     let dir = std::path::Path::new(output_dir);
     for file in files {
         let path = dir.join(&file.name);
-        let _ = file.data.write_to(&path);
+        // Copy, not move: a Path may be the user's own input file.
+        let _ = file.data.copy_to(&path);
     }
 }
 

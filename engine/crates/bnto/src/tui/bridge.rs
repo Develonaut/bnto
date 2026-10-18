@@ -414,4 +414,25 @@ mod tests {
         assert_eq!(outputs.len(), 1);
         assert_eq!(outputs[0].original_size, None);
     }
+
+    #[test]
+    fn write_progressive_files_copies_a_path_and_keeps_the_source() {
+        // Guards: an argument file passes through as a path to the user's
+        // own file, so writing it out must copy, never move it.
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("original.mp4");
+        fs::write(&src, b"video").unwrap();
+        let out = temp.path().join("out");
+        fs::create_dir(&out).unwrap();
+
+        let files = [bnto_core::events::ProgressOutputFile {
+            name: "renamed.mp4".into(),
+            data: FileData::Path(src.clone()),
+            mime_type: "video/mp4".into(),
+        }];
+        write_progressive_files(&out.to_string_lossy(), &files);
+
+        assert_eq!(fs::read(out.join("renamed.mp4")).unwrap(), b"video");
+        assert!(src.exists(), "source must survive a progressive write");
+    }
 }
