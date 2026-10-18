@@ -37,7 +37,11 @@ pre-commit:
 
     lint:
       glob: "*.{ts,tsx,js,mjs}"
-      exclude: "^(archive/|engine/|node_modules/|\\.next)"
+      exclude:
+        - "archive/**"
+        - "engine/**"
+        - "**/node_modules/**"
+        - "**/.next/**"
       run: pnpm turbo run lint
 
     typecheck:
@@ -60,5 +64,9 @@ pre-commit:
 
     check-grab-bags:
       glob: "*.{ts,tsx}"
-      exclude: "(node_modules/|engine/|\\.next|e2e/)"
+      exclude:
+        - "**/node_modules/**"
+        - "engine/**"
+        - "**/.next/**"
+        - "**/e2e/**"
       run: sh scripts/hooks/check-grab-bags.sh {staged_files}
