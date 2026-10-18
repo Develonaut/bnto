@@ -6,15 +6,16 @@
 
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
-use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 
+use bnto_core::CommandOptions;
 use bnto_core::context::ProcessContext;
 use bnto_core::dotenv::parse_dotenv;
 use bnto_core::errors::BntoError;
 
+use crate::command_stream;
 use crate::process_registry::ProcessRegistry;
 use crate::scratch::RunScratch;
 
@@ -181,6 +182,37 @@ fn command_failed(
     BntoError::CommandFailed { message, stdout }
 }
 
+/// A finished command's stdout, or the failure it ends with: stopped for
+/// outliving its timeout, or a non-zero exit. Either failure hands over the
+/// stdout printed so far.
+fn command_outcome(
+    cmd: &str,
+    options: &CommandOptions,
+    finished: command_stream::Finished,
+) -> Result<Vec<u8>, BntoError> {
+    if finished.timed_out {
+        let secs = options.timeout.unwrap_or_default().as_secs();
+        let message = format!("Command '{cmd}' timed out after {secs}s and was stopped");
+        return Err(BntoError::CommandFailed {
+            message,
+            stdout: finished.stdout,
+        });
+    }
+    if finished.status.success() {
+        return Ok(finished.stdout);
+    }
+    let stderr = finished.stderr.join(
+        "
+",
+    );
+    Err(command_failed(
+        cmd,
+        finished.status,
+        &stderr,
+        finished.stdout,
+    ))
+}
+
 impl ProcessContext for NativeContext {
     fn dry_run(&self) -> bool {
         self.dry_run
@@ -212,87 +244,31 @@ impl ProcessContext for NativeContext {
         args: &[&str],
         on_output: &dyn Fn(&str),
     ) -> Result<Vec<u8>, BntoError> {
+        self.run_command_with(cmd, args, &CommandOptions::default(), on_output)
+    }
+
+    /// Spawn with `options.env` set on the child only, relay its output, and
+    /// kill its whole tree if it outlives `options.timeout`.
+    fn run_command_with(
+        &self,
+        cmd: &str,
+        args: &[&str],
+        options: &CommandOptions,
+        on_output: &dyn Fn(&str),
+    ) -> Result<Vec<u8>, BntoError> {
         let mut command = self.group_command(cmd, args);
+        command.envs(options.env.iter().map(|(k, v)| (k, v)));
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
         let mut child = self
             .spawn_tracked(&mut command)
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
-        let pgid = child.id();
-
-        // Stream stdout line-by-line on a background thread, calling the
-        // callback AND collecting raw bytes. This lets tools like yt-dlp
-        // (which send progress to stdout) show lines in the TUI while we
-        // still capture the full output for stdout mode.
-        let stdout = child.stdout.take().expect("stdout piped");
-        let (line_tx, line_rx) = std::sync::mpsc::channel::<String>();
-        let stdout_handle = std::thread::spawn(move || {
-            let reader = std::io::BufReader::new(stdout);
-            let mut raw_bytes = Vec::new();
-            for line in reader.lines().map_while(Result::ok) {
-                let _ = line_tx.send(line.clone());
-                raw_bytes.extend_from_slice(line.as_bytes());
-                raw_bytes.push(b'\n');
-            }
-            raw_bytes
-        });
-
-        // Stream stderr line-by-line on another background thread.
-        let stderr = child.stderr.take().expect("stderr piped");
-        let (stderr_tx, stderr_rx) = std::sync::mpsc::channel::<String>();
-        let stderr_handle = std::thread::spawn(move || {
-            let reader = std::io::BufReader::new(stderr);
-            let mut lines = Vec::new();
-            for line in reader.lines().map_while(Result::ok) {
-                let _ = stderr_tx.send(line.clone());
-                lines.push(line);
-            }
-            lines
-        });
-
-        // Relay lines from both streams to the callback on the caller thread.
-        // Poll both channels until both senders are dropped (threads finished).
-        let mut stdout_done = false;
-        let mut stderr_done = false;
-        while !stdout_done || !stderr_done {
-            if !stdout_done {
-                match line_rx.try_recv() {
-                    Ok(line) => on_output(&line),
-                    Err(std::sync::mpsc::TryRecvError::Disconnected) => stdout_done = true,
-                    Err(std::sync::mpsc::TryRecvError::Empty) => {}
-                }
-            }
-            if !stderr_done {
-                match stderr_rx.try_recv() {
-                    Ok(line) => on_output(&line),
-                    Err(std::sync::mpsc::TryRecvError::Disconnected) => stderr_done = true,
-                    Err(std::sync::mpsc::TryRecvError::Empty) => {}
-                }
-            }
-            // Small sleep to avoid busy-spinning when both channels are empty.
-            if !stdout_done || !stderr_done {
-                std::thread::sleep(std::time::Duration::from_millis(10));
-            }
-        }
-
-        let wait_result = child.wait();
-        self.registry.deregister(pgid);
-        let status = wait_result
+        let pid = child.id();
+        let kill = || self.registry.terminate(pid);
+        let finished = command_stream::stream(&mut child, on_output, options.timeout, &kill);
+        self.registry.deregister(pid);
+        let finished = finished
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to wait for '{cmd}': {e}")))?;
-
-        let stdout_bytes = stdout_handle.join().map_err(|_| {
-            BntoError::ProcessingFailed("stdout reader thread panicked".to_string())
-        })?;
-
-        let stderr_lines = stderr_handle.join().map_err(|_| {
-            BntoError::ProcessingFailed("stderr reader thread panicked".to_string())
-        })?;
-
-        if status.success() {
-            Ok(stdout_bytes)
-        } else {
-            let stderr_text = stderr_lines.join("\n");
-            Err(command_failed(cmd, status, &stderr_text, stdout_bytes))
-        }
+        command_outcome(cmd, options, finished)
     }
 
     /// Temp files go in the run's scratch dir, removed when this context
@@ -905,5 +881,73 @@ mod tests {
         let ctx = NativeContext::current_dir().unwrap();
         assert!(!ctx.dry_run());
         assert!(ctx.with_dry_run(true).dry_run());
+    }
+
+    // --- Command options: env and timeout ---
+
+    /// A command that runs far past any test's timeout.
+    fn long_command() -> (&'static str, Vec<&'static str>) {
+        if cfg!(windows) {
+            ("ping", vec!["-n", "300", "127.0.0.1"])
+        } else {
+            ("sleep", vec!["300"])
+        }
+    }
+
+    #[test]
+    fn test_run_command_with_sets_env_for_the_command() {
+        let ctx = ctx_with_registry(Arc::new(ProcessRegistry::new()));
+        let script = if cfg!(windows) {
+            "echo %BNTO_TEST_OPTION_VAR%"
+        } else {
+            "echo $BNTO_TEST_OPTION_VAR"
+        };
+        let (cmd, args) = shell(script);
+        let options = bnto_core::CommandOptions {
+            env: vec![("BNTO_TEST_OPTION_VAR".into(), "from options".into())],
+            timeout: None,
+        };
+        let out = ctx.run_command_with(cmd, &args, &options, &|_| {}).unwrap();
+        assert_eq!(String::from_utf8_lossy(&out).trim(), "from options");
+        assert!(
+            std::env::var("BNTO_TEST_OPTION_VAR").is_err(),
+            "bnto's own environment is unchanged"
+        );
+    }
+
+    #[test]
+    fn test_run_command_with_kills_a_command_that_outlives_its_timeout() {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+        let (cmd, args) = long_command();
+        let options = bnto_core::CommandOptions {
+            env: Vec::new(),
+            timeout: Some(std::time::Duration::from_secs(1)),
+        };
+        let started = std::time::Instant::now();
+        let err = ctx
+            .run_command_with(cmd, &args, &options, &|_| {})
+            .expect_err("the command outlived its timeout");
+        assert!(
+            started.elapsed() < UNBLOCK_DEADLINE,
+            "the kill unblocked it"
+        );
+        assert!(
+            err.to_string().contains("timed out after 1s"),
+            "the error names the timeout: {err}"
+        );
+        assert!(registry.active().is_empty(), "the child was deregistered");
+    }
+
+    #[test]
+    fn test_run_command_with_leaves_a_quick_command_alone() {
+        let ctx = ctx_with_registry(Arc::new(ProcessRegistry::new()));
+        let (cmd, args) = shell("echo quick");
+        let options = bnto_core::CommandOptions {
+            env: Vec::new(),
+            timeout: Some(std::time::Duration::from_secs(30)),
+        };
+        let out = ctx.run_command_with(cmd, &args, &options, &|_| {}).unwrap();
+        assert_eq!(String::from_utf8_lossy(&out).trim(), "quick");
     }
 }

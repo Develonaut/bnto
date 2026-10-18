@@ -18,6 +18,7 @@
 pub mod catalog;
 mod check;
 mod cli;
+mod command_stream;
 mod consent;
 mod context;
 mod dispatch;

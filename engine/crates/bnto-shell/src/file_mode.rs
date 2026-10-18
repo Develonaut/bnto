@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use bnto_core::processor::{NodeInput, NodeOutput, OutputFile};
 use bnto_core::{BntoError, ProcessContext, ProgressReporter};
 
+use crate::invocation::Invocation;
 use crate::output_files::collect_output_files;
 
 /// Placeholder in args that gets replaced with the temp output directory path.
@@ -13,14 +14,18 @@ pub(crate) const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
 /// File mode: run command in a temp dir, collect written files as output.
 /// Replaces `{{output_dir}}` in args with the temp directory path.
 pub(crate) fn process_file_mode(
-    command: &str,
-    program: &str,
-    args: &[String],
+    invocation: &Invocation,
     _input: &NodeInput,
     progress: &ProgressReporter,
     ctx: &dyn ProcessContext,
     max_output_mb: u64,
 ) -> Result<NodeOutput, BntoError> {
+    let Invocation {
+        command,
+        program,
+        args,
+        options,
+    } = invocation;
     let output_dir = create_output_dir(ctx)?;
     let dir_str = output_dir.to_string_lossy();
     let resolved_args = substitute_output_dir(args, &dir_str);
@@ -28,7 +33,7 @@ pub(crate) fn process_file_mode(
     let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
     // Run the command with stderr streaming — stdout is captured but unused.
     let _stdout = ctx
-        .run_command_streaming(program, &arg_refs, &|line| {
+        .run_command_with(program, &arg_refs, options, &|line| {
             progress.report_output(line);
         })
         .map_err(|e| hand_over_written(e, command, &output_dir, max_output_mb))?;

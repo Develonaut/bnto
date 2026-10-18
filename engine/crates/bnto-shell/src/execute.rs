@@ -23,11 +23,13 @@ use bnto_core::{
 
 pub use crate::args::flatten_conditional_args;
 use crate::args::resolve_input_placeholders;
+use crate::command_options::command_options;
 use crate::file_mode::process_file_mode;
+use crate::invocation::Invocation;
 use crate::parameters::build_parameters;
 use crate::search_path;
 use crate::stdout_mode::process_stdout_mode;
-use crate::validate::{self, DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
+use crate::validate::{self, DEFAULT_MAX_OUTPUT_MB};
 
 // Items the tests below exercise directly.
 #[cfg(test)]
@@ -95,9 +97,6 @@ impl NodeProcessor for ShellCommand {
         let params = &input.params;
         let command = required_command(params)?;
         let mut args = flattened_args(params);
-        // Parsed (env sanitized) but not yet applied to the spawned command.
-        let _timeout = u64_param(params, "timeout", DEFAULT_TIMEOUT_SECS);
-        let _env = sanitized_env(params);
         // Security check: reject shell interpreters and path-based commands
         validate::validate_command(command).map_err(BntoError::InvalidInput)?;
         let program = resolved_program(command, params, ctx)?;
@@ -105,25 +104,15 @@ impl NodeProcessor for ShellCommand {
         // The CLI injects "url" or "text" params for URL/Text mode recipes.
         resolve_input_placeholders(&mut args, params);
         let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
+        let invocation = Invocation {
+            command,
+            program: &program,
+            args: &args,
+            options: command_options(params),
+        };
         match params.get("outputMode").and_then(serde_json::Value::as_str) {
-            Some("file") => process_file_mode(
-                command,
-                &program,
-                &args,
-                &input,
-                progress,
-                ctx,
-                max_output_mb,
-            ),
-            _ => process_stdout_mode(
-                command,
-                &program,
-                &args,
-                &input,
-                progress,
-                ctx,
-                max_output_mb,
-            ),
+            Some("file") => process_file_mode(&invocation, &input, progress, ctx, max_output_mb),
+            _ => process_stdout_mode(&invocation, &input, progress, ctx, max_output_mb),
         }
     }
 
@@ -183,15 +172,6 @@ fn u64_param(params: &Params, key: &str, default: u64) -> u64 {
         .get(key)
         .and_then(serde_json::Value::as_u64)
         .unwrap_or(default)
-}
-
-/// Env vars with dangerous entries stripped silently.
-fn sanitized_env(params: &Params) -> Params {
-    params
-        .get("env")
-        .and_then(serde_json::Value::as_object)
-        .map(validate::sanitize_env)
-        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -880,5 +860,57 @@ mod tests {
             serde_json::Value::String("".into()),
         ];
         assert_eq!(flatten_conditional_args(&args), vec!["--no-playlist"]);
+    }
+
+    /// Records the options it was asked to run a command with.
+    struct RecordingOptions(std::sync::Mutex<Vec<bnto_core::CommandOptions>>);
+
+    impl ProcessContext for RecordingOptions {
+        fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            Ok(b"ok".to_vec())
+        }
+        fn run_command_with(
+            &self,
+            _cmd: &str,
+            _args: &[&str],
+            options: &bnto_core::CommandOptions,
+            _on_output: &dyn Fn(&str),
+        ) -> Result<Vec<u8>, BntoError> {
+            self.0.lock().unwrap().push(options.clone());
+            Ok(b"ok".to_vec())
+        }
+        fn temp_file(&self, s: &str) -> Result<std::path::PathBuf, BntoError> {
+            NoopContext.temp_file(s)
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&std::path::Path, BntoError> {
+            NoopContext.work_dir()
+        }
+    }
+
+    #[test]
+    fn test_the_command_runs_with_the_recipes_env_and_timeout() {
+        let ctx = RecordingOptions(std::sync::Mutex::new(Vec::new()));
+        let params = serde_json::json!({
+            "command": "tool", "timeout": 9, "env": { "GREETING": "hi" }
+        });
+        let input = NodeInput {
+            data: FileData::Bytes(vec![]),
+            filename: String::new(),
+            mime_type: None,
+            params: params.as_object().unwrap().clone(),
+        };
+        ShellCommand::new()
+            .process(input, &ProgressReporter::new_noop(), &ctx)
+            .unwrap();
+        let seen = ctx.0.lock().unwrap();
+        assert_eq!(seen.len(), 1);
+        assert_eq!(seen[0].timeout, Some(std::time::Duration::from_secs(9)));
+        assert_eq!(
+            seen[0].env,
+            vec![("GREETING".to_string(), "hi".to_string())]
+        );
     }
 }
