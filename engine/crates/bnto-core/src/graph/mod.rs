@@ -34,6 +34,16 @@ pub enum Flow<'a> {
     Graph(LevelGraph<'a>),
 }
 
+impl<'a> Flow<'a> {
+    /// The level's processing nodes in the order they run.
+    pub fn order(&self) -> &[&'a PipelineNode] {
+        match self {
+            Flow::Sequence(nodes) => nodes,
+            Flow::Graph(graph) => &graph.order,
+        }
+    }
+}
+
 /// A validated level graph.
 #[derive(Debug)]
 pub struct LevelGraph<'a> {

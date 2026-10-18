@@ -21,25 +21,27 @@ use super::{ChainPosition, NodeExecutionResult, PipelineContext, run_node_chain}
 /// A failure inside a run closes that run's own chain first (a per-file
 /// sequence closes the failing file's pass); then the `always` nodes of
 /// every later run run as one explicit chain on what it handed over.
+/// `position` places `nodes` among the level's nodes.
 pub(super) fn run_auto_iteration<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     files: Vec<PipelineFile>,
+    position: ChainPosition,
 ) -> Result<NodeExecutionResult, ChainFailure> {
     let runs = partition_into_runs(nodes, ctx.registry);
     let mut auto_ctx = ctx.layer();
     let mut chain = NodeExecutionResult::holding(files);
     for run in &runs {
         let files = std::mem::take(&mut chain.output_files);
-        match run_one(&auto_ctx, nodes, run, files) {
+        match run_one(&auto_ctx, nodes, run, files, position) {
             Ok(result) => {
                 let records = chain.then(result);
                 auto_ctx.node_outputs.add(records, ctx.count_keys);
             }
             Err(failure) => {
                 let end = run.end();
-                let position = ChainPosition::starting_at(end, nodes.len());
-                return Err(failure.close(&mut auto_ctx, &nodes[end..], 0, position));
+                let rest = position.offset(end);
+                return Err(failure.close(&mut auto_ctx, &nodes[end..], 0, rest));
             }
         }
     }
@@ -53,30 +55,30 @@ fn run_one<F: Fn() -> u64 + Copy>(
     nodes: &[&PipelineNode],
     run: &Run,
     files: Vec<PipelineFile>,
+    position: ChainPosition,
 ) -> Result<NodeExecutionResult, ChainFailure> {
     match run {
         Run::PerFileSequence { start, len } => {
             let seq = &nodes[*start..*start + *len];
-            let position = ChainPosition::starting_at(*start, nodes.len());
-            run_per_file_sequence(ctx, seq, files, position)
+            run_per_file_sequence(ctx, seq, files, position.offset(*start))
         }
         Run::Container { index } | Run::Batch { index } => {
-            run_single_node(ctx, nodes, *index, files)
+            run_single_node(ctx, nodes, *index, files, position)
         }
-        Run::Source { index } => run_single_node(ctx, nodes, *index, vec![]),
+        Run::Source { index } => run_single_node(ctx, nodes, *index, vec![], position),
     }
 }
 
-/// Run the node at `index` as a one-node chain, numbered within the whole pipeline.
+/// Run the node at `index` as a one-node chain, numbered within the whole level.
 fn run_single_node<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     nodes: &[&PipelineNode],
     index: usize,
     files: Vec<PipelineFile>,
+    position: ChainPosition,
 ) -> Result<NodeExecutionResult, ChainFailure> {
     let node = &nodes[index..index + 1];
-    let position = ChainPosition::starting_at(index, nodes.len());
-    run_node_chain(ctx, node, files, 0, position)
+    run_node_chain(ctx, node, files, 0, position.offset(index))
 }
 
 /// A contiguous run of nodes that share an execution strategy.
