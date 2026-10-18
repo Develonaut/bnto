@@ -41,6 +41,7 @@ mod package_manager;
 mod process_registry;
 mod progress;
 mod progress_indent;
+mod progressive_output;
 mod run;
 mod run_output;
 mod run_verdict;

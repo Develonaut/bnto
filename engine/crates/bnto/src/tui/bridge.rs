@@ -18,9 +18,10 @@ use crate::io;
 mod events;
 mod output;
 
+pub use crate::progressive_output::write_progressive_files;
 pub use events::map_pipeline_event;
 use output::extract_file_metadata;
-pub use output::{FileResultMeta, build_output_files, write_progressive_files};
+pub use output::{FileResultMeta, build_output_files};
 
 /// Message sent from the bridge thread back to the TUI event loop.
 #[derive(Debug)]
