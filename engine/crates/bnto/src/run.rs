@@ -65,19 +65,18 @@ pub fn run_recipe(
     let ctx = context::NativeContext::current_dir().map(|c| c.with_dry_run(flags.dry_run));
     let ctx = verdict.or_fail(ctx, "Error:");
     let target = run_target(output_override, flags.dry_run, &prepared, &ctx);
-    match execute(prepared, ctx, &target, logger, &verdict) {
+    // `ctx` lives to the end of this function: its scratch dir holds the
+    // temp files the output step copies from, and dropping it deletes them.
+    match execute(prepared, &ctx, &target, logger, &verdict) {
         Ok(result) => finish_run(logger, &stats, start, &result, &target, &verdict),
         Err(e) => fail_run(logger, &e, &verdict),
     }
 }
 
 /// Run the pipeline with progress on stderr, tallying nodes for the verdict.
-///
-/// Takes `ctx` by value: dropping it on return deletes a dry run's temp
-/// files before the exits that follow, which skip destructors.
 fn execute(
     prepared: input::PreparedInput,
-    ctx: context::NativeContext,
+    ctx: &context::NativeContext,
     target: &RunTarget,
     logger: &Arc<dyn Logger>,
     verdict: &RunVerdict,
@@ -87,7 +86,7 @@ fn execute(
     if target.dry_run {
         dry_run::print_shell_note(&prepared.definition_json);
     }
-    bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx)
+    bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, ctx)
 }
 
 /// Read recipe JSON — try catalog slug first, then disk path.

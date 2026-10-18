@@ -16,7 +16,7 @@ use bnto_core::dotenv::parse_dotenv;
 use bnto_core::errors::BntoError;
 
 use crate::process_registry::ProcessRegistry;
-use crate::scratch::{RunScratch, persisted_temp_file};
+use crate::scratch::RunScratch;
 
 /// Native context for CLI execution with full system access.
 ///
@@ -39,8 +39,8 @@ pub struct NativeContext {
     registry: Arc<ProcessRegistry>,
     /// Set by `bnto run --dry-run`: writing nodes decide and write nothing.
     dry_run: bool,
-    /// Holds a dry run's temp files; dropping the context deletes them,
-    /// since no output step will move them away.
+    /// Holds the run's temp files; dropping the context deletes them. The
+    /// output step copies results out, so the context must outlive it.
     scratch: RunScratch,
 }
 
@@ -295,14 +295,10 @@ impl ProcessContext for NativeContext {
         }
     }
 
-    /// A real run's temp files persist for the output step to move; a dry
-    /// run's go in the scratch dir, removed when this context drops.
+    /// Temp files go in the run's scratch dir, removed when this context
+    /// drops — after a real run's output step has copied them out.
     fn temp_file(&self, suffix: &str) -> Result<PathBuf, BntoError> {
-        if self.dry_run {
-            self.scratch.temp_file(suffix)
-        } else {
-            persisted_temp_file(None, suffix)
-        }
+        self.scratch.temp_file(suffix)
     }
 
     fn env_var(&self, key: &str) -> Option<String> {
@@ -469,13 +465,17 @@ mod tests {
     }
 
     #[test]
-    fn test_real_run_temp_file_survives_context_drop() {
-        // The output step moves a real run's temp files after the pipeline.
+    fn test_real_run_temp_file_removed_when_context_drops() {
+        // The output step copies results out, so a real run's temp files
+        // are the run's to delete once the context (and the run) is done.
         let ctx = NativeContext::current_dir().unwrap();
         let path = ctx.temp_file(".txt").unwrap();
+        assert!(path.exists());
         drop(ctx);
-        assert!(path.exists(), "real-run temp file must persist");
-        std::fs::remove_file(&path).ok();
+        assert!(
+            !path.exists(),
+            "real-run temp file must not outlive the run"
+        );
     }
 
     #[test]

@@ -89,7 +89,7 @@ fn main() {
 
 /// Kill spawned command trees (shell-command children + grandchildren) on
 /// SIGINT/SIGTERM — they run in their own process groups, so the terminal's
-/// Ctrl+C no longer reaches them on its own. Then delete any dry-run scratch
+/// Ctrl+C no longer reaches them on its own. Then delete any run scratch
 /// dirs, which `process::exit` would otherwise leave behind.
 fn install_signal_handler() {
     let _ = ctrlc::set_handler(|| {
