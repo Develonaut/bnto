@@ -113,6 +113,15 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       enumValues: ["none", "markdown"] as const,
     },
   },
+  "file-sort": {
+    by: { type: "string", control: "text", required: true },
+    case: {
+      type: "enum",
+      control: "select",
+      required: false,
+      enumValues: ["sensitive", "insensitive"] as const,
+    },
+  },
   group: {
     mode: {
       type: "enum",

@@ -655,6 +655,39 @@ fn test_file_render_dry_run_writes_nothing() {
     assert!(last_line(&stderr).contains("(dry run)"), "stderr: {stderr}");
 }
 
+// --- File Sort ---
+
+#[test]
+fn test_file_sort_orders_csv_rows_by_two_keys_with_blanks_last() {
+    // spreadsheet-read → file-sort (`source, -year`) → report, which prints
+    // a line per row in the order the rows reach it.
+    let dir = temp_output_dir();
+    let csv = dir.path().join("titles.csv");
+    let rows = "title,source,year\n\
+                Gamma,web,2019\n\
+                Alpha,app,2020\n\
+                Delta,,2021\n\
+                Beta,web,2024\n\
+                Epsilon,app,2018\n";
+    std::fs::write(&csv, rows).unwrap();
+    let output = Command::new(bnto_bin())
+        .args(["run", &custom_recipe_path("file-sort-report"), "--yes"])
+        .arg(&csv)
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    let lines = [
+        "row: Alpha (app 2020)",
+        "row: Epsilon (app 2018)",
+        "row: Beta (web 2024)",
+        "row: Gamma (web 2019)",
+        "row: Delta ( 2021)",
+    ];
+    let at: Vec<usize> = lines.iter().map(|l| line_index(&stderr, l)).collect();
+    assert!(at.windows(2).all(|w| w[0] < w[1]), "out of order: {stderr}");
+}
+
 // --- Shell search_path ---
 
 /// A tools folder holding a `greet` program that prints "greeted", and a

@@ -44,6 +44,7 @@ pub fn create_browser_registry() -> NodeRegistry {
     registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("file-render", Box::new(bnto_file::FileRender::new()));
+    registry.register("file-sort", Box::new(bnto_file::FileSort::new()));
     registry.register("image-strip-exif", Box::new(bnto_image::StripExif::new()));
     registry.register(
         "spreadsheet-convert",
@@ -138,7 +139,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 20);
+        assert_eq!(registry.len(), 21);
 
         let expected = [
             "assert",
@@ -149,6 +150,7 @@ mod tests {
             "file-metadata",
             "file-rename",
             "file-render",
+            "file-sort",
             "image-compress",
             "image-resize",
             "image-convert",
@@ -176,9 +178,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (20) + file-collect + file-copy + file-delete + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 28
-        assert_eq!(registry.len(), 28);
+        // Full registry = browser (21) + file-collect + file-copy + file-delete + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 29
+        assert_eq!(registry.len(), 29);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -198,6 +200,20 @@ mod tests {
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "only-docs");
         assert!(findings[0].message.contains("name_pattern"));
+    }
+
+    #[test]
+    fn test_check_refuses_a_file_sort_key_with_no_field() {
+        let definition: PipelineDefinition = serde_json::from_value(serde_json::json!({
+            "nodes": [{ "id": "order", "type": "file-sort", "parameters": {
+                "by": "source, -"
+            } }]
+        }))
+        .unwrap();
+        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        assert_eq!(findings.len(), 1, "{findings:?}");
+        assert_eq!(findings[0].node_id, "order");
+        assert!(findings[0].message.contains("empty sort key"));
     }
 
     #[test]
@@ -686,6 +702,7 @@ mod tests {
             "file-filter",
             "file-metadata",
             "file-rename",
+            "file-sort",
             "image-compress",
             "image-resize",
             "image-convert",

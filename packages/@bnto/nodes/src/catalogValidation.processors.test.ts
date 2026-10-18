@@ -150,3 +150,26 @@ describe("file-rename", () => {
     expect(caseP.options).toEqual(["lower", "upper", "title"]);
   });
 });
+
+// =============================================================================
+// file-sort
+// =============================================================================
+
+describe("file-sort", () => {
+  const proc = PROCESSOR_MAP.get("file-sort")!;
+
+  it("is a browser-capable batch node with by and case params", () => {
+    expect(proc.platforms).toContain("browser");
+    expect(proc.inputCardinality).toBe("batch");
+    expect(proc.parameters.map((p) => p.name)).toEqual(["by", "case"]);
+  });
+
+  it("by is required text; case defaults to sensitive", () => {
+    const by = proc.parameters.find((p) => p.name === "by")!;
+    expect(by.type).toBe("string");
+    expect(by.constraints?.required).toBe(true);
+    const caseP = proc.parameters.find((p) => p.name === "case")!;
+    expect(caseP.options).toEqual(["sensitive", "insensitive"]);
+    expect(caseP.default).toBe("sensitive");
+  });
+});

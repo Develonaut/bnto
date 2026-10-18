@@ -18,6 +18,7 @@ import { fileMetadataProcessor } from "./fileMetadata";
 import { fileMoveProcessor } from "./fileMove";
 import { fileRenameProcessor } from "./fileRename";
 import { fileRenderProcessor } from "./fileRender";
+import { fileSortProcessor } from "./fileSort";
 import { imageCompressProcessor } from "./imageCompress";
 import { imageConvertProcessor } from "./imageConvert";
 import { imageOverlayProcessor } from "./imageOverlay";
@@ -48,6 +49,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   fileMoveProcessor,
   fileRenameProcessor,
   fileRenderProcessor,
+  fileSortProcessor,
   imageCompressProcessor,
   imageConvertProcessor,
   imageOverlayProcessor,

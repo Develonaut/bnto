@@ -1,10 +1,10 @@
 # bnto-file
 
-File operation nodes. Rename, filter, decode, collect, copy, delete, inspect, and render files.
+File operation nodes. Rename, filter, sort, decode, collect, copy, delete, inspect, and render files.
 
 ## Overview
 
-`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter the pipeline (filter), decode file content (decode), collect files from disk (collect), copy files to a destination (copy), delete the files flowing in (delete), extract metadata, or write one text file from the items (render). Runs in the browser via WASM (rename, filter, decode, metadata, render) or natively for CLI/desktop (collect, copy, delete, list, move).
+`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter or reorder the pipeline (filter, sort), decode file content (decode), collect files from disk (collect), copy files to a destination (copy), delete the files flowing in (delete), extract metadata, or write one text file from the items (render). Runs in the browser via WASM (rename, filter, sort, decode, metadata, render) or natively for CLI/desktop (collect, copy, delete, list, move).
 
 ## Processors
 
@@ -13,6 +13,7 @@ File operation nodes. Rename, filter, decode, collect, copy, delete, inspect, an
 | `RenameFiles`  | `file-rename`   | Transform filenames via find/replace, case changes, prefix/suffix, pattern templates | browser, cli    |
 | `FileDecode`   | `file-decode`   | Decode each file's content from a text encoding into its bytes. `encoding: base64` (default): standard alphabet, padded or not, whitespace and line breaks ignored; URL-safe (`-`, `_`) is refused for now. Keeps the input's name unless `filename` gives one (`{{name}}` = input name without its last extension, `{{ext}}` = that extension); MIME type from the output name. Records `decoded_size`. A file that isn't valid base64 fails the run, naming it | browser, cli |
 | `FileFilter`   | `file-filter`   | Keep or drop files by extension, name or path pattern (glob/regex), and size          | browser, cli    |
+| `FileSort`     | `file-sort`     | Reorder items by metadata fields (`by: "source, -title"`, `-` = descending, later fields break ties); stable, numbers numeric, text by code point (or `case: insensitive`), missing / null / empty values last in either direction; data and metadata untouched | browser, cli |
 | `FileMetadata` | `file-metadata` | Extract file metadata (size, extension, MIME type, modified time, SHA-256 hash)      | browser, cli    |
 | `FileRender`   | `file-render`   | Write one in-memory text file (Markdown table, report) from a template: header, one row per item filled from `{{item.KEY}}` / `{{file}}`, footer; `{{count}}` anywhere; `escape: markdown` escapes values; a key an item lacks fails the run; `rows` in node metadata | browser, cli |
 | `FileCollect`  | `file-collect`  | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it | cli |
@@ -46,6 +47,10 @@ src/
 │   ├── params.rs           # Parameter schema + typed reads
 │   ├── fill.rs             # {{item.KEY}} / {{file}} per item, {{count}}
 │   └── escape.rs           # none | markdown escaping of filled values
+├── sort/             # FileSort processor (file-sort)
+│   ├── mod.rs              # NodeProcessor impl (batch), stable keyed sort
+│   ├── params.rs           # Parameter schema + `by` / `case` parsing
+│   └── key.rs              # One value's sort key; the total order over types
 ├── collect.rs        # FileCollect processor + metadata (native-only)
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer

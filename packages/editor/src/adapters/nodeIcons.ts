@@ -29,6 +29,7 @@ import {
   CircleOffIcon,
   ReplaceIcon,
   MessageSquareIcon,
+  ArrowUpDownIcon,
 } from "@bnto/ui";
 
 /**
@@ -56,6 +57,7 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   "file-text": FileTextIcon,
   table: TableIcon,
   "file-minus-2": FileMinusCornerIcon,
+  "arrow-up-down": ArrowUpDownIcon,
   // I/O contextual icons (from getNodeIcon)
   "file-up": FileUpIcon,
   "text-cursor-input": TextCursorInputIcon,

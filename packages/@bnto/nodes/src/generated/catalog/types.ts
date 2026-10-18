@@ -18,6 +18,7 @@ export type NodeTypeName =
   | "file-move"
   | "file-rename"
   | "file-render"
+  | "file-sort"
   | "group"
   | "http-request"
   | "image-compress"
