@@ -43,6 +43,9 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     encoding: { type: "enum", control: "select", required: false, enumValues: ["base64"] as const },
     filename: { type: "string", control: "text", required: false },
   },
+  "file-delete": {
+    base: { type: "string", control: "text", required: true },
+  },
   "file-filter": {
     extensions: { type: "string", control: "text", required: false },
     name_pattern: { type: "string", control: "text", required: false },

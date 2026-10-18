@@ -17,6 +17,7 @@ describe("NODE_TYPES", () => {
   it("maps camelCase keys to kebab-case type names", () => {
     expect(NODE_TYPES.editFields).toBe("edit-fields");
     expect(NODE_TYPES.fileDecode).toBe("file-decode");
+    expect(NODE_TYPES.fileDelete).toBe("file-delete");
     expect(NODE_TYPES.fileMove).toBe("file-move");
     expect(NODE_TYPES.fileRename).toBe("file-rename");
     expect(NODE_TYPES.fileRender).toBe("file-render");
@@ -85,6 +86,7 @@ describe("NODE_TYPE_INFO", () => {
     expect(names).toEqual([
       "file-collect",
       "file-copy",
+      "file-delete",
       "file-list",
       "file-move",
       "http-request",

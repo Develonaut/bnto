@@ -89,6 +89,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-collect")).toBe(true);
     expect(PROCESSOR_MAP.has("file-copy")).toBe(true);
     expect(PROCESSOR_MAP.has("file-decode")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-delete")).toBe(true);
     expect(PROCESSOR_MAP.has("file-list")).toBe(true);
     expect(PROCESSOR_MAP.has("file-move")).toBe(true);
     expect(PROCESSOR_MAP.has("file-filter")).toBe(true);
@@ -107,6 +108,7 @@ describe("catalog structure", () => {
     const NON_BROWSER_TYPES = new Set([
       "file-collect",
       "file-copy",
+      "file-delete",
       "file-list",
       "file-move",
       "shell-command",

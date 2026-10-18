@@ -21,6 +21,10 @@
       "label": "Decode Files",
       "description": "Decode each file's content from a text encoding (base64) into its bytes."
     },
+    "fileDelete": {
+      "label": "Delete Files",
+      "description": "Delete the files flowing in, each under a base folder; missing files are skipped and counted."
+    },
     "fileFilter": {
       "label": "Filter Files",
       "description": "Keep or drop files by extension, name or path pattern, and size."
@@ -210,6 +214,13 @@
         "label": "Output Filename",
         "description": "Name for each decoded file. {{name}} is the input's name without its last extension and {{ext}} that extension, e.g. {{name}}.json. Leave empty to keep the input's name.",
         "placeholder": "{{name}}.json"
+      }
+    },
+    "fileDelete": {
+      "base": {
+        "label": "Base Folder",
+        "description": "Folder every deleted file must be under. A file outside it (including through \"..\" or a link) refuses the run, so nothing is deleted.",
+        "placeholder": "./build"
       }
     },
     "fileFilter": {

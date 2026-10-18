@@ -1,0 +1,30 @@
+{
+  "id": "file-list-filter-delete",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Filter Delete",
+  "metadata": {
+    "description": "Takes no input: lists paths under the Root run var, keeps the .log files, and deletes them under Root."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "list",
+      "type": "file-list",
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": ["a.log", "keep.txt", "logs/b.log"]
+      }
+    },
+    { "id": "logs", "type": "file-filter", "parameters": { "extensions": "log" } },
+    { "id": "delete", "type": "file-delete", "parameters": { "base": "{{vars.Root}}" } },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "list" },
+    { "id": "e2", "source": "list", "target": "logs" },
+    { "id": "e3", "source": "logs", "target": "delete" },
+    { "id": "e4", "source": "delete", "target": "output" }
+  ]
+}

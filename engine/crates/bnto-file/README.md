@@ -1,10 +1,10 @@
 # bnto-file
 
-File operation nodes. Rename, filter, decode, collect, copy, inspect, and render files.
+File operation nodes. Rename, filter, decode, collect, copy, delete, inspect, and render files.
 
 ## Overview
 
-`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter the pipeline (filter), decode file content (decode), collect files from disk (collect), copy files to a destination (copy), extract metadata, or write one text file from the items (render). Runs in the browser via WASM (rename, filter, decode, metadata, render) or natively for CLI/desktop (collect, copy).
+`bnto-file` provides `NodeProcessor` implementations for file operations. Processors either transform filenames (rename), filter the pipeline (filter), decode file content (decode), collect files from disk (collect), copy files to a destination (copy), delete the files flowing in (delete), extract metadata, or write one text file from the items (render). Runs in the browser via WASM (rename, filter, decode, metadata, render) or natively for CLI/desktop (collect, copy, delete, list, move).
 
 ## Processors
 
@@ -17,6 +17,7 @@ File operation nodes. Rename, filter, decode, collect, copy, inspect, and render
 | `FileRender`   | `file-render`   | Write one in-memory text file (Markdown table, report) from a template: header, one row per item filled from `{{item.KEY}}` / `{{file}}`, footer; `{{count}}` anywhere; `escape: markdown` escapes values; a key an item lacks fails the run; `rows` in node metadata | browser, cli |
 | `FileCollect`  | `file-collect`  | Traverse the directory its input references (a path reference, e.g. a folder from `file-list`, or a CLI dir) and collect files matching a glob pattern, named relative to it | cli |
 | `FileCopy`     | `file-copy`     | Place output files in a destination directory; conflict: skip, overwrite, rename, newer (`newer` flags each file `copied` / `up_to_date` / `skipped_newer` and records the node's totals) | cli             |
+| `FileDelete`   | `file-delete`   | Delete the files flowing in (path references, e.g. from `file-list` / `file-filter`); each must resolve under `base` (no `..` or link escapes), a folder or in-memory item refuses the whole run before anything is deleted, a missing file is skipped; items pass through flagged `deleted` / `skipped`, totals in node metadata | cli |
 | `FileList`     | `file-list`     | Turn path lists (input files, NUL- or newline-separated, plus a `paths` param) into path references under a base folder, each with its `full_path`; missing paths skipped and counted, and `entries` lists every path in order with its `full_path` and `status` (`found` / `missing`) | cli |
 | `FileMove`     | `file-move`     | Move files into folders under a destination by the path in each name; rename only, refuses any run that would replace a file | cli |
 
@@ -48,6 +49,10 @@ src/
 ├── collect.rs        # FileCollect processor + metadata (native-only)
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
+├── delete/           # FileDelete processor (file-delete, native-only)
+│   ├── mod.rs              # NodeProcessor impl (batch), check-all-then-delete, outputs + counts
+│   ├── params.rs           # Parameter schema + typed reads
+│   └── target.rs           # Base resolution; folders, `..` and links resolved and checked
 ├── list/             # FileList processor (file-list, native-only)
 │   ├── mod.rs              # NodeProcessor impl (batch), outputs + entries / missing metadata
 │   ├── listed.rs           # One listed path: name, `/`-separated full path, found or missing

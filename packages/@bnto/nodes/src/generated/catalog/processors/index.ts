@@ -11,6 +11,7 @@ import { editFieldsProcessor } from "./editFields";
 import { fileCollectProcessor } from "./fileCollect";
 import { fileCopyProcessor } from "./fileCopy";
 import { fileDecodeProcessor } from "./fileDecode";
+import { fileDeleteProcessor } from "./fileDelete";
 import { fileFilterProcessor } from "./fileFilter";
 import { fileListProcessor } from "./fileList";
 import { fileMetadataProcessor } from "./fileMetadata";
@@ -40,6 +41,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   fileCollectProcessor,
   fileCopyProcessor,
   fileDecodeProcessor,
+  fileDeleteProcessor,
   fileFilterProcessor,
   fileListProcessor,
   fileMetadataProcessor,

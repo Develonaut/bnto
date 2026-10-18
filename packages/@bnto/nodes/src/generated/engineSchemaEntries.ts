@@ -12,6 +12,7 @@ import { editFieldsNodeSchema } from "./schemas/editFields";
 import { fileCollectNodeSchema } from "./schemas/fileCollect";
 import { fileCopyNodeSchema } from "./schemas/fileCopy";
 import { fileDecodeNodeSchema } from "./schemas/fileDecode";
+import { fileDeleteNodeSchema } from "./schemas/fileDelete";
 import { fileFilterNodeSchema } from "./schemas/fileFilter";
 import { fileListNodeSchema } from "./schemas/fileList";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
@@ -51,6 +52,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "file-collect": fileCollectNodeSchema,
   "file-copy": fileCopyNodeSchema,
   "file-decode": fileDecodeNodeSchema,
+  "file-delete": fileDeleteNodeSchema,
   "file-filter": fileFilterNodeSchema,
   "file-list": fileListNodeSchema,
   "file-metadata": fileMetadataNodeSchema,
@@ -115,6 +117,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   "file-decode": {
     encoding: { options: [{ value: "base64", label: "Base64" }] },
   },
+  "file-delete": {},
   "file-filter": {
     pattern_mode: {
       options: [
