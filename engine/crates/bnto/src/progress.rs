@@ -34,16 +34,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
         PipelineEvent::IterationStarted { .. } | PipelineEvent::IterationFailed { .. } => {}
         PipelineEvent::IterationCompleted { output_files, .. } => {
             if let Some(dir) = &output_dir {
-                for file in output_files {
-                    let path = std::path::Path::new(dir).join(&file.name);
-                    // Create parent dirs for files with subdirectory paths.
-                    if let Some(parent) = path.parent() {
-                        let _ = std::fs::create_dir_all(parent);
-                    }
-                    // Copy, never rename: a Path output may be the user's own
-                    // file, and the final write_results reads it again.
-                    let _ = file.data.copy_to(&path);
-                }
+                crate::progressive_output::write_progressive_files(dir, output_files);
             }
         }
         PipelineEvent::NodeStarted {

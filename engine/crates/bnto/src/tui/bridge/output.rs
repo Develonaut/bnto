@@ -1,5 +1,5 @@
-// Bridge output files — engine metadata extraction, progressive writes, and
-// reading written files back for the results screen.
+// Bridge output files — engine metadata extraction and reading written
+// files back for the results screen.
 
 use super::super::screens::results::OutputFile;
 
@@ -31,18 +31,6 @@ pub fn extract_file_metadata(result: &bnto_core::pipeline::PipelineResult) -> Ve
             }
         })
         .collect()
-}
-
-/// Write progressive output files from an iteration to the output directory.
-/// Called from the TUI event loop when an `IterationCompleted` event
-/// carries file data (progressive output mode).
-pub fn write_progressive_files(output_dir: &str, files: &[bnto_core::events::ProgressOutputFile]) {
-    let dir = std::path::Path::new(output_dir);
-    for file in files {
-        let path = dir.join(&file.name);
-        // Copy, not move: a Path may be the user's own input file.
-        let _ = file.data.copy_to(&path);
-    }
 }
 
 /// Read output files from the bridge's output directory, merging engine metadata.
