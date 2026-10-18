@@ -161,6 +161,14 @@ OutputFile { data: FileData::Path(path), .. }
 
 **The CLI's input files are `FileData::Path` too.** `bnto run` argument files enter the pipeline as references to the user's own files (`read_pipeline_file` in `bnto/src/io.rs`). So code that writes results out must use `copy_to()`, never `write_to()`: `write_to()` renames a `Path`, which would move the user's original into the output folder. Only `overwrite` mode renames sources, on purpose.
 
+## Recipe Edges Route Files
+
+The engine honors a recipe's `edges` (see [engine-execution.md](../strategy/engine-execution.md#edges-and-data-flow)). Three things catch people out:
+
+- **Edge order sets merge order.** A step fed by several edges gets their files in the order the edges are listed in `edges`, not `nodes` order. List `notes → join` before `listing → join` to put the notes first.
+- **A step with no incoming edge starts empty.** No more drop-everything `file-filter` before a fresh `file-list`; leave it unwired from the step before. A step wired to nothing after it contributes no files to the output.
+- **Fan-out shares files on disk.** One output feeding two steps hands both the same `FileData::Path`. A step that moves or deletes it (`file-move`, `file-delete`, an overwriting output) takes it from the branches that run after it, and they fail naming the missing file.
+
 ## Windows Portability (Engine)
 
 CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-windows` job, required by the CI Gate). Code and tests that assume Unix break there. Rules:
@@ -220,4 +228,4 @@ import { Dialog, DialogContent, DialogTitle } from "@bnto/ui";
 2. Run `cargo clippy --workspace --all-targets -- -D warnings` and `cargo test --workspace` on **Linux and Windows** (CI runs both). Some lints and `cfg` paths are platform-specific.
 3. Fix every new lint in the same PR.
 
-**MSRV vs pinned toolchain.** `rust-version` in `engine/Cargo.toml` `[workspace.package]` is the *minimum* compiler the crates build on, which is what `cargo install bnto` users need. The pinned toolchain is what contributors and CI *use*, and it's usually newer. Bumping the toolchain doesn't change the MSRV. Raise `rust-version` only when code starts using a newer language feature or std API (verify with `rustup toolchain install <ver> --profile minimal && cargo +<ver> check --workspace --all-targets`).
+**MSRV vs pinned toolchain.** `rust-version` in `engine/Cargo.toml` `[workspace.package]` is the _minimum_ compiler the crates build on, which is what `cargo install bnto` users need. The pinned toolchain is what contributors and CI _use_, and it's usually newer. Bumping the toolchain doesn't change the MSRV. Raise `rust-version` only when code starts using a newer language feature or std API (verify with `rustup toolchain install <ver> --profile minimal && cargo +<ver> check --workspace --all-targets`).

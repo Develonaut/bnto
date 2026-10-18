@@ -11,7 +11,7 @@ export const fileJoinNodeType: NodeTypeInfo = {
   name: "file-join",
   label: "Join Files",
   description:
-    "Join the files flowing in into one file, in arrival order, a separator between them.",
+    "Join the files flowing in into one file, in arrival order (edge order when several steps feed it), a separator between them.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

@@ -1,0 +1,34 @@
+{
+  "id": "edges-notes-listing-join",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Edges Notes Listing Join",
+  "metadata": {
+    "description": "Takes no input: `listing` renders listing.md, `notes` lists notes.md under the Root run var, and both fan into `join`, the notes edge first, which writes README.md: the notes, a newline, then the listing."
+  },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "listing",
+      "type": "file-render",
+      "parameters": { "filename": "listing.md", "header": "- door.wav\n- rain.wav", "row": "-" }
+    },
+    {
+      "id": "notes",
+      "type": "file-list",
+      "parameters": { "base": "{{vars.Root}}", "paths": ["notes.md"] }
+    },
+    {
+      "id": "join",
+      "type": "file-join",
+      "parameters": { "filename": "README.md", "separator": "\n" }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "listing" },
+    { "id": "e2", "source": "notes", "target": "join" },
+    { "id": "e3", "source": "listing", "target": "join" },
+    { "id": "e4", "source": "join", "target": "output" }
+  ]
+}
