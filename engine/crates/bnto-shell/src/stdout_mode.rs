@@ -3,26 +3,31 @@
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, OutputFile};
 use bnto_core::{BntoError, ProcessContext, ProgressReporter};
 
+use crate::invocation::Invocation;
 use crate::validate;
 
 /// Stdout mode: capture command stdout as a single output file. `program` is
 /// what runs (the full path from `search_path`, or `command` itself); the
 /// output is named after `command`.
 pub(crate) fn process_stdout_mode(
-    command: &str,
-    program: &str,
-    args: &[String],
+    invocation: &Invocation,
     input: &NodeInput,
     progress: &ProgressReporter,
     ctx: &dyn ProcessContext,
     max_output_mb: u64,
 ) -> Result<NodeOutput, BntoError> {
+    let Invocation {
+        command,
+        program,
+        args,
+        options,
+    } = invocation;
     progress.report(10, &format!("Running {command}..."));
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
     let filename = make_output_filename(command, &input.filename);
     let limit = validate::max_output_bytes(max_output_mb);
     let output_bytes = ctx
-        .run_command_streaming(program, &arg_refs, &|line| {
+        .run_command_with(program, &arg_refs, options, &|line| {
             progress.report_output(line);
         })
         .map_err(|e| hand_over_stdout(e, command, &filename, limit))?;

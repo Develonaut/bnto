@@ -20,6 +20,7 @@ pub mod binary_probe;
 
 /// Controlled system access for processors that need external tools.
 /// Browser gets `NoopContext`, CLI gets `NativeContext`, desktop gets `SandboxedContext`.
+pub mod command_options;
 pub mod context;
 
 /// Error types for the WASM engine.
@@ -135,6 +136,7 @@ pub mod version;
 // `use bnto_core::BntoError`. Convenience!
 pub use binary_probe::find_on_path;
 pub use check::{CheckFinding, check_pipeline};
+pub use command_options::CommandOptions;
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, Metadata, Port, Position};
 pub use definition_schema::definition_json_schema;

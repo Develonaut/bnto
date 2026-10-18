@@ -88,6 +88,16 @@ impl ProcessRegistry {
         }
     }
 
+    /// Terminate one registered child's whole tree, as `terminate_all` does
+    /// for every child (a command that outlived its timeout). It stays
+    /// registered until its owner reaps it and calls `deregister`.
+    pub fn terminate(&self, pid: u32) {
+        #[cfg(unix)]
+        kill_trees(&[pid]);
+        #[cfg(windows)]
+        self.terminate_jobs(&[pid]);
+    }
+
     /// `TerminateJobObject` the job of each child in `pids`.
     #[cfg(windows)]
     fn terminate_jobs(&self, pids: &[u32]) {

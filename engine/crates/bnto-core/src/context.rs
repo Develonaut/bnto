@@ -8,6 +8,7 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::command_options::CommandOptions;
 use crate::errors::BntoError;
 
 /// System access boundary for processors that need external tools.
@@ -28,6 +29,21 @@ pub trait ProcessContext: Send + Sync {
     ) -> Result<Vec<u8>, BntoError> {
         let _ = on_output;
         self.run_command(cmd, args)
+    }
+
+    /// Run an external command with `options` (extra env, a time limit),
+    /// streaming output like `run_command_streaming`. A context that spawns
+    /// real processes must apply both. The default, for contexts that never
+    /// do (the browser, test doubles), ignores them.
+    fn run_command_with(
+        &self,
+        cmd: &str,
+        args: &[&str],
+        options: &CommandOptions,
+        on_output: &dyn Fn(&str),
+    ) -> Result<Vec<u8>, BntoError> {
+        let _ = options;
+        self.run_command_streaming(cmd, args, on_output)
     }
 
     /// Return a unique temporary file path with atomic creation (mkstemp).

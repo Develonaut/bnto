@@ -10,10 +10,12 @@
 // bnto-engine. Browser (WASM) gets NoopContext which blocks execution.
 
 mod args;
+mod command_options;
 pub mod execute;
 #[cfg(test)]
 mod failing_tool;
 mod file_mode;
+mod invocation;
 mod output_files;
 mod parameters;
 pub mod search_path;
