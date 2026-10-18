@@ -4,14 +4,12 @@
 
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, ProgressOutputFile};
-use crate::pipeline::{PipelineDefinition, PipelineFile};
+use crate::pipeline::{IterationMode, PipelineDefinition, PipelineFile};
 
+use super::flow::{level_flow_of, run_level};
 use super::loop_config::{OnErrorStrategy, OutputPersistence, parse_loop_config};
 use super::node_outputs::{NodeRecords, merge_records};
-use super::{
-    ChainPosition, NodeExecutionResult, PipelineContext, PipelineNodeRef, filter_processing_nodes,
-    run_node_chain,
-};
+use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
 
 /// Passthrough result — returns input files unchanged with zero processing.
 fn passthrough(files: Vec<PipelineFile>) -> NodeExecutionResult {
@@ -246,9 +244,9 @@ fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
-    let processing_nodes = filter_processing_nodes(definition);
-    let position = ChainPosition::whole(processing_nodes.len());
-    run_node_chain(ctx, &processing_nodes, files, file_offset, position)
+    let container = ctx.parent_node_id.as_deref();
+    let flow = level_flow_of(&definition.nodes, &definition.edges, container)?;
+    run_level(ctx, &flow, files, file_offset, IterationMode::Explicit)
         .map_err(super::closing::ChainFailure::into_error)
 }
 

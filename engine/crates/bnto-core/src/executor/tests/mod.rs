@@ -344,6 +344,7 @@ mod auto_iteration;
 mod basic;
 mod batch_input;
 mod containers;
+mod edges;
 mod errors;
 mod item_templates;
 mod metadata;

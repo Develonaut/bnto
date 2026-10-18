@@ -23,12 +23,15 @@ mod chain;
 mod closing;
 mod container;
 mod count_keys;
+mod flow;
 mod leaf_output;
 pub mod loop_config;
 pub mod node_outputs;
 mod primitive;
 pub mod resolve;
 mod result;
+mod routed;
+mod segments;
 pub mod template;
 mod unfilled_items;
 
@@ -36,8 +39,7 @@ use crate::context::ProcessContext;
 use crate::errors::BntoError;
 use crate::events::{NodeInfo, PipelineEvent, PipelineReporter};
 use crate::pipeline::{
-    IterationMode, PipelineDefinition, PipelineFile, PipelineNode, PipelineResult,
-    is_container_node, is_io_node,
+    PipelineDefinition, PipelineFile, PipelineNode, PipelineResult, is_container_node,
 };
 use crate::registry::NodeRegistry;
 use chain::run_node_chain;
@@ -126,7 +128,12 @@ impl ChainPosition {
 
     /// The rest of the chain, after its node at offset `i`.
     fn after(self, i: usize) -> Self {
-        Self::starting_at(self.first_index + i + 1, self.total_nodes)
+        self.offset(i + 1)
+    }
+
+    /// The chain's node at offset `i`, onward.
+    fn offset(self, i: usize) -> Self {
+        Self::starting_at(self.first_index + i, self.total_nodes)
     }
 }
 
@@ -142,15 +149,6 @@ struct NodeExecutionResult {
 
 // --- Public API ---
 
-/// Filter out I/O marker nodes (input/output) that don't perform processing.
-fn filter_processing_nodes(definition: &PipelineDefinition) -> Vec<&PipelineNode> {
-    definition
-        .nodes
-        .iter()
-        .filter(|n| !is_io_node(&n.node_type))
-        .collect()
-}
-
 /// Execute a complete pipeline: walk nodes, iterate files, chain outputs.
 ///
 /// Main entry point for the engine. `now_ms` is injected for testability
@@ -163,7 +161,7 @@ pub fn execute_pipeline(
     process_ctx: &dyn ProcessContext,
     now_ms: impl Fn() -> u64 + Copy,
 ) -> Result<PipelineResult, BntoError> {
-    let processing_nodes = filter_processing_nodes(definition);
+    let flow = flow::root_flow(definition)?;
     let count_keys = count_keys::count_keys_for(&definition.nodes, registry);
     let ctx = build_root_context(
         definition,
@@ -174,8 +172,9 @@ pub fn execute_pipeline(
         &count_keys,
         now_ms,
     );
-    emit_pipeline_started(&ctx, &processing_nodes, files.len());
-    match run_processing_nodes(&ctx, definition, &processing_nodes, files) {
+    emit_pipeline_started(&ctx, flow.order(), files.len());
+    let mode = definition.resolved_iteration();
+    match flow::run_level(&ctx, &flow, files, 0, mode) {
         Ok(result) => Ok(finish_pipeline(&ctx, ctx.started_ms, result)),
         Err(failure) => Err(fail_pipeline(&ctx, failure)),
     }
@@ -225,22 +224,6 @@ fn emit_pipeline_started<F: Fn() -> u64 + Copy>(
         total_files,
         nodes,
     });
-}
-
-/// Run the top-level nodes with the definition's iteration strategy.
-fn run_processing_nodes<F: Fn() -> u64 + Copy>(
-    ctx: &PipelineContext<F>,
-    definition: &PipelineDefinition,
-    processing_nodes: &[&PipelineNode],
-    files: Vec<PipelineFile>,
-) -> Result<NodeExecutionResult, ChainFailure> {
-    match definition.resolved_iteration() {
-        IterationMode::Explicit => {
-            let position = ChainPosition::whole(processing_nodes.len());
-            run_node_chain(ctx, processing_nodes, files, 0, position)
-        }
-        IterationMode::Auto => auto_iteration::run_auto_iteration(ctx, processing_nodes, files),
-    }
 }
 
 /// Emit PipelineCompleted and convert the final files into the result.
