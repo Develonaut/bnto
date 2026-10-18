@@ -52,15 +52,13 @@ pre-commit:
       glob: "**/package.json"
       run: pnpm sherif -p @bnto/package.json
 
+    # Multi-line `run:` scripts break on Windows, where lefthook passes them
+    # to `sh -c` inside double quotes; keep shell logic in scripts/hooks/.
     check-object-assign:
       glob: "*.tsx"
-      run: |
-        if grep -rn 'Object\.assign' {staged_files} 2>/dev/null; then
-          echo "ERROR: Object.assign compound patterns break RSC. Use flat named exports."
-          exit 1
-        fi
+      run: sh scripts/hooks/check-object-assign.sh {staged_files}
 
     check-grab-bags:
       glob: "*.{ts,tsx}"
       exclude: "(node_modules/|engine/|\\.next|e2e/)"
-      run: sh scripts/check-grab-bags.sh {staged_files}
+      run: sh scripts/hooks/check-grab-bags.sh {staged_files}

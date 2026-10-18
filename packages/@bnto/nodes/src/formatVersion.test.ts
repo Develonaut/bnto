@@ -1,6 +1,6 @@
-import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -76,8 +76,10 @@ describe("isCompatibleVersion", () => {
 
 describe("cross-language sync", () => {
   it("Rust FORMAT_VERSION matches TS CURRENT_FORMAT_VERSION", () => {
-    // Find monorepo root via git (works regardless of package location)
-    const root = execSync("git rev-parse --show-toplevel", { encoding: "utf-8" }).trim();
+    // Resolve the monorepo root from this file, not via git: inside a git
+    // hook GIT_DIR is set, and `git rev-parse --show-toplevel` in a worktree
+    // then returns the current directory instead of the root.
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), "../../../..");
     const rustFile = resolve(root, "engine/crates/bnto-core/src/lib.rs");
     const source = readFileSync(rustFile, "utf-8");
     const match = source.match(/pub const FORMAT_VERSION:\s*&str\s*=\s*"([^"]+)"/);
