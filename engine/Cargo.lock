@@ -215,6 +215,7 @@ dependencies = [
 name = "bnto-file"
 version = "0.2.0"
 dependencies = [
+ "base64",
  "bnto-core",
  "filetime",
  "js-sys",

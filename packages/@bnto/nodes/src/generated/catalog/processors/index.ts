@@ -10,6 +10,7 @@ import { assertProcessor } from "./assert";
 import { editFieldsProcessor } from "./editFields";
 import { fileCollectProcessor } from "./fileCollect";
 import { fileCopyProcessor } from "./fileCopy";
+import { fileDecodeProcessor } from "./fileDecode";
 import { fileFilterProcessor } from "./fileFilter";
 import { fileListProcessor } from "./fileList";
 import { fileMetadataProcessor } from "./fileMetadata";
@@ -38,6 +39,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   editFieldsProcessor,
   fileCollectProcessor,
   fileCopyProcessor,
+  fileDecodeProcessor,
   fileFilterProcessor,
   fileListProcessor,
   fileMetadataProcessor,

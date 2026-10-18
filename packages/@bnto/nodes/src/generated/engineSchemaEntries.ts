@@ -11,6 +11,7 @@ import { assertNodeSchema } from "./schemas/assert";
 import { editFieldsNodeSchema } from "./schemas/editFields";
 import { fileCollectNodeSchema } from "./schemas/fileCollect";
 import { fileCopyNodeSchema } from "./schemas/fileCopy";
+import { fileDecodeNodeSchema } from "./schemas/fileDecode";
 import { fileFilterNodeSchema } from "./schemas/fileFilter";
 import { fileListNodeSchema } from "./schemas/fileList";
 import { fileMetadataNodeSchema } from "./schemas/fileMetadata";
@@ -49,6 +50,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "edit-fields": editFieldsNodeSchema,
   "file-collect": fileCollectNodeSchema,
   "file-copy": fileCopyNodeSchema,
+  "file-decode": fileDecodeNodeSchema,
   "file-filter": fileFilterNodeSchema,
   "file-list": fileListNodeSchema,
   "file-metadata": fileMetadataNodeSchema,
@@ -109,6 +111,9 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
       ],
     },
     tolerance_ms: { suffix: "ms", visibleWhen: { param: "conflict", equals: "newer" } },
+  },
+  "file-decode": {
+    encoding: { options: [{ value: "base64", label: "Base64" }] },
   },
   "file-filter": {
     pattern_mode: {

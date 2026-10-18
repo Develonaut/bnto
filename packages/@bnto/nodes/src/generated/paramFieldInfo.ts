@@ -39,6 +39,10 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     },
     tolerance_ms: { type: "number", control: "number", required: false, min: 0 },
   },
+  "file-decode": {
+    encoding: { type: "enum", control: "select", required: false, enumValues: ["base64"] as const },
+    filename: { type: "string", control: "text", required: false },
+  },
   "file-filter": {
     extensions: { type: "string", control: "text", required: false },
     name_pattern: { type: "string", control: "text", required: false },

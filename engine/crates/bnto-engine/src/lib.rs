@@ -39,6 +39,7 @@ pub fn create_browser_registry() -> NodeRegistry {
     registry.register("assert", Box::new(bnto_core::control::Assert::new()));
     registry.register("report", Box::new(bnto_core::control::Report::new()));
     registry.register("edit-fields", Box::new(bnto_core::data::EditFields::new()));
+    registry.register("file-decode", Box::new(bnto_file::FileDecode::new()));
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
     registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
@@ -136,12 +137,13 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 19);
+        assert_eq!(registry.len(), 20);
 
         let expected = [
             "assert",
             "report",
             "edit-fields",
+            "file-decode",
             "file-filter",
             "file-metadata",
             "file-rename",
@@ -173,9 +175,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (19) + file-collect + file-copy + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 26
-        assert_eq!(registry.len(), 26);
+        // Full registry = browser (20) + file-collect + file-copy + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 27
+        assert_eq!(registry.len(), 27);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -634,6 +636,7 @@ mod tests {
         // Pattern: category-operation (e.g., "image-compress", not "compress-images").
         let registry = create_browser_registry();
         let expected_keys = [
+            "file-decode",
             "file-filter",
             "file-metadata",
             "file-rename",

@@ -88,6 +88,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("edit-fields")).toBe(true);
     expect(PROCESSOR_MAP.has("file-collect")).toBe(true);
     expect(PROCESSOR_MAP.has("file-copy")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-decode")).toBe(true);
     expect(PROCESSOR_MAP.has("file-list")).toBe(true);
     expect(PROCESSOR_MAP.has("file-move")).toBe(true);
     expect(PROCESSOR_MAP.has("file-filter")).toBe(true);

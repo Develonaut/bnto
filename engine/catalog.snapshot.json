@@ -231,6 +231,45 @@
       ]
     },
     {
+      "name": "file-decode",
+      "label": "Decode Files",
+      "description": "Decode each file's content from a text encoding (base64) into its bytes.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "arrow-left-right",
+      "params": [
+        {
+          "name": "encoding",
+          "label": "Encoding",
+          "description": "The text encoding each file is in. base64 is the standard alphabet (+ and /), padded or not; whitespace and line breaks are ignored. URL-safe base64 (- and _) is not accepted.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "base64",
+                "label": "Base64"
+              }
+            ]
+          },
+          "default": "base64",
+          "surfaceable": true
+        },
+        {
+          "name": "filename",
+          "label": "Output Filename",
+          "description": "Name for each decoded file. {{name}} is the input's name without its last extension and {{ext}} that extension, e.g. {{name}}.json. Leave empty to keep the input's name.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "{{name}}.json",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "file-filter",
       "label": "Filter Files",
       "description": "Keep or drop files by extension, name or path pattern, and size.",
@@ -2523,6 +2562,47 @@
           },
           "surfaceable": true,
           "suffix": "ms"
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "file-decode",
+      "name": "Decode Files",
+      "description": "Decode each file's content from a text encoding (base64) into its bytes, so later nodes read the decoded content.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "encoding",
+          "label": "Encoding",
+          "description": "The text encoding each file is in. base64 is the standard alphabet (+ and /), padded or not; whitespace and line breaks are ignored. URL-safe base64 (- and _) is not accepted.",
+          "paramType": {
+            "type": "enum",
+            "options": [
+              {
+                "value": "base64",
+                "label": "Base64"
+              }
+            ]
+          },
+          "default": "base64",
+          "surfaceable": true
+        },
+        {
+          "name": "filename",
+          "label": "Output Filename",
+          "description": "Name for each decoded file. {{name}} is the input's name without its last extension and {{ext}} that extension, e.g. {{name}}.json. Leave empty to keep the input's name.",
+          "paramType": {
+            "type": "string"
+          },
+          "placeholder": "{{name}}.json",
+          "surfaceable": true
         }
       ],
       "inputCardinality": "perFile"

@@ -153,8 +153,9 @@ fn extract_extension(filename: &str) -> String {
         .to_lowercase()
 }
 
-/// Guess MIME type from file extension.
-fn guess_mime_type(filename: &str) -> String {
+/// Guess MIME type from file extension; `application/octet-stream` when unknown.
+/// Shared with file-decode, which names its output's type the same way.
+pub(crate) fn guess_mime_type(filename: &str) -> String {
     let ext = extract_extension(filename);
     match ext.as_str() {
         "jpg" | "jpeg" => "image/jpeg".to_string(),

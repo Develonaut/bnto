@@ -1,6 +1,6 @@
 // bnto-file — File operation nodes.
 //
-// Browser-capable: filter, rename, metadata (no filesystem access).
+// Browser-capable: decode, filter, rename, metadata (no filesystem access).
 // CLI-only: collect, copy, list, move (require filesystem access).
 
 /// File-filter node — drop files that don't match extension, pattern,
@@ -37,6 +37,10 @@ pub mod r#move;
 /// file-move and the CLI's `output` overwrite mode.
 pub mod relocate;
 
+/// File-decode node — decode each file's content from a text encoding
+/// (base64) into its bytes. Browser-compatible.
+pub mod decode;
+
 /// File-metadata node — extract file metadata (size, extension, MIME
 /// type, hash) and attach to pipeline output. Browser-compatible.
 pub mod metadata;
@@ -50,6 +54,7 @@ pub mod wasm_bridge;
 
 pub use collect::FileCollect;
 pub use copy::FileCopy;
+pub use decode::FileDecode;
 pub use filter::FileFilter;
 pub use list::FileList;
 pub use metadata::FileMetadata;
