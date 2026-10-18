@@ -62,7 +62,7 @@ The key insight: `ProcessContext` is already the abstraction boundary. Each targ
 
 1. **System environment** — `std::env::var(key)` (current behavior)
 2. **Project `.env` file** — `.env` in the recipe's working directory (new)
-3. **User dotenv** — `$XDG_CONFIG_HOME/bnto/.env` or `~/.config/bnto/.env` (new, uses existing `BntoPaths`)
+3. **User dotenv** — `$BNTO_HOME/.env`, default `~/.bnto/.env` (uses existing `BntoPaths`)
 
 **Why this order:** System env vars take priority because they're the most explicit (the user actively exported them). Project `.env` is next for per-project credentials. User dotenv is the fallback for global defaults like `OPENAI_API_KEY`.
 
@@ -79,7 +79,7 @@ fn env_var(&self, key: &str) -> Option<String> {
     if let Some(val) = self.project_env.get(key) {
         return Some(val.clone());
     }
-    // 3. User dotenv (~/.config/bnto/.env)
+    // 3. User dotenv (~/.bnto/.env)
     if let Some(val) = self.user_env.get(key) {
         return Some(val.clone());
     }
@@ -162,7 +162,7 @@ Add an optional `secrets` array to `PipelineDefinition`:
 $ bnto run ai-summarize input.txt
 Error: Missing required secret: OPENAI_API_KEY
   Set it via: export OPENAI_API_KEY=sk-...
-  Or add to ~/.config/bnto/.env
+  Or add to ~/.bnto/.env
 ```
 
 ---
@@ -225,7 +225,7 @@ This is a future implementation detail — the key decision is that `Env`-source
 
 ### Phase 1 — Dotenv support + pre-flight validation (next sprint, ~1 PR)
 
-- Load `.env` from working directory and `~/.config/bnto/.env` in `NativeContext`
+- Load `.env` from working directory and `~/.bnto/.env` in `NativeContext`
 - Simple `KEY=VALUE` parser (no crate dependency — keep it < 50 lines)
 - `secrets` array in `PipelineDefinition` schema
 - Pre-flight check: fail with clear message if required secrets are missing

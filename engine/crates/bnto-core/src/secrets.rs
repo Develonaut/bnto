@@ -75,7 +75,10 @@ pub fn format_missing_error(missing: &[&SecretStatus]) -> String {
         }
     }
     lines.push(String::new());
-    lines.push("Set them via environment variables or add to ~/.config/bnto/.env".to_string());
+    lines.push(
+        "Set them via environment variables, a .env in the working directory, or ~/.bnto/.env"
+            .to_string(),
+    );
     lines.join("\n")
 }
 
@@ -210,7 +213,7 @@ mod tests {
         assert!(msg.contains("API_KEY (OpenAI API key)"));
         assert!(msg.contains("  - DB_URL"));
         assert!(!msg.contains("DB_URL ("));
-        assert!(msg.contains("~/.config/bnto/.env"));
+        assert!(msg.contains("~/.bnto/.env"));
     }
 
     #[test]

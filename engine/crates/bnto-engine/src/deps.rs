@@ -920,7 +920,7 @@ mod tests {
         assert!(result.is_err());
         let msg = result.unwrap_err().to_string();
         assert!(msg.contains("API_KEY"));
-        assert!(msg.contains("~/.config/bnto/.env"));
+        assert!(msg.contains("~/.bnto/.env"));
     }
 
     #[test]
