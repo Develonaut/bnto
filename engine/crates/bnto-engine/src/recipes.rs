@@ -112,6 +112,28 @@ mod tests {
         }
     }
 
+    /// Every recipe's root edges are a valid graph whose execution order is
+    /// today's processing-node order, so reading edges changes no run.
+    #[test]
+    fn test_builtin_recipes_root_graph_keeps_node_order() {
+        for recipe in builtin_recipes() {
+            let def: PipelineDefinition = serde_json::from_str(recipe.definition_json).unwrap();
+            let flow = bnto_core::level_flow(&def.nodes, &def.edges)
+                .unwrap_or_else(|e| panic!("Recipe '{}' edges refused: {e}", recipe.slug));
+            let bnto_core::Flow::Graph(graph) = flow else {
+                panic!("Recipe '{}' has no root edges", recipe.slug);
+            };
+            let order: Vec<&str> = graph.order.iter().map(|n| n.id.as_str()).collect();
+            let today: Vec<&str> = def
+                .nodes
+                .iter()
+                .filter(|n| !bnto_core::pipeline::is_io_node(&n.node_type))
+                .map(|n| n.id.as_str())
+                .collect();
+            assert_eq!(order, today, "Recipe '{}'", recipe.slug);
+        }
+    }
+
     #[test]
     fn test_builtin_recipe_by_slug() {
         let recipe =

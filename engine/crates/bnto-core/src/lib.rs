@@ -63,6 +63,12 @@ pub mod data;
 /// Mirrors the TypeScript `PipelineDefinition` / `PipelineNode` types.
 pub mod pipeline;
 
+/// `PipelineEdge` — a connection between two sibling pipeline nodes.
+pub mod pipeline_edge;
+
+/// Level graph — validates one level's edges and orders its nodes.
+pub mod graph;
+
 /// `InputMode` and its wire-string form (the input node's `mode` param).
 pub mod input_mode;
 
@@ -142,6 +148,7 @@ pub use executor::template::{
 };
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use file_data::FileData;
+pub use graph::{Flow, GraphError, LevelGraph, Source, level_flow};
 pub use logging::{LogEntry, LogLevel, Logger, NoopLogger};
 pub use metadata::{
     Constraints, Dependency, HostPlatform, InputCardinality, InstallHints, NodeCategory,
@@ -153,6 +160,7 @@ pub use pipeline::{
     PipelineFileResult, PipelineNode, PipelineResult, PipelineSettings, first_processing_node_id,
     resolve_input_mode, resolve_output_directory, resolve_output_mode,
 };
+pub use pipeline_edge::PipelineEdge;
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
 pub use progress::ProgressReporter;
 pub use registry::NodeRegistry;

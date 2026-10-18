@@ -203,6 +203,7 @@ mod tests {
             node_type: node_type.into(),
             params: serde_json::Map::new(),
             children,
+            edges: vec![],
             fields: Default::default(),
             always: false,
         }
@@ -350,6 +351,7 @@ mod tests {
             node_type: "shell-command".into(),
             params,
             children: None,
+            edges: vec![],
             fields: Default::default(),
             always: false,
         }];
@@ -366,6 +368,7 @@ mod tests {
             node_type: "shell-command".into(),
             params,
             children: None,
+            edges: vec![],
             fields: Default::default(),
             always: false,
         }];
@@ -385,6 +388,7 @@ mod tests {
                 node_type: "shell-command".into(),
                 params,
                 children: None,
+                edges: vec![],
                 fields: Default::default(),
                 always: false,
             }

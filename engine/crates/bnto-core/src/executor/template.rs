@@ -1224,6 +1224,7 @@ mod tests {
             fields: BTreeMap::new(),
             always: false,
             children: None,
+            edges: vec![],
         }
     }
 
@@ -1235,6 +1236,7 @@ mod tests {
             fields: BTreeMap::new(),
             always: false,
             children: None,
+            edges: vec![],
         }
     }
 
