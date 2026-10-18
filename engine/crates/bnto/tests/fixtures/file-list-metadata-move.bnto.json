@@ -1,0 +1,35 @@
+{
+  "id": "file-list-metadata-move",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Metadata Move",
+  "metadata": {
+    "description": "Takes no input: lists clip.bin under the Root run var, reports its size and modified time, and moves it under the Dest run var."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "list",
+      "type": "file-list",
+      "parameters": { "base": "{{vars.Root}}", "paths": ["clip.bin"] }
+    },
+    { "id": "meta", "type": "file-metadata" },
+    {
+      "id": "show",
+      "type": "report",
+      "parameters": {
+        "message": "meta: {{item.filename}} {{item.file_size}} bytes, modified {{item.modified}}"
+      }
+    },
+    { "id": "move", "type": "file-move", "parameters": { "destination": "{{vars.Dest}}" } },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "list" },
+    { "id": "e2", "source": "list", "target": "meta" },
+    { "id": "e3", "source": "meta", "target": "show" },
+    { "id": "e4", "source": "show", "target": "move" },
+    { "id": "e5", "source": "move", "target": "output" }
+  ]
+}
