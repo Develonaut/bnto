@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::field_def::FieldDef;
+use crate::pipeline_edge::PipelineEdge;
 use crate::secrets::SecretDef;
 
 // =============================================================================
@@ -65,6 +66,11 @@ pub struct PipelineDefinition {
     /// The ordered list of nodes in this pipeline.
     /// Nodes execute sequentially — output from node N feeds into node N+1.
     pub nodes: Vec<PipelineNode>,
+
+    /// Connections between root-level nodes. Empty means a linear chain in
+    /// `nodes` order; see `graph::level_flow`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub edges: Vec<PipelineEdge>,
 
     /// Recipe-level settings (iteration mode, etc.).
     /// Optional for backward compatibility — missing defaults to explicit iteration.
@@ -127,6 +133,11 @@ pub struct PipelineNode {
     /// (with `"children"`) both work.
     #[serde(alias = "nodes")]
     pub children: Option<Vec<PipelineNode>>,
+
+    /// Connections between this container's children. Empty on leaves, and
+    /// on containers whose children run as a linear chain.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub edges: Vec<PipelineEdge>,
 
     /// Node-level field declarations — user-facing controls that map to
     /// `{{fields.*}}` templates in this node's parameters. Each node is
@@ -672,7 +683,7 @@ mod tests {
     #[test]
     fn test_unknown_fields_silently_ignored() {
         // Real recipe JSON includes fields the Rust struct doesn't have:
-        // version, name, position, metadata, inputPorts, outputPorts, edges.
+        // version, name, position, metadata, inputPorts, outputPorts.
         // Serde should ignore them without error.
         let json = r#"{
             "nodes": [
@@ -695,6 +706,55 @@ mod tests {
         assert_eq!(def.nodes.len(), 1);
         assert_eq!(def.nodes[0].id, "compress-image");
         assert_eq!(def.nodes[0].params["quality"], 80);
+        assert_eq!(def.edges.len(), 1, "edges are read, not ignored");
+    }
+
+    // --- Edges ---
+
+    #[test]
+    fn test_edges_read_on_the_root_and_on_a_container() {
+        let def = parse_definition(
+            r#"{
+                "nodes": [
+                    { "id": "g", "type": "group", "nodes": [
+                        { "id": "a", "type": "x" }, { "id": "b", "type": "x" }
+                    ], "edges": [ { "id": "ge1", "source": "a", "target": "b" } ] }
+                ],
+                "edges": [
+                    { "id": "e1", "source": "input", "target": "g",
+                      "sourceHandle": "out-1", "targetHandle": "in-1" }
+                ]
+            }"#,
+        );
+        let root = PipelineEdge {
+            id: "e1".into(),
+            source: "input".into(),
+            target: "g".into(),
+        };
+        assert_eq!(def.edges, vec![root]);
+        let inner = &def.nodes[0].edges;
+        assert_eq!(inner.len(), 1);
+        assert_eq!(
+            (inner[0].id.as_str(), inner[0].source.as_str()),
+            ("ge1", "a")
+        );
+        assert_eq!(inner[0].target, "b");
+    }
+
+    #[test]
+    fn test_edges_default_empty_and_omitted_when_serialized() {
+        let def = parse_definition(r#"{ "nodes": [ { "id": "a", "type": "x" } ] }"#);
+        assert!(def.edges.is_empty());
+        assert!(def.nodes[0].edges.is_empty());
+        let json = serde_json::to_value(&def).unwrap();
+        assert!(json.get("edges").is_none());
+        assert!(json["nodes"][0].get("edges").is_none());
+    }
+
+    #[test]
+    fn test_edge_without_a_target_is_refused() {
+        let json = r#"{ "nodes": [], "edges": [ { "id": "e1", "source": "a" } ] }"#;
+        assert!(serde_json::from_str::<PipelineDefinition>(json).is_err());
     }
 
     #[test]

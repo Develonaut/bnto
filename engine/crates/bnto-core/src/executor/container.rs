@@ -23,7 +23,8 @@ fn passthrough(files: Vec<PipelineFile>) -> NodeExecutionResult {
     }
 }
 
-/// Extract and clone children into a sub-pipeline definition.
+/// Extract and clone children (and the edges between them) into a
+/// sub-pipeline definition.
 /// Returns `None` if children are absent or empty (caller should passthrough).
 fn clone_children_definitions(node: PipelineNodeRef) -> Option<PipelineDefinition> {
     let children = node.children.as_ref()?;
@@ -32,6 +33,7 @@ fn clone_children_definitions(node: PipelineNodeRef) -> Option<PipelineDefinitio
     }
     Some(PipelineDefinition {
         nodes: children.clone(),
+        edges: node.edges.clone(),
         settings: None,
         requires: Vec::new(),
         secrets: Vec::new(),
@@ -248,4 +250,34 @@ fn execute_sub_pipeline<F: Fn() -> u64 + Copy>(
     let position = ChainPosition::whole(processing_nodes.len());
     run_node_chain(ctx, &processing_nodes, files, file_offset, position)
         .map_err(super::closing::ChainFailure::into_error)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pipeline::PipelineNode;
+
+    fn container(json: &str) -> PipelineNode {
+        serde_json::from_str(json).unwrap()
+    }
+
+    #[test]
+    fn sub_definition_carries_the_containers_edges() {
+        let node = container(
+            r#"{ "id": "g", "type": "group",
+                 "nodes": [ { "id": "a", "type": "x" }, { "id": "b", "type": "x" } ],
+                 "edges": [ { "id": "e1", "source": "a", "target": "b" } ] }"#,
+        );
+        let sub = clone_children_definitions(&node).expect("has children");
+        assert_eq!(sub.edges, node.edges);
+        assert_eq!(sub.nodes.len(), 2);
+    }
+
+    #[test]
+    fn sub_definition_of_an_edgeless_container_has_no_edges() {
+        let node =
+            container(r#"{ "id": "g", "type": "loop", "nodes": [ { "id": "a", "type": "x" } ] }"#);
+        let sub = clone_children_definitions(&node).expect("has children");
+        assert!(sub.edges.is_empty());
+    }
 }

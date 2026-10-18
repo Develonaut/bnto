@@ -79,6 +79,8 @@ src/
 ├── progress.rs           # ProgressReporter (target-agnostic closures)
 ├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
+├── pipeline_edge.rs      # PipelineEdge: a connection between two sibling nodes
+├── graph/                # level_flow(): validate one level's edges, Kahn order, file routing (not yet used by the executor)
 ├── run_summary.rs        # RunSummary (serializable run outcome) + NodeTally (per-node counts from events)
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
