@@ -14,6 +14,7 @@ import { isContainerNodeType } from "./isContainerNodeType";
 import { isCompatibleVersion } from "./formatVersion";
 import { TYPE_VALIDATORS } from "./validateTypeSpecific";
 import { validateNodeParams } from "./validateNodeParams";
+import { validateEdgeGraph } from "./validateEdgeGraph";
 
 // Re-export ValidationError so existing consumers don't break
 export type { ValidationError } from "./validationError";
@@ -58,10 +59,12 @@ function validateTypeSpecific(def: Definition): ValidationError[] {
 }
 
 /**
- * Validates that all edges reference existing child nodes.
+ * Validates one level's edges (this definition's direct children).
  *
  * Checks that `source` and `target` on each edge map to a node ID
- * in the definition's `nodes` array.
+ * in the definition's `nodes` array, then applies the engine's graph
+ * rules (see `validateEdgeGraph`): no cycles, duplicates, edges into
+ * `input` or out of `output`, or nodes that touch no edge.
  */
 export function validateEdges(def: Definition): ValidationError[] {
   if (!def.edges?.length) return [];
@@ -86,7 +89,7 @@ export function validateEdges(def: Definition): ValidationError[] {
     }
   }
 
-  return errors;
+  return [...errors, ...validateEdgeGraph(def)];
 }
 
 /** Validates child nodes recursively and edges for group/container nodes. */

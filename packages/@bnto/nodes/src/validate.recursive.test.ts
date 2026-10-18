@@ -87,7 +87,10 @@ describe("validateEdges", () => {
     const def = validDef({
       type: "group",
       nodes: [validDef({ id: "a" }), validDef({ id: "b" })],
-      edges: [{ id: "e1", source: "nonexistent", target: "b" }],
+      edges: [
+        { id: "e0", source: "a", target: "b" },
+        { id: "e1", source: "nonexistent", target: "b" },
+      ],
     });
     const errors = validateEdges(def);
     expect(errors).toHaveLength(1);
@@ -98,7 +101,10 @@ describe("validateEdges", () => {
     const def = validDef({
       type: "group",
       nodes: [validDef({ id: "a" }), validDef({ id: "b" })],
-      edges: [{ id: "e1", source: "a", target: "nonexistent" }],
+      edges: [
+        { id: "e0", source: "a", target: "b" },
+        { id: "e1", source: "a", target: "nonexistent" },
+      ],
     });
     const errors = validateEdges(def);
     expect(errors).toHaveLength(1);
@@ -111,7 +117,7 @@ describe("validateEdges", () => {
       nodes: [validDef({ id: "a" })],
       edges: [{ id: "e1", source: "ghost1", target: "ghost2" }],
     });
-    const errors = validateEdges(def);
+    const errors = validateEdges(def).filter((e) => e.message.includes("invalid"));
     expect(errors).toHaveLength(2);
   });
 
