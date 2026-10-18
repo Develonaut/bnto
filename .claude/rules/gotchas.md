@@ -159,6 +159,8 @@ OutputFile { data: FileData::Path(path), .. }
 
 **Rule of thumb:** If your processor's `process()` function doesn't call `input.data.into_bytes()`, its output should use `FileData::Path`. See [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#filedata-selection) for the full guide.
 
+**The CLI's input files are `FileData::Path` too.** `bnto run` argument files enter the pipeline as references to the user's own files (`read_pipeline_file` in `bnto/src/io.rs`). So code that writes results out must use `copy_to()`, never `write_to()`: `write_to()` renames a `Path`, which would move the user's original into the output folder. Only `overwrite` mode renames sources, on purpose.
+
 ## Windows Portability (Engine)
 
 CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-windows` job, required by the CI Gate). Code and tests that assume Unix break there. Rules:

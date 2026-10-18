@@ -40,9 +40,9 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                     if let Some(parent) = path.parent() {
                         let _ = std::fs::create_dir_all(parent);
                     }
-                    // write_to() uses rename() for Path variant (O(1)),
-                    // std::fs::write() for Bytes variant.
-                    let _ = file.data.write_to(&path);
+                    // copy_to(), not write_to(): a Path may be the user's
+                    // own input file, which a rename would move away.
+                    let _ = file.data.copy_to(&path);
                 }
             }
         }
@@ -276,6 +276,36 @@ mod tests {
             b"video1"
         );
         assert!(dir.join("top.txt").exists());
+    }
+
+    #[test]
+    fn test_progressive_output_copies_a_path_and_keeps_the_source() {
+        use bnto_core::events::ProgressOutputFile;
+
+        // Guards: an argument file passes through as a path to the user's
+        // own file, so writing it out must copy, never move it.
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("original.mp4");
+        std::fs::write(&src, b"video").unwrap();
+        let out = temp.path().join("out");
+        std::fs::create_dir(&out).unwrap();
+
+        let reporter = stderr_reporter(noop_logger(), Some(out.to_str().unwrap().to_string()));
+        reporter.emit(PipelineEvent::IterationCompleted {
+            node_id: "loop-1".to_string(),
+            iteration: 0,
+            total_iterations: 1,
+            duration_ms: 100,
+            files_produced: 1,
+            output_files: vec![ProgressOutputFile {
+                name: "renamed.mp4".to_string(),
+                data: bnto_core::processor::FileData::Path(src.clone()),
+                mime_type: "video/mp4".to_string(),
+            }],
+        });
+
+        assert_eq!(std::fs::read(out.join("renamed.mp4")).unwrap(), b"video");
+        assert!(src.exists(), "source must survive a progressive write");
     }
 
     fn noop_logger() -> Arc<dyn Logger> {

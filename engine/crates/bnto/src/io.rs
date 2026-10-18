@@ -6,7 +6,9 @@ use bnto_core::{PipelineFile, PipelineResult};
 
 /// Read a file (or directory) from disk into a PipelineFile.
 ///
-/// For regular files, reads bytes into memory. For directories, creates a
+/// For regular files, references the file on disk (`FileData::Path`) without
+/// reading it; nodes that need the content read it themselves, so a multi-GB
+/// file only loads when a node asks for its bytes. For directories, creates a
 /// synthetic entry with the absolute path as the name and empty data —
 /// processors like `file-collect` use the filename as the directory to traverse.
 pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
@@ -26,14 +28,13 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
         });
     }
 
-    let data = std::fs::read(path).map_err(|e| format!("{e}"))?;
     let name = p
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| path.to_string());
     let mime_type = guess_mime(path);
 
-    Ok(PipelineFile::input(name, data, mime_type))
+    PipelineFile::input_path(name, p.to_path_buf(), mime_type).map_err(|e| format!("{e}"))
 }
 
 /// Write all result files to an output directory.
@@ -600,6 +601,48 @@ mod tests {
             matches!(&pf.data, bnto_core::processor::FileData::Bytes(b) if b.is_empty()),
             "Directory input should have empty bytes"
         );
+    }
+
+    #[test]
+    fn test_read_pipeline_file_regular_file_is_a_path_reference() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("clip.jpg");
+        std::fs::write(&path, b"twelve bytes").unwrap();
+
+        let pf = read_pipeline_file(path.to_str().unwrap()).unwrap();
+
+        assert_eq!(pf.name, "clip.jpg");
+        assert_eq!(pf.mime_type, "image/jpeg");
+        assert_eq!(pf.data, FileData::Path(path));
+        assert_eq!(pf.metadata[bnto_core::INPUT_SIZE_KEY], 12);
+    }
+
+    #[test]
+    fn test_read_pipeline_file_missing_file_errors() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("gone.jpg");
+        assert!(read_pipeline_file(path.to_str().unwrap()).is_err());
+    }
+
+    #[test]
+    fn test_bytes_node_reads_an_argument_file_reference() {
+        let fixture =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../test-fixtures/images/small.jpg");
+        let recipe = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../bnto-engine/recipes/compress-images.bnto.json");
+        let pf = read_pipeline_file(fixture.to_str().unwrap()).unwrap();
+        assert!(matches!(pf.data, FileData::Path(_)));
+
+        let result = bnto_engine::run_pipeline(
+            &std::fs::read_to_string(recipe).unwrap(),
+            vec![pf],
+            &bnto_core::PipelineReporter::new_noop(),
+            &bnto_core::NoopContext,
+        )
+        .unwrap();
+
+        let bytes = result.files[0].data.to_bytes().unwrap();
+        assert_eq!(&bytes[..3], &[0xFF, 0xD8, 0xFF], "JPEG magic bytes");
     }
 
     #[test]

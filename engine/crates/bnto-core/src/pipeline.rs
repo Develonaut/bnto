@@ -185,6 +185,24 @@ impl PipelineFile {
             metadata,
         }
     }
+
+    /// An input file referenced on disk, not read into memory. Its size,
+    /// from file metadata, is recorded under [`INPUT_SIZE_KEY`].
+    pub fn input_path(
+        name: String,
+        path: std::path::PathBuf,
+        mime_type: String,
+    ) -> std::io::Result<Self> {
+        let size = std::fs::metadata(&path)?.len();
+        let mut metadata = serde_json::Map::new();
+        metadata.insert(INPUT_SIZE_KEY.to_string(), size.into());
+        Ok(Self {
+            name,
+            data: crate::processor::FileData::Path(path),
+            mime_type,
+            metadata,
+        })
+    }
 }
 
 /// A single output file produced by the pipeline.
@@ -397,6 +415,27 @@ mod tests {
         let file = PipelineFile::input("a.jpg".into(), vec![0u8; 42], "image/jpeg".into());
         assert_eq!(file.metadata[INPUT_SIZE_KEY], 42);
         assert_eq!(file.metadata.len(), 1);
+    }
+
+    #[test]
+    fn test_input_path_references_the_file_and_records_its_size() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("a.mp4");
+        std::fs::write(&path, vec![0u8; 42]).unwrap();
+
+        let file =
+            PipelineFile::input_path("a.mp4".into(), path.clone(), "video/mp4".into()).unwrap();
+
+        assert_eq!(file.data, crate::processor::FileData::Path(path));
+        assert_eq!(file.metadata[INPUT_SIZE_KEY], 42);
+        assert_eq!(file.metadata.len(), 1);
+    }
+
+    #[test]
+    fn test_input_path_errors_on_a_missing_file() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("gone.mp4");
+        assert!(PipelineFile::input_path("gone.mp4".into(), path, "video/mp4".into()).is_err());
     }
 
     // --- Deserialization Tests ---
