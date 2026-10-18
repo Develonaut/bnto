@@ -70,6 +70,20 @@ fn test_file_join_writes_the_listed_files_as_one_in_order() {
 }
 
 #[test]
+fn test_file_join_real_run_leaves_no_temp_files() {
+    // The joined file streams into a run temp file; the output step copies
+    // it out, so the run must delete it afterwards.
+    let root = root_fixture();
+    let (out, tmp) = (temp_output_dir(), temp_output_dir());
+    let output = run_join(root.path(), out.path(), tmp.path(), &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert_eq!(entries(out.path()), ["README.md"]);
+    let left = entries(tmp.path());
+    assert!(left.is_empty(), "left in temp: {left:?}");
+}
+
+#[test]
 fn test_file_join_dry_run_writes_nothing() {
     let root = root_fixture();
     let (out_root, tmp) = (temp_output_dir(), temp_output_dir());
