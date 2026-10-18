@@ -34,6 +34,7 @@ import { spreadsheetLookupProcessor } from "./spreadsheetLookup";
 import { spreadsheetMergeProcessor } from "./spreadsheetMerge";
 import { spreadsheetReadProcessor } from "./spreadsheetRead";
 import { spreadsheetRenameProcessor } from "./spreadsheetRename";
+import { summarizeProcessor } from "./summarize";
 import { vectorOptimizeProcessor } from "./vectorOptimize";
 import { vectorRasterizeProcessor } from "./vectorRasterize";
 
@@ -66,6 +67,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   spreadsheetMergeProcessor,
   spreadsheetReadProcessor,
   spreadsheetRenameProcessor,
+  summarizeProcessor,
   vectorOptimizeProcessor,
   vectorRasterizeProcessor,
 ] as const;

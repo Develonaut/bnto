@@ -1,0 +1,87 @@
+{
+  "id": "summarize-report",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Summarize Report",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Reads a CSV as one item per row, summarizes the rows by folder with each folder's count and total size, and prints a line per folder."
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": { "x": 0, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "multiple": false
+      },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "read",
+      "type": "spreadsheet-read",
+      "version": "1.0.0",
+      "name": "Read",
+      "position": { "x": 125, "y": 100 },
+      "metadata": {},
+      "parameters": {},
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "totals",
+      "type": "summarize",
+      "version": "1.0.0",
+      "name": "Totals",
+      "position": { "x": 250, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "groupBy": "folder",
+        "sum": "size"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "show",
+      "type": "report",
+      "version": "1.0.0",
+      "name": "Show",
+      "position": { "x": 375, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "message": "folder {{item.folder}}: {{item.count}} files, {{item.sum_size}} bytes"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": { "x": 500, "y": 100 },
+      "metadata": {},
+      "parameters": {
+        "mode": "none"
+      },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "read" },
+    { "id": "e2", "source": "read", "target": "totals" },
+    { "id": "e3", "source": "totals", "target": "show" },
+    { "id": "e-out", "source": "show", "target": "output" }
+  ]
+}

@@ -60,6 +60,8 @@ export { spreadsheetReadParamsSchema, spreadsheetReadNodeSchema } from "./spread
 export type { SpreadsheetReadParams } from "./spreadsheetRead";
 export { spreadsheetRenameParamsSchema, spreadsheetRenameNodeSchema } from "./spreadsheetRename";
 export type { SpreadsheetRenameParams } from "./spreadsheetRename";
+export { summarizeParamsSchema, summarizeNodeSchema } from "./summarize";
+export type { SummarizeParams } from "./summarize";
 export { vectorOptimizeParamsSchema, vectorOptimizeNodeSchema } from "./vectorOptimize";
 export type { VectorOptimizeParams } from "./vectorOptimize";
 export { vectorRasterizeParamsSchema, vectorRasterizeNodeSchema } from "./vectorRasterize";

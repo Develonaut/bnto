@@ -305,6 +305,10 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   "spreadsheet-rename": {
     columns: { type: "record", control: "keyValue", required: false },
   },
+  summarize: {
+    groupBy: { type: "string", control: "text", required: false },
+    sum: { type: "string", control: "text", required: false },
+  },
   transform: {
     expression: { type: "string", control: "textarea", required: false },
     mappings: { type: "record", control: "keyValue", required: false },

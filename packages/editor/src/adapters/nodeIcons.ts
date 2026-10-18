@@ -31,6 +31,7 @@ import {
   MessageSquareIcon,
   ArrowUpDownIcon,
   MergeIcon,
+  SigmaIcon,
 } from "@bnto/ui";
 
 /**
@@ -60,6 +61,7 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   "file-minus-2": FileMinusCornerIcon,
   "arrow-up-down": ArrowUpDownIcon,
   merge: MergeIcon,
+  sigma: SigmaIcon,
   // I/O contextual icons (from getNodeIcon)
   "file-up": FileUpIcon,
   "text-cursor-input": TextCursorInputIcon,

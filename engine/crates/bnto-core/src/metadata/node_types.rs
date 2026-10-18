@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 37 registered node types.
+/// Return metadata for all 38 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -117,6 +117,15 @@ fn data_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "pen-line"
+        ),
+        node_type!(
+            "summarize",
+            "Summarize",
+            "Group items by fields; output one item per group with its count and field totals.",
+            NodeCategory::Data,
+            false,
+            "browser",
+            "sigma"
         ),
         node_type!(
             "transform",

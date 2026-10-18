@@ -113,6 +113,7 @@ export {
   MessageSquare as MessageSquareIcon,
   ArrowUpDown as ArrowUpDownIcon,
   Merge as MergeIcon,
+  Sigma as SigmaIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

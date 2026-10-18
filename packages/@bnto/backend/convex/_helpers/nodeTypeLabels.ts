@@ -39,6 +39,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-read": "Read Rows",
   "spreadsheet-rename": "Rename CSV Columns",
+  "summarize": "Summarize",
   "transform": "Transform",
   "vector-optimize": "Optimize SVG",
   "vector-rasterize": "SVG to Image",

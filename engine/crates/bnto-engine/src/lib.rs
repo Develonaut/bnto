@@ -39,6 +39,7 @@ pub fn create_browser_registry() -> NodeRegistry {
     registry.register("assert", Box::new(bnto_core::control::Assert::new()));
     registry.register("report", Box::new(bnto_core::control::Report::new()));
     registry.register("edit-fields", Box::new(bnto_core::data::EditFields::new()));
+    registry.register("summarize", Box::new(bnto_core::data::Summarize::new()));
     registry.register("file-decode", Box::new(bnto_file::FileDecode::new()));
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
     registry.register("file-join", Box::new(bnto_file::FileJoin::new()));
@@ -140,12 +141,13 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 22);
+        assert_eq!(registry.len(), 23);
 
         let expected = [
             "assert",
             "report",
             "edit-fields",
+            "summarize",
             "file-decode",
             "file-filter",
             "file-join",
@@ -180,9 +182,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (22) + file-collect + file-copy + file-delete + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 30
-        assert_eq!(registry.len(), 30);
+        // Full registry = browser (23) + file-collect + file-copy + file-delete + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 31
+        assert_eq!(registry.len(), 31);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -524,6 +526,69 @@ mod tests {
         let msg = err.to_string();
         assert!(msg.contains("\"middle\""), "{msg}");
         assert!(msg.contains("people_row"), "{msg}");
+    }
+
+    /// A text file named `name` holding `size` bytes.
+    fn sized_file(name: &str, size: usize) -> PipelineFile {
+        PipelineFile {
+            name: name.to_string(),
+            data: FileData::Bytes(vec![b'x'; size]),
+            mime_type: "text/plain".to_string(),
+            metadata: serde_json::Map::new(),
+        }
+    }
+
+    #[test]
+    fn test_summarize_counts_and_totals_what_file_metadata_attached() {
+        // file-metadata gives each file `extension` and `file_size`;
+        // summarize turns five files into one item per extension.
+        let json = r#"{
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "input", "type": "input" },
+                { "id": "meta", "type": "file-metadata" },
+                { "id": "totals", "type": "summarize",
+                  "parameters": { "groupBy": "extension", "sum": "file_size" } },
+                { "id": "output", "type": "output" }
+            ]
+        }"#;
+        let files = vec![
+            sized_file("a.md", 10),
+            sized_file("b.png", 300),
+            sized_file("c.md", 20),
+            sized_file("d.png", 400),
+            sized_file("e.md", 30),
+        ];
+        let reporter = PipelineReporter::new_noop();
+        let result =
+            run_pipeline(json, files, &reporter, &NoopContext).expect("pipeline should succeed");
+
+        let rows: Vec<serde_json::Value> = result
+            .files
+            .iter()
+            .map(|f| serde_json::Value::Object(f.metadata.clone()))
+            .collect();
+        assert_eq!(
+            rows,
+            vec![
+                serde_json::json!({ "extension": "md", "count": 3, "sum_file_size": 60 }),
+                serde_json::json!({ "extension": "png", "count": 2, "sum_file_size": 700 }),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_check_refuses_a_summarize_field_list_with_an_empty_field() {
+        let definition: PipelineDefinition = serde_json::from_value(serde_json::json!({
+            "nodes": [{ "id": "totals", "type": "summarize", "parameters": {
+                "groupBy": "folder,,kind"
+            } }]
+        }))
+        .unwrap();
+        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        assert_eq!(findings.len(), 1, "{findings:?}");
+        assert_eq!(findings[0].node_id, "totals");
+        assert!(findings[0].message.contains("empty field"), "{findings:?}");
     }
 
     /// Run file-list (`paths` under `root`) -> file-filter (`.log` only) ->
