@@ -345,6 +345,7 @@ mod basic;
 mod batch_input;
 mod containers;
 mod edges;
+mod edges_always;
 mod errors;
 mod item_templates;
 mod metadata;

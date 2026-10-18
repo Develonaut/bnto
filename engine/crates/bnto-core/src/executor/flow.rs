@@ -3,8 +3,8 @@
 // the chain it always did. A graph runs segment by segment in execution
 // order, its files routed along the edges (`routed.rs`, `segments.rs`).
 //
-// A failure fails the level at once: the failing segment closes its own
-// chain (its `always` nodes run), and no later segment runs.
+// A failure stops the level: the failing segment closes its own chain, then
+// every later step is skipped except `always` ones (`flow_closing.rs`).
 
 use std::ops::Range;
 
@@ -17,6 +17,7 @@ use crate::pipeline_edge::PipelineEdge;
 
 use super::auto_iteration::run_auto_iteration;
 use super::closing::ChainFailure;
+use super::flow_closing::close_graph;
 use super::routed::Routed;
 use super::segments::{as_chain, segments};
 use super::{ChainPosition, NodeExecutionResult, PipelineContext, run_node_chain};
@@ -118,9 +119,24 @@ fn run_graph<'a, F: Fn() -> u64 + Copy>(
     let mut routed = Routed::new(graph, files);
     let mut level = NodeExecutionResult::holding(Vec::new());
     for range in segments(graph) {
-        let last: &'a PipelineNode = graph.order[range.end - 1];
+        let end = range.end;
+        let last: &'a PipelineNode = graph.order[end - 1];
         let last = last.id.as_str();
-        let result = run_graph_segment(&level_ctx, graph, &mut routed, range, file_offset, mode)?;
+        let result =
+            match run_graph_segment(&level_ctx, graph, &mut routed, range, file_offset, mode) {
+                Ok(result) => result,
+                Err(failure) => {
+                    let ctx = &mut level_ctx;
+                    return Err(close_graph(
+                        ctx,
+                        graph,
+                        &mut routed,
+                        failure,
+                        end,
+                        file_offset,
+                    ));
+                }
+            };
         let records = level.then(result);
         level_ctx.node_outputs.add(records, ctx.count_keys);
         routed.hand_over(last, std::mem::take(&mut level.output_files));

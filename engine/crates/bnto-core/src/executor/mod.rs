@@ -24,6 +24,7 @@ mod closing;
 mod container;
 mod count_keys;
 mod flow;
+mod flow_closing;
 mod leaf_output;
 pub mod loop_config;
 pub mod node_outputs;
