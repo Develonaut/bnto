@@ -1,0 +1,25 @@
+{
+  "id": "file-list-write",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "File List Write",
+  "metadata": {
+    "description": "Takes no input: lists two files under the Root run var and writes them to the output dir, for checking that a run copies user files and never moves them."
+  },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "list",
+      "type": "file-list",
+      "parameters": {
+        "base": "{{vars.Root}}",
+        "paths": ["a.txt", "b.txt"]
+      }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "list" },
+    { "id": "e2", "source": "list", "target": "output" }
+  ]
+}

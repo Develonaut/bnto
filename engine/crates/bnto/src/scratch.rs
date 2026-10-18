@@ -1,8 +1,9 @@
-// Per-run scratch directory for a dry run's temp files.
+// Per-run scratch directory for a run's temp files.
 //
-// A dry run still executes shell-command nodes, and their output lands in
-// temp files that only a real run's output step moves away. Creating them
-// under one bnto-owned directory lets the run delete exactly what it made.
+// Nodes such as shell-command write their output to temp files. The output
+// step copies results out (it must never move a user's own files), so the
+// run deletes its temp files itself. Creating them under one bnto-owned
+// directory lets it delete exactly what it made.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -28,7 +29,7 @@ impl RunScratch {
             *dir = Some(created);
         }
         let root = dir.as_ref().map(TempDir::path).expect("created above");
-        persisted_temp_file(Some(root), suffix)
+        persisted_temp_file(root, suffix)
     }
 
     /// The scratch dir, if one has been created.
@@ -57,8 +58,8 @@ fn lock_live() -> std::sync::MutexGuard<'static, Vec<PathBuf>> {
     LIVE_DIRS.lock().unwrap_or_else(|e| e.into_inner())
 }
 
-/// Delete every live scratch dir. Called from the signal handler after
-/// child processes are killed, so nothing still holds their files open.
+/// Delete every live scratch dir. Called before `process::exit` — from the
+/// signal handler after child processes are killed, and when a run fails.
 pub fn remove_live_dirs() {
     let dirs = std::mem::take(&mut *lock_live());
     remove_dirs(&dirs);
@@ -85,16 +86,13 @@ fn create_scratch_dir() -> Result<TempDir, BntoError> {
         .map_err(|e| BntoError::ProcessingFailed(format!("Failed to create scratch dir: {e}")))
 }
 
-/// Atomically create a `bnto-*<suffix>` file that outlives its handle, in
-/// `dir` or (with `None`) the system temp dir.
-pub fn persisted_temp_file(dir: Option<&Path>, suffix: &str) -> Result<PathBuf, BntoError> {
-    let mut builder = tempfile::Builder::new();
-    builder.prefix("bnto-").suffix(suffix);
-    let file = match dir {
-        Some(dir) => builder.tempfile_in(dir),
-        None => builder.tempfile(),
-    };
-    file.map_err(|e| BntoError::ProcessingFailed(format!("Failed to create temp file: {e}")))?
+/// Atomically create a `bnto-*<suffix>` file in `dir` that outlives its handle.
+fn persisted_temp_file(dir: &Path, suffix: &str) -> Result<PathBuf, BntoError> {
+    tempfile::Builder::new()
+        .prefix("bnto-")
+        .suffix(suffix)
+        .tempfile_in(dir)
+        .map_err(|e| BntoError::ProcessingFailed(format!("Failed to create temp file: {e}")))?
         .into_temp_path()
         .keep()
         .map_err(|e| BntoError::ProcessingFailed(format!("Failed to persist temp file: {e}")))
@@ -184,7 +182,7 @@ mod tests {
     #[test]
     fn test_persisted_temp_file_outlives_its_handle() {
         let dir = tempfile::tempdir().unwrap();
-        let file = persisted_temp_file(Some(dir.path()), ".txt").unwrap();
+        let file = persisted_temp_file(dir.path(), ".txt").unwrap();
         assert!(file.exists());
         assert!(file.to_string_lossy().ends_with(".txt"));
     }

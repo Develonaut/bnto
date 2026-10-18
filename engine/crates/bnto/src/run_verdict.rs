@@ -44,7 +44,8 @@ impl RunVerdict {
     }
 
     /// Print `{label} {error}` as the last stderr line (and, with `--json`,
-    /// the failed summary on stdout), then exit 1.
+    /// the failed summary on stdout), delete the run's temp files (the exit
+    /// skips destructors), then exit 1.
     pub fn fail(&self, label: &str, error: impl Display) -> ! {
         let elapsed_ms = self.start.elapsed().as_millis() as u64;
         let nodes = self.tally.borrow().nodes();
@@ -52,6 +53,7 @@ impl RunVerdict {
         let message = summary.error.as_deref().unwrap_or_default();
         eprintln!("{} {message}", label.red());
         self.print_json(&summary);
+        crate::scratch::remove_live_dirs();
         process::exit(1);
     }
 
