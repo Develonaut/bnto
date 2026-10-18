@@ -1,6 +1,6 @@
 // bnto-file — File operation nodes.
 //
-// Browser-capable: decode, filter, rename, metadata, render, sort (no filesystem access).
+// Browser-capable: decode, filter, join, rename, metadata, render, sort (no filesystem access).
 // CLI-only: collect, copy, delete, list, move (require filesystem access).
 
 /// File-filter node — drop files that don't match extension, pattern,
@@ -59,6 +59,11 @@ pub mod metadata;
 /// (a header, one block per item, a footer). Browser-compatible.
 pub mod render;
 
+/// File-join node — join the files flowing in into one file, in arrival
+/// order, a separator between them; disk files stream, never loaded whole.
+/// Browser-compatible.
+pub mod join;
+
 /// WASM bridge — JS-callable functions for file operations.
 pub mod wasm_bridge;
 
@@ -67,6 +72,7 @@ pub use copy::FileCopy;
 pub use decode::FileDecode;
 pub use delete::FileDelete;
 pub use filter::FileFilter;
+pub use join::FileJoin;
 pub use list::FileList;
 pub use metadata::FileMetadata;
 pub use r#move::FileMove;

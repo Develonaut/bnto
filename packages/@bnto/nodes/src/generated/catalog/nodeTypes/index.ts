@@ -13,6 +13,7 @@ import { fileCopyNodeType } from "./fileCopy";
 import { fileDecodeNodeType } from "./fileDecode";
 import { fileDeleteNodeType } from "./fileDelete";
 import { fileFilterNodeType } from "./fileFilter";
+import { fileJoinNodeType } from "./fileJoin";
 import { fileListNodeType } from "./fileList";
 import { fileMetadataNodeType } from "./fileMetadata";
 import { fileMoveNodeType } from "./fileMove";
@@ -55,6 +56,7 @@ export const NODE_TYPES = {
   fileDecode: "file-decode",
   fileDelete: "file-delete",
   fileFilter: "file-filter",
+  fileJoin: "file-join",
   fileList: "file-list",
   fileMetadata: "file-metadata",
   fileMove: "file-move",
@@ -101,6 +103,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "file-decode": fileDecodeNodeType,
   "file-delete": fileDeleteNodeType,
   "file-filter": fileFilterNodeType,
+  "file-join": fileJoinNodeType,
   "file-list": fileListNodeType,
   "file-metadata": fileMetadataNodeType,
   "file-move": fileMoveNodeType,

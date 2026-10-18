@@ -41,6 +41,7 @@ pub fn create_browser_registry() -> NodeRegistry {
     registry.register("edit-fields", Box::new(bnto_core::data::EditFields::new()));
     registry.register("file-decode", Box::new(bnto_file::FileDecode::new()));
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
+    registry.register("file-join", Box::new(bnto_file::FileJoin::new()));
     registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("file-render", Box::new(bnto_file::FileRender::new()));
@@ -139,7 +140,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 21);
+        assert_eq!(registry.len(), 22);
 
         let expected = [
             "assert",
@@ -147,6 +148,7 @@ mod tests {
             "edit-fields",
             "file-decode",
             "file-filter",
+            "file-join",
             "file-metadata",
             "file-rename",
             "file-render",
@@ -178,9 +180,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (21) + file-collect + file-copy + file-delete + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 29
-        assert_eq!(registry.len(), 29);
+        // Full registry = browser (22) + file-collect + file-copy + file-delete + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 30
+        assert_eq!(registry.len(), 30);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -700,6 +702,7 @@ mod tests {
         let expected_keys = [
             "file-decode",
             "file-filter",
+            "file-join",
             "file-metadata",
             "file-rename",
             "file-sort",

@@ -20,6 +20,7 @@ describe("NODE_TYPES", () => {
     expect(NODE_TYPES.fileDelete).toBe("file-delete");
     expect(NODE_TYPES.fileMove).toBe("file-move");
     expect(NODE_TYPES.fileRename).toBe("file-rename");
+    expect(NODE_TYPES.fileJoin).toBe("file-join");
     expect(NODE_TYPES.fileRender).toBe("file-render");
     expect(NODE_TYPES.fileSort).toBe("file-sort");
     expect(NODE_TYPES.httpRequest).toBe("http-request");
