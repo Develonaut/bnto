@@ -15,7 +15,7 @@ use crate::progress_indent::{self, StepDepths};
 /// and logs command output through the session logger.
 ///
 /// When `output_dir` is provided, progressive output files from
-/// `IterationCompleted` events are written to disk immediately.
+/// `IterationCompleted` events are copied to disk immediately.
 pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> PipelineReporter {
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.
@@ -40,8 +40,8 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                     if let Some(parent) = path.parent() {
                         let _ = std::fs::create_dir_all(parent);
                     }
-                    // copy_to(), not write_to(): a Path may be the user's
-                    // own input file, which a rename would move away.
+                    // Copy, never rename: a Path output may be the user's own
+                    // file, and the final write_results reads it again.
                     let _ = file.data.copy_to(&path);
                 }
             }
@@ -279,33 +279,33 @@ mod tests {
     }
 
     #[test]
-    fn test_progressive_output_copies_a_path_and_keeps_the_source() {
+    fn test_progressive_output_copies_path_files_and_keeps_the_source() {
         use bnto_core::events::ProgressOutputFile;
 
-        // Guards: an argument file passes through as a path to the user's
-        // own file, so writing it out must copy, never move it.
-        let temp = tempfile::tempdir().unwrap();
-        let src = temp.path().join("original.mp4");
-        std::fs::write(&src, b"video").unwrap();
-        let out = temp.path().join("out");
-        std::fs::create_dir(&out).unwrap();
+        let src_dir = tempfile::tempdir().unwrap();
+        let src = src_dir.path().join("mine.txt");
+        std::fs::write(&src, b"user file").unwrap();
+        let out = tempfile::tempdir().unwrap();
 
-        let reporter = stderr_reporter(noop_logger(), Some(out.to_str().unwrap().to_string()));
+        let reporter = stderr_reporter(noop_logger(), Some(out.path().to_str().unwrap().into()));
         reporter.emit(PipelineEvent::IterationCompleted {
             node_id: "loop-1".to_string(),
             iteration: 0,
             total_iterations: 1,
-            duration_ms: 100,
+            duration_ms: 1,
             files_produced: 1,
             output_files: vec![ProgressOutputFile {
-                name: "renamed.mp4".to_string(),
+                name: "mine.txt".to_string(),
                 data: bnto_core::processor::FileData::Path(src.clone()),
-                mime_type: "video/mp4".to_string(),
+                mime_type: "text/plain".to_string(),
             }],
         });
 
-        assert_eq!(std::fs::read(out.join("renamed.mp4")).unwrap(), b"video");
-        assert!(src.exists(), "source must survive a progressive write");
+        assert_eq!(std::fs::read(&src).unwrap(), b"user file");
+        assert_eq!(
+            std::fs::read(out.path().join("mine.txt")).unwrap(),
+            b"user file"
+        );
     }
 
     fn noop_logger() -> Arc<dyn Logger> {
