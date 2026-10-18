@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use super::*;
 
 /// What a capture node received: each file's name and bytes, per call.
-type Seen = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
+pub(super) type Seen = Arc<Mutex<Vec<(String, Vec<u8>)>>>;
 
 /// Records every file it receives and passes it on unchanged.
 struct CaptureProcessor(Seen);
@@ -76,7 +76,7 @@ impl crate::processor::NodeProcessor for FailWithLogProcessor {
 
 /// The mock registry plus `test-capture` (recording into the returned
 /// list) and `test-fail-with-log`.
-fn always_registry() -> (NodeRegistry, Seen) {
+pub(super) fn always_registry() -> (NodeRegistry, Seen) {
     let seen = Seen::default();
     let mut registry = mock_registry();
     registry.register("test-capture", Box::new(CaptureProcessor(seen.clone())));
@@ -85,7 +85,7 @@ fn always_registry() -> (NodeRegistry, Seen) {
 }
 
 /// Run `json` on one `input.txt` file, returning the result and events.
-fn run(
+pub(super) fn run(
     json: &str,
     registry: &NodeRegistry,
 ) -> (Result<PipelineResult, BntoError>, Vec<PipelineEvent>) {
@@ -98,7 +98,7 @@ fn run(
 }
 
 /// Ids of the nodes that started, in order.
-fn started(events: &[PipelineEvent]) -> Vec<String> {
+pub(super) fn started(events: &[PipelineEvent]) -> Vec<String> {
     events
         .iter()
         .filter_map(|e| match e {
@@ -109,7 +109,7 @@ fn started(events: &[PipelineEvent]) -> Vec<String> {
 }
 
 /// Names of the files the capture node saw.
-fn seen_names(seen: &Seen) -> Vec<String> {
+pub(super) fn seen_names(seen: &Seen) -> Vec<String> {
     seen.lock()
         .unwrap()
         .iter()

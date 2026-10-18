@@ -51,6 +51,32 @@ impl ChainFailure {
         self
     }
 
+    /// Run `node` as a closing step on `files` (a graph step's fan-in)
+    /// rather than on what the previous closing step handed over.
+    pub(super) fn close_with<F: Fn() -> u64 + Copy>(
+        mut self,
+        ctx: &mut PipelineContext<F>,
+        node: PipelineNodeRef,
+        files: Vec<PipelineFile>,
+        position: ChainPosition,
+        file_offset: usize,
+    ) -> Self {
+        self.files = files;
+        let (index, total) = (position.first_index, position.total_nodes);
+        self.run_step(ctx, node, index, total, file_offset)
+    }
+
+    /// The files handed over so far, leaving none.
+    pub(super) fn take_files(&mut self) -> Vec<PipelineFile> {
+        std::mem::take(&mut self.files)
+    }
+
+    /// The same verdict, handing over `files` instead.
+    pub(super) fn handing_over(mut self, files: Vec<PipelineFile>) -> Self {
+        self.files = files;
+        self
+    }
+
     /// Run one closing step on the files handed over so far.
     fn run_step<F: Fn() -> u64 + Copy>(
         mut self,
