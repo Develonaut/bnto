@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 34 registered node types.
+/// Return metadata for all 35 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -149,6 +149,15 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             false,
             "cli",
             "copy"
+        ),
+        node_type!(
+            "file-delete",
+            "Delete Files",
+            "Delete the files flowing in, each under a base folder; missing files are skipped and counted.",
+            NodeCategory::File,
+            false,
+            "cli",
+            "file-minus-2"
         ),
         node_type!(
             "file-list",

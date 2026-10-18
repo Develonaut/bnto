@@ -80,6 +80,7 @@ pub fn create_registry() -> NodeRegistry {
     {
         registry.register("file-collect", Box::new(bnto_file::FileCollect::new()));
         registry.register("file-copy", Box::new(bnto_file::FileCopy::new()));
+        registry.register("file-delete", Box::new(bnto_file::FileDelete::new()));
         registry.register("file-list", Box::new(bnto_file::FileList::new()));
         registry.register("file-move", Box::new(bnto_file::FileMove::new()));
         registry.register(
@@ -175,9 +176,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (20) + file-collect + file-copy + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (7) = 27
-        assert_eq!(registry.len(), 27);
+        // Full registry = browser (20) + file-collect + file-copy + file-delete + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 28
+        assert_eq!(registry.len(), 28);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -465,6 +466,51 @@ mod tests {
         let msg = err.to_string();
         assert!(msg.contains("\"middle\""), "{msg}");
         assert!(msg.contains("people_row"), "{msg}");
+    }
+
+    /// Run file-list (`paths` under `root`) -> file-filter (`.log` only) ->
+    /// file-delete (under `root`), with no input files.
+    #[cfg(feature = "native")]
+    fn run_list_filter_delete(root: &std::path::Path, paths: &[&str]) -> PipelineResult {
+        let root = root.to_str().unwrap();
+        let json = serde_json::json!({
+            "settings": { "iteration": "auto" },
+            "nodes": [
+                { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+                { "id": "list", "type": "file-list",
+                  "parameters": { "base": root, "paths": paths } },
+                { "id": "logs", "type": "file-filter", "parameters": { "extensions": "log" } },
+                { "id": "delete", "type": "file-delete", "parameters": { "base": root } },
+                { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+            ]
+        })
+        .to_string();
+        let reporter = PipelineReporter::new_noop();
+        run_pipeline(&json, vec![], &reporter, &NoopContext).expect("pipeline should succeed")
+    }
+
+    #[test]
+    #[cfg(feature = "native")]
+    fn test_file_delete_removes_what_list_and_filter_chose() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join("logs")).unwrap();
+        for name in ["a.log", "keep.txt", "logs/b.log"] {
+            std::fs::write(tmp.path().join(name), name).unwrap();
+        }
+        let result =
+            run_list_filter_delete(tmp.path(), &["a.log", "keep.txt", "logs/b.log", "gone.log"]);
+        assert!(!tmp.path().join("a.log").exists());
+        assert!(!tmp.path().join("logs/b.log").exists());
+        assert!(
+            tmp.path().join("keep.txt").exists(),
+            "the filter dropped it"
+        );
+        assert!(tmp.path().join("logs").is_dir());
+        let counts = &result.node_metadata["delete"];
+        assert_eq!(counts["deleted"], 2, "{counts:?}");
+        assert_eq!(counts["skipped"], 0, "file-list already skipped gone.log");
+        let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
+        assert_eq!(names, vec!["a.log", "logs/b.log"]);
     }
 
     #[test]

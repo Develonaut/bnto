@@ -14,6 +14,8 @@ export { fileCopyParamsSchema, fileCopyNodeSchema } from "./fileCopy";
 export type { FileCopyParams } from "./fileCopy";
 export { fileDecodeParamsSchema, fileDecodeNodeSchema } from "./fileDecode";
 export type { FileDecodeParams } from "./fileDecode";
+export { fileDeleteParamsSchema, fileDeleteNodeSchema } from "./fileDelete";
+export type { FileDeleteParams } from "./fileDelete";
 export { fileFilterParamsSchema, fileFilterNodeSchema } from "./fileFilter";
 export type { FileFilterParams } from "./fileFilter";
 export { fileListParamsSchema, fileListNodeSchema } from "./fileList";

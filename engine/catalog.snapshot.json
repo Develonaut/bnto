@@ -270,6 +270,32 @@
       ]
     },
     {
+      "name": "file-delete",
+      "label": "Delete Files",
+      "description": "Delete the files flowing in, each under a base folder; missing files are skipped and counted.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "cli"
+      ],
+      "icon": "file-minus-2",
+      "params": [
+        {
+          "name": "base",
+          "label": "Base Folder",
+          "description": "Folder every deleted file must be under. A file outside it (including through \"..\" or a link) refuses the run, so nothing is deleted.",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "./build",
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "file-filter",
       "label": "Filter Files",
       "description": "Keep or drop files by extension, name or path pattern, and size.",
@@ -2606,6 +2632,33 @@
         }
       ],
       "inputCardinality": "perFile"
+    },
+    {
+      "nodeType": "file-delete",
+      "name": "Delete Files",
+      "description": "Delete the files flowing in, each under a base folder; missing files are skipped and counted, and a folder or a file outside the base refuses the run.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "base",
+          "label": "Base Folder",
+          "description": "Folder every deleted file must be under. A file outside it (including through \"..\" or a link) refuses the run, so nothing is deleted.",
+          "paramType": {
+            "type": "string"
+          },
+          "constraints": {
+            "required": true
+          },
+          "placeholder": "./build",
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "file-filter",

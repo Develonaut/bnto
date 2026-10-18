@@ -1,0 +1,12 @@
+{
+  "id": "check-file-delete-bad",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check File Delete Bad",
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    { "id": "no-base", "type": "file-delete", "parameters": {} },
+    { "id": "fine", "type": "file-delete", "parameters": { "base": "." } },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ]
+}

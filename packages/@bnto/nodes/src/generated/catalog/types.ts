@@ -11,6 +11,7 @@ export type NodeTypeName =
   | "file-collect"
   | "file-copy"
   | "file-decode"
+  | "file-delete"
   | "file-filter"
   | "file-list"
   | "file-metadata"
