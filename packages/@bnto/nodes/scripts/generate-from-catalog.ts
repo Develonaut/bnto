@@ -527,9 +527,11 @@ function generateZodField(param: RawParameter | RawNodeTypeParam): string {
 
   // Control-based overrides: tagPicker → array, keyValue → record
   if (control === "tagPicker" && name === "args") {
-    // shell-command args support nested arrays as conditional groups.
-    // Nested arrays are flattened by the engine's flatten_conditional_args().
-    zodChain = "z.array(z.union([z.string(), z.array(z.string())]))";
+    // shell-command args support nested arrays as conditional groups
+    // (flattened by the engine's flatten_conditional_args()) and
+    // `{ each: [...] }` groups, repeated once per incoming file.
+    zodChain =
+      "z.array(z.union([z.string(), z.array(z.string()), z.object({ each: z.array(z.string()) }).strict()]))";
   } else if (control === "tagPicker") {
     zodChain = "z.array(z.string())";
   } else if (control === "keyValue" && param.paramType.type === "object") {

@@ -25,7 +25,8 @@ export const shellCommandProcessor: ProcessorDef = {
     {
       name: "args",
       label: "Arguments",
-      description: "Command arguments as an array of strings.",
+      description:
+        'Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {"each": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled.',
       type: "string" as const,
     },
     {
@@ -66,5 +67,5 @@ export const shellCommandProcessor: ProcessorDef = {
       surfaceable: false,
     },
   ],
-  inputCardinality: "source" as const,
+  inputCardinality: "batch" as const,
 };

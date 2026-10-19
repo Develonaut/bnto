@@ -16,7 +16,7 @@
 // validation, env var sanitization).
 
 use bnto_core::metadata::InputCardinality;
-use bnto_core::processor::{NodeInput, NodeOutput};
+use bnto_core::processor::{BatchFile, BatchInput, FileData, NodeInput, NodeOutput};
 use bnto_core::{
     BntoError, NodeCategory, NodeMetadata, NodeProcessor, ProcessContext, ProgressReporter,
 };
@@ -24,6 +24,7 @@ use bnto_core::{
 pub use crate::args::flatten_conditional_args;
 use crate::args::resolve_input_placeholders;
 use crate::command_options::command_options;
+use crate::each;
 use crate::file_mode::process_file_mode;
 use crate::invocation::Invocation;
 use crate::parameters::build_parameters;
@@ -38,8 +39,6 @@ use crate::file_mode::OUTPUT_DIR_PLACEHOLDER;
 use crate::output_files::{collect_output_files, mime_from_extension};
 #[cfg(test)]
 use crate::stdout_mode::make_output_filename;
-#[cfg(test)]
-use bnto_core::processor::FileData;
 
 /// JSON params of a node, as the processor receives them.
 type Params = serde_json::Map<String, serde_json::Value>;
@@ -79,6 +78,9 @@ impl NodeProcessor for ShellCommand {
         if let Err(e) = search_path::read_search_path(params.get("search_path")) {
             errors.push(e);
         }
+        if let Err(e) = each::check_groups(params.get("args")) {
+            errors.push(e);
+        }
         if let Some(timeout) = params.get("timeout").and_then(serde_json::Value::as_u64)
             && timeout == 0
         {
@@ -88,32 +90,37 @@ impl NodeProcessor for ShellCommand {
         errors
     }
 
+    /// Run with no incoming files (a direct call, not through the executor).
     fn process(
         &self,
         input: NodeInput,
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let params = &input.params;
-        let command = required_command(params)?;
-        let mut args = flattened_args(params);
-        // Security check: reject shell interpreters and path-based commands
-        validate::validate_command(command).map_err(BntoError::InvalidInput)?;
-        let program = resolved_program(command, params, ctx)?;
-        // Resolve {{url}} and {{input}} placeholders from injected params.
-        // The CLI injects "url" or "text" params for URL/Text mode recipes.
-        resolve_input_placeholders(&mut args, params);
-        let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
-        let invocation = Invocation {
-            command,
-            program: &program,
-            args: &args,
-            options: command_options(params),
+        run_node(&input, &[], progress, ctx)
+    }
+
+    /// Run once with every incoming file, for `each` groups in `args`. The
+    /// files never reach the command otherwise, and the output is named
+    /// after the command alone, as when the node had no input.
+    fn process_batch(
+        &self,
+        input: BatchInput,
+        progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        let node_input = NodeInput {
+            data: FileData::Bytes(Vec::new()),
+            filename: String::new(),
+            mime_type: None,
+            params: input.params,
         };
-        match params.get("outputMode").and_then(serde_json::Value::as_str) {
-            Some("file") => process_file_mode(&invocation, &input, progress, ctx, max_output_mb),
-            _ => process_stdout_mode(&invocation, &input, progress, ctx, max_output_mb),
-        }
+        run_node(&node_input, &input.files, progress, ctx)
+    }
+
+    /// Fills `{{item.*}}` inside `each` groups itself, once per file.
+    fn resolves_items(&self) -> bool {
+        true
     }
 
     fn metadata(&self) -> NodeMetadata {
@@ -129,10 +136,55 @@ impl NodeProcessor for ShellCommand {
                 "desktop".to_string(),
             ],
             parameters: build_parameters(),
-            input_cardinality: InputCardinality::Source,
+            input_cardinality: InputCardinality::Batch,
             requires: vec![],
         }
     }
+}
+
+/// Validate, build and run the command `input.params` describe, with
+/// `files` for its `each` groups.
+fn run_node(
+    input: &NodeInput,
+    files: &[BatchFile],
+    progress: &ProgressReporter,
+    ctx: &dyn ProcessContext,
+) -> Result<NodeOutput, BntoError> {
+    let params = &input.params;
+    let command = required_command(params)?;
+    // Security check: reject shell interpreters and path-based commands
+    validate::validate_command(command).map_err(BntoError::InvalidInput)?;
+    let program = resolved_program(command, params, ctx)?;
+    let args = command_args(params, files, ctx)?;
+    let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
+    let invocation = Invocation {
+        command,
+        program: &program,
+        args: &args,
+        options: command_options(params),
+    };
+    match params.get("outputMode").and_then(serde_json::Value::as_str) {
+        Some("file") => process_file_mode(&invocation, input, progress, ctx, max_output_mb),
+        _ => process_stdout_mode(&invocation, input, progress, ctx, max_output_mb),
+    }
+}
+
+/// The command's arguments: `each` groups filled per file, conditional
+/// groups flattened, then `{{url}}` / `{{input}}` resolved from the params
+/// the CLI injects for URL/Text mode recipes.
+fn command_args(
+    params: &Params,
+    files: &[BatchFile],
+    ctx: &dyn ProcessContext,
+) -> Result<Vec<String>, BntoError> {
+    if let Some(error) = each::unfilled_item(params) {
+        return Err(BntoError::InvalidInput(error));
+    }
+    let raw = params.get("args").and_then(serde_json::Value::as_array);
+    let expanded = each::expand_each(raw.map_or(&[], Vec::as_slice), files, ctx)?;
+    let mut args = flatten_conditional_args(&expanded);
+    resolve_input_placeholders(&mut args, params);
+    Ok(args)
 }
 
 /// The required `command` param.
@@ -155,15 +207,6 @@ fn resolved_program(
     let found = search_path::resolve_command(command, &folders, ctx.work_dir().ok())
         .map_err(BntoError::InvalidInput)?;
     Ok(found.map_or_else(|| command.to_string(), |p| p.to_string_lossy().into_owned()))
-}
-
-/// The `args` param with conditional groups flattened (empty when unset).
-fn flattened_args(params: &Params) -> Vec<String> {
-    params
-        .get("args")
-        .and_then(serde_json::Value::as_array)
-        .map(|arr| flatten_conditional_args(arr))
-        .unwrap_or_default()
 }
 
 /// A numeric param, or `default` when unset.
@@ -912,5 +955,122 @@ mod tests {
             seen[0].env,
             vec![("GREETING".to_string(), "hi".to_string())]
         );
+    }
+
+    // --- each groups (batch input) ---
+
+    /// Records the args of every command it was asked to run.
+    struct RecordingArgs(std::sync::Mutex<Vec<Vec<String>>>);
+
+    impl ProcessContext for RecordingArgs {
+        fn run_command(&self, _cmd: &str, args: &[&str]) -> Result<Vec<u8>, BntoError> {
+            let args = args.iter().map(|a| a.to_string()).collect();
+            self.0.lock().unwrap().push(args);
+            Ok(b"ok".to_vec())
+        }
+        fn temp_file(&self, s: &str) -> Result<std::path::PathBuf, BntoError> {
+            NoopContext.temp_file(s)
+        }
+        fn env_var(&self, _key: &str) -> Option<String> {
+            None
+        }
+        fn work_dir(&self) -> Result<&std::path::Path, BntoError> {
+            NoopContext.work_dir()
+        }
+    }
+
+    fn batch(params: serde_json::Value, names: &[&str]) -> BatchInput {
+        let files = names
+            .iter()
+            .map(|name| BatchFile {
+                data: FileData::Path(std::env::temp_dir().join(name)),
+                filename: name.to_string(),
+                mime_type: None,
+                metadata: serde_json::Map::new(),
+            })
+            .collect();
+        BatchInput {
+            files,
+            params: params.as_object().unwrap().clone(),
+        }
+    }
+
+    #[test]
+    fn test_shell_command_takes_its_incoming_files_and_fills_items_itself() {
+        let meta = ShellCommand::new().metadata();
+        assert_eq!(meta.input_cardinality, InputCardinality::Batch);
+        assert!(ShellCommand::new().resolves_items());
+    }
+
+    #[test]
+    fn test_one_command_gets_every_file_through_an_each_group() {
+        let ctx = RecordingArgs(Default::default());
+        let input = batch(
+            serde_json::json!({
+                "command": "llvm-cov",
+                "args": ["report", { "each": ["-object={{path}}"] }, "-format=text"]
+            }),
+            &["a.dll", "b.dll"],
+        );
+        let output = ShellCommand::new()
+            .process_batch(input, &ProgressReporter::new_noop(), &ctx)
+            .unwrap();
+        let object = |n: &str| format!("-object={}", std::env::temp_dir().join(n).display());
+        let ran = ctx.0.lock().unwrap().clone();
+        assert_eq!(
+            ran,
+            [vec![
+                "report".to_string(),
+                object("a.dll"),
+                object("b.dll"),
+                "-format=text".to_string()
+            ]]
+        );
+        // Named after the command, never after an incoming file.
+        assert_eq!(output.files[0].filename, "llvm-cov-output");
+    }
+
+    #[test]
+    fn test_incoming_files_without_a_group_change_nothing() {
+        let ctx = RecordingArgs(Default::default());
+        let input = batch(
+            serde_json::json!({ "command": "git", "args": ["--version"] }),
+            &["a.txt"],
+        );
+        let output = ShellCommand::new()
+            .process_batch(input, &ProgressReporter::new_noop(), &ctx)
+            .unwrap();
+        assert_eq!(
+            ctx.0.lock().unwrap().clone(),
+            [vec!["--version".to_string()]]
+        );
+        assert_eq!(output.files.len(), 1, "only the command's stdout");
+        assert_eq!(output.files[0].filename, "git-output");
+    }
+
+    #[test]
+    fn test_an_item_outside_a_group_fails_before_running() {
+        let ctx = RecordingArgs(Default::default());
+        let input = batch(
+            serde_json::json!({ "command": "tool", "args": ["{{item.size}}"] }),
+            &["a.txt"],
+        );
+        let err = ShellCommand::new()
+            .process_batch(input, &ProgressReporter::new_noop(), &ctx)
+            .err()
+            .expect("should fail");
+        assert!(
+            err.to_string().contains("{{item.size}} has no value"),
+            "{err}"
+        );
+        assert!(ctx.0.lock().unwrap().is_empty(), "nothing should run");
+    }
+
+    #[test]
+    fn test_validate_refuses_a_malformed_each_group() {
+        let params = serde_json::json!({ "command": "tool", "args": [{ "each": "x" }] });
+        let errors = ShellCommand::new().validate(params.as_object().unwrap());
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("each"), "{errors:?}");
     }
 }

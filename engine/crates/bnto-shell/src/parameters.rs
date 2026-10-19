@@ -35,7 +35,10 @@ fn args_param() -> ParameterDef {
     ParameterDef {
         name: "args".to_string(),
         label: "Arguments".to_string(),
-        description: "Command arguments as an array of strings.".to_string(),
+        description: "Command arguments: text, conditional groups (nested lists, dropped \
+                      when any part is empty) and {\"each\": [...]} groups, repeated once \
+                      per incoming file with {{path}}, {{file}} and {{item.KEY}} filled."
+            .to_string(),
         param_type: ParameterType::String,
         control: Some("tagPicker".to_string()),
         ..Default::default()
