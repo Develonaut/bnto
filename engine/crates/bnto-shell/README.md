@@ -12,7 +12,7 @@ Native-only: registered behind `#[cfg(feature = "native")]` in `bnto-engine`. Br
 
 | Processor      | Node Type       | What It Does                                                         |
 | -------------- | --------------- | -------------------------------------------------------------------- |
-| `ShellCommand` | `shell-command` | Execute external CLI tools with security validation and output modes  |
+| `ShellCommand` | `shell-command` | Execute external CLI tools with security validation and output modes |
 
 ## Output Modes
 
@@ -40,6 +40,18 @@ The `args` array supports conditional flag groups via nested arrays:
 
 After template resolution, empty strings drop silently, and nested arrays where any element is empty drop the entire group. This enables optional flags without recipe-level `if/else`.
 
+## Incoming Files (`each` groups)
+
+`shell-command` is a batch node: it runs once and gets every file its incoming edges carry. Files reach the command only through an `each` group in `args`, which repeats once per file, in edge order:
+
+```json
+"args": ["report", { "each": ["-object={{path}}"] }, "-format=text"]
+```
+
+Inside a group, `{{path}}` is the file on disk (a relative reference is under the working directory; in-memory bytes are written to a temp file first, keeping the extension), `{{file}}` is its pipeline name and `{{item.KEY}}` its metadata. A group may hold several entries (`["--name", "{{file}}"]`), kept together per file. With no files a group adds nothing. An object entry that isn't `{"each": [text, ...]}` is refused.
+
+Without a group the command runs as it always has: incoming files are ignored and the output is still named after the command (`<command>-output`). Outside a loop the node fills `{{item.*}}` itself, so a `{{item.KEY}}` anywhere but inside a group fails the step; inside a loop the executor fills it from the loop's item first, as for every node. Windows limits a command line to about 32K characters, which caps how many paths one command can take.
+
 ## Directory Structure
 
 ```
@@ -47,6 +59,7 @@ src/
 ├── lib.rs           # Public exports
 ├── execute.rs       # ShellCommand processor (param parsing, mode dispatch)
 ├── args.rs          # Conditional arg groups + {{url}}/{{input}} placeholders
+├── each/            # `each` arg groups: the group once per incoming file
 ├── stdout_mode.rs   # "stdout" output mode
 ├── file_mode.rs     # "file" output mode ({{output_dir}} temp dir)
 ├── failing_tool.rs  # (tests) a context whose command prints, writes a log, then exits non-zero

@@ -210,6 +210,21 @@ describe("validateDefinition — shell-command (all params optional)", () => {
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
+
+  it("accepts an each group in args beside strings and conditional groups", () => {
+    const args = ["report", ["--flag", "on"], { each: ["-object={{path}}"] }];
+    const def = validDef({ type: "shell-command", parameters: { command: "llvm-cov", args } });
+    const errors = validateDefinition(def);
+    expect(errors).toHaveLength(0);
+  });
+
+  it("rejects an object in args that isn't an each group of text", () => {
+    for (const bad of [{ each: "{{path}}" }, { each: ["{{path}}"], sep: "," }, { for: ["x"] }]) {
+      const def = validDef({ type: "shell-command", parameters: { command: "t", args: [bad] } });
+      const errors = validateDefinition(def);
+      expect(errors.some((e) => e.field.startsWith("args"))).toBe(true);
+    }
+  });
 });
 
 describe("validateDefinition — edit-fields", () => {

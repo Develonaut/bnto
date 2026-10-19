@@ -9,7 +9,7 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | command | string | - | - | Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH. |
-| args | string | - | - | Command arguments as an array of strings. |
+| args | string | - | - | Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {"each": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled. |
 | outputMode | string | stdout | - | How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {{output_dir}} in args to inject the path). |
 | timeout | number | 300 | - | Maximum execution time in seconds. Default: 300. |
 | maxOutputSize | number | 500 | - | Maximum size per output file in megabytes. Default: 100 MB. |

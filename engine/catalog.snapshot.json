@@ -1845,7 +1845,7 @@
         {
           "name": "args",
           "label": "Arguments",
-          "description": "Command arguments as an array of strings.",
+          "description": "Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {\"each\": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled.",
           "paramType": {
             "type": "string"
           },
@@ -3826,7 +3826,7 @@
         {
           "name": "args",
           "label": "Arguments",
-          "description": "Command arguments as an array of strings.",
+          "description": "Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {\"each\": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled.",
           "paramType": {
             "type": "string"
           },
@@ -3884,7 +3884,7 @@
           "surfaceable": false
         }
       ],
-      "inputCardinality": "source"
+      "inputCardinality": "batch"
     },
     {
       "nodeType": "spreadsheet-clean",

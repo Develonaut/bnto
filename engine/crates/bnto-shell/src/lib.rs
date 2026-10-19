@@ -11,6 +11,7 @@
 
 mod args;
 mod command_options;
+mod each;
 pub mod execute;
 #[cfg(test)]
 mod failing_tool;

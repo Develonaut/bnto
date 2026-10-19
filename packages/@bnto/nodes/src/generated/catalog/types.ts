@@ -104,5 +104,5 @@ export interface ProcessorDef {
   readonly accepts: readonly string[];
   readonly platforms: readonly string[];
   readonly parameters: readonly ProcessorParam[];
-  readonly inputCardinality: "batch" | "perFile" | "source";
+  readonly inputCardinality: "batch" | "perFile";
 }

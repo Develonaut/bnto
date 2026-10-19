@@ -10,7 +10,11 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for shell-command node parameters. */
 export const shellCommandParamsSchema = z.object({
   command: z.string().optional(),
-  args: z.array(z.union([z.string(), z.array(z.string())])).optional(),
+  args: z
+    .array(
+      z.union([z.string(), z.array(z.string()), z.object({ each: z.array(z.string()) }).strict()]),
+    )
+    .optional(),
   outputMode: z.string().optional().default("stdout"),
   timeout: z.number().optional().default(300),
   maxOutputSize: z.number().optional().default(500),
@@ -34,7 +38,8 @@ export const shellCommandNodeSchema: NodeSchema = {
     },
     args: {
       label: "Arguments",
-      description: "Command arguments as an array of strings.",
+      description:
+        'Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {"each": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled.',
     },
     outputMode: {
       label: "Output Mode",
