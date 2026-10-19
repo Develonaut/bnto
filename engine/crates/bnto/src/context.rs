@@ -247,8 +247,9 @@ impl ProcessContext for NativeContext {
         self.run_command_with(cmd, args, &CommandOptions::default(), on_output)
     }
 
-    /// Spawn with `options.env` set on the child only, relay its output, and
-    /// kill its whole tree if it outlives `options.timeout`.
+    /// Spawn in `options.dir` (else the work dir) with `options.env` set on
+    /// the child only, relay its output, and kill its whole tree if it
+    /// outlives `options.timeout`.
     fn run_command_with(
         &self,
         cmd: &str,
@@ -258,6 +259,9 @@ impl ProcessContext for NativeContext {
     ) -> Result<Vec<u8>, BntoError> {
         let mut command = self.group_command(cmd, args);
         command.envs(options.env.iter().map(|(k, v)| (k, v)));
+        if let Some(dir) = &options.dir {
+            command.current_dir(dir);
+        }
         command.stdout(Stdio::piped()).stderr(Stdio::piped());
         let mut child = self
             .spawn_tracked(&mut command)
@@ -905,7 +909,7 @@ mod tests {
         let (cmd, args) = shell(script);
         let options = bnto_core::CommandOptions {
             env: vec![("BNTO_TEST_OPTION_VAR".into(), "from options".into())],
-            timeout: None,
+            ..Default::default()
         };
         let out = ctx.run_command_with(cmd, &args, &options, &|_| {}).unwrap();
         assert_eq!(String::from_utf8_lossy(&out).trim(), "from options");
@@ -921,8 +925,8 @@ mod tests {
         let ctx = ctx_with_registry(registry.clone());
         let (cmd, args) = long_command();
         let options = bnto_core::CommandOptions {
-            env: Vec::new(),
             timeout: Some(std::time::Duration::from_secs(1)),
+            ..Default::default()
         };
         let started = std::time::Instant::now();
         let err = ctx
@@ -944,10 +948,29 @@ mod tests {
         let ctx = ctx_with_registry(Arc::new(ProcessRegistry::new()));
         let (cmd, args) = shell("echo quick");
         let options = bnto_core::CommandOptions {
-            env: Vec::new(),
             timeout: Some(std::time::Duration::from_secs(30)),
+            ..Default::default()
         };
         let out = ctx.run_command_with(cmd, &args, &options, &|_| {}).unwrap();
         assert_eq!(String::from_utf8_lossy(&out).trim(), "quick");
+    }
+
+    #[test]
+    fn test_run_command_with_runs_the_command_in_options_dir() {
+        let ctx = ctx_with_registry(Arc::new(ProcessRegistry::new()));
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("marker.txt"), b"").unwrap();
+        let script = if cfg!(windows) {
+            "if exist marker.txt echo here"
+        } else {
+            "test -f marker.txt && echo here"
+        };
+        let (cmd, args) = shell(script);
+        let options = bnto_core::CommandOptions {
+            dir: Some(dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let out = ctx.run_command_with(cmd, &args, &options, &|_| {}).unwrap();
+        assert_eq!(String::from_utf8_lossy(&out).trim(), "here");
     }
 }

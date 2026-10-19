@@ -1,6 +1,8 @@
 // The options shell-command runs its command with: the recipe's `timeout`
-// (seconds, default 300) and its `env`, with dangerous variables stripped.
+// (seconds, default 300), its `env` with dangerous variables stripped, and
+// the folder `cwd` resolved to.
 
+use std::path::PathBuf;
 use std::time::Duration;
 
 use bnto_core::CommandOptions;
@@ -8,8 +10,9 @@ use serde_json::{Map, Value};
 
 use crate::validate::{self, DEFAULT_TIMEOUT_SECS};
 
-/// The `CommandOptions` a shell-command node's `params` ask for.
-pub(crate) fn command_options(params: &Map<String, Value>) -> CommandOptions {
+/// The `CommandOptions` a shell-command node's `params` ask for, run in
+/// `dir` (`None` for the work dir).
+pub(crate) fn command_options(params: &Map<String, Value>, dir: Option<PathBuf>) -> CommandOptions {
     let secs = params
         .get("timeout")
         .and_then(Value::as_u64)
@@ -17,6 +20,7 @@ pub(crate) fn command_options(params: &Map<String, Value>) -> CommandOptions {
     CommandOptions {
         env: env_vars(params),
         timeout: Some(Duration::from_secs(secs)),
+        dir,
     }
 }
 
@@ -43,15 +47,19 @@ mod tests {
         value.as_object().unwrap().clone()
     }
 
+    fn command_options_for(params: &Map<String, Value>) -> CommandOptions {
+        command_options(params, None)
+    }
+
     #[test]
     fn test_timeout_is_the_param_in_seconds() {
-        let options = command_options(&params(serde_json::json!({ "timeout": 7 })));
+        let options = command_options_for(&params(serde_json::json!({ "timeout": 7 })));
         assert_eq!(options.timeout, Some(Duration::from_secs(7)));
     }
 
     #[test]
     fn test_timeout_defaults_when_unset() {
-        let options = command_options(&params(serde_json::json!({})));
+        let options = command_options_for(&params(serde_json::json!({})));
         assert_eq!(
             options.timeout,
             Some(Duration::from_secs(DEFAULT_TIMEOUT_SECS))
@@ -60,7 +68,7 @@ mod tests {
 
     #[test]
     fn test_env_vars_are_passed_sorted_by_name() {
-        let options = command_options(&params(serde_json::json!({
+        let options = command_options_for(&params(serde_json::json!({
             "env": { "B_VAR": "two", "A_VAR": "one" }
         })));
         assert_eq!(
@@ -74,7 +82,7 @@ mod tests {
 
     #[test]
     fn test_a_number_or_bool_env_value_is_passed_as_text() {
-        let options = command_options(&params(serde_json::json!({
+        let options = command_options_for(&params(serde_json::json!({
             "env": { "COUNT": 3, "DEBUG": true }
         })));
         assert_eq!(
@@ -88,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_dangerous_env_vars_are_stripped() {
-        let options = command_options(&params(serde_json::json!({
+        let options = command_options_for(&params(serde_json::json!({
             "env": { "LD_PRELOAD": "/evil.so", "SAFE": "yes" }
         })));
         assert_eq!(options.env, vec![("SAFE".to_string(), "yes".to_string())]);

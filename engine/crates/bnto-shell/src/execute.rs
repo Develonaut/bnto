@@ -24,6 +24,7 @@ use bnto_core::{
 pub use crate::args::flatten_conditional_args;
 use crate::args::resolve_input_placeholders;
 use crate::command_options::command_options;
+use crate::cwd;
 use crate::each;
 use crate::file_mode::process_file_mode;
 use crate::invocation::Invocation;
@@ -79,6 +80,9 @@ impl NodeProcessor for ShellCommand {
             errors.push(e);
         }
         if let Err(e) = each::check_groups(params.get("args")) {
+            errors.push(e);
+        }
+        if let Err(e) = cwd::read_cwd(params.get("cwd")) {
             errors.push(e);
         }
         if let Some(timeout) = params.get("timeout").and_then(serde_json::Value::as_u64)
@@ -155,13 +159,14 @@ fn run_node(
     // Security check: reject shell interpreters and path-based commands
     validate::validate_command(command).map_err(BntoError::InvalidInput)?;
     let program = resolved_program(command, params, ctx)?;
+    let dir = working_dir(params, ctx)?;
     let args = command_args(params, files, ctx)?;
     let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
     let invocation = Invocation {
         command,
         program: &program,
         args: &args,
-        options: command_options(params),
+        options: command_options(params, dir),
     };
     match params.get("outputMode").and_then(serde_json::Value::as_str) {
         Some("file") => process_file_mode(&invocation, input, progress, ctx, max_output_mb),
@@ -207,6 +212,20 @@ fn resolved_program(
     let found = search_path::resolve_command(command, &folders, ctx.work_dir().ok())
         .map_err(BntoError::InvalidInput)?;
     Ok(found.map_or_else(|| command.to_string(), |p| p.to_string_lossy().into_owned()))
+}
+
+/// The folder `cwd` names under the work dir, or `None` to run in the
+/// work dir itself.
+fn working_dir(
+    params: &Params,
+    ctx: &dyn ProcessContext,
+) -> Result<Option<std::path::PathBuf>, BntoError> {
+    let Some(folder) = cwd::read_cwd(params.get("cwd")).map_err(BntoError::InvalidInput)? else {
+        return Ok(None);
+    };
+    cwd::resolve_cwd(folder, ctx.work_dir()?)
+        .map(Some)
+        .map_err(BntoError::InvalidInput)
 }
 
 /// A numeric param, or `default` when unset.
@@ -905,8 +924,11 @@ mod tests {
         assert_eq!(flatten_conditional_args(&args), vec!["--no-playlist"]);
     }
 
-    /// Records the options it was asked to run a command with.
-    struct RecordingOptions(std::sync::Mutex<Vec<bnto_core::CommandOptions>>);
+    /// Records the options it was asked to run a command with, in `.1`.
+    struct RecordingOptions(
+        std::sync::Mutex<Vec<bnto_core::CommandOptions>>,
+        std::path::PathBuf,
+    );
 
     impl ProcessContext for RecordingOptions {
         fn run_command(&self, _cmd: &str, _args: &[&str]) -> Result<Vec<u8>, BntoError> {
@@ -929,22 +951,25 @@ mod tests {
             None
         }
         fn work_dir(&self) -> Result<&std::path::Path, BntoError> {
-            NoopContext.work_dir()
+            Ok(&self.1)
+        }
+    }
+
+    fn options_input(params: serde_json::Value) -> NodeInput {
+        NodeInput {
+            data: FileData::Bytes(vec![]),
+            filename: String::new(),
+            mime_type: None,
+            params: params.as_object().unwrap().clone(),
         }
     }
 
     #[test]
     fn test_the_command_runs_with_the_recipes_env_and_timeout() {
-        let ctx = RecordingOptions(std::sync::Mutex::new(Vec::new()));
-        let params = serde_json::json!({
+        let ctx = RecordingOptions(Default::default(), Default::default());
+        let input = options_input(serde_json::json!({
             "command": "tool", "timeout": 9, "env": { "GREETING": "hi" }
-        });
-        let input = NodeInput {
-            data: FileData::Bytes(vec![]),
-            filename: String::new(),
-            mime_type: None,
-            params: params.as_object().unwrap().clone(),
-        };
+        }));
         ShellCommand::new()
             .process(input, &ProgressReporter::new_noop(), &ctx)
             .unwrap();
@@ -1066,11 +1091,64 @@ mod tests {
         assert!(ctx.0.lock().unwrap().is_empty(), "nothing should run");
     }
 
+    // --- cwd ---
+
+    #[test]
+    fn test_the_command_runs_in_the_cwd_folder_under_the_work_dir() {
+        let work = tempfile::tempdir().unwrap();
+        std::fs::create_dir(work.path().join("Tools")).unwrap();
+        let ctx = RecordingOptions(Default::default(), work.path().to_path_buf());
+        let input = options_input(serde_json::json!({ "command": "tool", "cwd": "Tools" }));
+        ShellCommand::new()
+            .process(input, &ProgressReporter::new_noop(), &ctx)
+            .unwrap();
+        let seen = ctx.0.lock().unwrap();
+        assert_eq!(seen[0].dir, Some(work.path().join("Tools")));
+    }
+
+    #[test]
+    fn test_without_cwd_the_command_runs_in_the_work_dir() {
+        let ctx = RecordingOptions(Default::default(), Default::default());
+        let input = options_input(serde_json::json!({ "command": "tool" }));
+        ShellCommand::new()
+            .process(input, &ProgressReporter::new_noop(), &ctx)
+            .unwrap();
+        assert_eq!(ctx.0.lock().unwrap()[0].dir, None);
+    }
+
+    #[test]
+    fn test_a_missing_cwd_folder_fails_before_running() {
+        let work = tempfile::tempdir().unwrap();
+        let ctx = RecordingOptions(Default::default(), work.path().to_path_buf());
+        let input = options_input(serde_json::json!({ "command": "tool", "cwd": "Tools" }));
+        let err = ShellCommand::new()
+            .process(input, &ProgressReporter::new_noop(), &ctx)
+            .err()
+            .expect("should fail");
+        assert!(err.to_string().contains("'cwd' folder 'Tools'"), "{err}");
+        assert!(ctx.0.lock().unwrap().is_empty(), "nothing should run");
+    }
+
     #[test]
     fn test_validate_refuses_a_malformed_each_group() {
         let params = serde_json::json!({ "command": "tool", "args": [{ "each": "x" }] });
         let errors = ShellCommand::new().validate(params.as_object().unwrap());
         assert_eq!(errors.len(), 1, "{errors:?}");
         assert!(errors[0].contains("each"), "{errors:?}");
+    }
+
+    #[test]
+    fn test_validate_refuses_a_cwd_that_leaves_the_work_dir() {
+        let params = serde_json::json!({ "command": "tool", "cwd": "../elsewhere" });
+        let errors = ShellCommand::new().validate(params.as_object().unwrap());
+        assert_eq!(errors.len(), 1, "{errors:?}");
+        assert!(errors[0].contains("'cwd'"), "{errors:?}");
+    }
+
+    #[test]
+    fn test_cwd_param_is_internal_and_listed() {
+        let meta = ShellCommand::new().metadata();
+        let param = meta.parameters.iter().find(|p| p.name == "cwd");
+        assert!(!param.expect("cwd should exist").surfaceable);
     }
 }
