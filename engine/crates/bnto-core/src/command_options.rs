@@ -1,6 +1,8 @@
 // Command options — what a node asks of one external command beyond its
-// program and arguments: extra environment variables and a time limit.
+// program and arguments: extra environment variables, a time limit and the
+// folder it runs in.
 
+use std::path::PathBuf;
 use std::time::Duration;
 
 /// How to run one external command, beyond its program and arguments.
@@ -11,4 +13,6 @@ pub struct CommandOptions {
     pub env: Vec<(String, String)>,
     /// Kill the command, and everything it started, once it has run this long.
     pub timeout: Option<Duration>,
+    /// The folder the command runs in. `None` runs it in the work dir.
+    pub dir: Option<PathBuf>,
 }

@@ -17,6 +17,7 @@ pub(crate) fn build_parameters() -> Vec<ParameterDef> {
         max_output_size_param(),
         env_param(),
         search_path_param(),
+        cwd_param(),
     ]
 }
 
@@ -98,9 +99,26 @@ fn search_path_param() -> ParameterDef {
     ParameterDef {
         name: "search_path".to_string(),
         label: "Search Path".to_string(),
-        description: "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory."
+        description: "Folders to find the command in, in order, instead of PATH. The command \
+                      is still a bare name and runs by its full path; relative folders are \
+                      under the working directory."
             .to_string(),
         param_type: ParameterType::Object,
+        surfaceable: false,
+        ..Default::default()
+    }
+}
+
+fn cwd_param() -> ParameterDef {
+    ParameterDef {
+        name: "cwd".to_string(),
+        label: "Working Folder".to_string(),
+        description: "Folder to run the command in, under the working directory (e.g. \
+                      'Tools'). Relative args are relative to it; search_path and \
+                      {{output_dir}} are not. Absolute paths and \"..\" are refused."
+            .to_string(),
+        param_type: ParameterType::String,
+        placeholder: Some("Tools".to_string()),
         surfaceable: false,
         ..Default::default()
     }

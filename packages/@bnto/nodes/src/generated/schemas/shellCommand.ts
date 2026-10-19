@@ -20,6 +20,7 @@ export const shellCommandParamsSchema = z.object({
   maxOutputSize: z.number().optional().default(500),
   env: z.record(z.unknown()).optional(),
   search_path: z.record(z.unknown()).optional(),
+  cwd: z.string().optional(),
 });
 
 /** Inferred TypeScript type for shell-command node parameters. */
@@ -62,7 +63,14 @@ export const shellCommandNodeSchema: NodeSchema = {
     search_path: {
       label: "Search Path",
       description:
-        "Folders to find the command in, in order, instead of PATH. The command                       is still a bare name and runs by its full path; relative folders are                       under the working directory.",
+        "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory.",
+      surfaceable: false,
+    },
+    cwd: {
+      label: "Working Folder",
+      description:
+        "Folder to run the command in, under the working directory (e.g. 'Tools'). Relative args are relative to it; search_path and {{output_dir}} are not. Absolute paths and \"..\" are refused.",
+      placeholder: "Tools",
       surfaceable: false,
     },
   },
