@@ -10,6 +10,7 @@ use serde_json::Value;
 
 use crate::context::ProcessContext;
 
+use super::interpolate::interpolate;
 use super::node_outputs::NodeOutputSource;
 
 /// All template namespace sources bundled for resolution.
@@ -160,9 +161,14 @@ pub fn resolve_ctx_templates(s: &str, ctx: &dyn ProcessContext) -> String {
     if !s.contains("{{ctx.") {
         return s.to_string();
     }
-    let mut result = s.to_string();
-    resolve_ctx_interpolation(&mut result, ctx, None);
-    result
+    interpolate(s, |inner| {
+        let key = inner.strip_prefix("ctx.")?;
+        Some(
+            resolve_ctx(key, ctx, None)
+                .map(|v| value_to_string(&v))
+                .unwrap_or_default(),
+        )
+    })
 }
 
 /// Returns the current platform name.
@@ -220,94 +226,29 @@ fn resolve_string(s: &str, ctx: &TemplateContext) -> Value {
         return Value::String(s.to_string());
     }
 
-    // Multiple or partial placeholders — string interpolation.
-    let mut result = s.to_string();
+    // Multiple or partial placeholders — one pass, values never rescanned.
+    Value::String(interpolate(s, |inner| interpolated_value(inner, ctx)))
+}
 
-    // Resolve {{fields.*}}
-    for (key, value) in ctx.field_values {
-        let placeholder = format!("{{{{fields.{key}}}}}");
-        if result.contains(&placeholder) {
-            result = result.replace(&placeholder, &value_to_string(value));
+/// The text one `{{ns.key}}` fills in during interpolation, or `None` to
+/// leave it as written: unknown fields, item outside a loop, other
+/// namespaces. Unset env, ctx and node values fill in as empty text.
+fn interpolated_value(inner: &str, ctx: &TemplateContext) -> Option<String> {
+    let (namespace, key) = inner.split_once('.')?;
+    let text = |value: Option<Value>| value.map(|v| value_to_string(&v)).unwrap_or_default();
+    match namespace {
+        "fields" => ctx.field_values.get(key).map(value_to_string),
+        "env" => Some(ctx.process_ctx.env_var(key).unwrap_or_default()),
+        "ctx" => Some(text(resolve_ctx(key, ctx.process_ctx, ctx.run_started_ms))),
+        "item" => ctx
+            .loop_item
+            .as_ref()
+            .map(|item| text(item.get(key).cloned())),
+        "node" => {
+            let (node_id, prop) = key.rsplit_once('.')?;
+            Some(text(resolve_node_ref(node_id, prop, ctx.node_outputs)))
         }
-    }
-
-    // Resolve {{env.*}} — scan for remaining env placeholders.
-    resolve_env_interpolation(&mut result, ctx.process_ctx);
-
-    // Resolve {{ctx.*}}
-    resolve_ctx_interpolation(&mut result, ctx.process_ctx, ctx.run_started_ms);
-
-    // Resolve {{item.*}}
-    resolve_item_interpolation(&mut result, ctx.loop_item);
-
-    // Resolve {{node.*}}
-    resolve_node_interpolation(&mut result, ctx.node_outputs);
-
-    Value::String(result)
-}
-
-/// Replace all `{{env.KEY}}` occurrences in-place via string interpolation.
-fn resolve_env_interpolation(result: &mut String, process_ctx: &dyn ProcessContext) {
-    while let Some(start) = result.find("{{env.") {
-        let rest = &result[start + 6..];
-        let Some(end) = rest.find("}}") else { break };
-        let key = &result[start + 6..start + 6 + end];
-        let val = process_ctx.env_var(key).unwrap_or_default();
-        let placeholder = format!("{{{{env.{key}}}}}");
-        *result = result.replace(&placeholder, &val);
-    }
-}
-
-/// Replace all `{{ctx.KEY}}` occurrences in-place via string interpolation.
-fn resolve_ctx_interpolation(
-    result: &mut String,
-    process_ctx: &dyn ProcessContext,
-    run_started_ms: Option<u64>,
-) {
-    while let Some(start) = result.find("{{ctx.") {
-        let rest = &result[start + 6..];
-        let Some(end) = rest.find("}}") else { break };
-        let key = &result[start + 6..start + 6 + end];
-        let val = resolve_ctx(key, process_ctx, run_started_ms)
-            .map(|v| value_to_string(&v))
-            .unwrap_or_default();
-        let placeholder = format!("{{{{ctx.{key}}}}}");
-        *result = result.replace(&placeholder, &val);
-    }
-}
-
-/// Replace all `{{item.KEY}}` occurrences in-place via string interpolation.
-fn resolve_item_interpolation(
-    result: &mut String,
-    loop_item: &Option<serde_json::Map<String, Value>>,
-) {
-    let Some(item) = loop_item.as_ref() else {
-        return;
-    };
-    while let Some(start) = result.find("{{item.") {
-        let rest = &result[start + 7..];
-        let Some(end) = rest.find("}}") else { break };
-        let key = &result[start + 7..start + 7 + end];
-        let val = item.get(key).map(value_to_string).unwrap_or_default();
-        let placeholder = format!("{{{{item.{key}}}}}");
-        *result = result.replace(&placeholder, &val);
-    }
-}
-
-/// Replace all `{{node.<id>.<prop>}}` occurrences in-place via string interpolation.
-fn resolve_node_interpolation(result: &mut String, node_outputs: &dyn NodeOutputSource) {
-    while let Some(start) = result.find("{{node.") {
-        let rest = &result[start + 7..];
-        let Some(end) = rest.find("}}") else { break };
-        let ref_str = &result[start + 7..start + 7 + end]; // "compress.format"
-        let Some((node_id, prop)) = ref_str.rsplit_once('.') else {
-            break;
-        };
-        let val = resolve_node_ref(node_id, prop, node_outputs)
-            .map(|v| value_to_string(&v))
-            .unwrap_or_default();
-        let placeholder = format!("{{{{node.{ref_str}}}}}");
-        *result = result.replace(&placeholder, &val);
+        _ => None,
     }
 }
 
@@ -364,9 +305,14 @@ pub fn resolve_node_templates(s: &str, node_outputs: &BTreeMap<String, Value>) -
     if !s.contains("{{node.") {
         return s.to_string();
     }
-    let mut result = s.to_string();
-    resolve_node_interpolation(&mut result, node_outputs);
-    result
+    interpolate(s, |inner| {
+        let (node_id, prop) = inner.strip_prefix("node.")?.rsplit_once('.')?;
+        Some(
+            resolve_node_ref(node_id, prop, node_outputs)
+                .map(|v| value_to_string(&v))
+                .unwrap_or_default(),
+        )
+    })
 }
 
 #[cfg(test)]
@@ -1361,5 +1307,102 @@ mod tests {
         };
         let resolved = resolve_templates(&params, &ctx);
         assert_eq!(resolved["stem"], json!("my-data"));
+    }
+
+    // --- Single pass: a filled value is data, never a template (SEC-17/18) ---
+
+    fn interp_ctx<'a>(
+        fields: &'a BTreeMap<String, Value>,
+        process_ctx: &'a MockContext,
+        outputs: &'a BTreeMap<String, Value>,
+        item: &'a Option<serde_json::Map<String, Value>>,
+    ) -> TemplateContext<'a> {
+        TemplateContext {
+            field_values: fields,
+            process_ctx,
+            node_outputs: outputs,
+            loop_item: item,
+            run_started_ms: None,
+        }
+    }
+
+    #[test]
+    fn test_a_filled_field_value_is_not_read_as_a_template() {
+        let fields = BTreeMap::from([("v".to_string(), json!("{{env.SECRET}}"))]);
+        let mock = MockContext::new().with_env("SECRET", "hunter2");
+        let (outputs, item) = (empty_outputs(), None);
+        let ctx = interp_ctx(&fields, &mock, &outputs, &item);
+        let params = make_params(&[("a", json!("x={{fields.v}}"))]);
+        let resolved = resolve_templates(&params, &ctx);
+        assert_eq!(resolved["a"], "x={{env.SECRET}}");
+    }
+
+    #[test]
+    fn test_a_filled_item_value_is_not_read_as_a_template() {
+        let fields = empty_fields();
+        let mock = MockContext::new();
+        let outputs = BTreeMap::from([("n".to_string(), json!({ "p": "leaked" }))]);
+        let item = Some(
+            json!({ "name": "{{node.n.p}}" })
+                .as_object()
+                .unwrap()
+                .clone(),
+        );
+        let ctx = interp_ctx(&fields, &mock, &outputs, &item);
+        let params = make_params(&[("a", json!("file {{item.name}}"))]);
+        assert_eq!(resolve_templates(&params, &ctx)["a"], "file {{node.n.p}}");
+    }
+
+    #[test]
+    fn test_a_self_referencing_env_value_terminates() {
+        let fields = empty_fields();
+        let mock = MockContext::new().with_env("LOOP", "{{env.LOOP}}");
+        let (outputs, item) = (empty_outputs(), None);
+        let ctx = interp_ctx(&fields, &mock, &outputs, &item);
+        let params = make_params(&[("a", json!("x={{env.LOOP}}"))]);
+        assert_eq!(resolve_templates(&params, &ctx)["a"], "x={{env.LOOP}}");
+    }
+
+    #[test]
+    fn test_a_self_referencing_item_value_terminates() {
+        let fields = empty_fields();
+        let mock = MockContext::new();
+        let outputs = empty_outputs();
+        let item = Some(json!({ "k": "{{item.k}}" }).as_object().unwrap().clone());
+        let ctx = interp_ctx(&fields, &mock, &outputs, &item);
+        let params = make_params(&[("a", json!("x={{item.k}}"))]);
+        assert_eq!(resolve_templates(&params, &ctx)["a"], "x={{item.k}}");
+    }
+
+    #[test]
+    fn test_a_self_referencing_node_value_terminates() {
+        let outputs = BTreeMap::from([("n".to_string(), json!({ "p": "{{node.n.p}}" }))]);
+        assert_eq!(
+            resolve_node_templates("d/{{node.n.p}}", &outputs),
+            "d/{{node.n.p}}"
+        );
+    }
+
+    #[test]
+    fn test_a_stray_open_brace_does_not_hide_a_placeholder() {
+        let fields = BTreeMap::from([("x".to_string(), json!("1"))]);
+        let mock = MockContext::new();
+        let (outputs, item) = (empty_outputs(), None);
+        let ctx = interp_ctx(&fields, &mock, &outputs, &item);
+        let params = make_params(&[("a", json!("{{a {{fields.x}} b"))]);
+        assert_eq!(resolve_templates(&params, &ctx)["a"], "{{a 1 b");
+    }
+
+    #[test]
+    fn test_unfinished_and_unknown_placeholders_are_kept() {
+        let fields = BTreeMap::from([("x".to_string(), json!("1"))]);
+        let mock = MockContext::new();
+        let (outputs, item) = (empty_outputs(), None);
+        let ctx = interp_ctx(&fields, &mock, &outputs, &item);
+        let params = make_params(&[("a", json!("{{fields.x}} {{vars.y}} {{fields.x"))]);
+        assert_eq!(
+            resolve_templates(&params, &ctx)["a"],
+            "1 {{vars.y}} {{fields.x"
+        );
     }
 }
