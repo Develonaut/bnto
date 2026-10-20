@@ -171,6 +171,7 @@ Skip if no Rust files changed.
 - [ ] **Parameterized tests**: Different param values produce measurably different outputs
 - [ ] **Golden tests**: If output changed, golden files updated and diff reviewed
 - [ ] **Processor naming**: `fn name()` returns the same string as the registry key (category-first: `"image-compress"`)
+- [ ] **Node vocabulary**: A new or renamed node is `<domain>-<verb>` with a verb from [node-vocabulary.md](../../scopes/rust/node-vocabulary.md), and behaves as that verb's class promises (content, side effects, output name). Label is "Verb Objects". Params are camelCase and reuse the Shared Params names. Renaming a shipped type or param comes with a `bnto migrate` step
 - [ ] **Crate README**: Processors table is up to date and section order follows the standard template
 
 ## Step 3: Code Quality

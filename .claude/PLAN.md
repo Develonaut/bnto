@@ -675,6 +675,18 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 ## Backlog
 
+### Node Vocabulary Alignment
+
+**Priority: Medium.** Bring shipped nodes in line with [node-vocabulary.md](scopes/rust/node-vocabulary.md). One PR per task (single-concern rule). Every breaking task adds a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`), runs codegen (`task wasm:codegen`), and updates recipes, fixtures and goldens. Remove the matching row from the doc's Audit table when a task merges. Do the labels first: they're non-breaking and cheap.
+
+- [ ] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Inspect Files", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
+- [ ] `engine` — **Rename `file-metadata` → `file-inspect`** with a migration
+- [ ] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Trust, consent, dry-run and TUI key on the type string: grep `"shell-command"` across `engine/crates/bnto/src/`
+- [ ] `engine` — **camelCase params** with a migration: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path`
+- [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals`
+- [ ] `engine` — **Output suffixes**: `image-overlay` `-overlay` → `-overlaid`; `vector-optimize` adds `-optimized`. Regenerate goldens
+- [ ] `engine` — **Decide `transform` vs `edit-fields`** before `transform` gets a processor (see Engine: Future Node Operations)
+
 ### Engine: Sprint 12B Follow-Up (remaining)
 
 **Priority: Medium.** Items unlocked by Sprint 12B (recipe-level deps + shell-command). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
