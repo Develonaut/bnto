@@ -1,10 +1,10 @@
 // The lines report prints: one per entry of `each`, one per file when the
-// message reads `{{item.*}}`, else one.
+// message reads `{{file}}` or `{{item.*}}`, else one.
 
 use serde_json::{Map, Value};
 
 use super::params::{ENTRY, ReportParams, WHOLE_ENTRY};
-use crate::control::placeholder::{self, ITEM, text};
+use crate::control::placeholder::{self, text};
 use crate::processor::BatchFile;
 
 /// Every line to print, in order, or why one can't be filled.
@@ -17,7 +17,7 @@ pub(super) fn lines(params: &ReportParams, files: &[BatchFile]) -> Result<Vec<St
             .map(|(i, entry)| entry_line(message, i + 1, entry))
             .collect();
     }
-    if placeholder::reads(message, ITEM) {
+    if placeholder::reads_file(message) {
         return files.iter().map(|file| file_line(message, file)).collect();
     }
     Ok(vec![message.clone()])
@@ -33,8 +33,9 @@ fn entry_line(message: &str, n: usize, entry: &Value) -> Result<String, String> 
     Ok(line.replace(WHOLE_ENTRY, &text(entry)))
 }
 
-/// The line for one file, its `{{item.KEY}}` read from the file's metadata.
+/// The line for one file: `{{file}}` is its name, `{{item.KEY}}` reads its
+/// metadata.
 fn file_line(message: &str, file: &BatchFile) -> Result<String, String> {
-    placeholder::resolve(message, ITEM, &file.metadata)
+    placeholder::resolve_file(message, &file.filename, &file.metadata)
         .map_err(|key| format!("{} has no item \"{key}\"", file.filename))
 }
