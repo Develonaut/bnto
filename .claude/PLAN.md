@@ -439,7 +439,7 @@ Close every open finding in [shell-command.md](scopes/security/shell-command.md)
 - [x] PR 4 — SEC-07: check shell-command params before templates are filled; require a literal command
 - [x] PR 5 — SEC-11: refuse templates inside interpreter code args (depends on PR 4)
 - [x] PR 6 — SEC-05: catch Windows spellings of shells in the denylist
-- [ ] PR 7 — SEC-08: refuse exec wrappers that launch a shell (depends on PR 6)
+- [x] PR 7 — SEC-08: refuse exec wrappers that launch a shell (depends on PR 6)
 - [x] PR 8 — SEC-10: strip shell/interpreter startup variables from recipe env
 - [x] PR 9 — SEC-13: check field values against their definitions before a run
 - [x] PR 10 — SEC-16: show full command lines in the consent prompt (depends on PR 2)

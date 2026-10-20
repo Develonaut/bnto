@@ -54,13 +54,17 @@ fn is_python(stem: &str) -> bool {
 
 /// Problems where `args` put data placeholders into `command`'s code.
 pub(crate) fn code_problems(command: &str, args: Option<&Value>) -> Vec<String> {
+    code_problems_in(command, &flat_strings(args))
+}
+
+/// `code_problems` over args already flattened, e.g. a wrapped program's.
+pub(crate) fn code_problems_in(command: &str, args: &[&str]) -> Vec<String> {
     let stem = program_stem(command);
     let flags = code_flags(&stem);
     if flags.is_empty() {
         return Vec::new();
     }
-    let args = flat_strings(args);
-    code_args(&args, flags, value_options(&stem))
+    code_args(args, flags, value_options(&stem))
         .into_iter()
         .filter_map(|(flag, code)| {
             let found = bnto_core::placeholders::data_placeholders(code);
@@ -125,7 +129,7 @@ fn code_after<'a>(arg: &'a str, flag: &str, next: Option<&'a str>) -> Option<&'a
 }
 
 /// Every string in `args`, in order, through conditional and `each` groups.
-fn flat_strings(args: Option<&Value>) -> Vec<&str> {
+pub(crate) fn flat_strings(args: Option<&Value>) -> Vec<&str> {
     fn walk<'a>(value: &'a Value, out: &mut Vec<&'a str>) {
         match value {
             Value::String(s) => out.push(s),

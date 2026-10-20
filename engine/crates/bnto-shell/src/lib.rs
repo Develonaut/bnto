@@ -25,5 +25,6 @@ mod raw_checks;
 pub mod search_path;
 mod stdout_mode;
 pub mod validate;
+mod wrappers;
 
 pub use execute::ShellCommand;

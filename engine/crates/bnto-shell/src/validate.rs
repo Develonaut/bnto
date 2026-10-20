@@ -101,14 +101,11 @@ pub fn validate_command(cmd: &str) -> Result<(), String> {
 
     // Reject shell interpreters — they bypass argument separation safety.
     // Compare the name Windows would run, so `bash.exe` and `cmd.` count.
-    let stem = program_stem(cmd);
-    for shell in SHELL_DENYLIST {
-        if stem == program_stem(shell) {
-            return Err(format!(
-                "'{cmd}' is a shell interpreter and cannot be used as a command. \
-                 Use the specific tool directly (e.g., 'ffmpeg', 'yt-dlp')"
-            ));
-        }
+    if is_shell(cmd) {
+        return Err(format!(
+            "'{cmd}' is a shell interpreter and cannot be used as a command. \
+             Use the specific tool directly (e.g., 'ffmpeg', 'yt-dlp')"
+        ));
     }
 
     // Reject paths — commands must be bare binary names
@@ -127,6 +124,14 @@ pub fn validate_command(cmd: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+/// Whether `cmd` names a shell interpreter, in any spelling Windows runs.
+pub(crate) fn is_shell(cmd: &str) -> bool {
+    let stem = program_stem(cmd);
+    SHELL_DENYLIST
+        .iter()
+        .any(|shell| stem == program_stem(shell))
 }
 
 /// The program name Windows resolves `cmd` to, case-folded: trailing dots
