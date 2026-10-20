@@ -21,6 +21,7 @@ mod interpreter_code;
 mod invocation;
 mod output_files;
 mod parameters;
+mod program_text;
 mod raw_checks;
 mod script;
 pub mod search_path;

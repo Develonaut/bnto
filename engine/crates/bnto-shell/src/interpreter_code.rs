@@ -57,25 +57,31 @@ pub(crate) fn code_problems(command: &str, args: Option<&Value>) -> Vec<String> 
     code_problems_in(command, &flat_strings(args))
 }
 
-/// `code_problems` over args already flattened, e.g. a wrapped program's.
+/// `code_problems` over args already flattened, e.g. a wrapped program's:
+/// interpreter code flags, plus program text tools take as a plain
+/// argument (awk, sed, jq).
 pub(crate) fn code_problems_in(command: &str, args: &[&str]) -> Vec<String> {
     let stem = program_stem(command);
+    let mut problems = crate::program_text::program_text_problems(command, &stem, args);
     let flags = code_flags(&stem);
     if flags.is_empty() {
-        return Vec::new();
+        return problems;
     }
-    code_args(args, flags, value_options(&stem))
-        .into_iter()
-        .filter_map(|(flag, code)| {
-            let found = bnto_core::placeholders::data_placeholders(code);
-            let first = found.first()?;
-            Some(format!(
-                "templates can't go inside {command} code ({flag}): '{first}' would run \
+    problems.extend(
+        code_args(args, flags, value_options(&stem))
+            .into_iter()
+            .filter_map(|(flag, code)| {
+                let found = bnto_core::placeholders::data_placeholders(code);
+                let first = found.first()?;
+                Some(format!(
+                    "templates can't go inside {command} code ({flag}): '{first}' would run \
                  data as code. Pass the value as a trailing argument and read it from \
                  sys.argv / process.argv / ARGV"
-            ))
-        })
-        .collect()
+                ))
+            })
+            .collect::<Vec<_>>(),
+    );
+    problems
 }
 
 /// Each code argument in `args` with the flag that introduced it, in any
@@ -107,7 +113,7 @@ fn code_args<'a>(
 }
 
 /// The code `arg` hands to `flag`, if it is that flag.
-fn code_after<'a>(arg: &'a str, flag: &str, next: Option<&'a str>) -> Option<&'a str> {
+pub(crate) fn code_after<'a>(arg: &'a str, flag: &str, next: Option<&'a str>) -> Option<&'a str> {
     if arg == flag {
         return next;
     }
