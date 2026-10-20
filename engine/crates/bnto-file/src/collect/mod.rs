@@ -40,9 +40,8 @@ impl NodeProcessor for FileCollect {
         NodeMetadata {
             node_type: "file-collect".to_string(),
             name: "Collect Files".to_string(),
-            description:
-                "Traverse a directory and collect files matching a glob pattern into the pipeline."
-                    .to_string(),
+            description: "Collect files from a folder that match a glob pattern into the pipeline."
+                .to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["cli".to_string(), "desktop".to_string()],
@@ -109,7 +108,7 @@ fn build_collect_params() -> Vec<ParameterDef> {
         ParameterDef {
             name: "recursive".to_string(),
             label: "Recursive".to_string(),
-            description: "Traverse subdirectories when collecting files.".to_string(),
+            description: "Search subfolders when collecting files.".to_string(),
             param_type: ParameterType::Boolean,
             default: Some(serde_json::json!(true)),
             ..Default::default()
@@ -117,7 +116,7 @@ fn build_collect_params() -> Vec<ParameterDef> {
         ParameterDef {
             name: "flatten".to_string(),
             label: "Flatten".to_string(),
-            description: "Strip directory structure from output filenames. When true, all files appear as if in the same directory.".to_string(),
+            description: "Strip folder structure from output filenames. When true, all files appear as if in the same folder.".to_string(),
             param_type: ParameterType::Boolean,
             default: Some(serde_json::json!(true)),
             ..Default::default()

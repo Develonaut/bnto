@@ -46,7 +46,7 @@ impl NodeProcessor for Summarize {
         NodeMetadata {
             node_type: "summarize".to_string(),
             name: "Summarize".to_string(),
-            description: "Group items by metadata fields and output one item per group with \
+            description: "Summarize items by metadata fields, one item per group with \
                           its count and the totals of numeric fields (sum_<field>). Groups \
                           keep first-seen order; the items summarized don't pass through."
                 .to_string(),

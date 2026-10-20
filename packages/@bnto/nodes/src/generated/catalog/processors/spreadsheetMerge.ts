@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const spreadsheetMergeProcessor: ProcessorDef = {
   nodeType: "spreadsheet-merge",
   name: "Merge CSV",
-  description: "Combine multiple CSV files into one, with header reconciliation and deduplication.",
+  description: "Merge multiple CSV files into one, with header reconciliation and deduplication.",
   category: "spreadsheet",
   accepts: ["text/csv"] as const,
   platforms: ["browser"] as const,

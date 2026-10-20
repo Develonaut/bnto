@@ -46,9 +46,8 @@ impl NodeProcessor for RenameFiles {
         NodeMetadata {
             node_type: "file-rename".to_string(),
             name: "Rename Files".to_string(),
-            description:
-                "Transform filenames using patterns, find/replace, case rules, and counters"
-                    .to_string(),
+            description: "Rename files using patterns, find/replace, case rules, and counters"
+                .to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string()],

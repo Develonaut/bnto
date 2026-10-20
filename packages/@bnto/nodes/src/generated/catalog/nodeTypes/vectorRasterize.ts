@@ -9,8 +9,8 @@ import type { NodeTypeInfo } from "../types";
 /** Node type info for vector-rasterize. */
 export const vectorRasterizeNodeType: NodeTypeInfo = {
   name: "vector-rasterize",
-  label: "SVG to Image",
-  description: "Convert SVG files to raster images (PNG, JPEG, WebP).",
+  label: "Rasterize SVG",
+  description: "Rasterize SVG files into raster images (PNG, JPEG, WebP).",
   category: "vector",
   isContainer: false,
   platforms: ["browser"] as const,

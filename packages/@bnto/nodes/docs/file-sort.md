@@ -1,6 +1,6 @@
 # Sort Files Node
 
-> Reorder items by one or more metadata fields, each ascending or descending.
+> Sort items by one or more metadata fields, each ascending or descending.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

@@ -1,6 +1,6 @@
 # Edit Fields Node
 
-> Set fields on each item from templates over its other fields; files pass through.
+> Edit fields on each item, setting them from templates over its other fields; files pass through.
 
 **Category:** data | **Platforms:** browser | **Container:** no
 

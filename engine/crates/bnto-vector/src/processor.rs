@@ -40,8 +40,8 @@ impl NodeProcessor for VectorRasterize {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "vector-rasterize".to_string(),
-            name: "SVG to Image".to_string(),
-            description: "Convert SVG files to raster images (PNG, JPEG, WebP)".to_string(),
+            name: "Rasterize SVG".to_string(),
+            description: "Rasterize SVG files into raster images (PNG, JPEG, WebP)".to_string(),
             category: NodeCategory::Vector,
             accepts: svg_accepts(),
             platforms: vec!["browser".to_string()],

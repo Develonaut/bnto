@@ -9,8 +9,8 @@ import type { ProcessorDef } from "../types";
 /** Processor definition for shell-command. */
 export const shellCommandProcessor: ProcessorDef = {
   nodeType: "shell-command",
-  name: "Shell Command",
-  description: "Execute external CLI tools with security validation.",
+  name: "Run Shell Command",
+  description: "Run external CLI tools with security validation.",
   category: "system",
   accepts: [] as const,
   platforms: ["cli", "server", "desktop"] as const,

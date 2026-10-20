@@ -1,6 +1,6 @@
 # Inspect Files Node
 
-> Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.
+> Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the output.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

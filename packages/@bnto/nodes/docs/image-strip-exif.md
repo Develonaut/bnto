@@ -1,6 +1,6 @@
 # Strip EXIF Node
 
-> Remove all EXIF metadata from images (GPS, camera info, timestamps).
+> Strip all EXIF metadata from images (GPS, camera info, timestamps).
 
 **Category:** image | **Platforms:** browser | **Container:** no
 

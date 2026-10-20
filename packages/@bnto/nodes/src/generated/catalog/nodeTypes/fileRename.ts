@@ -10,8 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const fileRenameNodeType: NodeTypeInfo = {
   name: "file-rename",
   label: "Rename Files",
-  description:
-    "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
+  description: "Rename files using patterns, find/replace, case rules, counters, and sanitization.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

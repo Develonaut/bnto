@@ -1,6 +1,6 @@
-# Shell Command Node
+# Run Shell Command Node
 
-> Execute shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.
+> Run shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.
 
 **Category:** system | **Platforms:** server | **Container:** no
 

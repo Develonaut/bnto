@@ -44,7 +44,7 @@ impl NodeProcessor for FileSort {
         NodeMetadata {
             node_type: "file-sort".to_string(),
             name: "Sort Files".to_string(),
-            description: "Reorder items by one or more metadata fields, each ascending or \
+            description: "Sort items by one or more metadata fields, each ascending or \
                           descending (`source, -title`). Stable; numbers sort numerically, \
                           missing values last. Data and metadata are untouched."
                 .to_string(),

@@ -11,7 +11,7 @@ export const fileFilterProcessor: ProcessorDef = {
   nodeType: "file-filter",
   name: "Filter Files",
   description:
-    "Keep or drop files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).",
+    "Filter files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).",
   category: "file",
   accepts: [] as const,
   platforms: ["browser", "cli"] as const,

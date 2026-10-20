@@ -1,6 +1,6 @@
 # Compress Images Node
 
-> Reduce image file size while maintaining quality.
+> Compress images to a smaller file size while maintaining quality.
 
 **Category:** image | **Platforms:** browser | **Container:** no
 

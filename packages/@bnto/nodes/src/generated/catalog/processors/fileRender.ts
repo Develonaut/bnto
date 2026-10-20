@@ -11,7 +11,7 @@ export const fileRenderProcessor: ProcessorDef = {
   nodeType: "file-render",
   name: "Render Text File",
   description:
-    "Write one text file from a template: a header, one row per item from its metadata, then a footer (a Markdown table, a report).",
+    "Render one text file from a template: a header, one row per item from its metadata, then a footer (a Markdown table, a report).",
   category: "file",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

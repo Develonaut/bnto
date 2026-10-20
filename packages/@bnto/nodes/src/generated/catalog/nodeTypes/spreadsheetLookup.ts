@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const spreadsheetLookupNodeType: NodeTypeInfo = {
   name: "spreadsheet-lookup",
   label: "Look Up Rows",
-  description: "Attach the CSV row whose key matches each file's name to that file.",
+  description: "Look up the CSV row whose key matches each file's name and attach it to that file.",
   category: "spreadsheet",
   isContainer: false,
   platforms: ["cli"] as const,

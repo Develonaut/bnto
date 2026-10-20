@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const spreadsheetLookupProcessor: ProcessorDef = {
   nodeType: "spreadsheet-lookup",
   name: "Look Up Rows",
-  description: "Attach the CSV row whose key matches each file's name to that file",
+  description: "Look up the CSV row whose key matches each file's name and attach it to that file",
   category: "spreadsheet",
   accepts: [] as const,
   platforms: ["cli", "desktop"] as const,

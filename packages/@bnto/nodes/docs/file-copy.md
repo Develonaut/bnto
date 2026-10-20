@@ -1,6 +1,6 @@
 # Copy Files Node
 
-> Place output files in a destination directory with conflict handling.
+> Copy output files into a destination folder, with conflict handling.
 
 **Category:** file | **Platforms:** cli | **Container:** no
 
@@ -8,8 +8,8 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| destination | string | - | - | Directory path to copy files into. |
-| create_dirs | boolean | true | - | Automatically create the destination directory if it doesn't exist. |
+| destination | string | - | - | Folder to copy files into. |
+| create_dirs | boolean | true | - | Automatically create the destination folder if it doesn't exist. |
 | conflict | enum | skip | skip, overwrite, rename, newer | What to do when a file with the same name already exists. "newer" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes. |
 | tolerance_ms | number | 2000 | ≥ 0 | Modified-time gap treated as equal in "newer" mode; FAT and Google Drive round times. |
 

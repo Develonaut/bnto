@@ -150,8 +150,8 @@ impl NodeProcessor for ShellCommand {
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
             node_type: "shell-command".to_string(),
-            name: "Shell Command".to_string(),
-            description: "Execute external CLI tools with security validation.".to_string(),
+            name: "Run Shell Command".to_string(),
+            description: "Run external CLI tools with security validation.".to_string(),
             category: NodeCategory::System,
             accepts: vec![],
             platforms: vec![

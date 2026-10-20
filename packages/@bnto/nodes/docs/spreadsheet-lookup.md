@@ -1,6 +1,6 @@
 # Look Up Rows Node
 
-> Attach the CSV row whose key matches each file's name to that file.
+> Look up the CSV row whose key matches each file's name and attach it to that file.
 
 **Category:** spreadsheet | **Platforms:** cli | **Container:** no
 

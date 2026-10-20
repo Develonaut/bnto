@@ -37,7 +37,7 @@ impl NodeProcessor for FileFilter {
         NodeMetadata {
             node_type: "file-filter".to_string(),
             name: "Filter Files".to_string(),
-            description: "Keep or drop files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).".to_string(),
+            description: "Filter files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).".to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string(), "cli".to_string()],

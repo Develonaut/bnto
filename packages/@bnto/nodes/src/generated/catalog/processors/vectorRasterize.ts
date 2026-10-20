@@ -9,8 +9,8 @@ import type { ProcessorDef } from "../types";
 /** Processor definition for vector-rasterize. */
 export const vectorRasterizeProcessor: ProcessorDef = {
   nodeType: "vector-rasterize",
-  name: "SVG to Image",
-  description: "Convert SVG files to raster images (PNG, JPEG, WebP)",
+  name: "Rasterize SVG",
+  description: "Rasterize SVG files into raster images (PNG, JPEG, WebP)",
   category: "vector",
   accepts: ["image/svg+xml"] as const,
   platforms: ["browser"] as const,

@@ -1,6 +1,6 @@
 # Read Rows Node
 
-> Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).
+> Read a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).
 
 **Category:** spreadsheet | **Platforms:** browser | **Container:** no
 

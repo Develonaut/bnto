@@ -11,7 +11,7 @@ export const reportProcessor: ProcessorDef = {
   nodeType: "report",
   name: "Report",
   description:
-    "Print a templated line to the run's output: once, once per file, or once per entry of a list; files pass through unchanged.",
+    "Report a templated line in the run's output: once, once per file, or once per entry of a list; files pass through unchanged.",
   category: "control",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

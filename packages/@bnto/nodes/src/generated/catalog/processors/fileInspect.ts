@@ -11,7 +11,7 @@ export const fileInspectProcessor: ProcessorDef = {
   nodeType: "file-inspect",
   name: "Inspect Files",
   description:
-    "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
+    "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
   category: "file",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

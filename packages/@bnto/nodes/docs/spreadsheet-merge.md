@@ -1,6 +1,6 @@
 # Merge CSV Node
 
-> Combine multiple CSV files into one with header reconciliation and deduplication.
+> Merge multiple CSV files into one with header reconciliation and deduplication.
 
 **Category:** spreadsheet | **Platforms:** browser | **Container:** no
 

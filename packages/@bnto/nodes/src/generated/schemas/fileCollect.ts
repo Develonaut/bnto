@@ -31,12 +31,12 @@ export const fileCollectNodeSchema: NodeSchema = {
     },
     recursive: {
       label: "Recursive",
-      description: "Traverse subdirectories when collecting files.",
+      description: "Search subfolders when collecting files.",
     },
     flatten: {
       label: "Flatten",
       description:
-        "Strip directory structure from output filenames. When true, all files appear as if in the same directory.",
+        "Strip folder structure from output filenames. When true, all files appear as if in the same folder.",
     },
   },
 };

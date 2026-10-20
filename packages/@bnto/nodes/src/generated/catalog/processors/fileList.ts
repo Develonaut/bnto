@@ -11,7 +11,7 @@ export const fileListProcessor: ProcessorDef = {
   nodeType: "file-list",
   name: "List Files",
   description:
-    "Turn lists of paths into files: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted. `entries` lists every path in order with its full path and status.",
+    "List files from lists of paths: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted. `entries` lists every path in order with its full path and status.",
   category: "file",
   accepts: [] as const,
   platforms: ["cli", "desktop"] as const,

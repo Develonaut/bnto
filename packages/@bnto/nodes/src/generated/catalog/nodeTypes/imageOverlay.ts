@@ -9,7 +9,7 @@ import type { NodeTypeInfo } from "../types";
 /** Node type info for image-overlay. */
 export const imageOverlayNodeType: NodeTypeInfo = {
   name: "image-overlay",
-  label: "Overlay Image",
+  label: "Overlay Images",
   description: "Overlay an image onto source images at a configurable position, size, and opacity.",
   category: "image",
   isContainer: false,

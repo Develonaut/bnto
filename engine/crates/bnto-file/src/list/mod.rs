@@ -46,7 +46,7 @@ impl NodeProcessor for FileList {
         NodeMetadata {
             node_type: "file-list".to_string(),
             name: "List Files".to_string(),
-            description: "Turn lists of paths into files: each listed path under a base folder \
+            description: "List files from lists of paths: each listed path under a base folder \
                           that exists joins the pipeline; missing ones are skipped and counted. \
                           `entries` lists every path in order with its full path and status."
                 .to_string(),

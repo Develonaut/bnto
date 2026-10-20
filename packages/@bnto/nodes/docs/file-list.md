@@ -1,6 +1,6 @@
 # List Files Node
 
-> Turn lists of paths into files under a base folder; every path is listed, found or missing.
+> List files from lists of paths under a base folder; every path is listed, found or missing.
 
 **Category:** file | **Platforms:** cli | **Container:** no
 

@@ -687,7 +687,7 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 **Priority: Medium.** Bring shipped nodes in line with [node-vocabulary.md](scopes/rust/node-vocabulary.md). One PR per task (single-concern rule). Every breaking task adds a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`), runs codegen (`task wasm:codegen`), and updates recipes, fixtures and goldens. Remove the matching row from the doc's Audit table when a task merges. Do the labels first: they're non-breaking and cheap.
 
-- [ ] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
+- [x] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
 - [x] `engine` — **Rename `file-metadata` → `file-inspect`** with a migration. Label "Inspect Files" shipped with it
 - [ ] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Trust, consent, dry-run and TUI key on the type string: grep `"shell-command"` across `engine/crates/bnto/src/`
 - [ ] `engine` — **camelCase params** with a migration: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path`

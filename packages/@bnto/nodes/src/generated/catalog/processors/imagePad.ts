@@ -11,7 +11,7 @@ export const imagePadProcessor: ProcessorDef = {
   nodeType: "image-pad",
   name: "Pad Images",
   description:
-    "Center images on a larger canvas, filling the added space with transparency or a color.",
+    "Pad images onto a larger, centered canvas, filling the added space with transparency or a color.",
   category: "image",
   accepts: ["image/jpeg", "image/png", "image/webp"] as const,
   platforms: ["browser"] as const,

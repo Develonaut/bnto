@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const reportNodeType: NodeTypeInfo = {
   name: "report",
   label: "Report",
-  description: "Print a templated line to the run's output; files pass through unchanged.",
+  description: "Report a templated line in the run's output; files pass through unchanged.",
   category: "control",
   isContainer: false,
   platforms: ["browser"] as const,

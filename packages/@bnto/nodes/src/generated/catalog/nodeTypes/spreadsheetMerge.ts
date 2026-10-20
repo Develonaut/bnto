@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const spreadsheetMergeNodeType: NodeTypeInfo = {
   name: "spreadsheet-merge",
   label: "Merge CSV",
-  description: "Combine multiple CSV files into one with header reconciliation and deduplication.",
+  description: "Merge multiple CSV files into one with header reconciliation and deduplication.",
   category: "spreadsheet",
   isContainer: false,
   platforms: ["browser"] as const,

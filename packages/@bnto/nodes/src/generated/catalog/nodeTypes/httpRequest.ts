@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const httpRequestNodeType: NodeTypeInfo = {
   name: "http-request",
   label: "HTTP Request",
-  description: "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
+  description: "Request URLs over HTTP to call APIs (GET, POST, PUT, DELETE, etc.).",
   category: "network",
   isContainer: false,
   platforms: ["server"] as const,
