@@ -98,6 +98,18 @@ impl NodeProcessor for ShellCommand {
         errors
     }
 
+    /// Filled after the executor, by shell-command itself (SEC-27).
+    fn reserved_tokens(&self) -> &'static [&'static str] {
+        &[
+            "{{output_dir}}",
+            "{{url}}",
+            "{{input}}",
+            "{{path}}",
+            "{{file}}",
+            "{{item.",
+        ]
+    }
+
     fn validate_raw(&self, raw: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         crate::raw_checks::raw_problems(raw)
     }
@@ -201,7 +213,7 @@ fn command_args(
     let raw = params.get("args").and_then(serde_json::Value::as_array);
     let expanded = each::expand_each(raw.map_or(&[], Vec::as_slice), files, ctx)?;
     let mut args = flatten_conditional_args(&expanded);
-    resolve_input_placeholders(&mut args, params);
+    resolve_input_placeholders(&mut args, params).map_err(BntoError::InvalidInput)?;
     Ok(args)
 }
 
@@ -796,7 +808,7 @@ mod tests {
         let mut args = vec!["--no-playlist".to_string(), "-o".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/video".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 3);
         assert_eq!(args[2], "https://example.com/video");
     }
@@ -806,7 +818,7 @@ mod tests {
         let mut args = vec!["--download".to_string(), "{{url}}".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/video".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "https://example.com/video");
     }
@@ -816,7 +828,7 @@ mod tests {
         let mut args = vec!["process".to_string(), "{{input}}".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/data".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "https://example.com/data");
     }
@@ -825,7 +837,7 @@ mod tests {
     fn test_resolve_no_url_no_change() {
         let mut args = vec!["--help".to_string()];
         let params = serde_json::Map::new();
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 1);
         assert_eq!(args[0], "--help");
     }
@@ -835,7 +847,7 @@ mod tests {
         let mut args = vec!["{{url}}".to_string(), "--verbose".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         // URL substituted in placeholder, NOT also appended
         assert_eq!(args.len(), 2);
         assert_eq!(args[0], "https://example.com");

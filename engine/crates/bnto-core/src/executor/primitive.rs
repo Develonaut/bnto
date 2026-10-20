@@ -175,10 +175,14 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     processor: &dyn crate::processor::NodeProcessor,
 ) -> Result<Params, BntoError> {
     let field_values = node_field_values(node);
-    if processor.resolves_items() && ctx.loop_item.is_none() {
-        return Ok(resolve_templates(ctx, node, &field_values, &None));
-    }
-    resolve_with(ctx, node, &field_values, &ctx.loop_item, None)
+    let resolved = if processor.resolves_items() && ctx.loop_item.is_none() {
+        resolve_templates(ctx, node, &field_values, &None)
+    } else {
+        resolve_with(ctx, node, &field_values, &ctx.loop_item, None)?
+    };
+    let reserved = processor.reserved_tokens();
+    super::reserved_tokens::check_reserved(reserved, &node.params, &resolved, &node.id)?;
+    Ok(resolved)
 }
 
 /// The `{{item.*}}` source for one file: the file's own metadata (what every
