@@ -6,8 +6,8 @@ use image::imageops::FilterType;
 use super::processor::ResizeImages;
 
 /// Max dimension — 16384px is the practical limit for WASM memory.
-pub(super) const MAX_DIMENSION: u32 = 16384;
-pub(super) const MIN_DIMENSION: u32 = 1;
+pub(crate) const MAX_DIMENSION: u32 = 16384;
+pub(crate) const MIN_DIMENSION: u32 = 1;
 
 impl ResizeImages {
     /// Calculate final (width, height) from params and original dimensions.

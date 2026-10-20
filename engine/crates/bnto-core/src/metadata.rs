@@ -333,9 +333,9 @@ mod tests {
     // --- NodeTypeInfo Tests ---
 
     #[test]
-    fn test_all_node_types_returns_38_entries() {
+    fn test_all_node_types_returns_39_entries() {
         let types = all_node_types();
-        assert_eq!(types.len(), 38, "Should have exactly 38 node types");
+        assert_eq!(types.len(), 39, "Should have exactly 39 node types");
     }
 
     #[test]
@@ -353,7 +353,7 @@ mod tests {
         let mut names: Vec<&str> = types.iter().map(|t| t.name.as_str()).collect();
         names.sort();
         names.dedup();
-        assert_eq!(names.len(), 38, "All node type names should be unique");
+        assert_eq!(names.len(), 39, "All node type names should be unique");
     }
 
     #[test]
