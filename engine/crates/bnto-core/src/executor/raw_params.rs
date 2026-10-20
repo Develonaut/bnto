@@ -1,10 +1,13 @@
 // Pre-flight: each processor checks its params as the recipe wrote them,
-// before templates fill data in (`NodeProcessor::validate_raw`). Run before
-// any step starts, so a refused recipe runs nothing.
+// before templates fill data in: no param it doesn't declare, and nothing
+// `NodeProcessor::validate_raw` refuses. Run before any step starts, so a
+// refused recipe runs nothing.
 
 use crate::errors::BntoError;
 use crate::pipeline::PipelineNode;
+use crate::processor::NodeProcessor;
 use crate::registry::NodeRegistry;
+use crate::undeclared_params::undeclared_params;
 
 /// Refuse the run when any node's processor refuses its unfilled params.
 pub(super) fn check_raw_params(
@@ -13,7 +16,7 @@ pub(super) fn check_raw_params(
 ) -> Result<(), BntoError> {
     for node in nodes {
         if let Some(processor) = registry.resolve(&node.node_type, &node.params)
-            && let Some(problem) = processor.validate_raw(&node.params).into_iter().next()
+            && let Some(problem) = first_problem(node, processor)
         {
             return Err(BntoError::InvalidInput(format!(
                 "Node '{}': {problem}",
@@ -27,18 +30,46 @@ pub(super) fn check_raw_params(
     Ok(())
 }
 
+/// The first undeclared param, else the first raw-param refusal.
+fn first_problem(node: &PipelineNode, processor: &dyn NodeProcessor) -> Option<String> {
+    let undeclared = processor.declared_params().and_then(|declared| {
+        undeclared_params(&node.node_type, &node.params, &declared)
+            .into_iter()
+            .next()
+    });
+    undeclared
+        .map(|u| u.message)
+        .or_else(|| processor.validate_raw(&node.params).into_iter().next())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::processor::{NodeInput, NodeOutput, NodeProcessor};
     use crate::progress::ProgressReporter;
 
-    /// Refuses a `secret` param written with a placeholder.
+    /// Declares one param, `secret`, and refuses it written with a placeholder.
     struct Picky;
 
     impl NodeProcessor for Picky {
         fn name(&self) -> &str {
             "picky"
+        }
+        fn metadata(&self) -> crate::metadata::NodeMetadata {
+            crate::metadata::NodeMetadata {
+                node_type: "picky".to_string(),
+                name: "Picky".to_string(),
+                description: String::new(),
+                category: crate::metadata::NodeCategory::Data,
+                accepts: vec![],
+                platforms: vec![],
+                parameters: vec![crate::metadata::ParameterDef {
+                    name: "secret".to_string(),
+                    ..Default::default()
+                }],
+                input_cardinality: Default::default(),
+                requires: vec![],
+            }
         }
         fn process(
             &self,
@@ -86,6 +117,31 @@ mod tests {
         ]));
         let err = check_raw_params(&ns, &registry()).unwrap_err().to_string();
         assert!(err.contains("Node 'p': 'secret' must be literal"), "{err}");
+    }
+
+    #[test]
+    fn an_undeclared_param_refuses_the_run_naming_node_and_param() {
+        let ns = nodes(serde_json::json!([
+            { "id": "p", "type": "picky", "parameters": { "secret": "x", "secert": "y" } }
+        ]));
+        let err = check_raw_params(&ns, &registry()).unwrap_err().to_string();
+        assert!(
+            err.contains("Node 'p': picky has no param \"secert\""),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn an_undeclared_param_nested_in_a_container_refuses_the_run() {
+        let ns = nodes(serde_json::json!([{
+            "id": "g", "type": "group",
+            "children": [{ "id": "p", "type": "picky", "parameters": { "extra": 1 } }]
+        }]));
+        let err = check_raw_params(&ns, &registry()).unwrap_err().to_string();
+        assert!(
+            err.contains("Node 'p': picky has no param \"extra\""),
+            "{err}"
+        );
     }
 
     #[test]

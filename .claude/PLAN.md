@@ -690,6 +690,7 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 - [x] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
 - [x] `engine` — **Rename `file-metadata` → `file-inspect`** with a migration. Label "Inspect Files" shipped with it
 - [x] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Consent, trust and dry-run now match on `bnto_shell::NODE_TYPE`, not a string literal
+- [x] `engine` — **Refuse params a node doesn't declare** (before the camelCase rename, so old keys fail loudly): `bnto check` reports them and a run's pre-flight refuses them; renamed types and params point at `bnto migrate` (`bnto-core/src/renamed.rs`)
 - [ ] `engine` — **camelCase params** with a migration: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path`
 - [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals`
 - [ ] `engine` — **Output suffixes**: `image-overlay` `-overlay` → `-overlaid`; `vector-optimize` adds `-optimized`. Regenerate goldens

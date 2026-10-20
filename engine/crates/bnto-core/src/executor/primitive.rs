@@ -8,6 +8,7 @@ use crate::metadata::InputCardinality;
 use crate::pipeline::PipelineFile;
 use crate::processor::{BatchFile, BatchInput, NodeInput};
 use crate::progress::ProgressReporter;
+use crate::renamed::with_node_type_hint;
 
 use super::leaf_output::LeafOutput;
 use super::node_reporter::build_node_reporter;
@@ -21,10 +22,11 @@ fn resolve_processor<'a, F: Fn() -> u64 + Copy>(
     ctx.registry
         .resolve(&node.node_type, &node.params)
         .ok_or_else(|| {
-            BntoError::InvalidInput(format!(
+            let message = format!(
                 "No processor registered for '{}' (node '{}')",
                 node.node_type, node.id
-            ))
+            );
+            BntoError::InvalidInput(with_node_type_hint(message, &node.node_type))
         })
 }
 

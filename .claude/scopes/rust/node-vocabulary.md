@@ -199,7 +199,7 @@ Rules:
 1. Check the registry. Use an existing verb if its meaning fits, even if another word sounds nicer.
 2. If none fits, add a row in the right class in the same PR as the node: verb, meaning, node, and the synonyms it rules out.
 3. A new verb never duplicates an existing one's meaning. If it does, use the existing one.
-4. Renaming a shipped node type or param is a breaking change. It needs a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`) so old recipes keep working, and its own PR.
+4. Renaming a shipped node type or param is a breaking change. It needs a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`) so old recipes keep working, a row in `engine/crates/bnto-core/src/renamed.rs` so `bnto check` and a run point an old recipe at `bnto migrate`, and its own PR.
 
 ---
 
