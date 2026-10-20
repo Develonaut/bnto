@@ -79,15 +79,15 @@ Convex validates all existing documents against the new schema on deploy. If you
 
 ## Tailwind v4 + Monorepo
 
-Tailwind skips `node_modules` by default. When shared packages are extracted (e.g., future `@bnto/ui`), classes defined in those packages won't generate CSS.
+Tailwind skips `node_modules` by default, so classes defined in shared workspace packages (`@bnto/ui`, `@bnto/editor`, `@bnto/form`) won't generate CSS unless the app points at their sources.
 
 **Fix:** Add a `@source` directive in the app's `globals.css`:
 
 ```css
-@source "../../node_modules/@bnto/ui";
+@source "../../../packages/ui/src";
 ```
 
-Path is relative to the CSS file. Currently UI is co-located in `apps/web/` so this isn't needed yet.
+Path is relative to the CSS file. `apps/web/app/globals.css` already has `@source` lines for `packages/ui`, `packages/editor` and `packages/@bnto/form`; add one when a new package ships Tailwind classes.
 
 ## pnpm 10 Native Dependencies
 

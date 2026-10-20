@@ -40,7 +40,7 @@ Node crates depend on `bnto-core` for the `NodeProcessor` trait, error types, an
 
 - **`NodeProcessor` trait** - contract every node implements: `metadata()` for self-description, `process()` for execution
 - **`NodeRegistry`** - maps compound keys (`nodeType:operation`, e.g. `"image:compress"`) to processor instances
-- **`PipelineExecutor`** - walks the node graph, chains I/O between nodes, handles containers (loop/group/parallel), emits structured progress events
+- **`execute_pipeline`** (`bnto-core/src/executor/`, wrapped by `bnto_engine::run_pipeline`) - walks the node graph, chains I/O between nodes, handles containers (loop/group/parallel), emits structured progress events
 - **`PipelineEvent`** - tagged union for progress reporting: `PipelineStarted`, `NodeStarted`, `FileProgress`, `NodeCompleted`, `PipelineCompleted`, etc.
 - **`catalog.snapshot.json`** - engine self-description file generated from the registry; consumed by `@bnto/nodes` codegen to produce TypeScript types and schemas
 
