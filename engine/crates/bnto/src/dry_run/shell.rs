@@ -114,17 +114,14 @@ fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
     };
     let resolved_params = resolve_templates(&node.params, &tpl_ctx);
 
-    let command = resolved_params
-        .get("command")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("<unknown>")
-        .to_string();
-
-    let args: Vec<String> = resolved_params
-        .get("args")
-        .and_then(serde_json::Value::as_array)
-        .map(|arr| bnto_shell::execute::flatten_conditional_args(arr))
-        .unwrap_or_default();
+    let (command, mut args) = shown_program(&resolved_params);
+    args.extend(
+        resolved_params
+            .get("args")
+            .and_then(serde_json::Value::as_array)
+            .map(|arr| bnto_shell::execute::flatten_conditional_args(arr))
+            .unwrap_or_default(),
+    );
 
     let output_mode = resolved_params
         .get("outputMode")
@@ -171,6 +168,20 @@ fn find_first_shell_command_id(nodes: &[PipelineNode]) -> Option<String> {
         }
     }
     None
+}
+
+/// The program a step runs and its leading args: `command`, or for a script
+/// step `<shell> -c <script> bnto`.
+fn shown_program(params: &serde_json::Map<String, serde_json::Value>) -> (String, Vec<String>) {
+    let text = |key| params.get(key).and_then(serde_json::Value::as_str);
+    match (text("command"), text("script")) {
+        (Some(command), _) => (command.to_string(), Vec::new()),
+        (None, Some(script)) => (
+            text("shell").unwrap_or("sh").to_string(),
+            vec!["-c".into(), script.to_string(), "bnto".into()],
+        ),
+        (None, None) => ("<unknown>".to_string(), Vec::new()),
+    }
 }
 
 /// Update a node's field default value by name, if the field accepts it.

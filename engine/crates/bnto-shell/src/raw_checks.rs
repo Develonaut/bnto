@@ -4,9 +4,9 @@
 use serde_json::{Map, Value};
 
 /// Problems in the unfilled params: a `command` that data could choose,
-/// or data placeholders inside interpreter code.
+/// data placeholders inside interpreter code, or a script data could write.
 pub(crate) fn raw_problems(raw: &Map<String, Value>) -> Vec<String> {
-    let mut problems = Vec::new();
+    let mut problems = crate::script::raw_script_problems(raw);
     let Some(command) = raw.get("command").and_then(Value::as_str) else {
         return problems;
     };

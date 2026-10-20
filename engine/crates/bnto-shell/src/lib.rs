@@ -22,6 +22,7 @@ mod invocation;
 mod output_files;
 mod parameters;
 mod raw_checks;
+mod script;
 pub mod search_path;
 mod stdout_mode;
 pub mod validate;

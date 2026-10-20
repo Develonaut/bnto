@@ -28,7 +28,6 @@ fn write_executable(path: &Path, body: &str) {
 
 /// SEC-20: hostile values arrive as $1 and stay data; `$0` is not a value.
 #[test]
-#[ignore = "OPEN SEC-20: script mode not built yet"]
 fn sec20_values_arrive_as_positional_data() {
     let lab = Lab::new();
     let recipe = lab.recipe(script_step(
@@ -49,7 +48,6 @@ fn sec20_values_arrive_as_positional_data() {
 /// SEC-21: a template in the script is refused on the raw definition, by
 /// `check` and `run` — a check after resolution would see the data.
 #[test]
-#[ignore = "OPEN SEC-21: script mode not built yet"]
 fn sec21_templates_in_the_script_are_refused() {
     let lab = Lab::new();
     // Control: the same value passed the safe way runs, so the refusal
@@ -76,7 +74,6 @@ fn sec21_templates_in_the_script_are_refused() {
 /// SEC-22: startup hooks in bnto's own environment never run: SHELLOPTS +
 /// PS4 and BASH_FUNC_* fire under bash and macOS /bin/sh, BASH_ENV under bash.
 #[test]
-#[ignore = "OPEN SEC-22: script mode not built yet (env_clear + bash -p)"]
 fn sec22_inherited_shell_startup_hooks_are_ignored() {
     let lab = Lab::new();
     let hook = lab.path().join("hook.sh");
@@ -97,7 +94,6 @@ fn sec22_inherited_shell_startup_hooks_are_ignored() {
 
 /// SEC-23: zsh reads `$ZDOTDIR/.zshenv` even for `-c`; script mode must not.
 #[test]
-#[ignore = "OPEN SEC-23: script mode not built yet (zsh -f)"]
 fn sec23_zsh_startup_files_are_ignored() {
     if !Path::new("/bin/zsh").exists() {
         return;
@@ -115,7 +111,6 @@ fn sec23_zsh_startup_files_are_ignored() {
 /// SEC-24: the shell is a fixed absolute path, never a PATH or
 /// `search_path` lookup that a planted `sh` could win.
 #[test]
-#[ignore = "OPEN SEC-24: script mode not built yet (absolute shell paths)"]
 fn sec24_shell_is_not_looked_up_on_path() {
     let lab = Lab::new();
     let fake_bin = lab.path().join("fakebin");
@@ -149,7 +144,6 @@ fn sec24_shell_is_not_looked_up_on_path() {
 
 /// SEC-25: only the named POSIX shells are accepted for `shell`.
 #[test]
-#[ignore = "OPEN SEC-25: script mode not built yet"]
 fn sec25_only_known_shells_are_accepted() {
     let lab = Lab::new();
     for shell in ["sh", "bash", "zsh", "dash", "ksh"] {
@@ -173,7 +167,6 @@ fn sec25_only_known_shells_are_accepted() {
 /// SEC-26: script mode starts from a cleared environment plus an allowlist,
 /// so the user's own exported secrets don't reach a script that didn't ask.
 #[test]
-#[ignore = "OPEN SEC-26: script mode not built yet (env_clear + allowlist)"]
 fn sec26_script_mode_does_not_inherit_the_full_environment() {
     let lab = Lab::new();
     let script = "printf '[%s]' \"${BNTO_PROBE_SECRET-unset}\"; command -v printf >/dev/null && printf ' path-ok'";
