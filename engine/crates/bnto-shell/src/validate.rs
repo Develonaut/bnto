@@ -64,10 +64,11 @@ pub fn validate_command(cmd: &str) -> Result<(), String> {
         return Err("command must not be empty".to_string());
     }
 
-    // Reject shell interpreters — they bypass argument separation safety
-    let cmd_lower = cmd.to_lowercase();
+    // Reject shell interpreters — they bypass argument separation safety.
+    // Compare the name Windows would run, so `bash.exe` and `cmd.` count.
+    let stem = program_stem(cmd);
     for shell in SHELL_DENYLIST {
-        if cmd_lower == *shell {
+        if stem == program_stem(shell) {
             return Err(format!(
                 "'{cmd}' is a shell interpreter and cannot be used as a command. \
                  Use the specific tool directly (e.g., 'ffmpeg', 'yt-dlp')"
@@ -91,6 +92,19 @@ pub fn validate_command(cmd: &str) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+/// The program name Windows resolves `cmd` to, case-folded: trailing dots
+/// and spaces dropped (Windows ignores them) and a `.exe` / `.com` suffix
+/// removed. On other OSes this only matters for the comparison.
+pub(crate) fn program_stem(cmd: &str) -> String {
+    let lower = cmd.to_lowercase();
+    let name = lower.trim_end_matches(['.', ' ']);
+    let name = name
+        .strip_suffix(".exe")
+        .or_else(|| name.strip_suffix(".com"))
+        .unwrap_or(name);
+    name.trim_end_matches(['.', ' ']).to_string()
 }
 
 /// Remove dangerous environment variables from a recipe-provided env map.
@@ -161,6 +175,42 @@ mod tests {
     }
 
     // --- Path validation ---
+
+    // Windows resolves `bash.exe`, `cmd.` and `pwsh .` to the same shells
+    // the denylist names (SEC-05).
+    #[test]
+    fn rejects_windows_spellings_of_shells() {
+        for cmd in [
+            "bash.exe",
+            "sh.exe",
+            "zsh.EXE",
+            "PowerShell.exe",
+            "pwsh.exe",
+            "cmd.com",
+            "cmd.",
+            "bash.",
+            "pwsh .",
+            "bash.exe.",
+            "powershell.exe  ",
+        ] {
+            let err = validate_command(cmd).expect_err(cmd);
+            assert!(err.contains("shell interpreter"), "{cmd}: {err}");
+        }
+    }
+
+    #[test]
+    fn allows_tools_whose_names_only_start_like_shells() {
+        for cmd in [
+            "shellcheck",
+            "bashate",
+            "cmdtool",
+            "python.exe",
+            "ffmpeg.exe",
+            "sh-tool",
+        ] {
+            assert!(validate_command(cmd).is_ok(), "{cmd} refused");
+        }
+    }
 
     #[test]
     fn rejects_relative_path_command() {
