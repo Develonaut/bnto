@@ -118,9 +118,15 @@ impl Lab {
 
     /// `bnto run` without `--yes`, answering the consent prompt with `answer`.
     pub fn run_answering(&self, recipe: &str, answer: &str) -> Outcome {
+        self.run_answering_with(recipe, answer, &[])
+    }
+
+    /// `run_answering` with env vars set on bnto itself.
+    pub fn run_answering_with(&self, recipe: &str, answer: &str, env: &[(&str, &str)]) -> Outcome {
         let mut child = self
             .bnto()
             .args(["run", recipe])
+            .envs(env.iter().copied())
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

@@ -57,3 +57,36 @@ fn sec16_consent_shows_the_full_command_line() {
         out.text
     );
 }
+
+/// SEC-29: `{{vars.*}}` are filled before consent, so approval covers the
+/// values that run. A different value asks again, and the prompt shows the
+/// value, not the template.
+#[test]
+fn sec29_consent_covers_the_values_vars_fill_in() {
+    let lab = Lab::new();
+    let recipe = git_recipe(&lab, json!(["{{vars.Flag}}"]));
+    let version = [("BNTO_VAR_FLAG", "--version")];
+    let first = lab.run_answering_with(&recipe, "y\n", &version);
+    assert!(first.ok, "{}", first.text);
+    assert!(
+        first.text.contains("git --version"),
+        "prompt must show the value: {}",
+        first.text
+    );
+    assert!(
+        lab.run_answering_with(&recipe, "", &version).ok,
+        "same value runs"
+    );
+
+    let changed = lab.run_answering_with(&recipe, "", &[("BNTO_VAR_FLAG", "--help")]);
+    assert!(
+        !changed.ok,
+        "a new var value ran on the old approval: {}",
+        changed.text
+    );
+    assert!(
+        changed.text.contains("Execution cancelled"),
+        "{}",
+        changed.text
+    );
+}
