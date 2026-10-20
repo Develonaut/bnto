@@ -17,7 +17,7 @@ pub fn write_output(
 ) {
     let outcome = io::write_results_with_mode(result, mode, output_dir, dry_run);
     let outcome = verdict.or_fail(outcome, "Error writing output:");
-    print_warnings(result, dry_run);
+    print_warnings(result, &outcome, dry_run);
     let summary = RunSummary {
         files_written: written_count(&outcome),
         ..verdict.passed(result)
@@ -27,10 +27,11 @@ pub fn write_output(
 }
 
 /// Warnings and totals, printed before the Done line so it stays last.
-fn print_warnings(result: &bnto_core::PipelineResult, dry_run: bool) {
+fn print_warnings(result: &bnto_core::PipelineResult, outcome: &io::WriteOutcome, dry_run: bool) {
     for warning in &result.warnings {
         eprintln!("  {} {warning}", "Warning:".yellow().bold());
     }
+    io::warn_renamed(outcome, dry_run);
     io::warn_files_left_as_newer(result);
     io::warn_files_without_a_row(result);
     io::print_copy_totals(result, dry_run);

@@ -57,7 +57,7 @@ These are the 6 implemented browser operations. Every recipe you design must use
 - CSV operations accept `.csv` files only.
 - File rename accepts any file type — it operates on filenames, not content.
 - Compression `quality` slider: higher = better quality. Default 80 is balanced (lower values = smaller file, more aggressive compression).
-- Resize `maintainAspect: true` means only one dimension needs specifying.
+- Resize `maintainAspect: true` means only one dimension needs specifying. With both set, the image fits inside the width×height box (no stretch, no padding).
 
 ### 2. Competitive Landscape
 

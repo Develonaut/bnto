@@ -58,12 +58,23 @@ bnto info compress-images
 # or `Check: FAIL (<n> findings)` (exit 1), with `, <n> notes` added if any
 bnto check backup.bnto.json recipes/*.bnto.json
 
+# A folder checks every .bnto.json under it, recursively, sorted by path, so a
+# new recipe can't miss the check (and it works where the shell expands no
+# globs, like Windows). Files and folders mix. node_modules/ and target/ are
+# skipped while walking, symlinked folders aren't followed, and a folder with
+# no recipes in it is a finding that fails the check
+bnto check recipes/ backup.bnto.json
+
 # Check external dependencies (processor and recipe-level `requires`)
 bnto doctor
 
 # Install a recipe's missing dependencies (prints each exact command, then asks)
 bnto install download-video
 ```
+
+### Output names
+
+With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. Names are only kept apart from each other: a file already in the output folder from an earlier run is replaced.
 
 ### `bnto run --json`
 
@@ -152,6 +163,7 @@ src/
 +-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)
++-- check_targets.rs       # `bnto check` arguments to recipe files (a folder walked recursively, sorted)
 +-- launch.rs              # `bnto tui` launcher
 +-- context.rs             # NativeContext for system access (commands, temp files, env)
 +-- scratch.rs             # Per-run scratch dir holding a run's temp files (removed on drop)
@@ -162,6 +174,7 @@ src/
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
++-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (indicatif bars)
 +-- progress_indent.rs     # Step layout: container children indented, container-relative numbers

@@ -3,11 +3,15 @@
 // Prints one line per finding, naming the file, then a note per param left
 // for `bnto run -p` to give, then a verdict line; exits 1 when anything was
 // found. Notes never fail the check. A file that can't be read or parsed is
-// a finding for that file, so one bad path never hides the rest.
+// a finding for that file, so one bad path never hides the rest. A folder
+// checks every recipe under it (see `check_targets`).
 
+use std::path::Path;
 use std::process;
 
 use bnto_core::{NodeRegistry, PipelineDefinition, RunTimeParam, check_pipeline};
+
+use crate::check_targets::{CheckTarget, check_targets};
 
 /// One file's output: finding lines, then note lines.
 #[derive(Debug, Default)]
@@ -16,30 +20,58 @@ struct FileLines {
     notes: Vec<String>,
 }
 
-/// Check every file in `paths`, print the findings, notes and verdict, and
-/// exit non-zero on any finding.
-pub fn run_check(paths: &[String]) {
-    let registry = bnto_engine::create_registry();
-    let (mut findings, mut notes) = (0, 0);
-    for path in paths {
-        let lines = check_file(path, &registry);
-        for line in lines.findings.iter().chain(&lines.notes) {
-            println!("{line}");
-        }
-        findings += lines.findings.len();
-        notes += lines.notes.len();
+/// Every line printed before the verdict, in order, with its counts.
+#[derive(Debug, Default)]
+struct CheckOutput {
+    lines: Vec<String>,
+    findings: usize,
+    notes: usize,
+}
+
+impl CheckOutput {
+    /// Add one file's findings, then its notes.
+    fn add(&mut self, file: FileLines) {
+        self.findings += file.findings.len();
+        self.notes += file.notes.len();
+        self.lines.extend(file.findings);
+        self.lines.extend(file.notes);
     }
-    println!("{}", verdict(paths.len(), findings, notes));
-    if findings > 0 {
+}
+
+/// Check every recipe `paths` name, print the findings, notes and verdict,
+/// and exit non-zero on any finding.
+pub fn run_check(paths: &[String]) {
+    let (recipes, output) = check_paths(paths, &bnto_engine::create_registry());
+    for line in &output.lines {
+        println!("{line}");
+    }
+    println!("{}", verdict(recipes, output.findings, output.notes));
+    if output.findings > 0 {
         process::exit(1);
     }
 }
 
-/// Output lines for the recipe file at `path`.
-fn check_file(path: &str, registry: &NodeRegistry) -> FileLines {
+/// How many recipes `paths` name, and the output lines, in argument order.
+fn check_paths(paths: &[String], registry: &NodeRegistry) -> (usize, CheckOutput) {
+    let mut recipes = 0;
+    let mut output = CheckOutput::default();
+    for target in paths.iter().flat_map(|arg| check_targets(arg)) {
+        match target {
+            CheckTarget::Recipe { path, name } => {
+                recipes += 1;
+                output.add(check_file(&path, &name, registry));
+            }
+            CheckTarget::Finding(line) => output.add(finding_only(line)),
+        }
+    }
+    (recipes, output)
+}
+
+/// Output lines for the recipe file at `path`, each naming it as `name`.
+fn check_file(path: &Path, name: &str, registry: &NodeRegistry) -> FileLines {
     match std::fs::read_to_string(path) {
-        Ok(json) => check_source(path, &json, registry),
-        Err(e) => finding_only(format!("{path}: cannot read file: {e}")),
+        Ok(json) => check_source(name, &json, registry),
+        Err(e) => finding_only(format!("{name}: cannot read file: {e}")),
     }
 }
 
@@ -201,9 +233,9 @@ mod tests {
     fn test_unreadable_file_is_one_finding() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("missing.bnto.json");
-        let path = path.to_str().unwrap();
-        let lines = check_file(path, &bnto_engine::create_registry()).findings;
+        let name = path.to_str().unwrap();
+        let lines = check_file(&path, name, &bnto_engine::create_registry()).findings;
         assert_eq!(lines.len(), 1);
-        assert!(lines[0].starts_with(&format!("{path}: cannot read file:")));
+        assert!(lines[0].starts_with(&format!("{name}: cannot read file:")));
     }
 }

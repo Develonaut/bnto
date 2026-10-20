@@ -1,0 +1,23 @@
+{
+  "id": "check-folders-a",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Folders A",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "keep-docs",
+      "type": "file-filter",
+      "parameters": { "name_pattern": "*.md" }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "none" }
+    }
+  ]
+}
