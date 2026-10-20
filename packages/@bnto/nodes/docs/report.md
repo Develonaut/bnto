@@ -8,7 +8,7 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| message | string | - | - | The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each. |
+| message | string | - | - | The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each. |
 | each | object | - | - | A list to print the message once per entry of, in order, usually a {{node.<id>.<key>}} template. |
 
 ## Configuration Example

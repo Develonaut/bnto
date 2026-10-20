@@ -25,6 +25,7 @@ export type NodeTypeName =
   | "image-compress"
   | "image-convert"
   | "image-overlay"
+  | "image-pad"
   | "image-resize"
   | "image-strip-exif"
   | "input"

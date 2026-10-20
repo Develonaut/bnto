@@ -38,6 +38,8 @@ export { imageConvertParamsSchema, imageConvertNodeSchema } from "./imageConvert
 export type { ImageConvertParams } from "./imageConvert";
 export { imageOverlayParamsSchema, imageOverlayNodeSchema } from "./imageOverlay";
 export type { ImageOverlayParams } from "./imageOverlay";
+export { imagePadParamsSchema, imagePadNodeSchema } from "./imagePad";
+export type { ImagePadParams } from "./imagePad";
 export { imageResizeParamsSchema, imageResizeNodeSchema } from "./imageResize";
 export type { ImageResizeParams } from "./imageResize";
 export { imageStripExifParamsSchema, imageStripExifNodeSchema } from "./imageStripExif";

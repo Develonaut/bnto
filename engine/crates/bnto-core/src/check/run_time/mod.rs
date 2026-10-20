@@ -1,0 +1,170 @@
+// Params a recipe leaves out for `bnto run -p` to give.
+//
+// A left-out param is needed when the node's `validate` refuses the recipe
+// without it and stops refusing once it has a value. A needed param is left
+// for run time when `-p nodeId:key=value` can give it. The rule mirrors how
+// the CLI applies one (`bnto/src/input.rs`): it sets the first node with that
+// id, searching nodes in order and each container's children before the next
+// node; it sets a declared field of that name instead of the param; and its
+// value is text, a number or true/false. A needed param it can't give that
+// way no run can give, since `--vars` only fills `{{vars.*}}` the recipe has.
+
+use crate::metadata::{ParameterDef, ParameterType};
+use crate::pipeline::PipelineNode;
+use crate::processor::NodeProcessor;
+
+type Params = serde_json::Map<String, serde_json::Value>;
+
+/// A param a recipe leaves out for the run to give.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RunTimeParam {
+    /// The id of the node the param belongs to.
+    pub node_id: String,
+    /// That node's type key.
+    pub node_type: String,
+    /// The param's name.
+    pub param: String,
+}
+
+impl std::fmt::Display for RunTimeParam {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "node \"{}\" ({}), param \"{}\": left for run time",
+            self.node_id, self.node_type, self.param
+        )
+    }
+}
+
+/// What `validate` refuses in a node once its left-out params are sorted.
+#[derive(Default)]
+pub(super) struct LeftOut {
+    /// What `validate` still refuses with every givable param given.
+    pub problems: Vec<String>,
+    /// Needed params `-p` can give.
+    pub givable: Vec<String>,
+    /// Needed params no run can give, each with the reason.
+    pub blocked: Vec<(String, String)>,
+}
+
+/// The node being checked: its definition, processor and resolved params.
+pub(super) struct Subject<'a> {
+    pub node: &'a PipelineNode,
+    pub processor: &'a dyn NodeProcessor,
+    pub params: &'a Params,
+}
+
+/// Sort the needed params `subject` leaves out, given `written`, what its
+/// `validate` refuses as written.
+pub(super) fn left_out(
+    subject: &Subject<'_>,
+    written: Vec<String>,
+    root: &[PipelineNode],
+) -> LeftOut {
+    let mut left = LeftOut::default();
+    let mut given = subject.params.clone();
+    let declared = subject.processor.metadata().parameters;
+    let absent = declared
+        .iter()
+        .filter(|d| !subject.params.contains_key(&d.name));
+    for def in absent.filter(|d| is_needed(subject, d, &written)) {
+        match unreachable_reason(subject.node, def, root) {
+            Some(reason) => left.blocked.push((def.name.clone(), reason)),
+            None => {
+                given.insert(def.name.clone(), stand_in(def));
+                left.givable.push(def.name.clone());
+            }
+        }
+    }
+    let after = subject.processor.validate(&given);
+    left.problems = written.into_iter().filter(|m| after.contains(m)).collect();
+    left
+}
+
+/// True when giving `def` a value takes away something `validate` refused.
+fn is_needed(subject: &Subject<'_>, def: &ParameterDef, written: &[String]) -> bool {
+    let mut given = subject.params.clone();
+    given.insert(def.name.clone(), stand_in(def));
+    let after = subject.processor.validate(&given);
+    written.iter().any(|m| !after.contains(m))
+}
+
+/// Why `-p` can't give `def` to `node`, or `None` when it can.
+fn unreachable_reason(
+    node: &PipelineNode,
+    def: &ParameterDef,
+    root: &[PipelineNode],
+) -> Option<String> {
+    if let Some(reason) = id_reason(&node.id) {
+        return Some(reason);
+    }
+    if !first_with_id(root, &node.id).is_some_and(|first| std::ptr::eq(first, node)) {
+        return Some(format!(
+            "-p {}:… sets an earlier node with the same id",
+            node.id
+        ));
+    }
+    if node.fields.contains_key(&def.name) {
+        return Some(format!(
+            "-p {}:{}=… sets the node's field of that name instead",
+            node.id, def.name
+        ));
+    }
+    type_reason(&def.param_type)
+}
+
+/// `-p` splits at the first `=` and then the first `:`, so it can't name a
+/// node whose id is empty or holds either.
+fn id_reason(id: &str) -> Option<String> {
+    if id.is_empty() {
+        return Some("-p can't name a node with an empty id".to_string());
+    }
+    id.chars()
+        .find(|c| matches!(c, ':' | '='))
+        .map(|c| format!("-p can't name a node whose id holds '{c}'"))
+}
+
+/// The node `-p` sets for `id`: the first in order, each container's
+/// children searched before the next node.
+fn first_with_id<'a>(nodes: &'a [PipelineNode], id: &str) -> Option<&'a PipelineNode> {
+    nodes.iter().find_map(|node| {
+        if node.id == id {
+            return Some(node);
+        }
+        first_with_id(node.children.as_deref().unwrap_or_default(), id)
+    })
+}
+
+/// `-p` values are text, numbers or true/false; a file param takes its
+/// base64 text, so only an object is out of reach.
+fn type_reason(param_type: &ParameterType) -> Option<String> {
+    matches!(param_type, ParameterType::Object)
+        .then(|| "-p gives text, numbers or true/false, not an object".to_string())
+}
+
+/// A value of `def`'s type that lets `validate` look past its absence.
+fn stand_in(def: &ParameterDef) -> serde_json::Value {
+    let text = || {
+        def.placeholder
+            .clone()
+            .unwrap_or_else(|| "run-time".to_string())
+    };
+    match &def.param_type {
+        ParameterType::Number => def
+            .constraints
+            .as_ref()
+            .and_then(|c| c.min)
+            .unwrap_or(0.0)
+            .into(),
+        ParameterType::Boolean => false.into(),
+        ParameterType::Enum { options } => options
+            .first()
+            .map_or_else(text, |o| o.value.clone())
+            .into(),
+        ParameterType::Object => serde_json::Value::Object(Params::new()),
+        ParameterType::String | ParameterType::File { .. } => text().into(),
+    }
+}
+
+#[cfg(test)]
+mod tests;

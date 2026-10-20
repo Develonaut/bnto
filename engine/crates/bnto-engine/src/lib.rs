@@ -57,6 +57,7 @@ pub fn create_browser_registry() -> NodeRegistry {
         Box::new(bnto_spreadsheet::MergeSpreadsheets::new()),
     );
     registry.register("image-overlay", Box::new(bnto_image::OverlayImage::new()));
+    registry.register("image-pad", Box::new(bnto_image::PadImages::new()));
     registry.register(
         "vector-rasterize",
         Box::new(bnto_vector::VectorRasterize::new()),
@@ -141,7 +142,7 @@ mod tests {
     #[test]
     fn test_browser_registry_has_all_processors() {
         let registry = create_browser_registry();
-        assert_eq!(registry.len(), 23);
+        assert_eq!(registry.len(), 24);
 
         let expected = [
             "assert",
@@ -160,6 +161,7 @@ mod tests {
             "image-convert",
             "image-strip-exif",
             "image-overlay",
+            "image-pad",
             "spreadsheet-clean",
             "spreadsheet-read",
             "spreadsheet-rename",
@@ -182,9 +184,9 @@ mod tests {
     #[cfg(feature = "native")]
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
-        // Full registry = browser (23) + file-collect + file-copy + file-delete + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 31
-        assert_eq!(registry.len(), 31);
+        // Full registry = browser (24) + file-collect + file-copy + file-delete + file-list
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 32
+        assert_eq!(registry.len(), 32);
         let params = serde_json::Map::new();
         assert!(
             registry.resolve("shell-command", &params).is_some(),
@@ -200,7 +202,7 @@ mod tests {
             } }]
         }))
         .unwrap();
-        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "only-docs");
         assert!(findings[0].message.contains("name_pattern"));
@@ -214,7 +216,7 @@ mod tests {
             } }]
         }))
         .unwrap();
-        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "order");
         assert!(findings[0].message.contains("empty sort key"));
@@ -227,7 +229,7 @@ mod tests {
         for recipe in recipes::builtin_recipes() {
             let definition: PipelineDefinition =
                 serde_json::from_str(recipe.definition_json).unwrap();
-            let findings = bnto_core::check_pipeline(&definition, &registry);
+            let findings = bnto_core::check_pipeline(&definition, &registry).findings;
             assert!(findings.is_empty(), "{}: {findings:?}", recipe.slug);
         }
     }
@@ -585,7 +587,7 @@ mod tests {
             } }]
         }))
         .unwrap();
-        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "totals");
         assert!(findings[0].message.contains("empty field"), "{findings:?}");
@@ -816,6 +818,7 @@ mod tests {
             "image-convert",
             "image-strip-exif",
             "image-overlay",
+            "image-pad",
             "spreadsheet-clean",
             "spreadsheet-read",
             "spreadsheet-rename",

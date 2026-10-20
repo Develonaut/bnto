@@ -217,3 +217,32 @@ describe("summarize", () => {
     }
   });
 });
+
+// =============================================================================
+// image-pad
+// =============================================================================
+
+describe("image-pad", () => {
+  const proc = PROCESSOR_MAP.get("image-pad")!;
+
+  it("is a browser-capable per-file image node", () => {
+    expect(proc.platforms).toContain("browser");
+    expect(proc.inputCardinality).toBe("perFile");
+    expect(proc.parameters.map((p) => p.name)).toEqual([
+      "width",
+      "height",
+      "background",
+      "quality",
+    ]);
+  });
+
+  it("canvas sides are optional pixel numbers; background defaults to transparent", () => {
+    const width = proc.parameters.find((p) => p.name === "width")!;
+    expect(width.type).toBe("number");
+    expect(width.constraints?.required).toBe(false);
+    expect(width.constraints?.min).toBe(1);
+    const background = proc.parameters.find((p) => p.name === "background")!;
+    expect(background.type).toBe("string");
+    expect(background.default).toBe("transparent");
+  });
+});

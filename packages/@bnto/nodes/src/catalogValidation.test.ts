@@ -83,6 +83,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("spreadsheet-convert")).toBe(true);
     expect(PROCESSOR_MAP.has("spreadsheet-merge")).toBe(true);
     expect(PROCESSOR_MAP.has("image-overlay")).toBe(true);
+    expect(PROCESSOR_MAP.has("image-pad")).toBe(true);
     expect(PROCESSOR_MAP.has("assert")).toBe(true);
     expect(PROCESSOR_MAP.has("report")).toBe(true);
     expect(PROCESSOR_MAP.has("edit-fields")).toBe(true);

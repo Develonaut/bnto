@@ -105,6 +105,36 @@ fn test_an_item_key_a_file_lacks_is_refused_naming_key_and_file() {
     assert!(msg.contains("b.txt") && msg.contains("size"), "{msg}");
 }
 
+#[test]
+fn test_the_file_token_prints_one_line_per_file_named_in_order() {
+    let files = vec![file("utils.ts", json!({})), file("hooks.ts", json!({}))];
+    let lines = printed(json!({ "message": "grab bag: {{file}}" }), files);
+    assert_eq!(lines, ["grab bag: utils.ts", "grab bag: hooks.ts"]);
+}
+
+#[test]
+fn test_the_file_token_and_item_keys_fill_from_the_same_file() {
+    let files = vec![
+        file("a.txt", json!({ "size": 10 })),
+        file("b.txt", json!({ "size": 20 })),
+    ];
+    let lines = printed(json!({ "message": "{{file}}: {{item.size}}" }), files);
+    assert_eq!(lines, ["a.txt: 10", "b.txt: 20"]);
+}
+
+#[test]
+fn test_the_file_token_with_no_files_prints_nothing() {
+    let lines = printed(json!({ "message": "{{file}}" }), vec![]);
+    assert!(lines.is_empty(), "{lines:?}");
+}
+
+#[test]
+fn test_a_file_name_that_reads_like_a_token_prints_as_written() {
+    let files = vec![file("{{item.size}}.txt", json!({}))];
+    let lines = printed(json!({ "message": "{{file}}" }), files);
+    assert_eq!(lines, ["{{item.size}}.txt"]);
+}
+
 // --- Per entry ---
 
 fn entries() -> Value {
@@ -219,6 +249,14 @@ fn test_validate_refuses_entry_and_item_together() {
     let errors = validate(params);
     assert_eq!(errors.len(), 1, "{errors:?}");
     assert!(errors[0].contains("item"), "{errors:?}");
+}
+
+#[test]
+fn test_validate_refuses_entry_and_file_together() {
+    let params = json!({ "each": [1], "message": "{{entry}} {{file}}" });
+    let errors = validate(params);
+    assert_eq!(errors.len(), 1, "{errors:?}");
+    assert!(errors[0].contains("{{file}}"), "{errors:?}");
 }
 
 // --- Dry run and metadata ---

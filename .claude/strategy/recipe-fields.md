@@ -185,8 +185,8 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 
 `report`'s `each` param takes a list, usually a sole `{{node.<id>.<key>}}` such as `{{node.opt.entries}}` (a `file-list`'s every path, in listed order). The node prints its `message` once per entry, and `{{entry.<key>}}` in the message reads that entry's field: `{{entry.status}}: {{entry.full_path}}`. An entry that is a plain value (text, a number) is `{{entry}}`, and `{{entry}}` on an object entry prints it as JSON.
 
-- **Recipe mistakes fail the run.** An `each` that doesn't resolve to a list, an entry without a key the message reads, `{{entry}}` with no `each`, or one message reading both `{{entry}}` and `{{item.*}}`.
-- **Per file instead.** Without `each`, a message that reads `{{item.<key>}}` prints once per incoming file, from that file's metadata. `report` and `assert` resolve `{{item.*}}` themselves per file (`NodeProcessor::resolves_items`), so outside a loop the engine hands those to them as written instead of refusing them.
+- **Recipe mistakes fail the run.** An `each` that doesn't resolve to a list, an entry without a key the message reads, `{{entry}}` with no `each`, or one message reading both `{{entry}}` and a per-file token (`{{file}}` or `{{item.*}}`).
+- **Per file instead.** Without `each`, a message that reads `{{file}}` (the file's name) or `{{item.<key>}}` (from the file's metadata) prints once per incoming file. `report` and `assert` resolve `{{item.*}}` themselves per file (`NodeProcessor::resolves_items`), so outside a loop the engine hands those to them as written instead of refusing them.
 - **`assert` per file.** An `assert` whose `value` or `expected` reads `{{item.<key>}}` or `{{file}}` (the file's name) checks once per incoming file and names every file that fails; with no files it checks nothing. So "fail if any file reaches this step" is `value: "{{file}}"`, `op: "equals"`, `expected: ""` after a `file-filter` that keeps the forbidden files.
 
 ### Node Output References

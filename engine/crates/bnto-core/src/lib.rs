@@ -135,7 +135,7 @@ pub mod version;
 // Instead of writing `use bnto_core::errors::BntoError`, they can write
 // `use bnto_core::BntoError`. Convenience!
 pub use binary_probe::find_on_path;
-pub use check::{CheckFinding, check_pipeline};
+pub use check::{CheckFinding, CheckReport, RunTimeParam, check_pipeline};
 pub use command_options::CommandOptions;
 pub use context::{NoopContext, ProcessContext};
 pub use definition::{Definition, Edge, Metadata, Port, Position};

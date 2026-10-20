@@ -1,0 +1,31 @@
+{
+  "id": "square-icon",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Square Icon",
+  "metadata": {
+    "description": "Rasterizes an image to PNG, fits it inside 64x64, then pads it onto a transparent 64x64 square."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["image/svg+xml", "image/png", "image/jpeg", "image/webp"],
+        "multiple": true
+      }
+    },
+    { "id": "png", "type": "image-convert", "parameters": { "format": "png" } },
+    { "id": "fit", "type": "image-resize", "parameters": { "width": 64 } },
+    { "id": "square", "type": "image-pad", "parameters": { "width": 64, "height": 64 } },
+    { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "png" },
+    { "id": "e2", "source": "png", "target": "fit" },
+    { "id": "e3", "source": "fit", "target": "square" },
+    { "id": "e4", "source": "square", "target": "output" }
+  ]
+}

@@ -114,6 +114,7 @@ export {
   ArrowUpDown as ArrowUpDownIcon,
   Merge as MergeIcon,
   Sigma as SigmaIcon,
+  Expand as ExpandIcon,
 } from "lucide-react";
 
 export type { LucideIcon } from "lucide-react";

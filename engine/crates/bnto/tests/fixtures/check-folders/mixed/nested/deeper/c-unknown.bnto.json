@@ -1,0 +1,23 @@
+{
+  "id": "check-folders-c",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Folders C",
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": { "mode": "file-upload", "multiple": true }
+    },
+    {
+      "id": "zap",
+      "type": "image-zap",
+      "parameters": {}
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": { "mode": "none" }
+    }
+  ]
+}

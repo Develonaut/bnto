@@ -7,8 +7,8 @@
 //
 // It runs as a batch so it prints even when no files arrive. With `each`
 // (a list, usually a sole `{{node.<id>.<key>}}`) it prints a line per entry,
-// in order; else, when `message` reads `{{item.*}}`, a line per incoming
-// file; else one line. A dry run prints what it would report.
+// in order; else, when `message` reads `{{file}}` or `{{item.*}}`, a line
+// per incoming file; else one line. A dry run prints what it would report.
 
 mod lines;
 mod params;

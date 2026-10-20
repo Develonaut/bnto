@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use crate::control::placeholder::{self, ITEM, text};
+use crate::control::placeholder::{self, text};
 use crate::metadata::{Constraints, ParameterDef, ParameterType};
 
 /// The per-entry namespace: `{{entry.KEY}}` reads a field of `each`'s entry.
@@ -13,7 +13,8 @@ pub(super) const WHOLE_ENTRY: &str = "{{entry}}";
 /// The node's params, read and checked.
 #[derive(Debug)]
 pub(super) struct ReportParams {
-    /// The line to print, its `{{item.*}}` / `{{entry.*}}` still to fill.
+    /// The line to print, its `{{file}}` / `{{item.*}}` / `{{entry.*}}` still
+    /// to fill.
     pub message: String,
     /// What to print a line per entry of; `None` when not set.
     pub each: Option<Value>,
@@ -65,8 +66,8 @@ fn check_namespaces(message: &str, has_each: bool) -> Result<(), String> {
                     set 'each' to the list to print a line per entry of"
             .to_string());
     }
-    if entry && placeholder::reads(message, ITEM) {
-        return Err("'message' reads both {{entry}} and {{item.*}}: \
+    if entry && placeholder::reads_file(message) {
+        return Err("'message' reads {{entry}} and {{file}} or {{item.*}}: \
                     a report prints a line per entry or per file, not both"
             .to_string());
     }
@@ -82,8 +83,9 @@ fn message_param() -> ParameterDef {
     ParameterDef {
         name: "message".to_string(),
         label: "Message".to_string(),
-        description: "The line to print, usually a template. {{item.<key>}} prints it once per \
-                      file, {{entry.<key>}} (or {{entry}}) once per entry of each."
+        description: "The line to print, usually a template. {{file}} (the file's name) or \
+                      {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) \
+                      once per entry of each."
             .to_string(),
         param_type: ParameterType::String,
         constraints: Some(Constraints {
