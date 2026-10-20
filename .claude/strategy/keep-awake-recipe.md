@@ -1,7 +1,7 @@
 # Conditional Steps + Cross-Platform Keep Awake — 11 PRs
 
 **Created:** October 20, 2026
-**Status:** Approved, October 20, 2026. PR 1 in progress.
+**Status:** Approved, October 20, 2026. PR 1 merged (#662). PR 2 in progress.
 **Related:** [engine-execution.md](engine-execution.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md), [shell-command.md](../scopes/security/shell-command.md#script-mode-the-safe-script-contract), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe)
 
 ## Context

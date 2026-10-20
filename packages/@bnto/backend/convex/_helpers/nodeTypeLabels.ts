@@ -10,7 +10,7 @@
 
 /** Node type name → display label for processing nodes (excludes I/O and containers). */
 export const NODE_TYPE_LABELS: Record<string, string> = {
-  assert: "Assert",
+  "assert": "Assert",
   "edit-fields": "Edit Fields",
   "file-collect": "Collect Files",
   "file-copy": "Copy Files",
@@ -31,7 +31,7 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "image-pad": "Pad Images",
   "image-resize": "Resize Images",
   "image-strip-exif": "Strip EXIF",
-  report: "Report",
+  "report": "Report",
   "shell-command": "Run Shell Command",
   "spreadsheet-clean": "Clean CSV",
   "spreadsheet-convert": "Convert CSV to JSON",
@@ -40,8 +40,8 @@ export const NODE_TYPE_LABELS: Record<string, string> = {
   "spreadsheet-merge": "Merge CSV",
   "spreadsheet-read": "Read Rows",
   "spreadsheet-rename": "Rename CSV Columns",
-  summarize: "Summarize",
-  transform: "Transform",
+  "summarize": "Summarize",
+  "transform": "Transform",
   "vector-optimize": "Optimize SVG",
   "vector-rasterize": "Rasterize SVG",
 };
