@@ -7,8 +7,8 @@ use std::sync::Arc;
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use bnto_core::{PipelineEvent, PipelineReporter};
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
 
+use crate::live_bar::LiveBar;
 use crate::output_names::OutputNames;
 use crate::progress_indent::{self, StepDepths};
 
@@ -20,7 +20,7 @@ use crate::progress_indent::{self, StepDepths};
 pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> PipelineReporter {
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.
-    let bar: RefCell<Option<ProgressBar>> = RefCell::new(None);
+    let live: RefCell<LiveBar> = RefCell::new(LiveBar::default());
     let spinner_tick: RefCell<usize> = RefCell::new(0);
     let depths: RefCell<StepDepths> = RefCell::new(StepDepths::default());
     let output_names: RefCell<OutputNames> = RefCell::default();
@@ -47,9 +47,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             total_nodes,
             parent_node_id,
         } => {
-            if let Some(b) = bar.borrow_mut().take() {
-                b.finish_and_clear();
-            }
+            live.borrow_mut().clear();
             let depth = depths
                 .borrow_mut()
                 .start(node_id, parent_node_id.as_deref());
@@ -63,31 +61,25 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
         PipelineEvent::FileProgress {
             file_index,
             total_files,
+            percent,
             message,
             ..
-        } => {
-            let mut bar_ref = bar.borrow_mut();
-            let pb = bar_ref.get_or_insert_with(|| {
-                let pb = ProgressBar::new(*total_files as u64);
-                pb.set_style(
-                    ProgressStyle::with_template("        {bar:30.cyan/dim} {pos}/{len} {msg}")
-                        .expect("valid template")
-                        .progress_chars("━╸─"),
-                );
-                pb
-            });
-            pb.set_position(*file_index as u64 + 1);
-            pb.set_message(message.clone());
-        }
+        } => live
+            .borrow_mut()
+            .file_progress(*file_index, *total_files, *percent, message),
+        PipelineEvent::NodeProgress {
+            done,
+            total,
+            message,
+            ..
+        } => live.borrow_mut().node_progress(*done, *total, message),
         PipelineEvent::NodeCompleted {
             node_id,
             duration_ms,
             files_processed,
             ..
         } => {
-            if let Some(b) = bar.borrow_mut().take() {
-                b.finish_and_clear();
-            }
+            live.borrow_mut().clear();
             let duration = format_duration_short(*duration_ms);
             eprintln!(
                 "{}{} {} file{} in {duration}",
@@ -98,9 +90,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             );
         }
         PipelineEvent::NodeFailed { node_id, error, .. } => {
-            if let Some(b) = bar.borrow_mut().take() {
-                b.finish_and_clear();
-            }
+            live.borrow_mut().clear();
             eprintln!(
                 "{}{} {node_id}: {error}",
                 progress_indent::step_indent(depths.borrow().depth(node_id)),
@@ -109,17 +99,13 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
         }
         // No line here: the run's verdict prints `Pipeline failed:` once, last.
         PipelineEvent::PipelineFailed { .. } => {
-            if let Some(b) = bar.borrow_mut().take() {
-                b.finish_and_clear();
-            }
+            live.borrow_mut().clear();
         }
         PipelineEvent::PipelineCompleted {
             duration_ms,
             total_files_processed,
         } => {
-            if let Some(b) = bar.borrow_mut().take() {
-                b.finish_and_clear();
-            }
+            live.borrow_mut().clear();
             eprintln!(
                 "\n  {} {}",
                 "✓".green().bold(),
@@ -134,12 +120,9 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
                 val
             };
             let spinner = braille_frame(tick);
-            // Suspend indicatif bar to print cleanly, then log for diagnostics.
-            if let Some(b) = bar.borrow().as_ref() {
-                b.suspend(|| eprintln!("        {} {}", spinner.to_string().cyan(), line.dimmed()));
-            } else {
-                eprintln!("        {} {}", spinner.to_string().cyan(), line.dimmed());
-            }
+            // Suspend the live line to print cleanly, then log for diagnostics.
+            live.borrow()
+                .suspend(|| eprintln!("        {} {}", spinner.to_string().cyan(), line.dimmed()));
             logger.log(LogEntry {
                 level: LogLevel::Debug,
                 target: "engine",
@@ -377,6 +360,39 @@ mod tests {
         reporter.emit(PipelineEvent::PipelineCompleted {
             duration_ms: 5100,
             total_files_processed: 1,
+        });
+    }
+
+    #[test]
+    fn test_stderr_reporter_handles_live_node_progress() {
+        let reporter = stderr_reporter(noop_logger(), None);
+        reporter.emit(PipelineEvent::NodeStarted {
+            node_id: "walk".to_string(),
+            node_index: 0,
+            total_nodes: 2,
+            node_type: "file-collect".to_string(),
+            parent_node_id: None,
+        });
+        reporter.emit(PipelineEvent::FileProgress {
+            node_id: "walk".to_string(),
+            file_index: 0,
+            total_files: 1,
+            percent: 0,
+            message: "Processing big-folder...".to_string(),
+        });
+        for (done, total) in [(10, None), (5000, None), (40, Some(100))] {
+            reporter.emit(PipelineEvent::NodeProgress {
+                node_id: "walk".to_string(),
+                done,
+                total,
+                message: format!("Found {done} files"),
+            });
+        }
+        reporter.emit(PipelineEvent::NodeCompleted {
+            node_id: "walk".to_string(),
+            duration_ms: 9000,
+            files_processed: 1,
+            parent_node_id: None,
         });
     }
 

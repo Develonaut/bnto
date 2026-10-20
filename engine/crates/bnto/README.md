@@ -185,7 +185,9 @@ src/
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
 +-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
-+-- progress.rs            # Stderr progress reporter (indicatif bars)
++-- progress.rs            # Stderr progress reporter (pipeline events -> lines)
++-- progress_line.rs       # A step's live line: bar of files, or spinner + running message
++-- live_bar.rs            # Draws the live line with indicatif (self-ticking, hidden off a TTY)
 +-- progress_indent.rs     # Step layout: container children indented, container-relative numbers
 +-- tui/
     +-- mod.rs             # TUI entry point, event loop, terminal setup/teardown

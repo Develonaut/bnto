@@ -62,8 +62,19 @@ impl ExecutionModel {
         self.push_output_line(crate::tui::strip_ansi::strip_ansi(line));
     }
 
+    /// Show a node's live status in the output pane. Updates from the same
+    /// node replace each other, so a long walk is one moving line.
+    pub(super) fn show_live_line(&mut self, node_id: String, message: String) {
+        if self.live_line_node.as_ref() == Some(&node_id) {
+            self.output_lines.pop_back();
+        }
+        self.push_output_line(message);
+        self.live_line_node = Some(node_id);
+    }
+
     /// Append to the rolling output window, dropping the oldest lines.
     pub(super) fn push_output_line(&mut self, line: String) {
+        self.live_line_node = None;
         self.output_lines.push_back(line);
         while self.output_lines.len() > MAX_OUTPUT_LINES {
             self.output_lines.pop_front();

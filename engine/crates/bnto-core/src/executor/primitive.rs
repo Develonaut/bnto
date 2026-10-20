@@ -10,25 +10,8 @@ use crate::processor::{BatchFile, BatchInput, NodeInput};
 use crate::progress::ProgressReporter;
 
 use super::leaf_output::LeafOutput;
+use super::node_reporter::build_node_reporter;
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
-
-/// Build a ProgressReporter that forwards output lines to PipelineEvent::CommandOutput.
-fn build_output_reporter<F: Fn() -> u64 + Copy>(
-    ctx: &PipelineContext<F>,
-    node_id: &str,
-) -> ProgressReporter {
-    let reporter = ctx.reporter.clone();
-    let nid = node_id.to_string();
-    ProgressReporter::with_output(
-        |_, _| {},
-        move |line| {
-            reporter.emit(PipelineEvent::CommandOutput {
-                node_id: nid.clone(),
-                line: line.to_string(),
-            });
-        },
-    )
-}
 
 /// Resolve the processor for a node, returning a descriptive error on miss.
 fn resolve_processor<'a, F: Fn() -> u64 + Copy>(
@@ -62,16 +45,23 @@ fn emit_file_progress<F: Fn() -> u64 + Copy>(
     });
 }
 
+/// A per-file node's run: its processor, id and the reporter every file shares.
+struct NodeRun<'a> {
+    processor: &'a dyn crate::processor::NodeProcessor,
+    id: &'a str,
+    progress: ProgressReporter,
+}
+
 /// Process a single file through a processor, emitting progress events.
 fn process_single_file<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
-    processor: &dyn crate::processor::NodeProcessor,
-    node_id: &str,
+    run: &NodeRun,
     params: &serde_json::Map<String, serde_json::Value>,
     file: PipelineFile,
     global_file_index: usize,
     out: &mut LeafOutput,
 ) -> Result<(), BntoError> {
+    let (processor, node_id) = (run.processor, run.id);
     let file_name = file.name;
     let inherited = file.metadata;
     emit_file_progress(
@@ -91,9 +81,7 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
         params: params.clone(),
     };
 
-    // Reporter that forwards command output lines to PipelineEvent::CommandOutput.
-    let output_reporter = build_output_reporter(ctx, node_id);
-    let output = match processor.process(input, &output_reporter, ctx.process_ctx) {
+    let output = match processor.process(input, &run.progress, ctx.process_ctx) {
         Ok(output) => output,
         Err(error) => return Err(out.fail(error, &inherited)),
     };
@@ -254,13 +242,18 @@ fn process_per_file<F: Fn() -> u64 + Copy>(
     let field_values = node_field_values(node);
     let shared = shared_params(ctx, node, &field_values)?;
     let mut out = LeafOutput::counting(processor.count_keys());
+    // One reporter for the whole run, so its throttle spans every file.
+    let run = NodeRun {
+        processor,
+        id: &node.id,
+        progress: build_node_reporter(ctx, &node.id),
+    };
     for (i, file) in files.into_iter().enumerate() {
         ctx.check_time_limit()
             .map_err(|e| out.fail(e, &Params::new()))?;
         let params = params_for_file(ctx, node, &field_values, &shared, &file)
             .map_err(|e| out.fail(e, &Params::new()))?;
-        let (id, index) = (&node.id, file_offset + i);
-        process_single_file(ctx, processor, id, &params, file, index, &mut out)?;
+        process_single_file(ctx, &run, &params, file, file_offset + i, &mut out)?;
     }
     Ok(out.into_result(&node.id, file_count))
 }
@@ -318,8 +311,8 @@ fn process_source<F: Fn() -> u64 + Copy>(
         params: resolved_params.clone(),
     };
 
-    let output_reporter = build_output_reporter(ctx, &node.id);
-    let output = processor.process(input, &output_reporter, ctx.process_ctx)?;
+    let progress = build_node_reporter(ctx, &node.id);
+    let output = processor.process(input, &progress, ctx.process_ctx)?;
 
     emit_file_progress(ctx, &node.id, file_offset, 100, "Complete".to_string());
 
@@ -364,8 +357,8 @@ fn process_batch<F: Fn() -> u64 + Copy>(
         params: resolved_params.clone(),
     };
 
-    let output_reporter = build_output_reporter(ctx, &node.id);
-    let output = processor.process_batch(batch_input, &output_reporter, ctx.process_ctx)?;
+    let progress = build_node_reporter(ctx, &node.id);
+    let output = processor.process_batch(batch_input, &progress, ctx.process_ctx)?;
 
     emit_file_progress(
         ctx,

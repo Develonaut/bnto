@@ -17,8 +17,10 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
     let p = Path::new(path);
 
     if p.is_dir() {
-        let abs = p
-            .canonicalize()
+        // dunce, not std: on Windows std returns the verbatim `\\?\D:\dir`,
+        // which every progress line then shows. dunce drops the prefix when the
+        // plain path means the same thing; std::fs handles either.
+        let abs = dunce::canonicalize(p)
             .map_err(|e| format!("{e}"))?
             .to_string_lossy()
             .to_string();
@@ -732,6 +734,39 @@ mod tests {
             matches!(&pf.data, bnto_core::processor::FileData::Bytes(b) if b.is_empty()),
             "Directory input should have empty bytes"
         );
+    }
+
+    /// The Windows verbatim path prefix, as in `\\?\D:\_ToDelete`.
+    const VERBATIM: &str = r"\\?\";
+
+    #[test]
+    fn test_directory_input_is_named_by_the_users_path_not_a_verbatim_one() {
+        // Windows canonical paths carry the verbatim prefix, which the
+        // progress line printed. The name is the plain absolute path.
+        let temp = tempfile::tempdir().unwrap();
+
+        let pf = read_pipeline_file(temp.path().to_str().unwrap()).unwrap();
+
+        assert!(
+            !pf.name.starts_with(VERBATIM),
+            "verbatim prefix: {}",
+            pf.name
+        );
+        assert!(Path::new(&pf.name).is_absolute(), "{}", pf.name);
+        assert!(Path::new(&pf.name).is_dir(), "{}", pf.name);
+    }
+
+    #[test]
+    fn test_relative_directory_input_is_named_by_its_absolute_path() {
+        let pf = read_pipeline_file("src").unwrap();
+
+        assert!(
+            !pf.name.starts_with(VERBATIM),
+            "verbatim prefix: {}",
+            pf.name
+        );
+        assert!(Path::new(&pf.name).is_absolute(), "{}", pf.name);
+        assert!(pf.name.ends_with("src"), "{}", pf.name);
     }
 
     #[test]

@@ -27,6 +27,7 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
         M::PipelineCompleted { duration_ms, .. } => model.complete_pipeline(duration_ms),
         M::PipelineFailed { error, .. } => model.fail_pipeline(error),
         M::CommandOutput { line, .. } => model.push_command_output(&line),
+        M::NodeProgress { node_id, message } => model.show_live_line(node_id, message),
         M::IterationStarted {
             node_id,
             iteration,

@@ -23,7 +23,7 @@ fn run_with(
 ) -> (Result<NodeOutput, BntoError>, Vec<String>) {
     let lines = Arc::new(Mutex::new(Vec::new()));
     let sink = Arc::clone(&lines);
-    let progress = ProgressReporter::with_output(
+    let progress = ProgressReporter::with_live(
         |_, _| {},
         move |line| sink.lock().unwrap().push(line.to_string()),
     );
@@ -303,4 +303,16 @@ fn test_metadata_is_a_browser_capable_batch_control_node() {
     let params: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
     assert_eq!(params, ["message", "each"]);
     assert!(report.resolves_items());
+}
+
+#[test]
+fn test_metadata_marks_message_required() {
+    // validate refuses a report without one, so the editor must not show it as optional.
+    let meta = Report::new().metadata();
+    let required = |name: &str| {
+        let param = meta.parameters.iter().find(|p| p.name == name).unwrap();
+        param.constraints.as_ref().is_some_and(|c| c.required)
+    };
+    assert!(required("message"));
+    assert!(!required("each"));
 }

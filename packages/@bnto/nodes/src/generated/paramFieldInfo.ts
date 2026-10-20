@@ -9,7 +9,7 @@ import type { NodeParamFieldInfo } from "../schemas/types";
 /** Pre-computed field info for all node parameters — replaces runtime Zod introspection. */
 export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamFieldInfo>> = {
   assert: {
-    value: { type: "string", control: "text", required: false },
+    value: { type: "string", control: "text", required: true },
     op: {
       type: "enum",
       control: "select",
@@ -77,7 +77,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     include_hash: { type: "boolean", control: "switch", required: false },
   },
   "file-move": {
-    destination: { type: "string", control: "text", required: false },
+    destination: { type: "string", control: "text", required: true },
     create_dirs: { type: "boolean", control: "switch", required: false },
   },
   "file-rename": {
@@ -236,11 +236,11 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     },
   },
   report: {
-    message: { type: "string", control: "text", required: false },
+    message: { type: "string", control: "text", required: true },
     each: { type: "record", control: "keyValue", required: false },
   },
   "shell-command": {
-    command: { type: "string", control: "text", required: false },
+    command: { type: "string", control: "text", required: true },
     args: { type: "array", control: "tagPicker", required: false },
     outputMode: { type: "string", control: "text", required: false },
     timeout: { type: "number", control: "number", required: false },

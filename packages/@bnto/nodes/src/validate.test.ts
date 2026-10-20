@@ -198,17 +198,17 @@ describe("validateDefinition — file-rename", () => {
   });
 });
 
-describe("validateDefinition — shell-command (all params optional)", () => {
+describe("validateDefinition — shell-command", () => {
   it("accepts shell-command as a known type", () => {
     const def = validDef({ type: "shell-command", parameters: { command: "echo hello" } });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
 
-  it("passes with empty params (all optional)", () => {
+  it("fails when command is missing", () => {
     const def = validDef({ type: "shell-command", parameters: {} });
     const errors = validateDefinition(def);
-    expect(errors).toHaveLength(0);
+    expect(errors.some((e) => e.field === "command")).toBe(true);
   });
 
   it("accepts an each group in args beside strings and conditional groups", () => {

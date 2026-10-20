@@ -1,6 +1,6 @@
 // Parameter schema for file-move, and typed reads of its values.
 
-use bnto_core::metadata::{ParameterDef, ParameterType};
+use bnto_core::metadata::{Constraints, ParameterDef, ParameterType};
 
 /// The node's params, read and checked.
 #[derive(Debug)]
@@ -52,6 +52,11 @@ fn destination_param() -> ParameterDef {
             .to_string(),
         param_type: ParameterType::String,
         placeholder: Some("./sorted".to_string()),
+        constraints: Some(Constraints {
+            min: None,
+            max: None,
+            required: true,
+        }),
         ..Default::default()
     }
 }
@@ -86,6 +91,17 @@ mod tests {
                 .contains("'destination' is required")
         );
         assert!(read(json!({ "destination": "" })).is_err());
+    }
+
+    #[test]
+    fn test_metadata_marks_destination_required() {
+        let params = build_move_parameters();
+        let required = |name: &str| {
+            let param = params.iter().find(|p| p.name == name).unwrap();
+            param.constraints.as_ref().is_some_and(|c| c.required)
+        };
+        assert!(required("destination"));
+        assert!(!required("create_dirs"));
     }
 
     #[test]

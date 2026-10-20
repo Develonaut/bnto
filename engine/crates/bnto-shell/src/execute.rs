@@ -278,6 +278,19 @@ mod tests {
     }
 
     #[test]
+    fn test_metadata_marks_command_required() {
+        // validate refuses a step without one, so the editor must not show it as optional.
+        let meta = ShellCommand::new().metadata();
+        let required: Vec<&str> = meta
+            .parameters
+            .iter()
+            .filter(|p| p.constraints.as_ref().is_some_and(|c| c.required))
+            .map(|p| p.name.as_str())
+            .collect();
+        assert_eq!(required, ["command"]);
+    }
+
+    #[test]
     fn test_metadata_no_requires() {
         let processor = ShellCommand::new();
         let meta = processor.metadata();

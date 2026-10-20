@@ -23,6 +23,7 @@
 {
   "type": "shell-command",
   "parameters": {
+      "command": "<string>",
       "outputMode": "stdout",
       "timeout": 300,
       "maxOutputSize": 500

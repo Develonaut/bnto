@@ -294,3 +294,17 @@ fn test_metadata_is_a_browser_capable_batch_control_node() {
     // It fills `{{item.*}}` itself, so the executor leaves those for it.
     assert!(Assert::new().resolves_items());
 }
+
+#[test]
+fn test_metadata_marks_value_and_op_required() {
+    // validate refuses an assert without them, so the editor must not show them as optional.
+    let meta = Assert::new().metadata();
+    let required = |name: &str| {
+        let param = meta.parameters.iter().find(|p| p.name == name).unwrap();
+        param.constraints.as_ref().is_some_and(|c| c.required)
+    };
+    assert!(required("value"));
+    assert!(required("op"));
+    assert!(!required("expected"));
+    assert!(!required("message"));
+}

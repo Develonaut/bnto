@@ -7,6 +7,7 @@
 //   - `auto_iteration.rs` — implicit per-file loops for `iteration: "auto"`
 //   - `primitive.rs` — leaf node execution (image compress, file rename, etc.)
 //   - `leaf_output.rs` — a leaf node's output files and node record
+//   - `node_reporter.rs` — a node's progress reporter, relayed as events
 //   - `container.rs` — container node execution (loop, group, parallel)
 //   - `loop_config.rs` — loop container params (error handling, persistence)
 //   - `node_outputs.rs` — each node's output metadata, for `{{node.<id>.*}}`
@@ -29,6 +30,7 @@ mod flow_closing;
 mod leaf_output;
 pub mod loop_config;
 pub mod node_outputs;
+mod node_reporter;
 mod primitive;
 pub mod resolve;
 mod result;
@@ -37,6 +39,8 @@ mod segments;
 pub mod template;
 mod time_limit;
 mod unfilled_items;
+
+use std::rc::Rc;
 
 use crate::context::ProcessContext;
 use crate::errors::BntoError;
@@ -71,6 +75,9 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     pipeline_total_files: usize,
     /// Returns current time in ms (injected for testability in WASM).
     now_ms: F,
+    /// The same clock, shareable with the closures that throttle node
+    /// progress (they must be `'static`, which `F` can't promise).
+    live_clock: Rc<dyn Fn() -> u64>,
     /// When the run started (from `now_ms`), for `{{ctx.started}}`.
     started_ms: u64,
     /// When the run must be done by, if its recipe sets `settings.timeout`.
@@ -97,6 +104,7 @@ impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
             process_ctx: self.process_ctx,
             pipeline_total_files: self.pipeline_total_files,
             now_ms: self.now_ms,
+            live_clock: Rc::clone(&self.live_clock),
             started_ms: self.started_ms,
             time_limit: self.time_limit,
             loop_item: self.loop_item.clone(),
@@ -166,7 +174,7 @@ pub fn execute_pipeline(
     registry: &NodeRegistry,
     reporter: &PipelineReporter,
     process_ctx: &dyn ProcessContext,
-    now_ms: impl Fn() -> u64 + Copy,
+    now_ms: impl Fn() -> u64 + Copy + 'static,
 ) -> Result<PipelineResult, BntoError> {
     let flow = flow::root_flow(definition)?;
     let count_keys = count_keys::count_keys_for(&definition.nodes, registry);
@@ -200,7 +208,7 @@ fn last_node_id<'a>(flow: &crate::graph::Flow<'a>) -> &'a str {
 }
 
 /// Build the top-level context, seeding node outputs from the input files.
-fn build_root_context<'a, F: Fn() -> u64 + Copy>(
+fn build_root_context<'a, F: Fn() -> u64 + Copy + 'static>(
     definition: &PipelineDefinition,
     files: &[PipelineFile],
     registry: &'a NodeRegistry,
@@ -218,6 +226,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
         process_ctx,
         pipeline_total_files: files.len(),
         now_ms,
+        live_clock: Rc::new(now_ms),
         started_ms,
         time_limit: TimeLimit::starting_at(started_ms, definition.time_limit_secs()),
         loop_item: None,

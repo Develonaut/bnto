@@ -3,7 +3,7 @@
 use serde_json::Value;
 
 use crate::control::placeholder::{self, text};
-use crate::metadata::{ParameterDef, ParameterType};
+use crate::metadata::{Constraints, ParameterDef, ParameterType};
 
 /// The per-entry namespace: `{{entry.KEY}}` reads a field of `each`'s entry.
 pub(super) const ENTRY: &str = "entry";
@@ -88,6 +88,11 @@ fn message_param() -> ParameterDef {
                       once per entry of each."
             .to_string(),
         param_type: ParameterType::String,
+        constraints: Some(Constraints {
+            min: None,
+            max: None,
+            required: true,
+        }),
         ..Default::default()
     }
 }

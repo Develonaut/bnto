@@ -1,19 +1,26 @@
 // The run's time limit (`settings.timeout`): once it has passed, no step,
 // file, loop iteration or closing step starts, and the run fails naming
 // the limit. A run with no limit is never stopped.
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::cell::Cell;
 
 use super::always::{Seen, always_registry, seen_names, started};
 use super::*;
 
-/// A clock the tick processor moves forward, read through `now_ms`.
-type Clock = Arc<AtomicU64>;
+thread_local! {
+    /// The test's clock, which the tick processor moves forward. One per
+    /// thread, so parallel tests keep their own; the executor runs every
+    /// processor on its caller's thread.
+    static CLOCK: Cell<u64> = const { Cell::new(0) };
+}
+
+/// The test clock, as `now_ms` (a plain `fn`, so it is `'static`).
+fn now() -> u64 {
+    CLOCK.with(Cell::get)
+}
 
 /// Moves the clock on by its step for every file it processes, standing in
 /// for a step that takes that long.
 struct TickProcessor {
-    clock: Clock,
     step_ms: u64,
 }
 
@@ -28,35 +35,30 @@ impl crate::processor::NodeProcessor for TickProcessor {
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        self.clock.fetch_add(self.step_ms, Ordering::SeqCst);
+        CLOCK.with(|clock| clock.set(clock.get() + self.step_ms));
         EchoProcessor.process(input, progress, ctx)
     }
 }
 
 /// The closing-step registry plus `test-tick` (1.5s per file) and
-/// `test-tick-long` (3s per file), both moving `clock`.
-fn tick_registry(clock: &Clock) -> (NodeRegistry, Seen) {
+/// `test-tick-long` (3s per file), both moving the clock.
+fn tick_registry() -> (NodeRegistry, Seen) {
     let (mut registry, seen) = always_registry();
     for (key, step_ms) in [("test-tick", 1500), ("test-tick-long", 3000)] {
-        let tick = TickProcessor {
-            clock: Arc::clone(clock),
-            step_ms,
-        };
-        registry.register(key, Box::new(tick));
+        registry.register(key, Box::new(TickProcessor { step_ms }));
     }
     (registry, seen)
 }
 
-/// Run `json` on `files` against a fresh clock at 0.
+/// Run `json` on `files` with the clock reset to 0.
 fn run_timed(
     json: &str,
     files: Vec<PipelineFile>,
 ) -> (Result<PipelineResult, BntoError>, Vec<PipelineEvent>, Seen) {
-    let clock = Clock::default();
-    let (registry, seen) = tick_registry(&clock);
+    CLOCK.with(|clock| clock.set(0));
+    let (registry, seen) = tick_registry();
     let recorder = RecordingReporter::new();
     let reporter = recorder.reporter();
-    let now = || clock.load(Ordering::SeqCst);
     let def = parse_def(json);
     let result = execute_pipeline(&def, files, &registry, &reporter, &NoopContext, now);
     (result, recorder.events(), seen)

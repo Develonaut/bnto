@@ -35,6 +35,9 @@ fn execution_message(event: PipelineEvent) -> ExecutionMessage {
         PipelineEvent::CommandOutput { node_id, line } => {
             ExecutionMessage::CommandOutput { node_id, line }
         }
+        PipelineEvent::NodeProgress {
+            node_id, message, ..
+        } => ExecutionMessage::NodeProgress { node_id, message },
         event => node_or_iteration_message(event),
     }
 }

@@ -19,6 +19,7 @@
 {
   "type": "assert",
   "parameters": {
+      "value": "<string>",
       "op": "equals"
   }
 }
