@@ -58,10 +58,12 @@ pub fn run_recipe(
 ) {
     let verdict = RunVerdict::new(flags.json);
     let raw_json = read_recipe(recipe_path, catalog, &verdict);
+    // Vars fill in before consent (SEC-29), so the approval is pinned to the
+    // values that run, and the prompt shows them rather than the template.
+    let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
     check_trust(recipe_path, &raw_json, flags.yes, catalog);
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
-    prepared.definition_json = resolve_vars(&prepared.definition_json, flags.vars, &verdict);
     let limited = run_limit::apply(&prepared.definition_json, flags.timeout);
     let (definition_json, time_limit) = verdict.or_fail(limited, "Error:");
     prepared.definition_json = definition_json;

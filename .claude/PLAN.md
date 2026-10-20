@@ -445,6 +445,14 @@ Close every open finding in [shell-command.md](scopes/security/shell-command.md)
 - [x] PR 10 — SEC-16: show full command lines in the consent prompt (depends on PR 2)
 - [x] PR 11 — SEC-20–26: script mode — literal script through a hardened shell (depends on PRs 4, 8, 10)
 
+Follow-ups:
+
+- [x] Pin tsx and run it through `pnpm exec` (#652)
+- [ ] **CLAIMED** Fail a command bnto stopped, whatever its exit code (fixes the flaky terminate_all test)
+- [x] SEC-29: fill `{{vars.*}}` before consent
+- [ ] SEC-28: refuse templates in positional program text (awk, sed)
+- [ ] SEC-27: refuse values carrying shell-command's own tokens
+
 ---
 
 ## Sprint 17: BRU File Ecosystem + Engine Polish — ACTIVE
