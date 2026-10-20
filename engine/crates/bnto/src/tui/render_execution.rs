@@ -36,15 +36,48 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
     frame.render_widget(Paragraph::new(output), bottom);
 }
 
+/// The consent prompt: what the recipe will run and how to answer.
+/// Mirrors the CLI prompt, so both surfaces ask the same question.
+fn consent_lines<'a>(
+    request: &'a crate::trust_gate::ConsentRequest,
+    theme: &'a Theme,
+) -> Vec<Line<'a>> {
+    let mut lines = vec![
+        Line::from(Span::styled(
+            "  This recipe runs commands on your computer",
+            theme.heading(),
+        )),
+        Line::from(""),
+        Line::from(Span::styled(
+            format!("  Recipe: {}", request.recipe_name),
+            theme.muted(),
+        )),
+        Line::from(Span::styled("  COMMANDS", theme.category())),
+    ];
+    for command in &request.commands {
+        lines.push(Line::from(format!("    - {command}")));
+    }
+    lines.push(Line::from(""));
+    lines.push(Line::from(Span::styled(
+        "  y allow and run  ·  n / Esc cancel",
+        theme.heading(),
+    )));
+    lines
+}
+
 /// Build header lines: status, nodes, files, errors.
 fn header_lines<'a>(
     exec: &'a super::screens::execution::ExecutionModel,
     theme: &'a Theme,
 ) -> Vec<Line<'a>> {
+    if let Some(request) = &exec.consent {
+        return consent_lines(request, theme);
+    }
     let mut lines: Vec<Line> = Vec::new();
 
     // Status + elapsed time
     let status_label = match &exec.status {
+        ExecutionStatus::AwaitingConsent => "Waiting for your OK",
         ExecutionStatus::Idle => "Idle",
         ExecutionStatus::Running => "Running",
         ExecutionStatus::Completed => "Completed",

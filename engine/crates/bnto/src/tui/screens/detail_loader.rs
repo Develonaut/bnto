@@ -79,6 +79,9 @@ pub fn load_detail_from_entry(
         name: entry.name.clone(),
         description: entry.description.clone(),
         is_bundled: entry.source == RecipeSource::Bundled,
+        has_shell: pipeline_def
+            .as_ref()
+            .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
         definition_json: entry.definition_json.clone(),
         params,
         form,
@@ -288,6 +291,9 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         name,
         description,
         is_bundled: false,
+        has_shell: pipeline_def
+            .as_ref()
+            .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
         definition_json: json.to_string(),
         params,
         form,
@@ -707,6 +713,20 @@ mod tests {
             model.params.iter().all(|p| p.node_id != "input"),
             "none mode must not surface an input control"
         );
+    }
+
+    #[test]
+    fn shell_recipes_are_marked_for_the_trust_badge() {
+        let shell = r#"{"name": "S", "nodes": [
+            {"id": "proc", "type": "shell-command", "parameters": {"command": "git"}}
+        ]}"#;
+        let plain = r#"{"name": "P", "nodes": [
+            {"id": "r", "type": "file-rename", "parameters": {}}
+        ]}"#;
+        let load = |json| load_detail_from_entry(&entry_from_json("x", json), &registry(), None);
+        assert!(load(shell).unwrap().has_shell);
+        assert!(!load(plain).unwrap().has_shell);
+        assert!(load_detail_from_json(shell, &registry()).unwrap().has_shell);
     }
 
     #[test]

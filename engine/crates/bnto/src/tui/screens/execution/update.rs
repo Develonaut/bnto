@@ -58,6 +58,8 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             warnings,
         } => model.set_outputs(files, output_dir, warnings),
         M::Cancel => model.status = ExecutionStatus::Cancelled,
+        // Recorded and applied at the app level, which owns the trust store.
+        M::AllowCommands => {}
         M::Tick { elapsed_ms } => model.elapsed_ms = elapsed_ms,
     }
     model

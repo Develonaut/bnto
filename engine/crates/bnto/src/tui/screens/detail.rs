@@ -65,6 +65,8 @@ pub struct DetailModel {
     pub description: String,
     /// Whether this recipe is bundled (for trust badge display).
     pub is_bundled: bool,
+    /// Whether it runs shell commands (for trust badge display).
+    pub has_shell: bool,
     /// Raw definition JSON (threaded to execution bridge).
     pub definition_json: String,
     /// Original param entries (kept for visible_when evaluation + confirm).
@@ -198,6 +200,7 @@ impl DetailModel {
             name: name.to_string(),
             description: description.to_string(),
             is_bundled: true,
+            has_shell: false,
             definition_json: String::new(),
             params,
             form,
