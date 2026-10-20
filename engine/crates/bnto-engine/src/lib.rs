@@ -917,6 +917,7 @@ mod tests {
             include_str!("../recipes/number-files.bnto.json"),
             include_str!("../recipes/sanitize-filenames.bnto.json"),
             include_str!("../recipes/flatten-folders.bnto.json"),
+            include_str!("../recipes/keep-awake.bnto.json"),
         ];
 
         for (i, json) in recipes.iter().enumerate() {

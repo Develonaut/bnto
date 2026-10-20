@@ -10,7 +10,7 @@ use std::process::Command;
 
 use helpers::{bnto_bin, custom_recipe_path};
 
-const BUNDLED_RECIPES: usize = 21;
+const BUNDLED_RECIPES: usize = 22;
 
 /// Run `bnto check` on `paths`: (exit ok, stdout lines).
 fn run_check(paths: &[String]) -> (bool, Vec<String>) {

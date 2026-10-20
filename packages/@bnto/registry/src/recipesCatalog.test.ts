@@ -35,8 +35,8 @@ describe("recipe catalog completeness", () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it("has exactly 21 recipes", () => {
-    expect(RECIPES.length).toBe(21);
+  it("has exactly 22 recipes", () => {
+    expect(RECIPES.length).toBe(22);
   });
 });
 
