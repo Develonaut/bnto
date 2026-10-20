@@ -92,6 +92,8 @@ pub struct ExecutionModel {
     pub output_dir: Option<String>,
     /// Rolling window of recent command output lines (stderr from child processes).
     pub output_lines: VecDeque<String>,
+    /// The node whose live status is the last output line, if any.
+    pub live_line_node: Option<String>,
     /// Non-fatal warnings from the pipeline (e.g. skipped loop iterations).
     pub warnings: Vec<String>,
     /// When true, pipeline runs without writing output — results go to Preview screen.
@@ -117,6 +119,7 @@ impl ExecutionModel {
             output_files: Vec::new(),
             output_dir: None,
             output_lines: VecDeque::new(),
+            live_line_node: None,
             warnings: Vec::new(),
             preview_mode: false,
         }
@@ -461,6 +464,39 @@ mod tests {
         // Oldest lines evicted — should start at line 5.
         assert_eq!(m.output_lines[0], "line 5");
         assert_eq!(m.output_lines[49], "line 54");
+    }
+
+    fn node_progress(node_id: &str, message: &str) -> ExecutionMessage {
+        ExecutionMessage::NodeProgress {
+            node_id: node_id.into(),
+            message: message.into(),
+        }
+    }
+
+    #[test]
+    fn node_progress_from_one_node_is_one_moving_line() {
+        let m = ExecutionModel::new("s");
+        let m = update(m, node_progress("walk", "Found 10 files"));
+        let m = update(m, node_progress("walk", "Found 900 files · photos"));
+        assert_eq!(m.output_lines, ["Found 900 files · photos"]);
+    }
+
+    #[test]
+    fn output_between_node_progress_keeps_both_lines() {
+        let m = ExecutionModel::new("s");
+        let m = update(m, node_progress("walk", "Found 10 files"));
+        let m = update(
+            m,
+            ExecutionMessage::CommandOutput {
+                node_id: "sh".into(),
+                line: "hello".into(),
+            },
+        );
+        let m = update(m, node_progress("walk", "Found 20 files"));
+        assert_eq!(
+            m.output_lines,
+            ["Found 10 files", "hello", "Found 20 files"]
+        );
     }
 
     #[test]

@@ -43,6 +43,8 @@ pub enum ExecutionMessage {
     },
     /// A line of stderr output from a running command.
     CommandOutput { node_id: String, line: String },
+    /// A running node's live status ("Found 1204 files · photos").
+    NodeProgress { node_id: String, message: String },
     /// Loop iteration started — tracks iteration count.
     IterationStarted {
         node_id: String,

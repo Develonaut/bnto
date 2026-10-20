@@ -80,6 +80,7 @@ pub mod processor;
 /// Progress reporting — how nodes tell the UI "I'm 50% done".
 /// Uses target-agnostic closures (no WASM dependency).
 pub mod progress;
+mod progress_throttle;
 
 /// Node registry — maps node type keys (e.g., "image-compress") to processors.
 /// Replaces the JS-side `wasmLoader.ts` registry.
@@ -164,7 +165,7 @@ pub use pipeline::{
 };
 pub use pipeline_edge::PipelineEdge;
 pub use processor::{BatchFile, BatchInput, NodeProcessor};
-pub use progress::ProgressReporter;
+pub use progress::{LiveProgress, ProgressReporter};
 pub use registry::NodeRegistry;
 pub use run_summary::{NodeSummary, NodeTally, RunStatus, RunSummary};
 pub use secrets::SecretDef;

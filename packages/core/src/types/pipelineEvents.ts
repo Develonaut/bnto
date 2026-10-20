@@ -12,6 +12,7 @@ export type PipelineEvent =
   | NodeStartedEvent
   | IterationStartedEvent
   | FileProgressEvent
+  | NodeProgressEvent
   | NodeCompletedEvent
   | NodeFailedEvent
   | PipelineCompletedEvent
@@ -52,6 +53,17 @@ export interface FileProgressEvent {
   fileIndex: number;
   totalFiles: number;
   percent: number;
+  message: string;
+}
+
+/** Live progress from inside a running node, throttled by the executor. */
+export interface NodeProgressEvent {
+  type: "NodeProgress";
+  nodeId: string;
+  /** Units done so far (a percent when `total` is 100). */
+  done: number;
+  /** Units in all, or null when the node can't know yet (files found during a walk). */
+  total: number | null;
   message: string;
 }
 

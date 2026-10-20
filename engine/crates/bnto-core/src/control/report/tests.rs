@@ -23,7 +23,7 @@ fn run_with(
 ) -> (Result<NodeOutput, BntoError>, Vec<String>) {
     let lines = Arc::new(Mutex::new(Vec::new()));
     let sink = Arc::clone(&lines);
-    let progress = ProgressReporter::with_output(
+    let progress = ProgressReporter::with_live(
         |_, _| {},
         move |line| sink.lock().unwrap().push(line.to_string()),
     );

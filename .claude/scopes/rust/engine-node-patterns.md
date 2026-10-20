@@ -379,6 +379,20 @@ output_files.push(OutputFile {
 
 ---
 
+## Live Progress
+
+Any processor that can run long (big files, folder walks, network calls) reports live progress through the `ProgressReporter` it's handed. Two calls cover every node:
+
+```rust
+// Knows how far through it is (one big image, a download with a size).
+progress.report(pct, "Compressing photo.jpg...");
+
+// Can't know the total yet (a folder walk, a stream of rows).
+progress.report_count(found as u64, &format!("Found {found} files · {folder}"));
+```
+
+Call them as often as is natural, e.g. once per entry walked: the executor throttles each node run to one `NodeProgress` event per 100ms, so don't throttle inside the node. The CLI shows a percent as a bar and a count as a spinner with your message, so make the message say what the number counts. Command output lines (`report_output`) are separate and never throttled. See [engine-execution.md](../../strategy/engine-execution.md#live-node-progress).
+
 ## Parameter Contract
 
 **Every parameter defined in `metadata()` MUST be read and used in ALL code paths of `process()`.** If a param only applies to some formats, document that in the param description and validate it in `validate()`.
