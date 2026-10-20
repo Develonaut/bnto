@@ -3,14 +3,15 @@
  * PipelineDefinition (execution-oriented format for the WASM executor).
  *
  * Recursively walks the Definition tree, stripping editor metadata
- * (position, ports, edges) and optionally merging per-node config
- * into leaf processing nodes. Of the recipe's settings, only the run's
- * time limit is carried over.
+ * (position, ports, port handles) and optionally merging per-node config
+ * into leaf processing nodes. Edges and the recipe's settings are kept, so
+ * the browser runs a recipe as the CLI does: an "auto" recipe iterates per
+ * file, and a level's files follow its edges.
  */
 
-import type { Definition } from "@bnto/registry";
+import type { Definition, Edge } from "@bnto/registry";
 import { isIoNodeType, isContainerNodeType } from "@bnto/registry";
-import type { PipelineDefinition, PipelineNode } from "../types/pipeline";
+import type { PipelineDefinition, PipelineEdge, PipelineNode } from "../types/pipeline";
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -30,8 +31,9 @@ export function definitionToPipeline(
   const pipeline: PipelineDefinition = {
     nodes: children.map((child) => convertNode(child, perNodeConfig)),
   };
-  const timeout = definition.settings?.timeout;
-  if (timeout !== undefined) pipeline.settings = { timeout };
+  const edges = convertEdges(definition.edges);
+  if (edges) pipeline.edges = edges;
+  if (definition.settings) pipeline.settings = { ...definition.settings };
   return pipeline;
 }
 
@@ -56,7 +58,15 @@ function convertNode(
 
   if (isContainer && node.nodes && node.nodes.length > 0) {
     result.children = node.nodes.map((child) => convertNode(child, perNodeConfig));
+    const edges = convertEdges(node.edges);
+    if (edges) result.edges = edges;
   }
 
   return result;
+}
+
+/** A level's edges without port handles (an editor concern), or none. */
+function convertEdges(edges: Edge[] | undefined): PipelineEdge[] | undefined {
+  if (!edges || edges.length === 0) return undefined;
+  return edges.map(({ id, source, target }) => ({ id, source, target }));
 }

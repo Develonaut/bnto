@@ -143,18 +143,74 @@ describe("definitionToPipeline", () => {
     expect(pipeline.nodes).toEqual([]);
   });
 
-  it("carries the recipe's time limit through to the engine", () => {
+  it("carries the recipe's settings through to the engine", () => {
     const pipeline = definitionToPipeline({
       ...SIMPLE_DEF,
       settings: { iteration: "auto", timeout: 30 },
     });
 
-    expect(pipeline.settings).toEqual({ timeout: 30 });
+    expect(pipeline.settings).toEqual({ iteration: "auto", timeout: 30 });
   });
 
-  it("leaves settings out when the recipe sets no time limit", () => {
+  it("carries the iteration mode when the recipe sets no time limit", () => {
     const pipeline = definitionToPipeline({ ...SIMPLE_DEF, settings: { iteration: "auto" } });
 
+    expect(pipeline.settings).toEqual({ iteration: "auto" });
+  });
+
+  it("leaves settings out when the recipe has none", () => {
+    const pipeline = definitionToPipeline(SIMPLE_DEF);
+
     expect(pipeline).not.toHaveProperty("settings");
+  });
+
+  it("carries the root's edges, without port handles", () => {
+    const pipeline = definitionToPipeline({
+      ...SIMPLE_DEF,
+      edges: [
+        { id: "e1", source: "input", target: "compress", sourceHandle: "out", targetHandle: "in" },
+        { id: "e2", source: "compress", target: "output" },
+      ],
+    });
+
+    expect(pipeline.edges).toEqual([
+      { id: "e1", source: "input", target: "compress" },
+      { id: "e2", source: "compress", target: "output" },
+    ]);
+  });
+
+  it("carries a container's edges on its pipeline node", () => {
+    const group = NESTED_DEF.nodes![1]!;
+    const pipeline = definitionToPipeline({
+      ...NESTED_DEF,
+      nodes: [
+        NESTED_DEF.nodes![0]!,
+        { ...group, edges: [{ id: "g1", source: "a", target: "b" }] },
+        NESTED_DEF.nodes![2]!,
+      ],
+    });
+
+    expect(pipeline.nodes[1]!.edges).toEqual([{ id: "g1", source: "a", target: "b" }]);
+  });
+
+  it("leaves edges out where a level has none", () => {
+    const pipeline = definitionToPipeline({ ...NESTED_DEF, edges: [] });
+
+    expect(pipeline).not.toHaveProperty("edges");
+    expect(pipeline.nodes[1]).not.toHaveProperty("edges");
+    expect(pipeline.nodes[1]!.children![0]).not.toHaveProperty("edges");
+  });
+
+  it("runs a bundled recipe as written: auto iteration along its edges", () => {
+    const recipe = getRecipeBySlug("compress-and-rename");
+
+    const pipeline = definitionToPipeline(recipe!.definition);
+
+    expect(pipeline.settings).toEqual({ iteration: "auto" });
+    expect(pipeline.edges?.map((e) => [e.source, e.target])).toEqual([
+      ["input", "compress"],
+      ["compress", "rename"],
+      ["rename", "output"],
+    ]);
   });
 });
