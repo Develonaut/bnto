@@ -89,6 +89,7 @@ pub mod registry;
 
 /// Node-level field declarations — typed user-facing controls for nodes.
 /// Field values are substituted into `{{fields.*}}` templates at execution time.
+pub mod field_check;
 pub mod field_def;
 
 /// Editor state model — pure-data recipe editing state.

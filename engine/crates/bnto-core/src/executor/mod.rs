@@ -25,6 +25,7 @@ mod chain;
 mod closing;
 mod container;
 mod count_keys;
+mod field_values;
 mod flow;
 mod flow_closing;
 mod interpolate;
@@ -177,6 +178,7 @@ pub fn execute_pipeline(
     process_ctx: &dyn ProcessContext,
     now_ms: impl Fn() -> u64 + Copy + 'static,
 ) -> Result<PipelineResult, BntoError> {
+    field_values::check_field_values(&definition.nodes)?;
     let flow = flow::root_flow(definition)?;
     let count_keys = count_keys::count_keys_for(&definition.nodes, registry);
     let ctx = build_root_context(

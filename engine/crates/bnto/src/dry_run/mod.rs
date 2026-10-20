@@ -53,7 +53,7 @@ pub fn dry_run_recipe(
     let mut def: PipelineDefinition = serde_json::from_str(&entry.definition_json).ok()?;
 
     // Apply field overrides before resolving shell-command templates.
-    shell::apply_field_overrides(&mut def, param_overrides);
+    let refused = shell::apply_field_overrides(&mut def, param_overrides);
 
     let registry = bnto_engine::create_registry();
     let dependencies = collect_pipeline_dependencies(&def, &registry);
@@ -84,6 +84,7 @@ pub fn dry_run_recipe(
         }
     };
 
+    let warnings = [refused, warnings].concat();
     Some(DryRunResult {
         name: entry.name.clone(),
         description: entry.description.clone(),
