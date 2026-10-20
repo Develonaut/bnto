@@ -25,6 +25,7 @@ import { httpRequestNodeType } from "./httpRequest";
 import { imageCompressNodeType } from "./imageCompress";
 import { imageConvertNodeType } from "./imageConvert";
 import { imageOverlayNodeType } from "./imageOverlay";
+import { imagePadNodeType } from "./imagePad";
 import { imageResizeNodeType } from "./imageResize";
 import { imageStripExifNodeType } from "./imageStripExif";
 import { inputNodeType } from "./input";
@@ -69,6 +70,7 @@ export const NODE_TYPES = {
   imageCompress: "image-compress",
   imageConvert: "image-convert",
   imageOverlay: "image-overlay",
+  imagePad: "image-pad",
   imageResize: "image-resize",
   imageStripExif: "image-strip-exif",
   input: "input",
@@ -117,6 +119,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   "image-compress": imageCompressNodeType,
   "image-convert": imageConvertNodeType,
   "image-overlay": imageOverlayNodeType,
+  "image-pad": imagePadNodeType,
   "image-resize": imageResizeNodeType,
   "image-strip-exif": imageStripExifNodeType,
   input: inputNodeType,

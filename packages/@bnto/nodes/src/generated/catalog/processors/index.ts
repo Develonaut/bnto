@@ -23,6 +23,7 @@ import { fileSortProcessor } from "./fileSort";
 import { imageCompressProcessor } from "./imageCompress";
 import { imageConvertProcessor } from "./imageConvert";
 import { imageOverlayProcessor } from "./imageOverlay";
+import { imagePadProcessor } from "./imagePad";
 import { imageResizeProcessor } from "./imageResize";
 import { imageStripExifProcessor } from "./imageStripExif";
 import { reportProcessor } from "./report";
@@ -56,6 +57,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   imageCompressProcessor,
   imageConvertProcessor,
   imageOverlayProcessor,
+  imagePadProcessor,
   imageResizeProcessor,
   imageStripExifProcessor,
   reportProcessor,

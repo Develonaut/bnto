@@ -28,6 +28,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `file-rename`         | `bnto-file`        | `RenameFiles`        |
 | `image-strip-exif`    | `bnto-image`       | `StripExif`          |
 | `image-overlay`       | `bnto-image`       | `OverlayImage`       |
+| `image-pad`           | `bnto-image`       | `PadImages`          |
 | `vector-rasterize`    | `bnto-vector`      | `VectorRasterize`    |
 | `vector-optimize`     | `bnto-vector`      | `OptimizeSvg`        |
 | `assert`              | `bnto-core`        | `control::Assert`    |

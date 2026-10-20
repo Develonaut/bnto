@@ -32,6 +32,7 @@ import {
   ArrowUpDownIcon,
   MergeIcon,
   SigmaIcon,
+  ExpandIcon,
 } from "@bnto/ui";
 
 /**
@@ -62,6 +63,7 @@ const ICON_COMPONENTS: Record<string, LucideIcon> = {
   "arrow-up-down": ArrowUpDownIcon,
   merge: MergeIcon,
   sigma: SigmaIcon,
+  expand: ExpandIcon,
   // I/O contextual icons (from getNodeIcon)
   "file-up": FileUpIcon,
   "text-cursor-input": TextCursorInputIcon,
