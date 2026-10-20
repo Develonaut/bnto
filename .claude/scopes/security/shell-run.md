@@ -47,6 +47,7 @@ Most payloads try to create a canary file. A test passes only if the canary neve
 | SEC-25 | Script mode: only `sh`, `bash`, `zsh`, `dash`, `ksh` are accepted                                                                                                                                                                                                                                | Guard              | —    | `script_mode::sec25_*`                    |
 | SEC-26 | Script mode: cleared environment plus an allowlist (PATH, HOME, locale, …), so exported secrets don't leak                                                                                                                                                                                       | Guard              | —    | `script_mode::sec26_*`                    |
 | SEC-30 | Windows `.bat`/`.cmd` shims can't be broken out of (BatBadBut, Rust ≥ 1.81)                                                                                                                                                                                                                      | Guard (Windows CI) | —    | `windows_batch::sec30_*`                  |
+| SEC-31 | Bundled script-mode steps pass ShellCheck and use a shell it reads (`sh`, `bash`, `dash`, `ksh`); CI fails if ShellCheck is missing                                                                                                                                                              | Guard              | —    | `bnto-engine/tests/bundled_scripts.rs`    |
 
 ## Script mode: the safe-script contract
 
@@ -62,5 +63,4 @@ Most payloads try to create a canary file. A test passes only if the canary neve
 
 - **Argument injection** (values starting with `-`) through fields. The fix (a per-field `noLeadingDash` validator or `--` insertion) isn't designed yet. A blanket ban would break `download-video`'s option-shaped enum values. Report recommendation 11.
 - **PowerShell script mode.** Script mode is POSIX-only and refuses to run on Windows. A PowerShell variant must pass values only as `BNTO_ARG_n` env vars via `-EncodedCommand`, never `-Command <script> <args>`. Add specs with the Windows keep-awake variant (report recommendation 8).
-- **ShellCheck on bundled scripts in CI.** Add it when the first bundled script ships (report recommendation 6).
 - **Templated `search_path`** lets a value choose the folder a command runs from. The shipped fixture uses `{{vars.Tools}}` (run config, not data). Whether `{{fields}}`/`{{item}}` should be allowed there is undecided. It's the same class as SEC-07.
