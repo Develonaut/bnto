@@ -19,6 +19,7 @@
 pub mod catalog;
 mod check;
 mod check_targets;
+mod child_env;
 mod cli;
 mod command_stream;
 mod consent;

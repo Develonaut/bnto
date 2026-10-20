@@ -137,9 +137,11 @@ describe("validateNodeParams", () => {
   // ---------- shell-command ----------
 
   describe("shell-command", () => {
-    it("fails when command is missing", () => {
-      const errors = validateNodeParams("shell-command", "n1", {});
-      expect(errors.some((e) => e.field === "command")).toBe(true);
+    it("accepts a script step without a command", () => {
+      // Command-or-script is checked by validateDefinition; per-param schemas
+      // can't express "one of".
+      const errors = validateNodeParams("shell-command", "n1", { script: 'echo "$1"' });
+      expect(errors).toHaveLength(0);
     });
 
     it("returns empty with valid params", () => {

@@ -3,7 +3,7 @@
 // One function per parameter; each sets only what differs from
 // `ParameterDef::default()` (no default value, surfaceable, no UI hints).
 
-use bnto_core::metadata::{Constraints, ParameterDef, ParameterType};
+use bnto_core::metadata::{ParameterDef, ParameterType};
 
 use crate::validate::{DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
@@ -11,6 +11,8 @@ use crate::validate::{DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 pub(crate) fn build_parameters() -> Vec<ParameterDef> {
     vec![
         command_param(),
+        script_param(),
+        shell_param(),
         args_param(),
         output_mode_param(),
         timeout_param(),
@@ -25,14 +27,42 @@ fn command_param() -> ParameterDef {
     ParameterDef {
         name: "command".to_string(),
         label: "Command".to_string(),
-        description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.".to_string(),
+        description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and \
+                      written literally. Set this or 'script', not both."
+            .to_string(),
         param_type: ParameterType::String,
         placeholder: Some("ffmpeg".to_string()),
-        constraints: Some(Constraints {
-            min: None,
-            max: None,
-            required: true,
-        }),
+        ..Default::default()
+    }
+}
+
+fn script_param() -> ParameterDef {
+    ParameterDef {
+        name: "script".to_string(),
+        label: "Script".to_string(),
+        description: "A shell script to run instead of 'command', written literally — no \
+                      {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is \
+                      'bnto'). Quote every expansion, avoid eval, and don't splice values into \
+                      nested -c / -e code; put -- before values a tool could read as options. \
+                      The shell starts with a cleared environment and no startup files."
+            .to_string(),
+        param_type: ParameterType::String,
+        control: Some("textarea".to_string()),
+        surfaceable: false,
+        ..Default::default()
+    }
+}
+
+fn shell_param() -> ParameterDef {
+    ParameterDef {
+        name: "shell".to_string(),
+        label: "Shell".to_string(),
+        description: "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed \
+                      path (never PATH). Default: sh."
+            .to_string(),
+        param_type: ParameterType::String,
+        default: Some(serde_json::Value::String("sh".to_string())),
+        surfaceable: false,
         ..Default::default()
     }
 }

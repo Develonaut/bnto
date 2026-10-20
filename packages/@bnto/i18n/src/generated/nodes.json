@@ -503,8 +503,16 @@
     "shellCommand": {
       "command": {
         "label": "Command",
-        "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+        "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",
         "placeholder": "ffmpeg"
+      },
+      "script": {
+        "label": "Script",
+        "description": "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files."
+      },
+      "shell": {
+        "label": "Shell",
+        "description": "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh."
       },
       "args": {
         "label": "Arguments",

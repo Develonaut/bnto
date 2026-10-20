@@ -262,8 +262,9 @@ impl ProcessContext for NativeContext {
     }
 
     /// Spawn in `options.dir` (else the work dir) with `options.env` set on
-    /// the child only, relay its output, and kill its whole tree if it
-    /// outlives `options.timeout`.
+    /// the child only (over a cleared environment when `options.clear_env`),
+    /// relay its output, and kill its whole tree if it outlives
+    /// `options.timeout`.
     fn run_command_with(
         &self,
         cmd: &str,
@@ -272,6 +273,10 @@ impl ProcessContext for NativeContext {
         on_output: &dyn Fn(&str),
     ) -> Result<Vec<u8>, BntoError> {
         let mut command = self.group_command(cmd, args);
+        if options.clear_env {
+            command.env_clear();
+            command.envs(crate::child_env::kept_vars(std::env::vars_os()));
+        }
         command.envs(options.env.iter().map(|(k, v)| (k, v)));
         if let Some(dir) = &options.dir {
             command.current_dir(dir);
@@ -931,6 +936,24 @@ mod tests {
             std::env::var("BNTO_TEST_OPTION_VAR").is_err(),
             "bnto's own environment is unchanged"
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_run_command_with_clear_env_keeps_only_the_allowlist() {
+        // Cargo sets CARGO_MANIFEST_DIR for this test process; a cleared
+        // command must not see it, but still finds programs on PATH.
+        let ctx = ctx_with_registry(Arc::new(ProcessRegistry::new()));
+        let (cmd, args) = shell(
+            "printf '%s|%s' \"${CARGO_MANIFEST_DIR-unset}\" \"$BNTO_OPT\"; command -v ls >/dev/null && printf '|path'",
+        );
+        let options = bnto_core::CommandOptions {
+            env: vec![("BNTO_OPT".into(), "mine".into())],
+            clear_env: true,
+            ..Default::default()
+        };
+        let out = ctx.run_command_with(cmd, &args, &options, &|_| {}).unwrap();
+        assert_eq!(String::from_utf8_lossy(&out).trim_end(), "unset|mine|path");
     }
 
     #[test]

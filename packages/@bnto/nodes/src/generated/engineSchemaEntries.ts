@@ -375,6 +375,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   },
   report: {},
   "shell-command": {
+    script: { control: "textarea" },
     args: { control: "tagPicker" },
     timeout: { suffix: "seconds" },
     maxOutputSize: { suffix: "MB" },

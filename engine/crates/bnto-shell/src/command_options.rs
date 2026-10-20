@@ -21,6 +21,8 @@ pub(crate) fn command_options(params: &Map<String, Value>, dir: Option<PathBuf>)
         env: env_vars(params),
         timeout: Some(Duration::from_secs(secs)),
         dir,
+        // A script starts from a cleared environment (SEC-22, SEC-26).
+        clear_env: crate::script::script(params).is_some(),
     }
 }
 

@@ -63,7 +63,11 @@ fn consent_lines<'a>(
         Line::from(Span::styled("  COMMANDS", theme.category())),
     ];
     for command in &request.commands {
-        lines.push(Line::from(format!("    - {command}")));
+        // A script step's line carries its script on the lines below.
+        for (i, part) in command.lines().enumerate() {
+            let bullet = if i == 0 { "    - " } else { "      " };
+            lines.push(Line::from(format!("{bullet}{part}")));
+        }
     }
     lines.push(Line::from(""));
     lines.push(Line::from(Span::styled(

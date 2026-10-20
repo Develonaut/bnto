@@ -1934,15 +1934,32 @@
         {
           "name": "command",
           "label": "Command",
-          "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+          "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",
           "paramType": {
             "type": "string"
           },
-          "constraints": {
-            "required": true
-          },
           "placeholder": "ffmpeg",
           "surfaceable": true
+        },
+        {
+          "name": "script",
+          "label": "Script",
+          "description": "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": false,
+          "control": "textarea"
+        },
+        {
+          "name": "shell",
+          "label": "Shell",
+          "description": "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "sh",
+          "surfaceable": false
         },
         {
           "name": "args",
@@ -4031,15 +4048,32 @@
         {
           "name": "command",
           "label": "Command",
-          "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+          "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",
           "paramType": {
             "type": "string"
           },
-          "constraints": {
-            "required": true
-          },
           "placeholder": "ffmpeg",
           "surfaceable": true
+        },
+        {
+          "name": "script",
+          "label": "Script",
+          "description": "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files.",
+          "paramType": {
+            "type": "string"
+          },
+          "surfaceable": false,
+          "control": "textarea"
+        },
+        {
+          "name": "shell",
+          "label": "Shell",
+          "description": "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "sh",
+          "surfaceable": false
         },
         {
           "name": "args",
