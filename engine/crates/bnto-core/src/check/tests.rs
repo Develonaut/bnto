@@ -48,11 +48,93 @@ impl NodeProcessor for Strict {
     }
 }
 
+/// Publishes real metadata declaring one param, `quality`.
+struct Declared;
+
+impl NodeProcessor for Declared {
+    fn name(&self) -> &str {
+        "declared"
+    }
+
+    fn metadata(&self) -> crate::metadata::NodeMetadata {
+        crate::metadata::NodeMetadata {
+            node_type: "declared".to_string(),
+            name: "Declared".to_string(),
+            description: String::new(),
+            category: crate::metadata::NodeCategory::Data,
+            accepts: vec![],
+            platforms: vec![],
+            parameters: vec![crate::metadata::ParameterDef {
+                name: "quality".to_string(),
+                ..Default::default()
+            }],
+            input_cardinality: Default::default(),
+            requires: vec![],
+        }
+    }
+
+    fn process(
+        &self,
+        _input: NodeInput,
+        _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        unreachable!("check never runs a node")
+    }
+}
+
 fn registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
     registry.register("lenient", Box::new(Lenient));
     registry.register("strict", Box::new(Strict));
+    registry.register("declared", Box::new(Declared));
     registry
+}
+
+// --- Undeclared params and renamed types ---
+
+#[test]
+fn test_a_param_the_node_does_not_declare_is_a_finding_on_that_param() {
+    let findings = check(json!({ "nodes": [{
+        "id": "step", "type": "declared", "parameters": { "quality": 80, "qualty": 70 }
+    }] }));
+
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].param.as_deref(), Some("qualty"));
+    assert_eq!(findings[0].message, "declared has no param \"qualty\"");
+}
+
+#[test]
+fn test_declared_params_alone_pass() {
+    let findings = check(json!({ "nodes": [{
+        "id": "step", "type": "declared", "parameters": { "quality": 80 }
+    }] }));
+    assert!(findings.is_empty(), "{findings:?}");
+}
+
+#[test]
+fn test_a_processor_with_placeholder_metadata_takes_any_param() {
+    assert!(check(one_node(json!({ "anything": 1 }))).is_empty());
+}
+
+#[test]
+fn test_an_undeclared_param_inside_a_container_is_found() {
+    let findings = check(json!({ "nodes": [{
+        "id": "loop", "type": "loop", "parameters": { "mode": "forEach" },
+        "nodes": [{ "id": "step", "type": "declared", "parameters": { "extra": 1 } }]
+    }] }));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].node_id, "step");
+}
+
+#[test]
+fn test_a_renamed_node_type_points_at_bnto_migrate() {
+    let findings = check(json!({ "nodes": [{ "id": "s", "type": "shell-command" }] }));
+    assert_eq!(
+        findings[0].message,
+        "unknown node type \"shell-command\" \
+         (renamed to \"shell-run\"; run `bnto migrate` on the recipe)"
+    );
 }
 
 fn check(def: serde_json::Value) -> Vec<CheckFinding> {

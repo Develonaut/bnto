@@ -48,6 +48,10 @@ impl NodeProcessor for Needy {
             parameters: vec![
                 required("base", ParameterType::String),
                 required("values", ParameterType::Object),
+                ParameterDef {
+                    name: "mode".to_string(),
+                    ..Default::default()
+                },
             ],
             input_cardinality: Default::default(),
             requires: vec![],

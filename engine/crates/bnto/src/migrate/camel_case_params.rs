@@ -2,30 +2,18 @@
 // recipe format uses (see `.claude/scopes/rust/node-vocabulary.md`).
 // Keys are renamed only on the node types that own them, so another node's
 // param, or a value nested inside a param, that happens to share a name is
-// left alone.
+// left alone. The renames are the snake_case rows of `bnto_core::renamed`,
+// the table `bnto check` reads to point an old recipe here.
 
+use bnto_core::renamed::PARAMS;
 use serde_json::{Map, Value};
 
 use super::{mutate_nodes, visit_nodes};
 
-/// `(node type, old key, new key)` for every renamed param.
-const RENAMES: &[(&str, &str, &str)] = &[
-    ("file-copy", "create_dirs", "createDirs"),
-    ("file-copy", "tolerance_ms", "toleranceMs"),
-    ("file-filter", "name_pattern", "namePattern"),
-    ("file-filter", "pattern_mode", "patternMode"),
-    ("file-filter", "min_size", "minSize"),
-    ("file-filter", "max_size", "maxSize"),
-    ("file-inspect", "include_hash", "includeHash"),
-    ("file-move", "create_dirs", "createDirs"),
-    ("file-rename", "max_length", "maxLength"),
-    ("file-rename", "counter_start", "counterStart"),
-    ("file-rename", "counter_pad", "counterPad"),
-    ("shell-run", "search_path", "searchPath"),
-    ("spreadsheet-export", "name_column", "nameColumn"),
-    ("spreadsheet-lookup", "key_column", "keyColumn"),
-    ("spreadsheet-lookup", "match_on", "matchOn"),
-];
+/// `(node type, old key, new key)` for each snake_case param rename.
+fn renames() -> impl Iterator<Item = &'static (&'static str, &'static str, &'static str)> {
+    PARAMS.iter().filter(|(_, old, _)| old.contains('_'))
+}
 
 /// Recipes accept a node's params under either key.
 const PARAM_KEYS: [&str; 2] = ["parameters", "params"];
@@ -56,7 +44,7 @@ pub(super) fn rename_snake_case_params(value: &mut Value) {
 }
 
 fn rename_keys(params: &mut Map<String, Value>, node_type: Option<&str>) {
-    for (_, old, new) in RENAMES.iter().filter(|(t, ..)| Some(*t) == node_type) {
+    for (_, old, new) in renames().filter(|(t, ..)| Some(*t) == node_type) {
         if let Some(val) = params.remove(*old) {
             params.entry(new.to_string()).or_insert(val);
         }
@@ -64,8 +52,7 @@ fn rename_keys(params: &mut Map<String, Value>, node_type: Option<&str>) {
 }
 
 fn old_keys(node_type: Option<&str>) -> impl Iterator<Item = &'static str> {
-    RENAMES
-        .iter()
+    renames()
         .filter(move |(t, ..)| Some(*t) == node_type)
         .map(|(_, old, _)| *old)
 }

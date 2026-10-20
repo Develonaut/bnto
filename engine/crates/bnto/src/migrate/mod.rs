@@ -638,6 +638,33 @@ mod tests {
         assert_eq!(value["children"][0]["type"], json!("shell-run"));
     }
 
+    // --- Every rename `bnto check` hints at is one migrate applies ---
+
+    #[test]
+    fn migrate_applies_every_renamed_node_type() {
+        for (old, new) in bnto_core::renamed::NODE_TYPES {
+            let mut value =
+                json!({ "id": "r", "type": "group", "nodes": [{ "id": "n", "type": old }] });
+            apply_migrations(&mut value);
+            assert_eq!(value["nodes"][0]["type"], json!(new), "{old} → {new}");
+        }
+    }
+
+    #[test]
+    fn migrate_applies_every_renamed_param() {
+        for (node_type, old, new) in bnto_core::renamed::PARAMS {
+            let mut value = json!({ "id": "r", "type": "group", "nodes": [
+                { "id": "n", "type": node_type, "parameters": { *old: 1 } }
+            ] });
+            apply_migrations(&mut value);
+            assert_eq!(
+                value["nodes"][0]["parameters"],
+                json!({ *new: 1 }),
+                "{node_type}: {old} → {new}"
+            );
+        }
+    }
+
     // --- File operations ---
 
     #[test]
