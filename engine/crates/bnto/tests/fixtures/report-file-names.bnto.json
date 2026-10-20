@@ -1,0 +1,23 @@
+{
+  "id": "report-file-names",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Report File Names",
+  "metadata": {
+    "description": "Prints a line naming each input file, in order."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+    {
+      "id": "show",
+      "type": "report",
+      "parameters": { "message": "got {{file}}" }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "show" },
+    { "id": "e2", "source": "show", "target": "output" }
+  ]
+}
