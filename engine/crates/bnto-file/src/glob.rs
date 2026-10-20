@@ -1,4 +1,5 @@
-// A file-name glob, compiled once per walk and matched against every name.
+// A file-name glob, compiled once and matched against many names: every
+// entry of file-collect's walk, every file through file-filter.
 //
 // `*` is any run of characters, `?` is one character, and everything else
 // is literal. The whole name must match, case-sensitively.
@@ -6,7 +7,7 @@
 use regex::Regex;
 
 /// A compiled file-name glob.
-pub(super) enum Glob {
+pub(crate) enum Glob {
     /// `*`: every name, without running a regex.
     Everything,
     Regex(Regex),
@@ -15,7 +16,7 @@ pub(super) enum Glob {
 }
 
 impl Glob {
-    pub(super) fn new(pattern: &str) -> Self {
+    pub(crate) fn new(pattern: &str) -> Self {
         if pattern == "*" {
             return Self::Everything;
         }
@@ -25,7 +26,7 @@ impl Glob {
         }
     }
 
-    pub(super) fn matches(&self, name: &str) -> bool {
+    pub(crate) fn matches(&self, name: &str) -> bool {
         match self {
             Self::Everything => true,
             Self::Regex(regex) => regex.is_match(name),
@@ -112,8 +113,8 @@ mod tests {
     }
 
     #[test]
-    fn is_matched_against_the_name_only() {
-        // The pattern never sees folders, so a `/` in it matches nothing.
+    fn slash_is_literal() {
+        // `**` is no folder wildcard: a `/` must appear in the name.
         assert!(!matches("**/*.svg", "logo.svg"));
         assert!(!matches("sub/*.svg", "logo.svg"));
     }

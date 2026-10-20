@@ -12,8 +12,8 @@ use bnto_core::BntoError;
 use bnto_core::processor::NodeInput;
 use bnto_core::progress::ProgressReporter;
 
-use super::glob::Glob;
 use super::{param_bool, param_str};
+use crate::glob::Glob;
 
 /// One directory walk: its settings, where it reports, and what it found.
 pub(super) struct Walker<'a> {
