@@ -768,7 +768,11 @@ mod tests {
                 .status();
         }
         assert!(killed, "orphaned grandchild {grandchild} must be killed");
-        handle.join().expect("streaming thread panicked").unwrap();
+        // `cmd` exited 0, but the step was still streaming when it was
+        // cancelled, so it reports stopped rather than success.
+        let result = handle.join().expect("streaming thread panicked");
+        let err = result.expect_err("a cancelled step must not report success");
+        assert!(err.to_string().contains("was stopped"), "{err}");
     }
 
     // Matches unix: a command that finishes on its own leaves its background
