@@ -57,6 +57,7 @@ mod scratch;
 pub mod storage;
 pub mod telemetry;
 mod trust;
+mod trust_gate;
 mod tui;
 mod vars;
 

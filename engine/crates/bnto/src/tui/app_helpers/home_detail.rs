@@ -14,6 +14,7 @@ use super::super::screens::home::HomeConfirmResult;
 use super::super::screens::library::{LibraryModel, load_library_entries};
 use super::super::screens::results::ResultsModel;
 use super::super::screens::settings::SettingsModel;
+use super::consent;
 use super::navigation::{is_at_last_visible_field, resolve_start_dir};
 
 /// Handle the HomeConfirm message — dispatches based on home screen selection.
@@ -179,7 +180,10 @@ fn start_from_detail(
         .as_ref()
         .map(|d| d.definition_json.clone())
         .unwrap_or_default();
-    let execution = Some(builder(&slug, files, overrides, definition_json));
+    let execution = Some(consent::gate(
+        builder(&slug, files, overrides, definition_json),
+        &model,
+    ));
     AppModel {
         screen: Screen::Execution { slug, from },
         execution,
@@ -211,11 +215,9 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
         .as_ref()
         .map(|d| d.definition_json.clone())
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(
-        &slug,
-        files,
-        overrides,
-        definition_json,
+    let execution = Some(consent::gate(
+        ExecutionModel::with_inputs(&slug, files, overrides, definition_json),
+        &model,
     ));
     AppModel {
         screen: Screen::Execution { slug, from },
@@ -263,11 +265,9 @@ pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel 
             )
         })
         .unwrap_or_default();
-    let execution = Some(ExecutionModel::with_inputs(
-        &slug,
-        files,
-        overrides,
-        definition_json,
+    let execution = Some(consent::gate(
+        ExecutionModel::with_inputs(&slug, files, overrides, definition_json),
+        &model,
     ));
     AppModel {
         screen: Screen::Execution { slug, from },
@@ -280,6 +280,9 @@ pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel 
 
 /// Handle execution messages — cancel navigates back to detail.
 pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppModel {
+    if matches!(msg, ExecutionMessage::AllowCommands) {
+        return consent::handle_allow(model);
+    }
     if matches!(msg, ExecutionMessage::Cancel) {
         let (slug, from) = match &model.screen {
             Screen::Execution { slug, from } => (slug.clone(), *from),

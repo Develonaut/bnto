@@ -12,6 +12,13 @@ use super::super::screens::results::ResultsMessage;
 /// Enter transitions to Results when the pipeline has finished (Completed or Failed).
 /// Esc cancels a running pipeline (handled above in handle_key as a special case).
 pub(super) fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
+    let awaiting = model
+        .execution
+        .as_ref()
+        .is_some_and(|e| e.status == ExecutionStatus::AwaitingConsent);
+    if awaiting {
+        return consent_key(key);
+    }
     let finished = model.execution.as_ref().is_some_and(|e| {
         matches!(
             e.status,
@@ -28,6 +35,19 @@ pub(super) fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<Ap
             }
         }
         KeyCode::Esc => Some(AppMessage::Execution(ExecutionMessage::Cancel)),
+        _ => None,
+    }
+}
+
+/// While a run awaits consent: `y` allows its commands, `n` or Esc declines.
+fn consent_key(key: KeyEvent) -> Option<AppMessage> {
+    match key.code {
+        KeyCode::Char('y') | KeyCode::Char('Y') => {
+            Some(AppMessage::Execution(ExecutionMessage::AllowCommands))
+        }
+        KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+            Some(AppMessage::Execution(ExecutionMessage::Cancel))
+        }
         _ => None,
     }
 }

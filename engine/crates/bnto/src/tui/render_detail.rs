@@ -63,7 +63,7 @@ fn detail_lines<'a>(
     let mut lines: Vec<Line> = Vec::new();
 
     // Recipe header — trust badge from catalog source.
-    let badge = trust::trust_badge(detail.is_bundled, false);
+    let badge = trust::trust_badge(detail.is_bundled, detail.has_shell);
     lines.push(Line::from(vec![
         Span::raw("  "),
         Span::styled(detail.name.as_str(), theme.heading()),

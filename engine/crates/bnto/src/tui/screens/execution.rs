@@ -18,6 +18,8 @@ pub use update::update;
 /// Pipeline execution status.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExecutionStatus {
+    /// An untrusted shell recipe waiting for the user to allow its commands.
+    AwaitingConsent,
     Idle,
     Running,
     Completed,
@@ -98,6 +100,8 @@ pub struct ExecutionModel {
     pub warnings: Vec<String>,
     /// When true, pipeline runs without writing output — results go to Preview screen.
     pub preview_mode: bool,
+    /// What the user is asked to allow while the run awaits consent.
+    pub consent: Option<crate::trust_gate::ConsentRequest>,
 }
 
 /// Maximum number of command output lines to retain in the rolling window.
@@ -122,6 +126,7 @@ impl ExecutionModel {
             live_line_node: None,
             warnings: Vec::new(),
             preview_mode: false,
+            consent: None,
         }
     }
 
@@ -150,6 +155,26 @@ impl ExecutionModel {
         Self {
             preview_mode: true,
             ..Self::with_inputs(slug, selected_files, param_overrides, definition_json)
+        }
+    }
+}
+
+impl ExecutionModel {
+    /// Hold the run until the user allows the commands in `request`.
+    pub fn awaiting_consent(self, request: crate::trust_gate::ConsentRequest) -> Self {
+        Self {
+            status: ExecutionStatus::AwaitingConsent,
+            consent: Some(request),
+            ..self
+        }
+    }
+
+    /// The user allowed the commands: the run may start.
+    pub fn consent_given(self) -> Self {
+        Self {
+            status: ExecutionStatus::Idle,
+            consent: None,
+            ..self
         }
     }
 }

@@ -6,6 +6,9 @@ use super::super::results::OutputFile;
 #[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum ExecutionMessage {
+    /// The user allowed an untrusted recipe's commands (handled by the app,
+    /// which records the approval).
+    AllowCommands,
     /// Pipeline started — initialize file and node tracking.
     PipelineStarted {
         total_nodes: usize,
