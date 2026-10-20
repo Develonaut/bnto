@@ -11,7 +11,7 @@ use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
-use crate::run_watchdog::RunWatchdog;
+use crate::run_watchdog::{self, Watched};
 use crate::{context, dry_run, input, progress, run_limit, telemetry, vars};
 
 /// The `bnto run` switches that change what a run does.
@@ -94,27 +94,28 @@ fn execute(
     if target.dry_run {
         dry_run::print_shell_note(&prepared.definition_json);
     }
-    watched(target.time_limit, verdict, || {
+    watched(ctx, target.time_limit, verdict, || {
         bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, ctx)
     })
 }
 
 /// `run`, watched when the run has a time limit: once the limit passes, the
-/// run timed out, whatever `run` returned.
+/// run timed out, whatever `run` returned. A run stuck past the grace period
+/// is ended by the watchdog with the same verdict.
 fn watched<T>(
+    ctx: &context::NativeContext,
     time_limit: Option<u64>,
     verdict: &RunVerdict,
     run: impl FnOnce() -> Result<T, bnto_core::BntoError>,
 ) -> Result<T, bnto_core::BntoError> {
-    let Some(secs) = time_limit else {
-        return run();
+    let stuck_verdict = verdict.clone();
+    let on_stuck = move |error: bnto_core::BntoError| {
+        stuck_verdict.fail("Pipeline failed:", error);
     };
-    let watchdog = RunWatchdog::for_run(secs, verdict.clone());
-    let result = run();
-    if watchdog.disarm() {
-        return Err(bnto_core::BntoError::TimedOut { secs });
+    match run_watchdog::watch(ctx.registry(), time_limit, on_stuck, run) {
+        Watched::Finished(result) => result,
+        Watched::Ended => run_watchdog::wait_for_exit(),
     }
-    result
 }
 
 /// Read recipe JSON — try catalog slug first, then disk path.

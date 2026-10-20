@@ -9,13 +9,17 @@
 // file data with empty bytes. Rename-only pipelines don't inspect content,
 // so this avoids loading large files into memory. Recipes with file-collect
 // (directory input) already pass empty bytes for the directory entry.
+//
+// The preview runs under the recipe's time limit, watched like `bnto run`.
 
+use bnto_core::BntoError;
 use bnto_core::events::PipelineReporter;
 use bnto_core::pipeline::PipelineResult;
 use bnto_core::processor::FileData;
 
 use crate::context::NativeContext;
-use crate::input;
+use crate::run_watchdog::{self, Watched};
+use crate::{input, run_limit};
 
 /// A single file transformation preview: original name → result name.
 #[derive(Debug, Clone, PartialEq)]
@@ -57,9 +61,20 @@ pub fn run_preview(
         .map_err(|e| format!("{e}"))?
         .with_dry_run(true);
     let reporter = PipelineReporter::new_noop();
+    let (json, time_limit) = run_limit::apply(&prepared.definition_json, None)?;
+    let run = || bnto_engine::run_pipeline(&json, stub_files, &reporter, &ctx);
+    match run_watchdog::watch(ctx.registry(), time_limit, end_stuck_preview, run) {
+        Watched::Finished(result) => result.map_err(|e| format!("{e}")),
+        Watched::Ended => run_watchdog::wait_for_exit(),
+    }
+}
 
-    bnto_engine::run_pipeline(&prepared.definition_json, stub_files, &reporter, &ctx)
-        .map_err(|e| format!("{e}"))
+/// A preview stuck past its time limit can't finish printing, so report the
+/// timeout as its failure, delete its temp files and exit 1.
+fn end_stuck_preview(error: BntoError) {
+    eprintln!("Warning: pipeline preview failed: {error}");
+    crate::scratch::remove_live_dirs();
+    std::process::exit(1);
 }
 
 /// Extract file previews from a completed pipeline result.
