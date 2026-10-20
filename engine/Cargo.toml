@@ -52,6 +52,8 @@ crossterm = "0.29"
 indicatif = "0.17"
 ratatui = { version = "0.30", default-features = false, features = ["crossterm"] }
 dirs = "6"
+# canonicalize() without the Windows verbatim prefix, for user-facing paths.
+dunce = "1"
 ureq = "3"
 toml = "0.8"
 uuid = { version = "1", features = ["v4"] }
