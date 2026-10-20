@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const spreadsheetCleanNodeType: NodeTypeInfo = {
   name: "spreadsheet-clean",
   label: "Clean CSV",
-  description: "Remove empty rows, trim whitespace, and deduplicate CSV data.",
+  description: "Clean CSV data by removing empty rows, trimming whitespace, and deduplicating.",
   category: "spreadsheet",
   isContainer: false,
   platforms: ["browser"] as const,

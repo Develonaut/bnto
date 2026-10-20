@@ -10,7 +10,8 @@ import type { NodeTypeInfo } from "../types";
 export const vectorOptimizeNodeType: NodeTypeInfo = {
   name: "vector-optimize",
   label: "Optimize SVG",
-  description: "Remove editor metadata, comments, and unnecessary elements from SVG files.",
+  description:
+    "Optimize SVG files by removing editor metadata, comments, and unnecessary elements.",
   category: "vector",
   isContainer: false,
   platforms: ["browser"] as const,

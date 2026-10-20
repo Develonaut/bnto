@@ -4,7 +4,7 @@
     {
       "name": "assert",
       "label": "Assert",
-      "description": "Fail the run when a comparison doesn't hold; otherwise pass files through.",
+      "description": "Assert a comparison on each item; fail the run when it doesn't hold, otherwise pass files through.",
       "category": "control",
       "isContainer": false,
       "platforms": [
@@ -78,7 +78,7 @@
     {
       "name": "edit-fields",
       "label": "Edit Fields",
-      "description": "Set fields on each item from templates over its other fields; files pass through.",
+      "description": "Edit fields on each item, setting them from templates over its other fields; files pass through.",
       "category": "data",
       "isContainer": false,
       "platforms": [
@@ -115,7 +115,7 @@
     {
       "name": "file-collect",
       "label": "Collect Files",
-      "description": "Traverse a directory and collect files matching a glob pattern into the pipeline.",
+      "description": "Collect files from a folder that match a glob pattern into the pipeline.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -137,7 +137,7 @@
         {
           "name": "recursive",
           "label": "Recursive",
-          "description": "Traverse subdirectories when collecting files.",
+          "description": "Search subfolders when collecting files.",
           "paramType": {
             "type": "boolean"
           },
@@ -147,7 +147,7 @@
         {
           "name": "flatten",
           "label": "Flatten",
-          "description": "Strip directory structure from output filenames. When true, all files appear as if in the same directory.",
+          "description": "Strip folder structure from output filenames. When true, all files appear as if in the same folder.",
           "paramType": {
             "type": "boolean"
           },
@@ -159,7 +159,7 @@
     {
       "name": "file-copy",
       "label": "Copy Files",
-      "description": "Place output files in a destination directory with conflict handling.",
+      "description": "Copy output files into a destination folder, with conflict handling.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -170,7 +170,7 @@
         {
           "name": "destination",
           "label": "Destination",
-          "description": "Directory path to copy files into.",
+          "description": "Folder to copy files into.",
           "paramType": {
             "type": "string"
           },
@@ -179,8 +179,8 @@
         },
         {
           "name": "create_dirs",
-          "label": "Create Directories",
-          "description": "Automatically create the destination directory if it doesn't exist.",
+          "label": "Create Folders",
+          "description": "Automatically create the destination folder if it doesn't exist.",
           "paramType": {
             "type": "boolean"
           },
@@ -304,7 +304,7 @@
     {
       "name": "file-filter",
       "label": "Filter Files",
-      "description": "Keep or drop files by extension, name or path pattern, and size.",
+      "description": "Filter files by extension, name or path pattern, and size, keeping or dropping the matches.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -417,7 +417,7 @@
     {
       "name": "file-inspect",
       "label": "Inspect Files",
-      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
+      "description": "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the output.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -476,7 +476,7 @@
     {
       "name": "file-list",
       "label": "List Files",
-      "description": "Turn lists of paths into files under a base folder; every path is listed, found or missing.",
+      "description": "List files from lists of paths under a base folder; every path is listed, found or missing.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -544,7 +544,7 @@
     {
       "name": "file-rename",
       "label": "Rename Files",
-      "description": "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
+      "description": "Rename files using patterns, find/replace, case rules, counters, and sanitization.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -712,7 +712,7 @@
     {
       "name": "file-render",
       "label": "Render Text File",
-      "description": "Write one text file from a template: a header, one row per item, then a footer.",
+      "description": "Render one text file from a template: a header, one row per item, then a footer.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -801,7 +801,7 @@
     {
       "name": "file-sort",
       "label": "Sort Files",
-      "description": "Reorder items by one or more metadata fields, each ascending or descending.",
+      "description": "Sort items by one or more metadata fields, each ascending or descending.",
       "category": "file",
       "isContainer": false,
       "platforms": [
@@ -881,7 +881,7 @@
     {
       "name": "http-request",
       "label": "HTTP Request",
-      "description": "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
+      "description": "Request URLs over HTTP to call APIs (GET, POST, PUT, DELETE, etc.).",
       "category": "network",
       "isContainer": false,
       "platforms": [
@@ -892,7 +892,7 @@
     {
       "name": "image-compress",
       "label": "Compress Images",
-      "description": "Reduce image file size while maintaining quality.",
+      "description": "Compress images to a smaller file size while maintaining quality.",
       "category": "image",
       "isContainer": false,
       "platforms": [
@@ -1006,7 +1006,7 @@
     },
     {
       "name": "image-overlay",
-      "label": "Overlay Image",
+      "label": "Overlay Images",
       "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
       "category": "image",
       "isContainer": false,
@@ -1183,7 +1183,7 @@
     {
       "name": "image-pad",
       "label": "Pad Images",
-      "description": "Center images on a larger canvas, filling the added space with transparency or a color.",
+      "description": "Pad images onto a larger, centered canvas, filling the added space with transparency or a color.",
       "category": "image",
       "isContainer": false,
       "platforms": [
@@ -1270,7 +1270,7 @@
     {
       "name": "image-resize",
       "label": "Resize Images",
-      "description": "Change image dimensions while maintaining quality.",
+      "description": "Resize images to new dimensions while maintaining quality.",
       "category": "image",
       "isContainer": false,
       "platforms": [
@@ -1355,7 +1355,7 @@
     {
       "name": "image-strip-exif",
       "label": "Strip EXIF",
-      "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
+      "description": "Strip all EXIF metadata from images (GPS, camera info, timestamps).",
       "category": "image",
       "isContainer": false,
       "platforms": [
@@ -1888,7 +1888,7 @@
     {
       "name": "report",
       "label": "Report",
-      "description": "Print a templated line to the run's output; files pass through unchanged.",
+      "description": "Report a templated line in the run's output; files pass through unchanged.",
       "category": "control",
       "isContainer": false,
       "platforms": [
@@ -1922,8 +1922,8 @@
     },
     {
       "name": "shell-command",
-      "label": "Shell Command",
-      "description": "Execute shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
+      "label": "Run Shell Command",
+      "description": "Run shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
       "category": "system",
       "isContainer": false,
       "platforms": [
@@ -2036,7 +2036,7 @@
     {
       "name": "spreadsheet-clean",
       "label": "Clean CSV",
-      "description": "Remove empty rows, trim whitespace, and deduplicate CSV data.",
+      "description": "Clean CSV data by removing empty rows, trimming whitespace, and deduplicating.",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -2078,7 +2078,7 @@
     },
     {
       "name": "spreadsheet-convert",
-      "label": "CSV to JSON",
+      "label": "Convert CSV to JSON",
       "description": "Convert CSV data to JSON format with configurable delimiters.",
       "category": "spreadsheet",
       "isContainer": false,
@@ -2130,7 +2130,7 @@
     {
       "name": "spreadsheet-export",
       "label": "Export Items as CSV",
-      "description": "Write the files passing through, with their metadata, as one CSV row each.",
+      "description": "Export the files passing through, with their metadata, as one CSV row each.",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -2176,7 +2176,7 @@
     {
       "name": "spreadsheet-lookup",
       "label": "Look Up Rows",
-      "description": "Attach the CSV row whose key matches each file's name to that file.",
+      "description": "Look up the CSV row whose key matches each file's name and attach it to that file.",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -2256,7 +2256,7 @@
     {
       "name": "spreadsheet-merge",
       "label": "Merge CSV",
-      "description": "Combine multiple CSV files into one with header reconciliation and deduplication.",
+      "description": "Merge multiple CSV files into one with header reconciliation and deduplication.",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -2299,7 +2299,7 @@
     {
       "name": "spreadsheet-read",
       "label": "Read Rows",
-      "description": "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).",
+      "description": "Read a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).",
       "category": "spreadsheet",
       "isContainer": false,
       "platforms": [
@@ -2412,7 +2412,7 @@
     {
       "name": "summarize",
       "label": "Summarize",
-      "description": "Group items by fields; output one item per group with its count and field totals.",
+      "description": "Summarize items into one per group of fields, with its count and field totals.",
       "category": "data",
       "isContainer": false,
       "platforms": [
@@ -2479,7 +2479,7 @@
     {
       "name": "vector-optimize",
       "label": "Optimize SVG",
-      "description": "Remove editor metadata, comments, and unnecessary elements from SVG files.",
+      "description": "Optimize SVG files by removing editor metadata, comments, and unnecessary elements.",
       "category": "vector",
       "isContainer": false,
       "platforms": [
@@ -2546,8 +2546,8 @@
     },
     {
       "name": "vector-rasterize",
-      "label": "SVG to Image",
-      "description": "Convert SVG files to raster images (PNG, JPEG, WebP).",
+      "label": "Rasterize SVG",
+      "description": "Rasterize SVG files into raster images (PNG, JPEG, WebP).",
       "category": "vector",
       "isContainer": false,
       "platforms": [
@@ -2604,7 +2604,7 @@
     {
       "nodeType": "assert",
       "name": "Assert",
-      "description": "Fail the run when a comparison doesn't hold (equals, not equals, after, before); otherwise pass files through unchanged.",
+      "description": "Assert a comparison on each item (equals, not equals, after, before); fail the run when it doesn't hold, otherwise pass files through unchanged.",
       "category": "control",
       "accepts": [],
       "platforms": [
@@ -2680,7 +2680,7 @@
     {
       "nodeType": "edit-fields",
       "name": "Edit Fields",
-      "description": "Set fields on each item from static values or templates over its other fields, such as {{item.first}} {{item.last}}; files pass through unchanged.",
+      "description": "Edit fields on each item, setting them from static values or templates over its other fields, such as {{item.first}} {{item.last}}; files pass through unchanged.",
       "category": "data",
       "accepts": [],
       "platforms": [
@@ -2719,7 +2719,7 @@
     {
       "nodeType": "file-collect",
       "name": "Collect Files",
-      "description": "Traverse a directory and collect files matching a glob pattern into the pipeline.",
+      "description": "Collect files from a folder that match a glob pattern into the pipeline.",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -2741,7 +2741,7 @@
         {
           "name": "recursive",
           "label": "Recursive",
-          "description": "Traverse subdirectories when collecting files.",
+          "description": "Search subfolders when collecting files.",
           "paramType": {
             "type": "boolean"
           },
@@ -2751,7 +2751,7 @@
         {
           "name": "flatten",
           "label": "Flatten",
-          "description": "Strip directory structure from output filenames. When true, all files appear as if in the same directory.",
+          "description": "Strip folder structure from output filenames. When true, all files appear as if in the same folder.",
           "paramType": {
             "type": "boolean"
           },
@@ -2764,7 +2764,7 @@
     {
       "nodeType": "file-copy",
       "name": "Copy Files",
-      "description": "Place output files in a destination directory with conflict handling.",
+      "description": "Copy output files into a destination folder, with conflict handling.",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -2775,7 +2775,7 @@
         {
           "name": "destination",
           "label": "Destination",
-          "description": "Directory path to copy files into.",
+          "description": "Folder to copy files into.",
           "paramType": {
             "type": "string"
           },
@@ -2784,8 +2784,8 @@
         },
         {
           "name": "create_dirs",
-          "label": "Create Directories",
-          "description": "Automatically create the destination directory if it doesn't exist.",
+          "label": "Create Folders",
+          "description": "Automatically create the destination folder if it doesn't exist.",
           "paramType": {
             "type": "boolean"
           },
@@ -2913,7 +2913,7 @@
     {
       "nodeType": "file-filter",
       "name": "Filter Files",
-      "description": "Keep or drop files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).",
+      "description": "Filter files by extension, name or path pattern, and size. Files that match every criterion are kept (or dropped, with keep off).",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3027,7 +3027,7 @@
     {
       "nodeType": "file-inspect",
       "name": "Inspect Files",
-      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
+      "description": "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3090,7 +3090,7 @@
     {
       "nodeType": "file-list",
       "name": "List Files",
-      "description": "Turn lists of paths into files: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted. `entries` lists every path in order with its full path and status.",
+      "description": "List files from lists of paths: each listed path under a base folder that exists joins the pipeline; missing ones are skipped and counted. `entries` lists every path in order with its full path and status.",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3160,7 +3160,7 @@
     {
       "nodeType": "file-rename",
       "name": "Rename Files",
-      "description": "Transform filenames using patterns, find/replace, case rules, and counters",
+      "description": "Rename files using patterns, find/replace, case rules, and counters",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3328,7 +3328,7 @@
     {
       "nodeType": "file-render",
       "name": "Render Text File",
-      "description": "Write one text file from a template: a header, one row per item from its metadata, then a footer (a Markdown table, a report).",
+      "description": "Render one text file from a template: a header, one row per item from its metadata, then a footer (a Markdown table, a report).",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3419,7 +3419,7 @@
     {
       "nodeType": "file-sort",
       "name": "Sort Files",
-      "description": "Reorder items by one or more metadata fields, each ascending or descending (`source, -title`). Stable; numbers sort numerically, missing values last. Data and metadata are untouched.",
+      "description": "Sort items by one or more metadata fields, each ascending or descending (`source, -title`). Stable; numbers sort numerically, missing values last. Data and metadata are untouched.",
       "category": "file",
       "accepts": [],
       "platforms": [
@@ -3467,7 +3467,7 @@
     {
       "nodeType": "image-compress",
       "name": "Compress Images",
-      "description": "Reduce image file size while maintaining quality",
+      "description": "Compress images to a smaller file size while maintaining quality",
       "category": "image",
       "accepts": [
         "image/jpeg",
@@ -3590,7 +3590,7 @@
     },
     {
       "nodeType": "image-overlay",
-      "name": "Overlay Image",
+      "name": "Overlay Images",
       "description": "Overlay an image onto source images at a configurable position, size, and opacity.",
       "category": "image",
       "accepts": [
@@ -3771,7 +3771,7 @@
     {
       "nodeType": "image-pad",
       "name": "Pad Images",
-      "description": "Center images on a larger canvas, filling the added space with transparency or a color.",
+      "description": "Pad images onto a larger, centered canvas, filling the added space with transparency or a color.",
       "category": "image",
       "accepts": [
         "image/jpeg",
@@ -3862,7 +3862,7 @@
     {
       "nodeType": "image-resize",
       "name": "Resize Images",
-      "description": "Change image dimensions while maintaining quality",
+      "description": "Resize images to new dimensions while maintaining quality",
       "category": "image",
       "accepts": [
         "image/jpeg",
@@ -3951,7 +3951,7 @@
     {
       "nodeType": "image-strip-exif",
       "name": "Strip EXIF",
-      "description": "Remove all EXIF metadata from images (GPS, camera info, timestamps)",
+      "description": "Strip all EXIF metadata from images (GPS, camera info, timestamps)",
       "category": "image",
       "accepts": [
         "image/jpeg",
@@ -3999,7 +3999,7 @@
     {
       "nodeType": "report",
       "name": "Report",
-      "description": "Print a templated line to the run's output: once, once per file, or once per entry of a list; files pass through unchanged.",
+      "description": "Report a templated line in the run's output: once, once per file, or once per entry of a list; files pass through unchanged.",
       "category": "control",
       "accepts": [],
       "platforms": [
@@ -4035,8 +4035,8 @@
     },
     {
       "nodeType": "shell-command",
-      "name": "Shell Command",
-      "description": "Execute external CLI tools with security validation.",
+      "name": "Run Shell Command",
+      "description": "Run external CLI tools with security validation.",
       "category": "system",
       "accepts": [],
       "platforms": [
@@ -4151,7 +4151,7 @@
     {
       "nodeType": "spreadsheet-clean",
       "name": "Clean CSV",
-      "description": "Remove empty rows, trim whitespace, and deduplicate CSV data",
+      "description": "Clean CSV data by removing empty rows, trimming whitespace, and deduplicating",
       "category": "spreadsheet",
       "accepts": [
         "text/csv"
@@ -4195,7 +4195,7 @@
     },
     {
       "nodeType": "spreadsheet-convert",
-      "name": "CSV to JSON",
+      "name": "Convert CSV to JSON",
       "description": "Convert CSV rows to a JSON array of objects",
       "category": "spreadsheet",
       "accepts": [
@@ -4249,7 +4249,7 @@
     {
       "nodeType": "spreadsheet-export",
       "name": "Export Items as CSV",
-      "description": "Write the files passing through, with their metadata, as one CSV row each",
+      "description": "Export the files passing through, with their metadata, as one CSV row each",
       "category": "spreadsheet",
       "accepts": [],
       "platforms": [
@@ -4296,7 +4296,7 @@
     {
       "nodeType": "spreadsheet-lookup",
       "name": "Look Up Rows",
-      "description": "Attach the CSV row whose key matches each file's name to that file",
+      "description": "Look up the CSV row whose key matches each file's name and attach it to that file",
       "category": "spreadsheet",
       "accepts": [],
       "platforms": [
@@ -4377,7 +4377,7 @@
     {
       "nodeType": "spreadsheet-merge",
       "name": "Merge CSV",
-      "description": "Combine multiple CSV files into one, with header reconciliation and deduplication.",
+      "description": "Merge multiple CSV files into one, with header reconciliation and deduplication.",
       "category": "spreadsheet",
       "accepts": [
         "text/csv"
@@ -4422,7 +4422,7 @@
     {
       "nodeType": "spreadsheet-read",
       "name": "Read Rows",
-      "description": "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id)",
+      "description": "Read a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id)",
       "category": "spreadsheet",
       "accepts": [
         "text/csv",
@@ -4540,7 +4540,7 @@
     {
       "nodeType": "summarize",
       "name": "Summarize",
-      "description": "Group items by metadata fields and output one item per group with its count and the totals of numeric fields (sum_<field>). Groups keep first-seen order; the items summarized don't pass through.",
+      "description": "Summarize items by metadata fields, one item per group with its count and the totals of numeric fields (sum_<field>). Groups keep first-seen order; the items summarized don't pass through.",
       "category": "data",
       "accepts": [],
       "platforms": [
@@ -4645,8 +4645,8 @@
     },
     {
       "nodeType": "vector-rasterize",
-      "name": "SVG to Image",
-      "description": "Convert SVG files to raster images (PNG, JPEG, WebP)",
+      "name": "Rasterize SVG",
+      "description": "Rasterize SVG files into raster images (PNG, JPEG, WebP)",
       "category": "vector",
       "accepts": [
         "image/svg+xml"

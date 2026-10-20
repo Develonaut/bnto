@@ -11,7 +11,7 @@ export const fileListNodeType: NodeTypeInfo = {
   name: "file-list",
   label: "List Files",
   description:
-    "Turn lists of paths into files under a base folder; every path is listed, found or missing.",
+    "List files from lists of paths under a base folder; every path is listed, found or missing.",
   category: "file",
   isContainer: false,
   platforms: ["cli"] as const,

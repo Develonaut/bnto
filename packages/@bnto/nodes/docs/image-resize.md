@@ -1,6 +1,6 @@
 # Resize Images Node
 
-> Change image dimensions while maintaining quality.
+> Resize images to new dimensions while maintaining quality.
 
 **Category:** image | **Platforms:** browser | **Container:** no
 

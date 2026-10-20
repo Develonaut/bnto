@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const spreadsheetCleanProcessor: ProcessorDef = {
   nodeType: "spreadsheet-clean",
   name: "Clean CSV",
-  description: "Remove empty rows, trim whitespace, and deduplicate CSV data",
+  description: "Clean CSV data by removing empty rows, trimming whitespace, and deduplicating",
   category: "spreadsheet",
   accepts: ["text/csv"] as const,
   platforms: ["browser"] as const,

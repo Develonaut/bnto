@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const spreadsheetExportProcessor: ProcessorDef = {
   nodeType: "spreadsheet-export",
   name: "Export Items as CSV",
-  description: "Write the files passing through, with their metadata, as one CSV row each",
+  description: "Export the files passing through, with their metadata, as one CSV row each",
   category: "spreadsheet",
   accepts: [] as const,
   platforms: ["cli", "desktop"] as const,

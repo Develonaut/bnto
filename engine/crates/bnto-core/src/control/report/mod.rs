@@ -45,7 +45,7 @@ impl NodeProcessor for Report {
         NodeMetadata {
             node_type: "report".to_string(),
             name: "Report".to_string(),
-            description: "Print a templated line to the run's output: once, once per file, \
+            description: "Report a templated line in the run's output: once, once per file, \
                           or once per entry of a list; files pass through unchanged."
                 .to_string(),
             category: NodeCategory::Control,

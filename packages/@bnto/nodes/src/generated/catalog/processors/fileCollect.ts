@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const fileCollectProcessor: ProcessorDef = {
   nodeType: "file-collect",
   name: "Collect Files",
-  description: "Traverse a directory and collect files matching a glob pattern into the pipeline.",
+  description: "Collect files from a folder that match a glob pattern into the pipeline.",
   category: "file",
   accepts: [] as const,
   platforms: ["cli", "desktop"] as const,
@@ -27,7 +27,7 @@ export const fileCollectProcessor: ProcessorDef = {
     {
       name: "recursive",
       label: "Recursive",
-      description: "Traverse subdirectories when collecting files.",
+      description: "Search subfolders when collecting files.",
       type: "boolean" as const,
       default: true,
     },
@@ -35,7 +35,7 @@ export const fileCollectProcessor: ProcessorDef = {
       name: "flatten",
       label: "Flatten",
       description:
-        "Strip directory structure from output filenames. When true, all files appear as if in the same directory.",
+        "Strip folder structure from output filenames. When true, all files appear as if in the same folder.",
       type: "boolean" as const,
       default: true,
     },

@@ -52,7 +52,7 @@ impl NodeProcessor for OverlayImage {
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
             node_type: "image-overlay".to_string(),
-            name: "Overlay Image".to_string(),
+            name: "Overlay Images".to_string(),
             description:
                 "Overlay an image onto source images at a configurable position, size, and opacity."
                     .to_string(),

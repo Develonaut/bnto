@@ -29,12 +29,12 @@ export const fileCopyNodeSchema: NodeSchema = {
   params: {
     destination: {
       label: "Destination",
-      description: "Directory path to copy files into.",
+      description: "Folder to copy files into.",
       placeholder: "./output",
     },
     create_dirs: {
-      label: "Create Directories",
-      description: "Automatically create the destination directory if it doesn't exist.",
+      label: "Create Folders",
+      description: "Automatically create the destination folder if it doesn't exist.",
     },
     conflict: {
       label: "Conflict Resolution",

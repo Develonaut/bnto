@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const imageResizeNodeType: NodeTypeInfo = {
   name: "image-resize",
   label: "Resize Images",
-  description: "Change image dimensions while maintaining quality.",
+  description: "Resize images to new dimensions while maintaining quality.",
   category: "image",
   isContainer: false,
   platforms: ["browser"] as const,

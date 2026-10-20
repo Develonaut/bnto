@@ -35,7 +35,7 @@ impl NodeProcessor for ConvertFormat {
         use bnto_core::metadata::*;
         NodeMetadata {
             node_type: "spreadsheet-convert".to_string(),
-            name: "CSV to JSON".to_string(),
+            name: "Convert CSV to JSON".to_string(),
             description: "Convert CSV rows to a JSON array of objects".to_string(),
             category: NodeCategory::Spreadsheet,
             accepts: vec!["text/csv".to_string()],

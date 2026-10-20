@@ -1,6 +1,6 @@
 # Export Items as CSV Node
 
-> Write the files passing through, with their metadata, as one CSV row each.
+> Export the files passing through, with their metadata, as one CSV row each.
 
 **Category:** spreadsheet | **Platforms:** cli | **Container:** no
 

@@ -36,7 +36,7 @@ impl NodeProcessor for FileInspect {
         NodeMetadata {
             node_type: "file-inspect".to_string(),
             name: "Inspect Files".to_string(),
-            description: "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.".to_string(),
+            description: "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.".to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string(), "cli".to_string(), "desktop".to_string()],

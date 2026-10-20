@@ -1,6 +1,6 @@
 # Report Node
 
-> Print a templated line to the run's output; files pass through unchanged.
+> Report a templated line in the run's output; files pass through unchanged.
 
 **Category:** control | **Platforms:** browser | **Container:** no
 

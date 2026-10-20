@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const fileCopyNodeType: NodeTypeInfo = {
   name: "file-copy",
   label: "Copy Files",
-  description: "Place output files in a destination directory with conflict handling.",
+  description: "Copy output files into a destination folder, with conflict handling.",
   category: "file",
   isContainer: false,
   platforms: ["cli"] as const,

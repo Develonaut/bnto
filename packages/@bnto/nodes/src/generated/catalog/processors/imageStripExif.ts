@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const imageStripExifProcessor: ProcessorDef = {
   nodeType: "image-strip-exif",
   name: "Strip EXIF",
-  description: "Remove all EXIF metadata from images (GPS, camera info, timestamps)",
+  description: "Strip all EXIF metadata from images (GPS, camera info, timestamps)",
   category: "image",
   accepts: ["image/jpeg", "image/png", "image/webp"] as const,
   platforms: ["browser"] as const,

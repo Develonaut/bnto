@@ -38,7 +38,7 @@ impl NodeProcessor for FileCopy {
         NodeMetadata {
             node_type: "file-copy".to_string(),
             name: "Copy Files".to_string(),
-            description: "Place output files in a destination directory with conflict handling."
+            description: "Copy output files into a destination folder, with conflict handling."
                 .to_string(),
             category: NodeCategory::File,
             accepts: vec![],
@@ -172,15 +172,15 @@ fn build_copy_params() -> Vec<ParameterDef> {
         ParameterDef {
             name: "destination".to_string(),
             label: "Destination".to_string(),
-            description: "Directory path to copy files into.".to_string(),
+            description: "Folder to copy files into.".to_string(),
             param_type: ParameterType::String,
             placeholder: Some("./output".to_string()),
             ..Default::default()
         },
         ParameterDef {
             name: "create_dirs".to_string(),
-            label: "Create Directories".to_string(),
-            description: "Automatically create the destination directory if it doesn't exist."
+            label: "Create Folders".to_string(),
+            description: "Automatically create the destination folder if it doesn't exist."
                 .to_string(),
             param_type: ParameterType::Boolean,
             default: Some(serde_json::json!(true)),

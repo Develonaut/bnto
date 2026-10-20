@@ -37,7 +37,9 @@ impl NodeProcessor for CleanSpreadsheet {
         NodeMetadata {
             node_type: "spreadsheet-clean".to_string(),
             name: "Clean CSV".to_string(),
-            description: "Remove empty rows, trim whitespace, and deduplicate CSV data".to_string(),
+            description:
+                "Clean CSV data by removing empty rows, trimming whitespace, and deduplicating"
+                    .to_string(),
             category: NodeCategory::Spreadsheet,
             accepts: vec!["text/csv".to_string()],
             platforms: vec!["browser".to_string()],

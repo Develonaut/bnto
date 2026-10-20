@@ -11,7 +11,7 @@ export const assertProcessor: ProcessorDef = {
   nodeType: "assert",
   name: "Assert",
   description:
-    "Fail the run when a comparison doesn't hold (equals, not equals, after, before); otherwise pass files through unchanged.",
+    "Assert a comparison on each item (equals, not equals, after, before); fail the run when it doesn't hold, otherwise pass files through unchanged.",
   category: "control",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

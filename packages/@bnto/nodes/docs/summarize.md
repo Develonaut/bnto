@@ -1,6 +1,6 @@
 # Summarize Node
 
-> Group items by fields; output one item per group with its count and field totals.
+> Summarize items into one per group of fields, with its count and field totals.
 
 **Category:** data | **Platforms:** browser | **Container:** no
 

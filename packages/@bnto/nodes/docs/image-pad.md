@@ -1,6 +1,6 @@
 # Pad Images Node
 
-> Center images on a larger canvas, filling the added space with transparency or a color.
+> Pad images onto a larger, centered canvas, filling the added space with transparency or a color.
 
 **Category:** image | **Platforms:** browser | **Container:** no
 

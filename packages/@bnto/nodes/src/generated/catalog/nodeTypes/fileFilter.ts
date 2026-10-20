@@ -10,7 +10,8 @@ import type { NodeTypeInfo } from "../types";
 export const fileFilterNodeType: NodeTypeInfo = {
   name: "file-filter",
   label: "Filter Files",
-  description: "Keep or drop files by extension, name or path pattern, and size.",
+  description:
+    "Filter files by extension, name or path pattern, and size, keeping or dropping the matches.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

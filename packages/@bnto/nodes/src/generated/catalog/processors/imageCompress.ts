@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const imageCompressProcessor: ProcessorDef = {
   nodeType: "image-compress",
   name: "Compress Images",
-  description: "Reduce image file size while maintaining quality",
+  description: "Compress images to a smaller file size while maintaining quality",
   category: "image",
   accepts: ["image/jpeg", "image/png", "image/webp"] as const,
   platforms: ["browser"] as const,

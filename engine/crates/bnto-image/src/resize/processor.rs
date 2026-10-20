@@ -52,7 +52,7 @@ impl NodeProcessor for ResizeImages {
         NodeMetadata {
             node_type: "image-resize".to_string(),
             name: "Resize Images".to_string(),
-            description: "Change image dimensions while maintaining quality".to_string(),
+            description: "Resize images to new dimensions while maintaining quality".to_string(),
             category: NodeCategory::Image,
             accepts: image_accepts(),
             platforms: vec!["browser".to_string()],

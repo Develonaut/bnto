@@ -11,7 +11,7 @@ export const fileSortProcessor: ProcessorDef = {
   nodeType: "file-sort",
   name: "Sort Files",
   description:
-    "Reorder items by one or more metadata fields, each ascending or descending (`source, -title`). Stable; numbers sort numerically, missing values last. Data and metadata are untouched.",
+    "Sort items by one or more metadata fields, each ascending or descending (`source, -title`). Stable; numbers sort numerically, missing values last. Data and metadata are untouched.",
   category: "file",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

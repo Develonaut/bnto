@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const fileRenameProcessor: ProcessorDef = {
   nodeType: "file-rename",
   name: "Rename Files",
-  description: "Transform filenames using patterns, find/replace, case rules, and counters",
+  description: "Rename files using patterns, find/replace, case rules, and counters",
   category: "file",
   accepts: [] as const,
   platforms: ["browser"] as const,
