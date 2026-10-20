@@ -123,6 +123,12 @@ pub struct RunArgs {
     /// and failure alike. stderr and exit codes are unchanged.
     #[arg(long)]
     pub json: bool,
+
+    /// Stop the whole run after this many seconds: every step it started
+    /// is stopped, child processes included, and the run fails. Overrides
+    /// the recipe's settings.timeout.
+    #[arg(long, value_name = "SECONDS", value_parser = clap::value_parser!(u64).range(1..))]
+    pub timeout: Option<u64>,
 }
 
 // Arguments for `bnto dry-run` (help text comes from `Command::DryRun`).

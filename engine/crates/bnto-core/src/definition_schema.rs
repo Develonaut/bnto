@@ -107,6 +107,11 @@ fn pipeline_settings_schema() -> Value {
                 "description": "How the executor handles iteration over multiple input files. 'auto' wraps primitive sequences in implicit per-file loops; 'explicit' (default) executes exactly what's defined.",
                 "enum": ["auto", "explicit"],
                 "default": "explicit"
+            },
+            "timeout": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The whole run's time limit in seconds. Once it passes, every step the run started is stopped and the run fails. No limit when unset; `bnto run --timeout` overrides it."
             }
         },
         "additionalProperties": false
@@ -321,6 +326,14 @@ mod tests {
         assert!(values.contains(&"auto"));
         assert!(values.contains(&"explicit"));
         assert_eq!(iteration["default"], "explicit");
+    }
+
+    #[test]
+    fn test_settings_schema_has_timeout_in_whole_seconds() {
+        let schema = definition_json_schema();
+        let timeout = &schema["$defs"]["PipelineSettings"]["properties"]["timeout"];
+        assert_eq!(timeout["type"], "integer");
+        assert_eq!(timeout["minimum"], 1);
     }
 
     #[test]

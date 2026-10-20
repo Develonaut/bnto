@@ -10,4 +10,9 @@ export type PipelineSettings = {
    * How the executor iterates over multiple input files.
    */
   iteration: IterationMode;
+  /**
+   * The whole run's time limit, in seconds. Once it has passed, no step,
+   * file or loop iteration starts and the run fails. Unset means no limit.
+   */
+  timeout?: number;
 };

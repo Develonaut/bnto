@@ -5,6 +5,7 @@
 //        bnto run <recipe> <file1> --param quality=50
 //        bnto run <recipe> <file1> --dry-run  (run every node, write nothing)
 //        bnto run <recipe> <file1> --json  (summary as one JSON line on stdout)
+//        bnto run <recipe> <file1> --timeout 600  (stop the run after 600s)
 //        bnto list
 //        bnto info <recipe>
 //        bnto dry-run <recipe> [files...] [--param key=value]
@@ -46,8 +47,10 @@ mod progress;
 mod progress_indent;
 mod progressive_output;
 mod run;
+mod run_limit;
 mod run_output;
 mod run_verdict;
+mod run_watchdog;
 mod scratch;
 pub mod storage;
 pub mod telemetry;

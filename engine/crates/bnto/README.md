@@ -42,6 +42,9 @@ bnto run backup.bnto.json --vars machine.json
 # Also print the run's summary as one JSON line on stdout (for scripts)
 bnto run backup.bnto.json --vars machine.json --yes --json
 
+# Stop the whole run after 10 minutes (overrides the recipe's settings.timeout)
+bnto run backup.bnto.json --timeout 600
+
 # List available built-in recipes
 bnto list
 
@@ -75,6 +78,10 @@ bnto install download-video
 ### Output names
 
 With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. Names are only kept apart from each other: a file already in the output folder from an earlier run is replaced.
+
+### Time limit
+
+A recipe can limit its whole run with `"settings": { "timeout": <seconds> }` (a whole number above 0); `bnto run --timeout <seconds>` overrides it, or limits a recipe that sets none. With neither, a run has no limit. When the limit passes, every step the run started is stopped, child processes included (a shell-command's whole process tree), no further step, file, loop item or `always` closing step starts, and the run fails with `Pipeline failed: Run timed out after <seconds>s` as its last stderr line and exit code 1. `--json` reports the same message as `error`. The limit covers the whole run, from dependency checks to the last step; a shell-command's own `timeout` still stops just that command. `bnto dry-run` shows the recipe's limit, and `bnto check` reports a `settings.timeout` that isn't a whole number of seconds above 0.
 
 ### `bnto run --json`
 
@@ -159,6 +166,8 @@ src/
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
 +-- run_output.rs          # Writes run results and prints the summary
 +-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary
++-- run_limit.rs           # A run's time limit: the recipe's settings.timeout or `--timeout`
++-- run_watchdog.rs        # Kills a run's child processes and ends it once its time limit passes
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
 +-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`

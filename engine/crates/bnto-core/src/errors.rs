@@ -39,6 +39,11 @@ pub enum BntoError {
     #[error("Operation cancelled")]
     Cancelled,
 
+    /// The run passed its time limit (`settings.timeout`, or the consumer's
+    /// override), so nothing more of it started.
+    #[error("Run timed out after {secs}s")]
+    TimedOut { secs: u64 },
+
     // --- Resource Errors ---
     /// A file is too large for browser processing.
     /// Browser memory is limited (~2GB), so we check file sizes before
@@ -104,6 +109,20 @@ impl BntoError {
         Self::FailedWithOutput(Box::new(FailedOutput { error, output }))
     }
 
+    /// Whether this failure is, or began with, the run passing its time
+    /// limit. A timeout ends the run: no closing step or skipped loop item
+    /// runs past it.
+    pub fn is_timeout(&self) -> bool {
+        match self {
+            Self::TimedOut { .. } => true,
+            Self::FailedWithOutput(failed) => failed.error.is_timeout(),
+            Self::ClosingStepFailed { first, error, .. } => {
+                first.is_timeout() || error.is_timeout()
+            }
+            _ => false,
+        }
+    }
+
     /// The error itself and the output it handed over, if any.
     pub fn into_parts(self) -> (BntoError, Option<NodeOutput>) {
         match self {
@@ -142,6 +161,29 @@ mod tests {
         let msg = error.to_string();
 
         assert_eq!(msg, "Invalid input: missing file data");
+    }
+
+    #[test]
+    fn test_timed_out_error_names_the_limit() {
+        let error = BntoError::TimedOut { secs: 30 };
+        assert_eq!(error.to_string(), "Run timed out after 30s");
+    }
+
+    #[test]
+    fn test_a_timeout_is_seen_through_what_wraps_it() {
+        let output = NodeOutput {
+            files: vec![],
+            metadata: serde_json::Map::new(),
+        };
+        let wrapped = BntoError::with_output(BntoError::TimedOut { secs: 1 }, output);
+        assert!(wrapped.is_timeout());
+        let closing = BntoError::ClosingStepFailed {
+            first: Box::new(BntoError::ProcessingFailed("killed".into())),
+            node_id: "cleanup".into(),
+            error: Box::new(BntoError::TimedOut { secs: 1 }),
+        };
+        assert!(closing.is_timeout());
+        assert!(!BntoError::Cancelled.is_timeout());
     }
 
     #[test]

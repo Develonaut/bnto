@@ -1,20 +1,21 @@
 // `bnto run` verdicts — a run's last human line on stderr and, with `--json`,
 // the same `RunSummary` as one JSON line on stdout.
 
-use std::cell::RefCell;
 use std::fmt::Display;
 use std::process;
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
 use bnto_core::{NodeTally, PipelineReporter, PipelineResult, RunSummary};
 use colored::Colorize;
 
-/// Reports one run's outcome and ends a failed run.
+/// Reports one run's outcome and ends a failed run. Clones share the run's
+/// tally, so the run watchdog's thread can report it too.
+#[derive(Clone)]
 pub struct RunVerdict {
     json: bool,
     start: Instant,
-    tally: Rc<RefCell<NodeTally>>,
+    tally: Arc<Mutex<NodeTally>>,
 }
 
 impl RunVerdict {
@@ -23,15 +24,15 @@ impl RunVerdict {
         Self {
             json,
             start: Instant::now(),
-            tally: Rc::default(),
+            tally: Arc::default(),
         }
     }
 
     /// `inner`, with every event also folded into this run's node tally.
     pub fn tallying(&self, inner: PipelineReporter) -> PipelineReporter {
-        let tally = Rc::clone(&self.tally);
+        let tally = Arc::clone(&self.tally);
         PipelineReporter::new(move |event| {
-            tally.borrow_mut().record(&event);
+            tally.lock().unwrap().record(&event);
             inner.emit(event);
         })
     }
@@ -39,7 +40,7 @@ impl RunVerdict {
     /// The passing summary of `result`, with the nodes tallied so far.
     pub fn passed(&self, result: &PipelineResult) -> RunSummary {
         RunSummary::from_result(result, result.duration_ms)
-            .with_nodes(self.tally.borrow().nodes())
+            .with_nodes(self.tally.lock().unwrap().nodes())
             .with_node_metadata(&result.node_metadata)
     }
 
@@ -48,7 +49,7 @@ impl RunVerdict {
     /// skips destructors), then exit 1.
     pub fn fail(&self, label: &str, error: impl Display) -> ! {
         let elapsed_ms = self.start.elapsed().as_millis() as u64;
-        let nodes = self.tally.borrow().nodes();
+        let nodes = self.tally.lock().unwrap().nodes();
         let summary = RunSummary::from_error(error, elapsed_ms).with_nodes(nodes);
         let message = summary.error.as_deref().unwrap_or_default();
         eprintln!("{} {message}", label.red());
@@ -76,6 +77,8 @@ mod tests {
     use super::*;
     use bnto_core::PipelineEvent;
     use bnto_core::events::NodeInfo;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
     fn test_tallying_reporter_forwards_events_and_records_nodes() {

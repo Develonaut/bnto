@@ -4,7 +4,8 @@
 // (no events) except those marked `always`, which run in order like
 // `finally`: the first gets the files the failed step handed over, each
 // next one gets the previous one's output. A closing step that fails joins
-// the verdict after the first failure and hands over its own files.
+// the verdict after the first failure and hands over its own files. A run
+// that passed its time limit runs no closing step: nothing starts past it.
 
 use crate::errors::BntoError;
 use crate::pipeline::PipelineFile;
@@ -44,6 +45,9 @@ impl ChainFailure {
         file_offset: usize,
         position: ChainPosition,
     ) -> Self {
+        if self.error.is_timeout() {
+            return self;
+        }
         for (i, node) in rest.iter().enumerate().filter(|(_, n)| n.always) {
             let index = position.first_index + i;
             self = self.run_step(ctx, node, index, position.total_nodes, file_offset);
@@ -62,6 +66,9 @@ impl ChainFailure {
         file_offset: usize,
     ) -> Self {
         self.files = files;
+        if self.error.is_timeout() {
+            return self;
+        }
         let (index, total) = (position.first_index, position.total_nodes);
         self.run_step(ctx, node, index, total, file_offset)
     }

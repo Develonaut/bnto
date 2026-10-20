@@ -66,6 +66,7 @@ pub mod pipeline;
 
 /// `PipelineEdge` — a connection between two sibling pipeline nodes.
 pub mod pipeline_edge;
+pub mod pipeline_settings;
 
 /// Level graph — validates one level's edges and orders its nodes.
 pub mod graph;

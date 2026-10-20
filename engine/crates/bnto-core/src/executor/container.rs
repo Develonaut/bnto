@@ -94,6 +94,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     let mut records = NodeRecords::new();
 
     for (i, file) in files.into_iter().enumerate() {
+        ctx.check_time_limit()?;
         let iter_start = (ctx.now_ms)();
 
         ctx.reporter.emit(PipelineEvent::IterationStarted {
@@ -137,6 +138,10 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                     error: error_msg.clone(),
                 });
 
+                // A timeout ends the run; it is never a skippable item.
+                if error.is_timeout() {
+                    return Err(error);
+                }
                 match config.on_error {
                     OnErrorStrategy::FailFast => return Err(error),
                     OnErrorStrategy::Continue => {

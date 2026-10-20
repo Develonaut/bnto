@@ -255,6 +255,8 @@ fn process_per_file<F: Fn() -> u64 + Copy>(
     let shared = shared_params(ctx, node, &field_values)?;
     let mut out = LeafOutput::counting(processor.count_keys());
     for (i, file) in files.into_iter().enumerate() {
+        ctx.check_time_limit()
+            .map_err(|e| out.fail(e, &Params::new()))?;
         let params = params_for_file(ctx, node, &field_values, &shared, &file)
             .map_err(|e| out.fail(e, &Params::new()))?;
         let (id, index) = (&node.id, file_offset + i);

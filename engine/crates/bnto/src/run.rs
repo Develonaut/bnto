@@ -11,7 +11,8 @@ use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
-use crate::{context, dry_run, input, progress, telemetry, vars};
+use crate::run_watchdog::RunWatchdog;
+use crate::{context, dry_run, input, progress, run_limit, telemetry, vars};
 
 /// The `bnto run` switches that change what a run does.
 #[derive(Clone, Copy)]
@@ -24,6 +25,8 @@ pub struct RunFlags<'a> {
     pub vars: &'a [String],
     /// `--json`: also print the run summary as one JSON line on stdout.
     pub json: bool,
+    /// `--timeout`: the run's time limit in seconds, over the recipe's.
+    pub timeout: Option<u64>,
 }
 
 /// Input facts recorded for logging and telemetry.
@@ -39,6 +42,8 @@ struct RunTarget {
     mode: String,
     output_dir: String,
     dry_run: bool,
+    /// The run's time limit in seconds, if it has one.
+    time_limit: Option<u64>,
 }
 
 /// Run a recipe (slug or path) against `inputs`.
@@ -57,6 +62,9 @@ pub fn run_recipe(
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
     prepared.definition_json = resolve_vars(&prepared.definition_json, flags.vars, &verdict);
+    let limited = run_limit::apply(&prepared.definition_json, flags.timeout);
+    let (definition_json, time_limit) = verdict.or_fail(limited, "Error:");
+    prepared.definition_json = definition_json;
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides);
     log_run_start(logger, &stats);
@@ -64,7 +72,7 @@ pub fn run_recipe(
     let start = Instant::now();
     let ctx = context::NativeContext::current_dir().map(|c| c.with_dry_run(flags.dry_run));
     let ctx = verdict.or_fail(ctx, "Error:");
-    let target = run_target(output_override, flags.dry_run, &prepared, &ctx);
+    let target = run_target(output_override, flags.dry_run, time_limit, &prepared, &ctx);
     // `ctx` lives to the end of this function: its scratch dir holds the
     // temp files the output step copies from, and dropping it deletes them.
     match execute(prepared, &ctx, &target, logger, &verdict) {
@@ -86,7 +94,27 @@ fn execute(
     if target.dry_run {
         dry_run::print_shell_note(&prepared.definition_json);
     }
-    bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, ctx)
+    watched(target.time_limit, verdict, || {
+        bnto_engine::run_pipeline(&prepared.definition_json, prepared.files, &reporter, ctx)
+    })
+}
+
+/// `run`, watched when the run has a time limit: once the limit passes, the
+/// run timed out, whatever `run` returned.
+fn watched<T>(
+    time_limit: Option<u64>,
+    verdict: &RunVerdict,
+    run: impl FnOnce() -> Result<T, bnto_core::BntoError>,
+) -> Result<T, bnto_core::BntoError> {
+    let Some(secs) = time_limit else {
+        return run();
+    };
+    let watchdog = RunWatchdog::for_run(secs, verdict.clone());
+    let result = run();
+    if watchdog.disarm() {
+        return Err(bnto_core::BntoError::TimedOut { secs });
+    }
+    result
 }
 
 /// Read recipe JSON — try catalog slug first, then disk path.
@@ -135,6 +163,7 @@ fn log_run_start(logger: &Arc<dyn Logger>, stats: &RunStats) {
 fn run_target(
     output_override: Option<&str>,
     dry_run: bool,
+    time_limit: Option<u64>,
     prepared: &input::PreparedInput,
     ctx: &context::NativeContext,
 ) -> RunTarget {
@@ -144,6 +173,7 @@ fn run_target(
         // Priority chain: explicit --output > recipe directory param > default "."
         output_dir: resolve_effective_output_dir(output_override, def_json, ctx, &prepared.files),
         dry_run,
+        time_limit,
     }
 }
 
