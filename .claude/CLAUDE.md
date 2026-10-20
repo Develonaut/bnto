@@ -37,6 +37,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Convex queries / mutations    | [scopes/backend/convex.md](.claude/scopes/backend/convex.md)                                                                                   |
 | Node system responsibilities  | [scopes/rust/node-responsibilities.md](.claude/scopes/rust/node-responsibilities.md)                                                           |
 | Adding a new engine node      | [scopes/rust/engine-node-patterns.md](.claude/scopes/rust/engine-node-patterns.md)                                                             |
+| Naming a node, verb or param  | [scopes/rust/node-vocabulary.md](.claude/scopes/rust/node-vocabulary.md)                                                                       |
 | Adding a new recipe           | [scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe](.claude/scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe) |
 | Security / trust boundaries   | [scopes/security/security.md](.claude/scopes/security/security.md)                                                                             |
 | Planning multi-PR features    | [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md)                                                               |
@@ -335,6 +336,7 @@ These rules do NOT auto-load. Read them yourself when you start working in a sco
 | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
 | [scopes/rust/node-responsibilities.md](.claude/scopes/rust/node-responsibilities.md) | Engine / @bnto/nodes / Editor responsibility matrix                                      |
 | [scopes/rust/engine-node-patterns.md](.claude/scopes/rust/engine-node-patterns.md)   | Adding new nodes & recipes — full checklists, test counts, codegen, surface verification |
+| [scopes/rust/node-vocabulary.md](.claude/scopes/rust/node-vocabulary.md)             | Node verbs, verb classes, label grammar, shared param names, open deviations             |
 
 **Security (cross-cutting):**
 

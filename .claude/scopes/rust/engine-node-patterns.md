@@ -23,7 +23,9 @@ Write failing tests BEFORE implementing the processor.
 - [ ] **`FileData` selection** — processors that don't modify file content MUST emit `FileData::Path` (zero-copy), not `FileData::Bytes`. See [FileData Selection](#filedata-selection) below
 - [ ] **Image processors use `encode::encode_image()`** — never custom encode functions
 - [ ] **Shared params use `common.rs`** — e.g., `quality_param_def()`, `image_accepts()`
-- [ ] **`name()` matches registry key** — `fn name()` returns the same string used in `registry.register()`. Convention: `category-operation` kebab-case (e.g., `"image-compress"`)
+- [ ] **Name from the vocabulary** — the type is `<domain>-<verb>` with a verb from [node-vocabulary.md](node-vocabulary.md), and the node keeps that verb's class contract (content, side effects, output name). A verb that isn't listed is added there in this PR
+- [ ] **`name()` matches registry key** — `fn name()` returns the same string used in `registry.register()` (e.g., `"image-compress"`)
+- [ ] **Label and params follow the vocabulary** — label is "Verb Objects" with the type's verb; params are camelCase and reuse the [Shared Params](node-vocabulary.md#shared-params) names for shared ideas
 - [ ] **Re-export from crate `lib.rs`** — add `pub mod {name};` and `pub use {name}::ProcessorName;`
 - [ ] **Unit tests pass** — `cargo test -p bnto-{crate}`
 
@@ -482,6 +484,9 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 | README table stale                                                      | Run `task readme:generate` after adding/changing recipes                           |
 | Nav category missing for new category                                   | Add to `CATEGORY_TITLES` and `CATEGORY_ORDER` in `recipeLinks.ts`                  |
 | `name()` doesn't match registry key                                     | Align to return the registry key (category-first: `"image-compress"`)              |
+| Noun type name, or a verb not in the vocabulary                         | Pick a verb from [node-vocabulary.md](node-vocabulary.md), or add one there        |
+| New param name for an idea another node already has                     | Reuse the [Shared Params](node-vocabulary.md#shared-params) name and values        |
+| Renamed a shipped type or param with no migration                       | Add a `bnto migrate` step in `engine/crates/bnto/src/migrate.rs`                   |
 | Crate README missing processors                                         | Update the Processors table when adding/removing processors                        |
 | Crate name doesn't match category                                       | Rename crate to match (e.g., `bnto-csv` → `bnto-spreadsheet`)                      |
 | Processor file name doesn't match operation                             | Rename file to match (e.g., `csv_to_json.rs` → `convert.rs`)                       |
