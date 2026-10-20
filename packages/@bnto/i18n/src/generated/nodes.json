@@ -208,7 +208,7 @@
         "description": "Folder to copy files into.",
         "placeholder": "./output"
       },
-      "create_dirs": {
+      "createDirs": {
         "label": "Create Folders",
         "description": "Automatically create the destination folder if it doesn't exist."
       },
@@ -216,7 +216,7 @@
         "label": "Conflict Resolution",
         "description": "What to do when a file with the same name already exists. \"newer\" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes."
       },
-      "tolerance_ms": {
+      "toleranceMs": {
         "label": "Time Tolerance",
         "description": "Modified-time gap treated as equal in \"newer\" mode; FAT and Google Drive round times."
       }
@@ -245,12 +245,12 @@
         "description": "Comma-separated list of file extensions to keep (e.g., \"jpg,png,svg\"). Leave empty to allow all extensions.",
         "placeholder": "jpg,png,svg"
       },
-      "name_pattern": {
+      "namePattern": {
         "label": "Name Pattern",
         "description": "Glob pattern to match against filenames (e.g., \"photo*\", \"*.backup.*\"). Uses glob syntax with * and ? wildcards.",
         "placeholder": "photo*"
       },
-      "pattern_mode": {
+      "patternMode": {
         "label": "Pattern Mode",
         "description": "How to interpret the name pattern."
       },
@@ -262,17 +262,17 @@
         "label": "Keep Matches",
         "description": "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept."
       },
-      "min_size": {
+      "minSize": {
         "label": "Minimum Size",
         "description": "Minimum file size in bytes. Files smaller than this are dropped."
       },
-      "max_size": {
+      "maxSize": {
         "label": "Maximum Size",
         "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit."
       }
     },
     "fileInspect": {
-      "include_hash": {
+      "includeHash": {
         "label": "Include Hash",
         "description": "Compute and include a SHA-256 hash of the file content."
       }
@@ -305,7 +305,7 @@
         "description": "Folder to move files under. Each file's name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and \"..\" are refused.",
         "placeholder": "./sorted"
       },
-      "create_dirs": {
+      "createDirs": {
         "label": "Create Folders",
         "description": "Create missing folders under the destination. Off refuses the run when a folder is missing."
       }
@@ -319,7 +319,7 @@
         "label": "Separator",
         "description": "Character to replace spaces and special characters (used with Sanitize)"
       },
-      "max_length": {
+      "maxLength": {
         "label": "Max Length",
         "description": "Maximum filename length after sanitize (0 = no limit)"
       },
@@ -348,11 +348,11 @@
         "description": "Template for the output filename (supports {{name}}, {{ext}}, {{index}}, {{date}}, {{counter}})",
         "placeholder": "{{name}}-{{counter}}.{{ext}}"
       },
-      "counter_start": {
+      "counterStart": {
         "label": "Counter Start",
         "description": "Starting number for the {{counter}} variable"
       },
-      "counter_pad": {
+      "counterPad": {
         "label": "Counter Padding",
         "description": "Zero-pad width for the counter (e.g., 3 → 001, 002)"
       },
@@ -534,7 +534,7 @@
         "label": "Environment",
         "description": "Additional environment variables for the command."
       },
-      "search_path": {
+      "searchPath": {
         "label": "Search Path",
         "description": "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory."
       },
@@ -574,7 +574,7 @@
         "description": "File to write, one row per file passing through; its folder must exist",
         "placeholder": "items.csv"
       },
-      "name_column": {
+      "nameColumn": {
         "label": "Name Column",
         "description": "Header of the first column, which holds each file's name"
       },
@@ -589,11 +589,11 @@
         "description": "Path of the CSV (with a header row) to look each file up in",
         "placeholder": "mapping.csv"
       },
-      "key_column": {
+      "keyColumn": {
         "label": "Key Column",
         "description": "Table column matched against each file; a key may appear on one row only"
       },
-      "match_on": {
+      "matchOn": {
         "label": "Match On",
         "description": "Which part of the file's name must equal the key exactly"
       },

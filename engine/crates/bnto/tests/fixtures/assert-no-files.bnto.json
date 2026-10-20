@@ -13,8 +13,8 @@
       "id": "grab-bags",
       "type": "file-filter",
       "parameters": {
-        "name_pattern": "^(utils|helpers|hooks)[.]ts$",
-        "pattern_mode": "regex"
+        "namePattern": "^(utils|helpers|hooks)[.]ts$",
+        "patternMode": "regex"
       }
     },
     {

@@ -104,7 +104,7 @@ fn rename_pattern_param() -> ParameterDef {
 
 fn rename_counter_start_param() -> ParameterDef {
     rename_number_param(
-        "counter_start",
+        "counterStart",
         "Counter Start",
         "Starting number for the {{counter}} variable",
         1,
@@ -114,7 +114,7 @@ fn rename_counter_start_param() -> ParameterDef {
 
 fn rename_counter_pad_param() -> ParameterDef {
     rename_number_param(
-        "counter_pad",
+        "counterPad",
         "Counter Padding",
         "Zero-pad width for the counter (e.g., 3 → 001, 002)",
         0,
@@ -159,7 +159,7 @@ fn rename_separator_param() -> ParameterDef {
 
 fn rename_max_length_param() -> ParameterDef {
     rename_number_param(
-        "max_length",
+        "maxLength",
         "Max Length",
         "Maximum filename length after sanitize (0 = no limit)",
         0,

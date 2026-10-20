@@ -23,7 +23,7 @@ export const fileCopyProcessor: ProcessorDef = {
       placeholder: "./output",
     },
     {
-      name: "create_dirs",
+      name: "createDirs",
       label: "Create Folders",
       description: "Automatically create the destination folder if it doesn't exist.",
       type: "boolean" as const,
@@ -39,7 +39,7 @@ export const fileCopyProcessor: ProcessorDef = {
       default: "skip",
     },
     {
-      name: "tolerance_ms",
+      name: "toleranceMs",
       label: "Time Tolerance",
       description:
         'Modified-time gap treated as equal in "newer" mode; FAT and Google Drive round times.',

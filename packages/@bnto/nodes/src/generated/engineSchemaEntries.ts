@@ -120,14 +120,14 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "newer", label: "Newer only (keep time)" },
       ],
     },
-    tolerance_ms: { suffix: "ms", visibleWhen: { param: "conflict", equals: "newer" } },
+    toleranceMs: { suffix: "ms", visibleWhen: { param: "conflict", equals: "newer" } },
   },
   "file-decode": {
     encoding: { options: [{ value: "base64", label: "Base64" }] },
   },
   "file-delete": {},
   "file-filter": {
-    pattern_mode: {
+    patternMode: {
       options: [
         { value: "glob", label: "Glob (*, ?)" },
         { value: "regex", label: "Regex" },
@@ -139,8 +139,8 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
         { value: "path", label: "Relative path" },
       ],
     },
-    min_size: { suffix: "bytes" },
-    max_size: { suffix: "bytes" },
+    minSize: { suffix: "bytes" },
+    maxSize: { suffix: "bytes" },
   },
   "file-inspect": {},
   "file-join": {},
@@ -393,7 +393,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
   },
   "spreadsheet-export": {},
   "spreadsheet-lookup": {
-    match_on: {
+    matchOn: {
       options: [
         { value: "path", label: "Path (relative folders included)" },
         { value: "filename", label: "Filename only" },

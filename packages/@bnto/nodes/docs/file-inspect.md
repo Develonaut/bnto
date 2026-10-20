@@ -8,7 +8,7 @@
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| include_hash | boolean | false | - | Compute and include a SHA-256 hash of the file content. |
+| includeHash | boolean | false | - | Compute and include a SHA-256 hash of the file content. |
 
 ## Configuration Example
 
@@ -16,7 +16,7 @@
 {
   "type": "file-inspect",
   "parameters": {
-      "include_hash": false
+      "includeHash": false
   }
 }
 ```

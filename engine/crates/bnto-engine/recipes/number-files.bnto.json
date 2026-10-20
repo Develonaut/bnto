@@ -56,8 +56,8 @@
       "metadata": {},
       "parameters": {
         "pattern": "{{counter}}-{{name}}.{{ext}}",
-        "counter_start": 1,
-        "counter_pad": 3
+        "counterStart": 1,
+        "counterPad": 3
       },
       "inputPorts": [],
       "outputPorts": []

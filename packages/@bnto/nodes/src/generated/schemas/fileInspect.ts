@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for file-inspect node parameters. */
 export const fileInspectParamsSchema = z.object({
-  include_hash: z.boolean().optional().default(false),
+  includeHash: z.boolean().optional().default(false),
 });
 
 /** Inferred TypeScript type for file-inspect node parameters. */
@@ -21,7 +21,7 @@ export const fileInspectNodeSchema: NodeSchema = {
   schemaVersion: 1,
   schema: fileInspectParamsSchema,
   params: {
-    include_hash: {
+    includeHash: {
       label: "Include Hash",
       description: "Compute and include a SHA-256 hash of the file content.",
     },

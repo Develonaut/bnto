@@ -685,13 +685,13 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 ### Node Vocabulary Alignment
 
-**Priority: Medium.** Bring shipped nodes in line with [node-vocabulary.md](scopes/rust/node-vocabulary.md). One PR per task (single-concern rule). Every breaking task adds a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`), runs codegen (`task wasm:codegen`), and updates recipes, fixtures and goldens. Remove the matching row from the doc's Audit table when a task merges. Do the labels first: they're non-breaking and cheap.
+**Priority: Medium.** Bring shipped nodes in line with [node-vocabulary.md](scopes/rust/node-vocabulary.md). One PR per task (single-concern rule). Every breaking task adds a `bnto migrate` step (`engine/crates/bnto/src/migrate/`), runs codegen (`task wasm:codegen`), and updates recipes, fixtures and goldens. Remove the matching row from the doc's Audit table when a task merges. Do the labels first: they're non-breaking and cheap.
 
 - [x] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
 - [x] `engine` — **Rename `file-metadata` → `file-inspect`** with a migration. Label "Inspect Files" shipped with it
 - [x] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Consent, trust and dry-run now match on `bnto_shell::NODE_TYPE`, not a string literal
 - [x] `engine` — **Refuse params a node doesn't declare** (before the camelCase rename, so old keys fail loudly): `bnto check` reports them and a run's pre-flight refuses them; renamed types and params point at `bnto migrate` (`bnto-core/src/renamed.rs`)
-- [ ] `engine` — **camelCase params** with a migration: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path`
+- [x] `engine` — **camelCase params** with a migration: the 14 snake_case params, renamed per node type by `bnto migrate`. `bnto-engine/tests/param_names.rs` now fails any new snake_case param
 - [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals`
 - [ ] `engine` — **Output suffixes**: `image-overlay` `-overlay` → `-overlaid`; `vector-optimize` adds `-optimized`. Regenerate goldens
 - [ ] `engine` — **Decide `transform` vs `edit-fields`** before `transform` gets a processor (see Engine: Future Node Operations)

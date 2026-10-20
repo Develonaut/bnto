@@ -1,7 +1,7 @@
 // file-copy `newer` mode — copy only when the source is newer than the target.
 //
 // Keeps mtimes comparable across FAT and Google Drive, which round them, by
-// treating a gap within `tolerance_ms` as equal. Never deletes anything.
+// treating a gap within `toleranceMs` as equal. Never deletes anything.
 
 use bnto_core::BntoError;
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, OutputFile};
@@ -9,7 +9,7 @@ use filetime::FileTime;
 use std::fs::{self, OpenOptions};
 use std::path::Path;
 
-/// Default tolerance when `tolerance_ms` is not set.
+/// Default tolerance when `toleranceMs` is not set.
 pub(crate) const DEFAULT_TOLERANCE_MS: u64 = 2000;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -68,9 +68,9 @@ fn passthrough_output(input: NodeInput, outcome: Outcome) -> NodeOutput {
     }
 }
 
-/// `tolerance_ms` as a whole number of milliseconds, 0 or more; the default when unset.
+/// `toleranceMs` as a whole number of milliseconds, 0 or more; the default when unset.
 fn tolerance_ms(params: &serde_json::Map<String, serde_json::Value>) -> Result<u64, BntoError> {
-    match params.get("tolerance_ms") {
+    match params.get("toleranceMs") {
         None => Ok(DEFAULT_TOLERANCE_MS),
         // as_f64 so `2000.0` (what the TUI and `{{fields.x}}` defaults emit) counts.
         Some(v) => v
@@ -79,7 +79,7 @@ fn tolerance_ms(params: &serde_json::Map<String, serde_json::Value>) -> Result<u
             .map(|n| n as u64)
             .ok_or_else(|| {
                 BntoError::InvalidInput(format!(
-                    "tolerance_ms must be a whole number of milliseconds, 0 or more; got {v}"
+                    "toleranceMs must be a whole number of milliseconds, 0 or more; got {v}"
                 ))
             }),
     }

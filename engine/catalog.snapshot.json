@@ -178,7 +178,7 @@
           "surfaceable": true
         },
         {
-          "name": "create_dirs",
+          "name": "createDirs",
           "label": "Create Folders",
           "description": "Automatically create the destination folder if it doesn't exist.",
           "paramType": {
@@ -216,7 +216,7 @@
           "surfaceable": true
         },
         {
-          "name": "tolerance_ms",
+          "name": "toleranceMs",
           "label": "Time Tolerance",
           "description": "Modified-time gap treated as equal in \"newer\" mode; FAT and Google Drive round times.",
           "paramType": {
@@ -323,7 +323,7 @@
           "surfaceable": true
         },
         {
-          "name": "name_pattern",
+          "name": "namePattern",
           "label": "Name Pattern",
           "description": "Glob pattern to match against filenames (e.g., \"photo*\", \"*.backup.*\"). Uses glob syntax with * and ? wildcards.",
           "paramType": {
@@ -333,7 +333,7 @@
           "surfaceable": true
         },
         {
-          "name": "pattern_mode",
+          "name": "patternMode",
           "label": "Pattern Mode",
           "description": "How to interpret the name pattern.",
           "paramType": {
@@ -383,7 +383,7 @@
           "surfaceable": true
         },
         {
-          "name": "min_size",
+          "name": "minSize",
           "label": "Minimum Size",
           "description": "Minimum file size in bytes. Files smaller than this are dropped.",
           "paramType": {
@@ -398,7 +398,7 @@
           "suffix": "bytes"
         },
         {
-          "name": "max_size",
+          "name": "maxSize",
           "label": "Maximum Size",
           "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit.",
           "paramType": {
@@ -426,7 +426,7 @@
       "icon": "file-text",
       "params": [
         {
-          "name": "include_hash",
+          "name": "includeHash",
           "label": "Include Hash",
           "description": "Compute and include a SHA-256 hash of the file content.",
           "paramType": {
@@ -530,7 +530,7 @@
           "surfaceable": true
         },
         {
-          "name": "create_dirs",
+          "name": "createDirs",
           "label": "Create Folders",
           "description": "Create missing folders under the destination. Off refuses the run when a folder is missing.",
           "paramType": {
@@ -586,7 +586,7 @@
           "surfaceable": true
         },
         {
-          "name": "max_length",
+          "name": "maxLength",
           "label": "Max Length",
           "description": "Maximum filename length after sanitize (0 = no limit)",
           "paramType": {
@@ -669,7 +669,7 @@
           "surfaceable": true
         },
         {
-          "name": "counter_start",
+          "name": "counterStart",
           "label": "Counter Start",
           "description": "Starting number for the {{counter}} variable",
           "paramType": {
@@ -683,7 +683,7 @@
           "surfaceable": true
         },
         {
-          "name": "counter_pad",
+          "name": "counterPad",
           "label": "Counter Padding",
           "description": "Zero-pad width for the counter (e.g., 3 → 001, 002)",
           "paramType": {
@@ -2013,7 +2013,7 @@
           "surfaceable": false
         },
         {
-          "name": "search_path",
+          "name": "searchPath",
           "label": "Search Path",
           "description": "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory.",
           "paramType": {
@@ -2152,7 +2152,7 @@
           "surfaceable": true
         },
         {
-          "name": "name_column",
+          "name": "nameColumn",
           "label": "Name Column",
           "description": "Header of the first column, which holds each file's name",
           "paramType": {
@@ -2198,7 +2198,7 @@
           "surfaceable": true
         },
         {
-          "name": "key_column",
+          "name": "keyColumn",
           "label": "Key Column",
           "description": "Table column matched against each file; a key may appear on one row only",
           "paramType": {
@@ -2208,7 +2208,7 @@
           "surfaceable": true
         },
         {
-          "name": "match_on",
+          "name": "matchOn",
           "label": "Match On",
           "description": "Which part of the file's name must equal the key exactly",
           "paramType": {
@@ -2783,7 +2783,7 @@
           "surfaceable": true
         },
         {
-          "name": "create_dirs",
+          "name": "createDirs",
           "label": "Create Folders",
           "description": "Automatically create the destination folder if it doesn't exist.",
           "paramType": {
@@ -2821,7 +2821,7 @@
           "surfaceable": true
         },
         {
-          "name": "tolerance_ms",
+          "name": "toleranceMs",
           "label": "Time Tolerance",
           "description": "Modified-time gap treated as equal in \"newer\" mode; FAT and Google Drive round times.",
           "paramType": {
@@ -2932,7 +2932,7 @@
           "surfaceable": true
         },
         {
-          "name": "name_pattern",
+          "name": "namePattern",
           "label": "Name Pattern",
           "description": "Glob pattern to match against filenames (e.g., \"photo*\", \"*.backup.*\"). Uses glob syntax with * and ? wildcards.",
           "paramType": {
@@ -2942,7 +2942,7 @@
           "surfaceable": true
         },
         {
-          "name": "pattern_mode",
+          "name": "patternMode",
           "label": "Pattern Mode",
           "description": "How to interpret the name pattern.",
           "paramType": {
@@ -2992,7 +2992,7 @@
           "surfaceable": true
         },
         {
-          "name": "min_size",
+          "name": "minSize",
           "label": "Minimum Size",
           "description": "Minimum file size in bytes. Files smaller than this are dropped.",
           "paramType": {
@@ -3007,7 +3007,7 @@
           "suffix": "bytes"
         },
         {
-          "name": "max_size",
+          "name": "maxSize",
           "label": "Maximum Size",
           "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit.",
           "paramType": {
@@ -3037,7 +3037,7 @@
       ],
       "parameters": [
         {
-          "name": "include_hash",
+          "name": "includeHash",
           "label": "Include Hash",
           "description": "Compute and include a SHA-256 hash of the file content.",
           "paramType": {
@@ -3145,7 +3145,7 @@
           "surfaceable": true
         },
         {
-          "name": "create_dirs",
+          "name": "createDirs",
           "label": "Create Folders",
           "description": "Create missing folders under the destination. Off refuses the run when a folder is missing.",
           "paramType": {
@@ -3201,7 +3201,7 @@
           "surfaceable": true
         },
         {
-          "name": "max_length",
+          "name": "maxLength",
           "label": "Max Length",
           "description": "Maximum filename length after sanitize (0 = no limit)",
           "paramType": {
@@ -3284,7 +3284,7 @@
           "surfaceable": true
         },
         {
-          "name": "counter_start",
+          "name": "counterStart",
           "label": "Counter Start",
           "description": "Starting number for the {{counter}} variable",
           "paramType": {
@@ -3298,7 +3298,7 @@
           "surfaceable": true
         },
         {
-          "name": "counter_pad",
+          "name": "counterPad",
           "label": "Counter Padding",
           "description": "Zero-pad width for the counter (e.g., 3 → 001, 002)",
           "paramType": {
@@ -4127,7 +4127,7 @@
           "surfaceable": false
         },
         {
-          "name": "search_path",
+          "name": "searchPath",
           "label": "Search Path",
           "description": "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory.",
           "paramType": {
@@ -4271,7 +4271,7 @@
           "surfaceable": true
         },
         {
-          "name": "name_column",
+          "name": "nameColumn",
           "label": "Name Column",
           "description": "Header of the first column, which holds each file's name",
           "paramType": {
@@ -4318,7 +4318,7 @@
           "surfaceable": true
         },
         {
-          "name": "key_column",
+          "name": "keyColumn",
           "label": "Key Column",
           "description": "Table column matched against each file; a key may appear on one row only",
           "paramType": {
@@ -4328,7 +4328,7 @@
           "surfaceable": true
         },
         {
-          "name": "match_on",
+          "name": "matchOn",
           "label": "Match On",
           "description": "Which part of the file's name must equal the key exactly",
           "paramType": {
@@ -7683,8 +7683,8 @@
             "name": "Number",
             "outputPorts": [],
             "parameters": {
-              "counter_pad": 3,
-              "counter_start": 1,
+              "counterPad": 3,
+              "counterStart": 1,
               "pattern": "{{counter}}-{{name}}.{{ext}}"
             },
             "position": {

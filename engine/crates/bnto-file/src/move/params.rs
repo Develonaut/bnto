@@ -24,7 +24,7 @@ impl MoveParams {
             .to_string();
         Ok(Self {
             destination,
-            create_dirs: flag(params, "create_dirs", true),
+            create_dirs: flag(params, "createDirs", true),
         })
     }
 }
@@ -63,7 +63,7 @@ fn destination_param() -> ParameterDef {
 
 fn create_dirs_param() -> ParameterDef {
     ParameterDef {
-        name: "create_dirs".to_string(),
+        name: "createDirs".to_string(),
         label: "Create Folders".to_string(),
         description: "Create missing folders under the destination. Off refuses the run when \
                       a folder is missing."
@@ -101,15 +101,15 @@ mod tests {
             param.constraints.as_ref().is_some_and(|c| c.required)
         };
         assert!(required("destination"));
-        assert!(!required("create_dirs"));
+        assert!(!required("createDirs"));
     }
 
     #[test]
     fn test_create_dirs_defaults_on_and_reads_text() {
         assert!(read(json!({ "destination": "d" })).unwrap().create_dirs);
-        let off = read(json!({ "destination": "d", "create_dirs": "false" })).unwrap();
+        let off = read(json!({ "destination": "d", "createDirs": "false" })).unwrap();
         assert!(!off.create_dirs);
-        let off = read(json!({ "destination": "d", "create_dirs": false })).unwrap();
+        let off = read(json!({ "destination": "d", "createDirs": false })).unwrap();
         assert!(!off.create_dirs);
     }
 }

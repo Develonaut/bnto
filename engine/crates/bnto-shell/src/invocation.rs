@@ -4,7 +4,7 @@
 use bnto_core::CommandOptions;
 
 /// The command a recipe named, the program that actually runs (its full
-/// path from `search_path`, or the command itself), its arguments, and the
+/// path from `searchPath`, or the command itself), its arguments, and the
 /// env and time limit it runs with.
 pub(crate) struct Invocation<'a> {
     pub command: &'a str,

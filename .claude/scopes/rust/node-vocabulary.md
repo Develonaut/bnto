@@ -186,7 +186,7 @@ When two nodes need the same idea, they use the same param name, type and values
 
 Rules:
 
-- **camelCase**, like the rest of the recipe format (`inputCardinality`, `children`).
+- **camelCase**, like the rest of the recipe format (`inputCardinality`, `children`). `bnto-engine/tests/param_names.rs` fails any processor param that isn't.
 - **One name per meaning.** `case` is letter case (`lower` \| `upper` \| `title`). Case sensitivity is `caseSensitive: boolean`, not another `case`.
 - **Booleans read as a yes/no question about the node's behaviour**: `recursive`, `flatten`, `createDirs`. No `no*` / `disable*` negatives.
 - **Enum values are kebab-case** (`first-file`, `top-left`, `not-equals`).
@@ -199,7 +199,7 @@ Rules:
 1. Check the registry. Use an existing verb if its meaning fits, even if another word sounds nicer.
 2. If none fits, add a row in the right class in the same PR as the node: verb, meaning, node, and the synonyms it rules out.
 3. A new verb never duplicates an existing one's meaning. If it does, use the existing one.
-4. Renaming a shipped node type or param is a breaking change. It needs a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`) so old recipes keep working, a row in `engine/crates/bnto-core/src/renamed.rs` so `bnto check` and a run point an old recipe at `bnto migrate`, and its own PR.
+4. Renaming a shipped node type or param is a breaking change. It needs a `bnto migrate` step (`engine/crates/bnto/src/migrate/`) so old recipes keep working, a row in `engine/crates/bnto-core/src/renamed.rs` so `bnto check` and a run point an old recipe at `bnto migrate`, and its own PR.
 
 ---
 
@@ -207,13 +207,12 @@ Rules:
 
 Deviations from this doc in shipped nodes. Each fix is its own PR, tracked in [PLAN.md](../../PLAN.md#node-vocabulary-alignment). Remove a row when its PR merges.
 
-| Node / area                       | Deviation                                                                                                                                                                                                               | Fix                                                                                              | Breaking     |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------ |
-| 14 params                         | snake_case: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path` | camelCase                                                                                        | Yes, migrate |
-| `file-sort` `case`                | Means case sensitivity; `file-rename` `case` means letter case                                                                                                                                                          | `caseSensitive: boolean`                                                                         | Yes, migrate |
-| `spreadsheet-merge` `deduplicate` | Same idea as `spreadsheet-clean` `removeDuplicates`                                                                                                                                                                     | `removeDuplicates`                                                                               | Yes, migrate |
-| `spreadsheet-export` `overwrite`  | Bare boolean for a conflict                                                                                                                                                                                             | `conflict` enum                                                                                  | Yes, migrate |
-| `assert` `op` value `not_equals`  | snake_case enum value                                                                                                                                                                                                   | `not-equals`                                                                                     | Yes, migrate |
-| `image-overlay` output            | Suffix `-overlay`                                                                                                                                                                                                       | `-overlaid`                                                                                      | Output names |
-| `vector-optimize` output          | Keeps the input name; other Change nodes add a suffix                                                                                                                                                                   | `-optimized`                                                                                     | Output names |
-| `transform` vs `edit-fields`      | Both set values from expressions. `transform` has no processor yet                                                                                                                                                      | Decide before `transform` gets a processor: fold it into `edit-fields`, or define the split here | n/a          |
+| Node / area                       | Deviation                                                          | Fix                                                                                              | Breaking     |
+| --------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------ |
+| `file-sort` `case`                | Means case sensitivity; `file-rename` `case` means letter case     | `caseSensitive: boolean`                                                                         | Yes, migrate |
+| `spreadsheet-merge` `deduplicate` | Same idea as `spreadsheet-clean` `removeDuplicates`                | `removeDuplicates`                                                                               | Yes, migrate |
+| `spreadsheet-export` `overwrite`  | Bare boolean for a conflict                                        | `conflict` enum                                                                                  | Yes, migrate |
+| `assert` `op` value `not_equals`  | snake_case enum value                                              | `not-equals`                                                                                     | Yes, migrate |
+| `image-overlay` output            | Suffix `-overlay`                                                  | `-overlaid`                                                                                      | Output names |
+| `vector-optimize` output          | Keeps the input name; other Change nodes add a suffix              | `-optimized`                                                                                     | Output names |
+| `transform` vs `edit-fields`      | Both set values from expressions. `transform` has no processor yet | Decide before `transform` gets a processor: fold it into `edit-fields`, or define the split here | n/a          |

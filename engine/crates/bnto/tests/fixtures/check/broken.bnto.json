@@ -12,7 +12,7 @@
     {
       "id": "only-docs",
       "type": "file-filter",
-      "parameters": { "name_pattern": "(", "pattern_mode": "regex" }
+      "parameters": { "namePattern": "(", "patternMode": "regex" }
     },
     {
       "id": "zap",

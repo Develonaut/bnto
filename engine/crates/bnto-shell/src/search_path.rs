@@ -1,7 +1,7 @@
-// `search_path` — the folders a shell-run looks in for its command.
+// `searchPath` — the folders a shell-run looks in for its command.
 //
 // `command` stays a bare name (validate.rs refuses paths and shells). When a
-// recipe sets `search_path`, the command is found in those folders only, in
+// recipe sets `searchPath`, the command is found in those folders only, in
 // order, and run by its full path; PATH is not consulted, so a wrong folder
 // fails loudly instead of running some other copy. The child's environment
 // (PATH included) is untouched. Relative folders are under the work dir.
@@ -10,10 +10,10 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
-/// `search_path` as a list of folders: a list of text, or one string.
+/// `searchPath` as a list of folders: a list of text, or one string.
 /// Missing or empty means "use PATH as usual".
 pub fn read_search_path(value: Option<&Value>) -> Result<Vec<String>, String> {
-    let refused = || "'search_path' must be a list of folder paths".to_string();
+    let refused = || "'searchPath' must be a list of folder paths".to_string();
     let folders = match value {
         None | Some(Value::Null) => return Ok(Vec::new()),
         Some(Value::String(s)) => vec![s.clone()],
@@ -24,7 +24,7 @@ pub fn read_search_path(value: Option<&Value>) -> Result<Vec<String>, String> {
         Some(_) => return Err(refused()),
     };
     if folders.iter().any(|f| f.trim().is_empty()) {
-        return Err("'search_path' has an empty folder".to_string());
+        return Err("'searchPath' has an empty folder".to_string());
     }
     Ok(folders)
 }
@@ -74,7 +74,7 @@ const WINDOWS_PROGRAM_EXTENSIONS: &[&str] = &[".com", ".exe", ".bat", ".cmd"];
 fn not_found(command: &str, dirs: &[PathBuf]) -> String {
     let listed: Vec<String> = dirs.iter().map(|d| d.display().to_string()).collect();
     format!(
-        "'{command}' was not found in search_path: {}",
+        "'{command}' was not found in searchPath: {}",
         listed.join(", ")
     )
 }
@@ -112,7 +112,7 @@ mod tests {
     fn test_read_refuses_anything_but_text_folders() {
         for bad in [json!(3), json!([1]), json!(["a", ""]), json!({ "a": 1 })] {
             let err = read_search_path(Some(&bad)).unwrap_err();
-            assert!(err.contains("search_path"), "{bad}: {err}");
+            assert!(err.contains("searchPath"), "{bad}: {err}");
         }
     }
 

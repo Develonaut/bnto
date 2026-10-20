@@ -47,7 +47,7 @@
         "command": "greet",
         "args": [],
         "outputMode": "stdout",
-        "search_path": ["{{vars.Tools}}"]
+        "searchPath": ["{{vars.Tools}}"]
       },
       "inputPorts": [],
       "outputPorts": []

@@ -35,8 +35,8 @@ fn command_and_script_together_are_refused() {
 #[test]
 fn an_empty_script_and_a_search_path_are_refused() {
     assert_eq!(script_problems(&params(json!({ "script": "  " }))).len(), 1);
-    let found = script_problems(&params(json!({ "script": "x", "search_path": ["bin"] })));
-    assert!(found[0].contains("search_path"), "{found:?}");
+    let found = script_problems(&params(json!({ "script": "x", "searchPath": ["bin"] })));
+    assert!(found[0].contains("searchPath"), "{found:?}");
 }
 
 #[test]

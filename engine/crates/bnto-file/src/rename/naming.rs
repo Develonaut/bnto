@@ -61,12 +61,12 @@ fn apply_pattern(
 }
 
 /// Format the counter value with zero-padding.
-/// Reads `__counter` (injected by process_batch) or falls back to counter_start.
+/// Reads `__counter` (injected by process_batch) or falls back to counterStart.
 fn format_counter(params: &serde_json::Map<String, serde_json::Value>) -> String {
     let counter_value = get_int_param(params, "__counter")
-        .or_else(|| get_int_param(params, "counter_start"))
+        .or_else(|| get_int_param(params, "counterStart"))
         .unwrap_or(1);
-    let pad = get_int_param(params, "counter_pad").unwrap_or(0);
+    let pad = get_int_param(params, "counterPad").unwrap_or(0);
 
     if pad > 0 {
         format!("{:0>width$}", counter_value, width = pad)
@@ -174,7 +174,7 @@ mod tests {
             serde_json::Value::Number(serde_json::Number::from(7)),
         );
         params.insert(
-            "counter_pad".to_string(),
+            "counterPad".to_string(),
             serde_json::Value::Number(serde_json::Number::from(3)),
         );
         assert_eq!(format_counter(&params), "007");

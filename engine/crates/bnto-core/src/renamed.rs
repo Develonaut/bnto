@@ -3,14 +3,33 @@
 // and point at `bnto migrate`, instead of a bare "unknown". Add a row here
 // in the same PR as the migration that renames it.
 
-/// `(old type, new type)` for every renamed node type.
-const NODE_TYPES: &[(&str, &str)] = &[
+/// `(old type, new type)` for every renamed node type. `bnto migrate`'s
+/// tests check it applies each one.
+pub const NODE_TYPES: &[(&str, &str)] = &[
     ("file-metadata", "file-inspect"),
     ("shell-command", "shell-run"),
 ];
 
-/// `(node type, old param, new param)` for every renamed param.
-const PARAMS: &[(&str, &str, &str)] = &[("image-compress", "compression", "quality")];
+/// `(node type, old param, new param)` for every renamed param, under the
+/// node's current type. `bnto migrate`'s tests check it applies each one.
+pub const PARAMS: &[(&str, &str, &str)] = &[
+    ("image-compress", "compression", "quality"),
+    ("file-copy", "create_dirs", "createDirs"),
+    ("file-copy", "tolerance_ms", "toleranceMs"),
+    ("file-filter", "name_pattern", "namePattern"),
+    ("file-filter", "pattern_mode", "patternMode"),
+    ("file-filter", "min_size", "minSize"),
+    ("file-filter", "max_size", "maxSize"),
+    ("file-inspect", "include_hash", "includeHash"),
+    ("file-move", "create_dirs", "createDirs"),
+    ("file-rename", "max_length", "maxLength"),
+    ("file-rename", "counter_start", "counterStart"),
+    ("file-rename", "counter_pad", "counterPad"),
+    ("shell-run", "search_path", "searchPath"),
+    ("spreadsheet-export", "name_column", "nameColumn"),
+    ("spreadsheet-lookup", "key_column", "keyColumn"),
+    ("spreadsheet-lookup", "match_on", "matchOn"),
+];
 
 /// `message` about an unknown `node_type`, with the rename hint appended
 /// when a migration renamed that type.

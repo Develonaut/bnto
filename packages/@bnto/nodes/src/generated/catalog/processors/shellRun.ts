@@ -77,7 +77,7 @@ export const shellRunProcessor: ProcessorDef = {
       surfaceable: false,
     },
     {
-      name: "search_path",
+      name: "searchPath",
       label: "Search Path",
       description:
         "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory.",

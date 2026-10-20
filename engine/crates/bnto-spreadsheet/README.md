@@ -39,7 +39,7 @@ input (items.json) → spreadsheet-read → file-rename (pattern: "{{item.meta.i
 
 ## Looking Up Rows
 
-`spreadsheet-lookup` joins each file to a row of the CSV at `table` (the VLOOKUP pattern). The row whose `key_column` equals the file's pipeline name exactly, or only its last path segment with `match_on: filename`, becomes the file's metadata, so later nodes read its columns with `{{item.<column>}}`. File data passes through untouched.
+`spreadsheet-lookup` joins each file to a row of the CSV at `table` (the VLOOKUP pattern). The row whose `keyColumn` equals the file's pipeline name exactly, or only its last path segment with `matchOn: filename`, becomes the file's metadata, so later nodes read its columns with `{{item.<column>}}`. File data passes through untouched.
 
 A key may appear on one row only; rows with an empty key are skipped. Keys are compared as written: pipeline names use `/` on every OS, and no Unicode normalization is applied. A relative `table` path resolves against the current directory.
 
@@ -54,16 +54,16 @@ A later node that reads a column the file doesn't carry (e.g. `{{item.new_name}}
 Renaming a library from a mapping table, and undoing it from the same table. The undo matches on the leaf name, so it needs every `new_name` in the table to be unique:
 
 ```
-file-collect (flatten: false) → spreadsheet-lookup (key_column: name)
+file-collect (flatten: false) → spreadsheet-lookup (keyColumn: name)
   → file-rename (pattern: "{{item.new_name}}") → output (mode: overwrite)
 
-file-collect (flatten: false) → spreadsheet-lookup (key_column: new_name, match_on: filename)
+file-collect (flatten: false) → spreadsheet-lookup (keyColumn: new_name, matchOn: filename)
   → file-rename (pattern: "{{item.name}}") → output (mode: overwrite)
 ```
 
 ## Exporting Items
 
-`spreadsheet-export` writes the files passing through as a CSV at `path` and passes them on unchanged; it never reads file content. One row per file: `name_column` (default `file`) holds the file's pipeline name, then every metadata key seen across the files, in the order first seen (alphabetical within one file), with an empty cell where a file lacks a key. Arrays and objects are written as JSON. It's a batch node, so it writes once per run, and the run output names the path and row count.
+`spreadsheet-export` writes the files passing through as a CSV at `path` and passes them on unchanged; it never reads file content. One row per file: `nameColumn` (default `file`) holds the file's pipeline name, then every metadata key seen across the files, in the order first seen (alphabetical within one file), with an empty cell where a file lacks a key. Arrays and objects are written as JSON. It's a batch node, so it writes once per run, and the run output names the path and row count.
 
 - **The folder must exist**, and a relative `path` resolves against the current directory. Keep the CSV outside a folder the recipe collects, or the next run collects it too.
 - **An existing file is kept** and fails the run, since it may be an earlier run's record; set `overwrite` to replace it. The CSV is written to a temporary file and renamed into place, so an interrupted write never leaves half a record.
@@ -71,7 +71,7 @@ file-collect (flatten: false) → spreadsheet-lookup (key_column: new_name, matc
 - **It records what the run planned.** It runs before `output`, so if `output` fails partway, the CSV lists renames that didn't all land.
 - Names that start with `=`, `+`, `-` or `@` may open as formulas in a spreadsheet app; the CSV keeps them as written so bnto reads them back exactly.
 
-After `spreadsheet-lookup` and `file-rename`, the CSV is the run's record: each file's new name (`file`), the row's columns (`name`, `new_name`, …) and `unmatched`. It drives the undo: `spreadsheet-lookup` with `table` set to the record, `key_column: file` and `match_on: filename`, then `file-rename` with `pattern: "{{item.name}}"`. An undo that also exports needs another `name_column`, since its files carry the record's `file` column.
+After `spreadsheet-lookup` and `file-rename`, the CSV is the run's record: each file's new name (`file`), the row's columns (`name`, `new_name`, …) and `unmatched`. It drives the undo: `spreadsheet-lookup` with `table` set to the record, `keyColumn: file` and `matchOn: filename`, then `file-rename` with `pattern: "{{item.name}}"`. An undo that also exports needs another `nameColumn`, since its files carry the record's `file` column.
 
 ## Directory Structure
 

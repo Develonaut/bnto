@@ -45,7 +45,7 @@ src/
 ├── filter/           # FileFilter processor (file-filter)
 │   ├── mod.rs              # NodeProcessor impl (per-file), extension / pattern / size criteria
 │   ├── params.rs           # Parameter schema
-│   └── pattern.rs          # name_pattern compiled once, reused while it stays the same
+│   └── pattern.rs          # namePattern compiled once, reused while it stays the same
 ├── inspect.rs        # FileInspect processor + metadata
 ├── render/           # FileRender processor (file-render)
 │   ├── mod.rs              # NodeProcessor impl (batch), layout, mime, rows metadata

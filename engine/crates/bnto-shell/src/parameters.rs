@@ -132,7 +132,7 @@ fn env_param() -> ParameterDef {
 
 fn search_path_param() -> ParameterDef {
     ParameterDef {
-        name: "search_path".to_string(),
+        name: "searchPath".to_string(),
         label: "Search Path".to_string(),
         description: "Folders to find the command in, in order, instead of PATH. The command \
                       is still a bare name and runs by its full path; relative folders are \

@@ -10,8 +10,8 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for file-filter node parameters. */
 export const fileFilterParamsSchema = z.object({
   extensions: z.string().optional(),
-  name_pattern: z.string().optional(),
-  pattern_mode: z
+  namePattern: z.string().optional(),
+  patternMode: z
     .enum(["glob", "regex"] as const)
     .optional()
     .default("glob"),
@@ -20,8 +20,8 @@ export const fileFilterParamsSchema = z.object({
     .optional()
     .default("name"),
   keep: z.boolean().optional().default(true),
-  min_size: z.number().min(0).optional().default(0),
-  max_size: z.number().min(0).optional().default(0),
+  minSize: z.number().min(0).optional().default(0),
+  maxSize: z.number().min(0).optional().default(0),
 });
 
 /** Inferred TypeScript type for file-filter node parameters. */
@@ -39,13 +39,13 @@ export const fileFilterNodeSchema: NodeSchema = {
         'Comma-separated list of file extensions to keep (e.g., "jpg,png,svg"). Leave empty to allow all extensions.',
       placeholder: "jpg,png,svg",
     },
-    name_pattern: {
+    namePattern: {
       label: "Name Pattern",
       description:
         'Glob pattern to match against filenames (e.g., "photo*", "*.backup.*"). Uses glob syntax with * and ? wildcards.',
       placeholder: "photo*",
     },
-    pattern_mode: {
+    patternMode: {
       label: "Pattern Mode",
       description: "How to interpret the name pattern.",
     },
@@ -59,11 +59,11 @@ export const fileFilterNodeSchema: NodeSchema = {
       description:
         "When on, files matching every criterion are kept and the rest dropped. When off, matching files are dropped and the rest kept.",
     },
-    min_size: {
+    minSize: {
       label: "Minimum Size",
       description: "Minimum file size in bytes. Files smaller than this are dropped.",
     },
-    max_size: {
+    maxSize: {
       label: "Maximum Size",
       description:
         "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit.",

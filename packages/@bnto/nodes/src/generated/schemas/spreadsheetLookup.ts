@@ -10,8 +10,8 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for spreadsheet-lookup node parameters. */
 export const spreadsheetLookupParamsSchema = z.object({
   table: z.string(),
-  key_column: z.string().optional().default("name"),
-  match_on: z
+  keyColumn: z.string().optional().default("name"),
+  matchOn: z
     .enum(["path", "filename"] as const)
     .optional()
     .default("path"),
@@ -35,11 +35,11 @@ export const spreadsheetLookupNodeSchema: NodeSchema = {
       description: "Path of the CSV (with a header row) to look each file up in",
       placeholder: "mapping.csv",
     },
-    key_column: {
+    keyColumn: {
       label: "Key Column",
       description: "Table column matched against each file; a key may appear on one row only",
     },
-    match_on: {
+    matchOn: {
       label: "Match On",
       description: "Which part of the file's name must equal the key exactly",
     },

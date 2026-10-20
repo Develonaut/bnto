@@ -27,7 +27,7 @@ impl ExportParams {
         let path = text("path")
             .ok_or("'path' is required: the CSV file to write")?
             .to_string();
-        let name_column = text("name_column")
+        let name_column = text("nameColumn")
             .unwrap_or(DEFAULT_NAME_COLUMN)
             .to_string();
         Ok(Self {
@@ -70,7 +70,7 @@ fn path_param() -> ParameterDef {
 
 fn name_column_param() -> ParameterDef {
     ParameterDef {
-        name: "name_column".to_string(),
+        name: "nameColumn".to_string(),
         label: "Name Column".to_string(),
         description: "Header of the first column, which holds each file's name".to_string(),
         default: Some(serde_json::json!(DEFAULT_NAME_COLUMN)),
@@ -112,7 +112,7 @@ mod tests {
             read(json!({ "path": "a.csv" })).unwrap().name_column,
             "file"
         );
-        let p = read(json!({ "path": "a.csv", "name_column": "new_path" })).unwrap();
+        let p = read(json!({ "path": "a.csv", "nameColumn": "new_path" })).unwrap();
         assert_eq!(p.name_column, "new_path");
     }
 
@@ -136,7 +136,7 @@ mod tests {
         let defs = build_export_parameters();
         let default = defs
             .iter()
-            .find(|d| d.name == "name_column")
+            .find(|d| d.name == "nameColumn")
             .unwrap()
             .default
             .clone();

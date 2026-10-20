@@ -8,7 +8,7 @@ pub(super) struct Item<'a> {
     pub metadata: &'a serde_json::Map<String, serde_json::Value>,
 }
 
-/// The CSV text for `items`, with `name_column` as the first header.
+/// The CSV text for `items`, with `nameColumn` as the first header.
 /// Fails when a metadata key would repeat that header.
 pub(super) fn items_csv(items: &[Item<'_>], name_column: &str) -> Result<String, String> {
     let keys = metadata_keys(items);
@@ -37,7 +37,7 @@ fn refuse_repeated_name_column(keys: &[String], name_column: &str) -> Result<(),
     }
     Err(format!(
         "a file's metadata has a '{name_column}' key, which would repeat the name column; \
-         set name_column to another header"
+         set nameColumn to another header"
     ))
 }
 
@@ -171,7 +171,7 @@ mod tests {
         )
         .unwrap_err();
         assert!(
-            err.contains("'file'") && err.contains("name_column"),
+            err.contains("'file'") && err.contains("nameColumn"),
             "{err}"
         );
     }

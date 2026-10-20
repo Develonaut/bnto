@@ -10,7 +10,7 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for spreadsheet-export node parameters. */
 export const spreadsheetExportParamsSchema = z.object({
   path: z.string(),
-  name_column: z.string().optional().default("file"),
+  nameColumn: z.string().optional().default("file"),
   overwrite: z.boolean().optional().default(false),
 });
 
@@ -28,7 +28,7 @@ export const spreadsheetExportNodeSchema: NodeSchema = {
       description: "File to write, one row per file passing through; its folder must exist",
       placeholder: "items.csv",
     },
-    name_column: {
+    nameColumn: {
       label: "Name Column",
       description: "Header of the first column, which holds each file's name",
     },

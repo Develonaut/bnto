@@ -17,7 +17,7 @@ export const fileInspectProcessor: ProcessorDef = {
   platforms: ["browser", "cli", "desktop"] as const,
   parameters: [
     {
-      name: "include_hash",
+      name: "includeHash",
       label: "Include Hash",
       description: "Compute and include a SHA-256 hash of the file content.",
       type: "boolean" as const,

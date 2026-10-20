@@ -131,15 +131,15 @@ describe("file-rename", () => {
     expect(names).toEqual([
       "sanitize",
       "separator",
-      "max_length",
+      "maxLength",
       "find",
       "replace",
       "case",
       "prefix",
       "suffix",
       "pattern",
-      "counter_start",
-      "counter_pad",
+      "counterStart",
+      "counterPad",
       "extension",
     ]);
   });

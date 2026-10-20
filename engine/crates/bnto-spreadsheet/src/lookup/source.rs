@@ -22,7 +22,7 @@ const MAX_CACHED: usize = 16;
 
 static TABLES: Mutex<Option<Cache>> = Mutex::new(None);
 
-/// The table at `path`, indexed by `key_column`. Errors name the file.
+/// The table at `path`, indexed by `keyColumn`. Errors name the file.
 pub(super) fn load_table(path: &str, key_column: &str) -> Result<Arc<LookupTable>, BntoError> {
     let stat =
         std::fs::metadata(path).map_err(|e| table_error(path, &format!("cannot be read: {e}")))?;

@@ -19,7 +19,7 @@ fn sec30_batch_shim_args_cannot_break_out_of_cmd_quoting() {
         json!({
             "command": "echoargs",
             "args": ["{{fields.v}}"],
-            "search_path": [bin.to_str().unwrap()]
+            "searchPath": [bin.to_str().unwrap()]
         }),
         &["v"],
     ));

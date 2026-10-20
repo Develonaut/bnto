@@ -10,12 +10,12 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for file-copy node parameters. */
 export const fileCopyParamsSchema = z.object({
   destination: z.string().optional(),
-  create_dirs: z.boolean().optional().default(true),
+  createDirs: z.boolean().optional().default(true),
   conflict: z
     .enum(["skip", "overwrite", "rename", "newer"] as const)
     .optional()
     .default("skip"),
-  tolerance_ms: z.number().min(0).optional().default(2000),
+  toleranceMs: z.number().min(0).optional().default(2000),
 });
 
 /** Inferred TypeScript type for file-copy node parameters. */
@@ -32,7 +32,7 @@ export const fileCopyNodeSchema: NodeSchema = {
       description: "Folder to copy files into.",
       placeholder: "./output",
     },
-    create_dirs: {
+    createDirs: {
       label: "Create Folders",
       description: "Automatically create the destination folder if it doesn't exist.",
     },
@@ -41,7 +41,7 @@ export const fileCopyNodeSchema: NodeSchema = {
       description:
         'What to do when a file with the same name already exists. "newer" copies only when the destination is missing or older than the source (path input only), keeps the source\'s modified time, and never deletes.',
     },
-    tolerance_ms: {
+    toleranceMs: {
       label: "Time Tolerance",
       description:
         'Modified-time gap treated as equal in "newer" mode; FAT and Google Drive round times.',

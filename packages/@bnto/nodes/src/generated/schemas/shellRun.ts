@@ -21,7 +21,7 @@ export const shellRunParamsSchema = z.object({
   timeout: z.number().optional().default(300),
   maxOutputSize: z.number().optional().default(500),
   env: z.record(z.unknown()).optional(),
-  search_path: z.record(z.unknown()).optional(),
+  searchPath: z.record(z.unknown()).optional(),
   cwd: z.string().optional(),
 });
 
@@ -75,7 +75,7 @@ export const shellRunNodeSchema: NodeSchema = {
       description: "Additional environment variables for the command.",
       surfaceable: false,
     },
-    search_path: {
+    searchPath: {
       label: "Search Path",
       description:
         "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory.",

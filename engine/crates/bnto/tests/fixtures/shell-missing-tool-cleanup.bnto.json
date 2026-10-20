@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "Runs a tool from a search_path folder that lacks it, so the step fails before anything starts; closing steps still list a file and copy it to a destination."
+    "description": "Runs a tool from a searchPath folder that lacks it, so the step fails before anything starts; closing steps still list a file and copy it to a destination."
   },
   "parameters": {},
   "inputPorts": [],
@@ -51,7 +51,7 @@
       "parameters": {
         "command": "tool",
         "outputMode": "stdout",
-        "search_path": ["{{vars.Tools}}"]
+        "searchPath": ["{{vars.Tools}}"]
       },
       "inputPorts": [],
       "outputPorts": []

@@ -24,7 +24,7 @@ export const spreadsheetExportProcessor: ProcessorDef = {
       placeholder: "items.csv",
     },
     {
-      name: "name_column",
+      name: "nameColumn",
       label: "Name Column",
       description: "Header of the first column, which holds each file's name",
       type: "string" as const,

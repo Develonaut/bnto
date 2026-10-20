@@ -25,7 +25,7 @@ export const fileFilterProcessor: ProcessorDef = {
       placeholder: "jpg,png,svg",
     },
     {
-      name: "name_pattern",
+      name: "namePattern",
       label: "Name Pattern",
       description:
         'Glob pattern to match against filenames (e.g., "photo*", "*.backup.*"). Uses glob syntax with * and ? wildcards.',
@@ -33,7 +33,7 @@ export const fileFilterProcessor: ProcessorDef = {
       placeholder: "photo*",
     },
     {
-      name: "pattern_mode",
+      name: "patternMode",
       label: "Pattern Mode",
       description: "How to interpret the name pattern.",
       type: "enum" as const,
@@ -58,7 +58,7 @@ export const fileFilterProcessor: ProcessorDef = {
       default: true,
     },
     {
-      name: "min_size",
+      name: "minSize",
       label: "Minimum Size",
       description: "Minimum file size in bytes. Files smaller than this are dropped.",
       type: "number" as const,
@@ -66,7 +66,7 @@ export const fileFilterProcessor: ProcessorDef = {
       constraints: { min: 0, required: false },
     },
     {
-      name: "max_size",
+      name: "maxSize",
       label: "Maximum Size",
       description:
         "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit.",
