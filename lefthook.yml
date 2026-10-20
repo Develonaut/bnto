@@ -17,7 +17,7 @@ pre-commit:
     docs-validate:
       glob: "engine/**/*.{rs,toml}"
       priority: 3
-      run: npx tsx scripts/validate-docs.ts
+      run: pnpm exec tsx scripts/validate-docs.ts
 
     rust-fmt:
       glob: "engine/**/*.rs"

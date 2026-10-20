@@ -422,7 +422,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Generate Lighthouse config for preview
-        run: npx tsx scripts/generate-lighthouserc.ts --base-url ${{ needs.deploy-preview.outputs.preview-url }}
+        run: pnpm exec tsx scripts/generate-lighthouserc.ts --base-url ${{ needs.deploy-preview.outputs.preview-url }}
         env:
           VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
 
@@ -642,13 +642,13 @@ jobs:
 
       - name: Submit to IndexNow
         if: env.INDEXNOW_KEY != ''
-        run: npx tsx scripts/seo/submitIndexNow.ts
+        run: pnpm exec tsx scripts/seo/submitIndexNow.ts
         env:
           INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
 
       - name: Submit to Google Indexing API
         if: env.GOOGLE_INDEXING_KEY != ''
-        run: npx tsx scripts/seo/submitGoogleIndexing.ts
+        run: pnpm exec tsx scripts/seo/submitGoogleIndexing.ts
         env:
           GOOGLE_INDEXING_KEY: ${{ secrets.GOOGLE_INDEXING_KEY }}
 

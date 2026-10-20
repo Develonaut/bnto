@@ -96,19 +96,19 @@ tasks:
   docs:validate:
     desc: Validate crate README documentation is complete
     cmds:
-      - npx tsx scripts/validate-docs.ts
+      - pnpm exec tsx scripts/validate-docs.ts
 
   # README recipe table codegen (registry → README.md)
   readme:generate:
     desc: Update README.md recipe table from @bnto/registry
     cmds:
-      - npx tsx packages/@bnto/registry/scripts/generate-readme-recipes.ts
+      - pnpm exec tsx packages/@bnto/registry/scripts/generate-readme-recipes.ts
 
   # Node codegen (engine → TypeScript)
   nodes:generate:
     desc: Generate TypeScript node definitions from engine catalog snapshot
     cmds:
-      - npx tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
+      - pnpm exec tsx packages/@bnto/nodes/scripts/generate-from-catalog.ts
       - npx prettier --write "packages/@bnto/nodes/src/generated/**/*.ts"
 
   nodes:export-types:
@@ -125,12 +125,12 @@ tasks:
   theme:generate:
     desc: Generate CSS + Rust palette from theme/palette.toml
     cmds:
-      - npx tsx scripts/generate-theme.ts
+      - pnpm exec tsx scripts/generate-theme.ts
 
   theme:check:
     desc: Verify generated theme files match palette.toml (CI)
     cmds:
-      - npx tsx scripts/generate-theme.ts --check
+      - pnpm exec tsx scripts/generate-theme.ts --check
 
   # E2E tests (two-stage: browser parallel, editor serial)
   e2e:
@@ -154,18 +154,18 @@ tasks:
   seo:audit:
     desc: Run Lighthouse CI audit locally against all public routes
     cmds:
-      - npx tsx scripts/generate-lighthouserc.ts --with-server
+      - pnpm exec tsx scripts/generate-lighthouserc.ts --with-server
       - pnpm --filter @bnto/web build
       - pnpm --filter @bnto/web exec lhci autorun --config=../../lighthouserc.json --collect.numberOfRuns=1
 
   # SEO search engine notifications
   seo:index-now:
     desc: Submit URLs to IndexNow endpoints (Bing, Yandex)
-    cmds: [npx tsx scripts/seo/submitIndexNow.ts]
+    cmds: [pnpm exec tsx scripts/seo/submitIndexNow.ts]
 
   seo:submit-google:
     desc: Submit URLs to Google Indexing API
-    cmds: [npx tsx scripts/seo/submitGoogleIndexing.ts]
+    cmds: [pnpm exec tsx scripts/seo/submitGoogleIndexing.ts]
 
   seo:submit-all:
     desc: Run all search engine notifications (IndexNow + Google)
