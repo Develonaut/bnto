@@ -1,7 +1,7 @@
 // Recipe-level settings — the root definition's `settings`: how the executor
 // iterates over input files, and the whole run's time limit.
 
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "ts")]
 use ts_rs::TS;
 
@@ -47,20 +47,31 @@ pub struct PipelineSettings {
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",
-        deserialize_with = "positive_seconds"
+        with = "positive_seconds"
     )]
     #[cfg_attr(feature = "ts", ts(optional, type = "number"))]
     pub timeout: Option<u64>,
 }
 
 /// A time limit is a whole number of seconds above 0: a 0s limit would fail
-/// every run before its first step.
-fn positive_seconds<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<u64>, D::Error> {
-    match u64::deserialize(deserializer) {
-        Ok(secs) if secs > 0 => Ok(Some(secs)),
-        _ => Err(serde::de::Error::custom(
-            "settings.timeout must be a whole number of seconds above 0",
-        )),
+/// every run before its first step. (A `with` module, not `deserialize_with`,
+/// because ts-rs reads `with` and warns on the other.)
+mod positive_seconds {
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S: Serializer>(secs: &Option<u64>, serializer: S) -> Result<S::Ok, S::Error> {
+        secs.serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Option<u64>, D::Error> {
+        match u64::deserialize(deserializer) {
+            Ok(secs) if secs > 0 => Ok(Some(secs)),
+            _ => Err(serde::de::Error::custom(
+                "settings.timeout must be a whole number of seconds above 0",
+            )),
+        }
     }
 }
 
