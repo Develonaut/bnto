@@ -431,7 +431,8 @@ mod tests {
             data: FileData::Path(src.clone()),
             mime_type: "video/mp4".into(),
         }];
-        write_progressive_files(&out.to_string_lossy(), &files);
+        let mut names = crate::output_names::OutputNames::default();
+        write_progressive_files(&out.to_string_lossy(), &files, &mut names);
 
         assert_eq!(fs::read(out.join("renamed.mp4")).unwrap(), b"video");
         assert!(src.exists(), "source must survive a progressive write");
