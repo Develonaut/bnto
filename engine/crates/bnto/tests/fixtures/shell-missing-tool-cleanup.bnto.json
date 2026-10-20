@@ -40,7 +40,7 @@
     },
     {
       "id": "build",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Build",
       "position": {
@@ -51,9 +51,7 @@
       "parameters": {
         "command": "tool",
         "outputMode": "stdout",
-        "search_path": [
-          "{{vars.Tools}}"
-        ]
+        "search_path": ["{{vars.Tools}}"]
       },
       "inputPorts": [],
       "outputPorts": []
@@ -70,9 +68,7 @@
       "metadata": {},
       "parameters": {
         "base": "{{vars.Root}}",
-        "paths": [
-          "leftover.txt"
-        ]
+        "paths": ["leftover.txt"]
       },
       "inputPorts": [],
       "outputPorts": [],

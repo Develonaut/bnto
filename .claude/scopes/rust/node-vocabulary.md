@@ -13,7 +13,7 @@ The verbs and shared terms every engine node is named and built with. A verb is 
 - **Domain** is the kind of thing the node works on, and matches the crate (`bnto-image` → `image-*`). Domains: `file`, `image`, `vector`, `spreadsheet`, `shell`, `http`. New domains get a new crate.
 - **Verb** comes from the [Verb Registry](#verb-registry) below. A verb that isn't listed gets added here first, in the same PR as the node, with its class and contract.
 - **Object** only when the verb alone is ambiguous in that domain (`image-strip-exif`: strip what?). Never repeat the domain (`image-resize-image`).
-- **No noun names.** A noun like `shell-command` says what a node is about, not what it does. `shell-command` is being renamed (see [Audit](#audit-october-2026)).
+- **No noun names.** A noun like `file-metadata` or `shell-command` (both since renamed, with migrations) says what a node is about, not what it does.
 
 **Two tiers have no domain**, because they work on any item:
 
@@ -141,9 +141,9 @@ Planned: `split` (one file → many files of the same kind, e.g. PDF pages), `ex
 
 ### Run
 
-| Verb  | Means                                          | Nodes                               | Not                         |
-| ----- | ---------------------------------------------- | ----------------------------------- | --------------------------- |
-| `run` | Run an external program and collect its output | `shell-run` (today `shell-command`) | `exec`, `execute`, `invoke` |
+| Verb  | Means                                          | Nodes       | Not                         |
+| ----- | ---------------------------------------------- | ----------- | --------------------------- |
+| `run` | Run an external program and collect its output | `shell-run` | `exec`, `execute`, `invoke` |
 
 `run` matches `bnto run`. A future `recipe` node that runs another recipe is structural, not a `run` verb.
 
@@ -209,7 +209,6 @@ Deviations from this doc in shipped nodes. Each fix is its own PR, tracked in [P
 
 | Node / area                       | Deviation                                                                                                                                                                                                               | Fix                                                                                              | Breaking     |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------ |
-| `shell-command`                   | Noun name                                                                                                                                                                                                               | Rename to `shell-run`                                                                            | Yes, migrate |
 | 14 params                         | snake_case: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path` | camelCase                                                                                        | Yes, migrate |
 | `file-sort` `case`                | Means case sensitivity; `file-rename` `case` means letter case                                                                                                                                                          | `caseSensitive: boolean`                                                                         | Yes, migrate |
 | `spreadsheet-merge` `deduplicate` | Same idea as `spreadsheet-clean` `removeDuplicates`                                                                                                                                                                     | `removeDuplicates`                                                                               | Yes, migrate |

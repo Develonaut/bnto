@@ -1,4 +1,4 @@
-// `{{item.*}}` outside an `each` group. shell-command fills item values
+// `{{item.*}}` outside an `each` group. shell-run fills item values
 // itself, inside groups, so outside a loop the executor hands it every
 // `{{item.KEY}}` as written; one anywhere else has nothing to fill it.
 
@@ -18,7 +18,7 @@ pub(crate) fn unfilled_item(params: &Map<String, Value>) -> Option<String> {
     });
     let found = outside_groups.into_iter().find(|v| reads_item(v))?;
     Some(format!(
-        "{} has no value: shell-command fills {{{{item.*}}}} only inside an \
+        "{} has no value: shell-run fills {{{{item.*}}}} only inside an \
          \"each\" group in 'args'",
         first_item(found)
     ))
@@ -59,7 +59,7 @@ mod tests {
         let p = params(json!({ "args": ["--size={{item.size}}"] }));
         assert_eq!(
             unfilled_item(&p).unwrap(),
-            "{{item.size}} has no value: shell-command fills {{item.*}} only inside \
+            "{{item.size}} has no value: shell-run fills {{item.*}} only inside \
              an \"each\" group in 'args'"
         );
     }

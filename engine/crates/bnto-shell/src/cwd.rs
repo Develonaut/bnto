@@ -1,4 +1,4 @@
-// `cwd` — the folder a shell-command's command runs in.
+// `cwd` — the folder a shell-run's command runs in.
 //
 // A folder under the work dir, so a tool that reads config from where it
 // starts (rustup's rust-toolchain.toml, a package.json) sees that folder's.

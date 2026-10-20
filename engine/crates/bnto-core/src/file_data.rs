@@ -1,6 +1,6 @@
 // FileData — in-memory vs on-disk file content.
 //
-// Small outputs (images, CSVs) use `Bytes`. Large outputs from shell-command
+// Small outputs (images, CSVs) use `Bytes`. Large outputs from shell-run
 // file mode use `Path` to avoid reading multi-GB files into memory.
 
 use std::path::{Path, PathBuf};
@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 /// File content — either in-memory bytes or a path on disk.
 ///
 /// Small outputs (images, CSVs) use `Bytes`. Files on disk (CLI argument
-/// files, `file-collect` results, shell-command file-mode outputs) use `Path`
+/// files, `file-collect` results, shell-run file-mode outputs) use `Path`
 /// to avoid reading multi-GB files into memory. A `Path` may be the user's
 /// own file: write it out with `copy_to()`; `write_to()` moves it.
 #[derive(Debug, Clone, PartialEq)]

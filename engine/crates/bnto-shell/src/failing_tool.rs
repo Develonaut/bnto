@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use bnto_core::processor::{FileData, NodeInput, NodeOutput};
 use bnto_core::{BntoError, NodeProcessor, NoopContext, ProcessContext, ProgressReporter};
 
-use crate::ShellCommand;
+use crate::ShellRun;
 
 /// What the failing tool prints to stdout before it exits.
 pub(crate) const STDOUT: &[u8] = b"compiling a\ncompiling b\nerror in b\n";
@@ -22,7 +22,7 @@ impl FailingTool {
         Self(tempfile::tempdir().unwrap())
     }
 
-    /// Run shell-command with `params` (merged over `command: "tool"`).
+    /// Run shell-run with `params` (merged over `command: "tool"`).
     pub(crate) fn run(&self, params: serde_json::Value) -> Result<NodeOutput, BntoError> {
         let mut map = serde_json::Map::new();
         map.insert("command".into(), "tool".into());
@@ -33,7 +33,7 @@ impl FailingTool {
             mime_type: None,
             params: map,
         };
-        ShellCommand::new().process(input, &ProgressReporter::new_noop(), self)
+        ShellRun::new().process(input, &ProgressReporter::new_noop(), self)
     }
 }
 

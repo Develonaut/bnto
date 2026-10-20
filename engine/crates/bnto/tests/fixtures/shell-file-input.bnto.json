@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "A file-input recipe with a shell-command node, for trust-gate tests."
+    "description": "A file-input recipe with a shell-run node, for trust-gate tests."
   },
   "parameters": {},
   "inputPorts": [],
@@ -41,7 +41,7 @@
     },
     {
       "id": "git",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Git Version",
       "position": {
@@ -51,9 +51,7 @@
       "metadata": {},
       "parameters": {
         "command": "git",
-        "args": [
-          "--version"
-        ],
+        "args": ["--version"],
         "outputMode": "stdout"
       },
       "inputPorts": [],

@@ -1,6 +1,6 @@
 // `{"each": [...]}` arg groups — the group once per incoming file.
 //
-// shell-command gets every file its incoming edges carry. An `each` group in
+// shell-run gets every file its incoming edges carry. An `each` group in
 // `args` repeats once per file, in that order, so one command can take a
 // whole collected list (`-object=<path>` per DLL). Inside a group `{{path}}`
 // is the file on disk, `{{file}}` its pipeline name and `{{item.KEY}}` its
@@ -23,7 +23,7 @@ const FILE_TOKEN: &str = "{{file}}";
 const ITEM_OPEN: &str = "{{item.";
 const CLOSE: &str = "}}";
 
-/// Tokens shell-command fills after its each groups (SEC-27): a file's path,
+/// Tokens shell-run fills after its each groups (SEC-27): a file's path,
 /// name or metadata carrying one would have it filled, so it's refused.
 const FILLED_LATER: &[&str] = &["{{output_dir}}", "{{url}}", "{{input}}"];
 
@@ -134,7 +134,7 @@ fn token<'a>(at: &'a str, file: &BatchFile, path: &str) -> Result<(String, &'a s
     Ok((checked(text(value))?, after))
 }
 
-/// `value`, unless it carries a token shell-command fills after the group.
+/// `value`, unless it carries a token shell-run fills after the group.
 fn checked(value: String) -> Result<String, FillError> {
     match FILLED_LATER.iter().find(|t| value.contains(**t)) {
         Some(token) => Err(FillError::Reserved(token.to_string())),
@@ -151,11 +151,11 @@ fn text(value: &Value) -> String {
     }
 }
 
-/// A file's path, name or metadata carries `token`, which shell-command fills
+/// A file's path, name or metadata carries `token`, which shell-run fills
 /// after the group, so the value can't be told apart from the recipe's own.
 fn reserved(token: &str, file: &BatchFile) -> BntoError {
     BntoError::InvalidInput(format!(
-        "{} carries '{token}' in its path, name or metadata, which shell-command fills \
+        "{} carries '{token}' in its path, name or metadata, which shell-run fills \
          itself; rename it or drop it from the group",
         file.filename
     ))

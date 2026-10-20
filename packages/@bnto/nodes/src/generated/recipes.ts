@@ -2026,7 +2026,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
             x: 250,
             y: 100,
           },
-          type: "shell-command",
+          type: "shell-run",
           version: "1.0.0",
         },
         {

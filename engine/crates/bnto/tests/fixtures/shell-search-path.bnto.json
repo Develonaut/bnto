@@ -35,7 +35,7 @@
     },
     {
       "id": "greet",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Greet",
       "position": {
@@ -47,9 +47,7 @@
         "command": "greet",
         "args": [],
         "outputMode": "stdout",
-        "search_path": [
-          "{{vars.Tools}}"
-        ]
+        "search_path": ["{{vars.Tools}}"]
       },
       "inputPorts": [],
       "outputPorts": []

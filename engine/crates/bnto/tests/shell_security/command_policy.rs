@@ -1,4 +1,4 @@
-// SEC-04..08: which programs a shell-command step may name.
+// SEC-04..08: which programs a shell-run step may name.
 // Static checks through `bnto check` and `bnto run`; nothing here needs the
 // program to exist, so these run on every OS.
 

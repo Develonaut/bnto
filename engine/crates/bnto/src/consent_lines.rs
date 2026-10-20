@@ -15,7 +15,7 @@ pub fn shell_command_lines(nodes: &[PipelineNode]) -> Vec<String> {
 
 fn collect(nodes: &[PipelineNode], lines: &mut Vec<String>) {
     for node in nodes {
-        if node.node_type == "shell-command"
+        if node.node_type == bnto_shell::NODE_TYPE
             && let Some(line) = command_line(&node.params)
             && !lines.contains(&line)
         {
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn shows_the_full_command_line_as_written() {
-        let ns = nodes(serde_json::json!([{ "id": "a", "type": "shell-command",
+        let ns = nodes(serde_json::json!([{ "id": "a", "type": "shell-run",
             "parameters": { "command": "git", "args": ["log", "--format=%H", "{{fields.v}}"] } }]));
         assert_eq!(
             shell_command_lines(&ns),
@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn shows_groups_search_path_and_env_names() {
         let ns = nodes(
-            serde_json::json!([{ "id": "a", "type": "shell-command", "parameters": {
+            serde_json::json!([{ "id": "a", "type": "shell-run", "parameters": {
             "command": "Build.bat",
             "args": [["--cookies", "{{fields.b}}"], { "each": ["-object={{path}}"] }],
             "search_path": ["{{env.ROOT}}/bin", "tools"],
@@ -123,10 +123,10 @@ mod tests {
     #[test]
     fn nested_steps_in_order_without_repeats() {
         let ns = nodes(serde_json::json!([
-            { "id": "a", "type": "shell-command", "parameters": { "command": "yt-dlp" } },
+            { "id": "a", "type": "shell-run", "parameters": { "command": "yt-dlp" } },
             { "id": "g", "type": "group", "children": [
-                { "id": "b", "type": "shell-command", "parameters": { "command": "ffmpeg", "args": ["-y"] } },
-                { "id": "c", "type": "shell-command", "parameters": { "command": "yt-dlp" } }
+                { "id": "b", "type": "shell-run", "parameters": { "command": "ffmpeg", "args": ["-y"] } },
+                { "id": "c", "type": "shell-run", "parameters": { "command": "yt-dlp" } }
             ] }
         ]));
         assert_eq!(shell_command_lines(&ns), ["yt-dlp", "ffmpeg -y"]);
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn a_script_step_shows_its_shell_args_and_whole_script() {
         let ns = nodes(
-            serde_json::json!([{ "id": "s", "type": "shell-command", "parameters": {
+            serde_json::json!([{ "id": "s", "type": "shell-run", "parameters": {
             "shell": "bash", "script": "set -eu\nprintf '%s' \"$1\"", "args": ["{{fields.v}}"]
         } }]),
         );

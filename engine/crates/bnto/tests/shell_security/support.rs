@@ -1,6 +1,6 @@
 // Shared harness: a throwaway lab folder per test, a canary file that any
 // successful injection creates, and recipe builders that wrap one
-// shell-command step so each test only states the params under attack.
+// shell-run step so each test only states the params under attack.
 // Several modules are Unix- or Windows-only, so not every helper is used
 // on every OS.
 #![allow(dead_code)]
@@ -44,7 +44,7 @@ impl Lab {
         self.canary().exists()
     }
 
-    /// Write a recipe wrapping one shell-command `step` and return its path.
+    /// Write a recipe wrapping one shell-run `step` and return its path.
     pub fn recipe(&self, step: Value) -> String {
         self.recipe_with(step, json!({ "mode": "none" }))
     }
@@ -167,7 +167,7 @@ fn outcome(output: std::process::Output) -> Outcome {
     }
 }
 
-/// A shell-command step with `params` (stdout output) and string `fields`.
+/// A shell-run step with `params` (stdout output) and string `fields`.
 pub fn step(params: Value, fields: &[&str]) -> Value {
     let mut params = params;
     params["outputMode"] = json!("stdout");
@@ -176,7 +176,7 @@ pub fn step(params: Value, fields: &[&str]) -> Value {
         .map(|name| (name.to_string(), json!({ "type": "string", "label": name })))
         .collect();
     json!({
-        "id": "attack", "type": "shell-command", "version": "1.0.0", "name": "Attack",
+        "id": "attack", "type": "shell-run", "version": "1.0.0", "name": "Attack",
         "position": { "x": 250, "y": 100 }, "metadata": {},
         "parameters": params, "fields": fields,
         "inputPorts": [], "outputPorts": []
@@ -195,7 +195,7 @@ fn recipe_json(step: Value, input: Value) -> Value {
     json!({
         "id": "attack", "type": "group", "version": "1.0.0", "name": "Attack",
         "position": { "x": 0, "y": 0 },
-        "metadata": { "description": "shell-command security probe", "category": "system" },
+        "metadata": { "description": "shell-run security probe", "category": "system" },
         "parameters": {}, "inputPorts": [], "outputPorts": [],
         "settings": { "iteration": "auto" },
         "nodes": [

@@ -6,9 +6,9 @@
 
 import type { NodeTypeInfo } from "../types";
 
-/** Node type info for shell-command. */
-export const shellCommandNodeType: NodeTypeInfo = {
-  name: "shell-command",
+/** Node type info for shell-run. */
+export const shellRunNodeType: NodeTypeInfo = {
+  name: "shell-run",
   label: "Run Shell Command",
   description:
     "Run shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",

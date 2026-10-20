@@ -21,7 +21,7 @@ import { isContainerNodeType } from "./isContainerNodeType";
  * ```
  */
 export function deriveCategory(definition: Definition): string {
-  // Explicit category in metadata takes precedence (e.g., shell-command recipes
+  // Explicit category in metadata takes precedence (e.g., shell-run recipes
   // where the node type is generic but the recipe purpose is specific)
   const explicit = definition.metadata?.category;
   if (typeof explicit === "string" && explicit.length > 0) {

@@ -18,12 +18,12 @@ fn file_result_to_js(file: &bnto_core::PipelineFileResult) -> Result<js_sys::Obj
     js_sys::Reflect::set(&obj, &"name".into(), &JsValue::from_str(&file.name))
         .map_err(|_| JsValue::from_str("Failed to set result file name"))?;
 
-    // Extract bytes — Path variant is unreachable in WASM (shell-command never runs in browser).
+    // Extract bytes — Path variant is unreachable in WASM (shell-run never runs in browser).
     let bytes = match &file.data {
         bnto_core::processor::FileData::Bytes(b) => b.as_slice(),
         bnto_core::processor::FileData::Path(_) => {
             return Err(JsValue::from_str(
-                "FileData::Path is not supported in WASM — shell-command is native-only",
+                "FileData::Path is not supported in WASM — shell-run is native-only",
             ));
         }
     };

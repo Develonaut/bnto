@@ -1,6 +1,6 @@
 // Per-run scratch directory for a run's temp files.
 //
-// Nodes such as shell-command write their output to temp files. The output
+// Nodes such as shell-run write their output to temp files. The output
 // step copies results out (it must never move a user's own files), so the
 // run deletes its temp files itself. Creating them under one bnto-owned
 // directory lets it delete exactly what it made.
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_drop_removes_files_and_sibling_dirs() {
-        // Mirrors shell-command file mode: a temp file plus a `.d` output
+        // Mirrors shell-run file mode: a temp file plus a `.d` output
         // dir next to it, with the command's output inside.
         let scratch = RunScratch::default();
         let file = scratch.temp_file("-output").unwrap();

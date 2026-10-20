@@ -362,7 +362,7 @@ mod tests {
             node_id: "child-1".to_string(),
             node_index: 0,
             total_nodes: 1,
-            node_type: "shell-command".to_string(),
+            node_type: "shell-run".to_string(),
             parent_node_id: Some("loop-1".to_string()),
         };
         let json = serde_json::to_value(&event).unwrap();

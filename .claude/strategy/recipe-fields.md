@@ -3,13 +3,13 @@
 **Status:** Implemented (MVP — node-level fields)
 **Created:** 2026-04-23
 **Updated:** 2026-04-24
-**Depends on:** shell-command processor (PR #444), recipe-level `requires` (PR #442)
+**Depends on:** shell-run processor (PR #444), recipe-level `requires` (PR #442)
 
 ---
 
 ## Problem
 
-When we migrated `download-video` from a dedicated processor to `shell-command`, we lost the user-facing parameter surface. The old `bnto-video` processor declared domain-specific params (format, quality, codec) that the TUI rendered as proper form controls. Now the TUI shows raw shell-command internals:
+When we migrated `download-video` from a dedicated processor to `shell-run`, we lost the user-facing parameter surface. The old `bnto-video` processor declared domain-specific params (format, quality, codec) that the TUI rendered as proper form controls. Now the TUI shows raw shell-run internals:
 
 ```
 Command     yt-dlp
@@ -27,7 +27,7 @@ Video Codec     h264 ▾
 Audio Codec     m4a  ▾
 ```
 
-This isn't shell-command-specific. **Any node** should be able to declare user-facing fields — named, typed, labeled controls that hook up to node parameters via templates.
+This isn't shell-run-specific. **Any node** should be able to declare user-facing fields — named, typed, labeled controls that hook up to node parameters via templates.
 
 ---
 
@@ -53,7 +53,7 @@ Node-level fields are the building blocks. Recipe-level fields (composed, curate
 
 ## Design Goals
 
-1. **Universal** — same `fields` concept works on any node, not just shell-command
+1. **Universal** — same `fields` concept works on any node, not just shell-run
 2. **Declarative** — JSON declares fields, engine + TUI/editor discover and render them
 3. **Namespaced templates** — `{{fields.format}}` makes it clear where values come from, extensible to `{{env.HOME}}`, `{{ctx.output_dir}}` etc.
 4. **Type-safe** — fields have types (string, number, enum, boolean) with validation constraints
@@ -71,7 +71,7 @@ A node declares its own user-facing fields directly. The fields template into th
 ```json
 {
   "id": "download",
-  "type": "shell-command",
+  "type": "shell-run",
   "fields": {
     "format": {
       "label": "Output Format",
@@ -224,9 +224,9 @@ Template variables are resolved **at pipeline execution time**, after the input 
 
 ### Where Resolution Lives
 
-Resolution happens in the `PipelineExecutor` (engine-level), not in individual node processors. This keeps processors simple — they receive fully resolved parameters and don't know about templates. The shell-command processor sees `"--merge-output-format", "mp4"`, not `"--merge-output-format", "{{fields.format}}"`.
+Resolution happens in the `PipelineExecutor` (engine-level), not in individual node processors. This keeps processors simple — they receive fully resolved parameters and don't know about templates. The shell-run processor sees `"--merge-output-format", "mp4"`, not `"--merge-output-format", "{{fields.format}}"`.
 
-This means **any node type** benefits from fields, not just shell-command. An `image-compress` node could use `{{fields.quality}}` in its `parameters.quality` value if the recipe author wants to surface quality as a user control.
+This means **any node type** benefits from fields, not just shell-run. An `image-compress` node could use `{{fields.quality}}` in its `parameters.quality` value if the recipe author wants to surface quality as a user control.
 
 ---
 
@@ -243,7 +243,7 @@ The TUI detail screen (`detail_loader.rs`) walks recipe nodes and collects field
 4. For input node: always surface the primary input field (URL, file, text) regardless
 ```
 
-When `fields` is present, the shell-command's raw params (command, args, outputMode) are **not shown**. The author has explicitly declared what users should see.
+When `fields` is present, the shell-run's raw params (command, args, outputMode) are **not shown**. The author has explicitly declared what users should see.
 
 ### Download Video — Before/After
 
@@ -315,7 +315,7 @@ Empty node_id (`:key=value`) is rejected — recipe-level fields are deferred.
 
 ### Phase 3: First Recipe Migration — COMPLETE
 
-- `download-video.bnto.json` uses node-level fields on the shell-command node
+- `download-video.bnto.json` uses node-level fields on the shell-run node
 - Template syntax: `{{fields.format}}`, `{{fields.videoCodec}}`, `{{fields.audioCodec}}`
 - Shell-command placeholders: `{{output_dir}}`, `{{url}}`, `{{input}}`
 

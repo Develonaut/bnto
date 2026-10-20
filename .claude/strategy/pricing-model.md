@@ -24,7 +24,7 @@ Use these terms consistently across all code, docs, and UI copy.
 | Term                  | Definition                                                                                 |
 | --------------------- | ------------------------------------------------------------------------------------------ |
 | **Node**              | An atomic processing unit. One operation: compress, resize, rename, transform, etc.        |
-| **Node type**         | A category of node: `image`, `csv`, `file`, `transform`, `ai`, `shell-command`, etc.       |
+| **Node type**         | A category of node: `image`, `csv`, `file`, `transform`, `ai`, `shell-run`, etc.           |
 | **Recipe**            | A `.bnto.json` composition of one or more nodes into a pipeline.                           |
 | **Predefined recipe** | A recipe curated by bnto, shipped with the product, with its own SEO page.                 |
 | **Custom recipe**     | A recipe created by a user in the recipe editor.                                           |
@@ -41,9 +41,9 @@ Use these terms consistently across all code, docs, and UI copy.
 | Category         | Node Types                                                     | Execution                         | User Access              |
 | ---------------- | -------------------------------------------------------------- | --------------------------------- | ------------------------ |
 | **Local nodes**  | `image`, `csv`, `file`, `video`, `transform`, `archive`, `pdf` | Local (CLI native / browser WASM) | Free, unlimited, forever |
-| **Server nodes** | `ai`, `shell-command`, `http-request` (unrestricted)           | Server-side (M4, technology TBD)  | Pro tier, usage-based    |
+| **Server nodes** | `ai`, `shell-run`, `http-request` (unrestricted)               | Server-side (M4, technology TBD)  | Pro tier, usage-based    |
 
-**On desktop, everything is free** — including AI (BYOK) and shell-command.
+**On desktop, everything is free** — including AI (BYOK) and shell-run.
 
 ---
 

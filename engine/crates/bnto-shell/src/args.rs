@@ -1,4 +1,4 @@
-// Shell-command argument preparation — conditional arg groups and the
+// `shell-run` argument preparation — conditional arg groups and the
 // `{{url}}` / `{{input}}` placeholders injected by input preparation.
 
 /// Placeholder in args for URL/text input injected by the CLI's input preparation.
@@ -30,7 +30,7 @@ pub(crate) fn resolve_input_placeholders(
     // would have it filled too.
     if input_val.contains(OUTPUT_DIR_TOKEN) {
         return Err(format!(
-            "the input carries '{OUTPUT_DIR_TOKEN}', which shell-command fills itself"
+            "the input carries '{OUTPUT_DIR_TOKEN}', which shell-run fills itself"
         ));
     }
 

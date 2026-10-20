@@ -27,7 +27,7 @@ import { imagePadProcessor } from "./imagePad";
 import { imageResizeProcessor } from "./imageResize";
 import { imageStripExifProcessor } from "./imageStripExif";
 import { reportProcessor } from "./report";
-import { shellCommandProcessor } from "./shellCommand";
+import { shellRunProcessor } from "./shellRun";
 import { spreadsheetCleanProcessor } from "./spreadsheetClean";
 import { spreadsheetConvertProcessor } from "./spreadsheetConvert";
 import { spreadsheetExportProcessor } from "./spreadsheetExport";
@@ -61,7 +61,7 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   imageResizeProcessor,
   imageStripExifProcessor,
   reportProcessor,
-  shellCommandProcessor,
+  shellRunProcessor,
   spreadsheetCleanProcessor,
   spreadsheetConvertProcessor,
   spreadsheetExportProcessor,

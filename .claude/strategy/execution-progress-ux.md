@@ -232,12 +232,12 @@ Changes from Phase 1:
 - Throughput metric after elapsed time (only shown when batch >= 5 files)
 - Size summary on completion line (requires `FileSummary` event — see Architecture)
 
-**Proposed output (shell-command / long-running):**
+**Proposed output (shell-run / long-running):**
 
 ```
   Pipeline: 1 step
 
-  [1/1] shell-command (download-video)
+  [1/1] shell-run (download-video)
         ⠙ Downloading… (2m 14s)
         [download]  67.2% of ~350MiB at 4.12MiB/s ETA 01:23
         done 1 file in 5m 32s
@@ -245,7 +245,7 @@ Changes from Phase 1:
   Completed 1 file in 5m 32s
 ```
 
-For shell-command recipes without deterministic file counts, replace the progress bar with a spinner + elapsed timer. `CommandOutput` lines from the child process (yt-dlp's own progress) display below the spinner.
+For shell-run recipes without deterministic file counts, replace the progress bar with a spinner + elapsed timer. `CommandOutput` lines from the child process (yt-dlp's own progress) display below the spinner.
 
 **Narrow terminal degradation (< 60 cols):**
 
@@ -400,7 +400,7 @@ This requires processors to report output sizes. Currently, `NodeProcessor::proc
 - Add blank lines between steps for readability
 - Show elapsed time per progress line: `3/10 photo.jpg (1.2s)`
 - Add completion summary line: `Completed 10 files in 2.4s`
-- For indeterminate shell-command nodes (no file count), use a braille spinner + elapsed instead of a progress bar
+- For indeterminate shell-run nodes (no file count), use a braille spinner + elapsed instead of a progress bar
 
 **TUI changes (`bnto/src/tui/render_execution.rs`):**
 
@@ -425,7 +425,7 @@ This requires processors to report output sizes. Currently, `NodeProcessor::proc
 **CLI changes:**
 
 - Throughput metric: `4.2 files/s` appended to progress line when batch >= 5 files
-- Braille spinner animation for shell-command nodes (requires `indicatif::ProgressBar` spinner mode)
+- Braille spinner animation for shell-run nodes (requires `indicatif::ProgressBar` spinner mode)
 
 **TUI changes:**
 

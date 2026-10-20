@@ -3,7 +3,7 @@
 //
 // Host `installHints` are shell command lines written by the recipe author,
 // so the recipe source is the trust boundary (same rule as `trust.rs` uses
-// for shell-command nodes): bundled recipes are reviewed and shipped with the
+// for shell-run nodes): bundled recipes are reviewed and shipped with the
 // binary; library recipes and `.bnto.json` paths are not.
 
 use crate::catalog::{CatalogEntry, RecipeCatalog, RecipeSource};

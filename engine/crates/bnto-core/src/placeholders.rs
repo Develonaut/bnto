@@ -8,7 +8,7 @@
 /// Namespaced placeholders the executor fills: `{{ns.key}}`.
 const DATA_NAMESPACES: &[&str] = &["fields", "env", "ctx", "node", "item"];
 
-/// Bare tokens shell-command fills: `{{url}}`, `{{path}}`, ...
+/// Bare tokens shell-run fills: `{{url}}`, `{{path}}`, ...
 const DATA_TOKENS: &[&str] = &["url", "input", "path", "file", "output_dir"];
 
 /// The data placeholders in `s`, as written (`{{item.name}}`). Text that

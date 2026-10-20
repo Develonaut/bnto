@@ -73,21 +73,17 @@ function validateEditFields(def: Definition): ValidationError[] {
 }
 
 /**
- * Validates shell-command node: it runs a `command` or a `script`, so it
+ * Validates shell-run node: it runs a `command` or a `script`, so it
  * needs exactly one — which per-param schemas can't express.
  */
-function validateShellCommand(def: Definition): ValidationError[] {
+function validateShellRun(def: Definition): ValidationError[] {
   const command = def.parameters["command"] != null;
   const script = def.parameters["script"] != null;
   if (command && script) {
-    return [
-      err(def.id, "script", `shell-command node '${def.id}' sets both 'command' and 'script'`),
-    ];
+    return [err(def.id, "script", `shell-run node '${def.id}' sets both 'command' and 'script'`)];
   }
   if (!command && !script) {
-    return [
-      err(def.id, "command", `shell-command node '${def.id}' needs a 'command' or a 'script'`),
-    ];
+    return [err(def.id, "command", `shell-run node '${def.id}' needs a 'command' or a 'script'`)];
   }
   return [];
 }
@@ -103,7 +99,7 @@ export const TYPE_VALIDATORS: Record<string, ((def: Definition) => ValidationErr
   {
     loop: validateLoop,
     "edit-fields": validateEditFields,
-    "shell-command": validateShellCommand,
+    "shell-run": validateShellRun,
     // These types have no type-specific validation
     group: undefined,
     parallel: undefined,

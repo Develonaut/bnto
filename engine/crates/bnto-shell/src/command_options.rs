@@ -1,4 +1,4 @@
-// The options shell-command runs its command with: the recipe's `timeout`
+// The options shell-run runs its command with: the recipe's `timeout`
 // (seconds, default 300), its `env` with dangerous variables stripped, and
 // the folder `cwd` resolved to.
 
@@ -10,7 +10,7 @@ use serde_json::{Map, Value};
 
 use crate::validate::{self, DEFAULT_TIMEOUT_SECS};
 
-/// The `CommandOptions` a shell-command node's `params` ask for, run in
+/// The `CommandOptions` a shell-run node's `params` ask for, run in
 /// `dir` (`None` for the work dir).
 pub(crate) fn command_options(params: &Map<String, Value>, dir: Option<PathBuf>) -> CommandOptions {
     let secs = params

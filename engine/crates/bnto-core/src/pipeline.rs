@@ -121,7 +121,7 @@ pub struct PipelineNode {
 /// A file that enters the pipeline for processing.
 ///
 /// This is the engine's internal file representation. Small files (images,
-/// CSVs) carry in-memory bytes. Large files from shell-command carry a
+/// CSVs) carry in-memory bytes. Large files from shell-run carry a
 /// disk path reference. The adapter layer (WASM bridge, CLI, Tauri)
 /// converts from its native file type to this.
 #[derive(Debug, Clone)]
@@ -723,7 +723,7 @@ mod tests {
     fn test_always_defaults_false_and_reads_from_the_node() {
         let def = parse_definition(
             r#"{ "nodes": [
-                { "id": "build", "type": "shell-command" },
+                { "id": "build", "type": "shell-run" },
                 { "id": "keep", "type": "file-copy", "always": true, "parameters": {} }
             ] }"#,
         );
@@ -1580,7 +1580,7 @@ mod tests {
                 "formatVersion": "1.0.0",
                 "nodes": [
                     { "id": "in", "type": "input", "params": { "mode": "none" } },
-                    { "id": "proc", "type": "shell-command", "params": {} },
+                    { "id": "proc", "type": "shell-run", "params": {} },
                     { "id": "out", "type": "output", "params": {} }
                 ]
             }"#,
@@ -1600,7 +1600,7 @@ mod tests {
                         "params": {},
                         "children": [
                             { "id": "in", "type": "input", "params": { "mode": "none" } },
-                            { "id": "proc", "type": "shell-command", "params": {} }
+                            { "id": "proc", "type": "shell-run", "params": {} }
                         ]
                     }
                 ]

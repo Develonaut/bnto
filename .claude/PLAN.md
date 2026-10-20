@@ -430,7 +430,7 @@ Deferred to Sprint 17 Wave 3. Image crop/rotate is lower priority than BRU file 
 
 ## Security Sweep: shell-command Hardening — COMPLETE
 
-Close every open finding in [shell-command.md](scopes/security/shell-command.md). Each PR removes the `#[ignore]` from its tests in `engine/crates/bnto/tests/shell_security/` (target: 0 ignored). Plan: [shell-security-sweep.md](plans/shell-security-sweep.md). Evidence: [research report](research/reports/Shell%20script%20injection%20safety.md).
+Close every open finding in [shell-run.md](scopes/security/shell-run.md). Each PR removes the `#[ignore]` from its tests in `engine/crates/bnto/tests/shell_security/` (target: 0 ignored). Plan: [shell-security-sweep.md](plans/shell-security-sweep.md). Evidence: [research report](research/reports/Shell%20script%20injection%20safety.md).
 
 - [x] PR 0 — Add the shell-command security suite and findings index
 - [x] PR 1 — Expect the resolved work dir in `shell_each` on macOS (test-only)
@@ -689,7 +689,7 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 - [x] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
 - [x] `engine` — **Rename `file-metadata` → `file-inspect`** with a migration. Label "Inspect Files" shipped with it
-- [ ] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Trust, consent, dry-run and TUI key on the type string: grep `"shell-command"` across `engine/crates/bnto/src/`
+- [x] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Consent, trust and dry-run now match on `bnto_shell::NODE_TYPE`, not a string literal
 - [ ] `engine` — **camelCase params** with a migration: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path`
 - [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals`
 - [ ] `engine` — **Output suffixes**: `image-overlay` `-overlay` → `-overlaid`; `vector-optimize` adds `-optimized`. Regenerate goldens
@@ -697,7 +697,7 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 ### Engine: Sprint 12B Follow-Up (remaining)
 
-**Priority: Medium.** Items unlocked by Sprint 12B (recipe-level deps + shell-command). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
+**Priority: Medium.** Items unlocked by Sprint 12B (recipe-level deps + shell-run). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
 
 1. ~~**`bnto install <recipe>`**~~ — **Done.** Sprint 14 Wave 2 (PR #453)
 2. ~~**Version constraint enforcement**~~ — **→ Sprint 16 Wave 3**
@@ -883,16 +883,16 @@ Promoted to Sprint 17 Wave 4.
 
 ### Triage: Power Recipe Infrastructure
 
-**Priority: Triage.** Implement foundational engine capabilities (recipe variables, template expressions, data-driven forEach, inter-node data passing) and core node types (shell-command, file-system, spreadsheet-read, http-request) to support complex, data-driven custom recipes like the Etsy Product Image Pipeline. See [power-recipes.md](strategy/power-recipes.md) for full gap analysis, node maps, priority tiers (Tier 0 foundation → Tier 1 nodes → Tier 2 resilience → Tier 3 recipe-as-node), and acceptance test matrix.
+**Priority: Triage.** Implement foundational engine capabilities (recipe variables, template expressions, data-driven forEach, inter-node data passing) and core node types (shell-run, file-system, spreadsheet-read, http-request) to support complex, data-driven custom recipes like the Etsy Product Image Pipeline. See [power-recipes.md](strategy/power-recipes.md) for full gap analysis, node maps, priority tiers (Tier 0 foundation → Tier 1 nodes → Tier 2 resilience → Tier 3 recipe-as-node), and acceptance test matrix.
 
-### Triage: Security hardening follow-ups (shell-command audit)
+### Triage: Security hardening follow-ups (shell-run audit)
 
-**Priority: Triage.** Seven deferred security items from the `shell-command` processor threat model. Each is independent and can be triaged separately:
+**Priority: Triage.** Seven deferred security items from the `shell-run` processor threat model. Each is independent and can be triaged separately:
 
 1. ~~**Recipe trust levels + first-run consent**~~ — **→ Sprint 17 Wave 1**
 2. ~~**`bnto inspect <recipe>` command**~~ — **Done.** Shipped as `bnto dry-run` in Sprint 14 Wave 1 (PR #451)
-3. **Path traversal prevention in shell-command args** — Sandbox file path arguments to execution working directory. Reject absolute paths and `..` traversal. Canonicalize + verify
-4. ~~**Fix `extra_args` whitespace splitting in yt-dlp adapter**~~ — **Resolved.** `bnto-video` crate deleted; `download-video` migrated to shell-command recipe with `{{fields.*}}` templates. The old whitespace-splitting code path no longer exists
+3. **Path traversal prevention in shell-run args** — Sandbox file path arguments to execution working directory. Reject absolute paths and `..` traversal. Canonicalize + verify
+4. ~~**Fix `extra_args` whitespace splitting in yt-dlp adapter**~~ — **Resolved.** `bnto-video` crate deleted; `download-video` migrated to shell-run recipe with `{{fields.*}}` templates. The old whitespace-splitting code path no longer exists
 5. ~~**TOCTOU fix in NativeContext::temp_file()**~~ — **Done.** Fixed in Sprint 14 Wave 1 (PR #450)
 6. **Network capability classification** — Classify recipes as local-only vs network-capable. Warn on network binaries (`curl`, `wget`, `nc`, `ssh`). Future: outbound domain allowlist
 7. **Recipe signatures** — Sign built-in recipes. Unsigned community recipes trigger warnings. Foundation for verified registry
@@ -955,7 +955,7 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ### Triage: bulk-video-download output routing
 
-**Priority: Triage.** The bulk-video-download recipe currently hardcodes the download path in the shell-command's `-o` arg. Instead, the output node's `directory` param should control where files end up, and the shell-command should write to `{{output_dir}}` (engine-managed temp). The loop's `progressive` output mode should populate the Downloads folder incrementally as iterations complete. Investigate whether the output node + progressive output pipeline is sufficient, or if yt-dlp's `-o` needs a special path for its own subdirectory structure (`{{item.group}}/`).
+**Priority: Triage.** The bulk-video-download recipe currently hardcodes the download path in the shell-run's `-o` arg. Instead, the output node's `directory` param should control where files end up, and the shell-run should write to `{{output_dir}}` (engine-managed temp). The loop's `progressive` output mode should populate the Downloads folder incrementally as iterations complete. Investigate whether the output node + progressive output pipeline is sufficient, or if yt-dlp's `-o` needs a special path for its own subdirectory structure (`{{item.group}}/`).
 
 `/Users/Ryan/.bnto/recipes/bulk-video-download.bnto.json`
 
@@ -979,7 +979,7 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ### Triage: Dry-run preview for file-processing recipes
 
-**Priority: Triage.** `bnto dry-run` only shows shell commands/dependencies (useful for shell-command recipes). File-processing recipes (flatten-folders, file-rename, etc.) need a dry-run mode that shows "file X would become Y" without writing anything. Should work in both CLI (`bnto dry-run flatten-folders /path/to/dir`) and TUI (pre-execution preview screen).
+**Priority: Triage.** `bnto dry-run` only shows shell commands/dependencies (useful for shell-run recipes). File-processing recipes (flatten-folders, file-rename, etc.) need a dry-run mode that shows "file X would become Y" without writing anything. Should work in both CLI (`bnto dry-run flatten-folders /path/to/dir`) and TUI (pre-execution preview screen).
 
 `engine/crates/bnto/src/commands/dry_run.rs`, `engine/crates/bnto-engine/src/executor/`
 
@@ -1003,7 +1003,7 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ---
 
-### Triage: shell-command timeout parameter is a no-op
+### Triage: shell-run timeout parameter is a no-op
 
 **Priority: Triage.** The `timeout` param is parsed then bound to `_timeout` and never enforced (`bnto-shell/src/execute.rs:95`); `DEFAULT_TIMEOUT_SECS` in `validate.rs:52` is defined but unused. A hung external command blocks the pipeline forever. Enforcement belongs in `run_command_streaming` (kill the process group on deadline — builds on the ProcessRegistry from PR #520).
 

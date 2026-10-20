@@ -1,4 +1,4 @@
-// Security validation for shell-command parameters.
+// Security validation for shell-run parameters.
 //
 // This module is the security boundary between recipe JSON and system
 // command execution. Every command passes through these checks before

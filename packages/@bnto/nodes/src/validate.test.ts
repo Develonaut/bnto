@@ -103,7 +103,7 @@ describe("validateDefinition — unknown type", () => {
       loop: { mode: "times", count: 3 },
       output: {},
       parallel: { tasks: [{ a: 1 }] },
-      "shell-command": { command: "echo hello" },
+      "shell-run": { command: "echo hello" },
       "spreadsheet-clean": {},
       "spreadsheet-rename": {},
       transform: {},
@@ -198,40 +198,40 @@ describe("validateDefinition — file-rename", () => {
   });
 });
 
-describe("validateDefinition — shell-command", () => {
-  it("accepts shell-command as a known type", () => {
-    const def = validDef({ type: "shell-command", parameters: { command: "echo hello" } });
+describe("validateDefinition — shell-run", () => {
+  it("accepts shell-run as a known type", () => {
+    const def = validDef({ type: "shell-run", parameters: { command: "echo hello" } });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
 
   it("fails when command is missing", () => {
-    const def = validDef({ type: "shell-command", parameters: {} });
+    const def = validDef({ type: "shell-run", parameters: {} });
     const errors = validateDefinition(def);
     expect(errors.some((e) => e.field === "command")).toBe(true);
   });
 
   it("accepts a script step instead of a command", () => {
-    const def = validDef({ type: "shell-command", parameters: { script: 'echo "$1"' } });
+    const def = validDef({ type: "shell-run", parameters: { script: 'echo "$1"' } });
     expect(validateDefinition(def)).toHaveLength(0);
   });
 
   it("fails when both command and script are set", () => {
     const params = { command: "git", script: "true" };
-    const def = validDef({ type: "shell-command", parameters: params });
+    const def = validDef({ type: "shell-run", parameters: params });
     expect(validateDefinition(def).some((e) => e.field === "script")).toBe(true);
   });
 
   it("accepts an each group in args beside strings and conditional groups", () => {
     const args = ["report", ["--flag", "on"], { each: ["-object={{path}}"] }];
-    const def = validDef({ type: "shell-command", parameters: { command: "llvm-cov", args } });
+    const def = validDef({ type: "shell-run", parameters: { command: "llvm-cov", args } });
     const errors = validateDefinition(def);
     expect(errors).toHaveLength(0);
   });
 
   it("rejects an object in args that isn't an each group of text", () => {
     for (const bad of [{ each: "{{path}}" }, { each: ["{{path}}"], sep: "," }, { for: ["x"] }]) {
-      const def = validDef({ type: "shell-command", parameters: { command: "t", args: [bad] } });
+      const def = validDef({ type: "shell-run", parameters: { command: "t", args: [bad] } });
       const errors = validateDefinition(def);
       expect(errors.some((e) => e.field.startsWith("args"))).toBe(true);
     }

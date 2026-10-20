@@ -1,6 +1,6 @@
 // The run's time limit through the built binary: a recipe's
 // `settings.timeout` or `bnto run --timeout` stops a run whose step hangs
-// (here a shell-command with no timeout of its own), kills the command it
+// (here a shell-run with no timeout of its own), kills the command it
 // started, and fails with one line naming the limit.
 
 mod helpers;
@@ -41,7 +41,7 @@ fn hung_recipe(dir: &Path, secs: u32, settings: serde_json::Value) -> String {
         "settings": settings,
         "nodes": [
             { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-            { "id": "hang", "type": "shell-command",
+            { "id": "hang", "type": "shell-run",
               "parameters": { "command": command, "args": args } },
             { "id": "output", "type": "output", "parameters": { "mode": "write" } }
         ]
@@ -175,7 +175,7 @@ fn test_a_run_within_its_limit_passes() {
         "settings": { "timeout": 60 },
         "nodes": [
             { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-            { "id": "quick", "type": "shell-command",
+            { "id": "quick", "type": "shell-run",
               "parameters": { "command": "git", "args": ["--version"] } },
             { "id": "output", "type": "output", "parameters": { "mode": "write" } }
         ]
@@ -228,7 +228,7 @@ fn test_dry_run_preview_past_its_time_limit_is_stopped() {
         "name": "Hang", "settings": { "timeout": 1 },
         "nodes": [
             { "id": "input", "type": "input" },
-            { "id": "hang", "type": "shell-command",
+            { "id": "hang", "type": "shell-run",
               "parameters": { "command": command, "args": args } },
             { "id": "output", "type": "output", "parameters": { "mode": "write" } }
         ]

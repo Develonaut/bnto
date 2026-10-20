@@ -60,7 +60,7 @@ mod tests {
     const SHELL_RECIPE: &str = r#"{
         "id": "probe", "type": "group", "version": "1.0.0", "name": "Probe",
         "nodes": [
-            { "id": "run", "type": "shell-command", "version": "1.0.0",
+            { "id": "run", "type": "shell-run", "version": "1.0.0",
               "parameters": { "command": "git", "args": ["--version"] } }
         ]
     }"#;

@@ -1,6 +1,6 @@
 // bnto-shell — Shell command execution for native targets.
 //
-// Provides the `shell-command` processor: a generic NodeProcessor that
+// Provides the `shell-run` processor: a generic NodeProcessor that
 // executes external CLI tools via ProcessContext::run_command(). This
 // enables connector-as-recipe architecture — recipes can wrap any CLI
 // tool (ffmpeg, yt-dlp, imagemagick) without needing a dedicated Rust
@@ -13,7 +13,6 @@ mod args;
 mod command_options;
 mod cwd;
 mod each;
-pub mod execute;
 #[cfg(test)]
 mod failing_tool;
 mod file_mode;
@@ -23,10 +22,16 @@ mod output_files;
 mod parameters;
 mod program_text;
 mod raw_checks;
+pub mod run;
 mod script;
 pub mod search_path;
 mod stdout_mode;
 pub mod validate;
 mod wrappers;
 
-pub use execute::ShellCommand;
+pub use run::ShellRun;
+
+/// The node type the shell processor registers under. Trust, consent and
+/// dry-run match nodes against this, so a recipe can't run a command
+/// without the consent check seeing it.
+pub const NODE_TYPE: &str = "shell-run";

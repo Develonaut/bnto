@@ -103,7 +103,7 @@ pub mod editor;
 pub mod logging;
 
 /// File content abstraction — in-memory bytes or on-disk path reference.
-/// Large files (shell-command outputs) stay on disk as path references to
+/// Large files (shell-run outputs) stay on disk as path references to
 /// avoid reading multi-GB files into memory.
 pub mod file_data;
 

@@ -40,7 +40,7 @@
     },
     {
       "id": "diff",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Diff",
       "position": {
@@ -50,14 +50,7 @@
       "metadata": {},
       "parameters": {
         "command": "git",
-        "args": [
-          "-c",
-          "core.autocrlf=false",
-          "diff",
-          "--no-index",
-          "before.txt",
-          "after.txt"
-        ],
+        "args": ["-c", "core.autocrlf=false", "diff", "--no-index", "before.txt", "after.txt"],
         "outputMode": "stdout"
       },
       "inputPorts": [],

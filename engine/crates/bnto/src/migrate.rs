@@ -40,6 +40,11 @@ fn all_migrations() -> Vec<Migration> {
             applies: has_file_metadata_node,
             apply: rename_file_metadata_to_file_inspect,
         },
+        Migration {
+            description: "Rename 'shell-command' node type to 'shell-run'",
+            applies: has_shell_command_node,
+            apply: rename_shell_command_to_shell_run,
+        },
     ]
 }
 
@@ -103,6 +108,18 @@ fn has_file_metadata_node(value: &Value) -> bool {
 /// Rename `file-metadata` nodes to `file-inspect`; params are unchanged.
 fn rename_file_metadata_to_file_inspect(value: &mut Value) {
     rename_node_type(value, "file-metadata", "file-inspect");
+}
+
+// --- Migration: shell-command → shell-run ---
+
+/// Check if any node has `type: "shell-command"`.
+fn has_shell_command_node(value: &Value) -> bool {
+    has_node_type(value, "shell-command")
+}
+
+/// Rename `shell-command` nodes to `shell-run`; params are unchanged.
+fn rename_shell_command_to_shell_run(value: &mut Value) {
+    rename_node_type(value, "shell-command", "shell-run");
 }
 
 // --- Tree traversal helpers ---
@@ -553,6 +570,64 @@ mod tests {
         assert_eq!(applied.len(), 1);
         assert_eq!(value["nodes"][0]["nodes"][0]["type"], json!("file-inspect"));
         assert_eq!(value["children"][0]["type"], json!("file-inspect"));
+    }
+
+    #[test]
+    fn migrates_shell_command_to_shell_run() {
+        let mut value = json!({
+            "id": "test",
+            "type": "group",
+            "parameters": {},
+            "nodes": [{
+                "id": "download",
+                "type": "shell-command",
+                "parameters": { "command": "yt-dlp", "timeout": 60 }
+            }]
+        });
+
+        let applied = apply_migrations(&mut value);
+        assert_eq!(applied.len(), 1);
+        assert!(applied[0].contains("shell-command"));
+
+        let node = &value["nodes"][0];
+        assert_eq!(node["type"], json!("shell-run"));
+        assert_eq!(node["id"], json!("download"));
+        assert_eq!(node["parameters"]["command"], json!("yt-dlp"));
+        assert_eq!(node["parameters"]["timeout"], json!(60));
+    }
+
+    #[test]
+    fn shell_run_migration_is_idempotent() {
+        let mut value = json!({
+            "id": "test",
+            "type": "group",
+            "nodes": [{ "id": "run", "type": "shell-command" }]
+        });
+
+        apply_migrations(&mut value);
+        let snapshot = value.clone();
+
+        assert!(apply_migrations(&mut value).is_empty());
+        assert_eq!(value, snapshot);
+    }
+
+    #[test]
+    fn migrates_shell_command_nested_in_nodes_and_children() {
+        let mut value = json!({
+            "id": "root",
+            "type": "group",
+            "nodes": [{
+                "id": "loop",
+                "type": "loop",
+                "nodes": [{ "id": "run", "type": "shell-command" }]
+            }],
+            "children": [{ "id": "run2", "type": "shell-command" }]
+        });
+
+        let applied = apply_migrations(&mut value);
+        assert_eq!(applied.len(), 1);
+        assert_eq!(value["nodes"][0]["nodes"][0]["type"], json!("shell-run"));
+        assert_eq!(value["children"][0]["type"], json!("shell-run"));
     }
 
     // --- File operations ---

@@ -40,7 +40,7 @@
     },
     {
       "id": "write",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Write Note",
       "position": {

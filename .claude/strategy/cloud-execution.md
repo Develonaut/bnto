@@ -321,16 +321,16 @@ With Railway as the execution target, the `platforms` taxonomy becomes concrete:
 
 ### Recipes unlocked by cloud execution
 
-| Recipe          | Node types               | Why server           | CLI alternative                           |
-| --------------- | ------------------------ | -------------------- | ----------------------------------------- |
-| Download Video  | `shell-command` (yt-dlp) | Needs yt-dlp binary  | `bnto run download-video` (already works) |
-| Extract Audio   | `shell-command` (ffmpeg) | Needs ffmpeg binary  | `bnto run extract-audio`                  |
-| Video Thumbnail | `shell-command` (ffmpeg) | Needs ffmpeg binary  | `bnto run video-thumbnail`                |
-| API to CSV      | `http-request`           | No CORS restrictions | `bnto run api-to-csv`                     |
-| AI Classify     | `ai`                     | API key proxy        | BYOK via CLI                              |
-| AI Summarize    | `ai`                     | API key proxy        | BYOK via CLI                              |
-| AI Transform    | `ai`                     | API key proxy        | BYOK via CLI                              |
-| Batch Shell     | `shell-command`          | Needs system access  | `bnto run <recipe>`                       |
+| Recipe          | Node types           | Why server           | CLI alternative                           |
+| --------------- | -------------------- | -------------------- | ----------------------------------------- |
+| Download Video  | `shell-run` (yt-dlp) | Needs yt-dlp binary  | `bnto run download-video` (already works) |
+| Extract Audio   | `shell-run` (ffmpeg) | Needs ffmpeg binary  | `bnto run extract-audio`                  |
+| Video Thumbnail | `shell-run` (ffmpeg) | Needs ffmpeg binary  | `bnto run video-thumbnail`                |
+| API to CSV      | `http-request`       | No CORS restrictions | `bnto run api-to-csv`                     |
+| AI Classify     | `ai`                 | API key proxy        | BYOK via CLI                              |
+| AI Summarize    | `ai`                 | API key proxy        | BYOK via CLI                              |
+| AI Transform    | `ai`                 | API key proxy        | BYOK via CLI                              |
+| Batch Shell     | `shell-run`          | Needs system access  | `bnto run <recipe>`                       |
 
 ---
 
@@ -365,7 +365,7 @@ const ALLOWED_BINARIES: &[&str] = &[
 ];
 ```
 
-Any `shell-command` node requesting a binary not in this list fails with a clear error. This is the single most important security boundary — it prevents arbitrary code execution.
+Any `shell-run` node requesting a binary not in this list fails with a clear error. This is the single most important security boundary — it prevents arbitrary code execution.
 
 ### Execution Tokens
 

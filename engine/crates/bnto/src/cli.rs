@@ -110,7 +110,7 @@ pub struct RunArgs {
     pub yes: bool,
 
     /// Run every node but write nothing; the summary says what would have
-    /// been written. shell-command nodes still run.
+    /// been written. shell-run nodes still run.
     #[arg(long)]
     pub dry_run: bool,
 

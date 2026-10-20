@@ -12,7 +12,7 @@ use serde_json::{Map, Value};
 pub(crate) const ITEM: &str = "item";
 
 /// The per-file name token: `{{file}}` reads the incoming file's name, as
-/// file-render and shell-command's `each` read it.
+/// file-render and shell-run's `each` read it.
 pub(crate) const FILE: &str = "{{file}}";
 
 const CLOSE: &str = "}}";

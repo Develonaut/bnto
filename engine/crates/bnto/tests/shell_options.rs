@@ -1,4 +1,4 @@
-// shell-command's `env`, `timeout` and `cwd` through the built binary: a
+// shell-run's `env`, `timeout` and `cwd` through the built binary: a
 // variable in `env` reaches the command, a command that outlives its
 // `timeout` is stopped and fails the run naming the limit, and `cwd` runs
 // the command in a folder under the working directory.
@@ -14,7 +14,7 @@ use helpers::{bnto_bin, temp_output_dir};
 /// Far longer than a stopped command may take to return on a loaded machine.
 const STOP_DEADLINE: Duration = Duration::from_secs(60);
 
-/// Write a recipe that runs one shell-command with `params`, run it with
+/// Write a recipe that runs one shell-run with `params`, run it with
 /// `--yes`, writing to `out`.
 fn run_shell(params: serde_json::Value, out: &Path) -> Output {
     run_shell_in(None, params, out)
@@ -27,7 +27,7 @@ fn run_shell_in(work: Option<&Path>, params: serde_json::Value, out: &Path) -> O
     let body = serde_json::json!({
         "nodes": [
             { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-            { "id": "tool", "type": "shell-command", "parameters": params },
+            { "id": "tool", "type": "shell-run", "parameters": params },
             { "id": "output", "type": "output", "parameters": { "mode": "write" } }
         ]
     });

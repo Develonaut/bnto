@@ -64,7 +64,7 @@ describe("getNodeSublabel", () => {
 
   it("returns category label for other processing nodes", () => {
     expect(getNodeSublabel("transform")).toBe("Data");
-    expect(getNodeSublabel("shell-command")).toBe("System");
+    expect(getNodeSublabel("shell-run")).toBe("System");
     expect(getNodeSublabel("http-request")).toBe("Network");
     expect(getNodeSublabel("file-rename")).toBe("File");
   });

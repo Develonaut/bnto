@@ -140,7 +140,7 @@ mod tests {
     fn test_catalog_has_all_thirty_two_processors() {
         // The native registry has 32 processors (24 browser + file-collect + file-copy +
         // file-delete + file-list + file-move + spreadsheet-export + spreadsheet-lookup +
-        // shell-command).
+        // shell-run).
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -191,7 +191,7 @@ mod tests {
             "spreadsheet-merge",
             "vector-rasterize",
             "vector-optimize",
-            "shell-command",
+            "shell-run",
         ];
 
         for key in &expected {
@@ -208,7 +208,7 @@ mod tests {
     fn test_browser_processors_support_browser_platform() {
         // All processors except native-only ones should include "browser".
         // file-collect, file-copy, file-delete, file-list, file-move, spreadsheet-export,
-        // spreadsheet-lookup, and shell-command need filesystem access.
+        // spreadsheet-lookup, and shell-run need filesystem access.
         let registry = bnto_engine::create_registry();
         let catalog = registry.catalog();
 
@@ -220,7 +220,7 @@ mod tests {
             "file-move",
             "spreadsheet-export",
             "spreadsheet-lookup",
-            "shell-command",
+            "shell-run",
         ];
 
         for entry in &catalog {
@@ -368,7 +368,7 @@ mod tests {
     /// Or via: `task wasm:snapshot`
     ///
     /// Uses the native registry so ALL processors (including CLI-only ones
-    /// like shell-command) appear in the snapshot. TypeScript codegen gets
+    /// like shell-run) appear in the snapshot. TypeScript codegen gets
     /// the full schema/params even for processors that can't run in-browser
     /// yet — ready for when they can.
     ///

@@ -1,17 +1,17 @@
 // The dry-run note that shell commands still execute.
 //
-// A dry run writes nothing, but shell-command nodes run for real (a dry run
+// A dry run writes nothing, but shell-run nodes run for real (a dry run
 // can't know their output otherwise), so the user is told up front.
 
 use bnto_core::{PipelineDefinition, PipelineNode};
 use colored::Colorize;
 
-/// Shell-command nodes in the tree, container children included.
+/// `shell-run` nodes in the tree, container children included.
 pub fn count_shell_commands(nodes: &[PipelineNode]) -> usize {
     nodes
         .iter()
         .map(|node| {
-            let own = usize::from(node.node_type == "shell-command");
+            let own = usize::from(node.node_type == bnto_shell::NODE_TYPE);
             own + node.children.as_deref().map_or(0, count_shell_commands)
         })
         .sum()
@@ -25,7 +25,7 @@ pub fn shell_note_text(definition_json: &str) -> Option<String> {
     (count > 0).then(|| format!("dry run still executes {count} shell command{plural}"))
 }
 
-/// Print the note to stderr when the recipe has shell-command nodes.
+/// Print the note to stderr when the recipe has shell-run nodes.
 pub fn print_shell_note(definition_json: &str) {
     if let Some(text) = shell_note_text(definition_json) {
         eprintln!("  {} {text}", "Note:".yellow().bold());
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn test_note_singular() {
-        let json = recipe(r#"[{"id":"a","type":"shell-command","parameters":{}}]"#);
+        let json = recipe(r#"[{"id":"a","type":"shell-run","parameters":{}}]"#);
         assert_eq!(
             shell_note_text(&json).as_deref(),
             Some("dry run still executes 1 shell command")
@@ -58,9 +58,9 @@ mod tests {
     #[test]
     fn test_note_counts_nested_shell_commands() {
         let json = recipe(
-            r#"[{"id":"a","type":"shell-command","parameters":{}},
+            r#"[{"id":"a","type":"shell-run","parameters":{}},
                 {"id":"l","type":"loop","parameters":{},"children":[
-                  {"id":"b","type":"shell-command","parameters":{}}]}]"#,
+                  {"id":"b","type":"shell-run","parameters":{}}]}]"#,
         );
         assert_eq!(
             shell_note_text(&json).as_deref(),

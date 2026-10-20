@@ -2,7 +2,7 @@
 //
 // Recipes are classified by whether they're bundled (always trusted) or
 // non-bundled (may need consent for shell commands). Non-bundled recipes
-// with shell-command nodes require first-run consent, cached per
+// with shell-run nodes require first-run consent, cached per
 // definition hash in `BntoPaths::state/trusted.json`.
 
 use std::collections::HashMap;
@@ -72,10 +72,10 @@ impl TrustStore {
     }
 }
 
-/// Check whether any node in the tree is a shell-command processor.
+/// Check whether any node in the tree is a shell-run processor.
 pub fn has_shell_commands(nodes: &[PipelineNode]) -> bool {
     for node in nodes {
-        if node.node_type == "shell-command" {
+        if node.node_type == bnto_shell::NODE_TYPE {
             return true;
         }
         if let Some(children) = &node.children
@@ -179,8 +179,15 @@ mod tests {
 
     #[test]
     fn has_shell_commands_true() {
-        let nodes = vec![node("shell-command", None)];
+        let nodes = vec![node("shell-run", None)];
         assert!(has_shell_commands(&nodes));
+    }
+
+    #[test]
+    fn has_shell_commands_matches_the_registered_processor() {
+        use bnto_core::processor::NodeProcessor;
+        let name = bnto_shell::ShellRun::new().name().to_string();
+        assert!(has_shell_commands(&[node(&name, None)]));
     }
 
     #[test]
@@ -191,7 +198,7 @@ mod tests {
 
     #[test]
     fn has_shell_commands_nested() {
-        let nodes = vec![node("loop", Some(vec![node("shell-command", None)]))];
+        let nodes = vec![node("loop", Some(vec![node("shell-run", None)]))];
         assert!(has_shell_commands(&nodes));
     }
 
@@ -199,7 +206,7 @@ mod tests {
     fn has_shell_commands_deep_nesting() {
         let nodes = vec![node(
             "group",
-            Some(vec![node("loop", Some(vec![node("shell-command", None)]))]),
+            Some(vec![node("loop", Some(vec![node("shell-run", None)]))]),
         )];
         assert!(has_shell_commands(&nodes));
     }

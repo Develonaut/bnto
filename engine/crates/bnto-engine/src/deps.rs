@@ -82,7 +82,7 @@ pub fn collect_all_dependencies(registry: &NodeRegistry) -> Vec<Dependency> {
 /// Collect unique dependencies from all registered processors plus the
 /// recipe-level `requires` of every given definition.
 ///
-/// Recipes built on generic nodes like `shell-command` declare their deps
+/// Recipes built on generic nodes like `shell-run` declare their deps
 /// only at the recipe level, so processor metadata alone misses them.
 /// Processor deps come first; recipe deps are deduplicated by binary name.
 pub fn collect_catalog_dependencies(
@@ -603,10 +603,10 @@ mod tests {
     #[test]
     fn test_collect_catalog_includes_recipe_level_requires() {
         // download-video's deps live only in recipe-level `requires`
-        // (shell-command declares none), so processor metadata alone misses them.
+        // (shell-run declares none), so processor metadata alone misses them.
         let registry = NodeRegistry::new();
         let defs = vec![make_definition_with_requires(
-            &["shell-command"],
+            &["shell-run"],
             vec![ytdlp_dep(), ffmpeg_dep()],
         )];
         let deps = collect_catalog_dependencies(&registry, &defs);
