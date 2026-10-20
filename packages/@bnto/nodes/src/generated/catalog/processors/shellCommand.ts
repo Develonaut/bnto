@@ -18,10 +18,27 @@ export const shellCommandProcessor: ProcessorDef = {
     {
       name: "command",
       label: "Command",
-      description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+      description:
+        "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",
       type: "string" as const,
-      constraints: { required: true },
       placeholder: "ffmpeg",
+    },
+    {
+      name: "script",
+      label: "Script",
+      description:
+        "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files.",
+      type: "string" as const,
+      surfaceable: false,
+    },
+    {
+      name: "shell",
+      label: "Shell",
+      description:
+        "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh.",
+      type: "string" as const,
+      default: "sh",
+      surfaceable: false,
     },
     {
       name: "args",

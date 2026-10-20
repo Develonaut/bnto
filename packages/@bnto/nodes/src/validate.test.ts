@@ -211,6 +211,17 @@ describe("validateDefinition — shell-command", () => {
     expect(errors.some((e) => e.field === "command")).toBe(true);
   });
 
+  it("accepts a script step instead of a command", () => {
+    const def = validDef({ type: "shell-command", parameters: { script: 'echo "$1"' } });
+    expect(validateDefinition(def)).toHaveLength(0);
+  });
+
+  it("fails when both command and script are set", () => {
+    const params = { command: "git", script: "true" };
+    const def = validDef({ type: "shell-command", parameters: params });
+    expect(validateDefinition(def).some((e) => e.field === "script")).toBe(true);
+  });
+
   it("accepts an each group in args beside strings and conditional groups", () => {
     const args = ["report", ["--flag", "on"], { each: ["-object={{path}}"] }];
     const def = validDef({ type: "shell-command", parameters: { command: "llvm-cov", args } });

@@ -73,6 +73,26 @@ function validateEditFields(def: Definition): ValidationError[] {
 }
 
 /**
+ * Validates shell-command node: it runs a `command` or a `script`, so it
+ * needs exactly one — which per-param schemas can't express.
+ */
+function validateShellCommand(def: Definition): ValidationError[] {
+  const command = def.parameters["command"] != null;
+  const script = def.parameters["script"] != null;
+  if (command && script) {
+    return [
+      err(def.id, "script", `shell-command node '${def.id}' sets both 'command' and 'script'`),
+    ];
+  }
+  if (!command && !script) {
+    return [
+      err(def.id, "command", `shell-command node '${def.id}' needs a 'command' or a 'script'`),
+    ];
+  }
+  return [];
+}
+
+/**
  * Dispatch map from node type name to its validator function.
  *
  * Per-operation node types (image-compress, image-resize, image-convert,
@@ -83,6 +103,7 @@ export const TYPE_VALIDATORS: Record<string, ((def: Definition) => ValidationErr
   {
     loop: validateLoop,
     "edit-fields": validateEditFields,
+    "shell-command": validateShellCommand,
     // These types have no type-specific validation
     group: undefined,
     parallel: undefined,
@@ -94,5 +115,4 @@ export const TYPE_VALIDATORS: Record<string, ((def: Definition) => ValidationErr
     "file-rename": undefined,
     transform: undefined,
     "http-request": undefined,
-    "shell-command": undefined,
   };

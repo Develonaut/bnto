@@ -9,7 +9,9 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for shell-command node parameters. */
 export const shellCommandParamsSchema = z.object({
-  command: z.string(),
+  command: z.string().optional(),
+  script: z.string().optional(),
+  shell: z.string().optional().default("sh"),
   args: z
     .array(
       z.union([z.string(), z.array(z.string()), z.object({ each: z.array(z.string()) }).strict()]),
@@ -34,8 +36,21 @@ export const shellCommandNodeSchema: NodeSchema = {
   params: {
     command: {
       label: "Command",
-      description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
+      description:
+        "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",
       placeholder: "ffmpeg",
+    },
+    script: {
+      label: "Script",
+      description:
+        "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files.",
+      surfaceable: false,
+    },
+    shell: {
+      label: "Shell",
+      description:
+        "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh.",
+      surfaceable: false,
     },
     args: {
       label: "Arguments",

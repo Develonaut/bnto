@@ -30,6 +30,7 @@
     "prettier": "^3.8.1",
     "sherif": "^1.11.0",
     "smol-toml": "^1.6.1",
+    "tsx": "^4.23.15",
     "turbo": "^2.4.4",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:"

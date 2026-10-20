@@ -53,3 +53,28 @@ fn sec12_data_as_trailing_interpreter_args_is_allowed() {
         assert!(check.ok, "{command} {flag}: {}", check.text);
     }
 }
+
+/// SEC-28: program text a tool takes as a plain argument (awk, sed, jq) is
+/// code too; data goes through the safe channel (`awk -v name=value`).
+#[test]
+fn sec28_templates_in_positional_program_text_are_refused() {
+    for params in [
+        json!({ "command": "awk", "args": ["BEGIN { system(\"{{fields.v}}\") }"] }),
+        json!({ "command": "sed", "args": ["s/x/{{fields.v}}/", "f.txt"] }),
+        json!({ "command": "timeout", "args": ["5", "awk", "{ print \"{{fields.v}}\" }"] }),
+    ] {
+        let lab = Lab::new();
+        let recipe = lab.recipe(step(params.clone(), &["v"]));
+        assert!(!lab.check(&recipe).ok, "check accepted {params}");
+        let run = lab.run(&recipe, &["v=x"]);
+        assert!(
+            !run.ok && run.text.contains("program text"),
+            "{params}: {}",
+            run.text
+        );
+    }
+    let lab = Lab::new();
+    let safe =
+        json!({ "command": "awk", "args": ["-v", "name={{fields.v}}", "BEGIN { print name }"] });
+    assert!(lab.check(&lab.recipe(step(safe, &["v"]))).ok);
+}

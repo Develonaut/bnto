@@ -29,6 +29,7 @@ use crate::each;
 use crate::file_mode::process_file_mode;
 use crate::invocation::Invocation;
 use crate::parameters::build_parameters;
+use crate::script;
 use crate::search_path;
 use crate::stdout_mode::process_stdout_mode;
 use crate::validate::{self, DEFAULT_MAX_OUTPUT_MB};
@@ -67,13 +68,16 @@ impl NodeProcessor for ShellCommand {
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         let mut errors = Vec::new();
 
-        match params.get("command").and_then(serde_json::Value::as_str) {
-            None => errors.push("'command' parameter is required".to_string()),
-            Some(cmd) => {
-                if let Err(e) = validate::validate_command(cmd) {
-                    errors.push(e);
-                }
-            }
+        // `command` is checked whenever it's set, even beside a script, so a
+        // bad command can't hide behind a missing (or probed) script.
+        let command = params.get("command").and_then(serde_json::Value::as_str);
+        if let Some(Err(e)) = command.map(validate::validate_command) {
+            errors.push(e);
+        }
+        match (command, script::script(params)) {
+            (_, Some(_)) => errors.extend(script::script_problems(params)),
+            (None, None) => errors.push("'command' or 'script' is required".to_string()),
+            (Some(_), None) => {}
         }
 
         if let Err(e) = search_path::read_search_path(params.get("search_path")) {
@@ -92,6 +96,18 @@ impl NodeProcessor for ShellCommand {
         }
 
         errors
+    }
+
+    /// Filled after the executor, by shell-command itself (SEC-27).
+    fn reserved_tokens(&self) -> &'static [&'static str] {
+        &[
+            "{{output_dir}}",
+            "{{url}}",
+            "{{input}}",
+            "{{path}}",
+            "{{file}}",
+            "{{item.",
+        ]
     }
 
     fn validate_raw(&self, raw: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
@@ -159,12 +175,17 @@ fn run_node(
     ctx: &dyn ProcessContext,
 ) -> Result<NodeOutput, BntoError> {
     let params = &input.params;
-    let command = required_command(params)?;
-    // Security check: reject shell interpreters and path-based commands
-    validate::validate_command(command).map_err(BntoError::InvalidInput)?;
-    let program = resolved_program(command, params, ctx)?;
+    let (command, program, mut args) = match script::script(params) {
+        Some(text) => script_program(params, text)?,
+        None => {
+            let command = required_command(params)?;
+            // Security check: reject shell interpreters and path-based commands
+            validate::validate_command(command).map_err(BntoError::InvalidInput)?;
+            (command, resolved_program(command, params, ctx)?, Vec::new())
+        }
+    };
     let dir = working_dir(params, ctx)?;
-    let args = command_args(params, files, ctx)?;
+    args.extend(command_args(params, files, ctx)?);
     let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
     let invocation = Invocation {
         command,
@@ -192,8 +213,24 @@ fn command_args(
     let raw = params.get("args").and_then(serde_json::Value::as_array);
     let expanded = each::expand_each(raw.map_or(&[], Vec::as_slice), files, ctx)?;
     let mut args = flatten_conditional_args(&expanded);
-    resolve_input_placeholders(&mut args, params);
+    resolve_input_placeholders(&mut args, params).map_err(BntoError::InvalidInput)?;
     Ok(args)
+}
+
+/// A script step's shell (by absolute path) and leading args — `-c
+/// <script> bnto` — after checking its params; the step's args follow as
+/// `$1..$N`.
+fn script_program<'a>(
+    params: &'a Params,
+    text: &str,
+) -> Result<(&'a str, String, Vec<String>), BntoError> {
+    let problems = script::script_problems(params);
+    if let Some(problem) = problems.into_iter().next() {
+        return Err(BntoError::InvalidInput(problem));
+    }
+    let shell = script::shell_name(params);
+    let (path, leading) = script::invocation(shell, text).map_err(BntoError::InvalidInput)?;
+    Ok((shell, path.to_string_lossy().into_owned(), leading))
 }
 
 /// The required `command` param.
@@ -282,8 +319,9 @@ mod tests {
     }
 
     #[test]
-    fn test_metadata_marks_command_required() {
-        // validate refuses a step without one, so the editor must not show it as optional.
+    fn test_a_step_needs_a_command_or_a_script() {
+        // Either alone is enough, so neither is marked required in metadata;
+        // validate refuses a step with neither.
         let meta = ShellCommand::new().metadata();
         let required: Vec<&str> = meta
             .parameters
@@ -291,7 +329,15 @@ mod tests {
             .filter(|p| p.constraints.as_ref().is_some_and(|c| c.required))
             .map(|p| p.name.as_str())
             .collect();
-        assert_eq!(required, ["command"]);
+        assert!(required.is_empty(), "{required:?}");
+        let errors = ShellCommand::new().validate(&serde_json::Map::new());
+        assert_eq!(errors, ["'command' or 'script' is required"]);
+        let script = serde_json::json!({ "script": "true" });
+        assert!(
+            ShellCommand::new()
+                .validate(script.as_object().unwrap())
+                .is_empty()
+        );
     }
 
     #[test]
@@ -762,7 +808,7 @@ mod tests {
         let mut args = vec!["--no-playlist".to_string(), "-o".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/video".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 3);
         assert_eq!(args[2], "https://example.com/video");
     }
@@ -772,7 +818,7 @@ mod tests {
         let mut args = vec!["--download".to_string(), "{{url}}".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/video".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "https://example.com/video");
     }
@@ -782,7 +828,7 @@ mod tests {
         let mut args = vec!["process".to_string(), "{{input}}".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com/data".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "https://example.com/data");
     }
@@ -791,7 +837,7 @@ mod tests {
     fn test_resolve_no_url_no_change() {
         let mut args = vec!["--help".to_string()];
         let params = serde_json::Map::new();
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         assert_eq!(args.len(), 1);
         assert_eq!(args[0], "--help");
     }
@@ -801,7 +847,7 @@ mod tests {
         let mut args = vec!["{{url}}".to_string(), "--verbose".to_string()];
         let mut params = serde_json::Map::new();
         params.insert("url".into(), "https://example.com".into());
-        resolve_input_placeholders(&mut args, &params);
+        resolve_input_placeholders(&mut args, &params).unwrap();
         // URL substituted in placeholder, NOT also appended
         assert_eq!(args.len(), 2);
         assert_eq!(args[0], "https://example.com");

@@ -15,4 +15,9 @@ pub struct CommandOptions {
     pub timeout: Option<Duration>,
     /// The folder the command runs in. `None` runs it in the work dir.
     pub dir: Option<PathBuf>,
+    /// Start from an empty environment plus a short allowlist (PATH, HOME,
+    /// locale, ...) instead of inheriting everything, then add `env`. For
+    /// script mode, so the user's exported secrets and shell startup hooks
+    /// never reach a script that didn't ask for them.
+    pub clear_env: bool,
 }

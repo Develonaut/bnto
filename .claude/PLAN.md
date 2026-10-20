@@ -428,7 +428,7 @@ Deferred to Sprint 17 Wave 3. Image crop/rotate is lower priority than BRU file 
 
 ---
 
-## Security Sweep: shell-command Hardening — ACTIVE
+## Security Sweep: shell-command Hardening — COMPLETE
 
 Close every open finding in [shell-command.md](scopes/security/shell-command.md). Each PR removes the `#[ignore]` from its tests in `engine/crates/bnto/tests/shell_security/` (target: 0 ignored). Plan: [shell-security-sweep.md](plans/shell-security-sweep.md). Evidence: [research report](research/reports/Shell%20script%20injection%20safety.md).
 
@@ -443,7 +443,15 @@ Close every open finding in [shell-command.md](scopes/security/shell-command.md)
 - [x] PR 8 — SEC-10: strip shell/interpreter startup variables from recipe env
 - [x] PR 9 — SEC-13: check field values against their definitions before a run
 - [x] PR 10 — SEC-16: show full command lines in the consent prompt (depends on PR 2)
-- [ ] PR 11 — SEC-20–26: script mode — literal script through a hardened shell (depends on PRs 4, 8, 10)
+- [x] PR 11 — SEC-20–26: script mode — literal script through a hardened shell (depends on PRs 4, 8, 10)
+
+Follow-ups:
+
+- [x] Pin tsx and run it through `pnpm exec` (#652)
+- [x] Fail a command bnto stopped, whatever its exit code (fixes the flaky terminate_all test, #653)
+- [x] SEC-29: fill `{{vars.*}}` before consent
+- [x] SEC-28: refuse templates in positional program text (awk, sed, jq)
+- [x] SEC-27: refuse values carrying shell-command's own tokens
 
 ---
 

@@ -27,10 +27,19 @@ fn collect(nodes: &[PipelineNode], lines: &mut Vec<String>) {
     }
 }
 
-/// `command arg …`, then `(from <search_path>)` and `[env: NAME, …]`.
+/// `command arg …`, then `(from <search_path>)` and `[env: NAME, …]`. A
+/// script step reads `<shell> -c <script> bnto arg …` with the whole script
+/// below it, so what's approved is the script that runs.
 fn command_line(params: &Map<String, Value>) -> Option<String> {
-    let command = params.get("command")?.as_str()?;
-    let mut line = command.to_string();
+    let script = params.get("script").and_then(Value::as_str);
+    let mut line = match (params.get("command").and_then(Value::as_str), script) {
+        (Some(command), _) => command.to_string(),
+        (None, Some(_)) => {
+            let shell = params.get("shell").and_then(Value::as_str).unwrap_or("sh");
+            format!("{shell} -c <script> bnto")
+        }
+        (None, None) => return None,
+    };
     if let Some(Value::Array(args)) = params.get("args") {
         for arg in args {
             line.push(' ');
@@ -47,6 +56,13 @@ fn command_line(params: &Map<String, Value>) -> Option<String> {
     {
         let names: Vec<&str> = env.keys().map(String::as_str).collect();
         line.push_str(&format!("  [env: {}]", names.join(", ")));
+    }
+    if let Some(script) = script {
+        line.push_str("\n      script:");
+        for script_line in script.lines() {
+            line.push_str("\n        ");
+            line.push_str(script_line);
+        }
     }
     Some(line)
 }
@@ -114,6 +130,21 @@ mod tests {
             ] }
         ]));
         assert_eq!(shell_command_lines(&ns), ["yt-dlp", "ffmpeg -y"]);
+    }
+
+    #[test]
+    fn a_script_step_shows_its_shell_args_and_whole_script() {
+        let ns = nodes(
+            serde_json::json!([{ "id": "s", "type": "shell-command", "parameters": {
+            "shell": "bash", "script": "set -eu\nprintf '%s' \"$1\"", "args": ["{{fields.v}}"]
+        } }]),
+        );
+        assert_eq!(
+            shell_command_lines(&ns),
+            [
+                "bash -c <script> bnto {{fields.v}}\n      script:\n        set -eu\n        printf '%s' \"$1\""
+            ]
+        );
     }
 
     #[test]

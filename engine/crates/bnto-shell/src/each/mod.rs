@@ -23,6 +23,18 @@ const FILE_TOKEN: &str = "{{file}}";
 const ITEM_OPEN: &str = "{{item.";
 const CLOSE: &str = "}}";
 
+/// Tokens shell-command fills after its each groups (SEC-27): a file's path,
+/// name or metadata carrying one would have it filled, so it's refused.
+const FILLED_LATER: &[&str] = &["{{output_dir}}", "{{url}}", "{{input}}"];
+
+/// Why a group couldn't be filled for a file.
+enum FillError {
+    /// The group reads `{{item.KEY}}` the file doesn't have.
+    Missing(String),
+    /// A value to fill in carries a token filled after the group.
+    Reserved(String),
+}
+
 /// `args` with every `each` group replaced by its filled copies, one per
 /// file, as plain strings; other entries are kept as they are.
 pub(crate) fn expand_each(
@@ -73,8 +85,11 @@ fn fill_group(
     for (i, file) in files.iter().enumerate() {
         let path = paths.get(i).map(|p| p.to_string_lossy().into_owned());
         for template in &group {
-            let text = fill(template, file, path.as_deref().unwrap_or(""))
-                .map_err(|key| missing(&key, file))?;
+            let text =
+                fill(template, file, path.as_deref().unwrap_or("")).map_err(|e| match e {
+                    FillError::Missing(key) => missing(&key, file),
+                    FillError::Reserved(token) => reserved(&token, file),
+                })?;
             out.push(Value::String(text));
         }
     }
@@ -84,7 +99,7 @@ fn fill_group(
 /// `template` filled for one file, or the first `{{item.KEY}}` key it lacks.
 /// Only the template is scanned, so a value that reads like a token is
 /// written as it is.
-fn fill(template: &str, file: &BatchFile, path: &str) -> Result<String, String> {
+fn fill(template: &str, file: &BatchFile, path: &str) -> Result<String, FillError> {
     let mut out = String::with_capacity(template.len());
     let mut rest = template;
     while let Some(start) = rest.find("{{") {
@@ -99,12 +114,12 @@ fn fill(template: &str, file: &BatchFile, path: &str) -> Result<String, String> 
 
 /// The text for the token `at` starts with, and what follows it. A `{{`
 /// that isn't one of the group's tokens is kept as written.
-fn token<'a>(at: &'a str, file: &BatchFile, path: &str) -> Result<(String, &'a str), String> {
+fn token<'a>(at: &'a str, file: &BatchFile, path: &str) -> Result<(String, &'a str), FillError> {
     if let Some(after) = at.strip_prefix(PATH_TOKEN) {
-        return Ok((path.to_string(), after));
+        return Ok((checked(path.to_string())?, after));
     }
     if let Some(after) = at.strip_prefix(FILE_TOKEN) {
-        return Ok((file.filename.clone(), after));
+        return Ok((checked(file.filename.clone())?, after));
     }
     let item = at
         .strip_prefix(ITEM_OPEN)
@@ -112,8 +127,19 @@ fn token<'a>(at: &'a str, file: &BatchFile, path: &str) -> Result<(String, &'a s
     let Some((key, after)) = item else {
         return Ok((at[..2].to_string(), &at[2..]));
     };
-    let value = file.metadata.get(key).ok_or_else(|| key.to_string())?;
-    Ok((text(value), after))
+    let value = file
+        .metadata
+        .get(key)
+        .ok_or_else(|| FillError::Missing(key.to_string()))?;
+    Ok((checked(text(value))?, after))
+}
+
+/// `value`, unless it carries a token shell-command fills after the group.
+fn checked(value: String) -> Result<String, FillError> {
+    match FILLED_LATER.iter().find(|t| value.contains(**t)) {
+        Some(token) => Err(FillError::Reserved(token.to_string())),
+        None => Ok(value),
+    }
 }
 
 /// A metadata value as text: strings as written, other JSON as JSON.
@@ -123,6 +149,16 @@ fn text(value: &Value) -> String {
         Value::Null => String::new(),
         other => other.to_string(),
     }
+}
+
+/// A file's path, name or metadata carries `token`, which shell-command fills
+/// after the group, so the value can't be told apart from the recipe's own.
+fn reserved(token: &str, file: &BatchFile) -> BntoError {
+    BntoError::InvalidInput(format!(
+        "{} carries '{token}' in its path, name or metadata, which shell-command fills \
+         itself; rename it or drop it from the group",
+        file.filename
+    ))
 }
 
 /// A group reads `{{item.KEY}}` a file lacks: name the key, the file and
