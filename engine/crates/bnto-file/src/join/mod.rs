@@ -17,7 +17,7 @@ use bnto_core::processor::{
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
-use crate::metadata::guess_mime_type;
+use crate::inspect::guess_mime_type;
 use params::{JoinParams, build_join_parameters};
 
 /// The node-metadata key holding how many files were joined.

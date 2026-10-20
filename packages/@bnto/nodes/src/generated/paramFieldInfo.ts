@@ -65,6 +65,9 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     min_size: { type: "number", control: "number", required: false, min: 0 },
     max_size: { type: "number", control: "number", required: false, min: 0 },
   },
+  "file-inspect": {
+    include_hash: { type: "boolean", control: "switch", required: false },
+  },
   "file-join": {
     filename: { type: "string", control: "text", required: true },
     separator: { type: "string", control: "text", required: false },
@@ -72,9 +75,6 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   "file-list": {
     paths: { type: "record", control: "keyValue", required: false },
     base: { type: "string", control: "text", required: false },
-  },
-  "file-metadata": {
-    include_hash: { type: "boolean", control: "switch", required: false },
   },
   "file-move": {
     destination: { type: "string", control: "text", required: true },

@@ -1,4 +1,4 @@
-# File Metadata Node
+# Inspect Files Node
 
 > Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.
 
@@ -14,7 +14,7 @@
 
 ```json
 {
-  "type": "file-metadata",
+  "type": "file-inspect",
   "parameters": {
       "include_hash": false
   }

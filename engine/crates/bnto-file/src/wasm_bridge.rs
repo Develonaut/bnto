@@ -9,7 +9,7 @@ use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor};
 use bnto_core::progress::ProgressReporter;
 
 use crate::filter::FileFilter;
-use crate::metadata::FileMetadata;
+use crate::inspect::FileInspect;
 use crate::rename::RenameFiles;
 
 // Helper: convert BntoError to JsValue at the WASM boundary.
@@ -242,7 +242,7 @@ pub fn filter_file_combined(
 
 /// Extract metadata from a file and return enriched output.
 #[wasm_bindgen]
-pub fn file_metadata_combined(
+pub fn file_inspect_combined(
     data: &[u8],
     filename: &str,
     params_json: &str,
@@ -258,7 +258,7 @@ pub fn file_metadata_combined(
         params,
     };
 
-    let processor = FileMetadata::new();
+    let processor = FileInspect::new();
     let progress = ProgressReporter::new(move |percent, message| {
         let _ = progress_callback.call2(
             &JsValue::NULL,

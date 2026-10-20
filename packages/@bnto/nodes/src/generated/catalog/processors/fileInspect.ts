@@ -6,10 +6,10 @@
 
 import type { ProcessorDef } from "../types";
 
-/** Processor definition for file-metadata. */
-export const fileMetadataProcessor: ProcessorDef = {
-  nodeType: "file-metadata",
-  name: "File Metadata",
+/** Processor definition for file-inspect. */
+export const fileInspectProcessor: ProcessorDef = {
+  nodeType: "file-inspect",
+  name: "Inspect Files",
   description:
     "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
   category: "file",

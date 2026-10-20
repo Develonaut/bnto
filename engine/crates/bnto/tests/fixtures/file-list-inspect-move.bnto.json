@@ -1,5 +1,5 @@
 {
-  "id": "file-list-metadata-move",
+  "id": "file-list-inspect-move",
   "type": "group",
   "version": "1.0.0",
   "name": "File List Metadata Move",
@@ -14,7 +14,7 @@
       "type": "file-list",
       "parameters": { "base": "{{vars.Root}}", "paths": ["clip.bin"] }
     },
-    { "id": "meta", "type": "file-metadata" },
+    { "id": "meta", "type": "file-inspect" },
     {
       "id": "show",
       "type": "report",

@@ -81,7 +81,7 @@ impl Sandbox {
     }
 }
 
-/// Give a file the same modified time in every run (file-metadata reports it).
+/// Give a file the same modified time in every run (file-inspect reports it).
 fn pin_mtime(path: &Path) {
     let time = filetime::FileTime::from_unix_time(1_700_000_000, 0);
     filetime::set_file_mtime(path, time).unwrap();

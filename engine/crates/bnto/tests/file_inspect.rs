@@ -1,5 +1,5 @@
-// file-metadata through the built binary — file-list picks a file on disk,
-// file-metadata reports its size and modified time without reading it, and
+// file-inspect through the built binary — file-list picks a file on disk,
+// file-inspect reports its size and modified time without reading it, and
 // file-move (which needs a file on disk, not bytes) moves it.
 
 mod helpers;
@@ -23,7 +23,7 @@ fn test_each_listed_file_reports_its_folder_under_the_list_root() {
     let output = Command::new(bnto_bin())
         .args([
             "run",
-            &custom_recipe_path("file-list-metadata-folder"),
+            &custom_recipe_path("file-list-inspect-folder"),
             "--yes",
         ])
         .args(["--vars", vars_file.to_str().unwrap()])
@@ -52,8 +52,7 @@ fn test_a_file_passed_on_the_command_line_has_an_empty_folder() {
     let file = nested.join("note.txt");
     std::fs::write(&file, b"hi").unwrap();
 
-    let (_out, stderr) =
-        run_custom_recipe_ok("file-metadata-folder-report", file.to_str().unwrap());
+    let (_out, stderr) = run_custom_recipe_ok("file-inspect-folder-report", file.to_str().unwrap());
 
     // The argument's own disk folder isn't a folder under any list root.
     assert!(stderr.contains("folder: [] note.txt"), "stderr: {stderr}");
@@ -78,7 +77,7 @@ fn test_size_and_modified_are_reported_and_the_file_stays_on_disk() {
     let output = Command::new(bnto_bin())
         .args([
             "run",
-            &custom_recipe_path("file-list-metadata-move"),
+            &custom_recipe_path("file-list-inspect-move"),
             "--yes",
         ])
         .args(["--vars", vars_file.to_str().unwrap()])
