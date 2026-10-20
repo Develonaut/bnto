@@ -157,12 +157,19 @@ The executor emits structured progress events. Each event has a `pipeline_id`, `
 | `PipelineStarted`   | Execution begins                                       | `pipeline_id`, `total_nodes`, `total_files`                            |
 | `NodeStarted`       | A node begins processing                               | `node_id`, `node_type`                                                 |
 | `FileProgress`      | Progress on a single file within a node                | `node_id`, `file_index`, `file_name`, `bytes_processed`, `bytes_total` |
+| `NodeProgress`      | A running node's own live report (throttled, 100ms)    | `node_id`, `done`, `total` (`null` when unknown), `message`            |
 | `NodeCompleted`     | A node finishes successfully                           | `node_id`, `files_processed`, `duration_ms`                            |
 | `NodeFailed`        | A node encounters an error                             | `node_id`, `error`, `file_index` (if file-specific)                    |
 | `PipelineCompleted` | All nodes finished successfully                        | `total_duration_ms`, `files_processed`                                 |
 | `PipelineFailed`    | Once, last, when a run fails (after its closing steps) | `node_id` (top-level node whose failure is the verdict), `error`       |
 
 In the browser, `bnto-wasm` bridges these events to a JS callback. `@bnto/core` maps them to Zustand store updates or DOM-direct attribute changes (for high-frequency `FileProgress` events).
+
+### Live node progress
+
+**Decision (October 2026):** every node reports live progress through its `ProgressReporter`, the same way for every node type: `report(percent, msg)` when it knows how far through it is, `report_count(count, msg)` when it can't know the total (files found during a folder walk, rows read from a stream). The executor relays both as `NodeProgress` (a percent is `done` of `total: 100`; a count has `total: null`) and throttles them to one per 100ms per node run, using the run's injected clock (so it works in WASM). Nodes report as often as they like and never throttle themselves. `CommandOutput` lines are not throttled.
+
+The CLI draws the step's live line from `FileProgress` and `NodeProgress` (`bnto/src/progress_line.rs` decides, `live_bar.rs` draws): a bar of files finished when the step spans several files, otherwise a spinner with the node's running message, or a bar when the node reports a percent. The line ticks on its own (spinner and elapsed time), so a step stuck on one long item still visibly moves. indicatif draws nothing when stderr isn't a terminal.
 
 ### CLI progress display
 

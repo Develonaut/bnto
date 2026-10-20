@@ -137,6 +137,22 @@ pub enum PipelineEvent {
         message: String,
     },
 
+    /// Live progress from inside a running node, throttled by the executor.
+    /// Lets a long step show it's still moving: a percent through one big
+    /// file, or a running count when the total is unknown (files found
+    /// during a folder walk).
+    #[serde(rename_all = "camelCase")]
+    NodeProgress {
+        /// Which node is reporting.
+        node_id: String,
+        /// Units done so far (a percent when `total` is 100).
+        done: u64,
+        /// Units in all, or `None` when the node can't know yet.
+        total: Option<u64>,
+        /// Human-readable status message (e.g., "Found 1204 files · photos").
+        message: String,
+    },
+
     /// Emitted when a node finishes successfully.
     /// The editor uses this to mark the node as "completed" with a checkmark.
     #[serde(rename_all = "camelCase")]
@@ -460,6 +476,23 @@ mod tests {
         assert_eq!(json["totalFiles"], 5);
         assert_eq!(json["percent"], 75);
         assert_eq!(json["message"], "Compressing photo.jpg...");
+    }
+
+    #[test]
+    fn test_node_progress_serializes_correctly() {
+        let event = PipelineEvent::NodeProgress {
+            node_id: "collect".to_string(),
+            done: 1204,
+            total: None,
+            message: "Found 1204 files".to_string(),
+        };
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "NodeProgress");
+        assert_eq!(json["nodeId"], "collect");
+        assert_eq!(json["done"], 1204);
+        assert_eq!(json["total"], serde_json::Value::Null);
+        assert_eq!(json["message"], "Found 1204 files");
     }
 
     #[test]

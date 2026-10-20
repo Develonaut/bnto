@@ -256,3 +256,94 @@ fn test_nested_group_loop_reports_global_file_count() {
         }
     }
 }
+
+// =========================================================================
+// Live Node Progress
+// =========================================================================
+
+/// The `NodeProgress` events of one run of `node_type` on one file.
+fn live_progress(node_type: &str, now: fn() -> u64) -> Vec<(String, u64, Option<u64>, String)> {
+    let def = parse_def(&format!(
+        r#"{{ "nodes": [
+            {{ "id": "in", "type": "input" }},
+            {{ "id": "walk", "type": "{node_type}" }},
+            {{ "id": "out", "type": "output" }}
+        ] }}"#
+    ));
+    let recorder = RecordingReporter::new();
+    let files = vec![make_file("folder", b"")];
+    execute_pipeline(
+        &def,
+        files,
+        &mock_registry(),
+        &recorder.reporter(),
+        &NoopContext,
+        now,
+    )
+    .unwrap();
+    recorder
+        .events()
+        .into_iter()
+        .filter_map(|e| match e {
+            PipelineEvent::NodeProgress {
+                node_id,
+                done,
+                total,
+                message,
+            } => Some((node_id, done, total, message)),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn node_count_reports_reach_the_pipeline_as_node_progress() {
+    let events = live_progress("test-counting", fake_now);
+    assert_eq!(
+        events[0],
+        ("walk".to_string(), 1, None, "Found 1 files".to_string())
+    );
+}
+
+#[test]
+fn node_percent_reports_reach_the_pipeline_out_of_100() {
+    let events = live_progress("test-slow", fake_now);
+    assert_eq!(
+        events[0],
+        (
+            "walk".to_string(),
+            25,
+            Some(100),
+            "Quarter done".to_string()
+        )
+    );
+}
+
+#[test]
+fn live_progress_is_throttled_while_the_clock_stands_still() {
+    // fake_now never moves, so only the first of the five counts gets out.
+    let events = live_progress("test-counting", fake_now);
+    assert_eq!(events.len(), 1);
+}
+
+thread_local! {
+    static TICKS: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
+}
+
+/// A clock that moves 60ms every time anything reads it.
+fn ticking_now() -> u64 {
+    TICKS.with(|t| {
+        t.set(t.get() + 60);
+        t.get()
+    })
+}
+
+#[test]
+fn live_progress_gets_through_once_per_interval_as_time_passes() {
+    // Reads 60ms apart against a 100ms interval: every other count passes.
+    let dones: Vec<u64> = live_progress("test-counting", ticking_now)
+        .into_iter()
+        .map(|(_, done, _, _)| done)
+        .collect();
+    assert_eq!(dones, vec![1, 3, 5]);
+}

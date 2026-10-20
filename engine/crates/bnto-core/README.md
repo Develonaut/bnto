@@ -55,6 +55,7 @@ Structured progress events consumed by the JS layer:
 - `PipelineStarted { total_nodes, total_files }`
 - `NodeStarted { node_id, node_type, operation }`
 - `FileProgress { node_id, file_index, total_files, file_name }`
+- `NodeProgress { node_id, done, total, message }` — a node's own live report, throttled; `total` is `None` when the node can't know it (nodes call `ProgressReporter::report` or `report_count`)
 - `NodeCompleted { node_id, duration_ms }`
 - `PipelineCompleted { total_duration_ms }`
 - `PipelineError { node_id, message }`
@@ -76,7 +77,8 @@ src/
 ├── events.rs             # PipelineEvent tagged union for progress reporting
 ├── metadata.rs           # NodeMetadata, ParameterDef, Constraints, NodeCategory
 ├── processor.rs          # NodeProcessor trait, NodeInput, NodeOutput
-├── progress.rs           # ProgressReporter (target-agnostic closures)
+├── progress.rs           # ProgressReporter (target-agnostic closures): percent, count, command output
+├── progress_throttle.rs  # Clock-injected throttle for live progress
 ├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
 ├── pipeline_edge.rs      # PipelineEdge: a connection between two sibling nodes

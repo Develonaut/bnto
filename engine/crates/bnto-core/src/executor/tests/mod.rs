@@ -117,6 +117,27 @@ impl crate::processor::NodeProcessor for SlowProcessor {
     }
 }
 
+/// Reports a running count 1..=5 with no total, like a folder walk.
+struct CountingProcessor;
+
+impl crate::processor::NodeProcessor for CountingProcessor {
+    fn name(&self) -> &str {
+        "counting"
+    }
+
+    fn process(
+        &self,
+        input: NodeInput,
+        progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        for found in 1..=5 {
+            progress.report_count(found, &format!("Found {found} files"));
+        }
+        crate::processor::NodeProcessor::process(&EchoProcessor, input, progress, ctx)
+    }
+}
+
 /// Returns two files per input.
 struct DoubleProcessor;
 
@@ -305,6 +326,7 @@ fn mock_registry() -> NodeRegistry {
     registry.register("test-uppercase", Box::new(UpperCaseProcessor));
     registry.register("test-fail", Box::new(FailProcessor));
     registry.register("test-slow", Box::new(SlowProcessor));
+    registry.register("test-counting", Box::new(CountingProcessor));
     registry.register("test-double", Box::new(DoubleProcessor));
     registry.register("test-metadata", Box::new(MetadataProcessor));
     registry.register("test-source", Box::new(SourceProcessor));

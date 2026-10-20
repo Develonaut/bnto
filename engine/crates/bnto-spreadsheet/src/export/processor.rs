@@ -263,7 +263,7 @@ mod tests {
         let csv_path = tmp.path().join("record.csv");
         let lines = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
         let sink = std::sync::Arc::clone(&lines);
-        let progress = ProgressReporter::with_output(
+        let progress = ProgressReporter::with_live(
             |_, _| {},
             move |l| sink.lock().unwrap().push(l.to_string()),
         );
@@ -354,7 +354,7 @@ a.wav
         let csv_path = tmp.path().join("record.csv");
         let lines = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
         let sink = std::sync::Arc::clone(&lines);
-        let progress = ProgressReporter::with_output(
+        let progress = ProgressReporter::with_live(
             |_, _| {},
             move |l| sink.lock().unwrap().push(l.to_string()),
         );

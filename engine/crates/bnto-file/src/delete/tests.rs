@@ -80,7 +80,7 @@ fn run_with(
     let lines = Rc::new(RefCell::new(Vec::new()));
     let sink = Rc::clone(&lines);
     let progress =
-        ProgressReporter::with_output(|_, _| {}, move |l| sink.borrow_mut().push(l.to_string()));
+        ProgressReporter::with_live(|_, _| {}, move |l| sink.borrow_mut().push(l.to_string()));
     let input = BatchInput {
         files,
         params: params_for(base),

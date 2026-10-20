@@ -54,8 +54,6 @@ impl NodeProcessor for FileCollect {
         progress: &ProgressReporter,
         _ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        progress.report(0, "Collecting files...");
-
         let root = walk_root(&input);
         if !root.is_dir() {
             return Err(BntoError::InvalidInput(format!(
@@ -64,63 +62,31 @@ impl NodeProcessor for FileCollect {
             )));
         }
 
-        // Read params.
-        let pattern = input
-            .params
-            .get("pattern")
-            .and_then(|v| v.as_str())
-            .unwrap_or("*");
-
-        let recursive = input
-            .params
-            .get("recursive")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
-
-        let flatten = input
-            .params
-            .get("flatten")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(true);
-
-        // Walk the directory and collect matching files.
-        let mut matched_files = Vec::new();
-        walk_directory(
-            &root,
-            &root,
-            pattern,
-            recursive,
-            flatten,
-            &mut matched_files,
-        )?;
-
-        progress.report(50, &format!("Found {} files", matched_files.len()));
-
-        // Produce output with path references (zero-copy — no file reads).
-        let total = matched_files.len();
-        let mut output_files = Vec::with_capacity(total);
-
-        for (i, (output_name, full_path)) in matched_files.into_iter().enumerate() {
-            let pct = 50 + ((i as u32 * 50) / (total as u32).max(1));
-            progress.report(pct, &format!("Collecting {}/{total}...", i + 1));
-
-            let mime_type = guess_mime_type(&output_name);
-
-            output_files.push(OutputFile {
-                data: FileData::Path(full_path),
-                filename: output_name,
-                mime_type,
-                metadata: serde_json::Map::new(),
-            });
-        }
-
-        progress.report(100, "Done");
-
+        let mut walker = Walker::new(&root, &input, progress);
+        walker.walk(&root)?;
         Ok(NodeOutput {
-            files: output_files,
+            files: walker.found.into_iter().map(output_file).collect(),
             metadata: serde_json::Map::new(),
         })
     }
+}
+
+/// A matched file as a path reference (zero-copy — no file reads).
+fn output_file((output_name, full_path): (String, PathBuf)) -> OutputFile {
+    OutputFile {
+        data: FileData::Path(full_path),
+        mime_type: guess_mime_type(&output_name),
+        filename: output_name,
+        metadata: serde_json::Map::new(),
+    }
+}
+
+fn param_str<'a>(input: &'a NodeInput, key: &str) -> Option<&'a str> {
+    input.params.get(key).and_then(|v| v.as_str())
+}
+
+fn param_bool(input: &NodeInput, key: &str) -> Option<bool> {
+    input.params.get(key).and_then(|v| v.as_bool())
 }
 
 // --- Parameter Definitions ---
@@ -167,55 +133,83 @@ fn walk_root(input: &NodeInput) -> PathBuf {
     }
 }
 
-/// Recursively walk a directory and collect files matching the glob pattern.
-///
-/// `base_dir` is the root directory (for computing relative paths).
-/// `current_dir` is the directory being scanned right now.
-fn walk_directory(
-    base_dir: &Path,
-    current_dir: &Path,
-    pattern: &str,
+/// One directory walk: its settings, where it reports, and what it found.
+struct Walker<'a> {
+    /// The walked root (for computing relative paths).
+    base_dir: &'a Path,
+    pattern: &'a str,
     recursive: bool,
     flatten: bool,
-    results: &mut Vec<(String, PathBuf)>,
-) -> Result<(), BntoError> {
-    let entries = std::fs::read_dir(current_dir).map_err(|e| {
-        BntoError::ProcessingFailed(format!(
-            "Failed to read directory {}: {e}",
-            current_dir.display()
-        ))
-    })?;
+    progress: &'a ProgressReporter,
+    /// `(output name, full path)` of each matched file, in walk order.
+    found: Vec<(String, PathBuf)>,
+}
 
-    for entry in entries {
-        let entry = entry.map_err(|e| {
-            BntoError::ProcessingFailed(format!("Failed to read directory entry: {e}"))
-        })?;
-        let path = entry.path();
-
-        if path.is_dir() {
-            // Recurse into subdirectories if enabled.
-            if recursive {
-                walk_directory(base_dir, &path, pattern, recursive, flatten, results)?;
-            }
-        } else if path.is_file() {
-            // Check if the filename matches the glob pattern.
-            let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-
-            if glob_matches(pattern, file_name) {
-                // Determine the output filename.
-                let output_name = if flatten {
-                    file_name.to_string()
-                } else {
-                    // Preserve the path relative to the base directory.
-                    bnto_core::slash_path(path.strip_prefix(base_dir).unwrap_or(&path))
-                };
-
-                results.push((output_name, path));
-            }
+impl<'a> Walker<'a> {
+    fn new(base_dir: &'a Path, input: &'a NodeInput, progress: &'a ProgressReporter) -> Self {
+        Self {
+            base_dir,
+            pattern: param_str(input, "pattern").unwrap_or("*"),
+            recursive: param_bool(input, "recursive").unwrap_or(true),
+            flatten: param_bool(input, "flatten").unwrap_or(true),
+            progress,
+            found: Vec::new(),
         }
     }
 
-    Ok(())
+    /// Collect the files in `dir` that match the pattern, and those in its
+    /// subdirectories when recursive.
+    ///
+    /// Reports the running count after every entry, so a walk of a huge
+    /// tree keeps moving; the reporter throttles what reaches the user.
+    fn walk(&mut self, dir: &Path) -> Result<(), BntoError> {
+        let entries = std::fs::read_dir(dir).map_err(|e| {
+            BntoError::ProcessingFailed(format!("Failed to read directory {}: {e}", dir.display()))
+        })?;
+        let label = self.folder_label(dir);
+        for entry in entries {
+            let entry = entry.map_err(|e| {
+                BntoError::ProcessingFailed(format!("Failed to read directory entry: {e}"))
+            })?;
+            self.visit(entry.path())?;
+            self.report(&label);
+        }
+        Ok(())
+    }
+
+    fn visit(&mut self, path: PathBuf) -> Result<(), BntoError> {
+        if path.is_dir() {
+            if self.recursive {
+                self.walk(&path)?;
+            }
+        } else if path.is_file() {
+            let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if glob_matches(self.pattern, file_name) {
+                let output_name = if self.flatten {
+                    file_name.to_string()
+                } else {
+                    bnto_core::slash_path(path.strip_prefix(self.base_dir).unwrap_or(&path))
+                };
+                self.found.push((output_name, path));
+            }
+        }
+        Ok(())
+    }
+
+    /// `dir` relative to the walked root, `/`-separated; empty for the root.
+    fn folder_label(&self, dir: &Path) -> String {
+        bnto_core::slash_path(dir.strip_prefix(self.base_dir).unwrap_or(dir))
+    }
+
+    fn report(&self, label: &str) {
+        let count = self.found.len();
+        let message = if label.is_empty() {
+            format!("Found {count} files")
+        } else {
+            format!("Found {count} files · {label}")
+        };
+        self.progress.report_count(count as u64, &message);
+    }
 }
 
 /// Simple glob matching (same logic as file-filter's glob_match).
@@ -263,7 +257,7 @@ fn guess_mime_type(filename: &str) -> String {
 mod tests {
     use super::*;
     use bnto_core::context::NoopContext;
-    use bnto_core::progress::ProgressReporter;
+    use bnto_core::progress::{LiveProgress, ProgressReporter};
     use std::fs;
     use tempfile::TempDir;
 
@@ -358,6 +352,71 @@ mod tests {
         let names: Vec<&str> = output.files.iter().map(|f| f.filename.as_str()).collect();
         assert!(names.contains(&"document.txt"));
         assert!(names.contains(&"readme.txt"));
+    }
+
+    // --- Live progress ---
+
+    type Reports = std::rc::Rc<std::cell::RefCell<Vec<(LiveProgress, String)>>>;
+
+    /// Run a collect over the test dir, recording every live update.
+    fn collect_reports(throttle_clock: Option<fn() -> u64>) -> Reports {
+        let test_dir = setup_test_dir();
+        let reports: Reports = Default::default();
+        let sink = std::rc::Rc::clone(&reports);
+        let mut progress = ProgressReporter::with_live(
+            move |p, m| sink.borrow_mut().push((p, m.to_string())),
+            |_| {},
+        );
+        if let Some(clock) = throttle_clock {
+            progress = progress.throttled(clock, 100);
+        }
+        let input = dir_input(test_dir.path(), params(&[]));
+        FileCollect::new()
+            .process(input, &progress, &NoopContext)
+            .unwrap();
+        reports
+    }
+
+    fn counts(reports: &Reports) -> Vec<u64> {
+        reports
+            .borrow()
+            .iter()
+            .map(|(p, _)| match p {
+                LiveProgress::Count(n) => *n,
+                LiveProgress::Percent(p) => panic!("expected counts only, got {p}%"),
+            })
+            .collect()
+    }
+
+    #[test]
+    fn test_collect_reports_a_growing_count_while_it_walks() {
+        let counts = counts(&collect_reports(None));
+        assert!(counts.windows(2).all(|w| w[0] <= w[1]), "{counts:?}");
+        assert!(
+            counts.contains(&1),
+            "reports before the walk ends: {counts:?}"
+        );
+        assert_eq!(counts.last(), Some(&5));
+    }
+
+    #[test]
+    fn test_collect_progress_names_the_folder_being_walked() {
+        let reports = collect_reports(None);
+        let messages: Vec<String> = reports.borrow().iter().map(|r| r.1.clone()).collect();
+        assert!(
+            messages.iter().any(|m| m.contains("subfolder")),
+            "{messages:?}"
+        );
+        assert!(
+            messages.iter().all(|m| m.starts_with("Found ")),
+            "{messages:?}"
+        );
+    }
+
+    #[test]
+    fn test_collect_progress_is_throttled_by_the_reporter() {
+        // A clock that never moves lets only the first report through.
+        assert_eq!(counts(&collect_reports(Some(|| 0))).len(), 1);
     }
 
     // --- Recursive vs flat ---
