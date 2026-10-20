@@ -21,7 +21,6 @@ const INTERPRETERS: &[(&str, &str)] = &[
 /// SEC-11: a template in the code argument is refused by `bnto check` and
 /// by `bnto run`, before anything is spawned.
 #[test]
-#[ignore = "OPEN SEC-11: templates are filled into interpreter code args"]
 fn sec11_templates_in_interpreter_code_are_refused() {
     for (command, flag) in INTERPRETERS {
         let lab = Lab::new();
