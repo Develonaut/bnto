@@ -433,7 +433,7 @@ Deferred to Sprint 17 Wave 3. Image crop/rotate is lower priority than BRU file 
 Close every open finding in [shell-command.md](scopes/security/shell-command.md). Each PR removes the `#[ignore]` from its tests in `engine/crates/bnto/tests/shell_security/` (target: 0 ignored). Plan: [shell-security-sweep.md](plans/shell-security-sweep.md). Evidence: [research report](research/reports/Shell%20script%20injection%20safety.md).
 
 - [x] PR 0 — Add the shell-command security suite and findings index
-- [ ] PR 1 — Expect the resolved work dir in `shell_each` on macOS (test-only)
+- [x] PR 1 — Expect the resolved work dir in `shell_each` on macOS (test-only)
 - [x] PR 2 — SEC-19: ask for consent in the TUI before running an untrusted shell recipe
 - [ ] PR 3 — SEC-17/18: fill templates in one pass so substituted values are never re-read
 - [ ] PR 4 — SEC-07: check shell-command params before templates are filled; require a literal command
