@@ -20,6 +20,7 @@ mod file_mode;
 mod invocation;
 mod output_files;
 mod parameters;
+mod raw_checks;
 pub mod search_path;
 mod stdout_mode;
 pub mod validate;

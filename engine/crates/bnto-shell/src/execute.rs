@@ -94,6 +94,10 @@ impl NodeProcessor for ShellCommand {
         errors
     }
 
+    fn validate_raw(&self, raw: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+        crate::raw_checks::raw_problems(raw)
+    }
+
     /// Run with no incoming files (a direct call, not through the executor).
     fn process(
         &self,
