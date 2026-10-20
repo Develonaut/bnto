@@ -65,7 +65,6 @@ fn sec09_recipe_env_cannot_hijack_loader_or_lookup() {
 /// recipe set these turns data back into code. They must never reach the
 /// child — stripped or refused.
 #[test]
-#[ignore = "OPEN SEC-10: recipe env passes shell startup variables through"]
 fn sec10_recipe_env_cannot_set_shell_startup_variables() {
     let names = [
         "BASH_ENV",
