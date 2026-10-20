@@ -31,7 +31,9 @@ pub enum Command {
     /// Check recipe files for unknown node types, refused parameters and
     /// malformed placeholders, without running them.
     Check {
-        /// Paths to .bnto.json files.
+        /// Paths to .bnto.json files, or folders: a folder checks every
+        /// .bnto.json under it, recursively (skipping node_modules and
+        /// target). A folder with no recipes in it fails the check.
         #[arg(required = true)]
         paths: Vec<String>,
     },
