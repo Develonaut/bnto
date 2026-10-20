@@ -279,5 +279,17 @@ describe("BntoWorker", () => {
       expect(version).toBe("0.2.0");
       expect(bnto.isReady).toBe(true);
     });
+
+    it("starts a new worker on re-init instead of the stopped one", async () => {
+      const bnto = await initWorker();
+      const stopped = mockWorkerInstance;
+      bnto.terminate();
+
+      const reinitPromise = bnto.init();
+      mockWorkerInstance.simulateMessage({ type: "ready", version: "0.1.0" });
+      await reinitPromise;
+
+      expect(mockWorkerInstance).not.toBe(stopped);
+    });
   });
 });

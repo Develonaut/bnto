@@ -4,7 +4,8 @@
  *
  * Recursively walks the Definition tree, stripping editor metadata
  * (position, ports, edges) and optionally merging per-node config
- * into leaf processing nodes.
+ * into leaf processing nodes. Of the recipe's settings, only the run's
+ * time limit is carried over.
  */
 
 import type { Definition } from "@bnto/registry";
@@ -26,9 +27,12 @@ export function definitionToPipeline(
   perNodeConfig?: Record<string, Record<string, unknown>>,
 ): PipelineDefinition {
   const children = definition.nodes ?? [];
-  return {
+  const pipeline: PipelineDefinition = {
     nodes: children.map((child) => convertNode(child, perNodeConfig)),
   };
+  const timeout = definition.settings?.timeout;
+  if (timeout !== undefined) pipeline.settings = { timeout };
+  return pipeline;
 }
 
 // ---------------------------------------------------------------------------

@@ -137,14 +137,15 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 ### Run Time Limit (`settings.timeout`)
 
-**Decision (October 2026):** a recipe limits its whole run with `"settings": { "timeout": <seconds> }` (a whole number above 0; `PipelineSettings::timeout`, refused at parse otherwise, so `bnto check` and `bnto run` report it). No limit when unset, and nothing changes for such a run. The limit is enforced in two layers:
+**Decision (October 2026):** a recipe limits its whole run with `"settings": { "timeout": <seconds> }` (a whole number above 0; `PipelineSettings::timeout`, refused at parse otherwise, so `bnto check` and `bnto run` report it). No limit when unset, and nothing changes for such a run. The limit is enforced in layers:
 
 - **Engine (every consumer):** the executor reads the limit from the definition and the run's `now_ms`, and checks it before every node, every file of a per-file node, and every loop iteration starts, and once more when the run ends (`executor/time_limit.rs`). Past it, it fails with `BntoError::TimedOut { secs }` ("Run timed out after <secs>s"). A timeout ends the run: no `always` closing step starts after it, and a loop's `onError: "continue"` never skips it like a failed item (`BntoError::is_timeout` sees through `FailedWithOutput` / `ClosingStepFailed`). Browser WASM gets this as is: it uses the same executor with `Date.now()`.
 - **CLI (a step stuck mid-run):** the engine can't stop a step that is already running. `bnto run` arms a watchdog thread (`bnto/src/run_watchdog.rs`) for the run's limit. When it passes, the watchdog kills every registered child process tree (`ProcessRegistry::terminate_all`: process groups on unix, Job Objects on Windows), which unblocks a step waiting on a command. The run then reports the timeout itself, whatever the step returned. A run that doesn't come back within a 2s grace (stuck on something that isn't a child process) is ended by the watchdog with the same verdict line, after killing again.
+- **Browser (a WASM step stuck mid-run):** `definitionToPipeline` carries `settings.timeout` into the pipeline it sends to WASM, and `@bnto/core`'s browser execution service races the run against it (`lib/withTimeLimit.ts`). When it passes, the service terminates the Web Worker (the only way to stop running WASM) and the run fails with the engine's message, "Run timed out after <secs>s". The next run lazily starts a fresh worker. Runs sharing that worker fail too.
 
 `bnto run --timeout <seconds>` overrides the recipe's limit by writing it into the definition (`bnto/src/run_limit.rs`), so both layers use one value. The limit covers the whole run, including pre-flight dependency checks. A shell-command's own `timeout` still stops just that command.
 
-**Not yet:** the TUI and `bnto dry-run`'s pipeline preview get the engine's between-step checks but no watchdog, and the browser has no hard stop for a running step (terminating the Web Worker would be it). Per-node timeouts beyond shell-command's remain open.
+**Not yet:** the TUI and `bnto dry-run`'s pipeline preview get the engine's between-step checks but no watchdog. Per-node timeouts beyond shell-command's remain open.
 
 ---
 

@@ -142,4 +142,19 @@ describe("definitionToPipeline", () => {
     const pipeline = definitionToPipeline(emptyDef);
     expect(pipeline.nodes).toEqual([]);
   });
+
+  it("carries the recipe's time limit through to the engine", () => {
+    const pipeline = definitionToPipeline({
+      ...SIMPLE_DEF,
+      settings: { iteration: "auto", timeout: 30 },
+    });
+
+    expect(pipeline.settings).toEqual({ timeout: 30 });
+  });
+
+  it("leaves settings out when the recipe sets no time limit", () => {
+    const pipeline = definitionToPipeline({ ...SIMPLE_DEF, settings: { iteration: "auto" } });
+
+    expect(pipeline).not.toHaveProperty("settings");
+  });
 });
