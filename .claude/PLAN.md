@@ -1011,6 +1011,14 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 
 ---
 
+### Triage: Optional per-node `timeout` (step or section limit)
+
+**Priority: Triage.** Give any step, `group` included, an optional `timeout`, enforced by the executor. It would cap one step or one section of a recipe, alongside the whole-run `settings.timeout` / `bnto run --timeout`. Don't build it until a real recipe needs it. Precedent: GitHub Actions step `timeout-minutes`, Airflow `execution_timeout`, Prefect task/subflow `timeout_seconds`.
+
+`engine/crates/bnto-core/src/executor/mod.rs` (run deadline today), `engine/crates/bnto-core/src/pipeline_settings.rs`
+
+---
+
 ## Reference
 
 | Document                                   | Purpose                                                                      |
