@@ -29,6 +29,7 @@ clap = { workspace = true }
 colored = { workspace = true }
 crossterm = { workspace = true }
 dirs = { workspace = true }
+dunce = { workspace = true }
 indicatif = { workspace = true }
 ratatui = { workspace = true }
 serde = { workspace = true }
