@@ -442,7 +442,7 @@ Close every open finding in [shell-command.md](scopes/security/shell-command.md)
 - [ ] PR 7 — SEC-08: refuse exec wrappers that launch a shell (depends on PR 6)
 - [x] PR 8 — SEC-10: strip shell/interpreter startup variables from recipe env
 - [x] PR 9 — SEC-13: check field values against their definitions before a run
-- [ ] PR 10 — SEC-16: show full command lines in the consent prompt (depends on PR 2)
+- [x] PR 10 — SEC-16: show full command lines in the consent prompt (depends on PR 2)
 - [ ] PR 11 — SEC-20–26: script mode — literal script through a hardened shell (depends on PRs 4, 8, 10)
 
 ---

@@ -70,7 +70,7 @@ fn running_an_untrusted_shell_recipe_waits_for_consent() {
     let app = run_from_detail(model, "probe", SHELL_RECIPE, false);
     assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
     let request = app.execution.as_ref().unwrap().consent.clone().unwrap();
-    assert_eq!(request.commands, vec!["git"]);
+    assert_eq!(request.commands, vec!["git --version"]);
 }
 
 #[test]

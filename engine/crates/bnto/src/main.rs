@@ -22,6 +22,7 @@ mod check_targets;
 mod cli;
 mod command_stream;
 mod consent;
+mod consent_lines;
 mod context;
 mod dispatch;
 mod doctor;
