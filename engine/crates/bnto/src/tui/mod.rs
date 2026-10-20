@@ -42,6 +42,8 @@ use crossterm::{event as crossterm_event, execute};
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 
+use crate::output_names::OutputNames;
+
 use app::{AppMessage, AppModel, update};
 use bridge::BridgeEvent;
 use keys::handle_key;
@@ -133,7 +135,8 @@ fn run_loop(
     };
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
-    let mut progressive_output_dir: Option<String> = None;
+    // The run's output folder and the names its iterations have written there.
+    let mut progressive_output: Option<(String, OutputNames)> = None;
 
     logger.log(LogEntry {
         level: LogLevel::Info,
@@ -228,16 +231,16 @@ fn run_loop(
             while let Ok(event) = rx.try_recv() {
                 model = match event {
                     BridgeEvent::OutputDir(dir) => {
-                        progressive_output_dir = Some(dir);
+                        progressive_output = Some((dir, OutputNames::default()));
                         model
                     }
                     BridgeEvent::Progress(pe) => {
                         // Write progressive output files to disk before mapping.
                         if let PipelineEvent::IterationCompleted { output_files, .. } = &pe
                             && !output_files.is_empty()
-                            && let Some(dir) = &progressive_output_dir
+                            && let Some((dir, names)) = &mut progressive_output
                         {
-                            bridge::write_progressive_files(dir, output_files);
+                            bridge::write_progressive_files(dir, output_files, names);
                         }
                         let msg = bridge::map_pipeline_event(pe);
                         update(model, msg)
@@ -342,7 +345,7 @@ fn run_loop(
             if cancelled || !matches!(model.screen, app::Screen::Execution { .. }) {
                 bridge_rx = None;
                 execution_start = None;
-                progressive_output_dir = None;
+                progressive_output = None;
                 // Abandoning a run must kill its spawned command tree —
                 // dropping the receiver alone leaves children running.
                 crate::process_registry::global().terminate_all();

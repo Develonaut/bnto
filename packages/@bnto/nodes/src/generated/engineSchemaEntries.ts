@@ -25,6 +25,7 @@ import { groupNodeSchema } from "./schemas/group";
 import { imageCompressNodeSchema } from "./schemas/imageCompress";
 import { imageConvertNodeSchema } from "./schemas/imageConvert";
 import { imageOverlayNodeSchema } from "./schemas/imageOverlay";
+import { imagePadNodeSchema } from "./schemas/imagePad";
 import { imageResizeNodeSchema } from "./schemas/imageResize";
 import { imageStripExifNodeSchema } from "./schemas/imageStripExif";
 import { inputNodeSchema } from "./schemas/input";
@@ -68,6 +69,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   "image-compress": imageCompressNodeSchema,
   "image-convert": imageConvertNodeSchema,
   "image-overlay": imageOverlayNodeSchema,
+  "image-pad": imagePadNodeSchema,
   "image-resize": imageResizeNodeSchema,
   "image-strip-exif": imageStripExifNodeSchema,
   input: inputNodeSchema,
@@ -237,6 +239,19 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     opacity: { suffix: "%" },
     offsetX: { suffix: "px", group: "offset" },
     offsetY: { suffix: "px", group: "offset" },
+    quality: {
+      suffix: "%",
+      control: "slider",
+      presets: [
+        { value: 60, label: "Draft" },
+        { value: 80, label: "Balanced" },
+        { value: 100, label: "Maximum" },
+      ],
+    },
+  },
+  "image-pad": {
+    width: { suffix: "px", group: "canvas" },
+    height: { suffix: "px", group: "canvas" },
     quality: {
       suffix: "%",
       control: "slider",

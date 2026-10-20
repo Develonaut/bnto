@@ -51,9 +51,19 @@ bnto info compress-images
 # Check recipe files without running them: unknown node types, parameters a
 # node refuses (e.g. a file-filter regex that doesn't compile), malformed
 # {{…}} placeholders, and every edge problem at every level (cycles, edges to
-# unknown or other-level nodes, unwired nodes). Prints one line per finding, then
-# `Check: PASS (<n> recipes)` (exit 0) or `Check: FAIL (<n> findings)` (exit 1)
+# unknown or other-level nodes, unwired nodes). A required param left out for
+# `bnto run -p node:param=value` to give is a note, not a finding; one no `-p`
+# can give (an object, or a node `-p` can't name) is a finding. Prints one line
+# per finding, then a line per note, then `Check: PASS (<n> recipes)` (exit 0)
+# or `Check: FAIL (<n> findings)` (exit 1), with `, <n> notes` added if any
 bnto check backup.bnto.json recipes/*.bnto.json
+
+# A folder checks every .bnto.json under it, recursively, sorted by path, so a
+# new recipe can't miss the check (and it works where the shell expands no
+# globs, like Windows). Files and folders mix. node_modules/ and target/ are
+# skipped while walking, symlinked folders aren't followed, and a folder with
+# no recipes in it is a finding that fails the check
+bnto check recipes/ backup.bnto.json
 
 # Check external dependencies (processor and recipe-level `requires`)
 bnto doctor
@@ -62,22 +72,40 @@ bnto doctor
 bnto install download-video
 ```
 
+### Output names
+
+With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. Names are only kept apart from each other: a file already in the output folder from an earlier run is replaced.
+
 ### `bnto run --json`
 
 `--json` prints the run's summary as exactly one JSON line on stdout, whether the run passes or fails. Progress, warnings and the human summary line stay on stderr, unchanged, and the exit code is the same (0 on a pass, 1 on a failure). The human `Done.` / `Pipeline failed:` line is printed last on stderr, after every warning, and both it and the JSON line are built from the same summary.
 
 ```json
-{"status":"pass","files_written":1,"duration_ms":5,"nodes":[{"id":"collect","node_type":"file-collect","files_processed":1,"metadata":{}},{"id":"copy","node_type":"file-copy","files_processed":1,"metadata":{"copied":1,"up_to_date":0,"skipped_newer":0}}],"error":null}
+{
+  "status": "pass",
+  "files_written": 1,
+  "duration_ms": 5,
+  "nodes": [
+    { "id": "collect", "node_type": "file-collect", "files_processed": 1, "metadata": {} },
+    {
+      "id": "copy",
+      "node_type": "file-copy",
+      "files_processed": 1,
+      "metadata": { "copied": 1, "up_to_date": 0, "skipped_newer": 0 }
+    }
+  ],
+  "error": null
+}
 ```
 
-| Field | Meaning |
-| --- | --- |
-| `status` | `"pass"` or `"fail"` |
-| `files_written` | Files the output step wrote, or renamed in place in overwrite mode; `0` for `message` / `none` output and on a failure. On `--dry-run`, the files that would be written |
-| `duration_ms` | Pipeline time on a pass; time since the run started on a failure |
-| `nodes` | Top-level processing nodes in pipeline order: `id`, `node_type`, `files_processed` summed over every time the node ran (nodes inside a container count toward the container), and `metadata`, the node's output record as `{{node.<id>.*}}` reads it at the end of the run. A node that never finished shows `0` and `{}` |
+| Field              | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`           | `"pass"` or `"fail"`                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `files_written`    | Files the output step wrote, or renamed in place in overwrite mode; `0` for `message` / `none` output and on a failure. On `--dry-run`, the files that would be written                                                                                                                                                                                                                                                    |
+| `duration_ms`      | Pipeline time on a pass; time since the run started on a failure                                                                                                                                                                                                                                                                                                                                                           |
+| `nodes`            | Top-level processing nodes in pipeline order: `id`, `node_type`, `files_processed` summed over every time the node ran (nodes inside a container count toward the container), and `metadata`, the node's output record as `{{node.<id>.*}}` reads it at the end of the run. A node that never finished shows `0` and `{}`                                                                                                  |
 | `nodes[].metadata` | What the node reported, as a JSON object; `{}` when it reported nothing (a container's own entry is always `{}`). Keys its processor declares as counts are totals for the whole node, e.g. file-copy in `newer` mode reports `copied`, `up_to_date` and `skipped_newer` (on `--dry-run`, `copied` counts the files that would be copied); other keys hold the last file's value. A failed run reports `{}` for every node |
-| `error` | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass |
+| `error`            | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass                                                                                                                                                                                                                                                                          |
 
 A run declined at the shell-command consent prompt prints no JSON line; pass `--yes` when scripting.
 
@@ -134,7 +162,8 @@ src/
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
 +-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
-+-- check.rs               # `bnto check` (recipe files checked on disk, findings + verdict)
++-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)
++-- check_targets.rs       # `bnto check` arguments to recipe files (a folder walked recursively, sorted)
 +-- launch.rs              # `bnto tui` launcher
 +-- context.rs             # NativeContext for system access (commands, temp files, env)
 +-- scratch.rs             # Per-run scratch dir holding a run's temp files (removed on drop)
@@ -145,6 +174,7 @@ src/
 +-- install_plan.rs        # Per-dependency install step (host hint / package manager / manual)
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
++-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (indicatif bars)
 +-- progress_indent.rs     # Step layout: container children indented, container-relative numbers

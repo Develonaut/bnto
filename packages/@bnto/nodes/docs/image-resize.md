@@ -16,7 +16,7 @@
 |-----------|------|---------|-------|-------------|
 | width | number | - | ≥ 1 | Target width in pixels |
 | height | number | - | ≥ 1 | Target height in pixels |
-| maintainAspect | boolean | true | - | Keep the original width-to-height ratio when resizing |
+| maintainAspect | boolean | true | - | Keep the original width-to-height ratio. With both width and height set, the image fits inside that box |
 | quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added. |
 
 ## Configuration Example

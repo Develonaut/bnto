@@ -9,4 +9,5 @@ mod params;
 mod processor;
 mod validate;
 
+pub(crate) use dimensions::{MAX_DIMENSION, MIN_DIMENSION};
 pub use processor::ResizeImages;

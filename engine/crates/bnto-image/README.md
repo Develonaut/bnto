@@ -1,6 +1,6 @@
 # bnto-image
 
-Image processing nodes. Compress, resize, convert, overlay, and strip metadata from images in the browser via WASM.
+Image processing nodes. Compress, resize, pad, convert, overlay, and strip metadata from images in the browser via WASM.
 
 ## Overview
 
@@ -16,6 +16,7 @@ Format detection and raster encoding live in [`bnto-encode`](../bnto-encode/), a
 | `ResizeImages`       | `image-resize`     | Scales to target dimensions with aspect ratio control. Lanczos3 filter                                              |
 | `ConvertImageFormat` | `image-convert`    | Converts between JPEG, PNG, and WebP with quality control. Also accepts SVG input (rasterized via `bnto-vector`)    |
 | `OverlayImage`       | `image-overlay`    | Composites a watermark/overlay onto images with configurable position, size, and opacity                            |
+| `PadImages`          | `image-pad`        | Centers images on a larger canvas (width/height), filling the added space with transparency or a hex color          |
 | `StripExif`          | `image-strip-exif` | Removes all EXIF metadata (GPS, camera info, timestamps) via decode/re-encode                                       |
 
 ## Directory Structure
@@ -41,6 +42,15 @@ src/
 │   ├── params.rs           # Defaults, positions, clamped param reads
 │   ├── param_defs.rs       # Parameter schema (metadata)
 │   └── validate.rs         # Static param validation
+├── pad/              # PadImages processor (image-pad)
+│   ├── mod.rs              # Module wiring + re-export
+│   ├── processor.rs        # NodeProcessor impl, decode/pad/encode, output metadata
+│   ├── canvas.rs           # Center on the filled canvas, flatten for JPEG
+│   ├── color.rs            # Background parsing (transparent / hex)
+│   ├── params.rs           # Typed param reads + canvas size
+│   ├── param_defs.rs       # Parameter schema (metadata)
+│   ├── validate.rs         # Static param validation
+│   └── tests.rs            # Processor-level tests
 ├── strip_exif.rs     # StripExif processor
 ├── svg.rs            # SVG detection and rasterization (convert-only)
 ├── orientation.rs    # EXIF orientation handling

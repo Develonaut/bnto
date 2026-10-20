@@ -77,6 +77,10 @@
       "label": "Overlay Image",
       "description": "Overlay an image onto source images at a configurable position, size, and opacity."
     },
+    "imagePad": {
+      "label": "Pad Images",
+      "description": "Center images on a larger canvas, filling the added space with transparency or a color."
+    },
     "imageResize": {
       "label": "Resize Images",
       "description": "Change image dimensions while maintaining quality."
@@ -442,6 +446,25 @@
         "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
       }
     },
+    "imagePad": {
+      "width": {
+        "label": "Width",
+        "description": "Canvas width in pixels. Leave empty to keep the image's width."
+      },
+      "height": {
+        "label": "Height",
+        "description": "Canvas height in pixels. Leave empty to keep the image's height."
+      },
+      "background": {
+        "label": "Background",
+        "description": "Fill for the added space: \"transparent\" or a hex color (#fff, #ffffff, #ffffff80). JPEG has no transparency, so a transparent fill comes out white.",
+        "placeholder": "#ffffff"
+      },
+      "quality": {
+        "label": "Quality",
+        "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added."
+      }
+    },
     "imageResize": {
       "width": {
         "label": "Width",
@@ -453,7 +476,7 @@
       },
       "maintainAspect": {
         "label": "Maintain Aspect Ratio",
-        "description": "Keep the original width-to-height ratio when resizing"
+        "description": "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box"
       },
       "quality": {
         "label": "Quality",
@@ -469,7 +492,7 @@
     "report": {
       "message": {
         "label": "Message",
-        "description": "The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each."
+        "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each."
       },
       "each": {
         "label": "For Each",

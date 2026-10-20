@@ -220,7 +220,7 @@ mod tests {
             .iter()
             .find(|c| c.category == NodeCategory::Image);
         assert!(image.is_some());
-        assert_eq!(image.unwrap().count, 5, "Image should have 5 node types");
+        assert_eq!(image.unwrap().count, 6, "Image should have 6 node types");
     }
 
     // --- Category navigation ---
