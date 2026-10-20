@@ -199,6 +199,15 @@ fn command_failed(
 /// A finished command's stdout, or the failure it ends with: stopped for
 /// outliving its timeout, or a non-zero exit. Either failure hands over the
 /// stdout printed so far.
+/// A command bnto stopped (cancel, quit, a signal) fails, keeping the
+/// stdout it printed, whatever exit code it ended with.
+fn command_stopped(cmd: &str, stdout: Vec<u8>) -> BntoError {
+    BntoError::CommandFailed {
+        message: format!("Command '{cmd}' was stopped before it finished"),
+        stdout,
+    }
+}
+
 fn command_outcome(
     cmd: &str,
     options: &CommandOptions,
@@ -240,9 +249,13 @@ impl ProcessContext for NativeContext {
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to run '{cmd}': {e}")))?;
         let pgid = child.id();
         let result = child.wait_with_output();
+        let stopped = self.registry.take_stopped(pgid);
         self.registry.deregister(pgid);
         let output = result
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to wait for '{cmd}': {e}")))?;
+        if stopped {
+            return Err(command_stopped(cmd, output.stdout));
+        }
 
         if output.status.success() {
             Ok(output.stdout)
@@ -288,9 +301,13 @@ impl ProcessContext for NativeContext {
         let pid = child.id();
         let kill = || self.registry.terminate(pid);
         let finished = command_stream::stream(&mut child, on_output, options.timeout, &kill);
+        let stopped = self.registry.take_stopped(pid);
         self.registry.deregister(pid);
         let finished = finished
             .map_err(|e| BntoError::ProcessingFailed(format!("Failed to wait for '{cmd}': {e}")))?;
+        if stopped && !finished.timed_out {
+            return Err(command_stopped(cmd, finished.stdout));
+        }
         command_outcome(cmd, options, finished)
     }
 
@@ -665,6 +682,35 @@ mod tests {
         assert_eq!(alive, -1, "whole process group must be dead");
     }
 
+    // A shell whose child died first can exit 0 from a bare `wait`, so a
+    // cancelled step could count as a success. The trap makes that certain.
+    #[cfg(unix)]
+    #[test]
+    fn a_stopped_command_fails_even_when_it_exits_zero() {
+        const ARGS: &[&str] = &["-c", "trap 'exit 0' TERM; sleep 300 & wait"];
+        let (_, result) = kill_streaming_command("sh", ARGS);
+        let err = result.expect_err("a stopped command must not report success");
+        assert!(err.to_string().contains("was stopped"), "{err}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_stopped_command_fails_without_streaming_too() {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = ctx_with_registry(registry.clone());
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let script = "trap 'exit 0' TERM; sleep 300 & wait";
+            let _ = tx.send(ctx.run_command("sh", &["-c", script]));
+        });
+        wait_until_registered(&registry);
+        registry.terminate_all();
+        let result = rx
+            .recv_timeout(UNBLOCK_DEADLINE)
+            .expect("must unblock after the kill");
+        assert!(result.unwrap_err().to_string().contains("was stopped"));
+    }
+
     #[cfg(windows)]
     #[test]
     fn terminate_all_unblocks_streaming_command_on_windows() {
@@ -722,7 +768,11 @@ mod tests {
                 .status();
         }
         assert!(killed, "orphaned grandchild {grandchild} must be killed");
-        handle.join().expect("streaming thread panicked").unwrap();
+        // `cmd` exited 0, but the step was still streaming when it was
+        // cancelled, so it reports stopped rather than success.
+        let result = handle.join().expect("streaming thread panicked");
+        let err = result.expect_err("a cancelled step must not report success");
+        assert!(err.to_string().contains("was stopped"), "{err}");
     }
 
     // Matches unix: a command that finishes on its own leaves its background

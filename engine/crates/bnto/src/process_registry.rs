@@ -6,7 +6,7 @@
 // A process-wide default registry exists (rather than plumbing an instance
 // through every layer) because OS signal handlers only have 'static access.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, LazyLock, Mutex};
 
 #[cfg(windows)]
@@ -28,6 +28,10 @@ type Tree = JobObject;
 #[derive(Default)]
 pub struct ProcessRegistry {
     groups: Mutex<HashMap<u32, Tree>>,
+    /// Children bnto stopped, until their owner asks. A stopped command
+    /// fails whatever its exit code: a shell whose child died first can exit
+    /// 0 from a bare `wait`, and a cancelled step must not count as done.
+    stopped: Mutex<HashSet<u32>>,
 }
 
 impl ProcessRegistry {
@@ -64,6 +68,12 @@ impl ProcessRegistry {
         }
     }
 
+    /// Whether bnto stopped `pid`, forgetting it either way. The owner asks
+    /// once, after reaping the child.
+    pub fn take_stopped(&self, pid: u32) -> bool {
+        self.stopped.lock().unwrap().remove(&pid)
+    }
+
     /// Snapshot of currently registered process groups.
     pub fn active(&self) -> Vec<u32> {
         self.groups.lock().unwrap().keys().copied().collect()
@@ -79,6 +89,7 @@ impl ProcessRegistry {
         if groups.is_empty() {
             return;
         }
+        self.stopped.lock().unwrap().extend(&groups);
         #[cfg(unix)]
         kill_trees(&groups);
         #[cfg(windows)]
@@ -92,6 +103,7 @@ impl ProcessRegistry {
     /// for every child (a command that outlived its timeout). It stays
     /// registered until its owner reaps it and calls `deregister`.
     pub fn terminate(&self, pid: u32) {
+        self.stopped.lock().unwrap().insert(pid);
         #[cfg(unix)]
         kill_trees(&[pid]);
         #[cfg(windows)]
