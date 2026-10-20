@@ -1,4 +1,4 @@
-# shell-command Security Findings
+# shell-run Security Findings
 
 **Created:** October 20, 2026
 **Evidence:** [Shell script injection safety report](../../research/reports/Shell%20script%20injection%20safety.md) (research notes alongside it)
@@ -36,7 +36,7 @@ Most payloads try to create a canary file. A test passes only if the canary neve
 | SEC-17 | A filled value is never rescanned, so data containing `{{env.SECRET}}` stays literal (templates fill in one left-to-right pass)                                                                                                                                                                  | Guard              | —    | `template_values::sec17_*`                |
 | SEC-18 | A value containing its own placeholder terminates instead of hanging template filling                                                                                                                                                                                                            | Guard              | —    | `template_values::sec18_*`                |
 | SEC-19 | The TUI asks for consent before running a library recipe with shell steps; "bundled" means the exact shipped definition                                                                                                                                                                          | Guard              | —    | `tui::app_helpers::consent::tests` (unit) |
-| SEC-27 | A value filled into a shell step may not carry shell-command's own tokens (`{{output_dir}}`, `{{url}}`, `{{input}}`, `{{path}}`, `{{file}}`, `{{item.*}}`): refused whether the executor, a file name or the input put it there                                                                  | Guard              | —    | `template_values::sec27_*`                |
+| SEC-27 | A value filled into a shell step may not carry shell-run's own tokens (`{{output_dir}}`, `{{url}}`, `{{input}}`, `{{path}}`, `{{file}}`, `{{item.*}}`): refused whether the executor, a file name or the input put it there                                                                      | Guard              | —    | `template_values::sec27_*`                |
 | SEC-28 | Data placeholders in program text a tool takes as a plain argument (`awk '…'`, `sed 's/…/'`, `sed -e`, `jq '…'`) are refused, also through wrappers; `awk -v` and `jq --arg` stay allowed                                                                                                        | Guard              | —    | `interpreter_code::sec28_*`               |
 | SEC-29 | `bnto run` fills `{{vars.*}}` before consent, so approval is pinned to the values that run and the prompt shows them; a changed value asks again                                                                                                                                                 | Guard              | —    | `consent::sec29_*`                        |
 | SEC-20 | Script mode: values arrive as `"$1"…`, never as syntax                                                                                                                                                                                                                                           | Guard              | —    | `script_mode::sec20_*`                    |
@@ -51,7 +51,7 @@ Most payloads try to create a canary file. A test passes only if the canary neve
 
 ## Script mode: the safe-script contract
 
-`shell-command` runs a literal script with `{ "shell": "sh", "script": "...", "args": [...] }` as `<fixed shell path> [-p|-f] -c <script> bnto <args…>`. The engine guarantees the script text is exactly what consent showed, the shell is the real one, and the environment is cleared. What it can't see is how the script uses its values, so bundled and user scripts follow these rules:
+`shell-run` runs a literal script with `{ "shell": "sh", "script": "...", "args": [...] }` as `<fixed shell path> [-p|-f] -c <script> bnto <args…>`. The engine guarantees the script text is exactly what consent showed, the shell is the real one, and the environment is cleared. What it can't see is how the script uses its values, so bundled and user scripts follow these rules:
 
 - Read values only as `"$1"`, `"$2"`… or `"$@"`, always quoted. An unquoted `$1` word-splits and globs.
 - No `eval`, and never splice a value into nested code: `sh -c "…$1…"`, `osascript -e "…$1…"`, `python3 -c "…$1…"`, `xargs sh -c`, `find -exec sh -c`.

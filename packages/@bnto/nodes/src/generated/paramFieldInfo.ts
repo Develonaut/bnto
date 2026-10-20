@@ -239,7 +239,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     message: { type: "string", control: "text", required: true },
     each: { type: "record", control: "keyValue", required: false },
   },
-  "shell-command": {
+  "shell-run": {
     command: { type: "string", control: "text", required: false },
     script: { type: "string", control: "textarea", required: false },
     shell: { type: "string", control: "text", required: false },

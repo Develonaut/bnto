@@ -192,7 +192,7 @@ Extend the editor journey matrix with custom recipe tests:
 | Over-parameterizing recipes                     | Sensible defaults > maximum configurability. A recipe should work with zero config changes                                                                 |
 | Ignoring rename as glue                         | `file-system` rename is the universal connector — it works on any file type output and adds organizational value to any pipeline                           |
 | Testing with wrong fixture type                 | Image specs need files from `IMAGE_FIXTURES_DIR`, CSV specs from `CSV_FIXTURES_DIR`. Mismatched fixtures = instant failure                                 |
-| Proposing server-only compositions              | `http-request` and `shell-command` are server-only (M4). All compositions must be browser-only for now                                                     |
+| Proposing server-only compositions              | `http-request` and `shell-run` are server-only (M4). All compositions must be browser-only for now                                                         |
 
 ## Quality Standards
 

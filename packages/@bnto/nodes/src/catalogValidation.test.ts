@@ -115,7 +115,7 @@ describe("catalog structure", () => {
       "file-delete",
       "file-list",
       "file-move",
-      "shell-command",
+      "shell-run",
       "spreadsheet-export",
       "spreadsheet-lookup",
     ]);

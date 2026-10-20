@@ -40,7 +40,7 @@
     },
     {
       "id": "git",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Git Version",
       "position": {

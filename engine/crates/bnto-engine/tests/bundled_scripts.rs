@@ -1,6 +1,6 @@
 // ShellCheck over every bundled recipe's script-mode steps. Bundled scripts
 // ship to every user and are shown whole at consent, so they're held to
-// ShellCheck's default rules (shell-command.md, "safe-script contract").
+// ShellCheck's default rules (shell-run.md, "safe-script contract").
 // Without ShellCheck the checks skip, unless BNTO_REQUIRE_SHELLCHECK=1 (set in
 // CI), where a missing ShellCheck fails so the gate can't pass by not running.
 

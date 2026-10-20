@@ -46,8 +46,8 @@ export { imageStripExifParamsSchema, imageStripExifNodeSchema } from "./imageStr
 export type { ImageStripExifParams } from "./imageStripExif";
 export { reportParamsSchema, reportNodeSchema } from "./report";
 export type { ReportParams } from "./report";
-export { shellCommandParamsSchema, shellCommandNodeSchema } from "./shellCommand";
-export type { ShellCommandParams } from "./shellCommand";
+export { shellRunParamsSchema, shellRunNodeSchema } from "./shellRun";
+export type { ShellRunParams } from "./shellRun";
 export { spreadsheetCleanParamsSchema, spreadsheetCleanNodeSchema } from "./spreadsheetClean";
 export type { SpreadsheetCleanParams } from "./spreadsheetClean";
 export { spreadsheetConvertParamsSchema, spreadsheetConvertNodeSchema } from "./spreadsheetConvert";

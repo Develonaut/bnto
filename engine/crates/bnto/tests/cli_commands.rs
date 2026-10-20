@@ -181,7 +181,7 @@ fn test_doctor_command() {
 #[test]
 fn test_doctor_checks_recipe_level_dependencies() {
     // yt-dlp is declared only in download-video's recipe-level `requires`
-    // (shell-command declares no deps), so it must come from recipe scanning.
+    // (shell-run declares no deps), so it must come from recipe scanning.
     let output = Command::new(bnto_bin()).arg("doctor").output().unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
@@ -266,7 +266,7 @@ fn test_none_mode_shell_source_feeds_next_node() {
         "Unexpected content: {content}"
     );
     // Each run is its own chain, but steps count against the whole pipeline.
-    assert!(stderr.contains("[1/2] shell-command"), "stderr: {stderr}");
+    assert!(stderr.contains("[1/2] shell-run"), "stderr: {stderr}");
     assert!(stderr.contains("[2/2] file-rename"), "stderr: {stderr}");
     assert!(!stderr.contains("[1/1]"), "stderr: {stderr}");
 }
@@ -1088,7 +1088,7 @@ fn test_dry_run_subcommand_copies_nothing() {
     assert_eq!(mtime, past, "destination mtime changed");
 }
 
-/// Put the shell-command fixture into a fresh library (dry-run resolves slugs only).
+/// Put the shell-run fixture into a fresh library (dry-run resolves slugs only).
 fn library_with_shell_recipe() -> tempfile::TempDir {
     let home = temp_output_dir();
     let library = home.path().join("recipes");
@@ -1104,7 +1104,7 @@ fn library_with_shell_recipe() -> tempfile::TempDir {
 #[test]
 fn test_dry_run_with_inputs_requires_consent_for_shell_recipe() {
     // Guards: a dry run with inputs executes the pipeline, so an untrusted
-    // shell-command recipe needs the same consent as `bnto run`.
+    // shell-run recipe needs the same consent as `bnto run`.
     let home = library_with_shell_recipe();
     let output = Command::new(bnto_bin())
         .env("BNTO_HOME", home.path())
@@ -1229,7 +1229,7 @@ fn test_youtube_download() {
 
 #[test]
 fn test_youtube_download_with_param_override() {
-    // Param override: timeout=600 changes the shell-command timeout.
+    // Param override: timeout=600 changes the shell-run timeout.
     // Verifies param injection works alongside URL input.
     let out = temp_output_dir();
     let output = Command::new(bnto_bin())
@@ -1312,8 +1312,8 @@ fn test_m3u8_download() {
     assert!(size > 1000, "Output file should be > 1KB, got {size} bytes");
 }
 
-// --- Shell-command recipe end-to-end (download-video) ---
-// These tests verify the shell-command processor's file output mode
+// --- `shell-run` recipe end-to-end (download-video) ---
+// These tests verify the shell-run processor's file output mode
 // with yt-dlp. They require yt-dlp and ffmpeg installed; they skip
 // gracefully if the tool is missing.
 

@@ -31,12 +31,12 @@ RECIPE 1: Flatten Source Folder
   └──────────┬──────────┘
              │
   ┌──────────▼──────────┐
-  │ shell-command        │  ✗ MISSING — no shell-command node
+  │ shell-run        │  ✗ MISSING — no shell-run node
   │ python3 Flatten.py   │
   └──────────┬──────────┘
              │
   ┌──────────▼──────────┐
-  │ shell-command        │  ✗ MISSING
+  │ shell-run        │  ✗ MISSING
   │ bash -c "rename"     │
   └─────────────────────┘
 
@@ -76,7 +76,7 @@ RECIPE 3: Merge Product STLs
   └──────────┬──────────┘
              │
   ┌──────────▼──────────┐
-  │ shell-command        │  ✗ MISSING
+  │ shell-run        │  ✗ MISSING
   │ python3 Merge_STL.py │
   │ (calls Blender)      │
   └─────────────────────┘
@@ -90,7 +90,7 @@ RECIPE 4: Generate Product Renders
   └──────────┬──────────┘
              │
   ┌──────────▼──────────┐
-  │ shell-command        │  ✗ MISSING
+  │ shell-run        │  ✗ MISSING
   │ python3 Render.py    │
   │ --theme {{THEME}}    │
   │ --zoom  {{ZOOM}}     │
@@ -111,7 +111,7 @@ RECIPE 5: Generate Etsy Listings
   │ loop (forEach)       │  ✗ MISSING
   │ items: rows          │
   │ ┌───────────────────┐│
-  │ │ shell-command      ││  ✗ MISSING
+  │ │ shell-run      ││  ✗ MISSING
   │ │ python3 Etsy_CSV   ││
   │ │ --name {{.item.   ││
   │ │         name}}     ││
@@ -128,7 +128,7 @@ Every recipe uses at least one missing node type. The three critical gaps:
 
 | Missing                               | Used In            | Blocking       |
 | ------------------------------------- | ------------------ | -------------- |
-| `shell-command`                       | Recipes 1, 3, 4, 5 | 4 of 5 recipes |
+| `shell-run`                           | Recipes 1, 3, 4, 5 | 4 of 5 recipes |
 | `file-system`                         | Recipes 1, 2, 3, 4 | 4 of 5 recipes |
 | `spreadsheet-read` + `forEach (data)` | Recipes 2, 5       | 2 of 5 recipes |
 
@@ -183,7 +183,7 @@ RECIPE: Generate Product Images (Unified)
   │  └────────────┬────────────┘ │
   │               │               │
   │  ┌────────────▼────────────┐ │
-  │  │ shell-command            │ │  ✗ MISSING
+  │  │ shell-run            │ │  ✗ MISSING
   │  │ python3 render.py        │ │
   │  │ --model                  │ │
   │  │   {{.PRODUCTS_DIR}}/     │ │
@@ -201,7 +201,7 @@ RECIPE: Generate Product Images (Unified)
   │  └────────────┬────────────┘ │
   │               │               │
   │  ┌────────────▼────────────┐ │
-  │  │ shell-command            │ │  ✗ MISSING
+  │  │ shell-run            │ │  ✗ MISSING
   │  │ python3 etsy_csv.py      │ │
   │  │ --name {{.item.name}}    │ │
   │  │ --title {{.item.title}}  │ │
@@ -246,8 +246,8 @@ RECIPE: Generate Product Images (Unified)
 | 2   | forEach row           | `loop` (data-driven)  | ✗ Missing    | Iterate structured data, not files |
 | 3   | Create product folder | `file-system` (mkdir) | ✗ Missing    | Need fs operations                 |
 | 4   | Generate overlay      | `http-request`        | ✗ Missing    | Figma Variables API                |
-| 5   | Render in Blender     | `shell-command`       | ✗ Missing    | ProcessContext infra exists        |
-| 6   | Generate Etsy CSV     | `shell-command`       | ✗ Missing    | Same node type as #5               |
+| 5   | Render in Blender     | `shell-run`           | ✗ Missing    | ProcessContext infra exists        |
+| 6   | Generate Etsy CSV     | `shell-run`           | ✗ Missing    | Same node type as #5               |
 | 7   | Composite overlay     | `image-overlay`       | **✓ Exists** | May need position/sizing tweaks    |
 
 **1 of 7 nodes exists today.** The missing 6 depend on 4 infrastructure pieces (variables, expressions, data forEach, inter-node data).
@@ -266,14 +266,14 @@ RECIPE A: Setup Product Folders
 
 RECIPE B: Generate Overlays + Renders
 ──────────────────────────────────────
-  spreadsheet-read  →  forEach  →  http-request  →  shell-command
+  spreadsheet-read  →  forEach  →  http-request  →  shell-run
        ✗                  ✗            ✗                  ✗
   For each product: Figma API → Blender render
 
 
 RECIPE C: Generate Listings
 ───────────────────────────
-  spreadsheet-read  →  forEach  →  shell-command  →  image-overlay
+  spreadsheet-read  →  forEach  →  shell-run  →  image-overlay
        ✗                  ✗            ✗                  ✓
   For each product: generate etsy.csv, composite overlays
 ```
@@ -340,7 +340,7 @@ Variables prompted before execution:
   │  └─────────────┬────────────────┘ │
   │                │                   │
   │  ┌─────────────▼────────────────┐ │
-  │  │ 2c. shell-command             │ │
+  │  │ 2c. shell-run             │ │
   │  │     python3 render.py         │ │
   │  │     --model                   │ │
   │  │       {{.PRODUCTS_DIR}}/      │ │
@@ -387,7 +387,7 @@ Variables prompted before execution:
   │  └───────────────────────────────┘ │
   │                │                   │
   │  ┌─────────────▼────────────────┐ │
-  │  │ 2f. shell-command             │ │
+  │  │ 2f. shell-run             │ │
   │  │     python3 etsy_csv.py       │ │
   │  │     --name {{.item.name}}     │ │
   │  │     --title {{.item.title}}   │ │
@@ -449,7 +449,7 @@ This is bnto's **"one recipe to rule them all"** moment. A single `.bnto.json` f
 | **Data-driven iteration**          | forEach (data)         | Each CSV row becomes a product                      |
 | **Filesystem orchestration**       | file-system            | Creates organized folder trees                      |
 | **External API integration**       | http-request           | Figma generates branded overlays                    |
-| **CLI tool orchestration**         | shell-command          | Blender renders 3D models                           |
+| **CLI tool orchestration**         | shell-run              | Blender renders 3D models                           |
 | **Nested loops**                   | forEach inside forEach | Per-render compositing inside per-product loop      |
 | **Built-in image processing**      | image-overlay          | Composites overlay onto renders                     |
 | **Variable system**                | recipe variables       | Theme, zoom, price — prompted once, used everywhere |
@@ -540,7 +540,7 @@ The test matrix:
 | CSV with 20 rows         | Batch — folder creation, iteration, no cross-contamination        |
 | CSV with missing column  | Error handling — expression fails on `{{.item.missing}}`          |
 | Figma API timeout        | http-request timeout + continueOnError                            |
-| Blender crash on 1 model | shell-command failure + continueOnError — other products complete |
+| Blender crash on 1 model | shell-run failure + continueOnError — other products complete     |
 | Nested loop (8 renders)  | Inner forEach over file-system list output                        |
 | Resume after interrupt   | Idempotent — mkdir skips existing, Blender skips existing renders |
 
@@ -617,7 +617,7 @@ Go template syntax with functions:
 | Type                      | Operations                                        | Status in Rust Engine                                                                            |
 | ------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `file-system`             | exists, list, mkdir, copy, move                   | **Missing entirely**                                                                             |
-| `shell-command`           | Run CLI with args, env, timeout, streaming, retry | **Missing entirely**                                                                             |
+| `shell-run`               | Run CLI with args, env, timeout, streaming, retry | **Missing entirely**                                                                             |
 | `spreadsheet` (read mode) | Read CSV from path, emit rows as structured data  | **Missing** — current spreadsheet nodes transform uploaded CSV bytes, they don't read from paths |
 | `image` (composite mode)  | Layer overlay on base image with position control | **Partial** — `image-overlay` exists but designed for watermarking, not arbitrary compositing    |
 | `loop` (forEach mode)     | Iterate over structured data (arrays, CSV rows)   | **Missing** — current loop iterates over files only                                              |
@@ -661,7 +661,7 @@ Nodes declared output ports. Edges connected output ports to input ports. Inside
 - **`timeout`** per node (up to 4 hours for Blender renders)
 - **`stream: true`** — relay stdout/stderr in real time
 - **`retry`/`retryDelay`/`stallTimeout`** — resilience for flaky downloads
-- **`env`** on shell-command — inject environment variables
+- **`env`** on shell-run — inject environment variables
 - **`concurrency`** — parallel processing within a loop
 
 ---
@@ -707,7 +707,7 @@ These are prerequisites. Without them, none of the node types below can work in 
 
 **What:** A `variables` array on the recipe definition with typed declarations, defaults, and UI hints. The TUI/CLI prompts for values before execution. Variables are resolved in template expressions throughout the recipe.
 
-**Why first:** Every node parameter in every old recipe references variables. Without this, shell-command args are hardcoded, loop items are hardcoded, paths are hardcoded. Variables are the parameterization layer that makes recipes reusable.
+**Why first:** Every node parameter in every old recipe references variables. Without this, shell-run args are hardcoded, loop items are hardcoded, paths are hardcoded. Variables are the parameterization layer that makes recipes reusable.
 
 **Scope:**
 
@@ -787,7 +787,7 @@ These are prerequisites. Without them, none of the node types below can work in 
 
 These are the node processors that the Etsy pipeline specifically needs. Build them after Tier 0 infrastructure is in place.
 
-#### 5. `shell-command` Node
+#### 5. `shell-run` Node
 
 **What:** Execute an arbitrary CLI command with arguments, environment variables, timeout, and streaming output.
 
@@ -808,7 +808,7 @@ These are the node processors that the Etsy pipeline specifically needs. Build t
 
 ```rust
 NodeMetadata {
-    node_type: "shell-command",
+    node_type: "shell-run",
     category: System,
     platforms: vec![Platform::Cli, Platform::Desktop],
     input_cardinality: InputCardinality::Source, // generates output, doesn't transform files
@@ -913,9 +913,9 @@ These aren't strictly required for a minimal viable version of the target workfl
 
 #### 10. Streaming Output for Long-Running Commands
 
-**What:** Relay stdout/stderr from shell-command nodes as progress events in real time.
+**What:** Relay stdout/stderr from shell-run nodes as progress events in real time.
 
-**Why:** Blender renders take 5-30 minutes. Without streaming output, the user stares at a blank progress bar. The old engine had `stream: true` on shell-command nodes.
+**Why:** Blender renders take 5-30 minutes. Without streaming output, the user stares at a blank progress bar. The old engine had `stream: true` on shell-run nodes.
 
 **Scope:**
 
@@ -958,7 +958,7 @@ These aren't strictly required for a minimal viable version of the target workfl
 
 **What:** Built-in functions in template expressions: `basename`, `basenameNoExt`, `split`, `join`, `lower`, `upper`, `trim`, `replace`.
 
-**Why:** The old image-optimizer recipe used `{{basenameNoExt .item}}` and `{{split $.SIZE_PRESET "x"}}` for dynamic output filenames. Without functions, users resort to shell-command nodes for trivial string operations.
+**Why:** The old image-optimizer recipe used `{{basenameNoExt .item}}` and `{{split $.SIZE_PRESET "x"}}` for dynamic output filenames. Without functions, users resort to shell-run nodes for trivial string operations.
 
 #### 14. Concurrency Control
 
@@ -984,7 +984,7 @@ Tier 0 (Foundation)
   └── 4. Inter-Node Data       ← depends on 2, 3
 
 Tier 1 (Core Nodes)           ← all depend on Tier 0
-  ├── 5. shell-command
+  ├── 5. shell-run
   ├── 6. file-system
   ├── 7. spreadsheet-read      ← depends on 4 (emits data)
   └── 8. http-request          ← depends on 4 (emits data)
@@ -1010,7 +1010,7 @@ To run the target workflow, the minimum set is:
 2. Template expressions (Tier 0.2)
 3. Data-driven forEach (Tier 0.3)
 4. Inter-node data passing (Tier 0.4)
-5. shell-command node (Tier 1.5)
+5. shell-run node (Tier 1.5)
 6. file-system node with mkdir (Tier 1.6)
 7. spreadsheet-read (Tier 1.7)
 8. http-request node (Tier 1.8)
@@ -1074,17 +1074,17 @@ The 11 Heavy Handed recipes are the acceptance test suite. When the Rust engine 
 
 | Old Recipe                    | Nodes Required                                             | Tier |
 | ----------------------------- | ---------------------------------------------------------- | ---- |
-| flatten-source-folder         | file-system (exists), shell-command                        | 1    |
+| flatten-source-folder         | file-system (exists), shell-run                            | 1    |
 | copy-product-overlays         | spreadsheet-read, forEach, file-system (mkdir, copy)       | 1    |
-| merge-product-stls            | file-system (exists), shell-command                        | 1    |
-| generate-product-renders      | file-system (exists), shell-command (long-running)         | 1+2  |
-| generate-etsy-listings        | spreadsheet-read, forEach, shell-command                   | 1    |
+| merge-product-stls            | file-system (exists), shell-run                            | 1    |
+| generate-product-renders      | file-system (exists), shell-run (long-running)             | 1+2  |
+| generate-etsy-listings        | spreadsheet-read, forEach, shell-run                       | 1    |
 | composite-images-with-overlay | file-system (list, mkdir), forEach, image (composite)      | 1    |
 | image-optimizer               | file-system (list, mkdir), forEach, image (resize+convert) | 1    |
-| download-video                | shell-command                                              | 1    |
-| download-video-authenticated  | shell-command                                              | 1    |
-| batch-download-videos         | forEach (over split string), shell-command                 | 1    |
-| batch-download-videos-auth    | forEach, shell-command (retry, stall timeout)              | 1+2  |
+| download-video                | shell-run                                                  | 1    |
+| download-video-authenticated  | shell-run                                                  | 1    |
+| batch-download-videos         | forEach (over split string), shell-run                     | 1    |
+| batch-download-videos-auth    | forEach, shell-run (retry, stall timeout)                  | 1+2  |
 
 **All 11 recipes are achievable with Tier 0 + Tier 1.** Tier 2 adds resilience for production use (retry, streaming, stall detection).
 
@@ -1100,13 +1100,13 @@ Instead: **the engine ships a small set of primitive nodes. Service integrations
 
 ```
 Engine (Rust): Primitive nodes — the building blocks
-  http-request, shell-command, file-system, spreadsheet-read,
+  http-request, shell-run, file-system, spreadsheet-read,
   image-overlay, loop, etc.
 
 Service Recipes: "Connectors" built from primitives
   figma-export.bnto.json      → 3 http-request nodes chained
   slack-notify.bnto.json      → 1 http-request (webhook POST)
-  s3-upload.bnto.json         → shell-command (aws cli)
+  s3-upload.bnto.json         → shell-run (aws cli)
   google-drive-sync.bnto.json → http-request + file-system
   etsy-upload.bnto.json       → http-request + spreadsheet-read
 
@@ -1396,7 +1396,7 @@ Any variable declared as `type: "secret"` is automatically redacted in:
 
 - CLI output (`Authorization: Bearer ***`)
 - TUI progress display
-- Streaming shell-command stdout (pattern-matched against known secret values)
+- Streaming shell-run stdout (pattern-matched against known secret values)
 - Error messages
 
 This follows GitHub Actions' model: registered secrets are automatically masked. No manual `::add-mask::` needed.
@@ -1411,7 +1411,7 @@ The engine ships with ~8 primitive node types. Service integrations, workflow te
 
 ```
 Layer 1: Engine Primitives (maintained by bnto)
-  http-request, shell-command, file-system, spreadsheet-read,
+  http-request, shell-run, file-system, spreadsheet-read,
   image-overlay, image-compress, image-resize, ...
   ~8-15 node types, stable, rarely changes
 

@@ -23,7 +23,7 @@ User decisions:
 2. Remove the `#[ignore]` from that PR's suite tests and add unit tests in the crate (RED).
 3. Implement until GREEN.
 4. Run `task wasm:lint`, `task wasm:test` and `task cli:test`. Also run `task ui:build` and `task ui:test` when codegen changed.
-5. Flip the finding to Guard in `.claude/scopes/security/shell-command.md` and tick it in PLAN.md.
+5. Flip the finding to Guard in `.claude/scopes/security/shell-run.md` and tick it in PLAN.md.
 6. Commit, without attribution lines, per the global CLAUDE.md.
 7. Check in with the user before pushing.
 
@@ -31,7 +31,7 @@ User decisions:
 
 **PR 0, `test/shell-security-suite`: Add the shell-command security suite and findings index.**
 
-- Commit the suite already written, `.claude/scopes/security/shell-command.md`, and `.claude/research/` (report and notes).
+- Commit the suite already written, `.claude/scopes/security/shell-run.md`, and `.claude/research/` (report and notes).
 - Add ignored RED specs for SEC-17 and SEC-18. For SEC-18, give `support.rs` a run-with-deadline helper that kills `bnto` after 10 s, so a regression can't hang CI.
 - Add a "Security sweep" section to `.claude/PLAN.md` listing PRs 1–11.
 

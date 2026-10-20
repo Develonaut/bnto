@@ -134,18 +134,18 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- shell-command ----------
+  // ---------- shell-run ----------
 
-  describe("shell-command", () => {
+  describe("shell-run", () => {
     it("accepts a script step without a command", () => {
       // Command-or-script is checked by validateDefinition; per-param schemas
       // can't express "one of".
-      const errors = validateNodeParams("shell-command", "n1", { script: 'echo "$1"' });
+      const errors = validateNodeParams("shell-run", "n1", { script: 'echo "$1"' });
       expect(errors).toHaveLength(0);
     });
 
     it("returns empty with valid params", () => {
-      const errors = validateNodeParams("shell-command", "n1", { command: "echo hello" });
+      const errors = validateNodeParams("shell-run", "n1", { command: "echo hello" });
       expect(errors).toHaveLength(0);
     });
   });

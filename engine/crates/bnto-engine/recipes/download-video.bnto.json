@@ -69,7 +69,7 @@
     },
     {
       "id": "download",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Download Video",
       "position": {

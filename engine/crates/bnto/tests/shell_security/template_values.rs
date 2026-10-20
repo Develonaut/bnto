@@ -43,7 +43,7 @@ fn sec18_self_referencing_values_terminate() {
     assert!(out.ok, "{}", out.text);
 }
 
-/// SEC-27: shell-command fills {{output_dir}}, {{url}}, {{input}} and each
+/// SEC-27: shell-run fills {{output_dir}}, {{url}}, {{input}} and each
 /// groups' tokens itself, after values are in. A value carrying one can't
 /// be told from the recipe's own, so it's refused, whichever way it came.
 #[test]

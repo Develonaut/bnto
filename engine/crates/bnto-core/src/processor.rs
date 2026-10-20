@@ -145,7 +145,7 @@ pub trait NodeProcessor {
     }
 
     /// Tokens this processor fills in its params itself, after the executor
-    /// (shell-command's `{{output_dir}}`, `{{url}}`, each groups' `{{path}}`).
+    /// (shell-run's `{{output_dir}}`, `{{url}}`, each groups' `{{path}}`).
     /// A value the executor fills in may not carry one: the processor
     /// couldn't tell it from the recipe's own. An entry ending in `.`
     /// (`{{item.`) covers every token it starts.

@@ -1,4 +1,4 @@
-// ShellCommand processor — execute external CLI tools.
+// ShellRun processor — execute external CLI tools.
 //
 // This is the generic "run any command" processor that enables
 // connector-as-recipe architecture. Recipes declare what tools
@@ -46,23 +46,23 @@ use crate::stdout_mode::make_output_filename;
 type Params = serde_json::Map<String, serde_json::Value>;
 
 /// Shell command processor — runs external CLI tools.
-pub struct ShellCommand;
+pub struct ShellRun;
 
-impl ShellCommand {
+impl ShellRun {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for ShellCommand {
+impl Default for ShellRun {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl NodeProcessor for ShellCommand {
+impl NodeProcessor for ShellRun {
     fn name(&self) -> &str {
-        "shell-command"
+        crate::NODE_TYPE
     }
 
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
@@ -98,7 +98,7 @@ impl NodeProcessor for ShellCommand {
         errors
     }
 
-    /// Filled after the executor, by shell-command itself (SEC-27).
+    /// Filled after the executor, by shell-run itself (SEC-27).
     fn reserved_tokens(&self) -> &'static [&'static str] {
         &[
             "{{output_dir}}",
@@ -149,7 +149,7 @@ impl NodeProcessor for ShellCommand {
 
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
-            node_type: "shell-command".to_string(),
+            node_type: crate::NODE_TYPE.to_string(),
             name: "Run Shell Command".to_string(),
             description: "Run external CLI tools with security validation.".to_string(),
             category: NodeCategory::System,
@@ -286,20 +286,20 @@ mod tests {
 
     #[test]
     fn test_processor_name() {
-        let processor = ShellCommand::new();
-        assert_eq!(processor.name(), "shell-command");
+        let processor = ShellRun::new();
+        assert_eq!(processor.name(), "shell-run");
     }
 
     #[test]
     fn test_metadata_category_system() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         assert_eq!(meta.category, NodeCategory::System);
     }
 
     #[test]
     fn test_metadata_platforms_native_only() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         assert_eq!(meta.platforms, vec!["cli", "server", "desktop"]);
         assert!(!meta.platforms.contains(&"browser".to_string()));
@@ -307,7 +307,7 @@ mod tests {
 
     #[test]
     fn test_metadata_parameters_complete() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         let param_names: Vec<&str> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
         assert!(param_names.contains(&"command"));
@@ -322,7 +322,7 @@ mod tests {
     fn test_a_step_needs_a_command_or_a_script() {
         // Either alone is enough, so neither is marked required in metadata;
         // validate refuses a step with neither.
-        let meta = ShellCommand::new().metadata();
+        let meta = ShellRun::new().metadata();
         let required: Vec<&str> = meta
             .parameters
             .iter()
@@ -330,11 +330,11 @@ mod tests {
             .map(|p| p.name.as_str())
             .collect();
         assert!(required.is_empty(), "{required:?}");
-        let errors = ShellCommand::new().validate(&serde_json::Map::new());
+        let errors = ShellRun::new().validate(&serde_json::Map::new());
         assert_eq!(errors, ["'command' or 'script' is required"]);
         let script = serde_json::json!({ "script": "true" });
         assert!(
-            ShellCommand::new()
+            ShellRun::new()
                 .validate(script.as_object().unwrap())
                 .is_empty()
         );
@@ -342,19 +342,16 @@ mod tests {
 
     #[test]
     fn test_metadata_no_requires() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
-        assert!(
-            meta.requires.is_empty(),
-            "shell-command has no inherent deps"
-        );
+        assert!(meta.requires.is_empty(), "shell-run has no inherent deps");
     }
 
     // --- Validation ---
 
     #[test]
     fn test_validate_empty_command_fails() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::Value::String("".into()));
         let errors = processor.validate(&params);
@@ -363,7 +360,7 @@ mod tests {
 
     #[test]
     fn test_validate_missing_command_fails() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let params = serde_json::Map::new();
         let errors = processor.validate(&params);
         assert!(!errors.is_empty());
@@ -372,7 +369,7 @@ mod tests {
 
     #[test]
     fn test_validate_present_command_passes() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::Value::String("echo".into()));
         let errors = processor.validate(&params);
@@ -381,7 +378,7 @@ mod tests {
 
     #[test]
     fn test_validate_shell_command_rejected() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::Value::String("bash".into()));
         let errors = processor.validate(&params);
@@ -396,7 +393,7 @@ mod tests {
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::json!("tool"));
         params.insert("search_path".into(), serde_json::json!([1]));
-        let errors = ShellCommand::new().validate(&params);
+        let errors = ShellRun::new().validate(&params);
         assert_eq!(errors.len(), 1, "{errors:?}");
         assert!(errors[0].contains("search_path"), "{errors:?}");
     }
@@ -409,7 +406,7 @@ mod tests {
             "search_path".into(),
             serde_json::json!(["C:/Windows/System32"]),
         );
-        let errors = ShellCommand::new().validate(&params);
+        let errors = ShellRun::new().validate(&params);
         assert!(
             errors.iter().any(|e| e.contains("shell interpreter")),
             "{errors:?}"
@@ -456,7 +453,7 @@ mod tests {
         std::fs::write(dir.path().join("tool.bat"), b"").unwrap();
         let ctx = Recording(Default::default());
         let progress = ProgressReporter::new_noop();
-        let output = ShellCommand::new()
+        let output = ShellRun::new()
             .process(search_path_input(dir.path()), &progress, &ctx)
             .unwrap();
         // Named after the bare command, never the full path it ran from.
@@ -472,7 +469,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let ctx = Recording(Default::default());
         let progress = ProgressReporter::new_noop();
-        let err = ShellCommand::new()
+        let err = ShellRun::new()
             .process(search_path_input(dir.path()), &progress, &ctx)
             .err()
             .expect("should fail");
@@ -485,14 +482,14 @@ mod tests {
 
     #[test]
     fn test_search_path_param_is_internal_and_listed() {
-        let meta = ShellCommand::new().metadata();
+        let meta = ShellRun::new().metadata();
         let param = meta.parameters.iter().find(|p| p.name == "search_path");
         assert!(!param.expect("search_path should exist").surfaceable);
     }
 
     #[test]
     fn test_validate_zero_timeout_rejected() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::Value::String("echo".into()));
         params.insert(
@@ -508,7 +505,7 @@ mod tests {
 
     #[test]
     fn test_noop_context_returns_error() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
             data: FileData::Bytes(vec![]),
@@ -532,7 +529,7 @@ mod tests {
 
     #[test]
     fn test_process_rejects_missing_command() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
             data: FileData::Bytes(vec![]),
@@ -546,7 +543,7 @@ mod tests {
 
     #[test]
     fn test_process_rejects_shell_command() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let progress = ProgressReporter::new_noop();
         let input = NodeInput {
             data: FileData::Bytes(vec![]),
@@ -573,7 +570,7 @@ mod tests {
 
     #[test]
     fn test_default_timeout_in_metadata() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         let timeout_param = meta
             .parameters
@@ -588,7 +585,7 @@ mod tests {
 
     #[test]
     fn test_default_max_output_size_in_metadata() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         let param = meta
             .parameters
@@ -606,7 +603,7 @@ mod tests {
 
     #[test]
     fn test_env_param_not_surfaceable() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         let env_param = meta
             .parameters
@@ -618,7 +615,7 @@ mod tests {
 
     #[test]
     fn test_output_mode_default_is_stdout() {
-        let processor = ShellCommand::new();
+        let processor = ShellRun::new();
         let meta = processor.metadata();
         let param = meta
             .parameters
@@ -1033,7 +1030,7 @@ mod tests {
         let input = options_input(serde_json::json!({
             "command": "tool", "timeout": 9, "env": { "GREETING": "hi" }
         }));
-        ShellCommand::new()
+        ShellRun::new()
             .process(input, &ProgressReporter::new_noop(), &ctx)
             .unwrap();
         let seen = ctx.0.lock().unwrap();
@@ -1085,9 +1082,9 @@ mod tests {
 
     #[test]
     fn test_shell_command_takes_its_incoming_files_and_fills_items_itself() {
-        let meta = ShellCommand::new().metadata();
+        let meta = ShellRun::new().metadata();
         assert_eq!(meta.input_cardinality, InputCardinality::Batch);
-        assert!(ShellCommand::new().resolves_items());
+        assert!(ShellRun::new().resolves_items());
     }
 
     #[test]
@@ -1100,7 +1097,7 @@ mod tests {
             }),
             &["a.dll", "b.dll"],
         );
-        let output = ShellCommand::new()
+        let output = ShellRun::new()
             .process_batch(input, &ProgressReporter::new_noop(), &ctx)
             .unwrap();
         let object = |n: &str| format!("-object={}", std::env::temp_dir().join(n).display());
@@ -1125,7 +1122,7 @@ mod tests {
             serde_json::json!({ "command": "git", "args": ["--version"] }),
             &["a.txt"],
         );
-        let output = ShellCommand::new()
+        let output = ShellRun::new()
             .process_batch(input, &ProgressReporter::new_noop(), &ctx)
             .unwrap();
         assert_eq!(
@@ -1143,7 +1140,7 @@ mod tests {
             serde_json::json!({ "command": "tool", "args": ["{{item.size}}"] }),
             &["a.txt"],
         );
-        let err = ShellCommand::new()
+        let err = ShellRun::new()
             .process_batch(input, &ProgressReporter::new_noop(), &ctx)
             .err()
             .expect("should fail");
@@ -1162,7 +1159,7 @@ mod tests {
         std::fs::create_dir(work.path().join("Tools")).unwrap();
         let ctx = RecordingOptions(Default::default(), work.path().to_path_buf());
         let input = options_input(serde_json::json!({ "command": "tool", "cwd": "Tools" }));
-        ShellCommand::new()
+        ShellRun::new()
             .process(input, &ProgressReporter::new_noop(), &ctx)
             .unwrap();
         let seen = ctx.0.lock().unwrap();
@@ -1173,7 +1170,7 @@ mod tests {
     fn test_without_cwd_the_command_runs_in_the_work_dir() {
         let ctx = RecordingOptions(Default::default(), Default::default());
         let input = options_input(serde_json::json!({ "command": "tool" }));
-        ShellCommand::new()
+        ShellRun::new()
             .process(input, &ProgressReporter::new_noop(), &ctx)
             .unwrap();
         assert_eq!(ctx.0.lock().unwrap()[0].dir, None);
@@ -1184,7 +1181,7 @@ mod tests {
         let work = tempfile::tempdir().unwrap();
         let ctx = RecordingOptions(Default::default(), work.path().to_path_buf());
         let input = options_input(serde_json::json!({ "command": "tool", "cwd": "Tools" }));
-        let err = ShellCommand::new()
+        let err = ShellRun::new()
             .process(input, &ProgressReporter::new_noop(), &ctx)
             .err()
             .expect("should fail");
@@ -1195,7 +1192,7 @@ mod tests {
     #[test]
     fn test_validate_refuses_a_malformed_each_group() {
         let params = serde_json::json!({ "command": "tool", "args": [{ "each": "x" }] });
-        let errors = ShellCommand::new().validate(params.as_object().unwrap());
+        let errors = ShellRun::new().validate(params.as_object().unwrap());
         assert_eq!(errors.len(), 1, "{errors:?}");
         assert!(errors[0].contains("each"), "{errors:?}");
     }
@@ -1203,14 +1200,14 @@ mod tests {
     #[test]
     fn test_validate_refuses_a_cwd_that_leaves_the_work_dir() {
         let params = serde_json::json!({ "command": "tool", "cwd": "../elsewhere" });
-        let errors = ShellCommand::new().validate(params.as_object().unwrap());
+        let errors = ShellRun::new().validate(params.as_object().unwrap());
         assert_eq!(errors.len(), 1, "{errors:?}");
         assert!(errors[0].contains("'cwd'"), "{errors:?}");
     }
 
     #[test]
     fn test_cwd_param_is_internal_and_listed() {
-        let meta = ShellCommand::new().metadata();
+        let meta = ShellRun::new().metadata();
         let param = meta.parameters.iter().find(|p| p.name == "cwd");
         assert!(!param.expect("cwd should exist").surfaceable);
     }

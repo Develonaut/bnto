@@ -1,4 +1,4 @@
-// shell-command's `each` arg groups through the built binary: files a
+// shell-run's `each` arg groups through the built binary: files a
 // collect step found reach one command, each as its own argument.
 
 mod helpers;
@@ -34,7 +34,7 @@ fn run_each(work: &Path, out: &Path, group: serde_json::Value) -> Output {
             { "id": "list", "type": "file-list", "parameters": { "paths": ["bin1", "bin2"] } },
             { "id": "collect", "type": "file-collect",
               "parameters": { "pattern": "*.dll", "flatten": false } },
-            { "id": "tool", "type": "shell-command", "parameters": {
+            { "id": "tool", "type": "shell-run", "parameters": {
                 "command": "git", "args": ["rev-parse", "--sq-quote", group, "--end"]
             } },
             { "id": "output", "type": "output", "parameters": { "mode": "write" } }

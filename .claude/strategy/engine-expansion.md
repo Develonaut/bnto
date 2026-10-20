@@ -124,7 +124,7 @@ With `platforms` now a first-class array (instead of a lossy `browserCapable` bo
 | `["browser"]`                  | image-compress, csv-clean, file-rename      | Browser + CLI + all  |
 | `["browser", "server"]`        | http-request (CORS in browser, full server) | All targets          |
 | `["cli", "server", "desktop"]` | video-download (needs yt-dlp)               | CLI, server, desktop |
-| `["cli", "desktop"]`           | shell-command (local execution only)        | CLI, desktop         |
+| `["cli", "desktop"]`           | shell-run (local execution only)            | CLI, desktop         |
 | `["server"]`                   | ai-inference (needs API key proxy)          | Server only (Pro)    |
 
 **Key insight:** `"browser"` implies the node can run everywhere (WASM compiles to all targets). Non-browser nodes need specific runtimes. The `platforms` array is the source of truth for filtering across all surfaces (editor palette, recipe capability checks, CLI availability).
@@ -264,7 +264,7 @@ This is the core value proposition: build one node, get it on every target, comp
 
 ## Recipe-Level Dependencies
 
-The dependency system (Sprint 9) handles processor-level deps well. But when recipes use generic processors like `shell-command` to invoke external tools, the dependency info is lost — the processor itself has no deps, but the recipe needs them.
+The dependency system (Sprint 9) handles processor-level deps well. But when recipes use generic processors like `shell-run` to invoke external tools, the dependency info is lost — the processor itself has no deps, but the recipe needs them.
 
 **Solution:** Add `requires: Vec<Dependency>` to `PipelineDefinition`. Recipe-level deps merge with node-level deps during pre-flight check (deduplication by binary name). Existing downstream code (`check_pipeline_dependencies`, `bnto info`, `bnto doctor`) works unchanged.
 
@@ -274,11 +274,11 @@ See [recipe-deps-strategy.md](recipe-deps-strategy.md) for the full design, work
 
 ---
 
-## Shell Command Node (`shell-command`)
+## Shell Command Node (`shell-run`)
 
 A generic processor for invoking CLI tools. Replaces the need for dedicated crates when wrapping external binaries.
 
-- **Node type:** `shell-command`
+- **Node type:** `shell-run`
 - **Category:** System
 - **Platforms:** `["cli", "server", "desktop"]`
 - **Parameters:** `command`, `args`, `timeout`, `env`
@@ -286,7 +286,7 @@ A generic processor for invoking CLI tools. Replaces the need for dedicated crat
 
 Uses `ProcessContext::run_command()` — explicit command + args split, no `sh -c`, no shell injection. The `NodeTypeInfo` entry already exists in `metadata.rs`.
 
-First conversion target: `download-video` recipe migrates from `bnto-video` crate to `shell-command` + recipe-level `requires: [yt-dlp, ffmpeg]`. The `bnto-video` crate is then deleted.
+First conversion target: `download-video` recipe migrates from `bnto-video` crate to `shell-run` + recipe-level `requires: [yt-dlp, ffmpeg]`. The `bnto-video` crate is then deleted.
 
 ---
 
@@ -309,8 +309,8 @@ First conversion target: `download-video` recipe migrates from `bnto-video` crat
 
 3. **`ProcessContext` on every `process()` call.** All processors receive `&dyn ProcessContext`. Browser gets `NoopContext`, CLI gets `NativeContext`. Simpler API surface, no conditional typing. (Sprint 9, PR #318)
 
-4. **Recipe-level `requires` merges with node-level deps.** Same `Dependency` struct, same deduplication. Recipes that use generic processors (like `shell-command`) declare their external tool requirements at the recipe level. See [recipe-deps-strategy.md](recipe-deps-strategy.md).
+4. **Recipe-level `requires` merges with node-level deps.** Same `Dependency` struct, same deduplication. Recipes that use generic processors (like `shell-run`) declare their external tool requirements at the recipe level. See [recipe-deps-strategy.md](recipe-deps-strategy.md).
 
-5. **`shell-command` uses explicit command + args, not `sh -c`.** No shell injection vector. `ProcessContext::run_command()` handles execution.
+5. **`shell-run` uses explicit command + args, not `sh -c`.** No shell injection vector. `ProcessContext::run_command()` handles execution.
 
-6. **`bnto-video` crate deletion is safe.** No external consumers. `download-video` recipe migrates to `shell-command` + recipe-level `requires`.
+6. **`bnto-video` crate deletion is safe.** No external consumers. `download-video` recipe migrates to `shell-run` + recipe-level `requires`.

@@ -22,19 +22,19 @@ These execute locally — CLI (native Rust), browser (WASM), desktop (native). C
 | `vector`    | Rust `bnto-vector` (`resvg`, `roxmltree`) | Yes | Yes     | SVG→raster conversion, SVG optimization                     |
 | `csv`       | Rust `csv` + `serde`                      | Yes | Yes     | Clean, rename columns, merge, sort, filter, convert to JSON |
 | `file`      | Rust `bnto-file`                          | Yes | Yes     | Rename (pattern/regex), zip, unzip                          |
-| `video`     | `shell-command` recipe (yt-dlp + ffmpeg)  | Yes | No      | Download video/audio from URLs                              |
+| `video`     | `shell-run` recipe (yt-dlp + ffmpeg)      | Yes | No      | Download video/audio from URLs                              |
 | `transform` | Rust / JS                                 | Yes | Yes     | Expression evaluation, field mapping, data transforms       |
 | `pdf`       | JS `pdf.js` + Canvas                      | TBD | TBD     | PDF to images, PDF to text                                  |
 | `archive`   | JS (JSZip) or Rust                        | TBD | TBD     | Zip/unzip operations                                        |
 
 ### Server-Only Nodes (Pro tier, future — monetization tabled)
 
-These would require managed server-side execution. On CLI/desktop, users can run these locally (BYOK for AI, local binaries for shell-command).
+These would require managed server-side execution. On CLI/desktop, users can run these locally (BYOK for AI, local binaries for shell-run).
 
 | Node Type                     | Why Server for Browser                                        | CLI/Desktop Alternative         |
 | ----------------------------- | ------------------------------------------------------------- | ------------------------------- |
 | `ai`                          | API keys shouldn't be exposed client-side; needs server proxy | BYOK — user supplies their key  |
-| `shell-command`               | Impossible in browser sandbox                                 | Full system access via CLI      |
+| `shell-run`                   | Impossible in browser sandbox                                 | Full system access via CLI      |
 | `http-request` (unrestricted) | CORS limits browser reach; server bypasses                    | No CORS in CLI — works directly |
 
 ### Browser Limitations
@@ -133,7 +133,7 @@ All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Tier
 | Recipe                  | Slug                  | Classification        | Node Types            | Notes                                                                 |
 | ----------------------- | --------------------- | --------------------- | --------------------- | --------------------------------------------------------------------- |
 | Convert EPS to SVG      | `/convert-eps-to-svg` | CLI-only              | `vector`              | Shell-out to Inkscape/Ghostscript. Backlog — requires native binaries |
-| Extract video thumbnail | `/extract-thumbnail`  | **Server-only (Pro)** | `shell-command`       | ffmpeg — impractical in browser WASM                                  |
+| Extract video thumbnail | `/extract-thumbnail`  | **Server-only (Pro)** | `shell-run`           | ffmpeg — impractical in browser WASM                                  |
 | Zip files               | `/zip-files`          | Browser-only          | `archive`             | JS zip libraries (JSZip)                                              |
 | Unzip archive           | `/unzip-files`        | Browser-only          | `archive`             | JS unzip libraries                                                    |
 | Generate image grid     | `/image-grid`         | Browser-only          | `image`               | Rust `image` composite or Canvas API                                  |

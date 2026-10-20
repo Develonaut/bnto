@@ -281,7 +281,7 @@ mod tests {
             name: "Download Video".to_string(),
             description: "Download videos".to_string(),
             category: "video".to_string(),
-            node_types: vec!["shell-command".to_string()],
+            node_types: vec!["shell-run".to_string()],
             dependencies: vec![Dependency {
                 binary: "yt-dlp".to_string(),
                 version: String::new(),
@@ -302,7 +302,7 @@ mod tests {
             name: "Download Video".to_string(),
             description: "Download videos".to_string(),
             category: "video".to_string(),
-            node_types: vec!["shell-command".to_string()],
+            node_types: vec!["shell-run".to_string()],
             dependencies: vec![],
             input_mode: InputMode::Url,
         };

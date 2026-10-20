@@ -49,7 +49,7 @@ Shared engine layer. Registry creation and pipeline convenience for all consumer
 | `spreadsheet-export`  | `bnto-spreadsheet` | `SpreadsheetExport`  |
 | `spreadsheet-lookup`  | `bnto-spreadsheet` | `SpreadsheetLookup`  |
 | `spreadsheet-read`    | `bnto-spreadsheet` | `ReadSpreadsheet`    |
-| `shell-command`       | `bnto-shell`       | `ShellCommand`       |
+| `shell-run`           | `bnto-shell`       | `ShellRun`           |
 
 ## Development
 

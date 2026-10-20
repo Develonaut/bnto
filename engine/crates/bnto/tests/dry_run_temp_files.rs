@@ -1,4 +1,4 @@
-// Dry-run temp-file hygiene — a dry run executes shell-command nodes but must
+// Dry-run temp-file hygiene — a dry run executes shell-run nodes but must
 // leave none of their temp output behind, while a real run still delivers it.
 
 mod helpers;

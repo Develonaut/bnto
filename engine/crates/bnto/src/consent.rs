@@ -1,4 +1,4 @@
-// Shell-command consent gate for `bnto run` and `bnto dry-run`.
+// `shell-run` consent gate for `bnto run` and `bnto dry-run`.
 //
 // The decision itself lives in `trust_gate` (shared with the TUI); this
 // module asks on the terminal and exits when the user declines.

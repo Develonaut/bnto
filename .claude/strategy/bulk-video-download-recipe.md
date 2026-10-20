@@ -13,7 +13,7 @@ Real-world use case: downloading and organizing video collections from Patreon (
 1. Scrape the collection page DOM → structured manifest (JSON or CSV)
 2. Feed the manifest to bnto → create directory tree + download videos per group
 
-This is the second validation recipe alongside the Etsy product pipeline. It exercises the same infrastructure gaps but with a simpler workflow — no HTTP API calls, no image compositing, just data-driven iteration + shell-command + filesystem ops.
+This is the second validation recipe alongside the Etsy product pipeline. It exercises the same infrastructure gaps but with a simpler workflow — no HTTP API calls, no image compositing, just data-driven iteration + shell-run + filesystem ops.
 
 ---
 
@@ -160,7 +160,7 @@ The browser console snippet would be modified to output CSV instead of JSON. CSV
       "nodes": [
         {
           "id": "download",
-          "type": "shell-command",
+          "type": "shell-run",
           "parameters": {
             "command": "yt-dlp",
             "args": [
@@ -286,13 +286,13 @@ bnto run ./bulk-video-download.bnto.json manifest.csv \
 
 ### What exists today
 
-| Component                 | Status     | Notes                                                                              |
-| ------------------------- | ---------- | ---------------------------------------------------------------------------------- |
-| `shell-command` processor | **Exists** | Can run yt-dlp with args, conditional groups, field templates                      |
-| Field template system     | **Exists** | `{{fields.*}}` substitution in node params                                         |
-| `bnto-csv` crate          | **Exists** | But only transforms CSV bytes (clean, rename, convert) — doesn't emit rows as data |
-| Loop container            | **Exists** | But only iterates over input files, not structured data                            |
-| Node-to-node templates    | **Exists** | `{{node.<id>.*}}` reads an earlier node's output metadata                          |
+| Component              | Status     | Notes                                                                              |
+| ---------------------- | ---------- | ---------------------------------------------------------------------------------- |
+| `shell-run` processor  | **Exists** | Can run yt-dlp with args, conditional groups, field templates                      |
+| Field template system  | **Exists** | `{{fields.*}}` substitution in node params                                         |
+| `bnto-csv` crate       | **Exists** | But only transforms CSV bytes (clean, rename, convert) — doesn't emit rows as data |
+| Loop container         | **Exists** | But only iterates over input files, not structured data                            |
+| Node-to-node templates | **Exists** | `{{node.<id>.*}}` reads an earlier node's output metadata                          |
 
 ### What's missing (in priority order)
 
@@ -303,7 +303,7 @@ bnto run ./bulk-video-download.bnto.json manifest.csv \
 | 3   | **Inter-node data passing**          | 0.4  | Wire `spreadsheet-read` output into `loop` container's items                    |
 | 4   | **`{{item.*}}` template resolution** | 0.2  | Resolve `{{item.group}}` and `{{item.url}}` inside loop child nodes             |
 
-These are the same gaps documented in [power-recipes.md](power-recipes.md) Tier 0.3, 0.4, 1.7. This recipe is a simpler validation than the Etsy pipeline — it only needs read + forEach + shell-command, no HTTP or filesystem nodes.
+These are the same gaps documented in [power-recipes.md](power-recipes.md) Tier 0.3, 0.4, 1.7. This recipe is a simpler validation than the Etsy pipeline — it only needs read + forEach + shell-run, no HTTP or filesystem nodes.
 
 ### Quickest win: CSV row iteration
 
@@ -361,7 +361,7 @@ This recipe validates the same infrastructure as the Etsy pipeline but with a sm
 | Template expressions    | Yes             | Yes                                        |
 | Data-driven forEach     | Yes (CSV rows)  | Yes (CSV rows)                             |
 | Inter-node data passing | Yes             | Yes                                        |
-| `shell-command`         | Yes             | Yes (yt-dlp)                               |
+| `shell-run`             | Yes             | Yes (yt-dlp)                               |
 | `file-system` (mkdir)   | Yes             | No (yt-dlp creates dirs via `-o` template) |
 | `spreadsheet-read`      | Yes             | Yes                                        |
 | `http-request`          | Yes (Figma API) | No                                         |

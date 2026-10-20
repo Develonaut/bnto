@@ -1,4 +1,4 @@
-// `search_path` — the folders a shell-command looks in for its command.
+// `search_path` — the folders a shell-run looks in for its command.
 //
 // `command` stays a bare name (validate.rs refuses paths and shells). When a
 // recipe sets `search_path`, the command is found in those folders only, in

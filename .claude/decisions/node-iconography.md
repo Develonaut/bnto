@@ -59,18 +59,18 @@ export function getNodeIcon(nodeType: NodeTypeName, params?: Record<string, unkn
 
 Several processing node icons are weak. These should be updated in `nodeTypes.ts`:
 
-| Node            | Current           | Updated            | Reason                                          |
-| --------------- | ----------------- | ------------------ | ----------------------------------------------- |
-| `image`         | `image`           | `image`            | ✅ keep                                         |
-| `spreadsheet`   | `table`           | `sheet`            | `sheet` reads as spreadsheet, more specific     |
-| `transform`     | `shuffle`         | `arrow-left-right` | Shuffle implies randomness; transform = mapping |
-| `edit-fields`   | `pen-line`        | `pen-line`         | ✅ keep                                         |
-| `loop`          | `refresh-cw`      | `repeat`           | `refresh` = reload, `repeat` = iteration        |
-| `parallel`      | `columns-3`       | `git-fork`         | Fork conveys branching/concurrent paths         |
-| `group`         | `braces`          | `box`              | Braces feel code-y; box = container             |
-| `http-request`  | `globe`           | `globe`            | ✅ keep                                         |
-| `file-system`   | `folder-open`     | `folder-open`      | ✅ keep                                         |
-| `shell-command` | `terminal-square` | `terminal`         | Cleaner at small sizes                          |
+| Node           | Current           | Updated            | Reason                                          |
+| -------------- | ----------------- | ------------------ | ----------------------------------------------- |
+| `image`        | `image`           | `image`            | ✅ keep                                         |
+| `spreadsheet`  | `table`           | `sheet`            | `sheet` reads as spreadsheet, more specific     |
+| `transform`    | `shuffle`         | `arrow-left-right` | Shuffle implies randomness; transform = mapping |
+| `edit-fields`  | `pen-line`        | `pen-line`         | ✅ keep                                         |
+| `loop`         | `refresh-cw`      | `repeat`           | `refresh` = reload, `repeat` = iteration        |
+| `parallel`     | `columns-3`       | `git-fork`         | Fork conveys branching/concurrent paths         |
+| `group`        | `braces`          | `box`              | Braces feel code-y; box = container             |
+| `http-request` | `globe`           | `globe`            | ✅ keep                                         |
+| `file-system`  | `folder-open`     | `folder-open`      | ✅ keep                                         |
+| `shell-run`    | `terminal-square` | `terminal`         | Cleaner at small sizes                          |
 
 ### 3. Fix the "Io" sublabel
 

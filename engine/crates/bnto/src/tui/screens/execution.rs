@@ -650,7 +650,7 @@ mod tests {
             ExecutionMessage::ChildNodeStarted {
                 parent_node_id: "loop-1".into(),
                 node_id: "child".into(),
-                node_type: "shell-command".into(),
+                node_type: "shell-run".into(),
             },
         );
         let m = update(
@@ -694,12 +694,12 @@ mod tests {
             ExecutionMessage::ChildNodeStarted {
                 parent_node_id: "loop-1".into(),
                 node_id: "child-a".into(),
-                node_type: "shell-command".into(),
+                node_type: "shell-run".into(),
             },
         );
         assert_eq!(m.nodes[0].children.len(), 1);
         assert_eq!(m.nodes[0].children[0].id, "child-a");
-        assert_eq!(m.nodes[0].children[0].node_type, "shell-command");
+        assert_eq!(m.nodes[0].children[0].node_type, "shell-run");
         assert_eq!(m.nodes[0].children[0].status, NodeStatus::Active);
     }
 
@@ -720,7 +720,7 @@ mod tests {
             ExecutionMessage::ChildNodeStarted {
                 parent_node_id: "loop-1".into(),
                 node_id: "child".into(),
-                node_type: "shell-command".into(),
+                node_type: "shell-run".into(),
             },
         );
         // Second time — upserts, doesn't duplicate.
@@ -729,7 +729,7 @@ mod tests {
             ExecutionMessage::ChildNodeStarted {
                 parent_node_id: "loop-1".into(),
                 node_id: "child".into(),
-                node_type: "shell-command".into(),
+                node_type: "shell-run".into(),
             },
         );
         assert_eq!(m.nodes[0].children.len(), 1);

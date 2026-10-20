@@ -61,7 +61,7 @@ fn problems_for(command: &str, args: &[&str], depth: usize) -> Vec<String> {
     for runs in what_runs(&program_stem(command), args) {
         match runs {
             Runs::Shell(why) => problems.push(format!(
-                "'{command}' {why}, which shell-command doesn't allow. Run the tool directly"
+                "'{command}' {why}, which shell-run doesn't allow. Run the tool directly"
             )),
             Runs::Program(_, program) if bnto_core::placeholders::mentions_data(program) => {
                 problems.push(format!(
@@ -70,7 +70,7 @@ fn problems_for(command: &str, args: &[&str], depth: usize) -> Vec<String> {
                 ));
             }
             Runs::Program(_, program) if is_shell(program) => problems.push(format!(
-                "'{command}' would run the shell '{program}', which shell-command \
+                "'{command}' would run the shell '{program}', which shell-run \
                  doesn't allow. Run the tool directly"
             )),
             // The wrapped program gets the same checks: interpreter code

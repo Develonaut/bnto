@@ -370,7 +370,7 @@ mod tests {
                         "type": "group",
                         "params": {},
                         "children": [
-                            { "id": "download", "type": "shell-command", "params": {} }
+                            { "id": "download", "type": "shell-run", "params": {} }
                         ]
                     }
                 ]
@@ -415,7 +415,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "shell-command", "params": {} },
+                { "id": "download", "type": "shell-run", "params": {} },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -436,7 +436,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "shell-command", "params": {} },
+                { "id": "download", "type": "shell-run", "params": {} },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -452,7 +452,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "shell-command", "params": { "format": "mp4" } },
+                { "id": "download", "type": "shell-run", "params": { "format": "mp4" } },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -485,7 +485,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "url" } },
-                { "id": "download", "type": "shell-command", "params": {} }
+                { "id": "download", "type": "shell-run", "params": {} }
             ]
         }"#;
         let result = prepare_inputs(json, &[], &[]);
@@ -499,7 +499,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "none" } },
-                { "id": "run", "type": "shell-command", "params": { "command": "date" } }
+                { "id": "run", "type": "shell-run", "params": { "command": "date" } }
             ]
         }"#;
         let result = prepare_inputs(json, &[], &[]).expect("none mode should not require args");
@@ -515,7 +515,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "none" } },
-                { "id": "run", "type": "shell-command", "params": { "command": "date" } }
+                { "id": "run", "type": "shell-run", "params": { "command": "date" } }
             ]
         }"#;
         let args = vec!["foo.txt".to_string(), "bar.txt".to_string()];
@@ -529,7 +529,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "none" } },
-                { "id": "run", "type": "shell-command", "params": { "timeout": 60 } }
+                { "id": "run", "type": "shell-run", "params": { "timeout": 60 } }
             ]
         }"#;
         let result = prepare_inputs(json, &[], &["timeout=5".to_string()]).unwrap();
@@ -543,7 +543,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": { "mode": "none" } },
-                { "id": "run", "type": "shell-command", "params": {} }
+                { "id": "run", "type": "shell-run", "params": {} }
             ]
         }"#;
         assert_eq!(mode_label(json), "no input");
@@ -573,7 +573,7 @@ mod tests {
             "formatVersion": "1.0.0",
             "nodes": [
                 { "id": "in", "type": "input", "params": {} },
-                { "id": "download", "type": "shell-command", "params": {} },
+                { "id": "download", "type": "shell-run", "params": {} },
                 { "id": "out", "type": "output", "params": {} }
             ]
         }"#;
@@ -676,7 +676,7 @@ mod tests {
                     { "id": "in", "type": "input", "params": {} },
                     {
                         "id": "download",
-                        "type": "shell-command",
+                        "type": "shell-run",
                         "params": {},
                         "fields": {
                             "format": {
@@ -715,7 +715,7 @@ mod tests {
                     { "id": "in", "type": "input", "params": {} },
                     {
                         "id": "download",
-                        "type": "shell-command",
+                        "type": "shell-run",
                         "params": {},
                         "fields": {
                             "format": {
@@ -749,7 +749,7 @@ mod tests {
                     { "id": "in", "type": "input", "params": {} },
                     {
                         "id": "download",
-                        "type": "shell-command",
+                        "type": "shell-run",
                         "params": {},
                         "fields": {
                             "format": {
@@ -789,7 +789,7 @@ mod tests {
                 "nodes": [
                     {
                         "id": "run",
-                        "type": "shell-command",
+                        "type": "shell-run",
                         "params": {},
                         "fields": {
                             "mode": {

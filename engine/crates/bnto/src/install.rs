@@ -580,6 +580,6 @@ mod tests {
     fn read_recipe_json_from_catalog() {
         let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
         let json = read_recipe_json("download-video", &catalog);
-        assert!(json.contains("download-video") || json.contains("shell-command"));
+        assert!(json.contains("download-video") || json.contains("shell-run"));
     }
 }

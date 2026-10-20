@@ -1,4 +1,4 @@
-// Parameter schema for the shell-command node.
+// Parameter schema for the shell-run node.
 //
 // One function per parameter; each sets only what differs from
 // `ParameterDef::default()` (no default value, surfaceable, no UI hints).
@@ -7,7 +7,7 @@ use bnto_core::metadata::{ParameterDef, ParameterType};
 
 use crate::validate::{DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
-/// Every parameter the shell-command node accepts.
+/// Every parameter the shell-run node accepts.
 pub(crate) fn build_parameters() -> Vec<ParameterDef> {
     vec![
         command_param(),

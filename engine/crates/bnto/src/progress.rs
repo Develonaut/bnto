@@ -133,7 +133,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
     })
 }
 
-/// Braille spinner frames for indeterminate progress (shell-command nodes).
+/// Braille spinner frames for indeterminate progress (shell-run nodes).
 const BRAILLE_FRAMES: &[char] = &['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 /// Get the braille spinner character for a given frame index.
@@ -343,7 +343,7 @@ mod tests {
             node_id: "n1".to_string(),
             node_index: 0,
             total_nodes: 1,
-            node_type: "shell-command".to_string(),
+            node_type: "shell-run".to_string(),
             parent_node_id: None,
         });
         // CommandOutput events should not panic.

@@ -1,7 +1,7 @@
 # Recipe-Level Dependency Declarations
 
 **Created:** April 22, 2026
-**Status:** Core shipped — recipe-level `requires`, `shell-command`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), per-platform install hints in `info`/`doctor`/run pre-flight (#531), and `bnto install` running the host install hint (§4). Open: recipe variables (§7)
+**Status:** Core shipped — recipe-level `requires`, `shell-run`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), per-platform install hints in `info`/`doctor`/run pre-flight (#531), and `bnto install` running the host install hint (§4). Open: recipe variables (§7)
 **Updated:** October 13, 2026
 **Related:** [engine-expansion.md](engine-expansion.md), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md), [PLAN.md](../PLAN.md)
 
@@ -9,17 +9,17 @@
 
 ## Problem
 
-The engine's dependency system only supports processor-level dependencies. Each processor declares `requires: Vec<Dependency>` on `NodeMetadata`, which works when a dedicated processor wraps an external tool (e.g., `video-download` processor wraps `yt-dlp`). But if a recipe uses a generic processor like `shell-command` to invoke external tools, the dependency information is lost.
+The engine's dependency system only supports processor-level dependencies. Each processor declares `requires: Vec<Dependency>` on `NodeMetadata`, which works when a dedicated processor wraps an external tool (e.g., `video-download` processor wraps `yt-dlp`). But if a recipe uses a generic processor like `shell-run` to invoke external tools, the dependency information is lost.
 
 ```
 # Today: dependency info lives on the processor
 video-download processor → requires: [yt-dlp, ffmpeg]
 
 # After conversion to connector-as-recipe:
-shell-command processor → requires: []  (generic — doesn't know what you'll run)
+shell-run processor → requires: []  (generic — doesn't know what you'll run)
 ```
 
-The engine can't warn users about missing tools because `shell-command` itself has no external dependencies — it's the **recipe** that introduces them.
+The engine can't warn users about missing tools because `shell-run` itself has no external dependencies — it's the **recipe** that introduces them.
 
 ---
 
@@ -29,10 +29,10 @@ Every connector-as-recipe will have this problem:
 
 | Recipe                 | External dep       | Generic node used |
 | ---------------------- | ------------------ | ----------------- |
-| `download-video`       | `yt-dlp`, `ffmpeg` | `shell-command`   |
-| Blender rendering      | `blender`          | `shell-command`   |
-| Batch video processing | `ffmpeg`           | `shell-command`   |
-| Community CLI wrappers | varies             | `shell-command`   |
+| `download-video`       | `yt-dlp`, `ffmpeg` | `shell-run`       |
+| Blender rendering      | `blender`          | `shell-run`       |
+| Batch video processing | `ffmpeg`           | `shell-run`       |
+| Community CLI wrappers | varies             | `shell-run`       |
 
 Without recipe-level `requires`, the connector-as-recipe architecture is blind to dependencies. Users get opaque "command not found" errors instead of actionable install hints.
 
@@ -53,7 +53,7 @@ Without recipe-level `requires`, the connector-as-recipe architecture is blind t
 | `bnto doctor`                     | Shipped | `bnto/src/doctor.rs` — `run_doctor`                                                                                            |
 | `bnto info <recipe>`              | Shipped | `bnto/src/info.rs` — `print_dependencies`                                                                                      |
 | `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install`; steps in `install_plan.rs`, `--yes` rule in `install_trust.rs` (§4)                     |
-| `shell-command` node              | Shipped | `bnto-shell` crate — `ShellCommand`                                                                                            |
+| `shell-run` node                  | Shipped | `bnto-shell` crate — `ShellRun`                                                                                                |
 
 ---
 
@@ -135,13 +135,13 @@ pub fn collect_pipeline_dependencies(
 - `bnto info` — already calls `collect_pipeline_dependencies()`, so recipe-level deps surface automatically
 - TUI detail screen — already shows deps via the info path
 
-### 4. `shell-command` node type
+### 4. `shell-run` node type
 
 A new processor enabling recipes to invoke arbitrary CLI tools.
 
 ```rust
 // New crate or module in bnto-engine
-// Node type: "shell-command"
+// Node type: "shell-run"
 // Category: System
 // Platforms: ["cli", "server", "desktop"]
 // Requires: [] (generic — recipe declares its own deps)
@@ -158,7 +158,7 @@ Uses `ProcessContext::run_command()` — pure Rust, no shell injection. The proc
 
 ### 5. Convert `download-video` recipe
 
-Rewrite `download-video.bnto.json` to use `shell-command` + recipe-level `requires`:
+Rewrite `download-video.bnto.json` to use `shell-run` + recipe-level `requires`:
 
 ```json
 {
@@ -179,7 +179,7 @@ Rewrite `download-video.bnto.json` to use `shell-command` + recipe-level `requir
     { "id": "input", "type": "input", "parameters": { "mode": "url" } },
     {
       "id": "download",
-      "type": "shell-command",
+      "type": "shell-run",
       "parameters": {
         "command": "yt-dlp",
         "args": ["${URL}", "-o", "${OUTPUT_DIR}/%(title)s.%(ext)s"]
@@ -206,7 +206,7 @@ Download video from URLs using yt-dlp.
 
   Category:   video
   Input:      url
-  Nodes:      shell-command
+  Nodes:      shell-run
 
   Dependencies:
     yt-dlp
@@ -239,7 +239,7 @@ Dependency requirements not met:
 - ~20 lines of Rust + tests
 - **Tests:** Deserialization with/without requires, merge deduplication, backward compat (existing recipes still parse)
 
-#### 2. `shell-command` node type
+#### 2. `shell-run` node type
 
 - New processor in `bnto-engine` (or new `bnto-shell` crate)
 - Uses `ProcessContext::run_command()`
@@ -249,7 +249,7 @@ Dependency requirements not met:
 
 #### 3. Convert `download-video` recipe
 
-- Rewrite `download-video.bnto.json` to use `shell-command` + recipe-level `requires`
+- Rewrite `download-video.bnto.json` to use `shell-run` + recipe-level `requires`
 - Delete `bnto-video` crate entirely
 - Remove from workspace, `bnto-engine/Cargo.toml`, registry, feature gates
 - Update golden tests, codegen
@@ -266,7 +266,7 @@ Dependency requirements not met:
   3. Otherwise the step is manual: the plan prints the hint and nothing runs. The generic `installHint` is prose (often a URL) and is never executed
 - The plan always prints the exact command each step will run before any prompt or execution, and each command is echoed again as it runs. Declining (or EOF on stdin) runs nothing
 - If no step is runnable, `bnto install` prints the hints and exits 1. Post-install verification re-probes every missing binary, so hint-based installs are verified the same way as package-manager installs
-- **Decision — `--yes` and author-written commands.** Host hints are shell command lines written by the recipe author, so the recipe source is the trust boundary (the same line `trust.rs` draws for `shell-command` nodes). `--yes` skips the prompt only when the commands come from a trusted source (`bnto/src/install_trust.rs`):
+- **Decision — `--yes` and author-written commands.** Host hints are shell command lines written by the recipe author, so the recipe source is the trust boundary (the same line `trust.rs` draws for `shell-run` nodes). `--yes` skips the prompt only when the commands come from a trusted source (`bnto/src/install_trust.rs`):
   - a bundled recipe slug → trusted (hints are reviewed in this repo and ship in the binary)
   - a library recipe or `.bnto.json` path → not trusted: `--yes` still prints the commands, explains why, and prompts. Non-interactive runs (closed stdin) therefore decline instead of executing an unreviewed shell command
   - `--all` → trusted unless a non-bundled catalog recipe declares `requires`
@@ -310,12 +310,12 @@ Same pattern as GitHub Actions (`uses: actions/setup-node@v4`), Docker (`FROM py
 
 ## Resolved Decisions
 
-1. **Recipe-level deps merge with node-level deps.** Not replace. A recipe that uses `shell-command` (no node deps) to call `yt-dlp` declares `requires: [yt-dlp]` at the recipe level. A recipe that uses `video-download` processor (which already declares `requires: [yt-dlp]`) doesn't need recipe-level deps — but could add them redundantly (deduplication handles it).
+1. **Recipe-level deps merge with node-level deps.** Not replace. A recipe that uses `shell-run` (no node deps) to call `yt-dlp` declares `requires: [yt-dlp]` at the recipe level. A recipe that uses `video-download` processor (which already declares `requires: [yt-dlp]`) doesn't need recipe-level deps — but could add them redundantly (deduplication handles it).
 
 2. **`Dependency` struct shared between node and recipe level.** Same fields, same JSON shape, same deduplication logic. No separate "RecipeDependency" type.
 
-3. **`shell-command` does not use `sh -c`.** Command and args are split explicitly via `ProcessContext::run_command()`. No shell injection vector. The processor validates that `command` is not empty and that the binary exists on PATH before execution.
+3. **`shell-run` does not use `sh -c`.** Command and args are split explicitly via `ProcessContext::run_command()`. No shell injection vector. The processor validates that `command` is not empty and that the binary exists on PATH before execution.
 
-4. **`bnto-video` crate deletion is safe.** The crate has no external consumers (not published separately). The `video-download` processor is only used by the built-in recipe. Converting the recipe to `shell-command` + recipe-level `requires` replaces all functionality.
+4. **`bnto-video` crate deletion is safe.** The crate has no external consumers (not published separately). The `video-download` processor is only used by the built-in recipe. Converting the recipe to `shell-run` + recipe-level `requires` replaces all functionality.
 
-5. **`bnto install` runs host install hints through the shell.** Unlike `shell-command` (decision 3), an install hint is a whole command line (`sudo apt install ffmpeg`), so it runs via `sh -c` / `cmd /C`. The exact string is always printed first, and `--yes` only auto-runs hints from bundled recipes (see §4).
+5. **`bnto install` runs host install hints through the shell.** Unlike `shell-run` (decision 3), an install hint is a whole command line (`sudo apt install ffmpeg`), so it runs via `sh -c` / `cmd /C`. The exact string is always printed first, and `--yes` only auto-runs hints from bundled recipes (see §4).

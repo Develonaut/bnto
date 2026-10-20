@@ -4,15 +4,15 @@ Shell command execution for native targets. Runs external CLI tools via `Process
 
 ## Overview
 
-`bnto-shell` provides the `shell-command` processor — a generic `NodeProcessor` that executes external CLI tools. This enables connector-as-recipe architecture: recipes can wrap any CLI tool (ffmpeg, yt-dlp, imagemagick) without needing a dedicated Rust processor for each one.
+`bnto-shell` provides the `shell-run` processor — a generic `NodeProcessor` that executes external CLI tools. This enables connector-as-recipe architecture: recipes can wrap any CLI tool (ffmpeg, yt-dlp, imagemagick) without needing a dedicated Rust processor for each one.
 
 Native-only: registered behind `#[cfg(feature = "native")]` in `bnto-engine`. Browser (WASM) gets `NoopContext` which blocks execution.
 
 ## Processors
 
-| Processor      | Node Type       | What It Does                                                         |
-| -------------- | --------------- | -------------------------------------------------------------------- |
-| `ShellCommand` | `shell-command` | Execute external CLI tools with security validation and output modes |
+| Processor  | Node Type   | What It Does                                                         |
+| ---------- | ----------- | -------------------------------------------------------------------- |
+| `ShellRun` | `shell-run` | Execute external CLI tools with security validation and output modes |
 
 ## Output Modes
 
@@ -43,7 +43,7 @@ After template resolution, empty strings drop silently, and nested arrays where 
 
 ## Incoming Files (`each` groups)
 
-`shell-command` is a batch node: it runs once and gets every file its incoming edges carry. Files reach the command only through an `each` group in `args`, which repeats once per file, in edge order:
+`shell-run` is a batch node: it runs once and gets every file its incoming edges carry. Files reach the command only through an `each` group in `args`, which repeats once per file, in edge order:
 
 ```json
 "args": ["report", { "each": ["-object={{path}}"] }, "-format=text"]
@@ -58,7 +58,7 @@ Without a group the command runs as it always has: incoming files are ignored an
 ```
 src/
 ├── lib.rs           # Public exports
-├── execute.rs       # ShellCommand processor (param parsing, mode dispatch)
+├── execute.rs       # ShellRun processor (param parsing, mode dispatch)
 ├── args.rs          # Conditional arg groups + {{url}}/{{input}} placeholders
 ├── each/            # `each` arg groups: the group once per incoming file
 ├── cwd.rs           # `cwd`: the folder under the work dir the command runs in

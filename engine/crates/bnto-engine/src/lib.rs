@@ -74,7 +74,7 @@ pub fn create_browser_registry() -> NodeRegistry {
 /// Create the full processor registry — all node types across all targets.
 ///
 /// Starts from the browser-safe registry and adds CLI/server/desktop
-/// processors (like shell-command) when compiled with the `native` feature.
+/// processors (like shell-run) when compiled with the `native` feature.
 /// This is the canonical registry — CLI, tests, and codegen use this.
 pub fn create_registry() -> NodeRegistry {
     #[allow(unused_mut)]
@@ -95,7 +95,7 @@ pub fn create_registry() -> NodeRegistry {
             "spreadsheet-lookup",
             Box::new(bnto_spreadsheet::SpreadsheetLookup::new()),
         );
-        registry.register("shell-command", Box::new(bnto_shell::ShellCommand::new()));
+        registry.register(bnto_shell::NODE_TYPE, Box::new(bnto_shell::ShellRun::new()));
     }
 
     registry
@@ -185,12 +185,12 @@ mod tests {
     fn test_full_registry_has_native_processors() {
         let registry = create_registry();
         // Full registry = browser (24) + file-collect + file-copy + file-delete + file-list
-        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-command (8) = 32
+        // + file-move + spreadsheet-export + spreadsheet-lookup + shell-run (8) = 32
         assert_eq!(registry.len(), 32);
         let params = serde_json::Map::new();
         assert!(
-            registry.resolve("shell-command", &params).is_some(),
-            "Native registry should include shell-command",
+            registry.resolve("shell-run", &params).is_some(),
+            "Native registry should include shell-run",
         );
     }
 

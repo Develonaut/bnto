@@ -173,7 +173,7 @@ The engine honors a recipe's `edges` (see [engine-execution.md](../strategy/engi
 
 CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-windows` job, required by the CI Gate). Code and tests that assume Unix break there. Rules:
 
-- **Output names from relative paths use `bnto_core::slash_path`.** File names travel between nodes and downstream nodes split them on `/` (e.g. `file-filter` matches against `filename.rsplit('/')` in `bnto-file/src/filter.rs`). `rel.to_string_lossy()` yields `a\b.mp4` on Windows, so the filter sees the whole string as the name. `file-collect` and `shell-command` already use `slash_path`.
+- **Output names from relative paths use `bnto_core::slash_path`.** File names travel between nodes and downstream nodes split them on `/` (e.g. `file-filter` matches against `filename.rsplit('/')` in `bnto-file/src/filter.rs`). `rel.to_string_lossy()` yields `a\b.mp4` on Windows, so the filter sees the whole string as the name. `file-collect` and `shell-run` already use `slash_path`.
 
   ```rust
   // BAD — `\` separators on Windows

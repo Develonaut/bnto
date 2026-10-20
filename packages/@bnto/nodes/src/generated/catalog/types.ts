@@ -33,7 +33,7 @@ export type NodeTypeName =
   | "output"
   | "parallel"
   | "report"
-  | "shell-command"
+  | "shell-run"
   | "spreadsheet-clean"
   | "spreadsheet-convert"
   | "spreadsheet-export"

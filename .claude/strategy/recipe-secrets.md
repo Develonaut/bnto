@@ -48,7 +48,7 @@ As recipes grow more powerful (AI API calls, authenticated HTTP requests, databa
 | No browser secret prompt            | `{{env.*}}` silently resolves to empty string in WASM — no user feedback          |
 | No recipe-level secret declarations | Recipes can't declare "I need `API_KEY`" — users discover missing vars at runtime |
 | No yt-dlp auth integration          | `download-video` has no cookie/credential fields                                  |
-| Shell arg bypass                    | `{{env.*}}` in shell-command args bypasses the `env` param sanitization           |
+| Shell arg bypass                    | `{{env.*}}` in shell-run args bypasses the `env` param sanitization               |
 
 ---
 
@@ -175,8 +175,8 @@ Error: Missing required secret: OPENAI_API_KEY
 | ------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Secret in recipe file**       | User hardcodes `API_KEY=sk-...` in `.bnto.json` and commits it                         | Recipes never contain secret values — only `{{env.*}}` references. Lint/validate could warn if a recipe param looks like a literal API key                                                      |
 | **Secret in logs**              | `bnto dry-run` or execution logs show resolved `{{env.API_KEY}}` as `sk-abc123...`     | Redact `{{env.*}}` values in dry-run output and execution logs. Show `{{env.API_KEY}}` or `***` instead of the resolved value                                                                   |
-| **Secret in shell args**        | `{{env.DB_PASSWORD}}` in shell-command args passes the raw value to the child process  | This is intentional — the external tool needs the real value. The risk is in logging, not in arg passing. Redact in logs, not in execution                                                      |
-| **Secret in process env**       | Child processes inherit the full parent environment                                    | Already mitigated: `bnto-shell` sanitizes the `env` param. But `{{env.*}}` in `args` is intentionally passed through. Consider `--no-inherit-env` for shell-command (future)                    |
+| **Secret in shell args**        | `{{env.DB_PASSWORD}}` in shell-run args passes the raw value to the child process      | This is intentional — the external tool needs the real value. The risk is in logging, not in arg passing. Redact in logs, not in execution                                                      |
+| **Secret in process env**       | Child processes inherit the full parent environment                                    | Already mitigated: `bnto-shell` sanitizes the `env` param. But `{{env.*}}` in `args` is intentionally passed through. Consider `--no-inherit-env` for shell-run (future)                        |
 | **Secret in shared recipe**     | User shares a recipe referencing `{{env.MY_SECRET}}` — recipient doesn't have that var | Pre-flight validation (see declarations above) catches this before execution. Clear error message                                                                                               |
 | **Secret in browser**           | User enters API key in browser prompt, key visible in memory/devtools                  | Browser secrets are held in JS memory only, never persisted. Cleared after execution. Standard browser security model applies — if the user's browser is compromised, they have bigger problems |
 | **Secret in execution history** | Convex stores execution logs with resolved param values                                | Don't store resolved `{{env.*}}` values in execution history. Store the template, not the resolved value                                                                                        |

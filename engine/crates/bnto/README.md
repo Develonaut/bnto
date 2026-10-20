@@ -81,7 +81,7 @@ With `--output` (the `output` step's `write` mode), every result lands as its ow
 
 ### Time limit
 
-A recipe can limit its whole run with `"settings": { "timeout": <seconds> }` (a whole number above 0); `bnto run --timeout <seconds>` overrides it, or limits a recipe that sets none. With neither, a run has no limit. When the limit passes, every step the run started is stopped, child processes included (a shell-command's whole process tree), no further step, file, loop item or `always` closing step starts, and the run fails with `Pipeline failed: Run timed out after <seconds>s` as its last stderr line and exit code 1. `--json` reports the same message as `error`. The limit covers the whole run, from dependency checks to the last step; a shell-command's own `timeout` still stops just that command. `bnto dry-run` shows the recipe's limit, and its pipeline preview stops at the limit too (the preview fails with `pipeline preview failed: Run timed out after <seconds>s`). The TUI stops a run at its recipe's limit and shows the same message. `bnto check` reports a `settings.timeout` that isn't a whole number of seconds above 0.
+A recipe can limit its whole run with `"settings": { "timeout": <seconds> }` (a whole number above 0); `bnto run --timeout <seconds>` overrides it, or limits a recipe that sets none. With neither, a run has no limit. When the limit passes, every step the run started is stopped, child processes included (a shell-run's whole process tree), no further step, file, loop item or `always` closing step starts, and the run fails with `Pipeline failed: Run timed out after <seconds>s` as its last stderr line and exit code 1. `--json` reports the same message as `error`. The limit covers the whole run, from dependency checks to the last step; a shell-run's own `timeout` still stops just that command. `bnto dry-run` shows the recipe's limit, and its pipeline preview stops at the limit too (the preview fails with `pipeline preview failed: Run timed out after <seconds>s`). The TUI stops a run at its recipe's limit and shows the same message. `bnto check` reports a `settings.timeout` that isn't a whole number of seconds above 0.
 
 ### `bnto run --json`
 
@@ -114,7 +114,7 @@ A recipe can limit its whole run with `"settings": { "timeout": <seconds> }` (a 
 | `nodes[].metadata` | What the node reported, as a JSON object; `{}` when it reported nothing (a container's own entry is always `{}`). Keys its processor declares as counts are totals for the whole node, e.g. file-copy in `newer` mode reports `copied`, `up_to_date` and `skipped_newer` (on `--dry-run`, `copied` counts the files that would be copied); other keys hold the last file's value. A failed run reports `{}` for every node |
 | `error`            | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass                                                                                                                                                                                                                                                                          |
 
-A run declined at the shell-command consent prompt prints no JSON line; pass `--yes` when scripting.
+A run declined at the shell-run consent prompt prints no JSON line; pass `--yes` when scripting.
 
 `bnto install` runs the recipe's `installHints` command for this OS (e.g. `winget install Gyan.FFmpeg`) through the platform shell; without one it falls back to the detected package manager (`brew`/`apt`/`pacman`/`choco install <binary>`), or prints the hint when nothing can run. `--yes` skips the prompt for bundled recipes only — commands written by library or file recipes are always shown and confirmed.
 
@@ -169,7 +169,7 @@ src/
 +-- run_limit.rs           # A run's time limit: the recipe's settings.timeout or `--timeout`
 +-- run_watchdog.rs        # Kills a run's child processes once its time limit passes (run, TUI, dry-run preview)
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
-+-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
++-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)
 +-- check_targets.rs       # `bnto check` arguments to recipe files (a folder walked recursively, sorted)

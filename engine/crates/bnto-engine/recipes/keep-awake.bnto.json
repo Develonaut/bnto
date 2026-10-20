@@ -54,7 +54,7 @@
     },
     {
       "id": "session",
-      "type": "shell-command",
+      "type": "shell-run",
       "version": "1.0.0",
       "name": "Caffeinate Session",
       "position": {

@@ -37,12 +37,12 @@ describe("NODE_SCHEMAS", () => {
     expect(NODE_SCHEMAS["http-request"]).toBeUndefined();
   });
 
-  it("shell-command has a generated schema (CLI-only but codegen-propagated)", () => {
-    expect(NODE_SCHEMAS["shell-command"]).toBeDefined();
-    expect(NODE_SCHEMAS["shell-command"]!.nodeType).toBe("shell-command");
+  it("shell-run has a generated schema (CLI-only but codegen-propagated)", () => {
+    expect(NODE_SCHEMAS["shell-run"]).toBeDefined();
+    expect(NODE_SCHEMAS["shell-run"]!.nodeType).toBe("shell-run");
   });
 
-  it("video-download processor was removed (replaced by shell-command recipe)", () => {
+  it("video-download processor was removed (replaced by shell-run recipe)", () => {
     expect(NODE_SCHEMAS["video-download"]).toBeUndefined();
   });
 });

@@ -1,7 +1,7 @@
 // Unified dry-run module — analyzes recipes and previews file transformations.
 //
 // Routes between two strategies based on what's available:
-// - Static analysis: resolve shell-command templates (always available)
+// - Static analysis: resolve shell-run templates (always available)
 // - Pipeline preview: run the pipeline without writes (requires input files)
 //
 // Both strategies produce a unified `DryRunResult` that the CLI and TUI
@@ -52,7 +52,7 @@ pub fn dry_run_recipe(
     let entry = catalog.resolve(slug)?;
     let mut def: PipelineDefinition = serde_json::from_str(&entry.definition_json).ok()?;
 
-    // Apply field overrides before resolving shell-command templates.
+    // Apply field overrides before resolving shell-run templates.
     let refused = shell::apply_field_overrides(&mut def, param_overrides);
 
     let registry = bnto_engine::create_registry();

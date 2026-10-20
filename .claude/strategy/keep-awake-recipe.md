@@ -2,11 +2,11 @@
 
 **Created:** October 20, 2026
 **Status:** Approved, October 20, 2026. PR 1 merged (#662). PR 2 in progress.
-**Related:** [engine-execution.md](engine-execution.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md), [shell-command.md](../scopes/security/shell-command.md#script-mode-the-safe-script-contract), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe)
+**Related:** [engine-execution.md](engine-execution.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md), [shell-run.md](../scopes/security/shell-run.md#script-mode-the-safe-script-contract), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe)
 
 ## Context
 
-The personal `keep-awake` recipe (caffeinate session manager) is being published as a built-in recipe, then made cross-platform. Planning it showed that the engine has **no conditional execution**. The only node-level control key is `always`. Without a conditional, per-OS behavior would need a one-off `platforms` override bolted onto shell-command, which `generic-building-block-nodes.md` flags as a red flag ("build the one generic piece").
+The personal `keep-awake` recipe (caffeinate session manager) is being published as a built-in recipe, then made cross-platform. Planning it showed that the engine has **no conditional execution**. The only node-level control key is `always`. Without a conditional, per-OS behavior would need a one-off `platforms` override bolted onto shell-run, which `generic-building-block-nodes.md` flags as a red flag ("build the one generic piece").
 
 Research (n8n If/Switch, Node-RED switch, NiFi RouteOnAttribute, Make Router vs GitHub Actions `if:`, Ansible `when:`, Argo/Tekton `when`):
 
@@ -82,7 +82,7 @@ Remaining:
 - A `bnto-engine` integration test walks `builtin_recipes()` and writes each `script` to a temp file.
 - It runs `shellcheck --shell=<shell>`.
 - It skips when ShellCheck is missing, and fails if `BNTO_REQUIRE_SHELLCHECK=1` (set in the CI `rust` job; `ubuntu-latest` ships ShellCheck).
-- `shell-command.md`: "Not yet covered" → a Guard row.
+- `shell-run.md`: "Not yet covered" → a Guard row.
 
 **RED tests:**
 

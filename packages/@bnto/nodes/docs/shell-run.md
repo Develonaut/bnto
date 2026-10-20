@@ -23,7 +23,7 @@
 
 ```json
 {
-  "type": "shell-command",
+  "type": "shell-run",
   "parameters": {
       "shell": "sh",
       "outputMode": "stdout",

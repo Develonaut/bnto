@@ -45,10 +45,10 @@ describe("getNodeSchema", () => {
     expect(getNodeSchema("http-request")).toBeUndefined();
   });
 
-  it("returns schema for shell-command", () => {
-    const schema = getNodeSchema("shell-command");
+  it("returns schema for shell-run", () => {
+    const schema = getNodeSchema("shell-run");
     expect(schema).toBeDefined();
-    expect(schema!.nodeType).toBe("shell-command");
+    expect(schema!.nodeType).toBe("shell-run");
   });
 
   it("returns undefined for old multi-operation type names", () => {

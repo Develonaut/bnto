@@ -1921,7 +1921,7 @@
       ]
     },
     {
-      "name": "shell-command",
+      "name": "shell-run",
       "label": "Run Shell Command",
       "description": "Run shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
       "category": "system",
@@ -4034,7 +4034,7 @@
       "inputCardinality": "batch"
     },
     {
-      "nodeType": "shell-command",
+      "nodeType": "shell-run",
       "name": "Run Shell Command",
       "description": "Run external CLI tools with security validation.",
       "category": "system",
@@ -7171,7 +7171,7 @@
               "x": 250,
               "y": 100
             },
-            "type": "shell-command",
+            "type": "shell-run",
             "version": "1.0.0"
           },
           {
@@ -8170,7 +8170,7 @@
               "x": 250,
               "y": 100
             },
-            "type": "shell-command",
+            "type": "shell-run",
             "version": "1.0.0"
           },
           {

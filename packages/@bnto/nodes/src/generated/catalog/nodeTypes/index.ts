@@ -33,7 +33,7 @@ import { loopNodeType } from "./loop";
 import { outputNodeType } from "./output";
 import { parallelNodeType } from "./parallel";
 import { reportNodeType } from "./report";
-import { shellCommandNodeType } from "./shellCommand";
+import { shellRunNodeType } from "./shellRun";
 import { spreadsheetCleanNodeType } from "./spreadsheetClean";
 import { spreadsheetConvertNodeType } from "./spreadsheetConvert";
 import { spreadsheetExportNodeType } from "./spreadsheetExport";
@@ -78,7 +78,7 @@ export const NODE_TYPES = {
   output: "output",
   parallel: "parallel",
   report: "report",
-  shellCommand: "shell-command",
+  shellRun: "shell-run",
   spreadsheetClean: "spreadsheet-clean",
   spreadsheetConvert: "spreadsheet-convert",
   spreadsheetExport: "spreadsheet-export",
@@ -127,7 +127,7 @@ export const NODE_TYPE_INFO: Record<NodeTypeName, NodeTypeInfo> = {
   output: outputNodeType,
   parallel: parallelNodeType,
   report: reportNodeType,
-  "shell-command": shellCommandNodeType,
+  "shell-run": shellRunNodeType,
   "spreadsheet-clean": spreadsheetCleanNodeType,
   "spreadsheet-convert": spreadsheetConvertNodeType,
   "spreadsheet-export": spreadsheetExportNodeType,

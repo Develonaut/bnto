@@ -1,4 +1,4 @@
-// Shell-command static analysis — resolve templates and extract command info.
+// `shell-run` static analysis — resolve templates and extract command info.
 //
 // Walks the recipe's node tree, resolves field defaults and template
 // variables, and extracts the shell commands that would be executed.
@@ -11,7 +11,7 @@ use bnto_core::executor::resolve::collect_field_values;
 use bnto_core::executor::template::{TemplateContext, resolve_templates};
 use bnto_core::{FieldDef, PipelineDefinition, PipelineNode};
 
-/// A resolved shell-command node ready for display.
+/// A resolved shell-run node ready for display.
 #[derive(Debug)]
 pub struct ShellCommandInfo {
     pub node_id: String,
@@ -22,7 +22,7 @@ pub struct ShellCommandInfo {
     pub unresolved: Vec<String>,
 }
 
-/// Walk the node tree and extract resolved shell-command info.
+/// Walk the node tree and extract resolved shell-run info.
 ///
 /// Counts non-shell processing nodes as `other_count` for display.
 pub fn collect_shell_commands(
@@ -39,7 +39,7 @@ pub fn collect_shell_commands(
             continue;
         }
 
-        if node.node_type == "shell-command" {
+        if node.node_type == bnto_shell::NODE_TYPE {
             commands.push(resolve_shell_command(node));
         } else {
             *other_count += 1;
@@ -53,7 +53,7 @@ pub fn collect_shell_commands(
 
 /// Apply `--param key=value` overrides to node field defaults.
 ///
-/// Supports `key=value` (targets first shell-command node) and
+/// Supports `key=value` (targets first shell-run node) and
 /// `nodeId:key=value` (targets specific node). A value the field refuses
 /// (an unlisted enum option, a number out of range) is not applied; the
 /// returned list says why, one entry per refused override.
@@ -96,7 +96,7 @@ pub fn format_command_line(cmd: &ShellCommandInfo) -> String {
 
 // --- Internal helpers ---
 
-/// Resolve a shell-command node's fields and extract display info.
+/// Resolve a shell-run node's fields and extract display info.
 fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
     let field_values = if node.fields.is_empty() {
         BTreeMap::new()
@@ -119,7 +119,7 @@ fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
         resolved_params
             .get("args")
             .and_then(serde_json::Value::as_array)
-            .map(|arr| bnto_shell::execute::flatten_conditional_args(arr))
+            .map(|arr| bnto_shell::run::flatten_conditional_args(arr))
             .unwrap_or_default(),
     );
 
@@ -155,10 +155,10 @@ fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
     }
 }
 
-/// Find the first shell-command node ID in the tree.
+/// Find the first shell-run node ID in the tree.
 fn find_first_shell_command_id(nodes: &[PipelineNode]) -> Option<String> {
     for node in nodes {
-        if node.node_type == "shell-command" {
+        if node.node_type == bnto_shell::NODE_TYPE {
             return Some(node.id.clone());
         }
         if let Some(children) = &node.children
@@ -248,7 +248,7 @@ mod tests {
         // the run would refuse.
         let mut def: PipelineDefinition = serde_json::from_str(
             r#"{"nodes": [{
-                "id": "run", "type": "shell-command", "parameters": {},
+                "id": "run", "type": "shell-run", "parameters": {},
                 "fields": {"mode": {"type": "enum", "label": "Mode", "default": "a",
                     "options": [{"value": "a", "label": "A"}, {"value": "b", "label": "B"}]}}
             }]}"#,

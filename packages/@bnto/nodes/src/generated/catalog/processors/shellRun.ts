@@ -4,89 +4,95 @@
  * Engine catalog v1.0.0
  */
 
-import { z } from "zod";
-import type { NodeSchema } from "../../schemas/types";
+import type { ProcessorDef } from "../types";
 
-/** Zod schema for shell-command node parameters. */
-export const shellCommandParamsSchema = z.object({
-  command: z.string().optional(),
-  script: z.string().optional(),
-  shell: z.string().optional().default("sh"),
-  args: z
-    .array(
-      z.union([z.string(), z.array(z.string()), z.object({ each: z.array(z.string()) }).strict()]),
-    )
-    .optional(),
-  outputMode: z.string().optional().default("stdout"),
-  timeout: z.number().optional().default(300),
-  maxOutputSize: z.number().optional().default(500),
-  env: z.record(z.unknown()).optional(),
-  search_path: z.record(z.unknown()).optional(),
-  cwd: z.string().optional(),
-});
-
-/** Inferred TypeScript type for shell-command node parameters. */
-export type ShellCommandParams = z.infer<typeof shellCommandParamsSchema>;
-
-/** Full schema definition for the shell-command node type. */
-export const shellCommandNodeSchema: NodeSchema = {
-  nodeType: "shell-command",
-  schemaVersion: 1,
-  schema: shellCommandParamsSchema,
-  params: {
-    command: {
+/** Processor definition for shell-run. */
+export const shellRunProcessor: ProcessorDef = {
+  nodeType: "shell-run",
+  name: "Run Shell Command",
+  description: "Run external CLI tools with security validation.",
+  category: "system",
+  accepts: [] as const,
+  platforms: ["cli", "server", "desktop"] as const,
+  parameters: [
+    {
+      name: "command",
       label: "Command",
       description:
         "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",
+      type: "string" as const,
       placeholder: "ffmpeg",
     },
-    script: {
+    {
+      name: "script",
       label: "Script",
       description:
         "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files.",
+      type: "string" as const,
       surfaceable: false,
     },
-    shell: {
+    {
+      name: "shell",
       label: "Shell",
       description:
         "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh.",
+      type: "string" as const,
+      default: "sh",
       surfaceable: false,
     },
-    args: {
+    {
+      name: "args",
       label: "Arguments",
       description:
         'Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {"each": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled.',
+      type: "string" as const,
     },
-    outputMode: {
+    {
+      name: "outputMode",
       label: "Output Mode",
       description:
         "How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {{output_dir}} in args to inject the path).",
+      type: "string" as const,
+      default: "stdout",
     },
-    timeout: {
+    {
+      name: "timeout",
       label: "Timeout",
       description: "Maximum execution time in seconds. Default: 300.",
+      type: "number" as const,
+      default: 300,
     },
-    maxOutputSize: {
+    {
+      name: "maxOutputSize",
       label: "Max Output Size",
       description: "Maximum size per output file in megabytes. Default: 100 MB.",
+      type: "number" as const,
+      default: 500,
     },
-    env: {
+    {
+      name: "env",
       label: "Environment",
       description: "Additional environment variables for the command.",
+      type: "object" as const,
       surfaceable: false,
     },
-    search_path: {
+    {
+      name: "search_path",
       label: "Search Path",
       description:
         "Folders to find the command in, in order, instead of PATH. The command is still a bare name and runs by its full path; relative folders are under the working directory.",
+      type: "object" as const,
       surfaceable: false,
     },
-    cwd: {
+    {
+      name: "cwd",
       label: "Working Folder",
       description:
         "Folder to run the command in, under the working directory (e.g. 'Tools'). Relative args are relative to it; search_path and {{output_dir}} are not. Absolute paths and \"..\" are refused.",
+      type: "string" as const,
       placeholder: "Tools",
       surfaceable: false,
     },
-  },
+  ],
+  inputCardinality: "batch" as const,
 };

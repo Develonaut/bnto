@@ -321,7 +321,7 @@ mod tests {
             "settings": { "timeout": 1 },
             "nodes": [
                 { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-                { "id": "hang", "type": "shell-command",
+                { "id": "hang", "type": "shell-run",
                   "parameters": { "command": command, "args": args } },
                 { "id": "output", "type": "output", "parameters": { "mode": "write" } }
             ]

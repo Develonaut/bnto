@@ -97,7 +97,7 @@ describe("getNodeIcon", () => {
     expect(getNodeIcon("group")).toBe("box");
     expect(getNodeIcon("http-request")).toBe("globe");
     expect(getNodeIcon("file-rename")).toBe("folder-open");
-    expect(getNodeIcon("shell-command")).toBe("terminal");
+    expect(getNodeIcon("shell-run")).toBe("terminal");
   });
 
   // --- Unknown node types fall back gracefully ---

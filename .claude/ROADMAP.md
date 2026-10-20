@@ -57,7 +57,7 @@ M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     (7 screens, 400+ tests). Schema-driven config, data persistence,
     Home/Library, List editor, Wizard, tonkotsu widget crate — all
     delivered. Recipe fields ({{fields.*}}) shipped. `download-video`
-    migrated to shell-command + recipe deps, `bnto-video` crate deleted.
+    migrated to shell-run + recipe deps, `bnto-video` crate deleted.
     Vector operations (svg-to-png, svg-to-jpeg, optimize-svg) shipped.
     Engine hardening complete (execution progress, dry-run, install, TOCTOU fix).
     TUI controls polish complete (Bubbles-inspired display/edit, FilePath,

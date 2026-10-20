@@ -398,7 +398,7 @@ mod tests {
                 "file-list",
                 "file-move",
                 "http-request",
-                "shell-command",
+                "shell-run",
                 "spreadsheet-export",
                 "spreadsheet-lookup",
             ]

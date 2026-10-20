@@ -655,7 +655,7 @@ mod tests {
                 {"id": "input", "type": "input", "parameters": {}},
                 {
                     "id": "proc",
-                    "type": "shell-command",
+                    "type": "shell-run",
                     "parameters": {"command": "echo"},
                     "fields": {
                         "format": {"type":"enum","label":"Format","options":[{"value":"mp4","label":"MP4"}],"default":"mp4"}
@@ -692,7 +692,7 @@ mod tests {
                 {"id": "input", "type": "input", "parameters": {"mode": "none"}},
                 {
                     "id": "proc",
-                    "type": "shell-command",
+                    "type": "shell-run",
                     "parameters": {"command": "caffeinate"},
                     "fields": {
                         "action": {"type":"enum","label":"Action","options":[{"value":"start","label":"Start"}],"default":"start"}
@@ -718,7 +718,7 @@ mod tests {
     #[test]
     fn shell_recipes_are_marked_for_the_trust_badge() {
         let shell = r#"{"name": "S", "nodes": [
-            {"id": "proc", "type": "shell-command", "parameters": {"command": "git"}}
+            {"id": "proc", "type": "shell-run", "parameters": {"command": "git"}}
         ]}"#;
         let plain = r#"{"name": "P", "nodes": [
             {"id": "r", "type": "file-rename", "parameters": {}}
@@ -735,7 +735,7 @@ mod tests {
             "name": "Text Recipe",
             "nodes": [
                 {"id": "input", "type": "input", "parameters": {"mode": "text", "label": "Command"}},
-                {"id": "proc", "type": "shell-command", "parameters": {"command": "echo"}},
+                {"id": "proc", "type": "shell-run", "parameters": {"command": "echo"}},
                 {"id": "output", "type": "output", "parameters": {}}
             ]
         }"#;

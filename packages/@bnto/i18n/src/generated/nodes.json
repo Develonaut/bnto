@@ -109,7 +109,7 @@
       "label": "Report",
       "description": "Report a templated line in the run's output; files pass through unchanged."
     },
-    "shellCommand": {
+    "shellRun": {
       "label": "Run Shell Command",
       "description": "Run shell commands with stall detection, retry, and streaming output. Still runs under bnto run --dry-run, so a recipe run dry uses it only to read."
     },
@@ -500,7 +500,7 @@
         "placeholder": "{{node.<id>.<key>}}"
       }
     },
-    "shellCommand": {
+    "shellRun": {
       "command": {
         "label": "Command",
         "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both.",

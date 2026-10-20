@@ -1,4 +1,4 @@
-// What shell-command refuses in its params as the recipe wrote them, before
+// What shell-run refuses in its params as the recipe wrote them, before
 // templates fill data in (`NodeProcessor::validate_raw`).
 
 use serde_json::{Map, Value};

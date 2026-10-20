@@ -1,4 +1,4 @@
-// What one shell-command node runs, gathered once and handed to its output
+// What one shell-run node runs, gathered once and handed to its output
 // mode (stdout or file).
 
 use bnto_core::CommandOptions;

@@ -33,7 +33,7 @@ import { loopNodeSchema } from "./schemas/loop";
 import { outputNodeSchema } from "./schemas/output";
 import { parallelNodeSchema } from "./schemas/parallel";
 import { reportNodeSchema } from "./schemas/report";
-import { shellCommandNodeSchema } from "./schemas/shellCommand";
+import { shellRunNodeSchema } from "./schemas/shellRun";
 import { spreadsheetCleanNodeSchema } from "./schemas/spreadsheetClean";
 import { spreadsheetConvertNodeSchema } from "./schemas/spreadsheetConvert";
 import { spreadsheetExportNodeSchema } from "./schemas/spreadsheetExport";
@@ -77,7 +77,7 @@ export const ENGINE_NODE_SCHEMAS: Record<string, NodeSchema> = {
   output: outputNodeSchema,
   parallel: parallelNodeSchema,
   report: reportNodeSchema,
-  "shell-command": shellCommandNodeSchema,
+  "shell-run": shellRunNodeSchema,
   "spreadsheet-clean": spreadsheetCleanNodeSchema,
   "spreadsheet-convert": spreadsheetConvertNodeSchema,
   "spreadsheet-export": spreadsheetExportNodeSchema,
@@ -374,7 +374,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     },
   },
   report: {},
-  "shell-command": {
+  "shell-run": {
     script: { control: "textarea" },
     args: { control: "tagPicker" },
     timeout: { suffix: "seconds" },
