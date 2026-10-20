@@ -8,7 +8,7 @@
 //        bnto list
 //        bnto info <recipe>
 //        bnto dry-run <recipe> [files...] [--param key=value]
-//        bnto check <recipe file>...  (validate recipe files without running)
+//        bnto check <recipe file or folder>...  (validate recipes without running)
 //        bnto install <recipe> [--yes]
 //        bnto install --all [--yes]
 //        bnto doctor
@@ -17,6 +17,7 @@
 
 pub mod catalog;
 mod check;
+mod check_targets;
 mod cli;
 mod command_stream;
 mod consent;

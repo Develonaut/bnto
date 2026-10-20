@@ -2,34 +2,50 @@
 //
 // Prints one line per finding, naming the file, then a verdict line; exits 1
 // when anything was found. A file that can't be read or parsed is a finding
-// for that file, so one bad path never hides the rest.
+// for that file, so one bad path never hides the rest. A folder checks every
+// recipe under it (see `check_targets`).
 
+use std::path::Path;
 use std::process;
 
 use bnto_core::{NodeRegistry, PipelineDefinition, check_pipeline};
 
-/// Check every file in `paths`, print the findings and the verdict, and exit
-/// non-zero on any finding.
+use crate::check_targets::{CheckTarget, check_targets};
+
+/// Check every recipe `paths` name, print the findings and the verdict, and
+/// exit non-zero on any finding.
 pub fn run_check(paths: &[String]) {
-    let registry = bnto_engine::create_registry();
-    let findings: Vec<String> = paths
-        .iter()
-        .flat_map(|path| check_file(path, &registry))
-        .collect();
+    let (recipes, findings) = check_paths(paths, &bnto_engine::create_registry());
     for line in &findings {
         println!("{line}");
     }
-    println!("{}", verdict(paths.len(), findings.len()));
+    println!("{}", verdict(recipes, findings.len()));
     if !findings.is_empty() {
         process::exit(1);
     }
 }
 
-/// Finding lines for the recipe file at `path`.
-fn check_file(path: &str, registry: &NodeRegistry) -> Vec<String> {
+/// How many recipes `paths` name, and the finding lines, in argument order.
+fn check_paths(paths: &[String], registry: &NodeRegistry) -> (usize, Vec<String>) {
+    let mut recipes = 0;
+    let mut findings = Vec::new();
+    for target in paths.iter().flat_map(|arg| check_targets(arg)) {
+        match target {
+            CheckTarget::Recipe { path, name } => {
+                recipes += 1;
+                findings.extend(check_file(&path, &name, registry));
+            }
+            CheckTarget::Finding(line) => findings.push(line),
+        }
+    }
+    (recipes, findings)
+}
+
+/// Finding lines for the recipe file at `path`, each naming it as `name`.
+fn check_file(path: &Path, name: &str, registry: &NodeRegistry) -> Vec<String> {
     match std::fs::read_to_string(path) {
-        Ok(json) => check_source(path, &json, registry),
-        Err(e) => vec![format!("{path}: cannot read file: {e}")],
+        Ok(json) => check_source(name, &json, registry),
+        Err(e) => vec![format!("{name}: cannot read file: {e}")],
     }
 }
 
@@ -146,9 +162,9 @@ mod tests {
     fn test_unreadable_file_is_one_finding() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("missing.bnto.json");
-        let path = path.to_str().unwrap();
-        let lines = check_file(path, &bnto_engine::create_registry());
+        let name = path.to_str().unwrap();
+        let lines = check_file(&path, name, &bnto_engine::create_registry());
         assert_eq!(lines.len(), 1);
-        assert!(lines[0].starts_with(&format!("{path}: cannot read file:")));
+        assert!(lines[0].starts_with(&format!("{name}: cannot read file:")));
     }
 }
