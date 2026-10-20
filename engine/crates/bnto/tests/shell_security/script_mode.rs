@@ -109,7 +109,7 @@ fn sec23_zsh_startup_files_are_ignored() {
 }
 
 /// SEC-24: the shell is a fixed absolute path, never a PATH or
-/// `search_path` lookup that a planted `sh` could win.
+/// `searchPath` lookup that a planted `sh` could win.
 #[test]
 fn sec24_shell_is_not_looked_up_on_path() {
     let lab = Lab::new();
@@ -132,11 +132,11 @@ fn sec24_shell_is_not_looked_up_on_path() {
         out.text
     );
 
-    planted["parameters"]["search_path"] = json!([fake_bin.to_str().unwrap()]);
+    planted["parameters"]["searchPath"] = json!([fake_bin.to_str().unwrap()]);
     let out = lab.run(&lab.recipe(planted), &[]);
     assert!(
         !lab.canary_fired(),
-        "ran the planted sh from search_path: {}",
+        "ran the planted sh from searchPath: {}",
         out.text
     );
     assert!(!out.ok || out.text.contains("ok"), "{}", out.text);

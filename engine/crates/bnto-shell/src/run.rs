@@ -80,7 +80,7 @@ impl NodeProcessor for ShellRun {
             (Some(_), None) => {}
         }
 
-        if let Err(e) = search_path::read_search_path(params.get("search_path")) {
+        if let Err(e) = search_path::read_search_path(params.get("searchPath")) {
             errors.push(e);
         }
         if let Err(e) = each::check_groups(params.get("args")) {
@@ -241,15 +241,15 @@ fn required_command(params: &Params) -> Result<&str, BntoError> {
         .ok_or_else(|| BntoError::InvalidInput("'command' parameter is required".to_string()))
 }
 
-/// What to spawn: the command's full path from `search_path` when set,
+/// What to spawn: the command's full path from `searchPath` when set,
 /// else the bare name for PATH resolution.
 fn resolved_program(
     command: &str,
     params: &Params,
     ctx: &dyn ProcessContext,
 ) -> Result<String, BntoError> {
-    let folders = search_path::read_search_path(params.get("search_path"))
-        .map_err(BntoError::InvalidInput)?;
+    let folders =
+        search_path::read_search_path(params.get("searchPath")).map_err(BntoError::InvalidInput)?;
     let found = search_path::resolve_command(command, &folders, ctx.work_dir().ok())
         .map_err(BntoError::InvalidInput)?;
     Ok(found.map_or_else(|| command.to_string(), |p| p.to_string_lossy().into_owned()))
@@ -386,16 +386,16 @@ mod tests {
         assert!(errors[0].contains("shell interpreter"));
     }
 
-    // --- search_path ---
+    // --- searchPath ---
 
     #[test]
     fn test_validate_refuses_a_search_path_that_is_not_folders() {
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::json!("tool"));
-        params.insert("search_path".into(), serde_json::json!([1]));
+        params.insert("searchPath".into(), serde_json::json!([1]));
         let errors = ShellRun::new().validate(&params);
         assert_eq!(errors.len(), 1, "{errors:?}");
-        assert!(errors[0].contains("search_path"), "{errors:?}");
+        assert!(errors[0].contains("searchPath"), "{errors:?}");
     }
 
     #[test]
@@ -403,7 +403,7 @@ mod tests {
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::json!("cmd"));
         params.insert(
-            "search_path".into(),
+            "searchPath".into(),
             serde_json::json!(["C:/Windows/System32"]),
         );
         let errors = ShellRun::new().validate(&params);
@@ -436,7 +436,7 @@ mod tests {
         let mut params = serde_json::Map::new();
         params.insert("command".into(), serde_json::json!("tool.bat"));
         params.insert(
-            "search_path".into(),
+            "searchPath".into(),
             serde_json::json!([dir.to_str().unwrap()]),
         );
         NodeInput {
@@ -473,18 +473,15 @@ mod tests {
             .process(search_path_input(dir.path()), &progress, &ctx)
             .err()
             .expect("should fail");
-        assert!(
-            err.to_string().contains("not found in search_path"),
-            "{err}"
-        );
+        assert!(err.to_string().contains("not found in searchPath"), "{err}");
         assert!(ctx.0.lock().unwrap().is_empty(), "nothing should run");
     }
 
     #[test]
     fn test_search_path_param_is_internal_and_listed() {
         let meta = ShellRun::new().metadata();
-        let param = meta.parameters.iter().find(|p| p.name == "search_path");
-        assert!(!param.expect("search_path should exist").surfaceable);
+        let param = meta.parameters.iter().find(|p| p.name == "searchPath");
+        assert!(!param.expect("searchPath should exist").surfaceable);
     }
 
     #[test]

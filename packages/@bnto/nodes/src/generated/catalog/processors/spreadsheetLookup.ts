@@ -24,14 +24,14 @@ export const spreadsheetLookupProcessor: ProcessorDef = {
       placeholder: "mapping.csv",
     },
     {
-      name: "key_column",
+      name: "keyColumn",
       label: "Key Column",
       description: "Table column matched against each file; a key may appear on one row only",
       type: "string" as const,
       default: "name",
     },
     {
-      name: "match_on",
+      name: "matchOn",
       label: "Match On",
       description: "Which part of the file's name must equal the key exactly",
       type: "enum" as const,

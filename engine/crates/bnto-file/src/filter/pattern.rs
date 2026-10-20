@@ -8,7 +8,7 @@ use regex::Regex;
 
 use crate::glob::Glob;
 
-/// A compiled `name_pattern`.
+/// A compiled `namePattern`.
 enum Compiled {
     Glob(Glob),
     /// `None` for a regex that doesn't compile: it matches nothing.

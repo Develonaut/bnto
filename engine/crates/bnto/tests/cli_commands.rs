@@ -736,7 +736,7 @@ fn test_summarize_fails_on_a_size_that_is_not_a_number() {
     assert!(!stderr.contains("folder docs:"), "stderr: {stderr}");
 }
 
-// --- Shell search_path ---
+// --- Shell searchPath ---
 
 /// A tools folder holding a `greet` program that prints "greeted", and a
 /// `--vars` file pointing `Tools` at it.
@@ -807,7 +807,7 @@ fn test_shell_command_fails_when_search_path_lacks_the_tool() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert_eq!(output.status.code(), Some(1), "stderr: {stderr}");
     assert!(
-        stderr.contains("'greet' was not found in search_path"),
+        stderr.contains("'greet' was not found in searchPath"),
         "stderr: {stderr}"
     );
 }
@@ -862,7 +862,7 @@ fn test_always_step_keeps_a_failed_commands_stdout() {
 
 #[test]
 fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
-    // Guards: a tool missing from search_path fails the step before anything
+    // Guards: a tool missing from searchPath fails the step before anything
     // runs; the closing steps still run, starting from no files.
     let tools = temp_output_dir();
     let root = temp_output_dir();
@@ -891,7 +891,7 @@ fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
     let last = last_stderr_line(&output);
     assert!(last.starts_with("Pipeline failed: "), "last line: {last}");
     assert!(
-        last.contains("'tool' was not found in search_path"),
+        last.contains("'tool' was not found in searchPath"),
         "last line: {last}"
     );
     let copied = std::fs::read_to_string(dest.path().join("leftover.txt")).unwrap();
@@ -1822,8 +1822,8 @@ fn test_lookup_then_rename_renames_in_place_and_undoes_from_the_same_table() {
 
     let undo = [
         table_param(&table),
-        "lookup:key_column=new_name".to_string(),
-        "lookup:match_on=filename".to_string(),
+        "lookup:keyColumn=new_name".to_string(),
+        "lookup:matchOn=filename".to_string(),
         "rename:pattern={{item.name}}".to_string(),
     ];
     let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &undo, false);
@@ -1977,8 +1977,8 @@ fn test_export_record_drives_the_undo() {
 
     let undo = [
         table_param(&record),
-        "lookup:key_column=file".to_string(),
-        "lookup:match_on=filename".to_string(),
+        "lookup:keyColumn=file".to_string(),
+        "lookup:matchOn=filename".to_string(),
         "rename:pattern={{item.name}}".to_string(),
     ];
     let (ok, stderr) = run_lookup_recipe("spreadsheet-lookup-rename", &lib, &undo, false);
@@ -2024,7 +2024,7 @@ fn test_move_sorts_files_into_a_subject_tree_and_undoes_from_the_same_table() {
 
     let undo = [
         table_param(&table),
-        "lookup:key_column=new_name".to_string(),
+        "lookup:keyColumn=new_name".to_string(),
         "rename:pattern={{item.name}}".to_string(),
         move_param(&lib),
     ];
@@ -2126,7 +2126,7 @@ fn test_check_fails_when_one_of_two_recipes_is_broken() {
     );
     for expected in [
         "\"only-docs\"",
-        "name_pattern",
+        "namePattern",
         "image-zap",
         "\"copy\"",
         "{{vars.Out",

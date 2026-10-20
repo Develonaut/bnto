@@ -7,7 +7,7 @@ use crate::invocation::Invocation;
 use crate::validate;
 
 /// Stdout mode: capture command stdout as a single output file. `program` is
-/// what runs (the full path from `search_path`, or `command` itself); the
+/// what runs (the full path from `searchPath`, or `command` itself); the
 /// output is named after `command`.
 pub(crate) fn process_stdout_mode(
     invocation: &Invocation,
@@ -118,13 +118,13 @@ mod tests {
     #[test]
     fn test_command_missing_from_search_path_fails_before_running_with_no_output() {
         let empty = tempfile::tempdir().unwrap();
-        let params = serde_json::json!({ "search_path": [empty.path().to_str().unwrap()] });
+        let params = serde_json::json!({ "searchPath": [empty.path().to_str().unwrap()] });
         let err = FailingTool::new().run(params).err().unwrap();
         let (error, output) = err.into_parts();
         assert!(
             error
                 .to_string()
-                .contains("'tool' was not found in search_path"),
+                .contains("'tool' was not found in searchPath"),
             "{error}"
         );
         assert!(output.is_none(), "nothing ran, so nothing to hand over");

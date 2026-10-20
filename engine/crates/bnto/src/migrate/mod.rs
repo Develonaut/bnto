@@ -11,6 +11,8 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use serde_json::Value;
 
+mod camel_case_params;
+
 /// A single migration transform applied to a recipe JSON document.
 struct Migration {
     /// Human-readable description shown in CLI output.
@@ -44,6 +46,12 @@ fn all_migrations() -> Vec<Migration> {
             description: "Rename 'shell-command' node type to 'shell-run'",
             applies: has_shell_command_node,
             apply: rename_shell_command_to_shell_run,
+        },
+        // After the type renames, so it finds params under the new types.
+        Migration {
+            description: "Rename snake_case params to camelCase",
+            applies: camel_case_params::has_snake_case_params,
+            apply: camel_case_params::rename_snake_case_params,
         },
     ]
 }
@@ -524,7 +532,7 @@ mod tests {
             "nodes": [{
                 "id": "meta",
                 "type": "file-metadata",
-                "parameters": { "include_hash": true }
+                "parameters": { "includeHash": true }
             }]
         });
 
@@ -535,7 +543,7 @@ mod tests {
         let node = &value["nodes"][0];
         assert_eq!(node["type"], json!("file-inspect"));
         assert_eq!(node["id"], json!("meta"));
-        assert_eq!(node["parameters"]["include_hash"], json!(true));
+        assert_eq!(node["parameters"]["includeHash"], json!(true));
     }
 
     #[test]

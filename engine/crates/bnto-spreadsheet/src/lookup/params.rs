@@ -36,12 +36,12 @@ impl LookupParams {
     /// Read the params, or every reason they're invalid.
     pub(super) fn read(params: &Params) -> Result<Self, Vec<String>> {
         let table = require_table(params);
-        let match_on = parse_match_on(text(params, "match_on"));
+        let match_on = parse_match_on(text(params, "matchOn"));
         let unmatched = parse_unmatched(text(params, "unmatched"));
         match (table, match_on, unmatched) {
             (Ok(table), Ok(match_on), Ok(unmatched)) => Ok(Self {
                 table,
-                key_column: text(params, "key_column")
+                key_column: text(params, "keyColumn")
                     .unwrap_or(DEFAULT_KEY_COLUMN)
                     .to_string(),
                 match_on,
@@ -76,7 +76,7 @@ fn parse_match_on(value: Option<&str>) -> Result<MatchOn, String> {
         None | Some("path") => Ok(MatchOn::Path),
         Some("filename") => Ok(MatchOn::Filename),
         Some(other) => Err(format!(
-            "'match_on' must be \"path\" or \"filename\", got \"{other}\""
+            "'matchOn' must be \"path\" or \"filename\", got \"{other}\""
         )),
     }
 }
@@ -100,7 +100,7 @@ pub(super) fn build_lookup_parameters() -> Vec<ParameterDef> {
         table_param(),
         key_column_param(),
         enum_param(
-            "match_on",
+            "matchOn",
             "Match On",
             "Which part of the file's name must equal the key exactly",
             &[
@@ -138,7 +138,7 @@ fn table_param() -> ParameterDef {
 
 fn key_column_param() -> ParameterDef {
     ParameterDef {
-        name: "key_column".to_string(),
+        name: "keyColumn".to_string(),
         label: "Key Column".to_string(),
         description: "Table column matched against each file; a key may appear on one row only"
             .to_string(),
@@ -193,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_every_bad_value_is_reported() {
-        let errors = read(json!({ "match_on": "stem", "unmatched": "skip" }))
+        let errors = read(json!({ "matchOn": "stem", "unmatched": "skip" }))
             .err()
             .unwrap();
         assert_eq!(errors.len(), 3, "{errors:?}");
@@ -203,8 +203,8 @@ mod tests {
     fn test_schema_defaults_match_the_reader() {
         let defs = build_lookup_parameters();
         let default = |n: &str| defs.iter().find(|d| d.name == n).unwrap().default.clone();
-        assert_eq!(default("key_column"), Some(json!("name")));
-        assert_eq!(default("match_on"), Some(json!("path")));
+        assert_eq!(default("keyColumn"), Some(json!("name")));
+        assert_eq!(default("matchOn"), Some(json!("path")));
         assert_eq!(default("unmatched"), Some(json!("keep")));
     }
 }

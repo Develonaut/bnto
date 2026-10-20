@@ -30,14 +30,14 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   },
   "file-copy": {
     destination: { type: "string", control: "text", required: false },
-    create_dirs: { type: "boolean", control: "switch", required: false },
+    createDirs: { type: "boolean", control: "switch", required: false },
     conflict: {
       type: "enum",
       control: "select",
       required: false,
       enumValues: ["skip", "overwrite", "rename", "newer"] as const,
     },
-    tolerance_ms: { type: "number", control: "number", required: false, min: 0 },
+    toleranceMs: { type: "number", control: "number", required: false, min: 0 },
   },
   "file-decode": {
     encoding: { type: "enum", control: "select", required: false, enumValues: ["base64"] as const },
@@ -48,8 +48,8 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   },
   "file-filter": {
     extensions: { type: "string", control: "text", required: false },
-    name_pattern: { type: "string", control: "text", required: false },
-    pattern_mode: {
+    namePattern: { type: "string", control: "text", required: false },
+    patternMode: {
       type: "enum",
       control: "select",
       required: false,
@@ -62,11 +62,11 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       enumValues: ["name", "path"] as const,
     },
     keep: { type: "boolean", control: "switch", required: false },
-    min_size: { type: "number", control: "number", required: false, min: 0 },
-    max_size: { type: "number", control: "number", required: false, min: 0 },
+    minSize: { type: "number", control: "number", required: false, min: 0 },
+    maxSize: { type: "number", control: "number", required: false, min: 0 },
   },
   "file-inspect": {
-    include_hash: { type: "boolean", control: "switch", required: false },
+    includeHash: { type: "boolean", control: "switch", required: false },
   },
   "file-join": {
     filename: { type: "string", control: "text", required: true },
@@ -78,7 +78,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   },
   "file-move": {
     destination: { type: "string", control: "text", required: true },
-    create_dirs: { type: "boolean", control: "switch", required: false },
+    createDirs: { type: "boolean", control: "switch", required: false },
   },
   "file-rename": {
     sanitize: {
@@ -88,7 +88,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
       enumValues: ["slugify", "strip", "normalize"] as const,
     },
     separator: { type: "string", control: "text", required: false },
-    max_length: { type: "number", control: "number", required: false, min: 0 },
+    maxLength: { type: "number", control: "number", required: false, min: 0 },
     find: { type: "string", control: "text", required: false },
     replace: { type: "string", control: "text", required: false },
     case: {
@@ -100,8 +100,8 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     prefix: { type: "string", control: "text", required: false },
     suffix: { type: "string", control: "text", required: false },
     pattern: { type: "string", control: "text", required: false },
-    counter_start: { type: "number", control: "number", required: false, min: 0 },
-    counter_pad: { type: "number", control: "slider", required: false, min: 0, max: 10 },
+    counterStart: { type: "number", control: "number", required: false, min: 0 },
+    counterPad: { type: "number", control: "slider", required: false, min: 0, max: 10 },
     extension: { type: "string", control: "text", required: false },
   },
   "file-render": {
@@ -248,7 +248,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     timeout: { type: "number", control: "number", required: false },
     maxOutputSize: { type: "number", control: "number", required: false },
     env: { type: "record", control: "keyValue", required: false },
-    search_path: { type: "record", control: "keyValue", required: false },
+    searchPath: { type: "record", control: "keyValue", required: false },
     cwd: { type: "string", control: "text", required: false },
   },
   "spreadsheet-clean": {
@@ -267,13 +267,13 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
   },
   "spreadsheet-export": {
     path: { type: "string", control: "text", required: true },
-    name_column: { type: "string", control: "text", required: false },
+    nameColumn: { type: "string", control: "text", required: false },
     overwrite: { type: "boolean", control: "switch", required: false },
   },
   "spreadsheet-lookup": {
     table: { type: "string", control: "text", required: true },
-    key_column: { type: "string", control: "text", required: false },
-    match_on: {
+    keyColumn: { type: "string", control: "text", required: false },
+    matchOn: {
       type: "enum",
       control: "select",
       required: false,

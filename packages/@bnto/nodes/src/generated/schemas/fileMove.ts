@@ -10,7 +10,7 @@ import type { NodeSchema } from "../../schemas/types";
 /** Zod schema for file-move node parameters. */
 export const fileMoveParamsSchema = z.object({
   destination: z.string(),
-  create_dirs: z.boolean().optional().default(true),
+  createDirs: z.boolean().optional().default(true),
 });
 
 /** Inferred TypeScript type for file-move node parameters. */
@@ -28,7 +28,7 @@ export const fileMoveNodeSchema: NodeSchema = {
         'Folder to move files under. Each file\'s name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and ".." are refused.',
       placeholder: "./sorted",
     },
-    create_dirs: {
+    createDirs: {
       label: "Create Folders",
       description:
         "Create missing folders under the destination. Off refuses the run when a folder is missing.",

@@ -15,7 +15,7 @@ pub(super) struct Root {
 }
 
 impl Root {
-    /// Resolve `destination`. A missing one is fine when `create_dirs` is on:
+    /// Resolve `destination`. A missing one is fine when `createDirs` is on:
     /// the nearest folder above it that exists is canonicalized instead.
     pub(super) fn resolve(destination: &str, create_dirs: bool) -> Result<Self, String> {
         let abs = std::path::absolute(destination)
@@ -29,7 +29,7 @@ impl Root {
             canonical_missing(&abs)?
         } else {
             return Err(format!(
-                "destination {} doesn't exist and create_dirs is off",
+                "destination {} doesn't exist and createDirs is off",
                 abs.display()
             ));
         };
@@ -54,7 +54,7 @@ impl Root {
     }
 
     /// Fail when `dest`'s folder can't be used: it would be created with
-    /// `create_dirs` off, a file sits where a folder should, or a link or
+    /// `createDirs` off, a file sits where a folder should, or a link or
     /// junction inside the destination leads outside it.
     pub(super) fn check_folder(&mut self, dest: &Path) -> Result<(), String> {
         let folder = dest.parent().unwrap_or(&self.path).to_path_buf();
@@ -80,7 +80,7 @@ impl Root {
         }
         if existing != folder && !self.create_dirs {
             return Err(format!(
-                "folder {} doesn't exist and create_dirs is off",
+                "folder {} doesn't exist and createDirs is off",
                 folder.display()
             ));
         }

@@ -26,7 +26,7 @@ export const fileMoveProcessor: ProcessorDef = {
       placeholder: "./sorted",
     },
     {
-      name: "create_dirs",
+      name: "createDirs",
       label: "Create Folders",
       description:
         "Create missing folders under the destination. Off refuses the run when a folder is missing.",

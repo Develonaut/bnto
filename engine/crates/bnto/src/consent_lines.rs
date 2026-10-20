@@ -27,7 +27,7 @@ fn collect(nodes: &[PipelineNode], lines: &mut Vec<String>) {
     }
 }
 
-/// `command arg …`, then `(from <search_path>)` and `[env: NAME, …]`. A
+/// `command arg …`, then `(from <searchPath>)` and `[env: NAME, …]`. A
 /// script step reads `<shell> -c <script> bnto arg …` with the whole script
 /// below it, so what's approved is the script that runs.
 fn command_line(params: &Map<String, Value>) -> Option<String> {
@@ -46,7 +46,7 @@ fn command_line(params: &Map<String, Value>) -> Option<String> {
             line.push_str(&shown_arg(arg));
         }
     }
-    if let Ok(folders) = bnto_shell::search_path::read_search_path(params.get("search_path"))
+    if let Ok(folders) = bnto_shell::search_path::read_search_path(params.get("searchPath"))
         && !folders.is_empty()
     {
         line.push_str(&format!(" (from {})", folders.join(", ")));
@@ -109,7 +109,7 @@ mod tests {
             serde_json::json!([{ "id": "a", "type": "shell-run", "parameters": {
             "command": "Build.bat",
             "args": [["--cookies", "{{fields.b}}"], { "each": ["-object={{path}}"] }],
-            "search_path": ["{{env.ROOT}}/bin", "tools"],
+            "searchPath": ["{{env.ROOT}}/bin", "tools"],
             "env": { "TOKEN": "{{env.T}}", "MODE": "x" }
         } }]),
         );

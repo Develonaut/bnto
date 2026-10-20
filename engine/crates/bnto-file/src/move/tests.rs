@@ -405,20 +405,20 @@ fn test_dry_run_moves_nothing_and_creates_no_folder() {
     assert_eq!(out.files[0].data, FileData::Path(tmp.path().join("a.wav")));
 }
 
-// --- create_dirs off ---
+// --- createDirs off ---
 
 #[test]
 fn test_without_create_dirs_a_missing_folder_is_refused() {
     let tmp = dir_with(&[("a.wav", "A"), ("b.wav", "B"), ("dest/Pistol/keep", "")]);
     let dest = tmp.path().join("dest");
-    let params = json!({ "destination": dest.to_string_lossy(), "create_dirs": false });
+    let params = json!({ "destination": dest.to_string_lossy(), "createDirs": false });
     let files = batch(
         tmp.path(),
         &[("a.wav", "Pistol/a.wav"), ("b.wav", "Rifle/b.wav")],
     );
     let err = error(run_with(files, params.clone(), &NoopContext));
     assert!(
-        err.contains("Rifle") && err.contains("create_dirs is off"),
+        err.contains("Rifle") && err.contains("createDirs is off"),
         "{err}"
     );
     assert_eq!(read(tmp.path(), "a.wav"), "A");
@@ -432,7 +432,7 @@ fn test_without_create_dirs_a_missing_folder_is_refused() {
 fn test_without_create_dirs_a_missing_destination_is_refused() {
     let tmp = dir_with(&[("a.wav", "A")]);
     let dest = tmp.path().join("nope");
-    let params = json!({ "destination": dest.to_string_lossy(), "create_dirs": false });
+    let params = json!({ "destination": dest.to_string_lossy(), "createDirs": false });
     let err = error(run_with(
         batch(tmp.path(), &[("a.wav", "a.wav")]),
         params,

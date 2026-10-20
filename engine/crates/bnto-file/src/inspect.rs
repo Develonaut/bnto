@@ -56,7 +56,7 @@ impl NodeProcessor for FileInspect {
 
         let include_hash = input
             .params
-            .get("include_hash")
+            .get("includeHash")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
         let facts = measure(&input.data, include_hash)?;
@@ -86,7 +86,7 @@ struct FileFacts {
 
 /// Size and mtime come from the filesystem for a disk file, so a multi-GB
 /// file is never loaded. Only the hash needs the content, so only
-/// `include_hash` reads it.
+/// `includeHash` reads it.
 fn measure(data: &FileData, include_hash: bool) -> Result<FileFacts, BntoError> {
     let read_failed =
         |e: std::io::Error| BntoError::ProcessingFailed(format!("Failed to read input: {e}"));
@@ -157,7 +157,7 @@ fn modified_time(data: &FileData) -> Option<String> {
 
 fn build_metadata_params() -> Vec<ParameterDef> {
     vec![ParameterDef {
-        name: "include_hash".to_string(),
+        name: "includeHash".to_string(),
         label: "Include Hash".to_string(),
         description: "Compute and include a SHA-256 hash of the file content.".to_string(),
         param_type: ParameterType::Boolean,
@@ -488,7 +488,7 @@ mod tests {
         let input = make_input(
             b"hello",
             "file.txt",
-            params(&[("include_hash", serde_json::json!(true))]),
+            params(&[("includeHash", serde_json::json!(true))]),
         );
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
@@ -508,7 +508,7 @@ mod tests {
         let input = make_input(
             b"",
             "empty.bin",
-            params(&[("include_hash", serde_json::json!(true))]),
+            params(&[("includeHash", serde_json::json!(true))]),
         );
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
@@ -716,7 +716,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let path = disk_file(tmp.path(), b"hello", 0);
         let mut input = path_input(path.clone());
-        input.params = params(&[("include_hash", serde_json::json!(true))]);
+        input.params = params(&[("includeHash", serde_json::json!(true))]);
 
         let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)

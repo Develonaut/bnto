@@ -198,14 +198,14 @@ mod tests {
     fn test_check_refuses_a_file_filter_regex_that_does_not_compile() {
         let definition: PipelineDefinition = serde_json::from_value(serde_json::json!({
             "nodes": [{ "id": "only-docs", "type": "file-filter", "parameters": {
-                "name_pattern": "(", "pattern_mode": "regex"
+                "namePattern": "(", "patternMode": "regex"
             } }]
         }))
         .unwrap();
         let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "only-docs");
-        assert!(findings[0].message.contains("name_pattern"));
+        assert!(findings[0].message.contains("namePattern"));
     }
 
     #[test]

@@ -55,8 +55,8 @@ pub(crate) fn script_problems(params: &Map<String, Value>) -> Vec<String> {
             names.join(", ")
         ));
     }
-    if params.contains_key("search_path") {
-        problems.push("'search_path' doesn't apply to a script; the shell is fixed".to_string());
+    if params.contains_key("searchPath") {
+        problems.push("'searchPath' doesn't apply to a script; the shell is fixed".to_string());
     }
     problems
 }
@@ -105,7 +105,7 @@ pub(crate) fn invocation(shell: &str, script: &str) -> Result<(PathBuf, Vec<Stri
 }
 
 /// The first installed copy of `shell`, by absolute path only — never a
-/// PATH or `search_path` lookup a planted `sh` could win.
+/// PATH or `searchPath` lookup a planted `sh` could win.
 fn shell_path(shell: &str, exists: impl Fn(&Path) -> bool) -> Result<PathBuf, String> {
     let (_, candidates) = SHELLS
         .iter()

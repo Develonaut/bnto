@@ -39,11 +39,11 @@ fn apply_sanitize(stem: String, params: &serde_json::Map<String, serde_json::Val
         "normalize" => bnto_core::case::normalize_unicode(&stem),
         _ => bnto_core::case::slug_with_separator(&stem, &separator),
     };
-    let max_length = get_int_param(params, "max_length").unwrap_or(0);
+    let max_length = get_int_param(params, "maxLength").unwrap_or(0);
     apply_max_length(&sanitized, max_length)
 }
 
-/// Truncate stem to max_length characters. 0 means no limit.
+/// Truncate stem to maxLength characters. 0 means no limit.
 fn apply_max_length(stem: &str, max_length: usize) -> String {
     if max_length == 0 || stem.len() <= max_length {
         return stem.to_string();

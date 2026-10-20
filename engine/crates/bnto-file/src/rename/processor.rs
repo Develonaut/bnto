@@ -40,7 +40,7 @@ impl NodeProcessor for RenameFiles {
     }
 
     /// Self-describing metadata: find, replace, case, prefix, suffix, pattern,
-    /// counter_start, counter_pad, extension. Accepts any file type.
+    /// counterStart, counterPad, extension. Accepts any file type.
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -83,14 +83,14 @@ impl NodeProcessor for RenameFiles {
     }
 
     /// Override batch processing to inject auto-incrementing counter values.
-    /// Each file gets a `__counter` internal param based on its position + counter_start.
+    /// Each file gets a `__counter` internal param based on its position + counterStart.
     fn process_batch(
         &self,
         input: BatchInput,
         progress: &ProgressReporter,
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
-        let counter_start = get_int_param(&input.params, "counter_start").unwrap_or(1);
+        let counter_start = get_int_param(&input.params, "counterStart").unwrap_or(1);
         let total = input.files.len();
         let mut all_files = Vec::new();
         let mut combined_metadata = serde_json::Map::new();
@@ -665,7 +665,7 @@ mod tests {
             serde_json::Value::Number(serde_json::Number::from(3)),
         );
         params.insert(
-            "counter_pad".to_string(),
+            "counterPad".to_string(),
             serde_json::Value::Number(serde_json::Number::from(4)),
         );
         let input = make_input(b"data", "photo.jpg", params);
@@ -722,7 +722,7 @@ mod tests {
         let progress = noop_progress();
         let mut params = string_param("pattern", "img-{{counter}}.{{ext}}");
         params.insert(
-            "counter_start".to_string(),
+            "counterStart".to_string(),
             serde_json::Value::Number(serde_json::Number::from(10)),
         );
         let batch = BatchInput {
@@ -759,7 +759,7 @@ mod tests {
         let progress = noop_progress();
         let mut params = string_param("pattern", "file-{{counter}}.{{ext}}");
         params.insert(
-            "counter_pad".to_string(),
+            "counterPad".to_string(),
             serde_json::Value::Number(serde_json::Number::from(3)),
         );
         let batch = BatchInput {
@@ -922,7 +922,7 @@ mod tests {
         let progress = noop_progress();
         let mut params = string_param("sanitize", "slugify");
         params.insert(
-            "max_length".to_string(),
+            "maxLength".to_string(),
             serde_json::Value::Number(serde_json::Number::from(5)),
         );
         let input = make_input(b"test data", "a-very-long-filename.txt", params);
@@ -936,7 +936,7 @@ mod tests {
         let progress = noop_progress();
         let mut params = string_param("sanitize", "slugify");
         params.insert(
-            "max_length".to_string(),
+            "maxLength".to_string(),
             serde_json::Value::Number(serde_json::Number::from(0)),
         );
         let input = make_input(b"test data", "a-very-long-filename.txt", params);

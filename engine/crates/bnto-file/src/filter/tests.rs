@@ -134,7 +134,7 @@ fn test_filter_by_glob_pattern() {
     let input = make_input(
         b"data",
         "photo_001.jpg",
-        params(&[("name_pattern", serde_json::json!("photo*"))]),
+        params(&[("namePattern", serde_json::json!("photo*"))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
     assert_eq!(output.files.len(), 1, "Glob pattern should match");
@@ -143,7 +143,7 @@ fn test_filter_by_glob_pattern() {
     let input = make_input(
         b"data",
         "document.pdf",
-        params(&[("name_pattern", serde_json::json!("photo*"))]),
+        params(&[("namePattern", serde_json::json!("photo*"))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
     assert_eq!(output.files.len(), 0, "Glob pattern should not match");
@@ -159,8 +159,8 @@ fn test_filter_by_regex_pattern() {
         b"data",
         "img42.png",
         params(&[
-            ("name_pattern", serde_json::json!(r"^img\d+\.png$")),
-            ("pattern_mode", serde_json::json!("regex")),
+            ("namePattern", serde_json::json!(r"^img\d+\.png$")),
+            ("patternMode", serde_json::json!("regex")),
         ]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
@@ -171,8 +171,8 @@ fn test_filter_by_regex_pattern() {
         b"data",
         "photo.png",
         params(&[
-            ("name_pattern", serde_json::json!(r"^img\d+\.png$")),
-            ("pattern_mode", serde_json::json!("regex")),
+            ("namePattern", serde_json::json!(r"^img\d+\.png$")),
+            ("patternMode", serde_json::json!("regex")),
         ]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
@@ -188,7 +188,7 @@ fn test_filter_glob_with_question_mark() {
     let input = make_input(
         b"data",
         "file1.txt",
-        params(&[("name_pattern", serde_json::json!("file?.txt"))]),
+        params(&[("namePattern", serde_json::json!("file?.txt"))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
     assert_eq!(output.files.len(), 1);
@@ -196,7 +196,7 @@ fn test_filter_glob_with_question_mark() {
     let input = make_input(
         b"data",
         "file10.txt",
-        params(&[("name_pattern", serde_json::json!("file?.txt"))]),
+        params(&[("namePattern", serde_json::json!("file?.txt"))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
     assert_eq!(output.files.len(), 0);
@@ -209,27 +209,27 @@ fn test_filter_by_min_size() {
     let processor = FileFilter::new();
     let progress = ProgressReporter::new_noop();
 
-    // 5 bytes, min_size=10 → dropped
+    // 5 bytes, minSize=10 → dropped
     let input = make_input(
         b"small",
         "small.txt",
-        params(&[("min_size", serde_json::json!(10))]),
+        params(&[("minSize", serde_json::json!(10))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
     assert_eq!(
         output.files.len(),
         0,
-        "File below min_size should be dropped"
+        "File below minSize should be dropped"
     );
 
-    // 20 bytes, min_size=10 → kept
+    // 20 bytes, minSize=10 → kept
     let input = make_input(
         &[0u8; 20],
         "big.txt",
-        params(&[("min_size", serde_json::json!(10))]),
+        params(&[("minSize", serde_json::json!(10))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
-    assert_eq!(output.files.len(), 1, "File above min_size should pass");
+    assert_eq!(output.files.len(), 1, "File above minSize should pass");
 }
 
 #[test]
@@ -237,27 +237,27 @@ fn test_filter_by_max_size() {
     let processor = FileFilter::new();
     let progress = ProgressReporter::new_noop();
 
-    // 20 bytes, max_size=10 → dropped
+    // 20 bytes, maxSize=10 → dropped
     let input = make_input(
         &[0u8; 20],
         "big.txt",
-        params(&[("max_size", serde_json::json!(10))]),
+        params(&[("maxSize", serde_json::json!(10))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
     assert_eq!(
         output.files.len(),
         0,
-        "File above max_size should be dropped"
+        "File above maxSize should be dropped"
     );
 
-    // 5 bytes, max_size=10 → kept
+    // 5 bytes, maxSize=10 → kept
     let input = make_input(
         b"small",
         "small.txt",
-        params(&[("max_size", serde_json::json!(10))]),
+        params(&[("maxSize", serde_json::json!(10))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
-    assert_eq!(output.files.len(), 1, "File below max_size should pass");
+    assert_eq!(output.files.len(), 1, "File below maxSize should pass");
 }
 
 #[test]
@@ -265,14 +265,14 @@ fn test_filter_size_zero_means_no_limit() {
     let processor = FileFilter::new();
     let progress = ProgressReporter::new_noop();
 
-    // max_size=0 → no limit (passes)
+    // maxSize=0 → no limit (passes)
     let input = make_input(
         &[0u8; 1000],
         "big.txt",
-        params(&[("max_size", serde_json::json!(0))]),
+        params(&[("maxSize", serde_json::json!(0))]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
-    assert_eq!(output.files.len(), 1, "max_size=0 should mean no limit");
+    assert_eq!(output.files.len(), 1, "maxSize=0 should mean no limit");
 }
 
 // --- Combined filters (AND logic) ---
@@ -288,7 +288,7 @@ fn test_filter_combined_extension_and_size() {
         "photo.jpg",
         params(&[
             ("extensions", serde_json::json!("jpg,png")),
-            ("min_size", serde_json::json!(10)),
+            ("minSize", serde_json::json!(10)),
         ]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
@@ -304,7 +304,7 @@ fn test_filter_combined_extension_and_size() {
         "photo.jpg",
         params(&[
             ("extensions", serde_json::json!("jpg,png")),
-            ("min_size", serde_json::json!(10)),
+            ("minSize", serde_json::json!(10)),
         ]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
@@ -320,7 +320,7 @@ fn test_filter_combined_extension_and_size() {
         "readme.txt",
         params(&[
             ("extensions", serde_json::json!("jpg,png")),
-            ("min_size", serde_json::json!(10)),
+            ("minSize", serde_json::json!(10)),
         ]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
@@ -341,7 +341,7 @@ fn test_filter_combined_pattern_and_extension() {
         b"data",
         "photo_001.jpg",
         params(&[
-            ("name_pattern", serde_json::json!("photo*")),
+            ("namePattern", serde_json::json!("photo*")),
             ("extensions", serde_json::json!("jpg")),
         ]),
     );
@@ -353,7 +353,7 @@ fn test_filter_combined_pattern_and_extension() {
         b"data",
         "document.jpg",
         params(&[
-            ("name_pattern", serde_json::json!("photo*")),
+            ("namePattern", serde_json::json!("photo*")),
             ("extensions", serde_json::json!("jpg")),
         ]),
     );
@@ -404,8 +404,8 @@ fn test_filter_invalid_regex_drops_file() {
         b"data",
         "file.txt",
         params(&[
-            ("name_pattern", serde_json::json!("[invalid")),
-            ("pattern_mode", serde_json::json!("regex")),
+            ("namePattern", serde_json::json!("[invalid")),
+            ("patternMode", serde_json::json!("regex")),
         ]),
     );
     let output = processor.process(input, &progress, &NoopContext).unwrap();
@@ -433,10 +433,10 @@ fn passes(filename: &str, p: &serde_json::Map<String, serde_json::Value>) -> boo
 fn drop_folders_params() -> serde_json::Map<String, serde_json::Value> {
     params(&[
         (
-            "name_pattern",
+            "namePattern",
             serde_json::json!(r"(?i)(^|/)(node_modules|build|\.cache)(/|$)|\.tmp$"),
         ),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("patternMode", serde_json::json!("regex")),
         ("match", serde_json::json!("path")),
         ("keep", serde_json::json!(false)),
     ])
@@ -462,8 +462,8 @@ fn test_match_path_keep_false_keeps_non_matching_paths() {
 #[test]
 fn test_match_path_tests_the_whole_relative_path() {
     let p = params(&[
-        ("name_pattern", serde_json::json!("^docs/")),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("namePattern", serde_json::json!("^docs/")),
+        ("patternMode", serde_json::json!("regex")),
         ("match", serde_json::json!("path")),
     ]);
     assert!(passes("docs/readme.md", &p));
@@ -473,7 +473,7 @@ fn test_match_path_tests_the_whole_relative_path() {
 #[test]
 fn test_match_path_with_glob() {
     let p = params(&[
-        ("name_pattern", serde_json::json!("docs/*")),
+        ("namePattern", serde_json::json!("docs/*")),
         ("match", serde_json::json!("path")),
     ]);
     assert!(passes("docs/readme.md", &p));
@@ -483,8 +483,8 @@ fn test_match_path_with_glob() {
 #[test]
 fn test_match_defaults_to_name() {
     let p = params(&[
-        ("name_pattern", serde_json::json!("^docs/")),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("namePattern", serde_json::json!("^docs/")),
+        ("patternMode", serde_json::json!("regex")),
     ]);
     assert!(
         !passes("docs/readme.md", &p),
@@ -531,13 +531,13 @@ fn test_validate_accepts_name_and_path() {
 #[test]
 fn test_validate_refuses_a_regex_that_does_not_compile() {
     let p = params(&[
-        ("name_pattern", serde_json::json!("(")),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("namePattern", serde_json::json!("(")),
+        ("patternMode", serde_json::json!("regex")),
     ]);
     let errors = FileFilter::new().validate(&p);
     assert_eq!(errors.len(), 1);
     assert!(
-        errors[0].contains("name_pattern"),
+        errors[0].contains("namePattern"),
         "error names the param: {errors:?}"
     );
     assert!(errors[0].ends_with("unclosed group"), "{errors:?}");
@@ -547,15 +547,15 @@ fn test_validate_refuses_a_regex_that_does_not_compile() {
 #[test]
 fn test_validate_accepts_a_valid_regex() {
     let p = params(&[
-        ("name_pattern", serde_json::json!(r"^img\d+\.png$")),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("namePattern", serde_json::json!(r"^img\d+\.png$")),
+        ("patternMode", serde_json::json!("regex")),
     ]);
     assert!(FileFilter::new().validate(&p).is_empty());
 }
 
 #[test]
 fn test_validate_leaves_glob_patterns_alone() {
-    let p = params(&[("name_pattern", serde_json::json!("("))]);
+    let p = params(&[("namePattern", serde_json::json!("("))]);
     assert!(FileFilter::new().validate(&p).is_empty());
 }
 
@@ -563,8 +563,8 @@ fn test_validate_leaves_glob_patterns_alone() {
 fn test_validate_skips_a_regex_that_holds_a_placeholder() {
     // The value is only known once the placeholder resolves at run time.
     let p = params(&[
-        ("name_pattern", serde_json::json!("^{{vars.Prefix}}")),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("namePattern", serde_json::json!("^{{vars.Prefix}}")),
+        ("patternMode", serde_json::json!("regex")),
     ]);
     assert!(FileFilter::new().validate(&p).is_empty());
 }
@@ -583,7 +583,7 @@ fn test_metadata_declares_match_and_keep() {
 fn glob_passes(pattern: &str, filename: &str) -> bool {
     passes(
         filename,
-        &params(&[("name_pattern", serde_json::json!(pattern))]),
+        &params(&[("namePattern", serde_json::json!(pattern))]),
     )
 }
 
@@ -652,7 +652,7 @@ b"
 #[test]
 fn test_glob_star_crosses_folders_when_matching_paths() {
     let p = params(&[
-        ("name_pattern", serde_json::json!("docs/*.md")),
+        ("namePattern", serde_json::json!("docs/*.md")),
         ("match", serde_json::json!("path")),
     ]);
     assert!(passes("docs/guide/intro.md", &p));
@@ -662,8 +662,8 @@ fn test_glob_star_crosses_folders_when_matching_paths() {
 #[test]
 fn test_regex_searches_anywhere_in_the_name() {
     let p = params(&[
-        ("name_pattern", serde_json::json!(r"\d{3}")),
-        ("pattern_mode", serde_json::json!("regex")),
+        ("namePattern", serde_json::json!(r"\d{3}")),
+        ("patternMode", serde_json::json!("regex")),
     ]);
     assert!(passes("IMG_123.jpg", &p));
     assert!(!passes("IMG_12.jpg", &p));
@@ -676,8 +676,8 @@ fn test_one_filter_follows_each_files_own_pattern() {
     let filter = FileFilter::new();
     let run = |pattern: &str, mode: &str, filename: &str| {
         let p = params(&[
-            ("name_pattern", serde_json::json!(pattern)),
-            ("pattern_mode", serde_json::json!(mode)),
+            ("namePattern", serde_json::json!(pattern)),
+            ("patternMode", serde_json::json!(mode)),
         ]);
         let input = make_input(b"data", filename, p);
         let progress = ProgressReporter::new_noop();

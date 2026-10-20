@@ -60,13 +60,13 @@ Enrich the existing processor — no new crates needed.
 
 **New parameters:**
 
-| Param           | Type    | Description                                              |
-| --------------- | ------- | -------------------------------------------------------- |
-| `counter_start` | integer | Starting number for sequential naming (default: 1)       |
-| `counter_pad`   | integer | Zero-pad width (default: 0, e.g. 3 → `001`, `002`)       |
-| `extension`     | string  | Replace extension (e.g. `"svg"` changes `.eps` → `.svg`) |
+| Param          | Type    | Description                                              |
+| -------------- | ------- | -------------------------------------------------------- |
+| `counterStart` | integer | Starting number for sequential naming (default: 1)       |
+| `counterPad`   | integer | Zero-pad width (default: 0, e.g. 3 → `001`, `002`)       |
+| `extension`    | string  | Replace extension (e.g. `"svg"` changes `.eps` → `.svg`) |
 
-**New template variables:** `{{counter}}` (auto-incrementing, respects `counter_start` and `counter_pad`)
+**New template variables:** `{{counter}}` (auto-incrementing, respects `counterStart` and `counterPad`)
 
 **Platform impact:** Browser + CLI (no new dependencies).
 
@@ -102,9 +102,9 @@ Place output files in a specific destination directory.
 | Param                | Type    | Description                                              |
 | -------------------- | ------- | -------------------------------------------------------- |
 | `destination`        | string  | Output directory path                                    |
-| `create_dirs`        | boolean | Create destination if missing (default: true)            |
+| `createDirs`         | boolean | Create destination if missing (default: true)            |
 | `conflict`           | enum    | `skip`, `overwrite`, `rename`, `newer` (default: `skip`) |
-| `tolerance_ms`       | number  | `newer` only: mtime gap treated as equal (default: 2000) |
+| `toleranceMs`        | number  | `newer` only: mtime gap treated as equal (default: 2000) |
 | `preserve_structure` | boolean | Maintain relative directory structure (default: false)   |
 
 **Platform:** Native-only (CLI/desktop) — writes to filesystem.
@@ -115,12 +115,12 @@ Place output files in a specific destination directory.
 
 Filter files by extension, name pattern, or size. Files that don't match are dropped from the pipeline.
 
-| Param          | Type    | Description                         |
-| -------------- | ------- | ----------------------------------- |
-| `extensions`   | string  | Comma-separated: `svg,eps,ai`       |
-| `name_pattern` | string  | Glob or regex for filename matching |
-| `min_size`     | integer | Minimum file size in bytes          |
-| `max_size`     | integer | Maximum file size in bytes          |
+| Param         | Type    | Description                         |
+| ------------- | ------- | ----------------------------------- |
+| `extensions`  | string  | Comma-separated: `svg,eps,ai`       |
+| `namePattern` | string  | Glob or regex for filename matching |
+| `minSize`     | integer | Minimum file size in bytes          |
+| `maxSize`     | integer | Maximum file size in bytes          |
 
 **Platform:** Browser + CLI (operates on in-memory file metadata).
 
@@ -130,11 +130,11 @@ Filter files by extension, name pattern, or size. Files that don't match are dro
 
 Strip special characters, normalize unicode, slugify filenames.
 
-| Param        | Type    | Description                                                                              |
-| ------------ | ------- | ---------------------------------------------------------------------------------------- |
-| `mode`       | enum    | `slugify` (lowercase+hyphens), `strip` (remove special chars), `normalize` (unicode NFC) |
-| `separator`  | string  | Replacement character for spaces/special chars (default: `-`)                            |
-| `max_length` | integer | Truncate stem to N characters (default: 0 = no limit)                                    |
+| Param       | Type    | Description                                                                              |
+| ----------- | ------- | ---------------------------------------------------------------------------------------- |
+| `mode`      | enum    | `slugify` (lowercase+hyphens), `strip` (remove special chars), `normalize` (unicode NFC) |
+| `separator` | string  | Replacement character for spaces/special chars (default: `-`)                            |
+| `maxLength` | integer | Truncate stem to N characters (default: 0 = no limit)                                    |
 
 **Platform:** Browser + CLI (pure string manipulation).
 

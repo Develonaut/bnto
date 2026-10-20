@@ -158,9 +158,7 @@ describe("engine defaults flow through to schemas", () => {
 
   it("file-move defaults match engine", () => {
     const engineDefaults = getProcessorDefaults("file-move");
-    expect(fileMoveParamsSchema.shape.create_dirs.parse(undefined)).toBe(
-      engineDefaults.create_dirs,
-    );
+    expect(fileMoveParamsSchema.shape.createDirs.parse(undefined)).toBe(engineDefaults.createDirs);
   });
 
   it("spreadsheet-export defaults match engine", () => {
@@ -168,16 +166,16 @@ describe("engine defaults flow through to schemas", () => {
     expect(spreadsheetExportParamsSchema.shape.overwrite.parse(undefined)).toBe(
       engineDefaults.overwrite,
     );
-    expect(spreadsheetExportParamsSchema.shape.name_column.parse(undefined)).toBe(
-      engineDefaults.name_column,
+    expect(spreadsheetExportParamsSchema.shape.nameColumn.parse(undefined)).toBe(
+      engineDefaults.nameColumn,
     );
   });
 
   it("spreadsheet-lookup defaults match engine", () => {
     const engineDefaults = getProcessorDefaults("spreadsheet-lookup");
     const shape = spreadsheetLookupParamsSchema.shape;
-    expect(shape.key_column.parse(undefined)).toBe(engineDefaults.key_column);
-    expect(shape.match_on.parse(undefined)).toBe(engineDefaults.match_on);
+    expect(shape.keyColumn.parse(undefined)).toBe(engineDefaults.keyColumn);
+    expect(shape.matchOn.parse(undefined)).toBe(engineDefaults.matchOn);
     expect(shape.unmatched.parse(undefined)).toBe(engineDefaults.unmatched);
   });
 

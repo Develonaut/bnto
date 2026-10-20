@@ -71,7 +71,7 @@ impl NodeProcessor for FileCopy {
 
         let create_dirs = input
             .params
-            .get("create_dirs")
+            .get("createDirs")
             .and_then(|v| v.as_bool())
             .unwrap_or(true);
 
@@ -178,7 +178,7 @@ fn build_copy_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
-            name: "create_dirs".to_string(),
+            name: "createDirs".to_string(),
             label: "Create Folders".to_string(),
             description: "Automatically create the destination folder if it doesn't exist."
                 .to_string(),
@@ -218,7 +218,7 @@ fn build_copy_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
-            name: "tolerance_ms".to_string(),
+            name: "toleranceMs".to_string(),
             label: "Time Tolerance".to_string(),
             description: "Modified-time gap treated as equal in \"newer\" mode; FAT and Google \
                           Drive round times."
@@ -375,7 +375,7 @@ mod tests {
             "file.txt",
             params(&[
                 ("destination", serde_json::json!(dest.to_str().unwrap())),
-                ("create_dirs", serde_json::json!(true)),
+                ("createDirs", serde_json::json!(true)),
             ]),
         );
 
@@ -397,14 +397,14 @@ mod tests {
                     "destination",
                     serde_json::json!("/tmp/nonexistent_bnto_test_dir_12345"),
                 ),
-                ("create_dirs", serde_json::json!(false)),
+                ("createDirs", serde_json::json!(false)),
             ]),
         );
 
         let result = processor.process(input, &progress, &NoopContext);
         assert!(
             result.is_err(),
-            "Should fail when dir missing and create_dirs=false"
+            "Should fail when dir missing and createDirs=false"
         );
     }
 
@@ -669,7 +669,7 @@ mod tests {
                 params: params(&[
                     ("destination", serde_json::json!(dest.to_str().unwrap())),
                     ("conflict", serde_json::json!("newer")),
-                    ("tolerance_ms", bad.clone()),
+                    ("toleranceMs", bad.clone()),
                 ]),
             };
             let result =
@@ -695,7 +695,7 @@ mod tests {
                 params: params(&[
                     ("destination", serde_json::json!(dest.to_str().unwrap())),
                     ("conflict", serde_json::json!("newer")),
-                    ("tolerance_ms", tolerance.clone()),
+                    ("toleranceMs", tolerance.clone()),
                 ]),
             };
             let out = FileCopy::new()
@@ -718,7 +718,7 @@ mod tests {
             params: params(&[
                 ("destination", serde_json::json!(dest.to_str().unwrap())),
                 ("conflict", serde_json::json!("newer")),
-                ("tolerance_ms", serde_json::json!(2000.0)),
+                ("toleranceMs", serde_json::json!(2000.0)),
             ]),
         };
         let out = FileCopy::new()
@@ -745,7 +745,7 @@ mod tests {
         let param = meta
             .parameters
             .iter()
-            .find(|p| p.name == "tolerance_ms")
+            .find(|p| p.name == "toleranceMs")
             .unwrap();
         assert_eq!(
             param.visible_when,
@@ -969,7 +969,7 @@ mod tests {
             "a.txt",
             params(&[
                 ("destination", serde_json::json!(missing.to_str().unwrap())),
-                ("create_dirs", serde_json::json!(false)),
+                ("createDirs", serde_json::json!(false)),
             ]),
         );
         let err = FileCopy::new()

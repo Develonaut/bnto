@@ -12,7 +12,7 @@
     {
       "id": "keep-docs",
       "type": "file-filter",
-      "parameters": { "name_pattern": "^docs/", "pattern_mode": "regex", "match": "path" }
+      "parameters": { "namePattern": "^docs/", "patternMode": "regex", "match": "path" }
     },
     {
       "id": "copy",

@@ -13,7 +13,7 @@ pub(super) fn build_filter_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
-            name: "name_pattern".to_string(),
+            name: "namePattern".to_string(),
             label: "Name Pattern".to_string(),
             description: "Glob pattern to match against filenames (e.g., \"photo*\", \"*.backup.*\"). Uses glob syntax with * and ? wildcards.".to_string(),
             param_type: ParameterType::String,
@@ -21,7 +21,7 @@ pub(super) fn build_filter_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
-            name: "pattern_mode".to_string(),
+            name: "patternMode".to_string(),
             label: "Pattern Mode".to_string(),
             description: "How to interpret the name pattern.".to_string(),
             param_type: ParameterType::Enum {
@@ -67,7 +67,7 @@ pub(super) fn build_filter_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
-            name: "min_size".to_string(),
+            name: "minSize".to_string(),
             label: "Minimum Size".to_string(),
             description: "Minimum file size in bytes. Files smaller than this are dropped.".to_string(),
             param_type: ParameterType::Number,
@@ -81,7 +81,7 @@ pub(super) fn build_filter_params() -> Vec<ParameterDef> {
             ..Default::default()
         },
         ParameterDef {
-            name: "max_size".to_string(),
+            name: "maxSize".to_string(),
             label: "Maximum Size".to_string(),
             description: "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit.".to_string(),
             param_type: ParameterType::Number,

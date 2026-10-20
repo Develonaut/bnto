@@ -30,7 +30,7 @@ export const fileRenameProcessor: ProcessorDef = {
       default: "-",
     },
     {
-      name: "max_length",
+      name: "maxLength",
       label: "Max Length",
       description: "Maximum filename length after sanitize (0 = no limit)",
       type: "number" as const,
@@ -77,7 +77,7 @@ export const fileRenameProcessor: ProcessorDef = {
       placeholder: "{{name}}-{{counter}}.{{ext}}",
     },
     {
-      name: "counter_start",
+      name: "counterStart",
       label: "Counter Start",
       description: "Starting number for the {{counter}} variable",
       type: "number" as const,
@@ -85,7 +85,7 @@ export const fileRenameProcessor: ProcessorDef = {
       constraints: { min: 0, required: false },
     },
     {
-      name: "counter_pad",
+      name: "counterPad",
       label: "Counter Padding",
       description: "Zero-pad width for the counter (e.g., 3 → 001, 002)",
       type: "number" as const,

@@ -12,7 +12,7 @@
     {
       "id": "keep-docs",
       "type": "file-filter",
-      "parameters": { "name_pattern": "*.md" }
+      "parameters": { "namePattern": "*.md" }
     },
     {
       "id": "output",

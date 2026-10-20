@@ -165,20 +165,20 @@ fn match_error(params: &serde_json::Map<String, serde_json::Value>) -> Option<St
     }
 }
 
-/// In regex mode `name_pattern` must compile; at run time a bad one would
+/// In regex mode `namePattern` must compile; at run time a bad one would
 /// match nothing. A pattern holding a `{{` placeholder is only known once
 /// that resolves, so it isn't judged here.
 fn regex_error(params: &serde_json::Map<String, serde_json::Value>) -> Option<String> {
-    if params.get("pattern_mode").and_then(|v| v.as_str()) != Some("regex") {
+    if params.get("patternMode").and_then(|v| v.as_str()) != Some("regex") {
         return None;
     }
-    let pattern = params.get("name_pattern").and_then(|v| v.as_str())?;
+    let pattern = params.get("namePattern").and_then(|v| v.as_str())?;
     if pattern.contains("{{") {
         return None;
     }
     let error = regex::Regex::new(pattern).err()?;
     Some(format!(
-        "name_pattern \"{pattern}\" is not a valid regex: {}",
+        "namePattern \"{pattern}\" is not a valid regex: {}",
         regex_reason(&error)
     ))
 }
@@ -193,14 +193,14 @@ fn regex_reason(error: &regex::Error) -> String {
 
 /// Check if the filename matches the name pattern (glob or regex).
 ///
-/// If `name_pattern` param is empty or missing, all names pass.
+/// If `namePattern` param is empty or missing, all names pass.
 fn matches_name_pattern(
     patterns: &PatternCache,
     filename: &str,
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> bool {
     let pattern = params
-        .get("name_pattern")
+        .get("namePattern")
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
@@ -210,7 +210,7 @@ fn matches_name_pattern(
     }
 
     // Any mode but `regex` is a glob. An invalid regex matches nothing.
-    let regex = params.get("pattern_mode").and_then(|v| v.as_str()) == Some("regex");
+    let regex = params.get("patternMode").and_then(|v| v.as_str()) == Some("regex");
     patterns.matches(pattern, regex, pattern_target(filename, params))
 }
 
@@ -233,11 +233,11 @@ fn keeps_matches(params: &serde_json::Map<String, serde_json::Value>) -> bool {
 
 /// Check if the file size falls within the min/max range.
 ///
-/// min_size=0 means no minimum. max_size=0 means no maximum.
+/// minSize=0 means no minimum. maxSize=0 means no maximum.
 fn matches_size(file_size: usize, params: &serde_json::Map<String, serde_json::Value>) -> bool {
-    let min_size = params.get("min_size").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+    let min_size = params.get("minSize").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
 
-    let max_size = params.get("max_size").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+    let max_size = params.get("maxSize").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
 
     // Check minimum.
     if min_size > 0 && file_size < min_size {

@@ -47,7 +47,7 @@ fn build_transforms_list(params: &serde_json::Map<String, serde_json::Value>) ->
         .filter(|(key, _)| params.contains_key(*key))
         .map(|(_, label)| label.to_string())
         .collect();
-    if params.contains_key("counter_start") || params.contains_key("counter_pad") {
+    if params.contains_key("counterStart") || params.contains_key("counterPad") {
         transforms.push("counter".to_string());
     }
     transforms

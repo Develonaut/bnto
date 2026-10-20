@@ -2486,8 +2486,8 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           name: "Number",
           outputPorts: [],
           parameters: {
-            counter_pad: 3,
-            counter_start: 1,
+            counterPad: 3,
+            counterStart: 1,
             pattern: "{{counter}}-{{name}}.{{ext}}",
           },
           position: {

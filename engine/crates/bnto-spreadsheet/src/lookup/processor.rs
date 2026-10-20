@@ -208,7 +208,7 @@ mod tests {
         let (_tmp, path) = table_file(MAPPING);
         let params = table_param(
             &path,
-            json!({ "key_column": "new_name", "match_on": "filename" }),
+            json!({ "keyColumn": "new_name", "matchOn": "filename" }),
         );
         let out = lookup("Pack/sub/GUNMech_Glock 01.wav", params).unwrap();
         assert_eq!(

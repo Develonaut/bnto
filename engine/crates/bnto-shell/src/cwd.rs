@@ -3,7 +3,7 @@
 // A folder under the work dir, so a tool that reads config from where it
 // starts (rustup's rust-toolchain.toml, a package.json) sees that folder's.
 // Absolute paths, drive letters and ".." are refused: a recipe can only move
-// its command deeper into the project, never out of it. `search_path` and
+// its command deeper into the project, never out of it. `searchPath` and
 // `{{output_dir}}` don't change; relative args are now relative to `cwd`.
 
 use std::path::{Path, PathBuf};
