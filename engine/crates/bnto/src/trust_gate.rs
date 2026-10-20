@@ -33,7 +33,7 @@ pub fn consent_needed(
     }
     Some(ConsentRequest {
         recipe_name: recipe_name(raw_json, fallback_name),
-        commands: trust::collect_shell_command_names(&def.nodes),
+        commands: crate::consent_lines::shell_command_lines(&def.nodes),
         hash,
     })
 }
@@ -77,7 +77,7 @@ mod tests {
         let request = consent_needed(SHELL_RECIPE, "probe", false, &TrustStore::default())
             .expect("a library shell recipe must ask");
         assert_eq!(request.recipe_name, "Probe");
-        assert_eq!(request.commands, vec!["git"]);
+        assert_eq!(request.commands, vec!["git --version"]);
         assert_eq!(request.hash, trust::definition_hash(SHELL_RECIPE));
     }
 

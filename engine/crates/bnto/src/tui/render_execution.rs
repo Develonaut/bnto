@@ -5,7 +5,7 @@
 
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{Paragraph, Wrap};
 
 use super::app::AppModel;
 use super::render_layout::content_panel;
@@ -22,6 +22,14 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         frame.render_widget(fallback, inner);
         return;
     };
+
+    // Consent gets the whole panel, wrapped, so a long command line is
+    // read in full before it's approved.
+    if let Some(request) = &exec.consent {
+        let prompt = Paragraph::new(consent_lines(request, theme)).wrap(Wrap { trim: false });
+        frame.render_widget(prompt, inner);
+        return;
+    }
 
     let header = header_lines(exec, theme);
     let header_height = header.len() as u16;
@@ -70,9 +78,6 @@ fn header_lines<'a>(
     exec: &'a super::screens::execution::ExecutionModel,
     theme: &'a Theme,
 ) -> Vec<Line<'a>> {
-    if let Some(request) = &exec.consent {
-        return consent_lines(request, theme);
-    }
     let mut lines: Vec<Line> = Vec::new();
 
     // Status + elapsed time
@@ -300,5 +305,52 @@ mod tests {
         node.total_iterations = Some(3);
         // Iteration count shown instead of file count.
         assert_eq!(node_annotation(&node), " (1/3)");
+    }
+
+    #[test]
+    fn consent_prompt_wraps_long_commands_so_they_read_in_full() {
+        use crate::storage::paths::BntoPaths;
+        use crate::trust_gate::ConsentRequest;
+        use crate::tui::app::{AppModel, DetailOrigin, Screen};
+        use crate::tui::screens::execution::ExecutionModel;
+        use crate::tui::theme::ThemeVariant;
+
+        let dir = tempfile::tempdir().unwrap();
+        let paths = BntoPaths {
+            home: dir.path().to_path_buf(),
+        };
+        let tail = "--sub-langs {{fields.subtitles}} -o {{output_dir}}/%(title)s.%(ext)s";
+        let command = format!("yt-dlp --no-playlist {tail}");
+        let request = ConsentRequest {
+            recipe_name: "Probe".into(),
+            commands: vec![command],
+            hash: "h".into(),
+        };
+        let model = AppModel {
+            screen: Screen::Execution {
+                slug: "probe".into(),
+                from: DetailOrigin::Library,
+            },
+            execution: Some(ExecutionModel::new("probe").awaiting_consent(request)),
+            ..AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths)
+        };
+        let backend = ratatui::backend::TestBackend::new(40, 30);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_execution(f, &model, &model.theme, f.area()))
+            .unwrap();
+        let text: String = terminal
+            .backend()
+            .buffer()
+            .content()
+            .iter()
+            .map(|cell| cell.symbol())
+            .collect::<String>()
+            .chars()
+            .filter(|c| !c.is_whitespace() && *c != '│' && *c != '─')
+            .collect();
+        let wanted: String = tail.chars().filter(|c| !c.is_whitespace()).collect();
+        assert!(text.contains(&wanted), "the end of the command was cut off");
+        assert!(text.contains("yallowandrun"), "the answer keys must show");
     }
 }

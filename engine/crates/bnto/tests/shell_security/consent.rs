@@ -44,7 +44,6 @@ fn sec15_editing_an_approved_recipe_asks_again() {
 /// SEC-16: the prompt shows the full command line, not just the program,
 /// so the person approving sees the args (and, in script mode, the script).
 #[test]
-#[ignore = "OPEN SEC-16: consent lists program names only"]
 fn sec16_consent_shows_the_full_command_line() {
     let lab = Lab::new();
     let recipe = lab.recipe(step(
