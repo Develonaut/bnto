@@ -91,6 +91,7 @@ pub mod registry;
 /// Field values are substituted into `{{fields.*}}` templates at execution time.
 pub mod field_check;
 pub mod field_def;
+pub mod placeholders;
 
 /// Editor state model — pure-data recipe editing state.
 /// Shared by all editor surfaces (TUI List, Wizard, Code, Graph).

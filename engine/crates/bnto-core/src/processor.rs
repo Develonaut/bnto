@@ -144,6 +144,16 @@ pub trait NodeProcessor {
         Vec::new()
     }
 
+    /// Problems in the params as the recipe wrote them, before any template
+    /// is filled — what `validate` can't see once data is in, such as a data
+    /// placeholder in a param that must be literal. The executor refuses the
+    /// run on any, before a step starts; `bnto check` reports them.
+    ///
+    /// Default: none.
+    fn validate_raw(&self, _raw: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
+        Vec::new()
+    }
+
     /// Keys of the node-level `NodeOutput.metadata` that count something per
     /// call (e.g. files copied). When the node runs more than once — a per-file
     /// node over several files, a loop's iterations — the executor adds these

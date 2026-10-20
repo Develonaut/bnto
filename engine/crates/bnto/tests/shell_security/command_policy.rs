@@ -97,7 +97,6 @@ fn sec06_command_paths_are_refused() {
 /// SEC-07: the program name must be written literally (Home Assistant's
 /// rule). A templated command lets data pick which program runs.
 #[test]
-#[ignore = "OPEN SEC-07: `command` is templated like any other param"]
 fn sec07_command_must_be_literal() {
     let lab = Lab::new();
     let recipe = lab.recipe(step(

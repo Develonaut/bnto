@@ -113,6 +113,9 @@ fn check_processor(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckR
         report.findings.push(finding(node, None, message));
         return;
     };
+    for problem in processor.validate_raw(&node.params) {
+        report.findings.push(finding(node, None, problem));
+    }
     let field_values = collect_field_values(&node.fields, &BTreeMap::new());
     let params = resolve_fields(&node.params, &field_values);
     let written = processor.validate(&params);
