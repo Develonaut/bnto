@@ -218,6 +218,7 @@ version = "0.2.0"
 dependencies = [
  "base64",
  "bnto-core",
+ "criterion",
  "filetime",
  "js-sys",
  "regex",

@@ -40,3 +40,11 @@ base64 = { workspace = true }
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }
 tempfile = { workspace = true }
+
+# Criterion uses Rayon which can't compile for wasm32. Only include for native targets.
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "collect_bench"
+harness = false

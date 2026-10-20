@@ -56,7 +56,10 @@ src/
 │   ├── mod.rs              # NodeProcessor impl (batch), output file + joined count
 │   ├── params.rs           # Parameter schema + typed reads
 │   └── write.rs            # Missing-file check; in-memory or streamed-to-temp join
-├── collect.rs        # FileCollect processor + metadata (native-only)
+├── collect/          # FileCollect processor (file-collect, native-only)
+│   ├── mod.rs              # NodeProcessor impl, parameter schema, MIME guess
+│   ├── walker.rs           # Directory walk; entry types from read_dir, links followed
+│   └── glob.rs             # File-name glob, compiled once per walk
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
 ├── delete/           # FileDelete processor (file-delete, native-only)
