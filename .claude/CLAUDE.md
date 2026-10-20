@@ -87,7 +87,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 
 **Bnto** is workflow automation through composable parts. Each node encapsulates a single capability — compress an image, call an API, run a shell command, download a video. Chain nodes into recipes that automate your workflow. One Rust engine compiles to every target: CLI, browser (WASM), desktop (Tauri), server. Write a recipe once, run it anywhere.
 
-Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **20 recipes ship today** — running via CLI (native Rust) and browser (Rust→WASM). The CLI is the primary development surface. The dividing line: **nodes that run locally are free, nodes that need a managed server cost money** (monetization tabled). See [ROADMAP.md](.claude/ROADMAP.md).
+Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **22 recipes ship today** — running via CLI (native Rust) and browser (Rust→WASM). The CLI is the primary development surface. The dividing line: **nodes that run locally are free, nodes that need a managed server cost money** (monetization tabled). See [ROADMAP.md](.claude/ROADMAP.md).
 
 - **CLI** (primary): `engine/crates/bnto/` — native Rust binary, full system access, published to crates.io
 - **Rust Engine**: `engine/` — shared engine crate powering CLI (native) and browser (WASM)

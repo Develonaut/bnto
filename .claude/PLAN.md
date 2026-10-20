@@ -27,7 +27,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 
 ## Current State
 
-**CLI is the product.** `cargo install bnto` gets you 20 recipes. The web is a landing page.
+**CLI is the product.** `cargo install bnto` gets you 22 recipes. The web is a landing page.
 
 - **v0.12.0 released (April 2026):** 20 recipes, video-download node (yt-dlp), dependency system, ProcessContext, `bnto list/info/run/doctor/install/dry-run` commands, TUI execution progress, vector operations (SVG). Published to crates.io
 - **Engine (Rust):** Library crates (bnto-core, bnto-image, bnto-csv, bnto-file, bnto-shell, bnto-engine), WASM entry point (bnto-wasm), CLI binary (bnto). CLI is the primary consumer, browser (WASM) is secondary

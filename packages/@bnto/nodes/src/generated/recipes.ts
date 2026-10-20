@@ -2758,4 +2758,248 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       version: "1.0.0",
     },
   },
+  {
+    slug: "keep-awake",
+    name: "Keep Awake",
+    description:
+      "Keep your Mac awake for a set time or until you stop it. Optionally nudges the cursor once you go idle so chat apps don't mark you Away. Start a session, come back later and run Stop. macOS only. CLI/desktop only.",
+    category: "system",
+    tags: ["macOS", "Sleep prevention", "Activity simulation", "No install"] as const,
+    definition: {
+      edges: [
+        {
+          id: "e1",
+          source: "input",
+          target: "session",
+        },
+        {
+          id: "e2",
+          source: "session",
+          target: "output",
+        },
+      ],
+      id: "keep-awake",
+      inputPorts: [],
+      metadata: {
+        category: "system",
+        description:
+          "Keep your Mac awake for a set time or until you stop it. Optionally nudges the cursor once you go idle so chat apps don't mark you Away. Start a session, come back later and run Stop. macOS only. CLI/desktop only.",
+        tags: ["macOS", "Sleep prevention", "Activity simulation", "No install"],
+      },
+      name: "Keep Awake",
+      nodes: [
+        {
+          id: "input",
+          inputPorts: [],
+          metadata: {},
+          name: "No Input",
+          outputPorts: [
+            {
+              id: "out-1",
+              name: "files",
+            },
+          ],
+          parameters: {
+            mode: "none",
+          },
+          position: {
+            x: 0,
+            y: 100,
+          },
+          type: "input",
+          version: "1.0.0",
+        },
+        {
+          fields: {
+            action: {
+              default: "start",
+              description:
+                "Start a new session, stop the running one, or check what's currently active.",
+              label: "Action",
+              options: [
+                {
+                  label: "Start a session",
+                  value: "start",
+                },
+                {
+                  label: "Stop the session",
+                  value: "stop",
+                },
+                {
+                  label: "Check status",
+                  value: "status",
+                },
+              ],
+              order: 1,
+              type: "enum",
+            },
+            display: {
+              default: "keep-on",
+              description:
+                "Keep the display awake so the screen never locks. Allow sleep if you only need background tasks to keep running.",
+              label: "Display",
+              options: [
+                {
+                  label: "Keep display awake (recommended)",
+                  value: "keep-on",
+                },
+                {
+                  label: "Allow display sleep",
+                  value: "allow-sleep",
+                },
+              ],
+              order: 3,
+              type: "enum",
+            },
+            duration: {
+              default: "3600",
+              description: "How long to stay awake. Ignored for Stop and Check status.",
+              label: "Session Length",
+              options: [
+                {
+                  label: "30 minutes",
+                  value: "1800",
+                },
+                {
+                  label: "1 hour",
+                  value: "3600",
+                },
+                {
+                  label: "2 hours",
+                  value: "7200",
+                },
+                {
+                  label: "3 hours",
+                  value: "10800",
+                },
+                {
+                  label: "4 hours",
+                  value: "14400",
+                },
+                {
+                  label: "6 hours",
+                  value: "21600",
+                },
+                {
+                  label: "8 hours",
+                  value: "28800",
+                },
+                {
+                  label: "10 hours",
+                  value: "36000",
+                },
+                {
+                  label: "12 hours",
+                  value: "43200",
+                },
+                {
+                  label: "Indefinitely (until stopped)",
+                  value: "inf",
+                },
+              ],
+              order: 2,
+              type: "enum",
+            },
+            jiggle: {
+              default: "120",
+              description:
+                "Keeping the Mac awake doesn't reset the system idle timer, so chat apps still mark you Away. This nudges the cursor 1px once you've been idle this long. Needs Accessibility permission for your terminal app.",
+              label: "Activity Simulation",
+              options: [
+                {
+                  label: "After 2 minutes idle (recommended)",
+                  value: "120",
+                },
+                {
+                  label: "After 1 minute idle",
+                  value: "60",
+                },
+                {
+                  label: "After 4 minutes idle",
+                  value: "240",
+                },
+                {
+                  label: "Off — sleep prevention only",
+                  value: "off",
+                },
+              ],
+              order: 4,
+              type: "enum",
+            },
+          },
+          id: "session",
+          inputPorts: [],
+          metadata: {},
+          name: "Caffeinate Session",
+          outputPorts: [],
+          parameters: {
+            args: [
+              "{{ctx.paths.home_dir}}",
+              "{{fields.action}}",
+              "{{fields.duration}}",
+              "{{fields.display}}",
+              "{{fields.jiggle}}",
+            ],
+            outputMode: "stdout",
+            script:
+              '# keep-awake: a background caffeinate session you start, check and stop.\n# $1 bnto home, $2 action, $3 duration (seconds | inf),\n# $4 display (keep-on | allow-sleep), $5 activity simulation (idle seconds | off).\ndie() { echo "keep-awake: $*" >&2; exit 2; }\nhome=$1 action=$2 duration=$3 display=$4 jiggle=$5\n[ -n "$home" ] || die "bnto home is unknown"\ncase $action in start | stop | status) ;; *) die "unknown action \'$action\'" ;; esac\ncase $duration in inf) ;; \'\' | *[!0-9]*) die "bad duration \'$duration\'" ;; esac\ncase $display in keep-on | allow-sleep) ;; *) die "bad display setting \'$display\'" ;; esac\ncase $jiggle in off) ;; \'\' | *[!0-9]*) die "bad idle threshold \'$jiggle\'" ;; esac\n\nstate_dir="$home/state"\nstate="$state_dir/keep-awake.json"\n\n# JXA helper, one entry point per mode, values via its own argv:\n#   trusted         -- does the terminal have Accessibility permission?\n#   idle            -- seconds since the last keyboard/mouse input\n#   loop SECS UNTIL -- nudge the cursor 1px whenever idle >= SECS, until\n#                      UNTIL (epoch seconds, 0 = forever)\n# A posted mouse move resets the system idle timer; caffeinate alone does\n# not, which is why chat apps still go Away during a plain caffeinate session.\n# shellcheck disable=SC2016 # JavaScript, not shell: nothing should expand.\nJXA=\'ObjC.import("CoreGraphics"); ObjC.import("ApplicationServices");\nfunction idle() { return $.CGEventSourceSecondsSinceLastEventType($.kCGEventSourceStateHIDSystemState, 0xFFFFFFFF); }\nfunction move(x, y) { $.CGEventPost($.kCGHIDEventTap, $.CGEventCreateMouseEvent($(), $.kCGEventMouseMoved, {x: x, y: y}, 0)); }\nfunction nudge() { var p = $.CGEventGetLocation($.CGEventCreate($())); move(p.x + 1, p.y); delay(0.15); move(p.x, p.y); }\nfunction run(argv) {\n  if (argv[0] === "trusted") return String($.AXIsProcessTrusted());\n  if (argv[0] === "idle") return String(Math.round(idle()));\n  var threshold = Number(argv[1]), ends = Number(argv[2]);\n  while (!ends || Date.now() / 1000 < ends) { delay(15); if (idle() >= threshold) nudge(); }\n}\'\njxa() { /usr/bin/osascript -l JavaScript -e "$JXA" "$@"; }\n\n# One field from the state file this script writes below.\nfield() { [ -f "$state" ] && sed -n "s/.*\\"$1\\": *\\"*\\([^,\\"}]*\\).*/\\1/p" "$state"; }\n\n# Print pid $1 if it\'s alive and its command matches $2, so stale state\n# whose pid was reused by an unrelated process doesn\'t count.\nalive() {\n  case $1 in \'\' | *[!0-9]*) return 1 ;; esac\n  ps -p "$1" -o comm= 2>/dev/null | grep -Eq "$2" && echo "$1"\n}\n\nsession_pid() { alive "$(field pid)" caffeinate; }\n# python: sessions started by the original personal recipe.\njiggle_pid() { alive "$(field jigglePid)" \'osascript|[Pp]ython\'; }\n\nend_session() {\n  kill "$1" 2>/dev/null\n  j=$(jiggle_pid)\n  if [ -n "$j" ]; then kill "$j" 2>/dev/null; fi\n  rm -f "$state"\n}\n\nremaining() {\n  ends=$(field until)\n  if [ -z "$ends" ]; then echo "running indefinitely"; return; fi\n  m=$(( (${ends%.*} - $(date +%s)) / 60 ))\n  if [ "$m" -lt 0 ]; then m=0; fi\n  printf \'%dh %02dm remaining of %s\\n\' $((m / 60)) $((m % 60)) "$(field label)"\n}\n\nlabel_for() {\n  case $1 in\n    1800) echo "30 minutes" ;;\n    3600) echo "1 hour" ;;\n    inf) echo "indefinitely" ;;\n    *) echo "$(($1 / 3600)) hours" ;;\n  esac\n}\n\ncurrent=$(session_pid)\n\nif [ "$action" = stop ]; then\n  if [ -n "$current" ]; then\n    end_session "$current"\n    echo "Session ended -- your Mac can sleep normally again."\n  else\n    rm -f "$state"\n    echo "No active session -- nothing to stop."\n  fi\n  exit 0\nfi\n\nif [ "$action" = status ]; then\n  if [ -z "$current" ]; then echo "No active session."; exit 0; fi\n  echo "Session active -- $(remaining)."\n  if [ -z "$(field jigglePid)" ]; then\n    sim=off\n  elif [ -n "$(jiggle_pid)" ]; then\n    sim=on\n  else\n    sim="STOPPED (check Accessibility permission)"\n  fi\n  echo "Activity simulation: $sim"\n  echo "Idle for $(jxa idle)s right now."\n  exit 0\nfi\n\n# --- start ---\nmkdir -p "$state_dir" || die "can\'t create $state_dir"\nreplaced=""\nif [ -n "$current" ]; then\n  end_session "$current"\n  replaced="Replaced previous session -- "\nfi\n\nlabel=$(label_for "$duration")\nif [ "$duration" = inf ]; then\n  secs=315360000 ends=0\nelse\n  secs=$duration ends=$(( $(date +%s) + duration ))\nfi\n\nset -- -i -s -t "$secs"\n# -d keeps the display awake; -u declares the user active, waking it if off.\nif [ "$display" = keep-on ]; then set -- -du "$@"; fi\n# Detached with stdio closed, so bnto sees the step finish right away.\nnohup /usr/bin/caffeinate "$@" </dev/null >/dev/null 2>&1 &\nextra=", \\"pid\\": $!"\nif [ "$ends" != 0 ]; then extra="$extra, \\"until\\": $ends"; fi\n\nwarning=""\nif [ "$jiggle" = off ]; then\n  sim=off\nelif [ "$(jxa trusted)" = true ]; then\n  nohup /usr/bin/osascript -l JavaScript -e "$JXA" loop "$jiggle" "$ends" </dev/null >/dev/null 2>&1 &\n  extra="$extra, \\"jigglePid\\": $!"\n  sim="on (nudges the cursor after ${jiggle}s idle)"\nelse\n  sim=off\n  warning="\nWARNING: activity simulation needs Accessibility permission -- chat apps will still mark you Away.\n  Grant it to your terminal app: System Settings > Privacy & Security > Accessibility"\nfi\n\nprintf \'{"label": "%s"%s}\\n\' "$label" "$extra" >"$state"\n\nif [ "$duration" = inf ]; then what="indefinitely (until you stop it)"; else what="for $label"; fi\necho "${replaced}Session started: staying awake $what."\necho "Activity simulation: $sim"\necho "Run keep-awake again with Action: Stop to end it early.$warning"\n',
+            shell: "sh",
+            timeout: 60,
+          },
+          position: {
+            x: 250,
+            y: 100,
+          },
+          type: "shell-command",
+          version: "1.0.0",
+        },
+        {
+          id: "output",
+          inputPorts: [
+            {
+              id: "in-1",
+              name: "files",
+            },
+          ],
+          metadata: {},
+          name: "Session Log",
+          outputPorts: [],
+          parameters: {
+            label: "Session Log",
+            mode: "message",
+          },
+          position: {
+            x: 500,
+            y: 100,
+          },
+          type: "output",
+          version: "1.0.0",
+        },
+      ],
+      outputPorts: [],
+      parameters: {},
+      position: {
+        x: 0,
+        y: 0,
+      },
+      requires: [
+        {
+          binary: "caffeinate",
+          homepage: "https://ss64.com/mac/caffeinate.html",
+          installHint: "built into macOS — nothing to install",
+        },
+        {
+          binary: "osascript",
+          homepage: "https://ss64.com/mac/osascript.html",
+          installHint:
+            "built into macOS — activity simulation needs Accessibility permission for your terminal app",
+        },
+      ],
+      settings: {
+        iteration: "auto",
+      },
+      type: "group",
+      version: "1.0.0",
+    },
+  },
 ] as const;

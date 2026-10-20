@@ -18,6 +18,7 @@ describe("BNTO_REGISTRY", () => {
   it("includes CLI-only recipes like download-video (for SEO)", () => {
     const slugs = BNTO_REGISTRY.map((b) => b.slug);
     expect(slugs).toContain("download-video");
+    expect(slugs).toContain("keep-awake");
   });
 
   it("all slugs are lowercase-hyphen format", () => {

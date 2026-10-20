@@ -51,6 +51,18 @@ const RECIPE_FAQ: Record<string, QA[]> = {
         "Each CSV row becomes a flat JSON object. Column headers become keys and cell values become string values. Nested structures are not inferred automatically. For complex mappings, chain with a data transform node.",
     },
   ],
+  "keep-awake": [
+    {
+      question: "How do I stop a session early?",
+      answer:
+        "Run keep-awake again and choose Stop (bnto run keep-awake --param action=stop). Check status reports how long is left and whether activity simulation is running.",
+    },
+    {
+      question: "Why does activity simulation need Accessibility permission?",
+      answer:
+        "Keeping a Mac awake doesn't reset its idle timer, so chat apps still mark you Away. Activity simulation nudges the cursor 1px once you've been idle, and macOS only allows that for apps granted Accessibility in System Settings > Privacy & Security.",
+    },
+  ],
   "merge-csv": [
     {
       question: "Do all CSV files need the same columns?",
@@ -136,4 +148,5 @@ export const CATEGORY_BREADCRUMB_LABELS: Record<string, string> = {
   file: "File Tools",
   vector: "Vector Tools",
   video: "Video Tools",
+  system: "System Tools",
 };
