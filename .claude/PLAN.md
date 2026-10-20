@@ -435,8 +435,8 @@ Close every open finding in [shell-command.md](scopes/security/shell-command.md)
 - [x] PR 0 — Add the shell-command security suite and findings index
 - [ ] PR 1 — Expect the resolved work dir in `shell_each` on macOS (test-only)
 - [x] PR 2 — SEC-19: ask for consent in the TUI before running an untrusted shell recipe
-- [ ] PR 3 — SEC-17/18: fill templates in one pass so substituted values are never re-read
-- [ ] PR 4 — SEC-07: check shell-command params before templates are filled; require a literal command
+- [x] PR 3 — SEC-17/18: fill templates in one pass so substituted values are never re-read
+- [ ] PR 4 — SEC-07 + SEC-27: check shell-command params before templates are filled; require a literal command; fill bnto-shell tokens only in template text
 - [ ] PR 5 — SEC-11: refuse templates inside interpreter code args (depends on PR 4)
 - [ ] PR 6 — SEC-05: catch Windows spellings of shells in the denylist
 - [ ] PR 7 — SEC-08: refuse exec wrappers that launch a shell (depends on PR 6)
