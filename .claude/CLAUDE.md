@@ -95,7 +95,7 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **2
 - **Web**: Next.js on Vercel + Convex Cloud — landing page, docs, predefined recipe pages for SEO, browser execution
 - **Desktop** (M4, backlog): Tauri (Rust-native) — links engine natively like CLI
 - **Cloud** (M4, backlog): Server-side execution for premium recipes (technology TBD)
-- **Shared Packages**: `@bnto/core` (transport-agnostic web API), `@bnto/registry` (node system facade + curation), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-generated catalog, internal to registry)
+- **Shared Packages**: `@bnto/core` (transport-agnostic web API), `@bnto/ui` (Motorway design system), `@bnto/editor` (recipe editor), `@bnto/form` (schema-driven forms), `@bnto/registry` (node system facade + curation), `@bnto/i18n` (UI string catalog), `@bnto/auth` (auth), `@bnto/backend` (Convex), `@bnto/nodes` (engine-generated catalog, internal to registry)
 - **Open Source**: MIT licensed
 
 ---
@@ -105,7 +105,7 @@ Recipes are defined as `.bnto.json` files that compose nodes into pipelines. **2
 These are enforced in detail by the universal rules files (auto-loaded) and scope-specific rules (read on demand). This section is the quick reference.
 
 1. **Layered Architecture:** CLI links engine directly. Web: `Apps → @bnto/core → Engine (Rust→WASM)`. Never skip layers. See [architecture.md](.claude/rules/architecture.md).
-2. **API Abstraction:** UI code NEVER calls Convex, Tauri, or Go directly. Always through `@bnto/core` hooks.
+2. **API Abstraction:** UI code NEVER calls Convex or Tauri directly. Always through `@bnto/core` hooks.
 3. **Bento Box Principle:** One thing per file/function/package. TS files < 250 lines, Rust files < 400 prod lines (excluding `#[cfg(test)]`), functions < 20 lines. No `utils.ts` or `helpers.go` grab bags. See [code-standards.md](.claude/rules/code-standards.md).
 4. **Co-location:** `@bnto/ui` (Motorway design system) and `@bnto/editor` extracted as packages (March 2026). Page-level components remain in `apps/web`.
 5. **Transport-agnostic:** `@bnto/core` detects runtime (browser vs Tauri) and swaps adapters. Components never know which backend they're talking to.
@@ -224,7 +224,7 @@ task check              # Full quality gate (lint + test + build)
 bnto/
 ├── apps/
 │   ├── web/                     # Next.js on Vercel
-│   └── desktop/                 # Tauri frontend (M3, planned)
+│   └── desktop/                 # Tauri frontend (M4, backlog — package.json only)
 ├── packages/
 │   ├── core/                    # @bnto/core — Transport-agnostic API
 │   ├── ui/                      # @bnto/ui — Motorway design system
@@ -232,20 +232,24 @@ bnto/
 │   └── @bnto/
 │       ├── auth/                # @bnto/auth — Cloud auth (web only)
 │       ├── backend/             # @bnto/backend — Convex schema + functions
+│       ├── form/                # @bnto/form — Schema-driven forms from node schemas
+│       ├── i18n/                # @bnto/i18n — UI string catalog (t, useT)
 │       ├── nodes/               # @bnto/nodes — Engine-agnostic node definitions
 │       └── registry/            # @bnto/registry — Curation + discovery layer
 ├── engine/                      # Rust engine (CLI + WASM + native)
-│   ├── recipes/                 # Authoritative .bnto.json recipe definitions (20 files)
 │   ├── crates/
 │   │   ├── bnto-core/           # Core library (types, traits, progress)
 │   │   ├── bnto-image/          # Image compression/resize/convert
 │   │   ├── bnto-spreadsheet/    # CSV clean/rename/convert/merge/read
-│   │   ├── bnto-file/           # File rename/filter/collect/copy/metadata
+│   │   ├── bnto-file/           # File decode/filter/inspect/join/rename/render/sort/collect/copy/delete/list/move
 │   │   ├── bnto-shell/          # Shell command execution
 │   │   ├── bnto-vector/         # SVG processing (rasterize, optimize)
+│   │   ├── bnto-encode/         # Shared image format detection + encoding
 │   │   ├── bnto-engine/         # Shared registry + pipeline runner + recipe catalog
+│   │   │   └── recipes/         # Authoritative .bnto.json recipe definitions (22 files)
 │   │   ├── bnto-wasm/           # cdylib entry point (WASM binary)
-│   │   └── bnto/                # Native CLI binary (`bnto`) — primary consumer
+│   │   ├── bnto/                # Native CLI binary (`bnto`) — primary consumer
+│   │   └── tonkotsu/            # Standalone ratatui form widgets (used by the TUI)
 ├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
     ├── rules/                   # Universal rules (auto-loaded)

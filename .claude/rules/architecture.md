@@ -24,6 +24,7 @@ Each layer only depends on layers below it. Never skip layers.
 | `@bnto/core`     | Transport-agnostic API -- hooks, types, adapters                              | React Query + adapters |
 | `@bnto/registry` | Node system facade -- re-exports all of @bnto/nodes + curation functions      | Stateless lookups      |
 | `@bnto/form`     | Schema-driven forms -- auto-generates UI controls from node schemas           | React + Zod            |
+| `@bnto/i18n`     | UI string catalog -- `t()` / `useT()`; node strings generated from the engine | JSON catalog + codegen |
 | `@bnto/nodes`    | Engine-generated catalog -- types, schemas, validation (INTERNAL to registry) | Codegen + Zod          |
 
 **State management:** Zustand handles client-only state (editor content, UI preferences). Server state uses a hybrid strategy -- see [data-fetching-strategy.md](../strategy/data-fetching-strategy.md) for the full decision record:
@@ -65,15 +66,20 @@ The dependency chain is strictly linear:
 ```
 @bnto/editor   → @bnto/form, @bnto/core, @bnto/ui
 @bnto/form     → @bnto/core, @bnto/ui    (leaf — schema-driven forms)
-@bnto/core     → @bnto/registry, @bnto/auth, @bnto/backend
+@bnto/core     → @bnto/registry, @bnto/auth, @bnto/backend, @bnto/i18n
 @bnto/registry → @bnto/nodes
 @bnto/ui       → (leaf — no @bnto/* imports)
 @bnto/nodes    → (leaf — engine-generated catalog)
+@bnto/i18n     → (leaf — string catalog)
 
 Apps (apps/web, apps/desktop)
   → @bnto/core (runtime — hooks, state, API)
+  → @bnto/ui (design system components)
+  → @bnto/editor (recipe editor)
   → @bnto/form (schema-driven forms — standalone, no editor dependency)
+  → @bnto/i18n (UI strings)
   → @bnto/registry (build-time SSG only — where Zustand doesn't exist)
+  → @bnto/auth/server (Next.js bootstrap only — see exception below)
 ```
 
 **`@bnto/nodes` is internal.** Only `@bnto/registry` imports from it. The registry re-exports everything consumers need (types, constants, helpers, validation). `@bnto/core` re-exports from `@bnto/registry` for convenience so the editor and apps import from `@bnto/core`.
@@ -130,7 +136,8 @@ Apps (apps/web, apps/desktop)
 - Sign in, sign up, sign out, session management
 - OAuth provider configuration
 - **Currently:** `@convex-dev/auth`. Named by role so internals can be swapped.
-- Consumed by `@bnto/core` internals, NEVER by app code directly
+- Consumed by `@bnto/core` internals, never by app components
+- **One exception:** the `@bnto/auth/server` entry point (`packages/@bnto/auth/src/server.ts`) is imported by `apps/web/app/layout.tsx` (`ConvexAuthNextjsServerProvider`) and `apps/web/proxy.ts` (`convexAuthNextjsMiddleware`). Next.js needs the auth provider at the root layout and the middleware to run before any React code, so this framework bootstrap can't go through `@bnto/core`. Nothing else in the app imports `@bnto/auth`
 
 ### `engine/crates/bnto/` -- Native CLI binary (`bnto`)
 
@@ -161,7 +168,7 @@ The node system spans three layers: Engine (Rust), `@bnto/nodes` (TypeScript), a
 
 ## Execution Model: Engine Owns the Pipeline
 
-**The Rust engine owns pipeline execution.** The `bnto-core` crate contains the `PipelineExecutor` -- it handles graph walking, topological ordering, container node semantics (loop/group), per-file iteration, `NodeProcessor` dispatch, and structured progress events. JS / `@bnto/core` is a thin adapter: convert browser types (File to bytes, Definition to WASM struct), make a single WASM call (`run_pipeline`), and relay progress events to the UI.
+**The Rust engine owns pipeline execution.** The `bnto-core` crate's `execute_pipeline` function (`bnto-core/src/executor/`) handles graph walking, topological ordering, container node semantics (loop/group), per-file iteration, `NodeProcessor` dispatch, and structured progress events. `bnto_engine::run_pipeline` wraps it with JSON parsing and the full node registry. JS / `@bnto/core` is a thin adapter: convert browser types (File to bytes, Definition to WASM struct), make a single WASM call (`execute_pipeline`, exported by `bnto-wasm`), and relay progress events to the UI.
 
 This design ensures identical execution across all consumers -- CLI (native), browser (WASM), desktop (Tauri), server. See [engine-execution.md](../strategy/engine-execution.md) for the full architecture.
 

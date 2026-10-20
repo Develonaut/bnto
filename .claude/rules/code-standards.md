@@ -173,7 +173,7 @@ function useAddNode() {
 
 ## Import Discipline
 
-- UI components are co-located in `apps/web/components/` (future `@bnto/ui`)
+- Shared UI components live in `@bnto/ui` (and editor features in `@bnto/editor`); page-level components stay in `apps/web/components/`
 - Data/actions import from `@bnto/core`
 - Backend types/functions stay inside `@bnto/backend` and `@bnto/core` internals
 - Each package only exports what it owns
