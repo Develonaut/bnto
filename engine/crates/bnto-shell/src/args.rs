@@ -4,6 +4,7 @@
 /// Placeholder in args for URL/text input injected by the CLI's input preparation.
 const URL_PLACEHOLDER: &str = "{{url}}";
 const INPUT_PLACEHOLDER: &str = "{{input}}";
+const OUTPUT_DIR_TOKEN: &str = "{{output_dir}}";
 
 /// Resolve `{{url}}` and `{{input}}` placeholders in args from injected params.
 ///
@@ -13,7 +14,7 @@ const INPUT_PLACEHOLDER: &str = "{{input}}";
 pub(crate) fn resolve_input_placeholders(
     args: &mut Vec<String>,
     params: &serde_json::Map<String, serde_json::Value>,
-) {
+) -> Result<(), String> {
     let url = params
         .get("url")
         .and_then(serde_json::Value::as_str)
@@ -25,6 +26,13 @@ pub(crate) fn resolve_input_placeholders(
 
     // The input value is whichever was injected (url or text).
     let input_val = if !url.is_empty() { url } else { text };
+    // SEC-27: `{{output_dir}}` is filled after this, so input carrying it
+    // would have it filled too.
+    if input_val.contains(OUTPUT_DIR_TOKEN) {
+        return Err(format!(
+            "the input carries '{OUTPUT_DIR_TOKEN}', which shell-command fills itself"
+        ));
+    }
 
     let has_url_placeholder = args.iter().any(|a| a.contains(URL_PLACEHOLDER));
     let has_input_placeholder = args.iter().any(|a| a.contains(INPUT_PLACEHOLDER));
@@ -44,6 +52,7 @@ pub(crate) fn resolve_input_placeholders(
     if !has_url_placeholder && !has_input_placeholder && !url.is_empty() {
         args.push(url.to_string());
     }
+    Ok(())
 }
 
 /// Flatten a resolved `args` array that may contain conditional groups.

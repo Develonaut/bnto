@@ -42,3 +42,46 @@ fn sec18_self_referencing_values_terminate() {
         .expect("bnto hung filling a self-referencing template");
     assert!(out.ok, "{}", out.text);
 }
+
+/// SEC-27: shell-command fills {{output_dir}}, {{url}}, {{input}} and each
+/// groups' tokens itself, after values are in. A value carrying one can't
+/// be told from the recipe's own, so it's refused, whichever way it came.
+#[test]
+fn sec27_values_carrying_shell_command_tokens_are_refused() {
+    let lab = Lab::new();
+    let field = lab.recipe(step(
+        json!({ "command": "printf", "args": ["[%s]", "--title={{fields.v}}"] }),
+        &["v"],
+    ));
+    let out = lab.run(&field, &["v=x{{output_dir}}"]);
+    assert!(
+        !out.ok && out.text.contains("fills itself"),
+        "field: {}",
+        out.text
+    );
+    assert!(lab.run(&field, &["v=plain"]).ok, "an ordinary value runs");
+
+    let named = lab.path().join("clip{{url}}.txt");
+    std::fs::write(&named, b"x").unwrap();
+    let each = lab.file_recipe(step(
+        json!({ "command": "printf", "args": ["[%s]", { "each": ["{{path}}"] }] }),
+        &[],
+    ));
+    let out = lab.run_with(&each, &[], &[named.to_str().unwrap()], &[]);
+    assert!(
+        !out.ok && out.text.contains("fills itself"),
+        "file name: {}",
+        out.text
+    );
+
+    let url = lab.recipe_with(
+        step(json!({ "command": "printf", "args": ["[%s]"] }), &[]),
+        json!({ "mode": "url", "accept": [], "extensions": [], "label": "URL", "multiple": true }),
+    );
+    let out = lab.run_with(&url, &[], &["https://example.com/{{output_dir}}"], &[]);
+    assert!(
+        !out.ok && out.text.contains("fills itself"),
+        "url: {}",
+        out.text
+    );
+}
