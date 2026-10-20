@@ -62,7 +62,6 @@ fn sec04_shells_are_refused_as_commands() {
 /// SEC-05: Windows resolves `bash.exe` / `pwsh.exe` to the same shells the
 /// denylist names, so the `.exe` spellings must be refused too.
 #[test]
-#[ignore = "OPEN SEC-05: denylist matches exact names, `bash.exe` etc. pass"]
 fn sec05_windows_exe_spellings_of_shells_are_refused() {
     let shells = [
         "sh.exe",
