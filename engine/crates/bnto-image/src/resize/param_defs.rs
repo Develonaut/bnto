@@ -35,7 +35,7 @@ fn maintain_aspect_param() -> ParameterDef {
     ParameterDef {
         name: "maintainAspect".to_string(),
         label: "Maintain Aspect Ratio".to_string(),
-        description: "Keep the original width-to-height ratio when resizing".to_string(),
+        description: "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box".to_string(),
         param_type: ParameterType::Boolean,
         default: Some(serde_json::json!(true)),
         group: Some("dimensions".to_string()),
