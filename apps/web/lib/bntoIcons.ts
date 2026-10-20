@@ -2,6 +2,7 @@ import type { LucideIcon } from "@bnto/ui";
 import {
   ArrowRightLeftIcon,
   BracesIcon,
+  CoffeeIcon,
   Columns3Icon,
   CropIcon,
   EyeOffIcon,
@@ -33,6 +34,7 @@ const BNTO_ICONS: Record<string, LucideIcon> = {
   "merge-csv": TableIcon,
   "csv-to-json": BracesIcon,
   "download-video": FileVideoIcon,
+  "keep-awake": CoffeeIcon,
 };
 
 export function getBntoIcon(slug: string): LucideIcon {

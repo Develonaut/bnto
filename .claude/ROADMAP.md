@@ -90,7 +90,7 @@ M5: Monetization (tabled)
 
 **A node is a universal capability.** Build it once in Rust, and the engine takes care of running it on every target. CLI nodes get full system access. Browser-capable nodes compile to WASM and work at bnto.io. Server nodes get managed infrastructure. The node author doesn't think about targets — the engine does.
 
-**The CLI is the product.** `cargo install bnto` gives you 20 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
+**The CLI is the product.** `cargo install bnto` gives you 22 recipes out of the box. New node types are built and tested via `bnto run` — the CLI is both the development workflow and the primary user experience:
 
 1. Build the processor in Rust (TDD-first, golden tests)
 2. Test via `bnto run <recipe> [files...]`

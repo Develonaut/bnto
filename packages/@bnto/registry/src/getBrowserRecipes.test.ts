@@ -19,6 +19,11 @@ describe("getBrowserRecipes", () => {
     expect(slugs).not.toContain("download-video");
   });
 
+  it("excludes keep-awake (CLI-only)", () => {
+    const slugs = getBrowserRecipes().map((r) => r.slug);
+    expect(slugs).not.toContain("keep-awake");
+  });
+
   it("every returned recipe passes isRecipeBrowserCapable", () => {
     for (const r of getBrowserRecipes()) {
       expect(isRecipeBrowserCapable(r)).toBe(true);

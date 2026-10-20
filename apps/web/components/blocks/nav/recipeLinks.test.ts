@@ -39,6 +39,7 @@ describe("RECIPES (buildRecipeCategories)", () => {
   it("does not contain non-browser recipes like download-video", () => {
     const allUrls = RECIPES.flatMap((c) => c.links.map((l) => l.url));
     expect(allUrls).not.toContain("/download-video");
+    expect(allUrls).not.toContain("/keep-awake");
   });
 });
 

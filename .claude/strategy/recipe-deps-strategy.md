@@ -53,7 +53,7 @@ Without recipe-level `requires`, the connector-as-recipe architecture is blind t
 | `bnto doctor`                     | Shipped | `bnto/src/doctor.rs` — `run_doctor`                                                                                            |
 | `bnto info <recipe>`              | Shipped | `bnto/src/info.rs` — `print_dependencies`                                                                                      |
 | `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install`; steps in `install_plan.rs`, `--yes` rule in `install_trust.rs` (§4)                     |
-| `shell-run` node                  | Shipped | `bnto-shell` crate — `ShellCommand`                                                                                            |
+| `shell-run` node                  | Shipped | `bnto-shell` crate — `ShellRun`                                                                                                |
 
 ---
 

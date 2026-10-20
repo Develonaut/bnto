@@ -175,4 +175,35 @@ export const CATEGORY_CONTENT: Record<string, CategoryContentBlock> = {
       },
     ],
   },
+
+  system: {
+    processDescription:
+      "System recipes run natively, outside the browser, and drive the tools that come with the operating system. They start processes and change how a machine behaves, which a browser tab can't do.",
+    features: [
+      {
+        heading: "Built-in tools first",
+        body: "System recipes lean on the tools the operating system already ships with, so there's usually nothing extra to install. bnto doctor confirms everything is in place.",
+      },
+      {
+        heading: "Start it, walk away",
+        body: "Long-running sessions keep going after the command returns. Check on them or stop them later from any terminal.",
+      },
+      {
+        heading: "Every command shown first",
+        body: "Before a system recipe runs for the first time, bnto shows you every command it will run and asks for your approval.",
+      },
+    ],
+    faq: [
+      {
+        question: "Why don't system recipes run in the browser?",
+        answer:
+          "They start processes and use operating system features such as power and input settings. A browser tab can't do either, so these recipes run natively, in the bnto CLI today.",
+      },
+      {
+        question: "Which operating systems are supported?",
+        answer:
+          "Each recipe page lists what it supports. Keep Awake runs on macOS today, with Windows and Linux planned.",
+      },
+    ],
+  },
 };

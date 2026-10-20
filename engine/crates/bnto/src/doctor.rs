@@ -219,8 +219,8 @@ mod tests {
     fn parse_catalog_parses_every_bundled_recipe() {
         let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
         let recipes = parse_catalog(&catalog);
-        assert_eq!(recipes.definitions.len(), 21);
-        assert_eq!(recipes.slugs.len(), 21);
+        assert_eq!(recipes.definitions.len(), 22);
+        assert_eq!(recipes.slugs.len(), 22);
         assert!(recipes.invalid.is_empty());
     }
 
@@ -231,7 +231,7 @@ mod tests {
         std::fs::write(tmp.path().join("broken.bnto.json"), r#"{"nodes":"x"}"#).unwrap();
         let catalog = RecipeCatalog::load(tmp.path());
         let recipes = parse_catalog(&catalog);
-        assert_eq!(recipes.definitions.len(), 21);
+        assert_eq!(recipes.definitions.len(), 22);
         assert_eq!(recipes.invalid.len(), 1);
         assert_eq!(recipes.invalid[0].0, "broken");
         assert!(!recipes.invalid[0].1.is_empty());
