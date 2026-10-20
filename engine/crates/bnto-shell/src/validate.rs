@@ -39,6 +39,41 @@ const DENIED_ENV_VARS: &[&str] = &[
     "TMPDIR",
 ];
 
+/// Startup hooks that make a shell or interpreter run code before the
+/// program's first line (SEC-10). Env values are templated, so a recipe
+/// setting these could turn data back into code:
+///   - SHELLOPTS=xtrace + PS4='$(cmd)' runs code in bash and macOS /bin/sh
+///   - BASH_ENV / ENV / ZDOTDIR (zsh's .zshenv) / FPATH source or autoload files
+///   - IFS, CDPATH, GLOBIGNORE, PROMPT_COMMAND change how a script parses or runs
+///   - NODE_OPTIONS, PERL5OPT/PERL5LIB, PYTHONSTARTUP/PYTHONPATH, RUBYOPT
+///     load modules into interpreters
+const STARTUP_ENV_VARS: &[&str] = &[
+    "BASH_ENV",
+    "ENV",
+    "SHELLOPTS",
+    "BASHOPTS",
+    "PS1",
+    "PS2",
+    "PS3",
+    "PS4",
+    "PROMPT_COMMAND",
+    "IFS",
+    "CDPATH",
+    "GLOBIGNORE",
+    "ZDOTDIR",
+    "FPATH",
+    "NODE_OPTIONS",
+    "PERL5OPT",
+    "PERL5LIB",
+    "PYTHONSTARTUP",
+    "PYTHONPATH",
+    "RUBYOPT",
+];
+
+/// Whole families: dynamic loader controls (`LD_AUDIT`, `DYLD_*`) and bash
+/// exported functions (`BASH_FUNC_ls%%` silently replaces `ls`).
+const DENIED_ENV_PREFIXES: &[&str] = &["LD_", "DYLD_", "BASH_FUNC_"];
+
 /// Default maximum bytes per output file.
 /// Configurable per-node via the `maxOutputSize` parameter (in MB).
 pub const DEFAULT_MAX_OUTPUT_MB: u64 = 500;
@@ -116,17 +151,82 @@ pub fn sanitize_env(
     env: &serde_json::Map<String, serde_json::Value>,
 ) -> serde_json::Map<String, serde_json::Value> {
     env.iter()
-        .filter(|(key, _)| {
-            let key_upper = key.to_uppercase();
-            !DENIED_ENV_VARS.contains(&key_upper.as_str()) && !key_upper.starts_with("DYLD_")
-        })
+        .filter(|(key, _)| !is_denied_env_var(key))
         .map(|(k, v)| (k.clone(), v.clone()))
         .collect()
+}
+
+/// Whether a recipe may not set `key`, compared case-insensitively.
+fn is_denied_env_var(key: &str) -> bool {
+    let key = key.to_uppercase();
+    DENIED_ENV_VARS.contains(&key.as_str())
+        || STARTUP_ENV_VARS.contains(&key.as_str())
+        || DENIED_ENV_PREFIXES.iter().any(|p| key.starts_with(p))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // SEC-10: startup hooks run code before a script's first line, and env
+    // values are templated, so a recipe must not be able to set them.
+    #[test]
+    fn strips_shell_and_interpreter_startup_variables() {
+        let names = [
+            "BASH_ENV",
+            "ENV",
+            "SHELLOPTS",
+            "BASHOPTS",
+            "PS1",
+            "PS2",
+            "PS3",
+            "PS4",
+            "PROMPT_COMMAND",
+            "IFS",
+            "CDPATH",
+            "GLOBIGNORE",
+            "ZDOTDIR",
+            "FPATH",
+            "BASH_FUNC_ls%%",
+            "bash_func_cp()",
+            "NODE_OPTIONS",
+            "PERL5OPT",
+            "PERL5LIB",
+            "PYTHONSTARTUP",
+            "PYTHONPATH",
+            "RUBYOPT",
+            "LD_AUDIT",
+            "ld_bind_now",
+            "Shellopts",
+        ];
+        let env: serde_json::Map<_, _> = names
+            .iter()
+            .map(|n| (n.to_string(), serde_json::json!("x")))
+            .collect();
+        let kept = sanitize_env(&env);
+        assert!(
+            kept.is_empty(),
+            "kept: {:?}",
+            kept.keys().collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn keeps_ordinary_variables_that_merely_resemble_startup_ones() {
+        let names = [
+            "ENVIRONMENT",
+            "PS_TOKEN",
+            "MY_IFS",
+            "NODE_ENV",
+            "PYTHONUNBUFFERED",
+            "API_KEY",
+        ];
+        let env: serde_json::Map<_, _> = names
+            .iter()
+            .map(|n| (n.to_string(), serde_json::json!("x")))
+            .collect();
+        assert_eq!(sanitize_env(&env).len(), names.len());
+    }
 
     // --- Shell denylist ---
 
