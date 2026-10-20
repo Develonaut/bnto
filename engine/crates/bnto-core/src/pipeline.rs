@@ -13,48 +13,7 @@ use crate::field_def::FieldDef;
 use crate::pipeline_edge::PipelineEdge;
 use crate::secrets::SecretDef;
 
-// =============================================================================
-// Pipeline Settings — Recipe-Level Configuration
-// =============================================================================
-
-/// How the executor handles iteration over multiple input files.
-#[cfg_attr(feature = "ts", derive(TS))]
-#[cfg_attr(
-    feature = "ts",
-    ts(
-        export,
-        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
-    )
-)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
-pub enum IterationMode {
-    /// Execute exactly what's defined — containers control iteration.
-    /// This is the existing behavior and the default for backward compatibility.
-    #[default]
-    Explicit,
-    /// Wrap contiguous per-file processor sequences in implicit per-file loops.
-    /// Flat recipes produce identical output to explicit-loop recipes.
-    Auto,
-}
-
-/// Recipe-level settings on the root Definition. Extensible — new fields
-/// can be added without changing the schema shape.
-#[cfg_attr(feature = "ts", derive(TS))]
-#[cfg_attr(
-    feature = "ts",
-    ts(
-        export,
-        export_to = "../../../../packages/@bnto/nodes/src/generated/definitionTypes/"
-    )
-)]
-#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct PipelineSettings {
-    /// How the executor iterates over multiple input files.
-    #[serde(default)]
-    pub iteration: IterationMode,
-}
+pub use crate::pipeline_settings::{IterationMode, PipelineSettings};
 
 // =============================================================================
 // Pipeline Definition
@@ -99,6 +58,11 @@ impl PipelineDefinition {
             .as_ref()
             .map(|s| s.iteration)
             .unwrap_or_default()
+    }
+
+    /// The run's time limit in seconds (`settings.timeout`), if it has one.
+    pub fn time_limit_secs(&self) -> Option<u64> {
+        self.settings.as_ref().and_then(|s| s.timeout)
     }
 }
 
@@ -1399,6 +1363,7 @@ mod tests {
     fn test_pipeline_settings_serializes() {
         let settings = PipelineSettings {
             iteration: IterationMode::Auto,
+            timeout: None,
         };
         let json = serde_json::to_string(&settings).unwrap();
         assert!(json.contains(r#""iteration":"auto""#));

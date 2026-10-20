@@ -104,6 +104,7 @@ impl EditorModel {
             edges: Some(edges),
             settings: Some(PipelineSettings {
                 iteration: IterationMode::Auto,
+                timeout: None,
             }),
             requires: Vec::new(),
             fields: std::collections::BTreeMap::new(),

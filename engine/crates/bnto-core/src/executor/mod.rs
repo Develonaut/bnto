@@ -14,6 +14,7 @@
 //   - `result.rs` — the run's result: final files and every node's record
 //   - `resolve.rs` — `{{fields.*}}` template resolution
 //   - `template.rs` — multi-namespace template resolution (env, ctx, node, item)
+//   - `time_limit.rs` — the run's time limit, checked before work starts
 //
 // Pure Rust — no WASM deps. Works with `cargo test` natively.
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
@@ -34,6 +35,7 @@ mod result;
 mod routed;
 mod segments;
 pub mod template;
+mod time_limit;
 mod unfilled_items;
 
 use crate::context::ProcessContext;
@@ -46,6 +48,7 @@ use crate::registry::NodeRegistry;
 use chain::run_node_chain;
 use closing::ChainFailure;
 use node_outputs::{CountKeys, NodeOutputs, NodeRecords};
+use time_limit::TimeLimit;
 
 #[cfg(test)]
 use crate::processor::NodeInput;
@@ -70,6 +73,8 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     now_ms: F,
     /// When the run started (from `now_ms`), for `{{ctx.started}}`.
     started_ms: u64,
+    /// When the run must be done by, if its recipe sets `settings.timeout`.
+    time_limit: Option<TimeLimit>,
     /// Current loop iteration's per-file metadata (CSV row columns, etc.).
     /// Set by loop containers from PipelineFile.metadata each iteration.
     loop_item: Option<serde_json::Map<String, serde_json::Value>>,
@@ -93,6 +98,7 @@ impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
             pipeline_total_files: self.pipeline_total_files,
             now_ms: self.now_ms,
             started_ms: self.started_ms,
+            time_limit: self.time_limit,
             loop_item: self.loop_item.clone(),
             parent_node_id: self.parent_node_id.clone(),
             node_outputs: self.node_outputs.layer(),
@@ -175,10 +181,22 @@ pub fn execute_pipeline(
     );
     emit_pipeline_started(&ctx, flow.order(), files.len());
     let mode = definition.resolved_iteration();
-    match flow::run_level(&ctx, &flow, files, 0, mode) {
+    let ran = flow::run_level(&ctx, &flow, files, 0, mode).and_then(|result| {
+        // A last step that ended past the limit still fails the run.
+        ctx.check_time_limit()
+            .map_err(|error| ChainFailure::new(last_node_id(&flow), error))?;
+        Ok(result)
+    });
+    match ran {
         Ok(result) => Ok(finish_pipeline(&ctx, ctx.started_ms, result)),
         Err(failure) => Err(fail_pipeline(&ctx, failure)),
     }
+}
+
+/// The id of the run's last processing node, which a run that ends past its
+/// time limit fails at.
+fn last_node_id<'a>(flow: &crate::graph::Flow<'a>) -> &'a str {
+    flow.order().last().map_or("", |node| node.id.as_str())
 }
 
 /// Build the top-level context, seeding node outputs from the input files.
@@ -201,6 +219,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy>(
         pipeline_total_files: files.len(),
         now_ms,
         started_ms,
+        time_limit: TimeLimit::starting_at(started_ms, definition.time_limit_secs()),
         loop_item: None,
         parent_node_id: None,
         node_outputs: NodeOutputs::root(seed),
@@ -286,6 +305,7 @@ fn execute_node<F: Fn() -> u64 + Copy>(
     total_nodes: usize,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
+    ctx.check_time_limit()?;
     let node_start = (ctx.now_ms)();
     emit_node_started(ctx, node, node_index, total_nodes);
 

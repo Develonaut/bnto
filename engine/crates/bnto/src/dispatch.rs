@@ -61,6 +61,7 @@ fn run_from_args(args: RunArgs, session: &Session) {
         dry_run: args.dry_run,
         vars: &args.vars,
         json: args.json,
+        timeout: args.timeout,
     };
     run_recipe(
         &args.recipe,

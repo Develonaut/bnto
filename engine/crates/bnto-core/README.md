@@ -80,6 +80,7 @@ src/
 ├── registry.rs           # NodeRegistry: compound key dispatch
 ├── pipeline.rs           # PipelineDefinition, PipelineNode, PipelineFile
 ├── pipeline_edge.rs      # PipelineEdge: a connection between two sibling nodes
+├── pipeline_settings.rs  # PipelineSettings: iteration mode and the run's time limit (`timeout`)
 ├── graph/                # level_flow(): validate one level's edges, Kahn order, file routing (not yet used by the executor)
 ├── run_summary.rs        # RunSummary (serializable run outcome) + NodeTally (per-node counts from events)
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
@@ -95,6 +96,7 @@ src/
     ├── closing.rs        # After a failure: skip nodes, run `always` closing steps
     ├── primitive.rs      # Leaf node execution
     ├── container.rs      # Container execution (loop, group, parallel)
+    ├── time_limit.rs     # The run's time limit, checked before each node, file and iteration
     └── tests/            # 13 test modules, 45+ tests
 ```
 

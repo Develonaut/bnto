@@ -75,6 +75,7 @@ mod tests {
             edges: Some(vec![]),
             settings: Some(PipelineSettings {
                 iteration: IterationMode::Auto,
+                timeout: None,
             }),
             requires: Vec::new(),
             fields: std::collections::BTreeMap::new(),
@@ -341,7 +342,8 @@ mod tests {
         assert_eq!(
             def.settings,
             Some(PipelineSettings {
-                iteration: IterationMode::Auto
+                iteration: IterationMode::Auto,
+                timeout: None,
             })
         );
     }
@@ -353,7 +355,8 @@ mod tests {
         assert_eq!(
             def.settings,
             Some(PipelineSettings {
-                iteration: IterationMode::Auto
+                iteration: IterationMode::Auto,
+                timeout: None,
             })
         );
     }
@@ -498,7 +501,8 @@ mod tests {
         assert_eq!(
             def.settings,
             Some(PipelineSettings {
-                iteration: IterationMode::Auto
+                iteration: IterationMode::Auto,
+                timeout: None,
             })
         );
     }

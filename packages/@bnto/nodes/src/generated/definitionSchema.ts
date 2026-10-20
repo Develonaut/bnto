@@ -183,6 +183,12 @@ export const DEFINITION_JSON_SCHEMA = {
           enum: ["auto", "explicit"],
           type: "string",
         },
+        timeout: {
+          description:
+            "The whole run's time limit in seconds. Once it passes, every step the run started is stopped and the run fails. No limit when unset; `bnto run --timeout` overrides it.",
+          minimum: 1,
+          type: "integer",
+        },
       },
       type: "object",
     },

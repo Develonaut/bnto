@@ -34,6 +34,8 @@ pub struct DryRunResult {
     pub output_dir: Option<String>,
     pub duration_ms: Option<u64>,
     pub warnings: Vec<String>,
+    /// The recipe's time limit in seconds (`settings.timeout`), if any.
+    pub time_limit: Option<u64>,
 }
 
 /// Analyze a recipe and produce a unified dry-run result.
@@ -92,6 +94,7 @@ pub fn dry_run_recipe(
         output_dir,
         duration_ms,
         warnings,
+        time_limit: def.time_limit_secs(),
     })
 }
 

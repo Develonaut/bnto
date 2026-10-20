@@ -104,11 +104,24 @@ fn print_footer(slug: &str, result: &DryRunResult) {
     if let Some(ms) = result.duration_ms {
         println!("  {}  {ms}ms", "Preview time:".dimmed());
     }
+    if let Some(secs) = result.time_limit {
+        println!(
+            "
+  {}  {}",
+            "Time limit:".dimmed(),
+            time_limit_line(secs)
+        );
+    }
 
     println!(
         "\n{}",
         format!("Run with: bnto run {slug} <input>").dimmed()
     );
+}
+
+/// What the run's time limit does, after the `Time limit:` label.
+fn time_limit_line(secs: u64) -> String {
+    format!("{secs}s (the run stops and fails past it; bnto run --timeout overrides)")
 }
 
 /// Plain text formatter for test assertions (no ANSI colors).
@@ -169,6 +182,9 @@ pub fn format_dry_run_plain(result: &DryRunResult) -> String {
         }
     }
 
+    if let Some(secs) = result.time_limit {
+        writeln!(out, "  Time limit: {}", time_limit_line(secs)).ok();
+    }
     out
 }
 
@@ -196,6 +212,7 @@ mod tests {
             output_dir: None,
             duration_ms: None,
             warnings: vec![],
+            time_limit: None,
         }
     }
 
@@ -219,6 +236,7 @@ mod tests {
             output_dir: Some("/tmp/output".into()),
             duration_ms: Some(245),
             warnings: vec![],
+            time_limit: None,
         }
     }
 
@@ -252,10 +270,22 @@ mod tests {
             output_dir: None,
             duration_ms: None,
             warnings: vec![],
+            time_limit: None,
         };
         let output = format_dry_run_plain(&result);
         assert!(output.contains("No shell commands"));
         assert!(output.contains("2 processing node(s)"));
+    }
+
+    #[test]
+    fn format_shows_the_runs_time_limit() {
+        let result = DryRunResult {
+            time_limit: Some(90),
+            ..make_shell_result()
+        };
+        let output = format_dry_run_plain(&result);
+        assert!(output.contains("Time limit: 90s"), "{output}");
+        assert!(!format_dry_run_plain(&make_shell_result()).contains("Time limit"));
     }
 
     #[test]
@@ -273,6 +303,7 @@ mod tests {
             output_dir: None,
             duration_ms: None,
             warnings: vec![],
+            time_limit: None,
         };
         let output = format_dry_run_plain(&result);
         assert!(output.contains("same.txt"));
