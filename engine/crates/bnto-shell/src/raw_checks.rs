@@ -22,6 +22,7 @@ pub(crate) fn raw_problems(raw: &Map<String, Value>) -> Vec<String> {
         command,
         raw.get("args"),
     ));
+    problems.extend(crate::wrappers::wrapper_problems(command, raw.get("args")));
     problems
 }
 

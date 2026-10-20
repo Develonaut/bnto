@@ -118,7 +118,6 @@ fn sec07_command_must_be_literal() {
 /// the denylist (GTFOBins). Later hardening — the consent hash is the real
 /// boundary for authors; this keeps the denylist honest about its job.
 #[test]
-#[ignore = "OPEN SEC-08 (later): `env sh -c ...` and other wrappers bypass the denylist"]
 fn sec08_exec_wrappers_cannot_launch_shells() {
     let lab = Lab::new();
     let wrapped = [
