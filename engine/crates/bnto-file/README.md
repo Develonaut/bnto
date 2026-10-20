@@ -41,7 +41,11 @@ src/
 │   ├── params.rs           # Parameter schema + typed reads
 │   ├── encoding.rs         # Encoding enum, base64 decode, error reasons
 │   └── output_name.rs      # `filename` template ({{name}}, {{ext}})
-├── filter.rs         # FileFilter processor + metadata
+├── glob.rs           # File-name glob, compiled once; shared by collect and filter
+├── filter/           # FileFilter processor (file-filter)
+│   ├── mod.rs              # NodeProcessor impl (per-file), extension / pattern / size criteria
+│   ├── params.rs           # Parameter schema
+│   └── pattern.rs          # name_pattern compiled once, reused while it stays the same
 ├── metadata.rs       # FileMetadata processor + metadata
 ├── render/           # FileRender processor (file-render)
 │   ├── mod.rs              # NodeProcessor impl (batch), layout, mime, rows metadata
@@ -58,8 +62,7 @@ src/
 │   └── write.rs            # Missing-file check; in-memory or streamed-to-temp join
 ├── collect/          # FileCollect processor (file-collect, native-only)
 │   ├── mod.rs              # NodeProcessor impl, parameter schema, MIME guess
-│   ├── walker.rs           # Directory walk; entry types from read_dir, links followed
-│   └── glob.rs             # File-name glob, compiled once per walk
+│   └── walker.rs           # Directory walk; entry types from read_dir, links followed
 ├── copy.rs           # FileCopy processor + metadata (native-only)
 ├── copy_newer.rs     # file-copy `newer` mode: copy only when the source is newer
 ├── delete/           # FileDelete processor (file-delete, native-only)

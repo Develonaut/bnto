@@ -12,7 +12,6 @@ use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 use std::path::PathBuf;
 
-mod glob;
 mod walker;
 
 use walker::Walker;

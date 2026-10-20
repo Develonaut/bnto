@@ -3,6 +3,9 @@
 // Browser-capable: decode, filter, join, rename, metadata, render, sort (no filesystem access).
 // CLI-only: collect, copy, delete, list, move (require filesystem access).
 
+/// A compiled file-name glob, shared by file-collect and file-filter.
+mod glob;
+
 /// File-filter node — drop files that don't match extension, pattern,
 /// or size criteria. Non-matching files produce empty output.
 pub mod filter;
