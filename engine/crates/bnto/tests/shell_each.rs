@@ -72,10 +72,16 @@ fn test_every_collected_file_reaches_one_command_as_its_own_arg() {
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(output.status.success(), "stderr: {stderr}");
     let quoted = only_output(out.path());
+    // bnto lists files under the work dir as the OS reports it: `getcwd`
+    // resolves macOS's /var -> /private/var symlink. Windows stays as-is,
+    // since canonicalize there would add a \\?\ prefix.
+    let root = if cfg!(unix) {
+        work.path().canonicalize().unwrap()
+    } else {
+        work.path().to_path_buf()
+    };
     for file in ["bin1/a.dll", "bin1/nested/b.dll", "bin2/c.dll"] {
-        let path = file
-            .split('/')
-            .fold(work.path().to_path_buf(), |p, s| p.join(s));
+        let path = file.split('/').fold(root.clone(), |p, s| p.join(s));
         assert!(
             quoted.contains(&format!("'-object={}'", path.display())),
             "{file} missing: {quoted}"
