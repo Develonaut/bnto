@@ -215,3 +215,44 @@ fn test_check_refuses_a_time_limit_of_zero() {
         "stdout: {stdout}"
     );
 }
+
+#[test]
+fn test_dry_run_preview_past_its_time_limit_is_stopped() {
+    // `dry-run` resolves catalog slugs only, so the recipe goes into a library.
+    let home = temp_output_dir();
+    let library = home.path().join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    let secs = unique_secs(7);
+    let (command, args) = hang(secs);
+    let body = serde_json::json!({
+        "name": "Hang", "settings": { "timeout": 1 },
+        "nodes": [
+            { "id": "input", "type": "input" },
+            { "id": "hang", "type": "shell-command",
+              "parameters": { "command": command, "args": args } },
+            { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+        ]
+    });
+    std::fs::write(library.join("hang.bnto.json"), body.to_string()).unwrap();
+    let input = home.path().join("input.txt");
+    std::fs::write(&input, "x").unwrap();
+    let started = Instant::now();
+    let output = Command::new(bnto_bin())
+        .env("BNTO_HOME", home.path())
+        .args(["dry-run", "hang", "--yes"])
+        .arg(&input)
+        .output()
+        .unwrap();
+    let (stdout, stderr) = (
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
+    assert!(started.elapsed() < STOP_DEADLINE, "it was stopped");
+    assert!(
+        stderr.contains("pipeline preview failed: Run timed out after 1s"),
+        "stderr: {stderr}"
+    );
+    assert!(stdout.contains("Time limit:"), "stdout: {stdout}");
+    assert!(stdout.contains(" 1s (the run stops"), "stdout: {stdout}");
+    assert_hang_gone(secs);
+}
