@@ -1,6 +1,6 @@
 // bnto-file — File operation nodes.
 //
-// Browser-capable: decode, filter, join, rename, metadata, render, sort (no filesystem access).
+// Browser-capable: decode, filter, inspect, join, rename, render, sort (no filesystem access).
 // CLI-only: collect, copy, delete, list, move (require filesystem access).
 
 /// A compiled file-name glob, shared by file-collect and file-filter.
@@ -54,9 +54,9 @@ pub mod decode;
 /// Browser-compatible.
 pub mod sort;
 
-/// File-metadata node — extract file metadata (size, extension, MIME
+/// File-inspect node — extract file metadata (size, extension, MIME
 /// type, hash) and attach to pipeline output. Browser-compatible.
-pub mod metadata;
+pub mod inspect;
 
 /// File-render node — write one text file from a template over the items
 /// (a header, one block per item, a footer). Browser-compatible.
@@ -75,9 +75,9 @@ pub use copy::FileCopy;
 pub use decode::FileDecode;
 pub use delete::FileDelete;
 pub use filter::FileFilter;
+pub use inspect::FileInspect;
 pub use join::FileJoin;
 pub use list::FileList;
-pub use metadata::FileMetadata;
 pub use r#move::FileMove;
 pub use rename::RenameFiles;
 pub use render::FileRender;

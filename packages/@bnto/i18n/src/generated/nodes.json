@@ -29,6 +29,10 @@
       "label": "Filter Files",
       "description": "Keep or drop files by extension, name or path pattern, and size."
     },
+    "fileInspect": {
+      "label": "Inspect Files",
+      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output."
+    },
     "fileJoin": {
       "label": "Join Files",
       "description": "Join the files flowing in into one file, in arrival order (edge order when several steps feed it), a separator between them."
@@ -36,10 +40,6 @@
     "fileList": {
       "label": "List Files",
       "description": "Turn lists of paths into files under a base folder; every path is listed, found or missing."
-    },
-    "fileMetadata": {
-      "label": "File Metadata",
-      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output."
     },
     "fileMove": {
       "label": "Move Files",
@@ -271,6 +271,12 @@
         "description": "Maximum file size in bytes. Files larger than this are dropped. 0 means no limit."
       }
     },
+    "fileInspect": {
+      "include_hash": {
+        "label": "Include Hash",
+        "description": "Compute and include a SHA-256 hash of the file content."
+      }
+    },
     "fileJoin": {
       "filename": {
         "label": "File Name",
@@ -291,12 +297,6 @@
         "label": "Base Folder",
         "description": "Folder the listed paths are relative to. Defaults to the working directory; absolute paths and \"..\" are refused.",
         "placeholder": "."
-      }
-    },
-    "fileMetadata": {
-      "include_hash": {
-        "label": "Include Hash",
-        "description": "Compute and include a SHA-256 hash of the file content."
       }
     },
     "fileMove": {

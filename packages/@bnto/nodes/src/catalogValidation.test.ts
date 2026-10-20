@@ -95,7 +95,7 @@ describe("catalog structure", () => {
     expect(PROCESSOR_MAP.has("file-list")).toBe(true);
     expect(PROCESSOR_MAP.has("file-move")).toBe(true);
     expect(PROCESSOR_MAP.has("file-filter")).toBe(true);
-    expect(PROCESSOR_MAP.has("file-metadata")).toBe(true);
+    expect(PROCESSOR_MAP.has("file-inspect")).toBe(true);
     expect(PROCESSOR_MAP.has("file-rename")).toBe(true);
     expect(PROCESSOR_MAP.has("file-render")).toBe(true);
     expect(PROCESSOR_MAP.has("file-join")).toBe(true);

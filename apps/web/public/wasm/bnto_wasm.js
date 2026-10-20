@@ -234,7 +234,7 @@ export function execute_pipeline(definition_json, files_js, progress_callback) {
  * @param {Function} progress_callback
  * @returns {any}
  */
-export function file_metadata_combined(data, filename, params_json, progress_callback) {
+export function file_inspect_combined(data, filename, params_json, progress_callback) {
   try {
     const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
     const ptr0 = passArray8ToWasm0(data, wasm.__wbindgen_export);
@@ -243,7 +243,7 @@ export function file_metadata_combined(data, filename, params_json, progress_cal
     const len1 = WASM_VECTOR_LEN;
     const ptr2 = passStringToWasm0(params_json, wasm.__wbindgen_export, wasm.__wbindgen_export2);
     const len2 = WASM_VECTOR_LEN;
-    wasm.file_metadata_combined(
+    wasm.file_inspect_combined(
       retptr,
       ptr0,
       len0,

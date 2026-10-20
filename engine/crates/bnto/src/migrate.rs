@@ -35,6 +35,11 @@ fn all_migrations() -> Vec<Migration> {
             applies: has_file_sanitize_node,
             apply: convert_file_sanitize_to_file_rename,
         },
+        Migration {
+            description: "Rename 'file-metadata' node type to 'file-inspect'",
+            applies: has_file_metadata_node,
+            apply: rename_file_metadata_to_file_inspect,
+        },
     ]
 }
 
@@ -80,28 +85,45 @@ fn rename_compression_to_quality(value: &mut Value) {
 
 /// Check if any node has `type: "file-sanitize"`.
 fn has_file_sanitize_node(value: &Value) -> bool {
-    visit_nodes(value, &|node| {
-        node.get("type")
-            .and_then(Value::as_str)
-            .is_some_and(|t| t == "file-sanitize")
-    })
+    has_node_type(value, "file-sanitize")
 }
 
 /// Convert `file-sanitize` nodes to `file-rename` with sanitize params preserved.
 fn convert_file_sanitize_to_file_rename(value: &mut Value) {
-    mutate_nodes(value, &|node| {
-        let is_file_sanitize = node
-            .get("type")
-            .and_then(Value::as_str)
-            .is_some_and(|t| t == "file-sanitize");
+    rename_node_type(value, "file-sanitize", "file-rename");
+}
 
-        if is_file_sanitize {
-            node["type"] = Value::String("file-rename".to_string());
-        }
-    });
+// --- Migration: file-metadata → file-inspect ---
+
+/// Check if any node has `type: "file-metadata"`.
+fn has_file_metadata_node(value: &Value) -> bool {
+    has_node_type(value, "file-metadata")
+}
+
+/// Rename `file-metadata` nodes to `file-inspect`; params are unchanged.
+fn rename_file_metadata_to_file_inspect(value: &mut Value) {
+    rename_node_type(value, "file-metadata", "file-inspect");
 }
 
 // --- Tree traversal helpers ---
+
+/// True if any node in the tree has `type` equal to `node_type`.
+fn has_node_type(value: &Value, node_type: &str) -> bool {
+    visit_nodes(value, &|node| {
+        node.get("type")
+            .and_then(Value::as_str)
+            .is_some_and(|t| t == node_type)
+    })
+}
+
+/// Set `type` to `to` on every node in the tree whose type is `from`.
+fn rename_node_type(value: &mut Value, from: &str, to: &str) {
+    mutate_nodes(value, &|node| {
+        if node.get("type").and_then(Value::as_str) == Some(from) {
+            node["type"] = Value::String(to.to_string());
+        }
+    });
+}
 
 /// Visit all nodes in the tree, returning true if the predicate matches any.
 fn visit_nodes(value: &Value, predicate: &dyn Fn(&Value) -> bool) -> bool {
@@ -474,6 +496,63 @@ mod tests {
         let applied = apply_migrations(&mut value);
         assert_eq!(applied.len(), 1);
         assert_eq!(value["children"][0]["parameters"]["quality"], json!(50));
+    }
+
+    #[test]
+    fn migrates_file_metadata_to_file_inspect() {
+        let mut value = json!({
+            "id": "test",
+            "type": "group",
+            "parameters": {},
+            "nodes": [{
+                "id": "meta",
+                "type": "file-metadata",
+                "parameters": { "include_hash": true }
+            }]
+        });
+
+        let applied = apply_migrations(&mut value);
+        assert_eq!(applied.len(), 1);
+        assert!(applied[0].contains("file-metadata"));
+
+        let node = &value["nodes"][0];
+        assert_eq!(node["type"], json!("file-inspect"));
+        assert_eq!(node["id"], json!("meta"));
+        assert_eq!(node["parameters"]["include_hash"], json!(true));
+    }
+
+    #[test]
+    fn file_inspect_migration_is_idempotent() {
+        let mut value = json!({
+            "id": "test",
+            "type": "group",
+            "nodes": [{ "id": "meta", "type": "file-metadata" }]
+        });
+
+        apply_migrations(&mut value);
+        let snapshot = value.clone();
+
+        assert!(apply_migrations(&mut value).is_empty());
+        assert_eq!(value, snapshot);
+    }
+
+    #[test]
+    fn migrates_file_metadata_nested_in_nodes_and_children() {
+        let mut value = json!({
+            "id": "root",
+            "type": "group",
+            "nodes": [{
+                "id": "loop",
+                "type": "loop",
+                "nodes": [{ "id": "meta", "type": "file-metadata" }]
+            }],
+            "children": [{ "id": "meta2", "type": "file-metadata" }]
+        });
+
+        let applied = apply_migrations(&mut value);
+        assert_eq!(applied.len(), 1);
+        assert_eq!(value["nodes"][0]["nodes"][0]["type"], json!("file-inspect"));
+        assert_eq!(value["children"][0]["type"], json!("file-inspect"));
     }
 
     // --- File operations ---

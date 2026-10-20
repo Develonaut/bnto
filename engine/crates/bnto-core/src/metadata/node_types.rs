@@ -205,6 +205,15 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             "filter"
         ),
         node_type!(
+            "file-inspect",
+            "Inspect Files",
+            "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "file-text"
+        ),
+        node_type!(
             "file-join",
             "Join Files",
             "Join the files flowing in into one file, in arrival order (edge order when several steps feed it), a separator between them.",
@@ -212,15 +221,6 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "merge"
-        ),
-        node_type!(
-            "file-metadata",
-            "File Metadata",
-            "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
-            NodeCategory::File,
-            false,
-            "browser",
-            "file-text"
         ),
         node_type!(
             "file-rename",

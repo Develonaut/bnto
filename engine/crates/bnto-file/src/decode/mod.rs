@@ -15,7 +15,7 @@ use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, Outpu
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
-use crate::metadata::guess_mime_type;
+use crate::inspect::guess_mime_type;
 use params::{DecodeParams, build_decode_parameters};
 
 /// The decoded byte count each file records; the node's record adds it up.

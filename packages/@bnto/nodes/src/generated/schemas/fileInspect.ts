@@ -7,19 +7,19 @@
 import { z } from "zod";
 import type { NodeSchema } from "../../schemas/types";
 
-/** Zod schema for file-metadata node parameters. */
-export const fileMetadataParamsSchema = z.object({
+/** Zod schema for file-inspect node parameters. */
+export const fileInspectParamsSchema = z.object({
   include_hash: z.boolean().optional().default(false),
 });
 
-/** Inferred TypeScript type for file-metadata node parameters. */
-export type FileMetadataParams = z.infer<typeof fileMetadataParamsSchema>;
+/** Inferred TypeScript type for file-inspect node parameters. */
+export type FileInspectParams = z.infer<typeof fileInspectParamsSchema>;
 
-/** Full schema definition for the file-metadata node type. */
-export const fileMetadataNodeSchema: NodeSchema = {
-  nodeType: "file-metadata",
+/** Full schema definition for the file-inspect node type. */
+export const fileInspectNodeSchema: NodeSchema = {
+  nodeType: "file-inspect",
   schemaVersion: 1,
-  schema: fileMetadataParamsSchema,
+  schema: fileInspectParamsSchema,
   params: {
     include_hash: {
       label: "Include Hash",

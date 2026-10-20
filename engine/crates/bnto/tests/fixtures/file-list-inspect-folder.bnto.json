@@ -1,10 +1,10 @@
 {
-  "id": "file-list-metadata-folder",
+  "id": "file-list-inspect-folder",
   "type": "group",
   "version": "1.0.0",
   "name": "File List Metadata Folder",
   "metadata": {
-    "description": "Takes no input: lists three files at different depths under the Root run var and prints each one's folder from file-metadata."
+    "description": "Takes no input: lists three files at different depths under the Root run var and prints each one's folder from file-inspect."
   },
   "settings": { "iteration": "auto" },
   "nodes": [
@@ -17,7 +17,7 @@
         "paths": ["top.txt", "shots/mid.txt", "shots/day1/deep.txt"]
       }
     },
-    { "id": "meta", "type": "file-metadata" },
+    { "id": "meta", "type": "file-inspect" },
     {
       "id": "show",
       "type": "report",

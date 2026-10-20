@@ -13,7 +13,7 @@ The verbs and shared terms every engine node is named and built with. A verb is 
 - **Domain** is the kind of thing the node works on, and matches the crate (`bnto-image` → `image-*`). Domains: `file`, `image`, `vector`, `spreadsheet`, `shell`, `http`. New domains get a new crate.
 - **Verb** comes from the [Verb Registry](#verb-registry) below. A verb that isn't listed gets added here first, in the same PR as the node, with its class and contract.
 - **Object** only when the verb alone is ambiguous in that domain (`image-strip-exif`: strip what?). Never repeat the domain (`image-resize-image`).
-- **No noun names.** `file-metadata` and `shell-command` say what a node is about, not what it does. They are being renamed (see [Audit](#audit-october-2026)).
+- **No noun names.** A noun like `shell-command` says what a node is about, not what it does. `shell-command` is being renamed (see [Audit](#audit-october-2026)).
 
 **Two tiers have no domain**, because they work on any item:
 
@@ -87,11 +87,11 @@ Planned verbs already in this class: `crop`, `rotate` (image), `encode`.
 
 ### Annotate
 
-| Verb      | Means                                                  | Nodes                                  | Not                         |
-| --------- | ------------------------------------------------------ | -------------------------------------- | --------------------------- |
-| `inspect` | Attach facts about each file (size, type, times, hash) | `file-inspect` (today `file-metadata`) | `stat`, `probe`, `describe` |
-| `lookup`  | Attach the matching row from a table, by key           | `spreadsheet-lookup`                   | `join`, `enrich`, `match`   |
-| `edit`    | Set fields on each item from values or templates       | `edit-fields`                          | `set`, `assign`, `tag`      |
+| Verb      | Means                                                  | Nodes                | Not                         |
+| --------- | ------------------------------------------------------ | -------------------- | --------------------------- |
+| `inspect` | Attach facts about each file (size, type, times, hash) | `file-inspect`       | `stat`, `probe`, `describe` |
+| `lookup`  | Attach the matching row from a table, by key           | `spreadsheet-lookup` | `join`, `enrich`, `match`   |
+| `edit`    | Set fields on each item from values or templates       | `edit-fields`        | `set`, `assign`, `tag`      |
 
 Matching records by key is always `lookup`. `join` means concatenate (see Combine).
 
@@ -210,7 +210,6 @@ Deviations from this doc in shipped nodes. Each fix is its own PR, tracked in [P
 | Node / area                       | Deviation                                                                                                                                                                                                               | Fix                                                                                              | Breaking     |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------ |
 | `shell-command`                   | Noun name                                                                                                                                                                                                               | Rename to `shell-run`, label "Run Shell Command"                                                 | Yes, migrate |
-| `file-metadata`                   | Noun name                                                                                                                                                                                                               | Rename to `file-inspect`, label "Inspect Files"                                                  | Yes, migrate |
 | 14 params                         | snake_case: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path` | camelCase                                                                                        | Yes, migrate |
 | `file-sort` `case`                | Means case sensitivity; `file-rename` `case` means letter case                                                                                                                                                          | `caseSensitive: boolean`                                                                         | Yes, migrate |
 | `spreadsheet-merge` `deduplicate` | Same idea as `spreadsheet-clean` `removeDuplicates`                                                                                                                                                                     | `removeDuplicates`                                                                               | Yes, migrate |
@@ -218,6 +217,6 @@ Deviations from this doc in shipped nodes. Each fix is its own PR, tracked in [P
 | `assert` `op` value `not_equals`  | snake_case enum value                                                                                                                                                                                                   | `not-equals`                                                                                     | Yes, migrate |
 | `image-overlay` output            | Suffix `-overlay`                                                                                                                                                                                                       | `-overlaid`                                                                                      | Output names |
 | `vector-optimize` output          | Keeps the input name; other Change nodes add a suffix                                                                                                                                                                   | `-optimized`                                                                                     | Output names |
-| Labels                            | "CSV to JSON", "SVG to Image", "File Metadata", "Shell Command", "Overlay Image"                                                                                                                                        | "Convert CSV to JSON", "Rasterize SVG", "Inspect Files", "Run Shell Command", "Overlay Images"   | No           |
+| Labels                            | "CSV to JSON", "SVG to Image", "Shell Command", "Overlay Image"                                                                                                                                                         | "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"                    | No           |
 | Labels / descriptions             | "Create Directories" (`file-copy`), "Traverse a directory" (`file-collect`)                                                                                                                                             | "Create Folders", "folder"                                                                       | No           |
 | `transform` vs `edit-fields`      | Both set values from expressions. `transform` has no processor yet                                                                                                                                                      | Decide before `transform` gets a processor: fold it into `edit-fields`, or define the split here | n/a          |

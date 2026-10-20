@@ -415,6 +415,29 @@
       ]
     },
     {
+      "name": "file-inspect",
+      "label": "Inspect Files",
+      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
+      "category": "file",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "file-text",
+      "params": [
+        {
+          "name": "include_hash",
+          "label": "Include Hash",
+          "description": "Compute and include a SHA-256 hash of the file content.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ]
+    },
+    {
       "name": "file-join",
       "label": "Join Files",
       "description": "Join the files flowing in into one file, in arrival order (edge order when several steps feed it), a separator between them.",
@@ -478,29 +501,6 @@
             "type": "string"
           },
           "placeholder": ".",
-          "surfaceable": true
-        }
-      ]
-    },
-    {
-      "name": "file-metadata",
-      "label": "File Metadata",
-      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
-      "category": "file",
-      "isContainer": false,
-      "platforms": [
-        "browser"
-      ],
-      "icon": "file-text",
-      "params": [
-        {
-          "name": "include_hash",
-          "label": "Include Hash",
-          "description": "Compute and include a SHA-256 hash of the file content.",
-          "paramType": {
-            "type": "boolean"
-          },
-          "default": false,
           "surfaceable": true
         }
       ]
@@ -3025,6 +3025,31 @@
       "inputCardinality": "perFile"
     },
     {
+      "nodeType": "file-inspect",
+      "name": "Inspect Files",
+      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
+      "category": "file",
+      "accepts": [],
+      "platforms": [
+        "browser",
+        "cli",
+        "desktop"
+      ],
+      "parameters": [
+        {
+          "name": "include_hash",
+          "label": "Include Hash",
+          "description": "Compute and include a SHA-256 hash of the file content.",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": false,
+          "surfaceable": true
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
       "nodeType": "file-join",
       "name": "Join Files",
       "description": "Join the files flowing in into one file, in the order they arrive, with an optional separator between them.",
@@ -3094,31 +3119,6 @@
         }
       ],
       "inputCardinality": "batch"
-    },
-    {
-      "nodeType": "file-metadata",
-      "name": "File Metadata",
-      "description": "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.",
-      "category": "file",
-      "accepts": [],
-      "platforms": [
-        "browser",
-        "cli",
-        "desktop"
-      ],
-      "parameters": [
-        {
-          "name": "include_hash",
-          "label": "Include Hash",
-          "description": "Compute and include a SHA-256 hash of the file content.",
-          "paramType": {
-            "type": "boolean"
-          },
-          "default": false,
-          "surfaceable": true
-        }
-      ],
-      "inputCardinality": "perFile"
     },
     {
       "nodeType": "file-move",
