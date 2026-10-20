@@ -1,0 +1,12 @@
+{
+  "id": "check-no-run-can-give",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check No Run Can Give",
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    { "id": "set", "type": "edit-fields", "parameters": {} },
+    { "id": "clean:up", "type": "file-delete", "parameters": {} },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ]
+}

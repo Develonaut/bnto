@@ -63,13 +63,18 @@ fn test_check_reports_edit_fields_without_a_values_map() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(!output.status.success(), "stdout: {stdout}");
     let lines: Vec<&str> = stdout.lines().collect();
-    assert_eq!(lines.last(), Some(&"Check: FAIL (2 findings)"), "{stdout}");
+    assert_eq!(lines.last(), Some(&"Check: FAIL (3 findings)"), "{stdout}");
     assert!(
         lines[0].contains("\"no-values\"") && lines[0].contains("'values' is required"),
         "{stdout}"
     );
+    // A map is no value `-p` can give, so leaving it out is no run-time param.
     assert!(
-        lines[1].contains("\"not-a-map\"") && lines[1].contains("map of field name"),
+        lines[1].contains("\"no-values\"") && lines[1].contains("no run can give it"),
+        "{stdout}"
+    );
+    assert!(
+        lines[2].contains("\"not-a-map\"") && lines[2].contains("map of field name"),
         "{stdout}"
     );
 }

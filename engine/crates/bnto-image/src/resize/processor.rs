@@ -468,11 +468,26 @@ mod tests {
     }
 
     #[test]
-    fn test_resize_jpeg_both_dimensions() {
-        // Resize to explicit 60×40 (ignoring aspect ratio).
+    fn test_resize_jpeg_both_dimensions_fits_inside() {
+        // 100×100 into a 60×40 box with maintainAspect (default) → 40×40.
         let processor = ResizeImages::new();
         let progress = ProgressReporter::new_noop();
         let input = make_input(TEST_JPEG, "test.jpg", dims_params(60, 40));
+
+        let output = processor.process(input, &progress, &NoopContext).unwrap();
+        let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));
+        assert_eq!(w, 40);
+        assert_eq!(h, 40);
+    }
+
+    #[test]
+    fn test_resize_jpeg_both_dimensions_no_aspect_stretches() {
+        // maintainAspect=false resizes to the exact 60×40 box.
+        let processor = ResizeImages::new();
+        let progress = ProgressReporter::new_noop();
+        let mut params = dims_params(60, 40);
+        params.insert("maintainAspect".to_string(), serde_json::Value::Bool(false));
+        let input = make_input(TEST_JPEG, "test.jpg", params);
 
         let output = processor.process(input, &progress, &NoopContext).unwrap();
         let (w, h) = get_image_dimensions(file_bytes(&output.files[0].data));

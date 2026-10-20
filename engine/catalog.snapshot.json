@@ -1172,6 +1172,93 @@
       ]
     },
     {
+      "name": "image-pad",
+      "label": "Pad Images",
+      "description": "Center images on a larger canvas, filling the added space with transparency or a color.",
+      "category": "image",
+      "isContainer": false,
+      "platforms": [
+        "browser"
+      ],
+      "icon": "expand",
+      "params": [
+        {
+          "name": "width",
+          "label": "Width",
+          "description": "Canvas width in pixels. Leave empty to keep the image's width.",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "max": 16384.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "canvas",
+          "suffix": "px"
+        },
+        {
+          "name": "height",
+          "label": "Height",
+          "description": "Canvas height in pixels. Leave empty to keep the image's height.",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "max": 16384.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "canvas",
+          "suffix": "px"
+        },
+        {
+          "name": "background",
+          "label": "Background",
+          "description": "Fill for the added space: \"transparent\" or a hex color (#fff, #ffffff, #ffffff80). JPEG has no transparency, so a transparent fill comes out white.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "transparent",
+          "placeholder": "#ffffff",
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "image-resize",
       "label": "Resize Images",
       "description": "Change image dimensions while maintaining quality.",
@@ -1215,7 +1302,7 @@
         {
           "name": "maintainAspect",
           "label": "Maintain Aspect Ratio",
-          "description": "Keep the original width-to-height ratio when resizing",
+          "description": "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box",
           "paramType": {
             "type": "boolean"
           },
@@ -1803,7 +1890,7 @@
         {
           "name": "message",
           "label": "Message",
-          "description": "The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+          "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
           "paramType": {
             "type": "string"
           },
@@ -3641,6 +3728,97 @@
       "inputCardinality": "perFile"
     },
     {
+      "nodeType": "image-pad",
+      "name": "Pad Images",
+      "description": "Center images on a larger canvas, filling the added space with transparency or a color.",
+      "category": "image",
+      "accepts": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "platforms": [
+        "browser"
+      ],
+      "parameters": [
+        {
+          "name": "width",
+          "label": "Width",
+          "description": "Canvas width in pixels. Leave empty to keep the image's width.",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "max": 16384.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "canvas",
+          "suffix": "px"
+        },
+        {
+          "name": "height",
+          "label": "Height",
+          "description": "Canvas height in pixels. Leave empty to keep the image's height.",
+          "paramType": {
+            "type": "number"
+          },
+          "constraints": {
+            "min": 1.0,
+            "max": 16384.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "group": "canvas",
+          "suffix": "px"
+        },
+        {
+          "name": "background",
+          "label": "Background",
+          "description": "Fill for the added space: \"transparent\" or a hex color (#fff, #ffffff, #ffffff80). JPEG has no transparency, so a transparent fill comes out white.",
+          "paramType": {
+            "type": "string"
+          },
+          "default": "transparent",
+          "placeholder": "#ffffff",
+          "surfaceable": true
+        },
+        {
+          "name": "quality",
+          "label": "Quality",
+          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "paramType": {
+            "type": "number"
+          },
+          "default": 80,
+          "constraints": {
+            "min": 1.0,
+            "max": 100.0,
+            "required": false
+          },
+          "surfaceable": true,
+          "suffix": "%",
+          "control": "slider",
+          "presets": [
+            {
+              "value": 60,
+              "label": "Draft"
+            },
+            {
+              "value": 80,
+              "label": "Balanced"
+            },
+            {
+              "value": 100,
+              "label": "Maximum"
+            }
+          ]
+        }
+      ],
+      "inputCardinality": "perFile"
+    },
+    {
       "nodeType": "image-resize",
       "name": "Resize Images",
       "description": "Change image dimensions while maintaining quality",
@@ -3687,7 +3865,7 @@
         {
           "name": "maintainAspect",
           "label": "Maintain Aspect Ratio",
-          "description": "Keep the original width-to-height ratio when resizing",
+          "description": "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box",
           "paramType": {
             "type": "boolean"
           },
@@ -3792,7 +3970,7 @@
         {
           "name": "message",
           "label": "Message",
-          "description": "The line to print, usually a template. {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
+          "description": "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
           "paramType": {
             "type": "string"
           },

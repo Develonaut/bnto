@@ -21,7 +21,7 @@ macro_rules! node_type {
     };
 }
 
-/// Return metadata for all 38 registered node types.
+/// Return metadata for all 39 registered node types.
 ///
 /// Single source of truth for the engine's node type registry.
 /// Composed from per-category helpers, then sorted alphabetically for stable output.
@@ -271,6 +271,15 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
             false,
             "browser",
             "image"
+        ),
+        node_type!(
+            "image-pad",
+            "Pad Images",
+            "Center images on a larger canvas, filling the added space with transparency or a color.",
+            NodeCategory::Image,
+            false,
+            "browser",
+            "expand"
         ),
         node_type!(
             "image-resize",

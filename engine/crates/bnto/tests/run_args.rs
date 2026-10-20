@@ -5,7 +5,9 @@ mod helpers;
 
 use std::process::Command;
 
-use helpers::{bnto_bin, custom_recipe_path, fixture_image, output_files, recipe_path};
+use helpers::{
+    bnto_bin, custom_recipe_path, fixture_image, fixture_vector, output_files, recipe_path,
+};
 
 /// Run `recipe` on `inputs` with extra args; returns (success, stderr).
 fn run(recipe: &str, inputs: &[&std::path::Path], extra: &[&str]) -> (bool, String) {
@@ -72,4 +74,41 @@ fn test_pass_through_copies_an_argument_file_and_keeps_the_source() {
     let files = output_files(&out);
     assert_eq!(files.len(), 1);
     assert_eq!(std::fs::read_to_string(files[0].path()).unwrap(), "keep me");
+}
+
+#[test]
+fn test_files_whose_names_differ_only_in_case_all_land_in_the_output() {
+    // Guards: `favicon/Logo.svg` and `logo.svg` were one file on Windows, so
+    // optimize-svg reported "2 files written" with only one on disk. Names
+    // are case-folded on every OS, so Linux writes the same two files.
+    let dir = tempfile::tempdir().unwrap();
+    let (upper, lower) = (dir.path().join("favicon"), dir.path().join("site"));
+    std::fs::create_dir_all(&upper).unwrap();
+    std::fs::create_dir_all(&lower).unwrap();
+    let (a, b) = (upper.join("Logo.svg"), lower.join("logo.svg"));
+    std::fs::copy(fixture_vector("verbose.svg"), &a).unwrap();
+    std::fs::write(
+        &b,
+        r#"<svg xmlns="http://www.w3.org/2000/svg"><rect width="1"/></svg>"#,
+    )
+    .unwrap();
+    let out = tempfile::tempdir().unwrap();
+
+    let out_arg = out.path().to_str().unwrap();
+    let (ok, stderr) = run(&recipe_path("optimize-svg"), &[&a, &b], &["-o", out_arg]);
+
+    assert!(ok, "stderr: {stderr}");
+    let mut names: Vec<String> = output_files(&out)
+        .iter()
+        .map(|f| f.file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    assert_eq!(names, ["Logo.svg", "logo_1.svg"]);
+    assert!(stderr.contains("2 files written"), "stderr: {stderr}");
+    assert!(stderr.contains("logo.svg → logo_1.svg"), "stderr: {stderr}");
+    let small = std::fs::read_to_string(out.path().join("logo_1.svg")).unwrap();
+    assert!(
+        small.contains("rect"),
+        "the second file kept its own content"
+    );
 }

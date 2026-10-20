@@ -6,12 +6,13 @@ use image::imageops::FilterType;
 use super::processor::ResizeImages;
 
 /// Max dimension — 16384px is the practical limit for WASM memory.
-pub(super) const MAX_DIMENSION: u32 = 16384;
-pub(super) const MIN_DIMENSION: u32 = 1;
+pub(crate) const MAX_DIMENSION: u32 = 16384;
+pub(crate) const MIN_DIMENSION: u32 = 1;
 
 impl ResizeImages {
     /// Calculate final (width, height) from params and original dimensions.
-    /// With `maintain_aspect`, a single dimension derives the other from the ratio.
+    /// With `maintain_aspect`, a single dimension derives the other from the ratio,
+    /// and both dimensions fit the image inside the box (like CSS `object-fit: contain`).
     pub(super) fn calculate_dimensions(
         target_width: Option<u32>,
         target_height: Option<u32>,
@@ -21,7 +22,9 @@ impl ResizeImages {
     ) -> Result<(u32, u32), BntoError> {
         validate_inputs(target_width, target_height, original_width, original_height)?;
         let (final_width, final_height) = match (target_width, target_height) {
-            (Some(w), Some(h)) => (w, h),
+            (Some(w), Some(h)) => {
+                resolve_both(w, h, original_width, original_height, maintain_aspect)
+            }
             (Some(w), None) => {
                 resolve_width_only(w, original_width, original_height, maintain_aspect)
             }
@@ -62,6 +65,19 @@ fn validate_inputs(
         ));
     }
     Ok(())
+}
+
+/// Fit inside the w×h box: the side that hits its limit first is exact, the other
+/// follows the ratio. Cross-multiplying in u64 picks that side without float error.
+fn resolve_both(w: u32, h: u32, orig_w: u32, orig_h: u32, maintain_aspect: bool) -> (u32, u32) {
+    if !maintain_aspect {
+        return (w, h);
+    }
+    if w as u64 * orig_h as u64 <= h as u64 * orig_w as u64 {
+        resolve_width_only(w, orig_w, orig_h, true)
+    } else {
+        resolve_height_only(h, orig_w, orig_h, true)
+    }
 }
 
 fn resolve_width_only(w: u32, orig_w: u32, orig_h: u32, maintain_aspect: bool) -> (u32, u32) {
@@ -109,10 +125,52 @@ mod tests {
     // =========================================================================
 
     #[test]
-    fn test_calculate_dimensions_both_specified() {
-        // When both width and height are given, use them directly.
+    fn test_calculate_dimensions_both_specified_matching_ratio() {
+        // 300×200 box has the same 3:2 ratio as 1200×800, so it fills exactly.
         let result = ResizeImages::calculate_dimensions(Some(300), Some(200), 1200, 800, true);
         assert_eq!(result.unwrap(), (300, 200));
+    }
+
+    #[test]
+    fn test_calculate_dimensions_both_with_aspect_fits_width() {
+        // Square into a wide 50×20 box: height is the tight side → 20×20.
+        let result = ResizeImages::calculate_dimensions(Some(50), Some(20), 100, 100, true);
+        assert_eq!(result.unwrap(), (20, 20));
+    }
+
+    #[test]
+    fn test_calculate_dimensions_both_with_aspect_fits_height() {
+        // 1200×800 into a 300×300 box: width is the tight side → 300×200.
+        let result = ResizeImages::calculate_dimensions(Some(300), Some(300), 1200, 800, true);
+        assert_eq!(result.unwrap(), (300, 200));
+    }
+
+    #[test]
+    fn test_calculate_dimensions_both_with_aspect_upscales_to_fit() {
+        // Small image grows until one side touches the box: 100×50 → 400×200.
+        let result = ResizeImages::calculate_dimensions(Some(400), Some(400), 100, 50, true);
+        assert_eq!(result.unwrap(), (400, 200));
+    }
+
+    #[test]
+    fn test_calculate_dimensions_both_with_aspect_favicon_svg() {
+        // The 3117×2744 favicon SVG into a 512×512 box: 512 × 2744/3117 = 450.7 → 451.
+        let result = ResizeImages::calculate_dimensions(Some(512), Some(512), 3117, 2744, true);
+        assert_eq!(result.unwrap(), (512, 451));
+    }
+
+    #[test]
+    fn test_calculate_dimensions_both_with_aspect_minimum_1px() {
+        // 1000×1 into a 2×2 box: height 0.002 rounds to 0 → clamped to 1.
+        let result = ResizeImages::calculate_dimensions(Some(2), Some(2), 1000, 1, true);
+        assert_eq!(result.unwrap(), (2, 1));
+    }
+
+    #[test]
+    fn test_calculate_dimensions_both_no_aspect_stretches() {
+        // maintainAspect=false keeps the exact box, distorting the image.
+        let result = ResizeImages::calculate_dimensions(Some(50), Some(20), 100, 100, false);
+        assert_eq!(result.unwrap(), (50, 20));
     }
 
     #[test]

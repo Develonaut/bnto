@@ -9,6 +9,7 @@ use bnto_core::{PipelineEvent, PipelineReporter};
 use colored::Colorize;
 
 use crate::live_bar::LiveBar;
+use crate::output_names::OutputNames;
 use crate::progress_indent::{self, StepDepths};
 
 /// Create a reporter that prints colored progress events to stderr
@@ -22,6 +23,7 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
     let live: RefCell<LiveBar> = RefCell::new(LiveBar::default());
     let spinner_tick: RefCell<usize> = RefCell::new(0);
     let depths: RefCell<StepDepths> = RefCell::new(StepDepths::default());
+    let output_names: RefCell<OutputNames> = RefCell::default();
 
     PipelineReporter::new(move |event: PipelineEvent| match &event {
         PipelineEvent::PipelineStarted { total_nodes, .. } => {
@@ -34,7 +36,8 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
         PipelineEvent::IterationStarted { .. } | PipelineEvent::IterationFailed { .. } => {}
         PipelineEvent::IterationCompleted { output_files, .. } => {
             if let Some(dir) = &output_dir {
-                crate::progressive_output::write_progressive_files(dir, output_files);
+                let names = &mut output_names.borrow_mut();
+                crate::progressive_output::write_progressive_files(dir, output_files, names);
             }
         }
         PipelineEvent::NodeStarted {

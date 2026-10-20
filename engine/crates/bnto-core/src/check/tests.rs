@@ -57,7 +57,7 @@ fn registry() -> NodeRegistry {
 
 fn check(def: serde_json::Value) -> Vec<CheckFinding> {
     let definition: PipelineDefinition = serde_json::from_value(def).unwrap();
-    check_pipeline(&definition, &registry())
+    check_pipeline(&definition, &registry()).findings
 }
 
 /// A recipe with one `lenient` node whose params are `params`.

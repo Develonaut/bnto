@@ -234,7 +234,7 @@ pub fn compress_image_combined(
 ///     ```json
 ///     {
 ///       "width": 800,                // Target width in pixels
-///       "height": 600,               // Target height (optional if maintainAspect)
+///       "height": 600,               // Target height (optional; with width + maintainAspect, fits inside)
 ///       "maintainAspect": true,      // Preserve aspect ratio (default: true)
 ///       "quality": 80                // JPEG quality 1-100 (default: 80)
 ///     }
