@@ -1,0 +1,53 @@
+# shell-command Security Findings
+
+**Created:** October 20, 2026
+**Evidence:** [Shell script injection safety report](../../research/reports/Shell%20script%20injection%20safety.md) (research notes alongside it)
+**Tests:** `engine/crates/bnto/tests/shell_security/` — run `cargo test -p bnto --test shell_security`; list open findings with `-- --ignored`.
+
+Every finding below is a test that attacks the real `bnto` binary. **Guards** hold today and run in CI, so a regression fails the build. **Open** findings are written as the behaviour we want and `#[ignore]`d with `OPEN SEC-xx`. Each one fails today (verified). A hardening PR un-ignores the tests it makes pass and flips the row to Guard.
+
+Most payloads try to create a canary file. A test passes only if the canary never appears and the legitimate path still works. That check comes from a positive control in the same test, so a test can't pass just because a feature is missing.
+
+## The model
+
+- **Author vs data.** Whoever wrote the recipe is trusted only through consent: bundled recipes are reviewed, and other recipes are approved per SHA-256 of the definition. Template values (`{{fields}}`, `{{item}}`, `{{node}}`, `{{env}}`, URL input) are **data** and may be hostile, because file names, CSV cells and downloaded content all flow in. Data must never become code.
+- **The rule every credible source converges on:** keep the code literal, and pass values out of band (argv, env or stdin), never spliced into script text. Peers use the same pattern: GitHub Actions env vars, Jenkins `withEnv`, Airflow `env=`, Alfred argv, Windmill `$1`.
+
+## Findings
+
+| ID     | Finding                                                                                                                                         | Status             | When                      | Test                                              |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------- | ------------------------------------------------- |
+| SEC-01 | Field values reach argv literally, never as shell syntax                                                                                        | Guard              | —                         | `argv_values::sec01_*`                            |
+| SEC-02 | One value is one argv element (no `shlex` re-split, unlike Home Assistant)                                                                      | Guard              | —                         | `argv_values::sec02_*`                            |
+| SEC-03 | Hostile file names via `each` groups stay data                                                                                                  | Guard              | —                         | `argv_values::sec03_*`                            |
+| SEC-04 | Shells are refused as `command`, in any letter case                                                                                             | Guard              | —                         | `command_policy::sec04_*`                         |
+| SEC-05 | `.exe` spellings (`bash.exe`, `pwsh.exe`, `powershell.exe`) slip past the denylist                                                              | **Open**           | Next                      | `command_policy::sec05_*`                         |
+| SEC-06 | `command` must be a bare name, not a path                                                                                                       | Guard              | —                         | `command_policy::sec06_*`                         |
+| SEC-07 | `command` is templated, so data can pick the program (Home Assistant forbids this)                                                              | **Open**           | Next                      | `command_policy::sec07_*`                         |
+| SEC-08 | Exec wrappers (`env`, `xargs`, `nohup`, `nice`, `timeout`) reach a shell around the denylist                                                    | **Open**           | Later                     | `command_policy::sec08_*`                         |
+| SEC-09 | Recipe `env` can't set `PATH`, `LD_*`, `DYLD_*`, `HOME`, `SHELL`, `TMPDIR`, in any case                                                         | Guard              | —                         | `env_policy::sec09_*`                             |
+| SEC-10 | Recipe `env` passes shell startup variables (`SHELLOPTS`+`PS4`, `BASH_FUNC_*`, `BASH_ENV`, `ZDOTDIR`, `FPATH`, …), and env values are templated | **Open**           | Before `script`           | `env_policy::sec10_*`                             |
+| SEC-11 | Templates are filled into interpreter code (`python3 -c`, `node -e`, `osascript -e`, …), the Budibase CVE-2026-25044 class                      | **Open**           | Next (reachable today)    | `interpreter_code::sec11_*`                       |
+| SEC-12 | Literal interpreter code that reads data from trailing argv stays allowed                                                                       | Guard              | —                         | `interpreter_code::sec12_*`                       |
+| SEC-13 | Enum `--param` values aren't checked against `options`                                                                                          | **Open**           | Before bundled keep-awake | `enum_values::sec13_*`                            |
+| SEC-14 | URL input must be http(s), never another scheme or an option                                                                                    | Guard              | —                         | `input_modes::sec14_*`                            |
+| SEC-15 | Editing an approved recipe asks for consent again                                                                                               | Guard              | —                         | `consent::sec15_*`                                |
+| SEC-16 | Consent shows program names only, not the args or script being approved                                                                         | **Open**           | Before `script`           | `consent::sec16_*`                                |
+| SEC-17 | Substituted values are rescanned, so data containing `{{env.SECRET}}` gets the secret filled in (second-order injection)                        | **Open**           | Next                      | `template_values::sec17_*`                        |
+| SEC-18 | A value containing its own placeholder (`{{env.X}}` = `"{{env.X}}"`) hangs template filling                                                     | **Open**           | Next                      | `template_values::sec18_*`                        |
+| SEC-19 | The TUI runs library recipes with shell steps without asking for consent (`tui/bridge.rs` skips `check_trust`)                                  | **Open**           | Next (most urgent)        | Unit tests in `bnto/src/tui` (added with the fix) |
+| SEC-20 | Script mode: values arrive as `"$1"…`, never as syntax                                                                                          | **Open**           | Before `script`           | `script_mode::sec20_*`                            |
+| SEC-21 | Script mode: `{{` in the script is refused on the raw definition                                                                                | **Open**           | Before `script`           | `script_mode::sec21_*`                            |
+| SEC-22 | Script mode: inherited `SHELLOPTS`+`PS4`, `BASH_FUNC_*`, `BASH_ENV` never run                                                                   | **Open**           | Before `script`           | `script_mode::sec22_*`                            |
+| SEC-23 | Script mode: zsh ignores `$ZDOTDIR/.zshenv` (`zsh -f`)                                                                                          | **Open**           | Before `script`           | `script_mode::sec23_*`                            |
+| SEC-24 | Script mode: shells run by absolute path, not PATH or `search_path`                                                                             | **Open**           | Before `script`           | `script_mode::sec24_*`                            |
+| SEC-25 | Script mode: only `sh`, `bash`, `zsh`, `dash`, `ksh` are accepted                                                                               | **Open**           | Before `script`           | `script_mode::sec25_*`                            |
+| SEC-26 | Script mode: cleared environment plus an allowlist, so exported secrets don't leak                                                              | **Open**           | Before `script`           | `script_mode::sec26_*`                            |
+| SEC-30 | Windows `.bat`/`.cmd` shims can't be broken out of (BatBadBut, Rust ≥ 1.81)                                                                     | Guard (Windows CI) | —                         | `windows_batch::sec30_*`                          |
+
+## Not yet covered by tests
+
+- **Argument injection** (values starting with `-`) through fields. The fix (a per-field `noLeadingDash` validator or `--` insertion) isn't designed yet. A blanket ban would break `download-video`'s option-shaped enum values. Report recommendation 11.
+- **PowerShell script mode** (values only as `BNTO_ARG_n` env vars via `-EncodedCommand`, never `-Command <script> <args>`). Add specs with the Windows keep-awake variant. Report recommendation 8.
+- **Templated `search_path`** lets a value choose the folder a command runs from. The shipped fixture uses `{{vars.Tools}}` (run config, not data). Whether `{{fields}}`/`{{item}}` should be allowed there is undecided. It's the same class as SEC-07.
+- **ShellCheck on bundled scripts in CI.** Report recommendation 6.

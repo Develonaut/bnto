@@ -428,6 +428,25 @@ Deferred to Sprint 17 Wave 3. Image crop/rotate is lower priority than BRU file 
 
 ---
 
+## Security Sweep: shell-command Hardening — ACTIVE
+
+Close every open finding in [shell-command.md](scopes/security/shell-command.md). Each PR removes the `#[ignore]` from its tests in `engine/crates/bnto/tests/shell_security/` (target: 0 ignored). Plan: [shell-security-sweep.md](plans/shell-security-sweep.md). Evidence: [research report](research/reports/Shell%20script%20injection%20safety.md).
+
+- [x] PR 0 — Add the shell-command security suite and findings index
+- [ ] PR 1 — Expect the resolved work dir in `shell_each` on macOS (test-only)
+- [ ] PR 2 — SEC-19: ask for consent in the TUI before running an untrusted shell recipe
+- [ ] PR 3 — SEC-17/18: fill templates in one pass so substituted values are never re-read
+- [ ] PR 4 — SEC-07: check shell-command params before templates are filled; require a literal command
+- [ ] PR 5 — SEC-11: refuse templates inside interpreter code args (depends on PR 4)
+- [ ] PR 6 — SEC-05: catch Windows spellings of shells in the denylist
+- [ ] PR 7 — SEC-08: refuse exec wrappers that launch a shell (depends on PR 6)
+- [ ] PR 8 — SEC-10: strip shell/interpreter startup variables from recipe env
+- [ ] PR 9 — SEC-13: check field values against their definitions before a run
+- [ ] PR 10 — SEC-16: show full command lines in the consent prompt (depends on PR 2)
+- [ ] PR 11 — SEC-20–26: script mode — literal script through a hardened shell (depends on PRs 4, 8, 10)
+
+---
+
 ## Sprint 17: BRU File Ecosystem + Engine Polish — ACTIVE
 
 **Goal:** Achieve the BRU (Bulk Rename Utility) composable file operations goal. Four new file processors that chain together to give BRU-level power. Parallel engine polish for execution progress, secrets, and trust model. Image crop/rotate (deferred from Sprint 16). Format expansion (CSV sort/filter, Excel, EPS→SVG). Grows recipe count from 20→26+.
