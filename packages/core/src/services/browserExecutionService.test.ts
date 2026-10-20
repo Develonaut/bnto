@@ -18,7 +18,7 @@ const COMPRESS_DEFINITION: PipelineDefinition = {
 
 const TIMED_DEFINITION: PipelineDefinition = {
   ...COMPRESS_DEFINITION,
-  settings: { timeout: 5 },
+  settings: { iteration: "auto", timeout: 5 },
 };
 
 // ---------------------------------------------------------------------------

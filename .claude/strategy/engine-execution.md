@@ -223,6 +223,8 @@ The JS side is deliberately thin:
 | Convert output bytes to downloadable `Blob`            | Download service          |
 | Surface errors to UI                                   | Error boundary            |
 
+Serializing (`transforms/definitionToPipeline.ts`) drops only what is editor-only (positions, ports, edge handles). It keeps every level's `edges` and the recipe's `settings` (iteration mode and time limit), so a browser run iterates and routes files as `bnto run` does. Dropping `settings.iteration` left output files unchanged for every bundled recipe but changed its progress events: an `auto` run sends `NodeStarted` / `NodeCompleted` per file per node, an `explicit` one once per node.
+
 `executePipeline.ts` (the JS-side orchestrator that loops over files and calls per-file WASM functions) is **deprecated** in favor of the Rust executor. It remains only as a fallback during migration.
 
 ---
