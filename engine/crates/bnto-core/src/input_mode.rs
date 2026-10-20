@@ -21,6 +21,11 @@ pub enum InputMode {
     None,
 }
 
+/// Params a run's input preparation injects into the processing node: the
+/// URL in `url` mode, the text in `text` mode, each under its mode's name.
+/// They carry the run's input, not the recipe's config, so any node takes them.
+pub const INJECTED_PARAMS: [&str; 2] = ["url", "text"];
+
 impl InputMode {
     /// The wire string used for the input node's `mode` param.
     pub fn as_str(self) -> &'static str {
@@ -63,6 +68,14 @@ mod tests {
         (InputMode::Text, "text"),
         (InputMode::None, "none"),
     ];
+
+    #[test]
+    fn injected_params_are_named_after_the_url_and_text_modes() {
+        assert_eq!(
+            INJECTED_PARAMS,
+            [InputMode::Url.as_str(), InputMode::Text.as_str()]
+        );
+    }
 
     #[test]
     fn as_str_returns_wire_string() {

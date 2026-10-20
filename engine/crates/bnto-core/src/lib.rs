@@ -122,8 +122,15 @@ pub mod vars;
 /// tallied from its pipeline events.
 pub mod run_summary;
 
+/// Node types and params a migration renamed, so errors can name the new
+/// spelling and point at `bnto migrate`.
+pub mod renamed;
+
 /// Relative paths as output-file names, `/`-separated on every OS.
 pub mod slash_path;
+
+/// Params a recipe gives a node that the node doesn't declare.
+pub mod undeclared_params;
 
 /// Civil (calendar) UTC time from epoch time, with no date crate.
 /// `rfc3339_utc` is the one format for times nodes and templates report.

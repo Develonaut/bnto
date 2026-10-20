@@ -4,7 +4,7 @@
 
 use crate::context::ProcessContext;
 use crate::errors::BntoError;
-use crate::metadata::{NodeCategory, NodeMetadata};
+use crate::metadata::{NodeCategory, NodeMetadata, ParameterDef};
 use crate::progress::ProgressReporter;
 
 // Re-export FileData so `processor::FileData` still works for existing imports.
@@ -243,6 +243,14 @@ pub trait NodeProcessor {
             input_cardinality: Default::default(),
             requires: vec![],
         }
+    }
+
+    /// The params a run accepts for this node: its metadata's, or `None`
+    /// when the processor keeps the placeholder `metadata()` above (test
+    /// mocks), which declares nothing. A run refuses any other param.
+    fn declared_params(&self) -> Option<Vec<ParameterDef>> {
+        let meta = self.metadata();
+        (meta.node_type == self.name()).then_some(meta.parameters)
     }
 }
 

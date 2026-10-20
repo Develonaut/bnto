@@ -14,7 +14,10 @@ use std::collections::BTreeMap;
 
 use crate::executor::resolve::{collect_field_values, resolve_fields};
 use crate::pipeline::{PipelineDefinition, PipelineNode, is_container_node, is_io_node};
+use crate::processor::NodeProcessor;
 use crate::registry::NodeRegistry;
+use crate::renamed::with_node_type_hint;
+use crate::undeclared_params::undeclared_params;
 use edges::{Level, edge_findings};
 pub use run_time::RunTimeParam;
 use run_time::{LeftOut, Subject, left_out};
@@ -109,13 +112,14 @@ fn check_node(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport
 /// defaults filled in, other placeholders left as written.
 fn check_processor(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport) {
     let Some(processor) = recipe.registry.resolve(&node.node_type, &node.params) else {
-        let message = format!("unknown node type \"{}\"", node.node_type);
-        report.findings.push(finding(node, None, message));
+        report.findings.push(unknown_type_finding(node));
         return;
     };
-    for problem in processor.validate_raw(&node.params) {
-        report.findings.push(finding(node, None, problem));
-    }
+    report.findings.extend(undeclared_findings(node, processor));
+    let raw = processor.validate_raw(&node.params).into_iter();
+    report
+        .findings
+        .extend(raw.map(|problem| finding(node, None, problem)));
     let field_values = collect_field_values(&node.fields, &BTreeMap::new());
     let params = resolve_fields(&node.params, &field_values);
     let written = processor.validate(&params);
@@ -167,6 +171,24 @@ fn placeholder_findings(node: &PipelineNode) -> Vec<CheckFinding> {
                 .into_iter()
                 .map(move |message| finding(node, Some(key), message))
         })
+        .collect()
+}
+
+/// No processor has the node's type; say so, with the new name when a
+/// migration renamed it.
+fn unknown_type_finding(node: &PipelineNode) -> CheckFinding {
+    let message = format!("unknown node type \"{}\"", node.node_type);
+    finding(node, None, with_node_type_hint(message, &node.node_type))
+}
+
+/// A finding per param the node gives that its processor doesn't declare.
+fn undeclared_findings(node: &PipelineNode, processor: &dyn NodeProcessor) -> Vec<CheckFinding> {
+    let Some(declared) = processor.declared_params() else {
+        return Vec::new();
+    };
+    undeclared_params(&node.node_type, &node.params, &declared)
+        .into_iter()
+        .map(|u| finding(node, Some(&u.param), u.message))
         .collect()
 }
 
