@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createBrowserExecutionService } from "./browserExecutionService";
 import { EXECUTION_STORE } from "./executionInstance";
 import type { BrowserFileResult } from "../types/browser";
@@ -14,6 +14,11 @@ const COMPRESS_DEFINITION: PipelineDefinition = {
     { id: "process", type: "image-compress", params: {} },
     { id: "output", type: "output", params: {} },
   ],
+};
+
+const TIMED_DEFINITION: PipelineDefinition = {
+  ...COMPRESS_DEFINITION,
+  settings: { timeout: 5 },
 };
 
 // ---------------------------------------------------------------------------
@@ -236,6 +241,89 @@ describe("browserExecutionService", () => {
 
       await instance.run(COMPRESS_DEFINITION, [new File(["data2"], "test2.jpg")]);
       expect(getStore(instance).getState().status).toBe("completed");
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // Run time limit — a step still running when the limit passes
+  // ─────────────────────────────────────────────────────────────────
+
+  describe("time limit", () => {
+    const files = () => [new File(["data"], "test.jpg")];
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+      // A step that never finishes, like a stuck WASM call.
+      mockExecutePipeline.mockReturnValue(new Promise(() => {}));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("stops the worker and fails with the engine's message when the limit passes", async () => {
+      const run = service.runPipeline(TIMED_DEFINITION, files());
+      const assertion = expect(run).rejects.toThrow("Run timed out after 5s");
+
+      await vi.advanceTimersByTimeAsync(5000);
+
+      await assertion;
+      expect(mockTerminate).toHaveBeenCalledOnce();
+    });
+
+    it("leaves the worker running until the limit passes", async () => {
+      service.runPipeline(TIMED_DEFINITION, files());
+
+      await vi.advanceTimersByTimeAsync(4999);
+
+      expect(mockTerminate).not.toHaveBeenCalled();
+    });
+
+    it("arms no timer and never stops the worker when the recipe sets no limit", async () => {
+      service.runPipeline(COMPRESS_DEFINITION, files());
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(600_000);
+      expect(mockTerminate).not.toHaveBeenCalled();
+    });
+
+    it("marks the execution failed with the timeout message", async () => {
+      const instance = service.createExecution();
+
+      const run = instance.run(TIMED_DEFINITION, files());
+      await vi.advanceTimersByTimeAsync(5000);
+      const result = await run;
+
+      expect(result.status).toBe("failed");
+      expect(result.error).toBe("Run timed out after 5s");
+      expect(getStore(instance).getState().status).toBe("failed");
+      expect(getStore(instance).getState().error).toBe("Run timed out after 5s");
+    });
+
+    it("starts the worker again for the next run", async () => {
+      const timedOut = service.runPipeline(TIMED_DEFINITION, files());
+      const assertion = expect(timedOut).rejects.toThrow("Run timed out after 5s");
+      await vi.advanceTimersByTimeAsync(5000);
+      await assertion;
+
+      mockExecutePipeline.mockResolvedValueOnce({ files: [], durationMs: 1 });
+      await service.runPipeline(TIMED_DEFINITION, files());
+
+      const terminateOrder = mockTerminate.mock.invocationCallOrder[0];
+      const lastInitOrder = mockInit.mock.invocationCallOrder.at(-1)!;
+      expect(lastInitOrder).toBeGreaterThan(terminateOrder);
+      expect(mockExecutePipeline).toHaveBeenCalledTimes(2);
+    });
+
+    it("clears the timer when the run finishes in time", async () => {
+      mockExecutePipeline.mockResolvedValueOnce({ files: [], durationMs: 1 });
+
+      await service.runPipeline(TIMED_DEFINITION, files());
+
+      expect(vi.getTimerCount()).toBe(0);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(mockTerminate).not.toHaveBeenCalled();
     });
   });
 });

@@ -6,6 +6,8 @@
 // Just what the executor needs: type, params, and I/O markers.
 // ---------------------------------------------------------------------------
 
+import type { PipelineSettings } from "@bnto/registry";
+
 /** A single node in the pipeline's execution order. */
 export interface PipelineNode {
   /** Unique node ID within this pipeline. */
@@ -22,4 +24,6 @@ export interface PipelineNode {
 export interface PipelineDefinition {
   /** Ordered list of nodes to execute. I/O nodes are skipped automatically. */
   nodes: PipelineNode[];
+  /** Recipe-level settings the browser run honors: the whole run's time limit. */
+  settings?: Pick<PipelineSettings, "timeout">;
 }

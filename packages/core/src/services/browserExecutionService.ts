@@ -13,6 +13,7 @@ import { downloadBlob } from "../adapters/browser/downloadBlob";
 import { createZipBlob } from "../adapters/browser/createZipBlob";
 import { BntoWorker } from "../adapters/browser/BntoWorker";
 import { createExecutionInstance } from "./executionInstance";
+import { withTimeLimit } from "../lib/withTimeLimit";
 import type { ExecutionInstance } from "./executionInstance";
 import type { BrowserFileResult, BrowserFileProgressInput } from "../types/browser";
 import type { PipelineDefinition } from "../types/pipeline";
@@ -86,11 +87,14 @@ async function runPipeline(
 ): Promise<BrowserFileResult[]> {
   if (files.length === 0) return [];
   const worker = await ensureWorker();
-  const result = await worker.executePipeline(
+  const run = worker.executePipeline(
     JSON.stringify(definition),
     files,
     createEventHandler(onProgress, onEvent),
   );
+  // Terminating the worker is the only way to stop a WASM step mid-run.
+  // The next run's ensureWorker() starts a fresh one.
+  const result = await withTimeLimit(run, definition.settings?.timeout, () => worker.terminate());
   return toFileResults(result.files);
 }
 
