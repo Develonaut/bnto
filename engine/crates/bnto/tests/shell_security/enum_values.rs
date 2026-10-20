@@ -27,7 +27,6 @@ fn enum_step() -> serde_json::Value {
 /// SEC-13: `--param` with a value outside the options is refused, naming
 /// the allowed values, before the step runs.
 #[test]
-#[ignore = "OPEN SEC-13: enum --param values aren't checked against options"]
 fn sec13_enum_values_must_be_listed_options() {
     let lab = Lab::new();
     let recipe = lab.recipe(enum_step());

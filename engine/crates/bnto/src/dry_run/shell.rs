@@ -54,9 +54,12 @@ pub fn collect_shell_commands(
 /// Apply `--param key=value` overrides to node field defaults.
 ///
 /// Supports `key=value` (targets first shell-command node) and
-/// `nodeId:key=value` (targets specific node).
-pub fn apply_field_overrides(def: &mut PipelineDefinition, overrides: &[String]) {
+/// `nodeId:key=value` (targets specific node). A value the field refuses
+/// (an unlisted enum option, a number out of range) is not applied; the
+/// returned list says why, one entry per refused override.
+pub fn apply_field_overrides(def: &mut PipelineDefinition, overrides: &[String]) -> Vec<String> {
     let default_node_id = find_first_shell_command_id(&def.nodes);
+    let mut refused = Vec::new();
 
     for entry in overrides {
         let Some((full_key, value)) = entry.split_once('=') else {
@@ -71,8 +74,11 @@ pub fn apply_field_overrides(def: &mut PipelineDefinition, overrides: &[String])
             continue;
         };
 
-        update_field_default(&mut def.nodes, &node_id, &key, value);
+        if let Err(e) = update_field_default(&mut def.nodes, &node_id, &key, value) {
+            refused.push(format!("--param {key}: {e}"));
+        }
     }
+    refused
 }
 
 /// Format a command and its args as a shell-like command line.
@@ -167,11 +173,17 @@ fn find_first_shell_command_id(nodes: &[PipelineNode]) -> Option<String> {
     None
 }
 
-/// Update a node's field default value by name.
-fn update_field_default(nodes: &mut [PipelineNode], node_id: &str, key: &str, value: &str) {
+/// Update a node's field default value by name, if the field accepts it.
+fn update_field_default(
+    nodes: &mut [PipelineNode],
+    node_id: &str,
+    key: &str,
+    value: &str,
+) -> Result<(), String> {
     for node in nodes.iter_mut() {
         if node.id == node_id {
             if let Some(field) = node.fields.get_mut(key) {
+                field.check_value(value)?;
                 match field {
                     FieldDef::String { default, .. } => *default = Some(value.to_string()),
                     FieldDef::Number { default, .. } => *default = value.parse::<f64>().ok(),
@@ -179,12 +191,13 @@ fn update_field_default(nodes: &mut [PipelineNode], node_id: &str, key: &str, va
                     FieldDef::Enum { default, .. } => *default = Some(value.to_string()),
                 }
             }
-            return;
+            return Ok(());
         }
         if let Some(children) = &mut node.children {
-            update_field_default(children, node_id, key, value);
+            update_field_default(children, node_id, key, value)?;
         }
     }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -216,5 +229,26 @@ mod tests {
         };
         let formatted = format_command_line(&cmd);
         assert!(formatted.contains("'{{output_dir}}/out.mp4'"));
+    }
+
+    #[test]
+    fn refused_override_is_reported_and_not_applied() {
+        // SEC-13: the static preview must not show a command with a value
+        // the run would refuse.
+        let mut def: PipelineDefinition = serde_json::from_str(
+            r#"{"nodes": [{
+                "id": "run", "type": "shell-command", "parameters": {},
+                "fields": {"mode": {"type": "enum", "label": "Mode", "default": "a",
+                    "options": [{"value": "a", "label": "A"}, {"value": "b", "label": "B"}]}}
+            }]}"#,
+        )
+        .unwrap();
+        let refused = apply_field_overrides(&mut def, &["mode=-x".into(), "mode=b".into()]);
+        assert_eq!(refused.len(), 1);
+        assert!(refused[0].contains("--param mode"), "{}", refused[0]);
+        let FieldDef::Enum { default, .. } = &def.nodes[0].fields["mode"] else {
+            panic!("expected Enum");
+        };
+        assert_eq!(default.as_deref(), Some("b"));
     }
 }

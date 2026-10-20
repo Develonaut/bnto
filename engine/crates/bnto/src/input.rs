@@ -202,7 +202,7 @@ fn apply_param_overrides(
         }
         let json_value = parse_param_value(&value);
         // Try updating a declared field on the node first.
-        if !apply_node_field_override(def, &node_id, &key, &json_value) {
+        if !apply_node_field_override(def, &node_id, &key, &json_value)? {
             // Not a declared field — inject as raw param.
             inject_param(def, &node_id, &key, &json_value)?;
         }
@@ -215,13 +215,15 @@ fn apply_param_overrides(
 /// Walks the definition tree to find the target node, checks if `key`
 /// matches a declared field, and updates its default. Returns `true` if
 /// a field was found and updated, `false` if the key is not a field
-/// (caller should fall back to raw param injection).
+/// (caller should fall back to raw param injection). A value the field's
+/// definition refuses (an unlisted enum option, a number out of range) is
+/// an error naming what's allowed.
 fn apply_node_field_override(
     def: &mut PipelineDefinition,
     node_id: &str,
     key: &str,
     value: &serde_json::Value,
-) -> bool {
+) -> Result<bool, String> {
     apply_node_field_in_nodes(&mut def.nodes, node_id, key, value)
 }
 
@@ -230,7 +232,7 @@ fn apply_node_field_in_nodes(
     node_id: &str,
     key: &str,
     value: &serde_json::Value,
-) -> bool {
+) -> Result<bool, String> {
     use bnto_core::FieldDef;
     for node in nodes.iter_mut() {
         if node.id == node_id {
@@ -239,6 +241,9 @@ fn apply_node_field_in_nodes(
                     serde_json::Value::String(s) => s.clone(),
                     other => other.to_string(),
                 };
+                field
+                    .check_value(&str_val)
+                    .map_err(|e| format!("--param {key}: {e}"))?;
                 match field {
                     FieldDef::String { default, .. } => *default = Some(str_val),
                     FieldDef::Number { default, .. } => {
@@ -249,17 +254,17 @@ fn apply_node_field_in_nodes(
                     }
                     FieldDef::Enum { default, .. } => *default = Some(str_val),
                 }
-                return true;
+                return Ok(true);
             }
-            return false;
+            return Ok(false);
         }
         if let Some(children) = &mut node.children
-            && apply_node_field_in_nodes(children, node_id, key, value)
+            && apply_node_field_in_nodes(children, node_id, key, value)?
         {
-            return true;
+            return Ok(true);
         }
     }
-    false
+    Ok(false)
 }
 
 /// Parse a `--param` value into (node_id, key, value).
@@ -775,5 +780,59 @@ mod tests {
         assert_eq!(default.as_deref(), Some("webm"));
         // Raw param was injected
         assert_eq!(def.nodes[1].params["timeout"], 600);
+    }
+
+    /// A shell node with a `mode` enum field limited to two options.
+    fn enum_def() -> PipelineDefinition {
+        test_def(
+            r#"{
+                "nodes": [
+                    {
+                        "id": "run",
+                        "type": "shell-command",
+                        "params": {},
+                        "fields": {
+                            "mode": {
+                                "type": "enum",
+                                "label": "Mode",
+                                "options": [
+                                    { "value": "fast", "label": "Fast" },
+                                    { "value": "slow", "label": "Slow" }
+                                ],
+                                "default": "fast"
+                            }
+                        }
+                    }
+                ]
+            }"#,
+        )
+    }
+
+    #[test]
+    fn test_param_outside_enum_options_is_refused_naming_them() {
+        // SEC-13: enum options are an allowlist for values that reach argv.
+        let mut def = enum_def();
+        let err =
+            apply_param_overrides(&mut def, &["mode=--exec".to_string()], Some("run")).unwrap_err();
+        assert!(err.contains("--param mode"), "{err}");
+        assert!(err.contains("'fast', 'slow'"), "{err}");
+        let bnto_core::FieldDef::Enum { default, .. } = &def.nodes[0].fields["mode"] else {
+            panic!("expected Enum");
+        };
+        assert_eq!(
+            default.as_deref(),
+            Some("fast"),
+            "refused value must not apply"
+        );
+    }
+
+    #[test]
+    fn test_param_inside_enum_options_applies() {
+        let mut def = enum_def();
+        apply_param_overrides(&mut def, &["mode=slow".to_string()], Some("run")).unwrap();
+        let bnto_core::FieldDef::Enum { default, .. } = &def.nodes[0].fields["mode"] else {
+            panic!("expected Enum");
+        };
+        assert_eq!(default.as_deref(), Some("slow"));
     }
 }
