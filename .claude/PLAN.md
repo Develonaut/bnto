@@ -42,7 +42,7 @@ Tasks are organized into **sprints** (features) and **waves** (dependency groups
 - **TUI Wizard (Sprint 13):** Guided recipe creation — category → operation → config → done. Hands off to List editor
 - **TUI controls polish (Sprints 14-15):** Bubbles-inspired display/edit modes, FilePath field type, TextArea, fuzzy Select filter, picker search/metadata/breadcrumbs, vim keybindings. `tonkotsu` now at huh parity for shipped controls
 - **Sprint 16 delivered:** tonkotsu huh parity, file-rename enhanced, template expressions, version constraints, `bnto migrate`, 2 design spikes (execution progress UX, recipe secrets). 20 recipes
-- **Next:** Sprint 17 — BRU file ecosystem (file-filter, file-collect, file-copy, file-metadata), engine polish (execution progress Phase 1, secrets Phase 1, recipe trust), image crop/rotate, format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes
+- **Next:** Sprint 17 — BRU file ecosystem (file-filter, file-collect, file-copy, file-inspect), engine polish (execution progress Phase 1, secrets Phase 1, recipe trust), image crop/rotate, format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes
 - **crates.io live:** All crates published. Release pipeline auto-publishes on stable tags
 - **Open source (MIT):** Monetization tabled. Focus on engine power and community traction
 - **Infra:** GitHub Actions CI, tag-triggered release pipeline (CI → preview → E2E → Lighthouse → production deploy → GitHub Release)
@@ -277,7 +277,7 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 **Sprint 16 complete.** tonkotsu at full huh parity, file-rename enhanced (counter + sanitize), template expressions (`{{env.*}}`, `{{ctx.*}}`, `{{node.*}}`), version constraints, `bnto migrate`, execution progress + secrets design spikes delivered. 20 recipes shipped.
 
-**Next: Sprint 17 — BRU File Ecosystem + Engine Polish.** Achieve BRU (Bulk Rename Utility) composable file operations goal: 4 new file processors (file-filter, file-collect, file-copy, file-metadata) that chain together for BRU-level power. Parallel engine polish (execution progress Phase 1, secrets Phase 1, recipe trust/consent). Image crop/rotate. Format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes.
+**Next: Sprint 17 — BRU File Ecosystem + Engine Polish.** Achieve BRU (Bulk Rename Utility) composable file operations goal: 4 new file processors (file-filter, file-collect, file-copy, file-inspect) that chain together for BRU-level power. Parallel engine polish (execution progress Phase 1, secrets Phase 1, recipe trust/consent). Image crop/rotate. Format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes.
 
 Desktop (Tauri) and monetization are deep backlog.
 
@@ -489,7 +489,7 @@ Four new processors in `bnto-file`. Each does one thing, composes with the other
 - [x] `engine/crates/bnto-file` — **`file-filter` processor**: Filter files by extension, name pattern, or size. Params: `extensions` (string, comma-separated), `name_pattern` (string, glob/regex), `min_size` (integer, bytes), `max_size` (integer, bytes). Files that don't match are dropped from the pipeline. Browser+CLI. 22 tests
 - [x] `engine/crates/bnto-file` — **`file-collect` processor**: Directory traversal + glob matching. Params: `pattern` (string, glob), `recursive` (boolean, default true), `flatten` (boolean, default true). Accepts directory path as input, outputs matched files into pipeline. CLI-only (filesystem traversal). 12 tests
 - [x] `engine/crates/bnto-file` — **`file-copy` processor**: Place output files in destination directory. Params: `destination` (string, path), `create_dirs` (boolean, default true), `conflict` (enum: skip/overwrite/rename, default skip). CLI-only (filesystem write). 10 tests
-- [x] `engine/crates/bnto-file` — **`file-metadata` processor**: Extract file properties (size, extension, mime_type, SHA-256 hash). Enriches file metadata map. Browser+CLI (pure-Rust SHA-256, no native deps). 18 tests
+- [x] `engine/crates/bnto-file` — **`file-inspect` processor**: Extract file properties (size, extension, mime_type, SHA-256 hash). Enriches file metadata map. Browser+CLI (pure-Rust SHA-256, no native deps). 18 tests
 
 #### Wave 3 — Image Processors + All Recipes + Codegen (depends on Wave 2)
 
@@ -683,6 +683,18 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 ## Backlog
 
+### Node Vocabulary Alignment
+
+**Priority: Medium.** Bring shipped nodes in line with [node-vocabulary.md](scopes/rust/node-vocabulary.md). One PR per task (single-concern rule). Every breaking task adds a `bnto migrate` step (`engine/crates/bnto/src/migrate.rs`), runs codegen (`task wasm:codegen`), and updates recipes, fixtures and goldens. Remove the matching row from the doc's Audit table when a task merges. Do the labels first: they're non-breaking and cheap.
+
+- [x] `engine` — **Labels and descriptions** (non-breaking): "Convert CSV to JSON", "Rasterize SVG", "Run Shell Command", "Overlay Images"; "Create Folders" on `file-copy`; "folder" not "directory" in `file-collect`
+- [x] `engine` — **Rename `file-metadata` → `file-inspect`** with a migration. Label "Inspect Files" shipped with it
+- [ ] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Trust, consent, dry-run and TUI key on the type string: grep `"shell-command"` across `engine/crates/bnto/src/`
+- [ ] `engine` — **camelCase params** with a migration: `create_dirs`, `tolerance_ms`, `name_pattern`, `pattern_mode`, `min_size`, `max_size`, `include_hash`, `max_length`, `counter_start`, `counter_pad`, `key_column`, `match_on`, `name_column`, `search_path`
+- [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals`
+- [ ] `engine` — **Output suffixes**: `image-overlay` `-overlay` → `-overlaid`; `vector-optimize` adds `-optimized`. Regenerate goldens
+- [ ] `engine` — **Decide `transform` vs `edit-fields`** before `transform` gets a processor (see Engine: Future Node Operations)
+
 ### Engine: Sprint 12B Follow-Up (remaining)
 
 **Priority: Medium.** Items unlocked by Sprint 12B (recipe-level deps + shell-command). See [recipe-deps-strategy.md](strategy/recipe-deps-strategy.md).
@@ -845,7 +857,7 @@ Promoted to Sprint 17 Wave 4.
 
 ### ~~Backlog: File Node Ecosystem — BRU-Style Composable File Operations~~ → Sprint 17 Wave 2
 
-**Promoted to Sprint 17 Wave 2.** `file-rename` enhancement and `file-sanitize` shipped in Sprint 16. Remaining nodes (`file-filter`, `file-collect`, `file-copy`, `file-metadata`) promoted to Sprint 17. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+**Promoted to Sprint 17 Wave 2.** `file-rename` enhancement and `file-sanitize` shipped in Sprint 16. Remaining nodes (`file-filter`, `file-collect`, `file-copy`, `file-inspect`) promoted to Sprint 17. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
 
 ### Triage: Homepage hero — BRU-style file recipe showcase
 
@@ -996,6 +1008,14 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 **Priority: Triage.** The `timeout` param is parsed then bound to `_timeout` and never enforced (`bnto-shell/src/execute.rs:95`); `DEFAULT_TIMEOUT_SECS` in `validate.rs:52` is defined but unused. A hung external command blocks the pipeline forever. Enforcement belongs in `run_command_streaming` (kill the process group on deadline — builds on the ProcessRegistry from PR #520).
 
 `engine/crates/bnto-shell/src/execute.rs:95`, `engine/crates/bnto/src/context.rs`
+
+---
+
+### Triage: Optional per-node `timeout` (step or section limit)
+
+**Priority: Triage.** Give any step, `group` included, an optional `timeout`, enforced by the executor. It would cap one step or one section of a recipe, alongside the whole-run `settings.timeout` / `bnto run --timeout`. Don't build it until a real recipe needs it. Precedent: GitHub Actions step `timeout-minutes`, Airflow `execution_timeout`, Prefect task/subflow `timeout_seconds`.
+
+`engine/crates/bnto-core/src/executor/mod.rs` (run deadline today), `engine/crates/bnto-core/src/pipeline_settings.rs`
 
 ---
 

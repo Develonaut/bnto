@@ -9,7 +9,7 @@ import type { NodeTypeInfo } from "../types";
 /** Node type info for spreadsheet-convert. */
 export const spreadsheetConvertNodeType: NodeTypeInfo = {
   name: "spreadsheet-convert",
-  label: "CSV to JSON",
+  label: "Convert CSV to JSON",
   description: "Convert CSV data to JSON format with configurable delimiters.",
   category: "spreadsheet",
   isContainer: false,

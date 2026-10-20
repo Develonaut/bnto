@@ -1,6 +1,6 @@
 # Clean CSV Node
 
-> Remove empty rows, trim whitespace, and deduplicate CSV data.
+> Clean CSV data by removing empty rows, trimming whitespace, and deduplicating.
 
 **Category:** spreadsheet | **Platforms:** browser | **Container:** no
 

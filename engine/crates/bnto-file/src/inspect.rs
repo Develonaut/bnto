@@ -1,4 +1,4 @@
-// file-metadata — Extract and expose file metadata as pipeline output.
+// file-inspect — Extract and expose file metadata as pipeline output.
 //
 // Pass-through enrichment node: file data flows unchanged, but the output
 // metadata map gains fields like folder, file_size, extension, mime_type,
@@ -12,31 +12,31 @@ use bnto_core::processor::{FileData, NodeInput, NodeOutput, NodeProcessor, Outpu
 use bnto_core::progress::ProgressReporter;
 use bnto_core::{BntoError, ProcessContext};
 
-/// File-metadata processor — enrich pipeline output with file info.
-pub struct FileMetadata;
+/// File-inspect processor — enrich pipeline output with file info.
+pub struct FileInspect;
 
-impl FileMetadata {
+impl FileInspect {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for FileMetadata {
+impl Default for FileInspect {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl NodeProcessor for FileMetadata {
+impl NodeProcessor for FileInspect {
     fn name(&self) -> &str {
-        "file-metadata"
+        "file-inspect"
     }
 
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
-            node_type: "file-metadata".to_string(),
-            name: "File Metadata".to_string(),
-            description: "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach it to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.".to_string(),
+            node_type: "file-inspect".to_string(),
+            name: "Inspect Files".to_string(),
+            description: "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the pipeline output. `folder` is the item's folder in its relative name, `/`-separated (`a/b/c.mp4` gives `a/b`), empty at the top level.".to_string(),
             category: NodeCategory::File,
             accepts: vec![],
             platforms: vec!["browser".to_string(), "cli".to_string(), "desktop".to_string()],
@@ -77,7 +77,7 @@ impl NodeProcessor for FileMetadata {
     }
 }
 
-/// What file-metadata learns about one file's data.
+/// What file-inspect learns about one file's data.
 struct FileFacts {
     size: u64,
     modified: Option<String>,
@@ -341,12 +341,12 @@ mod tests {
 
     #[test]
     fn test_name_returns_correct_key() {
-        assert_eq!(FileMetadata::new().name(), "file-metadata");
+        assert_eq!(FileInspect::new().name(), "file-inspect");
     }
 
     #[test]
     fn test_metadata_is_browser_compatible() {
-        let meta = FileMetadata::new().metadata();
+        let meta = FileInspect::new().metadata();
         assert_eq!(meta.category, NodeCategory::File);
         assert!(meta.platforms.contains(&"browser".to_string()));
         assert!(meta.platforms.contains(&"cli".to_string()));
@@ -356,7 +356,7 @@ mod tests {
 
     #[test]
     fn test_extracts_file_size() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
         let data = b"hello world";
 
@@ -369,7 +369,7 @@ mod tests {
 
     #[test]
     fn test_extracts_extension() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", "photo.JPG", serde_json::Map::new());
@@ -381,7 +381,7 @@ mod tests {
 
     #[test]
     fn test_extracts_mime_type() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", "image.png", serde_json::Map::new());
@@ -393,7 +393,7 @@ mod tests {
 
     #[test]
     fn test_extracts_filename() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", "report.csv", serde_json::Map::new());
@@ -412,7 +412,7 @@ mod tests {
             mime_type: None,
             params: serde_json::Map::new(),
         };
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
         output.metadata["folder"].clone()
@@ -460,7 +460,7 @@ mod tests {
             mime_type: None,
             params: serde_json::Map::new(),
         };
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
         assert_eq!(output.metadata["filename"], "a/b/c.txt");
@@ -471,7 +471,7 @@ mod tests {
 
     #[test]
     fn test_no_hash_by_default() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", "file.txt", serde_json::Map::new());
@@ -482,7 +482,7 @@ mod tests {
 
     #[test]
     fn test_hash_when_enabled() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
@@ -502,7 +502,7 @@ mod tests {
 
     #[test]
     fn test_hash_empty_input() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(
@@ -548,7 +548,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let path = disk_file(tmp.path(), b"data", 1_700_000_000_123);
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(
                 path_input(path),
                 &ProgressReporter::new_noop(),
@@ -570,7 +570,7 @@ mod tests {
             .unwrap()
             .as_millis() as u64;
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(
                 path_input(path),
                 &ProgressReporter::new_noop(),
@@ -589,7 +589,7 @@ mod tests {
     fn test_in_memory_bytes_have_no_modified_time() {
         let input = make_input(b"data", "file.txt", serde_json::Map::new());
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
 
@@ -602,7 +602,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let path = disk_file(tmp.path(), b"hello", 0);
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(
                 path_input(path),
                 &ProgressReporter::new_noop(),
@@ -657,7 +657,7 @@ mod tests {
             return;
         };
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(
                 path_input(path),
                 &ProgressReporter::new_noop(),
@@ -674,7 +674,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let path = disk_file(tmp.path(), b"data", 0);
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(
                 path_input(path.clone()),
                 &ProgressReporter::new_noop(),
@@ -702,7 +702,7 @@ mod tests {
             params: serde_json::Map::new(),
         };
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
 
@@ -718,7 +718,7 @@ mod tests {
         let mut input = path_input(path.clone());
         input.params = params(&[("include_hash", serde_json::json!(true))]);
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
 
@@ -733,7 +733,7 @@ mod tests {
     fn test_in_memory_bytes_stay_bytes() {
         let input = make_input(b"in memory", "file.txt", serde_json::Map::new());
 
-        let output = FileMetadata::new()
+        let output = FileInspect::new()
             .process(input, &ProgressReporter::new_noop(), &NoopContext)
             .unwrap();
 
@@ -745,7 +745,7 @@ mod tests {
 
     #[test]
     fn test_data_passes_through_unchanged() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
         let data = b"original file content";
 
@@ -758,7 +758,7 @@ mod tests {
 
     #[test]
     fn test_filename_passes_through() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", "my-file.csv", serde_json::Map::new());
@@ -771,7 +771,7 @@ mod tests {
 
     #[test]
     fn test_no_extension_file() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", "Makefile", serde_json::Map::new());
@@ -785,7 +785,7 @@ mod tests {
 
     #[test]
     fn test_dotfile() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"data", ".gitignore", serde_json::Map::new());
@@ -798,7 +798,7 @@ mod tests {
 
     #[test]
     fn test_empty_file() {
-        let processor = FileMetadata::new();
+        let processor = FileInspect::new();
         let progress = ProgressReporter::new_noop();
 
         let input = make_input(b"", "empty.txt", serde_json::Map::new());

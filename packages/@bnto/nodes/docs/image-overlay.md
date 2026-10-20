@@ -1,4 +1,4 @@
-# Overlay Image Node
+# Overlay Images Node
 
 > Overlay an image onto source images at a configurable position, size, and opacity.
 

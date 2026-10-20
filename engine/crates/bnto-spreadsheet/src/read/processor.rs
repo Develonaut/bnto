@@ -36,7 +36,7 @@ impl NodeProcessor for ReadSpreadsheet {
         NodeMetadata {
             node_type: "spreadsheet-read".to_string(),
             name: "Read Rows".to_string(),
-            description: "Explode a CSV or a JSON array into one item per row for loop iteration. \
+            description: "Read a CSV or a JSON array into one item per row for loop iteration. \
                           Nested JSON fields read as dotted keys (meta.id)"
                 .to_string(),
             category: NodeCategory::Spreadsheet,

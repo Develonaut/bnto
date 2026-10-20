@@ -9,7 +9,7 @@ import type { ProcessorDef } from "../types";
 /** Processor definition for image-overlay. */
 export const imageOverlayProcessor: ProcessorDef = {
   nodeType: "image-overlay",
-  name: "Overlay Image",
+  name: "Overlay Images",
   description: "Overlay an image onto source images at a configurable position, size, and opacity.",
   category: "image",
   accepts: ["image/jpeg", "image/png", "image/webp"] as const,

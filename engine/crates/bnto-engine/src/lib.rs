@@ -42,8 +42,8 @@ pub fn create_browser_registry() -> NodeRegistry {
     registry.register("summarize", Box::new(bnto_core::data::Summarize::new()));
     registry.register("file-decode", Box::new(bnto_file::FileDecode::new()));
     registry.register("file-filter", Box::new(bnto_file::FileFilter::new()));
+    registry.register("file-inspect", Box::new(bnto_file::FileInspect::new()));
     registry.register("file-join", Box::new(bnto_file::FileJoin::new()));
-    registry.register("file-metadata", Box::new(bnto_file::FileMetadata::new()));
     registry.register("file-rename", Box::new(bnto_file::RenameFiles::new()));
     registry.register("file-render", Box::new(bnto_file::FileRender::new()));
     registry.register("file-sort", Box::new(bnto_file::FileSort::new()));
@@ -151,8 +151,8 @@ mod tests {
             "summarize",
             "file-decode",
             "file-filter",
+            "file-inspect",
             "file-join",
-            "file-metadata",
             "file-rename",
             "file-render",
             "file-sort",
@@ -323,12 +323,12 @@ mod tests {
 
     #[test]
     fn test_flat_recipe_renames_from_metadata_an_earlier_node_attached() {
-        // file-metadata attaches `extension`; file-rename reads it per file.
+        // file-inspect attaches `extension`; file-rename reads it per file.
         let json = r#"{
             "settings": { "iteration": "auto" },
             "nodes": [
                 { "id": "input", "type": "input" },
-                { "id": "meta", "type": "file-metadata" },
+                { "id": "meta", "type": "file-inspect" },
                 { "id": "rename", "type": "file-rename",
                   "parameters": { "pattern": "{{item.extension}}-{{name}}.{{ext}}" } },
                 { "id": "output", "type": "output" }
@@ -349,7 +349,7 @@ mod tests {
         let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
         assert_eq!(names, vec!["txt-notes.txt", "csv-data.csv"]);
 
-        // Metadata accumulates: file-metadata's keys survive the rename,
+        // Metadata accumulates: file-inspect's keys survive the rename,
         // alongside what file-rename attached.
         let meta = &result.files[0].metadata;
         assert_eq!(meta["extension"], "txt");
@@ -394,7 +394,7 @@ mod tests {
             "settings": { "iteration": "auto" },
             "nodes": [
                 { "id": "input", "type": "input" },
-                { "id": "meta", "type": "file-metadata" },
+                { "id": "meta", "type": "file-inspect" },
                 { "id": "rename", "type": "file-rename",
                   "parameters": { "pattern": "{{item.modified}} {{ctx.started}}" } },
                 { "id": "output", "type": "output" }
@@ -443,7 +443,7 @@ mod tests {
                 { "id": "input", "type": "input", "parameters": { "mode": "none" } },
                 { "id": "list", "type": "file-list",
                   "parameters": { "base": tmp.path().to_str().unwrap(), "paths": names } },
-                { "id": "meta", "type": "file-metadata" },
+                { "id": "meta", "type": "file-inspect" },
                 { "id": "output", "type": "output", "parameters": { "mode": "none" } }
             ]
         })
@@ -542,13 +542,13 @@ mod tests {
 
     #[test]
     fn test_summarize_counts_and_totals_what_file_metadata_attached() {
-        // file-metadata gives each file `extension` and `file_size`;
+        // file-inspect gives each file `extension` and `file_size`;
         // summarize turns five files into one item per extension.
         let json = r#"{
             "settings": { "iteration": "auto" },
             "nodes": [
                 { "id": "input", "type": "input" },
-                { "id": "meta", "type": "file-metadata" },
+                { "id": "meta", "type": "file-inspect" },
                 { "id": "totals", "type": "summarize",
                   "parameters": { "groupBy": "extension", "sum": "file_size" } },
                 { "id": "output", "type": "output" }
@@ -809,8 +809,8 @@ mod tests {
         let expected_keys = [
             "file-decode",
             "file-filter",
+            "file-inspect",
             "file-join",
-            "file-metadata",
             "file-rename",
             "file-sort",
             "image-compress",

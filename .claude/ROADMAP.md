@@ -67,7 +67,7 @@ M3: Engine Expansion + CLI           ← ACTIVE (April 2026)
     `bnto migrate` shipped. Design spikes: execution progress UX, recipe secrets.
 
     Next: Sprint 17 — BRU file ecosystem + engine polish. Composable file
-    operations (file-filter, file-collect, file-copy, file-metadata) for
+    operations (file-filter, file-collect, file-copy, file-inspect) for
     BRU-level power. Engine polish (execution progress Phase 1, secrets
     Phase 1, recipe trust/consent). Image crop/rotate. Format expansion
     (CSV sort/filter, Excel, EPS→SVG). bnto-editor crate extraction.

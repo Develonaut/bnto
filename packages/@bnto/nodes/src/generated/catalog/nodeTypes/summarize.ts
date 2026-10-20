@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const summarizeNodeType: NodeTypeInfo = {
   name: "summarize",
   label: "Summarize",
-  description: "Group items by fields; output one item per group with its count and field totals.",
+  description: "Summarize items into one per group of fields, with its count and field totals.",
   category: "data",
   isContainer: false,
   platforms: ["browser"] as const,

@@ -6,12 +6,12 @@
 
 import type { NodeTypeInfo } from "../types";
 
-/** Node type info for file-metadata. */
-export const fileMetadataNodeType: NodeTypeInfo = {
-  name: "file-metadata",
-  label: "File Metadata",
+/** Node type info for file-inspect. */
+export const fileInspectNodeType: NodeTypeInfo = {
+  name: "file-inspect",
+  label: "Inspect Files",
   description:
-    "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
+    "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the output.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

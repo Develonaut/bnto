@@ -11,7 +11,7 @@ export const summarizeProcessor: ProcessorDef = {
   nodeType: "summarize",
   name: "Summarize",
   description:
-    "Group items by metadata fields and output one item per group with its count and the totals of numeric fields (sum_<field>). Groups keep first-seen order; the items summarized don't pass through.",
+    "Summarize items by metadata fields, one item per group with its count and the totals of numeric fields (sum_<field>). Groups keep first-seen order; the items summarized don't pass through.",
   category: "data",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

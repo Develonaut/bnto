@@ -11,7 +11,7 @@ export const imagePadNodeType: NodeTypeInfo = {
   name: "image-pad",
   label: "Pad Images",
   description:
-    "Center images on a larger canvas, filling the added space with transparency or a color.",
+    "Pad images onto a larger, centered canvas, filling the added space with transparency or a color.",
   category: "image",
   isContainer: false,
   platforms: ["browser"] as const,

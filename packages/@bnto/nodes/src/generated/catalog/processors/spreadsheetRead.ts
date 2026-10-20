@@ -11,7 +11,7 @@ export const spreadsheetReadProcessor: ProcessorDef = {
   nodeType: "spreadsheet-read",
   name: "Read Rows",
   description:
-    "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id)",
+    "Read a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id)",
   category: "spreadsheet",
   accepts: ["text/csv", "application/json"] as const,
   platforms: ["browser"] as const,

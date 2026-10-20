@@ -10,7 +10,8 @@ import type { NodeTypeInfo } from "../types";
 export const assertNodeType: NodeTypeInfo = {
   name: "assert",
   label: "Assert",
-  description: "Fail the run when a comparison doesn't hold; otherwise pass files through.",
+  description:
+    "Assert a comparison on each item; fail the run when it doesn't hold, otherwise pass files through.",
   category: "control",
   isContainer: false,
   platforms: ["browser"] as const,

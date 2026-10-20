@@ -53,7 +53,7 @@ impl NodeProcessor for PadImages {
         NodeMetadata {
             node_type: "image-pad".to_string(),
             name: "Pad Images".to_string(),
-            description: "Center images on a larger canvas, filling the added space with \
+            description: "Pad images onto a larger, centered canvas, filling the added space with \
                           transparency or a color."
                 .to_string(),
             category: NodeCategory::Image,

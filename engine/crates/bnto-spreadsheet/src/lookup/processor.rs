@@ -35,8 +35,9 @@ impl NodeProcessor for SpreadsheetLookup {
         NodeMetadata {
             node_type: "spreadsheet-lookup".to_string(),
             name: "Look Up Rows".to_string(),
-            description: "Attach the CSV row whose key matches each file's name to that file"
-                .to_string(),
+            description:
+                "Look up the CSV row whose key matches each file's name and attach it to that file"
+                    .to_string(),
             category: NodeCategory::Spreadsheet,
             accepts: vec![],
             platforms: vec!["cli".to_string(), "desktop".to_string()],

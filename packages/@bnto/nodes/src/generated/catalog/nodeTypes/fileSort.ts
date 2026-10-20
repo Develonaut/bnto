@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const fileSortNodeType: NodeTypeInfo = {
   name: "file-sort",
   label: "Sort Files",
-  description: "Reorder items by one or more metadata fields, each ascending or descending.",
+  description: "Sort items by one or more metadata fields, each ascending or descending.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

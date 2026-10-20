@@ -1,6 +1,6 @@
-# SVG to Image Node
+# Rasterize SVG Node
 
-> Convert SVG files to raster images (PNG, JPEG, WebP).
+> Rasterize SVG files into raster images (PNG, JPEG, WebP).
 
 **Category:** vector | **Platforms:** browser | **Container:** no
 

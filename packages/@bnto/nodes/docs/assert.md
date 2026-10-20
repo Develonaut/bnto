@@ -1,6 +1,6 @@
 # Assert Node
 
-> Fail the run when a comparison doesn't hold; otherwise pass files through.
+> Assert a comparison on each item; fail the run when it doesn't hold, otherwise pass files through.
 
 **Category:** control | **Platforms:** browser | **Container:** no
 

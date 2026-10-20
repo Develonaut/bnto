@@ -141,7 +141,8 @@ impl NodeProcessor for CompressImages {
         NodeMetadata {
             node_type: "image-compress".to_string(),
             name: "Compress Images".to_string(),
-            description: "Reduce image file size while maintaining quality".to_string(),
+            description: "Compress images to a smaller file size while maintaining quality"
+                .to_string(),
             category: NodeCategory::Image,
             accepts: image_accepts(),
             platforms: vec!["browser".to_string()],

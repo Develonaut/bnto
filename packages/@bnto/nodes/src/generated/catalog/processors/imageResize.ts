@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const imageResizeProcessor: ProcessorDef = {
   nodeType: "image-resize",
   name: "Resize Images",
-  description: "Change image dimensions while maintaining quality",
+  description: "Resize images to new dimensions while maintaining quality",
   category: "image",
   accepts: ["image/jpeg", "image/png", "image/webp"] as const,
   platforms: ["browser"] as const,

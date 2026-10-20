@@ -13,9 +13,9 @@ import { fileCopyProcessor } from "./fileCopy";
 import { fileDecodeProcessor } from "./fileDecode";
 import { fileDeleteProcessor } from "./fileDelete";
 import { fileFilterProcessor } from "./fileFilter";
+import { fileInspectProcessor } from "./fileInspect";
 import { fileJoinProcessor } from "./fileJoin";
 import { fileListProcessor } from "./fileList";
-import { fileMetadataProcessor } from "./fileMetadata";
 import { fileMoveProcessor } from "./fileMove";
 import { fileRenameProcessor } from "./fileRename";
 import { fileRenderProcessor } from "./fileRender";
@@ -47,9 +47,9 @@ export const PROCESSORS: readonly ProcessorDef[] = [
   fileDecodeProcessor,
   fileDeleteProcessor,
   fileFilterProcessor,
+  fileInspectProcessor,
   fileJoinProcessor,
   fileListProcessor,
-  fileMetadataProcessor,
   fileMoveProcessor,
   fileRenameProcessor,
   fileRenderProcessor,

@@ -44,7 +44,7 @@ A toolkit of small, focused file operation nodes that compose into powerful reci
 | Sequential numbering (001, 002...) | Yes | Static `{{index}}` only    | Add `counter` params to `file-rename`  |
 | Extension manipulation             | Yes | Locked to original         | Add `extension` param to `file-rename` |
 | Character sanitization             | Yes | One find/replace at a time | New `file-sanitize` node               |
-| File property-based naming         | Yes | Filename only              | New `file-metadata` node               |
+| File property-based naming         | Yes | Filename only              | New `file-inspect` node                |
 | Directory traversal                | Yes | Explicit file selection    | New `file-collect` node                |
 | File placement/output              | Yes | Download only              | New `file-copy` node                   |
 | Conditional branching              | Yes | None                       | New `file-filter` node                 |
@@ -140,7 +140,7 @@ Strip special characters, normalize unicode, slugify filenames.
 
 **Crate:** `bnto-file` (extend existing crate).
 
-#### `file-metadata` — Property Extraction
+#### `file-inspect` — Property Extraction
 
 Extract file properties and inject them as template variables for downstream `file-rename` nodes.
 
@@ -254,7 +254,7 @@ Vector-to-vector conversion requiring external system binaries. First processor 
 
 These aren't shipped recipes but examples of what users can build in the editor:
 
-- **Organize photos by date:** `file-collect` → `file-metadata` → `file-rename(pattern={{year}}/{{month}}/{{name}}.{{ext}})` → `file-copy`
+- **Organize photos by date:** `file-collect` → `file-inspect` → `file-rename(pattern={{year}}/{{month}}/{{name}}.{{ext}})` → `file-copy`
 - **Clean up downloads:** `file-collect(~/Downloads)` → `file-filter(extensions=png,jpg,svg)` → `file-sanitize(slugify)` → `file-copy(./sorted/)`
 - **Prepare icons for web:** `file-collect(**/*.svg)` → `svg-optimize` → `file-rename(prefix=icon-, case=lower)` → `file-copy(./public/icons/)`
 - **Extract and convert vectors:** `file-collect(**/*.eps)` → `image-convert(→svg)` → `svg-optimize` → `file-copy(./vectors/)`
@@ -275,7 +275,7 @@ These aren't shipped recipes but examples of what users can build in the editor:
 | 6        | `file-filter` node                                 | Small — metadata checks in `bnto-file`               | Composition building block                        | Backlog                 |
 | 7        | `file-collect` node                                | Medium — filesystem traversal, input model change    | Unlocks all CLI directory workflows               | Backlog                 |
 | 8        | `file-copy` node                                   | Small — filesystem write in `bnto-file`              | Completes the collect→process→place pipeline      | Backlog                 |
-| 9        | `file-metadata` node                               | Medium — property extraction, cross-crate            | Advanced rename compositions                      | Backlog                 |
+| 9        | `file-inspect` node                                | Medium — property extraction, cross-crate            | Advanced rename compositions                      | Backlog                 |
 
 ---
 
@@ -303,7 +303,7 @@ Option 3 is preferred — it keeps the execution model uniform and requires the 
 | `file-filter`            | Yes                       | Yes                        | Yes              | file     |
 | `file-collect`           | Limited (webkitdirectory) | Yes                        | Yes              | file     |
 | `file-copy`              | No (download only)        | Yes                        | Yes              | file     |
-| `file-metadata`          | Limited                   | Yes                        | Yes              | file     |
+| `file-inspect`           | Limited                   | Yes                        | Yes              | file     |
 
 ### SEO Impact
 
@@ -334,5 +334,5 @@ All high-intent, tool-seeking queries with strong conversion potential.
 1. **`file-collect` execution model** — Which of the three options above? Needs a design spike with the engine architecture.
 2. **`resvg` WASM size** — Need to benchmark the size impact of adding `resvg` to the WASM binary for SVG→raster in browser.
 3. **SVGO integration** — Should the CLI prefer SVGO when available, or always use the Rust implementation for determinism? Golden tests need consistent output.
-4. **`file-metadata` scope** — How much property extraction is useful? EXIF is well-defined but filesystem metadata varies by OS.
+4. **`file-inspect` scope** — How much property extraction is useful? EXIF is well-defined but filesystem metadata varies by OS.
 5. **`file-copy` in browser** — Browser can't write to filesystem. Should `file-copy` be hidden in browser recipes, or should it fall back to zip download with directory structure preserved?

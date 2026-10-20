@@ -9,7 +9,7 @@ import type { ProcessorDef } from "../types";
 /** Processor definition for spreadsheet-convert. */
 export const spreadsheetConvertProcessor: ProcessorDef = {
   nodeType: "spreadsheet-convert",
-  name: "CSV to JSON",
+  name: "Convert CSV to JSON",
   description: "Convert CSV rows to a JSON array of objects",
   category: "spreadsheet",
   accepts: ["text/csv"] as const,

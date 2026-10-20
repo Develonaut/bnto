@@ -39,7 +39,7 @@ impl NodeProcessor for MergeSpreadsheets {
             node_type: "spreadsheet-merge".to_string(),
             name: "Merge CSV".to_string(),
             description:
-                "Combine multiple CSV files into one, with header reconciliation and deduplication."
+                "Merge multiple CSV files into one, with header reconciliation and deduplication."
                     .to_string(),
             category: NodeCategory::Spreadsheet,
             accepts: vec!["text/csv".to_string()],

@@ -10,7 +10,7 @@ import type { ProcessorDef } from "../types";
 export const fileCopyProcessor: ProcessorDef = {
   nodeType: "file-copy",
   name: "Copy Files",
-  description: "Place output files in a destination directory with conflict handling.",
+  description: "Copy output files into a destination folder, with conflict handling.",
   category: "file",
   accepts: [] as const,
   platforms: ["cli", "desktop"] as const,
@@ -18,14 +18,14 @@ export const fileCopyProcessor: ProcessorDef = {
     {
       name: "destination",
       label: "Destination",
-      description: "Directory path to copy files into.",
+      description: "Folder to copy files into.",
       type: "string" as const,
       placeholder: "./output",
     },
     {
       name: "create_dirs",
-      label: "Create Directories",
-      description: "Automatically create the destination directory if it doesn't exist.",
+      label: "Create Folders",
+      description: "Automatically create the destination folder if it doesn't exist.",
       type: "boolean" as const,
       default: true,
     },

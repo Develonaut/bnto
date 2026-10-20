@@ -64,7 +64,9 @@ describe("computePalette", () => {
 
   it("uses NODE_TYPE_INFO description for each item", () => {
     const compress = allItems().find((i) => i.type === "image-compress");
-    expect(compress!.description).toBe("Reduce image file size while maintaining quality.");
+    expect(compress!.description).toBe(
+      "Compress images to a smaller file size while maintaining quality.",
+    );
   });
 
   it("leaves container nodes unchanged", () => {

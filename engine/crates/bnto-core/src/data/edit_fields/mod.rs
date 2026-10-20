@@ -43,8 +43,8 @@ impl NodeProcessor for EditFields {
         NodeMetadata {
             node_type: "edit-fields".to_string(),
             name: "Edit Fields".to_string(),
-            description: "Set fields on each item from static values or templates over its \
-                          other fields, such as {{item.first}} {{item.last}}; files pass \
+            description: "Edit fields on each item, setting them from static values or templates \
+                          over its other fields, such as {{item.first}} {{item.last}}; files pass \
                           through unchanged."
                 .to_string(),
             category: NodeCategory::Data,

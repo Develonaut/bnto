@@ -43,8 +43,9 @@ impl NodeProcessor for Assert {
         NodeMetadata {
             node_type: "assert".to_string(),
             name: "Assert".to_string(),
-            description: "Fail the run when a comparison doesn't hold (equals, not equals, \
-                          after, before); otherwise pass files through unchanged."
+            description: "Assert a comparison on each item (equals, not equals, after, before); \
+                          fail the run when it doesn't hold, otherwise pass files through \
+                          unchanged."
                 .to_string(),
             category: NodeCategory::Control,
             accepts: vec![],

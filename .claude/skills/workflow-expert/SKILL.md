@@ -224,6 +224,7 @@ Extend the editor journey matrix with custom recipe tests:
 | [strategy/editor-user-journey.md](../../strategy/editor-user-journey.md)           | Full editor user journey — stages, entry points, interaction model           |
 | [engine/catalog.snapshot.json](../../../engine/catalog.snapshot.json)              | Engine catalog — node types, operations, parameters, constraints             |
 | [scopes/rust/node-responsibilities.md](../../scopes/rust/node-responsibilities.md) | Node system layers — engine vs @bnto/nodes vs editor                         |
+| [scopes/rust/node-vocabulary.md](../../scopes/rust/node-vocabulary.md)             | Node verbs and classes — use these when proposing a missing node             |
 | [strategy/pricing-model.md](../../strategy/pricing-model.md)                       | Free vs premium — browser nodes free, server nodes Pro                       |
 | [apps/web/e2e/helpers/editor.ts](../../../apps/web/e2e/helpers/editor.ts)          | Editor E2E helpers — navigation, palette, selection, execution               |
 | [apps/web/e2e/helpers.ts](../../../apps/web/e2e/helpers.ts)                        | Shared E2E helpers — fixtures, magic bytes, upload, download                 |

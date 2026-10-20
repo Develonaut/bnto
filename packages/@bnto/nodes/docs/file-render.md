@@ -1,6 +1,6 @@
 # Render Text File Node
 
-> Write one text file from a template: a header, one row per item, then a footer.
+> Render one text file from a template: a header, one row per item, then a footer.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

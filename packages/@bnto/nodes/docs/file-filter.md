@@ -1,6 +1,6 @@
 # Filter Files Node
 
-> Keep or drop files by extension, name or path pattern, and size.
+> Filter files by extension, name or path pattern, and size, keeping or dropping the matches.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

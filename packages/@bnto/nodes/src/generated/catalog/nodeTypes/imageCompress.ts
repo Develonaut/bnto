@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const imageCompressNodeType: NodeTypeInfo = {
   name: "image-compress",
   label: "Compress Images",
-  description: "Reduce image file size while maintaining quality.",
+  description: "Compress images to a smaller file size while maintaining quality.",
   category: "image",
   isContainer: false,
   platforms: ["browser"] as const,

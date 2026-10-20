@@ -1,6 +1,6 @@
 # Collect Files Node
 
-> Traverse a directory and collect files matching a glob pattern into the pipeline.
+> Collect files from a folder that match a glob pattern into the pipeline.
 
 **Category:** file | **Platforms:** cli | **Container:** no
 
@@ -9,8 +9,8 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | pattern | string | * | - | Glob pattern to match files (e.g., "*.jpg", "**/*.svg"). Default: "*" (all files). |
-| recursive | boolean | true | - | Traverse subdirectories when collecting files. |
-| flatten | boolean | true | - | Strip directory structure from output filenames. When true, all files appear as if in the same directory. |
+| recursive | boolean | true | - | Search subfolders when collecting files. |
+| flatten | boolean | true | - | Strip folder structure from output filenames. When true, all files appear as if in the same folder. |
 
 ## Configuration Example
 

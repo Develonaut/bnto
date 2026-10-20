@@ -62,7 +62,7 @@ fn control_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "assert",
             "Assert",
-            "Fail the run when a comparison doesn't hold; otherwise pass files through.",
+            "Assert a comparison on each item; fail the run when it doesn't hold, otherwise pass files through.",
             NodeCategory::Control,
             false,
             "browser",
@@ -98,7 +98,7 @@ fn control_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "report",
             "Report",
-            "Print a templated line to the run's output; files pass through unchanged.",
+            "Report a templated line in the run's output; files pass through unchanged.",
             NodeCategory::Control,
             false,
             "browser",
@@ -112,7 +112,7 @@ fn data_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "edit-fields",
             "Edit Fields",
-            "Set fields on each item from templates over its other fields; files pass through.",
+            "Edit fields on each item, setting them from templates over its other fields; files pass through.",
             NodeCategory::Data,
             false,
             "browser",
@@ -121,7 +121,7 @@ fn data_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "summarize",
             "Summarize",
-            "Group items by fields; output one item per group with its count and field totals.",
+            "Summarize items into one per group of fields, with its count and field totals.",
             NodeCategory::Data,
             false,
             "browser",
@@ -144,7 +144,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-collect",
             "Collect Files",
-            "Traverse a directory and collect files matching a glob pattern into the pipeline.",
+            "Collect files from a folder that match a glob pattern into the pipeline.",
             NodeCategory::File,
             false,
             "cli",
@@ -153,7 +153,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-copy",
             "Copy Files",
-            "Place output files in a destination directory with conflict handling.",
+            "Copy output files into a destination folder, with conflict handling.",
             NodeCategory::File,
             false,
             "cli",
@@ -171,7 +171,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-list",
             "List Files",
-            "Turn lists of paths into files under a base folder; every path is listed, found or missing.",
+            "List files from lists of paths under a base folder; every path is listed, found or missing.",
             NodeCategory::File,
             false,
             "cli",
@@ -198,11 +198,20 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-filter",
             "Filter Files",
-            "Keep or drop files by extension, name or path pattern, and size.",
+            "Filter files by extension, name or path pattern, and size, keeping or dropping the matches.",
             NodeCategory::File,
             false,
             "browser",
             "filter"
+        ),
+        node_type!(
+            "file-inspect",
+            "Inspect Files",
+            "Inspect files and attach their metadata (folder, size, extension, MIME type, modified time, hash) to the output.",
+            NodeCategory::File,
+            false,
+            "browser",
+            "file-text"
         ),
         node_type!(
             "file-join",
@@ -214,18 +223,9 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
             "merge"
         ),
         node_type!(
-            "file-metadata",
-            "File Metadata",
-            "Extract file metadata (folder, size, extension, MIME type, modified time, hash) and attach to output.",
-            NodeCategory::File,
-            false,
-            "browser",
-            "file-text"
-        ),
-        node_type!(
             "file-rename",
             "Rename Files",
-            "Transform filenames using patterns, find/replace, case rules, counters, and sanitization.",
+            "Rename files using patterns, find/replace, case rules, counters, and sanitization.",
             NodeCategory::File,
             false,
             "browser",
@@ -234,7 +234,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-render",
             "Render Text File",
-            "Write one text file from a template: a header, one row per item, then a footer.",
+            "Render one text file from a template: a header, one row per item, then a footer.",
             NodeCategory::File,
             false,
             "browser",
@@ -243,7 +243,7 @@ fn file_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "file-sort",
             "Sort Files",
-            "Reorder items by one or more metadata fields, each ascending or descending.",
+            "Sort items by one or more metadata fields, each ascending or descending.",
             NodeCategory::File,
             false,
             "browser",
@@ -257,7 +257,7 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "image-compress",
             "Compress Images",
-            "Reduce image file size while maintaining quality.",
+            "Compress images to a smaller file size while maintaining quality.",
             NodeCategory::Image,
             false,
             "browser",
@@ -275,7 +275,7 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "image-pad",
             "Pad Images",
-            "Center images on a larger canvas, filling the added space with transparency or a color.",
+            "Pad images onto a larger, centered canvas, filling the added space with transparency or a color.",
             NodeCategory::Image,
             false,
             "browser",
@@ -284,7 +284,7 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "image-resize",
             "Resize Images",
-            "Change image dimensions while maintaining quality.",
+            "Resize images to new dimensions while maintaining quality.",
             NodeCategory::Image,
             false,
             "browser",
@@ -293,7 +293,7 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "image-strip-exif",
             "Strip EXIF",
-            "Remove all EXIF metadata from images (GPS, camera info, timestamps).",
+            "Strip all EXIF metadata from images (GPS, camera info, timestamps).",
             NodeCategory::Image,
             false,
             "browser",
@@ -301,7 +301,7 @@ fn image_node_types() -> Vec<NodeTypeInfo> {
         ),
         node_type!(
             "image-overlay",
-            "Overlay Image",
+            "Overlay Images",
             "Overlay an image onto source images at a configurable position, size, and opacity.",
             NodeCategory::Image,
             false,
@@ -338,7 +338,7 @@ fn network_node_types() -> Vec<NodeTypeInfo> {
     vec![node_type!(
         "http-request",
         "HTTP Request",
-        "Make HTTP requests to APIs (GET, POST, PUT, DELETE, etc.).",
+        "Request URLs over HTTP to call APIs (GET, POST, PUT, DELETE, etc.).",
         NodeCategory::Network,
         false,
         "server",
@@ -351,7 +351,7 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "spreadsheet-clean",
             "Clean CSV",
-            "Remove empty rows, trim whitespace, and deduplicate CSV data.",
+            "Clean CSV data by removing empty rows, trimming whitespace, and deduplicating.",
             NodeCategory::Spreadsheet,
             false,
             "browser",
@@ -360,7 +360,7 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "spreadsheet-read",
             "Read Rows",
-            "Explode a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).",
+            "Read a CSV or a JSON array into one item per row for loop iteration. Nested JSON fields read as dotted keys (meta.id).",
             NodeCategory::Spreadsheet,
             false,
             "browser",
@@ -368,7 +368,7 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         ),
         node_type!(
             "spreadsheet-convert",
-            "CSV to JSON",
+            "Convert CSV to JSON",
             "Convert CSV data to JSON format with configurable delimiters.",
             NodeCategory::Spreadsheet,
             false,
@@ -378,7 +378,7 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "spreadsheet-export",
             "Export Items as CSV",
-            "Write the files passing through, with their metadata, as one CSV row each.",
+            "Export the files passing through, with their metadata, as one CSV row each.",
             NodeCategory::Spreadsheet,
             false,
             "cli",
@@ -387,7 +387,7 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "spreadsheet-lookup",
             "Look Up Rows",
-            "Attach the CSV row whose key matches each file's name to that file.",
+            "Look up the CSV row whose key matches each file's name and attach it to that file.",
             NodeCategory::Spreadsheet,
             false,
             "cli",
@@ -396,7 +396,7 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "spreadsheet-merge",
             "Merge CSV",
-            "Combine multiple CSV files into one with header reconciliation and deduplication.",
+            "Merge multiple CSV files into one with header reconciliation and deduplication.",
             NodeCategory::Spreadsheet,
             false,
             "browser",
@@ -417,8 +417,8 @@ fn spreadsheet_node_types() -> Vec<NodeTypeInfo> {
 fn system_node_types() -> Vec<NodeTypeInfo> {
     vec![node_type!(
         "shell-command",
-        "Shell Command",
-        "Execute shell commands with stall detection, retry, and streaming output. \
+        "Run Shell Command",
+        "Run shell commands with stall detection, retry, and streaming output. \
          Still runs under bnto run --dry-run, so a recipe run dry uses it only to read.",
         NodeCategory::System,
         false,
@@ -431,8 +431,8 @@ fn vector_node_types() -> Vec<NodeTypeInfo> {
     vec![
         node_type!(
             "vector-rasterize",
-            "SVG to Image",
-            "Convert SVG files to raster images (PNG, JPEG, WebP).",
+            "Rasterize SVG",
+            "Rasterize SVG files into raster images (PNG, JPEG, WebP).",
             NodeCategory::Vector,
             false,
             "browser",
@@ -441,7 +441,7 @@ fn vector_node_types() -> Vec<NodeTypeInfo> {
         node_type!(
             "vector-optimize",
             "Optimize SVG",
-            "Remove editor metadata, comments, and unnecessary elements from SVG files.",
+            "Optimize SVG files by removing editor metadata, comments, and unnecessary elements.",
             NodeCategory::Vector,
             false,
             "browser",

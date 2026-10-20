@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const fileRenderNodeType: NodeTypeInfo = {
   name: "file-render",
   label: "Render Text File",
-  description: "Write one text file from a template: a header, one row per item, then a footer.",
+  description: "Render one text file from a template: a header, one row per item, then a footer.",
   category: "file",
   isContainer: false,
   platforms: ["browser"] as const,

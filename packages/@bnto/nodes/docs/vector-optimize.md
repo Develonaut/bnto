@@ -1,6 +1,6 @@
 # Optimize SVG Node
 
-> Remove editor metadata, comments, and unnecessary elements from SVG files.
+> Optimize SVG files by removing editor metadata, comments, and unnecessary elements.
 
 **Category:** vector | **Platforms:** browser | **Container:** no
 

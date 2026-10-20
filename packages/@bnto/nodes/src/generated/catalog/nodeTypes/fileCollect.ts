@@ -10,7 +10,7 @@ import type { NodeTypeInfo } from "../types";
 export const fileCollectNodeType: NodeTypeInfo = {
   name: "file-collect",
   label: "Collect Files",
-  description: "Traverse a directory and collect files matching a glob pattern into the pipeline.",
+  description: "Collect files from a folder that match a glob pattern into the pipeline.",
   category: "file",
   isContainer: false,
   platforms: ["cli"] as const,

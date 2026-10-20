@@ -1,6 +1,6 @@
 # Rename Files Node
 
-> Transform filenames using patterns, find/replace, case rules, counters, and sanitization.
+> Rename files using patterns, find/replace, case rules, counters, and sanitization.
 
 **Category:** file | **Platforms:** browser | **Container:** no
 

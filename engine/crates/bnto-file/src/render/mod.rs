@@ -45,7 +45,7 @@ impl NodeProcessor for FileRender {
         NodeMetadata {
             node_type: "file-render".to_string(),
             name: "Render Text File".to_string(),
-            description: "Write one text file from a template: a header, one row per item \
+            description: "Render one text file from a template: a header, one row per item \
                           from its metadata, then a footer (a Markdown table, a report)."
                 .to_string(),
             category: NodeCategory::File,

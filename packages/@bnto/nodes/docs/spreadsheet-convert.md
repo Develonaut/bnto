@@ -1,4 +1,4 @@
-# CSV to JSON Node
+# Convert CSV to JSON Node
 
 > Convert CSV data to JSON format with configurable delimiters.
 

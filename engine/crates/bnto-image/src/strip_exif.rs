@@ -65,7 +65,7 @@ impl NodeProcessor for StripExif {
         NodeMetadata {
             node_type: "image-strip-exif".to_string(),
             name: "Strip EXIF".to_string(),
-            description: "Remove all EXIF metadata from images (GPS, camera info, timestamps)"
+            description: "Strip all EXIF metadata from images (GPS, camera info, timestamps)"
                 .to_string(),
             category: NodeCategory::Image,
             accepts: image_accepts(),

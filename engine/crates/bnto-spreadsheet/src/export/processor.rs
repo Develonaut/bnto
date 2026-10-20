@@ -40,7 +40,7 @@ impl NodeProcessor for SpreadsheetExport {
             node_type: "spreadsheet-export".to_string(),
             name: "Export Items as CSV".to_string(),
             description:
-                "Write the files passing through, with their metadata, as one CSV row each"
+                "Export the files passing through, with their metadata, as one CSV row each"
                     .to_string(),
             category: NodeCategory::Spreadsheet,
             accepts: vec![],
