@@ -134,17 +134,30 @@ describe("validateNodeParams", () => {
     });
   });
 
-  // ---------- shell-command (all params optional — returns empty) ----------
+  // ---------- shell-command ----------
 
   describe("shell-command", () => {
-    it("returns empty with no params (all optional)", () => {
+    it("fails when command is missing", () => {
       const errors = validateNodeParams("shell-command", "n1", {});
-      expect(errors).toHaveLength(0);
+      expect(errors.some((e) => e.field === "command")).toBe(true);
     });
 
     it("returns empty with valid params", () => {
       const errors = validateNodeParams("shell-command", "n1", { command: "echo hello" });
       expect(errors).toHaveLength(0);
+    });
+  });
+
+  // ---------- params the engine refuses to run without ----------
+
+  describe("required params", () => {
+    it.each([
+      ["file-move", "destination"],
+      ["report", "message"],
+      ["assert", "value"],
+    ])("%s fails when %s is missing", (nodeType, field) => {
+      const errors = validateNodeParams(nodeType, "n1", {});
+      expect(errors.some((e) => e.field === field)).toBe(true);
     });
   });
 

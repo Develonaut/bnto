@@ -3,7 +3,7 @@
 // One function per parameter; each sets only what differs from
 // `ParameterDef::default()` (no default value, surfaceable, no UI hints).
 
-use bnto_core::metadata::{ParameterDef, ParameterType};
+use bnto_core::metadata::{Constraints, ParameterDef, ParameterType};
 
 use crate::validate::{DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
@@ -28,6 +28,11 @@ fn command_param() -> ParameterDef {
         description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.".to_string(),
         param_type: ParameterType::String,
         placeholder: Some("ffmpeg".to_string()),
+        constraints: Some(Constraints {
+            min: None,
+            max: None,
+            required: true,
+        }),
         ..Default::default()
     }
 }

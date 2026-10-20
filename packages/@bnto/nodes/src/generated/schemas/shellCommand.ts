@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for shell-command node parameters. */
 export const shellCommandParamsSchema = z.object({
-  command: z.string().optional(),
+  command: z.string(),
   args: z
     .array(
       z.union([z.string(), z.array(z.string()), z.object({ each: z.array(z.string()) }).strict()]),

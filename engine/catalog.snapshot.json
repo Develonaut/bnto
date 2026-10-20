@@ -19,6 +19,9 @@
           "paramType": {
             "type": "string"
           },
+          "constraints": {
+            "required": true
+          },
           "surfaceable": true
         },
         {
@@ -47,6 +50,9 @@
             ]
           },
           "default": "equals",
+          "constraints": {
+            "required": true
+          },
           "surfaceable": true
         },
         {
@@ -516,6 +522,9 @@
           "description": "Folder to move files under. Each file's name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and \"..\" are refused.",
           "paramType": {
             "type": "string"
+          },
+          "constraints": {
+            "required": true
           },
           "placeholder": "./sorted",
           "surfaceable": true
@@ -1807,6 +1816,9 @@
           "paramType": {
             "type": "string"
           },
+          "constraints": {
+            "required": true
+          },
           "surfaceable": true
         },
         {
@@ -1838,6 +1850,9 @@
           "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
           "paramType": {
             "type": "string"
+          },
+          "constraints": {
+            "required": true
           },
           "placeholder": "ffmpeg",
           "surfaceable": true
@@ -2501,6 +2516,9 @@
           "paramType": {
             "type": "string"
           },
+          "constraints": {
+            "required": true
+          },
           "surfaceable": true
         },
         {
@@ -2529,6 +2547,9 @@
             ]
           },
           "default": "equals",
+          "constraints": {
+            "required": true
+          },
           "surfaceable": true
         },
         {
@@ -3012,6 +3033,9 @@
           "description": "Folder to move files under. Each file's name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and \"..\" are refused.",
           "paramType": {
             "type": "string"
+          },
+          "constraints": {
+            "required": true
           },
           "placeholder": "./sorted",
           "surfaceable": true
@@ -3796,6 +3820,9 @@
           "paramType": {
             "type": "string"
           },
+          "constraints": {
+            "required": true
+          },
           "surfaceable": true
         },
         {
@@ -3829,6 +3856,9 @@
           "description": "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
           "paramType": {
             "type": "string"
+          },
+          "constraints": {
+            "required": true
           },
           "placeholder": "ffmpeg",
           "surfaceable": true

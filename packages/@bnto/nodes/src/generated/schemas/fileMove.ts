@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for file-move node parameters. */
 export const fileMoveParamsSchema = z.object({
-  destination: z.string().optional(),
+  destination: z.string(),
   create_dirs: z.boolean().optional().default(true),
 });
 

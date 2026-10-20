@@ -22,6 +22,7 @@ export const fileMoveProcessor: ProcessorDef = {
       description:
         'Folder to move files under. Each file\'s name is its path inside it (e.g. Pistol/Slide/shot.wav); absolute paths and ".." are refused.',
       type: "string" as const,
+      constraints: { required: true },
       placeholder: "./sorted",
     },
     {
