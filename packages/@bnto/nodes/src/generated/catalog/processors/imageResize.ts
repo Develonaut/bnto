@@ -32,7 +32,8 @@ export const imageResizeProcessor: ProcessorDef = {
     {
       name: "maintainAspect",
       label: "Maintain Aspect Ratio",
-      description: "Keep the original width-to-height ratio when resizing",
+      description:
+        "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box",
       type: "boolean" as const,
       default: true,
     },
