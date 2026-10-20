@@ -304,3 +304,15 @@ fn test_metadata_is_a_browser_capable_batch_control_node() {
     assert_eq!(params, ["message", "each"]);
     assert!(report.resolves_items());
 }
+
+#[test]
+fn test_metadata_marks_message_required() {
+    // validate refuses a report without one, so the editor must not show it as optional.
+    let meta = Report::new().metadata();
+    let required = |name: &str| {
+        let param = meta.parameters.iter().find(|p| p.name == name).unwrap();
+        param.constraints.as_ref().is_some_and(|c| c.required)
+    };
+    assert!(required("message"));
+    assert!(!required("each"));
+}

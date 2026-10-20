@@ -17,6 +17,7 @@
 {
   "type": "file-move",
   "parameters": {
+      "destination": "<string>",
       "create_dirs": true
   }
 }

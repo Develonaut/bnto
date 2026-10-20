@@ -4,7 +4,7 @@ use serde_json::Value;
 
 use super::compare::Op;
 use crate::control::placeholder::text;
-use crate::metadata::{OptionEntry, ParameterDef, ParameterType};
+use crate::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
 
 /// The node's params, read and checked.
 #[derive(Debug)]
@@ -54,14 +54,14 @@ impl AssertParams {
 /// All assert parameters, in the order the editor displays them.
 pub(super) fn build_assert_parameters() -> Vec<ParameterDef> {
     vec![
-        text_param(
+        required(text_param(
             "value",
             "Value",
             "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} \
              or {{file}} (the file's name) it is checked once per incoming file, and no files \
              means nothing to check.",
-        ),
-        op_param(),
+        )),
+        required(op_param()),
         text_param("expected", "Expected", "What the value is compared to."),
         text_param(
             "message",
@@ -78,6 +78,18 @@ fn text_param(name: &str, label: &str, description: &str) -> ParameterDef {
         description: description.to_string(),
         param_type: ParameterType::String,
         ..Default::default()
+    }
+}
+
+/// Mark a param required: `read` refuses a step without it.
+fn required(param: ParameterDef) -> ParameterDef {
+    ParameterDef {
+        constraints: Some(Constraints {
+            min: None,
+            max: None,
+            required: true,
+        }),
+        ..param
     }
 }
 

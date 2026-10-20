@@ -22,6 +22,7 @@ export const reportProcessor: ProcessorDef = {
       description:
         "The line to print, usually a template. {{file}} (the file's name) or {{item.<key>}} prints it once per file, {{entry.<key>}} (or {{entry}}) once per entry of each.",
       type: "string" as const,
+      constraints: { required: true },
     },
     {
       name: "each",

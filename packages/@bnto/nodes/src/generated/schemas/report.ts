@@ -9,7 +9,7 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for report node parameters. */
 export const reportParamsSchema = z.object({
-  message: z.string().optional(),
+  message: z.string(),
   each: z.record(z.unknown()).optional(),
 });
 

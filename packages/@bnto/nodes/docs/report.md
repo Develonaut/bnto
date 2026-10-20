@@ -16,7 +16,9 @@
 ```json
 {
   "type": "report",
-  "parameters": {}
+  "parameters": {
+      "message": "<string>"
+  }
 }
 ```
 

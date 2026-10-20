@@ -22,6 +22,7 @@ export const assertProcessor: ProcessorDef = {
       description:
         "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file, and no files means nothing to check.",
       type: "string" as const,
+      constraints: { required: true },
     },
     {
       name: "op",
@@ -30,6 +31,7 @@ export const assertProcessor: ProcessorDef = {
       type: "enum" as const,
       options: ["equals", "not_equals", "after", "before"] as const,
       default: "equals",
+      constraints: { required: true },
     },
     {
       name: "expected",

@@ -9,11 +9,8 @@ import type { NodeSchema } from "../../schemas/types";
 
 /** Zod schema for assert node parameters. */
 export const assertParamsSchema = z.object({
-  value: z.string().optional(),
-  op: z
-    .enum(["equals", "not_equals", "after", "before"] as const)
-    .optional()
-    .default("equals"),
+  value: z.string(),
+  op: z.enum(["equals", "not_equals", "after", "before"] as const).default("equals"),
   expected: z.string().optional(),
   message: z.string().optional(),
 });

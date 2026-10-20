@@ -20,6 +20,7 @@ export const shellCommandProcessor: ProcessorDef = {
       label: "Command",
       description: "Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH.",
       type: "string" as const,
+      constraints: { required: true },
       placeholder: "ffmpeg",
     },
     {
