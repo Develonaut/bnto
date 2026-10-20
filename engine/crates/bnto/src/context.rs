@@ -102,6 +102,20 @@ impl NativeContext {
         self
     }
 
+    /// The registry this context's commands are tracked in, for whatever
+    /// must kill them (a run's time limit).
+    pub fn registry(&self) -> Arc<ProcessRegistry> {
+        Arc::clone(&self.registry)
+    }
+
+    /// The same context, tracking its commands in `registry` instead, so a
+    /// test's kills can't reach other tests' children.
+    #[cfg(test)]
+    pub fn with_registry(mut self, registry: Arc<ProcessRegistry>) -> Self {
+        self.registry = registry;
+        self
+    }
+
     /// Prepare a command in its own process group so cancel/quit/signal
     /// paths can kill the whole spawned tree via `kill(-pgid, …)`. Windows
     /// gets the same reach from the Job Object `spawn_tracked` adds.

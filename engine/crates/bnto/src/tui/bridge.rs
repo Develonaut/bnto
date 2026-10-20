@@ -7,13 +7,14 @@ use std::sync::mpsc;
 use std::thread;
 
 use bnto_core::events::{PipelineEvent, PipelineReporter};
-use bnto_core::{InputMode, PipelineDefinition, resolve_input_mode};
+use bnto_core::pipeline::PipelineResult;
+use bnto_core::{BntoError, InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::run_pipeline;
 
 use crate::context::NativeContext;
 use crate::dry_run::files::FilePreview;
-use crate::input;
-use crate::io;
+use crate::run_watchdog::{self, Watched};
+use crate::{input, io, run_limit};
 
 mod events;
 mod output;
@@ -79,27 +80,39 @@ pub fn spawn_pipeline(
 }
 
 /// Inner bridge logic — runs synchronously on the spawned thread.
-/// Any failure is reported to the TUI as a single `Error` event.
 fn run_bridge(tx: mpsc::Sender<BridgeEvent>, job: &BridgeJob) {
-    if let Err(e) = try_run_bridge(&tx, job) {
+    match NativeContext::current_dir() {
+        Ok(ctx) => run_bridge_in(&tx, job, ctx.with_dry_run(job.preview_mode)),
+        Err(e) => {
+            let _ = tx.send(BridgeEvent::Error(e.to_string()));
+        }
+    }
+}
+
+/// Run `job` in `ctx`. Any failure is reported to the TUI as a single
+/// `Error` event.
+fn run_bridge_in(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob, ctx: NativeContext) {
+    if let Err(e) = try_run_bridge(tx, job, &ctx) {
         let _ = tx.send(BridgeEvent::Error(e));
     }
 }
 
 /// Prepare inputs, run the pipeline, then write (or preview) the results.
-fn try_run_bridge(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob) -> Result<(), String> {
+fn try_run_bridge(
+    tx: &mpsc::Sender<BridgeEvent>,
+    job: &BridgeJob,
+    ctx: &NativeContext,
+) -> Result<(), String> {
     let (args, override_args) = input_args(job);
     // Prepare inputs (validates files, applies param overrides to definition).
     let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
-    let ctx = NativeContext::current_dir()
-        .map_err(|e| format!("{e}"))?
-        .with_dry_run(job.preview_mode);
     let mode = resolve_mode(&job.definition_json);
-    let output_dir = resolve_output_dir(tx, job, &mode, &ctx, &prepared.files);
+    let output_dir = resolve_output_dir(tx, job, &mode, ctx, &prepared.files);
     let reporter = channel_reporter(tx);
     // Run the pipeline (blocking — this is why we're on a background thread).
-    let result = run_pipeline(&prepared.definition_json, prepared.files, &reporter, &ctx)
-        .map_err(|e| format!("{e}"))?;
+    let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
+        return Ok(());
+    };
     if job.preview_mode {
         send_preview_done(tx, output_dir, result);
         return Ok(());
@@ -109,6 +122,26 @@ fn try_run_bridge(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob) -> Result<(),
     io::write_results_with_mode(&result, &mode, &output_dir, false)?;
     send_done(tx, output_dir, result, file_metadata);
     Ok(())
+}
+
+/// Run the pipeline under the recipe's time limit. `None` when the run was
+/// stuck past it and the watchdog already sent the timeout as an `Error`.
+fn run_watched(
+    tx: &mpsc::Sender<BridgeEvent>,
+    prepared: input::PreparedInput,
+    reporter: &PipelineReporter,
+    ctx: &NativeContext,
+) -> Result<Option<PipelineResult>, String> {
+    let (json, time_limit) = run_limit::apply(&prepared.definition_json, None)?;
+    let stuck_tx = tx.clone();
+    let on_stuck = move |error: BntoError| {
+        let _ = stuck_tx.send(BridgeEvent::Error(error.to_string()));
+    };
+    let run = || run_pipeline(&json, prepared.files, reporter, ctx);
+    match run_watchdog::watch(ctx.registry(), time_limit, on_stuck, run) {
+        Watched::Finished(result) => result.map(Some).map_err(|e| e.to_string()),
+        Watched::Ended => Ok(None),
+    }
 }
 
 /// Positional args and `key=value` overrides for `prepare_inputs`.
@@ -269,6 +302,58 @@ mod tests {
     use super::*;
     use bnto_core::FileData;
     use std::fs;
+    use std::sync::Arc;
+    use std::time::{Duration, Instant};
+
+    use crate::process_registry::ProcessRegistry;
+
+    /// Far longer than a stopped run may take, far shorter than the hang.
+    const STOP_DEADLINE: Duration = Duration::from_secs(60);
+
+    /// A recipe whose one step runs for minutes, limited to 1s.
+    fn hung_recipe_json() -> String {
+        let (command, args) = if cfg!(windows) {
+            ("ping", serde_json::json!(["-n", "300", "127.0.0.1"]))
+        } else {
+            ("sleep", serde_json::json!(["300"]))
+        };
+        serde_json::json!({
+            "settings": { "timeout": 1 },
+            "nodes": [
+                { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+                { "id": "hang", "type": "shell-command",
+                  "parameters": { "command": command, "args": args } },
+                { "id": "output", "type": "output", "parameters": { "mode": "write" } }
+            ]
+        })
+        .to_string()
+    }
+
+    #[test]
+    fn a_run_past_its_time_limit_is_stopped_and_fails_naming_it() {
+        let registry = Arc::new(ProcessRegistry::new());
+        let ctx = NativeContext::current_dir()
+            .unwrap()
+            .with_dry_run(true)
+            .with_registry(Arc::clone(&registry));
+        let job = BridgeJob {
+            slug: "hang".into(),
+            definition_json: hung_recipe_json(),
+            selected_files: vec![],
+            param_overrides: HashMap::new(),
+            preview_mode: true,
+        };
+        let (tx, rx) = mpsc::channel();
+        let started = Instant::now();
+        run_bridge_in(&tx, &job, ctx);
+        assert!(started.elapsed() < STOP_DEADLINE, "it was stopped");
+        let last = rx.try_iter().last();
+        let Some(BridgeEvent::Error(message)) = last else {
+            panic!("expected an error last, got {last:?}");
+        };
+        assert_eq!(message, "Run timed out after 1s");
+        assert!(registry.active().is_empty(), "the hung command was killed");
+    }
 
     #[test]
     fn extract_metadata_reads_original_size() {
