@@ -200,7 +200,7 @@ mod tests {
             } }]
         }))
         .unwrap();
-        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "only-docs");
         assert!(findings[0].message.contains("name_pattern"));
@@ -214,7 +214,7 @@ mod tests {
             } }]
         }))
         .unwrap();
-        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "order");
         assert!(findings[0].message.contains("empty sort key"));
@@ -227,7 +227,7 @@ mod tests {
         for recipe in recipes::builtin_recipes() {
             let definition: PipelineDefinition =
                 serde_json::from_str(recipe.definition_json).unwrap();
-            let findings = bnto_core::check_pipeline(&definition, &registry);
+            let findings = bnto_core::check_pipeline(&definition, &registry).findings;
             assert!(findings.is_empty(), "{}: {findings:?}", recipe.slug);
         }
     }
@@ -585,7 +585,7 @@ mod tests {
             } }]
         }))
         .unwrap();
-        let findings = bnto_core::check_pipeline(&definition, &create_registry());
+        let findings = bnto_core::check_pipeline(&definition, &create_registry()).findings;
         assert_eq!(findings.len(), 1, "{findings:?}");
         assert_eq!(findings[0].node_id, "totals");
         assert!(findings[0].message.contains("empty field"), "{findings:?}");
