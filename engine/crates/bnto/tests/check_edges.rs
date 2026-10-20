@@ -90,8 +90,7 @@ fn test_check_passes_every_bundled_recipe() {
 }
 
 /// Fixtures that leave a required param for the test to pass with
-/// `--params`, so `bnto check` (which takes no overrides) reports it. It
-/// reported them before edges were checked too.
+/// `--params`, so `bnto check` notes it as left for run time.
 const NEEDS_PARAMS: [&str; 1] = ["spreadsheet-lookup-rename-move.bnto.json"];
 
 #[test]
@@ -106,12 +105,13 @@ fn test_check_passes_every_run_fixture() {
 }
 
 #[test]
-fn test_a_fixture_that_needs_params_has_only_that_finding() {
+fn test_a_fixture_that_needs_params_passes_with_a_note() {
     for name in NEEDS_PARAMS {
         let path = crates_dir().join("bnto/tests/fixtures").join(name);
         let (ok, lines) = run_check(&[path.to_string_lossy().into_owned()]);
-        assert!(!ok, "stdout: {lines:?}");
+        assert!(ok, "stdout: {lines:?}");
         assert_eq!(lines.len(), 2, "{lines:?}");
-        assert!(lines[0].contains("is required"), "{lines:?}");
+        assert!(lines[0].contains("note:"), "{lines:?}");
+        assert_eq!(lines[1], "Check: PASS (1 recipe, 1 note)");
     }
 }

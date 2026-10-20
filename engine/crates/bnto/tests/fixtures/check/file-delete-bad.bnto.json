@@ -5,7 +5,7 @@
   "name": "Check File Delete Bad",
   "nodes": [
     { "id": "input", "type": "input", "parameters": { "mode": "none" } },
-    { "id": "no-base", "type": "file-delete", "parameters": {} },
+    { "id": "empty-base", "type": "file-delete", "parameters": { "base": "" } },
     { "id": "fine", "type": "file-delete", "parameters": { "base": "." } },
     { "id": "output", "type": "output", "parameters": { "mode": "none" } }
   ]

@@ -54,8 +54,11 @@ bnto info compress-images
 # Check recipe files without running them: unknown node types, parameters a
 # node refuses (e.g. a file-filter regex that doesn't compile), malformed
 # {{…}} placeholders, and every edge problem at every level (cycles, edges to
-# unknown or other-level nodes, unwired nodes). Prints one line per finding, then
-# `Check: PASS (<n> recipes)` (exit 0) or `Check: FAIL (<n> findings)` (exit 1)
+# unknown or other-level nodes, unwired nodes). A required param left out for
+# `bnto run -p node:param=value` to give is a note, not a finding; one no `-p`
+# can give (an object, or a node `-p` can't name) is a finding. Prints one line
+# per finding, then a line per note, then `Check: PASS (<n> recipes)` (exit 0)
+# or `Check: FAIL (<n> findings)` (exit 1), with `, <n> notes` added if any
 bnto check backup.bnto.json recipes/*.bnto.json
 
 # A folder checks every .bnto.json under it, recursively, sorted by path, so a
@@ -168,7 +171,7 @@ src/
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
 +-- consent.rs             # Shell-command trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
-+-- check.rs               # `bnto check` (recipe files checked on disk, findings + verdict)
++-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)
 +-- check_targets.rs       # `bnto check` arguments to recipe files (a folder walked recursively, sorted)
 +-- launch.rs              # `bnto tui` launcher
 +-- context.rs             # NativeContext for system access (commands, temp files, env)

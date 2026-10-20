@@ -1,0 +1,11 @@
+{
+  "id": "check-file-delete-run-time",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check File Delete Run Time",
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    { "id": "clean", "type": "file-delete", "parameters": {} },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ]
+}

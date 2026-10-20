@@ -90,7 +90,7 @@ fn test_a_file_outside_base_refuses_the_run_and_deletes_nothing() {
 }
 
 #[test]
-fn test_check_reports_file_delete_without_a_base() {
+fn test_check_reports_file_delete_with_an_empty_base() {
     let recipe = custom_recipe_path("check/file-delete-bad");
     let output = Command::new(bnto_bin())
         .args(["check", &recipe])
@@ -101,7 +101,7 @@ fn test_check_reports_file_delete_without_a_base() {
     let lines: Vec<&str> = stdout.lines().collect();
     assert_eq!(lines.last(), Some(&"Check: FAIL (1 finding)"), "{stdout}");
     assert!(
-        lines[0].contains("\"no-base\"") && lines[0].contains("'base' is required"),
+        lines[0].contains("\"empty-base\"") && lines[0].contains("'base' is required"),
         "{stdout}"
     );
 }

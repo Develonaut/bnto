@@ -1,0 +1,18 @@
+{
+  "id": "check-lookup-run-time",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Check Lookup Run Time",
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "file-upload", "multiple": true } },
+    {
+      "id": "each",
+      "type": "loop",
+      "parameters": {},
+      "nodes": [
+        { "id": "lookup", "type": "spreadsheet-lookup", "parameters": { "unmatched": "keep" } }
+      ]
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ]
+}
