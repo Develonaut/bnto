@@ -450,7 +450,7 @@ Follow-ups:
 - [x] Pin tsx and run it through `pnpm exec` (#652)
 - [ ] **CLAIMED** Fail a command bnto stopped, whatever its exit code (fixes the flaky terminate_all test)
 - [x] SEC-29: fill `{{vars.*}}` before consent
-- [ ] SEC-28: refuse templates in positional program text (awk, sed)
+- [x] SEC-28: refuse templates in positional program text (awk, sed, jq)
 - [ ] SEC-27: refuse values carrying shell-command's own tokens
 
 ---
