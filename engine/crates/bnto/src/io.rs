@@ -4,6 +4,8 @@ use std::path::Path;
 
 use bnto_core::{PipelineFile, PipelineResult};
 
+use crate::output_names::{self, Renamed};
+
 /// Read a file (or directory) from disk into a PipelineFile.
 ///
 /// For regular files, references the file on disk (`FileData::Path`) without
@@ -44,12 +46,16 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 ///
 /// Uses `FileData::copy_to()` which copies for path-referenced files
 /// and writes bytes for in-memory files. Source files are never modified.
-pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), String> {
+///
+/// Names that would land on one file are kept apart (see `output_names`);
+/// returns the files written under a new name.
+pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Vec<Renamed>, String> {
     check_file_names(result)?;
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
-    for file in &result.files {
-        let out_path = Path::new(output_dir).join(&file.name);
+    let (names, renamed) = output_names::plan(result.files.iter().map(|f| f.name.as_str()));
+    for (file, name) in result.files.iter().zip(&names) {
+        let out_path = Path::new(output_dir).join(name);
         if let Some(parent) = out_path.parent() {
             std::fs::create_dir_all(parent)
                 .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
@@ -59,7 +65,7 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<(), St
             .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))?;
     }
 
-    Ok(())
+    Ok(renamed)
 }
 
 /// Fail on a result file with no name, for a real write and a dry run alike.
@@ -80,8 +86,13 @@ fn check_file_names(result: &PipelineResult) -> Result<(), String> {
 /// Outcome of a mode-aware write operation.
 #[derive(Debug, PartialEq)]
 pub enum WriteOutcome {
-    /// Files were copied to an output directory.
-    Written { dir: String, count: usize },
+    /// Files were copied to an output directory; `renamed` lists those
+    /// written under a new name so they didn't replace one another.
+    Written {
+        dir: String,
+        count: usize,
+        renamed: Vec<Renamed>,
+    },
     /// Files were renamed in place (overwrite mode).
     Overwritten { count: usize },
     /// No files written — summary message only.
@@ -108,12 +119,15 @@ pub fn write_results_with_mode(
     match mode {
         "write" => {
             check_file_names(result)?;
-            if !dry_run {
-                write_results(result, output_dir)?;
-            }
+            let renamed = if dry_run {
+                output_names::plan(result.files.iter().map(|f| f.name.as_str())).1
+            } else {
+                write_results(result, output_dir)?
+            };
             Ok(WriteOutcome::Written {
                 dir: output_dir.to_string(),
                 count: result.files.len(),
+                renamed,
             })
         }
         "overwrite" => crate::overwrite::overwrite_in_place(result, dry_run)
@@ -221,6 +235,37 @@ fn no_row_warning_text(unmatched: &[&str]) -> String {
         "{} had no row in the lookup table: {}",
         count_files(unmatched.len()),
         capped_names(unmatched)
+    )
+}
+
+/// Print one warning line naming the files written under a new name.
+pub fn warn_renamed(outcome: &WriteOutcome, dry_run: bool) {
+    use colored::Colorize;
+
+    if let WriteOutcome::Written { renamed, .. } = outcome
+        && !renamed.is_empty()
+    {
+        let warning = "Warning:".yellow().bold();
+        eprintln!("  {warning} {}", renamed_warning_text(renamed, dry_run));
+    }
+}
+
+/// `N file(s) written under a new name …: a → a_1`, names capped.
+fn renamed_warning_text(renamed: &[Renamed], dry_run: bool) -> String {
+    let pairs: Vec<String> = renamed
+        .iter()
+        .map(|r| format!("{} → {}", r.from, r.to))
+        .collect();
+    let pairs: Vec<&str> = pairs.iter().map(String::as_str).collect();
+    let verb = if dry_run {
+        "would be written"
+    } else {
+        "written"
+    };
+    format!(
+        "{} {verb} under a new name, since another has the same name (case ignored): {}",
+        count_files(renamed.len()),
+        capped_names(&pairs)
     )
 }
 
@@ -557,6 +602,92 @@ mod tests {
 
         assert!(matches!(outcome, WriteOutcome::Written { count: 1, .. }));
         assert!(!out_dir.exists(), "dry run must not create the output dir");
+    }
+
+    // --- output names that clash ---
+
+    fn make_result_with_paths(files: &[(std::path::PathBuf, &str)]) -> PipelineResult {
+        let mut result = make_result_with_bytes(b"", "unused");
+        result.files = files
+            .iter()
+            .map(|(src, name)| make_result_with_path(src.clone(), name).files.remove(0))
+            .collect();
+        result
+    }
+
+    /// Two sources whose pipeline names differ only in case.
+    fn case_twins(tmp: &Path) -> PipelineResult {
+        let (a, b) = (tmp.join("a.svg"), tmp.join("b.svg"));
+        std::fs::write(&a, b"first").unwrap();
+        std::fs::write(&b, b"second").unwrap();
+        make_result_with_paths(&[(a, "Logo.svg"), (b, "logo.svg")])
+    }
+
+    fn renamed(from: &str, to: &str) -> Renamed {
+        Renamed {
+            from: from.into(),
+            to: to.into(),
+        }
+    }
+
+    #[test]
+    fn test_write_mode_keeps_both_files_whose_names_differ_only_in_case() {
+        // Guards: on Windows the second copy replaced the first, while the
+        // summary still counted both.
+        let temp = tempfile::tempdir().unwrap();
+        let out_dir = temp.path().join("output");
+        let result = case_twins(temp.path());
+
+        let outcome =
+            write_results_with_mode(&result, "write", out_dir.to_str().unwrap(), false).unwrap();
+
+        let WriteOutcome::Written {
+            count, renamed: r, ..
+        } = outcome
+        else {
+            panic!("expected Written, got {outcome:?}");
+        };
+        assert_eq!(r, [renamed("logo.svg", "logo_1.svg")]);
+        assert_eq!(count, std::fs::read_dir(&out_dir).unwrap().count());
+        assert_eq!(std::fs::read(out_dir.join("Logo.svg")).unwrap(), b"first");
+        assert_eq!(
+            std::fs::read(out_dir.join("logo_1.svg")).unwrap(),
+            b"second"
+        );
+    }
+
+    #[test]
+    fn test_dry_run_write_mode_reports_the_new_name_and_writes_nothing() {
+        let temp = tempfile::tempdir().unwrap();
+        let out_dir = temp.path().join("output");
+        let result = case_twins(temp.path());
+
+        let outcome =
+            write_results_with_mode(&result, "write", out_dir.to_str().unwrap(), true).unwrap();
+
+        let expected = WriteOutcome::Written {
+            dir: out_dir.to_str().unwrap().to_string(),
+            count: 2,
+            renamed: vec![renamed("logo.svg", "logo_1.svg")],
+        };
+        assert_eq!(outcome, expected);
+        assert!(!out_dir.exists());
+    }
+
+    #[test]
+    fn test_renamed_warning_text_names_each_file_and_its_new_name() {
+        let one = [renamed("logo.svg", "logo_1.svg")];
+        assert_eq!(
+            renamed_warning_text(&one, false),
+            "1 file written under a new name, since another has the same name \
+             (case ignored): logo.svg → logo_1.svg"
+        );
+        let two = [renamed("a.svg", "a_1.svg"), renamed("A.svg", "A_2.svg")];
+        assert_eq!(
+            renamed_warning_text(&two, true),
+            "2 files would be written under a new name, since another has the same \
+             name (case ignored): a.svg → a_1.svg, A.svg → A_2.svg"
+        );
     }
 
     #[test]
