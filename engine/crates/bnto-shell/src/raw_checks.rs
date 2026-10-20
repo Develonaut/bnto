@@ -3,12 +3,14 @@
 
 use serde_json::{Map, Value};
 
-/// Problems in the unfilled params: a `command` that data could choose.
+/// Problems in the unfilled params: a `command` that data could choose,
+/// or data placeholders inside interpreter code.
 pub(crate) fn raw_problems(raw: &Map<String, Value>) -> Vec<String> {
     let mut problems = Vec::new();
-    if let Some(command) = raw.get("command").and_then(Value::as_str)
-        && bnto_core::placeholders::mentions_data(command)
-    {
+    let Some(command) = raw.get("command").and_then(Value::as_str) else {
+        return problems;
+    };
+    if bnto_core::placeholders::mentions_data(command) {
         // SEC-07: like Home Assistant, the program name is written literally
         // so a file name or field value can never pick what runs.
         problems.push(format!(
@@ -16,6 +18,10 @@ pub(crate) fn raw_problems(raw: &Map<String, Value>) -> Vec<String> {
              the program. Name the tool and pass values as arguments"
         ));
     }
+    problems.extend(crate::interpreter_code::code_problems(
+        command,
+        raw.get("args"),
+    ));
     problems
 }
 
