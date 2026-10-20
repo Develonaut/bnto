@@ -1,0 +1,37 @@
+{
+  "id": "assert-no-files",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Assert No Files",
+  "metadata": {
+    "description": "Keeps the input files named utils.ts, helpers.ts or hooks.ts, and fails the run naming each one that is kept."
+  },
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+    {
+      "id": "grab-bags",
+      "type": "file-filter",
+      "parameters": {
+        "name_pattern": "^(utils|helpers|hooks)[.]ts$",
+        "pattern_mode": "regex"
+      }
+    },
+    {
+      "id": "none",
+      "type": "assert",
+      "parameters": {
+        "value": "{{file}}",
+        "op": "equals",
+        "expected": "",
+        "message": "Grab-bag file names"
+      }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "grab-bags" },
+    { "id": "e2", "source": "grab-bags", "target": "none" },
+    { "id": "e3", "source": "none", "target": "output" }
+  ]
+}

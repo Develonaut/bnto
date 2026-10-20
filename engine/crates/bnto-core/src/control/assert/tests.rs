@@ -187,6 +187,56 @@ fn test_item_templates_with_no_files_check_nothing() {
     );
 }
 
+// --- The file token ---
+
+#[test]
+fn test_file_token_reads_each_file_name() {
+    let files = vec![file("a.txt", json!({}))];
+    assert!(run(check(json!("{{file}}"), "equals", json!("a.txt")), files).is_ok());
+}
+
+#[test]
+fn test_file_token_checks_each_file_and_names_every_failure() {
+    // "Fail if any file arrives": every file reaching the step fails, named.
+    let files = vec![file("utils.ts", json!({})), file("hooks.ts", json!({}))];
+    let msg = failure(check(json!("{{file}}"), "equals", json!("")), files);
+    assert!(
+        msg.contains("utils.ts") && msg.contains("hooks.ts"),
+        "{msg}"
+    );
+    assert!(!msg.contains("{{file}}"), "{msg}");
+}
+
+#[test]
+fn test_file_token_with_no_files_checks_nothing() {
+    assert!(run(check(json!("{{file}}"), "equals", json!("")), vec![]).is_ok());
+}
+
+#[test]
+fn test_file_token_in_expected_checks_per_file() {
+    let files = vec![file("a.txt", json!({ "name": "a.txt" }))];
+    let params = check(json!("{{item.name}}"), "equals", json!("{{file}}"));
+    assert!(run(params, files).is_ok());
+}
+
+#[test]
+fn test_file_token_mixes_with_item_keys() {
+    let files = vec![file("a.txt", json!({ "tag": "x" }))];
+    let params = check(json!("{{file}}:{{item.tag}}"), "equals", json!("a.txt:x"));
+    assert!(run(params, files).is_ok());
+}
+
+#[test]
+fn test_a_metadata_value_that_reads_like_the_file_token_is_kept_as_written() {
+    let files = vec![file("a.txt", json!({ "note": "{{file}}" }))];
+    let params = check(json!("{{item.note}}"), "equals", json!("{{file}}x"));
+    let msg = failure(params, files);
+    assert!(
+        msg.contains("got \"{{file}}\", expected \"a.txtx\""),
+        "{msg}"
+    );
+}
+
 // --- Validate and dry run ---
 
 #[test]

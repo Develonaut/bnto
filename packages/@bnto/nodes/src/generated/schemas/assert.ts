@@ -30,7 +30,7 @@ export const assertNodeSchema: NodeSchema = {
     value: {
       label: "Value",
       description:
-        "What to check, usually a template such as {{node.<id>.<key>}} or {{item.<key>}}.",
+        "What to check, usually a template such as {{node.<id>.<key>}}. With {{item.<key>}} or {{file}} (the file's name) it is checked once per incoming file, and no files means nothing to check.",
     },
     op: {
       label: "Comparison",

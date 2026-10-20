@@ -3,8 +3,9 @@
 // A generic control node: compares `value` to `expected` with `op` and, when
 // the comparison holds, passes its files on unchanged. It runs as a batch so
 // it checks even when no files arrive. When `value` or `expected` reads
-// `{{item.*}}`, the comparison runs once per incoming file and every failing
-// file is named in the one error. A dry run checks nothing.
+// `{{file}}` or `{{item.*}}`, the comparison runs once per incoming file and
+// every failing file is named in the one error; with no files it checks
+// nothing. A dry run checks nothing.
 
 mod compare;
 mod params;
@@ -15,7 +16,7 @@ use crate::progress::ProgressReporter;
 use crate::{BntoError, ProcessContext};
 
 use super::pass_through::pass_through;
-use super::placeholder::{self, ITEM};
+use super::placeholder;
 use params::{AssertParams, build_assert_parameters};
 
 /// Assert processor — a comparison that fails the run when it doesn't hold.
@@ -110,9 +111,9 @@ impl NodeProcessor for Assert {
 }
 
 /// Every reason the check fails: once, or once per file when it reads
-/// `{{item.*}}` (no files, nothing to check).
+/// `{{file}}` or `{{item.*}}` (no files, nothing to check).
 fn failures(params: &AssertParams, files: &[BatchFile]) -> Vec<String> {
-    if !(placeholder::reads(&params.value, ITEM) || placeholder::reads(&params.expected, ITEM)) {
+    if !(placeholder::reads_file(&params.value) || placeholder::reads_file(&params.expected)) {
         return compare::compare(&params.value, params.op, &params.expected)
             .err()
             .into_iter()
@@ -127,7 +128,7 @@ fn failures(params: &AssertParams, files: &[BatchFile]) -> Vec<String> {
 /// Why the check fails for one file, named by it; `None` when it holds.
 fn file_failure(params: &AssertParams, file: &BatchFile) -> Option<String> {
     let resolve = |text: &str| {
-        placeholder::resolve(text, ITEM, &file.metadata)
+        placeholder::resolve_file(text, &file.filename, &file.metadata)
             .map_err(|key| format!("has no item \"{key}\""))
     };
     let checked = resolve(&params.value).and_then(|value| {

@@ -1,15 +1,19 @@
 // `{{<namespace>.KEY}}` placeholders a batch node (assert, report, edit-fields)
-// fills itself.
+// fills itself, and the per-file `{{file}}`.
 //
 // The executor resolves a batch node's params once, with no item, so the
-// placeholders it can't fill there (`{{item.*}}`, report's `{{entry.*}}`)
-// reach the node as written. The node resolves them once per file or entry,
-// against that file's metadata or that entry's fields.
+// placeholders it can't fill there (`{{item.*}}`, `{{file}}`, report's
+// `{{entry.*}}`) reach the node as written. The node resolves them once per
+// file or entry, against that file's name and metadata or that entry's fields.
 
 use serde_json::{Map, Value};
 
 /// The per-file namespace: `{{item.KEY}}` reads the incoming file's metadata.
 pub(crate) const ITEM: &str = "item";
+
+/// The per-file name token: `{{file}}` reads the incoming file's name, as
+/// file-render and shell-command's `each` read it.
+pub(crate) const FILE: &str = "{{file}}";
 
 const CLOSE: &str = "}}";
 
@@ -44,6 +48,26 @@ pub(crate) fn resolve(
     }
     out.push_str(rest);
     Ok(out)
+}
+
+/// Whether `text` reads the file it is filled for: `{{file}}` or `{{item.*}}`.
+pub(crate) fn reads_file(text: &str) -> bool {
+    text.contains(FILE) || reads(text, ITEM)
+}
+
+/// `text` filled for one file: `{{file}}` with `name`, `{{item.KEY}}` from
+/// `metadata`, or the first key `metadata` doesn't have. Only the template is
+/// scanned, so a filled value that reads like a token is kept as written.
+pub(crate) fn resolve_file(
+    text_in: &str,
+    name: &str,
+    metadata: &Map<String, Value>,
+) -> Result<String, String> {
+    let pieces = text_in
+        .split(FILE)
+        .map(|piece| resolve(piece, ITEM, metadata))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(pieces.join(name))
 }
 
 /// A value as text: strings as written, other JSON (numbers, lists) as JSON.
@@ -81,6 +105,37 @@ mod tests {
     fn test_reads_needs_the_namespace_and_a_dot() {
         assert!(reads("x {{item.k}}", "item"));
         assert!(!reads("x {{items.k}} {{item}}", "item"));
+    }
+
+    #[test]
+    fn test_reads_file_needs_the_file_token_or_an_item_key() {
+        assert!(reads_file("{{file}}") && reads_file("{{item.k}}"));
+        assert!(!reads_file("{{files}} {{node.a.file}}"));
+    }
+
+    #[test]
+    fn test_resolve_file_fills_the_name_and_item_keys() {
+        let v = values(json!({ "k": "x" }));
+        let out = resolve_file("{{file}}={{item.k}} {{file}}", "a.ts", &v).unwrap();
+        assert_eq!(out, "a.ts=x a.ts");
+    }
+
+    #[test]
+    fn test_resolve_file_keeps_filled_values_that_read_like_tokens() {
+        let v = values(json!({ "k": "{{file}}" }));
+        let out = resolve_file("{{item.k}}", "{{item.k}}.ts", &v).unwrap();
+        assert_eq!(out, "{{file}}");
+        let out = resolve_file("{{file}}", "{{item.k}}.ts", &v).unwrap();
+        assert_eq!(out, "{{item.k}}.ts");
+    }
+
+    #[test]
+    fn test_resolve_file_returns_a_missing_key() {
+        let v = values(json!({}));
+        assert_eq!(
+            resolve_file("{{file}} {{item.gone}}", "a", &v),
+            Err("gone".into())
+        );
     }
 
     #[test]
