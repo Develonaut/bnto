@@ -97,7 +97,7 @@ M5: Monetization (tabled)
 3. Prove it works end-to-end in the CLI
 4. The engine's `platforms` metadata determines where it surfaces — browser, desktop, server, or all of the above
 
-**Extensibility is the point.** The 20 predefined recipes are a starting point. Anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
+**Extensibility is the point.** The predefined recipes are a starting point. Anyone can add a node for any capability — image processing, data transforms, API calls, shell commands, video manipulation — and it automatically composes with every other node in the system. Recipes are just compositions of nodes. The engine handles execution, iteration, progress, and error handling.
 
 **TUI is live.** `bnto tui` launches an interactive terminal UI (ratatui + crossterm) — 7 screens (Home, Recipes, Library, Detail, Picker, Execution, Results), List editor with undo/redo, Wizard for guided creation, schema-driven parameter controls. 400+ tests. `bnto` (no args) launches the TUI.
 

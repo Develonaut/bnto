@@ -97,7 +97,9 @@ Every processor needs at least one recipe that exercises it. See [Checklist: Add
 
 - [ ] **Create recipe definition** — `engine/recipes/{slug}.bnto.json` (engine is the source of truth for recipes)
 - [ ] **Add to `builtin_recipes()`** — add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`
-- [ ] **Register web overlay** — add to `RECIPE_IDS`, `WEB_DESCRIPTIONS`, `WEB_FEATURES`, `DISPLAY_ORDER` in `packages/@bnto/registry/src/recipesCatalog.ts`
+- [ ] **Script-mode steps pass ShellCheck** — a bundled `script` must pass `bnto-engine/tests/bundled_scripts.rs` (SEC-31), and a `# shellcheck disable=` may name only codes in its `ALLOWED_DISABLES`
+- [ ] **Dependencies install everywhere** — every `requires` entry needs an `installHints` entry for macOS, Linux and Windows (`every_bundled_dependency_installs_on_every_os` in `recipes.rs`), because `bnto doctor` checks every recipe's deps on every OS. A tool that exists on only one OS can't be a recipe-level dependency until `requires` can be scoped to an OS
+- [ ] **Bump the hard-coded recipe counts** — `recipes.rs` (`test_builtin_recipes_count`, and the category list if the category is new), `bnto-wasm/src/catalog.rs`, `bnto/src/catalog.rs` (bundled and bundled + library cases), `bnto/src/doctor.rs`, `bnto/src/tui/screens/browser.rs`, `BUNDLED_RECIPES` in `bnto/tests/check_edges.rs` and `check_folders.rs`, `packages/@bnto/registry/src/recipesCatalog.test.ts`, and the "N recipes ship today" lines in `.claude/CLAUDE.md`, `PLAN.md` and `ROADMAP.md`
 - [ ] **Regenerate TypeScript** — `task wasm:codegen` (snapshot → generate TS from engine catalog)
 - [ ] **Add engine integration test** — `test_generated_{slug}_recipe()` in `bnto-engine/src/lib.rs`
 - [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include the new recipe's `include_str!()`
@@ -150,9 +152,9 @@ A recipe is a predefined pipeline composition that maps to a public URL. Adding 
 
 ### Step 1: Define the Recipe (Engine-Owned)
 
-Recipes are defined as `.bnto.json` files in `engine/recipes/`. The engine is the source of truth.
+Recipes are defined as `.bnto.json` files in `engine/crates/bnto-engine/recipes/`. The engine is the source of truth, metadata included: `recipesCatalog.ts` derives every `Recipe` from the generated catalog, so there is no TypeScript overlay to fill in.
 
-- [ ] **Create recipe definition** — `engine/recipes/{slug}.bnto.json`
+- [ ] **Create recipe definition** — `engine/crates/bnto-engine/recipes/{slug}.bnto.json`
   - Must include: `id` (slug), `type: "group"`, `version`, `name`, `metadata` (with `description` and `category`), `nodes[]`, `edges[]`, `settings` with iteration mode
   - The `definition` contains the full node graph: input node, processor nodes, output node, edges connecting them
 - [ ] **Add to `builtin_recipes()`** — add `include_str!()` in `engine/crates/bnto-engine/src/recipes.rs`
@@ -167,7 +169,7 @@ Recipes are defined as `.bnto.json` files in `engine/recipes/`. The engine is th
 ### Step 3: Engine Integration Tests
 
 - [ ] **Add integration test** — `test_generated_{slug}_recipe()` in `engine/crates/bnto-engine/src/lib.rs` that runs the fixture through `run_pipeline()`
-- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` must include `include_str!("../../../recipes/{slug}.bnto.json")`
+- [ ] **Add to recipe parse test** — `test_all_generated_recipes_parse()` in `bnto-engine/src/lib.rs` must include `include_str!("../recipes/{slug}.bnto.json")`
 - [ ] **Engine tests pass** — `task wasm:test`
 
 ### Step 4: Golden Tests
@@ -179,9 +181,11 @@ Recipes are defined as `.bnto.json` files in `engine/recipes/`. The engine is th
 - [ ] **Verify golden files** — `task cli:golden`
 - [ ] **Commit golden files** — `engine/crates/bnto/tests/golden/{slug}/`
 
+A recipe with only side effects and no output files (`download-video`, `keep-awake`) has no golden test. Cover it with CLI tests instead, sandboxed in a temp `BNTO_HOME` and `HOME` (see `bnto/tests/keep_awake.rs`).
+
 ### Step 5: Verify Recipe Appears in All Surfaces
 
-These surfaces auto-derive from the `RECIPES` array, but tests have assertions that must include your addition:
+These surfaces auto-derive from the `RECIPES` array, but tests have assertions that must include your addition. CLI-only recipes (any node without the `browser` platform) get a CLI page automatically: "from Your Terminal" title, the `bnto run` command built from the input mode (`getCliRunCommand`), CLI copy and `SoftwareApplication` JSON-LD. They stay out of the nav and browser lists (`getBrowserRecipes`); add the slug to the "excludes" assertions in `getBrowserRecipes.test.ts` and `recipeLinks.test.ts`, and the "includes CLI-only" one in `bntoRegistry.test.ts`.
 
 | Surface            | How it picks up the recipe                                                                  | Test that catches a miss                                                |
 | ------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -192,7 +196,7 @@ These surfaces auto-derive from the `RECIPES` array, but tests have assertions t
 | **Sitemap**        | `buildBntoSitemapEntries.ts` reads `BNTO_REGISTRY`                                          | Derived — entry auto-generated if in BNTO_REGISTRY                      |
 | **llms.txt**       | `app/llms.txt/route.ts` reads `getAllRecipes()`                                             | Derived — auto-generated at build time                                  |
 | **llms-full.txt**  | `app/llms-full.txt/route.ts` reads `getAllRecipes()`                                        | Derived — auto-generated at build time                                  |
-| **README table**   | `task readme:generate` reads `RECIPES`                                                      | Manual — you must run the command                                       |
+| **README table**   | `task readme:generate` reads `RECIPES` (count + table)                                      | `scripts/renderReadme.test.ts` — fails when README.md is stale          |
 | **Static params**  | `generateStaticParams()` reads `BNTO_REGISTRY`                                              | Build will generate the page if in registry                             |
 | **JSON-LD**        | `BntoJsonLd` renders from `BntoEntry`                                                       | Derived — auto-rendered per page                                        |
 
@@ -202,18 +206,21 @@ These surfaces auto-derive from the `RECIPES` array, but tests have assertions t
 - [ ] **SEO registry tests pass** — `apps/web/lib/__tests__/bntoRegistry.test.ts` verifies BNTO_REGISTRY count matches getAllRecipes(), all entries have required fields, no slug collisions with reserved paths
 - [ ] **Nav links tests pass** — `apps/web/components/blocks/nav/recipeLinks.test.ts` verifies categories and links
 
-### Step 6: Nav Category (if new category)
+### Step 6: Web Category Content (if new category)
 
-If the recipe's `category` is new (not `image`, `spreadsheet`, or `file`):
+If the recipe's `category` has no recipe yet:
 
-- [ ] **Add category title** — `CATEGORY_TITLES` in `apps/web/components/blocks/nav/recipeLinks.ts`
-- [ ] **Add to category order** — `CATEGORY_ORDER` in the same file
-- [ ] **Update nav test** — `recipeLinks.test.ts` — "categories are ordered" assertion must include the new category
+- [ ] **Category page content** — a block in `apps/web/lib/categoryContent.ts` (process description, 3 features, FAQ). `recipePageContent.test.ts` fails without it, and also fails if the copy promises a consent prompt (built-in recipes never show one) or a category FAQ names a single recipe
+- [ ] **Breadcrumb label** — `CATEGORY_BREADCRUMB_LABELS` in `apps/web/lib/recipePageContent.ts` (guarded by the same test)
+- [ ] **Recipe icon** — `apps/web/lib/bntoIcons.ts` (falls back to a generic icon)
+- [ ] **Mascot** — `apps/web/app/(app)/[bnto]/_utils/categoryMascot.ts` (falls back to the `file` mascot; `system` and `video` use the fallback today)
+- [ ] **Explore filter** — `ExploreFilters.tsx` lists every category except the node-only `io` and `control`, so a new recipe category appears automatically
+- [ ] **Nav (browser recipes only)** — `CATEGORY_TITLES` and `CATEGORY_ORDER` in `apps/web/components/blocks/nav/recipeLinks.ts`, plus the "categories are ordered" assertion in `recipeLinks.test.ts`
 
 ### Step 7: README Update
 
-- [ ] **Regenerate README table** — `task readme:generate` updates the recipe table in `README.md`
-- [ ] **Commit README** — the generated table between `<!-- BEGIN AUTO-GENERATED RECIPES TABLE -->` markers
+- [ ] **Regenerate README** — `task readme:generate` updates the recipe count and table in `README.md`
+- [ ] **Commit README** — `scripts/renderReadme.test.ts` (in `task ui:test`) fails CI when it's stale
 
 ### Step 8: Quality Gate
 
