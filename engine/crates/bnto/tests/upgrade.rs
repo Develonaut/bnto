@@ -48,7 +48,8 @@ impl Sandbox {
     }
 
     /// The real bnto, copied into the sandbox's cargo bin dir, as
-    /// `cargo install` would have put it.
+    /// `cargo install` would have put it. Unix-only, like its tests.
+    #[cfg(unix)]
     fn cargo_installed_bnto(&self) -> PathBuf {
         let exe = self.path("cargo/bin/bnto");
         std::fs::copy(env!("CARGO_BIN_EXE_bnto"), &exe).unwrap();
