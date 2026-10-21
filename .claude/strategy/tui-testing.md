@@ -1,7 +1,7 @@
 # TUI Snapshots + Journey Tests -- 3 PRs
 
 **Created:** October 21, 2026
-**Status:** Approved, October 21, 2026; next in the queue (before the [CLI upgrade notices](cli-upgrade.md), then keep-awake PR 3). PR 1 in review.
+**Status:** Approved, October 21, 2026; next in the queue (before the [CLI upgrade notices](cli-upgrade.md), then keep-awake PR 3). PR 1 merged (#681); PR 2 in review.
 **Related:** [tui-strategy.md](tui-strategy.md) (it already calls for golden snapshot tests for rendering), [tui-user-journey.md](tui-user-journey.md), [journeys/web.md](../journeys/web.md), [pre-commit.md](../rules/pre-commit.md)
 
 ## Context
@@ -96,6 +96,24 @@ Goal: the TUI gets the same two layers the web has. Agents can then validate a T
 
 - **Detail descriptions are cut mid-word.** A long field description ends at the panel edge ("check what's c") instead of wrapping. It's visible in the `detail_*` snapshots. To fix in its own PR, which will update those snapshots.
 - **Settings reads telemetry outside `BNTO_HOME`.** `TelemetryConfig::load()` reads the real `~/.config/bnto/telemetry.json` (`dirs::config_dir`), so a sandboxed TUI still shows the user's own telemetry choice. Snapshots mask the value (`◂ [telemetry] ▸`). A follow-up should route the telemetry config through `BntoPaths`, so tests and `BNTO_HOME` users stay isolated.
+
+## Quality gate
+
+Decided (Ryan, Oct 21): the TUI tests are an automated quality gate, like the web's E2E suite. Snapshots and journeys run on every PR in the required CI Gate. They run in the Rust job's `cargo test --package bnto`, and again in a named "TUI tests (snapshots + journeys)" step so failures read as TUI failures. Locally they run in `task check` (via `task tui:test`). Windows journeys stay `#[ignore]`d until ConPTY runs prove stable in CI; enabling them is tracked here. Snapshots already run on Windows.
+
+## PR 2 spike: harness choice (October 21, 2026)
+
+**Decided: our own harness on `portable-pty` + `vt100`.** On crates.io, `portable-pty` (22.5M downloads) and `vt100` (15.3M) are mature. The packaged options are young: `testty` (~2k downloads, 0.18 already, versions moving fast), `termlens` (~6k) and `ratatui-testlib` (~6.6k, 0.1). The harness (`bnto/tests/tui/harness.rs`) is about 200 lines.
+
+Lessons from wiring it up:
+
+- **Wait for the whole frame.** A read can land mid-draw: the pane title is on screen before the status bar. Journeys use `wait_until` with every part they check, never `wait_for` on the first part and then assert the rest.
+- **Start in an empty `work/` folder, not HOME.** On macOS bnto writes config under `$HOME/Library`, which a file list would show first.
+- **Keys:** pause briefly between keys, so a lone Esc isn't merged into the next escape sequence.
+
+Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux CI runs them in `cargo test --package bnto`. Windows is `#[ignore]`d until ConPTY runs prove stable.
+
+Found while writing TJ3: when an output file is _larger_ than its input, the results screen says "Savings: 5 KB → 10 KB (0% smaller)" (e.g. a JPEG converted to WebP). It should say it grew.
 
 ## Dependency Chain
 
