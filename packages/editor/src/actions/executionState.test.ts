@@ -54,6 +54,20 @@ describe("applyPipelineEvent", () => {
     expect(next["compress-1"]).toBe("failed");
   });
 
+  it("settles a skipped node to idle: its when guard kept it from running", () => {
+    const current: ExecutionState = { "compress-1": "pending" };
+    const next = applyPipelineEvent(current, {
+      type: "NodeSkipped",
+      nodeId: "compress-1",
+      nodeIndex: 0,
+      totalNodes: 1,
+      nodeType: "image-compress",
+      parentNodeId: null,
+      reason: 'when {{ctx.platform}} equals macos: got "browser", expected "macos"',
+    });
+    expect(next["compress-1"]).toBe("idle");
+  });
+
   it("returns same state for informational events", () => {
     const current: ExecutionState = { "compress-1": "active" };
     const next = applyPipelineEvent(current, {

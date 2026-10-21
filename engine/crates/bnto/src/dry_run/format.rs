@@ -67,6 +67,13 @@ fn print_shell_commands(result: &DryRunResult) {
                 cmd.unresolved.join(", ").yellow()
             );
         }
+        if let Some(reason) = &cmd.skipped {
+            println!(
+                "    {}  {}",
+                "Skipped on this host:".dimmed(),
+                reason.yellow()
+            );
+        }
     }
 }
 
@@ -162,6 +169,9 @@ pub fn format_dry_run_plain(result: &DryRunResult) -> String {
                 if !cmd.unresolved.is_empty() {
                     writeln!(out, "    Placeholders: {}", cmd.unresolved.join(", ")).ok();
                 }
+                if let Some(reason) = &cmd.skipped {
+                    writeln!(out, "    Skipped on this host: {reason}").ok();
+                }
             }
         }
         if !result.file_previews.is_empty() {
@@ -206,6 +216,7 @@ mod tests {
                 args: vec!["--format".into(), "mp4".into()],
                 output_mode: "file".into(),
                 unresolved: vec![],
+                skipped: None,
             }],
             file_previews: vec![],
             other_node_count: 0,
@@ -247,6 +258,18 @@ mod tests {
         assert!(output.contains("yt-dlp"));
         assert!(output.contains("download"));
         assert!(output.contains("Commands:"));
+    }
+
+    #[test]
+    fn format_marks_a_command_skipped_on_this_host() {
+        let mut result = make_shell_result();
+        result.shell_commands[0].skipped =
+            Some("when {{ctx.platform}} equals linux: got \"macos\", expected \"linux\"".into());
+        let output = format_dry_run_plain(&result);
+        assert!(
+            output.contains("    Skipped on this host: when {{ctx.platform}} equals linux"),
+            "{output}"
+        );
     }
 
     #[test]

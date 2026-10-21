@@ -60,6 +60,28 @@ impl ExecutionModel {
         }
     }
 
+    /// Mark a node skipped. A container's child never started, so it's
+    /// added on first sight, like `start_child`.
+    pub(super) fn skip_node(
+        &mut self,
+        parent_id: Option<&str>,
+        node_id: String,
+        node_type: String,
+    ) {
+        let Some(parent_id) = parent_id else {
+            if let Some(node) = self.node_mut(&node_id) {
+                node.status = NodeStatus::Skipped;
+            }
+            return;
+        };
+        self.start_child(parent_id, node_id.clone(), node_type);
+        if let Some(parent) = self.node_mut(parent_id)
+            && let Some(child) = parent.children.iter_mut().find(|c| c.id == node_id)
+        {
+            child.status = NodeStatus::Skipped;
+        }
+    }
+
     /// Mark a container child active, adding it on first sight.
     pub(super) fn start_child(&mut self, parent_id: &str, node_id: String, node_type: String) {
         let Some(parent) = self.node_mut(parent_id) else {

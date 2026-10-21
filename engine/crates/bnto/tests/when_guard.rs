@@ -76,6 +76,11 @@ impl Sandbox {
 
     /// `bnto run` on every input; the names written to the output folder.
     fn run(&self) -> Vec<String> {
+        self.run_with_stderr().0
+    }
+
+    /// Like `run`, with what the run printed on stderr.
+    fn run_with_stderr(&self) -> (Vec<String>, String) {
         let inputs: Vec<String> = std::fs::read_dir(self.root.path().join("in"))
             .unwrap()
             .map(|e| e.unwrap().path().to_string_lossy().into_owned())
@@ -85,9 +90,9 @@ impl Sandbox {
         args.extend(inputs.iter().map(String::as_str));
         args.extend(["--yes", "-o", out.as_str()]);
         let output = self.bnto(&args);
-        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
         assert!(output.status.success(), "stderr: {stderr}");
-        names_in(&self.root.path().join("out"))
+        (names_in(&self.root.path().join("out")), stderr)
     }
 }
 
@@ -113,7 +118,15 @@ fn cj1_a_holding_guard_runs_its_step() {
 fn cj1_a_failing_guard_passes_the_file_through_untouched() {
     let when = guard("{{ctx.platform}}", "not-equals", host_platform());
     let sandbox = Sandbox::new(&recipe(vec![rename("tag", "on-", Some(when))]), &["a.txt"]);
-    assert_eq!(sandbox.run(), ["a.txt"]);
+    let (names, stderr) = sandbox.run_with_stderr();
+    assert_eq!(names, ["a.txt"]);
+    // The step is reported skipped, with the guard and what it read.
+    let line = stderr
+        .lines()
+        .find(|l| l.contains("file-rename"))
+        .unwrap_or_else(|| panic!("no step line: {stderr}"));
+    assert!(line.contains("skipped"), "{line}");
+    assert!(line.contains("when {{ctx.platform}} not-equals"), "{line}");
 }
 
 // --- CJ3: per-OS groups ---
@@ -146,6 +159,38 @@ fn cj6_check_refuses_an_unknown_op_and_a_guard_on_an_io_node() {
     assert!(stdout.contains("node \"tag\" (file-rename)"), "{stdout}");
     assert!(stdout.contains("'op' \"is\" is not one of"), "{stdout}");
     assert!(stdout.contains("Check: FAIL (2 findings)"), "{stdout}");
+}
+
+// --- CJ7: the dry run shows what this host skips ---
+
+#[test]
+fn cj7_dry_run_marks_the_other_oses_commands_skipped() {
+    let groups = ["macos", "linux", "windows"].map(|os| {
+        json!({ "id": os, "type": "group",
+                "when": guard("{{ctx.platform}}", "equals", os),
+                "nodes": [{ "id": format!("{os}-say"), "type": "shell-run",
+                            "parameters": { "command": format!("say-{os}") } }] })
+    });
+    let sandbox = Sandbox::new(&recipe(groups.to_vec()), &[]);
+    let library = sandbox.root.path().join("bnto-home").join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    std::fs::copy(
+        sandbox.path("guarded.bnto.json"),
+        library.join("guarded.bnto.json"),
+    )
+    .unwrap();
+
+    let output = sandbox.bnto(&["dry-run", "guarded"]);
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(output.status.success(), "{stdout}");
+    let skipped = stdout.matches("Skipped on this host").count();
+    assert_eq!(skipped, 2, "the other two OSes' commands:\n{stdout}");
+    let host_block = stdout
+        .split(&format!("say-{}", host_platform()))
+        .nth(1)
+        .unwrap_or_else(|| panic!("no host command:\n{stdout}"));
+    let next_line = host_block.lines().take(3).collect::<Vec<_>>().join("\n");
+    assert!(!next_line.contains("Skipped"), "{next_line}");
 }
 
 // --- CJ8: a guard on each file inside a loop ---

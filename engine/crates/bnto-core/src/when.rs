@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::compare::{Op, compare};
+use crate::executor::template::{TemplateContext, resolve_templates};
 
 /// `when: { value, op, expected }` on a node. `value` and `expected` take
 /// templates (`{{ctx.platform}}`, `{{fields.action}}`, `{{item.kind}}`, …);
@@ -43,14 +44,42 @@ impl When {
             .ok_or_else(|| format!("when: 'op' \"{}\" is not one of {}", self.op, Op::NAMES))
     }
 
+    /// The guard as written, e.g. `{{ctx.platform}} equals macos`.
+    pub fn describe(&self) -> String {
+        format!("{} {} {}", self.value, self.op, self.expected)
+    }
+
+    /// Run or skip, filling `value` and `expected` from `tpl`: the node's
+    /// fields, ctx, earlier records and the loop item. Shared by the
+    /// executor and the CLI's dry run.
+    pub fn decide_in(&self, tpl: &TemplateContext) -> Result<Guard, String> {
+        let mut sides = serde_json::Map::new();
+        sides.insert("value".into(), self.value.clone().into());
+        sides.insert("expected".into(), self.expected.clone().into());
+        let resolved = resolve_templates(&sides, tpl);
+        self.decide(
+            &as_text(&resolved["value"]),
+            &as_text(&resolved["expected"]),
+        )
+    }
+
     /// Run or skip, given `value` and `expected` with their templates filled.
     pub fn decide(&self, value: &str, expected: &str) -> Result<Guard, String> {
         Ok(match compare(value, self.op()?, expected) {
             Ok(()) => Guard::Run,
             Err(why) => Guard::Skip {
-                reason: format!("when {} {} {}: {why}", self.value, self.op, self.expected),
+                reason: format!("when {}: {why}", self.describe()),
             },
         })
+    }
+}
+
+/// A sole placeholder keeps its JSON type (`{{node.x.count}}` is a number),
+/// so a guard compares its text.
+fn as_text(value: &serde_json::Value) -> String {
+    match value {
+        serde_json::Value::String(text) => text.clone(),
+        other => other.to_string(),
     }
 }
 
@@ -98,6 +127,12 @@ mod tests {
             panic!("{guard:?}")
         };
         assert!(message.contains("\"is\""), "{message}");
+    }
+
+    #[test]
+    fn describes_itself_as_written() {
+        let guard = when("{{ctx.platform}}", "equals", "macos");
+        assert_eq!(guard.describe(), "{{ctx.platform}} equals macos");
     }
 
     #[test]

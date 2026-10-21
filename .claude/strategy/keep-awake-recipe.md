@@ -20,8 +20,8 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Merged (#674) |
 | E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | Merged (#672) |
 | F   | Refresh the new-recipe checklist and stale recipe counts     | `docs/new-recipe-checklist`        | Merged (#679) |
-| 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | In review     |
-| 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | Not started   |
+| 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Merged (#697) |
+| 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | In review     |
 | 5   | Let a container's fields reach the steps inside it           | `feat/scoped-fields`               | Not started   |
 | 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Not started   |
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Not started   |

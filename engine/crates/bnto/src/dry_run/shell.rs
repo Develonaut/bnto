@@ -20,6 +20,9 @@ pub struct ShellCommandInfo {
     pub args: Vec<String>,
     pub output_mode: String,
     pub unresolved: Vec<String>,
+    /// Why it won't run on this host: a `when` guard on it or a container
+    /// above it that doesn't hold.
+    pub skipped: Option<String>,
 }
 
 /// Walk the node tree and extract resolved shell-run info.
@@ -30,23 +33,28 @@ pub fn collect_shell_commands(
     commands: &mut Vec<ShellCommandInfo>,
     other_count: &mut usize,
 ) {
-    let skip = ["input", "output", "group", "loop"];
-    for node in nodes {
-        if skip.contains(&node.node_type.as_str()) {
-            if let Some(children) = &node.children {
-                collect_shell_commands(children, commands, other_count);
-            }
-            continue;
-        }
+    collect_under(nodes, &[], commands, other_count);
+}
 
+/// Walk `nodes`, which sit inside the containers in `above`.
+fn collect_under<'a>(
+    nodes: &'a [PipelineNode],
+    above: &[&'a PipelineNode],
+    commands: &mut Vec<ShellCommandInfo>,
+    other_count: &mut usize,
+) {
+    for node in nodes {
+        let mut path = above.to_vec();
+        path.push(node);
         if node.node_type == bnto_shell::NODE_TYPE {
-            commands.push(resolve_shell_command(node));
-        } else {
+            let mut info = resolve_shell_command(node);
+            info.skipped = super::host_skip::host_skip(&path);
+            commands.push(info);
+        } else if !["input", "output", "group", "loop"].contains(&node.node_type.as_str()) {
             *other_count += 1;
         }
-
         if let Some(children) = &node.children {
-            collect_shell_commands(children, commands, other_count);
+            collect_under(children, &path, commands, other_count);
         }
     }
 }
@@ -152,6 +160,7 @@ fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
         args,
         output_mode,
         unresolved,
+        skipped: None,
     }
 }
 
@@ -216,6 +225,26 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_step_in_another_oss_branch_is_marked_skipped() {
+        let nodes: Vec<PipelineNode> = serde_json::from_value(serde_json::json!([
+            { "id": "g", "type": "group",
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "plan9" },
+              "children": [{ "id": "s", "type": "shell-run", "parameters": { "command": "x" } }] },
+            { "id": "t", "type": "shell-run", "parameters": { "command": "y" } }
+        ]))
+        .unwrap();
+        let (mut commands, mut others) = (Vec::new(), 0);
+        collect_shell_commands(&nodes, &mut commands, &mut others);
+        assert!(
+            commands[0]
+                .skipped
+                .as_deref()
+                .is_some_and(|r| r.contains("plan9"))
+        );
+        assert_eq!(commands[1].skipped, None);
+    }
+
+    #[test]
     fn format_command_line_simple() {
         let cmd = ShellCommandInfo {
             node_id: "n1".into(),
@@ -224,6 +253,7 @@ mod tests {
             args: vec!["hello".into(), "world".into()],
             output_mode: "stdout".into(),
             unresolved: vec![],
+            skipped: None,
         };
         assert_eq!(format_command_line(&cmd), "echo hello world");
     }
@@ -237,6 +267,7 @@ mod tests {
             args: vec!["--flag".into(), "{{output_dir}}/out.mp4".into()],
             output_mode: "file".into(),
             unresolved: vec![],
+            skipped: None,
         };
         let formatted = format_command_line(&cmd);
         assert!(formatted.contains("'{{output_dir}}/out.mp4'"));

@@ -24,6 +24,11 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             duration_ms,
         } => model.complete_node(&node_id, duration_ms),
         M::NodeFailed { node_id, error } => model.fail_node(&node_id, error),
+        M::NodeSkipped {
+            node_id,
+            node_type,
+            parent_node_id,
+        } => model.skip_node(parent_node_id.as_deref(), node_id, node_type),
         M::PipelineCompleted { duration_ms, .. } => model.complete_pipeline(duration_ms),
         M::PipelineFailed { error, .. } => model.fail_pipeline(error),
         M::CommandOutput { line, .. } => model.push_command_output(&line),
