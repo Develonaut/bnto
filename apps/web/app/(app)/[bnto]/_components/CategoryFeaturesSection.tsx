@@ -4,7 +4,17 @@ import { Card, Heading, InView, SlideUp, Stagger, ScaleIn, Stack, Text } from "@
 import { getFeatures } from "@/lib/recipePageContent";
 import { getCategoryMascot } from "../_utils/categoryMascot";
 
-export function CategoryFeaturesSection({ category }: { category: string }) {
+const BROWSER_BLURB =
+  "Every feature is designed around how people actually work: batch processing, format flexibility, and zero configuration. Drop your files and go.";
+const CLI_BLURB =
+  "Every feature is designed around how people actually work: one command, sensible defaults, and nothing to configure.";
+
+interface CategoryFeaturesSectionProps {
+  category: string;
+  runsInBrowser: boolean;
+}
+
+export function CategoryFeaturesSection({ category, runsInBrowser }: CategoryFeaturesSectionProps) {
   const features = getFeatures(category);
   if (features.length === 0) return null;
 
@@ -39,8 +49,7 @@ export function CategoryFeaturesSection({ category }: { category: string }) {
               Built for real workflows
             </Heading>
             <Text color="muted" leading="snug">
-              Every feature is designed around how people actually work: batch processing, format
-              flexibility, and zero configuration. Drop your files and go.
+              {runsInBrowser ? BROWSER_BLURB : CLI_BLURB}
             </Text>
           </Stack>
         </SlideUp>

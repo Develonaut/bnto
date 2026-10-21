@@ -1,6 +1,8 @@
+import type { Recipe } from "@bnto/core";
+import { getCliRunCommand } from "@bnto/registry";
 import { Card, Badge, Heading, Text, Stack, Row } from "@bnto/ui";
 
-export function CliPromo({ slug }: { slug: string }) {
+export function CliPromo({ recipe }: { recipe: Recipe }) {
   return (
     <Card className="mx-auto max-w-lg p-6 text-left">
       <Stack className="gap-4">
@@ -26,7 +28,9 @@ export function CliPromo({ slug }: { slug: string }) {
           <Text size="xs" mono color="muted" className="uppercase tracking-wider">
             Run
           </Text>
-          <code className="font-mono text-sm">bnto run {slug} &lt;url&gt;</code>
+          <code className="font-mono text-sm" data-testid="cli-run-command">
+            {getCliRunCommand(recipe)}
+          </code>
         </Stack>
 
         <a

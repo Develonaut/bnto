@@ -43,14 +43,14 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
   if (!entry) notFound();
 
   const recipe = getRecipeBySlug(slug);
-  const browserCapable = recipe ? isRecipeBrowserCapable(recipe) : true;
+  const cliRecipe = recipe && !isRecipeBrowserCapable(recipe) ? recipe : undefined;
 
   return (
     <>
       <BntoJsonLd entry={entry} recipe={recipe ?? undefined} />
       <AppShellContent>
         <Container size="lg" className="space-y-6 text-center">
-          {browserCapable ? (
+          {!cliRecipe ? (
             <BntoRunStepper entry={entry} />
           ) : (
             <>
@@ -61,7 +61,7 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
                 {entry.description}
               </p>
               <div className="relative">
-                <CliPromo slug={slug} />
+                <CliPromo recipe={cliRecipe} />
                 <RecipeHeroMascot category={entry.category} />
               </div>
             </>
@@ -77,15 +77,19 @@ export default async function BntoPage({ params }: { params: Promise<{ bnto: str
         )}
 
         <Divider label="No catches" />
-        <WhyBntoSection />
+        <WhyBntoSection runsInBrowser={entry.runsInBrowser} />
 
         <Divider label="Features" />
-        <CategoryFeaturesSection category={entry.category} />
+        <CategoryFeaturesSection category={entry.category} runsInBrowser={entry.runsInBrowser} />
 
         <RelatedRecipesSection category={entry.category} currentSlug={entry.slug} />
 
         <Divider label="FAQ" />
-        <RecipeFaqSection slug={entry.slug} category={entry.category} />
+        <RecipeFaqSection
+          slug={entry.slug}
+          category={entry.category}
+          runsInBrowser={entry.runsInBrowser}
+        />
       </AppShellContent>
     </>
   );

@@ -1,4 +1,9 @@
-import { getBrowserRecipes, getAllRecipes, isRecipeBrowserCapable } from "@bnto/registry";
+import {
+  getAllRecipes,
+  getBrowserRecipes,
+  getCliRunCommand,
+  isRecipeBrowserCapable,
+} from "@bnto/registry";
 import type { Recipe } from "@bnto/registry";
 import { BASE_URL } from "@/lib/constants";
 
@@ -8,13 +13,20 @@ function formatAccepts(r: Recipe) {
   return r.accept.extensions.map((e) => e.replace(".", "").toUpperCase()).join(", ");
 }
 
+/** Browser recipes list the formats they accept; CLI-only ones, their command. */
+function formatInput(r: Recipe) {
+  return isRecipeBrowserCapable(r)
+    ? `- Accepts: ${formatAccepts(r)}`
+    : `- Run: ${getCliRunCommand(r)}`;
+}
+
 function formatRecipe(r: Recipe, platform: string) {
   return [
     `### ${r.name}`,
     `- URL: ${BASE_URL}/${r.slug}`,
     `- Description: ${r.description}`,
     `- Category: ${r.category}`,
-    `- Accepts: ${formatAccepts(r) || "URL input"}`,
+    formatInput(r),
     `- Features: ${r.features.join(", ")}`,
     `- Platform: ${platform}`,
     "- Cost: Free",
