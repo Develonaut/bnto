@@ -97,6 +97,9 @@ bnto info download-video
 
 # Check external tool availability
 bnto doctor
+
+# Install the newest release (when bnto was installed with cargo)
+bnto upgrade
 ```
 
 The CLI runs recipes using the native Rust engine. Direct native execution with full system access. Progress bars, colored output, and timing summaries keep you informed.
@@ -167,6 +170,14 @@ The same `.bnto.json` runs in the CLI, browser, desktop, and server. Nodes are t
 `settings.timeout` limits the whole run, in seconds: past it, every step the run started is stopped and the run fails (`bnto run --timeout` overrides it).
 
 A node marked `"always": true` (beside its `id` and `type`) is a closing step, like `finally`: it still runs after an earlier step fails, on whatever the failed step handed over, such as the output a failed command printed. The run still fails with the first error. Use it to keep a tool's log when the tool fails, or to clean up whatever the result.
+
+A node can also carry a `when` guard, like GitHub Actions' `if:`: it runs only when the comparison holds, and otherwise its files pass through untouched. `value` and `expected` take templates, and `op` is `equals`, `not-equals`, `after` or `before`. Two guarded steps make an if/else; guarded groups give each operating system its own branch:
+
+```json
+{ "id": "mac", "type": "group",
+  "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" },
+  "nodes": [ … ] }
+```
 
 ---
 
