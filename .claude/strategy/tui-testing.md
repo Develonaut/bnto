@@ -94,8 +94,8 @@ Goal: the TUI gets the same two layers the web has. Agents can then validate a T
 
 ## Found while building PR 1
 
-- **Detail descriptions are cut mid-word.** A long field description ends at the panel edge ("check what's c") instead of wrapping. It's visible in the `detail_*` snapshots. To fix in its own PR, which will update those snapshots.
-- **Settings reads telemetry outside `BNTO_HOME`, and unit tests wrote the real file.** `TelemetryConfig` lives at `<config dir>/bnto/telemetry.json` (`~/Library/Application Support` on macOS), not `BNTO_HOME`. TUI unit tests toggling telemetry called `telemetry::set_enabled`, which rewrote the developer's real file. It was confirmed modified by a `cargo test` run on Oct 21, and it could silently re-enable telemetry for someone who had turned it off. **Fixed:** `config_path()` returns `None` in test builds, so the snapshot mask is gone. **Open, for Ryan:** there are two telemetry settings. The TUI toggle writes both `config.toml` `[telemetry] enabled` (in `BNTO_HOME`) and `telemetry.json`, while telemetry and the Settings screen read only `telemetry.json`. One source of truth means a migration of users' choice and anonymous id, which is its own PR.
+- **Fixed (#683): Detail descriptions were cut mid-word.** A long field description ends at the panel edge ("check what's c") instead of wrapping. It's visible in the `detail_*` snapshots. To fix in its own PR, which will update those snapshots.
+- **Fixed (#684), one question open: Settings reads telemetry outside `BNTO_HOME`, and unit tests wrote the real file.** `TelemetryConfig` lives at `<config dir>/bnto/telemetry.json` (`~/Library/Application Support` on macOS), not `BNTO_HOME`. TUI unit tests toggling telemetry called `telemetry::set_enabled`, which rewrote the developer's real file. It was confirmed modified by a `cargo test` run on Oct 21, and it could silently re-enable telemetry for someone who had turned it off. **Fixed:** `config_path()` returns `None` in test builds, so the snapshot mask is gone. **Open, for Ryan:** there are two telemetry settings. The TUI toggle writes both `config.toml` `[telemetry] enabled` (in `BNTO_HOME`) and `telemetry.json`, while telemetry and the Settings screen read only `telemetry.json`. One source of truth means a migration of users' choice and anonymous id, which is its own PR.
 
 ## Quality gate
 
@@ -113,7 +113,7 @@ Lessons from wiring it up:
 
 Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux CI runs them in `cargo test --package bnto`. Windows is `#[ignore]`d until ConPTY runs prove stable.
 
-Found while writing TJ3: when an output file is _larger_ than its input, the results screen says "Savings: 5 KB → 10 KB (0% smaller)" (e.g. a JPEG converted to WebP). It should say it grew.
+Found while writing TJ3, **fixed in #685**: when an output file was _larger_ than its input, the results screen said "Savings: 5 KB → 10 KB (0% smaller)". It now says "Size: 5 KB → 10 KB (100% larger)".
 
 ## Run output audit (October 21, 2026)
 
