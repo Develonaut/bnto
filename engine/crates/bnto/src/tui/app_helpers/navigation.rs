@@ -12,7 +12,8 @@ pub(crate) fn is_at_last_visible_field(form: &tonkotsu::FormModel) -> bool {
         .rev()
         .find(|(_, f)| f.visible)
         .map(|(i, _)| i);
-    last_visible == Some(form.focused)
+    // No visible fields: nothing to walk, so moving on reaches Run.
+    last_visible.is_none_or(|i| i == form.focused)
 }
 
 /// Navigate back one screen, clearing the state of the screen we're leaving.
@@ -134,4 +135,17 @@ pub(crate) fn back_screen_for_editor(from: DetailOrigin) -> Screen {
 /// Returns the current working directory (or "." as fallback).
 pub(crate) fn resolve_start_dir() -> std::path::PathBuf {
     std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_form_with_no_fields_is_already_at_its_end() {
+        // A recipe with nothing to set: moving on must reach Run.
+        assert!(is_at_last_visible_field(&tonkotsu::FormModel::new(
+            Vec::new()
+        )));
+    }
 }

@@ -87,6 +87,23 @@ fn tj12_a_library_copy_never_hides_the_built_in() {
 
 #[test]
 #[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj13_a_shell_recipe_without_fields_offers_just_run() {
+    // Its command, args and limits are the program, not options (R4).
+    let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/tui/slow-shell.bnto.json");
+    let mut tui = Tui::launch_with_library(120, 36, &[&recipe]);
+    tui.wait_for("slow-shell");
+    tui.press(&[Key::Enter]);
+    tui.wait_for("Slow Shell");
+    tui.press(&[Key::Enter]);
+    let screen = tui.wait_for("Run →");
+    for raw in ["Command", "Arguments", "Output Mode", "Timeout"] {
+        assert!(!screen.contains(raw), "{raw} shown:\n{screen}");
+    }
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
 fn tj3_compress_an_image_and_see_the_result() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../../test-fixtures/images/gradient.jpg");
@@ -174,18 +191,18 @@ fn tj6_keep_awake_status_shows_its_message() {
 #[test]
 #[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
 fn tj11_tab_walks_every_field_to_run_on_a_short_terminal() {
-    // A shell recipe with no fields shows the shell node's raw params. Their
-    // descriptions wrap, so at 80x24 the later fields sit below the fold:
-    // each Tab must scroll the newly focused field into view.
+    // Five declared fields whose descriptions wrap: at 80x24 the later
+    // fields sit below the fold, so each Tab must scroll the newly focused
+    // field into view.
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("tests/fixtures/tui/slow-shell.bnto.json");
+        .join("tests/fixtures/tui/long-fields.bnto.json");
     let mut tui = Tui::launch_with_library(80, 24, &[&recipe]);
-    tui.wait_for("slow-shell"); // the home Library pane lists file names
+    tui.wait_for("long-fields"); // the home Library pane lists file names
     tui.press(&[Key::Enter]); // Library pane is focused: open the library
-    tui.wait_for("Slow Shell");
+    tui.wait_for("Long Fields");
     tui.press(&[Key::Enter]); // ...and the recipe
-    tui.wait_for("> Command");
-    for label in ["Arguments", "Output Mode", "Timeout", "Max Output Size"] {
+    tui.wait_for("> Source");
+    for label in ["Target", "Format", "Retries", "Verbose"] {
         tui.press(&[Key::Tab]);
         tui.wait_for(&format!("> {label}"));
     }
