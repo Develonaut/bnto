@@ -10,6 +10,8 @@ mod policy;
 mod spawn;
 mod version;
 
+pub use version::Version;
+
 use std::io::IsTerminal;
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -39,9 +41,18 @@ pub fn notice_and_refresh(paths: &BntoPaths) {
 /// The hidden `__check-for-updates` command: check once and cache the
 /// result. Offline or on error, nothing is written and the next run retries.
 pub fn run_check(paths: &BntoPaths) {
-    let Some(latest) = fetch::fetch_latest() else {
-        return;
-    };
+    if let Some(latest) = latest_release() {
+        record(paths, latest);
+    }
+}
+
+/// Ask for the newest release now, skipping the cache.
+pub fn latest_release() -> Option<Version> {
+    fetch::fetch_latest()
+}
+
+/// Cache `latest` as just checked, so the notice reflects it.
+pub fn record(paths: &BntoPaths, latest: Version) {
     let result = cache::CheckResult {
         checked_at: now(),
         latest: latest.to_string(),

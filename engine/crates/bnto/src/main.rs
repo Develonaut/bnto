@@ -63,6 +63,7 @@ mod trust;
 mod trust_gate;
 mod tui;
 mod update_check;
+mod upgrade;
 mod vars;
 
 use std::process;
@@ -80,6 +81,10 @@ use logging::FileLogger;
 fn main() {
     let cli = Cli::parse();
     telemetry::init();
+    // A Windows upgrade leaves the replaced binary beside the new one.
+    if let Ok(exe) = std::env::current_exe() {
+        upgrade::remove_leftover(&exe);
+    }
 
     install_signal_handler();
 

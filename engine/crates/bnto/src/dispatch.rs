@@ -36,7 +36,7 @@ pub fn dispatch(command: Option<Command>, session: Session) {
     if !matches!(command, Command::Telemetry { .. }) {
         telemetry::capture(telemetry::events::cli_command(command.name()));
     }
-    if !matches!(command, Command::Tui { .. })
+    if !matches!(command, Command::Tui { .. } | Command::Upgrade { .. })
         && let Some(paths) = &session.paths
     {
         crate::update_check::notice_and_refresh(paths);
@@ -62,6 +62,7 @@ fn run_command(command: Command, session: Session) {
             launch_tui(&theme, recipe, new, &session.logger, session.paths)
         }
         Command::Telemetry { action } => run_telemetry(action),
+        Command::Upgrade { check } => crate::upgrade::run_upgrade(check, session.paths.as_ref()),
         Command::CheckForUpdates => {}
     }
 }
