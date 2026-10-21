@@ -6,6 +6,7 @@
 pub mod app;
 mod app_helpers;
 mod bridge;
+mod detail_fit;
 pub mod event;
 pub mod format;
 mod keys;
@@ -149,6 +150,13 @@ fn run_loop(
     });
 
     loop {
+        // Before drawing, so a key that moved focus shows it scrolled into view.
+        if matches!(model.screen, app::Screen::Detail { .. })
+            && let Some(detail) = &mut model.detail
+        {
+            detail_fit::fit_detail(detail, &model.theme, terminal.size()?);
+        }
+
         let draw_start = Instant::now();
         terminal.draw(|frame| render::draw_frame(frame, &model))?;
         let draw_us = draw_start.elapsed().as_micros() as u64;
@@ -188,22 +196,6 @@ fn run_loop(
                         height: picker_height,
                     }),
                 );
-            }
-        }
-
-        // Update detail viewport height from terminal size.
-        // Screen chrome: 2 (name/desc header + blank line).
-        if matches!(model.screen, app::Screen::Detail { .. }) {
-            let size = terminal.size()?;
-            let detail_height = render_layout::viewport_height(size.height, 2);
-            if detail_height > 0
-                && let Some(detail) = &mut model.detail
-            {
-                detail.viewport.set_height(detail_height);
-                // Counted after wrapping, so the last wrapped rows can be reached.
-                let content_lines =
-                    render_detail::detail_content_height(detail, &model.theme, size.width);
-                detail.viewport.set_content_height(content_lines);
             }
         }
 

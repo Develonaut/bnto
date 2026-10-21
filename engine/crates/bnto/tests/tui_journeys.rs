@@ -7,8 +7,8 @@ mod harness;
 
 use harness::{Key, Tui};
 
-/// Move down to the detail screen's Run button with `j`. Not Tab: some list
-/// fields swallow it, and on Run itself Tab starts the run.
+/// Move down to the detail screen's Run button with `j`. Not Tab: on Run
+/// itself Tab starts the run, and this checks the screen between presses.
 fn focus_run(tui: &mut Tui) {
     for _ in 0..20 {
         if tui.screen().contains("▸ Run →") {
@@ -143,4 +143,26 @@ fn tj6_keep_awake_status_shows_its_message() {
         .iter()
         .all(|part| screen.contains(part))
     });
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj11_tab_walks_every_field_to_run_on_a_short_terminal() {
+    // A shell recipe with no fields shows the shell node's raw params. Their
+    // descriptions wrap, so at 80x24 the later fields sit below the fold:
+    // each Tab must scroll the newly focused field into view.
+    let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/tui/slow-shell.bnto.json");
+    let mut tui = Tui::launch_with_library(80, 24, &[&recipe]);
+    tui.wait_for("slow-shell"); // the home Library pane lists file names
+    tui.press(&[Key::Enter]); // Library pane is focused: open the library
+    tui.wait_for("Slow Shell");
+    tui.press(&[Key::Enter]); // ...and the recipe
+    tui.wait_for("> Command");
+    for label in ["Arguments", "Output Mode", "Timeout", "Max Output Size"] {
+        tui.press(&[Key::Tab]);
+        tui.wait_for(&format!("> {label}"));
+    }
+    tui.press(&[Key::Tab]);
+    tui.wait_for("▸ Run →");
 }
