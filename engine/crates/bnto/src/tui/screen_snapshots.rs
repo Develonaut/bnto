@@ -274,6 +274,13 @@ fn results_with_message() -> Session {
     session
 }
 
+/// Home while a newer bnto is out: the status line names it.
+fn update_available() -> Session {
+    let mut session = Session::new();
+    session.model.update_notice = Some("bnto 99.0.0 available, run bnto upgrade".into());
+    session
+}
+
 /// Each screen the snapshots cover, by name.
 fn screens() -> Vec<(&'static str, Session)> {
     let detail = |slug: &str| {
@@ -298,6 +305,7 @@ fn screens() -> Vec<(&'static str, Session)> {
             Session::new().send(AppMessage::OpenLibrary),
         ),
         ("settings", Session::new().send(AppMessage::OpenSettings)),
+        ("home_update_available", update_available()),
         (
             "execution_loop_running",
             running(LOOP_RECIPE, &loop_mid_run()),
@@ -324,12 +332,18 @@ fn the_bottom_bar_status_is_never_overwritten() {
         for (width, height) in SIZES {
             let screen = session.screen(width, height);
             let bottom = screen.lines().rev().find(|l| !l.trim().is_empty()).unwrap();
-            let status = format!("recipes  ·  v{}", env!("CARGO_PKG_VERSION"));
-            let at = bottom
-                .find(&status)
-                .unwrap_or_else(|| panic!("{name} {width}x{height}: status cut: {bottom:?}"));
-            // What's left of the status: the hints, then at least two spaces.
-            let hints = bottom[..at].trim_end().trim_end_matches(char::is_numeric);
+            // The status is the counts line ("22 recipes  ·  v…"), or an
+            // upgrade notice in its place. Left of it: hints, then 2+ spaces.
+            let counts = format!("recipes  ·  v{}", env!("CARGO_PKG_VERSION"));
+            let hints = if let Some(at) = bottom.find(&counts) {
+                bottom[..at].trim_end().trim_end_matches(char::is_numeric)
+            } else {
+                let at = bottom
+                    .find(" available, run bnto upgrade")
+                    .and_then(|end| bottom[..end].rfind("bnto "))
+                    .unwrap_or_else(|| panic!("{name} {width}x{height}: status cut: {bottom:?}"));
+                &bottom[..at]
+            };
             assert!(
                 hints.trim().is_empty() || hints.ends_with("  "),
                 "{name} {width}x{height}: hints run into the status: {bottom:?}"

@@ -166,3 +166,10 @@ fn tj11_tab_walks_every_field_to_run_on_a_short_terminal() {
     tui.press(&[Key::Tab]);
     tui.wait_for("▸ Run →");
 }
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj10_a_newer_release_shows_in_the_status_line() {
+    let tui = Tui::launch_with_update(120, 36, "99.0.0");
+    tui.wait_for("bnto 99.0.0 available, run bnto upgrade");
+}

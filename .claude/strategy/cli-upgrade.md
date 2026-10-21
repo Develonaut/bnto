@@ -1,7 +1,7 @@
 # CLI Upgrade Notices + `bnto upgrade` -- 3 PRs
 
 **Created:** October 21, 2026
-**Status:** Approved, October 21, 2026. PR 1 (#693) and PR 2 in review.
+**Status:** Approved, October 21, 2026. PR 1 (#693), PR 2 and PR 3 in review.
 **Related:** [releases.md](../scopes/process/releases.md#one-number-everywhere), [tui-data-persistence.md](tui-data-persistence.md), [environment-variables.md](../environment-variables.md)
 
 ## Context
