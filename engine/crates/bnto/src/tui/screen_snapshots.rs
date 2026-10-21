@@ -2,12 +2,15 @@
 // counterpart to the web's page screenshots (.claude/strategy/tui-testing.md).
 // Review changes with `cargo insta review`.
 
+use std::path::PathBuf;
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{Terminal, backend::TestBackend};
 
 use super::app::{AppMessage, AppModel, update};
 use super::keys::handle_key;
 use super::render::draw_frame;
+use super::screens::picker::PickerModel;
 use super::theme::ThemeVariant;
 use crate::storage::paths::BntoPaths;
 
@@ -47,6 +50,27 @@ impl Session {
         self
     }
 
+    /// Root the open recipe's file picker in a folder holding `names`, shown
+    /// as `~/photos`, so a snapshot is the same in every checkout: no
+    /// working directory, no listing of whatever sits next to it.
+    fn with_inputs(mut self, names: &[&str]) -> Self {
+        let dir = self._home.path().join("photos");
+        std::fs::create_dir_all(&dir).unwrap();
+        for name in names {
+            std::fs::write(dir.join(name), b"").unwrap();
+        }
+        let detail = self.model.detail.as_mut().expect("a recipe is open");
+        let mut picker = PickerModel::from_slug(
+            &detail.slug,
+            &dir,
+            &self.model.registry,
+            &detail.definition_json,
+        );
+        picker.current_dir = PathBuf::from("~/photos");
+        detail.input_picker = Some(picker);
+        self
+    }
+
     /// The screen's text, one line per row, trailing spaces trimmed.
     fn screen(&self, width: u16, height: u16) -> String {
         let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
@@ -62,32 +86,14 @@ impl Session {
     }
 }
 
-/// Snapshot `session` at every size. The version is masked so a release bump
-/// doesn't rewrite every snapshot, and the working directory (a file
-/// recipe's default input) so snapshots match on every machine.
+/// Snapshot `session` at every size, with the version masked so a release
+/// bump doesn't rewrite every snapshot.
 fn snapshot(name: &str, session: &Session) {
-    let cwd = std::env::current_dir().unwrap().display().to_string();
-    let filters = [
-        (r"v\d+\.\d+\.\d+".to_string(), "v[version]"),
-        // With its padding: the path's length differs between machines.
-        (format!("{} *", regex_literal(&cwd)), "[cwd] "),
-    ];
-    let filters: Vec<(&str, &str)> = filters.iter().map(|(p, r)| (p.as_str(), *r)).collect();
     for (width, height) in SIZES {
-        insta::with_settings!({ filters => filters.clone() }, {
+        insta::with_settings!({ filters => vec![(r"v\d+\.\d+\.\d+", "v[version]")] }, {
             insta::assert_snapshot!(format!("{name}_{width}x{height}"), session.screen(width, height));
         });
     }
-}
-
-/// `text` as a regex that matches it literally (insta filters are regexes).
-fn regex_literal(text: &str) -> String {
-    text.chars()
-        .flat_map(|c| {
-            let special = "\\.+*?()|[]{}^$".contains(c);
-            special.then_some('\\').into_iter().chain([c])
-        })
-        .collect()
 }
 
 /// Each screen the snapshots cover, by name.
@@ -105,7 +111,10 @@ fn screens() -> Vec<(&'static str, Session)> {
         ),
         ("detail_keep_awake", detail("keep-awake")),
         ("detail_download_video", detail("download-video")),
-        ("detail_compress_images", detail("compress-images")),
+        (
+            "detail_compress_images",
+            detail("compress-images").with_inputs(&["beach.jpg", "notes.txt", "sunset.png"]),
+        ),
         (
             "library_empty",
             Session::new().send(AppMessage::OpenLibrary),

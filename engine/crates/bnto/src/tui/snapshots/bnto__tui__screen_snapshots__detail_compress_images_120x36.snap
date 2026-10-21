@@ -16,10 +16,10 @@ expression: "session.screen(width, height)"
             │  Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup. │
             │                                                                                              │
             │  INPUT                                                                                       │
-            │  [cwd] │
+            │  ~/photos                                                                                    │
             │                                                                                              │
-            │  ▸ / src                                                                                     │
-            │    / tests                                                                                   │
+            │  ▸   beach.jpg  0 B [ ]                                                                      │
+            │      sunset.png  0 B [ ]                                                                     │
             │  0 files selected                                                                            │
             │                                                                                              │
             │  PARAMETERS                                                                                  │
