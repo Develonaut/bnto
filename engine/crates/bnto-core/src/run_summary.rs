@@ -54,6 +54,10 @@ pub struct RunSummary {
     pub nodes: Vec<NodeSummary>,
     /// Why the run failed; `None` on a pass.
     pub error: Option<String>,
+    /// The text a message-mode run reported (keep-awake's "No active
+    /// session."). Left out of the JSON when the run reported none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
 }
 
 impl RunSummary {
@@ -65,6 +69,7 @@ impl RunSummary {
             duration_ms,
             nodes: Vec::new(),
             error: None,
+            message: None,
         }
     }
 
@@ -76,12 +81,18 @@ impl RunSummary {
             duration_ms,
             nodes: Vec::new(),
             error: Some(error.to_string()),
+            message: None,
         }
     }
 
     /// The same summary with `nodes` in place of its node list.
     pub fn with_nodes(self, nodes: Vec<NodeSummary>) -> Self {
         Self { nodes, ..self }
+    }
+
+    /// The same summary reporting `message` as the run's text.
+    pub fn with_message(self, message: Option<String>) -> Self {
+        Self { message, ..self }
     }
 
     /// The same summary with each node's metadata looked up by id in `metadata`.
@@ -290,6 +301,22 @@ mod tests {
         copy.metadata = object(serde_json::json!({ "copied": 1 }));
         let json = serde_json::to_value(&copy).unwrap();
         assert_eq!(json["metadata"], serde_json::json!({ "copied": 1 }));
+    }
+
+    #[test]
+    fn test_summary_with_a_message_serializes_it() {
+        let summary = RunSummary::from_result(&result_with(&["sh-output"], 1), 1)
+            .with_message(Some("No active session.".into()));
+        let json = serde_json::to_value(summary).unwrap();
+        assert_eq!(json["message"], "No active session.");
+    }
+
+    #[test]
+    fn test_summary_without_a_message_leaves_the_field_out() {
+        let json = serde_json::to_value(RunSummary::from_result(&result_with(&["a"], 1), 1));
+        assert!(json.unwrap().get("message").is_none());
+        let json = serde_json::to_value(RunSummary::from_error("boom", 1)).unwrap();
+        assert!(json.get("message").is_none());
     }
 
     #[test]

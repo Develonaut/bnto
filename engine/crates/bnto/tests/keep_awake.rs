@@ -57,6 +57,17 @@ impl Sandbox {
 
     /// Run keep-awake with `params`: whether it succeeded, and its output.
     fn try_run(&self, params: &[&str]) -> (bool, String) {
+        let output = self.command(params).output().unwrap();
+        let text = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        (output.status.success(), text)
+    }
+
+    /// `bnto run keep-awake --yes` with `params`, inside this sandbox.
+    fn command(&self, params: &[&str]) -> Command {
         let mut cmd = Command::new(bnto_bin());
         cmd.env("BNTO_HOME", self.bnto.path())
             .env("HOME", self.user.path())
@@ -64,13 +75,7 @@ impl Sandbox {
         for param in params {
             cmd.args(["--param", param]);
         }
-        let output = cmd.output().unwrap();
-        let text = format!(
-            "{}{}",
-            String::from_utf8_lossy(&output.stdout),
-            String::from_utf8_lossy(&output.stderr)
-        );
-        (output.status.success(), text)
+        cmd
     }
 
     /// The caffeinate pid the session's state file records.
@@ -227,6 +232,34 @@ fn status_without_a_session_says_none_active() {
     let sandbox = Sandbox::new();
     let out = sandbox.run(&["action=status"]);
     assert!(out.contains("No active session"), "{out}");
+}
+
+#[test]
+fn status_ends_with_the_session_log_not_the_output_file_name() {
+    let sandbox = Sandbox::new();
+    let output = sandbox.command(&["action=status"]).output().unwrap();
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stderr}");
+    let lines: Vec<&str> = stderr.lines().filter(|l| !l.trim().is_empty()).collect();
+    let summary = &lines[lines.len() - 3..];
+    assert_eq!(summary[0], "Session Log:", "{stderr}");
+    assert_eq!(summary[1], "  No active session.", "{stderr}");
+    assert!(summary[2].starts_with("Done. in "), "{stderr}");
+    assert!(!stderr.contains("sh-output"), "{stderr}");
+}
+
+#[test]
+fn status_json_reports_the_message() {
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command(&["action=status"])
+        .arg("--json")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let summary: serde_json::Value = serde_json::from_str(stdout.trim()).unwrap();
+    assert_eq!(summary["status"], "pass", "{stdout}");
+    assert_eq!(summary["message"], "No active session.", "{stdout}");
 }
 
 #[test]
