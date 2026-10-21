@@ -84,6 +84,11 @@ pub enum Command {
         #[command(subcommand)]
         action: TelemetryAction,
     },
+
+    /// Check crates.io for a newer bnto and cache the answer. Started in the
+    /// background by other commands once a day; not for direct use.
+    #[command(name = "__check-for-updates", hide = true)]
+    CheckForUpdates,
 }
 
 // Arguments for `bnto run`. No doc comment: clap would read it as help
@@ -175,6 +180,7 @@ impl Command {
             Self::Migrate { .. } => "migrate",
             Self::Tui { .. } => "tui",
             Self::Telemetry { .. } => "telemetry",
+            Self::CheckForUpdates => "check-for-updates",
         }
     }
 }

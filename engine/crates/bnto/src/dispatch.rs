@@ -27,8 +27,19 @@ pub fn dispatch(command: Option<Command>, session: Session) {
         launch_tui("los-angeles", None, false, &session.logger, session.paths);
         return;
     };
+    if matches!(command, Command::CheckForUpdates) {
+        if let Some(paths) = &session.paths {
+            crate::update_check::run_check(paths);
+        }
+        return;
+    }
     if !matches!(command, Command::Telemetry { .. }) {
         telemetry::capture(telemetry::events::cli_command(command.name()));
+    }
+    if !matches!(command, Command::Tui { .. })
+        && let Some(paths) = &session.paths
+    {
+        crate::update_check::notice_and_refresh(paths);
     }
     run_command(command, session);
 }
@@ -51,6 +62,7 @@ fn run_command(command: Command, session: Session) {
             launch_tui(&theme, recipe, new, &session.logger, session.paths)
         }
         Command::Telemetry { action } => run_telemetry(action),
+        Command::CheckForUpdates => {}
     }
 }
 

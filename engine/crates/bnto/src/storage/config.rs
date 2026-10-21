@@ -33,6 +33,30 @@ pub struct TomlConfig {
     /// Telemetry consent settings.
     #[serde(default)]
     pub telemetry: TelemetrySection,
+
+    /// Update check settings.
+    #[serde(default)]
+    pub updates: UpdatesSection,
+}
+
+/// `[updates]`: whether bnto checks crates.io for a newer release.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct UpdatesSection {
+    /// Check once a day and mention a newer bnto (default on).
+    #[serde(default = "default_update_check")]
+    pub check: bool,
+}
+
+impl Default for UpdatesSection {
+    fn default() -> Self {
+        Self {
+            check: default_update_check(),
+        }
+    }
+}
+
+fn default_update_check() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -92,6 +116,7 @@ impl Default for TomlConfig {
             tui: TuiSection::default(),
             paths: PathsSection::default(),
             telemetry: TelemetrySection::default(),
+            updates: UpdatesSection::default(),
         }
     }
 }
@@ -217,6 +242,7 @@ mod tests {
                 home: Some("/custom".into()),
             },
             telemetry: TelemetrySection { enabled: false },
+            updates: UpdatesSection { check: false },
         };
 
         config.save(&paths).unwrap();
@@ -270,5 +296,17 @@ enabled = false
         assert_eq!(config.tui.theme, "tokyo");
         assert!(config.paths.home.is_none());
         assert!(!config.telemetry.enabled);
+    }
+
+    #[test]
+    fn update_checks_default_on_and_can_be_turned_off() {
+        assert!(TomlConfig::default().updates.check);
+        let config: TomlConfig = toml::from_str("[updates]\ncheck = false\n").unwrap();
+        assert!(!config.updates.check);
+        let config: TomlConfig = toml::from_str("version = 3\n").unwrap();
+        assert!(
+            config.updates.check,
+            "a config written before [updates] keeps checks on"
+        );
     }
 }
