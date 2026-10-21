@@ -14,10 +14,11 @@ use crate::trust;
 
 use super::app::AppModel;
 use super::render_layout::content_panel;
-use super::screens::detail::DetailFocus;
+use super::screens::detail::{DetailFocus, DetailModel};
 use super::screens::detail_bridge::BntoFormTheme;
 use super::theme::Theme;
 use super::widgets::file_list;
+use super::wrap_lines::wrap_lines;
 
 /// Render the recipe detail screen.
 pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -29,7 +30,7 @@ pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
         return;
     };
 
-    let lines = detail_lines(detail, theme);
+    let lines = wrap_lines(detail_lines(detail, theme), usize::from(inner.width));
     let scroll_offset = detail.viewport.offset();
     let content = Paragraph::new(lines).scroll((scroll_offset as u16, 0));
     frame.render_widget(content, inner);
@@ -53,6 +54,13 @@ pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
             frame.render_widget(indicator, area);
         }
     }
+}
+
+/// Rows the detail screen's content takes in a terminal `term_width` wide,
+/// after wrapping: the viewport's scroll range.
+pub fn detail_content_height(detail: &DetailModel, theme: &Theme, term_width: u16) -> usize {
+    let width = usize::from(super::render_layout::panel_inner_width(term_width));
+    wrap_lines(detail_lines(detail, theme), width).len()
 }
 
 /// Build the lines for the detail screen content.

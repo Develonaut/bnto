@@ -31,6 +31,7 @@ pub mod screens;
 mod strip_ansi;
 pub mod theme;
 pub mod widgets;
+mod wrap_lines;
 
 use std::io;
 use std::sync::{Arc, mpsc};
@@ -193,13 +194,15 @@ fn run_loop(
         // Update detail viewport height from terminal size.
         // Screen chrome: 2 (name/desc header + blank line).
         if matches!(model.screen, app::Screen::Detail { .. }) {
-            let term_h = terminal.size()?.height;
-            let detail_height = render_layout::viewport_height(term_h, 2);
+            let size = terminal.size()?;
+            let detail_height = render_layout::viewport_height(size.height, 2);
             if detail_height > 0
                 && let Some(detail) = &mut model.detail
             {
                 detail.viewport.set_height(detail_height);
-                let content_lines = detail.estimate_content_lines();
+                // Counted after wrapping, so the last wrapped rows can be reached.
+                let content_lines =
+                    render_detail::detail_content_height(detail, &model.theme, size.width);
                 detail.viewport.set_content_height(content_lines);
             }
         }
