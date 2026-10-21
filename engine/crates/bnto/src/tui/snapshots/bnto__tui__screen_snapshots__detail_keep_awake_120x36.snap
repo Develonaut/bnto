@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ D E T A I L ─────────────────────────────────────────────────────────────────────────────────╮
+            │  Keep Awake  [built-in]                                                                      │
+            │  Keep your Mac awake for a set time or until you stop it. By default it also nudges the curso│
+            │                                                                                              │
+            │  PARAMETERS                                                                                  │
+            │                                                                                              │
+            │  > Action   < Start a session >                                                              │
+            │      Start a new session, stop the running one, or check what's currently active.            │
+            │                                                                                              │
+            │    Session Length   1 hour                                                                   │
+            │      How long to stay awake. Ignored for Stop and Check status.                              │
+            │                                                                                              │
+            │    Display   Keep display awake (recommended)                                                │
+            │      Keep the display awake so it doesn't sleep. Allow sleep if you only need background task│
+            │                                                                                              │
+            │    Activity Simulation   After 2 minutes idle (recommended)                                  │
+            │      Keeping the Mac awake doesn't reset the system idle timer, so chat apps still mark you A│
+            │                                                                                              │
+            │    Run →                                                                                     │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            ↑↓ navigate  Enter edit/select  Tab next section          22 recipes  ·  v[version]  ·  Los Angeles

@@ -100,6 +100,18 @@ tasks:
     cmds:
       - BLESS=1 cargo test --package bnto -- golden
 
+  tui:snapshots:
+    desc: Check TUI screen snapshots (engine/crates/bnto/src/tui/snapshots)
+    dir: ./engine
+    cmds:
+      - cargo test --package bnto --bin bnto screen_snapshots
+
+  tui:snapshots:update:
+    desc: Rewrite TUI screen snapshots from current output (review with git diff)
+    dir: ./engine
+    cmds:
+      - INSTA_UPDATE=always cargo test --package bnto --bin bnto screen_snapshots
+
   # Documentation validation
   docs:validate:
     desc: Validate crate README documentation is complete

@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ S E T T I N G S ─────────────────────────────────────────────────────────────────────────────╮
+            │▸ Theme                                                                                       │
+            │    ◂ Los Angeles ▸                                                                           │
+            │    Color theme (use arrow keys to cycle)                                                     │
+            │                                                                                              │
+            │  Home Path                                                                                   │
+            │    (not set)                                                                                 │
+            │    Where bnto stores recipes, logs, and cache (Enter to browse)                              │
+            │                                                                                              │
+            │  Telemetry                                                                                   │
+            │    ◂ [telemetry] ▸                                                                                    │
+            │    Anonymous usage data (use arrow keys to toggle)                                           │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            ↑↓ navigate  ◂▸ theme  Enter browse  Esc back             22 recipes  ·  v[version]  ·  Los Angeles

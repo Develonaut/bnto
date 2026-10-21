@@ -22,6 +22,14 @@ use super::render_wizard::draw_wizard;
 use super::theme::Theme;
 use super::widgets::{help_bar, search_input, status_line};
 
+/// Render one whole frame: logo, the current screen, and the bottom bar.
+pub fn draw_frame(frame: &mut ratatui::Frame, model: &AppModel) {
+    let (logo_area, content_area, bottom_area) = super::render_layout::app_frame(frame.area());
+    draw_logo(frame, &model.theme, logo_area);
+    draw_content(frame, model, &model.theme, content_area);
+    draw_bottom_bar(frame, model, &model.theme, bottom_area);
+}
+
 /// Render the bnto ASCII logo header — shared across all screens.
 pub fn draw_logo(frame: &mut ratatui::Frame, theme: &Theme, area: Rect) {
     let lines = logo_lines(theme);
@@ -187,19 +195,24 @@ pub fn draw_bottom_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &The
     } else {
         model.screen.help_hints()
     };
-    let line = help_bar::render_help_bar(&hints, theme);
-    frame.render_widget(Paragraph::new(line), area);
-
-    // Status info (right-aligned).
-    let recipe_count = model.browser.recipes.len();
-    let version = env!("CARGO_PKG_VERSION");
-    let theme_name = model.theme_variant.display_name();
+    // Status info (right-aligned), drawn first: the hints get what's left.
     let status = status_line::render_status_line_with_message(
-        recipe_count,
-        version,
-        theme_name,
+        model.browser.recipes.len(),
+        env!("CARGO_PKG_VERSION"),
+        model.theme_variant.display_name(),
         model.status_message.as_deref(),
         theme,
     );
+    let hints_width = usize::from(area.width).saturating_sub(status.width() + STATUS_GAP);
     frame.render_widget(Paragraph::new(status).alignment(Alignment::Right), area);
+
+    let line = help_bar::render_help_bar(&help_bar::fit_hints(&hints, hints_width), theme);
+    let hints_area = Rect {
+        width: u16::try_from(hints_width).unwrap_or(area.width),
+        ..area
+    };
+    frame.render_widget(Paragraph::new(line), hints_area);
 }
+
+/// Minimum columns between the key hints and the status on the bottom bar.
+const STATUS_GAP: usize = 2;

@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ L I B R A R Y ────────────────╮╭ R E C I P E S ──────────────────────────────────────────────╮
+            │  No recipes yet               ││  FILE                                                       │
+            │                               ││   Flatten Folders                                           │
+            │                               ││   Number Files                                              │
+            │                               ││   Rename Files                                              │
+            │                               ││   Sanitize Filenames                                        │
+            │                               ││                                                             │
+            │                               ││  IMAGE                                                      │
+            │                               ││   Compress & Rename                                         │
+            │                               ││   Compress Images                                           │
+            │                               ││   Convert Image Format                                      │
+            │                               ││   Generate Thumbnails                                       │
+            │                               ││   Optimize Images for Web                                   │
+            │                               ││   Resize Images                                             │
+            │                               ││   Strip EXIF                                                │
+            │                               ││   Watermark Images                                          │
+            │                               ││                                                             │
+            ╰───────────────────────────────╯│  SPREADSHEET                                                │
+            ╭ N E W ────────────────────────╮│   Clean CSV                                                 │
+            │  Create from scratch          ││   CSV to JSON                                               │
+            ╰───────────────────────────────╯│   Merge CSV                                                 │
+            ╭ S E T T I N G S ──────────────╮│   Rename CSV Columns                                        │
+            │  Preferences                  ││   Standardize CSV                                           │
+            ╰───────────────────────────────╯╰─────────────────────────────────────────────────────────────╯
+            Tab pane  ↑↓ navigate  Enter select  q quit               22 recipes  ·  v[version]  ·  Los Angeles

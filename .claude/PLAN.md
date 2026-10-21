@@ -281,7 +281,7 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 **In flight (October 2026): Keep Awake + conditional steps.** A built-in keep-awake recipe, then a `when` step guard, recipe OS support and Linux/Windows variants. PR-by-PR tracker: [keep-awake-recipe.md](strategy/keep-awake-recipe.md#tracker).
 
-**Next after keep-awake fix F: CLI upgrade notices.** A once-a-day update check, `bnto upgrade`, and a TUI status-line notice (3 PRs): [cli-upgrade.md](strategy/cli-upgrade.md).
+**Next: TUI snapshots + journey tests** (3 PRs), so TUI changes get the same checks the web has: [tui-testing.md](strategy/tui-testing.md). **Then: CLI upgrade notices.** A once-a-day update check, `bnto upgrade`, and a TUI status-line notice (3 PRs): [cli-upgrade.md](strategy/cli-upgrade.md).
 
 Desktop (Tauri) and monetization are deep backlog.
 

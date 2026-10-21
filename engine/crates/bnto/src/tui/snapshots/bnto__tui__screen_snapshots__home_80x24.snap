@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ L I B R A R Y ──────╮╭ R E C I P E S ────────────────────────────╮
+      │  No recipes yet     ││  FILE                                     │
+      │                     ││   Flatten Folders                         │
+      │                     ││   Number Files                            │
+      │                     ││   Rename Files                            │
+      │                     ││   Sanitize Filenames                      │
+      │                     ││                                           │
+      ╰─────────────────────╯│  IMAGE                                    │
+      ╭ N E W ──────────────╮│   Compress & Rename                       │
+      │  Create from scratch││   Compress Images                         │
+      ╰─────────────────────╯│   Convert Image Format                    │
+      ╭ S E T T I N G S ────╮│   Generate Thumbnails                     │
+      │  Preferences        ││   Optimize Images for Web                 │
+      ╰─────────────────────╯╰───────────────────────────────────────────╯
+      Tab pane  ↑↓ navigate         22 recipes  ·  v[version]  ·  Los Angeles

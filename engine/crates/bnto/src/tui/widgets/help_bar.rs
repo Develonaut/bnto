@@ -30,6 +30,31 @@ pub fn render_help_bar<'a>(hints: &[(&str, &str)], theme: &Theme) -> Line<'a> {
     Line::from(spans)
 }
 
+/// Columns between two hints in [`render_help_bar`].
+const SEPARATOR_WIDTH: usize = 2;
+
+/// The leading `hints` that fit in `width` columns as [`render_help_bar`]
+/// draws them. Hints that don't fit are dropped whole, from the end, so the
+/// bar never shows a half-cut "Enter s".
+pub fn fit_hints<'h>(hints: &[(&'h str, &'h str)], width: usize) -> Vec<(&'h str, &'h str)> {
+    let mut used = 0;
+    let mut fitted = Vec::new();
+    for &(key, desc) in hints {
+        let separator = if fitted.is_empty() {
+            0
+        } else {
+            SEPARATOR_WIDTH
+        };
+        let needed = separator + Line::from(format!("{key} {desc}")).width();
+        if used + needed > width {
+            break;
+        }
+        used += needed;
+        fitted.push((key, desc));
+    }
+    fitted
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -69,6 +94,27 @@ mod tests {
             .filter(|s| s.content.as_ref() == "  ")
             .count();
         assert_eq!(separator_count, 0);
+    }
+
+    const HINTS: [(&str, &str); 3] = [("Tab", "pane"), ("↑↓", "navigate"), ("q", "quit")];
+
+    #[test]
+    fn every_hint_fits_a_wide_bar() {
+        assert_eq!(fit_hints(&HINTS, 80), HINTS.to_vec());
+    }
+
+    #[test]
+    fn hints_that_dont_fit_are_dropped_whole_from_the_end() {
+        // "Tab pane" (8) + "  " + "↑↓ navigate" (11) = 21; "q quit" needs 8 more.
+        assert_eq!(fit_hints(&HINTS, 21), HINTS[..2].to_vec());
+        assert_eq!(fit_hints(&HINTS, 28), HINTS[..2].to_vec());
+        assert_eq!(fit_hints(&HINTS, 29), HINTS.to_vec());
+    }
+
+    #[test]
+    fn no_room_means_no_hints() {
+        assert!(fit_hints(&HINTS, 7).is_empty());
+        assert!(fit_hints(&HINTS, 0).is_empty());
     }
 
     #[test]
