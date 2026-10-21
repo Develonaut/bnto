@@ -32,6 +32,13 @@ jobs:
       - name: Check the tag matches the engine release version
         run: ./scripts/check-release-version.sh "$GITHUB_REF_NAME"
 
+      # Same for crates with their own version: a changed tonkotsu still on a
+      # published version left v0.17.0's bnto unable to publish.
+      - name: Install Rust toolchain (engine/rust-toolchain.toml)
+        run: rustup toolchain install && rustup show active-toolchain
+      - name: Check crates with their own version were bumped
+        run: ./scripts/check-own-version-crates.sh
+
       - name: Determine changed surfaces
         id: filter
         env:
