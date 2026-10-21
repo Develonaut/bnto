@@ -279,6 +279,8 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 **Next: Sprint 17 — BRU File Ecosystem + Engine Polish.** Achieve BRU (Bulk Rename Utility) composable file operations goal: 4 new file processors (file-filter, file-collect, file-copy, file-inspect) that chain together for BRU-level power. Parallel engine polish (execution progress Phase 1, secrets Phase 1, recipe trust/consent). Image crop/rotate. Format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes.
 
+**In flight (October 2026): Keep Awake + conditional steps.** A built-in keep-awake recipe, then a `when` step guard, recipe OS support and Linux/Windows variants. PR-by-PR tracker: [keep-awake-recipe.md](strategy/keep-awake-recipe.md#tracker).
+
 Desktop (Tauri) and monetization are deep backlog.
 
 ---
