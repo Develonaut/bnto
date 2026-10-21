@@ -12,7 +12,7 @@ Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) ad
 | --- | ------------------------------------------------------------ | ---------------------------------- | ------------- |
 | 1   | Publish keep-awake as a built-in macOS recipe                | `feat/keep-awake-macos`            | Merged (#662) |
 | 2   | Lint bundled recipe scripts with ShellCheck in CI            | `chore/shellcheck-bundled-scripts` | Merged (#665) |
-| A   | Make keep-awake's Stop and Start only touch its own session  | `fix/keep-awake-session-safety`    | In progress   |
+| A   | Make keep-awake's Stop and Start only touch its own session  | `fix/keep-awake-session-safety`    | In review     |
 | B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | Not started   |
 | C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | Not started   |
 | D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Not started   |
