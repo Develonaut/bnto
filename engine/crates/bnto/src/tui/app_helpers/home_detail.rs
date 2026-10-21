@@ -91,6 +91,9 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
 }
 
 /// Route a form message to the detail screen's focus sections.
+///
+/// Only moves focus; the main loop's `fit_detail` scrolls the new focus
+/// into view, since that needs the terminal width.
 pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) -> AppModel {
     let detail = model.detail.map(|mut d| {
         use super::super::screens::detail::DetailFocus;
@@ -99,8 +102,6 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
             DetailFocus::Input => {
                 if matches!(msg, tonkotsu::FormMessage::FocusNext) {
                     d.focus = DetailFocus::Params;
-                    let line = d.estimate_section_line(DetailFocus::Params);
-                    d.viewport.ensure_visible(line);
                 }
             }
             DetailFocus::Params => {
@@ -111,24 +112,16 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
 
                 if at_last {
                     d.focus = DetailFocus::Run;
-                    let line = d.estimate_section_line(DetailFocus::Run);
-                    d.viewport.ensure_visible(line);
                 } else if at_first && d.input_picker.is_some() {
                     d.focus = DetailFocus::Input;
-                    d.viewport.go_to_top();
                 } else {
                     d.form = tonkotsu::update(d.form, msg);
                     detail_bridge::update_visibility(&mut d.form, &d.params);
-                    // Keep focused field visible after navigation
-                    let line = d.estimate_focused_field_line();
-                    d.viewport.ensure_visible(line);
                 }
             }
             DetailFocus::Run => {
                 if matches!(msg, tonkotsu::FormMessage::FocusPrev) {
                     d.focus = DetailFocus::Params;
-                    let line = d.estimate_focused_field_line();
-                    d.viewport.ensure_visible(line);
                 }
             }
         }

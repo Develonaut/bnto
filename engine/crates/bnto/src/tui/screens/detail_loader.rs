@@ -89,6 +89,7 @@ pub fn load_detail_from_entry(
         input_mode,
         input_picker,
         viewport: tonkotsu::Viewport::new(),
+        revealed: None,
     })
 }
 
@@ -301,6 +302,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         input_mode: InputMode::FileUpload,
         input_picker: None,
         viewport: tonkotsu::Viewport::new(),
+        revealed: None,
     })
 }
 

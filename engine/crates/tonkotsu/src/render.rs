@@ -4,6 +4,8 @@
 //! Returns `Vec<Line>` for the caller to render into their terminal frame.
 //! Supports scroll/viewport — auto-scrolls the focused field into view.
 
+use std::ops::Range;
+
 use ratatui::text::{Line, Span};
 
 use crate::form::{FormMode, FormModel};
@@ -26,12 +28,45 @@ pub fn render_form(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static
     }
 }
 
+/// The lines the focused field (label, control and description) spans in
+/// [`render_form`]'s output before viewport slicing, i.e. with
+/// `viewport_height == 0`. Lets a caller that scrolls the form itself keep
+/// the focused field in view. `None` when the focused field is hidden.
+pub fn focused_field_lines(model: &FormModel, theme: &dyn FormTheme) -> Option<Range<usize>> {
+    let layout = match model.mode {
+        // Editing full-screen: the panel is the focused field.
+        FormMode::FullScreenEdit if model.is_editing() => {
+            let lines = render_fullscreen_edit(model, theme);
+            return model.focused_field().map(|_| 0..lines.len());
+        }
+        FormMode::Inline => inline_layout(model, theme),
+        _ => display_edit_layout(model, theme),
+    };
+    layout
+        .fields
+        .into_iter()
+        .find(|(index, _)| *index == model.focused)
+        .map(|(_, lines)| lines)
+}
+
+/// A form's lines, and which of them each visible field spans.
+struct Layout {
+    lines: Vec<Line<'static>>,
+    /// `(field index, its lines)`, in render order.
+    fields: Vec<(usize, Range<usize>)>,
+}
+
 /// DisplayEdit mode: all fields as compact one-liners, except the editing field
 /// which gets its full control rendered. Group headers appear before each group's
 /// first visible field.
 fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
+    let layout = display_edit_layout(model, theme);
+    apply_viewport(model, layout.lines, &layout.fields)
+}
+
+fn display_edit_layout(model: &FormModel, theme: &dyn FormTheme) -> Layout {
     let mut all_lines: Vec<Line<'static>> = Vec::new();
-    let mut field_start_lines: Vec<(usize, usize)> = Vec::new();
+    let mut fields: Vec<(usize, Range<usize>)> = Vec::new();
     let mut rendered_groups: Vec<usize> = Vec::new();
 
     let visible_indices: Vec<usize> = model
@@ -69,14 +104,17 @@ fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'st
             ]));
         }
 
-        field_start_lines.push((i, start));
+        fields.push((i, start..all_lines.len()));
 
         if last_visible != Some(i) {
             all_lines.push(Line::default());
         }
     }
 
-    apply_viewport(model, all_lines, &field_start_lines)
+    Layout {
+        lines: all_lines,
+        fields,
+    }
 }
 
 /// FullScreenEdit mode: display identical to DisplayEdit.
@@ -178,8 +216,13 @@ fn render_edit_footer(field: &crate::field::Field, theme: &dyn FormTheme) -> Lin
 /// Inline mode (legacy): every field renders its full control.
 /// Group headers appear before each group's first visible field.
 fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
+    let layout = inline_layout(model, theme);
+    apply_viewport(model, layout.lines, &layout.fields)
+}
+
+fn inline_layout(model: &FormModel, theme: &dyn FormTheme) -> Layout {
     let mut all_lines: Vec<Line<'static>> = Vec::new();
-    let mut field_start_lines: Vec<(usize, usize)> = Vec::new();
+    let mut fields: Vec<(usize, Range<usize>)> = Vec::new();
     let mut rendered_groups: Vec<usize> = Vec::new();
 
     let visible_indices: Vec<usize> = model
@@ -211,14 +254,17 @@ fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>>
             ]));
         }
 
-        field_start_lines.push((i, start));
+        fields.push((i, start..all_lines.len()));
 
         if last_visible != Some(i) {
             all_lines.push(Line::default());
         }
     }
 
-    apply_viewport(model, all_lines, &field_start_lines)
+    Layout {
+        lines: all_lines,
+        fields,
+    }
 }
 
 /// Insert a group header line if this field is the first visible field in its group.
@@ -273,16 +319,16 @@ fn render_field_inline(
 fn apply_viewport(
     model: &FormModel,
     all_lines: Vec<Line<'static>>,
-    field_start_lines: &[(usize, usize)],
+    fields: &[(usize, Range<usize>)],
 ) -> Vec<Line<'static>> {
     if model.viewport_height == 0 || all_lines.len() <= model.viewport_height {
         return all_lines;
     }
 
-    let focused_start = field_start_lines
+    let focused_start = fields
         .iter()
         .find(|(idx, _)| *idx == model.focused)
-        .map(|(_, start)| *start)
+        .map(|(_, lines)| lines.start)
         .unwrap_or(0);
 
     let mut offset = model.scroll_offset;
@@ -759,5 +805,67 @@ mod tests {
             !text.contains("Other"),
             "other group should be hidden: {text}"
         );
+    }
+
+    // --- focused_field_lines ---
+
+    /// Index of the first rendered line containing `needle`.
+    fn line_of(lines: &[Line<'_>], needle: &str) -> usize {
+        lines
+            .iter()
+            .position(|l| l.to_string().contains(needle))
+            .unwrap_or_else(|| panic!("{needle:?} not rendered"))
+    }
+
+    fn described_form() -> FormModel {
+        FormModel::new(vec![
+            text("a")
+                .label("First")
+                .description(Some("first help"))
+                .build(),
+            text("b")
+                .label("Second")
+                .description(Some("second help"))
+                .build(),
+            text("c").label("Third").build(),
+        ])
+    }
+
+    #[test]
+    fn focused_field_lines_span_label_through_description() {
+        let mut model = described_form();
+        model.focused = 1;
+        let lines = render_form(&model, &theme());
+        let range = focused_field_lines(&model, &theme()).unwrap();
+        assert_eq!(range.start, line_of(&lines, "Second"));
+        assert_eq!(range.end, line_of(&lines, "second help") + 1);
+    }
+
+    #[test]
+    fn focused_field_lines_skip_hidden_fields_above() {
+        let mut model = described_form();
+        model.fields[0].visible = false;
+        model.focused = 2;
+        let lines = render_form(&model, &theme());
+        let range = focused_field_lines(&model, &theme()).unwrap();
+        assert_eq!(range.start, line_of(&lines, "Third"));
+        assert_eq!(range.end, range.start + 1);
+    }
+
+    #[test]
+    fn focused_field_lines_in_display_edit_mode() {
+        let mut model = described_form().with_mode(FormMode::DisplayEdit);
+        model.focused = 1;
+        let lines = render_form(&model, &theme());
+        let range = focused_field_lines(&model, &theme()).unwrap();
+        assert_eq!(range.start, line_of(&lines, "Second"));
+        assert_eq!(range.end, line_of(&lines, "second help") + 1);
+    }
+
+    #[test]
+    fn focused_field_lines_none_for_a_hidden_focus() {
+        let mut model = described_form();
+        model.fields[0].visible = false;
+        assert_eq!(focused_field_lines(&model, &theme()), None);
     }
 }
