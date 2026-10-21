@@ -12,7 +12,7 @@ use crate::consent::check_trust;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
 use crate::run_watchdog::{self, Watched};
-use crate::{context, dry_run, input, progress, run_limit, telemetry, vars};
+use crate::{context, dry_run, input, progress, run_limit, run_message, telemetry, vars};
 
 /// The `bnto run` switches that change what a run does.
 #[derive(Clone, Copy)]
@@ -44,6 +44,8 @@ struct RunTarget {
     dry_run: bool,
     /// The run's time limit in seconds, if it has one.
     time_limit: Option<u64>,
+    /// The output node's label (keep-awake: "Session Log").
+    label: Option<String>,
 }
 
 /// Run a recipe (slug or path) against `inputs`.
@@ -171,20 +173,17 @@ fn run_target(
     ctx: &context::NativeContext,
 ) -> RunTarget {
     let def_json = &prepared.definition_json;
+    let def = serde_json::from_str::<bnto_core::PipelineDefinition>(def_json).ok();
     RunTarget {
-        mode: resolve_mode(def_json),
+        mode: def
+            .as_ref()
+            .map_or_else(|| "write".to_string(), bnto_core::resolve_output_mode),
         // Priority chain: explicit --output > recipe directory param > default "."
         output_dir: resolve_effective_output_dir(output_override, def_json, ctx, &prepared.files),
         dry_run,
         time_limit,
+        label: def.as_ref().and_then(run_message::output_label),
     }
-}
-
-/// Resolve the output mode from the recipe definition.
-fn resolve_mode(definition_json: &str) -> String {
-    serde_json::from_str::<bnto_core::PipelineDefinition>(definition_json)
-        .map(|def| bnto_core::resolve_output_mode(&def))
-        .unwrap_or_else(|_| "write".to_string())
 }
 
 /// Directory the progress reporter writes iteration output to, creating it
@@ -227,6 +226,7 @@ fn finish_run(
         &target.mode,
         &target.output_dir,
         target.dry_run,
+        target.label.clone(),
         verdict,
     );
 }
