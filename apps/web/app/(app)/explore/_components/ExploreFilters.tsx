@@ -12,9 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useExploreParams } from "./useExploreParams";
 
 /** Categories relevant for recipe filtering (exclude internal-only categories). */
-const RECIPE_CATEGORIES = getAllCategories().filter(
-  (c) => c.name !== "io" && c.name !== "control" && c.name !== "system",
-);
+const RECIPE_CATEGORIES = getAllCategories().filter((c) => c.name !== "io" && c.name !== "control");
 
 export function ExploreFilters() {
   const { category, update } = useExploreParams();

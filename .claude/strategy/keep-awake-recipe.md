@@ -13,9 +13,9 @@ Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) ad
 | 1   | Publish keep-awake as a built-in macOS recipe                | `feat/keep-awake-macos`            | Merged (#662) |
 | 2   | Lint bundled recipe scripts with ShellCheck in CI            | `chore/shellcheck-bundled-scripts` | Merged (#665) |
 | A   | Make keep-awake's Stop and Start only touch its own session  | `fix/keep-awake-session-safety`    | Merged (#671) |
-| B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | In review     |
-| C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | Not started   |
-| D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Not started   |
+| B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | Merged (#673) |
+| C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | In review     |
+| D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Merged (#674) |
 | E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | Merged (#672) |
 | F   | Refresh the new-recipe checklist and stale recipe counts     | `docs/new-recipe-checklist`        | Not started   |
 | 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Not started   |
@@ -102,6 +102,7 @@ A code review of PRs 1-2 (October 21, 2026; security/Rust and web/docs reviewers
 - The category FAQ names one recipe and promises Windows/Linux; "each recipe page lists what it supports" isn't true until PR 7.
 - `/explore` excludes `system` from its category filter (`ExploreFilters.tsx`), so `/explore?category=system`, linked from breadcrumb JSON-LD, shows a blank filter.
 - Recipe metadata: "Optionally nudges" (it's on by default), "so the screen never locks" (it stops display sleep, not locks), the "No install" tag contradicts the page's "Install the CLI" card.
+- Not done: no `system` mascot (falls back to `file`), and three recipe descriptions still say "CLI/desktop only" though there's no desktop app yet.
 
 ### D: Stop CLI-only recipe pages describing a browser tool
 
