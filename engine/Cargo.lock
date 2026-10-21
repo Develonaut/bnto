@@ -152,7 +152,7 @@ dependencies = [
 
 [[package]]
 name = "bnto"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bnto-core",
  "bnto-engine",
@@ -185,7 +185,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-core"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -198,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-encode"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bnto-core",
  "image",
@@ -207,7 +207,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-engine"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "base64",
  "bnto-core",
@@ -223,7 +223,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-file"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "base64",
  "bnto-core",
@@ -243,7 +243,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-image"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "base64",
  "bnto-core",
@@ -263,7 +263,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-shell"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bnto-core",
  "serde_json",
@@ -272,7 +272,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-spreadsheet"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bnto-core",
  "csv",
@@ -288,7 +288,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-vector"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bnto-core",
  "bnto-encode",
@@ -304,7 +304,7 @@ dependencies = [
 
 [[package]]
 name = "bnto-wasm"
-version = "0.17.0"
+version = "0.17.1"
 dependencies = [
  "bnto-core",
  "bnto-engine",
@@ -2398,7 +2398,7 @@ checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
 
 [[package]]
 name = "tonkotsu"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "crossterm",
  "ratatui",
