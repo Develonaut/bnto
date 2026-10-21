@@ -1,0 +1,225 @@
+{
+  "id": "favicons",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Favicons",
+  "metadata": {
+    "description": "Renders the PNG favicon set from favicon.svg: favicon-96x96 on a transparent square, the 192 and 512 web app icons on the cream page color, and the 180 apple-touch-icon on cream with a margin. Pass favicon.svg; the logo isn't square, so each canvas is padded to a square before resizing."
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "file-upload",
+        "extensions": [".svg"],
+        "multiple": false
+      }
+    },
+    {
+      "id": "rasterize",
+      "type": "vector-rasterize",
+      "parameters": {
+        "format": "png"
+      }
+    },
+    {
+      "id": "square-clear",
+      "type": "image-pad",
+      "parameters": {
+        "width": 3117,
+        "height": 3117
+      }
+    },
+    {
+      "id": "square-cream",
+      "type": "image-pad",
+      "parameters": {
+        "width": 3117,
+        "height": 3117,
+        "background": "#fffcf0"
+      }
+    },
+    {
+      "id": "square-cream-margin",
+      "type": "image-pad",
+      "parameters": {
+        "width": 3896,
+        "height": 3896,
+        "background": "#fffcf0"
+      }
+    },
+    {
+      "id": "size-96",
+      "type": "image-resize",
+      "parameters": {
+        "width": 96,
+        "height": 96
+      }
+    },
+    {
+      "id": "size-180",
+      "type": "image-resize",
+      "parameters": {
+        "width": 180,
+        "height": 180
+      }
+    },
+    {
+      "id": "size-192",
+      "type": "image-resize",
+      "parameters": {
+        "width": 192,
+        "height": 192
+      }
+    },
+    {
+      "id": "size-512",
+      "type": "image-resize",
+      "parameters": {
+        "width": 512,
+        "height": 512
+      }
+    },
+    {
+      "id": "name-96",
+      "type": "file-rename",
+      "parameters": {
+        "pattern": "favicon-96x96"
+      }
+    },
+    {
+      "id": "name-180",
+      "type": "file-rename",
+      "parameters": {
+        "pattern": "apple-touch-icon"
+      }
+    },
+    {
+      "id": "name-192",
+      "type": "file-rename",
+      "parameters": {
+        "pattern": "web-app-manifest-192x192"
+      }
+    },
+    {
+      "id": "name-512",
+      "type": "file-rename",
+      "parameters": {
+        "pattern": "web-app-manifest-512x512"
+      }
+    },
+    {
+      "id": "compress",
+      "type": "image-compress",
+      "parameters": {}
+    },
+    {
+      "id": "strip-suffix",
+      "type": "file-rename",
+      "parameters": {
+        "find": "-compressed",
+        "replace": ""
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": {
+        "mode": "write"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "rasterize"
+    },
+    {
+      "id": "e2",
+      "source": "rasterize",
+      "target": "square-clear"
+    },
+    {
+      "id": "e3",
+      "source": "rasterize",
+      "target": "square-cream"
+    },
+    {
+      "id": "e4",
+      "source": "rasterize",
+      "target": "square-cream-margin"
+    },
+    {
+      "id": "e5",
+      "source": "square-clear",
+      "target": "size-96"
+    },
+    {
+      "id": "e6",
+      "source": "square-cream-margin",
+      "target": "size-180"
+    },
+    {
+      "id": "e7",
+      "source": "square-cream",
+      "target": "size-192"
+    },
+    {
+      "id": "e8",
+      "source": "square-cream",
+      "target": "size-512"
+    },
+    {
+      "id": "e9",
+      "source": "size-96",
+      "target": "name-96"
+    },
+    {
+      "id": "e10",
+      "source": "size-180",
+      "target": "name-180"
+    },
+    {
+      "id": "e11",
+      "source": "size-192",
+      "target": "name-192"
+    },
+    {
+      "id": "e12",
+      "source": "size-512",
+      "target": "name-512"
+    },
+    {
+      "id": "e13",
+      "source": "name-96",
+      "target": "compress"
+    },
+    {
+      "id": "e14",
+      "source": "name-180",
+      "target": "compress"
+    },
+    {
+      "id": "e15",
+      "source": "name-192",
+      "target": "compress"
+    },
+    {
+      "id": "e16",
+      "source": "name-512",
+      "target": "compress"
+    },
+    {
+      "id": "e17",
+      "source": "compress",
+      "target": "strip-suffix"
+    },
+    {
+      "id": "e18",
+      "source": "strip-suffix",
+      "target": "output"
+    }
+  ]
+}
