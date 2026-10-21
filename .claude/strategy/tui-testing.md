@@ -1,7 +1,7 @@
 # TUI Snapshots + Journey Tests -- 3 PRs
 
 **Created:** October 21, 2026
-**Status:** Approved, October 21, 2026; next in the queue (before the [CLI upgrade notices](cli-upgrade.md), then keep-awake PR 3). PR 1 merged (#681); PR 2 in review.
+**Status:** Approved, October 21, 2026; next in the queue (before the [CLI upgrade notices](cli-upgrade.md), then keep-awake PR 3). PRs 1 (#681) and 2 (#682) merged; PR 3 in review.
 **Related:** [tui-strategy.md](tui-strategy.md) (it already calls for golden snapshot tests for rendering), [tui-user-journey.md](tui-user-journey.md), [journeys/web.md](../journeys/web.md), [pre-commit.md](../rules/pre-commit.md)
 
 ## Context
@@ -114,6 +114,30 @@ Lessons from wiring it up:
 Runs in about 1.5s for three journeys and was 10/10 stable locally. Linux CI runs them in `cargo test --package bnto`. Windows is `#[ignore]`d until ConPTY runs prove stable.
 
 Found while writing TJ3: when an output file is _larger_ than its input, the results screen says "Savings: 5 KB → 10 KB (0% smaller)" (e.g. a JPEG converted to WebP). It should say it grew.
+
+## Run output audit (October 21, 2026)
+
+These came from driving real runs in the TUI (tmux, sandboxed homes) and comparing them with `bnto run`:
+
+- an explicit-loop recipe on 6 images (`tests/fixtures/explicit/compress-and-rename.bnto.json`)
+- a shell recipe that prints a line every 0.4s
+- keep-awake with Action "Check status"
+
+**Works:** live streaming (lines appear as the command prints them), the elapsed timer, loop iteration counts (`loop (2/6)`), children indented under their container, the consent prompt (full script, y/n, same as the CLI), and per-file progress messages.
+
+| #   | Finding                                                                                                                                                                                                                            | Severity | Fix                                                                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| R1  | **A recipe's output message is never shown.** Output nodes in `message` mode, such as keep-awake's "No active session." or "Session started…", end on "No output files." The CLI prints them. keep-awake is unusable from the TUI. | High     | Show the output message on the results screen. Journey TJ6 (keep-awake status shows "No active session.") is the RED test.    |
+| R2  | **Streamed output disappears at results.** Everything shown under OUTPUT during the run is gone once it finishes, including the last lines of a failing command.                                                                   | High     | Keep the run's output log on the results screen. Journey TJ5 (shell lines are still readable after the run) is the RED test.  |
+| R3  | **Tab is trapped by a list field.** On a shell recipe's raw params, Tab stops at Arguments and never reaches Run. Down/`j` work.                                                                                                   | Medium   | Tab leaves list fields like any other field; add a render or key test.                                                        |
+| R4  | A shell recipe with no declared fields exposes the shell node's raw params (Command, Arguments, Output Mode, Timeout, …) on its detail screen.                                                                                     | Medium   | Show raw params only for recipes that declare no fields _and_ opt in, or collapse them under "Advanced". Needs a design call. |
+| R5  | Completed and in-progress rows share a marker: mid-run, "Completed photo1-compressed.jpg" still shows `◉`, and states differ only by color. The CLI uses `✓`.                                                                      | Low      | `✓` for done, keeping color as the secondary cue. Snapshot.                                                                   |
+| R6  | Waiting files show as "file 2", "file 3" … though their names are known up front.                                                                                                                                                  | Low      | Name them from the selected files. Snapshot.                                                                                  |
+| R7  | A loop's later steps appear only when they start (`file-rename` pops in mid-run), so the layout shifts.                                                                                                                            | Low      | List every child step from the start as pending. Snapshot.                                                                    |
+| R8  | The results screen lists files out of input order (5, 6, 3, 2, 1, 4).                                                                                                                                                              | Low      | Keep input order. Unit test.                                                                                                  |
+| R9  | CLI: the first-run telemetry notice prints even with `BNTO_TELEMETRY_DISABLED=1` or `DO_NOT_TRACK`.                                                                                                                                | Low      | Skip the notice when env disables telemetry. Unit test.                                                                       |
+
+Order: R1+R2 (one PR, with TJ5/TJ6), then R3, then R5–R8 as one "execution screen polish" PR with snapshots, then R9. R4 waits for a design decision.
 
 ## Dependency Chain
 

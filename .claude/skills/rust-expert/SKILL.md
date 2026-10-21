@@ -148,3 +148,4 @@ This is why target-agnostic node design matters: the same node logic you test na
 | `.claude/rules/code-standards.md`                | Bento Box Principle (applies to Rust too — one concept per file, <250 lines)            |
 | `.claude/scopes/rust/engine-node-patterns.md`    | **MANDATORY** when adding nodes — full 7-phase checklist, test counts, codegen pipeline |
 | `.claude/scopes/rust/node-vocabulary.md`         | **MANDATORY** when naming a node or param — verb registry, verb classes, shared params  |
+| `.claude/journeys/tui.md`                        | **MANDATORY** when touching the TUI — snapshots + PTY journeys, `task tui:test`         |
