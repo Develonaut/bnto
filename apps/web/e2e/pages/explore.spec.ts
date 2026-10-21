@@ -58,6 +58,16 @@ test.describe("Explore page — desktop @browser", () => {
     await expect(csvRecipe).toBeVisible();
   });
 
+  test("a category link from a recipe breadcrumb selects that category", async ({ page }) => {
+    // Breadcrumb JSON-LD links /explore?category=<category>; System is CLI-only.
+    await page.goto("/explore?category=system");
+
+    const filter = page.getByTestId("explore-category-filter");
+    await expect(filter.getByRole("combobox")).toHaveText(/System/);
+    await expect(page.getByTestId("explore-recipe-keep-awake")).toBeVisible();
+    await expect(page.getByTestId("explore-recipe-clean-csv")).not.toBeVisible();
+  });
+
   test("clicking recipe card navigates to tool page", async ({ page }) => {
     await page.goto("/explore");
 

@@ -2762,9 +2762,9 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     slug: "keep-awake",
     name: "Keep Awake",
     description:
-      "Keep your Mac awake for a set time or until you stop it. Optionally nudges the cursor once you go idle so chat apps don't mark you Away. Start a session, come back later and run Stop. macOS only. CLI/desktop only.",
+      "Keep your Mac awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. macOS only. CLI/desktop only.",
     category: "system",
-    tags: ["macOS", "Sleep prevention", "Activity simulation", "No install"] as const,
+    tags: ["macOS", "Sleep prevention", "Activity simulation"] as const,
     definition: {
       edges: [
         {
@@ -2783,8 +2783,8 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       metadata: {
         category: "system",
         description:
-          "Keep your Mac awake for a set time or until you stop it. Optionally nudges the cursor once you go idle so chat apps don't mark you Away. Start a session, come back later and run Stop. macOS only. CLI/desktop only.",
-        tags: ["macOS", "Sleep prevention", "Activity simulation", "No install"],
+          "Keep your Mac awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. macOS only. CLI/desktop only.",
+        tags: ["macOS", "Sleep prevention", "Activity simulation"],
       },
       name: "Keep Awake",
       nodes: [
@@ -2836,7 +2836,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
             display: {
               default: "keep-on",
               description:
-                "Keep the display awake so the screen never locks. Allow sleep if you only need background tasks to keep running.",
+                "Keep the display awake so it doesn't sleep. Allow sleep if you only need background tasks to keep running.",
               label: "Display",
               options: [
                 {

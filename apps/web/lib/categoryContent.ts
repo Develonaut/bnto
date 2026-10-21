@@ -182,15 +182,15 @@ export const CATEGORY_CONTENT: Record<string, CategoryContentBlock> = {
     features: [
       {
         heading: "Built-in tools first",
-        body: "System recipes lean on the tools the operating system already ships with, so there's usually nothing extra to install. bnto doctor confirms everything is in place.",
+        body: "System recipes lean on the tools the operating system already ships with, so there's usually nothing extra to install.",
       },
       {
         heading: "Start it, walk away",
         body: "Long-running sessions keep going after the command returns. Check on them or stop them later from any terminal.",
       },
       {
-        heading: "Every command shown first",
-        body: "Before a system recipe runs for the first time, bnto shows you every command it will run and asks for your approval.",
+        heading: "Nothing hidden",
+        body: "Built-in recipes are open source, so every command they run is in the repo. A recipe you add from elsewhere shows each command, full scripts included, and waits for your OK the first time it runs.",
       },
     ],
     faq: [
@@ -202,7 +202,7 @@ export const CATEGORY_CONTENT: Record<string, CategoryContentBlock> = {
       {
         question: "Which operating systems are supported?",
         answer:
-          "Each recipe page lists what it supports. Keep Awake runs on macOS today, with Windows and Linux planned.",
+          "It depends on the recipe, because each one drives its own operating system's tools. A recipe's description says which systems it runs on.",
       },
     ],
   },

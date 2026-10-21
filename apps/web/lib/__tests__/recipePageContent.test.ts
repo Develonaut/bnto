@@ -113,3 +113,21 @@ describe("CLI-only recipe pages", () => {
     expect(text).toContain("never leave your browser");
   });
 });
+
+describe("category content claims", () => {
+  it("never promises a consent prompt, which built-in recipes skip", () => {
+    // Bundled recipes are trusted and run without asking (trust.rs).
+    const text = JSON.stringify(CATEGORY_CONTENT);
+    expect(text).not.toMatch(/asks for your approval|before .* runs for the first time/i);
+  });
+
+  it("names no single recipe in category-wide FAQs", () => {
+    const slugsAndNames = getAllRecipes().flatMap((r) => [r.slug, r.name]);
+    for (const [category, block] of Object.entries(CATEGORY_CONTENT)) {
+      const faq = JSON.stringify(block.faq);
+      for (const name of slugsAndNames) {
+        expect(faq, `${category} FAQ names ${name}`).not.toContain(name);
+      }
+    }
+  });
+});
