@@ -30,6 +30,10 @@ pub struct NodeSummary {
     /// The node's recorded output metadata (what `{{node.<id>.*}}` reads);
     /// `{}` when it recorded none or never ran.
     pub metadata: serde_json::Map<String, serde_json::Value>,
+    /// Why the node's `when` guard skipped it; left out of the JSON when
+    /// the node wasn't skipped.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skip_reason: Option<String>,
 }
 
 impl NodeSummary {
@@ -39,6 +43,7 @@ impl NodeSummary {
             node_type: info.node_type.clone(),
             files_processed: 0,
             metadata: serde_json::Map::new(),
+            skip_reason: None,
         }
     }
 }
@@ -126,6 +131,12 @@ impl NodeTally {
                 parent_node_id: None,
                 ..
             } => self.add_files(node_id, *files_processed),
+            PipelineEvent::NodeSkipped {
+                node_id,
+                reason,
+                parent_node_id: None,
+                ..
+            } => self.mark_skipped(node_id, reason),
             _ => {}
         }
     }
@@ -134,6 +145,12 @@ impl NodeTally {
     fn add_files(&mut self, node_id: &str, files: usize) {
         if let Some(node) = self.nodes.iter_mut().find(|n| n.id == node_id) {
             node.files_processed += files;
+        }
+    }
+
+    fn mark_skipped(&mut self, node_id: &str, reason: &str) {
+        if let Some(node) = self.nodes.iter_mut().find(|n| n.id == node_id) {
+            node.skip_reason = Some(reason.to_string());
         }
     }
 
@@ -198,6 +215,18 @@ mod tests {
             node_type: node_type.into(),
             files_processed,
             metadata: Map::new(),
+            skip_reason: None,
+        }
+    }
+
+    fn skipped(id: &str, parent: Option<&str>) -> PipelineEvent {
+        PipelineEvent::NodeSkipped {
+            node_id: id.into(),
+            node_index: 0,
+            total_nodes: 1,
+            node_type: "shell-run".into(),
+            parent_node_id: parent.map(String::from),
+            reason: "not on this OS".into(),
         }
     }
 
@@ -344,6 +373,36 @@ mod tests {
         tally.record(&completed("inner", 4, Some("loop")));
         tally.record(&completed("loop", 2, None));
         assert_eq!(tally.nodes(), vec![node("loop", "loop", 2)]);
+    }
+
+    #[test]
+    fn test_tally_marks_a_skipped_node_with_its_reason() {
+        let mut tally = NodeTally::default();
+        tally.record(&started(&[("mac", "group"), ("linux", "group")]));
+        tally.record(&completed("mac", 1, None));
+        tally.record(&skipped("linux", None));
+        let nodes = tally.nodes();
+        assert_eq!(nodes[0].skip_reason, None);
+        assert_eq!(nodes[1].skip_reason.as_deref(), Some("not on this OS"));
+    }
+
+    #[test]
+    fn test_tally_ignores_a_skip_inside_a_container() {
+        let mut tally = NodeTally::default();
+        tally.record(&started(&[("g", "group")]));
+        tally.record(&skipped("inner", Some("g")));
+        tally.record(&completed("g", 1, None));
+        assert_eq!(tally.nodes(), vec![node("g", "group", 1)]);
+    }
+
+    #[test]
+    fn test_skip_reason_is_in_the_json_only_for_a_skipped_node() {
+        let mut ran = node("a", "file-copy", 1);
+        let json = serde_json::to_value(&ran).unwrap();
+        assert!(json.get("skip_reason").is_none(), "{json}");
+        ran.skip_reason = Some("when a equals b".into());
+        let json = serde_json::to_value(&ran).unwrap();
+        assert_eq!(json["skip_reason"], "when a equals b");
     }
 
     #[test]

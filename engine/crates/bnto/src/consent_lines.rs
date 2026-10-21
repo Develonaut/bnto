@@ -148,6 +148,21 @@ mod tests {
     }
 
     #[test]
+    fn guarded_steps_are_listed_whether_or_not_their_guard_holds() {
+        // Consent covers every command the recipe could run (SEC-16).
+        let ns = nodes(serde_json::json!([
+            { "id": "a", "type": "shell-run", "parameters": { "command": "caffeinate" },
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" } },
+            { "id": "g", "type": "group",
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "linux" },
+              "children": [
+                { "id": "b", "type": "shell-run", "parameters": { "command": "systemd-inhibit" } }
+            ] }
+        ]));
+        assert_eq!(shell_command_lines(&ns), ["caffeinate", "systemd-inhibit"]);
+    }
+
+    #[test]
     fn non_shell_steps_show_nothing() {
         let ns = nodes(serde_json::json!([{ "id": "r", "type": "file-rename", "parameters": {} }]));
         assert!(shell_command_lines(&ns).is_empty());

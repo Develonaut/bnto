@@ -149,8 +149,24 @@ fn definition_properties() -> Value {
         "outputPorts":{ "type": "array", "description": "Output connection ports.", "items": { "$ref": "#/$defs/Port" } },
         "settings":   { "$ref": "#/$defs/PipelineSettings" },
         "always":     { "type": "boolean", "default": false, "description": "Closing step: run even after an earlier node in the same chain failed, like `finally`. The run still fails with the first error." },
+        "when":       { "$ref": "#/$defs/When" },
         "nodes":      { "type": "array", "description": "Child nodes (recursive).", "items": { "$ref": "#/$defs/Definition" } },
         "edges":      { "type": "array", "description": "Connections between child nodes.", "items": { "$ref": "#/$defs/Edge" } }
+    })
+}
+
+/// A node's `when` guard: run the step only when the comparison holds.
+fn when_schema() -> Value {
+    serde_json::json!({
+        "type": "object",
+        "description": "Run this step only when the comparison holds; otherwise skip it and pass its files through untouched. Templates work in value and expected, e.g. {{ctx.platform}} or {{fields.action}}.",
+        "required": ["value", "op", "expected"],
+        "properties": {
+            "value":    { "type": "string", "description": "What to compare, usually a template such as {{ctx.platform}}." },
+            "op":       { "type": "string", "enum": ["equals", "not-equals", "after", "before"], "description": "How value is compared to expected. after and before compare RFC 3339 times." },
+            "expected": { "type": "string", "description": "What value is compared to." }
+        },
+        "additionalProperties": false
     })
 }
 
@@ -168,6 +184,7 @@ pub fn definition_json_schema() -> Value {
             "Edge": edge_schema(),
             "Metadata": metadata_schema(),
             "PipelineSettings": pipeline_settings_schema(),
+            "When": when_schema(),
             "Definition": {
                 "type": "object",
                 "description": "A single node in a .bnto.json recipe. Can contain child nodes (recursive).",
@@ -304,6 +321,20 @@ mod tests {
             props["settings"]["$ref"], "#/$defs/PipelineSettings",
             "settings should reference PipelineSettings"
         );
+    }
+
+    #[test]
+    fn test_definition_schema_has_a_when_guard() {
+        let schema = definition_json_schema();
+        let when = &schema["$defs"]["Definition"]["properties"]["when"];
+        assert_eq!(when["$ref"], "#/$defs/When");
+        let guard = &schema["$defs"]["When"];
+        assert_eq!(
+            guard["required"],
+            serde_json::json!(["value", "op", "expected"])
+        );
+        let ops = guard["properties"]["op"]["enum"].as_array().unwrap();
+        assert!(ops.contains(&"not-equals".into()), "{ops:?}");
     }
 
     #[test]

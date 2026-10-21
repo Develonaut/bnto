@@ -4787,6 +4787,9 @@
           "version": {
             "description": "Format version (semver, e.g., '1.0.0').",
             "type": "string"
+          },
+          "when": {
+            "$ref": "#/$defs/When"
           }
         },
         "required": [
@@ -4908,6 +4911,36 @@
         "required": [
           "id",
           "name"
+        ],
+        "type": "object"
+      },
+      "When": {
+        "additionalProperties": false,
+        "description": "Run this step only when the comparison holds; otherwise skip it and pass its files through untouched. Templates work in value and expected, e.g. {{ctx.platform}} or {{fields.action}}.",
+        "properties": {
+          "expected": {
+            "description": "What value is compared to.",
+            "type": "string"
+          },
+          "op": {
+            "description": "How value is compared to expected. after and before compare RFC 3339 times.",
+            "enum": [
+              "equals",
+              "not-equals",
+              "after",
+              "before"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "description": "What to compare, usually a template such as {{ctx.platform}}.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "op",
+          "expected"
         ],
         "type": "object"
       }

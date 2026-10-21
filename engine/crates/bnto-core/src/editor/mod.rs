@@ -71,6 +71,7 @@ mod tests {
                 requires: Vec::new(),
                 fields: std::collections::BTreeMap::new(),
                 always: false,
+                when: None,
             }]),
             edges: Some(vec![]),
             settings: Some(PipelineSettings {
@@ -80,6 +81,7 @@ mod tests {
             requires: Vec::new(),
             fields: std::collections::BTreeMap::new(),
             always: false,
+            when: None,
         }
     }
 

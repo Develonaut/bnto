@@ -9,6 +9,7 @@
 mod edges;
 mod placeholder;
 mod run_time;
+mod when;
 
 use std::collections::BTreeMap;
 
@@ -91,7 +92,11 @@ fn check_level(level: &Level<'_>, recipe: &Recipe<'_>, report: &mut CheckReport)
 fn check_node(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport) {
     if is_io_node(&node.node_type) {
         report.findings.extend(io_always_finding(node));
-    } else if is_container_node(&node.node_type) {
+        report.findings.extend(when::io_when_finding(node));
+        return;
+    }
+    report.findings.extend(when::when_findings(node));
+    if is_container_node(&node.node_type) {
         report.findings.extend(placeholder_findings(node));
         let children = Level {
             nodes: node.children.as_deref().unwrap_or_default(),

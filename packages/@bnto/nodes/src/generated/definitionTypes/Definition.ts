@@ -6,6 +6,7 @@ import type { Metadata } from "./Metadata";
 import type { PipelineSettings } from "./PipelineSettings";
 import type { Port } from "./Port";
 import type { Position } from "./Position";
+import type { When } from "./When";
 
 /**
  * Full document shape for a node in a `.bnto.json` file.
@@ -43,4 +44,9 @@ export type Definition = {
    * like `finally`. The run still fails with the first error.
    */
   always?: boolean;
+  /**
+   * A guard: the step runs only when this comparison holds; otherwise it
+   * is skipped and its files pass through.
+   */
+  when?: When;
 };
