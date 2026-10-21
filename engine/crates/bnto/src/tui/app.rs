@@ -281,6 +281,7 @@ fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tui::screens::size_change::SizeChange;
     use bnto_core::InputMode;
 
     /// Build test paths in a unique temp directory.
@@ -1019,7 +1020,10 @@ mod tests {
         assert_eq!(results.total_time_ms, 800);
         assert_eq!(results.output_dir, Some("/out".into()));
         assert!(results.savings.is_some(), "savings computed from sizes");
-        assert_eq!(results.savings.as_ref().unwrap().percent(), 60);
+        assert_eq!(
+            results.savings.as_ref().unwrap().change(),
+            Some(SizeChange::Smaller(60))
+        );
         assert!(app.execution.is_none(), "execution cleared");
 
         // Results → Browser via RunAnother
