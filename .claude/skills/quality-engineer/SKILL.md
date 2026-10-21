@@ -350,11 +350,12 @@ test.describe("recipe-name — browser execution @browser", () => {
 
 ## References
 
-| Document                                                             | What it covers                                                          |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| [journeys/README.md](../../journeys/README.md)                       | Journey test philosophy, ID scheme, matrix format                       |
-| [journeys/browser-execution.md](../../journeys/browser-execution.md) | Testing Trophy model, 5 test layers, 4-phase capture, confidence matrix |
-| [journeys/web.md](../../journeys/web.md)                             | Web journey matrix (W1-W42)                                             |
-| [journeys/auth.md](../../journeys/auth.md)                           | Auth journey matrix (A/S/C series)                                      |
-| [rules/pre-commit.md](../../rules/pre-commit.md)                     | Screenshot regression gate, E2E conventions                             |
-| [rules/code-standards.md](../../rules/code-standards.md)             | Testing strategy by layer, coverage requirements                        |
+| Document                                                             | What it covers                                                                                                                |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/journeys/tui.md`                                            | TUI journeys (TJ1+) and screen snapshots: PTY harness in `bnto/tests/tui/harness.rs`, `task tui:test`; the TUI's quality gate |
+| [journeys/README.md](../../journeys/README.md)                       | Journey test philosophy, ID scheme, matrix format                                                                             |
+| [journeys/browser-execution.md](../../journeys/browser-execution.md) | Testing Trophy model, 5 test layers, 4-phase capture, confidence matrix                                                       |
+| [journeys/web.md](../../journeys/web.md)                             | Web journey matrix (W1-W42)                                                                                                   |
+| [journeys/auth.md](../../journeys/auth.md)                           | Auth journey matrix (A/S/C series)                                                                                            |
+| [rules/pre-commit.md](../../rules/pre-commit.md)                     | Screenshot regression gate, E2E conventions                                                                                   |
+| [rules/code-standards.md](../../rules/code-standards.md)             | Testing strategy by layer, coverage requirements                                                                              |
