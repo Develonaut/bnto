@@ -27,6 +27,11 @@ jobs:
         with:
           fetch-depth: 0 # Full history for tag comparison
 
+      # A stable tag must equal the engine release version, or crates.io
+      # silently skips every crate as "already exists" while the site ships.
+      - name: Check the tag matches the engine release version
+        run: ./scripts/check-release-version.sh "$GITHUB_REF_NAME"
+
       - name: Determine changed surfaces
         id: filter
         env:

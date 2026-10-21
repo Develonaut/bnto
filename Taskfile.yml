@@ -337,6 +337,11 @@ tasks:
       - find .turbo -type f -mtime +7 -delete 2>/dev/null; find .turbo -type d -empty -delete 2>/dev/null; echo "Pruned Turbo cache (entries older than 7 days)"
 
   # Release
+  version:bump:
+    desc: "Set the engine release version every bnto crate shares (e.g., task version:bump -- 0.17.0)"
+    cmds:
+      - ./scripts/bump-version.sh {{.CLI_ARGS}}
+
   release:tag:
     desc: "Create a release tag on main (e.g., task release:tag -- v1.0.0)"
     cmds:
@@ -349,6 +354,7 @@ tasks:
         echo "Tagging main as $TAG..."
         git checkout main
         git pull origin main
+        ./scripts/check-release-version.sh "$TAG"
         git tag "$TAG"
         git push origin "$TAG"
         echo "Tag $TAG pushed. Release workflow will start shortly."
