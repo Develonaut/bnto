@@ -7,9 +7,9 @@
 // every failing file is named in the one error; with no files it checks
 // nothing. A dry run checks nothing.
 
-mod compare;
 mod params;
 
+use crate::compare;
 use crate::metadata::{InputCardinality, NodeCategory, NodeMetadata};
 use crate::processor::{BatchFile, BatchInput, NodeInput, NodeOutput, NodeProcessor};
 use crate::progress::ProgressReporter;

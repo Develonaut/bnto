@@ -33,6 +33,8 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             );
         }
         PipelineEvent::IterationStarted { .. } | PipelineEvent::IterationFailed { .. } => {}
+        // Shown in PR 4 of the conditional-steps plan (skipped-step surfaces).
+        PipelineEvent::NodeSkipped { .. } => {}
         PipelineEvent::IterationCompleted { output_files, .. } => {
             if let Some(dir) = &output_dir {
                 let names = &mut output_names.borrow_mut();

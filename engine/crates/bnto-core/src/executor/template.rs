@@ -1169,6 +1169,7 @@ mod tests {
             params: serde_json::Map::new(),
             fields: BTreeMap::new(),
             always: false,
+            when: None,
             children: None,
             edges: vec![],
         }
@@ -1181,6 +1182,7 @@ mod tests {
             params: serde_json::Map::new(),
             fields: BTreeMap::new(),
             always: false,
+            when: None,
             children: None,
             edges: vec![],
         }

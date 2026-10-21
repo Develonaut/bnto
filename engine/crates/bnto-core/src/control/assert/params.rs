@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use super::compare::Op;
+use crate::compare::Op;
 use crate::control::placeholder::text;
 use crate::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
 

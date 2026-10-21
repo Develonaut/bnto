@@ -81,6 +81,11 @@ pub struct Definition {
     /// like `finally`. The run still fails with the first error.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub always: bool,
+    /// A guard: the step runs only when this comparison holds; otherwise it
+    /// is skipped and its files pass through.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
+    pub when: Option<crate::when::When>,
 }
 
 /// 2D coordinate for a node on the editor canvas.
@@ -207,6 +212,7 @@ mod tests {
             requires: Vec::new(),
             fields: BTreeMap::new(),
             always: false,
+            when: None,
         }
     }
 
@@ -427,6 +433,7 @@ mod tests {
         assert!(plain.get("always").is_none());
         let closing = Definition {
             always: true,
+            when: None,
             ..minimal_leaf("n2", "file-copy")
         };
         let json = serde_json::to_value(&closing).unwrap();

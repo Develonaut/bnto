@@ -53,6 +53,7 @@ pub mod executor;
 /// Recipe check — unknown node types, refused params and malformed
 /// placeholders, found without running anything.
 pub mod check;
+pub mod compare;
 
 /// Control nodes (assert, report) that steer a run rather than transform files.
 pub mod control;
@@ -140,6 +141,7 @@ pub mod time;
 /// Parses `--version` output, extracts version numbers, validates against
 /// constraint strings like `">=6.0"`.
 pub mod version;
+pub mod when;
 
 // --- Re-exports ---
 // These `pub use` statements let users import directly from the crate root.

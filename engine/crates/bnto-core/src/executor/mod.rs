@@ -2,6 +2,7 @@
 //
 // Walks nodes in order, chaining outputs to inputs. Split across these files:
 //   - `mod.rs` — public API, node dispatch, shared types
+//   - `guard.rs` — a node's `when` guard: run it, or skip it and pass files on
 //   - `chain.rs` — node chaining: each node's output feeds the next
 //   - `closing.rs` — after a failure: skip nodes, run `always` closing steps
 //   - `auto_iteration.rs` — implicit per-file loops for `iteration: "auto"`
@@ -28,6 +29,7 @@ mod count_keys;
 mod field_values;
 mod flow;
 mod flow_closing;
+mod guard;
 mod interpolate;
 mod leaf_output;
 pub mod loop_config;
@@ -321,6 +323,12 @@ fn execute_node<F: Fn() -> u64 + Copy>(
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     ctx.check_time_limit()?;
+    // A false `when` skips the node before it starts, even an `always` one.
+    let files = match guard::decide(ctx, node, (node_index, total_nodes), files) {
+        Ok(guard::Decision::Run(files)) => files,
+        Ok(guard::Decision::Skipped(result)) => return Ok(result),
+        Err(error) => return Err(emit_node_failure(ctx, &node.id, error)),
+    };
     let node_start = (ctx.now_ms)();
     emit_node_started(ctx, node, node_index, total_nodes);
 

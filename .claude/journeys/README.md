@@ -12,6 +12,7 @@ Living verification contracts for each major domain. Each matrix defines the use
 | **Engine**  | [engine.md](engine.md) | CLI execution, node types, fixtures, validation, error handling           |
 | **Web App** | [web.md](web.md)       | Next.js app: page loads, SEO, tool pages, navigation, responsive behavior |
 | **TUI**     | [tui.md](tui.md)       | `bnto tui`: navigation, layout at two sizes, consent, live runs, results  |
+| **CLI**     | [cli.md](cli.md)       | `bnto run` / `bnto check` on conditional steps (`when` guards)            |
 
 ## How to Use
 
@@ -22,7 +23,7 @@ Living verification contracts for each major domain. Each matrix defines the use
 
 ## Conventions
 
-- **Journey IDs** are prefixed by domain: `A` (auth), `E` (engine), `P` (API), `W` (web), `TJ` (TUI)
+- **Journey IDs** are prefixed by domain: `A` (auth), `E` (engine), `P` (API), `W` (web), `TJ` (TUI), `CJ` (CLI)
 - **Pass criteria** describe what success looks like, not how to implement the test
 - **Gate maps** document every system checkpoint in the flow: the functions, the auth checks, the error paths
 - Matrices are updated when the system changes. Stale matrices are worse than no matrices.
