@@ -249,6 +249,7 @@ fn run_loop(
                         file_metadata,
                         warnings,
                         preview_data,
+                        message,
                     } => {
                         let (slug, from) = match &model.screen {
                             app::Screen::Execution { slug, from } => (slug.clone(), *from),
@@ -287,6 +288,13 @@ fn run_loop(
                         } else {
                             // Normal mode: build outputs and transition to Results.
                             let outputs = bridge::build_output_files(&output_dir, &file_metadata);
+                            let model = match message {
+                                Some(message) => update(
+                                    model,
+                                    AppMessage::Execution(ExecutionMessage::Reported { message }),
+                                ),
+                                None => model,
+                            };
                             let model = update(
                                 model,
                                 AppMessage::Execution(ExecutionMessage::OutputsReady {

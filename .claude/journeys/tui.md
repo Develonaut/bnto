@@ -1,7 +1,7 @@
 # TUI — User Journey Test Matrix
 
 **Domain:** `bnto tui`, the terminal UI. Covers home, library, recipe detail, file picking, consent, live execution and results.
-**Status:** Snapshots (#681) and journeys TJ1–TJ3 (#682) run on every PR in the CI Gate. The other journeys are planned.
+**Status:** Snapshots (#681) and journeys TJ1–TJ3, TJ5 and TJ6 run on every PR in the CI Gate. The other journeys are planned.
 **Last Updated:** October 21, 2026
 
 ---
@@ -43,15 +43,15 @@ Every journey runs with temp `HOME`, `BNTO_HOME` and config dirs, and never touc
 
 ### Running recipes
 
-| #    | Journey                             | Steps                                                               | Pass Criteria                                                                                                                                                      | Test                                                   |
-| ---- | ----------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| TJ3  | Compress an image                   | Select a fixture image, Run                                         | The results screen lists `<name>-compressed.jpg`; output under `BNTO_HOME/output`                                                                                  | `tj3_compress_an_image_and_see_the_result`             |
-| TJ4  | Multi-step loop shows live progress | Run the explicit-loop compress-and-rename fixture on several images | During the run, `loop (n/N)` advances, every child step is listed from the start, and file rows show names and a distinct done marker. Results are in input order. | Planned (audit R5–R8)                                  |
-| TJ5  | Shell output streams and stays      | Run a shell recipe that prints a line every 0.4s; approve consent   | Consent lists the full script. Lines appear while it runs (line 2 before line 5), and all lines are still readable on the results screen.                          | Planned (audit R2)                                     |
-| TJ6  | A message recipe shows its message  | keep-awake with Action = Check status                               | The results screen shows "No active session."                                                                                                                      | Planned (audit R1)                                     |
-| TJ9  | A failing step                      | Run a recipe whose command exits non-zero                           | Failed state names the step, the error and the last output lines; Esc returns to the detail                                                                        | Planned                                                |
-| TJ10 | Upgrade notice                      | Launch with a seeded newer-version cache                            | Status line shows `bnto X available, run bnto upgrade`                                                                                                             | With [cli-upgrade.md](../strategy/cli-upgrade.md) PR 3 |
+| #    | Journey                             | Steps                                                               | Pass Criteria                                                                                                                                                      | Test                                                    |
+| ---- | ----------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| TJ3  | Compress an image                   | Select a fixture image, Run                                         | The results screen lists `<name>-compressed.jpg`; output under `BNTO_HOME/output`                                                                                  | `tj3_compress_an_image_and_see_the_result`              |
+| TJ4  | Multi-step loop shows live progress | Run the explicit-loop compress-and-rename fixture on several images | During the run, `loop (n/N)` advances, every child step is listed from the start, and file rows show names and a distinct done marker. Results are in input order. | Planned (audit R5–R8)                                   |
+| TJ5  | Shell output streams and stays      | Run a shell recipe that prints a line every 0.4s; approve consent   | Consent lists the full script. Lines appear while it runs (line 2 before line 5), and all lines are still readable on the results screen.                          | `tj5_shell_output_streams_live_and_stays_after_the_run` |
+| TJ6  | A message recipe shows its message  | keep-awake with Action = Check status                               | The results screen shows "No active session."                                                                                                                      | `tj6_keep_awake_status_shows_its_message`               |
+| TJ9  | A failing step                      | Run a recipe whose command exits non-zero                           | Failed state names the step, the error and the last output lines; Esc returns to the detail                                                                        | Planned                                                 |
+| TJ10 | Upgrade notice                      | Launch with a seeded newer-version cache                            | Status line shows `bnto X available, run bnto upgrade`                                                                                                             | With [cli-upgrade.md](../strategy/cli-upgrade.md) PR 3  |
 
 ## Known gaps
 
-See the run output audit in [tui-testing.md](../strategy/tui-testing.md#run-output-audit-october-21-2026) (R1–R9). Journeys TJ4–TJ6 are their RED tests. Windows journeys are `#[ignore]`d until ConPTY runs prove stable; the snapshots already run on Windows.
+See the run output audit in [tui-testing.md](../strategy/tui-testing.md#run-output-audit-october-21-2026) (R1–R9). Journeys TJ5 and TJ6 covered R2 and R1 (fixed); TJ4 is the RED test for R5–R8. Windows journeys are `#[ignore]`d until ConPTY runs prove stable; the snapshots already run on Windows.

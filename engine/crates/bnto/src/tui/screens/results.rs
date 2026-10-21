@@ -35,6 +35,10 @@ pub struct ResultsModel {
     pub savings: Option<SizeSavings>,
     pub cursor: usize,
     pub output_dir: Option<String>,
+    /// What a message-mode recipe reported (keep-awake's "No active session.").
+    pub message: Option<crate::run_message::RunMessage>,
+    /// The run's streamed command output, kept so it's still readable after.
+    pub log: Vec<String>,
 }
 
 /// Messages the results screen can handle.
@@ -60,6 +64,21 @@ impl ResultsModel {
             savings,
             cursor: 0,
             output_dir,
+            message: None,
+            log: Vec::new(),
+        }
+    }
+
+    /// Add what the run reported: its message, and its streamed output.
+    pub fn with_report(
+        self,
+        message: Option<crate::run_message::RunMessage>,
+        log: Vec<String>,
+    ) -> Self {
+        Self {
+            message,
+            log,
+            ..self
         }
     }
 }

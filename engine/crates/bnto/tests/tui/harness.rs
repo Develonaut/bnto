@@ -64,6 +64,22 @@ impl Tui {
     /// Like [`Tui::launch`], with `files` copied into the folder the TUI
     /// starts in (a file recipe's default input).
     pub fn launch_with(cols: u16, rows: u16, files: &[&std::path::Path]) -> Self {
+        Self::launch_full(cols, rows, files, &[])
+    }
+
+    /// Like [`Tui::launch`], with `recipes` in the sandbox's library
+    /// (`BNTO_HOME/recipes`), as if the user had saved them.
+    #[allow(dead_code)] // each journey file uses a subset
+    pub fn launch_with_library(cols: u16, rows: u16, recipes: &[&std::path::Path]) -> Self {
+        Self::launch_full(cols, rows, &[], recipes)
+    }
+
+    fn launch_full(
+        cols: u16,
+        rows: u16,
+        files: &[&std::path::Path],
+        recipes: &[&std::path::Path],
+    ) -> Self {
         let size = PtySize {
             rows,
             cols,
@@ -76,6 +92,11 @@ impl Tui {
         std::fs::create_dir_all(&work).unwrap();
         for file in files {
             std::fs::copy(file, work.join(file.file_name().unwrap())).unwrap();
+        }
+        let library = homes.1.path().join("recipes");
+        std::fs::create_dir_all(&library).unwrap();
+        for recipe in recipes {
+            std::fs::copy(recipe, library.join(recipe.file_name().unwrap())).unwrap();
         }
         let child = pair
             .slave

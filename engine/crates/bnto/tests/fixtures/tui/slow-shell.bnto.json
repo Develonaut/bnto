@@ -1,0 +1,59 @@
+{
+  "id": "slow-shell",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Slow Shell",
+  "position": { "x": 0, "y": 0 },
+  "metadata": {
+    "description": "Prints a line every 0.3s, for TUI journey TJ5.",
+    "category": "system"
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": { "iteration": "auto" },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "No Input",
+      "position": { "x": 0, "y": 0 },
+      "metadata": {},
+      "parameters": { "mode": "none" },
+      "inputPorts": [],
+      "outputPorts": [{ "id": "out-1", "name": "files" }]
+    },
+    {
+      "id": "talk",
+      "type": "shell-run",
+      "version": "1.0.0",
+      "name": "Talk",
+      "position": { "x": 250, "y": 0 },
+      "metadata": {},
+      "parameters": {
+        "shell": "sh",
+        "script": "for i in 1 2 3 4 5; do echo \"line $i\" >&2; sleep 0.3; done",
+        "outputMode": "stdout",
+        "timeout": 30
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Log",
+      "position": { "x": 500, "y": 0 },
+      "metadata": {},
+      "parameters": { "mode": "message", "label": "Log" },
+      "inputPorts": [{ "id": "in-1", "name": "files" }],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "talk" },
+    { "id": "e2", "source": "talk", "target": "output" }
+  ]
+}

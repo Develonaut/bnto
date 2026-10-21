@@ -44,6 +44,10 @@ pub enum ExecutionMessage {
         output_dir: Option<String>,
         warnings: Vec<String>,
     },
+    /// What a message-mode recipe reported, shown on the results screen.
+    Reported {
+        message: crate::run_message::RunMessage,
+    },
     /// A line of stderr output from a running command.
     CommandOutput { node_id: String, line: String },
     /// A running node's live status ("Found 1204 files · photos").

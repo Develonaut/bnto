@@ -52,6 +52,7 @@ mod progress_line;
 mod progressive_output;
 mod run;
 mod run_limit;
+mod run_message;
 mod run_output;
 mod run_verdict;
 mod run_watchdog;

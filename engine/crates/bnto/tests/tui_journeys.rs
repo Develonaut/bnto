@@ -7,6 +7,18 @@ mod harness;
 
 use harness::{Key, Tui};
 
+/// Move down to the detail screen's Run button with `j`. Not Tab: some list
+/// fields swallow it, and on Run itself Tab starts the run.
+fn focus_run(tui: &mut Tui) {
+    for _ in 0..20 {
+        if tui.screen().contains("▸ Run →") {
+            return;
+        }
+        tui.press(&[Key::Char('j')]);
+    }
+    panic!("never reached Run. Screen:\n{}", tui.screen());
+}
+
 /// Press Down until the selection marker sits on `name`.
 fn select(tui: &mut Tui, name: &str) {
     for _ in 0..40 {
@@ -75,4 +87,60 @@ fn tj3_compress_an_image_and_see_the_result() {
         .expect("the run wrote an output folder")
         .count();
     assert!(written > 0, "no output under BNTO_HOME");
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj5_shell_output_streams_live_and_stays_after_the_run() {
+    let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/tui/slow-shell.bnto.json");
+    let mut tui = Tui::launch_with_library(120, 40, &[&recipe]);
+    tui.wait_for("slow-shell"); // the home Library pane lists file names
+    tui.press(&[Key::Enter]); // Library pane is focused: open the library
+    tui.wait_for("Slow Shell");
+    tui.press(&[Key::Enter]); // ...and the recipe
+    tui.wait_for("Slow Shell  [local (shell)]");
+    focus_run(&mut tui);
+    tui.press(&[Key::Enter]);
+
+    // A library shell recipe asks first, showing the whole script.
+    tui.wait_until("the consent prompt with the script", |screen| {
+        screen.contains("This recipe runs commands") && screen.contains("echo \"line $i\"")
+    });
+    tui.press(&[Key::Char('y')]);
+
+    // Live: line 2 is on screen while the command is still running.
+    tui.wait_until("line 2 while the command is still running", |screen| {
+        screen.contains("line 2") && !screen.contains("line 5")
+    });
+    tui.wait_until("the results screen keeping every line", |screen| {
+        ["R E S U L T S", "OUTPUT", "line 1", "line 5"]
+            .iter()
+            .all(|part| screen.contains(part))
+    });
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "keep-awake's script runs under sh")]
+fn tj6_keep_awake_status_shows_its_message() {
+    // Status only reads state: with a fresh BNTO_HOME there's no session.
+    let mut tui = Tui::launch(120, 40);
+    tui.wait_for("R E C I P E S");
+    tui.press(&[Key::Tab]);
+    select(&mut tui, "Keep Awake");
+    tui.press(&[Key::Enter]);
+    tui.wait_for("Start a session");
+    tui.press(&[Key::Right, Key::Right]);
+    tui.wait_for("Check status");
+    focus_run(&mut tui);
+    tui.press(&[Key::Enter]);
+    tui.wait_until("keep-awake's session log on the results screen", |screen| {
+        [
+            "R E S U L T S",
+            "S E S S I O N   L O G",
+            "No active session.",
+        ]
+        .iter()
+        .all(|part| screen.contains(part))
+    });
 }
