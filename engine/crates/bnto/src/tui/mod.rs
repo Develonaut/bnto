@@ -25,6 +25,8 @@ mod render_preview;
 mod render_results;
 mod render_wizard;
 pub mod screen;
+#[cfg(test)]
+mod screen_snapshots;
 pub mod screens;
 mod strip_ansi;
 pub mod theme;
@@ -147,15 +149,7 @@ fn run_loop(
 
     loop {
         let draw_start = Instant::now();
-        terminal.draw(|frame| {
-            let area = frame.area();
-            let theme = &model.theme;
-            let (logo_area, content_area, bottom_area) = render_layout::app_frame(area);
-
-            render::draw_logo(frame, theme, logo_area);
-            render::draw_content(frame, &model, theme, content_area);
-            render::draw_bottom_bar(frame, &model, theme, bottom_area);
-        })?;
+        terminal.draw(|frame| render::draw_frame(frame, &model))?;
         let draw_us = draw_start.elapsed().as_micros() as u64;
         if draw_us >= SLOW_FRAME_THRESHOLD_US {
             logger.log(LogEntry {

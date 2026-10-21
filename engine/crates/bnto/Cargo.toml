@@ -54,5 +54,6 @@ windows-sys = { workspace = true, features = [
 ] }
 
 [dev-dependencies]
+insta = { workspace = true }
 csv = { workspace = true }
 filetime = { workspace = true }

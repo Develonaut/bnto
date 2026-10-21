@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ D E T A I L ─────────────────────────────────────────────────────────────────────────────────╮
+            │  Download Video  [built-in]                                                                  │
+            │  Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hund│
+            │                                                                                              │
+            │  PARAMETERS                                                                                  │
+            │                                                                                              │
+            │  > Video URL                                                                                 │
+            │      https://youtube.com/watch?v=...                                                         │
+            │                                                                                              │
+            │    Output Format   MP4 (H.264)                                                               │
+            │      Video container format                                                                  │
+            │                                                                                              │
+            │    Video Codec   H.264                                                                       │
+            │                                                                                              │
+            │    Audio Codec   M4A (AAC)                                                                   │
+            │                                                                                              │
+            │    Browser Cookies   None                                                                    │
+            │      Use cookies from a browser for authenticated content (Patreon, private videos)          │
+            │                                                                                              │
+            │    Quality Cap   Best available                                                              │
+            │      Maximum video resolution (best available if unset)                                      │
+            │                                                                                              │
+            │    Subtitles   None                                                                          │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            ↑↓ navigate  Enter edit/select  Tab next section          22 recipes  ·  v[version]  ·  Los Angeles

@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ D E T A I L ─────────────────────────────────────────────────────╮
+      │  Download Video  [built-in]                                      │
+      │  Download video or audio from URLs using yt-dlp. Supports YouTube│
+      │                                                                  │
+      │  PARAMETERS                                                      │
+      │                                                                  │
+      │  > Video URL                                                     │
+      │      https://youtube.com/watch?v=...                             │
+      │                                                                  │
+      │    Output Format   MP4 (H.264)                                   │
+      │      Video container format                                      │
+      │                                                                  │
+      │    Video Codec   H.264                                           │
+      ╰──────────────────────────────────────────────────────────────────╯
+      ↑↓ navigate                   22 recipes  ·  v[version]  ·  Los Angeles
