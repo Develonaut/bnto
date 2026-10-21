@@ -8,8 +8,11 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Wrap};
 
 use super::app::AppModel;
+use super::file_window::file_window;
 use super::render_layout::content_panel;
-use super::screens::execution::{ExecutionStatus, FileStatus, NodeStatus};
+use super::screens::execution::{
+    ExecutionModel, ExecutionStatus, FileStatus, NodeProgress, NodeStatus,
+};
 use super::screens::results::format_duration;
 use super::theme::Theme;
 
@@ -31,7 +34,7 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         return;
     }
 
-    let header = header_lines(exec, theme);
+    let header = header_lines(exec, theme, file_rows(exec, theme, inner.height));
     let header_height = header.len() as u16;
 
     let [top, bottom] =
@@ -77,14 +80,44 @@ fn consent_lines<'a>(
     lines
 }
 
-/// Build header lines: status, nodes, files, errors.
-fn header_lines<'a>(
-    exec: &'a super::screens::execution::ExecutionModel,
-    theme: &'a Theme,
-) -> Vec<Line<'a>> {
-    let mut lines: Vec<Line> = Vec::new();
+/// Rows the OUTPUT pane keeps (heading and lines) whenever there's output,
+/// so a long FILES list can't push it off a short terminal.
+const MIN_OUTPUT_ROWS: usize = 4;
 
-    // Status + elapsed time
+/// How many FILES rows fit in a panel `height` rows tall, after the rest of
+/// the header and the OUTPUT pane's rows.
+fn file_rows(exec: &ExecutionModel, theme: &Theme, height: u16) -> usize {
+    let full = header_lines(exec, theme, usize::MAX).len();
+    let file_lines = if show_files(exec) {
+        exec.files.len()
+    } else {
+        0
+    };
+    let output = if exec.output_lines.is_empty() {
+        0
+    } else {
+        MIN_OUTPUT_ROWS
+    };
+    usize::from(height).saturating_sub(full - file_lines + output)
+}
+
+/// Build header lines: status, steps, files (at most `file_rows`), errors.
+fn header_lines<'a>(exec: &'a ExecutionModel, theme: &'a Theme, file_rows: usize) -> Vec<Line<'a>> {
+    let mut lines = status_lines(exec, theme);
+    lines.extend(steps_lines(exec, theme));
+    if show_files(exec) {
+        lines.extend(files_lines(exec, theme, file_rows));
+    }
+    if let Some(error) = &exec.error {
+        lines.push(Line::from(Span::styled(
+            format!("  Error: {error}"),
+            theme.heading(),
+        )));
+    }
+    lines
+}
+
+fn status_lines<'a>(exec: &ExecutionModel, theme: &Theme) -> Vec<Line<'a>> {
     let status_label = match &exec.status {
         ExecutionStatus::AwaitingConsent => "Waiting for your OK",
         ExecutionStatus::Idle => "Idle",
@@ -93,68 +126,104 @@ fn header_lines<'a>(
         ExecutionStatus::Failed => "Failed",
         ExecutionStatus::Cancelled => "Cancelled",
     };
-    let elapsed = format_duration(exec.elapsed_ms);
-    lines.push(Line::from(vec![
-        Span::styled(format!("  {status_label}"), theme.heading()),
-        Span::styled(format!("  {elapsed}"), theme.muted()),
-    ]));
+    vec![
+        Line::from(vec![
+            Span::styled(format!("  {status_label}"), theme.heading()),
+            Span::styled(
+                format!("  {}", format_duration(exec.elapsed_ms)),
+                theme.muted(),
+            ),
+        ]),
+        Line::from(""),
+    ]
+}
+
+/// STEPS: each node, with a container's steps indented under it.
+fn steps_lines<'a>(exec: &'a ExecutionModel, theme: &Theme) -> Vec<Line<'a>> {
+    if exec.nodes.is_empty() {
+        return Vec::new();
+    }
+    let mut lines = vec![Line::from(Span::styled("  STEPS", theme.category()))];
+    for node in &exec.nodes {
+        lines.push(step_line(node, "  ", theme));
+        lines.extend(
+            node.children
+                .iter()
+                .map(|child| step_line(child, "    ", theme)),
+        );
+    }
     lines.push(Line::from(""));
+    lines
+}
 
-    // Node progress (labeled "STEPS" — user-facing terminology)
-    if !exec.nodes.is_empty() {
-        lines.push(Line::from(Span::styled("  STEPS", theme.category())));
-        for node in &exec.nodes {
-            let (marker, style) = node_marker(&node.status, theme);
-            let label = node_label(node);
-            let annotation = node_annotation(node);
-            lines.push(Line::from(Span::styled(
-                format!("  {marker} {label}{annotation}"),
-                style,
-            )));
-            // Render child nodes indented under their parent container.
-            for child in &node.children {
-                let (cm, cs) = node_marker(&child.status, theme);
-                let child_label = node_label(child);
-                let child_ann = node_annotation(child);
-                lines.push(Line::from(Span::styled(
-                    format!("    {cm} {child_label}{child_ann}"),
-                    cs,
-                )));
-            }
-        }
-        lines.push(Line::from(""));
+fn step_line<'a>(node: &NodeProgress, indent: &str, theme: &Theme) -> Line<'a> {
+    let (marker, style) = node_marker(&node.status, theme);
+    let text = format!(
+        "{indent}{marker} {}{}",
+        node_label(node),
+        node_annotation(node)
+    );
+    Line::from(Span::styled(text, style))
+}
+
+/// FILES: a window around the file being worked on, the rest counted. With
+/// room for fewer than two rows, one summary line instead: "FILES 2/3 · ◉ name".
+fn files_lines<'a>(exec: &'a ExecutionModel, theme: &Theme, rows: usize) -> Vec<Line<'a>> {
+    let active = exec
+        .files
+        .iter()
+        .position(|f| f.status == FileStatus::Processing)
+        .or_else(|| {
+            exec.files
+                .iter()
+                .position(|f| f.status == FileStatus::Waiting)
+        });
+    if rows < 2 && exec.files.len() > rows {
+        return vec![files_summary_line(exec, active, theme)];
     }
-
-    // File progress — hidden when all files are done but pipeline is still
-    // running, since it just shows "Complete" for input files while containers
-    // are doing the real work (e.g., loop iterating over dynamic items).
-    let show_files = !exec.files.is_empty() && !should_hide_files(exec);
-    if show_files {
-        lines.push(Line::from(Span::styled("  FILES", theme.category())));
-        for file in &exec.files {
-            let (marker, style) = file_marker(&file.status, theme);
-            let pct = if file.percent > 0 && file.percent < 100 {
-                format!(" {}%", file.percent)
-            } else {
-                String::new()
-            };
-            lines.push(Line::from(Span::styled(
-                format!("  {marker} {}{pct}", file.name),
-                style,
-            )));
-        }
-        lines.push(Line::from(""));
-    }
-
-    // Error display
-    if let Some(error) = &exec.error {
+    let window = file_window(exec.files.len(), active, rows);
+    let mut lines = vec![Line::from(Span::styled("  FILES", theme.category()))];
+    for file in &exec.files[window.shown] {
+        let (marker, style) = file_marker(&file.status, theme);
         lines.push(Line::from(Span::styled(
-            format!("  Error: {error}"),
-            theme.heading(),
+            format!("  {marker} {}", file_text(file)),
+            style,
         )));
     }
-
+    if window.hidden > 0 {
+        let more = format!("  … {} more", window.hidden);
+        lines.push(Line::from(Span::styled(more, theme.muted())));
+    }
+    lines.push(Line::from(""));
     lines
+}
+
+/// FILES in one line: which file of how many, and its status.
+fn files_summary_line<'a>(exec: &ExecutionModel, active: Option<usize>, theme: &Theme) -> Line<'a> {
+    let index = active.unwrap_or(exec.files.len() - 1);
+    let file = &exec.files[index];
+    let (marker, style) = file_marker(&file.status, theme);
+    Line::from(vec![
+        Span::styled(
+            format!("  FILES {}/{} · ", index + 1, exec.files.len()),
+            theme.category(),
+        ),
+        Span::styled(format!("{marker} {}", file_text(file)), style),
+    ])
+}
+
+/// A file row's text: its name or progress message, and the percent mid-way.
+fn file_text(file: &super::screens::execution::FileProgress) -> String {
+    if file.percent > 0 && file.percent < 100 {
+        format!("{} {}%", file.name, file.percent)
+    } else {
+        file.name.clone()
+    }
+}
+
+/// Whether FILES shows; see [`should_hide_files`].
+fn show_files(exec: &ExecutionModel) -> bool {
+    !exec.files.is_empty() && !should_hide_files(exec)
 }
 
 /// Build output lines sized to fill available height.
@@ -187,7 +256,7 @@ fn node_marker(status: &NodeStatus, theme: &Theme) -> (&'static str, ratatui::st
     match status {
         NodeStatus::Pending => ("○", theme.muted()),
         NodeStatus::Active => ("◉", theme.selected()),
-        NodeStatus::Completed { .. } => ("●", theme.text()),
+        NodeStatus::Completed { .. } => ("✓", theme.text()),
         NodeStatus::Failed(_) => ("✗", theme.heading()),
     }
 }
@@ -225,7 +294,7 @@ fn node_annotation(node: &super::screens::execution::NodeProgress) -> String {
 
 /// Hide the FILES section when it's misleading: all input files are done
 /// but the pipeline is still running (containers generating dynamic work).
-fn should_hide_files(exec: &super::screens::execution::ExecutionModel) -> bool {
+fn should_hide_files(exec: &ExecutionModel) -> bool {
     if exec.status != ExecutionStatus::Running {
         return false;
     }
@@ -239,7 +308,7 @@ fn file_marker(status: &FileStatus, theme: &Theme) -> (&'static str, ratatui::st
     match status {
         FileStatus::Waiting => ("○", theme.muted()),
         FileStatus::Processing => ("◉", theme.selected()),
-        FileStatus::Done => ("●", theme.text()),
+        FileStatus::Done => ("✓", theme.text()),
         FileStatus::Failed(_) => ("✗", theme.heading()),
     }
 }
@@ -260,6 +329,16 @@ mod tests {
             total_iterations: None,
             children: Vec::new(),
         }
+    }
+
+    #[test]
+    fn done_reads_as_a_check_not_a_dot() {
+        // ◉ (running) and ● (done) were easy to confuse; the CLI uses ✓.
+        let theme = Theme::from_variant(crate::tui::theme::ThemeVariant::LosAngeles);
+        let done = NodeStatus::Completed { duration_ms: 1 };
+        assert_eq!(node_marker(&done, &theme).0, "✓");
+        assert_eq!(file_marker(&FileStatus::Done, &theme).0, "✓");
+        assert_ne!(node_marker(&NodeStatus::Active, &theme).0, "✓");
     }
 
     #[test]

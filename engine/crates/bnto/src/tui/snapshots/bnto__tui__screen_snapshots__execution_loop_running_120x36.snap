@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ R U N N I N G ───────────────────────────────────────────────────────────────────────────────╮
+            │  Running  0ms                                                                                │
+            │                                                                                              │
+            │  STEPS                                                                                       │
+            │  ◉ loop (2/3)                                                                                │
+            │    ◉ image-compress                                                                          │
+            │    ○ file-rename                                                                             │
+            │                                                                                              │
+            │  FILES                                                                                       │
+            │  ✓ beach.jpg                                                                                 │
+            │  ◉ Compressing sunset.jpg... 50%                                                             │
+            │  ○ lake.jpg                                                                                  │
+            │                                                                                              │
+            │  OUTPUT                                                                                      │
+            │  Compressing JPEG (quality: 80)...                                                           │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            Esc cancel  Enter continue                                22 recipes  ·  v[version]  ·  Los Angeles

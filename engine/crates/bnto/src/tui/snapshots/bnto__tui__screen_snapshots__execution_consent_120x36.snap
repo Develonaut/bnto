@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ R U N N I N G ───────────────────────────────────────────────────────────────────────────────╮
+            │  This recipe runs commands on your computer                                                  │
+            │                                                                                              │
+            │  Recipe: Slow Shell                                                                          │
+            │  COMMANDS                                                                                    │
+            │    - sh -c <script> bnto                                                                     │
+            │          script:                                                                             │
+            │            for i in 1 2 3; do echo "line $i"; done                                           │
+            │                                                                                              │
+            │  y allow and run  ·  n / Esc cancel                                                          │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            Esc cancel  Enter continue                                22 recipes  ·  v[version]  ·  Los Angeles
