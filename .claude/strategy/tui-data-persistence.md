@@ -183,7 +183,7 @@ Migration functions are simple: `fn migrate_v1_to_v2(config: &mut toml::Value) -
 | Theme               | Yes             | User preference, editable                |
 | Output directory    | Yes             | User preference, editable                |
 | Picker default path | Yes             | User preference, editable                |
-| Telemetry consent   | Yes             | User should be able to see and change it |
+| Telemetry on/off    | Yes             | User should be able to see and change it |
 | Window size         | No (state)      | Not a preference, just restored state    |
 | Last-used recipe    | No (state)      | Ephemeral convenience                    |
 | Execution history   | No (state)      | App-managed, not user-editable           |
@@ -236,6 +236,16 @@ match config.save(&paths) {
 ```
 
 **Policy:** Save errors are surfaced as status bar messages. They don't block the user (no modal dialogs for a save failure). The user can continue working and retry later. Config remains in memory even if disk write fails.
+
+### Telemetry: one setting (October 2026)
+
+`[telemetry] enabled` in config.toml is the only on/off setting. `bnto telemetry enable|disable|status`, the TUI's Settings toggle and the runtime check all read or write it (`telemetry/choice.rs`). `telemetry.json` (`dirs::config_dir()/bnto/`) still exists, and it holds state only: the anonymous id and whether the first-run notice was shown.
+
+Before this, the choice lived in both files. The TUI toggle wrote both, but telemetry and the Settings screen read only `telemetry.json`, so a hand edit of config.toml did nothing. The merge (`choice::settle`, run at startup and by `bnto telemetry status`) does this:
+
+- An `enabled` left in `telemetry.json` by an older bnto is read once, and telemetry is off if either file says off. An opt-out is never lost, and an old opt-in never overrides a config.toml opt-out.
+- The result is saved to config.toml. Only after that save succeeds is `telemetry.json` rewritten without `enabled`, so the old field can't switch a later choice back.
+- Env opt-outs (`BNTO_TELEMETRY_DISABLED=1`, `DO_NOT_TRACK=1`) still beat both.
 
 ---
 

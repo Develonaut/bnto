@@ -5,7 +5,6 @@
 
 use super::super::theme::ThemeVariant;
 use crate::storage::config::TomlConfig;
-use crate::telemetry;
 
 /// A single configurable field in the settings screen.
 #[derive(Debug, Clone)]
@@ -61,7 +60,7 @@ impl SettingsModel {
             SettingsField {
                 key: "telemetry",
                 label: "Telemetry",
-                value: if telemetry::config::TelemetryConfig::load().enabled {
+                value: if config.telemetry.enabled {
                     "On".to_string()
                 } else {
                     "Off".to_string()
@@ -157,10 +156,12 @@ mod tests {
     }
 
     #[test]
-    fn telemetry_field_shows_on_or_off() {
-        let m = default_settings();
-        let value = &m.fields[2].value;
-        assert!(value == "On" || value == "Off");
+    fn telemetry_field_shows_config_tomls_choice() {
+        assert_eq!(default_settings().fields[2].value, "On");
+        let mut config = TomlConfig::default();
+        config.telemetry.enabled = false;
+        let m = SettingsModel::from_toml_config(&config);
+        assert_eq!(m.fields[2].value, "Off");
     }
 
     #[test]
