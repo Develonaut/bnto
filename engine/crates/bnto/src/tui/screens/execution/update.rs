@@ -1,6 +1,6 @@
 // Execution screen update — routes each message to a focused transition.
 
-use super::{ExecutionMessage, ExecutionModel, ExecutionStatus};
+use super::{ExecutionMessage, ExecutionModel, ExecutionStatus, FileStatus};
 
 /// Pure state transition for the execution screen.
 pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionModel {
@@ -34,14 +34,27 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             total_iterations,
         } => model.start_iteration(&node_id, iteration, total_iterations),
         M::IterationCompleted {
-            node_id, iteration, ..
-        } => model.set_iteration(&node_id, iteration),
+            node_id,
+            iteration,
+            total_iterations,
+            ..
+        } => {
+            model.set_iteration(&node_id, iteration);
+            model.settle_iteration_file(iteration, total_iterations, FileStatus::Done);
+        }
         M::IterationFailed {
             node_id,
             iteration,
+            total_iterations,
             error,
-            ..
-        } => model.fail_iteration(&node_id, iteration, &error),
+        } => {
+            model.settle_iteration_file(
+                iteration,
+                total_iterations,
+                FileStatus::Failed(error.clone()),
+            );
+            model.fail_iteration(&node_id, iteration, &error);
+        }
         M::ChildNodeStarted {
             parent_node_id,
             node_id,

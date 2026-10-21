@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ R E S U L T S ───────────────────────────────────────────────────────────────────────────────╮
+            │  Completed in 26ms                                                                           │
+            │                                                                                              │
+            │  S E S S I O N   L O G                                                                       │
+            │  Session started: staying awake for 1 hour.                                                  │
+            │  Activity simulation: off                                                                    │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            o open file  O open folder  r run another  q quit         22 recipes  ·  v[version]  ·  Los Angeles

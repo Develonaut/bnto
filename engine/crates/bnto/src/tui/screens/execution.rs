@@ -4,6 +4,7 @@
 
 mod message;
 mod nodes;
+mod plan;
 mod run;
 mod update;
 
@@ -197,6 +198,9 @@ impl NodeProgress {
         }
     }
 }
+
+#[cfg(test)]
+mod run_display_tests;
 
 #[cfg(test)]
 mod tests {

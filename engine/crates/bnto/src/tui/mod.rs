@@ -7,6 +7,7 @@ pub mod app;
 mod app_helpers;
 mod bridge;
 pub mod event;
+mod file_window;
 pub mod format;
 mod keys;
 pub mod palette;

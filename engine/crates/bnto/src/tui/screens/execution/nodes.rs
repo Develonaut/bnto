@@ -26,6 +26,12 @@ impl ExecutionModel {
         percent: u32,
         message: String,
     ) {
+        // Files run one after another, so one the run has moved past is done.
+        for earlier in 0..file_index.min(self.files.len()) {
+            if self.files[earlier].status == FileStatus::Processing {
+                self.settle_file(earlier, FileStatus::Done);
+            }
+        }
         if let Some(file) = self.files.get_mut(file_index) {
             file.percent = percent;
             file.status = FileStatus::Processing;
@@ -95,6 +101,32 @@ impl ExecutionModel {
         if let Some(node) = self.node_mut(node_id) {
             node.iteration = Some(iteration);
         }
+    }
+
+    /// Settle the file a per-file loop iteration ran on. Only when the loop
+    /// runs once per selected file; other loops don't map onto file rows.
+    pub(super) fn settle_iteration_file(
+        &mut self,
+        iteration: usize,
+        total: usize,
+        status: FileStatus,
+    ) {
+        if total != self.files.len() {
+            return;
+        }
+        if iteration < self.files.len() {
+            self.settle_file(iteration, status);
+        }
+    }
+
+    /// Finish file `index`: its status, and its name back in place of the
+    /// last progress message ("Compressing a.jpg..." reads wrong once done).
+    fn settle_file(&mut self, index: usize, status: FileStatus) {
+        let name = self.waiting_name(index);
+        let file = &mut self.files[index];
+        file.status = status;
+        file.percent = 100;
+        file.name = name;
     }
 
     /// Record a failed iteration. In continue mode the loop keeps going, so
