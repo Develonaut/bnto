@@ -118,6 +118,13 @@ pub struct ParameterDef {
     /// Whether this param can be surfaced in container config panels.
     #[serde(default = "default_true")]
     pub surfaceable: bool,
+    /// Whether someone running a recipe sets this param: the run screen
+    /// shows it when the recipe declares no `fields`. False for params that
+    /// are the program itself (a shell command and its args), which only the
+    /// author sets; authoring surfaces go by `surfaceable`. Native-only: no
+    /// browser node needs it, so it stays out of the catalog.
+    #[serde(skip)]
+    pub run_option: bool,
 
     // --- Presentation Fields (engine-owned schema) ---
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -155,6 +162,7 @@ impl Default for ParameterDef {
             visible_when: None,
             required_when: None,
             surfaceable: true,
+            run_option: true,
             group: None,
             suffix: None,
             control: None,

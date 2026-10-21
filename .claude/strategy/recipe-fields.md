@@ -45,7 +45,7 @@ fields (what the user sees)     →  {{fields.*}} templates  →  parameters (wh
 **`fields` lives on nodes** — each node declares its own user-facing controls. The discovery hierarchy:
 
 1. **Nodes have `fields`** — discover from individual nodes, show those
-2. **No `fields` anywhere** — fall back to current behavior (surfaceable processor params from metadata)
+2. **No `fields` anywhere** — fall back to the processors' run options: params that are both `surfaceable` and `run_option` (compress-images' Quality, resize's Width). A param that is the program itself (a shell command, its args and limits) is `run_option: false`, so a field-less shell recipe offers just Run
 
 Node-level fields are the building blocks. Recipe-level fields (composed, curated surface) are deferred until there's a real use case for cross-node field binding.
 
@@ -239,7 +239,7 @@ The TUI detail screen (`detail_loader.rs`) walks recipe nodes and collects field
 ```
 1. Walk all nodes in the definition tree (including nested children)
 2. For each node with `fields`, convert to ParamEntry list with owning node_id
-3. If no `fields` anywhere, fall back to current behavior (surfaceable processor params from metadata)
+3. If no `fields` anywhere, fall back to the processors' run options (`surfaceable && run_option` params)
 4. For input node: always surface the primary input field (URL, file, text) regardless
 ```
 
@@ -334,15 +334,16 @@ Empty node_id (`:key=value`) is rejected — recipe-level fields are deferred.
 
 ## Design Decisions
 
-| Decision                             | Choice                                  | Rationale                                                                                           |
-| ------------------------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| JSON key name                        | `fields`                                | Natural name — matches template namespace `{{fields.*}}`, matches user mental model ("form fields") |
-| Fields location (MVP)                | Node-level only                         | Building blocks first — recipe-level composition deferred until real use case                       |
-| `parameters` vs `fields`             | Distinct roles                          | `parameters` = internal config. `fields` = optional user-facing controls that hook up via templates |
-| Template syntax                      | `{{double braces}}`                     | Handlebars-style avoids collision with JSON objects, JS template literals, shell expansion          |
-| Resolution layer                     | PipelineExecutor                        | All node types benefit. Processors receive fully resolved params                                    |
-| Field type system                    | Tagged union (`#[serde(tag = "type")]`) | Clean JSON, exhaustive matching in Rust, easy to extend                                             |
-| Processor params when fields present | Hidden from TUI                         | Author opted into a curated surface. Raw params are implementation details                          |
+| Decision                             | Choice                                  | Rationale                                                                                                       |
+| ------------------------------------ | --------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| JSON key name                        | `fields`                                | Natural name — matches template namespace `{{fields.*}}`, matches user mental model ("form fields")             |
+| Fields location (MVP)                | Node-level only                         | Building blocks first — recipe-level composition deferred until real use case                                   |
+| `parameters` vs `fields`             | Distinct roles                          | `parameters` = internal config. `fields` = optional user-facing controls that hook up via templates             |
+| Template syntax                      | `{{double braces}}`                     | Handlebars-style avoids collision with JSON objects, JS template literals, shell expansion                      |
+| Resolution layer                     | PipelineExecutor                        | All node types benefit. Processors receive fully resolved params                                                |
+| Field type system                    | Tagged union (`#[serde(tag = "type")]`) | Clean JSON, exhaustive matching in Rust, easy to extend                                                         |
+| Processor params when fields present | Hidden from TUI                         | Author opted into a curated surface. Raw params are implementation details                                      |
+| Shell params when no fields (R4)     | Hidden from TUI; Run only               | Like GitHub Actions' run form or n8n's, a step's command isn't an option. Consent and `bnto info` still show it |
 
 ---
 

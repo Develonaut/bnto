@@ -7,9 +7,10 @@ use bnto_core::metadata::{ParameterDef, ParameterType};
 
 use crate::validate::{DEFAULT_MAX_OUTPUT_MB, DEFAULT_TIMEOUT_SECS};
 
-/// Every parameter the shell-run node accepts.
+/// Every parameter the shell-run node accepts. None is a run option: they
+/// are the program, and a recipe offers choices through `fields`.
 pub(crate) fn build_parameters() -> Vec<ParameterDef> {
-    vec![
+    let params = vec![
         command_param(),
         script_param(),
         shell_param(),
@@ -20,7 +21,14 @@ pub(crate) fn build_parameters() -> Vec<ParameterDef> {
         env_param(),
         search_path_param(),
         cwd_param(),
-    ]
+    ];
+    params
+        .into_iter()
+        .map(|p| ParameterDef {
+            run_option: false,
+            ..p
+        })
+        .collect()
 }
 
 fn command_param() -> ParameterDef {
@@ -156,5 +164,28 @@ fn cwd_param() -> ParameterDef {
         placeholder: Some("Tools".to_string()),
         surfaceable: false,
         ..Default::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn no_param_is_an_option_for_someone_running_the_recipe() {
+        // The command, its args and its limits are the program the author
+        // wrote. A recipe offers the runner choices through `fields`.
+        for param in build_parameters() {
+            assert!(!param.run_option, "{} is shown when running", param.name);
+        }
+    }
+
+    #[test]
+    fn the_author_can_still_set_the_command() {
+        let command = build_parameters().into_iter().find(|p| p.name == "command");
+        assert!(
+            command.unwrap().surfaceable,
+            "the wizard and editor need it"
+        );
     }
 }
