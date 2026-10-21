@@ -4,10 +4,22 @@
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::{Mutex, MutexGuard};
 
 use tempfile::TempDir;
 
 const CURRENT: &str = env!("CARGO_PKG_VERSION");
+
+/// Held while writing an executable and while spawning. A child forked
+/// while another test still has a new executable open for writing inherits
+/// that fd, and Linux then refuses to run the file ("Text file busy").
+static EXEC_FILES: Mutex<()> = Mutex::new(());
+
+fn exec_files() -> MutexGuard<'static, ()> {
+    EXEC_FILES
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
 
 /// A sandbox: homes, an index listing `versions`, and a cargo home.
 struct Sandbox {
@@ -32,7 +44,8 @@ impl Sandbox {
 
     /// Run `binary upgrade <args>` with every home in the sandbox.
     fn upgrade(&self, binary: &Path, args: &[&str]) -> Output {
-        Command::new(binary)
+        let mut command = Command::new(binary);
+        command
             .arg("upgrade")
             .args(args)
             .env("HOME", self.path("home"))
@@ -43,8 +56,13 @@ impl Sandbox {
                 "BNTO_UPDATE_INDEX_URL",
                 format!("file://{}", self.path("index").display()),
             )
-            .output()
-            .unwrap()
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+        let child = {
+            let _guard = exec_files();
+            command.spawn().unwrap()
+        };
+        child.wait_with_output().unwrap()
     }
 
     /// The real bnto, copied into the sandbox's cargo bin dir, as
@@ -52,6 +70,7 @@ impl Sandbox {
     #[cfg(unix)]
     fn cargo_installed_bnto(&self) -> PathBuf {
         let exe = self.path("cargo/bin/bnto");
+        let _guard = exec_files();
         std::fs::copy(env!("CARGO_BIN_EXE_bnto"), &exe).unwrap();
         exe
     }
@@ -81,6 +100,7 @@ fn fake_cargo(sandbox: &Sandbox, code: u8) {
         calls.display()
     );
     let cargo = sandbox.path("cargo/bin/cargo");
+    let _guard = exec_files();
     std::fs::write(&cargo, script).unwrap();
     std::fs::set_permissions(&cargo, std::fs::Permissions::from_mode(0o755)).unwrap();
 }
