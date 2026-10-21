@@ -23,6 +23,15 @@ pub fn env_opts_out(value: Option<&str>) -> bool {
     value.is_some_and(|v| !v.is_empty() && v != "0")
 }
 
+/// Whether the TUI may check: as [`checks_enabled`], except the TUI always
+/// owns a terminal, so stderr's state doesn't matter.
+pub fn tui_checks_enabled(context: Context) -> bool {
+    checks_enabled(Context {
+        stderr_is_terminal: true,
+        ..context
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -53,6 +62,24 @@ mod tests {
         assert!(!checks_enabled(Context {
             stderr_is_terminal: false,
             ..ON
+        }));
+    }
+
+    #[test]
+    fn the_tui_checks_without_asking_about_stderr() {
+        // The TUI owns the terminal; stderr's state says nothing about it.
+        let piped = Context {
+            stderr_is_terminal: false,
+            ..ON
+        };
+        assert!(tui_checks_enabled(piped));
+        assert!(!tui_checks_enabled(Context {
+            in_ci: true,
+            ..piped
+        }));
+        assert!(!tui_checks_enabled(Context {
+            env_opted_out: true,
+            ..piped
         }));
     }
 

@@ -138,6 +138,8 @@ fn run_loop(
         Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
         None => AppModel::new(variant, recipe_json, new_recipe),
     };
+    let (update_notice, mut update_rx) = crate::update_check::for_tui(&model.paths);
+    model.update_notice = update_notice;
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
     // The run's output folder and the names its iterations have written there.
@@ -198,6 +200,12 @@ fn run_loop(
                     }),
                 );
             }
+        }
+
+        // A background update check that finished mid-session.
+        if let Some(notice) = update_rx.as_ref().and_then(|rx| rx.try_recv().ok()) {
+            model = update(model, AppMessage::UpdateAvailable(notice));
+            update_rx = None;
         }
 
         // Spawn the pipeline bridge when execution screen enters Idle state.

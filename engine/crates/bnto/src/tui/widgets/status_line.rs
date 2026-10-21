@@ -46,6 +46,15 @@ pub fn render_status_line<'a>(
     ])
 }
 
+/// The status line when a newer bnto is out: the notice, then the version.
+pub fn render_update_line<'a>(notice: &str, version: &str, theme: &Theme) -> Line<'a> {
+    Line::from(vec![
+        Span::styled(notice.to_string(), theme.category()),
+        Span::styled("  ·  ", theme.muted()),
+        Span::styled(format!("v{version}"), theme.muted()),
+    ])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -115,5 +124,18 @@ mod tests {
         );
         let text = collect_text(&line);
         assert!(text.contains("Failed to save config"));
+    }
+
+    #[test]
+    fn an_update_takes_the_place_of_the_counts() {
+        let line = render_update_line(
+            "bnto 0.17.0 available, run bnto upgrade",
+            "0.16.1",
+            &theme(),
+        );
+        assert_eq!(
+            collect_text(&line),
+            "bnto 0.17.0 available, run bnto upgrade  ·  v0.16.1"
+        );
     }
 }

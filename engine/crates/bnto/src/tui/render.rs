@@ -196,13 +196,18 @@ pub fn draw_bottom_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &The
         model.screen.help_hints()
     };
     // Status info (right-aligned), drawn first: the hints get what's left.
-    let status = status_line::render_status_line_with_message(
-        model.browser.recipes.len(),
-        env!("CARGO_PKG_VERSION"),
-        model.theme_variant.display_name(),
-        model.status_message.as_deref(),
-        theme,
-    );
+    // A transient message wins, then an available upgrade, then the counts.
+    let version = env!("CARGO_PKG_VERSION");
+    let status = match (&model.status_message, &model.update_notice) {
+        (None, Some(notice)) => status_line::render_update_line(notice, version, theme),
+        _ => status_line::render_status_line_with_message(
+            model.browser.recipes.len(),
+            version,
+            model.theme_variant.display_name(),
+            model.status_message.as_deref(),
+            theme,
+        ),
+    };
     let hints_width = usize::from(area.width).saturating_sub(status.width() + STATUS_GAP);
     frame.render_widget(Paragraph::new(status).alignment(Alignment::Right), area);
 

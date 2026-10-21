@@ -83,6 +83,7 @@ impl AppModel {
             toml_config,
             paths,
             status_message: None,
+            update_notice: None,
             settings_picker_field: None,
             param_overrides: HashMap::new(),
             registry,

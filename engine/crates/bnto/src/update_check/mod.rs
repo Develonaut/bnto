@@ -14,6 +14,7 @@ pub use version::Version;
 
 use std::io::IsTerminal;
 use std::path::PathBuf;
+use std::sync::mpsc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::storage::BntoPaths;
@@ -36,6 +37,35 @@ pub fn notice_and_refresh(paths: &BntoPaths) {
     if cache::needs_check(cached.as_ref(), now()) {
         spawn::spawn_refresh();
     }
+}
+
+/// For the TUI: the notice from the cache now, and, when the cache is
+/// stale, a channel that delivers one after a fresh check on a background
+/// thread (the TUI runs long enough for it to finish).
+pub fn for_tui(paths: &BntoPaths) -> (Option<String>, Option<mpsc::Receiver<String>>) {
+    if !policy::tui_checks_enabled(context(&TomlConfig::load(paths))) {
+        return (None, None);
+    }
+    let Some(current) = version::Version::current() else {
+        return (None, None);
+    };
+    let cached = cache::load(&cache_path(paths));
+    let now_notice = cache::update_from(cached.as_ref(), current).map(notice::tui_notice);
+    if !cache::needs_check(cached.as_ref(), now()) {
+        return (now_notice, None);
+    }
+    let (tx, rx) = mpsc::channel();
+    let paths = paths.clone();
+    std::thread::spawn(move || {
+        let Some(latest) = latest_release() else {
+            return;
+        };
+        record(&paths, latest);
+        if latest > current {
+            let _ = tx.send(notice::tui_notice(latest));
+        }
+    });
+    (now_notice, Some(rx))
 }
 
 /// The hidden `__check-for-updates` command: check once and cache the

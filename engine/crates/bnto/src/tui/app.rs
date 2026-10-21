@@ -108,6 +108,8 @@ pub struct AppModel {
     pub paths: BntoPaths,
     /// Transient status bar message (e.g. "Settings saved" or "Failed to save").
     pub status_message: Option<String>,
+    /// "bnto 0.17.0 available, run bnto upgrade" when a newer release is out.
+    pub update_notice: Option<String>,
     /// Which settings field opened the picker (None = normal recipe picker).
     pub settings_picker_field: Option<String>,
     /// Param overrides from detail screen, carried through picker to execution.
@@ -217,6 +219,10 @@ fn update_screen_models(model: AppModel, msg: AppMessage) -> AppModel {
 fn update_authoring(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::OpenSettings => handle_open_settings(model),
+        AppMessage::UpdateAvailable(notice) => AppModel {
+            update_notice: Some(notice),
+            ..model
+        },
         AppMessage::Settings(msg) => {
             let settings = model.settings.map(|s| settings_update(s, msg));
             AppModel { settings, ..model }

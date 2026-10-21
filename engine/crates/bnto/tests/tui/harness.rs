@@ -64,14 +64,21 @@ impl Tui {
     /// Like [`Tui::launch`], with `files` copied into the folder the TUI
     /// starts in (a file recipe's default input).
     pub fn launch_with(cols: u16, rows: u16, files: &[&std::path::Path]) -> Self {
-        Self::launch_full(cols, rows, files, &[])
+        Self::launch_full(cols, rows, files, &[], None)
+    }
+
+    /// Like [`Tui::launch`], with the update check on and its cache saying
+    /// `latest` is out (checked just now, so nothing reaches the network).
+    #[allow(dead_code)] // each journey file uses a subset
+    pub fn launch_with_update(cols: u16, rows: u16, latest: &str) -> Self {
+        Self::launch_full(cols, rows, &[], &[], Some(latest))
     }
 
     /// Like [`Tui::launch`], with `recipes` in the sandbox's library
     /// (`BNTO_HOME/recipes`), as if the user had saved them.
     #[allow(dead_code)] // each journey file uses a subset
     pub fn launch_with_library(cols: u16, rows: u16, recipes: &[&std::path::Path]) -> Self {
-        Self::launch_full(cols, rows, &[], recipes)
+        Self::launch_full(cols, rows, &[], recipes, None)
     }
 
     fn launch_full(
@@ -79,6 +86,7 @@ impl Tui {
         rows: u16,
         files: &[&std::path::Path],
         recipes: &[&std::path::Path],
+        update: Option<&str>,
     ) -> Self {
         let size = PtySize {
             rows,
@@ -98,10 +106,12 @@ impl Tui {
         for recipe in recipes {
             std::fs::copy(recipe, library.join(recipe.file_name().unwrap())).unwrap();
         }
-        let child = pair
-            .slave
-            .spawn_command(command(&homes))
-            .expect("spawn bnto tui");
+        let mut cmd = command(&homes);
+        if let Some(latest) = update {
+            seed_update_cache(homes.1.path(), latest);
+            allow_update_check(&mut cmd);
+        }
+        let child = pair.slave.spawn_command(cmd).expect("spawn bnto tui");
         drop(pair.slave);
 
         let [rows_nz, cols_nz] =
@@ -198,8 +208,38 @@ fn command(homes: &(TempDir, TempDir)) -> CommandBuilder {
     cmd.env("XDG_CONFIG_HOME", user.join(".config"));
     cmd.env("BNTO_HOME", bnto);
     cmd.env("BNTO_TELEMETRY_DISABLED", "1");
+    // Off unless a journey asks for it: no journey may reach the network.
+    cmd.env("BNTO_NO_UPDATE_CHECK", "1");
     cmd.env("TERM", "xterm-256color");
     cmd
+}
+
+/// A fresh cached update check saying `latest` is out.
+fn seed_update_cache(bnto_home: &std::path::Path, latest: &str) {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let cache = bnto_home.join("cache");
+    std::fs::create_dir_all(&cache).unwrap();
+    let json = format!(r#"{{"checkedAt":{now},"latest":"{latest}"}}"#);
+    std::fs::write(cache.join("update-check.json"), json).unwrap();
+}
+
+/// Let the update check run: no opt-out, and not CI (CI turns it off).
+fn allow_update_check(cmd: &mut CommandBuilder) {
+    cmd.env_remove("BNTO_NO_UPDATE_CHECK");
+    for var in [
+        "CI",
+        "GITHUB_ACTIONS",
+        "GITLAB_CI",
+        "CIRCLECI",
+        "TRAVIS",
+        "BUILDKITE",
+        "JENKINS_URL",
+    ] {
+        cmd.env_remove(var);
+    }
 }
 
 /// The empty folder the TUI starts in. Not HOME itself, where bnto keeps
