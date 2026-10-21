@@ -30,10 +30,9 @@ pub(crate) fn handle_theme_changed(model: AppModel, variant: ThemeVariant) -> Ap
 
 /// Handle telemetry toggle — persist setting and update display.
 pub(crate) fn handle_telemetry_toggled(model: AppModel, enabled: bool) -> AppModel {
-    crate::telemetry::set_enabled(enabled);
     let mut toml_config = model.toml_config.clone();
     toml_config.telemetry.enabled = enabled;
-    let status_message = match toml_config.save(&model.paths) {
+    let status_message = match crate::telemetry::set_enabled(&model.paths, enabled) {
         Ok(()) => None,
         Err(e) => Some(format!("Failed to save: {e}")),
     };

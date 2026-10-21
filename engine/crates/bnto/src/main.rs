@@ -80,7 +80,6 @@ use logging::FileLogger;
 
 fn main() {
     let cli = Cli::parse();
-    telemetry::init();
     // A Windows upgrade leaves the replaced binary beside the new one.
     if let Ok(exe) = std::env::current_exe() {
         upgrade::remove_leftover(&exe);
@@ -89,6 +88,8 @@ fn main() {
     install_signal_handler();
 
     let paths = init_storage();
+    // The telemetry choice lives in config.toml, so storage comes first.
+    telemetry::init(paths.as_ref());
     // Session logger — shared across all commands.
     let logger = create_logger(&paths);
     // Build unified recipe catalog — bundled + user library.
