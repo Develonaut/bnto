@@ -229,12 +229,17 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
 
 /// Execution finished — transition to the results screen.
 pub(crate) fn handle_execution_complete(model: AppModel, slug: String) -> AppModel {
-    let (outputs, elapsed, output_dir) = model
-        .execution
-        .as_ref()
-        .map(|e| (e.output_files.clone(), e.elapsed_ms, e.output_dir.clone()))
-        .unwrap_or_default();
-    let results = Some(ResultsModel::new(&slug, outputs, elapsed, output_dir));
+    let results = model.execution.as_ref().map(|e| {
+        let log = e.output_lines.iter().cloned().collect();
+        ResultsModel::new(
+            &slug,
+            e.output_files.clone(),
+            e.elapsed_ms,
+            e.output_dir.clone(),
+        )
+        .with_report(e.message.clone(), log)
+    });
+    let results = results.or_else(|| Some(ResultsModel::new(&slug, Vec::new(), 0, None)));
     AppModel {
         screen: Screen::Results { slug },
         execution: None,

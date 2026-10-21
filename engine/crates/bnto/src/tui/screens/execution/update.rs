@@ -57,6 +57,7 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             output_dir,
             warnings,
         } => model.set_outputs(files, output_dir, warnings),
+        M::Reported { message } => model.message = Some(message),
         M::Cancel => model.status = ExecutionStatus::Cancelled,
         // Recorded and applied at the app level, which owns the trust store.
         M::AllowCommands => {}
