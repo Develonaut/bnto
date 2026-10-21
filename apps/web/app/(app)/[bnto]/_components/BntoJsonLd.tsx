@@ -22,7 +22,7 @@ interface BntoJsonLdProps {
 export function BntoJsonLd({ entry, recipe }: BntoJsonLdProps) {
   const pageUrl = `${BASE_URL}/${entry.slug}`;
   const categoryLabel = CATEGORY_BREADCRUMB_LABELS[entry.category] ?? entry.category;
-  const faqItems = getFaq(entry.slug, entry.category);
+  const faqItems = getFaq(entry.slug, entry.category, entry.runsInBrowser);
   const steps = recipe ? getHowItWorks(recipe) : [];
 
   const schemas = [

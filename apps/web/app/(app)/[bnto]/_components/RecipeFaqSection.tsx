@@ -6,10 +6,11 @@ import { FAQ_MASCOT } from "../_utils/sectionMascots";
 interface RecipeFaqSectionProps {
   slug: string;
   category: string;
+  runsInBrowser: boolean;
 }
 
-export function RecipeFaqSection({ slug, category }: RecipeFaqSectionProps) {
-  const items = getFaq(slug, category);
+export function RecipeFaqSection({ slug, category, runsInBrowser }: RecipeFaqSectionProps) {
+  const items = getFaq(slug, category, runsInBrowser);
   if (items.length === 0) return null;
 
   return (

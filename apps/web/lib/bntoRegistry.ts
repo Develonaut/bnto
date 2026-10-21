@@ -8,28 +8,36 @@
  * This module maps Recipe → BntoEntry to preserve the existing consumer API.
  */
 
-import { getAllRecipes, getRecipeBySlug } from "@bnto/registry";
+import { getAllRecipes, getRecipeBySlug, isRecipeBrowserCapable } from "@bnto/registry";
 import type { Recipe } from "@bnto/core";
 
 export interface BntoEntry {
   slug: string;
+  /** Recipe name, for cards and labels (`h1` adds the search phrasing). */
+  name: string;
   title: string;
   description: string;
   h1: string;
   fixture: string;
   features: string[];
   category: string;
+  /** False for CLI-only recipes, whose pages mustn't promise a browser tool. */
+  runsInBrowser: boolean;
 }
 
 export function toBntoEntry(r: Recipe): BntoEntry {
+  const runsInBrowser = isRecipeBrowserCapable(r);
+  const h1 = runsInBrowser ? `${r.name} Online Free` : `${r.name} from Your Terminal`;
   return {
     slug: r.slug,
-    title: `${r.name} Online Free -- bnto`,
+    name: r.name,
+    title: runsInBrowser ? `${h1} -- bnto` : `${h1}, Free -- bnto`,
     description: r.description,
-    h1: `${r.name} Online Free`,
+    h1,
     fixture: `${r.slug}.bnto.json`,
     features: r.features,
     category: r.category,
+    runsInBrowser,
   };
 }
 

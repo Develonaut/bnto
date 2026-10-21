@@ -78,6 +78,18 @@ describe("getBntoBySlug", () => {
     expect(entry!.title).toBe("Compress Images Online Free -- bnto");
   });
 
+  it("doesn't call a CLI-only recipe an online tool", () => {
+    const entry = getBntoBySlug("keep-awake");
+    expect(entry!.runsInBrowser).toBe(false);
+    expect(entry!.h1).toBe("Keep Awake from Your Terminal");
+    expect(entry!.title).toBe("Keep Awake from Your Terminal, Free -- bnto");
+  });
+
+  it("carries the recipe name for cards", () => {
+    expect(getBntoBySlug("keep-awake")!.name).toBe("Keep Awake");
+    expect(getBntoBySlug("compress-images")!.runsInBrowser).toBe(true);
+  });
+
   it("returns undefined for invalid slug", () => {
     expect(getBntoBySlug("nonexistent")).toBeUndefined();
   });
