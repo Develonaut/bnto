@@ -16,7 +16,7 @@ Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) ad
 | B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | Not started   |
 | C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | Not started   |
 | D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Not started   |
-| E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | Not started   |
+| E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | In review     |
 | F   | Refresh the new-recipe checklist and stale recipe counts     | `docs/new-recipe-checklist`        | Not started   |
 | 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Not started   |
 | 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | Not started   |
@@ -116,7 +116,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 
 - A bundled script can switch off any check with `# shellcheck disable=…`, including `all`; allow only listed codes (today SC2016) and assert it.
 - Run ShellCheck with `--norc` so a developer's `~/.shellcheckrc` can't change local results.
-- CI's ubuntu-latest ShellCheck version differs from local; consider pinning.
+- Not done: CI's ubuntu-latest ShellCheck version can differ from a developer's. Pin it if a version bump ever changes results.
 
 ### F: Refresh the new-recipe checklist and stale recipe counts
 
