@@ -31,16 +31,23 @@ pub struct CatalogEntry {
 
 /// Single flat list of all recipes from all sources.
 pub struct RecipeCatalog {
+    /// What each slug runs: a library recipe replaces a built-in of its slug.
     entries: Vec<CatalogEntry>,
+    /// Every built-in, including those a library recipe overrides, so the
+    /// TUI's Recipes pane can still list and open the shipped recipe.
+    builtins: Vec<CatalogEntry>,
 }
 
 impl RecipeCatalog {
     /// Load bundled + library recipes into a single list.
     ///
-    /// If the same slug exists in both, the library version wins
-    /// (user's copy overrides the bundled recipe).
+    /// If the same slug exists in both, the library version is what the
+    /// slug runs (the user's copy overrides the bundled recipe), but the
+    /// built-in stays in `bundled()` for the TUI's Recipes pane.
     pub fn load(library_dir: &Path) -> Self {
-        let mut entries = load_bundled();
+        let mut builtins = load_bundled();
+        builtins.sort_by(|a, b| a.category.cmp(&b.category).then(a.slug.cmp(&b.slug)));
+        let mut entries = builtins.clone();
         let library_entries = load_library(library_dir);
 
         // Library overrides bundled: remove bundled entries whose slugs
@@ -53,7 +60,7 @@ impl RecipeCatalog {
         }
 
         entries.sort_by(|a, b| a.category.cmp(&b.category).then(a.slug.cmp(&b.slug)));
-        Self { entries }
+        Self { entries, builtins }
     }
 
     /// All catalog entries.
@@ -74,15 +81,19 @@ impl RecipeCatalog {
         self.entries.iter().find(|e| e.slug == slug)
     }
 
-    /// Only bundled (predefined) recipes — excludes user library entries.
+    /// Every bundled (predefined) recipe, including one a library recipe
+    /// overrides. Excludes user library entries.
     pub fn bundled(&self) -> Vec<&CatalogEntry> {
-        self.entries
-            .iter()
-            .filter(|e| e.source == RecipeSource::Bundled)
-            .collect()
+        self.builtins.iter().collect()
     }
 
-    /// Whether a slug is a bundled recipe (for trust classification only).
+    /// The shipped recipe for a slug, even when a library recipe overrides it.
+    pub fn resolve_bundled(&self, slug: &str) -> Option<&CatalogEntry> {
+        self.builtins.iter().find(|e| e.slug == slug)
+    }
+
+    /// Whether the recipe a slug runs is bundled (for trust classification
+    /// only): false when a library recipe overrides the built-in.
     pub fn is_bundled(&self, slug: &str) -> bool {
         self.entries
             .iter()
@@ -203,6 +214,39 @@ mod tests {
         let entry = catalog.resolve("compress-images").unwrap();
         assert_eq!(entry.name, "My Compress");
         assert!(matches!(entry.source, RecipeSource::Library(_)));
+    }
+
+    #[test]
+    fn an_overridden_built_in_stays_in_the_built_in_list() {
+        let tmp = tempfile::tempdir().unwrap();
+        write_recipe(tmp.path(), "compress-images", "My Compress", "image");
+        let catalog = RecipeCatalog::load(tmp.path());
+        assert_eq!(
+            catalog.bundled().len(),
+            22,
+            "the shipped one is still listed"
+        );
+        let shipped = catalog.resolve_bundled("compress-images").unwrap();
+        assert_eq!(shipped.name, "Compress Images");
+        assert_eq!(shipped.source, RecipeSource::Bundled);
+    }
+
+    #[test]
+    fn an_overridden_slug_is_not_bundled_because_the_library_copy_runs() {
+        // `bnto run compress-images` runs the user's copy, so it must not
+        // get the built-in's trust.
+        let tmp = tempfile::tempdir().unwrap();
+        write_recipe(tmp.path(), "compress-images", "My Compress", "image");
+        let catalog = RecipeCatalog::load(tmp.path());
+        assert!(!catalog.is_bundled("compress-images"));
+    }
+
+    #[test]
+    fn resolve_bundled_ignores_library_only_recipes() {
+        let tmp = tempfile::tempdir().unwrap();
+        write_recipe(tmp.path(), "my-custom", "Custom", "custom");
+        let catalog = RecipeCatalog::load(tmp.path());
+        assert!(catalog.resolve_bundled("my-custom").is_none());
     }
 
     #[test]

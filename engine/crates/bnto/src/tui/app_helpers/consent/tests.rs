@@ -216,3 +216,40 @@ fn y_allows_and_n_declines_only_while_consent_is_pending() {
     let app = update(app, AppMessage::Execution(ExecutionMessage::AllowCommands));
     assert!(handle_key(&app, key(KeyCode::Char('y'))).is_none());
 }
+
+/// A model whose library holds `json` as its own `download-video`.
+fn model_with_library_copy(json: &str) -> (tempfile::TempDir, AppModel) {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = BntoPaths {
+        home: dir.path().to_path_buf(),
+    };
+    paths.ensure_dirs().unwrap();
+    std::fs::write(paths.recipes_dir().join("download-video.bnto.json"), json).unwrap();
+    let model = AppModel::with_paths(ThemeVariant::LosAngeles, None, false, paths);
+    (dir, model)
+}
+
+fn shipped_download_video() -> String {
+    bnto_engine::recipes::builtin_recipes()
+        .into_iter()
+        .find(|r| r.slug == "download-video")
+        .unwrap()
+        .definition_json
+        .to_string()
+}
+
+#[test]
+fn the_shipped_recipe_starts_without_asking_when_a_library_copy_shares_its_slug() {
+    let shipped = shipped_download_video();
+    let (_dir, model) = model_with_library_copy(&shipped.replace("yt-dlp", "my-dlp"));
+    let app = run_from_detail(model, "download-video", &shipped, false);
+    assert_eq!(status(&app), ExecutionStatus::Idle);
+}
+
+#[test]
+fn a_library_copy_with_a_built_in_slug_still_asks() {
+    let copy = shipped_download_video().replace("yt-dlp", "my-dlp");
+    let (_dir, model) = model_with_library_copy(&copy);
+    let app = run_from_detail(model, "download-video", &copy, false);
+    assert_eq!(status(&app), ExecutionStatus::AwaitingConsent);
+}

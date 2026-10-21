@@ -56,7 +56,7 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
             let clamped = idx.min(model.browser.recipes.len() - 1);
             let slug = model.browser.recipes[clamped].slug.clone();
             let start_dir = resolve_start_dir();
-            let entry = model.catalog.resolve(&slug);
+            let entry = DetailOrigin::Home.entry(&model.catalog, &slug);
             let detail =
                 entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
             AppModel {
@@ -133,7 +133,7 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
 /// Navigate to a recipe's detail screen from the browser.
 pub(crate) fn handle_recipe_selected(model: AppModel, slug: String) -> AppModel {
     let start_dir = resolve_start_dir();
-    let entry = model.catalog.resolve(&slug);
+    let entry = DetailOrigin::Browser.entry(&model.catalog, &slug);
     let detail = entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
     AppModel {
         screen: Screen::Detail {
@@ -287,7 +287,7 @@ pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppMod
             _ => (String::new(), DetailOrigin::Home),
         };
         let start_dir = resolve_start_dir();
-        let entry = model.catalog.resolve(&slug);
+        let entry = from.entry(&model.catalog, &slug);
         let detail =
             entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
         return AppModel {

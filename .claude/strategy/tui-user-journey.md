@@ -238,6 +238,8 @@ struct LibraryEntry {
 
 The predefined recipe catalog. This is what the current Browser screen does — browse all built-in recipes by category, search, and select. Two new actions: "Add to Library" and direct "Run."
 
+**A library recipe never hides a built-in (October 2026).** A library recipe named like a built-in (`~/.bnto/recipes/keep-awake.bnto.json`) shows in My Library. The built-in still shows here, and the status bar counts every built-in. Opening a recipe from this pane opens the shipped one, and its trust is the built-in's. Opening from My Library opens the user's copy, and its trust is its own. `bnto run <slug>` on the command line runs the library copy, since it overrides the name there. Before this, the catalog dropped the built-in, so the pane and its count lost it and every path opened the copy.
+
 ```
 ╭─ Recipes ───────────────────────────────────────╮
 │                                                  │

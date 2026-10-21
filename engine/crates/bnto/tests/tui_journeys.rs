@@ -61,6 +61,32 @@ fn tj2_scroll_to_keep_awake_and_open_it() {
 
 #[test]
 #[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj12_a_library_copy_never_hides_the_built_in() {
+    // A library recipe named like a built-in used to drop the built-in from
+    // the Recipes pane (and its count) and open the copy instead.
+    let shipped = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../bnto-engine/recipes/keep-awake.bnto.json");
+    let copy = std::fs::read_to_string(shipped).unwrap().replacen(
+        "\"Keep Awake\"",
+        "\"My Keep Awake\"",
+        1,
+    );
+    let dir = tempfile::tempdir().unwrap();
+    let recipe = dir.path().join("keep-awake.bnto.json");
+    std::fs::write(&recipe, copy).unwrap();
+
+    let mut tui = Tui::launch_with_library(120, 36, &[&recipe]);
+    tui.wait_until("the library copy and the full catalog count", |screen| {
+        screen.contains("keep-awake") && screen.contains("22 recipes")
+    });
+    tui.press(&[Key::Tab]);
+    select(&mut tui, "Keep Awake");
+    tui.press(&[Key::Enter]);
+    tui.wait_for("Keep Awake  [built-in]");
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
 fn tj3_compress_an_image_and_see_the_result() {
     let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../../test-fixtures/images/gradient.jpg");
