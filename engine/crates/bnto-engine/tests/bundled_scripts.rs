@@ -13,6 +13,12 @@ use serde_json::Value;
 /// can't check, so a bundled script may not use it.
 const CHECKABLE_SHELLS: &[&str] = &["sh", "bash", "dash", "ksh"];
 
+/// ShellCheck codes a bundled script may switch off with a
+/// `# shellcheck disable=` directive. Anything else (including `all`) needs
+/// a reviewed entry here, so a directive can't quietly empty the gate.
+/// SC2016: single-quoted `$` in literal JavaScript (keep-awake's JXA).
+const ALLOWED_DISABLES: &[&str] = &["SC2016"];
+
 /// A script-mode step in a bundled recipe.
 struct ScriptStep {
     at: String,
@@ -50,13 +56,25 @@ fn collect_steps(recipe: &str, nodes: &Value, out: &mut Vec<ScriptStep>) {
     }
 }
 
-/// Run `program` (ShellCheck) over `script` as written for `shell`.
+/// The codes every `# shellcheck disable=` directive in `script` names.
+fn disabled_codes(script: &str) -> Vec<String> {
+    script
+        .split("shellcheck disable=")
+        .skip(1)
+        .filter_map(|rest| rest.split_whitespace().next())
+        .flat_map(|codes| codes.split(','))
+        .map(str::to_string)
+        .collect()
+}
+
+/// Run `program` (ShellCheck) over `script` as written for `shell`. `--norc`
+/// keeps a developer's own shellcheckrc from changing the result.
 fn shellcheck(program: &str, shell: &str, script: &str) -> Outcome {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("script.sh");
     std::fs::write(&path, script).unwrap();
     let output = Command::new(program)
-        .args(["--shell", shell, "--format", "gcc"])
+        .args(["--norc", "--shell", shell, "--format", "gcc"])
         .arg(&path)
         .output();
     match output {
@@ -121,6 +139,26 @@ fn bundled_scripts_use_a_shell_shellcheck_reads() {
             step.shell
         );
     }
+}
+
+#[test]
+fn bundled_scripts_disable_only_allowed_checks() {
+    for step in bundled_script_steps() {
+        for code in disabled_codes(&step.script) {
+            assert!(
+                ALLOWED_DISABLES.contains(&code.as_str()),
+                "{} disables {code}, which isn't in ALLOWED_DISABLES",
+                step.at
+            );
+        }
+    }
+}
+
+#[test]
+fn every_disable_directive_is_read() {
+    // Control: the allowlist check sees every form a directive takes.
+    let script = "# shellcheck disable=all\nx=1 # shellcheck disable=SC2034,SC2086 # why\n";
+    assert_eq!(disabled_codes(script), ["all", "SC2034", "SC2086"]);
 }
 
 #[test]
