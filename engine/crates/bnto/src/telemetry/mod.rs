@@ -7,7 +7,7 @@
 //   DO_NOT_TRACK=1
 
 pub mod bucket;
-mod ci;
+pub(crate) mod ci;
 mod client;
 pub mod config;
 mod consent;

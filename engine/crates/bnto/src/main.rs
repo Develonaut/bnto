@@ -62,6 +62,7 @@ pub mod telemetry;
 mod trust;
 mod trust_gate;
 mod tui;
+mod update_check;
 mod vars;
 
 use std::process;
