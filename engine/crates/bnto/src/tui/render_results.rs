@@ -6,7 +6,8 @@ use ratatui::widgets::Paragraph;
 
 use super::app::AppModel;
 use super::render_layout::content_panel;
-use super::screens::results::{file_savings_percent, format_duration, format_size};
+use super::screens::results::{format_duration, format_size};
+use super::screens::size_change::SizeChange;
 use super::theme::Theme;
 
 /// Render the results screen.
@@ -43,11 +44,11 @@ fn results_lines<'a>(
     if let Some(savings) = &results.savings {
         let before = format_size(savings.before);
         let after = format_size(savings.after);
-        let pct = savings.percent();
-        lines.push(Line::from(Span::styled(
-            format!("  Savings: {before} → {after} ({pct}% smaller)"),
-            theme.category(),
-        )));
+        let summary = match savings.change() {
+            Some(change) => format!("  {}: {before} → {after} ({change})", change.heading()),
+            None => format!("  Size: {before} → {after}"),
+        };
+        lines.push(Line::from(Span::styled(summary, theme.category())));
         lines.push(Line::from(""));
     }
 
@@ -76,14 +77,13 @@ fn results_lines<'a>(
             } else {
                 theme.text()
             };
-            // Show per-file savings when original_size is available.
+            // Show how each file's size changed when original_size is available.
             let size_info = if let Some(orig) = file.original_size {
                 let orig_str = format_size(orig);
                 let new_str = format_size(file.size_bytes);
-                if let Some(pct) = file_savings_percent(orig, file.size_bytes) {
-                    format!("  {orig_str} → {new_str}  ({pct}% smaller)")
-                } else {
-                    format!("  {orig_str} → {new_str}")
+                match SizeChange::between(orig, file.size_bytes) {
+                    Some(change) => format!("  {orig_str} → {new_str}  ({change})"),
+                    None => format!("  {orig_str} → {new_str}"),
                 }
             } else {
                 format!("  {}", format_size(file.size_bytes))
@@ -96,4 +96,51 @@ fn results_lines<'a>(
     }
 
     lines
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::tui::screens::results::{OutputFile, ResultsModel};
+    use crate::tui::theme::ThemeVariant;
+
+    fn rendered(outputs: Vec<OutputFile>) -> Vec<String> {
+        let results = ResultsModel::new("s", outputs, 0, None);
+        let theme = Theme::from_variant(ThemeVariant::LosAngeles);
+        results_lines(&results, &theme)
+            .iter()
+            .map(|line| line.to_string())
+            .collect()
+    }
+
+    #[test]
+    fn grown_output_reads_as_larger_not_zero_percent_smaller() {
+        let lines = rendered(vec![OutputFile {
+            name: "gradient.webp".into(),
+            size_bytes: 10_240,
+            original_size: Some(5_120),
+        }]);
+        assert!(lines.contains(&"  Size: 5 KB → 10 KB (100% larger)".to_string()));
+        assert!(
+            lines
+                .iter()
+                .any(|l| l.ends_with("5 KB → 10 KB  (100% larger)"))
+        );
+        assert!(!lines.iter().any(|l| l.contains("smaller")));
+    }
+
+    #[test]
+    fn shrunk_output_keeps_savings_wording() {
+        let lines = rendered(vec![OutputFile {
+            name: "photo.jpg".into(),
+            size_bytes: 5_120,
+            original_size: Some(10_240),
+        }]);
+        assert!(lines.contains(&"  Savings: 10 KB → 5 KB (50% smaller)".to_string()));
+        assert!(
+            lines
+                .iter()
+                .any(|l| l.ends_with("10 KB → 5 KB  (50% smaller)"))
+        );
+    }
 }
