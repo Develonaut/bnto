@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { getBntoCliVersion } from "../../lib/getBntoCliVersion";
 
 /**
  * Site navigation journey — verifies every public route on the site loads
@@ -47,6 +48,11 @@ test.describe("Site navigation — desktop @browser", () => {
     // Click a recipe link inside the dropdown
     await page.getByTestId("explore-link-compress-images").click();
     await expect(page).toHaveURL("/compress-images");
+  });
+
+  test("home: terminal demo installs the current CLI version", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByText(`Installed bnto v${getBntoCliVersion()}`)).toBeVisible();
   });
 
   test("footer: FAQ link navigates correctly", async ({ page }) => {

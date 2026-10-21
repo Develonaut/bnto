@@ -1,14 +1,16 @@
 "use client";
 
+import { useMemo } from "react";
 import { Surface } from "@bnto/ui";
 
 import { useStepInView } from "@/components/sections";
 
 import { Terminal } from "./Terminal";
 
-const DEMO_LINES = [
+/** The demo's install-and-run session; `version` is the CLI crate's real version. */
+const demoLines = (version: string) => [
   { text: "$ cargo install bnto", typing: true, speed: 35, delay: 400 },
-  { text: "  Installed bnto v0.5.0", className: "text-muted-foreground", delay: 600 },
+  { text: `  Installed bnto v${version}`, className: "text-muted-foreground", delay: 600 },
   { text: "", delay: 200 },
   { text: "$ bnto run compress-images photos/*.jpg", typing: true, speed: 30, delay: 500 },
   {
@@ -31,12 +33,14 @@ const DEMO_LINES = [
 ];
 
 /** Hero terminal — animated CLI demo showing install + run flow. */
-export function HeroTerminal() {
+export function HeroTerminal({ version }: { version: string }) {
   const [inView, ref] = useStepInView(0.3);
+  // Stable per version: Terminal restarts its animation when `lines` changes.
+  const lines = useMemo(() => demoLines(version), [version]);
 
   return (
     <Surface ref={ref} dormant={!inView} elevation="lg" rounded="xl">
-      <Terminal lines={DEMO_LINES} />
+      <Terminal lines={lines} />
     </Surface>
   );
 }
