@@ -76,6 +76,15 @@ jobs:
       - name: CLI tests (unit + golden)
         run: cargo test --package bnto
 
+      # The TUI's quality gate, like the web's E2E suite: screen snapshots
+      # plus journeys driving the real `bnto tui` in a pseudo-terminal. Already
+      # run above; repeated by name so a TUI failure reads as one
+      # (.claude/strategy/tui-testing.md).
+      - name: TUI tests (snapshots + journeys)
+        run: |
+          cargo test --package bnto --bin bnto screen_snapshots
+          cargo test --package bnto --test tui_journeys
+
       # Dogfood recipes run on the bnto binary the CLI tests just built, so an
       # engine change that breaks one fails here.
       - name: Check dogfood recipes (recipes/)

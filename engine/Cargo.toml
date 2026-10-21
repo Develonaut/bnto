@@ -87,6 +87,10 @@ ts-rs = "12"
 # Text snapshots of rendered TUI screens (dev-only; ratatui's recommended
 # pairing with TestBackend). Review changes with `cargo insta review`.
 insta = { version = "1", features = ["filters"] }
+# TUI journey tests (dev-only): run the real `bnto tui` in a pseudo-terminal
+# (ConPTY on Windows) and read its screen through a VT100 emulator.
+portable-pty = "0.9"
+vt100 = "0.18"
 
 # --- Build Profiles ---
 
