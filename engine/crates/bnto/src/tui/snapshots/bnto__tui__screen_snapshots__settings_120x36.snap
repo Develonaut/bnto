@@ -21,7 +21,7 @@ expression: "session.screen(width, height)"
             │    Where bnto stores recipes, logs, and cache (Enter to browse)                              │
             │                                                                                              │
             │  Telemetry                                                                                   │
-            │    ◂ [telemetry] ▸                                                                                    │
+            │    ◂ On ▸                                                                                    │
             │    Anonymous usage data (use arrow keys to toggle)                                           │
             │                                                                                              │
             │                                                                                              │

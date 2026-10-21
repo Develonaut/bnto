@@ -69,8 +69,6 @@ fn snapshot(name: &str, session: &Session) {
     let cwd = std::env::current_dir().unwrap().display().to_string();
     let filters = [
         (r"v\d+\.\d+\.\d+".to_string(), "v[version]"),
-        // Settings reads telemetry from the real ~/.config/bnto, not BNTO_HOME.
-        (r"◂ (On|Off) ▸".to_string(), "◂ [telemetry] ▸"),
         // With its padding: the path's length differs between machines.
         (format!("{} *", regex_literal(&cwd)), "[cwd] "),
     ];

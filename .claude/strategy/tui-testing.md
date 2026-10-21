@@ -95,7 +95,7 @@ Goal: the TUI gets the same two layers the web has. Agents can then validate a T
 ## Found while building PR 1
 
 - **Detail descriptions are cut mid-word.** A long field description ends at the panel edge ("check what's c") instead of wrapping. It's visible in the `detail_*` snapshots. To fix in its own PR, which will update those snapshots.
-- **Settings reads telemetry outside `BNTO_HOME`.** `TelemetryConfig::load()` reads the real `~/.config/bnto/telemetry.json` (`dirs::config_dir`), so a sandboxed TUI still shows the user's own telemetry choice. Snapshots mask the value (`◂ [telemetry] ▸`). A follow-up should route the telemetry config through `BntoPaths`, so tests and `BNTO_HOME` users stay isolated.
+- **Settings reads telemetry outside `BNTO_HOME`, and unit tests wrote the real file.** `TelemetryConfig` lives at `<config dir>/bnto/telemetry.json` (`~/Library/Application Support` on macOS), not `BNTO_HOME`. TUI unit tests toggling telemetry called `telemetry::set_enabled`, which rewrote the developer's real file. It was confirmed modified by a `cargo test` run on Oct 21, and it could silently re-enable telemetry for someone who had turned it off. **Fixed:** `config_path()` returns `None` in test builds, so the snapshot mask is gone. **Open, for Ryan:** there are two telemetry settings. The TUI toggle writes both `config.toml` `[telemetry] enabled` (in `BNTO_HOME`) and `telemetry.json`, while telemetry and the Settings screen read only `telemetry.json`. One source of truth means a migration of users' choice and anonymous id, which is its own PR.
 
 ## Quality gate
 

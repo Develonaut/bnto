@@ -62,14 +62,27 @@ impl TelemetryConfig {
     }
 }
 
-/// Config file path: ~/.config/bnto/telemetry.json.
+/// Config file path: `<config dir>/bnto/telemetry.json` (`~/.config` on
+/// Linux, `~/Library/Application Support` on macOS). Unit tests get none, so
+/// loading falls back to defaults and saving does nothing: a test that
+/// toggles telemetry must never rewrite the developer's own choice.
 pub fn config_path() -> Option<PathBuf> {
+    if cfg!(test) {
+        return None;
+    }
     dirs::config_dir().map(|d| d.join("bnto").join("telemetry.json"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unit_tests_never_read_or_write_the_real_config() {
+        assert_eq!(config_path(), None);
+        assert!(TelemetryConfig::default().save().is_err());
+        assert!(TelemetryConfig::load().enabled, "falls back to the default");
+    }
 
     #[test]
     fn default_config_values() {
@@ -139,10 +152,5 @@ mod tests {
         assert!(result.is_err());
         let fallback = result.unwrap_or_default();
         assert!(fallback.enabled);
-    }
-
-    #[test]
-    fn config_path_returns_some() {
-        assert!(config_path().is_some());
     }
 }
