@@ -3,6 +3,7 @@ import { HeroInstall } from "@/components/blocks/HeroInstall";
 import { HeroMascot } from "@/components/blocks/HeroMascot";
 import { HeroSidebar } from "@/components/blocks/HeroSidebar";
 import { HeroTerminal } from "@/components/blocks/HeroTerminal";
+import { getBntoCliVersion } from "@/lib/getBntoCliVersion";
 
 import { BuildYourOwnSection } from "./_components/BuildYourOwnSection";
 import { HouseSpecialsSection } from "./_components/HouseSpecialsSection";
@@ -20,7 +21,7 @@ export default function Home() {
         <Stack className="gap-4">
           <HeroInstall />
           <div className="relative">
-            <HeroTerminal />
+            <HeroTerminal version={getBntoCliVersion()} />
             <HeroMascot />
           </div>
         </Stack>
