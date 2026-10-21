@@ -12,11 +12,11 @@ Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) ad
 | --- | ------------------------------------------------------------ | ---------------------------------- | ------------- |
 | 1   | Publish keep-awake as a built-in macOS recipe                | `feat/keep-awake-macos`            | Merged (#662) |
 | 2   | Lint bundled recipe scripts with ShellCheck in CI            | `chore/shellcheck-bundled-scripts` | Merged (#665) |
-| A   | Make keep-awake's Stop and Start only touch its own session  | `fix/keep-awake-session-safety`    | In review     |
-| B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | Not started   |
+| A   | Make keep-awake's Stop and Start only touch its own session  | `fix/keep-awake-session-safety`    | Merged (#671) |
+| B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | In review     |
 | C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | Not started   |
 | D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Not started   |
-| E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | In review     |
+| E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | Merged (#672) |
 | F   | Refresh the new-recipe checklist and stale recipe counts     | `docs/new-recipe-checklist`        | Not started   |
 | 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Not started   |
 | 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | Not started   |
