@@ -36,11 +36,11 @@ pub fn init() {
     STATE.get_or_init(|| {
         let mut config = TelemetryConfig::load();
 
-        // First-run consent — returns false on the notice invocation.
-        let consent_active = consent::handle_consent(&mut config);
-
-        // Check env var overrides.
+        // Env opt-out also suppresses the first-run notice.
         let env_disabled = is_env_disabled();
+
+        // First-run consent — returns false on the notice invocation.
+        let consent_active = consent::handle_consent(&mut config, env_disabled);
         let active = compute_active(consent_active, config.enabled, env_disabled);
 
         // Read API key from env (write-only key, safe to embed).
