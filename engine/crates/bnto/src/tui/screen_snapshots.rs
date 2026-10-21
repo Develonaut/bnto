@@ -144,3 +144,24 @@ fn the_bottom_bar_status_is_never_overwritten() {
         }
     }
 }
+
+#[test]
+fn long_descriptions_wrap_instead_of_being_cut() {
+    // At 80 columns these used to end at the panel edge mid-word.
+    let session = Session::new().send(AppMessage::RecipeSelected {
+        slug: "keep-awake".to_string(),
+    });
+    let words = |text: &str| -> String {
+        text.split(|c: char| c.is_whitespace() || c == '│')
+            .filter(|w| !w.is_empty())
+            .collect::<Vec<_>>()
+            .join(" ")
+    };
+    let screen = words(&session.screen(80, 24));
+    for full in [
+        "Start a new session, stop the running one, or check what's currently active.",
+        "By default it also nudges the cursor once you go idle",
+    ] {
+        assert!(screen.contains(full), "cut: {full:?}\n{screen}");
+    }
+}

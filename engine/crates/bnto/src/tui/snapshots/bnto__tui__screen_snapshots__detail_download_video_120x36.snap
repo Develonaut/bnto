@@ -13,7 +13,8 @@ expression: "session.screen(width, height)"
 
             ╭ D E T A I L ─────────────────────────────────────────────────────────────────────────────────╮
             │  Download Video  [built-in]                                                                  │
-            │  Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hund│
+            │  Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and     │
+            │  hundreds of sites. CLI/desktop only.                                                        │
             │                                                                                              │
             │  PARAMETERS                                                                                  │
             │                                                                                              │
@@ -33,6 +34,5 @@ expression: "session.screen(width, height)"
             │    Quality Cap   Best available                                                              │
             │      Maximum video resolution (best available if unset)                                      │
             │                                                                                              │
-            │    Subtitles   None                                                                          │
             ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
             ↑↓ navigate  Enter edit/select  Tab next section          22 recipes  ·  v[version]  ·  Los Angeles

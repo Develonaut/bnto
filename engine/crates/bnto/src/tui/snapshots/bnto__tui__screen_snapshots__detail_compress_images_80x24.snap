@@ -12,7 +12,8 @@ expression: "session.screen(width, height)"
 
       ╭ D E T A I L ─────────────────────────────────────────────────────╮
       │  Compress Images  [built-in]                                     │
-      │  Compress PNG, JPEG, and WebP images instantly in your browser. N│
+      │  Compress PNG, JPEG, and WebP images instantly in your browser.  │
+      │  No upload limits, no signup.                                    │
       │                                                                  │
       │  INPUT                                                           │
       │  [cwd] │
@@ -22,6 +23,5 @@ expression: "session.screen(width, height)"
       │  0 files selected                                                │
       │                                                                  │
       │  PARAMETERS                                                      │
-      │                                                                  │
       ╰──────────────────────────────────────────────────────────────────╯
       ↑↓ navigate                   22 recipes  ·  v[version]  ·  Los Angeles

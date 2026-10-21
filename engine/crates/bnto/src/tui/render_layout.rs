@@ -49,6 +49,12 @@ pub fn app_frame(area: Rect) -> (Rect, Rect, Rect) {
     (logo, content, bottom)
 }
 
+/// Width inside a [`content_panel`] for a terminal `term_width` columns wide:
+/// the frame's side margins, then the panel's two border columns.
+pub fn panel_inner_width(term_width: u16) -> u16 {
+    term_width.saturating_sub(margin_x(term_width) * 2 + 2)
+}
+
 /// Compute viewport height for scrollable screens (picker, detail).
 ///
 /// Subtracts the app frame chrome (margins, logo, bottom bar, panel borders)
