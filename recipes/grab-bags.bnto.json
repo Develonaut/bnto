@@ -1,0 +1,36 @@
+{
+  "id": "grab-bags",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Grab Bags",
+  "metadata": {
+    "description": "Fails the run naming every given file called utils, helpers or hooks (.ts or .tsx): grab-bag names the Bento Box Principle rules out. Pass the files to check, e.g. the staged ones."
+  },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+    {
+      "id": "grab-bags",
+      "type": "file-filter",
+      "parameters": {
+        "namePattern": "^(utils|helpers|hooks)[.]tsx?$",
+        "patternMode": "regex"
+      }
+    },
+    {
+      "id": "none",
+      "type": "assert",
+      "parameters": {
+        "value": "{{file}}",
+        "op": "equals",
+        "expected": "",
+        "message": "Grab-bag file names (group by domain instead)"
+      }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "grab-bags" },
+    { "id": "e2", "source": "grab-bags", "target": "none" },
+    { "id": "e3", "source": "none", "target": "output" }
+  ]
+}

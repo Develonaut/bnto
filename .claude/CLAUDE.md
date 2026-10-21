@@ -250,6 +250,7 @@ bnto/
 │   │   ├── bnto-wasm/           # cdylib entry point (WASM binary)
 │   │   ├── bnto/                # Native CLI binary (`bnto`) — primary consumer
 │   │   └── tonkotsu/            # Standalone ratatui form widgets (used by the TUI)
+├── recipes/                     # Dogfood recipes: repo chores bnto runs on itself (task check:budgets, …)
 ├── test-fixtures/               # Shared test assets (images, CSVs)
 └── .claude/                     # Strategy docs, decisions, plan, rules
     ├── rules/                   # Universal rules (auto-loaded)

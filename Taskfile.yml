@@ -1,5 +1,10 @@
 version: "3"
 
+vars:
+  # The CLI built from this checkout (`task cli:build`). Dogfood recipes in
+  # recipes/ run with it, so they exercise the engine as it is here.
+  BNTO: engine/target/fast/bnto{{exeExt}}
+
 tasks:
   # Frontend tasks
   ui:build:
@@ -47,6 +52,9 @@ tasks:
       - task: theme:check
       - echo "=== docs validation ==="
       - task: docs:validate
+      - echo "=== dogfood recipes ==="
+      - task: check:recipes
+      - task: check:budgets
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -97,6 +105,36 @@ tasks:
     desc: Validate crate README documentation is complete
     cmds:
       - pnpm exec tsx scripts/validate-docs.ts
+
+  # Dogfood recipes (recipes/): repo chores done by bnto itself
+  check:recipes:
+    desc: Check every recipe in recipes/ without running it
+    deps: [cli:build]
+    cmds: ["{{.BNTO}} check recipes/"]
+
+  check:budgets:
+    desc: Fail naming every web asset over its size budget (WASM bundle 6 MB, other public files 512 KB)
+    deps: [cli:build]
+    cmds: ["{{.BNTO}} run recipes/size-budget.bnto.json"]
+
+  check:grab-bags:
+    desc: "Fail naming every utils/helpers/hooks.ts(x) file: the ones given (task check:grab-bags -- <files>), else the staged ones"
+    deps: [cli:build]
+    cmds:
+      - |
+        files="{{.CLI_ARGS}}"
+        [ -n "$files" ] || files=$(git diff --cached --name-only --diff-filter=d -- '*.ts' '*.tsx' ':(exclude,glob)**/e2e/**')
+        if [ -n "$files" ]; then
+          {{.BNTO}} run recipes/grab-bags.bnto.json $files
+        else
+          echo "No TypeScript files to check"
+        fi
+
+  assets:favicons:
+    desc: Regenerate the PNG favicons from apps/web/public/favicon/favicon.svg
+    deps: [cli:build]
+    cmds:
+      - "{{.BNTO}} run recipes/favicons.bnto.json apps/web/public/favicon/favicon.svg -o apps/web/public/favicon"
 
   # README recipe table codegen (registry → README.md)
   readme:generate:

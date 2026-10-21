@@ -1,0 +1,62 @@
+{
+  "id": "size-budget",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Size Budget",
+  "metadata": {
+    "description": "Fails the run naming every web asset over its size budget: 6 MB for the WASM engine bundle, 512 KB for everything else in apps/web/public. Run it from the repo root."
+  },
+  "nodes": [
+    { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+    {
+      "id": "public",
+      "type": "file-list",
+      "parameters": { "paths": ["apps/web/public"] }
+    },
+    { "id": "walk", "type": "file-collect", "parameters": { "flatten": false } },
+    {
+      "id": "wasm",
+      "type": "file-filter",
+      "parameters": { "namePattern": "wasm/*", "match": "path" }
+    },
+    {
+      "id": "assets",
+      "type": "file-filter",
+      "parameters": { "namePattern": "wasm/*", "match": "path", "keep": false }
+    },
+    {
+      "id": "wasm-over",
+      "type": "file-filter",
+      "parameters": { "minSize": 6000000 }
+    },
+    {
+      "id": "assets-over",
+      "type": "file-filter",
+      "parameters": { "minSize": 512000 }
+    },
+    { "id": "sizes", "type": "file-inspect", "parameters": {} },
+    {
+      "id": "none-over",
+      "type": "assert",
+      "parameters": {
+        "value": "{{item.file_size}} bytes",
+        "op": "equals",
+        "expected": "within budget",
+        "message": "Over size budget in apps/web/public"
+      }
+    },
+    { "id": "output", "type": "output", "parameters": { "mode": "none" } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "input", "target": "public" },
+    { "id": "e2", "source": "public", "target": "walk" },
+    { "id": "e3", "source": "walk", "target": "wasm" },
+    { "id": "e4", "source": "walk", "target": "assets" },
+    { "id": "e5", "source": "wasm", "target": "wasm-over" },
+    { "id": "e6", "source": "assets", "target": "assets-over" },
+    { "id": "e7", "source": "wasm-over", "target": "sizes" },
+    { "id": "e8", "source": "assets-over", "target": "sizes" },
+    { "id": "e9", "source": "sizes", "target": "none-over" },
+    { "id": "e10", "source": "none-over", "target": "output" }
+  ]
+}
