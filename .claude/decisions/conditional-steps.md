@@ -46,5 +46,5 @@ Guards are decided at run time, so everything that runs before the first step ig
 ## Trade-offs
 
 - **No expression language.** One comparison per guard. "macOS and display on" is a guarded group inside a guarded group. Revisit if real recipes need `and`/`or` often.
-- **Skips are silent until PR 4.** The CLI, TUI and `--dry-run` don't show skipped steps yet. `bnto run --json` already carries `skip_reason` on a skipped top-level node.
+- **Where skips show (PR 4).** The CLI prints `skipped: <reason>` in place of a step's line; the TUI marks the step `– (skipped)`; consent lines carry `(when …)` for every guard on a step's path; `bnto dry-run` marks commands skipped on this host when it can decide now (guards on `{{node.*}}` or `{{item.*}}` wait for the run); `bnto run --json` carries `skip_reason`. The web editor keeps `when` (and `always`) on load and save, and settles a skipped node to idle.
 - **Container fields come later (PR 5).** Until then a guard reads only its own node's fields, so an if/else pair on one field needs container-scoped fields.

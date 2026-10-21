@@ -31,6 +31,13 @@ pub enum ExecutionMessage {
     NodeCompleted { node_id: String, duration_ms: u64 },
     /// A node failed.
     NodeFailed { node_id: String, error: String },
+    /// A node's `when` guard didn't hold, so it never ran. `parent_node_id`
+    /// names its container, if any.
+    NodeSkipped {
+        node_id: String,
+        node_type: String,
+        parent_node_id: Option<String>,
+    },
     /// Entire pipeline completed.
     PipelineCompleted {
         duration_ms: u64,

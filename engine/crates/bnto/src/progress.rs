@@ -33,8 +33,26 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             );
         }
         PipelineEvent::IterationStarted { .. } | PipelineEvent::IterationFailed { .. } => {}
-        // Shown in PR 4 of the conditional-steps plan (skipped-step surfaces).
-        PipelineEvent::NodeSkipped { .. } => {}
+        PipelineEvent::NodeSkipped {
+            node_id,
+            node_type,
+            node_index,
+            total_nodes,
+            parent_node_id,
+            reason,
+        } => {
+            live.borrow_mut().clear();
+            let depth = depths
+                .borrow_mut()
+                .start(node_id, parent_node_id.as_deref());
+            eprintln!(
+                "{}{} {} {}",
+                progress_indent::step_indent(depth),
+                progress_indent::step_counter(*node_index, *total_nodes).dimmed(),
+                node_type.dimmed(),
+                format!("skipped: {reason}").dimmed(),
+            );
+        }
         PipelineEvent::IterationCompleted { output_files, .. } => {
             if let Some(dir) = &output_dir {
                 let names = &mut output_names.borrow_mut();

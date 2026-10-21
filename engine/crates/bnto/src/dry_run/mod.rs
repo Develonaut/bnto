@@ -9,6 +9,7 @@
 
 pub mod files;
 mod format;
+mod host_skip;
 mod shell;
 mod shell_note;
 

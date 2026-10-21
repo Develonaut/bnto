@@ -2,12 +2,12 @@
 // its value and expected with the node's own template context (its fields,
 // ctx, earlier nodes' records, the loop item) and compare them.
 
-use super::template::{TemplateContext, resolve_templates};
+use super::template::TemplateContext;
 use super::{NodeExecutionResult, PipelineContext};
 use crate::errors::BntoError;
 use crate::events::PipelineEvent;
 use crate::pipeline::{PipelineFile, PipelineNode};
-use crate::when::{Guard, When};
+use crate::when::Guard;
 
 /// What a guard decided for one call of a node.
 pub(super) enum Decision {
@@ -39,20 +39,6 @@ fn skip_reason<F: Fn() -> u64 + Copy>(
     let Some(when) = &node.when else {
         return Ok(None);
     };
-    let (value, expected) = resolve_sides(ctx, node, when);
-    match when.decide(&value, &expected) {
-        Ok(Guard::Run) => Ok(None),
-        Ok(Guard::Skip { reason }) => Ok(Some(reason)),
-        Err(message) => Err(BntoError::InvalidInput(format!("{}: {message}", node.id))),
-    }
-}
-
-/// `value` and `expected` with their templates filled, as text.
-fn resolve_sides<F: Fn() -> u64 + Copy>(
-    ctx: &PipelineContext<F>,
-    node: &PipelineNode,
-    when: &When,
-) -> (String, String) {
     let field_values = super::resolve::collect_field_values(&node.fields, &Default::default());
     let tpl = TemplateContext {
         field_values: &field_values,
@@ -61,19 +47,10 @@ fn resolve_sides<F: Fn() -> u64 + Copy>(
         loop_item: &ctx.loop_item,
         run_started_ms: Some(ctx.started_ms),
     };
-    let mut sides = serde_json::Map::new();
-    sides.insert("value".into(), when.value.clone().into());
-    sides.insert("expected".into(), when.expected.clone().into());
-    let resolved = resolve_templates(&sides, &tpl);
-    (as_text(&resolved["value"]), as_text(&resolved["expected"]))
-}
-
-/// A sole placeholder keeps its JSON type (`{{node.x.count}}` is a number),
-/// so a guard compares its text.
-fn as_text(value: &serde_json::Value) -> String {
-    match value {
-        serde_json::Value::String(text) => text.clone(),
-        other => other.to_string(),
+    match when.decide_in(&tpl) {
+        Ok(Guard::Run) => Ok(None),
+        Ok(Guard::Skip { reason }) => Ok(Some(reason)),
+        Err(message) => Err(BntoError::InvalidInput(format!("{}: {message}", node.id))),
     }
 }
 

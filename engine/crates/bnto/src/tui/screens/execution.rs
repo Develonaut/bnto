@@ -51,8 +51,12 @@ pub struct FileProgress {
 pub enum NodeStatus {
     Pending,
     Active,
-    Completed { duration_ms: u64 },
+    Completed {
+        duration_ms: u64,
+    },
     Failed(String),
+    /// Its `when` guard didn't hold, so it never ran.
+    Skipped,
 }
 
 /// Progress tracking for a single node.
@@ -201,6 +205,10 @@ impl NodeProgress {
 
 #[cfg(test)]
 mod run_display_tests;
+
+#[cfg(test)]
+#[path = "execution/skipped_tests.rs"]
+mod skipped_tests;
 
 #[cfg(test)]
 mod tests {

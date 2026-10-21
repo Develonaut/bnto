@@ -29,6 +29,9 @@ function carryOverOptionalFields(originalDef: Definition | null): Partial<Defini
     ...(originalDef.fields && Object.keys(originalDef.fields).length > 0
       ? { fields: originalDef.fields }
       : {}),
+    // Engine node keys the editor doesn't edit yet: keep them on export.
+    ...(originalDef.always ? { always: originalDef.always } : {}),
+    ...(originalDef.when ? { when: originalDef.when } : {}),
   };
 }
 

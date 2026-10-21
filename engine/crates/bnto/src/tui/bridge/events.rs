@@ -68,6 +68,16 @@ fn node_or_iteration_message(event: PipelineEvent) -> ExecutionMessage {
         PipelineEvent::NodeFailed { node_id, error, .. } => {
             ExecutionMessage::NodeFailed { node_id, error }
         }
+        PipelineEvent::NodeSkipped {
+            node_id,
+            node_type,
+            parent_node_id,
+            ..
+        } => ExecutionMessage::NodeSkipped {
+            node_id,
+            node_type,
+            parent_node_id,
+        },
         event => file_or_iteration_message(event),
     }
 }

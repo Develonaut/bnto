@@ -129,6 +129,7 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 - **Errors:** an unknown op fails the run at that node (`NodeFailed`, then the usual verdict). `bnto check` reports it earlier, along with malformed placeholders in the guard and `when` on an I/O node.
 - **Pre-flight ignores guards:** consent lists every shell command (SEC-16) and the raw param checks walk every branch, so a branch for another OS can't hide a refused step.
 - **Run summary:** `NodeTally` keeps a skipped top-level node's reason as `skip_reason`, so `bnto run --json` carries it.
+- **Shared decision:** `When::decide_in(&TemplateContext)` resolves and compares; the executor and the CLI's `bnto dry-run` both call it, so a preview can't disagree with a run.
 
 ### Edges and Data Flow
 

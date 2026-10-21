@@ -258,6 +258,7 @@ fn node_marker(status: &NodeStatus, theme: &Theme) -> (&'static str, ratatui::st
         NodeStatus::Active => ("◉", theme.selected()),
         NodeStatus::Completed { .. } => ("✓", theme.text()),
         NodeStatus::Failed(_) => ("✗", theme.heading()),
+        NodeStatus::Skipped => ("–", theme.muted()),
     }
 }
 
@@ -288,6 +289,7 @@ fn node_annotation(node: &super::screens::execution::NodeProgress) -> String {
         NodeStatus::Completed { duration_ms } => {
             format!(" ({})", format_duration(*duration_ms))
         }
+        NodeStatus::Skipped => " (skipped)".to_string(),
         _ => String::new(),
     }
 }
@@ -317,6 +319,20 @@ fn file_marker(status: &FileStatus, theme: &Theme) -> (&'static str, ratatui::st
 mod tests {
     use super::*;
     use crate::tui::screens::execution::{NodeProgress, NodeStatus};
+
+    #[test]
+    fn a_skipped_node_is_marked_and_says_so() {
+        let node = make_node(NodeStatus::Skipped, 0, 0);
+        assert_eq!(
+            node_marker(
+                &node.status,
+                &Theme::from_variant(crate::tui::theme::ThemeVariant::LosAngeles)
+            )
+            .0,
+            "–"
+        );
+        assert_eq!(node_annotation(&node), " (skipped)");
+    }
 
     fn make_node(status: NodeStatus, files_processed: usize, total_files: usize) -> NodeProgress {
         NodeProgress {
