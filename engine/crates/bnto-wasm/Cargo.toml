@@ -24,7 +24,7 @@
 
 [package]
 name = "bnto-wasm"
-version = "0.1.1"
+version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 description = "Unified WASM entry point for Bnto — loads all node processors into one module"
@@ -51,15 +51,15 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # Foundation crate — provides setup(), version(), and shared types
-bnto-core = { path = "../bnto-core" }
+bnto-core = { workspace = true }
 
 # Shared engine — default registry + pipeline convenience
-bnto-engine = { path = "../bnto-engine" }
+bnto-engine = { workspace = true }
 
 # Node crates — still needed for wasm_bridge re-exports (direct WASM bindings)
-bnto-spreadsheet = { path = "../bnto-spreadsheet" }
-bnto-file = { path = "../bnto-file" }
-bnto-image = { path = "../bnto-image" }
+bnto-spreadsheet = { workspace = true }
+bnto-file = { workspace = true }
+bnto-image = { workspace = true }
 
 # The Rust ↔ JS bridge
 wasm-bindgen = { workspace = true }
@@ -84,7 +84,7 @@ wasm-bindgen-test = { workspace = true }
 criterion = { version = "0.5", features = ["html_reports"] }
 # Enable native feature for catalog snapshot generation (includes all processors).
 # Tests run natively, not as WASM, so native-only crates compile fine here.
-bnto-engine = { path = "../bnto-engine", features = ["native"] }
+bnto-engine = { workspace = true, features = ["native"] }
 
 # =============================================================================
 # Benchmarks

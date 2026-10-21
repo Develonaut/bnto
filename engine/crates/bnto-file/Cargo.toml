@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-file"
-version = "0.2.0"
+version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 description = "File operation nodes for Bnto WASM engine — rename files"
@@ -25,7 +25,7 @@ wasm-opt = ["-O", "--enable-bulk-memory", "--enable-nontrapping-float-to-int", "
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.2.0" }
+bnto-core = { workspace = true }
 wasm-bindgen = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
