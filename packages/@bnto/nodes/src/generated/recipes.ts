@@ -2982,19 +2982,6 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
         x: 0,
         y: 0,
       },
-      requires: [
-        {
-          binary: "caffeinate",
-          homepage: "https://ss64.com/mac/caffeinate.html",
-          installHint: "built into macOS — nothing to install",
-        },
-        {
-          binary: "osascript",
-          homepage: "https://ss64.com/mac/osascript.html",
-          installHint:
-            "built into macOS — activity simulation needs Accessibility permission for your terminal app",
-        },
-      ],
       settings: {
         iteration: "auto",
       },

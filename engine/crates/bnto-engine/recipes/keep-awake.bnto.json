@@ -18,18 +18,6 @@
   "settings": {
     "iteration": "auto"
   },
-  "requires": [
-    {
-      "binary": "caffeinate",
-      "installHint": "built into macOS — nothing to install",
-      "homepage": "https://ss64.com/mac/caffeinate.html"
-    },
-    {
-      "binary": "osascript",
-      "installHint": "built into macOS — activity simulation needs Accessibility permission for your terminal app",
-      "homepage": "https://ss64.com/mac/osascript.html"
-    }
-  ],
   "nodes": [
     {
       "id": "input",
