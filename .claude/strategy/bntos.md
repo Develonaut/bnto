@@ -128,6 +128,18 @@ All browser-only (free, unlimited) except Fetch & Save URL which is hybrid. Tier
 
 ---
 
+## CLI-Only Recipes (shipped)
+
+Run natively through the bnto CLI; their pages are CLI promos, not browser tools.
+
+| Recipe          | Slug               | Node Types                  | Status                     |
+| --------------- | ------------------ | --------------------------- | -------------------------- |
+| Download Video  | `/download-video`  | `video-download` (yt-dlp)   | Delivered (PR #332)        |
+| Flatten Folders | `/flatten-folders` | `file-collect`, `file-move` | Delivered (PR #513)        |
+| Keep Awake      | `/keep-awake`      | `shell-run` (script mode)   | Delivered (PR #662), macOS |
+
+---
+
 ## Tier 4: Backlog Recipes
 
 | Recipe                  | Slug                  | Classification        | Node Types            | Notes                                                                 |

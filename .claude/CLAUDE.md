@@ -82,6 +82,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Power recipes / gap analysis   | [power-recipes.md](.claude/strategy/power-recipes.md)                           |
 | Cloud execution (Railway)      | [cloud-execution.md](.claude/strategy/cloud-execution.md)                       |
 | Keep Awake + conditional steps | [keep-awake-recipe.md](.claude/strategy/keep-awake-recipe.md) — PR tracker      |
+| CLI upgrade notices            | [cli-upgrade.md](.claude/strategy/cli-upgrade.md)                               |
 
 ---
 

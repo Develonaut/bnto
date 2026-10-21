@@ -6,7 +6,9 @@
 
 ## Tracker
 
-Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) added fixes A-F, which land before PR 3. After F, resume at PR 3.
+Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) added fixes A-F, which land before PR 3. After F comes the [CLI upgrade plan](cli-upgrade.md) (3 PRs), then resume at PR 3.
+
+Shipped alongside: the README's recipe count is generated and checked (#675); every bnto crate shares the release version (#677); the home page's install demo shows it (#678). Releases: v0.16.0 (site: keep-awake page + fixes A-E), v0.16.1 (crates.io).
 
 | #   | PR                                                           | Branch                             | Status        |
 | --- | ------------------------------------------------------------ | ---------------------------------- | ------------- |
@@ -14,10 +16,10 @@ Order of work: PRs 1-2 shipped, then a code review of both (October 21, 2026) ad
 | 2   | Lint bundled recipe scripts with ShellCheck in CI            | `chore/shellcheck-bundled-scripts` | Merged (#665) |
 | A   | Make keep-awake's Stop and Start only touch its own session  | `fix/keep-awake-session-safety`    | Merged (#671) |
 | B   | Stop `bnto doctor` failing off macOS over keep-awake's deps  | `fix/keep-awake-doctor-deps`       | Merged (#673) |
-| C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | In review     |
+| C   | Make the System category's web copy and filter accurate      | `fix/system-category-web`          | Merged (#676) |
 | D   | Stop CLI-only recipe pages describing a browser tool         | `fix/cli-only-recipe-pages`        | Merged (#674) |
 | E   | Limit ShellCheck disables in bundled scripts                 | `chore/shellcheck-hardening`       | Merged (#672) |
-| F   | Refresh the new-recipe checklist and stale recipe counts     | `docs/new-recipe-checklist`        | Not started   |
+| F   | Refresh the new-recipe checklist and stale recipe counts     | `docs/new-recipe-checklist`        | In review     |
 | 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Not started   |
 | 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | Not started   |
 | 5   | Let a container's fields reach the steps inside it           | `feat/scoped-fields`               | Not started   |
