@@ -185,6 +185,7 @@ bnto run <recipe> [files...]  # Run a recipe against files
 bnto list                     # List available recipes
 bnto info <recipe>            # Show recipe details and dependencies
 bnto doctor                   # Check external dependencies (yt-dlp, etc.)
+bnto upgrade [--check]        # Install the newest release (cargo installs)
 bnto tui                      # Launch interactive TUI (recipe browser, file picker, execution)
 bnto tui --theme tokyo        # TUI with dark theme (los-angeles | tokyo | monaco)
 

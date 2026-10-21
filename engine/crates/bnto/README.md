@@ -24,6 +24,8 @@ Once a day, bnto checks crates.io's public index for a newer release and, when t
 bnto 0.17.0 is available (you have 0.16.1). Run `bnto upgrade`.
 ```
 
+To install it, run `bnto upgrade`. For a `cargo install` it reruns `cargo install bnto --locked`. Any other install gets told how to upgrade instead of a guess. `bnto upgrade --check` only reports.
+
 The check runs in a detached background process, so no command waits on it, and it sends nothing about you. It's off in CI and when stderr isn't a terminal. To turn it off, set `BNTO_NO_UPDATE_CHECK=1` or add this to `~/.bnto/config.toml`:
 
 ```toml
