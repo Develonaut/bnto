@@ -20,8 +20,11 @@ use super::app_helpers::{
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
     handle_wizard_form,
 };
+mod detail_entry;
 mod init;
 mod message;
+#[cfg(test)]
+mod shadowed_recipe_tests;
 
 use super::screens::browser::{BrowserModel, update as browser_update};
 use super::screens::detail::{DetailFocus, DetailModel};

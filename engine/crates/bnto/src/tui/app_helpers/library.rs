@@ -153,8 +153,7 @@ pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
         .map(|s| s.slug);
     match slug {
         Some(slug) => {
-            // Resolve the recipe from the catalog to get definition_json.
-            let entry = model.catalog.resolve(&slug);
+            let entry = DetailOrigin::Library.entry(&model.catalog, &slug);
             let start_dir = resolve_start_dir();
             let detail = entry.and_then(|e| {
                 super::super::screens::detail_loader::load_detail_from_entry(

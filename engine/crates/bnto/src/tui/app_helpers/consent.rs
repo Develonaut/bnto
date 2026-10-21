@@ -20,11 +20,12 @@ pub(crate) fn gate(exec: ExecutionModel, model: &AppModel) -> ExecutionModel {
 }
 
 /// Bundled means the exact shipped definition, not just its slug: an
-/// edited copy run from the editor keeps the slug but not the review.
+/// edited copy run from the editor, or a library recipe of the same slug,
+/// keeps the slug but not the review.
 fn is_bundled_definition(model: &AppModel, slug: &str, definition_json: &str) -> bool {
     model
         .catalog
-        .resolve(slug)
+        .resolve_bundled(slug)
         .is_some_and(|e| e.source == RecipeSource::Bundled && e.definition_json == definition_json)
 }
 
