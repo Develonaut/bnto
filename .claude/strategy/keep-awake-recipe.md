@@ -25,7 +25,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 5   | Let a container's fields reach the steps inside it           | `feat/scoped-fields`               | Merged (#708) |
 | 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Merged (#710) |
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Merged (#711) |
-| 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#NNN) |
+| 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#712) |
 | 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Not started   |
 | 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Not started   |
 | 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Not started   |
@@ -62,7 +62,7 @@ Naming follows [node-vocabulary.md](../scopes/rust/node-vocabulary.md). Enum val
 | OS support            | Worked out, never hand-written. A guard counts as a platform guard only when `value` is exactly `{{ctx.platform}}`, `op` is equals/not-equals, and `expected` is a literal. `runs_on(node, os)` = the guard allows `os`, and the node is a primitive or has a processing descendant that runs on `os`. A recipe's `os` = the OSes on which some root processing node runs. Exposed as `os` (not `platforms`, which already means runtime target). |
 | OS-scoped deps        | `requires` allowed on any node (planned for containers only; a step's own `requires` is the tightest scope and `runs_on` treats both alike). Pre-flight, doctor and install skip deps of nodes that don't run on the host (same `runs_on`). No new `platforms` field on `Dependency`.                                                                                                                                                             |
 | Unsupported host      | `bnto run` stops before any step runs, and before consent for library recipes: "keep-awake runs on macOS. This machine runs Linux." (Built-in recipes are trusted and have no consent step.)                                                                                                                                                                                                                                                      |
-| Doctor until PR 8     | **Closed by PR 8 (#NNN).** (Review, Oct 21.) Fix B dropped keep-awake's recipe-level `requires`: `bnto doctor` checked every recipe's deps on every OS, so `caffeinate`/`osascript` failed it on Linux and Windows with no way to fix it. PR 8 put them back on the `macos` group; doctor now lists them there as `skip … (macOS only)`.                                                                                                          |
+| Doctor until PR 8     | **Closed by PR 8 (#712).** (Review, Oct 21.) Fix B dropped keep-awake's recipe-level `requires`: `bnto doctor` checked every recipe's deps on every OS, so `caffeinate`/`osascript` failed it on Linux and Windows with no way to fix it. PR 8 put them back on the `macos` group; doctor now lists them there as `skip … (macOS only)`.                                                                                                          |
 
 ---
 
