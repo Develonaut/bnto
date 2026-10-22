@@ -62,6 +62,8 @@ export { validateRecipe } from "./validateRecipe";
 // ── Classification ──────────────────────────────────────────────────────
 export { isNodeType, isIoNodeType, isContainerNodeType } from "./classification";
 export { isRecipeBrowserCapable } from "./isRecipeBrowserCapable";
+export { getRecipeOsBadge } from "./getRecipeOsBadge";
+export { recipeOsLabels } from "./recipeOsLabels";
 export { getCliRunCommand } from "./getCliRunCommand";
 
 // ── Node metadata ──────────────────────────────────────────────────────

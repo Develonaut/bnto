@@ -8,7 +8,12 @@
  * This module maps Recipe → BntoEntry to preserve the existing consumer API.
  */
 
-import { getAllRecipes, getRecipeBySlug, isRecipeBrowserCapable } from "@bnto/registry";
+import {
+  getAllRecipes,
+  getRecipeBySlug,
+  isRecipeBrowserCapable,
+  recipeOsLabels,
+} from "@bnto/registry";
 import type { Recipe } from "@bnto/core";
 
 export interface BntoEntry {
@@ -23,6 +28,8 @@ export interface BntoEntry {
   category: string;
   /** False for CLI-only recipes, whose pages mustn't promise a browser tool. */
   runsInBrowser: boolean;
+  /** The OSes the recipe has steps for ("macOS", …), worked out by the engine. */
+  operatingSystems: string[];
 }
 
 export function toBntoEntry(r: Recipe): BntoEntry {
@@ -38,6 +45,7 @@ export function toBntoEntry(r: Recipe): BntoEntry {
     features: r.features,
     category: r.category,
     runsInBrowser,
+    operatingSystems: recipeOsLabels(r.os),
   };
 }
 

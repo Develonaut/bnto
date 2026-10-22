@@ -1,7 +1,7 @@
 /**
  * Application JSON-LD schema with free pricing signal. Browser recipes are a
- * WebApplication; CLI-only ones are SoftwareApplication, with no OS claimed
- * until recipes carry the OSes they run on.
+ * WebApplication; CLI-only ones are SoftwareApplication, claiming the OSes
+ * the recipe has steps for.
  */
 
 import type { BntoEntry } from "@/lib/bntoRegistry";
@@ -16,7 +16,13 @@ export function buildWebAppSchema(entry: BntoEntry, pageUrl: string) {
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     featureList: entry.features,
   };
-  if (!entry.runsInBrowser) return { ...base, "@type": "SoftwareApplication" };
+  if (!entry.runsInBrowser) {
+    return {
+      ...base,
+      "@type": "SoftwareApplication",
+      operatingSystem: entry.operatingSystems.join(", ") || undefined,
+    };
+  }
   return {
     ...base,
     "@type": "WebApplication",

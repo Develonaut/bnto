@@ -23,6 +23,7 @@ const ENTRY: BntoEntry = {
   category: "image",
   name: "Compress Images",
   runsInBrowser: true,
+  operatingSystems: ["macOS", "Linux", "Windows"],
 };
 
 const CLI_ENTRY: BntoEntry = {
@@ -33,6 +34,7 @@ const CLI_ENTRY: BntoEntry = {
   name: "Keep Awake",
   category: "system",
   runsInBrowser: false,
+  operatingSystems: ["macOS"],
 };
 
 const PAGE_URL = "https://bnto.io/compress-images";
@@ -48,6 +50,7 @@ describe("buildWebAppSchema", () => {
     expect(schema.url).toBe(PAGE_URL);
     expect(schema.offers).toEqual({ "@type": "Offer", price: "0", priceCurrency: "USD" });
     expect(schema.featureList).toEqual(ENTRY.features);
+    expect(schema.operatingSystem).toBe("Any");
   });
 });
 
@@ -57,8 +60,13 @@ describe("buildWebAppSchema for a CLI-only recipe", () => {
 
     expect(schema["@type"]).toBe("SoftwareApplication");
     expect(schema).not.toHaveProperty("browserRequirements");
-    expect(schema).not.toHaveProperty("operatingSystem");
     expect(schema.offers).toEqual({ "@type": "Offer", price: "0", priceCurrency: "USD" });
+  });
+
+  it("claims the operating systems it runs on", () => {
+    expect(buildWebAppSchema(CLI_ENTRY, PAGE_URL).operatingSystem).toBe("macOS");
+    const everywhere = { ...CLI_ENTRY, operatingSystems: ["macOS", "Linux", "Windows"] };
+    expect(buildWebAppSchema(everywhere, PAGE_URL).operatingSystem).toBe("macOS, Linux, Windows");
   });
 });
 
