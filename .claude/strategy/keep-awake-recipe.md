@@ -26,7 +26,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Merged (#710) |
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Merged (#711) |
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#712) |
-| 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Not started   |
+| 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Merged (#NNN) |
 | 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Not started   |
 | 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Not started   |
 
@@ -267,6 +267,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 **Branch:** `feat/powershell-script-mode`
 **One sentence:** Run a literal PowerShell script with values passed only as `BNTO_ARG_n` environment variables.
 Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCommand`, by absolute path, cleared env + `BNTO_ARG_1..N`. Security specs mirror SEC-20..26 in Windows CI.
+**As built:** design in [powershell-script-mode.md](../decisions/powershell-script-mode.md). `"shell": "powershell"` (Windows PowerShell 5.1, Windows only, under `%SystemRoot%`) and `"pwsh"` (PowerShell 7, fixed paths on all three OSes) in `bnto-shell/src/powershell.rs`: `-NoLogo -NoProfile -NonInteractive -EncodedCommand <base64 UTF-16LE of a fixed prelude + the script>` and nothing after it; values only as `$env:BNTO_ARG_1..N` + `BNTO_ARG_COUNT` (`run.rs` puts them in the child's env instead of argv; file mode fills `{{output_dir}}` in them). The prelude silences progress records and makes stdout UTF-8. A step's `env` may not name `BNTO_ARG_*`; a script whose command line would pass 30,000 characters is refused on every OS. `__PSLockdownPolicy` joined the cleared-env allowlist; `PSModulePath` stays out. Consent shows `pwsh <script> $env:BNTO_ARG_n: <args>`; `bnto dry-run` shows `BNTO_ARG_1=…` per value. SEC-32..37 in `bnto/tests/shell_security/powershell_mode.rs` run per installed PowerShell; CI sets `BNTO_REQUIRE_PWSH=1` on Linux (`pwsh`) and Windows (both), so they can't skip there. Not done: PSScriptAnalyzer for bundled PowerShell scripts (lands with the first one, PR 11).
 
 ### PR 10 / 11: Keep awake on Linux / Windows
 

@@ -29,6 +29,7 @@ use crate::each;
 use crate::file_mode::process_file_mode;
 use crate::invocation::Invocation;
 use crate::parameters::build_parameters;
+use crate::powershell;
 use crate::script;
 use crate::search_path;
 use crate::stdout_mode::process_stdout_mode;
@@ -185,13 +186,20 @@ fn run_node(
         }
     };
     let dir = working_dir(params, ctx)?;
-    args.extend(command_args(params, files, ctx)?);
+    let mut options = command_options(params, dir);
+    let values = command_args(params, files, ctx)?;
+    if script::values_in_env(params) {
+        // Never on the command line: PowerShell would read them as code.
+        options.env.extend(powershell::value_env(&values));
+    } else {
+        args.extend(values);
+    }
     let max_output_mb = u64_param(params, "maxOutputSize", DEFAULT_MAX_OUTPUT_MB);
     let invocation = Invocation {
         command,
         program: &program,
         args: &args,
-        options: command_options(params, dir),
+        options,
     };
     match params.get("outputMode").and_then(serde_json::Value::as_str) {
         Some("file") => process_file_mode(&invocation, input, progress, ctx, max_output_mb),
@@ -218,8 +226,8 @@ fn command_args(
 }
 
 /// A script step's shell (by absolute path) and leading args — `-c
-/// <script> bnto` — after checking its params; the step's args follow as
-/// `$1..$N`.
+/// <script> bnto`, or PowerShell's `-EncodedCommand <script>` — after
+/// checking its params. A POSIX script's values follow as `$1..$N`.
 fn script_program<'a>(
     params: &'a Params,
     text: &str,

@@ -24,6 +24,10 @@ const KEPT: &[&str] = &[
     "USERPROFILE",
     "APPDATA",
     "LOCALAPPDATA",
+    // A machine that forces PowerShell's Constrained Language Mode through
+    // it keeps it. PSModulePath stays behind: PowerShell falls back to its
+    // own module folders, so an exported path can't plant a module.
+    "__PSLOCKDOWNPOLICY",
 ];
 
 /// Whether a command with a cleared environment keeps `name` from bnto's.
@@ -55,6 +59,7 @@ mod tests {
             "TERM",
             "Path",
             "SystemRoot",
+            "__PSLockdownPolicy",
         ] {
             assert!(keeps(name), "{name}");
         }
@@ -76,6 +81,7 @@ mod tests {
             "DYLD_INSERT_LIBRARIES",
             "NODE_OPTIONS",
             "SSH_AUTH_SOCK",
+            "PSModulePath",
         ] {
             assert!(!keeps(name), "{name}");
         }

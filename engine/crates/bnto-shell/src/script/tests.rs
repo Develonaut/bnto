@@ -10,7 +10,7 @@ fn params(value: serde_json::Value) -> Map<String, Value> {
 
 #[test]
 fn a_script_step_with_a_known_shell_is_valid() {
-    for shell in ["sh", "bash", "zsh", "dash", "ksh"] {
+    for shell in ["sh", "bash", "zsh", "dash", "ksh", "powershell", "pwsh"] {
         let p = params(json!({ "script": "echo \"$1\"", "shell": shell }));
         assert!(script_problems(&p).is_empty(), "{shell}");
     }
@@ -19,7 +19,15 @@ fn a_script_step_with_a_known_shell_is_valid() {
 
 #[test]
 fn unknown_shells_are_refused() {
-    for shell in ["python3", "fish", "cmd", "powershell", "/bin/sh", "bash -c"] {
+    for shell in [
+        "python3",
+        "fish",
+        "cmd",
+        "PowerShell",
+        "pwsh.exe",
+        "/bin/sh",
+        "bash -c",
+    ] {
         let found = script_problems(&params(json!({ "script": "true", "shell": shell })));
         assert_eq!(found.len(), 1, "{shell}");
         assert!(found[0].contains("'shell' must be one of"), "{}", found[0]);
@@ -92,4 +100,57 @@ fn the_invocation_turns_startup_files_off_and_fixes_dollar_zero() {
         let (_, args) = invocation("zsh", "true").unwrap();
         assert_eq!(args[0], "-f");
     }
+}
+
+#[test]
+fn a_script_step_may_not_set_the_variables_that_carry_its_values() {
+    for name in ["BNTO_ARG_1", "bnto_arg_count"] {
+        let p = params(json!({ "script": "true", "env": { name: "x" } }));
+        let found = script_problems(&p);
+        assert!(
+            found.iter().any(|f| f.contains("BNTO_ARG_")),
+            "{name}: {found:?}"
+        );
+    }
+    let p = params(json!({ "script": "true", "env": { "MY_ARG": "x" } }));
+    assert!(script_problems(&p).is_empty());
+}
+
+#[test]
+fn a_powershell_script_too_long_to_encode_is_refused() {
+    let long = "x".repeat(12_000);
+    let p = params(json!({ "script": long, "shell": "powershell" }));
+    assert!(script_problems(&p).iter().any(|f| f.contains("too long")));
+    let p = params(json!({ "script": long, "shell": "bash" }));
+    assert!(script_problems(&p).is_empty(), "the cap is PowerShell's");
+}
+
+#[test]
+fn only_a_powershell_script_takes_its_values_in_env() {
+    assert!(values_in_env(&params(
+        json!({ "script": "x", "shell": "pwsh" })
+    )));
+    assert!(values_in_env(&params(
+        json!({ "script": "x", "shell": "powershell" })
+    )));
+    assert!(!values_in_env(&params(
+        json!({ "script": "x", "shell": "sh" })
+    )));
+    assert!(!values_in_env(&params(
+        json!({ "command": "git", "shell": "pwsh" })
+    )));
+}
+
+#[cfg(windows)]
+#[test]
+fn a_posix_shell_names_powershell_on_windows() {
+    let err = invocation("sh", "true").unwrap_err();
+    assert!(err.contains("use 'powershell'"), "{err}");
+}
+
+#[cfg(not(windows))]
+#[test]
+fn windows_powershell_names_pwsh_elsewhere() {
+    let err = invocation("powershell", "true").unwrap_err();
+    assert!(err.contains("use 'pwsh'"), "{err}");
 }

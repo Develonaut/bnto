@@ -20,6 +20,7 @@ mod interpreter_code;
 mod invocation;
 mod output_files;
 mod parameters;
+mod powershell;
 mod program_text;
 mod raw_checks;
 pub mod run;
@@ -29,6 +30,7 @@ mod stdout_mode;
 pub mod validate;
 mod wrappers;
 
+pub use powershell::is_powershell;
 pub use run::ShellRun;
 
 /// The node type the shell processor registers under. Trust, consent and

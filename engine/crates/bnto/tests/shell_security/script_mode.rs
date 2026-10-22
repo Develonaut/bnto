@@ -154,7 +154,7 @@ fn sec25_only_known_shells_are_accepted() {
         "python3",
         "fish",
         "cmd",
-        "powershell",
+        "PowerShell.exe",
         "/bin/sh",
         "bash -c",
         "{{fields.s}}",

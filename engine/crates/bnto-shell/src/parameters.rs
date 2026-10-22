@@ -52,6 +52,8 @@ fn script_param() -> ParameterDef {
                       {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is \
                       'bnto'). Quote every expansion, avoid eval, and don't splice values into \
                       nested -c / -e code; put -- before values a tool could read as options. \
+                      A PowerShell script reads them as $env:BNTO_ARG_1… ($env:BNTO_ARG_COUNT \
+                      holds how many); never pass one to Invoke-Expression. \
                       The shell starts with a cleared environment and no startup files."
             .to_string(),
         param_type: ParameterType::String,
@@ -65,8 +67,9 @@ fn shell_param() -> ParameterDef {
     ParameterDef {
         name: "shell".to_string(),
         label: "Shell".to_string(),
-        description: "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed \
-                      path (never PATH). Default: sh."
+        description: "Which shell runs 'script': sh, bash, zsh, dash or ksh, powershell \
+                      (Windows only) or pwsh (PowerShell 7), by its fixed path (never PATH). \
+                      Default: sh."
             .to_string(),
         param_type: ParameterType::String,
         default: Some(serde_json::Value::String("sh".to_string())),

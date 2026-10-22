@@ -9,8 +9,8 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | command | string | - | - | Binary to execute (e.g., 'ffmpeg', 'yt-dlp'). Must be on PATH and written literally. Set this or 'script', not both. |
-| script | string | - | - | A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as "$1", "$2"… ("$0" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files. |
-| shell | string | sh | - | Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh. |
+| script | string | - | - | A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as "$1", "$2"… ("$0" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. A PowerShell script reads them as $env:BNTO_ARG_1… ($env:BNTO_ARG_COUNT holds how many); never pass one to Invoke-Expression. The shell starts with a cleared environment and no startup files. |
+| shell | string | sh | - | Which shell runs 'script': sh, bash, zsh, dash or ksh, powershell (Windows only) or pwsh (PowerShell 7), by its fixed path (never PATH). Default: sh. |
 | args | string | - | - | Command arguments: text, conditional groups (nested lists, dropped when any part is empty) and {"each": [...]} groups, repeated once per incoming file with {{path}}, {{file}} and {{item.KEY}} filled. |
 | outputMode | string | stdout | - | How to collect output. 'stdout' captures command output. 'file' reads files written by the command to a temp directory (use {{output_dir}} in args to inject the path). |
 | timeout | number | 300 | - | Maximum execution time in seconds. Default: 300. |
