@@ -8,6 +8,7 @@ mod helpers;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::{Mutex, MutexGuard};
 
 use tempfile::TempDir;
 
@@ -20,17 +21,26 @@ const START: [&str; 4] = [
     "jiggle=off",
 ];
 
+/// One test at a time: several cold Windows PowerShells at once, each
+/// compiling the session's P/Invoke types, can push a step past its 60s
+/// limit on a small CI runner, which no user's single session does.
+static ONE_AT_A_TIME: Mutex<()> = Mutex::new(());
+
 /// A sandbox for one test: `bnto` is the BNTO_HOME, `user` the profile.
+/// Holds the lock above for the test's lifetime.
 struct Sandbox {
     bnto: TempDir,
     user: TempDir,
+    _turn: MutexGuard<'static, ()>,
 }
 
 impl Sandbox {
     fn new() -> Self {
+        let turn = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
         Self {
             bnto: temp_output_dir(),
             user: temp_output_dir(),
+            _turn: turn,
         }
     }
 
@@ -202,8 +212,9 @@ fn a_stale_pid_another_program_now_uses_is_left_alone() {
         .unwrap();
     let state = sandbox.state_file();
     std::fs::create_dir_all(state.parent().unwrap()).unwrap();
+    // The right pid, but not the start time keep-awake recorded for it.
     let json = format!(
-        r#"{{"label":"1 hour","pid":{},"jiggle":false}}"#,
+        r#"{{"label":"1 hour","pid":{},"started":"1","jiggle":false}}"#,
         other.id()
     );
     std::fs::write(&state, json).unwrap();
