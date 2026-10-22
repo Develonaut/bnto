@@ -116,8 +116,8 @@ describe("recipe definition structure", () => {
 describe("recipe OS support", () => {
   const osOf = (slug: string) => RECIPES.find((r) => r.slug === slug)?.os;
 
-  it("keep-awake runs on macOS only", () => {
-    expect(osOf("keep-awake")).toEqual(["macos"]);
+  it("keep-awake runs on macOS and Linux", () => {
+    expect(osOf("keep-awake")).toEqual(["macos", "linux"]);
   });
 
   it("a recipe without platform guards runs everywhere", () => {

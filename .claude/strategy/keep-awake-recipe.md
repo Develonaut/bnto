@@ -27,7 +27,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Merged (#711) |
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#712) |
 | 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Merged (#713) |
-| 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Not started   |
+| 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Merged (#714) |
 | 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Not started   |
 
 Workflow per PR: branch from `main`, RED tests first, `/pre-commit`, push, open a PR, enable squash auto-merge, fix CI. No attribution lines or "Test Plan" sections. Tests never touch the real `~/.bnto` (temp `BNTO_HOME` + `HOME`), and never start or stop a session outside a sandbox.
@@ -275,6 +275,16 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 **One sentence each:** Add the `systemd-inhibit` (Linux) / PowerShell (Windows) keep-awake session as a platform-guarded group.
 **What:** Move the fields up to a `session` group shared by all OS groups (PR 5).
 **RED tests:** OS-gated CLI round-trips (status/stop with no session; start→status→stop; temp `BNTO_HOME`). Linux: activity simulation without X11/`xdotool` starts anyway with a notice; skip when `systemd-inhibit` is absent.
+
+**Linux design (PR 10, researched Oct 22, 2026):**
+
+- **Sleep:** `systemd-inhibit --who=keep-awake --what=sleep[:idle] --mode=block <sleep> <secs>`, detached like `caffeinate`. It holds the lock while its `sleep` child runs. `idle` is added when the display should stay on.
+- **Display:** logind's `idle` inhibitor only blocks suspend-on-idle. GNOME ignores it for blanking and locking (a GNOME developer, [Red Hat bug 1077579](https://bugzilla.redhat.com/show_bug.cgi?id=1077579)); KDE Plasma 6 honors it. So with `display=keep-on`, when `gnome-session-inhibit` is installed and the session bus is reachable, a second inhibitor (`--inhibit idle:suspend`) holds the display; otherwise the start message says where the display stays on.
+- **Who may inhibit:** polkit's defaults ([`org.freedesktop.login1.policy`](https://github.com/systemd/systemd/blob/main/src/login/org.freedesktop.login1.policy)) allow `inhibit-block-sleep` only from a session on a _local_ console (`allow_active`/`allow_inactive`); an SSH login or a service falls under `allow_any`, which is `auth_admin_keep`, and a non-interactive caller can't satisfy it. So a start there fails with "systemd refused to keep this computer awake: <reason>" rather than claiming a session it doesn't have. Upstream allows `inhibit-block-idle` for anyone, but Ubuntu's CI runner refused it while granting sleep, so a refused `sleep:idle` retries as `sleep` alone and the start says the display may still sleep. CI grants the runner user `inhibit-block-sleep` through a polkit rule and sets `BNTO_REQUIRE_KEEP_AWAKE=1`, so the round trip holds a real lock there.
+- **Activity simulation:** an X11 session (no `WAYLAND_DISPLAY`), `xdotool` and `xprintidle`. A `/bin/sh` loop nudges the cursor 1px with XTEST once `xprintidle` reaches the threshold, like the macOS JXA loop. On Wayland one app can't move the cursor for another, so the session starts without it and says so.
+- **Desktop variables:** script mode clears the environment, so the step's `env` passes `DISPLAY`, `XAUTHORITY`, `WAYLAND_DISPLAY`, `DBUS_SESSION_BUS_ADDRESS` and `XDG_RUNTIME_DIR` from `{{env.*}}` by name (consent lists them). Empty means unset.
+- **Programs by absolute path** (`/usr/bin`, then `/bin`), never PATH, as on macOS. `ours()` matches each pid's command line (`systemd-inhibit --who=keep-awake`, `gnome-session-inhibit --app-id keep-awake`, `/bin/sh -c … keep-awake-nudger`) so a reused pid isn't killed.
+- **Considered:** `xset s off -dpms` (X11-only and global, so it has to be undone) and the `org.freedesktop.portal.Inhibit` portal (the inhibit lasts only while the caller stays on the bus, which `gdbus` doesn't). Rejected.
 
 ## CLI journey matrix (`.claude/journeys/cli.md`, added in PR 3)
 

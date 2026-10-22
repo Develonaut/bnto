@@ -72,7 +72,7 @@ test.describe("Explore page — desktop @browser", () => {
   test("only a recipe limited to some OSes carries an OS badge", async ({ page }) => {
     await page.goto("/explore");
 
-    await expect(page.getByTestId("recipe-os-badge-keep-awake")).toHaveText("macOS only");
+    await expect(page.getByTestId("recipe-os-badge-keep-awake")).toHaveText("macOS and Linux only");
     // A CLI recipe for every OS, and a browser recipe, say nothing.
     await expect(page.locator(OS_BADGES)).toHaveCount(1);
   });

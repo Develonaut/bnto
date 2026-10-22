@@ -73,12 +73,24 @@ jobs:
           # bundled-script lint (bnto-engine/tests/bundled_scripts.rs).
           BNTO_REQUIRE_SHELLCHECK: "1"
 
+      # keep-awake's Linux tests hold a real systemd-inhibit sleep lock. polkit
+      # allows that only from a login session, which a runner isn't in, so
+      # grant it to the runner user here (CI only) and require the round trip.
+      - name: Let the CLI tests hold a sleep inhibitor
+        run: |
+          sudo mkdir -p /etc/polkit-1/rules.d
+          echo 'polkit.addRule(function (action, subject) { if (action.id == "org.freedesktop.login1.inhibit-block-sleep" && subject.user == "'"$USER"'") return polkit.Result.YES; });' \
+            | sudo tee /etc/polkit-1/rules.d/50-bnto-ci.rules
+          systemd-inhibit --what=sleep --who=bnto-ci --why=probe --mode=block true
+
       - name: CLI tests (unit + golden)
         run: cargo test --package bnto
         env:
           # ubuntu-latest ships pwsh; fail rather than skip the PowerShell
           # script-mode specs (bnto/tests/shell_security/powershell_mode.rs).
           BNTO_REQUIRE_PWSH: "1"
+          # The keep-awake round trip must really hold a sleep lock.
+          BNTO_REQUIRE_KEEP_AWAKE: "1"
 
       # The TUI's quality gate, like the web's E2E suite: screen snapshots
       # plus journeys driving the real `bnto tui` in a pseudo-terminal. Already

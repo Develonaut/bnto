@@ -108,7 +108,7 @@ mod tests {
     }
 
     #[test]
-    fn keep_awake_needs_caffeinate_and_osascript_only_on_macos() {
+    fn keep_awake_needs_each_oss_tools_only_there() {
         let recipe = builtin_recipe_by_slug("keep-awake").unwrap();
         let def: PipelineDefinition = serde_json::from_str(recipe.definition_json).unwrap();
         let scoped = crate::deps::scoped_pipeline_dependencies(&def, &crate::create_registry());
@@ -117,7 +117,53 @@ mod tests {
             .map(|s| (s.dependency.binary.as_str(), s.os.as_slice()))
             .collect();
         let mac: &[HostPlatform] = &[HostPlatform::MacOs];
-        assert_eq!(needs, [("caffeinate", mac), ("osascript", mac)]);
+        let linux: &[HostPlatform] = &[HostPlatform::Linux];
+        assert_eq!(
+            needs,
+            [
+                ("caffeinate", mac),
+                ("osascript", mac),
+                ("systemd-inhibit", linux)
+            ]
+        );
+    }
+
+    #[test]
+    fn keep_awakes_fields_live_once_on_the_session_group_both_oss_read() {
+        let recipe = builtin_recipe_by_slug("keep-awake").unwrap();
+        let def: serde_json::Value = serde_json::from_str(recipe.definition_json).unwrap();
+        let session = def["nodes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|n| n["id"] == "session")
+            .expect("a session group");
+        assert_eq!(session["type"], "group");
+        let fields: Vec<&str> = session["fields"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(fields, ["action", "display", "duration", "jiggle"]);
+        let steps: Vec<&serde_json::Value> = session["nodes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|os| &os["nodes"][0])
+            .collect();
+        assert_eq!(steps.len(), 2, "a macOS and a Linux branch");
+        for step in &steps {
+            assert!(
+                step.get("fields").is_none(),
+                "{} declares fields",
+                step["id"]
+            );
+        }
+        assert_eq!(
+            steps[0]["parameters"]["args"],
+            steps[1]["parameters"]["args"]
+        );
     }
 
     #[test]
