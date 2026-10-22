@@ -1,6 +1,6 @@
 // A node's `when` guard, decided just before the node would start: resolve
-// its value and expected with the node's own template context (its fields,
-// ctx, earlier nodes' records, the loop item) and compare them.
+// its value and expected with the node's own template context (the fields it
+// and its containers declare, ctx, earlier records, the loop item), compare.
 
 use super::template::TemplateContext;
 use super::{NodeExecutionResult, PipelineContext};
@@ -39,7 +39,7 @@ fn skip_reason<F: Fn() -> u64 + Copy>(
     let Some(when) = &node.when else {
         return Ok(None);
     };
-    let field_values = super::resolve::collect_field_values(&node.fields, &Default::default());
+    let field_values = ctx.fields_for(node);
     let tpl = TemplateContext {
         field_values: &field_values,
         process_ctx: ctx.process_ctx,

@@ -11,9 +11,8 @@ mod placeholder;
 mod run_time;
 mod when;
 
-use std::collections::BTreeMap;
-
-use crate::executor::resolve::{collect_field_values, resolve_fields};
+use crate::executor::field_scope::{FieldValues, declare};
+use crate::executor::resolve::resolve_fields;
 use crate::pipeline::{PipelineDefinition, PipelineNode, is_container_node, is_io_node};
 use crate::processor::NodeProcessor;
 use crate::registry::NodeRegistry;
@@ -70,7 +69,7 @@ pub fn check_pipeline(definition: &PipelineDefinition, registry: &NodeRegistry) 
         root: &definition.nodes,
         registry,
     };
-    check_level(&root, &recipe, &mut report);
+    check_level(&root, &FieldValues::new(), &recipe, &mut report);
     report
 }
 
@@ -81,15 +80,26 @@ struct Recipe<'a> {
 }
 
 /// Check a level's edges, then its nodes in order, recursing into container
-/// children.
-fn check_level(level: &Level<'_>, recipe: &Recipe<'_>, report: &mut CheckReport) {
+/// children. `fields` are the field values its containers declare.
+fn check_level(
+    level: &Level<'_>,
+    fields: &FieldValues,
+    recipe: &Recipe<'_>,
+    report: &mut CheckReport,
+) {
     report.findings.extend(edge_findings(level, recipe.root));
     for node in level.nodes {
-        check_node(node, recipe, report);
+        check_node(node, &declare(fields, &node.fields), recipe, report);
     }
 }
 
-fn check_node(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport) {
+/// Check one node; `fields` are the values it sees, its own included.
+fn check_node(
+    node: &PipelineNode,
+    fields: &FieldValues,
+    recipe: &Recipe<'_>,
+    report: &mut CheckReport,
+) {
     if is_io_node(&node.node_type) {
         report.findings.extend(io_always_finding(node));
         report.findings.extend(when::io_when_finding(node));
@@ -103,9 +113,9 @@ fn check_node(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport
             edges: &node.edges,
             owner: Some(node),
         };
-        check_level(&children, recipe, report);
+        check_level(&children, fields, recipe, report);
     } else {
-        check_processor(node, recipe, report);
+        check_processor(node, fields, recipe, report);
         report.findings.extend(placeholder_findings(node));
     }
 }
@@ -114,8 +124,14 @@ fn check_node(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport
 /// the params it needs sorted into notes and problems.
 ///
 /// `validate` sees the params as a run with no overrides would: field
-/// defaults filled in, other placeholders left as written.
-fn check_processor(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckReport) {
+/// defaults (its own and its containers') filled in, other placeholders left
+/// as written.
+fn check_processor(
+    node: &PipelineNode,
+    fields: &FieldValues,
+    recipe: &Recipe<'_>,
+    report: &mut CheckReport,
+) {
     let Some(processor) = recipe.registry.resolve(&node.node_type, &node.params) else {
         report.findings.push(unknown_type_finding(node));
         return;
@@ -125,8 +141,7 @@ fn check_processor(node: &PipelineNode, recipe: &Recipe<'_>, report: &mut CheckR
     report
         .findings
         .extend(raw.map(|problem| finding(node, None, problem)));
-    let field_values = collect_field_values(&node.fields, &BTreeMap::new());
-    let params = resolve_fields(&node.params, &field_values);
+    let params = resolve_fields(&node.params, fields);
     let written = processor.validate(&params);
     if written.is_empty() {
         return;

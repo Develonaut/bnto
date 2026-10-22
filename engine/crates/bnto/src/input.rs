@@ -180,7 +180,9 @@ fn inject_param_in_nodes(
 
 /// Apply `--param` overrides to the definition.
 ///
-/// Format: `key=value` targets the default processing node.
+/// Format: `key=value` targets the node that declares field `key` (a
+/// container's fields reach the steps inside it), else the default
+/// processing node. Two nodes declaring `key` is an error.
 /// Format: `nodeId:key=value` targets a specific node.
 ///
 /// If the target node declares a matching field, the field's default is
@@ -192,7 +194,8 @@ fn apply_param_overrides(
     default_node_id: Option<&str>,
 ) -> Result<(), String> {
     for entry in overrides {
-        let (node_id, key, value) = parse_override(entry, default_node_id)?;
+        let target = unnamed_target(def, entry, default_node_id)?;
+        let (node_id, key, value) = parse_override(entry, target.as_deref())?;
         if node_id.is_empty() {
             return Err(format!(
                 "Invalid --param format: ':{}={}'. Recipe-level field overrides are not supported. \
@@ -208,6 +211,21 @@ fn apply_param_overrides(
         }
     }
     Ok(())
+}
+
+/// The node a `key=value` entry that names no node goes to: the one that
+/// declares field `key`, else `default_node_id`.
+fn unnamed_target(
+    def: &PipelineDefinition,
+    entry: &str,
+    default_node_id: Option<&str>,
+) -> Result<Option<String>, String> {
+    let fallback = default_node_id.map(str::to_string);
+    let key = entry.split_once('=').map_or(entry, |(key, _)| key);
+    if key.contains(':') {
+        return Ok(fallback);
+    }
+    Ok(crate::field_owner::field_owner(&def.nodes, key)?.or(fallback))
 }
 
 /// Update a node-level field's default value.
@@ -834,5 +852,94 @@ mod tests {
             panic!("expected Enum");
         };
         assert_eq!(default.as_deref(), Some("slow"));
+    }
+
+    // --- key=value targets the node that declares the field ---
+
+    /// A `session` group declaring `action`, holding a `run` step that
+    /// declares `mode`, then a `tidy` step; `extra` adds a node after them.
+    fn scoped_def(extra: &str) -> PipelineDefinition {
+        let enum_field = |default: &str, other: &str| {
+            format!(
+                r#"{{ "type": "enum", "label": "X", "default": "{default}",
+                    "options": [{{ "value": "{default}", "label": "A" }}, {{ "value": "{other}", "label": "B" }}] }}"#
+            )
+        };
+        test_def(&format!(
+            r#"{{ "nodes": [
+                {{ "id": "session", "type": "group", "fields": {{ "action": {} }},
+                   "nodes": [
+                       {{ "id": "run", "type": "shell-run", "fields": {{ "mode": {} }} }},
+                       {{ "id": "tidy", "type": "shell-run" }}
+                   ] }}{extra}
+            ] }}"#,
+            enum_field("start", "stop"),
+            enum_field("fast", "slow")
+        ))
+    }
+
+    fn enum_default(node: &PipelineNode, key: &str) -> Option<String> {
+        match &node.fields[key] {
+            bnto_core::FieldDef::Enum { default, .. } => default.clone(),
+            other => panic!("expected Enum, got {other:?}"),
+        }
+    }
+
+    fn apply(def: &mut PipelineDefinition, entry: &str) -> Result<(), String> {
+        let first = first_processing_node_id(def);
+        apply_param_overrides(def, &[entry.to_string()], first.as_deref())
+    }
+
+    #[test]
+    fn test_a_field_on_a_group_is_set_by_its_key() {
+        let mut def = scoped_def("");
+        apply(&mut def, "action=stop").unwrap();
+        assert_eq!(
+            enum_default(&def.nodes[0], "action").as_deref(),
+            Some("stop")
+        );
+    }
+
+    #[test]
+    fn test_a_field_on_a_later_step_is_set_by_its_key() {
+        let mut def = scoped_def(
+            r#", { "id": "last", "type": "shell-run",
+                "fields": { "size": { "type": "string", "label": "Size", "default": "s" } } }"#,
+        );
+        apply(&mut def, "size=xl").unwrap();
+        let bnto_core::FieldDef::String { default, .. } = &def.nodes[1].fields["size"] else {
+            panic!("expected String");
+        };
+        assert_eq!(default.as_deref(), Some("xl"));
+        assert!(!def.nodes[0].params.contains_key("size"), "not a raw param");
+    }
+
+    #[test]
+    fn test_a_key_no_node_declares_is_a_raw_param_on_the_first_step() {
+        let mut def = scoped_def("");
+        apply(&mut def, "timeout=5").unwrap();
+        let run = &def.nodes[0].children.as_ref().unwrap()[0];
+        assert_eq!(run.id, "run");
+        assert_eq!(run.params["timeout"], 5);
+    }
+
+    #[test]
+    fn test_a_field_two_nodes_declare_needs_its_node_named() {
+        let mut def = scoped_def(
+            r#", { "id": "again", "type": "shell-run",
+                "fields": { "action": { "type": "string", "label": "Action" } } }"#,
+        );
+        let err = apply(&mut def, "action=stop").unwrap_err();
+        assert!(
+            err.contains("\"session\"") && err.contains("\"again\""),
+            "{err}"
+        );
+        assert!(err.contains("session:action="), "{err}");
+
+        apply(&mut def, "session:action=stop").unwrap();
+        assert_eq!(
+            enum_default(&def.nodes[0], "action").as_deref(),
+            Some("stop")
+        );
     }
 }

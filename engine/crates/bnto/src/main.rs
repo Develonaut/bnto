@@ -28,6 +28,7 @@ mod context;
 mod dispatch;
 mod doctor;
 pub mod dry_run;
+mod field_owner;
 mod info;
 mod input;
 mod inspect;

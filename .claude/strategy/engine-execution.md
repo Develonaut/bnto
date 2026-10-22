@@ -122,7 +122,7 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 **Decision (October 2026):** a node can carry `"when": { "value", "op", "expected" }` beside `always`, like GitHub Actions `if:` or Ansible `when:`. The step runs only when the comparison holds. See [conditional-steps.md](../decisions/conditional-steps.md) for the options weighed.
 
-- **Comparison:** `op` is `equals`, `not-equals`, `after` or `before`, the same words and code as `assert` (`bnto-core/src/compare.rs`). `value` and `expected` take templates: own fields, `{{ctx.platform}}`, `{{env.*}}`, `{{node.<id>.*}}`, `{{item.*}}`. A number from a sole placeholder is compared as its text.
+- **Comparison:** `op` is `equals`, `not-equals`, `after` or `before`, the same words and code as `assert` (`bnto-core/src/compare.rs`). `value` and `expected` take templates: the fields in scope (below), `{{ctx.platform}}`, `{{env.*}}`, `{{node.<id>.*}}`, `{{item.*}}`. A number from a sole placeholder is compared as its text.
 - **When:** decided in `execute_node` just before the node would start (`executor/guard.rs`), so per file under auto-iteration and per iteration in a loop.
 - **Skip:** the node emits `NodeSkipped { node_id, node_index, total_nodes, node_type, parent_node_id, reason }` instead of `NodeStarted`, hands its input files on unchanged, and records no `{{node.<id>.*}}` metadata. With edges, its consumers get those files. A skipped container never starts its children. A skip is not a failure.
 - **With `always`:** a false `when` skips a closing step too.
@@ -130,6 +130,10 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 - **Pre-flight ignores guards:** consent lists every shell command (SEC-16) and the raw param checks walk every branch, so a branch for another OS can't hide a refused step.
 - **Run summary:** `NodeTally` keeps a skipped top-level node's reason as `skip_reason`, so `bnto run --json` carries it.
 - **Shared decision:** `When::decide_in(&TemplateContext)` resolves and compares; the executor and the CLI's `bnto dry-run` both call it, so a preview can't disagree with a run.
+
+### Fields in Scope
+
+**Decision (October 2026):** a container's `fields` are visible to every node inside it, so an if/else pair of guarded steps can share one field. The nearest declaration wins (a step's own field shadows its group's), and a group's fields never reach nodes after it. `PipelineContext.fields` carries the values the enclosing containers declare; `fields_for(node)` adds the node's own (`executor/field_scope.rs`). Leaf params, `when` guards, `bnto check` and the CLI dry run all read fields this way. `bnto run -p key=value` sets the node that declares `key`, and asks for `nodeId:key` when two do. See [conditional-steps.md](../decisions/conditional-steps.md#fields-in-scope-pr-5).
 
 ### Edges and Data Flow
 

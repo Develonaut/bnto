@@ -15,6 +15,7 @@
 //   - `count_keys.rs` — which metadata keys each node adds up across runs
 //   - `result.rs` — the run's result: final files and every node's record
 //   - `resolve.rs` — `{{fields.*}}` template resolution
+//   - `field_scope.rs` — the fields a node sees: its containers', then its own
 //   - `template.rs` — multi-namespace template resolution (env, ctx, node, item)
 //   - `time_limit.rs` — the run's time limit, checked before work starts
 //
@@ -26,6 +27,7 @@ mod chain;
 mod closing;
 mod container;
 mod count_keys;
+pub mod field_scope;
 mod field_values;
 mod flow;
 mod flow_closing;
@@ -91,6 +93,8 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     /// Current loop iteration's per-file metadata (CSV row columns, etc.).
     /// Set by loop containers from PipelineFile.metadata each iteration.
     loop_item: Option<serde_json::Map<String, serde_json::Value>>,
+    /// Field values the enclosing containers declare, for `{{fields.*}}`.
+    fields: Rc<field_scope::FieldValues>,
     /// If executing inside a container, the container's node ID.
     /// Used to set `parent_node_id` on child `NodeStarted` events.
     parent_node_id: Option<String>,
@@ -114,6 +118,7 @@ impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
             started_ms: self.started_ms,
             time_limit: self.time_limit,
             loop_item: self.loop_item.clone(),
+            fields: Rc::clone(&self.fields),
             parent_node_id: self.parent_node_id.clone(),
             node_outputs: self.node_outputs.layer(),
             count_keys: self.count_keys,
@@ -238,6 +243,7 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy + 'static>(
         started_ms,
         time_limit: TimeLimit::starting_at(started_ms, definition.time_limit_secs()),
         loop_item: None,
+        fields: Rc::default(),
         parent_node_id: None,
         node_outputs: NodeOutputs::root(seed),
         count_keys,

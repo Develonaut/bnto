@@ -273,18 +273,21 @@ Audio Codec     m4a  ▾
 
 ## CLI Override Routing
 
-CLI param overrides use `nodeId:key=value` format to route field changes to the correct node:
+CLI param overrides route field changes to the node that declares them:
 
 ```bash
-bnto run download-video --override "download:format=webm"
+bnto run download-video -p format=webm            # the node declaring `format`
+bnto run download-video -p download:format=webm   # a named node
 ```
 
 The override system:
 
-1. Parses `nodeId:key=value` format
-2. Finds the target node in the definition tree
-3. If `key` matches a declared field, updates the field's default value
+1. Parses `key=value` or `nodeId:key=value`
+2. For `key=value`, finds the one node that declares field `key` (`bnto/src/field_owner.rs`); two declarations are an error asking for `nodeId:key`; none falls back to the first processing node
+3. If `key` matches a declared field on the target, updates the field's default value
 4. If `key` doesn't match a field, falls back to raw param injection
+
+**Container fields (October 2026):** fields declared on a `group` or `loop` reach every node inside it, and the nearest declaration wins. See [conditional-steps.md](../decisions/conditional-steps.md#fields-in-scope-pr-5).
 
 Empty node_id (`:key=value`) is rejected — recipe-level fields are deferred.
 

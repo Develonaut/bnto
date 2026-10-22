@@ -1,4 +1,4 @@
-// `when` guards through the built binary (CLI journeys CJ1, CJ3, CJ6, CJ8 in
+// `when` guards through the built binary (CLI journeys CJ1-CJ3, CJ6-CJ8 in
 // .claude/journeys/cli.md): a guarded step runs or is skipped with its files
 // passed through. Every run uses a temp HOME and BNTO_HOME.
 
@@ -81,6 +81,15 @@ impl Sandbox {
 
     /// Like `run`, with what the run printed on stderr.
     fn run_with_stderr(&self) -> (Vec<String>, String) {
+        let output = self.run_raw(&[]);
+        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+        assert!(output.status.success(), "stderr: {stderr}");
+        (names_in(&self.root.path().join("out")), stderr)
+    }
+
+    /// `bnto run` on every input with `extra` args, into a fresh output folder.
+    fn run_raw(&self, extra: &[&str]) -> Output {
+        let _ = std::fs::remove_dir_all(self.root.path().join("out"));
         let inputs: Vec<String> = std::fs::read_dir(self.root.path().join("in"))
             .unwrap()
             .map(|e| e.unwrap().path().to_string_lossy().into_owned())
@@ -89,10 +98,16 @@ impl Sandbox {
         let mut args = vec!["run", recipe.as_str()];
         args.extend(inputs.iter().map(String::as_str));
         args.extend(["--yes", "-o", out.as_str()]);
-        let output = self.bnto(&args);
-        let stderr = String::from_utf8_lossy(&output.stderr).into_owned();
+        args.extend(extra);
+        self.bnto(&args)
+    }
+
+    /// `bnto run` with `extra` args; the names written to the output folder.
+    fn run_args(&self, extra: &[&str]) -> Vec<String> {
+        let output = self.run_raw(extra);
+        let stderr = String::from_utf8_lossy(&output.stderr);
         assert!(output.status.success(), "stderr: {stderr}");
-        (names_in(&self.root.path().join("out")), stderr)
+        names_in(&self.root.path().join("out"))
     }
 }
 
@@ -130,6 +145,43 @@ fn cj1_a_failing_guard_passes_the_file_through_untouched() {
 }
 
 // --- CJ3: per-OS groups ---
+
+// --- CJ2: an if/else pair on a container's field, flipped with --param ---
+
+/// A `session` group declaring `action` (start or stop), holding a rename
+/// for each value guarded on it, plus `extra` steps after the group.
+fn if_else_recipe(extra: Vec<Value>) -> Value {
+    let on = |action: &str| guard("{{fields.action}}", "equals", action);
+    let mut steps = vec![json!({ "id": "session", "type": "group",
+        "fields": { "action": { "type": "enum", "label": "Action", "default": "start",
+            "options": [{ "value": "start", "label": "Start" }, { "value": "stop", "label": "Stop" }] } },
+        "nodes": [rename("start", "start-", Some(on("start"))), rename("stop", "stop-", Some(on("stop")))] })];
+    steps.extend(extra);
+    recipe(steps)
+}
+
+#[test]
+fn cj2_param_flips_an_if_else_pair_on_a_groups_field() {
+    let sandbox = Sandbox::new(&if_else_recipe(Vec::new()), &["a.txt"]);
+    assert_eq!(sandbox.run(), ["start-a.txt"]);
+    assert_eq!(sandbox.run_args(&["-p", "action=stop"]), ["stop-a.txt"]);
+    assert_eq!(
+        sandbox.run_args(&["-p", "session:action=stop"]),
+        ["stop-a.txt"]
+    );
+}
+
+#[test]
+fn cj2_a_field_two_nodes_declare_needs_its_node_named() {
+    let mut again = rename("again", "x-", None);
+    again["fields"] = json!({ "action": { "type": "string", "label": "Action" } });
+    let sandbox = Sandbox::new(&if_else_recipe(vec![again]), &["a.txt"]);
+    let output = sandbox.run_raw(&["-p", "action=stop"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("\"session\", \"again\""), "{stderr}");
+    assert!(!sandbox.root.path().join("out").exists(), "nothing ran");
+}
 
 #[test]
 fn cj3_only_the_hosts_group_runs() {
