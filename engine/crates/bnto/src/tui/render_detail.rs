@@ -1,7 +1,7 @@
 // Render the recipe detail screen — recipe header + input section + form + Run button.
 //
 // Three-section layout:
-// 1. Recipe header (name, description) — always shown
+// 1. Recipe header (name, trust and OS badges, description) — always shown
 // 2. INPUT section — file picker for file-mode recipes (conditional)
 // 3. PARAMETERS section — form fields rendered by tonkotsu
 // 4. Run button — always present at the bottom
@@ -12,6 +12,7 @@ use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 
+use crate::host_support::os_badge;
 use crate::trust;
 
 use super::app::AppModel;
@@ -107,12 +108,16 @@ fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
 
     // Recipe header — trust badge from catalog source.
     let badge = trust::trust_badge(detail.is_bundled, detail.has_shell);
-    lines.push(Line::from(vec![
+    let mut header = vec![
         Span::raw("  "),
         Span::styled(detail.name.as_str(), theme.heading()),
         Span::raw("  "),
         Span::styled(format!("[{badge}]"), theme.category()),
-    ]));
+    ];
+    if let Some(os) = os_badge(&detail.os) {
+        header.extend([Span::raw("  "), Span::styled(os, theme.category())]);
+    }
+    lines.push(Line::from(header));
     lines.push(Line::from(vec![
         Span::raw("  "),
         Span::styled(detail.description.as_str(), theme.muted()),

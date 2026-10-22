@@ -1,6 +1,8 @@
 // Recipe info — formats detailed recipe information for `bnto info <recipe>`.
 
-use bnto_core::{Dependency, InputMode, PipelineDefinition, resolve_input_mode};
+use bnto_core::os_support::{describe_os, recipe_os};
+use bnto_core::pipeline::{is_container_node, is_io_node};
+use bnto_core::{Dependency, HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
 use bnto_engine::deps::collect_pipeline_dependencies;
 
 use crate::catalog::RecipeCatalog;
@@ -16,6 +18,8 @@ pub struct RecipeInfo {
     pub node_types: Vec<String>,
     pub dependencies: Vec<Dependency>,
     pub input_mode: InputMode,
+    /// The operating systems it has steps for.
+    pub os: Vec<HostPlatform>,
 }
 
 /// Print recipe info to stdout with colored formatting.
@@ -25,6 +29,7 @@ pub fn print_recipe_info(slug: &str, info: &RecipeInfo) {
     println!("{}\n", info.description);
     println!("  {}   {}", "Category:".dimmed(), info.category);
     println!("  {}      {}", "Input:".dimmed(), info.input_mode);
+    println!("  {}    {}", "Runs on:".dimmed(), describe_os(&info.os));
     println!(
         "  {}      {}",
         "Nodes:".dimmed(),
@@ -83,27 +88,27 @@ pub fn get_recipe_info(slug: &str, catalog: &RecipeCatalog) -> Option<RecipeInfo
         node_types,
         dependencies,
         input_mode,
+        os: recipe_os(&def),
     })
 }
 
-/// Walk the definition tree and collect unique processing node types.
-/// Skips I/O markers (input, output) and container types (group, loop).
+/// Walk the definition tree and collect unique processing node types,
+/// leaving out I/O markers and containers.
 fn extract_node_types(def: &PipelineDefinition) -> Vec<String> {
-    let skip = ["input", "output", "group", "loop"];
     let mut types = Vec::new();
-    collect_types(&def.nodes, &skip, &mut types);
+    collect_types(&def.nodes, &mut types);
     types.sort();
     types.dedup();
     types
 }
 
-fn collect_types(nodes: &[bnto_core::PipelineNode], skip: &[&str], types: &mut Vec<String>) {
+fn collect_types(nodes: &[bnto_core::PipelineNode], types: &mut Vec<String>) {
     for node in nodes {
-        if !skip.contains(&node.node_type.as_str()) {
+        if !is_io_node(&node.node_type) && !is_container_node(&node.node_type) {
             types.push(node.node_type.clone());
         }
         if let Some(children) = &node.children {
-            collect_types(children, skip, types);
+            collect_types(children, types);
         }
     }
 }
@@ -126,6 +131,7 @@ mod tests {
         writeln!(out).ok();
         writeln!(out, "  Category:   {}", info.category).ok();
         writeln!(out, "  Input:      {}", info.input_mode).ok();
+        writeln!(out, "  Runs on:    {}", describe_os(&info.os)).ok();
         writeln!(out, "  Nodes:      {}", info.node_types.join(", ")).ok();
         if !info.dependencies.is_empty() {
             writeln!(out).ok();
@@ -227,7 +233,42 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_get_info_reports_where_it_runs() {
+        let c = catalog();
+        let info = get_recipe_info("keep-awake", &c).unwrap();
+        assert_eq!(info.os, [HostPlatform::MacOs]);
+        let info = get_recipe_info("compress-images", &c).unwrap();
+        assert_eq!(info.os, HostPlatform::ALL);
+    }
+
+    #[test]
+    fn test_node_types_skip_every_container() {
+        let def: PipelineDefinition = serde_json::from_value(serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input" },
+            { "id": "p", "type": "parallel", "nodes": [{ "id": "a", "type": "file-rename" }] },
+            { "id": "g", "type": "group", "nodes": [{ "id": "b", "type": "file-sort" }] },
+        ] }))
+        .unwrap();
+        assert_eq!(extract_node_types(&def), ["file-rename", "file-sort"]);
+    }
+
     // --- format_recipe_info ---
+
+    #[test]
+    fn test_format_shows_where_it_runs() {
+        let info = RecipeInfo {
+            slug: "keep-awake".to_string(),
+            name: "Keep Awake".to_string(),
+            description: "Keep your Mac awake".to_string(),
+            category: "system".to_string(),
+            node_types: vec!["shell-run".to_string()],
+            dependencies: vec![],
+            input_mode: InputMode::None,
+            os: vec![HostPlatform::MacOs],
+        };
+        assert!(format_recipe_info(&info).contains("  Runs on:    macOS\n"));
+    }
 
     #[test]
     fn test_format_contains_name() {
@@ -239,6 +280,7 @@ mod tests {
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
             input_mode: InputMode::FileUpload,
+            os: HostPlatform::ALL.to_vec(),
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("Compress Images"));
@@ -254,6 +296,7 @@ mod tests {
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
             input_mode: InputMode::FileUpload,
+            os: HostPlatform::ALL.to_vec(),
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("image"));
@@ -269,6 +312,7 @@ mod tests {
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
             input_mode: InputMode::FileUpload,
+            os: HostPlatform::ALL.to_vec(),
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("image-compress"));
@@ -290,6 +334,7 @@ mod tests {
                 homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
             }],
             input_mode: InputMode::Url,
+            os: HostPlatform::ALL.to_vec(),
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("yt-dlp"));
@@ -305,6 +350,7 @@ mod tests {
             node_types: vec!["shell-run".to_string()],
             dependencies: vec![],
             input_mode: InputMode::Url,
+            os: HostPlatform::ALL.to_vec(),
         };
         let output = format_recipe_info(&info);
         assert!(output.contains("  Input:      url\n"));
@@ -320,6 +366,7 @@ mod tests {
             node_types: vec!["image-compress".to_string()],
             dependencies: vec![],
             input_mode: InputMode::FileUpload,
+            os: HostPlatform::ALL.to_vec(),
         };
         let output = format_recipe_info(&info);
         assert!(

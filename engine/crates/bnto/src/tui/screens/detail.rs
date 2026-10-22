@@ -7,8 +7,8 @@
 
 use std::collections::HashMap;
 
-use bnto_core::InputMode;
 use bnto_core::metadata::{ParamCondition, ParameterType};
+use bnto_core::{HostPlatform, InputMode};
 use tonkotsu::{FormModel, Viewport};
 
 use super::picker::PickerModel;
@@ -67,6 +67,8 @@ pub struct DetailModel {
     pub is_bundled: bool,
     /// Whether it runs shell commands (for trust badge display).
     pub has_shell: bool,
+    /// The operating systems it has steps for (for the OS badge).
+    pub os: Vec<HostPlatform>,
     /// Raw definition JSON (threaded to execution bridge).
     pub definition_json: String,
     /// Original param entries (kept for visible_when evaluation + confirm).
@@ -119,6 +121,7 @@ impl DetailModel {
             description: description.to_string(),
             is_bundled: true,
             has_shell: false,
+            os: HostPlatform::ALL.to_vec(),
             definition_json: String::new(),
             params,
             form,

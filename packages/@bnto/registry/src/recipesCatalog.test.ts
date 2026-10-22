@@ -108,3 +108,19 @@ describe("recipe definition structure", () => {
     }
   });
 });
+
+// =============================================================================
+// OS support — worked out by the engine from each recipe's platform guards
+// =============================================================================
+
+describe("recipe OS support", () => {
+  const osOf = (slug: string) => RECIPES.find((r) => r.slug === slug)?.os;
+
+  it("keep-awake runs on macOS only", () => {
+    expect(osOf("keep-awake")).toEqual(["macos"]);
+  });
+
+  it("a recipe without platform guards runs everywhere", () => {
+    expect(osOf("compress-images")).toEqual(["macos", "linux", "windows"]);
+  });
+});

@@ -18,6 +18,27 @@ pub enum HostPlatform {
 }
 
 impl HostPlatform {
+    /// Every platform, in the order bnto lists them.
+    pub const ALL: [Self; 3] = [Self::MacOs, Self::Linux, Self::Windows];
+
+    /// The name `{{ctx.platform}}` reads, and a platform guard compares.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::MacOs => "macos",
+            Self::Linux => "linux",
+            Self::Windows => "windows",
+        }
+    }
+
+    /// The name people know it by.
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::MacOs => "macOS",
+            Self::Linux => "Linux",
+            Self::Windows => "Windows",
+        }
+    }
+
     /// The platform this binary was compiled for. `None` on targets with
     /// no host OS (WASM) or OSes without hints (BSDs), which use the fallback.
     pub const fn current() -> Option<Self> {
@@ -83,6 +104,13 @@ mod tests {
             linux: String::new(),
             windows: "winget install yt-dlp.yt-dlp".to_string(),
         }
+    }
+
+    #[test]
+    fn names_match_what_ctx_platform_reads() {
+        let names = HostPlatform::ALL.map(HostPlatform::as_str);
+        assert_eq!(names, ["macos", "linux", "windows"]);
+        assert_eq!(HostPlatform::MacOs.label(), "macOS");
     }
 
     #[test]

@@ -164,24 +164,27 @@ fn tj5_shell_output_streams_live_and_stays_after_the_run() {
 }
 
 #[test]
-#[cfg_attr(windows, ignore = "keep-awake's script runs under sh")]
-fn tj6_keep_awake_status_shows_its_message() {
-    // Status only reads state: with a fresh BNTO_HOME there's no session.
-    let mut tui = Tui::launch(120, 40);
-    tui.wait_for("R E C I P E S");
-    tui.press(&[Key::Tab]);
-    select(&mut tui, "Keep Awake");
+#[cfg_attr(windows, ignore = "the fixture's script runs under sh")]
+fn tj6_a_message_recipe_shows_its_message() {
+    // A recipe whose output is a message (keep-awake's session log) shows
+    // it on the results screen under the output's label.
+    let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/tui/report.bnto.json");
+    let mut tui = Tui::launch_with_library(120, 40, &[&recipe]);
+    tui.wait_for("report"); // the home Library pane lists file names
     tui.press(&[Key::Enter]);
-    tui.wait_for("Start a session");
-    tui.press(&[Key::Right, Key::Right]);
-    tui.wait_for("Check status");
+    tui.wait_for("Report");
+    tui.press(&[Key::Enter]);
+    tui.wait_for("D E T A I L");
     focus_run(&mut tui);
     tui.press(&[Key::Enter]);
-    tui.wait_until("keep-awake's session log on the results screen", |screen| {
+    tui.wait_for("runs commands on your computer"); // a library recipe asks first
+    tui.press(&[Key::Char('y')]);
+    tui.wait_until("the report on the results screen", |screen| {
         [
             "R E S U L T S",
-            "S E S S I O N   L O G",
-            "No active session.",
+            "S T A T U S   R E P O R T",
+            "Nothing to report.",
         ]
         .iter()
         .all(|part| screen.contains(part))

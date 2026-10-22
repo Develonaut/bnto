@@ -62,10 +62,11 @@ bnto run backup.bnto.json --vars machine.json --yes --json
 # Stop the whole run after 10 minutes (overrides the recipe's settings.timeout)
 bnto run backup.bnto.json --timeout 600
 
-# List available built-in recipes
+# List available built-in recipes ([macOS] marks one that runs on some OSes only)
 bnto list
 
-# Show details about a recipe (dependencies show this OS's install hint)
+# Show details about a recipe: the OSes it runs on, and dependencies with this
+# OS's install hint
 bnto info compress-images
 
 # Check recipe files without running them: unknown node types, parameters a
@@ -183,6 +184,7 @@ src/
 +-- cli.rs                 # clap definitions for every subcommand
 +-- dispatch.rs            # Routes a parsed subcommand to its implementation
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
++-- host_support.rs        # Refuses a recipe with no steps for this OS; the [macOS]-style badge
 +-- run_output.rs          # Writes run results and prints the summary
 +-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary
 +-- run_limit.rs           # A run's time limit: the recipe's settings.timeout or `--timeout`

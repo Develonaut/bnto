@@ -123,4 +123,4 @@ export { DEFINITION_JSON_SCHEMA } from "./generated/definitionSchema";
 
 // Generated recipes (from engine built-in recipe catalog)
 export { GENERATED_RECIPES } from "./generated/recipes";
-export type { GeneratedRecipe } from "./generated/recipes";
+export type { GeneratedRecipe, RecipeOs } from "./generated/recipes";

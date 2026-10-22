@@ -132,9 +132,14 @@ fn cj1_a_holding_guard_runs_its_step() {
 #[test]
 fn cj1_a_failing_guard_passes_the_file_through_untouched() {
     let when = guard("{{ctx.platform}}", "not-equals", host_platform());
-    let sandbox = Sandbox::new(&recipe(vec![rename("tag", "on-", Some(when))]), &["a.txt"]);
+    // An unguarded step after it keeps the recipe runnable here (CJ4).
+    let steps = vec![
+        rename("tag", "on-", Some(when)),
+        rename("next", "next-", None),
+    ];
+    let sandbox = Sandbox::new(&recipe(steps), &["a.txt"]);
     let (names, stderr) = sandbox.run_with_stderr();
-    assert_eq!(names, ["a.txt"]);
+    assert_eq!(names, ["next-a.txt"], "only the unguarded step renamed it");
     // The step is reported skipped, with the guard and what it read.
     let line = stderr
         .lines()
@@ -192,6 +197,87 @@ fn cj3_only_the_hosts_group_runs() {
     });
     let sandbox = Sandbox::new(&recipe(groups.to_vec()), &["a.txt"]);
     assert_eq!(sandbox.run(), [format!("{}-a.txt", host_platform())]);
+}
+
+// --- CJ4: no branch for this host ---
+
+/// What people call `os`, as the refusal names it.
+fn label(os: &str) -> &'static str {
+    match os {
+        "macos" => "macOS",
+        "windows" => "Windows",
+        _ => "Linux",
+    }
+}
+
+/// A shell step per OS other than this one, each in a group guarded on it,
+/// saved as the library recipe `guarded` (so it needs consent to run).
+fn elsewhere_sandbox() -> (Sandbox, Vec<&'static str>) {
+    let others: Vec<&str> = ["macos", "linux", "windows"]
+        .into_iter()
+        .filter(|os| *os != host_platform())
+        .collect();
+    let groups = others.iter().map(|os| {
+        json!({ "id": os, "type": "group",
+                "when": guard("{{ctx.platform}}", "equals", os),
+                "nodes": [{ "id": format!("{os}-say"), "type": "shell-run",
+                            "parameters": { "command": "echo", "args": [os] } }] })
+    });
+    let sandbox = Sandbox::new(&recipe(groups.collect()), &[]);
+    let library = sandbox.root.path().join("bnto-home").join("recipes");
+    std::fs::create_dir_all(&library).unwrap();
+    std::fs::copy(
+        sandbox.path("guarded.bnto.json"),
+        library.join("guarded.bnto.json"),
+    )
+    .unwrap();
+    (sandbox, others)
+}
+
+#[test]
+fn cj4_a_recipe_with_no_branch_for_this_host_stops_before_any_step() {
+    let (sandbox, others) = elsewhere_sandbox();
+    let out = sandbox.path("out");
+    let output = sandbox.bnto(&["run", "guarded", "--yes", "-o", &out]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    let message = format!(
+        "guarded runs on {} and {}. This machine runs {}.",
+        label(others[0]),
+        label(others[1]),
+        label(host_platform())
+    );
+    assert!(stderr.contains(&message), "{stderr}");
+    assert!(!stderr.contains("[1/"), "no step started: {stderr}");
+    assert!(!sandbox.root.path().join("out").exists(), "nothing written");
+}
+
+#[test]
+fn cj4_the_refusal_comes_before_consent() {
+    let (sandbox, _) = elsewhere_sandbox();
+    // No --yes: a library recipe of shell steps would ask first.
+    let output = sandbox.bnto(&["run", "guarded"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    assert!(stderr.contains("This machine runs"), "{stderr}");
+    assert!(!stderr.contains("echo"), "no consent prompt: {stderr}");
+    assert!(!stderr.contains("cancelled"), "no consent prompt: {stderr}");
+}
+
+/// Keep-awake has only a macOS branch, so CI's Linux and Windows jobs see
+/// `bnto run` refuse it before its script could start.
+#[test]
+#[cfg(not(target_os = "macos"))]
+fn cj4_keep_awake_refuses_to_run_off_macos() {
+    let sandbox = Sandbox::new(&recipe(vec![]), &[]);
+    let output = sandbox.bnto(&["run", "keep-awake", "-p", "action=status"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    let host = label(host_platform());
+    let message = format!("keep-awake runs on macOS. This machine runs {host}.");
+    assert!(stderr.contains(&message), "{stderr}");
+    assert!(!stderr.contains("[1/"), "no step started: {stderr}");
+    assert!(!stderr.contains("skipped"), "no step reached: {stderr}");
 }
 
 // --- CJ6: bnto check ---

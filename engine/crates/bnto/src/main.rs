@@ -29,6 +29,7 @@ mod dispatch;
 mod doctor;
 pub mod dry_run;
 mod field_owner;
+mod host_support;
 mod info;
 mod input;
 mod inspect;

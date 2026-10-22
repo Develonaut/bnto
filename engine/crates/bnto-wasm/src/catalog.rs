@@ -40,7 +40,29 @@ struct RecipeEntry {
     description: String,
     category: String,
     tags: Vec<String>,
+    /// The operating systems it has steps for (`macos`, `linux`, `windows`),
+    /// worked out from its platform guards.
+    os: Vec<&'static str>,
     definition: serde_json::Value,
+}
+
+/// A built-in recipe as the catalog lists it.
+fn recipe_entry(r: bnto_engine::recipes::BuiltinRecipe) -> RecipeEntry {
+    let pipeline: bnto_core::PipelineDefinition =
+        serde_json::from_str(r.definition_json).expect("built-in recipe JSON must parse");
+    RecipeEntry {
+        os: bnto_core::os_support::recipe_os(&pipeline)
+            .into_iter()
+            .map(bnto_core::HostPlatform::as_str)
+            .collect(),
+        slug: r.slug,
+        name: r.name,
+        description: r.description,
+        category: r.category,
+        tags: r.tags,
+        definition: serde_json::from_str(r.definition_json)
+            .expect("built-in recipe JSON must be valid"),
+    }
 }
 
 /// Build the catalog's `nodeTypes` array by joining every `NodeTypeInfo`
@@ -73,15 +95,7 @@ pub fn node_catalog() -> Result<String, JsValue> {
 
     let recipes: Vec<RecipeEntry> = bnto_engine::recipes::builtin_recipes()
         .into_iter()
-        .map(|r| RecipeEntry {
-            slug: r.slug,
-            name: r.name,
-            description: r.description,
-            category: r.category,
-            tags: r.tags,
-            definition: serde_json::from_str(r.definition_json)
-                .expect("built-in recipe JSON must be valid"),
-        })
+        .map(recipe_entry)
         .collect();
 
     let envelope = CatalogEnvelope {
@@ -104,15 +118,7 @@ mod tests {
     fn build_test_recipes() -> Vec<RecipeEntry> {
         bnto_engine::recipes::builtin_recipes()
             .into_iter()
-            .map(|r| RecipeEntry {
-                slug: r.slug,
-                name: r.name,
-                description: r.description,
-                category: r.category,
-                tags: r.tags,
-                definition: serde_json::from_str(r.definition_json)
-                    .expect("built-in recipe JSON must be valid"),
-            })
+            .map(recipe_entry)
             .collect()
     }
 
@@ -270,6 +276,16 @@ mod tests {
             22,
             "Catalog should include all 22 built-in recipes"
         );
+    }
+
+    #[test]
+    fn test_catalog_recipes_carry_the_oses_they_run_on() {
+        let recipes = build_test_recipes();
+        let os_of = |slug: &str| &recipes.iter().find(|r| r.slug == slug).unwrap().os;
+        assert_eq!(os_of("keep-awake"), &["macos"]);
+        assert_eq!(os_of("compress-images"), &["macos", "linux", "windows"]);
+        let json = serde_json::to_value(&recipes[0]).unwrap();
+        assert!(json["os"].is_array(), "serialized as `os`");
     }
 
     #[test]

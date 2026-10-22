@@ -6,7 +6,7 @@
  * syncedAt) live on UserRecipe in @bnto/core — not here.
  */
 
-import type { Definition } from "@bnto/nodes";
+import type { Definition, RecipeOs } from "@bnto/nodes";
 
 /**
  * A bnto recipe — definition + display metadata.
@@ -40,6 +40,13 @@ export interface Recipe {
 
   /** Feature tags for JSON-LD and display (e.g., ["PNG", "JPEG", "Browser-based"]). */
   features: string[];
+
+  /**
+   * The operating systems it has steps for, worked out by the engine from
+   * its platform guards. Set on predefined recipes; absent on user-created
+   * ones, which TS doesn't analyse.
+   */
+  os?: RecipeOs[];
 }
 
 /**

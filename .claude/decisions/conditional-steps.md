@@ -1,7 +1,7 @@
 # Decision: Conditional Steps (`when` guards)
 
 **Created:** October 2026
-**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4 and scoped fields in PR 5; OS support follows in PRs 6-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
+**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4, scoped fields in PR 5 and recipe OS support in PR 6; the web badge and OS-scoped dependencies follow in PRs 7-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
 **Applies to:** the executor in `bnto-core`, so every consumer (CLI, TUI, WASM).
 
 ---
@@ -56,3 +56,13 @@ An if/else pair on one field needs both steps to read it, so a container's `fiel
 - **`--param key=value`** sets the node that declares field `key`, wherever it is (`bnto/src/field_owner.rs`), and falls back to a raw param on the first processing step when none does. When two nodes declare `key`, the run stops before anything happens and asks for `nodeId:key=value`, naming both. No bundled recipe declares a field twice.
 - **Unchanged:** SEC-13 still checks every declaration's value before the run (`field_values.rs`). The TUI form lists each field once, on the node that declares it, and sends `nodeId:key`.
 - **Considered:** merging every node's fields into one recipe-wide set. Rejected: two unrelated steps with a `format` field would clash, and a recipe-level surface is a separate, deferred decision ([recipe-fields.md](../strategy/recipe-fields.md)).
+
+## OS support (PR 6)
+
+Which OSes a recipe runs on is worked out from its guards, never written by hand, so it can't drift from what the recipe does.
+
+- **Platform guard:** a guard whose `value` is exactly `{{ctx.platform}}`, whose `op` is `equals` or `not-equals`, and whose `expected` has no template. Anything else (a field, a loop item, a reversed or padded comparison, an ordering op) might hold on any OS, so it rules none out. `HostPlatform::as_str` is both what `{{ctx.platform}}` reads and what a guard is compared with, through the same `compare` the run uses.
+- **The rule** (`bnto_core::os_support`): `runs_on(node, os)` holds when the node's guard allows `os` and the node is a primitive or holds a step that `runs_on(os)`. Guards nest: a Linux group inside a "not Windows" group runs on Linux only. A recipe's `os` is the OSes on which some root step runs, in macOS, Linux, Windows order. A recipe with no steps at all runs everywhere; an empty container counts for nothing.
+- **Where it shows:** `bnto info` prints `Runs on:`; `bnto list` and the TUI detail header tag a recipe that misses an OS (`[macOS]`); the catalog snapshot carries `os` for each built-in, generated into `GeneratedRecipe.os` and `Recipe.os` in `@bnto/registry` (optional on `Recipe`: user recipes aren't analysed in TS).
+- **Unsupported host:** `bnto run` checks before anything else, so before consent and before any step: "keep-awake runs on macOS. This machine runs Linux." It exits 1 through the usual verdict (`--json` carries the message). A host bnto has no name for (a BSD) and a definition that doesn't parse are let through, to fail their own way.
+- **Not covered:** the TUI and `bnto dry-run` don't refuse; on an unsupported host a TUI run skips every step. `bnto check` doesn't flag a recipe that runs nowhere.

@@ -66,6 +66,7 @@ interface RawRecipe {
   description: string;
   category: string;
   tags: string[];
+  os: string[];
   definition: Record<string, unknown>;
 }
 
@@ -1209,6 +1210,7 @@ function generateRecipesFile(): string | null {
     description: ${JSON.stringify(r.description)},
     category: ${JSON.stringify(r.category)},
     tags: ${JSON.stringify(r.tags ?? [])} as const,
+    os: ${JSON.stringify(r.os)} as const,
     definition: ${JSON.stringify(r.definition, null, 4)
       .split("\n")
       .map((line, i) => (i === 0 ? line : "    " + line))
@@ -1221,6 +1223,9 @@ function generateRecipesFile(): string | null {
 
 import type { Definition } from "../definition";
 
+/** An operating system a recipe can run on (what \`{{ctx.platform}}\` reads). */
+export type RecipeOs = "macos" | "linux" | "windows";
+
 /** A generated recipe from the engine's built-in catalog. */
 export interface GeneratedRecipe {
   readonly slug: string;
@@ -1228,6 +1233,8 @@ export interface GeneratedRecipe {
   readonly description: string;
   readonly category: string;
   readonly tags: readonly string[];
+  /** The OSes it has steps for, worked out by the engine from its platform guards. */
+  readonly os: readonly RecipeOs[];
   readonly definition: Definition;
 }
 

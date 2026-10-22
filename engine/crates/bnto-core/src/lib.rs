@@ -55,6 +55,9 @@ pub mod executor;
 pub mod check;
 pub mod compare;
 
+/// The operating systems a recipe runs on, worked out from its platform guards.
+pub mod os_support;
+
 /// Control nodes (assert, report) that steer a run rather than transform files.
 pub mod control;
 
