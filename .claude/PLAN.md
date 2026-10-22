@@ -279,7 +279,7 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 **Next: Sprint 17 — BRU File Ecosystem + Engine Polish.** Achieve BRU (Bulk Rename Utility) composable file operations goal: 4 new file processors (file-filter, file-collect, file-copy, file-inspect) that chain together for BRU-level power. Parallel engine polish (execution progress Phase 1, secrets Phase 1, recipe trust/consent). Image crop/rotate. Format expansion (CSV sort/filter, Excel, EPS→SVG). Target: 26+ recipes.
 
-**In flight (October 2026): Keep Awake + conditional steps.** A built-in keep-awake recipe, then a `when` step guard, recipe OS support and Linux/Windows variants. PR-by-PR tracker: [keep-awake-recipe.md](strategy/keep-awake-recipe.md#tracker).
+**Done (October 2026): Keep Awake + conditional steps.** A built-in keep-awake recipe on macOS, Linux and Windows, built on a `when` step guard, scoped fields, recipe OS support, OS-scoped dependencies and PowerShell script mode (11 PRs, #662-#715). Record and follow-ups: [keep-awake-recipe.md](strategy/keep-awake-recipe.md).
 
 **Next: TUI snapshots + journey tests** (3 PRs), so TUI changes get the same checks the web has: [tui-testing.md](strategy/tui-testing.md). **Then: CLI upgrade notices.** A once-a-day update check, `bnto upgrade`, and a TUI status-line notice (3 PRs): [cli-upgrade.md](strategy/cli-upgrade.md).
 
