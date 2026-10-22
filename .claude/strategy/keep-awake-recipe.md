@@ -26,7 +26,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Merged (#710) |
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Merged (#711) |
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#712) |
-| 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Merged (#NNN) |
+| 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Merged (#713) |
 | 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Not started   |
 | 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Not started   |
 
