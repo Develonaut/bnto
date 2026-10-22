@@ -19,8 +19,9 @@ pub(crate) const ARG_PREFIX: &str = "BNTO_ARG_";
 /// Fixed engine text run before every script: no progress records on
 /// stderr, UTF-8 stdout like every other step, and no ANSI colors in error
 /// text (`$PSStyle` exists from pwsh 7.2).
-const PRELUDE: &str = "$ProgressPreference = 'SilentlyContinue'\n\
-                       [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n\
+/// One line, because Windows PowerShell's error view quotes the command text.
+const PRELUDE: &str = "$ProgressPreference = 'SilentlyContinue'; \
+                       [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); \
                        if ($PSStyle) { $PSStyle.OutputRendering = 'PlainText' }\n";
 
 /// Flags before the encoded script: no banner, no profile, no prompts.
@@ -172,7 +173,8 @@ mod tests {
         let script = "Write-Output \"héllo ✓\"";
         let decoded = decode(&encode(script));
         assert_eq!(decoded, format!("{PRELUDE}{script}"));
-        assert!(decoded.starts_with("$ProgressPreference = 'SilentlyContinue'\n"));
+        assert!(decoded.starts_with("$ProgressPreference = 'SilentlyContinue'; "));
+        assert_eq!(PRELUDE.lines().count(), 1);
     }
 
     #[test]

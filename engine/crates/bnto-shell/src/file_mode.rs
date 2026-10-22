@@ -26,6 +26,7 @@ pub(crate) fn process_file_mode(
         program,
         args,
         options,
+        ..
     } = invocation;
     let output_dir = create_output_dir(ctx)?;
     let dir_str = output_dir.to_string_lossy();
@@ -36,9 +37,12 @@ pub(crate) fn process_file_mode(
     // Run the command with stderr streaming — stdout is captured but unused.
     let _stdout = ctx
         .run_command_with(program, &arg_refs, &options, &|line| {
-            progress.report_output(line);
+            invocation.relay(line, progress);
         })
-        .map_err(|e| hand_over_written(e, command, &output_dir, max_output_mb))?;
+        .map_err(|e| {
+            let error = invocation.readable(e);
+            hand_over_written(error, command, &output_dir, max_output_mb)
+        })?;
     progress.report(80, "Collecting output files...");
     let files = collect_output_files(&output_dir, max_output_mb)?;
     if files.is_empty() {

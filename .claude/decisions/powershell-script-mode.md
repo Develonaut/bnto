@@ -34,13 +34,13 @@ PowerShell can't reuse the POSIX shape. `-Command <script> <args…>` **appends 
 
 - **`-EncodedCommand`, and nothing after it.** No value is ever on the command line, so no PowerShell or Windows command-line parsing can turn one into code or into an extra argument.
 - **`-NoProfile`** so no profile script runs (the analogue of `bash -p` / `zsh -f`); **`-NonInteractive`** so a prompt fails instead of hanging the run.
-- **`-OutputFormat Text`, explicitly.** An encoded, non-interactive command whose stderr is redirected writes its _errors_ as `#< CLIXML <Objs…>` unless the output format was given on the command line (ConsoleHost's error format rule, on 5.1 and 7 alike). The first CI run of the specs caught it: a failing step's message arrived as XML.
+- **`-OutputFormat Text`, explicitly, and CLIXML decoded.** An encoded, non-interactive command whose stderr is redirected writes its error, warning and verbose records as `#< CLIXML <Objs…>`. pwsh 7 stops when the output format is given on the command line; Windows PowerShell 5.1 does it regardless. The first CI runs caught both: a failing step's message arrived as XML. So bnto also decodes it (`bnto-shell/src/clixml.rs`, PowerShell steps only): the marker line is dropped and each `<S S="…">` string becomes text, in streamed output and in the failure message. This is how Ansible reads PowerShell's stderr. Wrapping the script in `& { … } *>&1` to reformat records was rejected: `using namespace` must open a script, so it can't sit inside a wrapper, and `exit` and `$?` would change.
 - **The prelude** is fixed engine text, the same for every step, prepended before encoding:
   - `$ProgressPreference = 'SilentlyContinue'`, so progress records never reach stderr;
   - `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)`, so stdout is UTF-8 like every other step (5.1 defaults to the OEM code page);
   - `if ($PSStyle) { $PSStyle.OutputRendering = 'PlainText' }`, so error text carries no ANSI color codes (`$PSStyle` exists from pwsh 7.2).
 
-  It never sets `$ErrorActionPreference`: a POSIX script doesn't get `set -e` either, so failure handling stays the author's choice. Consent shows the author's script, not the prelude, the way it doesn't show `-p`.
+  The prelude is a single line, because 5.1's error view quotes the command text it ran. It never sets `$ErrorActionPreference`: a POSIX script doesn't get `set -e` either, so failure handling stays the author's choice. Consent shows the author's script, not the prelude, the way it doesn't show `-p`.
 
 - **Exit status:** the script's `exit N` is the step's exit code; a terminating error exits 1. Same success/failure rules as every command.
 - **Why not `-File <temp.ps1>`:** script files are subject to the execution policy, and a machine policy set by Group Policy overrides `-ExecutionPolicy Bypass`, so the step would fail on managed machines. `-EncodedCommand` isn't subject to the execution policy. A temp file would also add a window to swap the script after consent.

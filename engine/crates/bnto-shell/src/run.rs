@@ -200,6 +200,7 @@ fn run_node(
         program: &program,
         args: &args,
         options,
+        clixml: script::values_in_env(params),
     };
     match params.get("outputMode").and_then(serde_json::Value::as_str) {
         Some("file") => process_file_mode(&invocation, input, progress, ctx, max_output_mb),
