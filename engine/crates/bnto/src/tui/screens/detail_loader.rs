@@ -4,9 +4,10 @@
 // Walks recipe definition JSON, resolves processors, collects surfaceable params.
 
 use bnto_core::metadata::ParameterType;
+use bnto_core::os_support::recipe_os;
 use bnto_core::pipeline::PipelineNode;
 use bnto_core::registry::NodeRegistry;
-use bnto_core::{InputMode, PipelineDefinition};
+use bnto_core::{HostPlatform, InputMode, PipelineDefinition};
 
 use crate::catalog::{CatalogEntry, RecipeSource};
 
@@ -84,6 +85,7 @@ pub fn load_detail_from_entry(
         has_shell: pipeline_def
             .as_ref()
             .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
+        os: definition_os(pipeline_def.as_ref()),
         definition_json: entry.definition_json.clone(),
         params,
         form,
@@ -93,6 +95,11 @@ pub fn load_detail_from_entry(
         viewport: tonkotsu::Viewport::new(),
         revealed: None,
     })
+}
+
+/// The OSes a recipe has steps for; everywhere when it doesn't parse.
+fn definition_os(def: Option<&PipelineDefinition>) -> Vec<HostPlatform> {
+    def.map_or_else(|| HostPlatform::ALL.to_vec(), recipe_os)
 }
 
 /// Collect field params from all nodes that declare fields.
@@ -298,6 +305,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         has_shell: pipeline_def
             .as_ref()
             .is_some_and(|d| crate::trust::has_shell_commands(&d.nodes)),
+        os: definition_os(pipeline_def.as_ref()),
         definition_json: json.to_string(),
         params,
         form,

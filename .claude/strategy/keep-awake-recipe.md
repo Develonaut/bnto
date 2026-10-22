@@ -23,7 +23,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Merged (#697) |
 | 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | Merged (#703) |
 | 5   | Let a container's fields reach the steps inside it           | `feat/scoped-fields`               | Merged (#708) |
-| 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Not started   |
+| 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Merged (#710) |
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Not started   |
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Not started   |
 | 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Not started   |
@@ -226,7 +226,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 - `bnto info` "Runs on:" (`info.rs`); `bnto list` marker (`list.rs`); TUI detail header (`render_detail.rs`).
 - `bnto run` stops before any step runs (and before consent) on an unsupported host.
 - Wrap keep-awake's step in a `when ctx.platform equals macos` group, and drop "macOS only" from its description.
-- Fix `info.rs` L92 / `dry_run/shell.rs` L33 skip lists to use `is_container_node`.
+- Fix `info.rs` L92 / `dry_run/shell.rs` L53 skip lists to use `is_container_node` (they missed `parallel`).
 
 **RED tests:**
 
@@ -237,6 +237,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 
 **Verification:** `task wasm:codegen && task wasm:test && task cli:test && task ui:build && task ui:test`
 **Count changes:** none. Split the TS codegen into its own PR if the diff passes ~400 lines.
+**As built:** `bnto_core::os_support` (`runs_on`, `recipe_os`, `describe_os`); `HostPlatform` gained `ALL`, `as_str` (also what `{{ctx.platform}}` now reads) and `label`. `bnto/src/host_support.rs` holds the refusal and the `[macOS]` badge shared by `bnto list` and the TUI header (shown only when a recipe misses an OS; `bnto info` always prints `Runs on:`). The refusal runs first in `run_recipe`, so before vars and consent. `Recipe.os` is optional in `@bnto/registry` (user recipes aren't analysed in TS). The TS side was small (~40 hand-written lines), so no split. TUI journey TJ6 moved off keep-awake to a message-mode fixture: on Linux CI keep-awake's step is now skipped. `isRecipeBrowserCapable` (`@bnto/registry`) skipped containers without looking inside, so keep-awake's step in a group made it browser-capable; it now walks children (keep-awake is the first built-in with a step in a container). Not done: the TUI and `bnto dry-run` don't refuse an unsupported host (a TUI run there skips every step).
 
 ### PR 7: Show which operating systems a recipe runs on, on bnto.io
 

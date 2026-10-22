@@ -12,7 +12,9 @@ use crate::consent::check_trust;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
 use crate::run_watchdog::{self, Watched};
-use crate::{context, dry_run, input, progress, run_limit, run_message, telemetry, vars};
+use crate::{
+    context, dry_run, host_support, input, progress, run_limit, run_message, telemetry, vars,
+};
 
 /// The `bnto run` switches that change what a run does.
 #[derive(Clone, Copy)]
@@ -60,6 +62,7 @@ pub fn run_recipe(
 ) {
     let verdict = RunVerdict::new(flags.json);
     let raw_json = read_recipe(recipe_path, catalog, &verdict);
+    refuse_unsupported_host(recipe_path, &raw_json, &verdict);
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
     let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
@@ -119,6 +122,15 @@ fn watched<T>(
     match run_watchdog::watch(ctx.registry(), time_limit, on_stuck, run) {
         Watched::Finished(result) => result,
         Watched::Ended => run_watchdog::wait_for_exit(),
+    }
+}
+
+/// Stop a recipe with no branch for this OS before consent and before any
+/// step runs.
+fn refuse_unsupported_host(recipe_path: &str, raw_json: &str, verdict: &RunVerdict) {
+    let host = bnto_core::HostPlatform::current();
+    if let Some(why) = host_support::unsupported_host(recipe_path, raw_json, host) {
+        verdict.fail("Error:", why);
     }
 }
 

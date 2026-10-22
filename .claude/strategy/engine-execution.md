@@ -135,6 +135,10 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 **Decision (October 2026):** a container's `fields` are visible to every node inside it, so an if/else pair of guarded steps can share one field. The nearest declaration wins (a step's own field shadows its group's), and a group's fields never reach nodes after it. `PipelineContext.fields` carries the values the enclosing containers declare; `fields_for(node)` adds the node's own (`executor/field_scope.rs`). Leaf params, `when` guards, `bnto check` and the CLI dry run all read fields this way. `bnto run -p key=value` sets the node that declares `key`, and asks for `nodeId:key` when two do. See [conditional-steps.md](../decisions/conditional-steps.md#fields-in-scope-pr-5).
 
+### Recipe OS Support
+
+**Decision (October 2026):** a recipe's operating systems (`os`) are worked out from its platform guards (`when {{ctx.platform}} equals|not-equals <literal>`), never hand-written: a step runs on an OS when every guard on its path allows it, and a recipe runs where some root step does (`bnto_core::os_support::recipe_os`). `bnto run` refuses an unsupported host before consent and before any step; `bnto info`, `bnto list`, the TUI and the catalog (`Recipe.os`) show it. `os` is a separate axis from node-type `platforms` (browser / cli / server). See [conditional-steps.md](../decisions/conditional-steps.md#os-support-pr-6).
+
 ### Edges and Data Flow
 
 **Decision (October 2026):** the executor honors a recipe's `edges`. Before, it fed every node the previous node's output whatever the edges said, so a step couldn't start from no files (a `file-list` after another node read that node's files as path lists) and couldn't take files from two earlier steps. This works the way Node-RED, NiFi and n8n's Merge do. Built in #611 (graph model), #614 (executor), #616 (closing steps), #613 (`bnto check`) and #612 (TS validation).

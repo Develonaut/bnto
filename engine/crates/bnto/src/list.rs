@@ -2,7 +2,11 @@
 
 use std::collections::BTreeMap;
 
+use bnto_core::HostPlatform;
+use bnto_core::os_support::recipe_os;
+
 use crate::catalog::CatalogEntry;
+use crate::host_support::os_badge;
 
 /// A group of recipes sharing a category, ready for display.
 #[derive(Debug)]
@@ -18,6 +22,8 @@ pub struct RecipeEntry {
     pub slug: String,
     pub name: String,
     pub description: String,
+    /// The operating systems it has steps for.
+    pub os: Vec<HostPlatform>,
 }
 
 /// Print grouped recipes to stdout with colored formatting.
@@ -30,9 +36,11 @@ pub fn print_recipe_list(groups: &[RecipeGroup]) {
         }
         println!("  {}:", group.category.yellow());
         for entry in &group.recipes {
+            let badge = os_badge(&entry.os).map(|b| format!("{} ", b.yellow()));
             println!(
-                "    {:<30} {}",
+                "    {:<30} {}{}",
                 entry.slug.cyan(),
+                badge.unwrap_or_default(),
                 entry.description.dimmed()
             );
         }
@@ -53,6 +61,7 @@ pub fn group_recipes(entries: &[CatalogEntry]) -> Vec<RecipeGroup> {
                 slug: entry.slug.clone(),
                 name: entry.name.clone(),
                 description: entry.description.clone(),
+                os: entry_os(entry),
             });
     }
 
@@ -63,6 +72,14 @@ pub fn group_recipes(entries: &[CatalogEntry]) -> Vec<RecipeGroup> {
             RecipeGroup { category, recipes }
         })
         .collect()
+}
+
+/// The OSes a catalog entry runs on; everywhere when its definition doesn't
+/// parse (`bnto run` reports that itself).
+fn entry_os(entry: &CatalogEntry) -> Vec<HostPlatform> {
+    serde_json::from_str(&entry.definition_json)
+        .map(|def| recipe_os(&def))
+        .unwrap_or_else(|_| HostPlatform::ALL.to_vec())
 }
 
 #[cfg(test)]
@@ -81,7 +98,10 @@ mod tests {
             }
             writeln!(out, "  {}:", group.category).ok();
             for entry in &group.recipes {
-                writeln!(out, "    {:<30} {}", entry.slug, entry.description).ok();
+                let badge = os_badge(&entry.os).map(|b| b + " ");
+                let description = &entry.description;
+                let line = format!("{}{description}", badge.unwrap_or_default());
+                writeln!(out, "    {:<30} {line}", entry.slug).ok();
             }
         }
         out
@@ -179,6 +199,7 @@ mod tests {
                 slug: "compress-images".to_string(),
                 name: "Compress Images".to_string(),
                 description: "Compress image files".to_string(),
+                os: HostPlatform::ALL.to_vec(),
             }],
         }];
         let output = format_recipe_list(&groups);
@@ -193,6 +214,7 @@ mod tests {
                 slug: "compress-images".to_string(),
                 name: "Compress Images".to_string(),
                 description: "Compress image files".to_string(),
+                os: HostPlatform::ALL.to_vec(),
             }],
         }];
         let output = format_recipe_list(&groups);
@@ -210,6 +232,7 @@ mod tests {
                 slug: "compress-images".to_string(),
                 name: "Compress Images".to_string(),
                 description: "Compress image files".to_string(),
+                os: HostPlatform::ALL.to_vec(),
             }],
         }];
         let output = format_recipe_list(&groups);
@@ -217,6 +240,21 @@ mod tests {
             output.contains("Compress image files"),
             "Should contain description"
         );
+    }
+
+    #[test]
+    fn test_format_marks_a_recipe_that_runs_on_some_oses() {
+        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let output = format_recipe_list(&group_recipes(catalog.all()));
+        let line = |slug: &str| {
+            output
+                .lines()
+                .find(|l| l.trim_start().starts_with(&format!("{slug} ")))
+                .unwrap_or_else(|| panic!("no {slug} line:\n{output}"))
+                .to_string()
+        };
+        assert!(line("keep-awake").contains(" [macOS] Keep your Mac"));
+        assert!(!line("compress-images").contains('['));
     }
 
     #[test]

@@ -29,4 +29,5 @@ export const RECIPES: readonly Recipe[] = GENERATED_RECIPES.map((generated) => (
     label: "Files",
   },
   features: [...generated.tags],
+  os: [...generated.os],
 }));

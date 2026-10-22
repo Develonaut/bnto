@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 use bnto_core::context::NoopContext;
 use bnto_core::executor::field_scope::{self, FieldValues};
 use bnto_core::executor::template::{TemplateContext, resolve_templates};
+use bnto_core::pipeline::{is_container_node, is_io_node};
 use bnto_core::{FieldDef, PipelineDefinition, PipelineNode};
 
 /// A resolved shell-run node ready for display.
@@ -50,7 +51,7 @@ fn collect_under<'a>(
             let mut info = resolve_shell_command(node, &field_scope::along(&path));
             info.skipped = super::host_skip::host_skip(&path);
             commands.push(info);
-        } else if !["input", "output", "group", "loop"].contains(&node.node_type.as_str()) {
+        } else if !is_io_node(&node.node_type) && !is_container_node(&node.node_type) {
             *other_count += 1;
         }
         if let Some(children) = &node.children {
@@ -255,6 +256,19 @@ mod tests {
                 .is_some_and(|r| r.contains("plan9"))
         );
         assert_eq!(commands[1].skipped, None);
+    }
+
+    #[test]
+    fn containers_are_not_counted_as_steps() {
+        let nodes: Vec<PipelineNode> = serde_json::from_value(serde_json::json!([
+            { "id": "p", "type": "parallel",
+              "children": [{ "id": "a", "type": "file-rename" }] },
+            { "id": "out", "type": "output" }
+        ]))
+        .unwrap();
+        let (mut commands, mut others) = (Vec::new(), 0);
+        collect_shell_commands(&nodes, &mut commands, &mut others);
+        assert_eq!(others, 1, "only the rename");
     }
 
     #[test]

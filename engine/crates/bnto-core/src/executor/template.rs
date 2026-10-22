@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 use serde_json::Value;
 
 use crate::context::ProcessContext;
+use crate::metadata::HostPlatform;
 
 use super::interpolate::interpolate;
 use super::node_outputs::NodeOutputSource;
@@ -171,17 +172,10 @@ pub fn resolve_ctx_templates(s: &str, ctx: &dyn ProcessContext) -> String {
     })
 }
 
-/// Returns the current platform name.
+/// The platform name a platform guard compares (`HostPlatform::as_str`),
+/// or "unknown" on an OS bnto has no name for.
 fn current_platform() -> &'static str {
-    if cfg!(target_os = "macos") {
-        "macos"
-    } else if cfg!(target_os = "linux") {
-        "linux"
-    } else if cfg!(target_os = "windows") {
-        "windows"
-    } else {
-        "unknown"
-    }
+    HostPlatform::current().map_or("unknown", HostPlatform::as_str)
 }
 
 /// Resolve {{node.<id>.<prop>}} from previously executed node outputs.
