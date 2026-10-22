@@ -253,7 +253,7 @@ mod tests {
                 .unwrap_or_else(|| panic!("no {slug} line:\n{output}"))
                 .to_string()
         };
-        assert!(line("keep-awake").contains(" [macOS] Keep your Mac"));
+        assert!(line("keep-awake").contains(" [macOS and Linux] Keep your computer awake"));
         assert!(!line("compress-images").contains('['));
     }
 

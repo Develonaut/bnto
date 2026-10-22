@@ -197,8 +197,8 @@ fn exits(pid: u32) -> bool {
 fn duration_options() -> Vec<(String, String)> {
     let text = std::fs::read_to_string(recipe_path("keep-awake")).unwrap();
     let recipe: serde_json::Value = serde_json::from_str(&text).unwrap();
-    // The session step, inside the macOS group.
-    let session = &recipe["nodes"][1]["nodes"][0];
+    // The session group, whose fields every OS's step reads.
+    let session = &recipe["nodes"][1];
     let options = &session["fields"]["duration"]["options"];
     options
         .as_array()

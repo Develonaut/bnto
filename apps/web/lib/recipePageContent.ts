@@ -61,9 +61,14 @@ const RECIPE_FAQ: Record<string, QA[]> = {
         "Run keep-awake again and choose Stop (bnto run keep-awake --param action=stop). Check status reports how long is left and whether activity simulation is running.",
     },
     {
-      question: "Why does activity simulation need Accessibility permission?",
+      question: "What does activity simulation need?",
       answer:
-        "Keeping a Mac awake doesn't reset its idle timer, so chat apps still mark you Away. Activity simulation nudges the cursor 1px once you've been idle, and macOS only allows that for apps granted Accessibility in System Settings > Privacy & Security.",
+        "Keeping a computer awake doesn't reset its idle timer, so chat apps still mark you Away. Activity simulation nudges the cursor 1px once you've been idle. On macOS that needs Accessibility permission for your terminal app (System Settings > Privacy & Security > Accessibility). On Linux it needs an X11 session with xdotool and xprintidle installed; Wayland doesn't let one app move the cursor for another, so there the session starts without it.",
+    },
+    {
+      question: "Does it keep the screen on under Linux?",
+      answer:
+        "It always stops the computer sleeping, through systemd-inhibit. Keeping the display on depends on the desktop: KDE Plasma honors systemd's idle inhibitor, and GNOME needs gnome-session-inhibit, which keep-awake uses when it's installed.",
     },
   ],
   "merge-csv": [

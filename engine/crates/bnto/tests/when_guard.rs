@@ -264,17 +264,17 @@ fn cj4_the_refusal_comes_before_consent() {
     assert!(!stderr.contains("cancelled"), "no consent prompt: {stderr}");
 }
 
-/// Keep-awake has only a macOS branch, so CI's Linux and Windows jobs see
+/// Keep-awake has macOS and Linux branches only, so CI's Windows job sees
 /// `bnto run` refuse it before its script could start.
 #[test]
-#[cfg(not(target_os = "macos"))]
-fn cj4_keep_awake_refuses_to_run_off_macos() {
+#[cfg(windows)]
+fn cj4_keep_awake_refuses_to_run_on_windows() {
     let sandbox = Sandbox::new(&recipe(vec![]), &[]);
     let output = sandbox.bnto(&["run", "keep-awake", "-p", "action=status"]);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "{stderr}");
     let host = label(host_platform());
-    let message = format!("keep-awake runs on macOS. This machine runs {host}.");
+    let message = format!("keep-awake runs on macOS and Linux. This machine runs {host}.");
     assert!(stderr.contains(&message), "{stderr}");
     assert!(!stderr.contains("[1/"), "no step started: {stderr}");
     assert!(!stderr.contains("skipped"), "no step reached: {stderr}");

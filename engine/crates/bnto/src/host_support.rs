@@ -38,20 +38,19 @@ mod tests {
     const KEEP_AWAKE: &str = include_str!("../../bnto-engine/recipes/keep-awake.bnto.json");
 
     #[test]
-    fn a_macos_recipe_is_refused_elsewhere() {
-        let why = unsupported_host("keep-awake", KEEP_AWAKE, Some(HostPlatform::Linux));
+    fn a_recipe_is_refused_on_an_os_it_has_no_step_for() {
+        let why = unsupported_host("keep-awake", KEEP_AWAKE, Some(HostPlatform::Windows));
         assert_eq!(
             why.as_deref(),
-            Some("keep-awake runs on macOS. This machine runs Linux.")
+            Some("keep-awake runs on macOS and Linux. This machine runs Windows.")
         );
     }
 
     #[test]
-    fn a_macos_recipe_runs_on_macos() {
-        assert_eq!(
-            unsupported_host("keep-awake", KEEP_AWAKE, Some(HostPlatform::MacOs)),
-            None
-        );
+    fn a_recipe_runs_on_each_os_it_has_a_step_for() {
+        for os in [HostPlatform::MacOs, HostPlatform::Linux] {
+            assert_eq!(unsupported_host("keep-awake", KEEP_AWAKE, Some(os)), None);
+        }
     }
 
     #[test]

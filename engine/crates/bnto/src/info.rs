@@ -228,14 +228,21 @@ mod tests {
     }
 
     #[test]
-    fn keep_awake_lists_its_macos_tools_as_macos_only() {
+    fn keep_awake_lists_each_oss_tools_with_its_os() {
         let info = get_recipe_info("keep-awake", &catalog()).unwrap();
         let notes: Vec<String> = info
             .dependencies
             .iter()
             .map(|d| format!("{}{}", d.dependency.binary, dependency_notes(d)))
             .collect();
-        assert_eq!(notes, ["caffeinate (macOS only)", "osascript (macOS only)"]);
+        assert_eq!(
+            notes,
+            [
+                "caffeinate (macOS only)",
+                "osascript (macOS only)",
+                "systemd-inhibit (Linux only)"
+            ]
+        );
     }
 
     #[test]
@@ -262,7 +269,7 @@ mod tests {
     fn test_get_info_reports_where_it_runs() {
         let c = catalog();
         let info = get_recipe_info("keep-awake", &c).unwrap();
-        assert_eq!(info.os, [HostPlatform::MacOs]);
+        assert_eq!(info.os, [HostPlatform::MacOs, HostPlatform::Linux]);
         let info = get_recipe_info("compress-images", &c).unwrap();
         assert_eq!(info.os, HostPlatform::ALL);
     }
