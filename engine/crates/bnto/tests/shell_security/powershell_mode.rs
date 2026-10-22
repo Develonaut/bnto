@@ -257,13 +257,13 @@ fn sec37_the_value_variables_belong_to_args() {
 
     for shell in installed() {
         let lab = Lab::new();
-        let script =
-            "Write-Output \"count=[$env:BNTO_ARG_COUNT] empty=[$([string]$env:BNTO_ARG_2)]\"";
+        // An empty arg drops, as for every shell (conditional args).
+        let script = "Write-Output \"count=[$env:BNTO_ARG_COUNT] second=[$env:BNTO_ARG_2]\"";
         let recipe = lab.recipe(ps_step(shell, script, json!(["a", "", "c"]), &[]));
         let out = lab.run(&recipe, &[]);
         assert!(out.ok, "{shell}: {}", out.text);
         assert!(
-            out.text.contains("count=[3] empty=[]"),
+            out.text.contains("count=[2] second=[c]"),
             "{shell}: {}",
             out.text
         );

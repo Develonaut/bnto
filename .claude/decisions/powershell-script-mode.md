@@ -29,14 +29,16 @@ PowerShell can't reuse the POSIX shape. `-Command <script> <args…>` **appends 
 ### The invocation
 
 ```
-<abs path> -NoLogo -NoProfile -NonInteractive -EncodedCommand <base64(UTF-16LE(prelude + script))>
+<abs path> -NoLogo -NoProfile -NonInteractive -OutputFormat Text -EncodedCommand <base64(UTF-16LE(prelude + script))>
 ```
 
 - **`-EncodedCommand`, and nothing after it.** No value is ever on the command line, so no PowerShell or Windows command-line parsing can turn one into code or into an extra argument.
 - **`-NoProfile`** so no profile script runs (the analogue of `bash -p` / `zsh -f`); **`-NonInteractive`** so a prompt fails instead of hanging the run.
+- **`-OutputFormat Text`, explicitly.** An encoded, non-interactive command whose stderr is redirected writes its _errors_ as `#< CLIXML <Objs…>` unless the output format was given on the command line (ConsoleHost's error format rule, on 5.1 and 7 alike). The first CI run of the specs caught it: a failing step's message arrived as XML.
 - **The prelude** is fixed engine text, the same for every step, prepended before encoding:
-  - `$ProgressPreference = 'SilentlyContinue'`, so progress records never reach stderr (5.1 serializes them as `#< CLIXML` noise when stderr is redirected);
-  - `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)`, so stdout is UTF-8 like every other step (5.1 defaults to the OEM code page).
+  - `$ProgressPreference = 'SilentlyContinue'`, so progress records never reach stderr;
+  - `[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)`, so stdout is UTF-8 like every other step (5.1 defaults to the OEM code page);
+  - `if ($PSStyle) { $PSStyle.OutputRendering = 'PlainText' }`, so error text carries no ANSI color codes (`$PSStyle` exists from pwsh 7.2).
 
   It never sets `$ErrorActionPreference`: a POSIX script doesn't get `set -e` either, so failure handling stays the author's choice. Consent shows the author's script, not the prelude, the way it doesn't show `-p`.
 
@@ -49,7 +51,7 @@ PowerShell can't reuse the POSIX shape. `-Command <script> <args…>` **appends 
 The step's `args` (after `each` expansion and conditional groups, exactly as for POSIX scripts) are set as environment variables on the child only: `BNTO_ARG_1`…`BNTO_ARG_N` and `BNTO_ARG_COUNT=N`. The script reads `$env:BNTO_ARG_1`. This is the only channel that works the same on 5.1 and 7.x and never touches the Windows command line (report recommendation 8; GitHub Actions and Jenkins `withEnv` use the same pattern).
 
 - They're added after the cleared environment and after the step's own `env`, so nothing can shadow them. A step's `env` may not name `BNTO_ARG_*` in script mode at all (refused by `validate`), so an author can't mistake one for the other.
-- An empty value is set as an empty variable. Windows may read it back as `$null`; `[string]$env:BNTO_ARG_1` reads `''` either way.
+- An empty arg drops before it gets a number, exactly as it does for a POSIX script's `$1…` (conditional args), so `BNTO_ARG_COUNT` counts only the values that are set.
 
 ### Environment
 

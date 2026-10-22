@@ -36,7 +36,7 @@ All commands pass through `validate.rs` before execution:
 Instead of `command`, a step can run a literal `script` (no `{{templates}}` in it), with values from `args`:
 
 - **POSIX** (`"shell"`: `sh` (default), `bash`, `zsh`, `dash`, `ksh`; not on Windows): runs `<fixed shell path> [-p|-f] -c <script> bnto <args…>`, so values are `"$1"`, `"$2"`… (`script.rs`).
-- **PowerShell** (`"shell"`: `powershell` on Windows, `pwsh` anywhere): runs `<fixed path> -NoLogo -NoProfile -NonInteractive -EncodedCommand <script>` with nothing after it, and values arrive only as `$env:BNTO_ARG_1`…`N` plus `$env:BNTO_ARG_COUNT` (`powershell.rs`). `-Command <script> <args>` would turn values into code. The encoded script must fit a Windows command line (about 11,000 characters).
+- **PowerShell** (`"shell"`: `powershell` on Windows, `pwsh` anywhere): runs `<fixed path> -NoLogo -NoProfile -NonInteractive -OutputFormat Text -EncodedCommand <script>` with nothing after it, and values arrive only as `$env:BNTO_ARG_1`…`N` plus `$env:BNTO_ARG_COUNT` (`powershell.rs`). `-Command <script> <args>` would turn values into code. The encoded script must fit a Windows command line (about 11,000 characters).
 
 Either way the shell runs by fixed absolute path (never PATH or `searchPath`), starts with a cleared environment plus an allowlist, and reads no startup files or profiles. The rules a script follows with its values are in [shell-run.md](../../../.claude/scopes/security/shell-run.md#script-mode-the-safe-script-contract); the PowerShell design is in [powershell-script-mode.md](../../../.claude/decisions/powershell-script-mode.md).
 

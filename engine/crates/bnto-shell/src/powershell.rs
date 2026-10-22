@@ -1,6 +1,6 @@
 // PowerShell script mode: a literal script run as `<abs path> -NoLogo
-// -NoProfile -NonInteractive -EncodedCommand <base64>`, with nothing after
-// it. `-Command <script> <args>` would append the args to the code, so values
+// -NoProfile -NonInteractive -OutputFormat Text -EncodedCommand <base64>`,
+// with nothing after it. `-Command <script> <args>` would append the args to the code, so values
 // reach the script only as $env:BNTO_ARG_1..N (SEC-32..37). See
 // decisions/powershell-script-mode.md.
 
@@ -16,16 +16,22 @@ pub(crate) const SHELLS: &[&str] = &["powershell", "pwsh"];
 /// The prefix of the variables that carry a step's values.
 pub(crate) const ARG_PREFIX: &str = "BNTO_ARG_";
 
-/// Fixed engine text run before every script: no progress records on stderr
-/// (5.1 writes them as `#< CLIXML`), and UTF-8 stdout like every other step.
+/// Fixed engine text run before every script: no progress records on
+/// stderr, UTF-8 stdout like every other step, and no ANSI colors in error
+/// text (`$PSStyle` exists from pwsh 7.2).
 const PRELUDE: &str = "$ProgressPreference = 'SilentlyContinue'\n\
-                       [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n";
+                       [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n\
+                       if ($PSStyle) { $PSStyle.OutputRendering = 'PlainText' }\n";
 
 /// Flags before the encoded script: no banner, no profile, no prompts.
+/// `-OutputFormat Text` must be explicit: an encoded, non-interactive
+/// command with stderr redirected otherwise writes its errors as `#< CLIXML`.
 const FLAGS: &[&str] = &[
     "-NoLogo",
     "-NoProfile",
     "-NonInteractive",
+    "-OutputFormat",
+    "Text",
     "-EncodedCommand",
 ];
 
@@ -39,7 +45,8 @@ pub fn is_powershell(shell: &str) -> bool {
 }
 
 /// The program and every arg for a PowerShell script: `<abs path> -NoLogo
-/// -NoProfile -NonInteractive -EncodedCommand <script>`. Nothing may follow.
+/// -NoProfile -NonInteractive -OutputFormat Text -EncodedCommand <script>`.
+/// Nothing may follow.
 pub(crate) fn invocation(shell: &str, script: &str) -> Result<(PathBuf, Vec<String>), String> {
     let system_root = std::env::var("SystemRoot").ok();
     let candidates = candidates(shell, HostPlatform::current(), system_root.as_deref())?;
@@ -146,15 +153,17 @@ mod tests {
     fn the_script_is_the_last_arg_and_nothing_follows_it() {
         let args = args("Write-Output $env:BNTO_ARG_1");
         assert_eq!(
-            args[..4],
+            args[..6],
             [
                 "-NoLogo",
                 "-NoProfile",
                 "-NonInteractive",
+                "-OutputFormat",
+                "Text",
                 "-EncodedCommand"
             ]
         );
-        assert_eq!(args.len(), 5);
+        assert_eq!(args.len(), 7);
         assert!(!args.iter().any(|a| a == "-Command" || a == "-File"));
     }
 

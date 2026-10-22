@@ -65,7 +65,7 @@ Most payloads try to create a canary file. A test passes only if the canary neve
 - Validate enum-like values with a `case` guard before using them.
 - Values are always strings; `$0` is `bnto`.
 
-PowerShell scripts (`"shell": "powershell"` on Windows, `"pwsh"` anywhere) run as `<fixed path> -NoLogo -NoProfile -NonInteractive -EncodedCommand <script>` with nothing after it, because `-Command <script> <args>` appends the args to the code. Values arrive only as `$env:BNTO_ARG_1`…`N` and `$env:BNTO_ARG_COUNT`. The same engine guarantees hold; a PowerShell script follows these rules ([powershell-script-mode.md](../../decisions/powershell-script-mode.md)):
+PowerShell scripts (`"shell": "powershell"` on Windows, `"pwsh"` anywhere) run as `<fixed path> -NoLogo -NoProfile -NonInteractive -OutputFormat Text -EncodedCommand <script>` with nothing after it, because `-Command <script> <args>` appends the args to the code. Values arrive only as `$env:BNTO_ARG_1`…`N` and `$env:BNTO_ARG_COUNT`. The same engine guarantees hold; a PowerShell script follows these rules ([powershell-script-mode.md](../../decisions/powershell-script-mode.md)):
 
 - Read values only as `$env:BNTO_ARG_n`. Interpolating one into a string (`"…$env:BNTO_ARG_1…"`) is text, not code.
 - Never turn a value into code: no `Invoke-Expression`/`iex`, `[scriptblock]::Create(…)`, `Add-Type` with a value in its source, or `powershell -Command`/`cmd /c`/`Start-Process -ArgumentList` strings built from a value.
