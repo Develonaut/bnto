@@ -78,7 +78,7 @@ The engine's `NodeRegistry` iterates all registered processors, serializes their
 
 ## Predefined Recipes
 
-18 recipes ship with bnto, each composing engine nodes into a ready-to-use pipeline. The authoritative recipe definitions live in the engine (`engine/recipes/*.bnto.json`). TypeScript recipe metadata is generated from the engine's catalog snapshot.
+The recipes that ship with bnto each compose engine nodes into a ready-to-use pipeline. The authoritative recipe definitions live in the engine (`engine/crates/bnto-engine/recipes/*.bnto.json`). TypeScript recipe metadata is generated from the engine's catalog snapshot.
 
 Access via `RECIPES` array or `getRecipeBySlug(slug)`. See the root README for the full recipe table.
 

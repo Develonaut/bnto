@@ -119,7 +119,7 @@ export function RecipeCardShowcase() {
                           <RecipeCardCategory>{entry.features[0]}</RecipeCardCategory>
                         </RecipeCardHeader>
                         <RecipeCardContent>
-                          <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
+                          <RecipeCardTitle>{entry.name}</RecipeCardTitle>
                           <RecipeCardTags tags={entry.features} limit={3} />
                         </RecipeCardContent>
                       </>

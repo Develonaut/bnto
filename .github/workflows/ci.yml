@@ -76,6 +76,15 @@ jobs:
       - name: CLI tests (unit + golden)
         run: cargo test --package bnto
 
+      # The TUI's quality gate, like the web's E2E suite: screen snapshots
+      # plus journeys driving the real `bnto tui` in a pseudo-terminal. Already
+      # run above; repeated by name so a TUI failure reads as one
+      # (.claude/strategy/tui-testing.md).
+      - name: TUI tests (snapshots + journeys)
+        run: |
+          cargo test --package bnto --bin bnto screen_snapshots
+          cargo test --package bnto --test tui_journeys
+
       # Dogfood recipes run on the bnto binary the CLI tests just built, so an
       # engine change that breaks one fails here.
       - name: Check dogfood recipes (recipes/)
@@ -266,6 +275,12 @@ jobs:
       - uses: actions/checkout@v5
       - name: Validate crate publish list
         run: ./scripts/check-crate-publish-list.sh
+      - name: Install Rust toolchain (engine/rust-toolchain.toml)
+        run: rustup toolchain install && rustup show active-toolchain
+      # A crate with its own version (tonkotsu) that changed must be bumped,
+      # or the release skips it and whatever uses the change fails to publish.
+      - name: Check crates with their own version were bumped
+        run: ./scripts/check-own-version-crates.sh
 
   # Gate job — single status check for branch protection.
   # Accepts skipped jobs when their surface didn't change.

@@ -21,7 +21,6 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.
     let live: RefCell<LiveBar> = RefCell::new(LiveBar::default());
-    let spinner_tick: RefCell<usize> = RefCell::new(0);
     let depths: RefCell<StepDepths> = RefCell::new(StepDepths::default());
     let output_names: RefCell<OutputNames> = RefCell::default();
 
@@ -34,6 +33,26 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             );
         }
         PipelineEvent::IterationStarted { .. } | PipelineEvent::IterationFailed { .. } => {}
+        PipelineEvent::NodeSkipped {
+            node_id,
+            node_type,
+            node_index,
+            total_nodes,
+            parent_node_id,
+            reason,
+        } => {
+            live.borrow_mut().clear();
+            let depth = depths
+                .borrow_mut()
+                .start(node_id, parent_node_id.as_deref());
+            eprintln!(
+                "{}{} {} {}",
+                progress_indent::step_indent(depth),
+                progress_indent::step_counter(*node_index, *total_nodes).dimmed(),
+                node_type.dimmed(),
+                format!("skipped: {reason}").dimmed(),
+            );
+        }
         PipelineEvent::IterationCompleted { output_files, .. } => {
             if let Some(dir) = &output_dir {
                 let names = &mut output_names.borrow_mut();
@@ -113,16 +132,9 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
             );
         }
         PipelineEvent::CommandOutput { node_id, line } => {
-            let tick = {
-                let mut t = spinner_tick.borrow_mut();
-                let val = *t;
-                *t += 1;
-                val
-            };
-            let spinner = braille_frame(tick);
             // Suspend the live line to print cleanly, then log for diagnostics.
             live.borrow()
-                .suspend(|| eprintln!("        {} {}", spinner.to_string().cyan(), line.dimmed()));
+                .suspend(|| eprintln!("{}", command_output_line(line).dimmed()));
             logger.log(LogEntry {
                 level: LogLevel::Debug,
                 target: "engine",
@@ -133,12 +145,11 @@ pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> P
     })
 }
 
-/// Braille spinner frames for indeterminate progress (shell-run nodes).
-const BRAILLE_FRAMES: &[char] = &['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-
-/// Get the braille spinner character for a given frame index.
-pub fn braille_frame(tick: usize) -> char {
-    BRAILLE_FRAMES[tick % BRAILLE_FRAMES.len()]
+/// One line a step's command printed, lined up with the live line's text.
+/// It stays on screen after the step ends, so it carries no spinner frame:
+/// the live bar below it is what spins.
+fn command_output_line(line: &str) -> String {
+    format!("          {line}")
 }
 
 /// Format a pipeline completion summary line.
@@ -202,20 +213,14 @@ mod tests {
         );
     }
 
-    // --- Braille spinner tests ---
+    // --- Command output lines ---
 
     #[test]
-    fn test_braille_frame_cycles() {
-        assert_eq!(braille_frame(0), '⠋');
-        assert_eq!(braille_frame(1), '⠙');
-        assert_eq!(braille_frame(9), '⠏');
-    }
-
-    #[test]
-    fn test_braille_frame_wraps() {
-        assert_eq!(braille_frame(10), '⠋');
-        assert_eq!(braille_frame(11), '⠙');
-        assert_eq!(braille_frame(20), '⠋');
+    fn test_command_output_line_has_no_spinner_glyph() {
+        // The line stays on screen after the step ends, so a spinner frame
+        // on it would freeze mid-spin.
+        let line = command_output_line("No active session.");
+        assert_eq!(line, "          No active session.");
     }
 
     #[test]

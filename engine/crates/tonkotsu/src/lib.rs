@@ -44,7 +44,7 @@ pub use file_entry::FileEntry;
 pub use form::{FormEffect, FormMessage, FormMode, FormModel, update};
 pub use group::FieldGroup;
 pub use keys::map_key_event;
-pub use render::render_form;
+pub use render::{focused_field_lines, render_form};
 pub use theme::{DefaultTheme, FormTheme};
 pub use validators::{min_len, not_empty, pattern, range};
 pub use viewport::Viewport;

@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ D E T A I L ─────────────────────────────────────────────────────────────────────────────────╮
+            │  Compress Images  [built-in]                                                                 │
+            │  Compress PNG, JPEG, and WebP images instantly in your browser. No upload limits, no signup. │
+            │                                                                                              │
+            │  INPUT                                                                                       │
+            │  ~/photos                                                                                    │
+            │                                                                                              │
+            │  ▸   beach.jpg  0 B [ ]                                                                      │
+            │      sunset.png  0 B [ ]                                                                     │
+            │  0 files selected                                                                            │
+            │                                                                                              │
+            │  PARAMETERS                                                                                  │
+            │                                                                                              │
+            │  > Quality   < 80% >  ████████████▊░░░                                                       │
+            │      Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this   │
+            │      quality.                                                                                │
+            │                                                                                              │
+            │    Run →                                                                                     │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            ↑↓ navigate  Enter edit/select  Tab next section          22 recipes  ·  v[version]  ·  Los Angeles

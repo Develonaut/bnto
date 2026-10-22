@@ -31,6 +31,13 @@ pub enum ExecutionMessage {
     NodeCompleted { node_id: String, duration_ms: u64 },
     /// A node failed.
     NodeFailed { node_id: String, error: String },
+    /// A node's `when` guard didn't hold, so it never ran. `parent_node_id`
+    /// names its container, if any.
+    NodeSkipped {
+        node_id: String,
+        node_type: String,
+        parent_node_id: Option<String>,
+    },
     /// Entire pipeline completed.
     PipelineCompleted {
         duration_ms: u64,
@@ -43,6 +50,10 @@ pub enum ExecutionMessage {
         files: Vec<OutputFile>,
         output_dir: Option<String>,
         warnings: Vec<String>,
+    },
+    /// What a message-mode recipe reported, shown on the results screen.
+    Reported {
+        message: crate::run_message::RunMessage,
     },
     /// A line of stderr output from a running command.
     CommandOutput { node_id: String, line: String },

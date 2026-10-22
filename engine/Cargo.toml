@@ -18,6 +18,10 @@ resolver = "2"
 
 # Package metadata shared by every crate (`<field>.workspace = true`).
 [workspace.package]
+# The release version: every bnto crate inherits it, and a stable release tag
+# must match it (scripts/check-release-version.sh), so the site, crates.io and
+# `bnto --version` show one number. Bump with `task version:bump -- X.Y.Z`.
+version = "0.17.1"
 # Minimum supported Rust version for `cargo install bnto` and library users.
 # This is the oldest compiler the code builds on, not the toolchain CI and
 # contributors use (that's pinned in rust-toolchain.toml). Raise it when code
@@ -26,6 +30,17 @@ rust-version = "1.88"
 
 # Shared dependency versions — crates reference these with `{ workspace = true }`.
 [workspace.dependencies]
+# Workspace crates. Their `version` is the release version above;
+# `task version:bump` moves them together. tonkotsu is versioned on its own.
+bnto-core = { path = "crates/bnto-core", version = "0.17.1" }
+bnto-encode = { path = "crates/bnto-encode", version = "0.17.1" }
+bnto-spreadsheet = { path = "crates/bnto-spreadsheet", version = "0.17.1" }
+bnto-file = { path = "crates/bnto-file", version = "0.17.1" }
+bnto-image = { path = "crates/bnto-image", version = "0.17.1" }
+bnto-vector = { path = "crates/bnto-vector", version = "0.17.1" }
+bnto-shell = { path = "crates/bnto-shell", version = "0.17.1" }
+bnto-engine = { path = "crates/bnto-engine", version = "0.17.1" }
+tonkotsu = { path = "crates/tonkotsu", version = "0.1.2" }
 wasm-bindgen = "0.2"
 js-sys = "0.3"
 web-sys = "0.3"
@@ -69,6 +84,13 @@ ctrlc = { version = "3", features = ["termination"] }
 # the Rust engine is the single source of truth for the `.bnto.json` shape.
 # Feature-gated via bnto-core's `ts` feature — zero cost in release builds.
 ts-rs = "12"
+# Text snapshots of rendered TUI screens (dev-only; ratatui's recommended
+# pairing with TestBackend). Review changes with `cargo insta review`.
+insta = { version = "1", features = ["filters"] }
+# TUI journey tests (dev-only): run the real `bnto tui` in a pseudo-terminal
+# (ConPTY on Windows) and read its screen through a VT100 emulator.
+portable-pty = "0.9"
+vt100 = "0.18"
 
 # --- Build Profiles ---
 

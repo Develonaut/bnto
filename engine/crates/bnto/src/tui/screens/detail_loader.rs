@@ -71,6 +71,8 @@ pub fn load_detail_from_entry(
                 PickerModel::from_slug(&entry.slug, &dir, registry, &entry.definition_json);
             (DetailFocus::Input, Some(picker))
         }
+        // Nothing to pick and nothing to set: Run is the only thing here.
+        _ if params.is_empty() => (DetailFocus::Run, None),
         InputMode::Url | InputMode::Text | InputMode::None => (DetailFocus::Params, None),
     };
 
@@ -89,6 +91,7 @@ pub fn load_detail_from_entry(
         input_mode,
         input_picker,
         viewport: tonkotsu::Viewport::new(),
+        revealed: None,
     })
 }
 
@@ -204,7 +207,8 @@ fn extract_input_param(node: &serde_json::Value, node_id: &str) -> Option<ParamE
     })
 }
 
-/// Extract surfaceable params from a single processor's metadata.
+/// Extract the params someone running the recipe sets (surfaceable run
+/// options) from a single processor's metadata.
 fn collect_params_from_processor(
     node_id: &str,
     node_params: &Option<&serde_json::Map<String, serde_json::Value>>,
@@ -212,7 +216,7 @@ fn collect_params_from_processor(
     params: &mut Vec<ParamEntry>,
 ) {
     for param_def in &processor.metadata().parameters {
-        if !param_def.surfaceable {
+        if !param_def.surfaceable || !param_def.run_option {
             continue;
         }
 
@@ -301,6 +305,7 @@ pub fn load_detail_from_json(json: &str, registry: &NodeRegistry) -> Result<Deta
         input_mode: InputMode::FileUpload,
         input_picker: None,
         viewport: tonkotsu::Viewport::new(),
+        revealed: None,
     })
 }
 
@@ -713,6 +718,35 @@ mod tests {
             model.params.iter().all(|p| p.node_id != "input"),
             "none mode must not surface an input control"
         );
+    }
+
+    #[test]
+    fn a_shell_recipe_without_fields_shows_no_program_params() {
+        // Like GitHub Actions' run form: a step's command isn't an option.
+        // The author declares fields for what the runner may change.
+        let json = r#"{"name": "S", "nodes": [
+            {"id": "proc", "type": "shell-run",
+             "parameters": {"command": "git", "args": ["status"]}}
+        ]}"#;
+        let model = load_detail_from_json(json, &registry()).unwrap();
+        let names: Vec<&str> = model.params.iter().map(|p| p.name.as_str()).collect();
+        assert!(names.is_empty(), "{names:?}");
+    }
+
+    #[test]
+    fn a_recipe_with_nothing_to_set_opens_on_run() {
+        let json = r#"{"name": "S", "nodes": [
+            {"id": "input", "type": "input", "parameters": {"mode": "none"}},
+            {"id": "proc", "type": "shell-run", "parameters": {"command": "git"}}
+        ]}"#;
+        let model = load_detail_from_entry(&entry_from_json("s", json), &registry(), None).unwrap();
+        assert_eq!(model.focus, DetailFocus::Run);
+    }
+
+    #[test]
+    fn a_recipe_without_fields_still_shows_its_processors_options() {
+        let model = load_detail("compress-images", &registry()).unwrap();
+        assert!(model.params.iter().any(|p| p.name == "quality"));
     }
 
     #[test]

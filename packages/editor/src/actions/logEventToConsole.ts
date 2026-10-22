@@ -53,6 +53,16 @@ const EVENT_HANDLERS: Record<string, (event: LoggableEvent) => void> = {
       (e as Extract<PipelineEvent, { type: "NodeFailed" }>).error,
     );
   },
+  NodeSkipped: (e) => {
+    const ev = e as Extract<PipelineEvent, { type: "NodeSkipped" }>;
+    logInfo(
+      "[bnto] -- [%s] Node %d/%d skipped — %s",
+      ev.nodeType,
+      ev.nodeIndex + 1,
+      ev.totalNodes,
+      ev.reason,
+    );
+  },
   PipelineCompleted: (e) => {
     const ev = e as Extract<PipelineEvent, { type: "PipelineCompleted" }>;
     logSuccess(

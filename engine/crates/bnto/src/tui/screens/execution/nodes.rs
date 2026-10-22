@@ -26,6 +26,12 @@ impl ExecutionModel {
         percent: u32,
         message: String,
     ) {
+        // Files run one after another, so one the run has moved past is done.
+        for earlier in 0..file_index.min(self.files.len()) {
+            if self.files[earlier].status == FileStatus::Processing {
+                self.settle_file(earlier, FileStatus::Done);
+            }
+        }
         if let Some(file) = self.files.get_mut(file_index) {
             file.percent = percent;
             file.status = FileStatus::Processing;
@@ -51,6 +57,28 @@ impl ExecutionModel {
     pub(super) fn fail_node(&mut self, node_id: &str, error: String) {
         if let Some(node) = self.node_mut(node_id) {
             node.status = NodeStatus::Failed(error);
+        }
+    }
+
+    /// Mark a node skipped. A container's child never started, so it's
+    /// added on first sight, like `start_child`.
+    pub(super) fn skip_node(
+        &mut self,
+        parent_id: Option<&str>,
+        node_id: String,
+        node_type: String,
+    ) {
+        let Some(parent_id) = parent_id else {
+            if let Some(node) = self.node_mut(&node_id) {
+                node.status = NodeStatus::Skipped;
+            }
+            return;
+        };
+        self.start_child(parent_id, node_id.clone(), node_type);
+        if let Some(parent) = self.node_mut(parent_id)
+            && let Some(child) = parent.children.iter_mut().find(|c| c.id == node_id)
+        {
+            child.status = NodeStatus::Skipped;
         }
     }
 
@@ -95,6 +123,32 @@ impl ExecutionModel {
         if let Some(node) = self.node_mut(node_id) {
             node.iteration = Some(iteration);
         }
+    }
+
+    /// Settle the file a per-file loop iteration ran on. Only when the loop
+    /// runs once per selected file; other loops don't map onto file rows.
+    pub(super) fn settle_iteration_file(
+        &mut self,
+        iteration: usize,
+        total: usize,
+        status: FileStatus,
+    ) {
+        if total != self.files.len() {
+            return;
+        }
+        if iteration < self.files.len() {
+            self.settle_file(iteration, status);
+        }
+    }
+
+    /// Finish file `index`: its status, and its name back in place of the
+    /// last progress message ("Compressing a.jpg..." reads wrong once done).
+    fn settle_file(&mut self, index: usize, status: FileStatus) {
+        let name = self.waiting_name(index);
+        let file = &mut self.files[index];
+        file.status = status;
+        file.percent = 100;
+        file.name = name;
     }
 
     /// Record a failed iteration. In continue mode the loop keeps going, so

@@ -6,6 +6,8 @@
 // 3. PARAMETERS section — form fields rendered by tonkotsu
 // 4. Run button — always present at the bottom
 
+use std::ops::Range;
+
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
@@ -14,10 +16,11 @@ use crate::trust;
 
 use super::app::AppModel;
 use super::render_layout::content_panel;
-use super::screens::detail::DetailFocus;
+use super::screens::detail::{DetailFocus, DetailModel};
 use super::screens::detail_bridge::BntoFormTheme;
 use super::theme::Theme;
 use super::widgets::file_list;
+use super::wrap_lines::wrap_lines;
 
 /// Render the recipe detail screen.
 pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -29,7 +32,7 @@ pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
         return;
     };
 
-    let lines = detail_lines(detail, theme);
+    let lines = wrap_lines(detail_lines(detail, theme), usize::from(inner.width));
     let scroll_offset = detail.viewport.offset();
     let content = Paragraph::new(lines).scroll((scroll_offset as u16, 0));
     frame.render_widget(content, inner);
@@ -55,11 +58,51 @@ pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, 
     }
 }
 
+/// Rows the detail screen's content takes in a terminal `term_width` wide,
+/// after wrapping: the viewport's scroll range.
+pub fn detail_content_height(detail: &DetailModel, theme: &Theme, term_width: u16) -> usize {
+    wrapped_rows(&detail_lines(detail, theme), content_width(term_width))
+}
+
+/// Rows the focused part of the screen spans after wrapping, in a terminal
+/// `term_width` wide: what to scroll into view when focus moves. Measured
+/// from the drawn lines, since a field's height depends on how its
+/// description wraps.
+pub fn detail_focus_rows(detail: &DetailModel, theme: &Theme, term_width: u16) -> Range<usize> {
+    let width = content_width(term_width);
+    match detail.focus {
+        // The input section sits under the recipe header: show both.
+        DetailFocus::Input => 0..1,
+        DetailFocus::Params => {
+            let form = form_lines(detail, theme);
+            let field =
+                tonkotsu::focused_field_lines(&detail.form, &BntoFormTheme(theme)).unwrap_or(0..0);
+            let start = wrapped_rows(&lead_lines(detail, theme), width)
+                + wrapped_rows(&form[..field.start], width);
+            start..start + wrapped_rows(&form[field], width)
+        }
+        DetailFocus::Run => {
+            let rows = detail_content_height(detail, theme, term_width);
+            rows.saturating_sub(1)..rows
+        }
+    }
+}
+
+fn content_width(term_width: u16) -> usize {
+    usize::from(super::render_layout::panel_inner_width(term_width))
+}
+
 /// Build the lines for the detail screen content.
-fn detail_lines<'a>(
-    detail: &'a super::screens::detail::DetailModel,
-    theme: &Theme,
-) -> Vec<Line<'a>> {
+fn detail_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
+    let mut lines = lead_lines(detail, theme);
+    lines.extend(form_lines(detail, theme));
+    lines.extend(run_lines(detail, theme));
+    lines
+}
+
+/// Everything above the form's fields: the recipe header, the input
+/// section, and the PARAMETERS heading.
+fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 
     // Recipe header — trust badge from catalog source.
@@ -145,19 +188,24 @@ fn detail_lines<'a>(
         };
         lines.push(Line::from(Span::styled("  PARAMETERS", section_style)));
         lines.push(Line::from(""));
+    }
+    lines
+}
 
-        // Delegate field rendering to tonkotsu, then indent to match container padding.
-        let form_theme = BntoFormTheme(theme);
-        let form_lines = tonkotsu::render_form(&detail.form, &form_theme);
-        for line in form_lines {
+/// The form's fields, rendered by tonkotsu and indented to the panel padding.
+fn form_lines(detail: &DetailModel, theme: &Theme) -> Vec<Line<'static>> {
+    tonkotsu::render_form(&detail.form, &BntoFormTheme(theme))
+        .into_iter()
+        .map(|line| {
             let mut spans = vec![Span::raw("  ")];
             spans.extend(line.spans);
-            lines.push(Line::from(spans));
-        }
-    }
+            Line::from(spans)
+        })
+        .collect()
+}
 
-    // "Run" action — always present, focusable at the bottom
-    lines.push(Line::from(""));
+/// The "Run" action — always present, focusable at the bottom.
+fn run_lines(detail: &DetailModel, theme: &Theme) -> Vec<Line<'static>> {
     let on_run = detail.is_run_focused();
     let marker = if on_run { "▸ " } else { "  " };
     let style = if on_run {
@@ -165,7 +213,13 @@ fn detail_lines<'a>(
     } else {
         theme.text()
     };
-    lines.push(Line::from(Span::styled(format!("  {marker}Run →"), style)));
+    vec![
+        Line::from(""),
+        Line::from(Span::styled(format!("  {marker}Run →"), style)),
+    ]
+}
 
-    lines
+/// How many rows `lines` take once wrapped to `width`.
+fn wrapped_rows(lines: &[Line<'_>], width: usize) -> usize {
+    wrap_lines(lines.to_vec(), width).len()
 }

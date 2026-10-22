@@ -7,7 +7,8 @@
 //   DO_NOT_TRACK=1
 
 pub mod bucket;
-mod ci;
+pub mod choice;
+pub(crate) mod ci;
 mod client;
 pub mod config;
 mod consent;
@@ -18,6 +19,8 @@ use std::sync::OnceLock;
 
 use config::TelemetryConfig;
 use events::Event;
+
+use crate::storage::paths::BntoPaths;
 
 /// Global telemetry state, initialized once via `init()`.
 struct TelemetryState {
@@ -30,18 +33,24 @@ static STATE: OnceLock<TelemetryState> = OnceLock::new();
 
 /// Initialize telemetry. Call once early in `main()`.
 ///
-/// Loads config, shows consent on first run, checks env vars.
+/// Loads config, shows consent on first run, checks env vars. The on/off
+/// choice comes from `paths`' config.toml; without a bnto home it falls
+/// back to what telemetry.json still says.
 /// Safe to call multiple times — only the first call takes effect.
-pub fn init() {
+pub fn init(paths: Option<&BntoPaths>) {
     STATE.get_or_init(|| {
         let mut config = TelemetryConfig::load();
+        let chosen = match paths {
+            Some(paths) => choice::settle(paths, &mut config),
+            None => config.legacy_enabled.unwrap_or(true),
+        };
+
+        // Env opt-out also suppresses the first-run notice.
+        let env_disabled = is_env_disabled();
 
         // First-run consent — returns false on the notice invocation.
-        let consent_active = consent::handle_consent(&mut config);
-
-        // Check env var overrides.
-        let env_disabled = is_env_disabled();
-        let active = compute_active(consent_active, config.enabled, env_disabled);
+        let consent_active = consent::handle_consent(&mut config, env_disabled);
+        let active = compute_active(consent_active, chosen, env_disabled);
 
         // Read API key from env (write-only key, safe to embed).
         let api_key = std::env::var("BNTO_POSTHOG_KEY").unwrap_or_default();
@@ -99,31 +108,34 @@ fn compute_active(consent_active: bool, config_enabled: bool, env_disabled: bool
     consent_active && config_enabled && !env_disabled
 }
 
-/// Enable or disable telemetry, persisting the choice to config.
-pub fn set_enabled(enabled: bool) {
+/// Enable or disable telemetry: save the choice to config.toml, and count
+/// it as having seen the notice.
+pub fn set_enabled(paths: &BntoPaths, enabled: bool) -> std::io::Result<()> {
+    choice::set(paths, enabled)?;
     let mut config = TelemetryConfig::load();
-    config.enabled = enabled;
     config.consent_shown = true;
     let _ = config.save();
+    Ok(())
 }
 
 /// Print current telemetry status to stderr.
-pub fn print_status() {
-    let config = TelemetryConfig::load();
+pub fn print_status(paths: &BntoPaths) {
+    let mut config = TelemetryConfig::load();
+    let chosen = choice::settle(paths, &mut config);
     let env_disabled = is_env_disabled();
 
     eprintln!("Telemetry status:");
-    eprintln!("  Config enabled: {}", config.enabled);
+    eprintln!("  Config enabled: {chosen}");
     eprintln!("  Consent shown:  {}", config.consent_shown);
     eprintln!("  Env disabled:   {env_disabled}");
     eprintln!(
         "  Effective:      {}",
-        config.enabled && !env_disabled && config.consent_shown
+        chosen && !env_disabled && config.consent_shown
     );
     eprintln!("  Anonymous ID:   {}", config.anonymous_id);
-
+    eprintln!("  Config file:    {}", paths.config_file().display());
     if let Some(path) = config::config_path() {
-        eprintln!("  Config file:    {}", path.display());
+        eprintln!("  State file:     {}", path.display());
     }
 }
 
@@ -161,36 +173,27 @@ mod tests {
         assert!(!compute_active(false, false, true));
     }
 
-    // --- set_enabled persistence: toggling off actually persists ---
+    // --- set_enabled: the choice lands in config.toml ---
 
     #[test]
-    fn set_enabled_false_persists_to_config() {
+    fn set_enabled_writes_config_toml() {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("bnto").join("telemetry.json");
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-
-        // Write an enabled config.
-        let config = TelemetryConfig {
-            enabled: true,
-            anonymous_id: "test-id".into(),
-            consent_shown: true,
+        let paths = BntoPaths {
+            home: dir.path().to_path_buf(),
         };
-        let json = serde_json::to_string_pretty(&config).unwrap();
-        std::fs::write(&path, &json).unwrap();
+        paths.ensure_dirs().unwrap();
+        set_enabled(&paths, false).unwrap();
+        let config = crate::storage::config::TomlConfig::load(&paths);
+        assert!(!config.telemetry.enabled);
+    }
 
-        // Modify it to disabled.
-        let mut loaded: TelemetryConfig =
-            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
-        loaded.enabled = false;
-        loaded.consent_shown = true;
-        let json = serde_json::to_string_pretty(&loaded).unwrap();
-        std::fs::write(&path, &json).unwrap();
-
-        // Re-load and verify.
-        let reloaded: TelemetryConfig =
-            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
-        assert!(!reloaded.enabled, "disabled config should persist");
-        assert!(reloaded.consent_shown);
+    #[test]
+    fn an_old_telemetry_json_choice_is_read_but_never_written_back() {
+        let old = r#"{"enabled":false,"anonymous_id":"id","consent_shown":true}"#;
+        let config: TelemetryConfig = serde_json::from_str(old).unwrap();
+        assert_eq!(config.legacy_enabled, Some(false));
+        let saved = serde_json::to_string(&config).unwrap();
+        assert!(!saved.contains("enabled"), "{saved}");
     }
 
     #[test]

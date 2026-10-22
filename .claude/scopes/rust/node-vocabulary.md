@@ -167,6 +167,22 @@ The label is the verb in title case, then what it acts on, plural: **Verb Object
 
 ---
 
+## Node Keys
+
+Keys on the node object itself, beside `id` / `type` / `parameters`, belong to the engine, not the processor. They apply to every node type, so they never go in `parameters`.
+
+| Key      | Type / values                                                                     | Meaning                                                                                                                                                          |
+| -------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `always` | boolean, default `false`                                                          | Closing step: runs even after an earlier step failed ([engine-execution.md](../../strategy/engine-execution.md#closing-steps-always))                            |
+| `when`   | `{ value, op, expected }`, `op` = `equals` \| `not-equals` \| `after` \| `before` | Guard: the step runs only when the comparison holds, else it's skipped and its files pass through ([conditional-steps.md](../../decisions/conditional-steps.md)) |
+
+Rules:
+
+- **A new node key is a decision**, recorded in `.claude/decisions/`. Prefer a param when only one node type needs it.
+- **Comparison words are shared** with `assert`. A new op goes in `bnto-core/src/compare.rs` and works in both.
+
+---
+
 ## Shared Params
 
 When two nodes need the same idea, they use the same param name, type and values. Check this table before naming a param, and add to it when a second node needs a new one.

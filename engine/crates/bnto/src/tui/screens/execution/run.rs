@@ -17,12 +17,27 @@ impl ExecutionModel {
         self.status = ExecutionStatus::Running;
         self.files = (0..total_files)
             .map(|i| FileProgress {
-                name: format!("file {}", i + 1),
+                name: self.waiting_name(i),
                 percent: 0,
                 status: FileStatus::Waiting,
             })
             .collect();
         self.nodes = initial_nodes(total_nodes, node_info);
+        for node in &mut self.nodes {
+            node.children = super::plan::container_steps(&self.definition_json, &node.id)
+                .into_iter()
+                .map(|(id, node_type)| NodeProgress::new(id, node_type, NodeStatus::Pending))
+                .collect();
+        }
+    }
+
+    /// The `i`th selected file's name, or "file N" when it isn't known.
+    pub(super) fn waiting_name(&self, i: usize) -> String {
+        self.selected_files
+            .get(i)
+            .and_then(|path| path.file_name())
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_else(|| format!("file {}", i + 1))
     }
 
     /// Mark the pipeline complete and every unfinished file as done.

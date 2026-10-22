@@ -21,6 +21,18 @@ const ENTRY: BntoEntry = {
   fixture: "small.jpg",
   features: ["Lossless compression", "Batch processing"],
   category: "image",
+  name: "Compress Images",
+  runsInBrowser: true,
+};
+
+const CLI_ENTRY: BntoEntry = {
+  ...ENTRY,
+  slug: "keep-awake",
+  title: "Keep Awake from Your Terminal, Free -- bnto",
+  h1: "Keep Awake from Your Terminal",
+  name: "Keep Awake",
+  category: "system",
+  runsInBrowser: false,
 };
 
 const PAGE_URL = "https://bnto.io/compress-images";
@@ -36,6 +48,17 @@ describe("buildWebAppSchema", () => {
     expect(schema.url).toBe(PAGE_URL);
     expect(schema.offers).toEqual({ "@type": "Offer", price: "0", priceCurrency: "USD" });
     expect(schema.featureList).toEqual(ENTRY.features);
+  });
+});
+
+describe("buildWebAppSchema for a CLI-only recipe", () => {
+  it("describes software, not a web app needing a browser", () => {
+    const schema: Record<string, unknown> = buildWebAppSchema(CLI_ENTRY, PAGE_URL);
+
+    expect(schema["@type"]).toBe("SoftwareApplication");
+    expect(schema).not.toHaveProperty("browserRequirements");
+    expect(schema).not.toHaveProperty("operatingSystem");
+    expect(schema.offers).toEqual({ "@type": "Offer", price: "0", priceCurrency: "USD" });
   });
 });
 

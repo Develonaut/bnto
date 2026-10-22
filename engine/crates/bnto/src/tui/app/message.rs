@@ -31,6 +31,8 @@ pub enum AppMessage {
     RunAnother,
     /// Open the settings screen.
     OpenSettings,
+    /// A newer bnto release is out (from the update check).
+    UpdateAvailable(String),
     /// User selected a new theme in settings.
     ThemeChanged(ThemeVariant),
     /// User toggled telemetry on/off in settings.

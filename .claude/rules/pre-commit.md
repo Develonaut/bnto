@@ -103,6 +103,14 @@ cd apps/web && pnpm exec playwright test --update-snapshots && pnpm exec playwri
 
 **Intermittent "01 Issue" hydration failures** are known (PopoverTrigger `asChild` SSR mismatch). If the only failures are "01 Issue" overlay detections with zero screenshot mismatches, that's acceptable.
 
+### Did you touch the TUI?
+
+**If you changed anything under `engine/crates/bnto/src/tui/`** (or tonkotsu, which the TUI renders with), run `task tui:test`. It runs the screen snapshots and the journeys that drive the real `bnto tui` in a pseudo-terminal, and the CI Gate runs the same on every PR.
+
+- A snapshot diff you meant: `task tui:snapshots:update`, review every changed `.snap` with `git diff`, then re-run `task tui:test` clean (the web's two-pass rule).
+- New screen or state: add it to `screens()` in `tui/screen_snapshots.rs`. New flow: add a journey to `tests/tui_journeys.rs` and a row to [journeys/tui.md](../journeys/tui.md).
+- Never point a journey at a real `~/.bnto`. The harness sandboxes every home dir.
+
 ### Did you touch UI?
 
 **If yes -- you MUST write or update e2e tests.** Use programmatic assertions for execution flows (magic bytes, file sizes, data attributes). Use screenshots only for page-level layout verification.

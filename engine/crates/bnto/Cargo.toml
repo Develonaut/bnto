@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto"
-version = "0.2.0"
+version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 description = "CLI for running .bnto.json recipes — compress images, clean CSVs, rename files"
@@ -20,11 +20,11 @@ name = "bnto"
 path = "src/main.rs"
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.2.0" }
-bnto-engine = { path = "../bnto-engine", version = "0.2.0", features = ["native"] }
-bnto-file = { path = "../bnto-file", version = "0.2.0" }
-bnto-shell = { path = "../bnto-shell", version = "0.2.0" }
-tonkotsu = { path = "../tonkotsu", version = "0.1.1" }
+bnto-core = { workspace = true }
+bnto-engine = { workspace = true, features = ["native"] }
+bnto-file = { workspace = true }
+bnto-shell = { workspace = true }
+tonkotsu = { workspace = true }
 clap = { workspace = true }
 colored = { workspace = true }
 crossterm = { workspace = true }
@@ -54,5 +54,8 @@ windows-sys = { workspace = true, features = [
 ] }
 
 [dev-dependencies]
+insta = { workspace = true }
+portable-pty = { workspace = true }
+vt100 = { workspace = true }
 csv = { workspace = true }
 filetime = { workspace = true }

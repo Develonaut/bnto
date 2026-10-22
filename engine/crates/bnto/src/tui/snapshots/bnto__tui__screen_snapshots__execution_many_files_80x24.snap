@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ R U N N I N G ───────────────────────────────────────────────────╮
+      │  Running  0ms                                                    │
+      │                                                                  │
+      │  STEPS                                                           │
+      │  ◉ image-compress (12/20)                                        │
+      │                                                                  │
+      │  FILES 12/20 · ◉ Compressing photo12.jpg... 50%                  │
+      │  OUTPUT                                                          │
+      │  Compressing JPEG (quality: 80)...                               │
+      │                                                                  │
+      │                                                                  │
+      │                                                                  │
+      │                                                                  │
+      ╰──────────────────────────────────────────────────────────────────╯
+      Esc cancel  Enter continue    22 recipes  ·  v[version]  ·  Los Angeles

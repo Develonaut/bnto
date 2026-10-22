@@ -42,6 +42,8 @@ tasks:
       - task: wasm:test
       - echo "=== cli tests ==="
       - task: cli:test
+      - echo "=== tui snapshots + journeys ==="
+      - task: tui:test
       - echo "=== typescript build ==="
       - task: ui:build
       - echo "=== typescript tests ==="
@@ -99,6 +101,25 @@ tasks:
     dir: ./engine
     cmds:
       - BLESS=1 cargo test --package bnto -- golden
+
+  tui:test:
+    desc: TUI checks — screen snapshots + journeys in a real pseudo-terminal
+    dir: ./engine
+    cmds:
+      - cargo test --package bnto --bin bnto screen_snapshots
+      - cargo test --package bnto --test tui_journeys
+
+  tui:snapshots:
+    desc: Check TUI screen snapshots (engine/crates/bnto/src/tui/snapshots)
+    dir: ./engine
+    cmds:
+      - cargo test --package bnto --bin bnto screen_snapshots
+
+  tui:snapshots:update:
+    desc: Rewrite TUI screen snapshots from current output (review with git diff)
+    dir: ./engine
+    cmds:
+      - INSTA_UPDATE=always cargo test --package bnto --bin bnto screen_snapshots
 
   # Documentation validation
   docs:validate:
@@ -337,6 +358,11 @@ tasks:
       - find .turbo -type f -mtime +7 -delete 2>/dev/null; find .turbo -type d -empty -delete 2>/dev/null; echo "Pruned Turbo cache (entries older than 7 days)"
 
   # Release
+  version:bump:
+    desc: "Set the engine release version every bnto crate shares (e.g., task version:bump -- 0.17.0)"
+    cmds:
+      - ./scripts/bump-version.sh {{.CLI_ARGS}}
+
   release:tag:
     desc: "Create a release tag on main (e.g., task release:tag -- v1.0.0)"
     cmds:
@@ -349,6 +375,7 @@ tasks:
         echo "Tagging main as $TAG..."
         git checkout main
         git pull origin main
+        ./scripts/check-release-version.sh "$TAG"
         git tag "$TAG"
         git push origin "$TAG"
         echo "Tag $TAG pushed. Release workflow will start shortly."

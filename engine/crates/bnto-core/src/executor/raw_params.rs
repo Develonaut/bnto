@@ -145,6 +145,19 @@ mod tests {
     }
 
     #[test]
+    fn a_guard_that_wont_hold_doesnt_hide_a_refused_step() {
+        // Checked before any guard is decided: a branch for another OS
+        // can't carry a bad step past pre-flight.
+        let ns = nodes(serde_json::json!([{
+            "id": "g", "type": "group",
+            "when": { "value": "a", "op": "equals", "expected": "b" },
+            "children": [{ "id": "p", "type": "picky", "parameters": { "secret": "{{fields.s}}" } }]
+        }]));
+        let err = check_raw_params(&ns, &registry()).unwrap_err().to_string();
+        assert!(err.contains("Node 'p'"), "{err}");
+    }
+
+    #[test]
     fn nested_nodes_and_unknown_types_are_walked() {
         let ns = nodes(serde_json::json!([{
             "id": "g", "type": "group",

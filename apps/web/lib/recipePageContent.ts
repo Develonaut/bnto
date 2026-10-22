@@ -11,7 +11,10 @@
  */
 
 import type { Recipe } from "@bnto/core";
+import { isRecipeBrowserCapable } from "@bnto/registry";
 import { CATEGORY_CONTENT } from "./categoryContent";
+import { CLI_RECIPE_FAQ } from "./cliRecipeFaq";
+import { getCliHowItWorks } from "./getCliHowItWorks";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,7 +76,7 @@ const RECIPE_FAQ: Record<string, QA[]> = {
 };
 
 // ---------------------------------------------------------------------------
-// Shared FAQ (applies to ALL recipes)
+// Shared FAQ (applies to ALL recipes), then browser- or CLI-specific answers
 // ---------------------------------------------------------------------------
 
 const SHARED_FAQ: QA[] = [
@@ -82,6 +85,9 @@ const SHARED_FAQ: QA[] = [
     answer:
       "Yes. No signup, no watermarks, no daily caps, no quality reduction. The engine runs on your machine, so it costs nothing to operate. All recipes are free and unlimited.",
   },
+];
+
+const BROWSER_FAQ: QA[] = [
   {
     question: "Are my files private?",
     answer:
@@ -100,6 +106,7 @@ const SHARED_FAQ: QA[] = [
 
 /** Build the 3-step "How it works" flow for a recipe. */
 export function getHowItWorks(recipe: Recipe): Step[] {
+  if (!isRecipeBrowserCapable(recipe)) return getCliHowItWorks(recipe);
   const categoryContent = CATEGORY_CONTENT[recipe.category];
   const processDescription =
     categoryContent?.processDescription ??
@@ -129,12 +136,13 @@ export function getFeatures(category: string): Feature[] {
 
 /**
  * Assemble FAQ items for a recipe page.
- * Order: recipe-specific (if any) -> category -> shared.
+ * Order: recipe-specific (if any) -> category -> shared -> browser or CLI.
  */
-export function getFaq(slug: string, category: string): QA[] {
+export function getFaq(slug: string, category: string, runsInBrowser: boolean): QA[] {
   const recipeSpecific = RECIPE_FAQ[slug] ?? [];
   const categoryFaq = CATEGORY_CONTENT[category]?.faq ?? [];
-  return [...recipeSpecific, ...categoryFaq, ...SHARED_FAQ];
+  const whereItRuns = runsInBrowser ? BROWSER_FAQ : CLI_RECIPE_FAQ;
+  return [...recipeSpecific, ...categoryFaq, ...SHARED_FAQ, ...whereItRuns];
 }
 
 // ---------------------------------------------------------------------------

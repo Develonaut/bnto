@@ -74,6 +74,24 @@ pub enum PipelineEvent {
         parent_node_id: Option<String>,
     },
 
+    /// Emitted instead of `NodeStarted` when a node's `when` guard doesn't
+    /// hold: the node never runs, and its input files pass through.
+    #[serde(rename_all = "camelCase")]
+    NodeSkipped {
+        /// The unique ID of the node (from the recipe definition).
+        node_id: String,
+        /// Position among its siblings, as in `NodeStarted`.
+        node_index: usize,
+        /// Number of sibling processing nodes, as in `NodeStarted`.
+        total_nodes: usize,
+        /// The type of node (e.g., "shell-run", "group").
+        node_type: String,
+        /// The container's ID when the node is inside one.
+        parent_node_id: Option<String>,
+        /// Why it was skipped: the guard and what it read.
+        reason: String,
+    },
+
     /// Emitted at the start of each loop iteration.
     /// Powers iteration count display (e.g., "3/15").
     #[serde(rename_all = "camelCase")]

@@ -5,7 +5,7 @@
 
 [package]
 name = "bnto-engine"
-version = "0.2.0"
+version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 description = "Shared engine — registry creation and pipeline convenience for all consumers"
@@ -20,12 +20,12 @@ categories = ["wasm"]
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.2.0" }
-bnto-spreadsheet = { path = "../bnto-spreadsheet", version = "0.2.0" }
-bnto-file = { path = "../bnto-file", version = "0.2.0" }
-bnto-image = { path = "../bnto-image", version = "0.2.0" }
-bnto-vector = { path = "../bnto-vector", version = "0.2.0" }
-bnto-shell = { path = "../bnto-shell", version = "0.2.0", optional = true }
+bnto-core = { workspace = true }
+bnto-spreadsheet = { workspace = true }
+bnto-file = { workspace = true }
+bnto-image = { workspace = true }
+bnto-vector = { workspace = true }
+bnto-shell = { workspace = true, optional = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]

@@ -81,6 +81,9 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | TUI controls polish (Bubbles)  | [tui-controls-bubbles.md](.claude/strategy/tui-controls-bubbles.md)             |
 | Power recipes / gap analysis   | [power-recipes.md](.claude/strategy/power-recipes.md)                           |
 | Cloud execution (Railway)      | [cloud-execution.md](.claude/strategy/cloud-execution.md)                       |
+| Keep Awake + conditional steps | [keep-awake-recipe.md](.claude/strategy/keep-awake-recipe.md) — PR tracker      |
+| CLI upgrade notices            | [cli-upgrade.md](.claude/strategy/cli-upgrade.md)                               |
+| TUI snapshots + journey tests  | [tui-testing.md](.claude/strategy/tui-testing.md)                               |
 
 ---
 
@@ -182,6 +185,7 @@ bnto run <recipe> [files...]  # Run a recipe against files
 bnto list                     # List available recipes
 bnto info <recipe>            # Show recipe details and dependencies
 bnto doctor                   # Check external dependencies (yt-dlp, etc.)
+bnto upgrade [--check]        # Install the newest release (cargo installs)
 bnto tui                      # Launch interactive TUI (recipe browser, file picker, execution)
 bnto tui --theme tokyo        # TUI with dark theme (los-angeles | tokyo | monaco)
 

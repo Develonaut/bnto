@@ -80,11 +80,36 @@ pub fn builtin_recipe_by_slug(slug: &str) -> Option<BuiltinRecipe> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bnto_core::PipelineDefinition;
+    use bnto_core::{HostPlatform, PipelineDefinition};
 
     #[test]
     fn test_builtin_recipes_count() {
         assert_eq!(builtin_recipes().len(), 22);
+    }
+
+    #[test]
+    fn every_bundled_dependency_installs_on_every_os() {
+        // `bnto doctor` checks every recipe's `requires` on every host, so a
+        // dependency with no install route somewhere fails doctor there for
+        // good. Relax this once `requires` can be scoped to an OS.
+        let oses = [
+            HostPlatform::MacOs,
+            HostPlatform::Linux,
+            HostPlatform::Windows,
+        ];
+        for recipe in builtin_recipes() {
+            let def: PipelineDefinition = serde_json::from_str(recipe.definition_json).unwrap();
+            for dep in &def.requires {
+                for os in oses {
+                    assert!(
+                        dep.install_hints.for_platform(os).is_some(),
+                        "{} needs {}, which has no install hint for {os:?}",
+                        recipe.slug,
+                        dep.binary
+                    );
+                }
+            }
+        }
     }
 
     #[test]

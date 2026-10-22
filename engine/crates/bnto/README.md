@@ -16,6 +16,23 @@ The detail screen renders type-aware controls for recipe parameters: boolean tog
 cargo install bnto
 ```
 
+### Updates
+
+Once a day, bnto checks crates.io's public index for a newer release and, when there is one, says so on stderr before a command runs:
+
+```
+bnto 0.17.0 is available (you have 0.16.1). Run `bnto upgrade`.
+```
+
+To install it, run `bnto upgrade`. For a `cargo install` it reruns `cargo install bnto --locked`. Any other install gets told how to upgrade instead of a guess. `bnto upgrade --check` only reports.
+
+The check runs in a detached background process, so no command waits on it, and it sends nothing about you. It's off in CI and when stderr isn't a terminal. To turn it off, set `BNTO_NO_UPDATE_CHECK=1` or add this to `~/.bnto/config.toml`:
+
+```toml
+[updates]
+check = false
+```
+
 ## Usage
 
 ```bash
@@ -105,14 +122,16 @@ A recipe can limit its whole run with `"settings": { "timeout": <seconds> }` (a 
 }
 ```
 
-| Field              | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `status`           | `"pass"` or `"fail"`                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `files_written`    | Files the output step wrote, or renamed in place in overwrite mode; `0` for `message` / `none` output and on a failure. On `--dry-run`, the files that would be written                                                                                                                                                                                                                                                    |
-| `duration_ms`      | Pipeline time on a pass; time since the run started on a failure                                                                                                                                                                                                                                                                                                                                                           |
-| `nodes`            | Top-level processing nodes in pipeline order: `id`, `node_type`, `files_processed` summed over every time the node ran (nodes inside a container count toward the container), and `metadata`, the node's output record as `{{node.<id>.*}}` reads it at the end of the run. A node that never finished shows `0` and `{}`                                                                                                  |
-| `nodes[].metadata` | What the node reported, as a JSON object; `{}` when it reported nothing (a container's own entry is always `{}`). Keys its processor declares as counts are totals for the whole node, e.g. file-copy in `newer` mode reports `copied`, `up_to_date` and `skipped_newer` (on `--dry-run`, `copied` counts the files that would be copied); other keys hold the last file's value. A failed run reports `{}` for every node |
-| `error`            | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass                                                                                                                                                                                                                                                                          |
+| Field                 | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `status`              | `"pass"` or `"fail"`                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `files_written`       | Files the output step wrote, or renamed in place in overwrite mode; `0` for `message` / `none` output and on a failure. On `--dry-run`, the files that would be written                                                                                                                                                                                                                                                    |
+| `duration_ms`         | Pipeline time on a pass; time since the run started on a failure                                                                                                                                                                                                                                                                                                                                                           |
+| `nodes`               | Top-level processing nodes in pipeline order: `id`, `node_type`, `files_processed` summed over every time the node ran (nodes inside a container count toward the container), and `metadata`, the node's output record as `{{node.<id>.*}}` reads it at the end of the run. A node that never finished shows `0` and `{}`                                                                                                  |
+| `nodes[].metadata`    | What the node reported, as a JSON object; `{}` when it reported nothing (a container's own entry is always `{}`). Keys its processor declares as counts are totals for the whole node, e.g. file-copy in `newer` mode reports `copied`, `up_to_date` and `skipped_newer` (on `--dry-run`, `copied` counts the files that would be copied); other keys hold the last file's value. A failed run reports `{}` for every node |
+| `nodes[].skip_reason` | Only on a node its `when` guard skipped: why, e.g. `when {{ctx.platform}} equals macos: got "linux", expected "macos"`. A skipped node processed no files and reported nothing                                                                                                                                                                                                                                             |
+| `error`               | The failure message (the text after `Pipeline failed:`, `Error writing output:`, `Error reading recipe:` or `Error:` on stderr); `null` on a pass                                                                                                                                                                                                                                                                          |
+| `message`             | Only on a `message`-mode run whose output reads as text: that text, e.g. keep-awake's `"No active session."`. stderr prints it under the output node's label (`Session Log:`) above the `Done.` line. Left out when the output is binary, empty or over 64 KiB; the `Done.` line then lists the output file names                                                                                                          |
 
 A run declined at the shell-run consent prompt prints no JSON line; pass `--yes` when scripting.
 
@@ -169,6 +188,7 @@ src/
 +-- run_limit.rs           # A run's time limit: the recipe's settings.timeout or `--timeout`
 +-- run_watchdog.rs        # Kills a run's child processes once its time limit passes (run, TUI, dry-run preview)
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
++-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
 +-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)

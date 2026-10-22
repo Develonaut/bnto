@@ -174,6 +174,7 @@ mod tests {
             edges: vec![],
             fields: Default::default(),
             always: false,
+            when: None,
         }
     }
 

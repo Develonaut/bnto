@@ -7,10 +7,11 @@ Tag-triggered release pipeline. Tag a commit on `main`, CI deploys a Vercel prev
 ## How to Cut a Release
 
 ```bash
-task release:tag -- v1.0.0
+task version:bump -- 1.0.0   # in a PR: sets the version every bnto crate shares
+task release:tag -- v1.0.0   # after that PR merges
 ```
 
-This checks out `main`, pulls latest, creates the tag, and pushes it. The release workflow starts automatically.
+`release:tag` checks out `main`, pulls latest, refuses a stable tag that doesn't match the engine release version, creates the tag, and pushes it. The release workflow starts automatically.
 
 **Manual alternative:**
 
@@ -74,6 +75,16 @@ Follow [semver](https://semver.org/):
 - **PATCH** — Bug fixes, performance improvements, dependency updates
 
 Pre-1.0 (`v0.x.y`): minor = features, patch = fixes. Breaking changes are expected.
+
+### One number everywhere
+
+The release tag, the bnto crates on crates.io, `bnto --version` and the site's install demo all show the same version. (Decided October 21, 2026. Before that, tags versioned the site and the crates were bumped by hand: v0.16.0 shipped the site while crates.io stayed on 0.2.0.)
+
+- **Source:** `[workspace.package] version` in `engine/Cargo.toml`. Every `bnto*` crate sets `version.workspace = true` and depends on its siblings through `[workspace.dependencies]` (enforced by `bnto-engine/tests/workspace_versions.rs`). tonkotsu, a standalone widget library, keeps its own version.
+- **Bump:** `task version:bump -- X.Y.Z` (`scripts/bump-version.sh`) rewrites the workspace version and the sibling dependency versions, then refreshes `Cargo.lock`. Bump in its own PR before tagging.
+- **Guard:** `scripts/check-release-version.sh` fails a stable tag that doesn't match. It runs in `task release:tag` and as the release workflow's first step, so crates.io can't silently skip a release ("already exists"). Pre-release tags aren't checked; they don't publish crates.
+- **Crates with their own version (tonkotsu).** They don't move with `task version:bump`. When one changes, bump its `version` in its own `Cargo.toml` and in `engine/Cargo.toml` `[workspace.dependencies]`, in the same PR. `scripts/check-own-version-crates.sh` fails CI (the Crate Publish List job) and the release when such a crate's packaged files differ from the version crates.io already has. v0.17.0 shipped without this: tonkotsu gained `focused_field_lines` under 0.1.1, the release skipped it as already published, and `bnto` 0.17.0 failed to build against the published tonkotsu, so only the library crates reached crates.io. v0.17.1 bumped tonkotsu to 0.1.2.
+- **Every release ships web and CLI together.** A recipe, node or page that isn't ready for bnto.io stays behind a feature flag ([feature-flags.md](../web/feature-flags.md)) rather than waiting for a separate web release.
 
 ---
 

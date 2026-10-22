@@ -20,8 +20,11 @@ use super::app_helpers::{
     handle_settings_path_confirmed, handle_telemetry_toggled, handle_theme_changed, handle_wizard,
     handle_wizard_form,
 };
+mod detail_entry;
 mod init;
 mod message;
+#[cfg(test)]
+mod shadowed_recipe_tests;
 
 use super::screens::browser::{BrowserModel, update as browser_update};
 use super::screens::detail::{DetailFocus, DetailModel};
@@ -108,6 +111,8 @@ pub struct AppModel {
     pub paths: BntoPaths,
     /// Transient status bar message (e.g. "Settings saved" or "Failed to save").
     pub status_message: Option<String>,
+    /// "bnto 0.17.0 available, run bnto upgrade" when a newer release is out.
+    pub update_notice: Option<String>,
     /// Which settings field opened the picker (None = normal recipe picker).
     pub settings_picker_field: Option<String>,
     /// Param overrides from detail screen, carried through picker to execution.
@@ -217,6 +222,10 @@ fn update_screen_models(model: AppModel, msg: AppMessage) -> AppModel {
 fn update_authoring(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::OpenSettings => handle_open_settings(model),
+        AppMessage::UpdateAvailable(notice) => AppModel {
+            update_notice: Some(notice),
+            ..model
+        },
         AppMessage::Settings(msg) => {
             let settings = model.settings.map(|s| settings_update(s, msg));
             AppModel { settings, ..model }
@@ -281,6 +290,7 @@ fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tui::screens::size_change::SizeChange;
     use bnto_core::InputMode;
 
     /// Build test paths in a unique temp directory.
@@ -1019,7 +1029,10 @@ mod tests {
         assert_eq!(results.total_time_ms, 800);
         assert_eq!(results.output_dir, Some("/out".into()));
         assert!(results.savings.is_some(), "savings computed from sizes");
-        assert_eq!(results.savings.as_ref().unwrap().percent(), 60);
+        assert_eq!(
+            results.savings.as_ref().unwrap().change(),
+            Some(SizeChange::Smaller(60))
+        );
         assert!(app.execution.is_none(), "execution cleared");
 
         // Results → Browser via RunAnother

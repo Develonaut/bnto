@@ -6,24 +6,40 @@
 use bnto_core::PipelineNode;
 use serde_json::{Map, Value};
 
-/// One line per shell step, in recipe order, without repeats.
+/// One line per shell step, in recipe order, without repeats. A step
+/// that runs only when `when` guards hold (its own or its containers')
+/// says so: consent covers every branch, whichever this machine takes.
 pub fn shell_command_lines(nodes: &[PipelineNode]) -> Vec<String> {
     let mut lines = Vec::new();
-    collect(nodes, &mut lines);
+    collect(nodes, &[], &mut lines);
     lines
 }
 
-fn collect(nodes: &[PipelineNode], lines: &mut Vec<String>) {
+fn collect(nodes: &[PipelineNode], guards: &[String], lines: &mut Vec<String>) {
     for node in nodes {
+        let mut guards = guards.to_vec();
+        guards.extend(node.when.as_ref().map(|w| w.describe()));
         if node.node_type == bnto_shell::NODE_TYPE
-            && let Some(line) = command_line(&node.params)
+            && let Some(line) = command_line(&node.params).map(|l| with_guards(l, &guards))
             && !lines.contains(&line)
         {
             lines.push(line);
         }
         if let Some(children) = &node.children {
-            collect(children, lines);
+            collect(children, &guards, lines);
         }
+    }
+}
+
+/// `line` with `  (when a, b)` after its first row, above any script.
+fn with_guards(line: String, guards: &[String]) -> String {
+    if guards.is_empty() {
+        return line;
+    }
+    let note = format!("  (when {})", guards.join(", "));
+    match line.split_once('\n') {
+        Some((first, rest)) => format!("{first}{note}\n{rest}"),
+        None => format!("{line}{note}"),
     }
 }
 
@@ -143,6 +159,46 @@ mod tests {
             shell_command_lines(&ns),
             [
                 "bash -c <script> bnto {{fields.v}}\n      script:\n        set -eu\n        printf '%s' \"$1\""
+            ]
+        );
+    }
+
+    #[test]
+    fn guarded_steps_are_listed_whether_or_not_their_guard_holds() {
+        // Consent covers every command the recipe could run (SEC-16).
+        let ns = nodes(serde_json::json!([
+            { "id": "a", "type": "shell-run", "parameters": { "command": "caffeinate" },
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" } },
+            { "id": "g", "type": "group",
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "linux" },
+              "children": [
+                { "id": "b", "type": "shell-run", "parameters": { "command": "systemd-inhibit" } }
+            ] }
+        ]));
+        assert_eq!(
+            shell_command_lines(&ns),
+            [
+                "caffeinate  (when {{ctx.platform}} equals macos)",
+                "systemd-inhibit  (when {{ctx.platform}} equals linux)",
+            ]
+        );
+    }
+
+    #[test]
+    fn nested_guards_all_show_and_sit_above_a_script() {
+        let ns = nodes(serde_json::json!([
+            { "id": "g", "type": "group",
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" },
+              "children": [
+                { "id": "s", "type": "shell-run",
+                  "when": { "value": "{{fields.action}}", "op": "equals", "expected": "start" },
+                  "parameters": { "shell": "bash", "script": "echo hi" } }
+            ] }
+        ]));
+        assert_eq!(
+            shell_command_lines(&ns),
+            [
+                "bash -c <script> bnto  (when {{ctx.platform}} equals macos, {{fields.action}} equals start)\n      script:\n        echo hi"
             ]
         );
     }

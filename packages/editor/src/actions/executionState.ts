@@ -12,7 +12,9 @@ import type { ExecutionState, NodeExecutionStatus } from "../store/types";
 /**
  * Map a pipeline event to the next execution state.
  *
- * Only NodeStarted, NodeCompleted, and NodeFailed change state.
+ * Only NodeStarted, NodeCompleted, NodeFailed and NodeSkipped change state.
+ * A skipped node never ran, so it settles to "idle", like a node the run
+ * didn't reach.
  * Other events (FileProgress, PipelineStarted/Completed) are
  * informational and don't affect node status.
  */
@@ -24,6 +26,8 @@ function applyPipelineEvent(current: ExecutionState, event: PipelineEvent): Exec
       return { ...current, [event.nodeId]: "completed" };
     case "NodeFailed":
       return { ...current, [event.nodeId]: "failed" };
+    case "NodeSkipped":
+      return { ...current, [event.nodeId]: "idle" };
     default:
       return current;
   }

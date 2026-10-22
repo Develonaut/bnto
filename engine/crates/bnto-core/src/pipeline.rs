@@ -112,6 +112,13 @@ pub struct PipelineNode {
     /// still fails with the first error. Defaults to false.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub always: bool,
+
+    /// A guard: the step runs only when this comparison holds. Otherwise it's
+    /// skipped and its input files pass through untouched. A skipped step
+    /// leaves no `{{node.<id>.*}}` record. A false `when` skips even an
+    /// `always` step.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub when: Option<crate::when::When>,
 }
 
 // =============================================================================

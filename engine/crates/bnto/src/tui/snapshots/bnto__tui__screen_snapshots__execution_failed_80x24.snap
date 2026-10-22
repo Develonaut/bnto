@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ R U N N I N G ───────────────────────────────────────────────────╮
+      │  Failed  0ms                                                     │
+      │                                                                  │
+      │  STEPS                                                           │
+      │  ✗ shell-run                                                     │
+      │                                                                  │
+      │  FILES 1/3 · ○ beach.jpg                                         │
+      │  Error: command exited with status 2                             │
+      │  OUTPUT                                                          │
+      │  fetching page 1...                                              │
+      │                                                                  │
+      │                                                                  │
+      │                                                                  │
+      ╰──────────────────────────────────────────────────────────────────╯
+      Esc cancel  Enter continue    22 recipes  ·  v[version]  ·  Los Angeles

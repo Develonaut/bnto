@@ -56,7 +56,7 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
             let clamped = idx.min(model.browser.recipes.len() - 1);
             let slug = model.browser.recipes[clamped].slug.clone();
             let start_dir = resolve_start_dir();
-            let entry = model.catalog.resolve(&slug);
+            let entry = DetailOrigin::Home.entry(&model.catalog, &slug);
             let detail =
                 entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
             AppModel {
@@ -91,6 +91,9 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
 }
 
 /// Route a form message to the detail screen's focus sections.
+///
+/// Only moves focus; the main loop's `fit_detail` scrolls the new focus
+/// into view, since that needs the terminal width.
 pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) -> AppModel {
     let detail = model.detail.map(|mut d| {
         use super::super::screens::detail::DetailFocus;
@@ -99,8 +102,6 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
             DetailFocus::Input => {
                 if matches!(msg, tonkotsu::FormMessage::FocusNext) {
                     d.focus = DetailFocus::Params;
-                    let line = d.estimate_section_line(DetailFocus::Params);
-                    d.viewport.ensure_visible(line);
                 }
             }
             DetailFocus::Params => {
@@ -111,24 +112,16 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
 
                 if at_last {
                     d.focus = DetailFocus::Run;
-                    let line = d.estimate_section_line(DetailFocus::Run);
-                    d.viewport.ensure_visible(line);
                 } else if at_first && d.input_picker.is_some() {
                     d.focus = DetailFocus::Input;
-                    d.viewport.go_to_top();
                 } else {
                     d.form = tonkotsu::update(d.form, msg);
                     detail_bridge::update_visibility(&mut d.form, &d.params);
-                    // Keep focused field visible after navigation
-                    let line = d.estimate_focused_field_line();
-                    d.viewport.ensure_visible(line);
                 }
             }
             DetailFocus::Run => {
                 if matches!(msg, tonkotsu::FormMessage::FocusPrev) {
                     d.focus = DetailFocus::Params;
-                    let line = d.estimate_focused_field_line();
-                    d.viewport.ensure_visible(line);
                 }
             }
         }
@@ -140,7 +133,7 @@ pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) ->
 /// Navigate to a recipe's detail screen from the browser.
 pub(crate) fn handle_recipe_selected(model: AppModel, slug: String) -> AppModel {
     let start_dir = resolve_start_dir();
-    let entry = model.catalog.resolve(&slug);
+    let entry = DetailOrigin::Browser.entry(&model.catalog, &slug);
     let detail = entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
     AppModel {
         screen: Screen::Detail {
@@ -229,12 +222,17 @@ pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
 
 /// Execution finished — transition to the results screen.
 pub(crate) fn handle_execution_complete(model: AppModel, slug: String) -> AppModel {
-    let (outputs, elapsed, output_dir) = model
-        .execution
-        .as_ref()
-        .map(|e| (e.output_files.clone(), e.elapsed_ms, e.output_dir.clone()))
-        .unwrap_or_default();
-    let results = Some(ResultsModel::new(&slug, outputs, elapsed, output_dir));
+    let results = model.execution.as_ref().map(|e| {
+        let log = e.output_lines.iter().cloned().collect();
+        ResultsModel::new(
+            &slug,
+            e.output_files.clone(),
+            e.elapsed_ms,
+            e.output_dir.clone(),
+        )
+        .with_report(e.message.clone(), log)
+    });
+    let results = results.or_else(|| Some(ResultsModel::new(&slug, Vec::new(), 0, None)));
     AppModel {
         screen: Screen::Results { slug },
         execution: None,
@@ -289,7 +287,7 @@ pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppMod
             _ => (String::new(), DetailOrigin::Home),
         };
         let start_dir = resolve_start_dir();
-        let entry = model.catalog.resolve(&slug);
+        let entry = from.entry(&model.catalog, &slug);
         let detail =
             entry.and_then(|e| load_detail_from_entry(e, &model.registry, Some(&start_dir)));
         return AppModel {

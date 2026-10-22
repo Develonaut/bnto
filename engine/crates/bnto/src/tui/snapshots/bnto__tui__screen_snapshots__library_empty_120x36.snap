@@ -1,0 +1,38 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+
+            ▄▄
+            ██           ██
+            ████▄ ████▄ ▀██▀▀ ▄███▄
+            ██ ██ ██ ██  ██   ██ ██
+            ████▀ ██ ██  ██   ▀███▀
+
+
+            ╭ L I B R A R Y ───────────────────────────────────────────────────────────────────────────────╮
+            │                                                                                              │
+            │  Your library is empty.                                                                      │
+            │                                                                                              │
+            │  Browse Recipes and press 'a' to add one.                                                    │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            │                                                                                              │
+            ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+            ↑↓ navigate  / search  Enter select  r rename  d delete   22 recipes  ·  v[version]  ·  Los Angeles

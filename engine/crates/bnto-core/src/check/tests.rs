@@ -349,6 +349,54 @@ fn test_always_on_an_io_node_is_reported() {
     assert!(findings[0].message.contains("always"), "{findings:?}");
 }
 
+// --- when ---
+
+#[test]
+fn test_a_valid_when_guard_passes() {
+    let findings = check(json!({ "nodes": [
+        { "id": "a", "type": "lenient",
+          "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" } },
+        { "id": "g", "type": "group",
+          "when": { "value": "{{ctx.platform}}", "op": "not-equals", "expected": "windows" },
+          "nodes": [{ "id": "c", "type": "lenient" }] }
+    ] }));
+    assert_eq!(findings, Vec::new());
+}
+
+#[test]
+fn test_a_when_with_an_unknown_op_is_reported() {
+    let findings = check(json!({ "nodes": [
+        { "id": "a", "type": "lenient",
+          "when": { "value": "x", "op": "is", "expected": "x" } }
+    ] }));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].node_id, "a");
+    assert_eq!(findings[0].param.as_deref(), Some("when"));
+    assert!(findings[0].message.contains("\"is\""), "{findings:?}");
+}
+
+#[test]
+fn test_when_on_an_io_node_is_reported() {
+    let findings = check(json!({ "nodes": [
+        { "id": "in", "type": "input",
+          "when": { "value": "x", "op": "equals", "expected": "x" } },
+        { "id": "a", "type": "lenient" }
+    ] }));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].node_id, "in");
+    assert!(findings[0].message.contains("when"), "{findings:?}");
+}
+
+#[test]
+fn test_a_malformed_placeholder_in_when_is_reported() {
+    let findings = check(json!({ "nodes": [
+        { "id": "a", "type": "lenient",
+          "when": { "value": "{{ctx.platform", "op": "equals", "expected": "macos" } }
+    ] }));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].param.as_deref(), Some("when"));
+}
+
 // --- Edges ---
 
 /// A root level `input`, `lenient` nodes `middle`, `output`, wired by

@@ -6,7 +6,9 @@
 pub mod app;
 mod app_helpers;
 mod bridge;
+mod detail_fit;
 pub mod event;
+mod file_window;
 pub mod format;
 mod keys;
 pub mod palette;
@@ -25,10 +27,13 @@ mod render_preview;
 mod render_results;
 mod render_wizard;
 pub mod screen;
+#[cfg(test)]
+mod screen_snapshots;
 pub mod screens;
 mod strip_ansi;
 pub mod theme;
 pub mod widgets;
+mod wrap_lines;
 
 use std::io;
 use std::sync::{Arc, mpsc};
@@ -133,6 +138,8 @@ fn run_loop(
         Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
         None => AppModel::new(variant, recipe_json, new_recipe),
     };
+    let (update_notice, mut update_rx) = crate::update_check::for_tui(&model.paths);
+    model.update_notice = update_notice;
     let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
     let mut execution_start: Option<Instant> = None;
     // The run's output folder and the names its iterations have written there.
@@ -146,16 +153,15 @@ fn run_loop(
     });
 
     loop {
-        let draw_start = Instant::now();
-        terminal.draw(|frame| {
-            let area = frame.area();
-            let theme = &model.theme;
-            let (logo_area, content_area, bottom_area) = render_layout::app_frame(area);
+        // Before drawing, so a key that moved focus shows it scrolled into view.
+        if matches!(model.screen, app::Screen::Detail { .. })
+            && let Some(detail) = &mut model.detail
+        {
+            detail_fit::fit_detail(detail, &model.theme, terminal.size()?);
+        }
 
-            render::draw_logo(frame, theme, logo_area);
-            render::draw_content(frame, &model, theme, content_area);
-            render::draw_bottom_bar(frame, &model, theme, bottom_area);
-        })?;
+        let draw_start = Instant::now();
+        terminal.draw(|frame| render::draw_frame(frame, &model))?;
         let draw_us = draw_start.elapsed().as_micros() as u64;
         if draw_us >= SLOW_FRAME_THRESHOLD_US {
             logger.log(LogEntry {
@@ -196,18 +202,10 @@ fn run_loop(
             }
         }
 
-        // Update detail viewport height from terminal size.
-        // Screen chrome: 2 (name/desc header + blank line).
-        if matches!(model.screen, app::Screen::Detail { .. }) {
-            let term_h = terminal.size()?.height;
-            let detail_height = render_layout::viewport_height(term_h, 2);
-            if detail_height > 0
-                && let Some(detail) = &mut model.detail
-            {
-                detail.viewport.set_height(detail_height);
-                let content_lines = detail.estimate_content_lines();
-                detail.viewport.set_content_height(content_lines);
-            }
+        // A background update check that finished mid-session.
+        if let Some(notice) = update_rx.as_ref().and_then(|rx| rx.try_recv().ok()) {
+            model = update(model, AppMessage::UpdateAvailable(notice));
+            update_rx = None;
         }
 
         // Spawn the pipeline bridge when execution screen enters Idle state.
@@ -252,6 +250,7 @@ fn run_loop(
                         file_metadata,
                         warnings,
                         preview_data,
+                        message,
                     } => {
                         let (slug, from) = match &model.screen {
                             app::Screen::Execution { slug, from } => (slug.clone(), *from),
@@ -290,6 +289,13 @@ fn run_loop(
                         } else {
                             // Normal mode: build outputs and transition to Results.
                             let outputs = bridge::build_output_files(&output_dir, &file_metadata);
+                            let model = match message {
+                                Some(message) => update(
+                                    model,
+                                    AppMessage::Execution(ExecutionMessage::Reported { message }),
+                                ),
+                                None => model,
+                            };
                             let model = update(
                                 model,
                                 AppMessage::Execution(ExecutionMessage::OutputsReady {
@@ -629,8 +635,7 @@ mod tests {
         // Focus on field 2 (telemetry, non-editable toggle).
         let settings = model.settings.as_mut().unwrap();
         settings.focused = 2;
-        // Explicitly set value to "On" — don't rely on TelemetryConfig::load()
-        // which can be polluted by other tests writing to the global config file.
+        // Set explicitly so the test doesn't depend on the default.
         settings.fields[2].value = "On".to_string();
         // Value is "On", so right should toggle to Off.
         let right = KeyEvent::new(KeyCode::Right, crossterm::event::KeyModifiers::NONE);

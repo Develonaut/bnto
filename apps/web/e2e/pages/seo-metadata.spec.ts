@@ -114,6 +114,41 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
   }
 });
 
+/** CLI-only recipes: their pages must not promise a browser tool. */
+const CLI_ONLY_SLUGS = [
+  { slug: "keep-awake", name: "Keep Awake", command: "bnto run keep-awake" },
+  { slug: "download-video", name: "Download Video", command: "bnto run download-video <url>" },
+] as const;
+
+test.describe("SEO — CLI-only recipe pages @browser", () => {
+  for (const entry of CLI_ONLY_SLUGS) {
+    test(`/${entry.slug}: presented as a CLI tool, not an online one`, async ({ page }) => {
+      await page.goto(`/${entry.slug}`);
+
+      await expect(page).toHaveTitle(`${entry.name} from Your Terminal, Free -- bnto`);
+      await expect(page.getByTestId("recipe-heading")).toHaveText(
+        `${entry.name} from Your Terminal`,
+      );
+      await expect(page.getByTestId("cli-run-command")).toHaveText(entry.command);
+      await expect(page.getByText("Drop your files", { exact: false })).toHaveCount(0);
+      await expect(page.getByText("runs entirely in your browser tab")).toHaveCount(0);
+    });
+
+    test(`/${entry.slug}: JSON-LD describes software, not a browser app`, async ({ page }) => {
+      await page.goto(`/${entry.slug}`);
+
+      const jsonLd = await page.evaluate(() => {
+        const script = document.querySelector('script[type="application/ld+json"]');
+        return script ? JSON.parse(script.textContent ?? "{}") : null;
+      });
+
+      expect(jsonLd["@type"]).toBe("SoftwareApplication");
+      expect(jsonLd.browserRequirements).toBeUndefined();
+      expect(jsonLd.operatingSystem).toBeUndefined();
+    });
+  }
+});
+
 test.describe("SEO — 404 for unknown slugs @browser", () => {
   test("unknown slug returns 404 page", async ({ page }) => {
     const response = await page.goto("/not-a-real-bnto-tool");

@@ -1,0 +1,27 @@
+---
+source: crates/bnto/src/tui/screen_snapshots.rs
+expression: "session.screen(width, height)"
+---
+
+      ▄▄
+      ██           ██
+      ████▄ ████▄ ▀██▀▀ ▄███▄
+      ██ ██ ██ ██  ██   ██ ██
+      ████▀ ██ ██  ██   ▀███▀
+
+
+      ╭ D E T A I L ─────────────────────────────────────────────────────╮
+      │  Keep Awake  [built-in]                                          │
+      │  Keep your Mac awake for a set time or until you stop it. By     │
+      │  default it also nudges the cursor once you go idle, so chat apps│
+      │  don't mark you Away. Start a session, come back later and run   │
+      │  Stop. macOS only. CLI/desktop only.                             │
+      │                                                                  │
+      │  PARAMETERS                                                      │
+      │                                                                  │
+      │  > Action   < Start a session >                                  │
+      │      Start a new session, stop the running one, or check what's  │
+      │      currently active.                                           │
+      │                                                                  │
+      ╰──────────────────────────────────────────────────────────────────╯
+      ↑↓ navigate                   22 recipes  ·  v[version]  ·  Los Angeles

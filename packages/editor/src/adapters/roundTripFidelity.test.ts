@@ -119,6 +119,21 @@ describe("round-trip fidelity", () => {
       }
     });
 
+    it("preserves a node's when guard and always flag", () => {
+      let def = createBlankDefinition();
+      def = addNode(def, "file-rename").definition;
+      const when = { value: "{{ctx.platform}}", op: "equals", expected: "macos" };
+      const guarded = { ...def.nodes![def.nodes!.length - 1]!, when, always: true };
+      def = { ...def, nodes: [...def.nodes!.slice(0, -1), guarded] };
+
+      const graph = definitionToGraph(def);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(def), graph.configs, def);
+
+      const exportedChild = exported.nodes!.find((n) => n.id === guarded.id)!;
+      expect(exportedChild.when).toEqual(when);
+      expect(exportedChild.always).toBe(true);
+    });
+
     it("preserves node order through round-trip", () => {
       let def = createBlankDefinition();
       def = addNode(def, "image-compress").definition;

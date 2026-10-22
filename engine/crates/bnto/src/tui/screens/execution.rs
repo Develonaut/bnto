@@ -4,6 +4,7 @@
 
 mod message;
 mod nodes;
+mod plan;
 mod run;
 mod update;
 
@@ -50,8 +51,12 @@ pub struct FileProgress {
 pub enum NodeStatus {
     Pending,
     Active,
-    Completed { duration_ms: u64 },
+    Completed {
+        duration_ms: u64,
+    },
     Failed(String),
+    /// Its `when` guard didn't hold, so it never ran.
+    Skipped,
 }
 
 /// Progress tracking for a single node.
@@ -98,6 +103,8 @@ pub struct ExecutionModel {
     pub live_line_node: Option<String>,
     /// Non-fatal warnings from the pipeline (e.g. skipped loop iterations).
     pub warnings: Vec<String>,
+    /// What a message-mode recipe reported, carried to the results screen.
+    pub message: Option<crate::run_message::RunMessage>,
     /// When true, pipeline runs without writing output — results go to Preview screen.
     pub preview_mode: bool,
     /// What the user is asked to allow while the run awaits consent.
@@ -125,6 +132,7 @@ impl ExecutionModel {
             output_lines: VecDeque::new(),
             live_line_node: None,
             warnings: Vec::new(),
+            message: None,
             preview_mode: false,
             consent: None,
         }
@@ -194,6 +202,13 @@ impl NodeProgress {
         }
     }
 }
+
+#[cfg(test)]
+mod run_display_tests;
+
+#[cfg(test)]
+#[path = "execution/skipped_tests.rs"]
+mod skipped_tests;
 
 #[cfg(test)]
 mod tests {

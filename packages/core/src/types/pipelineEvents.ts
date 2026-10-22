@@ -15,6 +15,7 @@ export type PipelineEvent =
   | NodeProgressEvent
   | NodeCompletedEvent
   | NodeFailedEvent
+  | NodeSkippedEvent
   | PipelineCompletedEvent
   | PipelineFailedEvent
   | CommandOutputEvent;
@@ -82,6 +83,19 @@ export interface NodeFailedEvent {
   error: string;
   /** If this node is inside a container, the container's ID. Null for top-level nodes. */
   parentNodeId: string | null;
+}
+
+/** A node whose `when` guard didn't hold: it never ran, and its files passed through. */
+export interface NodeSkippedEvent {
+  type: "NodeSkipped";
+  nodeId: string;
+  nodeIndex: number;
+  totalNodes: number;
+  nodeType: string;
+  /** If this node is inside a container, the container's ID. Null for top-level nodes. */
+  parentNodeId: string | null;
+  /** The guard and what it read, e.g. `when {{ctx.platform}} equals macos: got "linux", expected "macos"`. */
+  reason: string;
 }
 
 export interface PipelineCompletedEvent {

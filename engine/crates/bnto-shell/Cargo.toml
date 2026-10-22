@@ -4,7 +4,7 @@
 
 [package]
 name = "bnto-shell"
-version = "0.2.0"
+version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 description = "Shell command processor for Bnto engine — execute external CLI tools"
@@ -19,7 +19,7 @@ categories = ["command-line-utilities"]
 crate-type = ["rlib"]
 
 [dependencies]
-bnto-core = { path = "../bnto-core", version = "0.2.0" }
+bnto-core = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]

@@ -84,6 +84,18 @@ pub enum Command {
         #[command(subcommand)]
         action: TelemetryAction,
     },
+
+    /// Install the newest bnto release (reruns `cargo install bnto --locked`).
+    Upgrade {
+        /// Only report whether a newer release exists; install nothing.
+        #[arg(long)]
+        check: bool,
+    },
+
+    /// Check crates.io for a newer bnto and cache the answer. Started in the
+    /// background by other commands once a day; not for direct use.
+    #[command(name = "__check-for-updates", hide = true)]
+    CheckForUpdates,
 }
 
 // Arguments for `bnto run`. No doc comment: clap would read it as help
@@ -175,6 +187,8 @@ impl Command {
             Self::Migrate { .. } => "migrate",
             Self::Tui { .. } => "tui",
             Self::Telemetry { .. } => "telemetry",
+            Self::Upgrade { .. } => "upgrade",
+            Self::CheckForUpdates => "check-for-updates",
         }
     }
 }

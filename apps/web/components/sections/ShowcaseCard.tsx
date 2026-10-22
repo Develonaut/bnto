@@ -35,7 +35,7 @@ export function ShowcaseCard({ entry, dormant, className }: ShowcaseCardProps) {
         <RecipeCardCategory>{entry.features[0]}</RecipeCardCategory>
       </RecipeCardHeader>
       <RecipeCardContent>
-        <RecipeCardTitle>{entry.h1.replace(/ Online Free$/, "")}</RecipeCardTitle>
+        <RecipeCardTitle>{entry.name}</RecipeCardTitle>
         <RecipeCardDescription>
           <span className="line-clamp-2">{entry.description}</span>
         </RecipeCardDescription>

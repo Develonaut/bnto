@@ -1,6 +1,7 @@
 // Pipeline execution bridge — runs the engine on a background thread
 // and relays PipelineEvent progress back to the TUI event loop via mpsc.
 
+use crate::run_message::{RunMessage, output_label, run_message};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::mpsc;
@@ -41,6 +42,8 @@ pub enum BridgeEvent {
         warnings: Vec<String>,
         /// File transformation previews (populated in preview mode only).
         preview_data: Vec<FilePreview>,
+        /// What a message-mode recipe reported (keep-awake's status text).
+        message: Option<RunMessage>,
     },
     /// Pipeline or setup failed with an error message.
     Error(String),
@@ -119,8 +122,11 @@ fn try_run_bridge(
     }
     // Normal mode: write output files using mode-aware dispatch.
     let file_metadata = extract_file_metadata(&result);
+    let message = (mode == "message")
+        .then(|| run_message(&result, recipe_output_label(&job.definition_json)))
+        .flatten();
     io::write_results_with_mode(&result, &mode, &output_dir, false)?;
-    send_done(tx, output_dir, result, file_metadata);
+    send_done(tx, output_dir, result, file_metadata, message);
     Ok(())
 }
 
@@ -175,6 +181,12 @@ fn recipe_input_mode(definition_json: &str) -> InputMode {
     serde_json::from_str::<PipelineDefinition>(definition_json)
         .map(|def| resolve_input_mode(&def))
         .unwrap_or_default()
+}
+
+/// The recipe output node's label, for its message (keep-awake: "Session Log").
+fn recipe_output_label(definition_json: &str) -> Option<String> {
+    let def = serde_json::from_str::<PipelineDefinition>(definition_json).ok()?;
+    output_label(&def)
 }
 
 /// Resolve the output mode from the recipe definition.
@@ -262,6 +274,7 @@ fn send_preview_done(
         file_metadata: vec![],
         warnings: result.warnings,
         preview_data: previews,
+        message: None,
     });
 }
 
@@ -271,6 +284,7 @@ fn send_done(
     output_dir: String,
     result: bnto_core::pipeline::PipelineResult,
     file_metadata: Vec<FileResultMeta>,
+    message: Option<RunMessage>,
 ) {
     let _ = tx.send(BridgeEvent::Done {
         output_dir,
@@ -279,6 +293,7 @@ fn send_done(
         file_metadata,
         warnings: result.warnings,
         preview_data: vec![],
+        message,
     });
 }
 

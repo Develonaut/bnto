@@ -1,6 +1,6 @@
 // Execution screen update — routes each message to a focused transition.
 
-use super::{ExecutionMessage, ExecutionModel, ExecutionStatus};
+use super::{ExecutionMessage, ExecutionModel, ExecutionStatus, FileStatus};
 
 /// Pure state transition for the execution screen.
 pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionModel {
@@ -24,6 +24,11 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             duration_ms,
         } => model.complete_node(&node_id, duration_ms),
         M::NodeFailed { node_id, error } => model.fail_node(&node_id, error),
+        M::NodeSkipped {
+            node_id,
+            node_type,
+            parent_node_id,
+        } => model.skip_node(parent_node_id.as_deref(), node_id, node_type),
         M::PipelineCompleted { duration_ms, .. } => model.complete_pipeline(duration_ms),
         M::PipelineFailed { error, .. } => model.fail_pipeline(error),
         M::CommandOutput { line, .. } => model.push_command_output(&line),
@@ -34,14 +39,27 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             total_iterations,
         } => model.start_iteration(&node_id, iteration, total_iterations),
         M::IterationCompleted {
-            node_id, iteration, ..
-        } => model.set_iteration(&node_id, iteration),
+            node_id,
+            iteration,
+            total_iterations,
+            ..
+        } => {
+            model.set_iteration(&node_id, iteration);
+            model.settle_iteration_file(iteration, total_iterations, FileStatus::Done);
+        }
         M::IterationFailed {
             node_id,
             iteration,
+            total_iterations,
             error,
-            ..
-        } => model.fail_iteration(&node_id, iteration, &error),
+        } => {
+            model.settle_iteration_file(
+                iteration,
+                total_iterations,
+                FileStatus::Failed(error.clone()),
+            );
+            model.fail_iteration(&node_id, iteration, &error);
+        }
         M::ChildNodeStarted {
             parent_node_id,
             node_id,
@@ -57,6 +75,7 @@ pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionMode
             output_dir,
             warnings,
         } => model.set_outputs(files, output_dir, warnings),
+        M::Reported { message } => model.message = Some(message),
         M::Cancel => model.status = ExecutionStatus::Cancelled,
         // Recorded and applied at the app level, which owns the trust store.
         M::AllowCommands => {}

@@ -118,6 +118,19 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 **Events:** closing steps emit `NodeStarted` / `NodeCompleted` / `NodeFailed` as usual, numbered by their position (so the CLI's step counter skips the skipped nodes). Skipped nodes emit nothing. `NodeFailed` is emitted for every failing node as before. `PipelineFailed` is emitted once per failed run, last, after every closing step: its `node_id` is the top-level node whose failure is the verdict (the container's id when the failure was inside one) and its `error` is the verdict message. Before closing steps, `PipelineFailed` was emitted at every node failure, including inside containers and in loop iterations that `onError: "continue"` then skipped.
 
+### Conditional Steps (`when`)
+
+**Decision (October 2026):** a node can carry `"when": { "value", "op", "expected" }` beside `always`, like GitHub Actions `if:` or Ansible `when:`. The step runs only when the comparison holds. See [conditional-steps.md](../decisions/conditional-steps.md) for the options weighed.
+
+- **Comparison:** `op` is `equals`, `not-equals`, `after` or `before`, the same words and code as `assert` (`bnto-core/src/compare.rs`). `value` and `expected` take templates: own fields, `{{ctx.platform}}`, `{{env.*}}`, `{{node.<id>.*}}`, `{{item.*}}`. A number from a sole placeholder is compared as its text.
+- **When:** decided in `execute_node` just before the node would start (`executor/guard.rs`), so per file under auto-iteration and per iteration in a loop.
+- **Skip:** the node emits `NodeSkipped { node_id, node_index, total_nodes, node_type, parent_node_id, reason }` instead of `NodeStarted`, hands its input files on unchanged, and records no `{{node.<id>.*}}` metadata. With edges, its consumers get those files. A skipped container never starts its children. A skip is not a failure.
+- **With `always`:** a false `when` skips a closing step too.
+- **Errors:** an unknown op fails the run at that node (`NodeFailed`, then the usual verdict). `bnto check` reports it earlier, along with malformed placeholders in the guard and `when` on an I/O node.
+- **Pre-flight ignores guards:** consent lists every shell command (SEC-16) and the raw param checks walk every branch, so a branch for another OS can't hide a refused step.
+- **Run summary:** `NodeTally` keeps a skipped top-level node's reason as `skip_reason`, so `bnto run --json` carries it.
+- **Shared decision:** `When::decide_in(&TemplateContext)` resolves and compares; the executor and the CLI's `bnto dry-run` both call it, so a preview can't disagree with a run.
+
 ### Edges and Data Flow
 
 **Decision (October 2026):** the executor honors a recipe's `edges`. Before, it fed every node the previous node's output whatever the edges said, so a step couldn't start from no files (a `file-list` after another node read that node's files as path lists) and couldn't take files from two earlier steps. This works the way Node-RED, NiFi and n8n's Merge do. Built in #611 (graph model), #614 (executor), #616 (closing steps), #613 (`bnto check`) and #612 (TS validation).

@@ -27,8 +27,19 @@ pub fn dispatch(command: Option<Command>, session: Session) {
         launch_tui("los-angeles", None, false, &session.logger, session.paths);
         return;
     };
+    if matches!(command, Command::CheckForUpdates) {
+        if let Some(paths) = &session.paths {
+            crate::update_check::run_check(paths);
+        }
+        return;
+    }
     if !matches!(command, Command::Telemetry { .. }) {
         telemetry::capture(telemetry::events::cli_command(command.name()));
+    }
+    if !matches!(command, Command::Tui { .. } | Command::Upgrade { .. })
+        && let Some(paths) = &session.paths
+    {
+        crate::update_check::notice_and_refresh(paths);
     }
     run_command(command, session);
 }
@@ -50,7 +61,9 @@ fn run_command(command: Command, session: Session) {
         Command::Tui { recipe, theme, new } => {
             launch_tui(&theme, recipe, new, &session.logger, session.paths)
         }
-        Command::Telemetry { action } => run_telemetry(action),
+        Command::Telemetry { action } => run_telemetry(action, session.paths.as_ref()),
+        Command::Upgrade { check } => crate::upgrade::run_upgrade(check, session.paths.as_ref()),
+        Command::CheckForUpdates => {}
     }
 }
 
@@ -75,16 +88,19 @@ fn run_from_args(args: RunArgs, session: &Session) {
 }
 
 /// `bnto telemetry enable|disable|status`.
-fn run_telemetry(action: TelemetryAction) {
-    match action {
-        TelemetryAction::Enable => {
-            telemetry::set_enabled(true);
-            eprintln!("Telemetry enabled.");
-        }
-        TelemetryAction::Disable => {
-            telemetry::set_enabled(false);
-            eprintln!("Telemetry disabled.");
-        }
-        TelemetryAction::Status => telemetry::print_status(),
+fn run_telemetry(action: TelemetryAction, paths: Option<&storage::BntoPaths>) {
+    let Some(paths) = paths else {
+        eprintln!("Error: could not find the bnto home directory.");
+        std::process::exit(1);
+    };
+    let enable = match action {
+        TelemetryAction::Status => return telemetry::print_status(paths),
+        TelemetryAction::Enable => true,
+        TelemetryAction::Disable => false,
+    };
+    if let Err(e) = telemetry::set_enabled(paths, enable) {
+        eprintln!("Error: could not save the telemetry setting: {e}");
+        std::process::exit(1);
     }
+    eprintln!("Telemetry {}.", if enable { "enabled" } else { "disabled" });
 }
