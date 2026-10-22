@@ -69,7 +69,7 @@ impl crate::processor::NodeProcessor for NameFromParamProcessor {
     }
 }
 
-fn item_registry() -> NodeRegistry {
+pub(super) fn item_registry() -> NodeRegistry {
     let mut registry = mock_registry();
     registry.register("test-tag", Box::new(TagProcessor));
     registry.register("test-name", Box::new(NameFromParamProcessor));
@@ -106,7 +106,7 @@ fn run_error(def_json: &str, files: Vec<PipelineFile>) -> String {
     }
 }
 
-fn run_names(def_json: &str, files: Vec<PipelineFile>) -> Vec<String> {
+pub(super) fn run_names(def_json: &str, files: Vec<PipelineFile>) -> Vec<String> {
     let def = parse_def(def_json);
     let reporter = PipelineReporter::new_noop();
     let result = execute_pipeline(

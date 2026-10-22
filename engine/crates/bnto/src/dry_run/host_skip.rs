@@ -7,25 +7,26 @@ use std::collections::BTreeMap;
 
 use bnto_core::PipelineNode;
 use bnto_core::context::NoopContext;
-use bnto_core::executor::resolve::collect_field_values;
+use bnto_core::executor::field_scope;
 use bnto_core::executor::template::TemplateContext;
 use bnto_core::when::{Guard, When};
 
 /// Why the last node of `path` (a step and the containers above it,
 /// outermost first) is skipped on this host, if a guard says so now.
 pub fn host_skip(path: &[&PipelineNode]) -> Option<String> {
-    path.iter().find_map(|node| skip_reason(node))
+    (1..=path.len()).find_map(|depth| skip_reason(&path[..depth]))
 }
 
-/// A node's own guard, decided with its field values (overrides already
-/// applied to their defaults) and `{{ctx.*}}`; `None` when it holds or
-/// can't be decided before the run.
-fn skip_reason(node: &PipelineNode) -> Option<String> {
-    let when = node.when.as_ref()?;
+/// The guard of the last node of `path`, decided with the field values it
+/// sees (its own and its containers', overrides already applied to their
+/// defaults) and `{{ctx.*}}`; `None` when it holds or can't be decided
+/// before the run.
+fn skip_reason(path: &[&PipelineNode]) -> Option<String> {
+    let when = path.last()?.when.as_ref()?;
     if decided_mid_run(when) {
         return None;
     }
-    let field_values = collect_field_values(&node.fields, &BTreeMap::new());
+    let field_values = field_scope::along(path);
     let tpl = TemplateContext {
         field_values: &field_values,
         process_ctx: &NoopContext,
@@ -95,6 +96,16 @@ mod tests {
                 "default": "stop" } },
             "when": { "value": "{{fields.action}}", "op": "equals", "expected": "start" } }));
         assert!(host_skip(&[&step]).is_some());
+    }
+
+    #[test]
+    fn a_guard_on_the_step_reads_its_groups_field() {
+        let group = node(serde_json::json!({ "id": "g", "type": "group",
+            "fields": { "action": { "type": "string", "label": "Action", "default": "stop" } } }));
+        let step = node(serde_json::json!({ "id": "s", "type": "shell-run",
+            "when": { "value": "{{fields.action}}", "op": "equals", "expected": "start" } }));
+        let reason = host_skip(&[&group, &step]).expect("action is stop");
+        assert!(reason.contains("\"stop\""), "{reason}");
     }
 
     #[test]

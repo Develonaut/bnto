@@ -1,7 +1,7 @@
 # Decision: Conditional Steps (`when` guards)
 
 **Created:** October 2026
-**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces, scoped fields and OS support follow in PRs 4-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
+**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4 and scoped fields in PR 5; OS support follows in PRs 6-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
 **Applies to:** the executor in `bnto-core`, so every consumer (CLI, TUI, WASM).
 
 ---
@@ -28,7 +28,7 @@ A node-level key, a sibling of `always`, never inside `parameters` (the processo
   "nodes": [ … ] }
 ```
 
-- **Comparison:** `op` is one of `equals`, `not-equals`, `after`, `before`, the same words and code as `assert` (`bnto-core/src/compare.rs`, shared). `not_equals` is accepted until assert's audit rename lands. `value` and `expected` take every template a param does: own fields, `{{ctx.*}}`, `{{env.*}}`, `{{node.<id>.*}}`, `{{item.*}}` in a loop. A template that is the whole string keeps its JSON type, so the guard compares the text of a number (`{{node.x.count}}` reads `3`, not `""`).
+- **Comparison:** `op` is one of `equals`, `not-equals`, `after`, `before`, the same words and code as `assert` (`bnto-core/src/compare.rs`, shared). `not_equals` is accepted until assert's audit rename lands. `value` and `expected` take every template a param does: the fields in scope (see below), `{{ctx.*}}`, `{{env.*}}`, `{{node.<id>.*}}`, `{{item.*}}` in a loop. A template that is the whole string keeps its JSON type, so the guard compares the text of a number (`{{node.x.count}}` reads `3`, not `""`).
 - **When it's decided:** in `execute_node`, before the node starts (`executor/guard.rs`). So once per call: per file under auto-iteration, per iteration inside a loop.
 - **Skipping:** the node never starts. It emits `NodeSkipped { …, reason }` in place of `NodeStarted`, returns its input files unchanged and records nothing for `{{node.<id>.*}}`. A skipped container never starts its children.
 - **`when` beats `always`:** a false guard skips even a closing step. A guard says whether a step belongs in this run at all; `always` says it survives an earlier failure.
@@ -47,4 +47,12 @@ Guards are decided at run time, so everything that runs before the first step ig
 
 - **No expression language.** One comparison per guard. "macOS and display on" is a guarded group inside a guarded group. Revisit if real recipes need `and`/`or` often.
 - **Where skips show (PR 4).** The CLI prints `skipped: <reason>` in place of a step's line; the TUI marks the step `– (skipped)`; consent lines carry `(when …)` for every guard on a step's path; `bnto dry-run` marks commands skipped on this host when it can decide now (guards on `{{node.*}}` or `{{item.*}}` wait for the run); `bnto run --json` carries `skip_reason`. The web editor keeps `when` (and `always`) on load and save, and settles a skipped node to idle.
-- **Container fields come later (PR 5).** Until then a guard reads only its own node's fields, so an if/else pair on one field needs container-scoped fields.
+
+## Fields in scope (PR 5)
+
+An if/else pair on one field needs both steps to read it, so a container's `fields` reach every node inside it, at any depth. The nearest declaration of a name wins: a step's own field shadows its group's, an inner group's shadows an outer one's, even a declaration with no default. A group's own `when` reads its own fields. Nothing leaks out: a step after the group doesn't see them.
+
+- **One rule everywhere:** `bnto_core::executor::field_scope` (`declare`, `along`) computes what a node sees. The executor carries it down the `PipelineContext` (`fields`), and `bnto check` and the CLI's dry run (`host_skip`, shell previews) walk the same path, so a preview reads what the run reads.
+- **`--param key=value`** sets the node that declares field `key`, wherever it is (`bnto/src/field_owner.rs`), and falls back to a raw param on the first processing step when none does. When two nodes declare `key`, the run stops before anything happens and asks for `nodeId:key=value`, naming both. No bundled recipe declares a field twice.
+- **Unchanged:** SEC-13 still checks every declaration's value before the run (`field_values.rs`). The TUI form lists each field once, on the node that declares it, and sends `nodeId:key`.
+- **Considered:** merging every node's fields into one recipe-wide set. Rejected: two unrelated steps with a `format` field would clash, and a recipe-level surface is a separate, deferred decision ([recipe-fields.md](../strategy/recipe-fields.md)).

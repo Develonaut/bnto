@@ -191,6 +191,24 @@ fn test_validate_sees_field_defaults_not_the_placeholder() {
     assert_eq!(findings, Vec::new());
 }
 
+#[test]
+fn test_validate_sees_a_containers_field_defaults() {
+    let mode =
+        |default| json!({ "type": "enum", "label": "Mode", "options": [], "default": default });
+    let findings = check(json!({ "nodes": [{
+        "id": "g", "type": "group", "fields": { "mode": mode("b") },
+        "nodes": [{ "id": "s", "type": "strict", "parameters": { "mode": "{{fields.mode}}" } }]
+    }] }));
+    assert_eq!(findings, Vec::new());
+
+    let findings = check(json!({ "nodes": [{
+        "id": "g", "type": "group", "fields": { "mode": mode("b") },
+        "nodes": [{ "id": "s", "type": "strict", "fields": { "mode": mode("z") },
+            "parameters": { "mode": "{{fields.mode}}" } }]
+    }] }));
+    assert_eq!(findings.len(), 1, "the step's own field wins: {findings:?}");
+}
+
 // --- Unknown node types ---
 
 #[test]

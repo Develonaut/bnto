@@ -7,7 +7,7 @@
 use std::collections::BTreeMap;
 
 use bnto_core::context::NoopContext;
-use bnto_core::executor::resolve::collect_field_values;
+use bnto_core::executor::field_scope::{self, FieldValues};
 use bnto_core::executor::template::{TemplateContext, resolve_templates};
 use bnto_core::{FieldDef, PipelineDefinition, PipelineNode};
 
@@ -47,7 +47,7 @@ fn collect_under<'a>(
         let mut path = above.to_vec();
         path.push(node);
         if node.node_type == bnto_shell::NODE_TYPE {
-            let mut info = resolve_shell_command(node);
+            let mut info = resolve_shell_command(node, &field_scope::along(&path));
             info.skipped = super::host_skip::host_skip(&path);
             commands.push(info);
         } else if !["input", "output", "group", "loop"].contains(&node.node_type.as_str()) {
@@ -61,10 +61,11 @@ fn collect_under<'a>(
 
 /// Apply `--param key=value` overrides to node field defaults.
 ///
-/// Supports `key=value` (targets first shell-run node) and
-/// `nodeId:key=value` (targets specific node). A value the field refuses
-/// (an unlisted enum option, a number out of range) is not applied; the
-/// returned list says why, one entry per refused override.
+/// Supports `key=value` (targets the node that declares field `key`, else
+/// the first shell-run node) and `nodeId:key=value` (targets specific node).
+/// A value the field refuses (an unlisted enum option, a number out of
+/// range), or a key two nodes declare, is not applied; the returned list
+/// says why, one entry per refused override.
 pub fn apply_field_overrides(def: &mut PipelineDefinition, overrides: &[String]) -> Vec<String> {
     let default_node_id = find_first_shell_command_id(&def.nodes);
     let mut refused = Vec::new();
@@ -74,12 +75,13 @@ pub fn apply_field_overrides(def: &mut PipelineDefinition, overrides: &[String])
             continue;
         };
 
-        let (node_id, key) = if let Some((nid, k)) = full_key.split_once(':') {
-            (nid.to_string(), k.to_string())
-        } else if let Some(ref nid) = default_node_id {
-            (nid.clone(), full_key.to_string())
-        } else {
-            continue;
+        let (node_id, key) = match override_target(def, full_key, default_node_id.as_deref()) {
+            Ok(Some(target)) => target,
+            Ok(None) => continue,
+            Err(e) => {
+                refused.push(e);
+                continue;
+            }
         };
 
         if let Err(e) = update_field_default(&mut def.nodes, &node_id, &key, value) {
@@ -87,6 +89,21 @@ pub fn apply_field_overrides(def: &mut PipelineDefinition, overrides: &[String])
         }
     }
     refused
+}
+
+/// `(node id, key)` an override's `full_key` sets: the node it names, else
+/// the node that declares the field, else `default_node_id`.
+fn override_target(
+    def: &PipelineDefinition,
+    full_key: &str,
+    default_node_id: Option<&str>,
+) -> Result<Option<(String, String)>, String> {
+    if let Some((nid, k)) = full_key.split_once(':') {
+        return Ok(Some((nid.to_string(), k.to_string())));
+    }
+    let owner = crate::field_owner::field_owner(&def.nodes, full_key)?;
+    let node_id = owner.or_else(|| default_node_id.map(str::to_string));
+    Ok(node_id.map(|nid| (nid, full_key.to_string())))
 }
 
 /// Format a command and its args as a shell-like command line.
@@ -104,17 +121,13 @@ pub fn format_command_line(cmd: &ShellCommandInfo) -> String {
 
 // --- Internal helpers ---
 
-/// Resolve a shell-run node's fields and extract display info.
-fn resolve_shell_command(node: &PipelineNode) -> ShellCommandInfo {
-    let field_values = if node.fields.is_empty() {
-        BTreeMap::new()
-    } else {
-        collect_field_values(&node.fields, &BTreeMap::new())
-    };
+/// Resolve a shell-run node's fields (`field_values`: its own and its
+/// containers') and extract display info.
+fn resolve_shell_command(node: &PipelineNode, field_values: &FieldValues) -> ShellCommandInfo {
     let noop = NoopContext;
     let empty_outputs = BTreeMap::new();
     let tpl_ctx = TemplateContext {
-        field_values: &field_values,
+        field_values,
         process_ctx: &noop,
         node_outputs: &empty_outputs,
         loop_item: &None,
@@ -292,5 +305,41 @@ mod tests {
             panic!("expected Enum");
         };
         assert_eq!(default.as_deref(), Some("b"));
+    }
+
+    /// A `session` group declaring `action`, holding one echo step.
+    fn group_field_def() -> PipelineDefinition {
+        serde_json::from_str(
+            r#"{"nodes": [{ "id": "session", "type": "group",
+                "fields": {"action": {"type": "enum", "label": "Action", "default": "start",
+                    "options": [{"value": "start", "label": "Start"}, {"value": "stop", "label": "Stop"}]}},
+                "nodes": [{ "id": "run", "type": "shell-run",
+                    "parameters": {"command": "echo", "args": ["{{fields.action}}"]} }] }]}"#,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn a_step_shows_its_groups_field() {
+        let mut def = group_field_def();
+        let refused = apply_field_overrides(&mut def, &["action=stop".into()]);
+        assert!(refused.is_empty(), "{refused:?}");
+        let (mut commands, mut others) = (Vec::new(), 0);
+        collect_shell_commands(&def.nodes, &mut commands, &mut others);
+        assert_eq!(format_command_line(&commands[0]), "echo stop");
+    }
+
+    #[test]
+    fn a_key_two_nodes_declare_is_refused() {
+        let mut def = group_field_def();
+        let step = &mut def.nodes[0].children.as_mut().unwrap()[0];
+        step.fields = def_fields(r#"{"action": {"type": "string", "label": "Action"}}"#);
+        let refused = apply_field_overrides(&mut def, &["action=stop".into()]);
+        assert_eq!(refused.len(), 1);
+        assert!(refused[0].contains("session:action="), "{}", refused[0]);
+    }
+
+    fn def_fields(json: &str) -> bnto_core::FieldDefs {
+        serde_json::from_str(json).unwrap()
     }
 }

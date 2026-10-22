@@ -2,10 +2,13 @@
 // Containers organize child nodes rather than processing files directly.
 // Loop runs children per-file; group/parallel run on the full batch.
 
+use std::rc::Rc;
+
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, ProgressOutputFile};
 use crate::pipeline::{IterationMode, PipelineDefinition, PipelineFile};
 
+use super::field_scope::FieldValues;
 use super::flow::{level_flow_of, run_level};
 use super::loop_config::{OnErrorStrategy, OutputPersistence, parse_loop_config};
 use super::node_outputs::{NodeRecords, merge_records};
@@ -54,16 +57,22 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
     };
 
     match node.node_type.as_str() {
-        "loop" => execute_loop(
-            ctx,
-            &node.id,
-            &node.params,
-            &sub_definition,
-            files,
-            file_offset,
-        ),
-        "group" | "parallel" => execute_group(ctx, &node.id, &sub_definition, files, file_offset),
+        "loop" => execute_loop(ctx, node, &sub_definition, files, file_offset),
+        "group" | "parallel" => execute_group(ctx, node, &sub_definition, files, file_offset),
         _ => Ok(passthrough(files)),
+    }
+}
+
+/// The context `container`'s children run in: under it, seeing its fields.
+fn inside<'a, F: Fn() -> u64 + Copy>(
+    ctx: &'a PipelineContext<'a, F>,
+    container: PipelineNodeRef,
+    fields: &Rc<FieldValues>,
+) -> PipelineContext<'a, F> {
+    PipelineContext {
+        fields: Rc::clone(fields),
+        parent_node_id: Some(container.id.clone()),
+        ..ctx.layer()
     }
 }
 
@@ -80,13 +89,14 @@ pub(super) fn execute_container_node<F: Fn() -> u64 + Copy>(
 /// count key adds up.
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
-    container_id: &str,
-    loop_params: &serde_json::Map<String, serde_json::Value>,
+    node: PipelineNodeRef,
     sub_definition: &PipelineDefinition,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
-    let config = parse_loop_config(loop_params);
+    let container_id = node.id.as_str();
+    let config = parse_loop_config(&node.params);
+    let fields = Rc::new(ctx.fields_for(node));
     let total_iterations = files.len();
     let mut all_output_files: Vec<PipelineFile> = Vec::new();
     let mut total_processed: usize = 0;
@@ -103,7 +113,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
             total_iterations,
         });
 
-        let loop_ctx = build_loop_context(ctx, container_id, &file);
+        let loop_ctx = build_loop_context(ctx, node, &fields, &file);
         let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i);
 
         match result {
@@ -209,7 +219,8 @@ fn build_progress_files(
 /// Build a PipelineContext for a single loop iteration.
 fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
     ctx: &'a PipelineContext<'a, F>,
-    container_id: &str,
+    container: PipelineNodeRef,
+    fields: &Rc<FieldValues>,
     file: &PipelineFile,
 ) -> PipelineContext<'a, F> {
     let item_data = if file.metadata.is_empty() {
@@ -219,23 +230,19 @@ fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
     };
     PipelineContext {
         loop_item: item_data,
-        parent_node_id: Some(container_id.to_string()),
-        ..ctx.layer()
+        ..inside(ctx, container, fields)
     }
 }
 
 /// Run the sub-pipeline once on the full batch of files.
 fn execute_group<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
-    container_id: &str,
+    node: PipelineNodeRef,
     sub_definition: &PipelineDefinition,
     files: Vec<PipelineFile>,
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
-    let group_ctx = PipelineContext {
-        parent_node_id: Some(container_id.to_string()),
-        ..ctx.layer()
-    };
+    let group_ctx = inside(ctx, node, &Rc::new(ctx.fields_for(node)));
     execute_sub_pipeline(&group_ctx, sub_definition, files, file_offset)
 }
 

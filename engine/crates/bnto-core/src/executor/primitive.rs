@@ -10,6 +10,7 @@ use crate::processor::{BatchFile, BatchInput, NodeInput};
 use crate::progress::ProgressReporter;
 use crate::renamed::with_node_type_hint;
 
+use super::field_scope::FieldValues;
 use super::leaf_output::LeafOutput;
 use super::node_reporter::build_node_reporter;
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
@@ -100,15 +101,6 @@ fn process_single_file<F: Fn() -> u64 + Copy>(
 }
 
 type Params = serde_json::Map<String, serde_json::Value>;
-type FieldValues = std::collections::BTreeMap<String, serde_json::Value>;
-
-/// A node's `{{fields.*}}` values. They don't vary per file, so compute once.
-fn node_field_values(node: PipelineNodeRef) -> FieldValues {
-    if node.fields.is_empty() {
-        return FieldValues::new();
-    }
-    super::resolve::collect_field_values(&node.fields, &FieldValues::new())
-}
 
 /// Resolve all template namespaces in node params (fields, env, ctx, node, item).
 /// `item` is the `{{item.*}}` source; `file` names the file it came from.
@@ -176,7 +168,7 @@ fn resolve_node_params<F: Fn() -> u64 + Copy>(
     node: PipelineNodeRef,
     processor: &dyn crate::processor::NodeProcessor,
 ) -> Result<Params, BntoError> {
-    let field_values = node_field_values(node);
+    let field_values = ctx.fields_for(node);
     let resolved = if processor.resolves_items() && ctx.loop_item.is_none() {
         resolve_templates(ctx, node, &field_values, &None)
     } else {
@@ -245,7 +237,8 @@ fn process_per_file<F: Fn() -> u64 + Copy>(
     file_offset: usize,
 ) -> Result<NodeExecutionResult, BntoError> {
     let file_count = files.len();
-    let field_values = node_field_values(node);
+    // Fields don't vary per file, so resolve them once.
+    let field_values = ctx.fields_for(node);
     let shared = shared_params(ctx, node, &field_values)?;
     let mut out = LeafOutput::counting(processor.count_keys());
     // One reporter for the whole run, so its throttle spans every file.
