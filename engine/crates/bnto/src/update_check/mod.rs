@@ -9,6 +9,7 @@ mod notice;
 mod policy;
 mod spawn;
 mod version;
+mod watch;
 
 pub use version::Version;
 
@@ -39,9 +40,9 @@ pub fn notice_and_refresh(paths: &BntoPaths) {
     }
 }
 
-/// For the TUI: the notice from the cache now, and, when the cache is
-/// stale, a channel that delivers one after a fresh check on a background
-/// thread (the TUI runs long enough for it to finish).
+/// For the TUI: the notice from the cache now, and a channel that delivers
+/// a notice whenever a newer release turns up while the TUI is open (an
+/// hourly look on a background thread; see `watch.rs`).
 pub fn for_tui(paths: &BntoPaths) -> (Option<String>, Option<mpsc::Receiver<String>>) {
     if !policy::tui_checks_enabled(context(&TomlConfig::load(paths))) {
         return (None, None);
@@ -49,23 +50,11 @@ pub fn for_tui(paths: &BntoPaths) -> (Option<String>, Option<mpsc::Receiver<Stri
     let Some(current) = version::Version::current() else {
         return (None, None);
     };
-    let cached = cache::load(&cache_path(paths));
-    let now_notice = cache::update_from(cached.as_ref(), current).map(notice::tui_notice);
-    if !cache::needs_check(cached.as_ref(), now()) {
-        return (now_notice, None);
-    }
+    let path = cache_path(paths);
+    let shown = cache::update_from(cache::load(&path).as_ref(), current);
     let (tx, rx) = mpsc::channel();
-    let paths = paths.clone();
-    std::thread::spawn(move || {
-        let Some(latest) = latest_release() else {
-            return;
-        };
-        record(&paths, latest);
-        if latest > current {
-            let _ = tx.send(notice::tui_notice(latest));
-        }
-    });
-    (now_notice, Some(rx))
+    std::thread::spawn(move || watch::run(&path, current, shown, tx));
+    (shown.map(notice::tui_notice), Some(rx))
 }
 
 /// The hidden `__check-for-updates` command: check once and cache the

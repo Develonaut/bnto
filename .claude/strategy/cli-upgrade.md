@@ -1,7 +1,7 @@
 # CLI Upgrade Notices + `bnto upgrade` -- 3 PRs
 
 **Created:** October 21, 2026
-**Status:** Approved, October 21, 2026. PR 1 (#693), PR 2 and PR 3 in review.
+**Status:** Shipped in v0.17.0 (PR 1 #693, PR 3 #695). Follow-up (October 22, 2026): an open TUI looks again every hour (`fix/tui-recheck-updates`).
 **Related:** [releases.md](../scopes/process/releases.md#one-number-everywhere), [tui-data-persistence.md](tui-data-persistence.md), [environment-variables.md](../environment-variables.md)
 
 ## Context
@@ -28,7 +28,7 @@ Since #677, one version number covers the release tag, crates.io and `bnto --ver
 | CLI notice                          | Before a command runs, one line on stderr: `bnto 0.17.0 is available (you have 0.16.1). Run bnto upgrade.` Never on stdout. _Changed in PR 1:_ printing after the command doesn't work when commands end with `process::exit`. The TUI (which gets its own notice in PR 3) and `bnto upgrade` don't show it.                                                                                                               |
 | `bnto upgrade`                      | When the running binary lives in cargo's bin dir (`$CARGO_HOME/bin`, default `~/.cargo/bin`), run `cargo install bnto --locked` with no shell and inherited stdio, then print old → new. Otherwise print how to upgrade for the detected install, without guessing. `--check` reports whether an upgrade exists, refreshing the cache now, and installs nothing.                                                           |
 | Windows                             | A running `.exe` can't be overwritten, and `bnto upgrade` is itself running. Rename the current exe to `bnto.old.exe` (allowed while it runs), let cargo install the new one, and delete `bnto.old.exe` on the next start. Verified in Windows CI.                                                                                                                                                                         |
-| TUI notice                          | Read the cache at startup and refresh in the background. When newer, the status line's right side shows `bnto 0.17.0 available, run bnto upgrade`. No modal, no network on the render thread.                                                                                                                                                                                                                              |
+| TUI notice                          | Read the cache at startup, then look again every hour on a background thread for as long as the TUI is open (`update_check/watch.rs`). A look reads the cache, so it picks up another `bnto`'s check, and asks the network only once the cache is a day old. When newer, the status line's right side shows `bnto 0.17.0 available, run bnto upgrade`. No modal, no network on the render thread.                          |
 
 ---
 
@@ -103,7 +103,7 @@ pub fn notice(current: &Version, latest: &Version) -> Option<String>;
 **Branch:** `feat/tui-upgrade-notice`
 **One sentence:** Show an available bnto upgrade in the TUI's status line.
 
-**What:** At startup the TUI reads the cached result and starts the PR 1 background refresh. When the refresh lands, it sends a message (`tui/app/message.rs`) so the notice can appear mid-session. The status line (`tui/render.rs` `render_status_line_with_message`) shows the hint on the right.
+**What:** At startup the TUI reads the cached result and starts the PR 1 background refresh. When the refresh lands, it sends a message (`tui/app/message.rs`) so the notice can appear mid-session. _Follow-up (Oct 22):_ that refresh ran once, at startup, so a TUI left open all day never saw a release that landed after it started. It now repeats hourly (`watch::run`) and sends each newer release once. The status line (`tui/render.rs` `render_status_line_with_message`) shows the hint on the right.
 
 **RED tests:**
 
@@ -127,10 +127,10 @@ PRs 2 and 3 are independent of each other.
 
 ## Journeys (add to `.claude/journeys/cli.md`)
 
-| ID  | Journey                                                                                            |
-| --- | -------------------------------------------------------------------------------------------------- |
-| CU1 | A newer release exists → any CLI command ends with one stderr line naming it and `bnto upgrade`    |
-| CU2 | `BNTO_NO_UPDATE_CHECK=1`, `[updates] check = false`, CI or piped output → no notice and no network |
-| CU3 | `bnto upgrade` on a cargo install → `cargo install bnto --locked` runs, old → new is printed       |
-| CU4 | `bnto upgrade` when current → says so, installs nothing                                            |
-| CU5 | TUI running when a release lands → status line shows the upgrade hint within the session           |
+| ID  | Journey                                                                                                                                                                            |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CU1 | A newer release exists → any CLI command ends with one stderr line naming it and `bnto upgrade`                                                                                    |
+| CU2 | `BNTO_NO_UPDATE_CHECK=1`, `[updates] check = false`, CI or piped output → no notice and no network                                                                                 |
+| CU3 | `bnto upgrade` on a cargo install → `cargo install bnto --locked` runs, old → new is printed                                                                                       |
+| CU4 | `bnto upgrade` when current → says so, installs nothing                                                                                                                            |
+| CU5 | TUI running when a release lands → status line shows the upgrade hint within the session (`watch.rs` unit tests: within a day, or within the hour once another `bnto` has checked) |
