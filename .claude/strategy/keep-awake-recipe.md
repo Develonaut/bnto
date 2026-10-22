@@ -1,7 +1,7 @@
 # Conditional Steps + Cross-Platform Keep Awake
 
 **Created:** October 20, 2026
-**Status:** In progress. The working tracker for this effort: update the table below in every PR that moves a row.
+**Status:** Done (October 22, 2026). All 11 PRs and review fixes A-F merged; keep-awake runs on macOS, Linux and Windows through `when`-guarded branches. Kept as the record of what was built and why; open items are under [Follow-ups](#follow-ups).
 **Related:** [engine-execution.md](engine-execution.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md), [shell-run.md](../scopes/security/shell-run.md#script-mode-the-safe-script-contract), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe)
 
 ## Tracker
@@ -294,6 +294,16 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 - **Ours:** the state file records the session's pid and process start time; a pid counts only while the process there started at that time and before the session's end. The first version matched `Win32_Process.CommandLine` against the encoded code, but WMI queries pushed steps past their 60s limit on CI's Windows runner; `Get-Process` is fast, and no other process can share both a pid and a start time.
 - **PowerShell 5.1 details:** flag values are written in decimal, since `0x80000001` parses as a negative Int32; idle time is worked out modulo 2^32, since `[Environment]::TickCount` wraps; the home folder is `$homeDir`, since `$home` is read-only.
 - **Lint gate:** PSScriptAnalyzer over bundled PowerShell steps (SEC-38), required in Windows CI.
+
+## Follow-ups
+
+Gaps the PRs above left open on purpose, collected from their "As built" and "Not done" notes. None blocks keep-awake.
+
+- **macOS tests in CI:** `bnto/tests/keep_awake.rs` is macOS-gated and CI has no macOS job, so the macOS round trips run only locally (fix A).
+- **Unsupported host in the TUI and `bnto dry-run`:** only `bnto run` refuses; a TUI run there skips every step (PR 6). `bnto check` doesn't flag a recipe that runs nowhere.
+- **`bnto check` gaps:** `requires` on an `input`/`output` node isn't flagged (PR 8); neither is a `powershell` step outside a Windows guard (PR 9). A group guarded for an OS bnto has no name for has its `requires` checked nowhere (PR 8).
+- **Web:** `llms-full.txt` doesn't list a recipe's OSes (PR 7); there's no `system` mascot, and three descriptions still say "CLI/desktop only" with no desktop app yet (fix C).
+- **Tooling:** CI's ShellCheck isn't version-pinned (fix E); `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9).
 
 ## CLI journey matrix (`.claude/journeys/cli.md`, added in PR 3)
 
