@@ -75,6 +75,10 @@ jobs:
 
       - name: CLI tests (unit + golden)
         run: cargo test --package bnto
+        env:
+          # ubuntu-latest ships pwsh; fail rather than skip the PowerShell
+          # script-mode specs (bnto/tests/shell_security/powershell_mode.rs).
+          BNTO_REQUIRE_PWSH: "1"
 
       # The TUI's quality gate, like the web's E2E suite: screen snapshots
       # plus journeys driving the real `bnto tui` in a pseudo-terminal. Already
@@ -135,6 +139,10 @@ jobs:
 
       - name: Tests
         run: cargo test --workspace
+        env:
+          # windows-latest ships powershell and pwsh; the PowerShell
+          # script-mode specs must run, not skip.
+          BNTO_REQUIRE_PWSH: "1"
 
   # ── TypeScript CI (only when web files changed) ──
   typescript:

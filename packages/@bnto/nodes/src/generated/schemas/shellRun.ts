@@ -43,13 +43,13 @@ export const shellRunNodeSchema: NodeSchema = {
     script: {
       label: "Script",
       description:
-        "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. The shell starts with a cleared environment and no startup files.",
+        "A shell script to run instead of 'command', written literally — no {{templates}}. Values from 'args' arrive as \"$1\", \"$2\"… (\"$0\" is 'bnto'). Quote every expansion, avoid eval, and don't splice values into nested -c / -e code; put -- before values a tool could read as options. A PowerShell script reads them as $env:BNTO_ARG_1… ($env:BNTO_ARG_COUNT holds how many); never pass one to Invoke-Expression. The shell starts with a cleared environment and no startup files.",
       surfaceable: false,
     },
     shell: {
       label: "Shell",
       description:
-        "Which shell runs 'script': sh, bash, zsh, dash or ksh, by its fixed path (never PATH). Default: sh.",
+        "Which shell runs 'script': sh, bash, zsh, dash or ksh, powershell (Windows only) or pwsh (PowerShell 7), by its fixed path (never PATH). Default: sh.",
       surfaceable: false,
     },
     args: {

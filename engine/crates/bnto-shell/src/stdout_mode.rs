@@ -21,6 +21,7 @@ pub(crate) fn process_stdout_mode(
         program,
         args,
         options,
+        ..
     } = invocation;
     progress.report(10, &format!("Running {command}..."));
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
@@ -28,9 +29,9 @@ pub(crate) fn process_stdout_mode(
     let limit = validate::max_output_bytes(max_output_mb);
     let output_bytes = ctx
         .run_command_with(program, &arg_refs, options, &|line| {
-            progress.report_output(line);
+            invocation.relay(line, progress);
         })
-        .map_err(|e| hand_over_stdout(e, command, &filename, limit))?;
+        .map_err(|e| hand_over_stdout(invocation.readable(e), command, &filename, limit))?;
     if output_bytes.len() > limit {
         return Err(BntoError::ProcessingFailed(format!(
             "Command output exceeded {max_output_mb} MB limit"

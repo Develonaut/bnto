@@ -44,15 +44,20 @@ fn with_guards(line: String, guards: &[String]) -> String {
 }
 
 /// `command arg …`, then `(from <searchPath>)` and `[env: NAME, …]`. A
-/// script step reads `<shell> -c <script> bnto arg …` with the whole script
-/// below it, so what's approved is the script that runs.
+/// script step reads `<shell> -c <script> bnto arg …` (a PowerShell one
+/// `<shell> <script> $env:BNTO_ARG_n: arg …`) with the whole script below
+/// it, so what's approved is the script that runs.
 fn command_line(params: &Map<String, Value>) -> Option<String> {
     let script = params.get("script").and_then(Value::as_str);
     let mut line = match (params.get("command").and_then(Value::as_str), script) {
         (Some(command), _) => command.to_string(),
         (None, Some(_)) => {
             let shell = params.get("shell").and_then(Value::as_str).unwrap_or("sh");
-            format!("{shell} -c <script> bnto")
+            if bnto_shell::is_powershell(shell) {
+                format!("{shell} <script> $env:BNTO_ARG_n:")
+            } else {
+                format!("{shell} -c <script> bnto")
+            }
         }
         (None, None) => return None,
     };
@@ -159,6 +164,21 @@ mod tests {
             shell_command_lines(&ns),
             [
                 "bash -c <script> bnto {{fields.v}}\n      script:\n        set -eu\n        printf '%s' \"$1\""
+            ]
+        );
+    }
+
+    #[test]
+    fn a_powershell_step_shows_its_values_as_variables_not_args() {
+        let ns = nodes(
+            serde_json::json!([{ "id": "s", "type": "shell-run", "parameters": {
+            "shell": "pwsh", "script": "Write-Output $env:BNTO_ARG_1", "args": ["{{fields.v}}", "x"]
+        } }]),
+        );
+        assert_eq!(
+            shell_command_lines(&ns),
+            [
+                "pwsh <script> $env:BNTO_ARG_n: {{fields.v}} x\n      script:\n        Write-Output $env:BNTO_ARG_1"
             ]
         );
     }

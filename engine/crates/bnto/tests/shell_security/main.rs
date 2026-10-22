@@ -18,6 +18,7 @@ mod enum_values;
 mod env_policy;
 mod input_modes;
 mod interpreter_code;
+mod powershell_mode;
 mod script_mode;
 mod template_values;
 mod windows_batch;

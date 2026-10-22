@@ -3,10 +3,11 @@
 use std::path::{Path, PathBuf};
 
 use bnto_core::processor::{NodeInput, NodeOutput, OutputFile};
-use bnto_core::{BntoError, ProcessContext, ProgressReporter};
+use bnto_core::{BntoError, CommandOptions, ProcessContext, ProgressReporter};
 
 use crate::invocation::Invocation;
 use crate::output_files::collect_output_files;
+use crate::powershell::ARG_PREFIX;
 
 /// Placeholder in args that gets replaced with the temp output directory path.
 pub(crate) const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
@@ -25,18 +26,23 @@ pub(crate) fn process_file_mode(
         program,
         args,
         options,
+        ..
     } = invocation;
     let output_dir = create_output_dir(ctx)?;
     let dir_str = output_dir.to_string_lossy();
     let resolved_args = substitute_output_dir(args, &dir_str);
+    let options = substitute_output_dir_in_values(options, &dir_str);
     progress.report(10, &format!("Running {command}..."));
     let arg_refs: Vec<&str> = resolved_args.iter().map(String::as_str).collect();
     // Run the command with stderr streaming — stdout is captured but unused.
     let _stdout = ctx
-        .run_command_with(program, &arg_refs, options, &|line| {
-            progress.report_output(line);
+        .run_command_with(program, &arg_refs, &options, &|line| {
+            invocation.relay(line, progress);
         })
-        .map_err(|e| hand_over_written(e, command, &output_dir, max_output_mb))?;
+        .map_err(|e| {
+            let error = invocation.readable(e);
+            hand_over_written(error, command, &output_dir, max_output_mb)
+        })?;
     progress.report(80, "Collecting output files...");
     let files = collect_output_files(&output_dir, max_output_mb)?;
     if files.is_empty() {
@@ -87,6 +93,18 @@ fn substitute_output_dir(args: &[String], dir: &str) -> Vec<String> {
         .collect()
 }
 
+/// Substitute `{{output_dir}}` in the values a PowerShell script reads from
+/// `$env:BNTO_ARG_n`, as in args. The step's own `env` is left as written.
+fn substitute_output_dir_in_values(options: &CommandOptions, dir: &str) -> CommandOptions {
+    let mut options = options.clone();
+    for (name, value) in &mut options.env {
+        if name.starts_with(ARG_PREFIX) {
+            *value = value.replace(OUTPUT_DIR_PLACEHOLDER, dir);
+        }
+    }
+    options
+}
+
 /// The collected files plus command / mode / byte / count metadata.
 fn file_output(command: &str, files: Vec<OutputFile>) -> NodeOutput {
     let total_bytes: u64 = files.iter().map(|f| f.data.len().unwrap_or(0)).sum();
@@ -106,7 +124,22 @@ fn file_output(command: &str, files: Vec<OutputFile>) -> NodeOutput {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::failing_tool::{FailingTool, MESSAGE};
+
+    #[test]
+    fn output_dir_is_filled_in_a_powershell_scripts_values_only() {
+        let options = CommandOptions {
+            env: vec![
+                ("BNTO_ARG_1".into(), "{{output_dir}}/out.txt".into()),
+                ("MY_VAR".into(), "{{output_dir}}".into()),
+            ],
+            ..CommandOptions::default()
+        };
+        let filled = substitute_output_dir_in_values(&options, "/tmp/d");
+        assert_eq!(filled.env[0].1, "/tmp/d/out.txt");
+        assert_eq!(filled.env[1].1, "{{output_dir}}");
+    }
 
     #[test]
     fn test_failed_command_hands_over_the_files_it_wrote() {

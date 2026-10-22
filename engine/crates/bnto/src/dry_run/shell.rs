@@ -137,13 +137,19 @@ fn resolve_shell_command(node: &PipelineNode, field_values: &FieldValues) -> She
     let resolved_params = resolve_templates(&node.params, &tpl_ctx);
 
     let (command, mut args) = shown_program(&resolved_params);
-    args.extend(
-        resolved_params
-            .get("args")
-            .and_then(serde_json::Value::as_array)
-            .map(|arr| bnto_shell::run::flatten_conditional_args(arr))
-            .unwrap_or_default(),
-    );
+    let values = resolved_params
+        .get("args")
+        .and_then(serde_json::Value::as_array)
+        .map(|arr| bnto_shell::run::flatten_conditional_args(arr))
+        .unwrap_or_default();
+    let text = |key| resolved_params.get(key).and_then(serde_json::Value::as_str);
+    if text("script").is_some() && text("shell").is_some_and(bnto_shell::is_powershell) {
+        // A PowerShell script reads its values as $env:BNTO_ARG_n, never args.
+        let numbered = values.iter().enumerate();
+        args.extend(numbered.map(|(i, v)| format!("BNTO_ARG_{}={v}", i + 1)));
+    } else {
+        args.extend(values);
+    }
 
     let output_mode = resolved_params
         .get("outputMode")
@@ -194,11 +200,15 @@ fn find_first_shell_command_id(nodes: &[PipelineNode]) -> Option<String> {
 }
 
 /// The program a step runs and its leading args: `command`, or for a script
-/// step `<shell> -c <script> bnto`.
+/// step `<shell> -c <script> bnto` (a PowerShell one `<shell> <script>`).
 fn shown_program(params: &serde_json::Map<String, serde_json::Value>) -> (String, Vec<String>) {
     let text = |key| params.get(key).and_then(serde_json::Value::as_str);
     match (text("command"), text("script")) {
         (Some(command), _) => (command.to_string(), Vec::new()),
+        (None, Some(script)) if text("shell").is_some_and(bnto_shell::is_powershell) => (
+            text("shell").unwrap_or_default().to_string(),
+            vec![script.to_string()],
+        ),
         (None, Some(script)) => (
             text("shell").unwrap_or("sh").to_string(),
             vec!["-c".into(), script.to_string(), "bnto".into()],
@@ -256,6 +266,22 @@ mod tests {
                 .is_some_and(|r| r.contains("plan9"))
         );
         assert_eq!(commands[1].skipped, None);
+    }
+
+    #[test]
+    fn a_powershell_step_shows_each_value_with_the_variable_it_lands_in() {
+        let nodes: Vec<PipelineNode> = serde_json::from_value(serde_json::json!([
+            { "id": "s", "type": "shell-run", "parameters": {
+                "shell": "powershell", "script": "Write-Output $env:BNTO_ARG_2",
+                "args": ["a", "b c"] } }
+        ]))
+        .unwrap();
+        let (mut commands, mut others) = (Vec::new(), 0);
+        collect_shell_commands(&nodes, &mut commands, &mut others);
+        assert_eq!(
+            format_command_line(&commands[0]),
+            "powershell 'Write-Output $env:BNTO_ARG_2' BNTO_ARG_1=a 'BNTO_ARG_2=b c'"
+        );
     }
 
     #[test]
