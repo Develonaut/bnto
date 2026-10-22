@@ -171,10 +171,11 @@ The label is the verb in title case, then what it acts on, plural: **Verb Object
 
 Keys on the node object itself, beside `id` / `type` / `parameters`, belong to the engine, not the processor. They apply to every node type, so they never go in `parameters`.
 
-| Key      | Type / values                                                                     | Meaning                                                                                                                                                          |
-| -------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `always` | boolean, default `false`                                                          | Closing step: runs even after an earlier step failed ([engine-execution.md](../../strategy/engine-execution.md#closing-steps-always))                            |
-| `when`   | `{ value, op, expected }`, `op` = `equals` \| `not-equals` \| `after` \| `before` | Guard: the step runs only when the comparison holds, else it's skipped and its files pass through ([conditional-steps.md](../../decisions/conditional-steps.md)) |
+| Key        | Type / values                                                                     | Meaning                                                                                                                                                                                |
+| ---------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `always`   | boolean, default `false`                                                          | Closing step: runs even after an earlier step failed ([engine-execution.md](../../strategy/engine-execution.md#closing-steps-always))                                                  |
+| `when`     | `{ value, op, expected }`, `op` = `equals` \| `not-equals` \| `after` \| `before` | Guard: the step runs only when the comparison holds, else it's skipped and its files pass through ([conditional-steps.md](../../decisions/conditional-steps.md))                       |
+| `requires` | `Dependency[]` (`binary`, `version`, `installHint`, `installHints`, `homepage`)   | External tools the node needs, checked only on the OSes it runs on; at the root, on every OS ([conditional-steps.md](../../decisions/conditional-steps.md#dependencies-in-scope-pr-8)) |
 
 Rules:
 

@@ -6,6 +6,7 @@
 
 pub mod deps;
 pub mod recipes;
+pub mod scoped_deps;
 
 use bnto_core::{
     BntoError, NodeRegistry, PipelineDefinition, PipelineFile, PipelineReporter, PipelineResult,

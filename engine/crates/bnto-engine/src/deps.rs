@@ -3,8 +3,10 @@
 // WASM has no processes, so this module is only useful in CLI/desktop
 // contexts where ProcessContext is a NativeContext.
 
-use bnto_core::{BntoError, Dependency, NodeRegistry, PipelineDefinition};
-use std::collections::HashSet;
+use bnto_core::{BntoError, Dependency, HostPlatform, NodeRegistry, PipelineDefinition};
+
+use crate::scoped_deps::{DepList, add_pipeline_deps, needed_on, scope};
+pub use crate::scoped_deps::{ScopedDependency, split_by_host};
 
 /// Result of checking a single dependency.
 #[derive(Debug, Clone)]
@@ -18,85 +20,70 @@ pub struct DependencyStatus {
     pub version_satisfied: Option<bool>,
 }
 
-/// Collect unique dependencies required by a pipeline definition.
-///
-/// Merges two sources: recipe-level deps (`definition.requires`) first,
-/// then per-node processor deps (from `metadata().requires`). Deduplicates
-/// by binary name — recipe-level deps take precedence when both declare
-/// the same binary.
+/// The dependencies a pipeline needs on `host`, one per binary: recipe-level
+/// `requires` first, then each node's own `requires` and its processor's.
+/// A node that doesn't run on `host` (a platform guard rules it out) adds
+/// nothing; see `scoped_deps`. `None` (a host bnto has no name for) needs
+/// everything.
 pub fn collect_pipeline_dependencies(
     definition: &PipelineDefinition,
     registry: &NodeRegistry,
+    host: Option<HostPlatform>,
 ) -> Vec<Dependency> {
-    let mut seen = HashSet::new();
-    let mut deps = Vec::new();
-
-    // Recipe-level deps first — these take precedence.
-    for dep in &definition.requires {
-        if seen.insert(dep.binary.clone()) {
-            deps.push(dep.clone());
-        }
-    }
-
-    // Then per-node processor deps (existing logic).
-    collect_from_nodes(&definition.nodes, registry, &mut seen, &mut deps);
-    deps
+    needed_on(scoped_pipeline_dependencies(definition, registry), host)
 }
 
-fn collect_from_nodes(
-    nodes: &[bnto_core::PipelineNode],
+/// Every dependency a pipeline needs on some OS, tagged with the OSes
+/// that need it.
+pub fn scoped_pipeline_dependencies(
+    definition: &PipelineDefinition,
     registry: &NodeRegistry,
-    seen: &mut HashSet<String>,
-    deps: &mut Vec<Dependency>,
-) {
-    let empty_params = serde_json::Map::new();
-    for node in nodes {
-        if let Some(processor) = registry.resolve(&node.node_type, &empty_params) {
-            for dep in &processor.metadata().requires {
-                if seen.insert(dep.binary.clone()) {
-                    deps.push(dep.clone());
-                }
-            }
-        }
-        // Recurse into container children.
-        if let Some(children) = &node.children {
-            collect_from_nodes(children, registry, seen, deps);
-        }
-    }
+) -> Vec<ScopedDependency> {
+    scope(|os| {
+        let mut list = DepList::default();
+        add_pipeline_deps(&mut list, definition, registry, os);
+        list.into_vec()
+    })
 }
 
 /// Collect unique dependencies from ALL registered processors in the registry.
 pub fn collect_all_dependencies(registry: &NodeRegistry) -> Vec<Dependency> {
-    let mut seen = HashSet::new();
-    let mut deps = Vec::new();
+    let mut list = DepList::default();
     for metadata in registry.catalog() {
-        for dep in metadata.requires {
-            if seen.insert(dep.binary.clone()) {
-                deps.push(dep);
-            }
-        }
+        list.extend(&metadata.requires);
     }
-    deps
+    list.into_vec()
 }
 
-/// Collect unique dependencies from all registered processors plus the
-/// recipe-level `requires` of every given definition.
+/// The dependencies every registered processor and every given recipe need
+/// on `host`, one per binary. Processor deps come first.
 ///
 /// Recipes built on generic nodes like `shell-run` declare their deps
-/// only at the recipe level, so processor metadata alone misses them.
-/// Processor deps come first; recipe deps are deduplicated by binary name.
+/// in `requires` (at the root or on the nodes that use them), so processor
+/// metadata alone misses them.
 pub fn collect_catalog_dependencies(
     registry: &NodeRegistry,
     definitions: &[PipelineDefinition],
+    host: Option<HostPlatform>,
 ) -> Vec<Dependency> {
-    let mut deps = collect_all_dependencies(registry);
-    let mut seen: HashSet<String> = deps.iter().map(|d| d.binary.clone()).collect();
-    for dep in definitions.iter().flat_map(|def| &def.requires) {
-        if seen.insert(dep.binary.clone()) {
-            deps.push(dep.clone());
+    needed_on(scoped_catalog_dependencies(registry, definitions), host)
+}
+
+/// Every dependency the catalog needs on some OS, tagged with the OSes
+/// that need it. Processor deps are needed everywhere.
+pub fn scoped_catalog_dependencies(
+    registry: &NodeRegistry,
+    definitions: &[PipelineDefinition],
+) -> Vec<ScopedDependency> {
+    let processors = collect_all_dependencies(registry);
+    scope(|os| {
+        let mut list = DepList::default();
+        list.extend(&processors);
+        for definition in definitions {
+            add_pipeline_deps(&mut list, definition, registry, os);
         }
-    }
-    deps
+        list.into_vec()
+    })
 }
 
 /// Check whether each dependency's binary is available on the system
@@ -147,7 +134,7 @@ pub fn check_pipeline_dependencies(
     registry: &NodeRegistry,
     ctx: &dyn bnto_core::ProcessContext,
 ) -> Result<(), BntoError> {
-    let deps = collect_pipeline_dependencies(definition, registry);
+    let deps = collect_pipeline_dependencies(definition, registry, HostPlatform::current());
     if deps.is_empty() {
         return Ok(());
     }
@@ -431,7 +418,7 @@ mod tests {
     fn test_collect_empty_pipeline_returns_no_deps() {
         let def = make_definition(&["input", "output"]);
         let registry = NodeRegistry::new();
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert!(deps.is_empty());
     }
 
@@ -440,7 +427,7 @@ mod tests {
         let mut registry = NodeRegistry::new();
         registry.register("no-deps", Box::new(NoDepsProcessor));
         let def = make_definition(&["input", "no-deps", "output"]);
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert!(deps.is_empty());
     }
 
@@ -449,7 +436,7 @@ mod tests {
         let mut registry = NodeRegistry::new();
         registry.register("video-transcode", Box::new(FfmpegProcessor));
         let def = make_definition(&["input", "video-transcode", "output"]);
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert_eq!(deps.len(), 1);
         assert_eq!(deps[0].binary, "ffmpeg");
     }
@@ -460,7 +447,7 @@ mod tests {
         registry.register("video-transcode", Box::new(FfmpegProcessor));
         registry.register("video-download", Box::new(YtDlpProcessor));
         let def = make_definition(&["input", "video-transcode", "video-download", "output"]);
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         // ffmpeg appears in both, but should be deduplicated
         assert_eq!(deps.len(), 2); // ffmpeg + yt-dlp
         let binaries: Vec<&str> = deps.iter().map(|d| d.binary.as_str()).collect();
@@ -475,7 +462,7 @@ mod tests {
         // Recipe declares deps but no nodes have processor deps.
         let def = make_definition_with_requires(&["input", "output"], vec![ytdlp_dep()]);
         let registry = NodeRegistry::new();
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert_eq!(deps.len(), 1);
         assert_eq!(deps[0].binary, "yt-dlp");
     }
@@ -487,7 +474,7 @@ mod tests {
         let mut registry = NodeRegistry::new();
         registry.register("video-transcode", Box::new(FfmpegProcessor));
         let def = make_definition(&["input", "video-transcode", "output"]);
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert_eq!(deps.len(), 1);
         assert_eq!(deps[0].binary, "ffmpeg");
     }
@@ -501,7 +488,7 @@ mod tests {
             &["input", "video-transcode", "output"],
             vec![ytdlp_dep()],
         );
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert_eq!(deps.len(), 2);
         let binaries: Vec<&str> = deps.iter().map(|d| d.binary.as_str()).collect();
         assert!(binaries.contains(&"yt-dlp"));
@@ -517,7 +504,7 @@ mod tests {
             &["input", "video-transcode", "output"],
             vec![ytdlp_dep()],
         );
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert_eq!(
             deps[0].binary, "yt-dlp",
             "Recipe-level dep should come first"
@@ -537,7 +524,7 @@ mod tests {
             &["input", "video-transcode", "output"],
             vec![ffmpeg_dep()],
         );
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert_eq!(deps.len(), 1, "Duplicate ffmpeg should be deduplicated");
         assert_eq!(deps[0].binary, "ffmpeg");
     }
@@ -547,7 +534,7 @@ mod tests {
         // Recipe has explicit empty requires — should behave like no requires.
         let def = make_definition_with_requires(&["input", "output"], vec![]);
         let registry = NodeRegistry::new();
-        let deps = collect_pipeline_dependencies(&def, &registry);
+        let deps = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
         assert!(deps.is_empty());
     }
 
@@ -609,16 +596,69 @@ mod tests {
             &["shell-run"],
             vec![ytdlp_dep(), ffmpeg_dep()],
         )];
-        let deps = collect_catalog_dependencies(&registry, &defs);
+        let deps = collect_catalog_dependencies(&registry, &defs, HostPlatform::current());
         let binaries: Vec<_> = deps.iter().map(|d| d.binary.as_str()).collect();
         assert_eq!(binaries, vec!["yt-dlp", "ffmpeg"]);
+    }
+
+    /// keep-awake's shape: a step in a macOS-only group that needs caffeinate.
+    fn mac_only_definition() -> PipelineDefinition {
+        serde_json::from_value(serde_json::json!({ "nodes": [{
+            "id": "macos", "type": "group",
+            "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" },
+            "requires": [{ "binary": "caffeinate" }],
+            "nodes": [{ "id": "session", "type": "shell-run" }]
+        }] }))
+        .unwrap()
+    }
+
+    #[test]
+    fn a_macos_groups_dependency_is_not_collected_on_linux_or_windows() {
+        let def = mac_only_definition();
+        let registry = NodeRegistry::new();
+        let on = |os| collect_pipeline_dependencies(&def, &registry, Some(os));
+        assert_eq!(on(HostPlatform::MacOs)[0].binary, "caffeinate");
+        assert!(on(HostPlatform::Linux).is_empty());
+        assert!(on(HostPlatform::Windows).is_empty());
+    }
+
+    #[test]
+    fn root_requires_are_collected_on_every_os() {
+        let def = make_definition_with_requires(&["shell-run"], vec![ytdlp_dep(), ffmpeg_dep()]);
+        for os in HostPlatform::ALL {
+            let deps = collect_pipeline_dependencies(&def, &NodeRegistry::new(), Some(os));
+            assert_eq!(deps, vec![ytdlp_dep(), ffmpeg_dep()], "{os:?}");
+        }
+    }
+
+    #[test]
+    fn the_catalog_scopes_a_macos_groups_dependency() {
+        let registry = NodeRegistry::new();
+        let defs = vec![mac_only_definition()];
+        let on = |os| collect_catalog_dependencies(&registry, &defs, Some(os));
+        assert_eq!(on(HostPlatform::MacOs)[0].binary, "caffeinate");
+        assert!(on(HostPlatform::Linux).is_empty());
+        assert!(on(HostPlatform::Windows).is_empty());
+        let scoped = scoped_catalog_dependencies(&registry, &defs);
+        assert_eq!(scoped[0].os, vec![HostPlatform::MacOs]);
+    }
+
+    #[test]
+    fn preflight_checks_a_macos_groups_dependency_only_on_macos() {
+        let def = mac_only_definition();
+        let result = check_pipeline_dependencies(&def, &NodeRegistry::new(), &AllMissingContext);
+        if cfg!(target_os = "macos") {
+            assert!(result.unwrap_err().to_string().contains("caffeinate"));
+        } else {
+            assert!(result.is_ok(), "{result:?}");
+        }
     }
 
     #[test]
     fn test_collect_catalog_without_recipes_matches_processor_deps() {
         let mut registry = NodeRegistry::new();
         registry.register("video-transcode", Box::new(FfmpegProcessor));
-        let deps = collect_catalog_dependencies(&registry, &[]);
+        let deps = collect_catalog_dependencies(&registry, &[], HostPlatform::current());
         assert_eq!(deps, collect_all_dependencies(&registry));
     }
 
@@ -630,7 +670,7 @@ mod tests {
             make_definition_with_requires(&[], vec![ytdlp_dep(), ffmpeg_dep()]),
             make_definition_with_requires(&[], vec![ytdlp_dep()]),
         ];
-        let deps = collect_catalog_dependencies(&registry, &defs);
+        let deps = collect_catalog_dependencies(&registry, &defs, HostPlatform::current());
         let binaries: Vec<_> = deps.iter().map(|d| d.binary.as_str()).collect();
         assert_eq!(binaries, vec!["ffmpeg", "yt-dlp"]);
     }

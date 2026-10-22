@@ -137,7 +137,7 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 ### Recipe OS Support
 
-**Decision (October 2026):** a recipe's operating systems (`os`) are worked out from its platform guards (`when {{ctx.platform}} equals|not-equals <literal>`), never hand-written: a step runs on an OS when every guard on its path allows it, and a recipe runs where some root step does (`bnto_core::os_support::recipe_os`). `bnto run` refuses an unsupported host before consent and before any step; `bnto info`, `bnto list`, the TUI and the catalog (`Recipe.os`) show it. `os` is a separate axis from node-type `platforms` (browser / cli / server). See [conditional-steps.md](../decisions/conditional-steps.md#os-support-pr-6).
+**Decision (October 2026):** a recipe's operating systems (`os`) are worked out from its platform guards (`when {{ctx.platform}} equals|not-equals <literal>`), never hand-written: a step runs on an OS when every guard on its path allows it, and a recipe runs where some root step does (`bnto_core::os_support::recipe_os`). `bnto run` refuses an unsupported host before consent and before any step; `bnto info`, `bnto list`, the TUI and the catalog (`Recipe.os`) show it. `os` is a separate axis from node-type `platforms` (browser / cli / server). The same rule scopes dependencies: a node's `requires` (and its processor's) are checked, by pre-flight, `bnto doctor` and `bnto install`, only on the OSes it runs on (`bnto_engine::scoped_deps`). See [conditional-steps.md](../decisions/conditional-steps.md#os-support-pr-6) and [Dependencies in scope](../decisions/conditional-steps.md#dependencies-in-scope-pr-8).
 
 ### Edges and Data Flow
 

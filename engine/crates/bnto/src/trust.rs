@@ -175,6 +175,7 @@ mod tests {
             fields: Default::default(),
             always: false,
             when: None,
+            requires: vec![],
         }
     }
 

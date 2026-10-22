@@ -30,8 +30,8 @@ export type Definition = {
   edges?: Array<Edge>;
   settings?: PipelineSettings;
   /**
-   * Recipe-level dependencies — external tools needed at runtime.
-   * Only meaningful at the root of a recipe document; nested nodes omit it.
+   * External tools needed at runtime. At the root, needed on every OS;
+   * on a nested node, checked only on the OSes that node runs on.
    */
   requires?: Array<Dependency>;
   /**

@@ -119,6 +119,12 @@ pub struct PipelineNode {
     /// `always` step.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub when: Option<crate::when::When>,
+
+    /// External tools this node needs, checked only on the OSes it runs on
+    /// (`os_support::runs_on`). A guarded group's `requires` aren't checked
+    /// on an OS its guard rules out. See `bnto_engine::scoped_deps`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: Vec<crate::Dependency>,
 }
 
 // =============================================================================
@@ -1121,6 +1127,22 @@ mod tests {
         assert_eq!(dep.version, ">=6.0");
         assert_eq!(dep.install_hint, "brew install ffmpeg");
         assert_eq!(dep.homepage, "https://ffmpeg.org");
+    }
+
+    #[test]
+    fn a_nested_node_keeps_its_requires() {
+        let json = r#"{ "nodes": [{ "id": "mac", "type": "group",
+            "requires": [{ "binary": "caffeinate" }],
+            "nodes": [{ "id": "s", "type": "shell-run" }] }] }"#;
+        let def: PipelineDefinition = serde_json::from_str(json).unwrap();
+        assert_eq!(def.nodes[0].requires[0].binary, "caffeinate");
+        let serialized = serde_json::to_string(&def.nodes[0]).unwrap();
+        assert!(serialized.contains(r#""requires":[{"binary":"caffeinate"}]"#));
+        let child = serde_json::to_string(&def.nodes[0].children.as_ref().unwrap()[0]).unwrap();
+        assert!(
+            !child.contains("requires"),
+            "empty requires is omitted: {child}"
+        );
     }
 
     // --- Secrets Field Tests ---

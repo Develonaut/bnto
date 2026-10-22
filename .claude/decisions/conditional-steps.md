@@ -1,7 +1,7 @@
 # Decision: Conditional Steps (`when` guards)
 
 **Created:** October 2026
-**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4, scoped fields in PR 5 and recipe OS support in PR 6 (#710); the web badge and OS-scoped dependencies follow in PRs 7-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
+**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4, scoped fields in PR 5 and recipe OS support in PR 6 (#710), the web badge in PR 7 (#711) and OS-scoped dependencies in PR 8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
 **Applies to:** the executor in `bnto-core`, so every consumer (CLI, TUI, WASM).
 
 ---
@@ -41,7 +41,7 @@ Guards are decided at run time, so everything that runs before the first step ig
 
 - **Consent** lists every shell command in the recipe, guarded or not (SEC-16). A user approving keep-awake on macOS approves what it would run anywhere.
 - **Raw param checks** (`executor/raw_params.rs`) refuse a bad step inside a branch for another OS, so a branch can't carry a refused step past pre-flight.
-- Branches stay ordinary `nodes` children, so dependency checks, migration and `bnto check` walk them as before.
+- Branches stay ordinary `nodes` children, so migration and `bnto check` walk them as before. Dependency checks are the one exception: they skip a branch that can't run on this OS (see "Dependencies in scope" below), since a missing tool there can never matter.
 
 ## Trade-offs
 
@@ -66,3 +66,15 @@ Which OSes a recipe runs on is worked out from its guards, never written by hand
 - **Where it shows:** `bnto info` prints `Runs on:`; `bnto list` and the TUI detail header tag a recipe that misses an OS (`[macOS]`); the catalog snapshot carries `os` for each built-in, generated into `GeneratedRecipe.os` and `Recipe.os` in `@bnto/registry` (optional on `Recipe`: user recipes aren't analysed in TS). On bnto.io (PR 7), a CLI recipe limited to some OSes carries a "macOS only" badge on its page and cards, and every CLI recipe's JSON-LD claims its `operatingSystem`; browser recipes show nothing (they run anywhere a browser does).
 - **Unsupported host:** `bnto run` checks before anything else, so before consent and before any step: "keep-awake runs on macOS. This machine runs Linux." It exits 1 through the usual verdict (`--json` carries the message). A host bnto has no name for (a BSD) and a definition that doesn't parse are let through, to fail their own way.
 - **Not covered:** the TUI and `bnto dry-run` don't refuse; on an unsupported host a TUI run skips every step. `bnto check` doesn't flag a recipe that runs nowhere.
+
+## Dependencies in scope (PR 8)
+
+A tool that ships with one OS (keep-awake's `caffeinate` and `osascript`) can't be installed on the others, so checking it everywhere failed `bnto doctor` on Linux and Windows for good (fix B dropped them until now).
+
+- **`requires` on any node**, not only the root: the same `Dependency` list, beside `when` and `always`. The tracker planned it for containers only. It went on every node because a step's own `requires` is the most precise scope, and `runs_on` already treats a step and a group the same way, so limiting it would only have added a refusal.
+- **The rule** (`bnto_engine::scoped_deps`): on an OS, a recipe needs its root `requires` and, for every node that `runs_on` that OS, the node's own `requires` and its processor's. A node ruled out takes its whole subtree with it, so guards nest the way `runs_on` does. A guard on anything but `{{ctx.platform}}` rules no OS out. A host bnto has no name for (a BSD) needs everything. **Root `requires` behave exactly as before:** needed on every OS, even one the recipe doesn't run on.
+- **One binary, two declarations** (a macOS group and a Linux group each asking for `ffmpeg` with their own hint) stay two entries, one per OS; on each OS the first one listed wins, as before.
+- **Where it shows:** the run's pre-flight, `bnto install` (one recipe or `--all`) and `bnto dry-run` check only what this OS needs. `bnto doctor` checks those and lists the rest as `skip caffeinate (macOS only)`; a dependency checked here that some OS doesn't need carries the same note (`ok caffeinate (macOS only)`). `bnto info` lists every dependency with its note, and for one this OS doesn't need, shows the install hint for an OS that does.
+- **Install hints:** a bundled dependency needs a per-OS hint (`installHints`) for every OS that needs it (`every_bundled_dependency_installs_on_every_os_that_needs_it`), not for all three.
+- **Considered:** an OS list on `Dependency` itself (`"platforms": ["macos"]`). Rejected: it would say again what the guards already say, and could drift from them.
+- **Not covered:** `bnto check` doesn't flag `requires` on an `input`/`output` node (they're collected like any other node's).

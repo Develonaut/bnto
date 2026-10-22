@@ -13,7 +13,7 @@ mod host_skip;
 mod shell;
 mod shell_note;
 
-use bnto_core::{Dependency, PipelineDefinition};
+use bnto_core::{Dependency, HostPlatform, PipelineDefinition};
 use bnto_engine::deps::collect_pipeline_dependencies;
 
 use crate::catalog::RecipeCatalog;
@@ -57,7 +57,7 @@ pub fn dry_run_recipe(
     let refused = shell::apply_field_overrides(&mut def, param_overrides);
 
     let registry = bnto_engine::create_registry();
-    let dependencies = collect_pipeline_dependencies(&def, &registry);
+    let dependencies = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
 
     // Static analysis: extract shell commands and count other nodes.
     let mut shell_commands = Vec::new();

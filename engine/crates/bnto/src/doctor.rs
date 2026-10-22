@@ -1,6 +1,7 @@
 // `bnto doctor` — check external dependencies and recipe secrets.
 
-use bnto_engine::deps::DependencyStatus;
+use bnto_core::HostPlatform;
+use bnto_engine::deps::{DependencyStatus, ScopedDependency};
 use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
@@ -21,18 +22,23 @@ pub fn run_doctor(catalog: &RecipeCatalog) {
 }
 
 /// Check binary dependencies across all recipes. Returns true on any issue.
+/// A dependency only other OSes need is listed, not checked.
 fn check_binaries(
     registry: &bnto_core::NodeRegistry,
     definitions: &[bnto_core::PipelineDefinition],
     ctx: &dyn bnto_core::ProcessContext,
 ) -> bool {
-    let deps = bnto_engine::deps::collect_catalog_dependencies(registry, definitions);
-    if deps.is_empty() {
+    let scoped = bnto_engine::deps::scoped_catalog_dependencies(registry, definitions);
+    if scoped.is_empty() {
         println!("{} All processors are self-contained.", "ok".green().bold());
         return false;
     }
+    let (here, elsewhere) = bnto_engine::deps::split_by_host(scoped, HostPlatform::current());
+    let deps: Vec<_> = here.iter().map(|s| s.dependency.clone()).collect();
     let statuses = bnto_engine::deps::check_dependencies(&deps, ctx);
-    print_dep_statuses(&statuses)
+    let has_issues = print_dep_statuses(&statuses, &here);
+    print_not_needed(&elsewhere);
+    has_issues
 }
 
 /// Print the final verdict, exiting non-zero when any check failed.
@@ -97,35 +103,47 @@ fn print_parse_failures(invalid: &[(String, String)]) -> bool {
 }
 
 /// Print each dependency status line. Returns true if any have issues.
-fn print_dep_statuses(statuses: &[DependencyStatus]) -> bool {
+fn print_dep_statuses(statuses: &[DependencyStatus], scoped: &[ScopedDependency]) -> bool {
     println!(
         "{}
 ",
         "Checking external dependencies...".bold()
     );
     let mut has_issues = false;
-    for status in statuses {
-        has_issues |= print_dep_status(status);
+    for (status, scoped) in statuses.iter().zip(scoped) {
+        has_issues |= print_dep_status(status, &name_with_os(scoped));
     }
     has_issues
 }
 
+/// The binary, plus " (macOS only)" when some OS doesn't need it.
+fn name_with_os(scoped: &ScopedDependency) -> String {
+    match scoped.os_note() {
+        Some(note) => format!(
+            "{} {}",
+            scoped.dependency.binary,
+            format!("({note})").dimmed()
+        ),
+        None => scoped.dependency.binary.clone(),
+    }
+}
+
 /// Print one dependency's status line(s). Returns true if it has an issue.
-fn print_dep_status(status: &DependencyStatus) -> bool {
+fn print_dep_status(status: &DependencyStatus, name: &str) -> bool {
     if !status.found {
-        print_missing(status);
+        print_missing(status, name);
         true
     } else if status.version_satisfied == Some(false) {
-        print_outdated(status);
+        print_outdated(status, name);
         true
     } else {
-        print_found(status);
+        print_found(status, name);
         false
     }
 }
 
-fn print_missing(status: &DependencyStatus) {
-    println!("  {} {}", "MISSING".red().bold(), status.dependency.binary);
+fn print_missing(status: &DependencyStatus, name: &str) {
+    println!("  {} {name}", "MISSING".red().bold());
     println!(
         "         Install: {}",
         status.dependency.host_install_hint().cyan()
@@ -135,12 +153,11 @@ fn print_missing(status: &DependencyStatus) {
     }
 }
 
-fn print_outdated(status: &DependencyStatus) {
+fn print_outdated(status: &DependencyStatus, name: &str) {
     let installed = status.installed_version.as_deref().unwrap_or("unknown");
     println!(
-        "  {} {} (installed: {}, requires: {})",
+        "  {} {name} (installed: {}, requires: {})",
         "OUTDATED".yellow().bold(),
-        status.dependency.binary,
         installed,
         status.dependency.version
     );
@@ -150,17 +167,19 @@ fn print_outdated(status: &DependencyStatus) {
     );
 }
 
-fn print_found(status: &DependencyStatus) {
+fn print_found(status: &DependencyStatus, name: &str) {
     let version_info = match &status.installed_version {
         Some(v) => format!(" ({})", v.dimmed()),
         None => String::new(),
     };
-    println!(
-        "  {} {}{}",
-        "ok".green(),
-        status.dependency.binary,
-        version_info
-    );
+    println!("  {} {name}{version_info}", "ok".green());
+}
+
+/// List the dependencies only other OSes need, unchecked.
+fn print_not_needed(elsewhere: &[ScopedDependency]) {
+    for scoped in elsewhere {
+        println!("  {} {}", "skip".dimmed(), name_with_os(scoped));
+    }
 }
 
 /// Check secrets across all catalog recipes that declare them.

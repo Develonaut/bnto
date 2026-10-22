@@ -88,28 +88,36 @@ mod tests {
     }
 
     #[test]
-    fn every_bundled_dependency_installs_on_every_os() {
-        // `bnto doctor` checks every recipe's `requires` on every host, so a
-        // dependency with no install route somewhere fails doctor there for
-        // good. Relax this once `requires` can be scoped to an OS.
-        let oses = [
-            HostPlatform::MacOs,
-            HostPlatform::Linux,
-            HostPlatform::Windows,
-        ];
+    fn every_bundled_dependency_installs_on_every_os_that_needs_it() {
+        // `bnto doctor` checks a dependency on every host that needs it, so
+        // one with no install route there fails doctor for good.
+        let registry = crate::create_registry();
         for recipe in builtin_recipes() {
             let def: PipelineDefinition = serde_json::from_str(recipe.definition_json).unwrap();
-            for dep in &def.requires {
-                for os in oses {
+            for scoped in crate::deps::scoped_pipeline_dependencies(&def, &registry) {
+                for os in scoped.os {
                     assert!(
-                        dep.install_hints.for_platform(os).is_some(),
+                        scoped.dependency.install_hints.for_platform(os).is_some(),
                         "{} needs {}, which has no install hint for {os:?}",
                         recipe.slug,
-                        dep.binary
+                        scoped.dependency.binary
                     );
                 }
             }
         }
+    }
+
+    #[test]
+    fn keep_awake_needs_caffeinate_and_osascript_only_on_macos() {
+        let recipe = builtin_recipe_by_slug("keep-awake").unwrap();
+        let def: PipelineDefinition = serde_json::from_str(recipe.definition_json).unwrap();
+        let scoped = crate::deps::scoped_pipeline_dependencies(&def, &crate::create_registry());
+        let needs: Vec<(&str, &[HostPlatform])> = scoped
+            .iter()
+            .map(|s| (s.dependency.binary.as_str(), s.os.as_slice()))
+            .collect();
+        let mac: &[HostPlatform] = &[HostPlatform::MacOs];
+        assert_eq!(needs, [("caffeinate", mac), ("osascript", mac)]);
     }
 
     #[test]
