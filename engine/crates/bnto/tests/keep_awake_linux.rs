@@ -190,6 +190,7 @@ fn activity_simulation_without_x11_starts_anyway_with_a_notice() {
     // Where polkit refuses the idle lock (CI does), the session still starts.
     let display = started
         .lines()
+        .map(str::trim_start)
         .find(|l| l.starts_with("Display: "))
         .unwrap_or("");
     assert!(
