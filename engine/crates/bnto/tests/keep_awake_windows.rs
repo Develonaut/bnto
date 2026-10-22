@@ -196,7 +196,7 @@ fn keeping_the_display_on_with_activity_simulation_starts() {
 fn a_stale_pid_another_program_now_uses_is_left_alone() {
     let sandbox = Sandbox::new();
     let mut other = Command::new("ping")
-        .args(["-n", "30", "127.0.0.1"])
+        .args(["-n", "3600", "127.0.0.1"])
         .stdout(std::process::Stdio::null())
         .spawn()
         .unwrap();
