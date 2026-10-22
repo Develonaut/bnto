@@ -28,7 +28,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#712) |
 | 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Merged (#713) |
 | 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Merged (#714) |
-| 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Merged (#NNN) |
+| 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Merged (#715) |
 
 Workflow per PR: branch from `main`, RED tests first, `/pre-commit`, push, open a PR, enable squash auto-merge, fix CI. No attribution lines or "Test Plan" sections. Tests never touch the real `~/.bnto` (temp `BNTO_HOME` + `HOME`), and never start or stop a session outside a sandbox.
 
