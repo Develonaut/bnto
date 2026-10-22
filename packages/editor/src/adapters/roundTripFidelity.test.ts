@@ -134,6 +134,20 @@ describe("round-trip fidelity", () => {
       expect(exportedChild.always).toBe(true);
     });
 
+    it("preserves a node's own requires", () => {
+      let def = createBlankDefinition();
+      def = addNode(def, "group").definition;
+      const requires = [{ binary: "caffeinate", installHints: { macos: "built into macOS" } }];
+      const scoped = { ...def.nodes![def.nodes!.length - 1]!, requires };
+      def = { ...def, nodes: [...def.nodes!.slice(0, -1), scoped] };
+
+      const graph = definitionToGraph(def);
+      const exported = rfNodesToDefinition(graph.nodes, metaOf(def), graph.configs, def);
+
+      const exportedChild = exported.nodes!.find((n) => n.id === scoped.id)!;
+      expect(exportedChild.requires).toEqual(requires);
+    });
+
     it("preserves node order through round-trip", () => {
       let def = createBlankDefinition();
       def = addNode(def, "image-compress").definition;

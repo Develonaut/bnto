@@ -85,6 +85,14 @@ export const DEFINITION_JSON_SCHEMA = {
           required: ["x", "y"],
           type: "object",
         },
+        requires: {
+          description:
+            "External tools this node needs. At the root, needed on every OS; on a nested node, checked only on the OSes that node runs on (its platform guards).",
+          items: {
+            $ref: "#/$defs/Dependency",
+          },
+          type: "array",
+        },
         settings: {
           $ref: "#/$defs/PipelineSettings",
         },
@@ -112,6 +120,46 @@ export const DEFINITION_JSON_SCHEMA = {
         "inputPorts",
         "outputPorts",
       ],
+      type: "object",
+    },
+    Dependency: {
+      additionalProperties: false,
+      description: "An external program that must be on the PATH.",
+      properties: {
+        binary: {
+          description: "The program's name, as looked up on the PATH.",
+          type: "string",
+        },
+        homepage: {
+          description: "Where to read about it.",
+          type: "string",
+        },
+        installHint: {
+          description: "How to install it, when no per-OS hint applies.",
+          type: "string",
+        },
+        installHints: {
+          additionalProperties: false,
+          description: "How to install it on each OS.",
+          properties: {
+            linux: {
+              type: "string",
+            },
+            macos: {
+              type: "string",
+            },
+            windows: {
+              type: "string",
+            },
+          },
+          type: "object",
+        },
+        version: {
+          description: "A version constraint, e.g. >=6.0.",
+          type: "string",
+        },
+      },
+      required: ["binary"],
       type: "object",
     },
     Edge: {

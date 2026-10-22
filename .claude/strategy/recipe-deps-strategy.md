@@ -1,8 +1,8 @@
 # Recipe-Level Dependency Declarations
 
 **Created:** April 22, 2026
-**Status:** Core shipped — recipe-level `requires`, `shell-run`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), per-platform install hints in `info`/`doctor`/run pre-flight (#531), and `bnto install` running the host install hint (§4). Open: recipe variables (§7)
-**Updated:** October 13, 2026
+**Status:** Core shipped — recipe-level `requires`, `shell-run`, `download-video` conversion, version checks, `bnto doctor` coverage of recipe deps (#530), host-aware binary probing (#525), per-platform install hints in `info`/`doctor`/run pre-flight (#531), `bnto install` running the host install hint (§4), and `requires` on any node, scoped to the OSes it runs on (keep-awake PR 8, [conditional-steps.md](../decisions/conditional-steps.md#dependencies-in-scope-pr-8)). Open: recipe variables (§7)
+**Updated:** October 22, 2026
 **Related:** [engine-expansion.md](engine-expansion.md), [engine-node-patterns.md](../scopes/rust/engine-node-patterns.md), [PLAN.md](../PLAN.md)
 
 ---
@@ -40,20 +40,21 @@ Without recipe-level `requires`, the connector-as-recipe architecture is blind t
 
 ## Current State
 
-| Component                         | Status  | Location (symbol)                                                                                                              |
-| --------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `Dependency` struct               | Shipped | `bnto-core/src/metadata.rs` — `Dependency`                                                                                     |
-| Per-platform install hints        | Shipped | `bnto-core/src/metadata/install_hints.rs` — `InstallHints`, `HostPlatform`; `Dependency::host_install_hint()`                  |
-| `NodeMetadata::requires`          | Shipped | `bnto-core/src/metadata.rs` — `NodeMetadata`                                                                                   |
-| `PipelineDefinition.requires`     | Shipped | `bnto-core/src/pipeline.rs` — `PipelineDefinition`                                                                             |
-| `collect_pipeline_dependencies()` | Shipped | `bnto-engine/src/deps.rs`                                                                                                      |
-| `collect_catalog_dependencies()`  | Shipped | `bnto-engine/src/deps.rs` — processor deps plus every catalog recipe's `requires` (#530)                                       |
-| `check_dependencies()`            | Shipped | `bnto-engine/src/deps.rs` — probes PATH with the host platform's lookup (#525), checks versions via `bnto_core::check_version` |
-| `check_pipeline_dependencies()`   | Shipped | `bnto-engine/src/deps.rs` — run pre-flight                                                                                     |
-| `bnto doctor`                     | Shipped | `bnto/src/doctor.rs` — `run_doctor`                                                                                            |
-| `bnto info <recipe>`              | Shipped | `bnto/src/info.rs` — `print_dependencies`                                                                                      |
-| `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install`; steps in `install_plan.rs`, `--yes` rule in `install_trust.rs` (§4)                     |
-| `shell-run` node                  | Shipped | `bnto-shell` crate — `ShellRun`                                                                                                |
+| Component                         | Status  | Location (symbol)                                                                                                                                      |
+| --------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Dependency` struct               | Shipped | `bnto-core/src/metadata.rs` — `Dependency`                                                                                                             |
+| Per-platform install hints        | Shipped | `bnto-core/src/metadata/install_hints.rs` — `InstallHints`, `HostPlatform`; `Dependency::host_install_hint()`                                          |
+| `NodeMetadata::requires`          | Shipped | `bnto-core/src/metadata.rs` — `NodeMetadata`                                                                                                           |
+| `PipelineDefinition.requires`     | Shipped | `bnto-core/src/pipeline.rs` — `PipelineDefinition`                                                                                                     |
+| `PipelineNode.requires`           | Shipped | `bnto-core/src/pipeline.rs` — a node's deps, checked only where it runs (`bnto-engine/src/scoped_deps.rs`)                                             |
+| `collect_pipeline_dependencies()` | Shipped | `bnto-engine/src/deps.rs`                                                                                                                              |
+| `collect_catalog_dependencies()`  | Shipped | `bnto-engine/src/deps.rs` — processor deps plus every catalog recipe's `requires` (#530), for one host; `scoped_*` variants tag each dep with its OSes |
+| `check_dependencies()`            | Shipped | `bnto-engine/src/deps.rs` — probes PATH with the host platform's lookup (#525), checks versions via `bnto_core::check_version`                         |
+| `check_pipeline_dependencies()`   | Shipped | `bnto-engine/src/deps.rs` — run pre-flight                                                                                                             |
+| `bnto doctor`                     | Shipped | `bnto/src/doctor.rs` — `run_doctor`                                                                                                                    |
+| `bnto info <recipe>`              | Shipped | `bnto/src/info.rs` — `print_dependencies`                                                                                                              |
+| `bnto install <recipe>`           | Shipped | `bnto/src/install.rs` — `run_install`; steps in `install_plan.rs`, `--yes` rule in `install_trust.rs` (§4)                                             |
+| `shell-run` node                  | Shipped | `bnto-shell` crate — `ShellRun`                                                                                                                        |
 
 ---
 
@@ -131,7 +132,7 @@ pub fn collect_pipeline_dependencies(
 ### 3. Everything downstream works unchanged
 
 - `check_pipeline_dependencies()` — already consumes the output of `collect_pipeline_dependencies()`
-- `bnto doctor` — uses `collect_catalog_dependencies()`, which merges processor metadata with the recipe-level `requires` of every catalog recipe (built-in and user library)
+- `bnto doctor` — uses `scoped_catalog_dependencies()`, which merges processor metadata with the `requires` of every catalog recipe (built-in and user library), and checks only what this OS needs (keep-awake PR 8)
 - `bnto info` — already calls `collect_pipeline_dependencies()`, so recipe-level deps surface automatically
 - TUI detail screen — already shows deps via the info path
 
@@ -319,3 +320,5 @@ Same pattern as GitHub Actions (`uses: actions/setup-node@v4`), Docker (`FROM py
 4. **`bnto-video` crate deletion is safe.** The crate has no external consumers (not published separately). The `video-download` processor is only used by the built-in recipe. Converting the recipe to `shell-run` + recipe-level `requires` replaces all functionality.
 
 5. **`bnto install` runs host install hints through the shell.** Unlike `shell-run` (decision 3), an install hint is a whole command line (`sudo apt install ffmpeg`), so it runs via `sh -c` / `cmd /C`. The exact string is always printed first, and `--yes` only auto-runs hints from bundled recipes (see §4).
+
+6. **`requires` scopes to the node that declares it** (keep-awake PR 8, October 2026). Any node can carry `requires`; a nested node's deps are checked only on the OSes it runs on (its platform guards), while root `requires` stay needed everywhere. See [conditional-steps.md](../decisions/conditional-steps.md#dependencies-in-scope-pr-8).

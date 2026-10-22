@@ -2,8 +2,8 @@
 
 use bnto_core::os_support::{describe_os, recipe_os};
 use bnto_core::pipeline::{is_container_node, is_io_node};
-use bnto_core::{Dependency, HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
-use bnto_engine::deps::collect_pipeline_dependencies;
+use bnto_core::{HostPlatform, InputMode, PipelineDefinition, resolve_input_mode};
+use bnto_engine::deps::{ScopedDependency, scoped_pipeline_dependencies};
 
 use crate::catalog::RecipeCatalog;
 
@@ -16,7 +16,8 @@ pub struct RecipeInfo {
     pub description: String,
     pub category: String,
     pub node_types: Vec<String>,
-    pub dependencies: Vec<Dependency>,
+    /// Every dependency, tagged with the OSes that need it.
+    pub dependencies: Vec<ScopedDependency>,
     pub input_mode: InputMode,
     /// The operating systems it has steps for.
     pub os: Vec<HostPlatform>,
@@ -50,22 +51,37 @@ fn run_hint(slug: &str, input_mode: InputMode) -> String {
     }
 }
 
-/// Print dependency details.
-fn print_dependencies(deps: &[Dependency]) {
+/// Print dependency details. A dependency only some OSes need says which.
+fn print_dependencies(deps: &[ScopedDependency]) {
     use colored::Colorize;
     if deps.is_empty() {
         return;
     }
     println!("\n  {}", "Dependencies:".dimmed());
-    for dep in deps {
-        let version = if dep.version.is_empty() {
-            String::new()
-        } else {
-            format!(" ({})", dep.version)
-        };
-        println!("    {}{version}", dep.binary.yellow());
-        println!("      Install: {}", dep.host_install_hint());
+    for scoped in deps {
+        println!(
+            "    {}{}",
+            scoped.dependency.binary.yellow(),
+            dependency_notes(scoped)
+        );
+        println!(
+            "      Install: {}",
+            scoped.install_hint(HostPlatform::current())
+        );
     }
+}
+
+/// " (>=6.0)", " (macOS only)", both, or nothing.
+fn dependency_notes(scoped: &ScopedDependency) -> String {
+    let version = &scoped.dependency.version;
+    [
+        (!version.is_empty()).then(|| version.clone()),
+        scoped.os_note(),
+    ]
+    .into_iter()
+    .flatten()
+    .map(|note| format!(" ({note})"))
+    .collect()
 }
 
 /// Extract structured info from a catalog recipe.
@@ -78,7 +94,7 @@ pub fn get_recipe_info(slug: &str, catalog: &RecipeCatalog) -> Option<RecipeInfo
     let input_mode = resolve_input_mode(&def);
 
     let registry = bnto_engine::create_registry();
-    let dependencies = collect_pipeline_dependencies(&def, &registry);
+    let dependencies = scoped_pipeline_dependencies(&def, &registry);
 
     Some(RecipeInfo {
         slug: entry.slug.clone(),
@@ -136,13 +152,11 @@ mod tests {
         if !info.dependencies.is_empty() {
             writeln!(out).ok();
             writeln!(out, "  Dependencies:").ok();
-            for dep in &info.dependencies {
-                write!(out, "    {} ", dep.binary).ok();
-                if !dep.version.is_empty() {
-                    write!(out, "({})", dep.version).ok();
-                }
-                writeln!(out).ok();
-                writeln!(out, "      Install: {}", dep.host_install_hint()).ok();
+            for scoped in &info.dependencies {
+                let notes = dependency_notes(scoped);
+                writeln!(out, "    {}{notes}", scoped.dependency.binary).ok();
+                let hint = scoped.install_hint(HostPlatform::current());
+                writeln!(out, "      Install: {hint}").ok();
             }
         }
         out
@@ -208,9 +222,20 @@ mod tests {
         let dep_names: Vec<&str> = info
             .dependencies
             .iter()
-            .map(|d| d.binary.as_str())
+            .map(|d| d.dependency.binary.as_str())
             .collect();
         assert!(dep_names.contains(&"yt-dlp"));
+    }
+
+    #[test]
+    fn keep_awake_lists_its_macos_tools_as_macos_only() {
+        let info = get_recipe_info("keep-awake", &catalog()).unwrap();
+        let notes: Vec<String> = info
+            .dependencies
+            .iter()
+            .map(|d| format!("{}{}", d.dependency.binary, dependency_notes(d)))
+            .collect();
+        assert_eq!(notes, ["caffeinate (macOS only)", "osascript (macOS only)"]);
     }
 
     #[test]
@@ -326,12 +351,15 @@ mod tests {
             description: "Download videos".to_string(),
             category: "video".to_string(),
             node_types: vec!["shell-run".to_string()],
-            dependencies: vec![Dependency {
-                binary: "yt-dlp".to_string(),
-                version: String::new(),
-                install_hint: "brew install yt-dlp".to_string(),
-                install_hints: Default::default(),
-                homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
+            dependencies: vec![ScopedDependency {
+                dependency: bnto_core::Dependency {
+                    binary: "yt-dlp".to_string(),
+                    version: String::new(),
+                    install_hint: "brew install yt-dlp".to_string(),
+                    install_hints: Default::default(),
+                    homepage: "https://github.com/yt-dlp/yt-dlp".to_string(),
+                },
+                os: HostPlatform::ALL.to_vec(),
             }],
             input_mode: InputMode::Url,
             os: HostPlatform::ALL.to_vec(),

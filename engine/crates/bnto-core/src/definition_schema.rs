@@ -150,8 +150,35 @@ fn definition_properties() -> Value {
         "settings":   { "$ref": "#/$defs/PipelineSettings" },
         "always":     { "type": "boolean", "default": false, "description": "Closing step: run even after an earlier node in the same chain failed, like `finally`. The run still fails with the first error." },
         "when":       { "$ref": "#/$defs/When" },
+        "requires":   { "type": "array", "description": "External tools this node needs. At the root, needed on every OS; on a nested node, checked only on the OSes that node runs on (its platform guards).", "items": { "$ref": "#/$defs/Dependency" } },
         "nodes":      { "type": "array", "description": "Child nodes (recursive).", "items": { "$ref": "#/$defs/Definition" } },
         "edges":      { "type": "array", "description": "Connections between child nodes.", "items": { "$ref": "#/$defs/Edge" } }
+    })
+}
+
+/// An external tool a node needs (`requires`).
+fn dependency_schema() -> Value {
+    serde_json::json!({
+        "type": "object",
+        "description": "An external program that must be on the PATH.",
+        "required": ["binary"],
+        "properties": {
+            "binary":       { "type": "string", "description": "The program's name, as looked up on the PATH." },
+            "version":      { "type": "string", "description": "A version constraint, e.g. >=6.0." },
+            "installHint":  { "type": "string", "description": "How to install it, when no per-OS hint applies." },
+            "installHints": {
+                "type": "object",
+                "description": "How to install it on each OS.",
+                "properties": {
+                    "macos":   { "type": "string" },
+                    "linux":   { "type": "string" },
+                    "windows": { "type": "string" }
+                },
+                "additionalProperties": false
+            },
+            "homepage":     { "type": "string", "description": "Where to read about it." }
+        },
+        "additionalProperties": false
     })
 }
 
@@ -185,6 +212,7 @@ pub fn definition_json_schema() -> Value {
             "Metadata": metadata_schema(),
             "PipelineSettings": pipeline_settings_schema(),
             "When": when_schema(),
+            "Dependency": dependency_schema(),
             "Definition": {
                 "type": "object",
                 "description": "A single node in a .bnto.json recipe. Can contain child nodes (recursive).",
@@ -321,6 +349,19 @@ mod tests {
             props["settings"]["$ref"], "#/$defs/PipelineSettings",
             "settings should reference PipelineSettings"
         );
+    }
+
+    #[test]
+    fn test_any_node_can_carry_requires() {
+        let schema = definition_json_schema();
+        let requires = &schema["$defs"]["Definition"]["properties"]["requires"];
+        assert_eq!(requires["items"]["$ref"], "#/$defs/Dependency");
+        let dep = &schema["$defs"]["Dependency"];
+        assert_eq!(dep["required"], serde_json::json!(["binary"]));
+        let hints = dep["properties"]["installHints"]["properties"]
+            .as_object()
+            .unwrap();
+        assert!(hints.contains_key("macos") && hints.contains_key("windows"));
     }
 
     #[test]

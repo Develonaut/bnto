@@ -37,8 +37,12 @@ pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &Re
 
     let (deps, label) = collect_deps(recipe_slug, all, &registry, catalog);
     if deps.is_empty() {
+        // "on Linux": another OS may still need something (`requires` on a
+        // platform-guarded step).
+        let here =
+            HostPlatform::current().map_or(String::new(), |os| format!(" on {}", os.label()));
         println!(
-            "{} {} has no external dependencies.",
+            "{} {} has no external dependencies{here}.",
             "ok".green().bold(),
             label
         );
@@ -122,7 +126,8 @@ fn collect_deps(
     let def: bnto_core::PipelineDefinition = crate::unwrap_or_exit(
         serde_json::from_str(&recipe_json).map_err(|e| format!("Invalid recipe JSON: {e}")),
     );
-    let deps = bnto_engine::deps::collect_pipeline_dependencies(&def, registry);
+    let deps =
+        bnto_engine::deps::collect_pipeline_dependencies(&def, registry, HostPlatform::current());
     (deps, slug.to_string())
 }
 
@@ -141,13 +146,17 @@ fn exit_missing_slug() -> ! {
     std::process::exit(1);
 }
 
-/// Dependencies for every catalog recipe — recipe-level `requires` plus
+/// Dependencies every catalog recipe needs on this OS — `requires` plus
 /// processor-declared deps, deduplicated by binary.
 fn collect_all_recipe_deps(
     registry: &bnto_core::NodeRegistry,
     catalog: &RecipeCatalog,
 ) -> Vec<bnto_core::metadata::Dependency> {
-    bnto_engine::deps::collect_catalog_dependencies(registry, &catalog.definitions())
+    bnto_engine::deps::collect_catalog_dependencies(
+        registry,
+        &catalog.definitions(),
+        HostPlatform::current(),
+    )
 }
 
 /// Print every planned step — the exact command that will run, or the
