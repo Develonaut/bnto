@@ -3,9 +3,10 @@
 // Quality strategies by format:
 //   JPEG: re-encode at lower quality (lossy, DCT-based)
 //   PNG: color quantization to 8-bit indexed palette (lossy, via quantize.rs)
-//   WebP: lossless re-encoding only (lossy requires libwebp, planned via jSquash)
-
-use std::io::Cursor;
+//   WebP: re-encode as lossy VP8 at the given quality (via bnto-encode)
+//
+// If re-encoding doesn't shrink the file (an input already compressed harder
+// than `quality` asks for), the original bytes pass through unchanged.
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
@@ -80,23 +81,18 @@ impl CompressImages {
         crate::quantize::compress_png_quantized(data, compression, progress)
     }
 
-    /// Re-encode a WebP image with lossless compression.
-    ///
-    /// NOTE: The `image` crate's WebP encoder only supports LOSSLESS mode.
-    /// Lossy WebP will be added later via jSquash JS fallback.
+    /// Re-encode a WebP image as lossy VP8 at a specific quality level.
     fn compress_webp(
         &self,
         data: &[u8],
+        quality: u8,
         progress: &ProgressReporter,
     ) -> Result<Vec<u8>, BntoError> {
         progress.report(10, "Decoding WebP...");
         let img = decode_with_orientation(data)?;
 
-        progress.report(50, "Compressing WebP (lossless)...");
-        let mut output = Vec::new();
-        let mut cursor_out = Cursor::new(&mut output);
-        img.write_to(&mut cursor_out, image::ImageFormat::WebP)
-            .map_err(|e| BntoError::ProcessingFailed(format!("Failed to encode WebP: {e}")))?;
+        progress.report(50, "Compressing WebP...");
+        let output = bnto_encode::encode_image(&img, ImageFormat::WebP, quality)?;
 
         progress.report(100, "WebP compression complete");
         Ok(output)
@@ -171,7 +167,8 @@ impl NodeProcessor for CompressImages {
         })?;
 
         let original_size = data.len();
-        let compressed_data = self.compress_by_format(&data, &input.params, format, progress)?;
+        let encoded = self.compress_by_format(&data, &input.params, format, progress)?;
+        let compressed_data = smaller_of(data, encoded);
         let compressed_size = compressed_data.len();
         let output_filename = Self::output_filename(&input.filename, format);
         let metadata = build_compression_metadata(original_size, compressed_size, format);
@@ -235,10 +232,21 @@ impl CompressImages {
                 self.compress_png(data, quality, progress)
             }
             ImageFormat::WebP => {
-                progress.report(5, "Compressing WebP (lossless)...");
-                self.compress_webp(data, progress)
+                progress.report(5, &format!("Compressing WebP (quality: {quality})..."));
+                self.compress_webp(data, quality, progress)
             }
         }
+    }
+}
+
+/// Keep the re-encoded bytes only when they beat the original. A compress
+/// step never grows a file; ties keep the original so nothing is re-encoded
+/// for no gain.
+fn smaller_of(original: Vec<u8>, encoded: Vec<u8>) -> Vec<u8> {
+    if encoded.len() < original.len() {
+        encoded
+    } else {
+        original
     }
 }
 
@@ -301,6 +309,7 @@ mod tests {
     use bnto_core::NoopContext;
     use bnto_core::processor::NodeInput;
     use bnto_core::progress::ProgressReporter;
+    use std::io::Cursor;
 
     /// Extract bytes from FileData. Panics on FileData::Path (never produced by image processors).
     fn file_bytes(data: &FileData) -> &[u8] {
@@ -329,6 +338,10 @@ mod tests {
 
     /// A medium JPEG image (400x400, ~23 KB)
     const TEST_MEDIUM_JPEG: &[u8] = include_bytes!("../../../../test-fixtures/images/medium.jpg");
+
+    /// A medium lossy WebP from libwebp (400x400, ~13 KB) — a real-world
+    /// WebP that is already well compressed.
+    const TEST_MEDIUM_WEBP: &[u8] = include_bytes!("../../../../test-fixtures/images/medium.webp");
 
     // =========================================================================
     // Helper Functions
@@ -362,6 +375,29 @@ mod tests {
     /// A no-op progress reporter for tests (no JS runtime needed).
     fn noop_progress() -> ProgressReporter {
         ProgressReporter::new_noop()
+    }
+
+    /// Re-encode an image as lossless WebP (VP8L) with the `image` crate.
+    fn encode_lossless_webp(data: &[u8]) -> Vec<u8> {
+        let img = image::load_from_memory(data).unwrap();
+        let mut buf = Vec::new();
+        img.write_to(&mut Cursor::new(&mut buf), image::ImageFormat::WebP)
+            .unwrap();
+        buf
+    }
+
+    /// FourCC of the first image-data chunk: `VP8 ` (lossy) or `VP8L` (lossless).
+    fn webp_bitstream(data: &[u8]) -> &[u8] {
+        let mut pos = 12;
+        while pos + 8 <= data.len() {
+            let fourcc = &data[pos..pos + 4];
+            if fourcc == b"VP8 " || fourcc == b"VP8L" {
+                return fourcc;
+            }
+            let size = u32::from_le_bytes(data[pos + 4..pos + 8].try_into().unwrap()) as usize;
+            pos += 8 + size + (size & 1);
+        }
+        panic!("no VP8/VP8L chunk in WebP output");
     }
 
     // =========================================================================
@@ -616,20 +652,107 @@ mod tests {
     }
 
     #[test]
-    fn test_compress_webp_with_quality_param_produces_valid_output() {
-        // WebP is lossless-only, but the quality param should be accepted
-        // without error and produce valid output.
+    fn test_compress_lossless_webp_becomes_lossy_and_smaller() {
+        // A lossless WebP of a photo leaves lots of room; lossy re-encoding
+        // at the default quality should take most of it.
+        let lossless = encode_lossless_webp(TEST_MEDIUM_PNG);
         let processor = CompressImages::new();
-        let progress = noop_progress();
-        let input = make_input_with_quality(TEST_WEBP, "image.webp", 80);
+        let input = make_input(&lossless, "photo.webp");
 
-        let output = processor.process(input, &progress, &NoopContext).unwrap();
-        assert_eq!(output.files.len(), 1);
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+        let compressed = file_bytes(&output.files[0].data);
+
         assert_eq!(
-            ImageFormat::from_magic_bytes(file_bytes(&output.files[0].data)),
-            Some(ImageFormat::WebP),
-            "WebP output should be valid even with quality param"
+            webp_bitstream(compressed),
+            b"VP8 ",
+            "output should be lossy"
         );
+        assert!(
+            compressed.len() * 2 < lossless.len(),
+            "lossy ({} bytes) should be under half of lossless ({} bytes)",
+            compressed.len(),
+            lossless.len()
+        );
+    }
+
+    #[test]
+    fn test_compress_webp_lower_quality_means_smaller_file() {
+        let lossless = encode_lossless_webp(TEST_MEDIUM_PNG);
+        let processor = CompressImages::new();
+
+        let q20 = processor
+            .process(
+                make_input_with_quality(&lossless, "photo.webp", 20),
+                &noop_progress(),
+                &NoopContext,
+            )
+            .unwrap();
+        let q80 = processor
+            .process(
+                make_input_with_quality(&lossless, "photo.webp", 80),
+                &noop_progress(),
+                &NoopContext,
+            )
+            .unwrap();
+
+        let (size_q20, size_q80) = (
+            file_bytes(&q20.files[0].data).len(),
+            file_bytes(&q80.files[0].data).len(),
+        );
+        assert!(
+            size_q20 < size_q80,
+            "WebP quality 20 ({size_q20} bytes) should be smaller than quality 80 ({size_q80} bytes)"
+        );
+    }
+
+    // =========================================================================
+    // Never-Grow Tests — a compress step must not make a file bigger
+    // =========================================================================
+
+    #[test]
+    fn test_compress_never_grows_an_already_lossy_webp() {
+        // medium.webp came out of libwebp (lossy, via ImageMagick). Re-encoding
+        // it at quality 100 can only grow it, so the original must come back.
+        let processor = CompressImages::new();
+        let input = make_input_with_quality(TEST_MEDIUM_WEBP, "photo.webp", 100);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(file_bytes(&output.files[0].data), TEST_MEDIUM_WEBP);
+        assert_eq!(output.files[0].filename, "photo-compressed.webp");
+    }
+
+    #[test]
+    fn test_compress_never_grows_a_jpeg() {
+        let processor = CompressImages::new();
+        let input = make_input_with_quality(TEST_MEDIUM_JPEG, "photo.jpg", 100);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(file_bytes(&output.files[0].data), TEST_MEDIUM_JPEG);
+    }
+
+    #[test]
+    fn test_compress_pass_through_reports_no_savings() {
+        let processor = CompressImages::new();
+        let input = make_input_with_quality(TEST_MEDIUM_WEBP, "photo.webp", 100);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        let original = output.metadata["originalSize"].as_u64().unwrap();
+        assert_eq!(
+            output.metadata["compressedSize"].as_u64().unwrap(),
+            original
+        );
+        assert_eq!(output.metadata["compressionRatio"].as_f64().unwrap(), 0.0);
     }
 
     // =========================================================================

@@ -13,7 +13,7 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | format | enum | png | png, jpeg, webp | The target raster format to convert SVG to |
-| quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only. |
+| quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). Applies to JPEG and WebP; PNG is lossless. |
 
 ## Configuration Example
 

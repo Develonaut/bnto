@@ -903,7 +903,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -974,7 +974,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -1150,7 +1150,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -1237,7 +1237,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -1322,7 +1322,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -1366,7 +1366,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -2585,7 +2585,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG and WebP; PNG is lossless.",
           "paramType": {
             "type": "number"
           },
@@ -3481,7 +3481,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -3557,7 +3557,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -3737,7 +3737,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -3828,7 +3828,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -3917,7 +3917,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -3965,7 +3965,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+          "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
           "paramType": {
             "type": "number"
           },
@@ -4685,7 +4685,7 @@
         {
           "name": "quality",
           "label": "Quality",
-          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+          "description": "Output quality (1 = lowest, 100 = highest). Applies to JPEG and WebP; PNG is lossless.",
           "paramType": {
             "type": "number"
           },

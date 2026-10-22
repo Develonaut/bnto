@@ -77,11 +77,13 @@ test.describe("compress-images — codec coverage @browser", () => {
 
     await expect(page.getByTestId("output-file")).toHaveCount(1);
 
-    // WebP encoding is lossless-only in the Rust image crate.
-    // Re-encoding a lossy WebP as lossless can produce a LARGER file.
-    // We only verify the output is valid WebP, not that it's smaller.
+    const inputSize = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "large.webp")).size;
+
+    // Compress never grows a file: a WebP already smaller than the lossy
+    // re-encode comes back unchanged.
     const buffer = await downloadAndVerify(page, {
       filenamePattern: /\.webp$/i,
+      maxSize: inputSize,
     });
 
     assertWebPBytes(buffer);

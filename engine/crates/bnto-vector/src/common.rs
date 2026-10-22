@@ -44,7 +44,9 @@ pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
     ParameterDef {
         name: "quality".to_string(),
         label: "Quality".to_string(),
-        description: "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.".to_string(),
+        description:
+            "Output quality (1 = lowest, 100 = highest). Applies to JPEG and WebP; PNG is lossless."
+                .to_string(),
         param_type: ParameterType::Number,
         default: Some(serde_json::json!(80)),
         constraints: Some(Constraints {

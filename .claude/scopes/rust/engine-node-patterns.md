@@ -436,7 +436,7 @@ Format-specific behavior:
 
 - **JPEG**: `quality` maps to encoder quality (1-100)
 - **PNG**: `quality` maps to `CompressionType` — <33 Fast, <66 Default, >=66 Best (lossless, affects speed/size)
-- **WebP**: Lossless only (`image` crate limitation). Quality param accepted but documented as no-op
+- **WebP**: `quality` maps to lossy VP8 quality (1-100) via `oxideav-webp` (pure Rust, builds for wasm32). Alpha goes in a separate plane
 
 ---
 

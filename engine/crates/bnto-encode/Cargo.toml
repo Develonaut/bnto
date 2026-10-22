@@ -28,6 +28,9 @@ crate-type = ["rlib"]
 [dependencies]
 bnto-core = { path = "../bnto-core", version = "0.2.0" }
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+# Lossy WebP (VP8) encoder — pure Rust, builds for wasm32. The `image` crate only encodes lossless WebP.
+# default-features = false drops the oxideav framework registry; the standalone API is all we use.
+oxideav-webp = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 wasm-bindgen-test = { workspace = true }

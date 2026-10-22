@@ -20,7 +20,7 @@
 | opacity | number | 80 | 0-100 | Overlay transparency (0 = invisible, 100 = fully opaque). |
 | offsetX | number | 0 | -500-500 | Horizontal pixel offset from the position. Positive = right, negative = left. |
 | offsetY | number | 0 | -500-500 | Vertical pixel offset from the position. Positive = down, negative = up. |
-| quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added. |
+| quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality. |
 
 ## Configuration Example
 
