@@ -54,6 +54,7 @@ Most payloads try to create a canary file. A test passes only if the canary neve
 | SEC-35 | PowerShell script mode: `powershell`/`pwsh` run by fixed absolute path; PATH and `searchPath` can't plant one                                                                                                                                                                                    | Guard              | —    | `powershell_mode::sec35_*`                |
 | SEC-36 | PowerShell script mode: cleared environment; exported secrets and `PSModulePath` don't reach the script                                                                                                                                                                                          | Guard              | —    | `powershell_mode::sec36_*`                |
 | SEC-37 | Script mode: a step's `env` can't set `BNTO_ARG_*`; `BNTO_ARG_COUNT` matches the args                                                                                                                                                                                                            | Guard              | —    | `powershell_mode::sec37_*`                |
+| SEC-38 | Bundled PowerShell script-mode steps pass PSScriptAnalyzer (warnings and errors, including `PSAvoidUsingInvokeExpression`); Windows CI fails if the analyzer is missing                                                                                                                          | Guard (Windows CI) | —    | `bnto-engine/tests/bundled_powershell.rs` |
 
 ## Script mode: the safe-script contract
 
@@ -71,9 +72,9 @@ PowerShell scripts (`"shell": "powershell"` on Windows, `"pwsh"` anywhere) run a
 - Never turn a value into code: no `Invoke-Expression`/`iex`, `[scriptblock]::Create(…)`, `Add-Type` with a value in its source, or `powershell -Command`/`cmd /c`/`Start-Process -ArgumentList` strings built from a value.
 - Pass values to native programs as separate arguments (`& tool -- $env:BNTO_ARG_1`), and validate them first on Windows PowerShell 5.1: it doesn't escape embedded `"` for native programs, so a quote can split one value into several arguments. Prefer cmdlets and .NET calls.
 - Validate enum-like values with `switch` or `-in` before use.
+- A background process (keep-awake's Windows session) gets its values through environment variables too: set `$env:NAME` before `Start-Process`, and keep its code a literal `{ … }` scriptblock (encoded with `.ToString()`), so PSScriptAnalyzer lints it as code.
 
 ## Not yet covered by tests
 
 - **Argument injection** (values starting with `-`) through fields. The fix (a per-field `noLeadingDash` validator or `--` insertion) isn't designed yet. A blanket ban would break `download-video`'s option-shaped enum values. Report recommendation 11.
-- **PowerShell lint for bundled scripts.** The first bundled PowerShell script (keep-awake Windows, PR 11) adds the SEC-31 equivalent: PSScriptAnalyzer in Windows CI, including `PSAvoidUsingInvokeExpression`.
 - **Templated `searchPath`** lets a value choose the folder a command runs from. The shipped fixture uses `{{vars.Tools}}` (run config, not data). Whether `{{fields}}`/`{{item}}` should be allowed there is undecided. It's the same class as SEC-07.

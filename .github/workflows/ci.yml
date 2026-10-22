@@ -155,6 +155,9 @@ jobs:
           # windows-latest ships powershell and pwsh; the PowerShell
           # script-mode specs must run, not skip.
           BNTO_REQUIRE_PWSH: "1"
+          # ...and PSScriptAnalyzer, which lints bundled PowerShell scripts
+          # (bnto-engine/tests/bundled_powershell.rs).
+          BNTO_REQUIRE_PSSCRIPTANALYZER: "1"
 
   # ── TypeScript CI (only when web files changed) ──
   typescript:

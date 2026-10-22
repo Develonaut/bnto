@@ -93,11 +93,11 @@ SEC-21 (templates in `script`/`shell` refused) and SEC-25 (only known shells) ex
 ## Trade-offs
 
 - **`-EncodedCommand` is a known attacker technique**, so endpoint security (Defender for Endpoint and others) records encoded PowerShell launches and some rules alert on them. It isn't blocked by default, and AMSI scans the decoded script either way. Accepted: it's the only channel that is both injection-proof and immune to execution policy on 5.1. If it causes trouble in practice, pwsh 7.4+'s `-CommandWithArgs` is the escape hatch for machines that have it.
-- **No PowerShell lint in CI yet.** POSIX bundled scripts pass ShellCheck (SEC-31). The first bundled PowerShell script (keep-awake Windows, PR 11) adds the equivalent: PSScriptAnalyzer on Windows CI, including `PSAvoidUsingInvokeExpression`.
+- **PowerShell lint in CI (keep-awake PR 11).** Bundled PowerShell scripts pass PSScriptAnalyzer's warning and error rules, `PSAvoidUsingInvokeExpression` included (SEC-38, `bnto-engine/tests/bundled_powershell.rs`), required in Windows CI the way ShellCheck is required on Linux (SEC-31).
 - **A recipe can still use `shell: powershell` without a Windows guard**, and it fails on macOS/Linux with a clear message. `bnto check` doesn't flag it. Revisit if it bites.
 - **Script length** is capped by the Windows command line. Keep-awake's Windows script is expected well under the cap.
 
 ## Not in this PR
 
-- The keep-awake Windows variant (PR 11) and its PSScriptAnalyzer gate.
+- The keep-awake Windows variant and its PSScriptAnalyzer gate shipped in keep-awake PR 11.
 - `-CommandWithArgs` for pwsh 7.4+.

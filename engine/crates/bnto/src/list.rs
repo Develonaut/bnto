@@ -244,7 +244,14 @@ mod tests {
 
     #[test]
     fn test_format_marks_a_recipe_that_runs_on_some_oses() {
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let library = tempfile::tempdir().unwrap();
+        let mac_only = r#"{ "id": "mac-only", "type": "group", "name": "Mac Only",
+            "metadata": { "description": "Only on a Mac.", "category": "system" },
+            "nodes": [{ "id": "g", "type": "group",
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": "macos" },
+              "nodes": [{ "id": "s", "type": "shell-run", "parameters": { "command": "true" } }] }] }"#;
+        std::fs::write(library.path().join("mac-only.bnto.json"), mac_only).unwrap();
+        let catalog = RecipeCatalog::load(library.path());
         let output = format_recipe_list(&group_recipes(catalog.all()));
         let line = |slug: &str| {
             output
@@ -253,7 +260,11 @@ mod tests {
                 .unwrap_or_else(|| panic!("no {slug} line:\n{output}"))
                 .to_string()
         };
-        assert!(line("keep-awake").contains(" [macOS and Linux] Keep your computer awake"));
+        assert!(
+            line("mac-only").contains(" [macOS] Only on a Mac."),
+            "{output}"
+        );
+        assert!(!line("keep-awake").contains('['));
         assert!(!line("compress-images").contains('['));
     }
 

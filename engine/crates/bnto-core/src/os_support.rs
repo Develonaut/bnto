@@ -206,11 +206,11 @@ mod tests {
     }
 
     #[test]
-    fn keep_awake_runs_on_macos_and_linux() {
+    fn keep_awake_runs_on_every_os_through_one_branch_each() {
         let json = include_str!("../../bnto-engine/recipes/keep-awake.bnto.json");
         assert_eq!(
             recipe_os(&serde_json::from_str(json).unwrap()),
-            [MacOs, Linux]
+            [MacOs, Linux, Windows]
         );
     }
 

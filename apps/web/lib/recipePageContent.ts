@@ -63,7 +63,7 @@ const RECIPE_FAQ: Record<string, QA[]> = {
     {
       question: "What does activity simulation need?",
       answer:
-        "Keeping a computer awake doesn't reset its idle timer, so chat apps still mark you Away. Activity simulation nudges the cursor 1px once you've been idle. On macOS that needs Accessibility permission for your terminal app (System Settings > Privacy & Security > Accessibility). On Linux it needs an X11 session with xdotool and xprintidle installed; Wayland doesn't let one app move the cursor for another, so there the session starts without it.",
+        "Keeping a computer awake doesn't reset its idle timer, so chat apps still mark you Away. Activity simulation nudges the cursor 1px once you've been idle. On macOS that needs Accessibility permission for your terminal app (System Settings > Privacy & Security > Accessibility). On Linux it needs an X11 session with xdotool and xprintidle installed; Wayland doesn't let one app move the cursor for another, so there the session starts without it. Windows needs nothing more.",
     },
     {
       question: "Does it keep the screen on under Linux?",

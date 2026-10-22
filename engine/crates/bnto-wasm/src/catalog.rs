@@ -282,7 +282,7 @@ mod tests {
     fn test_catalog_recipes_carry_the_oses_they_run_on() {
         let recipes = build_test_recipes();
         let os_of = |slug: &str| &recipes.iter().find(|r| r.slug == slug).unwrap().os;
-        assert_eq!(os_of("keep-awake"), &["macos", "linux"]);
+        assert_eq!(os_of("keep-awake"), &["macos", "linux", "windows"]);
         assert_eq!(os_of("compress-images"), &["macos", "linux", "windows"]);
         let json = serde_json::to_value(&recipes[0]).unwrap();
         assert!(json["os"].is_array(), "serialized as `os`");

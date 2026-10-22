@@ -14,8 +14,12 @@ function recipe(slug: string) {
 const withOs = (base: Recipe, os: Recipe["os"]): Recipe => ({ ...base, os });
 
 describe("getRecipeOsBadge", () => {
-  it("names the one OS keep-awake runs on", () => {
-    expect(getRecipeOsBadge(recipe("keep-awake"))).toBe("macOS and Linux only");
+  it("names the one OS a recipe is limited to", () => {
+    expect(getRecipeOsBadge(withOs(recipe("keep-awake"), ["macos"]))).toBe("macOS only");
+  });
+
+  it("shows nothing for keep-awake, which runs on every OS", () => {
+    expect(getRecipeOsBadge(recipe("keep-awake"))).toBeNull();
   });
 
   it("names every OS a recipe is limited to", () => {
