@@ -6,7 +6,6 @@
 pub enum ImageFormat {
     Jpeg,
     Png,
-    /// Lossless-only in Rust `image` crate. Lossy planned via jSquash JS fallback.
     WebP,
 }
 

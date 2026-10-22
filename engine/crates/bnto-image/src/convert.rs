@@ -1,8 +1,7 @@
 // Convert Image Format Node — re-encode images between JPEG, PNG, and WebP.
 // Also accepts SVG input, rasterizing via bnto-vector before encoding.
 //
-// WebP output is lossless-only (Rust `image` crate limitation).
-// Lossy WebP planned via jSquash JS fallback.
+// WebP output is lossy (VP8) at the requested quality.
 
 use bnto_core::context::ProcessContext;
 use bnto_core::errors::BntoError;
@@ -20,9 +19,6 @@ use crate::orientation::decode_with_orientation;
 use crate::svg;
 
 use bnto_core::DEFAULT_QUALITY;
-
-/// WebP quality cap — lossless encoder produces bloat above 85.
-const MAX_WEBP_QUALITY: u8 = 85;
 
 /// The convert-image-format node processor.
 pub struct ConvertImageFormat;
@@ -60,21 +56,14 @@ impl ConvertImageFormat {
         }
     }
 
-    /// Quality extraction with WebP cap at MAX_WEBP_QUALITY.
-    fn get_quality(
-        params: &serde_json::Map<String, serde_json::Value>,
-        target_format: ImageFormat,
-    ) -> u8 {
-        let raw = params
+    /// Quality extraction, clamped to 1-100.
+    fn get_quality(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
+        params
             .get("quality")
             .and_then(|v| v.as_u64())
             .map(|q| q as u8)
             .unwrap_or(DEFAULT_QUALITY)
-            .clamp(MIN_QUALITY, MAX_QUALITY);
-        match target_format {
-            ImageFormat::WebP => raw.min(MAX_WEBP_QUALITY),
-            _ => raw,
-        }
+            .clamp(MIN_QUALITY, MAX_QUALITY)
     }
 
     /// Replace extension: "photo.jpg" + PNG -> "photo.png"
@@ -191,7 +180,7 @@ fn encode_to_target(
     params: &serde_json::Map<String, serde_json::Value>,
     progress: &ProgressReporter,
 ) -> Result<Vec<u8>, BntoError> {
-    let quality = ConvertImageFormat::get_quality(params, target);
+    let quality = ConvertImageFormat::get_quality(params);
     progress.report(
         60,
         &format!("Encoding as {:?} (quality: {quality})...", target),
@@ -387,7 +376,7 @@ mod tests {
     fn test_quality_default_when_not_specified() {
         // No quality param → use DEFAULT_QUALITY (80).
         let params = serde_json::Map::new();
-        let quality = ConvertImageFormat::get_quality(&params, ImageFormat::Jpeg);
+        let quality = ConvertImageFormat::get_quality(&params);
         assert_eq!(quality, DEFAULT_QUALITY);
     }
 
@@ -395,31 +384,23 @@ mod tests {
     fn test_quality_respected_for_jpeg() {
         // Quality param should be used as-is for JPEG.
         let params = format_quality_params("jpeg", 50);
-        let quality = ConvertImageFormat::get_quality(&params, ImageFormat::Jpeg);
+        let quality = ConvertImageFormat::get_quality(&params);
         assert_eq!(quality, 50);
     }
 
     #[test]
-    fn test_quality_capped_for_webp() {
-        // Quality > 85 for WebP should be capped at 85.
+    fn test_quality_respected_for_webp() {
+        // WebP is lossy, so the full 1-100 range means something.
         let params = format_quality_params("webp", 100);
-        let quality = ConvertImageFormat::get_quality(&params, ImageFormat::WebP);
-        assert_eq!(quality, MAX_WEBP_QUALITY);
-    }
-
-    #[test]
-    fn test_quality_not_capped_for_webp_when_below_max() {
-        // Quality <= 85 for WebP should pass through unchanged.
-        let params = format_quality_params("webp", 70);
-        let quality = ConvertImageFormat::get_quality(&params, ImageFormat::WebP);
-        assert_eq!(quality, 70);
+        let quality = ConvertImageFormat::get_quality(&params);
+        assert_eq!(quality, 100);
     }
 
     #[test]
     fn test_quality_clamped_to_valid_range() {
         // Quality of 0 should clamp to MIN_QUALITY (1).
         let params = format_quality_params("jpeg", 0);
-        let quality = ConvertImageFormat::get_quality(&params, ImageFormat::Jpeg);
+        let quality = ConvertImageFormat::get_quality(&params);
         assert_eq!(quality, MIN_QUALITY);
     }
 

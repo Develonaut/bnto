@@ -58,7 +58,7 @@ pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
     ParameterDef {
         name: "quality".to_string(),
         label: "Quality".to_string(),
-        description: "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.".to_string(),
+        description: "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.".to_string(),
         param_type: ParameterType::Number,
         default: Some(serde_json::json!(80)),
         constraints: Some(Constraints {

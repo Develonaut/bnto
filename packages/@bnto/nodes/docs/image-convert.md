@@ -16,7 +16,7 @@
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | format | enum | jpeg | jpeg, png, webp | The target image format to convert to |
-| quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added. |
+| quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality. |
 
 ## Configuration Example
 

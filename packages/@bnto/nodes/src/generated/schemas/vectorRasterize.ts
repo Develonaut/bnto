@@ -29,7 +29,7 @@ export const vectorRasterizeNodeSchema: NodeSchema = {
     quality: {
       label: "Quality",
       description:
-        "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+        "Output quality (1 = lowest, 100 = highest). Applies to JPEG and WebP; PNG is lossless.",
     },
   },
 };

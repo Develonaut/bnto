@@ -29,7 +29,7 @@ export const imageConvertNodeSchema: NodeSchema = {
     quality: {
       label: "Quality",
       description:
-        "Output quality (1 = lowest, 100 = highest). WebP is lossless-only; quality has no effect until lossy WebP support is added.",
+        "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
     },
   },
 };

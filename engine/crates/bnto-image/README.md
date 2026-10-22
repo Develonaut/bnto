@@ -10,14 +10,14 @@ Format detection and raster encoding live in [`bnto-encode`](../bnto-encode/), a
 
 ## Processors
 
-| Processor            | Node Type          | What It Does                                                                                                        |
-| -------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `CompressImages`     | `image-compress`   | Re-encodes at a target compression level (1-100). PNG uses quantization (median cut + dithering) for ~57% reduction |
-| `ResizeImages`       | `image-resize`     | Scales to target dimensions with aspect ratio control. Lanczos3 filter                                              |
-| `ConvertImageFormat` | `image-convert`    | Converts between JPEG, PNG, and WebP with quality control. Also accepts SVG input (rasterized via `bnto-vector`)    |
-| `OverlayImage`       | `image-overlay`    | Composites a watermark/overlay onto images with configurable position, size, and opacity                            |
-| `PadImages`          | `image-pad`        | Centers images on a larger canvas (width/height), filling the added space with transparency or a hex color          |
-| `StripExif`          | `image-strip-exif` | Removes all EXIF metadata (GPS, camera info, timestamps) via decode/re-encode                                       |
+| Processor            | Node Type          | What It Does                                                                                                                                                                              |
+| -------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CompressImages`     | `image-compress`   | Re-encodes at a target quality (1-100): JPEG and WebP lossy, PNG via quantization (median cut + dithering). Never grows a file: if re-encoding isn't smaller, the original passes through |
+| `ResizeImages`       | `image-resize`     | Scales to target dimensions with aspect ratio control. Lanczos3 filter                                                                                                                    |
+| `ConvertImageFormat` | `image-convert`    | Converts between JPEG, PNG, and WebP with quality control. Also accepts SVG input (rasterized via `bnto-vector`)                                                                          |
+| `OverlayImage`       | `image-overlay`    | Composites a watermark/overlay onto images with configurable position, size, and opacity                                                                                                  |
+| `PadImages`          | `image-pad`        | Centers images on a larger canvas (width/height), filling the added space with transparency or a hex color                                                                                |
+| `StripExif`          | `image-strip-exif` | Removes all EXIF metadata (GPS, camera info, timestamps) via decode/re-encode                                                                                                             |
 
 ## Directory Structure
 
@@ -61,7 +61,7 @@ src/
 
 ## Key Dependencies
 
-- `bnto-encode` - shared image format detection (`ImageFormat`) and encoding (`encode_image()`)
+- `bnto-encode` - shared image format detection (`ImageFormat`) and encoding (`encode_image()`, including lossy WebP)
 - `image` (0.25) - pure Rust codecs for JPEG, PNG, WebP (no rayon, WASM incompatible)
 - `bnto-vector` (0.1) - SVG rasterization via resvg/usvg/tiny-skia (used by convert processor)
 - `quantizr` (1.4) - PNG quantization via median cut algorithm

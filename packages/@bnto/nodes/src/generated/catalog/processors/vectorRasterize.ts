@@ -28,7 +28,7 @@ export const vectorRasterizeProcessor: ProcessorDef = {
       name: "quality",
       label: "Quality",
       description:
-        "Output quality (1 = lowest, 100 = highest). Applies to JPEG; PNG is lossless; WebP is lossless-only.",
+        "Output quality (1 = lowest, 100 = highest). Applies to JPEG and WebP; PNG is lossless.",
       type: "number" as const,
       default: 80,
       constraints: { min: 1, max: 100, required: false },
