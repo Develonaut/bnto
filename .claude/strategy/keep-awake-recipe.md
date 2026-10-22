@@ -23,7 +23,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 3   | Skip a step when its `when` guard doesn't hold               | `feat/when-guard`                  | Merged (#697) |
 | 4   | Show skipped steps in the CLI, TUI and previews              | `feat/when-surfaces`               | Merged (#703) |
 | 5   | Let a container's fields reach the steps inside it           | `feat/scoped-fields`               | Merged (#708) |
-| 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Not started   |
+| 6   | Work out the OSes a recipe runs on, refuse unsupported hosts | `feat/recipe-os-support`           | Merged (#710) |
 | 7   | Show which operating systems a recipe runs on, on bnto.io    | `feat/web-os-badge`                | Not started   |
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Not started   |
 | 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Not started   |

@@ -1,7 +1,7 @@
 # Decision: Conditional Steps (`when` guards)
 
 **Created:** October 2026
-**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4, scoped fields in PR 5 and recipe OS support in PR 6; the web badge and OS-scoped dependencies follow in PRs 7-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
+**Status:** Decided. The engine side shipped in keep-awake PR 3 (`feat/when-guard`); surfaces shipped in PR 4, scoped fields in PR 5 and recipe OS support in PR 6 (#710); the web badge and OS-scoped dependencies follow in PRs 7-8 ([keep-awake-recipe.md](../strategy/keep-awake-recipe.md)).
 **Applies to:** the executor in `bnto-core`, so every consumer (CLI, TUI, WASM).
 
 ---

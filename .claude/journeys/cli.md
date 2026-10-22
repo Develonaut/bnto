@@ -2,7 +2,7 @@
 
 **Domain:** `bnto run` and `bnto check` on recipes with conditional steps (`when` guards).
 **Status:** CJ1-CJ4 and CJ6-CJ8 run on every PR (Linux and Windows CI, macOS locally); CJ5 is covered by `consent_lines.rs` unit tests.
-**Last Updated:** October 22, 2026 (CJ4, PR 6)
+**Last Updated:** October 22, 2026 (CJ4, PR 6 #710)
 
 ---
 
