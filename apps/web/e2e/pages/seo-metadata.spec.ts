@@ -116,8 +116,20 @@ test.describe("SEO metadata — all Tier 1 slugs @browser", () => {
 
 /** CLI-only recipes: their pages must not promise a browser tool. */
 const CLI_ONLY_SLUGS = [
-  { slug: "keep-awake", name: "Keep Awake", command: "bnto run keep-awake" },
-  { slug: "download-video", name: "Download Video", command: "bnto run download-video <url>" },
+  {
+    slug: "keep-awake",
+    name: "Keep Awake",
+    command: "bnto run keep-awake",
+    os: "macOS",
+    badge: "macOS only",
+  },
+  {
+    slug: "download-video",
+    name: "Download Video",
+    command: "bnto run download-video <url>",
+    os: "macOS, Linux, Windows",
+    badge: null,
+  },
 ] as const;
 
 test.describe("SEO — CLI-only recipe pages @browser", () => {
@@ -144,7 +156,15 @@ test.describe("SEO — CLI-only recipe pages @browser", () => {
 
       expect(jsonLd["@type"]).toBe("SoftwareApplication");
       expect(jsonLd.browserRequirements).toBeUndefined();
-      expect(jsonLd.operatingSystem).toBeUndefined();
+      expect(jsonLd.operatingSystem).toBe(entry.os);
+    });
+
+    test(`/${entry.slug}: names the OSes it's limited to`, async ({ page }) => {
+      await page.goto(`/${entry.slug}`);
+
+      const badge = page.getByTestId(`recipe-os-badge-${entry.slug}`);
+      if (entry.badge) await expect(badge).toHaveText(entry.badge);
+      else await expect(badge).toHaveCount(0);
     });
   }
 });

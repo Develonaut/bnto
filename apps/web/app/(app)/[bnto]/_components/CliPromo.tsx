@@ -1,6 +1,7 @@
 import type { Recipe } from "@bnto/core";
 import { getCliRunCommand } from "@bnto/registry";
 import { Card, Badge, Heading, Text, Stack, Row } from "@bnto/ui";
+import { RecipeOsBadge } from "@/components/blocks/RecipeOsBadge";
 
 export function CliPromo({ recipe }: { recipe: Recipe }) {
   return (
@@ -8,6 +9,7 @@ export function CliPromo({ recipe }: { recipe: Recipe }) {
       <Stack className="gap-4">
         <Row className="gap-2">
           <Badge size="sm">CLI Only</Badge>
+          <RecipeOsBadge recipe={recipe} />
         </Row>
         <Heading level={3} size="sm">
           Available via the bnto CLI

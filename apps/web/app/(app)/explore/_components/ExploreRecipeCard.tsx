@@ -15,7 +15,9 @@ import {
   RecipeCardDescription,
   RecipeCardTags,
   RecipeCardTitle,
+  Row,
 } from "@bnto/ui";
+import { RecipeOsBadge } from "@/components/blocks/RecipeOsBadge";
 
 type CardSize = "sm" | "md" | "lg";
 
@@ -51,7 +53,10 @@ export function ExploreRecipeCard({ recipe, icon: Icon, size = "md" }: ExploreRe
         <Icon className="size-10 text-primary" />
       </div>
       <RecipeCardContent>
-        <RecipeCardCategory>{categoryLabel}</RecipeCardCategory>
+        <Row wrap>
+          <RecipeCardCategory>{categoryLabel}</RecipeCardCategory>
+          <RecipeOsBadge recipe={recipe} />
+        </Row>
         <RecipeCardTitle>{recipe.name}</RecipeCardTitle>
         <RecipeCardDescription>{recipe.description}</RecipeCardDescription>
         <RecipeCardTags tags={recipe.features} limit={3} />
