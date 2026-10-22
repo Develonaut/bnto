@@ -202,10 +202,11 @@ fn run_loop(
             }
         }
 
-        // A background update check that finished mid-session.
-        if let Some(notice) = update_rx.as_ref().and_then(|rx| rx.try_recv().ok()) {
-            model = update(model, AppMessage::UpdateAvailable(notice));
-            update_rx = None;
+        // A newer release the background update watch found mid-session.
+        match update_rx.as_ref().map(mpsc::Receiver::try_recv) {
+            Some(Ok(notice)) => model = update(model, AppMessage::UpdateAvailable(notice)),
+            Some(Err(mpsc::TryRecvError::Disconnected)) => update_rx = None,
+            _ => {}
         }
 
         // Spawn the pipeline bridge when execution screen enters Idle state.
