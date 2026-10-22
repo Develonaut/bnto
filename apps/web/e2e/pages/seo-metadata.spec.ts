@@ -120,8 +120,8 @@ const CLI_ONLY_SLUGS = [
     slug: "keep-awake",
     name: "Keep Awake",
     command: "bnto run keep-awake",
-    os: "macOS, Linux",
-    badge: "macOS and Linux only",
+    os: "macOS, Linux, Windows",
+    badge: null,
   },
   {
     slug: "download-video",

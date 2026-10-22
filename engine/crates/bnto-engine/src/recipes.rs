@@ -152,7 +152,7 @@ mod tests {
             .iter()
             .map(|os| &os["nodes"][0])
             .collect();
-        assert_eq!(steps.len(), 2, "a macOS and a Linux branch");
+        assert_eq!(steps.len(), 3, "a macOS, a Linux and a Windows branch");
         for step in &steps {
             assert!(
                 step.get("fields").is_none(),
@@ -160,10 +160,9 @@ mod tests {
                 step["id"]
             );
         }
-        assert_eq!(
-            steps[0]["parameters"]["args"],
-            steps[1]["parameters"]["args"]
-        );
+        for step in &steps[1..] {
+            assert_eq!(steps[0]["parameters"]["args"], step["parameters"]["args"]);
+        }
     }
 
     #[test]

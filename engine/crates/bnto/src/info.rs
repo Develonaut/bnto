@@ -269,7 +269,7 @@ mod tests {
     fn test_get_info_reports_where_it_runs() {
         let c = catalog();
         let info = get_recipe_info("keep-awake", &c).unwrap();
-        assert_eq!(info.os, [HostPlatform::MacOs, HostPlatform::Linux]);
+        assert_eq!(info.os, HostPlatform::ALL);
         let info = get_recipe_info("compress-images", &c).unwrap();
         assert_eq!(info.os, HostPlatform::ALL);
     }

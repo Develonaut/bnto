@@ -69,12 +69,12 @@ test.describe("Explore page — desktop @browser", () => {
     await expect(page.getByTestId("explore-recipe-clean-csv")).not.toBeVisible();
   });
 
-  test("only a recipe limited to some OSes carries an OS badge", async ({ page }) => {
+  test("no OS badge shows while every bundled recipe runs on every OS", async ({ page }) => {
     await page.goto("/explore");
 
-    await expect(page.getByTestId("recipe-os-badge-keep-awake")).toHaveText("macOS and Linux only");
-    // A CLI recipe for every OS, and a browser recipe, say nothing.
-    await expect(page.locator(OS_BADGES)).toHaveCount(1);
+    // keep-awake now has a branch per OS; a browser recipe never says anything.
+    await expect(page.getByTestId("explore-recipe-keep-awake")).toBeVisible();
+    await expect(page.locator(OS_BADGES)).toHaveCount(0);
   });
 
   test("a browser recipe's page carries no OS badge", async ({ page }) => {

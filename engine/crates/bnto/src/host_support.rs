@@ -35,21 +35,24 @@ pub fn os_badge(os: &[HostPlatform]) -> Option<String> {
 mod tests {
     use super::*;
 
-    const KEEP_AWAKE: &str = include_str!("../../bnto-engine/recipes/keep-awake.bnto.json");
+    /// A recipe whose one step sits in a group that skips Windows.
+    const UNIX_ONLY: &str = r#"{ "nodes": [{ "id": "g", "type": "group",
+        "when": { "value": "{{ctx.platform}}", "op": "not-equals", "expected": "windows" },
+        "nodes": [{ "id": "s", "type": "shell-run", "parameters": { "command": "true" } }] }] }"#;
 
     #[test]
     fn a_recipe_is_refused_on_an_os_it_has_no_step_for() {
-        let why = unsupported_host("keep-awake", KEEP_AWAKE, Some(HostPlatform::Windows));
+        let why = unsupported_host("unix-only", UNIX_ONLY, Some(HostPlatform::Windows));
         assert_eq!(
             why.as_deref(),
-            Some("keep-awake runs on macOS and Linux. This machine runs Windows.")
+            Some("unix-only runs on macOS and Linux. This machine runs Windows.")
         );
     }
 
     #[test]
     fn a_recipe_runs_on_each_os_it_has_a_step_for() {
         for os in [HostPlatform::MacOs, HostPlatform::Linux] {
-            assert_eq!(unsupported_host("keep-awake", KEEP_AWAKE, Some(os)), None);
+            assert_eq!(unsupported_host("unix-only", UNIX_ONLY, Some(os)), None);
         }
     }
 
@@ -62,7 +65,7 @@ mod tests {
 
     #[test]
     fn an_unnamed_os_or_an_unreadable_recipe_is_let_through() {
-        assert_eq!(unsupported_host("keep-awake", KEEP_AWAKE, None), None);
+        assert_eq!(unsupported_host("unix-only", UNIX_ONLY, None), None);
         let host = Some(HostPlatform::Windows);
         assert_eq!(unsupported_host("broken", "{", host), None);
     }

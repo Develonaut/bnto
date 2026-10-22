@@ -1,4 +1,5 @@
-// ShellCheck over every bundled recipe's script-mode steps. Bundled scripts
+// ShellCheck over every bundled recipe's POSIX script-mode steps (PowerShell
+// steps get PSScriptAnalyzer, bundled_powershell.rs). Bundled scripts
 // ship to every user and are shown whole at consent, so they're held to
 // ShellCheck's default rules (shell-run.md, "safe-script contract").
 // Without ShellCheck the checks skip, unless BNTO_REQUIRE_SHELLCHECK=1 (set in
@@ -6,8 +7,16 @@
 
 use std::process::Command;
 
-use bnto_engine::recipes::builtin_recipes;
-use serde_json::Value;
+#[path = "support/bundled_steps.rs"]
+mod bundled_steps;
+
+use bundled_steps::{ScriptStep, bundled_script_steps};
+
+/// The bundled script steps a POSIX shell runs: ShellCheck's to read.
+fn posix_steps() -> Vec<ScriptStep> {
+    let steps = bundled_script_steps().into_iter();
+    steps.filter(|step| !step.is_powershell()).collect()
+}
 
 /// Shells ShellCheck can read. Script mode also accepts zsh, which ShellCheck
 /// can't check, so a bundled script may not use it.
@@ -19,41 +28,10 @@ const CHECKABLE_SHELLS: &[&str] = &["sh", "bash", "dash", "ksh"];
 /// SC2016: single-quoted `$` in literal JavaScript (keep-awake's JXA).
 const ALLOWED_DISABLES: &[&str] = &["SC2016"];
 
-/// A script-mode step in a bundled recipe.
-struct ScriptStep {
-    at: String,
-    shell: String,
-    script: String,
-}
-
 enum Outcome {
     Clean,
     Findings(String),
     Missing,
-}
-
-/// Every script-mode step in the bundled recipes, container children included.
-fn bundled_script_steps() -> Vec<ScriptStep> {
-    let mut steps = Vec::new();
-    for recipe in builtin_recipes() {
-        let def: Value = serde_json::from_str(recipe.definition_json).unwrap();
-        collect_steps(&recipe.slug, &def["nodes"], &mut steps);
-    }
-    steps
-}
-
-fn collect_steps(recipe: &str, nodes: &Value, out: &mut Vec<ScriptStep>) {
-    for node in nodes.as_array().into_iter().flatten() {
-        let params = &node["parameters"];
-        if let Some(script) = params["script"].as_str() {
-            out.push(ScriptStep {
-                at: format!("{recipe}/{}", node["id"].as_str().unwrap_or("?")),
-                shell: params["shell"].as_str().unwrap_or("sh").to_string(),
-                script: script.to_string(),
-            });
-        }
-        collect_steps(recipe, &node["nodes"], out);
-    }
 }
 
 /// The codes every `# shellcheck disable=` directive in `script` names.
@@ -103,7 +81,7 @@ fn on_missing(required: bool) {
 
 #[test]
 fn every_bundled_script_passes_shellcheck() {
-    let steps = bundled_script_steps();
+    let steps = posix_steps();
     assert!(
         steps.iter().any(|s| s.at.starts_with("keep-awake/")),
         "no script steps found; the walk is broken"
@@ -130,11 +108,11 @@ fn an_unquoted_value_is_a_finding() {
 }
 
 #[test]
-fn bundled_scripts_use_a_shell_shellcheck_reads() {
+fn bundled_scripts_use_a_shell_a_linter_reads() {
     for step in bundled_script_steps() {
         assert!(
-            CHECKABLE_SHELLS.contains(&step.shell.as_str()),
-            "{} uses {}, which ShellCheck can't check",
+            CHECKABLE_SHELLS.contains(&step.shell.as_str()) || step.is_powershell(),
+            "{} uses {}, which neither ShellCheck nor PSScriptAnalyzer checks",
             step.at,
             step.shell
         );
@@ -143,7 +121,7 @@ fn bundled_scripts_use_a_shell_shellcheck_reads() {
 
 #[test]
 fn bundled_scripts_disable_only_allowed_checks() {
-    for step in bundled_script_steps() {
+    for step in posix_steps() {
         for code in disabled_codes(&step.script) {
             assert!(
                 ALLOWED_DISABLES.contains(&code.as_str()),

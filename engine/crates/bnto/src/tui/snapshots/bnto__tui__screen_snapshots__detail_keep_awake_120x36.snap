@@ -12,10 +12,10 @@ expression: "session.screen(width, height)"
 
 
             ╭ D E T A I L ─────────────────────────────────────────────────────────────────────────────────╮
-            │  Keep Awake  [built-in]  [macOS and Linux]                                                   │
-            │  Keep your computer awake for a set time or until you stop it, on macOS or Linux. By default │
-            │  it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a       │
-            │  session, come back later and run Stop. CLI/desktop only.                                    │
+            │  Keep Awake  [built-in]                                                                      │
+            │  Keep your computer awake for a set time or until you stop it. By default it also nudges the │
+            │  cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later │
+            │  and run Stop. CLI/desktop only.                                                             │
             │                                                                                              │
             │  PARAMETERS                                                                                  │
             │                                                                                              │
@@ -33,6 +33,6 @@ expression: "session.screen(width, height)"
             │      Keeping the computer awake doesn't reset the idle timer, so chat apps still mark you    │
             │      Away. This nudges the cursor 1px once you've been idle this long. macOS needs           │
             │      Accessibility permission for your terminal app; Linux needs an X11 session with xdotool │
-            │      and xprintidle.                                                                         │
+            │      and xprintidle; Windows needs nothing more.                                             │
             ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
             ↑↓ navigate  Enter edit/select  Tab next section          22 recipes  ·  v[version]  ·  Los Angeles

@@ -8164,17 +8164,19 @@
     {
       "slug": "keep-awake",
       "name": "Keep Awake",
-      "description": "Keep your computer awake for a set time or until you stop it, on macOS or Linux. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
+      "description": "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
       "category": "system",
       "tags": [
         "macOS",
         "Linux",
+        "Windows",
         "Sleep prevention",
         "Activity simulation"
       ],
       "os": [
         "macos",
-        "linux"
+        "linux",
+        "windows"
       ],
       "definition": {
         "edges": [
@@ -8193,10 +8195,11 @@
         "inputPorts": [],
         "metadata": {
           "category": "system",
-          "description": "Keep your computer awake for a set time or until you stop it, on macOS or Linux. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
+          "description": "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
           "tags": [
             "macOS",
             "Linux",
+            "Windows",
             "Sleep prevention",
             "Activity simulation"
           ]
@@ -8315,7 +8318,7 @@
               },
               "jiggle": {
                 "default": "120",
-                "description": "Keeping the computer awake doesn't reset the idle timer, so chat apps still mark you Away. This nudges the cursor 1px once you've been idle this long. macOS needs Accessibility permission for your terminal app; Linux needs an X11 session with xdotool and xprintidle.",
+                "description": "Keeping the computer awake doesn't reset the idle timer, so chat apps still mark you Away. This nudges the cursor 1px once you've been idle this long. macOS needs Accessibility permission for your terminal app; Linux needs an X11 session with xdotool and xprintidle; Windows needs nothing more.",
                 "label": "Activity Simulation",
                 "options": [
                   {
@@ -8466,6 +8469,53 @@
                 "version": "1.0.0",
                 "when": {
                   "expected": "linux",
+                  "op": "equals",
+                  "value": "{{ctx.platform}}"
+                }
+              },
+              {
+                "id": "windows",
+                "inputPorts": [],
+                "metadata": {},
+                "name": "Windows",
+                "nodes": [
+                  {
+                    "id": "wake",
+                    "inputPorts": [],
+                    "metadata": {},
+                    "name": "Windows Keep-Awake Session",
+                    "outputPorts": [],
+                    "parameters": {
+                      "args": [
+                        "{{ctx.paths.home_dir}}",
+                        "{{fields.action}}",
+                        "{{fields.duration}}",
+                        "{{fields.display}}",
+                        "{{fields.jiggle}}"
+                      ],
+                      "outputMode": "stdout",
+                      "script": "# keep-awake (Windows): a background session you start, check and stop.\n# $env:BNTO_ARG_1 bnto home, _2 action, _3 duration (seconds | inf),\n# _4 display (keep-on | allow-sleep), _5 activity simulation (idle seconds | off).\n$ErrorActionPreference = 'Stop'\nfunction Exit-Failure([string]$Message) {\n    [Console]::Error.WriteLine(\"keep-awake: $Message\")\n    exit 2\n}\n$homeDir = [string]$env:BNTO_ARG_1\n$action = [string]$env:BNTO_ARG_2\n$duration = [string]$env:BNTO_ARG_3\n$display = [string]$env:BNTO_ARG_4\n$jiggle = [string]$env:BNTO_ARG_5\nif (-not $homeDir) { Exit-Failure 'bnto home is unknown' }\nif ($action -notin 'start', 'stop', 'status') { Exit-Failure \"unknown action '$action'\" }\nif ($duration -ne 'inf' -and $duration -notmatch '^[1-9][0-9]*$') { Exit-Failure \"bad duration '$duration'\" }\nif ($display -notin 'keep-on', 'allow-sleep') { Exit-Failure \"bad display setting '$display'\" }\nif ($jiggle -ne 'off' -and $jiggle -notmatch '^[1-9][0-9]*$') { Exit-Failure \"bad idle threshold '$jiggle'\" }\n\n# The session itself, run detached by a second, hidden PowerShell. The keep-\n# awake request holds for as long as it runs; once you've been idle long\n# enough it nudges the cursor 1px, which resets the idle timer chat apps read.\n# Its values come from KEEP_AWAKE_* environment variables, never its code.\n$session = {\n    Add-Type -Namespace KeepAwake -Name Native -MemberDefinition @'\n[DllImport(\"kernel32.dll\")] public static extern uint SetThreadExecutionState(uint flags);\n[DllImport(\"user32.dll\")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, System.UIntPtr extra);\n[DllImport(\"user32.dll\")] public static extern bool GetLastInputInfo(ref LastInput info);\npublic struct LastInput { public uint Size; public uint Time; }\n'@\n    # ES_CONTINUOUS | ES_SYSTEM_REQUIRED, plus ES_DISPLAY_REQUIRED to keep the screen on.\n    $flags = [uint32]2147483649\n    if ($env:KEEP_AWAKE_DISPLAY -eq 'keep-on') { $flags = [uint32]2147483651 }\n    [void][KeepAwake.Native]::SetThreadExecutionState($flags)\n    $ends = [long]$env:KEEP_AWAKE_UNTIL\n    $threshold = [long]$env:KEEP_AWAKE_JIGGLE\n    $info = New-Object KeepAwake.Native+LastInput\n    $info.Size = 8\n    $wrap = [long]4294967296\n    while ($ends -eq 0 -or [DateTimeOffset]::UtcNow.ToUnixTimeSeconds() -lt $ends) {\n        Start-Sleep -Seconds 15\n        if ($threshold -gt 0 -and [KeepAwake.Native]::GetLastInputInfo([ref]$info)) {\n            $ticks = ([long][Environment]::TickCount + $wrap) % $wrap\n            $idle = (($ticks - $info.Time + $wrap) % $wrap) / 1000\n            if ($idle -ge $threshold) {\n                [KeepAwake.Native]::mouse_event(1, 1, 0, 0, [UIntPtr]::Zero)\n                Start-Sleep -Milliseconds 150\n                [KeepAwake.Native]::mouse_event(1, -1, 0, 0, [UIntPtr]::Zero)\n            }\n        }\n    }\n}\n$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($session.ToString()))\n\n$stateDir = Join-Path $homeDir 'state'\n$state = Join-Path $stateDir 'keep-awake.json'\n$now = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()\n\nfunction Read-State {\n    if (-not (Test-Path -LiteralPath $state)) { return $null }\n    try { return Get-Content -LiteralPath $state -Raw | ConvertFrom-Json } catch { return $null }\n}\n\n# The session's pid, if the state file names one that still runs our session\n# code before its end time; a pid now used by another program doesn't count.\nfunction Get-SessionId($Saved) {\n    if (-not $Saved -or -not $Saved.pid) { return $null }\n    if ($Saved.until -and [long]$Saved.until -le $now) { return $null }\n    $id = [int]$Saved.pid\n    $process = Get-CimInstance Win32_Process -Filter \"ProcessId = $id\" -ErrorAction SilentlyContinue\n    if ($process -and $process.CommandLine -and $process.CommandLine.Contains($encoded)) { return $id }\n    return $null\n}\n\nfunction Get-Plural([long]$Count, [string]$Unit) {\n    if ($Count -eq 1) { return \"1 $Unit\" }\n    return \"$Count ${Unit}s\"\n}\n\nfunction Get-Label([string]$Seconds) {\n    if ($Seconds -eq 'inf') { return 'indefinitely' }\n    $hours = [math]::Floor([long]$Seconds / 3600)\n    $minutes = [math]::Floor(([long]$Seconds % 3600) / 60)\n    if ($hours -eq 0) { return Get-Plural $minutes 'minute' }\n    if ($minutes -eq 0) { return Get-Plural $hours 'hour' }\n    return \"$(Get-Plural $hours 'hour') $(Get-Plural $minutes 'minute')\"\n}\n\n$saved = Read-State\n$current = Get-SessionId $saved\n\nif ($action -eq 'stop') {\n    if ($current) {\n        Stop-Process -Id $current -Force -ErrorAction SilentlyContinue\n        Remove-Item -LiteralPath $state -ErrorAction SilentlyContinue\n        Write-Output 'Session ended -- this computer can sleep normally again.'\n    } else {\n        Remove-Item -LiteralPath $state -ErrorAction SilentlyContinue\n        Write-Output 'No active session -- nothing to stop.'\n    }\n    exit 0\n}\n\nif ($action -eq 'status') {\n    if (-not $current) {\n        Write-Output 'No active session.'\n        exit 0\n    }\n    if ($saved.until) {\n        # Round up, so a fresh 30-minute session reads 30m, not 29m.\n        $left = [math]::Max(0, [math]::Floor(([long]$saved.until - $now + 59) / 60))\n        $remaining = '{0}h {1:D2}m remaining of {2}' -f [math]::Floor($left / 60), [int]($left % 60), $saved.label\n    } else {\n        $remaining = 'running indefinitely'\n    }\n    Write-Output \"Session active -- $remaining.\"\n    if ($saved.jiggle) { Write-Output 'Activity simulation: on' } else { Write-Output 'Activity simulation: off' }\n    exit 0\n}\n\n# --- start ---\nNew-Item -ItemType Directory -Force -Path $stateDir | Out-Null\n$replaced = ''\nif ($current) {\n    Stop-Process -Id $current -Force -ErrorAction SilentlyContinue\n    $replaced = 'Replaced previous session -- '\n}\nRemove-Item -LiteralPath $state -ErrorAction SilentlyContinue\n\n$label = Get-Label $duration\n$until = 0\nif ($duration -ne 'inf') { $until = $now + [long]$duration }\n$env:KEEP_AWAKE_UNTIL = \"$until\"\n$env:KEEP_AWAKE_DISPLAY = $display\n$env:KEEP_AWAKE_JIGGLE = '0'\nif ($jiggle -ne 'off') { $env:KEEP_AWAKE_JIGGLE = $jiggle }\n\n# The same PowerShell that runs this step, hidden and detached: Start-Process\n# hands it no handles, so bnto sees the step finish right away.\n$powershell = (Get-Process -Id $PID).Path\n$arguments = '-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', $encoded\n$process = Start-Process -FilePath $powershell -ArgumentList $arguments -WindowStyle Hidden -PassThru\nStart-Sleep -Seconds 1\nif ($process.HasExited) { Exit-Failure \"the session stopped right away (exit $($process.ExitCode))\" }\n\n$record = [ordered]@{ label = $label; pid = $process.Id; jiggle = ($jiggle -ne 'off') }\nif ($until) { $record.until = $until }\n$record | ConvertTo-Json -Compress | Set-Content -LiteralPath $state -Encoding ASCII\n\nif ($duration -eq 'inf') { $span = 'indefinitely (until you stop it)' } else { $span = \"for $label\" }\nWrite-Output \"${replaced}Session started: staying awake $span.\"\nif ($display -eq 'keep-on') { Write-Output 'Display: kept on' } else { Write-Output 'Display: allowed to sleep' }\nif ($jiggle -eq 'off') {\n    Write-Output 'Activity simulation: off'\n} else {\n    Write-Output \"Activity simulation: on (nudges the cursor after ${jiggle}s idle)\"\n}\nWrite-Output 'Run keep-awake again with Action: Stop to end it early.'\n",
+                      "shell": "powershell",
+                      "timeout": 60
+                    },
+                    "position": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "type": "shell-run",
+                    "version": "1.0.0"
+                  }
+                ],
+                "outputPorts": [],
+                "parameters": {},
+                "position": {
+                  "x": 0,
+                  "y": 300
+                },
+                "type": "group",
+                "version": "1.0.0",
+                "when": {
+                  "expected": "windows",
                   "op": "equals",
                   "value": "{{ctx.platform}}"
                 }

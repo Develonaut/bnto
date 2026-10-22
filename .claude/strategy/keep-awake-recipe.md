@@ -28,7 +28,7 @@ Shipped alongside: the README's recipe count is generated and checked (#675); ev
 | 8   | Scope dependencies to the steps that use them                | `feat/scoped-requires`             | Merged (#712) |
 | 9   | PowerShell script mode                                       | `feat/powershell-script-mode`      | Merged (#713) |
 | 10  | Keep awake on Linux                                          | `feat/keep-awake-linux`            | Merged (#714) |
-| 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Not started   |
+| 11  | Keep awake on Windows                                        | `feat/keep-awake-windows`          | Merged (#NNN) |
 
 Workflow per PR: branch from `main`, RED tests first, `/pre-commit`, push, open a PR, enable squash auto-merge, fix CI. No attribution lines or "Test Plan" sections. Tests never touch the real `~/.bnto` (temp `BNTO_HOME` + `HOME`), and never start or stop a session outside a sandbox.
 
@@ -285,6 +285,15 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 - **Desktop variables:** script mode clears the environment, so the step's `env` passes `DISPLAY`, `XAUTHORITY`, `WAYLAND_DISPLAY`, `DBUS_SESSION_BUS_ADDRESS` and `XDG_RUNTIME_DIR` from `{{env.*}}` by name (consent lists them). Empty means unset.
 - **Programs by absolute path** (`/usr/bin`, then `/bin`), never PATH, as on macOS. `ours()` matches each pid's command line (`systemd-inhibit --who=keep-awake`, `gnome-session-inhibit --app-id keep-awake`, `/bin/sh -c … keep-awake-nudger`) so a reused pid isn't killed.
 - **Considered:** `xset s off -dpms` (X11-only and global, so it has to be undone) and the `org.freedesktop.portal.Inhibit` portal (the inhibit lasts only while the caller stays on the bus, which `gdbus` doesn't). Rejected.
+
+**Windows design (PR 11):**
+
+- **Session:** `SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED [| ES_DISPLAY_REQUIRED])` holds only while its thread lives, so the step starts a hidden, detached `powershell.exe` (`Start-Process -WindowStyle Hidden`, which hands it no handles, so the step finishes at once) that holds the request until the session ends. bnto releases a finished step's Job Object rather than killing it (`job_object.rs`), so the session outlives the step, as `nohup` does on unix; cancel, timeout or a crashed bnto still kill it.
+- **Activity simulation:** the same process polls `GetLastInputInfo` every 15s and moves the cursor 1px and back with `mouse_event` once you've been idle the threshold. No permission is needed.
+- **No values in code:** the session's code is a literal `{ … }` scriptblock in the step script, so PSScriptAnalyzer lints it, and its `.ToString()` goes to `-EncodedCommand`. Its values reach it as `KEEP_AWAKE_*` environment variables set before `Start-Process`.
+- **Ours:** the session's code is constant, so its encoded form identifies it: a pid counts only while `Win32_Process.CommandLine` contains it and before the session's end time.
+- **PowerShell 5.1 details:** flag values are written in decimal, since `0x80000001` parses as a negative Int32; idle time is worked out modulo 2^32, since `[Environment]::TickCount` wraps; the home folder is `$homeDir`, since `$home` is read-only.
+- **Lint gate:** PSScriptAnalyzer over bundled PowerShell steps (SEC-38), required in Windows CI.
 
 ## CLI journey matrix (`.claude/journeys/cli.md`, added in PR 3)
 
