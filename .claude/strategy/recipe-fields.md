@@ -170,16 +170,16 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 
 ### Active Namespaces
 
-| Namespace         | Source                                      | Example                    | Resolved By                                                |
-| ----------------- | ------------------------------------------- | -------------------------- | ---------------------------------------------------------- |
-| `{{fields.*}}`    | Field values (user-configured or defaults)  | `{{fields.format}}`        | Engine, before node execution                              |
-| `{{output_dir}}`  | Engine execution context                    | `{{output_dir}}/file.mp4`  | Shell-command processor                                    |
-| `{{url}}`         | Input node URL value                        | `{{url}}`                  | Shell-command processor                                    |
-| `{{input}}`       | Input node text value                       | `{{input}}`                | Shell-command processor                                    |
-| `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run; an unset key fails the run |
-| `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms       | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                   |
-| `{{node.<id>.*}}` | An earlier node's output metadata           | `{{node.step1.count}}`     | Engine, before each node runs (see below)                  |
-| `{{entry.*}}`     | One entry of a `report` node's `each` list  | `{{entry.status}}`         | The `report` node, once per entry (see below)              |
+| Namespace         | Source                                      | Example                    | Resolved By                                                                  |
+| ----------------- | ------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
+| `{{fields.*}}`    | Field values (user-configured or defaults)  | `{{fields.format}}`        | Engine, before node execution; an unfilled one fails the run before any step |
+| `{{output_dir}}`  | Engine execution context                    | `{{output_dir}}/file.mp4`  | Shell-command processor                                                      |
+| `{{url}}`         | Input node URL value                        | `{{url}}`                  | Shell-command processor                                                      |
+| `{{input}}`       | Input node text value                       | `{{input}}`                | Shell-command processor                                                      |
+| `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run; an unset key fails the run                   |
+| `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms       | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                                     |
+| `{{node.<id>.*}}` | An earlier node's output metadata           | `{{node.step1.count}}`     | Engine, before each node runs (see below)                                    |
+| `{{entry.*}}`     | One entry of a `report` node's `each` list  | `{{entry.status}}`         | The `report` node, once per entry (see below)                                |
 
 ### Per-Entry References
 

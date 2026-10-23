@@ -1,8 +1,10 @@
 // Pre-flight (SEC-13): every node's field values must fit their definitions
 // before any step runs, whatever set them — `--param`, the TUI form, vars or
 // the recipe itself. Checked up front so a bad value never runs half a recipe.
+// Every `{{fields.*}}` a step uses must have a value to fill it, too.
 
 use crate::errors::BntoError;
+use crate::missing_fields::missing_fields;
 use crate::pipeline::PipelineNode;
 
 /// Refuse the run when any field value, in any node, breaks its definition.
@@ -18,6 +20,19 @@ pub(super) fn check_field_values(nodes: &[PipelineNode]) -> Result<(), BntoError
         }
     }
     Ok(())
+}
+
+/// Refuse the run when a `{{fields.*}}` reference has nothing to fill it, so
+/// no step runs on the literal placeholder (ISS-1). Lists every one.
+pub(super) fn check_field_refs(nodes: &[PipelineNode]) -> Result<(), BntoError> {
+    let missing: Vec<String> = missing_fields(nodes)
+        .iter()
+        .map(|m| format!("Node '{}': {}", m.node_id, m.message()))
+        .collect();
+    if missing.is_empty() {
+        return Ok(());
+    }
+    Err(BntoError::InvalidInput(missing.join("; ")))
 }
 
 #[cfg(test)]

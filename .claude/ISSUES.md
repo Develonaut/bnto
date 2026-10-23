@@ -12,23 +12,12 @@
 
 | ID     | Issue                                                            | Area     | Status |
 | ------ | ---------------------------------------------------------------- | -------- | ------ |
-| ISS-1  | An unresolved `{{fields.*}}` template reaches its step as text   | engine   | Open   |
 | ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404      | web docs | Open   |
 | ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto` | cli test | Open   |
 | ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`     | tooling  | Open   |
 | ISS-10 | `task check` skips the crate publish checks CI runs              | tooling  | Open   |
 
 ---
-
-### ISS-1: An unresolved `{{fields.*}}` template reaches its step as text
-
-**Found:** before October 2026 (moved from PLAN.md's backlog); hit again October 23, 2026.
-
-Fields resolve per node (`collect_field_values(&node.fields, …)`). A template that names a field its node can't see, or a field left unset with no default, reaches the step as the literal placeholder. The step then runs with it and can no-op with exit 0: the download-patreon library recipe's flatten and upload steps did. `release-verify` has to treat any `{` in its `version` argument as "unset" for the same reason (`recipes/release-verify.bnto.json`). `bnto dry-run` already refuses unresolved `{{fields.*}}`, but a live run doesn't.
-
-**Fix options:** resolve fields recipe-wide (a group-level merge), or have `bnto run` stop before the first step and name the missing field (`-p version=...`).
-
-`engine/crates/bnto-core/src/executor/primitive.rs`, `engine/crates/bnto-core/src/executor/resolve.rs`, `engine/crates/bnto/src/dry_run/mod.rs`
 
 ### ISS-7: The CLI's telemetry notice links `bnto.io/telemetry`, a 404
 

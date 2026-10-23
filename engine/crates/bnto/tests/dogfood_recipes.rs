@@ -121,6 +121,23 @@ fn release_verify_asks_for_a_version_before_any_request() {
     let output = run_in(&repo_root(), &dogfood_recipe("release-verify"));
     let all = text(&output);
     assert!(!output.status.success(), "{all}");
+    // The engine refuses the unset field before any step (ISS-1).
+    assert!(all.contains("{{fields.version}} has no value"), "{all}");
+    assert!(
+        !all.contains("crates.io serves"),
+        "reached the network: {all}"
+    );
+}
+
+#[test]
+fn release_verify_with_an_empty_version_asks_for_one() {
+    let output = run_with(
+        &repo_root(),
+        &dogfood_recipe("release-verify"),
+        &["version="],
+    );
+    let all = text(&output);
+    assert!(!output.status.success(), "{all}");
     assert!(all.contains("give the version: -p version=X.Y.Z"), "{all}");
 }
 

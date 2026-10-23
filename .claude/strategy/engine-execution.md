@@ -133,7 +133,7 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 
 ### Fields in Scope
 
-**Decision (October 2026):** a container's `fields` are visible to every node inside it, so an if/else pair of guarded steps can share one field. The nearest declaration wins (a step's own field shadows its group's), and a group's fields never reach nodes after it. `PipelineContext.fields` carries the values the enclosing containers declare; `fields_for(node)` adds the node's own (`executor/field_scope.rs`). Leaf params, `when` guards, `bnto check` and the CLI dry run all read fields this way. `bnto run -p key=value` sets the node that declares `key`, and asks for `nodeId:key` when two do. See [conditional-steps.md](../decisions/conditional-steps.md#fields-in-scope-pr-5).
+**Decision (October 2026):** a container's `fields` are visible to every node inside it, so an if/else pair of guarded steps can share one field. The nearest declaration wins (a step's own field shadows its group's), and a group's fields never reach nodes after it. `PipelineContext.fields` carries the values the enclosing containers declare; `fields_for(node)` adds the node's own (`executor/field_scope.rs`). Leaf params, `when` guards, `bnto check` and the CLI dry run all read fields this way. `bnto run -p key=value` sets the node that declares `key`, and asks for `nodeId:key` when two do. Pre-flight refuses a `{{fields.*}}` nothing in scope fills, naming the node and the field (`bnto_core::missing_fields`, ISS-1). See [conditional-steps.md](../decisions/conditional-steps.md#fields-in-scope-pr-5).
 
 ### Recipe OS Support
 

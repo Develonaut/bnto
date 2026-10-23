@@ -136,6 +136,9 @@ pub mod slash_path;
 /// Params a recipe gives a node that the node doesn't declare.
 pub mod undeclared_params;
 
+/// `{{fields.*}}` references no field value fills.
+pub mod missing_fields;
+
 /// Civil (calendar) UTC time from epoch time, with no date crate.
 /// `rfc3339_utc` is the one format for times nodes and templates report.
 pub mod time;

@@ -164,11 +164,16 @@ fn test_valid_recipe_with_io_nodes_and_a_loop_passes() {
 
 #[test]
 fn test_every_known_namespace_passes_without_values() {
-    let findings = check(one_node(json!({
-        "a": "{{fields.x}}", "b": "{{env.HOME}}", "c": "{{ctx.date}}",
-        "d": "{{node.prev.name}}", "e": "{{item.new_name}}", "f": "{{vars.Out}}/Art",
-        "g": "{{entry.status}}: {{entry}}"
-    })));
+    // `x` is declared, with no value: a run gives it, so check doesn't need one.
+    let findings = check(json!({ "nodes": [{
+        "id": "step", "type": "lenient",
+        "fields": { "x": { "type": "string", "label": "X" } },
+        "parameters": {
+            "a": "{{fields.x}}", "b": "{{env.HOME}}", "c": "{{ctx.date}}",
+            "d": "{{node.prev.name}}", "e": "{{item.new_name}}", "f": "{{vars.Out}}/Art",
+            "g": "{{entry.status}}: {{entry}}"
+        }
+    }] }));
     assert_eq!(findings, Vec::new());
 }
 
@@ -647,4 +652,34 @@ fn test_an_edge_with_no_end_at_the_root_is_reported_on_the_missing_id() {
     assert_eq!(findings.len(), 2, "{findings:?}");
     assert_eq!(findings[0].node_id, "ghost");
     assert!(findings[0].message.contains("\"e1\""), "{findings:?}");
+}
+
+// --- Unfilled fields (ISS-1) ---
+
+#[test]
+fn test_a_field_no_node_in_scope_declares_is_a_finding() {
+    let findings = check(json!({ "nodes": [
+        { "id": "write-config", "type": "lenient",
+          "fields": { "outDir": { "type": "string", "label": "Out", "default": "/tmp" } } },
+        { "id": "flatten", "type": "lenient", "parameters": { "dir": "{{fields.outDir}}" } }
+    ] }));
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].node_id, "flatten");
+    assert!(
+        findings[0].message.contains("{{fields.outDir}}"),
+        "{}",
+        findings[0].message
+    );
+}
+
+#[test]
+fn test_a_field_declared_with_no_value_is_left_to_run_time() {
+    // release-verify's `version`: every run gives it with -p.
+    let findings = check(json!({ "nodes": [{
+        "id": "checks", "type": "group",
+        "fields": { "version": { "type": "string", "label": "Version" } },
+        "nodes": [{ "id": "crates", "type": "lenient",
+                    "parameters": { "v": "{{fields.version}}" } }]
+    }] }));
+    assert!(findings.is_empty(), "{findings:?}");
 }
