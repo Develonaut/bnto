@@ -90,7 +90,7 @@ A code review of PRs 1-2 (October 21, 2026; security/Rust and web/docs reviewers
 - Remaining time rounded down ("29m" on a fresh 30-minute session): round up.
 - "STOPPED (check Accessibility permission)" blamed the wrong thing: losing the permission makes nudges silently do nothing; the loop doesn't exit.
 - **Tests:** the replace test now checks the first caffeinate died; the sandbox's Drop kills recorded pids directly instead of relying on the Stop under test; new tests for pid reuse, expired state, an orphaned nudger, `duration=inf`, activity simulation on, and every duration label.
-- Known gap: these tests are macOS-gated and CI has no macOS job, so they run only locally.
+- Closed since (follow-up): CI's `keep-awake (macOS)` job runs these tests on `macos-latest`, required by the CI Gate when engine files change.
 - Unverified, not fixed: two Starts at the same instant can race (no lock); caffeinate's `-t` may not count time asleep.
 
 ### B: Stop `bnto doctor` failing off macOS over keep-awake's deps
@@ -300,7 +300,6 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 
 Gaps the PRs above left open on purpose, collected from their "As built" and "Not done" notes. None blocks keep-awake.
 
-- **macOS tests in CI:** `bnto/tests/keep_awake.rs` is macOS-gated and CI has no macOS job, so the macOS round trips run only locally (fix A).
 - **Web:** `llms-full.txt` doesn't list a recipe's OSes (PR 7); there's no `system` mascot, and three descriptions still say "CLI/desktop only" with no desktop app yet (fix C).
 - **Tooling:** `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9): it was an escape hatch in case `-EncodedCommand` caused trouble, and it hasn't.
 

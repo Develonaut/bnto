@@ -1,5 +1,6 @@
 // keep-awake recipe — start / status / stop round-trips through the real CLI.
-// macOS only: the recipe drives `caffeinate` and `osascript`. Each test gets
+// macOS only: the recipe drives `caffeinate` and `osascript`; CI runs this in
+// its `keep-awake (macOS)` job. Each test gets
 // its own BNTO_HOME and HOME, so it never sees or touches the user's live
 // session, even if the script's home path breaks.
 #![cfg(target_os = "macos")]
