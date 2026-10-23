@@ -12,6 +12,7 @@ use crate::consent::check_trust;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
 use crate::run_watchdog::{self, Watched};
+use crate::telemetry::recipe_label::{RecipeLabel, recipe_label};
 use crate::{
     context, dry_run, host_support, input, progress, run_limit, run_message, telemetry, vars,
 };
@@ -36,7 +37,8 @@ struct RunStats<'a> {
     recipe_path: &'a str,
     file_count: usize,
     total_bytes: u64,
-    param_names: Vec<String>,
+    /// What telemetry may say about the recipe.
+    label: RecipeLabel,
 }
 
 /// Where and how results are written.
@@ -73,7 +75,7 @@ pub fn run_recipe(
     let (definition_json, time_limit) = verdict.or_fail(limited, "Error:");
     prepared.definition_json = definition_json;
     print_run_banner(recipe_path, &raw_json, &prepared);
-    let stats = run_stats(recipe_path, &prepared, param_overrides);
+    let stats = run_stats(recipe_path, &prepared, param_overrides, catalog);
     log_run_start(logger, &stats);
 
     let start = Instant::now();
@@ -142,12 +144,17 @@ fn read_recipe(path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> Str
     verdict.or_fail(std::fs::read_to_string(path), "Error reading recipe:")
 }
 
-/// Collect file count, byte total and overridden param names.
+/// Collect file count, byte total and the recipe's telemetry label.
 fn run_stats<'a>(
     recipe_path: &'a str,
     prepared: &input::PreparedInput,
     param_overrides: &[String],
+    catalog: &RecipeCatalog,
 ) -> RunStats<'a> {
+    let param_names = param_overrides
+        .iter()
+        .filter_map(|p| p.split('=').next().map(|k| k.to_string()))
+        .collect();
     RunStats {
         recipe_path,
         file_count: prepared.files.len(),
@@ -156,10 +163,7 @@ fn run_stats<'a>(
             .iter()
             .map(|f| f.data.len().unwrap_or(0))
             .sum(),
-        param_names: param_overrides
-            .iter()
-            .filter_map(|p| p.split('=').next().map(|k| k.to_string()))
-            .collect(),
+        label: recipe_label(catalog, recipe_path, param_names),
     }
 }
 
@@ -225,13 +229,12 @@ fn finish_run(
         elapsed_us: Some(start.elapsed().as_micros() as u64),
     });
     telemetry::capture(telemetry::events::cli_recipe_run_with_params(
-        stats.recipe_path,
+        &stats.label,
         result.duration_ms,
         stats.file_count,
         stats.total_bytes,
         result.files.len(),
         true,
-        &stats.param_names,
     ));
     write_output(
         result,

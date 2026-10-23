@@ -14,6 +14,7 @@ pub mod config;
 mod consent;
 mod debug;
 pub mod events;
+pub mod recipe_label;
 
 use std::sync::OnceLock;
 
