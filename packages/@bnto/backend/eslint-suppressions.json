@@ -1,0 +1,42 @@
+{
+  "convex/_dev_cleanup.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "convex/_helpers/start_execution.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "convex/_helpers/upload_validation.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "convex/cleanup.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "convex/cleanup_stale.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "convex/execution_analytics.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "convex/execution_engine.ts": {
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "convex/recipes.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  }
+}

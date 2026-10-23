@@ -1,0 +1,12 @@
+{
+  "src/buildFormEntries.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/controls/watermarkLayout.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}
