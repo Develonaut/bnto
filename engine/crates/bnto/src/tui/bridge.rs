@@ -106,6 +106,7 @@ fn run_bridge_in(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob, ctx: NativeCon
 
 /// Prepare inputs, run the pipeline, then write (or preview) the results.
 /// A recipe with no branch for this OS stops first, as `bnto run` does.
+#[expect(clippy::too_many_lines)]
 fn try_run_bridge(
     tx: &mpsc::Sender<BridgeEvent>,
     job: &BridgeJob,

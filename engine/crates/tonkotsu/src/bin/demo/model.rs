@@ -85,6 +85,7 @@ pub fn update_demo(mut model: DemoModel, msg: DemoMessage) -> DemoModel {
 }
 
 /// Drain pending form effects and fulfill them with filesystem I/O.
+#[expect(clippy::too_many_lines)]
 fn drain_effects(model: &mut DemoModel) {
     let effects = std::mem::take(&mut model.form.pending_effects);
     for effect in effects {
@@ -114,6 +115,7 @@ fn drain_effects(model: &mut DemoModel) {
 /// Dirs come first (alphabetical), then files (alphabetical).
 /// Filters files by extension when the list is non-empty.
 /// Hidden entries (starting with '.') are excluded unless show_hidden is true.
+#[expect(clippy::too_many_lines)]
 fn read_directory(
     path: &std::path::Path,
     extensions: &[String],

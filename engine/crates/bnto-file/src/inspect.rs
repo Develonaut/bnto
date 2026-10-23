@@ -213,6 +213,7 @@ pub(crate) fn guess_mime_type(filename: &str) -> String {
 /// Compute SHA-256 hash of data, returned as lowercase hex string.
 ///
 /// Uses a pure-Rust implementation to stay WASM-compatible — no OpenSSL.
+#[expect(clippy::too_many_lines)]
 fn sha256_hex(data: &[u8]) -> String {
     use std::fmt::Write;
 

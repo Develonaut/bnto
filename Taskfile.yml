@@ -297,6 +297,8 @@ tasks:
     dir: ./engine
     cmds:
       - cargo clippy --workspace --all-targets -- -D warnings
+      # Function length, production code only (tests are exempt).
+      - cargo clippy --workspace -- -W clippy::too_many_lines -D warnings
 
   wasm:fmt:
     desc: Format all Rust code

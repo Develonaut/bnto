@@ -55,6 +55,7 @@ pub fn draw_content(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
 }
 
 /// Render the recipe browser — search bar + category-grouped recipe list.
+#[expect(clippy::too_many_lines)]
 fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let inner = content_panel(frame, theme, area, model.screen.title());
 
@@ -123,6 +124,7 @@ fn draw_browser(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, are
 ///
 /// Theme field shows the current variant with left/right arrows.
 /// Path fields show their value (Enter opens file picker to browse).
+#[expect(clippy::too_many_lines)]
 fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let inner = content_panel(frame, theme, area, model.screen.title());
 
@@ -179,6 +181,7 @@ fn draw_settings(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
 /// Render the shared bottom bar: help hints (left) + status info (right).
 ///
 /// All screens use this — rendered inside the app frame for consistent positioning.
+#[expect(clippy::too_many_lines)]
 pub fn draw_bottom_bar(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     // Help hints (left-aligned).
     // Settings picker shows directory-selection hints instead of file-selection hints.

@@ -49,6 +49,7 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
 
 /// The consent prompt: what the recipe will run and how to answer.
 /// Mirrors the CLI prompt, so both surfaces ask the same question.
+#[expect(clippy::too_many_lines)]
 fn consent_lines<'a>(
     request: &'a crate::trust_gate::ConsentRequest,
     theme: &'a Theme,
@@ -168,6 +169,7 @@ fn step_line<'a>(node: &NodeProgress, indent: &str, theme: &Theme) -> Line<'a> {
 
 /// FILES: a window around the file being worked on, the rest counted. With
 /// room for fewer than two rows, one summary line instead: "FILES 2/3 · ◉ name".
+#[expect(clippy::too_many_lines)]
 fn files_lines<'a>(exec: &'a ExecutionModel, theme: &Theme, rows: usize) -> Vec<Line<'a>> {
     let active = exec
         .files

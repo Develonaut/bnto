@@ -56,6 +56,7 @@ struct NodeRun<'a> {
 }
 
 /// Process a single file through a processor, emitting progress events.
+#[expect(clippy::too_many_lines)]
 fn process_single_file<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     run: &NodeRun,
@@ -321,6 +322,7 @@ fn process_source<F: Fn() -> u64 + Copy>(
 }
 
 /// Process all files at once through a batch processor.
+#[expect(clippy::too_many_lines)]
 fn process_batch<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     processor: &dyn crate::processor::NodeProcessor,

@@ -87,6 +87,7 @@ fn inside<'a, F: Fn() -> u64 + Copy>(
 /// another iteration. Nodes after the loop read every successful iteration's
 /// records merged in order, so a later iteration wins a key both set and a
 /// count key adds up.
+#[expect(clippy::too_many_lines)]
 fn execute_loop<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     node: PipelineNodeRef,

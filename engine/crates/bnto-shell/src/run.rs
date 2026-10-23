@@ -66,6 +66,7 @@ impl NodeProcessor for ShellRun {
         crate::NODE_TYPE
     }
 
+    #[expect(clippy::too_many_lines)]
     fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         let mut errors = Vec::new();
 
@@ -181,6 +182,7 @@ impl NodeProcessor for ShellRun {
 
 /// Validate, build and run the command `input.params` describe, with
 /// `files` for its `each` groups.
+#[expect(clippy::too_many_lines)]
 fn run_node(
     input: &NodeInput,
     files: &[BatchFile],

@@ -7,6 +7,7 @@ use super::super::screens::wizard::{
 use super::navigation::back_screen_for_editor;
 
 /// Forward wizard messages, handling actions (complete, back).
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_wizard(model: AppModel, msg: WizardMessage) -> AppModel {
     let from = match &model.screen {
         Screen::Wizard { from } => *from,

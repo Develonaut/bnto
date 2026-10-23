@@ -17,6 +17,7 @@ use crate::progress_indent::{self, StepDepths};
 ///
 /// When `output_dir` is provided, progressive output files from
 /// `IterationCompleted` events are copied to disk immediately.
+#[expect(clippy::too_many_lines)]
 pub fn stderr_reporter(logger: Arc<dyn Logger>, output_dir: Option<String>) -> PipelineReporter {
     // RefCell for interior mutability — PipelineReporter takes Fn, not FnMut.
     // Safe because the reporter is only called from a single thread.

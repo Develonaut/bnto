@@ -22,6 +22,7 @@ pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
@@ -72,6 +73,7 @@ fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<
     lines
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_expanded(
     field: &Field,
     highlight: usize,

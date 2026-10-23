@@ -11,6 +11,7 @@ use super::super::screens::results::ResultsMessage;
 ///
 /// Enter transitions to Results when the pipeline has finished (Completed or Failed).
 /// Esc cancels a running pipeline (handled above in handle_key as a special case).
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_execution_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let awaiting = model
         .execution

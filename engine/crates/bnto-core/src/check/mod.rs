@@ -111,6 +111,7 @@ fn check_level(level: &Level<'_>, scope: &Scope, recipe: &Recipe<'_>, report: &m
 }
 
 /// Check one node; `scope` is what it sees, its own fields and guard included.
+#[expect(clippy::too_many_lines)]
 fn check_node(node: &PipelineNode, scope: &Scope, recipe: &Recipe<'_>, report: &mut CheckReport) {
     if is_io_node(&node.node_type) {
         report.findings.extend(io_always_finding(node));
@@ -142,6 +143,7 @@ fn check_node(node: &PipelineNode, scope: &Scope, recipe: &Recipe<'_>, report: &
 /// `validate` sees the params as a run with no overrides would: field
 /// defaults (its own and its containers') filled in, other placeholders left
 /// as written.
+#[expect(clippy::too_many_lines)]
 fn check_processor(
     node: &PipelineNode,
     scope: &Scope,

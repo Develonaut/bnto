@@ -66,6 +66,7 @@ impl FormModel {
     ///
     /// Each `(label, fields)` pair becomes a `FieldGroup`. Groups render
     /// section headers in DisplayEdit and FullScreenEdit modes.
+    #[expect(clippy::too_many_lines)]
     pub fn with_groups(groups: Vec<(&str, Vec<Field>)>) -> Self {
         let mut all_fields: Vec<Field> = Vec::new();
         let mut field_groups: Vec<FieldGroup> = Vec::new();
@@ -140,6 +141,7 @@ impl FormModel {
 pub use crate::messages::{FormEffect, FormMessage};
 
 /// Pure state transition — apply a message to the form model.
+#[expect(clippy::too_many_lines)]
 pub fn update(model: FormModel, msg: FormMessage) -> FormModel {
     match msg {
         FormMessage::FocusNext => {

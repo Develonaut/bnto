@@ -58,6 +58,7 @@ fn strings(objs: &str) -> String {
 }
 
 /// XML entities, then PowerShell's `_xHHHH_` escapes for control characters.
+#[expect(clippy::too_many_lines)]
 fn unescape(text: &str) -> String {
     let xml = text
         .replace("&lt;", "<")

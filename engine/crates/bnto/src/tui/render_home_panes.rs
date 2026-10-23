@@ -61,6 +61,7 @@ pub fn draw_recipes_pane(
 
 /// The catalog grouped under category headings, and the line of the selected
 /// recipe (if the pane is focused).
+#[expect(clippy::too_many_lines)]
 fn recipe_lines<'a>(
     model: &'a AppModel,
     theme: &Theme,

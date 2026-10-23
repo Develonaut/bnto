@@ -12,6 +12,7 @@ use super::theme::Theme;
 use super::widgets::{file_list, search_input};
 
 /// Render the file picker screen.
+#[expect(clippy::too_many_lines)]
 pub fn draw_picker(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let inner = content_panel(frame, theme, area, model.screen.title());
 

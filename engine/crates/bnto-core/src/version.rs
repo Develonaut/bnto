@@ -30,6 +30,7 @@ pub enum ConstraintOp {
 /// Scans the output for the first sequence of dot-separated numbers
 /// (e.g., `"6.1.1"` from `"ffmpeg version 6.1.1 Copyright..."`).
 /// Returns `None` if no version pattern is found.
+#[expect(clippy::too_many_lines)]
 pub fn extract_version(output: &str) -> Option<&str> {
     // Find the first digit-dot-digit pattern.
     let bytes = output.as_bytes();

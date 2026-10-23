@@ -64,6 +64,7 @@ fn render_display_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'st
     apply_viewport(model, layout.lines, &layout.fields)
 }
 
+#[expect(clippy::too_many_lines)]
 fn display_edit_layout(model: &FormModel, theme: &dyn FormTheme) -> Layout {
     let mut all_lines: Vec<Line<'static>> = Vec::new();
     let mut fields: Vec<(usize, Range<usize>)> = Vec::new();
@@ -120,6 +121,7 @@ fn display_edit_layout(model: &FormModel, theme: &dyn FormTheme) -> Layout {
 /// FullScreenEdit mode: display identical to DisplayEdit.
 /// Edit mode hides all other fields and renders a dedicated panel:
 /// label header, full control widget, description, and key hints footer.
+#[expect(clippy::too_many_lines)]
 fn render_fullscreen_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     if !model.is_editing() {
         // Display mode is identical to DisplayEdit
@@ -187,6 +189,7 @@ fn render_fullscreen_edit(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<
 }
 
 /// Render the key hints footer for full-screen edit mode.
+#[expect(clippy::too_many_lines)]
 fn render_edit_footer(field: &crate::field::Field, theme: &dyn FormTheme) -> Line<'static> {
     let hints = match &field.state {
         crate::field::FieldState::TextAreaEditing { .. } => {
@@ -220,6 +223,7 @@ fn render_inline(model: &FormModel, theme: &dyn FormTheme) -> Vec<Line<'static>>
     apply_viewport(model, layout.lines, &layout.fields)
 }
 
+#[expect(clippy::too_many_lines)]
 fn inline_layout(model: &FormModel, theme: &dyn FormTheme) -> Layout {
     let mut all_lines: Vec<Line<'static>> = Vec::new();
     let mut fields: Vec<(usize, Range<usize>)> = Vec::new();

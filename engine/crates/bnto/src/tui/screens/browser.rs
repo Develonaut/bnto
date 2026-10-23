@@ -126,6 +126,7 @@ impl BrowserModel {
 }
 
 /// Pure state transition for the browser screen.
+#[expect(clippy::too_many_lines)]
 pub fn update(mut model: BrowserModel, msg: BrowserMessage) -> BrowserModel {
     match msg {
         BrowserMessage::CursorDown => {

@@ -9,6 +9,7 @@ use crate::validators;
 use crate::{confirm, file_path, multiselect, note, number, select, text};
 
 /// Build the full set of 13 kitchen-sink demo fields.
+#[expect(clippy::too_many_lines)]
 pub fn build_fields() -> Vec<Field> {
     vec![
         // 1. Note — read-only informational text (not focusable)

@@ -124,6 +124,7 @@ pub fn format_command_line(cmd: &ShellCommandInfo) -> String {
 
 /// Resolve a shell-run node's fields (`field_values`: its own and its
 /// containers') and extract display info.
+#[expect(clippy::too_many_lines)]
 fn resolve_shell_command(node: &PipelineNode, field_values: &FieldValues) -> ShellCommandInfo {
     let noop = NoopContext;
     let empty_outputs = BTreeMap::new();

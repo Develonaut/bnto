@@ -95,6 +95,7 @@ fn parse_unmatched(value: Option<&str>) -> Result<Unmatched, String> {
 // --- Schema ---
 
 /// All lookup parameters, in the order the editor displays them.
+#[expect(clippy::too_many_lines)]
 pub(super) fn build_lookup_parameters() -> Vec<ParameterDef> {
     vec![
         table_param(),

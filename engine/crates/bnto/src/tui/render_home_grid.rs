@@ -17,6 +17,7 @@ use super::theme::{ROUNDED_BORDERS, Theme};
 ///
 /// Receives the content area from `app_frame()` — already centered with
 /// logo above and bottom bar below.
+#[expect(clippy::too_many_lines)]
 pub fn draw_home_grid(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     // Horizontal split: left column (35%) + right column.
     let left_width = (area.width * 35) / 100;

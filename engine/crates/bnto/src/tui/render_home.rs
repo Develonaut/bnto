@@ -28,6 +28,7 @@ pub fn draw_home(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, ar
 }
 
 /// Simple linear menu fallback for small terminals.
+#[expect(clippy::too_many_lines)]
 fn draw_home_simple(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let inner = content_panel(frame, theme, area, model.screen.title());
 

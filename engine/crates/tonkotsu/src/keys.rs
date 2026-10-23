@@ -89,6 +89,7 @@ fn map_multiselect_editing_key(key: KeyEvent) -> Option<FormMessage> {
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn map_file_path_browsing_key(key: KeyEvent) -> Option<FormMessage> {
     match (key.code, key.modifiers) {
         // Navigation
@@ -129,6 +130,7 @@ fn map_file_path_browsing_key(key: KeyEvent) -> Option<FormMessage> {
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn map_idle_key(key: KeyEvent, kind: &FieldKind) -> Option<FormMessage> {
     match (key.code, key.modifiers) {
         (KeyCode::Tab, KeyModifiers::NONE) | (KeyCode::Down, KeyModifiers::NONE) => {

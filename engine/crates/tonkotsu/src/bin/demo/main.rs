@@ -57,6 +57,7 @@ fn install_panic_hook() {
     }));
 }
 
+#[expect(clippy::too_many_lines)]
 fn run_loop(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io::Result<()> {
     let term_h = terminal.size()?.height;
     let vh = layout::viewport_height(term_h);

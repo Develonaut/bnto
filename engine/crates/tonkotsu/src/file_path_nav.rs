@@ -8,6 +8,7 @@ use crate::file_entry::{FileEntry, NavHistory};
 use crate::form::{FormEffect, FormModel};
 
 /// Start browsing: emit LoadDirectory effect, enter FilePathBrowsing state.
+#[expect(clippy::too_many_lines)]
 pub fn start_browsing(mut model: FormModel, idx: usize, field: Field) -> FormModel {
     let (extensions, start_home) = match &field.kind {
         FieldKind::FilePath {
@@ -110,6 +111,7 @@ fn try_pop_nav_history(field: &Field, new_dir: &PathBuf) -> Option<(NavHistory, 
 }
 
 /// Update the nav_history field within FilePathBrowsing state.
+#[expect(clippy::too_many_lines)]
 fn update_nav_history(field: Field, nav: NavHistory) -> Field {
     match field.state {
         FieldState::FilePathBrowsing {

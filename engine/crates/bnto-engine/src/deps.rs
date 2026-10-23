@@ -93,6 +93,7 @@ pub fn scoped_catalog_dependencies(
 /// same way `run_command` would spawn it. If the dependency has a
 /// non-empty `version` constraint, runs `<binary> --version` and
 /// validates the output against the constraint.
+#[expect(clippy::too_many_lines)]
 pub fn check_dependencies(
     deps: &[Dependency],
     ctx: &dyn bnto_core::ProcessContext,
@@ -129,6 +130,7 @@ pub fn check_dependencies(
 /// Intended as a pre-flight check before `run_pipeline()`. Returns `Ok(())`
 /// when all dependencies are satisfied, or `Err(BntoError)` listing the
 /// missing binaries with install hints.
+#[expect(clippy::too_many_lines)]
 pub fn check_pipeline_dependencies(
     definition: &PipelineDefinition,
     registry: &NodeRegistry,

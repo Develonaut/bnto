@@ -32,6 +32,7 @@ fn port_schema() -> Value {
 }
 
 /// Build the JSON Schema for an `Edge` (connection between two nodes).
+#[expect(clippy::too_many_lines)]
 fn edge_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -64,6 +65,7 @@ fn edge_schema() -> Value {
 }
 
 /// Build the JSON Schema for the `metadata` object (description, timestamps, tags).
+#[expect(clippy::too_many_lines)]
 fn metadata_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -157,6 +159,7 @@ fn definition_properties() -> Value {
 }
 
 /// An external tool a node needs (`requires`).
+#[expect(clippy::too_many_lines)]
 fn dependency_schema() -> Value {
     serde_json::json!({
         "type": "object",
@@ -200,6 +203,7 @@ fn when_schema() -> Value {
 /// Generate a JSON Schema (Draft 2020-12) for the `.bnto.json` Definition format.
 ///
 /// The Definition is recursive — child `nodes` reference the same schema via `$ref`.
+#[expect(clippy::too_many_lines)]
 pub fn definition_json_schema() -> Value {
     serde_json::json!({
         "$schema": "https://json-schema.org/draft/2020-12/schema",

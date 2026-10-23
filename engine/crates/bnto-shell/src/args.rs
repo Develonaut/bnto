@@ -11,6 +11,7 @@ const OUTPUT_DIR_TOKEN: &str = "{{output_dir}}";
 /// The CLI's input preparation injects `"url"` or `"text"` into the node's
 /// params for URL/Text mode recipes. If no placeholder exists in the args
 /// but a `url` param is present, append the URL as the last argument.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn resolve_input_placeholders(
     args: &mut Vec<String>,
     params: &serde_json::Map<String, serde_json::Value>,

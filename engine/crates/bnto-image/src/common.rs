@@ -20,6 +20,7 @@ pub(crate) fn image_accepts_with_svg() -> Vec<String> {
 }
 
 /// Format parameter definition for the convert processor (JPEG/PNG/WebP enum).
+#[expect(clippy::too_many_lines)]
 pub(crate) fn format_param_def() -> bnto_core::metadata::ParameterDef {
     use bnto_core::metadata::*;
     ParameterDef {
@@ -53,6 +54,7 @@ pub(crate) fn format_param_def() -> bnto_core::metadata::ParameterDef {
 }
 
 /// Quality parameter definition shared by all image operations.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn quality_param_def() -> bnto_core::metadata::ParameterDef {
     use bnto_core::metadata::*;
     ParameterDef {

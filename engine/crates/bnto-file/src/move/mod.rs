@@ -125,6 +125,7 @@ fn summary(moved: usize, in_place: usize, root: &Root, ctx: &dyn ProcessContext)
 
 /// Each file at its new path, named by its path under the root. A dry run
 /// moved nothing, so its files still point at their sources.
+#[expect(clippy::too_many_lines)]
 fn outputs(files: Vec<BatchFile>, planned: Planned, dry_run: bool) -> NodeOutput {
     let files = files
         .into_iter()

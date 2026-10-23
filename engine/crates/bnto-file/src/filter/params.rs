@@ -2,6 +2,7 @@
 
 use bnto_core::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
 
+#[expect(clippy::too_many_lines)]
 pub(super) fn build_filter_params() -> Vec<ParameterDef> {
     vec![
         ParameterDef {

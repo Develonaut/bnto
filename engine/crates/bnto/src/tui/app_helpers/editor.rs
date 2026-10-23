@@ -11,6 +11,7 @@ use super::super::screens::library::{LibraryModel, load_library_entries};
 use super::navigation::back_screen_for_editor;
 
 /// Navigate back from the editor, cleaning up editor state.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn navigate_back_from_editor(
     model: AppModel,
     _editor: EditorScreenModel,
@@ -41,6 +42,7 @@ pub(crate) fn navigate_back_from_editor(
 }
 
 /// Save the editor's recipe to disk. Optionally navigate back after saving.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn perform_editor_save(
     model: AppModel,
     mut editor: EditorScreenModel,
@@ -81,6 +83,7 @@ pub(crate) fn perform_editor_save(
 }
 
 /// Load an EditorModel from raw recipe JSON.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn load_editor_from_json(json: &str) -> Result<bnto_core::editor::EditorModel, String> {
     // Try strict deserialization.
     if let Ok(def) = serde_json::from_str::<bnto_core::definition::Definition>(json) {
@@ -133,6 +136,7 @@ fn json_to_editor_params(
 }
 
 /// Forward an editor message, handling actions (back, save, save+back).
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_editor(model: AppModel, msg: EditorMessage) -> AppModel {
     let from = match &model.screen {
         Screen::Editor { from } => *from,
@@ -176,6 +180,7 @@ pub(crate) fn handle_editor_form(model: AppModel, form_msg: tonkotsu::FormMessag
 }
 
 /// Clone a browser recipe into the editor.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_open_editor_from_browser(model: AppModel) -> AppModel {
     let recipe = model.browser.selected_recipe();
     match recipe {
@@ -210,6 +215,7 @@ pub(crate) fn handle_open_editor_from_browser(model: AppModel) -> AppModel {
 }
 
 /// Open a library recipe in the editor for in-place editing.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_open_editor_from_library(model: AppModel) -> AppModel {
     let slug = model
         .library

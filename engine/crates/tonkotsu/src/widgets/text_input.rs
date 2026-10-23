@@ -33,6 +33,7 @@ pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_editing(
     prefix: &str,
     label: &str,
@@ -79,6 +80,7 @@ fn render_editing(
     lines
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_idle(
     prefix: &str,
     label: &str,

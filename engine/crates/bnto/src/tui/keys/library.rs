@@ -6,6 +6,7 @@ use super::super::app::{AppMessage, AppModel};
 use super::super::screens::library::LibraryMessage;
 
 /// Handle key events on the Library screen.
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_library_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let lib = model.library.as_ref()?;
 

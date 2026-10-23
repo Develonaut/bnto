@@ -48,6 +48,7 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 ///      stay target-agnostic — no WASM-specific code)
 ///   2. The function is small enough that duplication is clearer than a
 ///      shared utility that would need its own crate
+#[expect(clippy::too_many_lines)]
 fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
     // --- Step 1: Extract the first output file ---
     //

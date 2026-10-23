@@ -7,6 +7,7 @@ use crate::format_size::format_size;
 use crate::theme::FormTheme;
 
 /// Render the file path browser: directory header + visible entries.
+#[expect(clippy::too_many_lines)]
 pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let (current_dir, entries, cursor, viewport_offset, viewport_height) = match &field.state {
         FieldState::FilePathBrowsing {

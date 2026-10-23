@@ -14,6 +14,7 @@ pub(crate) const OUTPUT_DIR_PLACEHOLDER: &str = "{{output_dir}}";
 
 /// File mode: run command in a temp dir, collect written files as output.
 /// Replaces `{{output_dir}}` in args with the temp directory path.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn process_file_mode(
     invocation: &Invocation,
     _input: &NodeInput,

@@ -6,6 +6,7 @@ use super::super::app::{AppMessage, AppModel};
 use super::super::screens::browser::BrowserMessage;
 
 /// Handle key events on the Browser screen.
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_browser_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     if model.browser.searching {
         return match key.code {

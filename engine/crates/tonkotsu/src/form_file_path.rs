@@ -14,6 +14,7 @@ use crate::viewport;
 /// This runs on the focused field's FilePathBrowsing state. If the focused
 /// field isn't in FilePathBrowsing (and it's not a DirLoaded response),
 /// the model is returned unchanged.
+#[expect(clippy::too_many_lines)]
 pub fn handle_file_path_message(mut model: FormModel, msg: FormMessage) -> FormModel {
     // DirLoaded targets a specific field by id, not necessarily the focused one.
     if let FormMessage::FilePathDirLoaded {
@@ -52,6 +53,7 @@ pub fn handle_file_path_message(mut model: FormModel, msg: FormMessage) -> FormM
 }
 
 /// Apply a browsing message to a field in FilePathBrowsing state.
+#[expect(clippy::too_many_lines)]
 fn apply_browsing_message(field: Field, msg: FormMessage, effects: &mut Vec<FormEffect>) -> Field {
     let (current_dir, entries, cursor, show_hidden, offset, height, mut nav_history) =
         match &field.state {
@@ -187,6 +189,7 @@ fn try_confirm(field: Field, entries: &[crate::file_entry::FileEntry], cursor: u
 }
 
 /// Update just the cursor and viewport offset within FilePathBrowsing.
+#[expect(clippy::too_many_lines)]
 fn with_cursor(field: Field, cursor: usize, offset: usize) -> Field {
     match field.state {
         FieldState::FilePathBrowsing {

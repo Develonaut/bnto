@@ -24,6 +24,7 @@ use super::widgets::file_list;
 use super::wrap_lines::wrap_lines;
 
 /// Render the recipe detail screen.
+#[expect(clippy::too_many_lines)]
 pub fn draw_detail(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let inner = content_panel(frame, theme, area, model.screen.title());
 
@@ -103,6 +104,7 @@ fn detail_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
 
 /// Everything above the form's fields: the recipe header, the input
 /// section, and the PARAMETERS heading.
+#[expect(clippy::too_many_lines)]
 fn lead_lines<'a>(detail: &'a DetailModel, theme: &Theme) -> Vec<Line<'a>> {
     let mut lines: Vec<Line> = Vec::new();
 

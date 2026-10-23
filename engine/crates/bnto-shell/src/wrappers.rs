@@ -17,6 +17,7 @@ struct Spec {
     positionals: usize,
 }
 
+#[expect(clippy::too_many_lines)]
 fn spec(stem: &str) -> Option<Spec> {
     let (value_opts, positionals): (&'static [&'static str], usize) = match stem {
         "env" => (&["-u", "--unset", "-C", "--chdir"], 0),
@@ -56,6 +57,7 @@ pub(crate) fn wrapper_problems(command: &str, args: Option<&Value>) -> Vec<Strin
     problems_for(command, &flat_strings(args), 0)
 }
 
+#[expect(clippy::too_many_lines)]
 fn problems_for(command: &str, args: &[&str], depth: usize) -> Vec<String> {
     let mut problems = Vec::new();
     for runs in what_runs(&program_stem(command), args) {

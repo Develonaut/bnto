@@ -17,6 +17,7 @@ use super::super::screens::picker::PickerMessage;
 ///
 /// Tab advances section forward, Shift+Tab goes backward.
 /// Esc always navigates back (unless a field is being edited).
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let detail = model.detail.as_ref()?;
     let is_editing = detail_bridge::is_form_editing(&detail.form);
@@ -63,6 +64,7 @@ pub(super) fn handle_detail_key(model: &AppModel, key: KeyEvent) -> Option<AppMe
 }
 
 /// Handle keys when the Input (file picker) section is focused.
+#[expect(clippy::too_many_lines)]
 fn handle_detail_input_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let detail = model.detail.as_ref()?;
     let picker = detail.input_picker.as_ref()?;
@@ -102,6 +104,7 @@ fn handle_detail_input_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage
 }
 
 /// Handle keys when the Params (form fields) section is focused.
+#[expect(clippy::too_many_lines)]
 fn handle_detail_params_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     use tonkotsu::FormMessage;
 

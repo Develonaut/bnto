@@ -25,6 +25,7 @@ pub fn draw_preview(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme,
 }
 
 /// Build lines for the preview screen content.
+#[expect(clippy::too_many_lines)]
 fn preview_lines<'a>(
     preview: &'a super::screens::preview::PreviewModel,
     theme: &'a Theme,

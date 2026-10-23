@@ -65,6 +65,7 @@ impl NodeProcessor for OverlayImage {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

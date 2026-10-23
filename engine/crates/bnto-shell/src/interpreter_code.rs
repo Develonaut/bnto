@@ -60,6 +60,7 @@ pub(crate) fn code_problems(command: &str, args: Option<&Value>) -> Vec<String> 
 /// `code_problems` over args already flattened, e.g. a wrapped program's:
 /// interpreter code flags, plus program text tools take as a plain
 /// argument (awk, sed, jq).
+#[expect(clippy::too_many_lines)]
 pub(crate) fn code_problems_in(command: &str, args: &[&str]) -> Vec<String> {
     let stem = program_stem(command);
     let mut problems = crate::program_text::program_text_problems(command, &stem, args);

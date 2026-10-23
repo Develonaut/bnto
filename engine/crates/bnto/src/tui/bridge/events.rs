@@ -11,6 +11,7 @@ pub fn map_pipeline_event(event: PipelineEvent) -> AppMessage {
 }
 
 /// Pipeline-level events map directly; node and iteration events delegate.
+#[expect(clippy::too_many_lines)]
 fn execution_message(event: PipelineEvent) -> ExecutionMessage {
     match event {
         PipelineEvent::PipelineStarted {
@@ -44,6 +45,7 @@ fn execution_message(event: PipelineEvent) -> ExecutionMessage {
 
 /// Node lifecycle and file progress events. Children of a container map to
 /// the `Child*` variants so the execution screen can nest them.
+#[expect(clippy::too_many_lines)]
 fn node_or_iteration_message(event: PipelineEvent) -> ExecutionMessage {
     match event {
         PipelineEvent::NodeStarted {
@@ -102,6 +104,7 @@ fn node_completed(
 }
 
 /// File progress and per-iteration events.
+#[expect(clippy::too_many_lines)]
 fn file_or_iteration_message(event: PipelineEvent) -> ExecutionMessage {
     match event {
         PipelineEvent::FileProgress {
@@ -131,6 +134,7 @@ fn file_or_iteration_message(event: PipelineEvent) -> ExecutionMessage {
 }
 
 /// Iteration completion and failure events.
+#[expect(clippy::too_many_lines)]
 fn iteration_outcome_message(event: PipelineEvent) -> ExecutionMessage {
     match event {
         PipelineEvent::IterationCompleted {

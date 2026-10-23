@@ -9,6 +9,7 @@ use super::picker::{PickerMessage, PickerModel};
 use super::viewport;
 
 /// Pure state transition for the picker screen.
+#[expect(clippy::too_many_lines)]
 pub fn update(mut model: PickerModel, msg: PickerMessage) -> PickerModel {
     match msg {
         PickerMessage::CursorDown => {

@@ -52,6 +52,7 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 ///      stay target-agnostic — no WASM-specific code)
 ///   2. The function is small enough that duplication is clearer than a
 ///      shared utility that would need its own crate
+#[expect(clippy::too_many_lines)]
 fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
     // --- Step 1: Extract the first output file ---
     //
@@ -199,6 +200,7 @@ pub fn rename_file_combined(
 /// In that case, this function returns JsValue::NULL so the JS side
 /// knows to skip this file.
 #[wasm_bindgen]
+#[expect(clippy::too_many_lines)]
 pub fn filter_file_combined(
     data: &[u8],
     filename: &str,

@@ -9,6 +9,7 @@ use crate::field::{Field, FieldKind};
 use crate::theme::FormTheme;
 
 /// Render a confirm field as lines of styled spans.
+#[expect(clippy::too_many_lines)]
 pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {

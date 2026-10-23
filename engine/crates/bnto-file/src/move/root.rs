@@ -17,6 +17,7 @@ pub(super) struct Root {
 impl Root {
     /// Resolve `destination`. A missing one is fine when `createDirs` is on:
     /// the nearest folder above it that exists is canonicalized instead.
+    #[expect(clippy::too_many_lines)]
     pub(super) fn resolve(destination: &str, create_dirs: bool) -> Result<Self, String> {
         let abs = std::path::absolute(destination)
             .map_err(|e| format!("destination {destination} can't be resolved: {e}"))?;
@@ -66,6 +67,7 @@ impl Root {
         result
     }
 
+    #[expect(clippy::too_many_lines)]
     fn walk_folder(&self, folder: &Path) -> Result<(), String> {
         // The nearest part of the path that exists, at or below the root.
         let existing = folder

@@ -52,6 +52,7 @@ impl AppModel {
     /// Browser closed, plus the catalog and library list for the Home pane.
     ///
     /// One line per field — the length is the field list, not logic.
+    #[expect(clippy::too_many_lines)]
     fn assemble(
         effective_variant: ThemeVariant,
         toml_config: TomlConfig,

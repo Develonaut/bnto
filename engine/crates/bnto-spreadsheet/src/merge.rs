@@ -70,6 +70,7 @@ impl NodeProcessor for MergeSpreadsheets {
     }
 
     /// Merge all input CSV files into a single output.
+    #[expect(clippy::too_many_lines)]
     fn process_batch(
         &self,
         input: BatchInput,
@@ -155,6 +156,7 @@ impl MergeConfig {
 
 // --- Metadata Parameter Definitions ---
 
+#[expect(clippy::too_many_lines)]
 fn build_merge_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
     use bnto_core::metadata::*;
     vec![
@@ -196,6 +198,7 @@ struct ParsedCsv {
 }
 
 /// Parse all batch files into header+rows structures.
+#[expect(clippy::too_many_lines)]
 fn parse_all_files(input: &BatchInput) -> Result<Vec<ParsedCsv>, BntoError> {
     let mut parsed = Vec::with_capacity(input.files.len());
 
@@ -278,6 +281,7 @@ fn reconcile_headers(parsed: &[ParsedCsv], config: &MergeConfig) -> Vec<String> 
 /// For union mode: maps by header name (missing columns → empty).
 /// For first-file mode: if headers match by name, map by name. Otherwise
 /// fall back to positional mapping (column 0 → column 0, etc.).
+#[expect(clippy::too_many_lines)]
 fn collect_all_rows(
     parsed: &[ParsedCsv],
     merged_headers: &[String],

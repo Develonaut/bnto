@@ -94,6 +94,7 @@ pub const DEFAULT_TIMEOUT_SECS: u64 = 300;
 ///   - Paths (absolute, relative, or parent traversal)
 ///
 /// Commands must be bare binary names resolved via PATH by the OS.
+#[expect(clippy::too_many_lines)]
 pub fn validate_command(cmd: &str) -> Result<(), String> {
     if cmd.is_empty() {
         return Err("command must not be empty".to_string());

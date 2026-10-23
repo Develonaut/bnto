@@ -17,6 +17,7 @@ use bnto_core::{
 ///
 /// Used by the `node_catalog()` WASM export and browser execution path.
 /// For the full registry (including CLI-only processors), use `create_registry()`.
+#[expect(clippy::too_many_lines)]
 pub fn create_browser_registry() -> NodeRegistry {
     let mut registry = NodeRegistry::new();
 

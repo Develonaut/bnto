@@ -54,6 +54,7 @@ pub fn run_install(recipe_slug: Option<&str>, yes: bool, all: bool, catalog: &Re
 }
 
 /// Plan, confirm, install and verify whichever dependencies are missing.
+#[expect(clippy::too_many_lines)]
 fn install_missing(
     statuses: &[DependencyStatus],
     label: &str,

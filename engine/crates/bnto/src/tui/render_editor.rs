@@ -12,6 +12,7 @@ use super::theme::Theme;
 use super::widgets::search_input;
 
 /// Draw the Editor screen content area.
+#[expect(clippy::too_many_lines)]
 pub fn draw_editor(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
     let inner = content_panel(frame, theme, area, model.screen.title());
     let editor_screen = match &model.editor {

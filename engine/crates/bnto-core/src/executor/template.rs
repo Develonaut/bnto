@@ -115,6 +115,7 @@ fn resolve_placeholder(prefix: &str, key: &str, ctx: &TemplateContext) -> Option
 ///   - `paths.temp_dir`   → system temp directory
 ///
 /// Old flat names (`work_dir`, `temp_dir`) are kept as backward-compat aliases.
+#[expect(clippy::too_many_lines)]
 fn resolve_ctx(
     key: &str,
     process_ctx: &dyn ProcessContext,

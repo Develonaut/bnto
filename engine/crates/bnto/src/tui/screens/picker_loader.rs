@@ -7,6 +7,7 @@ use std::path::Path;
 use super::picker::FileEntry;
 
 /// Read directory entries, filter files by extension, sort dirs-first then alpha.
+#[expect(clippy::too_many_lines)]
 pub fn load_entries(dir: &Path, extensions: &[String], show_hidden: bool) -> Vec<FileEntry> {
     let read_dir = match std::fs::read_dir(dir) {
         Ok(rd) => rd,
@@ -114,6 +115,7 @@ fn matches_extensions(name: &str, extensions: &[String]) -> bool {
 ///
 /// Walks the recipe's node list, finds processor nodes, resolves their
 /// `metadata().accepts` MIME types, and converts to file extensions.
+#[expect(clippy::too_many_lines)]
 pub fn extensions_for_recipe(
     definition_json: &str,
     registry: &bnto_core::registry::NodeRegistry,

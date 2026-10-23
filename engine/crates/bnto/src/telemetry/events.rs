@@ -54,6 +54,7 @@ pub fn cli_recipe_run(
 
 /// Recipe run, with its `-p` overrides: names only for a bundled recipe
 /// (see `recipe_label`), the count for any recipe.
+#[expect(clippy::too_many_lines)]
 pub fn cli_recipe_run_with_params(
     recipe: &RecipeLabel,
     duration_ms: u64,

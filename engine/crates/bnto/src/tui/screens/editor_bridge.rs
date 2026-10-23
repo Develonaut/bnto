@@ -44,6 +44,7 @@ pub fn build_form(
 }
 
 /// Convert an EditorNode's params to ParamEntry list using registry metadata.
+#[expect(clippy::too_many_lines)]
 fn node_to_params(node: &EditorNode, registry: &NodeRegistry) -> Vec<ParamEntry> {
     let empty_map = serde_json::Map::new();
     let param_map: serde_json::Map<String, serde_json::Value> = node

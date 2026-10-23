@@ -105,6 +105,11 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+      # Production code only (no --all-targets), so tests are exempt. Functions
+      # over 20 lines carry #[expect(clippy::too_many_lines)] until they're split.
+      - name: Function length
+        run: cargo clippy --workspace -- -W clippy::too_many_lines -D warnings
+
       - name: Unit tests (native)
         run: cargo test --workspace --exclude bnto
 
@@ -164,6 +169,11 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
+
+      # Production code only (no --all-targets), so tests are exempt. Functions
+      # over 20 lines carry #[expect(clippy::too_many_lines)] until they're split.
+      - name: Function length
+        run: cargo clippy --workspace -- -W clippy::too_many_lines -D warnings
 
       - name: Tests
         run: cargo test --workspace

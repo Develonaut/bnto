@@ -112,6 +112,7 @@ pub enum WriteOutcome {
 ///
 /// On a `dry_run` nothing is written or renamed; the outcome is what a real
 /// run would report.
+#[expect(clippy::too_many_lines)]
 pub fn write_results_with_mode(
     result: &PipelineResult,
     mode: &str,

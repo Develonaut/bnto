@@ -36,6 +36,7 @@ pub(super) fn joined(
 }
 
 /// Fail before writing anything when a disk file is gone, naming every one.
+#[expect(clippy::too_many_lines)]
 fn refuse_missing(files: &[BatchFile]) -> Result<(), BntoError> {
     let missing: Vec<String> = files
         .iter()

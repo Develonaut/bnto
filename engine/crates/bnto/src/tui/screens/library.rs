@@ -100,6 +100,7 @@ impl LibraryModel {
 }
 
 /// Pure state transition for the library screen.
+#[expect(clippy::too_many_lines)]
 pub fn update(mut model: LibraryModel, msg: LibraryMessage) -> LibraryModel {
     match msg {
         LibraryMessage::CursorDown => {
@@ -210,6 +211,7 @@ fn refilter(model: &mut LibraryModel) {
 ///
 /// Parses each file's JSON to extract `name` and `metadata.description`.
 /// Silently skips files that can't be read or parsed.
+#[expect(clippy::too_many_lines)]
 pub fn load_library_entries(dir: &Path) -> Vec<LibraryEntry> {
     let mut entries: Vec<LibraryEntry> = std::fs::read_dir(dir)
         .map(|rd| {

@@ -51,6 +51,7 @@ pub(crate) fn handle_telemetry_toggled(model: AppModel, enabled: bool) -> AppMod
 }
 
 /// Open the file picker from settings to browse for a directory.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_open_settings_picker(model: AppModel, field_key: String) -> AppModel {
     let current_value = model
         .settings
@@ -81,6 +82,7 @@ pub(crate) fn handle_open_settings_picker(model: AppModel, field_key: String) ->
 }
 
 /// Confirm a picker directory as a settings field value and persist.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_settings_path_confirmed(model: AppModel) -> AppModel {
     let dir_path = model
         .picker

@@ -47,6 +47,7 @@ fn with_guards(line: String, guards: &[String]) -> String {
 /// script step reads `<shell> -c <script> bnto arg …` (a PowerShell one
 /// `<shell> <script> $env:BNTO_ARG_n: arg …`) with the whole script below
 /// it, so what's approved is the script that runs.
+#[expect(clippy::too_many_lines)]
 fn command_line(params: &Map<String, Value>) -> Option<String> {
     let script = params.get("script").and_then(Value::as_str);
     let mut line = match (params.get("command").and_then(Value::as_str), script) {

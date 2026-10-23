@@ -52,6 +52,7 @@ impl NodeProcessor for ReadSpreadsheet {
         validate_params(params)
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

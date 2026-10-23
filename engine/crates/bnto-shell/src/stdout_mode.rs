@@ -9,6 +9,7 @@ use crate::validate;
 /// Stdout mode: capture command stdout as a single output file. `program` is
 /// what runs (the full path from `searchPath`, or `command` itself); the
 /// output is named after `command`.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn process_stdout_mode(
     invocation: &Invocation,
     input: &NodeInput,

@@ -13,6 +13,7 @@ use crate::form::FormMessage;
 ///
 /// Both states share identical cursor logic — the only difference is which
 /// `FieldState` variant wraps the `(buffer, cursor)` pair.
+#[expect(clippy::too_many_lines)]
 pub fn update(field: Field, msg: FormMessage) -> Field {
     let (buffer, cursor, is_number) = match &field.state {
         FieldState::TextEditing { buffer, cursor } => (buffer.clone(), *cursor, false),
@@ -67,6 +68,7 @@ fn rewrap_as_number(field: Field) -> Field {
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn insert_char(field: Field, buffer: &str, graphemes: &[&str], cursor: usize, ch: char) -> Field {
     // Check character limit
     if let FieldKind::Text {
