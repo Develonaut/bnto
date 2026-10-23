@@ -689,6 +689,8 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 
 ## Backlog
 
+Features and ideas. Defects (bugs, standards violations, stale docs, security gaps) go in [ISSUES.md](ISSUES.md), the pickup list for known problems.
+
 ### Node Vocabulary Alignment
 
 **Priority: Medium.** Bring shipped nodes in line with [node-vocabulary.md](scopes/rust/node-vocabulary.md). One PR per task (single-concern rule). Every breaking task adds a `bnto migrate` step (`engine/crates/bnto/src/migrate/`), runs codegen (`task wasm:codegen`), and updates recipes, fixtures and goldens. Remove the matching row from the doc's Audit table when a task merges. Do the labels first: they're non-breaking and cheap.
@@ -817,10 +819,6 @@ Spreadsheet operations and vector format conversion. Extends recipe breadth.
 ### ~~Triage: Secret/environment variable management for recipes~~ → Sprint 16 Wave 5
 
 **Promoted.** Design spike promoted to Sprint 16 Wave 5 (`strategy/recipe-secrets.md`). Depends on `{{env.*}}` template namespace (Wave 4).
-
-### Triage: E2E teardown cleanup fails in release pipeline
-
-**Priority: Low.** E2E teardown logs `cleanup failed` because `CONVEX_DEPLOYMENT` isn't set in release pipeline. Either pass env var to E2E job or skip cleanup against Vercel preview.
 
 ### Infra: Conventional Commits + Auto-Changelog
 
@@ -999,22 +997,6 @@ Strategy: [execution-progress-ux.md](strategy/execution-progress-ux.md) § Phase
 **Priority: Triage.** Nodes should hand off rich context (file path, metadata, what they did) to the next node rather than relying on implicit assumptions. Currently processors like file-rename do filesystem work (fs::rename) that may belong in the pipeline runner or output writer — nodes are doing secret file management instead of their one job. Need a deep review of: (1) what context flows between nodes (FileData, filename, metadata), (2) whether processors are doing filesystem work that belongs at a different layer, (3) the boundary between "process this data" and "manage where files live on disk", (4) namespace/context available to nodes. Related to "Audit output node coupling" backlog item above.
 
 `engine/crates/bnto-file/src/rename.rs`, `engine/crates/bnto-core/src/processor.rs`, `engine/crates/bnto-engine/src/pipeline/`
-
----
-
-### Triage: Unresolved {{fields.*}} templates pass through silently at runtime
-
-**Priority: Triage.** Fields resolve per-node only (`collect_field_values(&node.fields, …)`), so a node referencing another node's field receives the literal placeholder string — the download-patreon library recipe's flatten/upload steps no-op'd silently with exit 0. `bnto dry-run` already asserts no unresolved `{{fields.*}}` remain, but live execution doesn't. Fix options: resolve fields recipe-globally (group-level merge), or fail loudly at execution when an arg still contains `{{fields.` after resolution.
-
-`engine/crates/bnto-core/src/executor/primitive.rs:133`, `engine/crates/bnto-core/src/executor/resolve.rs:99`, `engine/crates/bnto/src/dry_run/mod.rs:141`
-
----
-
-### Triage: shell-run timeout parameter is a no-op
-
-**Priority: Triage.** The `timeout` param is parsed then bound to `_timeout` and never enforced (`bnto-shell/src/execute.rs:95`); `DEFAULT_TIMEOUT_SECS` in `validate.rs:52` is defined but unused. A hung external command blocks the pipeline forever. Enforcement belongs in `run_command_streaming` (kill the process group on deadline — builds on the ProcessRegistry from PR #520).
-
-`engine/crates/bnto-shell/src/execute.rs:95`, `engine/crates/bnto/src/context.rs`
 
 ---
 

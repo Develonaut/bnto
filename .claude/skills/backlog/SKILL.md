@@ -6,7 +6,7 @@ args: "<description of the issue or idea>"
 
 # Backlog — Quick Add
 
-Append a triage item to `PLAN.md` without breaking flow. This is for observations, bugs, and ideas that come up while working — capture them fast, triage later during `/groom`.
+Append a triage item to `PLAN.md` without breaking flow. **A defect** (bug, standards violation, stale doc, security gap) goes in `.claude/ISSUES.md` instead: verify it, then add a row and a section as that file's header says. This is for observations, bugs, and ideas that come up while working — capture them fast, triage later during `/groom`.
 
 ## Instructions
 
