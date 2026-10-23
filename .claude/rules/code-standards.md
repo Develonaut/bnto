@@ -16,7 +16,7 @@ Like a traditional Japanese bento box where each compartment serves a specific p
 
 - **Files (TypeScript):** Target 50-100 lines. Hard cap at 250 -- no exceptions. If a file approaches 150 lines, look for extraction opportunities
 - **Files (Rust):** Hard cap at 400 production lines (excluding `#[cfg(test)]` blocks). Rust files naturally run larger than TS due to co-located tests, explicit error handling, and match arms. The 250-line TS limit doesn't translate 1:1. Enforced by `task check:rust-size` and CI's engine job ([rust-file-size](../../recipes/rust-file-size.bnto.json)), which skip top-level `#[cfg(test)] mod` blocks, `tests.rs` files and `tests/` folders
-- **Functions:** < 20 lines. No escape hatch
+- **Functions:** < 20 lines, not counting blank lines and comments. Tests are exempt. ESLint's `max-lines-per-function` enforces it for `.ts`; a `.tsx` function gets 60, for a component's JSX. Functions already over it are listed in each package's `eslint-suppressions.json`, a baseline that only shrinks: fix one and lower its count (`pnpm exec eslint . --prune-suppressions`), never add one. See [function-length.md](../decisions/function-length.md)
 - **Components:** One exported component per file. Target 50-100 lines of JSX + logic. If a component has more than 2-3 sub-components defined in the same file, break into a folder with barrel export
 - **Hooks:** One exported hook per file
 - **Functions/utils:** One exported function per file. If a function is more than a few lines or reused anywhere, it gets its own file (camelCase, e.g., `formatDuration.ts`). Group related functions in a domain folder, not a grab-bag file

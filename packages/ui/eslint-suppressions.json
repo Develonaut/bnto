@@ -1,0 +1,57 @@
+{
+  "src/animation/runCountAnimation.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/animation/useIntersectionVisible.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/Button/buildSharedProps.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/Button/resolvePushableClasses.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/Combobox/useComboboxRemove.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/KeyValueEditor/useKeyValueEditor.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/RadialSlider/useRadialEmit.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/RadialSlider/useRadialLayout.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/interaction/Slider/useSliderState.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/layout/partitionBentoChildren.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/utils/toDropzoneAccept.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}

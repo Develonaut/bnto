@@ -1,0 +1,52 @@
+{
+  "app/(app)/[bnto]/_components/_schemas/buildBreadcrumbSchema.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/(app)/[bnto]/_components/_schemas/buildWebAppSchema.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/(app)/[bnto]/_stores/recipeStepperActions.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/(app)/_components/recipeSnippets.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/buildStaticSitemapEntries.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/editor/_components/useEditorRecipe.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/llms-full.txt/route.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "app/llms.txt/route.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "components/sections/useStepInView.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "lib/recipePageContent.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}

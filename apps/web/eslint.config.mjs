@@ -30,9 +30,11 @@ const eslintConfig = defineConfig([
       // --- Complexity & size enforcement (code-standards.md) ---
       complexity: ["error", { max: 10 }],
       "sonarjs/cognitive-complexity": ["error", 15],
+      // code-standards.md: functions < 20 lines. Older functions over it are
+      // listed in each package's eslint-suppressions.json, which only shrinks.
       "max-lines-per-function": [
         "error",
-        { max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
+        { max: 20, skipBlankLines: true, skipComments: true, IIFEs: true },
       ],
       "max-lines": ["error", { max: 250, skipBlankLines: true, skipComments: true }],
 

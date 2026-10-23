@@ -1,0 +1,62 @@
+{
+  "src/adapters/browser/BntoWorker.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/adapters/browser/bnto.worker.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/clients/authClient.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/clients/executionClient.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/hooks/useAuth.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/hooks/useDownloadFiles.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/hooks/useUploadFiles.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/services/analyticsService.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/services/executionInstance.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/services/uploadService.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/stores/executionInstanceStore.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/transforms/localHistory.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}

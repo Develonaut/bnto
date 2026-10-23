@@ -1,0 +1,167 @@
+{
+  "src/actions/addChildIntoContainer.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/actions/addNode.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/actions/addSiblingChild.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/actions/addTopLevel.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/actions/childDefToNode.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/actions/createBlank.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/actions/expandContainer.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/actions/loadDefinition.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/actions/removeNode.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/actions/runExecution.ts": {
+    "max-lines-per-function": {
+      "count": 3
+    }
+  },
+  "src/actions/updateParams.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/adapters/createCompartmentNode.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/adapters/definitionToGraph.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/adapters/definitionTreeHelpers.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/adapters/layoutNodes.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/components/NodePaletteDialog/useNodePaletteDialog.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/components/OpenRecipeDialog/useFileImport.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/components/RunPanel/useRunTab.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/debug/step.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/helpers/injectAddDividers.ts": {
+    "max-lines-per-function": {
+      "count": 5
+    }
+  },
+  "src/helpers/injectPlaceholder.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/hooks/factories/createUseExecution.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/hooks/useExecutionNodes.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/hooks/useNodes.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/services/definitionService.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/services/executionService.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/services/nodeServiceMutations.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/store/buildInitialState.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/store/createEditorStore.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/store/resolveInitialState.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/store/storeExecutionActions.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/store/storeGraphActions.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "src/store/storeUtilityActions.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}

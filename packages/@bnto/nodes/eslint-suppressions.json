@@ -1,0 +1,12 @@
+{
+  "src/validate.ts": {
+    "max-lines-per-function": {
+      "count": 2
+    }
+  },
+  "src/validateTypeSpecific.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  }
+}
