@@ -6,7 +6,7 @@ use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
-use crate::{dry_run, info, list};
+use crate::{dry_run, host_support, info, list};
 
 /// `bnto list` — print the catalog grouped by category.
 pub fn list_recipes(catalog: &RecipeCatalog) {
@@ -30,6 +30,7 @@ pub fn show_dry_run(
     yes: bool,
     catalog: &RecipeCatalog,
 ) {
+    refuse_unsupported_host(slug, catalog);
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
     if let Some(entry) = catalog.resolve(slug)
@@ -42,6 +43,19 @@ pub fn show_dry_run(
         exit_unknown_recipe(slug);
     };
     dry_run::print_dry_run(slug, &result);
+}
+
+/// Stop a recipe with no branch for this OS, as `bnto run` does: a preview
+/// of a run that would be refused would mislead.
+fn refuse_unsupported_host(slug: &str, catalog: &RecipeCatalog) {
+    let Some(entry) = catalog.resolve(slug) else {
+        return;
+    };
+    let host = bnto_core::HostPlatform::current();
+    if let Some(why) = host_support::unsupported_host(slug, &entry.definition_json, host) {
+        eprintln!("{} {why}", "Error:".red());
+        process::exit(1);
+    }
 }
 
 /// Report an unknown recipe slug, then exit.
