@@ -1,7 +1,7 @@
 # CLI Upgrade Notices + `bnto upgrade` -- 3 PRs
 
 **Created:** October 21, 2026
-**Status:** Shipped in v0.17.0 (PR 1 #693, PR 3 #695). Follow-up (October 22, 2026): an open TUI looks again every hour (`fix/tui-recheck-updates`).
+**Status:** Shipped in v0.17.0: PR 1 (#693), PR 2 (#694), PR 3 (#695). Follow-up (October 22, 2026): an open TUI looks again every hour (#709).
 **Related:** [releases.md](../scopes/process/releases.md#one-number-everywhere), [tui-data-persistence.md](tui-data-persistence.md), [environment-variables.md](../environment-variables.md)
 
 ## Context
@@ -118,9 +118,9 @@ pub fn notice(current: &Version, latest: &Version) -> Option<String>;
 ## Dependency Chain
 
 ```
-PR 1 (update check + CLI notice)
-|-- PR 2 (bnto upgrade)        -- uses PR 1's cache and refresh
-|-- PR 3 (TUI notice)          -- uses PR 1's cache and refresh
+PR 1 (update check + CLI notice) -- merged #693
+|-- PR 2 (bnto upgrade)        -- uses PR 1's cache and refresh, merged #694
+|-- PR 3 (TUI notice)          -- uses PR 1's cache and refresh, merged #695
 ```
 
 PRs 2 and 3 are independent of each other.
