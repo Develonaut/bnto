@@ -8,23 +8,23 @@
 
 Recipes first, using `shell-run` where bnto has no node yet; then each product gap gets built and swaps into its recipe. Stop for Ryan's go-ahead between phases.
 
-| #   | PR                                                 | Branch                         | Status      |
-| --- | -------------------------------------------------- | ------------------------------ | ----------- |
-| 0   | Record the dogfooding plan                         | `docs/dogfooding-plan`         | In review   |
-| 1   | Delete the unused web assets                       | `chore/delete-unused-assets`   | Not started |
-| 2   | Fail on unused web assets, check assets on web PRs | `feat/unused-assets-check`     | Not started |
-| 3   | Split `node_types.rs` under 400 production lines   | `refactor/split-node-types`    | Not started |
-| 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Not started |
-| 5   | Verify a release shipped                           | `feat/release-verify`          | Not started |
-| 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Not started |
-| 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Not started |
-| 7a  | Source kinds and project consent                   | `feat/recipe-source-kinds`     | Not started |
-| 7b  | Load project recipes from `.bnto/recipes/`         | `feat/project-recipes`         | Not started |
-| 7c  | Project recipes in the TUI                         | `feat/tui-project-recipes`     | Not started |
-| 7d  | Move bnto's dogfood recipes to `.bnto/recipes/`    | `chore/move-dogfood-recipes`   | Not started |
-| 8   | `file-inspect` line count, replacing the awk step  | `feat/file-inspect-line-count` | Not started |
-| 9   | Content search, replacing the grep step            | `feat/content-search`          | Not started |
-| 10  | `http-request` node, replacing the curl steps      | `feat/http-request`            | Not started |
+| #   | PR                                                 | Branch                         | Status        |
+| --- | -------------------------------------------------- | ------------------------------ | ------------- |
+| 0   | Record the dogfooding plan                         | `docs/dogfooding-plan`         | Merged (#725) |
+| 1   | Delete the unused web assets                       | `chore/delete-unused-assets`   | Not started   |
+| 2   | Fail on unused web assets, check assets on web PRs | `feat/unused-assets-check`     | Not started   |
+| 3   | Split `node_types.rs` under 400 production lines   | `refactor/split-node-types`    | Not started   |
+| 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Not started   |
+| 5   | Verify a release shipped                           | `feat/release-verify`          | Not started   |
+| 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Not started   |
+| 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Not started   |
+| 7a  | Source kinds and project consent                   | `feat/recipe-source-kinds`     | Not started   |
+| 7b  | Load project recipes from `.bnto/recipes/`         | `feat/project-recipes`         | Not started   |
+| 7c  | Project recipes in the TUI                         | `feat/tui-project-recipes`     | Not started   |
+| 7d  | Move bnto's dogfood recipes to `.bnto/recipes/`    | `chore/move-dogfood-recipes`   | Not started   |
+| 8   | `file-inspect` line count, replacing the awk step  | `feat/file-inspect-line-count` | Not started   |
+| 9   | Content search, replacing the grep step            | `feat/content-search`          | Not started   |
+| 10  | `http-request` node, replacing the curl steps      | `feat/http-request`            | Not started   |
 
 ```
 Phase 0  record the plan
