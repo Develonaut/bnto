@@ -95,4 +95,4 @@ Each is a generic building block, not a dogfood special case. Each PR swaps its 
 
 ## Found during Phase 1
 
-Defects Phase 1 turned up are in [ISSUES.md](../ISSUES.md): ISS-1 (unset fields reach steps as template text), ISS-4 (`run_loop` length) and ISS-5 (function length is unenforced).
+Defects Phase 1 turned up are in [ISSUES.md](../ISSUES.md): ISS-1 (unset fields reach steps as template text), ISS-4 (`run_loop` length, split in #738) and ISS-5 (function length is unenforced).

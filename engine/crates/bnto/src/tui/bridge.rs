@@ -34,19 +34,23 @@ pub enum BridgeEvent {
     /// Used by progressive output to write files as iterations complete.
     OutputDir(String),
     /// Pipeline finished — output files written to this directory.
-    Done {
-        output_dir: String,
-        file_count: usize,
-        duration_ms: u64,
-        file_metadata: Vec<FileResultMeta>,
-        warnings: Vec<String>,
-        /// File transformation previews (populated in preview mode only).
-        preview_data: Vec<FilePreview>,
-        /// What a message-mode recipe reported (keep-awake's status text).
-        message: Option<RunMessage>,
-    },
+    Done(RunDone),
     /// Pipeline or setup failed with an error message.
     Error(String),
+}
+
+/// A finished run, as the bridge reports it.
+#[derive(Debug)]
+pub struct RunDone {
+    pub output_dir: String,
+    pub file_count: usize,
+    pub duration_ms: u64,
+    pub file_metadata: Vec<FileResultMeta>,
+    pub warnings: Vec<String>,
+    /// File transformation previews (populated in preview mode only).
+    pub preview_data: Vec<FilePreview>,
+    /// What a message-mode recipe reported (keep-awake's status text).
+    pub message: Option<RunMessage>,
 }
 
 /// Everything one bridge run needs, owned by the worker thread.
@@ -272,7 +276,7 @@ fn send_preview_done(
     result: bnto_core::pipeline::PipelineResult,
 ) {
     let previews = crate::dry_run::files::extract_previews(&result);
-    let _ = tx.send(BridgeEvent::Done {
+    let _ = tx.send(BridgeEvent::Done(RunDone {
         output_dir,
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
@@ -280,7 +284,7 @@ fn send_preview_done(
         warnings: result.warnings,
         preview_data: previews,
         message: None,
-    });
+    }));
 }
 
 /// Report a finished, written run.
@@ -291,7 +295,7 @@ fn send_done(
     file_metadata: Vec<FileResultMeta>,
     message: Option<RunMessage>,
 ) {
-    let _ = tx.send(BridgeEvent::Done {
+    let _ = tx.send(BridgeEvent::Done(RunDone {
         output_dir,
         file_count: result.files.len(),
         duration_ms: result.duration_ms,
@@ -299,7 +303,7 @@ fn send_done(
         warnings: result.warnings,
         preview_data: vec![],
         message,
-    });
+    }));
 }
 
 /// Find and remove an override value by param name (e.g. "url").

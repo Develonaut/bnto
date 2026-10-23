@@ -13,7 +13,6 @@
 | ID    | Issue                                                            | Area     | Status |
 | ----- | ---------------------------------------------------------------- | -------- | ------ |
 | ISS-1 | An unresolved `{{fields.*}}` template reaches its step as text   | engine   | Open   |
-| ISS-4 | `run_loop` in `tui/mod.rs` is 277 lines (limit: 20 per function) | tui      | Open   |
 | ISS-5 | Nothing enforces the 20-line function limit                      | tooling  | Open   |
 | ISS-7 | The CLI's telemetry notice links `bnto.io/telemetry`, a 404      | web docs | Open   |
 | ISS-8 | Most CLI integration tests run `bnto` against the real `~/.bnto` | cli test | Open   |
@@ -30,17 +29,11 @@ Fields resolve per node (`collect_field_values(&node.fields, …)`). A template 
 
 `engine/crates/bnto-core/src/executor/primitive.rs`, `engine/crates/bnto-core/src/executor/resolve.rs`, `engine/crates/bnto/src/dry_run/mod.rs`
 
-### ISS-4: `run_loop` in `tui/mod.rs` is 277 lines
-
-**Found:** October 23, 2026 (dogfooding PR 3b).
-
-`run_loop` (`engine/crates/bnto/src/tui/mod.rs:99-375`) is the TUI's event loop, against code-standards.md's 20-line function limit. Moving the terminal setup out (#729) brought the file under 400 lines, but the function itself is unchanged. Split it into per-event handlers. `task tui:test` (snapshots and journeys) covers it.
-
 ### ISS-5: Nothing enforces the 20-line function limit
 
 **Found:** October 23, 2026 (dogfooding PR 4).
 
-code-standards.md says functions stay under 20 lines, "no escape hatch". `rust-file-size` (#731) checks Rust file length and ESLint `max-lines` checks TypeScript file length, but nothing checks function length in either language. ISS-4 is the worst known case. Measure first (for example, clippy's `too_many_lines` with `too-many-lines-threshold = 20` in `clippy.toml`, and ESLint's `max-lines-per-function`), then decide: enforce with an allowlist that only shrinks, or change the rule.
+code-standards.md says functions stay under 20 lines, "no escape hatch". `rust-file-size` (#731) checks Rust file length and ESLint `max-lines` checks TypeScript file length, but nothing checks function length in either language. The worst known case, the TUI's 277-line `run_loop`, was split into per-step functions (#738). Measure first (for example, clippy's `too_many_lines` with `too-many-lines-threshold = 20` in `clippy.toml`, and ESLint's `max-lines-per-function`), then decide: enforce with an allowlist that only shrinks, or change the rule.
 
 ### ISS-7: The CLI's telemetry notice links `bnto.io/telemetry`, a 404
 

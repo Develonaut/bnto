@@ -26,6 +26,7 @@ mod render_picker;
 mod render_preview;
 mod render_results;
 mod render_wizard;
+mod run_loop;
 pub mod screen;
 #[cfg(test)]
 mod screen_snapshots;
@@ -37,27 +38,11 @@ pub mod widgets;
 mod wrap_lines;
 
 use std::io;
-use std::sync::{Arc, mpsc};
-use std::time::{Duration, Instant};
+use std::sync::Arc;
 
-use bnto_core::events::PipelineEvent;
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
-use crossterm::event::Event;
 
-use crate::output_names::OutputNames;
-
-use app::{AppMessage, AppModel, update};
-use bridge::BridgeEvent;
-use keys::handle_key;
-use screens::execution::{ExecutionMessage, ExecutionStatus};
-use screens::picker::PickerMessage;
 use theme::ThemeVariant;
-
-/// Render time threshold in microseconds — only log frames slower than this.
-const SLOW_FRAME_THRESHOLD_US: u64 = 16_000;
-
-/// Tick rate for the event loop (how often we check for input).
-const TICK_RATE: Duration = Duration::from_millis(50);
 
 /// Launch the interactive TUI with the given theme variant.
 ///
@@ -82,7 +67,7 @@ pub fn launch_tui(
     logger.flush(); // Flush the init entry even if setup fails.
     let mut terminal = terminal?;
 
-    let result = run_loop(
+    let result = run_loop::run_loop(
         &mut terminal,
         variant,
         recipe_json,
@@ -95,291 +80,13 @@ pub fn launch_tui(
     result
 }
 
-/// Main event loop — poll input, update state, render.
-fn run_loop(
-    terminal: &mut terminal::TuiTerminal,
-    variant: ThemeVariant,
-    recipe_json: Option<String>,
-    new_recipe: bool,
-    logger: &Arc<dyn Logger>,
-    paths: Option<crate::storage::BntoPaths>,
-) -> io::Result<()> {
-    let mut model = match paths {
-        Some(p) => AppModel::with_paths(variant, recipe_json, new_recipe, p),
-        None => AppModel::new(variant, recipe_json, new_recipe),
-    };
-    let (update_notice, mut update_rx) = crate::update_check::for_tui(&model.paths);
-    model.update_notice = update_notice;
-    let mut bridge_rx: Option<mpsc::Receiver<BridgeEvent>> = None;
-    let mut execution_start: Option<Instant> = None;
-    // The run's output folder and the names its iterations have written there.
-    let mut progressive_output: Option<(String, OutputNames)> = None;
-
-    logger.log(LogEntry {
-        level: LogLevel::Info,
-        target: "tui",
-        message: format!("session start (screen={})", model.screen.log_label()),
-        elapsed_us: None,
-    });
-
-    loop {
-        // Before drawing, so a key that moved focus shows it scrolled into view.
-        if matches!(model.screen, app::Screen::Detail { .. })
-            && let Some(detail) = &mut model.detail
-        {
-            detail_fit::fit_detail(detail, &model.theme, terminal.size()?);
-        }
-
-        let draw_start = Instant::now();
-        terminal.draw(|frame| render::draw_frame(frame, &model))?;
-        let draw_us = draw_start.elapsed().as_micros() as u64;
-        if draw_us >= SLOW_FRAME_THRESHOLD_US {
-            logger.log(LogEntry {
-                level: LogLevel::Warn,
-                target: "tui",
-                message: format!("slow frame render (screen={})", model.screen.log_label()),
-                elapsed_us: Some(draw_us),
-            });
-        }
-
-        // Update browser viewport height from terminal size.
-        // Screen chrome: 2 (search bar + blank line).
-        if matches!(model.screen, app::Screen::Browser) {
-            let term_h = terminal.size()?.height;
-            let browser_height = render_layout::viewport_height(term_h, 2);
-            if browser_height > 0 {
-                model = update(
-                    model,
-                    AppMessage::Browser(screens::browser::BrowserMessage::Resize {
-                        height: browser_height,
-                    }),
-                );
-            }
-        }
-
-        // Update picker viewport height from terminal size.
-        // Screen chrome: 2 (dir path + blank line).
-        if matches!(model.screen, app::Screen::Picker { .. }) {
-            let term_h = terminal.size()?.height;
-            let picker_height = render_layout::viewport_height(term_h, 2);
-            if picker_height > 0 {
-                model = update(
-                    model,
-                    AppMessage::Picker(PickerMessage::Resize {
-                        height: picker_height,
-                    }),
-                );
-            }
-        }
-
-        // A newer release the background update watch found mid-session.
-        match update_rx.as_ref().map(mpsc::Receiver::try_recv) {
-            Some(Ok(notice)) => model = update(model, AppMessage::UpdateAvailable(notice)),
-            Some(Err(mpsc::TryRecvError::Disconnected)) => update_rx = None,
-            _ => {}
-        }
-
-        // Spawn the pipeline bridge when execution screen enters Idle state.
-        if bridge_rx.is_none()
-            && let Some(exec) = &model.execution
-            && exec.status == ExecutionStatus::Idle
-            && let app::Screen::Execution { slug, .. } = &model.screen
-        {
-            bridge_rx = Some(bridge::spawn_pipeline(
-                slug.clone(),
-                exec.definition_json.clone(),
-                exec.selected_files.clone(),
-                exec.param_overrides.clone(),
-                exec.preview_mode,
-            ));
-            execution_start = Some(Instant::now());
-        }
-
-        // Poll bridge events (non-blocking) and map to AppMessages.
-        if let Some(rx) = &bridge_rx {
-            while let Ok(event) = rx.try_recv() {
-                model = match event {
-                    BridgeEvent::OutputDir(dir) => {
-                        progressive_output = Some((dir, OutputNames::default()));
-                        model
-                    }
-                    BridgeEvent::Progress(pe) => {
-                        // Write progressive output files to disk before mapping.
-                        if let PipelineEvent::IterationCompleted { output_files, .. } = &pe
-                            && !output_files.is_empty()
-                            && let Some((dir, names)) = &mut progressive_output
-                        {
-                            bridge::write_progressive_files(dir, output_files, names);
-                        }
-                        let msg = bridge::map_pipeline_event(pe);
-                        update(model, msg)
-                    }
-                    BridgeEvent::Done {
-                        output_dir,
-                        file_count,
-                        duration_ms,
-                        file_metadata,
-                        warnings,
-                        preview_data,
-                        message,
-                    } => {
-                        let (slug, from) = match &model.screen {
-                            app::Screen::Execution { slug, from } => (slug.clone(), *from),
-                            _ => (String::new(), app::DetailOrigin::Home),
-                        };
-                        let is_preview = model.execution.as_ref().is_some_and(|e| e.preview_mode);
-
-                        if is_preview {
-                            // Preview mode: build PreviewModel from extracted data.
-                            let (selected_files, param_overrides, definition_json) = model
-                                .execution
-                                .as_ref()
-                                .map(|e| {
-                                    (
-                                        e.selected_files.clone(),
-                                        e.param_overrides.clone(),
-                                        e.definition_json.clone(),
-                                    )
-                                })
-                                .unwrap_or_default();
-                            let preview = screens::preview::PreviewModel::new(
-                                &slug,
-                                preview_data,
-                                duration_ms,
-                                warnings,
-                                selected_files,
-                                param_overrides,
-                                definition_json,
-                            );
-                            AppModel {
-                                screen: app::Screen::Preview { slug, from },
-                                execution: None,
-                                preview: Some(preview),
-                                ..model
-                            }
-                        } else {
-                            // Normal mode: build outputs and transition to Results.
-                            let outputs = bridge::build_output_files(&output_dir, &file_metadata);
-                            let model = match message {
-                                Some(message) => update(
-                                    model,
-                                    AppMessage::Execution(ExecutionMessage::Reported { message }),
-                                ),
-                                None => model,
-                            };
-                            let model = update(
-                                model,
-                                AppMessage::Execution(ExecutionMessage::OutputsReady {
-                                    files: outputs,
-                                    output_dir: Some(output_dir),
-                                    warnings,
-                                }),
-                            );
-                            let model = update(
-                                model,
-                                AppMessage::Execution(ExecutionMessage::PipelineCompleted {
-                                    duration_ms,
-                                    total_files_processed: file_count,
-                                }),
-                            );
-                            update(model, AppMessage::ExecutionComplete { slug })
-                        }
-                    }
-                    BridgeEvent::Error(err) => update(
-                        model,
-                        AppMessage::Execution(ExecutionMessage::PipelineFailed {
-                            node_id: String::new(),
-                            error: err,
-                        }),
-                    ),
-                };
-            }
-        }
-
-        // Emit a Tick to keep the elapsed timer live while running.
-        if let Some(start) = execution_start
-            && model
-                .execution
-                .as_ref()
-                .is_some_and(|e| e.status == ExecutionStatus::Running)
-        {
-            let elapsed_ms = start.elapsed().as_millis() as u64;
-            model = update(
-                model,
-                AppMessage::Execution(ExecutionMessage::Tick { elapsed_ms }),
-            );
-        }
-
-        // Clear the bridge receiver when we've left the execution screen
-        // (auto-transition fired) or user cancelled. Don't clear on Completed/Failed
-        // status — the bridge thread may still be writing files and hasn't sent
-        // BridgeEvent::Done yet.
-        if bridge_rx.is_some() {
-            let cancelled = model
-                .execution
-                .as_ref()
-                .is_some_and(|e| e.status == ExecutionStatus::Cancelled);
-            if cancelled || !matches!(model.screen, app::Screen::Execution { .. }) {
-                bridge_rx = None;
-                execution_start = None;
-                progressive_output = None;
-                // Abandoning a run must kill its spawned command tree —
-                // dropping the receiver alone leaves children running.
-                crate::process_registry::global().terminate_all();
-            }
-        }
-
-        if model.should_quit {
-            break;
-        }
-
-        if let Some(Event::Key(key)) = event::poll_event(TICK_RATE)?
-            && let Some(msg) = handle_key(&model, key)
-        {
-            let prev_screen = model.screen.log_label();
-            let update_start = Instant::now();
-            model = update(model, msg.clone());
-            let update_us = update_start.elapsed().as_micros() as u64;
-
-            let new_screen = model.screen.log_label();
-            if prev_screen != new_screen {
-                logger.log(LogEntry {
-                    level: LogLevel::Info,
-                    target: "tui",
-                    message: format!("{prev_screen} → {new_screen}"),
-                    elapsed_us: Some(update_us),
-                });
-            } else if update_us >= SLOW_FRAME_THRESHOLD_US {
-                logger.log(LogEntry {
-                    level: LogLevel::Debug,
-                    target: "tui",
-                    message: format!("update on {prev_screen}: {msg:?}"),
-                    elapsed_us: Some(update_us),
-                });
-            }
-        }
-    }
-
-    // Quitting mid-execution must not orphan spawned commands (no-op when
-    // nothing is running).
-    crate::process_registry::global().terminate_all();
-
-    logger.log(LogEntry {
-        level: LogLevel::Info,
-        target: "tui",
-        message: "session end".into(),
-        elapsed_us: None,
-    });
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use crossterm::event::{KeyCode, KeyEvent};
 
     use super::*;
-    use app::{AppMessage, Screen};
+    use app::{AppMessage, AppModel, Screen, update};
+    use keys::handle_key;
     use screens::browser::BrowserMessage;
     use screens::execution::ExecutionMessage;
     use screens::home::HomeMessage;
