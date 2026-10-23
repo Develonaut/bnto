@@ -27,7 +27,7 @@ If any check fails: fix the errors, re-run from the top.
 task seo:audit         # Build + run Lighthouse against all public routes -- must pass
 ```
 
-Lighthouse CI also runs as a GitHub Actions workflow (`lighthouse.yml`) on every PR. Error-level assertions (accessibility, best practices, SEO >= 90) block merge. Performance warnings are advisory. If audits fail, run `/lighthouse-audit --local` to triage and fix.
+On a PR, this local audit is the only Lighthouse check: CI doesn't run Lighthouse on PRs. Error-level assertions (accessibility, best practices, SEO >= 90) must pass; performance warnings are advisory. If audits fail, run `/lighthouse-audit --local` to triage and fix. The release gate runs Lighthouse again against the tag's Vercel preview (the `lighthouse` job in `release.yml`), so a regression that skipped this step fails the release instead. `lighthouse.yml` runs only when started by hand (`workflow_dispatch`).
 
 ## Step 2: Architecture & Bento Box Compliance
 

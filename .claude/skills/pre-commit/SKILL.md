@@ -109,7 +109,7 @@ This runs Lighthouse against 10 public URLs (homepage, 6 recipe pages, pricing, 
 
 If any **error-level** assertion fails, run `/lighthouse-audit --local` to triage and fix the failing audits before proceeding.
 
-**Note:** Lighthouse CI also runs as a separate GitHub Actions workflow on every PR. Failures there will block merge. Running locally first catches issues before pushing.
+**Note:** This local audit is the only Lighthouse check a PR gets. CI doesn't run Lighthouse on PRs; the release gate does (`release.yml`), so a regression skipped here fails the next release.
 
 ## Step 3: Test Coverage & Quality Verification
 
