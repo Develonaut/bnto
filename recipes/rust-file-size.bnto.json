@@ -1,0 +1,104 @@
+{
+  "id": "rust-file-size",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Rust File Size",
+  "metadata": {
+    "description": "Fails the run naming every Rust source file under engine/crates/*/src over 400 production lines, the limit in code-standards.md. Top-level #[cfg(test)] modules do not count, and neither do tests.rs files or tests/ folders. Run it from the repo root."
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "crates",
+      "type": "file-list",
+      "parameters": {
+        "paths": ["engine/crates"]
+      }
+    },
+    {
+      "id": "walk",
+      "type": "file-collect",
+      "parameters": {
+        "flatten": false
+      }
+    },
+    {
+      "id": "sources",
+      "type": "file-filter",
+      "parameters": {
+        "namePattern": "^[^/]+/src/.+[.]rs$",
+        "patternMode": "regex",
+        "match": "path",
+        "keep": true
+      }
+    },
+    {
+      "id": "production",
+      "type": "file-filter",
+      "parameters": {
+        "namePattern": "(^|/)tests([.]rs$|/)",
+        "patternMode": "regex",
+        "match": "path",
+        "keep": false
+      }
+    },
+    {
+      "id": "count",
+      "type": "shell-run",
+      "parameters": {
+        "shell": "sh",
+        "script": "# rust-file-size: fail naming every Rust source file over 400 production\n# lines (code-standards.md). Every line counts except top-level\n# `#[cfg(test)] mod <name> { ... }` blocks, wherever they sit in the file.\n# Each argument is one file, relative to engine/crates.\n# Gap: line counting in file-inspect will replace this step (dogfooding.md, PR 8).\nlimit=400\nover=\"\"\nfor file in \"$@\"; do\n  lines=$(awk '\n    skip { if ($0 == \"}\") skip = 0; next }\n    pending { pending = 0; if ($0 ~ /^mod [A-Za-z0-9_]+ \\{$/) { skip = 1; next } n++ }\n    /^#\\[cfg\\(test\\)\\]$/ { pending = 1; next }\n    { n++ }\n    END { if (pending) n++; print n + 0 }\n  ' \"engine/crates/$file\") || exit 2\n  if [ \"$lines\" -gt \"$limit\" ]; then\n    over=\"$over\n  engine/crates/$file: $lines\"\n  fi\ndone\n\nif [ -n \"$over\" ]; then\n  echo \"Over $limit production lines (split the file; see code-standards.md):$over\" >&2\n  exit 1\nfi\necho \"Every Rust source file is within $limit production lines.\"\n",
+        "args": [
+          {
+            "each": ["{{file}}"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": {
+        "mode": "none"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "crates"
+    },
+    {
+      "id": "e2",
+      "source": "crates",
+      "target": "walk"
+    },
+    {
+      "id": "e3",
+      "source": "walk",
+      "target": "sources"
+    },
+    {
+      "id": "e4",
+      "source": "sources",
+      "target": "production"
+    },
+    {
+      "id": "e5",
+      "source": "production",
+      "target": "count"
+    },
+    {
+      "id": "e6",
+      "source": "count",
+      "target": "output"
+    }
+  ]
+}
