@@ -1,6 +1,7 @@
 // A home of its own for each `bnto` a test runs, so no test reads the
 // developer's recipe library or writes session logs into their ~/.bnto.
 
+use std::path::PathBuf;
 use std::process::Command;
 
 use super::bnto_bin;
@@ -26,9 +27,14 @@ impl Sandbox {
         let mut cmd = Command::new(bnto_bin());
         cmd.current_dir(self.work.path())
             .env("HOME", self.home.path())
-            .env("BNTO_HOME", self.home.path().join(".bnto"))
+            .env("BNTO_HOME", self.bnto_home())
             .env("XDG_CONFIG_HOME", self.home.path().join(".config"))
             .env("BNTO_TELEMETRY_DISABLED", "1");
         cmd
+    }
+
+    /// The sandbox's bnto home: put library recipes in its `recipes/`.
+    pub fn bnto_home(&self) -> PathBuf {
+        self.home.path().join(".bnto")
     }
 }

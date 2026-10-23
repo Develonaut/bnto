@@ -121,8 +121,11 @@ fn release_verify_asks_for_a_version_before_any_request() {
     let output = run_in(&repo_root(), &dogfood_recipe("release-verify"));
     let all = text(&output);
     assert!(!output.status.success(), "{all}");
-    // The engine refuses the unset field before any step (ISS-1).
-    assert!(all.contains("{{fields.version}} has no value"), "{all}");
+    // Refused before consent and any step, naming the -p (ISS-1).
+    assert!(
+        all.contains("field \"version\" (node \"checks\") is unset: pass -p version=..."),
+        "{all}"
+    );
     assert!(
         !all.contains("crates.io serves"),
         "reached the network: {all}"

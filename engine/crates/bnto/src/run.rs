@@ -13,6 +13,7 @@ use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
 use crate::run_watchdog::{self, Watched};
 use crate::telemetry::recipe_label::{RecipeLabel, recipe_label};
+use crate::unfilled_fields::refuse_unfilled;
 use crate::{
     context, dry_run, host_support, input, progress, run_limit, run_message, telemetry, vars,
 };
@@ -69,6 +70,9 @@ pub fn run_recipe(
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
     let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
+    // Before consent, so nobody approves a run the engine would refuse.
+    let unfilled = refuse_unfilled(&raw_json, param_overrides);
+    verdict.or_fail(unfilled, "Error:");
     check_trust(recipe_path, &raw_json, flags.yes, catalog);
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
