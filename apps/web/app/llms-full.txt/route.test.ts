@@ -17,6 +17,14 @@ describe("llms-full.txt", () => {
     expect(await recipeSection("Download Video")).toContain("- Run: bnto run download-video <url>");
   });
 
+  it("says which operating systems a CLI-only recipe runs on", async () => {
+    expect(await recipeSection("Keep Awake")).toContain("- Runs on: macOS, Linux, Windows\n");
+  });
+
+  it("leaves the OS line off a browser recipe, which runs in any browser", async () => {
+    expect(await recipeSection("Compress Images")).not.toContain("Runs on:");
+  });
+
   it("lists accepted formats for a browser recipe", async () => {
     expect(await recipeSection("Compress Images")).toContain("- Accepts: ");
   });
