@@ -1,0 +1,89 @@
+{
+  "id": "unused-assets",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Unused Assets",
+  "metadata": {
+    "description": "Fails the run naming every file in apps/web/public that nothing in the web app or its UI packages references (by /public path or file name). The WASM bundle, favicons and robots.txt are served by convention, and dotfiles (Finder's .DS_Store) never ship, so all are skipped. Run it from the repo root."
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "public",
+      "type": "file-list",
+      "parameters": {
+        "paths": ["apps/web/public"]
+      }
+    },
+    {
+      "id": "walk",
+      "type": "file-collect",
+      "parameters": {
+        "flatten": false
+      }
+    },
+    {
+      "id": "checked",
+      "type": "file-filter",
+      "parameters": {
+        "namePattern": "^(wasm/|favicon/|robots[.]txt$)|(^|/)[.]",
+        "patternMode": "regex",
+        "match": "path",
+        "keep": false
+      }
+    },
+    {
+      "id": "references",
+      "type": "shell-run",
+      "parameters": {
+        "shell": "sh",
+        "script": "# unused-assets: fail naming every file in apps/web/public that nothing in\n# the web app or its UI packages references, by its /public path or its file\n# name. Each argument is one file, relative to apps/web/public.\n# Gap: a content-search node will replace this step (dogfooding.md, PR 9).\nreferenced() {\n  for dir in apps/web/app apps/web/components apps/web/lib packages/ui/src packages/editor/src; do\n    if [ -d \"$dir\" ] && grep -rqF -- \"$1\" \"$dir\"; then return 0; fi\n  done\n  return 1\n}\n\nunused=\"\"\nfor file in \"$@\"; do\n  if ! referenced \"/$file\" && ! referenced \"${file##*/}\"; then\n    unused=\"$unused\n  apps/web/public/$file\"\n  fi\ndone\n\nif [ -n \"$unused\" ]; then\n  echo \"Nothing references these files in apps/web/public:$unused\" >&2\n  exit 1\nfi\necho \"Every file in apps/web/public is referenced.\"\n",
+        "args": [
+          {
+            "each": ["{{file}}"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": {
+        "mode": "none"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "public"
+    },
+    {
+      "id": "e2",
+      "source": "public",
+      "target": "walk"
+    },
+    {
+      "id": "e3",
+      "source": "walk",
+      "target": "checked"
+    },
+    {
+      "id": "e4",
+      "source": "checked",
+      "target": "references"
+    },
+    {
+      "id": "e5",
+      "source": "references",
+      "target": "output"
+    }
+  ]
+}

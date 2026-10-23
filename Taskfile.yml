@@ -57,6 +57,7 @@ tasks:
       - echo "=== dogfood recipes ==="
       - task: check:recipes
       - task: check:budgets
+      - task: check:assets
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -137,6 +138,12 @@ tasks:
     desc: Fail naming every web asset over its size budget (WASM bundle 6 MB, other public files 512 KB)
     deps: [cli:build]
     cmds: ["{{.BNTO}} run recipes/size-budget.bnto.json"]
+
+  check:assets:
+    desc: Fail naming every file in apps/web/public that nothing in the web app or its UI packages references
+    deps: [cli:build]
+    # --yes: the recipe's reference search is a shell step, and Task can't answer consent.
+    cmds: ["{{.BNTO}} run recipes/unused-assets.bnto.json --yes"]
 
   check:grab-bags:
     desc: "Fail naming every utils/helpers/hooks.ts(x) file: the ones given (task check:grab-bags -- <files>), else the staged ones"

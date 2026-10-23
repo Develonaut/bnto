@@ -124,10 +124,6 @@ jobs:
       - name: Check dogfood recipes (recipes/)
         run: ./target/debug/bnto check ../recipes/
 
-      - name: Size budgets (recipes/size-budget.bnto.json)
-        working-directory: .
-        run: ./engine/target/debug/bnto run recipes/size-budget.bnto.json
-
       - name: WASM integration tests (bnto-wasm)
         run: wasm-pack test --node crates/bnto-wasm
 
@@ -199,6 +195,37 @@ jobs:
 
       - name: keep-awake round trips
         run: cargo test --package bnto --test keep_awake
+
+  # The web's assets, checked by dogfood recipes: the size budget and the
+  # unused-asset check. A web change can add an asset and an engine change
+  # can break a recipe, so it runs on either. Needs a built bnto, which the
+  # TypeScript job doesn't have.
+  web-assets:
+    name: "Web assets (size budget + unused)"
+    runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.web == 'true' || needs.detect-changes.outputs.engine == 'true'
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust toolchain (engine/rust-toolchain.toml)
+        working-directory: engine
+        run: rustup toolchain install && rustup show active-toolchain
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: engine
+
+      - name: Build bnto
+        working-directory: engine
+        run: cargo build --package bnto
+
+      - name: Size budgets (recipes/size-budget.bnto.json)
+        run: ./engine/target/debug/bnto run recipes/size-budget.bnto.json
+
+      # --yes: the reference search is a shell step, and CI can't answer consent.
+      - name: Unused assets (recipes/unused-assets.bnto.json)
+        run: ./engine/target/debug/bnto run recipes/unused-assets.bnto.json --yes
 
   # ── TypeScript CI (only when web files changed) ──
   typescript:
@@ -357,6 +384,7 @@ jobs:
         rust,
         rust-windows,
         rust-macos-keep-awake,
+        web-assets,
         typescript,
         crate-publish-check,
         docs,
@@ -369,6 +397,7 @@ jobs:
           rust="${{ needs.rust.result }}"
           rust_windows="${{ needs.rust-windows.result }}"
           rust_macos="${{ needs.rust-macos-keep-awake.result }}"
+          assets="${{ needs.web-assets.result }}"
           ts="${{ needs.typescript.result }}"
           crates="${{ needs.crate-publish-check.result }}"
           docs="${{ needs.docs.result }}"
@@ -414,6 +443,11 @@ jobs:
             failed=1
           fi
 
+          if { [ "$web" = "true" ] || [ "$engine" = "true" ]; } && [ "$assets" != "success" ]; then
+            echo "FAILED: Web assets = $assets (web or engine files changed)"
+            failed=1
+          fi
+
           # TypeScript is required when web files changed
           if [ "$web" = "true" ] && [ "$ts" != "success" ]; then
             echo "FAILED: TypeScript = $ts (web files changed)"
@@ -431,6 +465,7 @@ jobs:
           echo "  Rust:       $rust (engine_changed: $engine)"
           echo "  Rust (Win): $rust_windows (engine_changed: $engine)"
           echo "  macOS:      $rust_macos (engine_changed: $engine)"
+          echo "  Assets:     $assets"
           echo "  TypeScript: $ts (web_changed: $web)"
 
   # NOTE: Convex production deploy moved to release.yml (runs after release gate passes).
