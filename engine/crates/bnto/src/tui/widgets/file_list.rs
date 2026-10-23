@@ -18,6 +18,7 @@ use super::super::theme::Theme;
 /// are marked with a checkbox. The cursor row is highlighted.
 /// File sizes are shown right of the name for files with known size.
 /// When `show_metadata` is true, permissions and symlink targets are shown.
+#[expect(clippy::too_many_lines)]
 pub fn render_file_list<'a>(
     entries: &[FileEntry],
     cursor: usize,

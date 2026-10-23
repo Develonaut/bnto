@@ -152,6 +152,7 @@ impl std::fmt::Debug for AppModel {
 /// Routing is split in three tiers: screen flow here, per-screen message
 /// forwarding in `update_screen`, and recipe authoring and settings in
 /// `update_authoring`.
+#[expect(clippy::too_many_lines)]
 pub fn update(model: AppModel, msg: AppMessage) -> AppModel {
     match msg {
         AppMessage::RecipeSelected { slug } => handle_recipe_selected(model, slug),

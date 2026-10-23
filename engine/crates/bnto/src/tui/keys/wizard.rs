@@ -12,6 +12,7 @@ use super::super::screens::wizard::{WizardMessage, WizardStep};
 /// - Category/Operation: j/k navigate, Enter confirms, Esc goes back
 /// - Configure: form keys (j/k/h/l/Enter for editing, Tab confirms, Esc back)
 /// - Complete: Enter opens editor, Esc goes back
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_wizard_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let wizard = model.wizard.as_ref()?;
 

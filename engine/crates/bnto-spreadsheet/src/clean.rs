@@ -50,6 +50,7 @@ impl NodeProcessor for CleanSpreadsheet {
     }
 
     /// Clean a CSV file: trim whitespace, remove empty rows, deduplicate.
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

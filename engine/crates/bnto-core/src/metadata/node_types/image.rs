@@ -2,6 +2,7 @@
 
 use crate::metadata::{NodeCategory, NodeTypeInfo};
 
+#[expect(clippy::too_many_lines)]
 pub(super) fn node_types() -> Vec<NodeTypeInfo> {
     vec![
         node_type!(

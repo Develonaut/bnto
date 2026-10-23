@@ -91,6 +91,7 @@ pub(super) fn validate_params(params: &Params) -> Vec<String> {
 // --- Schema ---
 
 /// All read parameters, in the order the editor displays them.
+#[expect(clippy::too_many_lines)]
 pub(super) fn build_read_parameters() -> Vec<ParameterDef> {
     vec![
         enum_param(

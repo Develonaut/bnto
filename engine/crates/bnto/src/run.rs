@@ -53,6 +53,7 @@ struct RunTarget {
 }
 
 /// Run a recipe (slug or path) against `inputs`.
+#[expect(clippy::too_many_lines)]
 pub fn run_recipe(
     recipe_path: &str,
     inputs: &[String],
@@ -214,6 +215,7 @@ fn progressive_dir(target: &RunTarget) -> Option<String> {
 }
 
 /// Log, report telemetry, and write results for a successful run.
+#[expect(clippy::too_many_lines)]
 fn finish_run(
     logger: &Arc<dyn Logger>,
     stats: &RunStats,

@@ -18,6 +18,7 @@ use super::consent;
 use super::navigation::{is_at_last_visible_field, resolve_start_dir};
 
 /// Handle the HomeConfirm message — dispatches based on home screen selection.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
     match model.home.confirm() {
         HomeConfirmResult::Navigate(screen) => match screen {
@@ -94,6 +95,7 @@ pub(crate) fn handle_home_confirm(model: AppModel) -> AppModel {
 ///
 /// Only moves focus; the main loop's `fit_detail` scrolls the new focus
 /// into view, since that needs the terminal width.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_detail_form(model: AppModel, msg: tonkotsu::FormMessage) -> AppModel {
     let detail = model.detail.map(|mut d| {
         use super::super::screens::detail::DetailFocus;
@@ -150,6 +152,7 @@ pub(crate) fn handle_recipe_selected(model: AppModel, slug: String) -> AppModel 
 /// Shared by `handle_config_confirmed` (normal run) and
 /// `handle_preview_requested` (preview mode) — only the
 /// `ExecutionModel` constructor differs.
+#[expect(clippy::too_many_lines)]
 fn start_from_detail(
     model: AppModel,
     slug: String,
@@ -191,6 +194,7 @@ pub(crate) fn handle_config_confirmed(model: AppModel, slug: String) -> AppModel
 }
 
 /// Confirm file selection and start execution.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_files_selected(model: AppModel, slug: String) -> AppModel {
     let from = match &model.screen {
         Screen::Picker { from, .. } => *from,
@@ -247,6 +251,7 @@ pub(crate) fn handle_preview_requested(model: AppModel, slug: String) -> AppMode
 }
 
 /// Confirm preview — re-run with writes using the stored inputs.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel {
     let from = match &model.screen {
         Screen::Preview { from, .. } => *from,
@@ -277,6 +282,7 @@ pub(crate) fn handle_preview_confirm(model: AppModel, slug: String) -> AppModel 
 }
 
 /// Handle execution messages — cancel navigates back to detail.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_execution(model: AppModel, msg: ExecutionMessage) -> AppModel {
     if matches!(msg, ExecutionMessage::AllowCommands) {
         return consent::handle_allow(model);

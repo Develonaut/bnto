@@ -5,6 +5,7 @@
 
 /// Replace each `{{inner}}` in `template` with `fill(inner)`. `None` keeps
 /// the placeholder as written; an unclosed `{{` is kept as text.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn interpolate(template: &str, fill: impl Fn(&str) -> Option<String>) -> String {
     let mut out = String::with_capacity(template.len());
     let mut rest = template;

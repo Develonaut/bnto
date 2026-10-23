@@ -44,6 +44,7 @@ pub struct DryRunResult {
 /// Without inputs: static analysis only (shell commands, dependencies).
 /// With inputs: also runs the pipeline without writing, extracts file
 /// transformation previews from the engine's metadata.
+#[expect(clippy::too_many_lines)]
 pub fn dry_run_recipe(
     slug: &str,
     inputs: &[String],

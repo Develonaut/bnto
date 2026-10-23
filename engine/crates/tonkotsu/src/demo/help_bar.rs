@@ -10,6 +10,7 @@ use crate::theme::FormTheme;
 /// Render the bottom help bar showing key hints and field count.
 ///
 /// Format: `Tab navigate  Enter edit  Esc cancel  Ctrl+R reset  10 fields  v0.1.0`
+#[expect(clippy::too_many_lines)]
 pub fn render_help_bar<'a>(field_count: usize, theme: &dyn FormTheme) -> Line<'a> {
     let hints = [
         ("Tab", "navigate"),

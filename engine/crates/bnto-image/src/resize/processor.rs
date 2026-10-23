@@ -62,6 +62,7 @@ impl NodeProcessor for ResizeImages {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

@@ -52,6 +52,7 @@ fn bnto_err_to_js(error: BntoError) -> JsValue {
 ///   - `data`: a Uint8Array (raw bytes, zero-copy via WASM shared memory)
 ///   - `filename`: the output filename as a string
 ///   - `mimeType`: the MIME type as a string
+#[expect(clippy::too_many_lines)]
 fn build_combined_result(output: NodeOutput) -> Result<JsValue, JsValue> {
     // --- Step 1: Extract the first output file ---
     //

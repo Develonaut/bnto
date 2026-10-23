@@ -124,6 +124,7 @@ fn is_source_node(node: &PipelineNode, registry: &NodeRegistry) -> bool {
 
 /// Partition the flat node list into runs based on node type and cardinality.
 /// Containers and batch nodes act as barriers that break per-file sequences.
+#[expect(clippy::too_many_lines)]
 fn partition_into_runs(nodes: &[&PipelineNode], registry: &NodeRegistry) -> Vec<Run> {
     let mut runs = Vec::new();
     let mut seq_start: Option<usize> = None;

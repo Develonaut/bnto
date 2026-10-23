@@ -67,6 +67,7 @@ impl NativeContext {
     ///
     /// Resolves bnto paths from `BntoPaths::resolve()`. If paths
     /// can't be determined, home_dir/output_dir fall back to temp dir.
+    #[expect(clippy::too_many_lines)]
     pub fn current_dir() -> Result<Self, BntoError> {
         let work_dir = std::env::current_dir().map_err(|e| {
             BntoError::ProcessingFailed(format!("Failed to get current directory: {e}"))
@@ -208,6 +209,7 @@ fn command_stopped(cmd: &str, stdout: Vec<u8>) -> BntoError {
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn command_outcome(
     cmd: &str,
     options: &CommandOptions,
@@ -278,6 +280,7 @@ impl ProcessContext for NativeContext {
     /// the child only (over a cleared environment when `options.clear_env`),
     /// relay its output, and kill its whole tree if it outlives
     /// `options.timeout`.
+    #[expect(clippy::too_many_lines)]
     fn run_command_with(
         &self,
         cmd: &str,

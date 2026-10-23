@@ -19,6 +19,7 @@ use crate::tui::theme::Theme;
 /// - Number with constraints → Number (with range/suffix)
 /// - Number without constraints → Text (free-form entry)
 /// - String → Text
+#[expect(clippy::too_many_lines)]
 pub fn param_to_field(param: &ParamEntry) -> Field {
     match &param.param_type {
         ParameterType::Boolean => tonkotsu::confirm(&param.name)
@@ -99,6 +100,7 @@ pub fn params_to_fields(params: &[ParamEntry]) -> Vec<Field> {
 /// Reads current values from the form's fields, maps them back to
 /// the ParamEntry list to evaluate visible_when conditions, then
 /// updates each field's `visible` flag.
+#[expect(clippy::too_many_lines)]
 pub fn update_visibility(form: &mut FormModel, params: &[ParamEntry]) {
     // Build a temporary params list with updated values from the form.
     let updated_params: Vec<ParamEntry> = params

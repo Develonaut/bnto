@@ -149,6 +149,7 @@ impl DetailModel {
     /// Hidden params (failing `visible_when`) are excluded from overrides.
     /// Values come from the form fields, not the original ParamEntry values.
     /// Files come from the embedded picker (empty for URL/text-mode).
+    #[expect(clippy::too_many_lines)]
     pub fn confirm(&self) -> ConfigResult {
         let overrides = self
             .params

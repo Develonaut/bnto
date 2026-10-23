@@ -22,6 +22,7 @@ impl NodeProcessor for OptimizeSvg {
         "vector-optimize"
     }
 
+    #[expect(clippy::too_many_lines)]
     fn metadata(&self) -> NodeMetadata {
         NodeMetadata {
             node_type: "vector-optimize".to_string(),
@@ -90,6 +91,7 @@ impl NodeProcessor for OptimizeSvg {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,
@@ -140,6 +142,7 @@ impl NodeProcessor for OptimizeSvg {
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn extract_config(params: &serde_json::Map<String, serde_json::Value>) -> OptimizeConfig {
     OptimizeConfig {
         remove_comments: params

@@ -46,6 +46,7 @@ impl NodeProcessor for ConvertFormat {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,
@@ -124,6 +125,7 @@ fn resolve_delimiter(delimiter: &str) -> u8 {
 
 // --- Metadata Parameter Definitions ---
 
+#[expect(clippy::too_many_lines)]
 fn build_convert_parameters() -> Vec<bnto_core::metadata::ParameterDef> {
     use bnto_core::metadata::*;
     vec![

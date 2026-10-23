@@ -25,6 +25,7 @@ struct Migration {
 
 /// All registered migrations in chronological order.
 /// Each migration is idempotent — `applies()` returns false if already migrated.
+#[expect(clippy::too_many_lines)]
 fn all_migrations() -> Vec<Migration> {
     vec![
         Migration {
@@ -254,6 +255,7 @@ pub fn find_recipe_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
 // --- CLI entry point ---
 
 /// Run the migrate command.
+#[expect(clippy::too_many_lines)]
 pub fn run_migrate(path: &str, dry_run: bool) {
     let target = Path::new(path);
 

@@ -118,6 +118,7 @@ fn load_bundled() -> Vec<CatalogEntry> {
 }
 
 /// Load `.bnto.json` files from the user's library directory.
+#[expect(clippy::too_many_lines)]
 fn load_library(dir: &Path) -> Vec<CatalogEntry> {
     let Ok(rd) = std::fs::read_dir(dir) else {
         return Vec::new();

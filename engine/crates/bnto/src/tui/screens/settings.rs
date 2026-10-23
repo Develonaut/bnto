@@ -41,6 +41,7 @@ pub enum SettingsMessage {
 
 impl SettingsModel {
     /// Create a settings model from the TOML config.
+    #[expect(clippy::too_many_lines)]
     pub fn from_toml_config(config: &TomlConfig) -> Self {
         let fields = vec![
             SettingsField {
@@ -91,6 +92,7 @@ impl SettingsModel {
 }
 
 /// Pure state transition for the settings screen.
+#[expect(clippy::too_many_lines)]
 pub fn update(model: SettingsModel, msg: SettingsMessage) -> SettingsModel {
     match msg {
         SettingsMessage::FocusNext => {

@@ -18,6 +18,7 @@ pub(super) struct Planned {
 /// Plan every move. Fails on in-memory data, or lists every unusable name,
 /// missing source, repeated source, bad folder and other-drive file, before
 /// anything moves.
+#[expect(clippy::too_many_lines)]
 pub(super) fn plan(files: &[BatchFile], root: &mut Root) -> Result<Planned, String> {
     let mut planned = Planned {
         moves: Vec::with_capacity(files.len()),
@@ -82,6 +83,7 @@ fn canonical_source(src: &Path) -> Result<PathBuf, String> {
 
 /// A name's path segments under the root. `/` and `\` both separate on every
 /// OS, so one table works everywhere; empty and `.` segments drop out.
+#[expect(clippy::too_many_lines)]
 fn segments(name: &str) -> Result<Vec<&str>, String> {
     if name.starts_with(['/', '\\']) || has_drive(name) || Path::new(name).is_absolute() {
         return Err(format!(

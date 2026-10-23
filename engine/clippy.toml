@@ -1,0 +1,4 @@
+# code-standards.md caps functions at 20 lines (clippy counts code lines only).
+# The lint is enforced on production code by `task wasm:lint` and CI; see
+# .claude/decisions/function-length.md.
+too-many-lines-threshold = 20

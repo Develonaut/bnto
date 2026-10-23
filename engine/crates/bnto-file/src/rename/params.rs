@@ -3,6 +3,7 @@
 use bnto_core::metadata::{Constraints, OptionEntry, ParameterDef, ParameterType};
 
 /// All rename parameters, in the order the editor displays them.
+#[expect(clippy::too_many_lines)]
 pub(super) fn build_rename_parameters() -> Vec<ParameterDef> {
     vec![
         rename_sanitize_param(),

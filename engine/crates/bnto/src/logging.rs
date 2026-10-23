@@ -53,6 +53,7 @@ impl FileLogger {
 }
 
 impl Logger for FileLogger {
+    #[expect(clippy::too_many_lines)]
     fn log(&self, entry: LogEntry) {
         if !self.is_enabled(entry.level) {
             return;

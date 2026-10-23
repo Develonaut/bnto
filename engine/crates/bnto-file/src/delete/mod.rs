@@ -153,6 +153,7 @@ fn summary(deleted: usize, skipped: usize, base: &str, ctx: &dyn ProcessContext)
 
 /// Each item handed on unchanged, its metadata kept and flagged with what
 /// happened to it; the node's metadata carries the totals.
+#[expect(clippy::too_many_lines)]
 fn outputs(files: Vec<BatchFile>, targets: &[Target]) -> NodeOutput {
     let mut totals = [0usize; 2];
     let files = files

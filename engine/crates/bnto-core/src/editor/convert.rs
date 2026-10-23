@@ -10,6 +10,7 @@ use super::types::{EditorModel, EditorNode, EditorSource};
 
 impl EditorModel {
     /// Build an editor model from a parsed `Definition`.
+    #[expect(clippy::too_many_lines)]
     pub fn from_definition(def: &Definition, source: EditorSource) -> Self {
         let nodes: Vec<EditorNode> = def
             .nodes
@@ -42,6 +43,7 @@ impl EditorModel {
     }
 
     /// Serialize the editor state back to a `Definition`.
+    #[expect(clippy::too_many_lines)]
     pub fn to_definition(&self) -> Definition {
         let child_defs: Vec<Definition> = self
             .nodes

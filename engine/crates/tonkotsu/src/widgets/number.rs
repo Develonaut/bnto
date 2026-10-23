@@ -24,6 +24,7 @@ pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
@@ -81,6 +82,7 @@ fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<
     lines
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_editing(
     field: &Field,
     buffer: &str,
@@ -143,6 +145,7 @@ fn render_slider_span(value: f64, min: f64, max: f64, width: u16) -> Span<'stati
 /// `ratio` is 0.0–1.0. `width` is the total character width.
 /// Uses full block (█) for filled portion and light shade (░) for empty.
 /// Partial blocks (▏▎▍▌▋▊▉) provide sub-cell precision at the boundary.
+#[expect(clippy::too_many_lines)]
 fn render_slider_bar(ratio: f64, width: u16) -> String {
     let total_eighths = (ratio * (width as f64) * 8.0).round() as usize;
     let full_blocks = total_eighths / 8;

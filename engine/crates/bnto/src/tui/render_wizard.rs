@@ -59,6 +59,7 @@ fn render_category_step(
 }
 
 /// Step 2: "What do you want to do?"
+#[expect(clippy::too_many_lines)]
 fn render_operation_step(
     lines: &mut Vec<Line>,
     wizard: &super::screens::wizard::WizardModel,

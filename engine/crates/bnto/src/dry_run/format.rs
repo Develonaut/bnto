@@ -32,6 +32,7 @@ fn print_dependencies(result: &DryRunResult) {
     println!();
 }
 
+#[expect(clippy::too_many_lines)]
 fn print_shell_commands(result: &DryRunResult) {
     if result.shell_commands.is_empty() {
         if result.file_previews.is_empty() {
@@ -77,6 +78,7 @@ fn print_shell_commands(result: &DryRunResult) {
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn print_file_previews(result: &DryRunResult) {
     if result.file_previews.is_empty() {
         return;

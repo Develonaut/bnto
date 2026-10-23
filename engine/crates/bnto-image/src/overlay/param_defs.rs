@@ -7,6 +7,7 @@ use super::params::{
 };
 
 /// All overlay parameters, in the order the editor displays them.
+#[expect(clippy::too_many_lines)]
 pub(super) fn build_overlay_parameters() -> Vec<ParameterDef> {
     vec![
         overlay_param(),

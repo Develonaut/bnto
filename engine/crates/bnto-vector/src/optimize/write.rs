@@ -11,6 +11,7 @@ use super::xml_passes;
 /// Recursively write a node and its children, applying optimization passes.
 /// `declared_ns` tracks namespace URIs already emitted to avoid duplicates
 /// on child elements (roxmltree propagates inherited namespaces to every node).
+#[expect(clippy::too_many_lines)]
 pub fn write_node(
     node: roxmltree::Node,
     writer: &mut XmlWriter,
@@ -57,6 +58,7 @@ fn write_text(node: roxmltree::Node, writer: &mut XmlWriter, config: &OptimizeCo
 }
 
 /// Write an element node, applying attribute and structural passes.
+#[expect(clippy::too_many_lines)]
 fn write_element(
     node: roxmltree::Node,
     writer: &mut XmlWriter,

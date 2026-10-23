@@ -12,6 +12,7 @@ use bnto_core::{
 };
 
 /// Convert a single `PipelineFileResult` to a JS object with name, data, mimeType, metadata.
+#[expect(clippy::too_many_lines)]
 fn file_result_to_js(file: &bnto_core::PipelineFileResult) -> Result<js_sys::Object, JsValue> {
     let obj = js_sys::Object::new();
 

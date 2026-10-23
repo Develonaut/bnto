@@ -48,6 +48,7 @@ use theme::ThemeVariant;
 ///
 /// If `recipe_json` is Some, starts directly on the editor screen
 /// for that recipe. If `new_recipe` is true, starts with a blank editor.
+#[expect(clippy::too_many_lines)]
 pub fn launch_tui(
     variant: ThemeVariant,
     recipe_json: Option<String>,

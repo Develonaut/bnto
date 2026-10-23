@@ -149,6 +149,7 @@ impl NodeProcessor for CompressImages {
     }
 
     /// Process a single image: detect format, decode, re-encode with compression.
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

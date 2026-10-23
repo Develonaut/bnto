@@ -31,6 +31,7 @@ impl NodeProcessor for RenameColumns {
     }
 
     /// Self-describing metadata. Parameters: columns (object mapping old->new names).
+    #[expect(clippy::too_many_lines)]
     fn metadata(&self) -> bnto_core::NodeMetadata {
         use bnto_core::metadata::*;
         NodeMetadata {
@@ -57,6 +58,7 @@ impl NodeProcessor for RenameColumns {
 
     /// Rename column headers based on the `columns` parameter mapping.
     /// Missing or non-matching columns are silently preserved.
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

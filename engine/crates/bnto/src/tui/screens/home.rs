@@ -99,6 +99,7 @@ impl HomeModel {
 }
 
 /// Pure state transition for the home screen.
+#[expect(clippy::too_many_lines)]
 pub fn update(model: HomeModel, msg: HomeMessage) -> HomeModel {
     match msg {
         HomeMessage::NextPane => {
@@ -168,6 +169,7 @@ fn pane_index(pane: HomePane) -> usize {
 /// List `.bnto.json` file stems in a directory (non-recursive).
 ///
 /// Returns stems like `["compress-images", "resize-images"]`.
+#[expect(clippy::too_many_lines)]
 pub fn list_library_recipes(dir: &std::path::Path) -> Vec<String> {
     let mut names: Vec<String> = std::fs::read_dir(dir)
         .map(|entries| {

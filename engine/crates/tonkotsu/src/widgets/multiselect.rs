@@ -42,6 +42,7 @@ fn render_idle(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<
     ])]
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_expanded(
     field: &Field,
     highlight: usize,

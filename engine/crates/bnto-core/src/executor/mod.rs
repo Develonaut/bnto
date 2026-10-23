@@ -179,6 +179,7 @@ struct NodeExecutionResult {
 ///
 /// Main entry point for the engine. `now_ms` is injected for testability
 /// (no `std::time::Instant` in WASM — uses `js_sys::Date::now()` instead).
+#[expect(clippy::too_many_lines)]
 pub fn execute_pipeline(
     definition: &PipelineDefinition,
     files: Vec<PipelineFile>,

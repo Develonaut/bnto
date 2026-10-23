@@ -23,6 +23,7 @@ use super::picker::PickerModel;
 ///
 /// For file-mode recipes, creates an embedded `PickerModel` starting at
 /// the given `start_dir`. For URL/text/none-mode, no picker is created.
+#[expect(clippy::too_many_lines)]
 pub fn load_detail_from_entry(
     entry: &CatalogEntry,
     registry: &NodeRegistry,
@@ -124,6 +125,7 @@ fn collect_field_params_recursive(nodes: &[PipelineNode], params: &mut Vec<Param
 }
 
 /// Walk definition nodes, resolve processors, and collect surfaceable params.
+#[expect(clippy::too_many_lines)]
 fn extract_surfaceable_params(
     nodes: &[serde_json::Value],
     registry: &NodeRegistry,
@@ -173,6 +175,7 @@ fn find_input_param_in_nodes(nodes: &[serde_json::Value]) -> Option<ParamEntry> 
 /// shows a text field for the user to enter a URL or text before running.
 /// Returns `None` for file-upload mode (handled by the file picker) and
 /// none mode (nothing to enter).
+#[expect(clippy::too_many_lines)]
 fn extract_input_param(node: &serde_json::Value, node_id: &str) -> Option<ParamEntry> {
     let params = node["parameters"].as_object()?;
     let mode: InputMode = params.get("mode")?.as_str()?.parse().ok()?;
@@ -216,6 +219,7 @@ fn extract_input_param(node: &serde_json::Value, node_id: &str) -> Option<ParamE
 
 /// Extract the params someone running the recipe sets (surfaceable run
 /// options) from a single processor's metadata.
+#[expect(clippy::too_many_lines)]
 fn collect_params_from_processor(
     node_id: &str,
     node_params: &Option<&serde_json::Map<String, serde_json::Value>>,

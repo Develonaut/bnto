@@ -41,6 +41,7 @@ const RECIPE_DEFINITIONS: &[&str] = &[
 ];
 
 /// Returns all built-in recipes, embedded at compile time.
+#[expect(clippy::too_many_lines)]
 pub fn builtin_recipes() -> Vec<BuiltinRecipe> {
     RECIPE_DEFINITIONS
         .iter()

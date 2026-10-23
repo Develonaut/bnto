@@ -11,6 +11,7 @@ use crate::field::SelectOption;
 ///
 /// Returns `Some(score)` if all filter characters appear in order within
 /// the label, `None` if there's no match. Higher scores = better match.
+#[expect(clippy::too_many_lines)]
 pub fn fuzzy_score(label: &str, filter: &str) -> Option<u32> {
     if filter.is_empty() {
         return Some(0);

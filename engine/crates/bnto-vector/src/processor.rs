@@ -51,6 +51,7 @@ impl NodeProcessor for VectorRasterize {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

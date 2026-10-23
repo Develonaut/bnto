@@ -1,7 +1,7 @@
 # Decision: Enforcing the 20-line function limit
 
 **Created:** October 23, 2026
-**Status:** Decided by Ryan (ISS-5). TypeScript is enforced in PR 1 (`feat/ts-function-length`); Rust follows in PR 2.
+**Status:** Decided by Ryan (ISS-5). Enforced for TypeScript in #739 (`feat/ts-function-length`) and for Rust in #740 (`feat/rust-function-length`).
 **Applies to:** every TypeScript package's ESLint config and every engine crate.
 
 ---
@@ -40,7 +40,7 @@ All counts skip blank lines and comments.
   - `.tsx` keeps 60, because code-standards.md sizes a component at 50-100 lines of JSX and logic. Dropping it to 20 would add 187 baseline entries; that's a separate call.
   - Each package's `eslint-suppressions.json` (ESLint 9.24+ bulk suppressions) lists the 98 existing offenders by file and count.
   - ESLint fails when a file has more offenders than its count. It also fails when the file has fewer ("suppressions left that do not occur anymore"), so fixing a function means lowering its count, or deleting the entry when the count reaches zero.
-- **Rust (PR 2):**
+- **Rust:**
   - `#[expect(clippy::too_many_lines)]` on each existing offender, with `too-many-lines-threshold = 20` in `engine/clippy.toml`.
   - A production-only run (`cargo clippy --workspace -- -W clippy::too_many_lines`) fails on any long function without the marker.
   - The marker fails once its function is under the limit (`unfulfilled_lint_expectations`), so the baseline only shrinks.
@@ -51,3 +51,5 @@ All counts skip blank lines and comments.
 - **Growth isn't caught.** A function already on the baseline can grow without failing. Only new offenders and fixed ones are caught.
 - **ESLint counts per file.** A file with a count of 2 could swap a fixed function for a new long one. The count still can't rise.
 - **Regenerating the baseline:** for TypeScript, run `pnpm exec eslint . --prune-suppressions` in the package once a function is fixed. Never use `--suppress-rule` to add one.
+- **Regenerating the Rust baseline** is never needed: a fixed function's `#[expect]` fails `task wasm:lint` until it's deleted. The Rust baseline started at 220 functions in 141 files.
+- **tonkotsu has its own crates.io version,** so its markers change its published files. #740 bumped it to 0.1.3 ([releases.md](../scopes/process/releases.md#one-number-everywhere)); splitting a tonkotsu function later needs a bump too.

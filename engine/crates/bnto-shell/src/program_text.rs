@@ -14,6 +14,7 @@ struct Spec {
     safe_form: &'static str,
 }
 
+#[expect(clippy::too_many_lines)]
 fn spec(stem: &str) -> Option<Spec> {
     Some(match stem {
         "awk" | "gawk" | "mawk" | "nawk" => Spec {
@@ -69,6 +70,7 @@ pub(crate) fn program_text_problems(command: &str, stem: &str, args: &[&str]) ->
 
 /// Every piece of program text in `args`: code-flag values, then the first
 /// positional when no code or file flag already gave the program.
+#[expect(clippy::too_many_lines)]
 fn program_texts<'a>(spec: &Spec, args: &[&'a str]) -> Vec<&'a str> {
     let mut texts = Vec::new();
     let (mut i, mut given, mut options) = (0, false, true);

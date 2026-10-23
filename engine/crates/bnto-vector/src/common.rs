@@ -6,6 +6,7 @@ pub(crate) fn svg_accepts() -> Vec<String> {
 }
 
 /// Format parameter — target raster format for SVG output.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn format_param_def() -> bnto_core::metadata::ParameterDef {
     use bnto_core::metadata::*;
     ParameterDef {

@@ -23,6 +23,7 @@ pub(crate) fn handle_library_delete(model: &AppModel) -> Option<String> {
 }
 
 /// Rename a library recipe by updating its JSON name field on disk.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_library_rename(model: &AppModel) -> Option<String> {
     let lib = model.library.as_ref()?;
     let (idx, new_name) = lib.renaming.as_ref()?;
@@ -77,6 +78,7 @@ pub(crate) fn handle_add_to_library(model: AppModel) -> AppModel {
 }
 
 /// Write a recipe to the user's library directory using browser data.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_add_to_library_write(
     model: AppModel,
     slug: &str,
@@ -145,6 +147,7 @@ pub(crate) fn handle_library(model: AppModel, msg: &LibraryMessage) -> AppModel 
 }
 
 /// Confirm a library selection and navigate to detail.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_library_confirm(model: AppModel) -> AppModel {
     let slug = model
         .library

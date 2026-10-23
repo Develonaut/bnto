@@ -51,6 +51,7 @@ pub fn handle_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
 
 /// The screen's handler when a search, modal or field-editing mode is
 /// active — those modes capture every key, ahead of global keys.
+#[expect(clippy::too_many_lines)]
 fn capturing_handler(model: &AppModel) -> Option<KeyHandler> {
     let capturing = match &model.screen {
         Screen::Browser => model.browser.searching,

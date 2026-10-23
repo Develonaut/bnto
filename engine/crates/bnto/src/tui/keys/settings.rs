@@ -11,6 +11,7 @@ use super::super::theme::ALL_VARIANTS;
 /// Theme field: left/right arrows cycle through themes.
 /// Telemetry field: left/right arrows toggle on/off.
 /// Path fields: Enter opens file picker for directory browsing.
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_settings_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let on_theme = model.settings.as_ref().is_some_and(|s| s.focused == 0);
 

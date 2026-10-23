@@ -17,6 +17,7 @@ pub(crate) fn is_at_last_visible_field(form: &tonkotsu::FormModel) -> bool {
 }
 
 /// Navigate back one screen, clearing the state of the screen we're leaving.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn handle_back(model: AppModel) -> AppModel {
     // Settings picker: return to Settings, not Detail.
     if matches!(&model.screen, Screen::Picker { .. }) && model.settings_picker_field.is_some() {
@@ -88,6 +89,7 @@ pub(crate) fn handle_back(model: AppModel) -> AppModel {
 }
 
 /// Determine which screen to go back to from the current screen.
+#[expect(clippy::too_many_lines)]
 pub(crate) fn back_screen(current: &Screen) -> Screen {
     match current {
         Screen::Home => Screen::Home,

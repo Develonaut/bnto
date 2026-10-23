@@ -3,6 +3,7 @@
 use super::{ExecutionMessage, ExecutionModel, ExecutionStatus, FileStatus};
 
 /// Pure state transition for the execution screen.
+#[expect(clippy::too_many_lines)]
 pub fn update(mut model: ExecutionModel, msg: ExecutionMessage) -> ExecutionModel {
     use ExecutionMessage as M;
     match msg {

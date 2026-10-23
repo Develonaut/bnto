@@ -54,6 +54,7 @@ impl NodeProcessor for FileCopy {
         &OUTCOME_KEYS
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,
@@ -167,6 +168,7 @@ impl NodeProcessor for FileCopy {
 
 // --- Parameter Definitions ---
 
+#[expect(clippy::too_many_lines)]
 fn build_copy_params() -> Vec<ParameterDef> {
     vec![
         ParameterDef {
@@ -245,6 +247,7 @@ fn build_copy_params() -> Vec<ParameterDef> {
 /// Resolve filename conflicts in the destination directory.
 ///
 /// Returns `Some(path)` to write to, or `None` if the file should be skipped.
+#[expect(clippy::too_many_lines)]
 fn resolve_conflict(
     dest_path: &Path,
     conflict_mode: &str,

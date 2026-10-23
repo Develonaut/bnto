@@ -43,6 +43,7 @@ impl Screen {
     }
 
     /// Contextual key hints for the help bar.
+    #[expect(clippy::too_many_lines)]
     pub fn help_hints(&self) -> Vec<(&'static str, &'static str)> {
         match self {
             Self::Home => vec![

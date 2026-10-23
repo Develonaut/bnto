@@ -12,6 +12,7 @@ use crate::form::FormMessage;
 const VIEWPORT_LINES: usize = 6;
 
 /// Apply a text-area editing message to a field in TextAreaEditing state.
+#[expect(clippy::too_many_lines)]
 pub fn update(field: Field, msg: FormMessage) -> Field {
     let (buffer, cursor, line, scroll_offset) = match &field.state {
         FieldState::TextAreaEditing {
@@ -100,6 +101,7 @@ fn insert_newline(field: &Field, buffer: &str, cursor: usize, line: usize, scrol
     set_state(field.clone(), new_buffer, 0, new_line, new_scroll)
 }
 
+#[expect(clippy::too_many_lines)]
 fn backspace(field: &Field, buffer: &str, cursor: usize, line: usize, scroll: usize) -> Field {
     let lines: Vec<&str> = buffer.split('\n').collect();
 
@@ -130,6 +132,7 @@ fn backspace(field: &Field, buffer: &str, cursor: usize, line: usize, scroll: us
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn delete_forward(field: &Field, buffer: &str, cursor: usize, line: usize, scroll: usize) -> Field {
     let lines: Vec<&str> = buffer.split('\n').collect();
     let line_len = grapheme_count(lines[line]);

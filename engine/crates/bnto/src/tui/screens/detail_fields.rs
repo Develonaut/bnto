@@ -29,6 +29,7 @@ pub(super) fn fields_to_params(
 }
 
 /// Convert a single FieldDef into a ParamEntry for the detail screen.
+#[expect(clippy::too_many_lines)]
 fn field_def_to_param(name: &str, def: &FieldDef, node_id: &str) -> ParamEntry {
     match def {
         FieldDef::String {

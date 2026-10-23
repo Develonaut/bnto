@@ -31,6 +31,7 @@ pub(crate) fn focus_next(model: FormModel) -> FormModel {
 }
 
 /// Move focus to the previous visible, focusable field (wrapping).
+#[expect(clippy::too_many_lines)]
 pub(crate) fn focus_prev(model: FormModel) -> FormModel {
     let visible_indices: Vec<usize> = model
         .fields

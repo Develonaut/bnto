@@ -26,6 +26,7 @@ pub struct PreparedInput {
 /// - **none**: takes no input — rejects positional args; config comes from node fields only
 ///
 /// Applies `--param` overrides after mode-specific preparation.
+#[expect(clippy::too_many_lines)]
 pub fn prepare_inputs(
     definition_json: &str,
     args: &[String],
@@ -245,6 +246,7 @@ fn apply_node_field_override(
     apply_node_field_in_nodes(&mut def.nodes, node_id, key, value)
 }
 
+#[expect(clippy::too_many_lines)]
 fn apply_node_field_in_nodes(
     nodes: &mut [PipelineNode],
     node_id: &str,

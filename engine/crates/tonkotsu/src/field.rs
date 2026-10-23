@@ -100,6 +100,7 @@ impl Field {
     /// - Number: value + suffix (e.g., "80%")
     /// - Select: the display label (not the raw value)
     /// - Confirm: affirmative/negative label (e.g., "Yes" / "No")
+    #[expect(clippy::too_many_lines)]
     pub fn display_value(&self) -> String {
         match &self.kind {
             FieldKind::Text { .. } => self.value.clone(),

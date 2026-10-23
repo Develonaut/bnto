@@ -76,6 +76,7 @@ impl NodeProcessor for StripExif {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

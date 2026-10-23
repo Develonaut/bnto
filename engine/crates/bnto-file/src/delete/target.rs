@@ -31,6 +31,7 @@ pub(super) fn base_root(base: &str) -> Result<PathBuf, String> {
 
 /// The item's target under `root`, or why it is refused. `base` is the
 /// param as written, for the message.
+#[expect(clippy::too_many_lines)]
 pub(super) fn check(file: &BatchFile, root: &Path, base: &str) -> Result<Target, String> {
     let name = &file.filename;
     let FileData::Path(path) = &file.data else {

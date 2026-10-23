@@ -108,6 +108,7 @@ fn run_segment<F: Fn() -> u64 + Copy>(
 /// Run a graph level segment by segment. Every node records into the
 /// level's layer, so a node reads any node that ran before it at this level.
 /// The level hands back the files its output sources name, in their order.
+#[expect(clippy::too_many_lines)]
 fn run_graph<'a, F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
     graph: &LevelGraph<'a>,

@@ -9,6 +9,7 @@ use super::super::screens::picker::PickerMessage;
 ///
 /// When search mode is active, character keys type into the query and
 /// navigation is limited to cursor + Esc. Otherwise, full picker keys apply.
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_picker_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let picker = model.picker.as_ref()?;
 

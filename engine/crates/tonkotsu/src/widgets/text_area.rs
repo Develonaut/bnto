@@ -14,6 +14,7 @@ use crate::theme::FormTheme;
 const VIEWPORT_LINES: usize = 6;
 
 /// Render a TextArea field as styled lines.
+#[expect(clippy::too_many_lines)]
 pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'static>> {
     let prefix = if focused { "> " } else { "  " };
     let label_style = if focused {
@@ -41,6 +42,7 @@ pub fn render(field: &Field, focused: bool, theme: &dyn FormTheme) -> Vec<Line<'
     }
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_editing(
     prefix: &str,
     label_style: Style,
@@ -105,6 +107,7 @@ fn render_editing(
     lines
 }
 
+#[expect(clippy::too_many_lines)]
 fn render_idle(
     prefix: &str,
     label: &str,

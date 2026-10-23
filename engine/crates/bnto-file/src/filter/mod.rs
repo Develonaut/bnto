@@ -54,6 +54,7 @@ impl NodeProcessor for FileFilter {
             .collect()
     }
 
+    #[expect(clippy::too_many_lines)]
     fn process(
         &self,
         input: NodeInput,

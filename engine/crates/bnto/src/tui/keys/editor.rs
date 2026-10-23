@@ -10,6 +10,7 @@ use super::super::screens::editor_bridge;
 ///
 /// When a picker overlay or delete confirmation is active, keys are routed
 /// to the overlay. Otherwise, normal editor navigation applies.
+#[expect(clippy::too_many_lines)]
 pub(super) fn handle_editor_key(model: &AppModel, key: KeyEvent) -> Option<AppMessage> {
     let editor = model.editor.as_ref()?;
 

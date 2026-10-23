@@ -70,6 +70,7 @@ pub fn confirm_file(entries: &[FileEntry], cursor: usize) -> Option<String> {
 }
 
 /// Apply a DirLoaded response to a field, restoring nav_history cursor if available.
+#[expect(clippy::too_many_lines)]
 pub fn apply_dir_loaded(
     field: Field,
     dir: PathBuf,
