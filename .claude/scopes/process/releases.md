@@ -146,6 +146,20 @@ Setup instructions in [environment-variables.md](../../environment-variables.md)
 
 Watch the workflow: `https://github.com/bntoio/bnto/actions`
 
+When it finishes, check the release actually shipped:
+
+```bash
+task release:verify -- 1.0.0   # no v
+```
+
+The `release-verify` dogfood recipe (`recipes/release-verify.bnto.json`) checks three things and reports each one even after another fails:
+
+- crates.io serves that version of every crate a release publishes;
+- a published GitHub Release (not a draft or prerelease) exists for the tag;
+- www.bnto.io's install demo shows the version.
+
+It isn't part of the release workflow yet; it runs by hand until it has proven itself.
+
 Artifacts uploaded on every release:
 
 - `e2e-report-<tag>` — Full Playwright HTML report (14-day retention)

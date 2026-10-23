@@ -1,0 +1,87 @@
+{
+  "id": "release-verify",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Release Verify",
+  "metadata": {
+    "description": "Checks that a bnto release actually shipped: crates.io serves the version for every crate a release publishes, a published GitHub Release exists for its tag, and www.bnto.io shows it. Every check reports even after one fails. Run it from the repo root after a release: task release:verify -- X.Y.Z."
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "checks",
+      "type": "group",
+      "name": "Checks",
+      "fields": {
+        "version": {
+          "type": "string",
+          "label": "Version",
+          "description": "The released version, X.Y.Z without the v (e.g. 0.18.0).",
+          "placeholder": "0.18.0"
+        }
+      },
+      "nodes": [
+        {
+          "id": "crates",
+          "type": "shell-run",
+          "name": "crates.io",
+          "parameters": {
+            "shell": "sh",
+            "script": "# release-verify, crates.io: every crate a release publishes at the shared\n# workspace version serves it. $1 the version. Run from the repo root.\n# Gap: an http-request node will replace curl here (dogfooding.md, PR 10).\ndie() { echo \"release-verify: $*\" >&2; exit 2; }\nversion=${1-}\n# An unset field reaches the step as its literal template (a missing value\n# should stop the run first; dogfooding.md follow-ups), so treat it as unset.\ncase $version in '' | *'{{'*) die \"give the version: -p version=X.Y.Z\" ;; esac\nprintf \"%s\\n\" \"$version\" | grep -Eq \"^[0-9]+[.][0-9]+[.][0-9]+$\" || die \"bad version '$version' (want X.Y.Z, no v)\"\n\nmissing=\"\"\nfor toml in engine/crates/*/Cargo.toml; do\n  if ! grep -q '^version.workspace = true' \"$toml\" || grep -q '^publish = false' \"$toml\"; then continue; fi\n  crate=$(sed -n 's/^name = \"\\(.*\\)\"/\\1/p' \"$toml\" | head -n 1)\n  if curl -fsS -o /dev/null -A \"bnto release-verify (https://github.com/Develonaut/bnto)\" \"https://crates.io/api/v1/crates/$crate/$version\"; then\n    echo \"  ok       crates.io serves $crate $version\"\n  else\n    missing=\"$missing $crate\"\n    echo \"  MISSING  crates.io has no $crate $version\"\n  fi\ndone\n[ -z \"$missing\" ] || die \"crates.io has no$missing at $version\"\n",
+            "args": ["{{fields.version}}"],
+            "timeout": 60
+          }
+        },
+        {
+          "id": "github",
+          "type": "shell-run",
+          "name": "GitHub Release",
+          "parameters": {
+            "shell": "sh",
+            "script": "# release-verify, GitHub: a published release (not a draft or prerelease)\n# exists for the version's tag. $1 the version.\n# Gap: an http-request node will replace curl here (dogfooding.md, PR 10).\ndie() { echo \"release-verify: $*\" >&2; exit 2; }\nversion=${1-}\n# An unset field reaches the step as its literal template (a missing value\n# should stop the run first; dogfooding.md follow-ups), so treat it as unset.\ncase $version in '' | *'{{'*) die \"give the version: -p version=X.Y.Z\" ;; esac\nprintf \"%s\\n\" \"$version\" | grep -Eq \"^[0-9]+[.][0-9]+[.][0-9]+$\" || die \"bad version '$version' (want X.Y.Z, no v)\"\n\nrelease=$(curl -fsS -H \"Accept: application/vnd.github+json\" \"https://api.github.com/repos/Develonaut/bnto/releases/tags/v$version\") || die \"GitHub has no release for v$version\"\nprintf '%s\\n' \"$release\" | grep -Eq '\"draft\": *false' || die \"the v$version release is still a draft\"\nprintf '%s\\n' \"$release\" | grep -Eq '\"prerelease\": *false' || die \"the v$version release is a prerelease\"\necho \"  ok       GitHub Release v$version is published\"\n",
+            "args": ["{{fields.version}}"],
+            "timeout": 60
+          },
+          "always": true
+        },
+        {
+          "id": "site",
+          "type": "shell-run",
+          "name": "bnto.io",
+          "parameters": {
+            "shell": "sh",
+            "script": "# release-verify, bnto.io: the home page's install demo shows the version,\n# so production deployed this release. $1 the version.\n# Gap: an http-request node will replace curl here (dogfooding.md, PR 10).\ndie() { echo \"release-verify: $*\" >&2; exit 2; }\nversion=${1-}\n# An unset field reaches the step as its literal template (a missing value\n# should stop the run first; dogfooding.md follow-ups), so treat it as unset.\ncase $version in '' | *'{{'*) die \"give the version: -p version=X.Y.Z\" ;; esac\nprintf \"%s\\n\" \"$version\" | grep -Eq \"^[0-9]+[.][0-9]+[.][0-9]+$\" || die \"bad version '$version' (want X.Y.Z, no v)\"\n\npage=$(curl -fsSL https://www.bnto.io/) || die \"www.bnto.io didn't answer\"\nprintf '%s\\n' \"$page\" | grep -qF \"$version\" || die \"www.bnto.io doesn't show $version yet\"\necho \"  ok       www.bnto.io shows $version\"\n",
+            "args": ["{{fields.version}}"],
+            "timeout": 60
+          },
+          "always": true
+        }
+      ]
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": {
+        "mode": "none"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "checks"
+    },
+    {
+      "id": "e2",
+      "source": "checks",
+      "target": "output"
+    }
+  ]
+}

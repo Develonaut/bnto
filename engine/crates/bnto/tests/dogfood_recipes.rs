@@ -20,8 +20,17 @@ fn dogfood_recipe(name: &str) -> PathBuf {
 
 /// `bnto run <recipe> --yes` with `root` as the working directory.
 fn run_in(root: &Path, recipe: &Path) -> Output {
+    run_with(root, recipe, &[])
+}
+
+/// `run_in`, plus `--param` pairs.
+fn run_with(root: &Path, recipe: &Path, params: &[&str]) -> Output {
+    let mut args = vec!["run", recipe.to_str().unwrap(), "--yes"];
+    for param in params {
+        args.extend(["--param", param]);
+    }
     Command::new(bnto_bin())
-        .args(["run", recipe.to_str().unwrap(), "--yes"])
+        .args(args)
         .current_dir(root)
         .env("HOME", root.join("home"))
         .env("BNTO_HOME", root.join("bnto-home"))
@@ -98,4 +107,61 @@ fn unused_assets_passes_when_everything_is_referenced() {
 
     let output = run_in(root, &dogfood_recipe("unused-assets"));
     assert!(output.status.success(), "{}", text(&output));
+}
+
+/// The repo root, where release-verify reads the crates it checks.
+fn repo_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..")
+}
+
+#[test]
+fn release_verify_asks_for_a_version_before_any_request() {
+    let output = run_in(&repo_root(), &dogfood_recipe("release-verify"));
+    let all = text(&output);
+    assert!(!output.status.success(), "{all}");
+    assert!(all.contains("give the version: -p version=X.Y.Z"), "{all}");
+}
+
+#[test]
+fn release_verify_refuses_a_malformed_version_before_any_request() {
+    for bad in ["v0.18.0", "0.18", "0.18.0-rc.1", "latest"] {
+        let param = format!("version={bad}");
+        let output = run_with(&repo_root(), &dogfood_recipe("release-verify"), &[&param]);
+        let all = text(&output);
+        assert!(!output.status.success(), "{bad}: {all}");
+        assert!(
+            all.contains(&format!("bad version '{bad}'")),
+            "{bad}: {all}"
+        );
+        assert!(
+            !all.contains("crates.io serves"),
+            "{bad} reached the network: {all}"
+        );
+    }
+}
+
+/// Live: needs the network. `task release:verify -- 0.18.0` runs the same.
+#[test]
+#[ignore = "talks to crates.io, GitHub and bnto.io"]
+fn release_verify_passes_a_shipped_release_and_fails_an_unshipped_one() {
+    let shipped = run_with(
+        &repo_root(),
+        &dogfood_recipe("release-verify"),
+        &["version=0.18.0"],
+    );
+    assert!(shipped.status.success(), "{}", text(&shipped));
+    let unshipped = run_with(
+        &repo_root(),
+        &dogfood_recipe("release-verify"),
+        &["version=0.0.1"],
+    );
+    let all = text(&unshipped);
+    assert!(!unshipped.status.success(), "{all}");
+    for check in [
+        "crates.io has no",
+        "GitHub has no release",
+        "doesn't show 0.0.1",
+    ] {
+        assert!(all.contains(check), "{check}: {all}");
+    }
 }

@@ -387,6 +387,13 @@ tasks:
         git push origin "$TAG"
         echo "Tag $TAG pushed. Release workflow will start shortly."
         echo "Watch progress: https://github.com/bntoio/bnto/actions"
+        echo "When it finishes: task release:verify -- ${TAG#v}"
+
+  release:verify:
+    desc: "Check a release shipped: crates.io, the GitHub Release and www.bnto.io (e.g., task release:verify -- 1.0.0)"
+    deps: [cli:build]
+    # --yes: the checks are shell steps, and Task can't answer consent.
+    cmds: ["{{.BNTO}} run recipes/release-verify.bnto.json --yes -p version={{.CLI_ARGS}}"]
 
   # Cross-cutting
   build:all:
