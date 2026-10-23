@@ -264,6 +264,26 @@ fn cj4_the_refusal_comes_before_consent() {
     assert!(!stderr.contains("cancelled"), "no consent prompt: {stderr}");
 }
 
+#[test]
+fn cj4_dry_run_refuses_a_recipe_with_no_branch_for_this_host_too() {
+    let (sandbox, others) = elsewhere_sandbox();
+    let output = sandbox.bnto(&["dry-run", "guarded"]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "{stderr}");
+    let message = format!(
+        "guarded runs on {} and {}. This machine runs {}.",
+        label(others[0]),
+        label(others[1]),
+        label(host_platform())
+    );
+    assert!(stderr.contains(&message), "{stderr}");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        !stdout.contains("Commands:"),
+        "no preview printed: {stdout}"
+    );
+}
+
 // --- CJ6: bnto check ---
 
 #[test]

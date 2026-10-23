@@ -15,7 +15,7 @@ use bnto_engine::run_pipeline;
 use crate::context::NativeContext;
 use crate::dry_run::files::FilePreview;
 use crate::run_watchdog::{self, Watched};
-use crate::{input, io, run_limit};
+use crate::{host_support, input, io, run_limit};
 
 mod events;
 mod output;
@@ -101,11 +101,16 @@ fn run_bridge_in(tx: &mpsc::Sender<BridgeEvent>, job: &BridgeJob, ctx: NativeCon
 }
 
 /// Prepare inputs, run the pipeline, then write (or preview) the results.
+/// A recipe with no branch for this OS stops first, as `bnto run` does.
 fn try_run_bridge(
     tx: &mpsc::Sender<BridgeEvent>,
     job: &BridgeJob,
     ctx: &NativeContext,
 ) -> Result<(), String> {
+    let host = bnto_core::HostPlatform::current();
+    if let Some(why) = host_support::unsupported_host(&job.slug, &job.definition_json, host) {
+        return Err(why);
+    }
     let (args, override_args) = input_args(job);
     // Prepare inputs (validates files, applies param overrides to definition).
     let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
@@ -368,6 +373,36 @@ mod tests {
         };
         assert_eq!(message, "Run timed out after 1s");
         assert!(registry.active().is_empty(), "the hung command was killed");
+    }
+
+    #[test]
+    fn a_recipe_with_no_branch_for_this_os_is_refused_before_any_step() {
+        let host = bnto_core::HostPlatform::current().map_or("unknown", |h| h.as_str());
+        let other = if host == "macos" { "linux" } else { "macos" };
+        let definition_json = serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "g", "type": "group",
+              "when": { "value": "{{ctx.platform}}", "op": "equals", "expected": other },
+              "nodes": [{ "id": "s", "type": "edit-fields" }] },
+            { "id": "output", "type": "output", "parameters": { "mode": "message" } }
+        ] })
+        .to_string();
+        let job = BridgeJob {
+            slug: "elsewhere".into(),
+            definition_json,
+            selected_files: vec![],
+            param_overrides: HashMap::new(),
+            preview_mode: true,
+        };
+        let ctx = NativeContext::current_dir().unwrap().with_dry_run(true);
+        let (tx, rx) = mpsc::channel();
+        run_bridge_in(&tx, &job, ctx);
+        let events: Vec<BridgeEvent> = rx.try_iter().collect();
+        let [BridgeEvent::Error(message)] = events.as_slice() else {
+            panic!("expected only an error, got {events:?}");
+        };
+        assert!(message.starts_with("elsewhere runs on "), "{message}");
+        assert!(message.contains("This machine runs"), "{message}");
     }
 
     #[test]
