@@ -18,7 +18,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Merged (#731) |
 | 5   | Verify a release shipped                           | `feat/release-verify`          | Merged (#730) |
 | 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Merged (#734) |
-| 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Not started   |
+| 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Merged (#735) |
 | 7a  | Source kinds and project consent                   | `feat/recipe-source-kinds`     | Not started   |
 | 7b  | Load project recipes from `.bnto/recipes/`         | `feat/project-recipes`         | Not started   |
 | 7c  | Project recipes in the TUI                         | `feat/tui-project-recipes`     | Not started   |

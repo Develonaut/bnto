@@ -5,15 +5,16 @@ mod helpers;
 use std::process::Command;
 
 use helpers::{
-    bnto_bin, custom_recipe_path, fixture_image, fixture_json, output_files, recipe_path,
-    run_custom_recipe_ok, run_explicit_recipe_ok, temp_output_dir,
+    Sandbox, bundled_slugs, custom_recipe_path, fixture_image, fixture_json, output_files,
+    recipe_path, run_custom_recipe_ok, run_explicit_recipe_ok, temp_output_dir,
 };
 
 // --- Help & List ---
 
 #[test]
 fn test_help_flag() {
-    let output = Command::new(bnto_bin()).arg("--help").output().unwrap();
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("--help").output().unwrap();
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(stdout.contains("Run .bnto.json recipes"));
@@ -21,9 +22,10 @@ fn test_help_flag() {
 
 #[test]
 fn test_no_subcommand_launches_tui() {
+    let sandbox = Sandbox::new();
     // `bnto` with no args now launches the TUI (equivalent to `bnto tui`).
     // Without a terminal, the TUI fails with a crossterm/ratatui error.
-    let output = Command::new(bnto_bin()).output().unwrap();
+    let output = sandbox.command().output().unwrap();
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
         !output.status.success(),
@@ -37,32 +39,36 @@ fn test_no_subcommand_launches_tui() {
 
 #[test]
 fn test_list_command() {
-    let output = Command::new(bnto_bin()).arg("list").output().unwrap();
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("list").output().unwrap();
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    // New output lists recipe slugs grouped by category, not processor type names.
+    // Recipe slugs grouped under category headers, and only the bundled ones:
+    // a library recipe in the developer's own ~/.bnto must not show up.
+    assert_eq!(listed_slugs(&stdout), bundled_slugs(), "got: {stdout}");
     assert!(
-        stdout.contains("compress-images"),
-        "Should list compress-images recipe, got: {stdout}"
-    );
-    assert!(
-        stdout.contains("rename-files"),
-        "Should list rename-files recipe, got: {stdout}"
-    );
-    assert!(
-        stdout.contains("clean-csv"),
-        "Should list clean-csv recipe, got: {stdout}"
-    );
-    // Verify category headers are present.
-    assert!(
-        stdout.contains("image"),
+        stdout.contains("  image:"),
         "Should have image category, got: {stdout}"
     );
 }
 
+/// The slugs `bnto list` prints, one per indented recipe line, sorted.
+fn listed_slugs(stdout: &str) -> Vec<String> {
+    let mut slugs: Vec<String> = stdout
+        .lines()
+        .filter(|line| line.starts_with("    "))
+        .filter_map(|line| line.split_whitespace().next())
+        .map(str::to_string)
+        .collect();
+    slugs.sort();
+    slugs
+}
+
 #[test]
 fn test_info_command() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["info", "compress-images"])
         .output()
         .unwrap();
@@ -84,7 +90,9 @@ fn test_info_command() {
 
 #[test]
 fn test_info_unknown_recipe() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["info", "nonexistent-recipe"])
         .output()
         .unwrap();
@@ -100,7 +108,9 @@ fn test_info_unknown_recipe() {
 
 #[test]
 fn test_dry_run_shell_command_recipe() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["dry-run", "download-video"])
         .output()
         .unwrap();
@@ -122,7 +132,9 @@ fn test_dry_run_shell_command_recipe() {
 
 #[test]
 fn test_dry_run_no_shell_commands() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["dry-run", "compress-images"])
         .output()
         .unwrap();
@@ -136,7 +148,9 @@ fn test_dry_run_no_shell_commands() {
 
 #[test]
 fn test_dry_run_unknown_recipe() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["dry-run", "nonexistent-recipe"])
         .output()
         .unwrap();
@@ -150,7 +164,9 @@ fn test_dry_run_unknown_recipe() {
 
 #[test]
 fn test_dry_run_with_param_override() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["dry-run", "download-video", "--param", "format=webm"])
         .output()
         .unwrap();
@@ -168,7 +184,8 @@ fn test_dry_run_with_param_override() {
 
 #[test]
 fn test_doctor_command() {
-    let output = Command::new(bnto_bin()).arg("doctor").output().unwrap();
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("doctor").output().unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
     // Doctor should run without crashing. It may pass or fail depending
     // on whether external tools (yt-dlp, ffmpeg) are installed.
@@ -180,9 +197,10 @@ fn test_doctor_command() {
 
 #[test]
 fn test_doctor_checks_recipe_level_dependencies() {
+    let sandbox = Sandbox::new();
     // yt-dlp is declared only in download-video's recipe-level `requires`
     // (shell-run declares no deps), so it must come from recipe scanning.
-    let output = Command::new(bnto_bin()).arg("doctor").output().unwrap();
+    let output = sandbox.command().arg("doctor").output().unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
         stdout.contains("yt-dlp"),
@@ -192,13 +210,15 @@ fn test_doctor_checks_recipe_level_dependencies() {
 
 #[test]
 fn test_doctor_warns_about_unparsable_recipe() {
+    let sandbox = Sandbox::new();
     // Valid JSON loads into the catalog, but isn't a valid definition.
     let home = tempfile::tempdir().unwrap();
     let recipes = home.path().join("recipes");
     std::fs::create_dir_all(&recipes).unwrap();
     std::fs::write(recipes.join("broken.bnto.json"), r#"{"nodes":"x"}"#).unwrap();
 
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .arg("doctor")
         .env("BNTO_HOME", home.path())
         .output()
@@ -216,7 +236,9 @@ fn test_doctor_warns_about_unparsable_recipe() {
 
 #[test]
 fn test_missing_recipe_file() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["run", "nonexistent.bnto.json", "file.jpg"])
         .output()
         .unwrap();
@@ -228,8 +250,10 @@ fn test_missing_recipe_file() {
 
 #[test]
 fn test_missing_input_file() {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("compress-images")])
         .arg("nonexistent.jpg")
         .args(["-o", out.path().to_str().unwrap()])
@@ -245,10 +269,12 @@ fn test_missing_input_file() {
 
 #[test]
 fn test_none_mode_shell_source_feeds_next_node() {
+    let sandbox = Sandbox::new();
     // Guards: a `none` recipe whose Source first node runs once and feeds the next node.
     // The fixture runs `git` because it is on every CI runner (`echo` is a cmd builtin on Windows).
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("no-input-shell-source"), "--yes"])
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -293,9 +319,11 @@ fn test_container_children_indent_under_their_container() {
 
 #[test]
 fn test_none_mode_rejects_positional_args() {
+    let sandbox = Sandbox::new();
     // Guards: a `none` recipe must not silently ignore positional args.
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args([
             "run",
             &custom_recipe_path("no-input-shell-source"),
@@ -334,8 +362,9 @@ fn run_vars_recipe(
     extra: &[&str],
     env: &[(&str, &str)],
 ) -> std::process::Output {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let mut cmd = Command::new(bnto_bin());
+    let mut cmd = sandbox.command();
     cmd.args(["run", &custom_recipe_path("file-copy-vars")])
         .arg(src)
         .args(["--yes", "-o", out.path().to_str().unwrap()])
@@ -408,6 +437,7 @@ fn test_run_unset_var_fails_before_any_node_runs() {
 
 #[test]
 fn test_shell_list_feeds_file_list_then_copy_keeps_folders() {
+    let sandbox = Sandbox::new();
     // Guards: a tool's NUL-separated path list (git ls-files -z) becomes the
     // files themselves, and file-copy keeps their folders.
     let repo = temp_output_dir();
@@ -429,7 +459,8 @@ fn test_shell_list_feeds_file_list_then_copy_keeps_folders() {
     let dest = temp_output_dir();
     let out = temp_output_dir();
     let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("shell-list-copy"), "--yes"])
         .args(["-p", &dest_param, "-o", out.path().to_str().unwrap()])
         .current_dir(repo.path())
@@ -450,6 +481,7 @@ fn test_shell_list_feeds_file_list_then_copy_keeps_folders() {
 /// Run `file-list-collect-copy` with `Root` from a `--vars` file and the
 /// copy destination from a param override.
 fn run_list_collect_copy(root: &std::path::Path, dest: &std::path::Path) -> std::process::Output {
+    let sandbox = Sandbox::new();
     let vars_dir = temp_output_dir();
     let vars_file = vars_dir.path().join("vars.json");
     let body = serde_json::json!({ "Root": root.to_str().unwrap() }).to_string();
@@ -457,7 +489,8 @@ fn run_list_collect_copy(root: &std::path::Path, dest: &std::path::Path) -> std:
     let out = temp_output_dir();
     let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
     let recipe = custom_recipe_path("file-list-collect-copy");
-    Command::new(bnto_bin())
+    sandbox
+        .command()
         .args(["run", &recipe, "--yes"])
         .args(["--vars", vars_file.to_str().unwrap(), "-p", &dest_param])
         .args(["-o", out.path().to_str().unwrap()])
@@ -509,6 +542,7 @@ fn test_file_list_missing_folder_copies_nothing_and_passes() {
 
 /// Run the assert-references fixture against a root holding `present`.
 fn run_assert_references(present: &[&str]) -> std::process::Output {
+    let sandbox = Sandbox::new();
     let root = temp_output_dir();
     for name in present {
         let path = root.path().join(name);
@@ -518,7 +552,8 @@ fn run_assert_references(present: &[&str]) -> std::process::Output {
     let vars = root.path().join("vars.json");
     let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
     std::fs::write(&vars, body).unwrap();
-    Command::new(bnto_bin())
+    sandbox
+        .command()
         .args(["run", &custom_recipe_path("assert-references"), "--yes"])
         .args(["--vars", vars.to_str().unwrap()])
         .output()
@@ -556,6 +591,7 @@ fn test_assert_fails_the_run_naming_every_missing_path() {
 /// Run the `fixture` recipe against a root holding `a.txt` and `sub/b.txt`
 /// (not `gone.txt`), and the root as text with `/` separators.
 fn run_report_fixture(fixture: &str) -> (std::process::Output, String) {
+    let sandbox = Sandbox::new();
     let root = temp_output_dir();
     for name in ["a.txt", "sub/b.txt"] {
         let path = root.path().join(name);
@@ -565,7 +601,8 @@ fn run_report_fixture(fixture: &str) -> (std::process::Output, String) {
     let vars = root.path().join("vars.json");
     let body = serde_json::json!({ "Root": root.path().to_str().unwrap() }).to_string();
     std::fs::write(&vars, body).unwrap();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path(fixture), "--yes"])
         .args(["--vars", vars.to_str().unwrap()])
         .output()
@@ -613,10 +650,11 @@ fn test_report_prints_a_line_per_incoming_file() {
 
 /// Run the csv-render-markdown fixture on a small CSV, writing to `out`.
 fn run_csv_render(out: &std::path::Path, dry_run: bool) -> std::process::Output {
+    let sandbox = Sandbox::new();
     let src = temp_output_dir();
     let csv = src.path().join("tools.csv");
     std::fs::write(&csv, "name,note\nhammer,nails\nsaw,cuts | rips\nlevel,\n").unwrap();
-    let mut cmd = Command::new(bnto_bin());
+    let mut cmd = sandbox.command();
     cmd.args(["run", &custom_recipe_path("csv-render-markdown"), "--yes"])
         .arg(&csv)
         .args(["-o", out.to_str().unwrap()]);
@@ -659,6 +697,7 @@ fn test_file_render_dry_run_writes_nothing() {
 
 #[test]
 fn test_file_sort_orders_csv_rows_by_two_keys_with_blanks_last() {
+    let sandbox = Sandbox::new();
     // spreadsheet-read → file-sort (`source, -year`) → report, which prints
     // a line per row in the order the rows reach it.
     let dir = temp_output_dir();
@@ -670,7 +709,8 @@ fn test_file_sort_orders_csv_rows_by_two_keys_with_blanks_last() {
                 Beta,web,2024\n\
                 Epsilon,app,2018\n";
     std::fs::write(&csv, rows).unwrap();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("file-sort-report"), "--yes"])
         .arg(&csv)
         .output()
@@ -692,6 +732,7 @@ fn test_file_sort_orders_csv_rows_by_two_keys_with_blanks_last() {
 
 #[test]
 fn test_summarize_prints_each_folders_count_and_total_size_in_first_seen_order() {
+    let sandbox = Sandbox::new();
     // spreadsheet-read → summarize (`groupBy: folder`, `sum: size`) → report,
     // which prints a line per group. CSV sizes are text and still add up.
     let dir = temp_output_dir();
@@ -703,7 +744,8 @@ fn test_summarize_prints_each_folders_count_and_total_size_in_first_seen_order()
                 d.png,img,24\n\
                 e.txt,docs,50\n";
     std::fs::write(&csv, rows).unwrap();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("summarize-report"), "--yes"])
         .arg(&csv)
         .output()
@@ -722,10 +764,12 @@ fn test_summarize_prints_each_folders_count_and_total_size_in_first_seen_order()
 
 #[test]
 fn test_summarize_fails_on_a_size_that_is_not_a_number() {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     let csv = dir.path().join("files.csv");
     std::fs::write(&csv, "name,folder,size\na.md,docs,100\nb.md,docs,12 KB\n").unwrap();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("summarize-report"), "--yes"])
         .arg(&csv)
         .output()
@@ -775,8 +819,10 @@ echo greeted
 }
 
 fn run_greet(tools: &tempfile::TempDir, out: &tempfile::TempDir) -> std::process::Output {
+    let sandbox = Sandbox::new();
     let vars = tools.path().join("vars.json");
-    Command::new(bnto_bin())
+    sandbox
+        .command()
         .args(["run", &custom_recipe_path("shell-search-path"), "--yes"])
         .args([
             "--vars",
@@ -823,6 +869,7 @@ fn last_stderr_line(output: &std::process::Output) -> String {
 
 #[test]
 fn test_always_step_keeps_a_failed_commands_stdout() {
+    let sandbox = Sandbox::new();
     // Guards: a command that exits non-zero hands its stdout to the closing
     // step, which copies it, and the run still fails naming the command.
     let work = temp_output_dir();
@@ -830,7 +877,8 @@ fn test_always_step_keeps_a_failed_commands_stdout() {
     std::fs::write(work.path().join("after.txt"), "two\n").unwrap();
     let (dest, out) = (temp_output_dir(), temp_output_dir());
     let dest_param = format!("keep:destination={}", dest.path().to_str().unwrap());
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args([
             "run",
             &custom_recipe_path("shell-fails-keep-stdout"),
@@ -862,6 +910,7 @@ fn test_always_step_keeps_a_failed_commands_stdout() {
 
 #[test]
 fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
+    let sandbox = Sandbox::new();
     // Guards: a tool missing from searchPath fails the step before anything
     // runs; the closing steps still run, starting from no files.
     let tools = temp_output_dir();
@@ -875,7 +924,8 @@ fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
     std::fs::write(&vars_file, vars.to_string()).unwrap();
     let (dest, out) = (temp_output_dir(), temp_output_dir());
     let dest_param = format!("copy:destination={}", dest.path().to_str().unwrap());
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args([
             "run",
             &custom_recipe_path("shell-missing-tool-cleanup"),
@@ -902,10 +952,12 @@ fn test_always_steps_run_after_a_step_fails_before_its_command_starts() {
 
 /// Run the file-decode-json fixture on one file named `name` holding `text`.
 fn run_decode_json(name: &str, text: &str) -> std::process::Output {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     let file = dir.path().join(name);
     std::fs::write(&file, text).unwrap();
-    Command::new(bnto_bin())
+    sandbox
+        .command()
         .args(["run", &custom_recipe_path("file-decode-json"), "--yes"])
         .arg(&file)
         .output()
@@ -945,6 +997,7 @@ fn test_file_decode_fails_the_run_naming_a_file_that_isnt_base64() {
 
 #[test]
 fn test_file_copy_newer_warns_about_newer_destination_file() {
+    let sandbox = Sandbox::new();
     // Guards: a destination file newer than the source is left and named on stderr.
     // A directory source goes through file-collect so the copy sees a path, not bytes.
     let src_dir = temp_output_dir();
@@ -959,7 +1012,8 @@ fn test_file_copy_newer_warns_about_newer_destination_file() {
     filetime::set_file_mtime(&kept, newer).unwrap();
 
     let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("file-copy-newer")])
         .arg(src_dir.path())
         .args(["--yes", "-p", &dest_param])
@@ -982,6 +1036,7 @@ fn test_file_copy_newer_warns_about_newer_destination_file() {
 
 #[test]
 fn test_run_dry_run_writes_nothing() {
+    let sandbox = Sandbox::new();
     // Guards: --dry-run runs the recipe but creates no destination or output
     // directory, and the summary says what would have been written.
     let src_dir = temp_output_dir();
@@ -993,7 +1048,8 @@ fn test_run_dry_run_writes_nothing() {
     let out = out_root.path().join("not-yet");
 
     let dest_param = format!("copy:destination={}", dest.to_str().unwrap());
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("file-copy-newer")])
         .arg(src_dir.path())
         .args(["--yes", "--dry-run", "-p", &dest_param])
@@ -1014,6 +1070,7 @@ fn test_run_dry_run_writes_nothing() {
 
 #[test]
 fn test_run_dry_run_keeps_warning_before_the_summary() {
+    let sandbox = Sandbox::new();
     // Guards: a newer destination file is warned about, and the (dry run)
     // summary is still the last line.
     let src_dir = temp_output_dir();
@@ -1028,7 +1085,8 @@ fn test_run_dry_run_keeps_warning_before_the_summary() {
 
     let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
     let out = out_root.path().join("not-yet");
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path("file-copy-newer")])
         .arg(src_dir.path())
         .args(["--yes", "--dry-run", "-p", &dest_param])
@@ -1048,6 +1106,7 @@ fn test_run_dry_run_keeps_warning_before_the_summary() {
 
 #[test]
 fn test_dry_run_subcommand_copies_nothing() {
+    let sandbox = Sandbox::new();
     // Guards: `bnto dry-run` runs file-copy as a dry run, so an older
     // destination file keeps its bytes and mtime.
     let src_dir = temp_output_dir();
@@ -1069,7 +1128,8 @@ fn test_dry_run_subcommand_copies_nothing() {
     .unwrap();
 
     let dest_param = format!("copy:destination={}", dest_dir.path().to_str().unwrap());
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .env("BNTO_HOME", home.path())
         .args(["dry-run", "file-copy-newer"])
         .arg(src_dir.path())
@@ -1103,10 +1163,12 @@ fn library_with_shell_recipe() -> tempfile::TempDir {
 
 #[test]
 fn test_dry_run_with_inputs_requires_consent_for_shell_recipe() {
+    let sandbox = Sandbox::new();
     // Guards: a dry run with inputs executes the pipeline, so an untrusted
     // shell-run recipe needs the same consent as `bnto run`.
     let home = library_with_shell_recipe();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .env("BNTO_HOME", home.path())
         .args(["dry-run", "shell-file-input", &fixture_image("small.jpg")])
         .output()
@@ -1124,8 +1186,10 @@ fn test_dry_run_with_inputs_requires_consent_for_shell_recipe() {
 
 #[test]
 fn test_dry_run_with_inputs_and_yes_skips_consent() {
+    let sandbox = Sandbox::new();
     let home = library_with_shell_recipe();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .env("BNTO_HOME", home.path())
         .args(["dry-run", "shell-file-input", "--yes"])
         .arg(fixture_image("small.jpg"))
@@ -1139,9 +1203,11 @@ fn test_dry_run_with_inputs_and_yes_skips_consent() {
 
 #[test]
 fn test_dry_run_without_inputs_never_prompts() {
+    let sandbox = Sandbox::new();
     // Static analysis runs nothing, so it stays the safe way to inspect commands.
     let home = library_with_shell_recipe();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .env("BNTO_HOME", home.path())
         .args(["dry-run", "shell-file-input"])
         .output()
@@ -1158,8 +1224,10 @@ fn test_dry_run_without_inputs_never_prompts() {
 
 #[test]
 fn test_url_mode_no_input_shows_error() {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("download-video"), "--yes"])
         .args(["-o", out.path().to_str().unwrap()])
         .output()
@@ -1175,8 +1243,10 @@ fn test_url_mode_no_input_shows_error() {
 
 #[test]
 fn test_url_mode_non_url_input_shows_error() {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("not-a-url.mp4")
         .args(["-o", out.path().to_str().unwrap()])
@@ -1193,11 +1263,13 @@ fn test_url_mode_non_url_input_shows_error() {
 
 #[test]
 fn test_youtube_download() {
+    let sandbox = Sandbox::new();
     // End-to-end download: YouTube → yt-dlp → output file.
     // "Me at the Zoo" (jNQXAC9IVRw) — first YouTube video, always available, ~465KB.
     // Requires yt-dlp + ffmpeg installed. Skips gracefully if missing.
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
         .args(["-o", out.path().to_str().unwrap()])
@@ -1229,10 +1301,12 @@ fn test_youtube_download() {
 
 #[test]
 fn test_youtube_download_with_param_override() {
+    let sandbox = Sandbox::new();
     // Param override: timeout=600 changes the shell-run timeout.
     // Verifies param injection works alongside URL input.
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://www.youtube.com/watch?v=jNQXAC9IVRw")
         .args(["--param", "timeout=600"])
@@ -1268,10 +1342,12 @@ fn test_youtube_download_with_param_override() {
 
 #[test]
 fn test_m3u8_url_routes_correctly() {
+    let sandbox = Sandbox::new();
     // Verifies m3u8 (HLS) URLs route through URL mode without
     // validation errors. Routing is fast — no download needed.
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
         .args(["-o", out.path().to_str().unwrap()])
@@ -1293,10 +1369,12 @@ fn test_m3u8_url_routes_correctly() {
 #[test]
 #[ignore] // HLS streams are large (~466MB). Run manually: cargo test -p bnto -- --ignored
 fn test_m3u8_download() {
+    let sandbox = Sandbox::new();
     // End-to-end download: m3u8 (HLS) → yt-dlp → output file.
     // Big Buck Bunny via Mux test stream. Requires yt-dlp + ffmpeg.
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("download-video"), "--yes"])
         .arg("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
         .args(["-o", out.path().to_str().unwrap()])
@@ -1321,8 +1399,10 @@ fn test_m3u8_download() {
 
 #[test]
 fn test_multiple_input_files() {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("compress-images")])
         .arg(fixture_image("small.jpg"))
         .arg(fixture_image("small.png"))
@@ -1363,10 +1443,12 @@ fn read_session_log(home: &tempfile::TempDir) -> String {
 
 #[test]
 fn test_run_creates_session_log() {
+    let sandbox = Sandbox::new();
     // A normal `bnto run` should produce a session log file.
     let home = temp_output_dir();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path("compress-images")])
         .arg(fixture_image("small.jpg"))
         .args(["-o", out.path().to_str().unwrap()])
@@ -1394,9 +1476,11 @@ fn test_run_creates_session_log() {
 
 #[test]
 fn test_list_creates_session_log() {
+    let sandbox = Sandbox::new();
     // `bnto list` should also produce a session log.
     let home = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .arg("list")
         .env("BNTO_HOME", home.path())
         .output()
@@ -1413,9 +1497,11 @@ fn test_list_creates_session_log() {
 
 #[test]
 fn test_tui_creates_session_log() {
+    let sandbox = Sandbox::new();
     // TUI fails without a terminal, but the logger writes before setup.
     let home = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .arg("tui")
         .env("BNTO_HOME", home.path())
         .output()
@@ -1438,7 +1524,9 @@ fn test_tui_creates_session_log() {
 
 #[test]
 fn test_install_help_flag() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["install", "--help"])
         .output()
         .unwrap();
@@ -1460,8 +1548,10 @@ fn test_install_help_flag() {
 
 #[test]
 fn test_install_no_deps_recipe() {
+    let sandbox = Sandbox::new();
     // compress-images has no external deps — should report "no dependencies".
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["install", "compress-images", "--yes"])
         .output()
         .unwrap();
@@ -1475,7 +1565,9 @@ fn test_install_no_deps_recipe() {
 
 #[test]
 fn test_install_unknown_recipe() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["install", "nonexistent-recipe", "--yes"])
         .output()
         .unwrap();
@@ -1489,7 +1581,9 @@ fn test_install_unknown_recipe() {
 
 #[test]
 fn test_install_no_args_shows_usage() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["install", "--yes"])
         .output()
         .unwrap();
@@ -1505,10 +1599,8 @@ fn test_install_no_args_shows_usage() {
 
 #[test]
 fn test_tui_help_flag() {
-    let output = Command::new(bnto_bin())
-        .args(["tui", "--help"])
-        .output()
-        .unwrap();
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().args(["tui", "--help"]).output().unwrap();
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
@@ -1525,7 +1617,9 @@ fn test_tui_help_flag() {
 
 #[test]
 fn test_migrate_help_flag() {
-    let output = Command::new(bnto_bin())
+    let sandbox = Sandbox::new();
+    let output = sandbox
+        .command()
         .args(["migrate", "--help"])
         .output()
         .unwrap();
@@ -1543,6 +1637,7 @@ fn test_migrate_help_flag() {
 
 #[test]
 fn test_migrate_file_dry_run() {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     let file = dir.path().join("old.bnto.json");
     std::fs::write(
@@ -1551,7 +1646,8 @@ fn test_migrate_file_dry_run() {
     )
     .unwrap();
 
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["migrate", file.to_str().unwrap(), "--dry-run"])
         .output()
         .unwrap();
@@ -1577,6 +1673,7 @@ fn test_migrate_file_dry_run() {
 
 #[test]
 fn test_migrate_file_applies_changes() {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     let file = dir.path().join("recipe.bnto.json");
     std::fs::write(
@@ -1585,7 +1682,8 @@ fn test_migrate_file_applies_changes() {
     )
     .unwrap();
 
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["migrate", file.to_str().unwrap()])
         .output()
         .unwrap();
@@ -1617,6 +1715,7 @@ fn test_migrate_file_applies_changes() {
 
 #[test]
 fn test_migrate_noop_recipe() {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     let file = dir.path().join("current.bnto.json");
     std::fs::write(
@@ -1625,7 +1724,8 @@ fn test_migrate_noop_recipe() {
     )
     .unwrap();
 
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["migrate", file.to_str().unwrap()])
         .output()
         .unwrap();
@@ -1643,6 +1743,7 @@ fn test_migrate_noop_recipe() {
 
 #[test]
 fn test_migrate_directory() {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     // One file needs migration, one doesn't.
     std::fs::write(
@@ -1656,7 +1757,8 @@ fn test_migrate_directory() {
     )
     .unwrap();
 
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["migrate", dir.path().to_str().unwrap()])
         .output()
         .unwrap();
@@ -1672,8 +1774,9 @@ fn test_migrate_directory() {
 // --- Output: overwrite ---
 
 fn run_overwrite_rename(lib: &std::path::Path, pattern: &str, dry_run: bool) -> (bool, String) {
+    let sandbox = Sandbox::new();
     let pattern_param = format!("rename:pattern={pattern}");
-    let mut cmd = Command::new(bnto_bin());
+    let mut cmd = sandbox.command();
     cmd.args(["run", &custom_recipe_path("file-rename-overwrite")])
         .arg(lib)
         .args(["--yes", "-p", &pattern_param]);
@@ -1732,11 +1835,13 @@ fn test_read_json_array_names_each_item_from_a_nested_field() {
 
 #[test]
 fn test_read_json_that_is_not_an_array_fails_naming_the_file() {
+    let sandbox = Sandbox::new();
     let dir = temp_output_dir();
     let file = dir.path().join("object.json");
     std::fs::write(&file, r#"{"meta": {"id": "x"}}"#).unwrap();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args([
             "run",
             &custom_recipe_path("spreadsheet-read-json-rename"),
@@ -1779,7 +1884,8 @@ fn run_lookup_recipe(
     params: &[String],
     dry_run: bool,
 ) -> (bool, String) {
-    let mut cmd = Command::new(bnto_bin());
+    let sandbox = Sandbox::new();
+    let mut cmd = sandbox.command();
     cmd.args(["run", &custom_recipe_path(recipe)])
         .arg(lib)
         .arg("--yes");
@@ -2092,11 +2198,8 @@ fn check_fixture(name: &str) -> String {
 
 /// Run `bnto check` on `paths`: (exit ok, stdout lines).
 fn run_check(paths: &[String]) -> (bool, Vec<String>) {
-    let output = Command::new(bnto_bin())
-        .arg("check")
-        .args(paths)
-        .output()
-        .unwrap();
+    let sandbox = Sandbox::new();
+    let output = sandbox.command().arg("check").args(paths).output().unwrap();
     let stdout = String::from_utf8_lossy(&output.stdout);
     let lines = stdout.lines().map(str::to_string).collect();
     (output.status.success(), lines)
