@@ -24,6 +24,7 @@ Read all of these before making any judgments:
 **Execution state:**
 
 - `.claude/PLAN.md` — the build plan (current state, what's built, sprint tasks)
+- `.claude/ISSUES.md` — known defects. Check each `Open` issue still holds, and that `Scheduled` ones still have a plan that owns them
 
 **Vision & strategy:**
 

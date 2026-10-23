@@ -66,6 +66,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Editor user journey (frozen)   | [editor-user-journey.md](.claude/strategy/editor-user-journey.md)               |
 | Strategic direction            | [ROADMAP.md](.claude/ROADMAP.md)                                                |
 | Implementation task            | [PLAN.md](.claude/PLAN.md)                                                      |
+| Known issues to pick up        | [ISSUES.md](.claude/ISSUES.md) — verified defects, one row each                 |
 | Free vs premium decisions      | [pricing-model.md](.claude/strategy/pricing-model.md)                           |
 | Writing integration tests      | [journeys/](.claude/journeys/) — user journey test matrices                     |
 | Predefined recipes & SEO slugs | [strategy/bntos.md](.claude/strategy/bntos.md)                                  |

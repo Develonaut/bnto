@@ -41,6 +41,8 @@ Then scan `PLAN.md` for **CLAIMED** tasks — note which packages they target. T
 
 Read `.claude/PLAN.md`. Find the **current sprint** (the first sprint with unclaimed tasks).
 
+Also read `.claude/ISSUES.md`, the list of known defects. An `Open` issue can be picked up like a task. Set its status to `In progress (<branch>)`, and the fixing PR deletes it.
+
 ### Step 2: Identify the Next Task(s)
 
 - Find unclaimed tasks (`- [ ]` without **CLAIMED**) in the earliest available wave

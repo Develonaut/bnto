@@ -87,16 +87,12 @@ When bnto runs inside a git repo, it also loads `*.bnto.json` from `<git root>/.
 
 Each is a generic building block, not a dogfood special case. Each PR swaps its recipe's `shell-run` step for the node.
 
-| Gap            | Replaces                 | Shape                                                                                                                                            |
-| -------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Line count     | awk in `rust-file-size`  | `file-inspect` attaches `line_count` for text files                                                                                              |
-| Content search | grep in `unused-assets`  | Keep or drop files whose text contains a pattern: a new node or a `file-filter` content criterion, decided per `generic-building-block-nodes.md` |
-| HTTP request   | curl in `release-verify` | The `http-request` node the architecture anticipates; its own design doc first (allowlist, timeouts, consent)                                    |
+| Gap            | Replaces                 | Shape                                                                                                                                                                             |
+| -------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Line count     | awk in `rust-file-size`  | `file-inspect` attaches `line_count` for text files, with a way to skip top-level `#[cfg(test)] mod` blocks wherever they sit (counting up to the first one misses code after it) |
+| Content search | grep in `unused-assets`  | Keep or drop files whose text contains a pattern: a new node or a `file-filter` content criterion, decided per `generic-building-block-nodes.md`                                  |
+| HTTP request   | curl in `release-verify` | The `http-request` node the architecture anticipates; its own design doc first (allowlist, timeouts, consent)                                                                     |
 
 ## Found during Phase 1
 
-Not in any PR yet; each needs its own decision before it's scheduled.
-
-- **An unset field with no default reaches its step as literal template text.** `release-verify`'s `version` field, left unset, passes `{{fields.version}}` to the script, so the script has to treat a `{` as "unset". `bnto run` should stop before the first step and name the missing field (`-p version=...`).
-- **`run_loop` in `bnto/src/tui/mod.rs` is about 280 lines,** far over the 20-line function limit. The file-size recipe doesn't see function length. Splitting it is a TUI refactor of its own.
-- **The line-count gap (PR 8) needs a rule, not only a count.** `rust-file-size` skips top-level `#[cfg(test)] mod <name> { ... }` blocks wherever they sit. "Count up to the test module" would miss code placed after it, so `file-inspect`'s line count needs a way to exclude blocks, or the recipe keeps a step for that part.
+Defects Phase 1 turned up are in [ISSUES.md](../ISSUES.md): ISS-1 (unset fields reach steps as template text), ISS-4 (`run_loop` length) and ISS-5 (function length is unenforced).
