@@ -7,15 +7,16 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-10**.
+- **IDs never get reused.** The next one is **ISS-11**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
-| ID    | Issue                                                            | Area     | Status |
-| ----- | ---------------------------------------------------------------- | -------- | ------ |
-| ISS-1 | An unresolved `{{fields.*}}` template reaches its step as text   | engine   | Open   |
-| ISS-7 | The CLI's telemetry notice links `bnto.io/telemetry`, a 404      | web docs | Open   |
-| ISS-8 | Most CLI integration tests run `bnto` against the real `~/.bnto` | cli test | Open   |
-| ISS-9 | Turbo's lint cache ignores the root `eslint.config.base.mjs`     | tooling  | Open   |
+| ID     | Issue                                                            | Area     | Status |
+| ------ | ---------------------------------------------------------------- | -------- | ------ |
+| ISS-1  | An unresolved `{{fields.*}}` template reaches its step as text   | engine   | Open   |
+| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404      | web docs | Open   |
+| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto` | cli test | Open   |
+| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`     | tooling  | Open   |
+| ISS-10 | `task check` skips the crate publish checks CI runs              | tooling  | Open   |
 
 ---
 
@@ -46,3 +47,9 @@ The first-run notice (`engine/crates/bnto/src/telemetry/consent.rs:27`) says bnt
 **Found:** October 23, 2026 (ISS-5, PR #739).
 
 Every package's `eslint.config.mjs` imports `../../eslint.config.base.mjs` (or `../../../`), but `turbo.json` has no `globalDependencies` and the `lint` task declares no inputs, so the shared config isn't part of any package's lint hash. After #739 lowered `max-lines-per-function` in the base config, `task check` replayed cached lint results for `@bnto/auth` and `@bnto/i18n` (`cache hit, replaying logs`), whose own files hadn't changed. A rule change that breaks an unchanged package passes `task check` and the pre-commit hook locally and fails only in CI, which has no Turbo cache. Add the base config (and any other shared root config the tasks read) to `globalDependencies`.
+
+### ISS-10: `task check` skips the crate publish checks CI runs
+
+**Found:** October 23, 2026 (ISS-5, PR #740).
+
+CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:382-389`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.

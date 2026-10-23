@@ -52,3 +52,4 @@ All counts skip blank lines and comments.
 - **ESLint counts per file.** A file with a count of 2 could swap a fixed function for a new long one. The count still can't rise.
 - **Regenerating the baseline:** for TypeScript, run `pnpm exec eslint . --prune-suppressions` in the package once a function is fixed. Never use `--suppress-rule` to add one.
 - **Regenerating the Rust baseline** is never needed: a fixed function's `#[expect]` fails `task wasm:lint` until it's deleted. The Rust baseline started at 220 functions in 141 files.
+- **tonkotsu has its own crates.io version,** so its markers change its published files. #740 bumped it to 0.1.3 ([releases.md](../scopes/process/releases.md#one-number-everywhere)); splitting a tonkotsu function later needs a bump too.
