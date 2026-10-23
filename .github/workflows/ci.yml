@@ -124,6 +124,11 @@ jobs:
       - name: Check dogfood recipes (recipes/)
         run: ./target/debug/bnto check ../recipes/
 
+      # code-standards.md's 400-production-line cap for Rust files.
+      - name: Rust file size (recipes/rust-file-size.bnto.json)
+        working-directory: .
+        run: ./engine/target/debug/bnto run recipes/rust-file-size.bnto.json --yes
+
       - name: WASM integration tests (bnto-wasm)
         run: wasm-pack test --node crates/bnto-wasm
 

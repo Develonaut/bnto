@@ -167,3 +167,78 @@ fn release_verify_passes_a_shipped_release_and_fails_an_unshipped_one() {
         assert!(all.contains(check), "{check}: {all}");
     }
 }
+
+/// A Rust file of `production` code lines with a `test_lines` test module
+/// after them, then `trailing` more code lines.
+fn rust_file(production: usize, test_lines: usize, trailing: usize) -> String {
+    let code = |n: usize| "fn f() {}\n".repeat(n);
+    let tests = format!(
+        "#[cfg(test)]\nmod tests {{\n{}}}\n",
+        "    #[test]\n".repeat(test_lines)
+    );
+    format!("{}{tests}{}", code(production), code(trailing))
+}
+
+#[test]
+fn rust_file_size_fails_naming_each_file_over_400_production_lines() {
+    let root = temp_output_dir();
+    let root = root.path();
+    write(
+        root,
+        "engine/crates/demo/src/big.rs",
+        &rust_file(401, 10, 0),
+    );
+    // Code after the test module still counts.
+    write(
+        root,
+        "engine/crates/demo/src/split.rs",
+        &rust_file(300, 200, 101),
+    );
+    write(
+        root,
+        "engine/crates/demo/src/at_limit.rs",
+        &rust_file(400, 500, 0),
+    );
+    // Test-only files are not production code.
+    write(
+        root,
+        "engine/crates/demo/src/nested/tests.rs",
+        &rust_file(900, 0, 0),
+    );
+    write(
+        root,
+        "engine/crates/demo/tests/journey.rs",
+        &rust_file(900, 0, 0),
+    );
+
+    let output = run_in(root, &dogfood_recipe("rust-file-size"));
+    let all = text(&output);
+    assert!(!output.status.success(), "oversized files passed: {all}");
+    assert!(all.contains("engine/crates/demo/src/big.rs: 401"), "{all}");
+    assert!(
+        all.contains("engine/crates/demo/src/split.rs: 401"),
+        "{all}"
+    );
+    for fine in ["at_limit.rs", "tests.rs", "journey.rs"] {
+        assert!(!all.contains(fine), "{fine} reported: {all}");
+    }
+}
+
+#[test]
+fn rust_file_size_passes_when_every_file_is_within_the_limit() {
+    let root = temp_output_dir();
+    let root = root.path();
+    write(
+        root,
+        "engine/crates/demo/src/lib.rs",
+        &rust_file(400, 300, 0),
+    );
+    write(
+        root,
+        "engine/crates/demo/src/small.rs",
+        &rust_file(20, 0, 0),
+    );
+
+    let output = run_in(root, &dogfood_recipe("rust-file-size"));
+    assert!(output.status.success(), "{}", text(&output));
+}

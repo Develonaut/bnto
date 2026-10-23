@@ -58,6 +58,7 @@ tasks:
       - task: check:recipes
       - task: check:budgets
       - task: check:assets
+      - task: check:rust-size
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -144,6 +145,12 @@ tasks:
     deps: [cli:build]
     # --yes: the recipe's reference search is a shell step, and Task can't answer consent.
     cmds: ["{{.BNTO}} run recipes/unused-assets.bnto.json --yes"]
+
+  check:rust-size:
+    desc: Fail naming every Rust source file over 400 production lines (code-standards.md)
+    deps: [cli:build]
+    # --yes: the line count is a shell step, and Task can't answer consent.
+    cmds: ["{{.BNTO}} run recipes/rust-file-size.bnto.json --yes"]
 
   check:grab-bags:
     desc: "Fail naming every utils/helpers/hooks.ts(x) file: the ones given (task check:grab-bags -- <files>), else the staged ones"
