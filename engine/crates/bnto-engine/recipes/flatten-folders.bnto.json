@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "Collect all files from nested subdirectories into a single flat output folder. CLI/desktop only.",
+    "description": "Collect all files from nested subdirectories into a single flat output folder. CLI only.",
     "category": "file",
     "tags": ["Organize", "Flatten", "Folders", "Cleanup"]
   },

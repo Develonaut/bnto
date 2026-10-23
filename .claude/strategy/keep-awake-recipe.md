@@ -104,7 +104,7 @@ A code review of PRs 1-2 (October 21, 2026; security/Rust and web/docs reviewers
 - The category FAQ names one recipe and promises Windows/Linux; "each recipe page lists what it supports" isn't true until PR 7.
 - `/explore` excludes `system` from its category filter (`ExploreFilters.tsx`), so `/explore?category=system`, linked from breadcrumb JSON-LD, shows a blank filter.
 - Recipe metadata: "Optionally nudges" (it's on by default), "so the screen never locks" (it stops display sleep, not locks), the "No install" tag contradicts the page's "Install the CLI" card.
-- Not done: no `system` mascot (falls back to `file`), and three recipe descriptions still say "CLI/desktop only" though there's no desktop app yet.
+- Not done: no `system` mascot (falls back to `file`). The "CLI/desktop only" descriptions now say "CLI only" (follow-up).
 
 ### D: Stop CLI-only recipe pages describing a browser tool
 
@@ -300,7 +300,7 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 
 Gaps the PRs above left open on purpose, collected from their "As built" and "Not done" notes. None blocks keep-awake.
 
-- **Web:** `llms-full.txt` doesn't list a recipe's OSes (PR 7); there's no `system` mascot, and three descriptions still say "CLI/desktop only" with no desktop app yet (fix C).
+- **Web:** there's no `system` mascot (falls back to `file`), which needs artwork.
 - **Tooling:** `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9): it was an escape hatch in case `-EncodedCommand` caused trouble, and it hasn't.
 
 ## CLI journey matrix (`.claude/journeys/cli.md`, added in PR 3)

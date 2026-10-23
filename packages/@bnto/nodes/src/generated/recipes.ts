@@ -1789,7 +1789,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     slug: "download-video",
     name: "Download Video",
     description:
-      "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+      "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI only.",
     category: "video",
     tags: ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"] as const,
     os: ["macos", "linux", "windows"] as const,
@@ -1811,7 +1811,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       metadata: {
         category: "video",
         description:
-          "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI/desktop only.",
+          "Download video or audio from URLs using yt-dlp. Supports YouTube, m3u8/HLS streams, and hundreds of sites. CLI only.",
         tags: ["YouTube", "m3u8/HLS", "MP4/WebM/MKV", "Audio extraction"],
       },
       name: "Download Video",
@@ -2675,7 +2675,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     slug: "flatten-folders",
     name: "Flatten Folders",
     description:
-      "Collect all files from nested subdirectories into a single flat output folder. CLI/desktop only.",
+      "Collect all files from nested subdirectories into a single flat output folder. CLI only.",
     category: "file",
     tags: ["Organize", "Flatten", "Folders", "Cleanup"] as const,
     os: ["macos", "linux", "windows"] as const,
@@ -2697,7 +2697,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       metadata: {
         category: "file",
         description:
-          "Collect all files from nested subdirectories into a single flat output folder. CLI/desktop only.",
+          "Collect all files from nested subdirectories into a single flat output folder. CLI only.",
         tags: ["Organize", "Flatten", "Folders", "Cleanup"],
       },
       name: "Flatten Folders",
@@ -2788,7 +2788,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
     slug: "keep-awake",
     name: "Keep Awake",
     description:
-      "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
+      "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI only.",
     category: "system",
     tags: ["macOS", "Linux", "Windows", "Sleep prevention", "Activity simulation"] as const,
     os: ["macos", "linux", "windows"] as const,
@@ -2810,7 +2810,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
       metadata: {
         category: "system",
         description:
-          "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
+          "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI only.",
         tags: ["macOS", "Linux", "Windows", "Sleep prevention", "Activity simulation"],
       },
       name: "Keep Awake",
