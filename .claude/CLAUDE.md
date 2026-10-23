@@ -83,6 +83,7 @@ Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourse
 | Cloud execution (Railway)      | [cloud-execution.md](.claude/strategy/cloud-execution.md)                       |
 | Keep Awake + conditional steps | [keep-awake-recipe.md](.claude/strategy/keep-awake-recipe.md) — done; record    |
 | CLI upgrade notices            | [cli-upgrade.md](.claude/strategy/cli-upgrade.md)                               |
+| Dogfooding bnto in this repo   | [dogfooding.md](.claude/strategy/dogfooding.md) — PR tracker                    |
 | TUI snapshots + journey tests  | [tui-testing.md](.claude/strategy/tui-testing.md)                               |
 
 ---
