@@ -1,7 +1,7 @@
 # Dogfooding bnto in its own repo
 
 **Created:** October 23, 2026
-**Status:** In progress. The working tracker for this effort: update the table below in every PR that moves a row.
+**Status:** Phase 1 done (October 23, 2026); Phase 2 waits for Ryan's go-ahead. The working tracker for this effort: update the table below in every PR that moves a row.
 **Related:** [recipes/README.md](../../recipes/README.md) (the dogfood recipes), [core-principles.md](core-principles.md), [generic-building-block-nodes.md](../decisions/generic-building-block-nodes.md)
 
 ## Tracker
@@ -12,10 +12,11 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | --- | -------------------------------------------------- | ------------------------------ | ------------- |
 | 0   | Record the dogfooding plan                         | `docs/dogfooding-plan`         | Merged (#725) |
 | 1   | Delete the unused web assets                       | `chore/delete-unused-assets`   | Merged (#726) |
-| 2   | Fail on unused web assets, check assets on web PRs | `feat/unused-assets-check`     | Not started   |
-| 3   | Split `node_types.rs` under 400 production lines   | `refactor/split-node-types`    | Not started   |
-| 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Not started   |
-| 5   | Verify a release shipped                           | `feat/release-verify`          | Not started   |
+| 2   | Fail on unused web assets, check assets on web PRs | `feat/unused-assets-check`     | Merged (#728) |
+| 3   | Split `node_types.rs` under 400 production lines   | `refactor/split-node-types`    | Merged (#727) |
+| 3b  | Move the TUI's terminal setup out of `tui/mod.rs`  | `refactor/tui-terminal-module` | Merged (#729) |
+| 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Merged (#731) |
+| 5   | Verify a release shipped                           | `feat/release-verify`          | Merged (#730) |
 | 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Not started   |
 | 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Not started   |
 | 7a  | Source kinds and project consent                   | `feat/recipe-source-kinds`     | Not started   |
@@ -29,7 +30,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 ```
 Phase 0  record the plan
 Phase 1  1 delete assets ─► 2 unused-assets check
-         3 split node_types.rs ─► 4 Rust size limit
+         3 split node_types.rs, 3b tui/mod.rs ─► 4 Rust size limit
          5 release-verify                          (independent)
 Phase 2  6a telemetry · 6b list test                (independent)
          7a source kinds ─► 7b load ─► 7c TUI ─► 7d move recipes
@@ -61,7 +62,7 @@ Git hooks stay shell scripts: a hook can't count on a contributor having a built
 - **About 60% of the web's non-WASM assets looked unused.** 1.7 MB of `apps/web/public` (2.9 MB without the WASM bundle) was referenced nowhere: `logos/`, `testimonials/`, `investors/`, `resource-allocation/`, `about/`, `features/` (one card embeds two base64 PNGs, 391 KB), `hero.webp`, `logo.svg`, `footer.svg`, `mascots/sushi-shoyu-alt.svg`. They date from the February UI consolidation (b9b01143), and no homepage plan uses them. **Decided: delete them all** (PR 1).
 - **Web-only PRs skipped the size budget.** It runs in the engine job, which `apps/**` changes don't trigger (PR 2 fixes this).
 - **Optimizing SVGs isn't worth it.** bnto's own `optimize-svg` over all 39 SVGs saved 1.5% (1.87 MB to 1.84 MB). The WebPs were already made with cwebp.
-- **The Rust 400-production-line limit wasn't enforced** (only TypeScript's, through ESLint `max-lines`). One file was over: `bnto-core/src/metadata/node_types.rs` (451). **Decided: split it** (PR 3), then enforce the limit (PR 4).
+- **The Rust 400-production-line limit wasn't enforced** (only TypeScript's, through ESLint `max-lines`). One file was over: `bnto-core/src/metadata/node_types.rs` (451). **Decided: split it** (PR 3), then enforce the limit (PR 4). Counting strictly for PR 4 found a second, `bnto/src/tui/mod.rs` (406), which an early `#[cfg(test)] use` had hidden from a "count up to the first `#[cfg(test)]`" rule (PR 3b).
 - **Checking a release was manual.** After v0.18.0, crates.io, the GitHub Release and the production deploy were checked by hand (PR 5).
 - **Repo recipes are invisible to bnto.** `RecipeCatalog::load` reads only bundled recipes and the user's library, so `bnto list` and `bnto tui` can't see them (PRs 7a-7d).
 - **Existing issues found along the way:** telemetry sends custom recipe names and run-by-path file paths as `slug` (PR 6a), and `test_list_command` reads the developer's real `~/.bnto` (PR 6b).
@@ -91,3 +92,11 @@ Each is a generic building block, not a dogfood special case. Each PR swaps its 
 | Line count     | awk in `rust-file-size`  | `file-inspect` attaches `line_count` for text files                                                                                              |
 | Content search | grep in `unused-assets`  | Keep or drop files whose text contains a pattern: a new node or a `file-filter` content criterion, decided per `generic-building-block-nodes.md` |
 | HTTP request   | curl in `release-verify` | The `http-request` node the architecture anticipates; its own design doc first (allowlist, timeouts, consent)                                    |
+
+## Found during Phase 1
+
+Not in any PR yet; each needs its own decision before it's scheduled.
+
+- **An unset field with no default reaches its step as literal template text.** `release-verify`'s `version` field, left unset, passes `{{fields.version}}` to the script, so the script has to treat a `{` as "unset". `bnto run` should stop before the first step and name the missing field (`-p version=...`).
+- **`run_loop` in `bnto/src/tui/mod.rs` is about 280 lines,** far over the 20-line function limit. The file-size recipe doesn't see function length. Splitting it is a TUI refactor of its own.
+- **The line-count gap (PR 8) needs a rule, not only a count.** `rust-file-size` skips top-level `#[cfg(test)] mod <name> { ... }` blocks wherever they sit. "Count up to the test module" would miss code placed after it, so `file-inspect`'s line count needs a way to exclude blocks, or the recipe keeps a step for that part.
