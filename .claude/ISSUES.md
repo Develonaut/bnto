@@ -7,15 +7,16 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-11**.
+- **IDs never get reused.** The next one is **ISS-12**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
-| ID     | Issue                                                            | Area     | Status |
-| ------ | ---------------------------------------------------------------- | -------- | ------ |
-| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404      | web docs | Open   |
-| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto` | cli test | Open   |
-| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`     | tooling  | Open   |
-| ISS-10 | `task check` skips the crate publish checks CI runs              | tooling  | Open   |
+| ID     | Issue                                                                  | Area     | Status |
+| ------ | ---------------------------------------------------------------------- | -------- | ------ |
+| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404            | web docs | Open   |
+| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`       | cli test | Open   |
+| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`           | tooling  | Open   |
+| ISS-10 | `task check` skips the crate publish checks CI runs                    | tooling  | Open   |
+| ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths | cli      | Open   |
 
 ---
 
@@ -42,3 +43,9 @@ Every package's `eslint.config.mjs` imports `../../eslint.config.base.mjs` (or `
 **Found:** October 23, 2026 (ISS-5, PR #740).
 
 CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:382-389`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.
+
+### ISS-11: The consent prompt suggests `bnto dry-run <path>`, which refuses paths
+
+**Found:** October 23, 2026 (ISS-1 part 2).
+
+When `bnto run` asks for consent, it suggests running `bnto dry-run {recipe_arg}` to inspect the commands (`engine/crates/bnto/src/consent.rs:42`), and declining says so again. For a recipe run by path, that command fails: `show_dry_run` resolves only catalog slugs (`engine/crates/bnto/src/inspect.rs`, `catalog.resolve(slug)`), so `bnto dry-run recipes/release-verify.bnto.json` prints `Error: Unknown recipe: …` and exits 1. Either let `bnto dry-run` read a recipe file as `bnto run` does (`run.rs` `read_recipe`), or suggest it only for slugs.

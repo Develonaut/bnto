@@ -46,10 +46,13 @@ fn sec15_editing_an_approved_recipe_asks_again() {
 #[test]
 fn sec16_consent_shows_the_full_command_line() {
     let lab = Lab::new();
-    let recipe = lab.recipe(step(
+    let mut node = step(
         json!({ "command": "git", "args": ["log", "--format=%H", "{{fields.v}}"] }),
         &["v"],
-    ));
+    );
+    // A value for `v`: an unset field is refused before the prompt (ISS-1).
+    node["fields"]["v"]["default"] = json!("HEAD");
+    let recipe = lab.recipe(node);
     let out = lab.run_answering(&recipe, "n\n");
     assert!(
         out.text.contains("git log --format=%H {{fields.v}}"),

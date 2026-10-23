@@ -6,6 +6,7 @@ use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
+use crate::unfilled_fields::refuse_unfilled;
 use crate::{dry_run, host_support, info, list};
 
 /// `bnto list` — print the catalog grouped by category.
@@ -31,6 +32,7 @@ pub fn show_dry_run(
     catalog: &RecipeCatalog,
 ) {
     refuse_unsupported_host(slug, catalog);
+    refuse_unfilled_fields(slug, param_overrides, catalog);
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
     if let Some(entry) = catalog.resolve(slug)
@@ -53,6 +55,17 @@ fn refuse_unsupported_host(slug: &str, catalog: &RecipeCatalog) {
     };
     let host = bnto_core::HostPlatform::current();
     if let Some(why) = host_support::unsupported_host(slug, &entry.definition_json, host) {
+        eprintln!("{} {why}", "Error:".red());
+        process::exit(1);
+    }
+}
+
+/// Stop a recipe with a `{{fields.*}}` nothing fills, as `bnto run` does.
+fn refuse_unfilled_fields(slug: &str, param_overrides: &[String], catalog: &RecipeCatalog) {
+    let Some(entry) = catalog.resolve(slug) else {
+        return;
+    };
+    if let Err(why) = refuse_unfilled(&entry.definition_json, param_overrides) {
         eprintln!("{} {why}", "Error:".red());
         process::exit(1);
     }

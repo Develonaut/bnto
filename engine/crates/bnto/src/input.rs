@@ -189,7 +189,7 @@ fn inject_param_in_nodes(
 /// If the target node declares a matching field, the field's default is
 /// updated so `collect_field_values()` picks it up. Otherwise, falls back
 /// to raw param injection.
-fn apply_param_overrides(
+pub(crate) fn apply_param_overrides(
     def: &mut PipelineDefinition,
     overrides: &[String],
     default_node_id: Option<&str>,
