@@ -276,12 +276,35 @@ fn sec37_the_value_variables_belong_to_args() {
 fn sec21_sec25_powershell_scripts_are_checked_like_posix_ones() {
     let lab = Lab::new();
     for shell in ["powershell", "pwsh"] {
-        let ok = lab.check(&lab.recipe(ps_step(shell, "Write-Output 1", json!([]), &[])));
+        let ok = lab.check(&lab.recipe(windows_only(ps_step(
+            shell,
+            "Write-Output 1",
+            json!([]),
+            &[],
+        ))));
         assert!(ok.ok, "{shell} refused: {}", ok.text);
         let templated = ps_step(shell, "Write-Output {{fields.v}}", json!([]), &["v"]);
-        let out = lab.check(&lab.recipe(templated));
+        let out = lab.check(&lab.recipe(windows_only(templated)));
         assert!(!out.ok, "{shell}: a template in the script was accepted");
     }
+}
+
+/// `bnto check` refuses Windows PowerShell on a step that can run elsewhere,
+/// and accepts pwsh anywhere.
+#[test]
+fn check_refuses_windows_powershell_off_windows() {
+    let lab = Lab::new();
+    let out = lab.check(&lab.recipe(ps_step("powershell", "Write-Output 1", json!([]), &[])));
+    assert!(!out.ok, "an unguarded powershell step passed: {}", out.text);
+    assert!(out.text.contains("which only Windows has"), "{}", out.text);
+    let out = lab.check(&lab.recipe(ps_step("pwsh", "Write-Output 1", json!([]), &[])));
+    assert!(out.ok, "pwsh refused: {}", out.text);
+}
+
+/// `step` guarded to run on Windows only.
+fn windows_only(mut step: Value) -> Value {
+    step["when"] = json!({ "value": "{{ctx.platform}}", "op": "equals", "expected": "windows" });
+    step
 }
 
 /// Not a SEC row: what a script prints, how it fails and how it exits.

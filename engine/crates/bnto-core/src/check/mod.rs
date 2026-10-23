@@ -7,6 +7,7 @@
 // A param left out for `bnto run -p` to give is a note, not a problem.
 
 mod edges;
+mod os_scope;
 mod placeholder;
 mod run_time;
 mod when;
@@ -69,8 +70,29 @@ pub fn check_pipeline(definition: &PipelineDefinition, registry: &NodeRegistry) 
         root: &definition.nodes,
         registry,
     };
-    check_level(&root, &FieldValues::new(), &recipe, &mut report);
+    let scope = Scope {
+        fields: FieldValues::new(),
+        platforms: os_scope::PLATFORMS.to_vec(),
+    };
+    check_level(&root, &scope, &recipe, &mut report);
     report
+}
+
+/// What a node inherits from the containers above it: the field values they
+/// declare and the platforms their guards leave.
+struct Scope {
+    fields: FieldValues,
+    platforms: Vec<&'static str>,
+}
+
+impl Scope {
+    /// The scope inside `node`: its fields declared, its guard applied.
+    fn enter(&self, node: &PipelineNode) -> Self {
+        Self {
+            fields: declare(&self.fields, &node.fields),
+            platforms: os_scope::narrow(&self.platforms, node),
+        }
+    }
 }
 
 /// What every level's check needs from the whole recipe.
@@ -80,32 +102,24 @@ struct Recipe<'a> {
 }
 
 /// Check a level's edges, then its nodes in order, recursing into container
-/// children. `fields` are the field values its containers declare.
-fn check_level(
-    level: &Level<'_>,
-    fields: &FieldValues,
-    recipe: &Recipe<'_>,
-    report: &mut CheckReport,
-) {
+/// children. `scope` is what its containers pass down.
+fn check_level(level: &Level<'_>, scope: &Scope, recipe: &Recipe<'_>, report: &mut CheckReport) {
     report.findings.extend(edge_findings(level, recipe.root));
     for node in level.nodes {
-        check_node(node, &declare(fields, &node.fields), recipe, report);
+        check_node(node, &scope.enter(node), recipe, report);
     }
 }
 
-/// Check one node; `fields` are the values it sees, its own included.
-fn check_node(
-    node: &PipelineNode,
-    fields: &FieldValues,
-    recipe: &Recipe<'_>,
-    report: &mut CheckReport,
-) {
+/// Check one node; `scope` is what it sees, its own fields and guard included.
+fn check_node(node: &PipelineNode, scope: &Scope, recipe: &Recipe<'_>, report: &mut CheckReport) {
     if is_io_node(&node.node_type) {
         report.findings.extend(io_always_finding(node));
         report.findings.extend(when::io_when_finding(node));
+        report.findings.extend(os_scope::io_requires_finding(node));
         return;
     }
     report.findings.extend(when::when_findings(node));
+    report.findings.extend(os_scope::guard_finding(node));
     if is_container_node(&node.node_type) {
         report.findings.extend(placeholder_findings(node));
         let children = Level {
@@ -113,9 +127,11 @@ fn check_node(
             edges: &node.edges,
             owner: Some(node),
         };
-        check_level(&children, fields, recipe, report);
+        check_level(&children, scope, recipe, report);
     } else {
-        check_processor(node, fields, recipe, report);
+        let unreachable = os_scope::unreachable_finding(node, &scope.platforms);
+        report.findings.extend(unreachable);
+        check_processor(node, scope, recipe, report);
         report.findings.extend(placeholder_findings(node));
     }
 }
@@ -128,7 +144,7 @@ fn check_node(
 /// as written.
 fn check_processor(
     node: &PipelineNode,
-    fields: &FieldValues,
+    scope: &Scope,
     recipe: &Recipe<'_>,
     report: &mut CheckReport,
 ) {
@@ -138,10 +154,12 @@ fn check_processor(
     };
     report.findings.extend(undeclared_findings(node, processor));
     let raw = processor.validate_raw(&node.params).into_iter();
-    report
-        .findings
-        .extend(raw.map(|problem| finding(node, None, problem)));
-    let params = resolve_fields(&node.params, fields);
+    let on_platforms = processor.platform_problems(&node.params, &scope.platforms);
+    report.findings.extend(
+        raw.chain(on_platforms)
+            .map(|problem| finding(node, None, problem)),
+    );
+    let params = resolve_fields(&node.params, &scope.fields);
     let written = processor.validate(&params);
     if written.is_empty() {
         return;

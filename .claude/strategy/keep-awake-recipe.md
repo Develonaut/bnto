@@ -301,7 +301,6 @@ Gaps the PRs above left open on purpose, collected from their "As built" and "No
 
 - **macOS tests in CI:** `bnto/tests/keep_awake.rs` is macOS-gated and CI has no macOS job, so the macOS round trips run only locally (fix A).
 - **Unsupported host in the TUI and `bnto dry-run`:** only `bnto run` refuses; a TUI run there skips every step (PR 6). `bnto check` doesn't flag a recipe that runs nowhere.
-- **`bnto check` gaps:** `requires` on an `input`/`output` node isn't flagged (PR 8); neither is a `powershell` step outside a Windows guard (PR 9). A group guarded for an OS bnto has no name for has its `requires` checked nowhere (PR 8).
 - **Web:** `llms-full.txt` doesn't list a recipe's OSes (PR 7); there's no `system` mascot, and three descriptions still say "CLI/desktop only" with no desktop app yet (fix C).
 - **Tooling:** CI's ShellCheck isn't version-pinned (fix E); `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9).
 

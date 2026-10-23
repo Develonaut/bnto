@@ -63,21 +63,21 @@ fn children(node: &PipelineNode) -> &[PipelineNode] {
 /// no; any other guard (a field, a loop item, an earlier step's record)
 /// may hold on every OS.
 fn guard_allows(when: Option<&When>, os: HostPlatform) -> bool {
-    match when.map(|when| (when, platform_op(when))) {
-        Some((when, Some(op))) => compare(os.as_str(), op, &when.expected).is_ok(),
-        _ => true,
+    match when.and_then(platform_guard) {
+        Some((op, expected)) => compare(os.as_str(), op, expected).is_ok(),
+        None => true,
     }
 }
 
-/// The op of a platform guard: `value` exactly `{{ctx.platform}}`, `op`
-/// equals or not-equals, and a literal `expected`. `None` for any other.
-fn platform_op(when: &When) -> Option<Op> {
+/// A platform guard's op and expected value: `value` exactly
+/// `{{ctx.platform}}`, `op` equals or not-equals, and a literal `expected`.
+/// `None` for any other guard.
+pub fn platform_guard(when: &When) -> Option<(Op, &str)> {
     if when.value != PLATFORM || when.expected.contains("{{") {
         return None;
     }
-    when.op()
-        .ok()
-        .filter(|op| matches!(op, Op::Equals | Op::NotEquals))
+    let op = when.op().ok()?;
+    matches!(op, Op::Equals | Op::NotEquals).then_some((op, when.expected.as_str()))
 }
 
 #[cfg(test)]

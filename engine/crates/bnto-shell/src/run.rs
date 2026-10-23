@@ -111,6 +111,18 @@ impl NodeProcessor for ShellRun {
         ]
     }
 
+    fn platform_problems(
+        &self,
+        params: &serde_json::Map<String, serde_json::Value>,
+        platforms: &[&str],
+    ) -> Vec<String> {
+        if script::script(params).is_none() {
+            return Vec::new();
+        }
+        let problem = powershell::platform_problem(script::shell_name(params), platforms);
+        problem.into_iter().collect()
+    }
+
     fn validate_raw(&self, raw: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
         crate::raw_checks::raw_problems(raw)
     }
