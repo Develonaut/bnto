@@ -76,7 +76,7 @@ export const CATEGORIES: readonly CategoryInfo[] = [
   {
     name: "video",
     label: "Video",
-    description: "Video operations — download, transcode (CLI/desktop only).",
+    description: "Video operations — download, transcode (CLI only).",
   },
 ] as const;
 

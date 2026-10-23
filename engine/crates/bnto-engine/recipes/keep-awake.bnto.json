@@ -8,7 +8,7 @@
     "y": 0
   },
   "metadata": {
-    "description": "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI/desktop only.",
+    "description": "Keep your computer awake for a set time or until you stop it. By default it also nudges the cursor once you go idle, so chat apps don't mark you Away. Start a session, come back later and run Stop. CLI only.",
     "category": "system",
     "tags": ["macOS", "Linux", "Windows", "Sleep prevention", "Activity simulation"]
   },
