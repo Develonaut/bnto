@@ -31,6 +31,7 @@ pub mod screen;
 mod screen_snapshots;
 pub mod screens;
 mod strip_ansi;
+mod terminal;
 pub mod theme;
 pub mod widgets;
 mod wrap_lines;
@@ -42,10 +43,6 @@ use std::time::{Duration, Instant};
 use bnto_core::events::PipelineEvent;
 use bnto_core::logging::{LogEntry, LogLevel, Logger};
 use crossterm::event::Event;
-use crossterm::terminal::{self, EnterAlternateScreen, LeaveAlternateScreen};
-use crossterm::{event as crossterm_event, execute};
-use ratatui::Terminal;
-use ratatui::backend::CrosstermBackend;
 
 use crate::output_names::OutputNames;
 
@@ -80,8 +77,8 @@ pub fn launch_tui(
         elapsed_us: None,
     });
 
-    install_panic_hook();
-    let terminal = setup_terminal();
+    terminal::install_panic_hook();
+    let terminal = terminal::setup();
     logger.flush(); // Flush the init entry even if setup fails.
     let mut terminal = terminal?;
 
@@ -94,40 +91,13 @@ pub fn launch_tui(
         paths,
     );
     logger.flush();
-    restore_terminal(&mut terminal)?;
+    terminal::restore(&mut terminal)?;
     result
-}
-
-/// Install a panic hook that restores the terminal before printing the panic.
-fn install_panic_hook() {
-    let original_hook = std::panic::take_hook();
-    std::panic::set_hook(Box::new(move |panic_info| {
-        let _ = terminal::disable_raw_mode();
-        let _ = execute!(io::stderr(), LeaveAlternateScreen);
-        original_hook(panic_info);
-    }));
-}
-
-/// Enter raw mode, switch to alternate screen, create terminal.
-fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<io::Stderr>>> {
-    terminal::enable_raw_mode()?;
-    let mut stderr = io::stderr();
-    execute!(stderr, EnterAlternateScreen)?;
-    execute!(stderr, crossterm_event::DisableMouseCapture)?;
-    let backend = CrosstermBackend::new(io::stderr());
-    Terminal::new(backend)
-}
-
-/// Leave alternate screen, disable raw mode, show cursor.
-fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<io::Stderr>>) -> io::Result<()> {
-    terminal::disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-    terminal.show_cursor()
 }
 
 /// Main event loop — poll input, update state, render.
 fn run_loop(
-    terminal: &mut Terminal<CrosstermBackend<io::Stderr>>,
+    terminal: &mut terminal::TuiTerminal,
     variant: ThemeVariant,
     recipe_json: Option<String>,
     new_recipe: bool,
