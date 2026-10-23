@@ -11,7 +11,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | #   | PR                                                 | Branch                         | Status        |
 | --- | -------------------------------------------------- | ------------------------------ | ------------- |
 | 0   | Record the dogfooding plan                         | `docs/dogfooding-plan`         | Merged (#725) |
-| 1   | Delete the unused web assets                       | `chore/delete-unused-assets`   | Not started   |
+| 1   | Delete the unused web assets                       | `chore/delete-unused-assets`   | Merged (#726) |
 | 2   | Fail on unused web assets, check assets on web PRs | `feat/unused-assets-check`     | Not started   |
 | 3   | Split `node_types.rs` under 400 production lines   | `refactor/split-node-types`    | Not started   |
 | 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Not started   |
