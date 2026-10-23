@@ -2,7 +2,9 @@
 // Each test file compiles as a separate crate — not all helpers are used by every file.
 #![allow(dead_code)]
 
-use std::process::Command;
+mod sandbox;
+
+pub use sandbox::Sandbox;
 
 /// Path to the compiled CLI binary.
 pub fn bnto_bin() -> String {
@@ -26,6 +28,20 @@ fn repo_root() -> std::path::PathBuf {
     engine_root().parent().unwrap().to_path_buf()
 }
 
+/// Every bundled recipe's slug (the engine's recipe file names), sorted.
+pub fn bundled_slugs() -> Vec<String> {
+    let dir = engine_root().join("crates/bnto-engine/recipes");
+    let mut slugs: Vec<String> = std::fs::read_dir(dir)
+        .unwrap()
+        .filter_map(|entry| {
+            let name = entry.ok()?.file_name().to_string_lossy().into_owned();
+            name.strip_suffix(".bnto.json").map(str::to_string)
+        })
+        .collect();
+    slugs.sort();
+    slugs
+}
+
 pub fn recipe_path(slug: &str) -> String {
     engine_root()
         .join(format!("crates/bnto-engine/recipes/{slug}.bnto.json"))
@@ -43,8 +59,10 @@ pub fn custom_recipe_path(slug: &str) -> String {
 
 /// Run a custom recipe fixture and assert it succeeds.
 pub fn run_custom_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &custom_recipe_path(slug), "--yes"])
         .arg(fixture)
         .args(["-o", out.path().to_str().unwrap()])
@@ -66,8 +84,10 @@ pub fn explicit_recipe_path(slug: &str) -> String {
 
 /// Run an explicit recipe fixture and assert it succeeds, returning stderr output.
 pub fn run_explicit_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &explicit_recipe_path(slug), "--yes"])
         .arg(fixture)
         .args(["-o", out.path().to_str().unwrap()])
@@ -124,8 +144,10 @@ pub fn temp_output_dir() -> tempfile::TempDir {
 
 /// Run a recipe and assert it succeeds, returning stderr output.
 pub fn run_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path(slug), "--yes"])
         .arg(fixture)
         .args(["-o", out.path().to_str().unwrap()])
@@ -139,8 +161,9 @@ pub fn run_recipe_ok(slug: &str, fixture: &str) -> (tempfile::TempDir, String) {
 
 /// Run a recipe with multiple input files and assert it succeeds.
 pub fn run_recipe_ok_multi(slug: &str, fixtures: &[String]) -> (tempfile::TempDir, String) {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let mut cmd = Command::new(bnto_bin());
+    let mut cmd = sandbox.command();
     cmd.args(["run", &recipe_path(slug), "--yes"]);
     for f in fixtures {
         cmd.arg(f);
@@ -158,8 +181,9 @@ pub fn run_explicit_recipe_ok_multi(
     slug: &str,
     fixtures: &[String],
 ) -> (tempfile::TempDir, String) {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let mut cmd = Command::new(bnto_bin());
+    let mut cmd = sandbox.command();
     cmd.args(["run", &explicit_recipe_path(slug), "--yes"]);
     for f in fixtures {
         cmd.arg(f);
@@ -177,8 +201,10 @@ pub fn run_explicit_recipe_ok_multi(
 
 /// Run a recipe with a directory input and assert it succeeds.
 pub fn run_recipe_ok_dir(slug: &str, input_dir: &std::path::Path) -> (tempfile::TempDir, String) {
+    let sandbox = Sandbox::new();
     let out = temp_output_dir();
-    let output = Command::new(bnto_bin())
+    let output = sandbox
+        .command()
         .args(["run", &recipe_path(slug), "--yes"])
         .arg(input_dir.to_str().unwrap())
         .args(["-o", out.path().to_str().unwrap()])
