@@ -21,7 +21,7 @@ resolver = "2"
 # The release version: every bnto crate inherits it, and a stable release tag
 # must match it (scripts/check-release-version.sh), so the site, crates.io and
 # `bnto --version` show one number. Bump with `task version:bump -- X.Y.Z`.
-version = "0.17.1"
+version = "0.18.0"
 # Minimum supported Rust version for `cargo install bnto` and library users.
 # This is the oldest compiler the code builds on, not the toolchain CI and
 # contributors use (that's pinned in rust-toolchain.toml). Raise it when code
@@ -32,14 +32,14 @@ rust-version = "1.88"
 [workspace.dependencies]
 # Workspace crates. Their `version` is the release version above;
 # `task version:bump` moves them together. tonkotsu is versioned on its own.
-bnto-core = { path = "crates/bnto-core", version = "0.17.1" }
-bnto-encode = { path = "crates/bnto-encode", version = "0.17.1" }
-bnto-spreadsheet = { path = "crates/bnto-spreadsheet", version = "0.17.1" }
-bnto-file = { path = "crates/bnto-file", version = "0.17.1" }
-bnto-image = { path = "crates/bnto-image", version = "0.17.1" }
-bnto-vector = { path = "crates/bnto-vector", version = "0.17.1" }
-bnto-shell = { path = "crates/bnto-shell", version = "0.17.1" }
-bnto-engine = { path = "crates/bnto-engine", version = "0.17.1" }
+bnto-core = { path = "crates/bnto-core", version = "0.18.0" }
+bnto-encode = { path = "crates/bnto-encode", version = "0.18.0" }
+bnto-spreadsheet = { path = "crates/bnto-spreadsheet", version = "0.18.0" }
+bnto-file = { path = "crates/bnto-file", version = "0.18.0" }
+bnto-image = { path = "crates/bnto-image", version = "0.18.0" }
+bnto-vector = { path = "crates/bnto-vector", version = "0.18.0" }
+bnto-shell = { path = "crates/bnto-shell", version = "0.18.0" }
+bnto-engine = { path = "crates/bnto-engine", version = "0.18.0" }
 tonkotsu = { path = "crates/tonkotsu", version = "0.1.2" }
 wasm-bindgen = "0.2"
 js-sys = "0.3"
