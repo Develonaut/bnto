@@ -246,7 +246,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 **RED tests:** the badge renders for `keep-awake` (Mac only); nothing renders when `os` is all three or the recipe is browser-capable. Read `scopes/web/components.md` + `theming.md` first.
 **Verification:** `task ui:build && task ui:test && task ui:lint && task e2e && task seo:audit` (regenerate page screenshots if the layout shifts).
 **Count changes:** none.
-**As built:** `@bnto/registry` `recipeOsLabels` and `getRecipeOsBadge` ("macOS only", `null` for a browser recipe, one that runs everywhere, or one without `os`). `apps/web/components/blocks/RecipeOsBadge.tsx` (outline `Badge`, `data-testid="recipe-os-badge-<slug>"`) sits beside "CLI Only" in `CliPromo` and beside the category on `ExploreRecipeCard` (explore grid, related recipes). It reads `@bnto/registry`, as `CliPromo` already does, because the recipe page is a server component and `@bnto/core` is client-only. CLI recipes' JSON-LD now claims `operatingSystem` ("macOS", "macOS, Linux, Windows") from `BntoEntry.operatingSystems`. No page screenshots exist to regenerate. Not done: `llms-full.txt` doesn't list a recipe's OSes.
+**As built:** `@bnto/registry` `recipeOsLabels` and `getRecipeOsBadge` ("macOS only", `null` for a browser recipe, one that runs everywhere, or one without `os`). `apps/web/components/blocks/RecipeOsBadge.tsx` (outline `Badge`, `data-testid="recipe-os-badge-<slug>"`) sits beside "CLI Only" in `CliPromo` and beside the category on `ExploreRecipeCard` (explore grid, related recipes). It reads `@bnto/registry`, as `CliPromo` already does, because the recipe page is a server component and `@bnto/core` is client-only. CLI recipes' JSON-LD now claims `operatingSystem` ("macOS", "macOS, Linux, Windows") from `BntoEntry.operatingSystems`. No page screenshots exist to regenerate. `llms-full.txt` lists a CLI recipe's OSes (`- Runs on:`) since a follow-up.
 
 ### PR 8: Scope dependencies to the steps that use them
 
@@ -300,7 +300,7 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 
 Gaps the PRs above left open on purpose, collected from their "As built" and "Not done" notes. None blocks keep-awake.
 
-- **Web:** `llms-full.txt` doesn't list a recipe's OSes (PR 7); there's no `system` mascot, and three descriptions still say "CLI/desktop only" with no desktop app yet (fix C).
+- **Web:** there's no `system` mascot (falls back to `file`), which needs artwork.
 - **Tooling:** `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9): it was an escape hatch in case `-EncodedCommand` caused trouble, and it hasn't.
 
 ## CLI journey matrix (`.claude/journeys/cli.md`, added in PR 3)

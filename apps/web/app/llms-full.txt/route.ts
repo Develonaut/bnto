@@ -3,6 +3,7 @@ import {
   getBrowserRecipes,
   getCliRunCommand,
   isRecipeBrowserCapable,
+  recipeOsLabels,
 } from "@bnto/registry";
 import type { Recipe } from "@bnto/registry";
 import { BASE_URL } from "@/lib/constants";
@@ -20,6 +21,13 @@ function formatInput(r: Recipe) {
     : `- Run: ${getCliRunCommand(r)}`;
 }
 
+/** The OSes a CLI-only recipe runs on; a browser recipe runs in any browser. */
+function formatOs(r: Recipe) {
+  const labels = recipeOsLabels(r.os);
+  if (isRecipeBrowserCapable(r) || labels.length === 0) return [];
+  return [`- Runs on: ${labels.join(", ")}`];
+}
+
 function formatRecipe(r: Recipe, platform: string) {
   return [
     `### ${r.name}`,
@@ -27,6 +35,7 @@ function formatRecipe(r: Recipe, platform: string) {
     `- Description: ${r.description}`,
     `- Category: ${r.category}`,
     formatInput(r),
+    ...formatOs(r),
     `- Features: ${r.features.join(", ")}`,
     `- Platform: ${platform}`,
     "- Cost: Free",
