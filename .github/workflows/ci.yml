@@ -26,10 +26,13 @@ jobs:
         id: filter
         with:
           filters: |
+            # A change to this workflow runs the jobs it could break.
             engine:
               - 'engine/**'
               - 'recipes/**'
+              - '.github/workflows/ci.yml'
             web:
+              - '.github/workflows/ci.yml'
               - 'apps/**'
               - 'packages/**'
               - 'pnpm-lock.yaml'
@@ -66,11 +69,26 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
 
+      # A fixed ShellCheck, so a runner-image update can't change what the
+      # bundled-script lint finds. /usr/local/bin comes before the image's
+      # copy in PATH. To bump: change the version and the checksum together.
+      - name: Install ShellCheck (pinned)
+        env:
+          SHELLCHECK_VERSION: v0.11.0
+          SHELLCHECK_SHA256: 8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/shellcheck.tar.xz" \
+            "https://github.com/koalaman/shellcheck/releases/download/$SHELLCHECK_VERSION/shellcheck-$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
+          echo "$SHELLCHECK_SHA256  $RUNNER_TEMP/shellcheck.tar.xz" | sha256sum -c -
+          tar -xJf "$RUNNER_TEMP/shellcheck.tar.xz" -C "$RUNNER_TEMP"
+          sudo install "$RUNNER_TEMP/shellcheck-$SHELLCHECK_VERSION/shellcheck" /usr/local/bin/shellcheck
+          shellcheck --version | grep -q "version: ${SHELLCHECK_VERSION#v}"
+
       - name: Unit tests (native)
         run: cargo test --workspace --exclude bnto
         env:
-          # ubuntu-latest ships ShellCheck; fail rather than skip the
-          # bundled-script lint (bnto-engine/tests/bundled_scripts.rs).
+          # Fail rather than skip the bundled-script lint
+          # (bnto-engine/tests/bundled_scripts.rs).
           BNTO_REQUIRE_SHELLCHECK: "1"
 
       # keep-awake's Linux tests hold a real systemd-inhibit sleep lock. polkit
