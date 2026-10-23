@@ -129,6 +129,21 @@ mod tests {
     }
 
     #[test]
+    fn keep_awakes_windows_step_has_time_for_a_first_run_scan() {
+        // CI's Windows runner took over 60s on a script's first runs (likely
+        // Defender scanning new PowerShell content), then under a second.
+        let recipe = builtin_recipe_by_slug("keep-awake").unwrap();
+        let def: serde_json::Value = serde_json::from_str(recipe.definition_json).unwrap();
+        let windows = def["nodes"][1]["nodes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|n| n["id"] == "windows")
+            .unwrap();
+        assert_eq!(windows["nodes"][0]["parameters"]["timeout"], 180);
+    }
+
+    #[test]
     fn keep_awakes_fields_live_once_on_the_session_group_both_oss_read() {
         let recipe = builtin_recipe_by_slug("keep-awake").unwrap();
         let def: serde_json::Value = serde_json::from_str(recipe.definition_json).unwrap();
