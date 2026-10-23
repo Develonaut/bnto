@@ -83,6 +83,34 @@ pub(crate) fn length_problem(script: &str) -> Option<String> {
     })
 }
 
+/// Windows PowerShell on a step that can run where it doesn't exist: the
+/// platforms (`{{ctx.platform}}` values) other than Windows it can reach.
+pub(crate) fn platform_problem(shell: &str, platforms: &[&str]) -> Option<String> {
+    let elsewhere: Vec<&str> = platforms
+        .iter()
+        .filter(|p| **p != "windows")
+        .map(|p| platform_label(p))
+        .collect();
+    (shell == "powershell" && !elsewhere.is_empty()).then(|| {
+        format!(
+            "'powershell' is Windows PowerShell, which only Windows has, but this step \
+             can also run on {}; guard it with when {{{{ctx.platform}}}} equals windows, \
+             or use 'pwsh'",
+            elsewhere.join(", ")
+        )
+    })
+}
+
+/// A `{{ctx.platform}}` value as people read it.
+fn platform_label(platform: &str) -> &str {
+    match platform {
+        "macos" => "macOS",
+        "linux" => "Linux",
+        "windows" => "Windows",
+        _ => "other OSes",
+    }
+}
+
 /// A step's values as the variables its script reads: `BNTO_ARG_1`…`N`, then
 /// `BNTO_ARG_COUNT`.
 pub(crate) fn value_env(values: &[String]) -> Vec<(String, String)> {
@@ -193,6 +221,19 @@ mod tests {
             value_env(&[]),
             [("BNTO_ARG_COUNT".to_string(), "0".to_string())]
         );
+    }
+
+    #[test]
+    fn windows_powershell_off_windows_names_where_it_can_run() {
+        let all = ["macos", "linux", "windows", "unknown"];
+        let problem = platform_problem("powershell", &all).unwrap();
+        assert!(
+            problem.contains("can also run on macOS, Linux, other OSes"),
+            "{problem}"
+        );
+        assert_eq!(platform_problem("powershell", &["windows"]), None);
+        assert_eq!(platform_problem("pwsh", &all), None);
+        assert_eq!(platform_problem("sh", &all), None);
     }
 
     #[test]

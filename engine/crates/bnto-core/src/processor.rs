@@ -165,6 +165,20 @@ pub trait NodeProcessor {
         Vec::new()
     }
 
+    /// Problems the params cause on some of the platforms the step can run
+    /// on: the values `{{ctx.platform}}` may read there (`macos`, `linux`,
+    /// `windows`, `unknown`), narrowed by the platform guards on its path.
+    /// `bnto check` reports them (shell-run's Windows-only `powershell`).
+    ///
+    /// Default: none.
+    fn platform_problems(
+        &self,
+        _params: &serde_json::Map<String, serde_json::Value>,
+        _platforms: &[&str],
+    ) -> Vec<String> {
+        Vec::new()
+    }
+
     /// Keys of the node-level `NodeOutput.metadata` that count something per
     /// call (e.g. files copied). When the node runs more than once — a per-file
     /// node over several files, a loop's iterations — the executor adds these
