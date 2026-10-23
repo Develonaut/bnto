@@ -1,7 +1,8 @@
 // The repo's dogfood recipes (recipes/, see .claude/strategy/dogfooding.md),
 // run through the real CLI against a temp copy of the layout they check, so
 // a recipe that stops catching what it's for fails here, not only in CI.
-// Each run uses a temp HOME and BNTO_HOME.
+// Each run gets its own temp HOME and BNTO_HOME, never under its working
+// directory (release-verify runs from the repo itself).
 #![cfg(unix)]
 
 mod helpers;
@@ -29,11 +30,12 @@ fn run_with(root: &Path, recipe: &Path, params: &[&str]) -> Output {
     for param in params {
         args.extend(["--param", param]);
     }
+    let homes = temp_output_dir();
     Command::new(bnto_bin())
         .args(args)
         .current_dir(root)
-        .env("HOME", root.join("home"))
-        .env("BNTO_HOME", root.join("bnto-home"))
+        .env("HOME", homes.path().join("home"))
+        .env("BNTO_HOME", homes.path().join("bnto-home"))
         .env("BNTO_TELEMETRY_DISABLED", "1")
         .env("BNTO_NO_UPDATE_CHECK", "1")
         .output()
