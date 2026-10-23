@@ -14,6 +14,7 @@ mod when;
 
 use crate::executor::field_scope::{FieldValues, declare};
 use crate::executor::resolve::resolve_fields;
+use crate::missing_fields::missing_fields;
 use crate::pipeline::{PipelineDefinition, PipelineNode, is_container_node, is_io_node};
 use crate::processor::NodeProcessor;
 use crate::registry::NodeRegistry;
@@ -76,6 +77,24 @@ pub fn check_pipeline(definition: &PipelineDefinition, registry: &NodeRegistry) 
     };
     check_level(&root, &scope, &recipe, &mut report);
     report
+        .findings
+        .extend(undeclared_field_findings(&definition.nodes));
+    report
+}
+
+/// `{{fields.*}}` references no node in scope declares: no run can fill them.
+/// A declared field with no value is left to run time (`-p`, the TUI form).
+fn undeclared_field_findings(nodes: &[PipelineNode]) -> Vec<CheckFinding> {
+    missing_fields(nodes)
+        .into_iter()
+        .filter(|m| m.declared_by.is_none())
+        .map(|m| CheckFinding {
+            message: m.message(),
+            node_id: m.node_id,
+            node_type: m.node_type,
+            param: None,
+        })
+        .collect()
 }
 
 /// What a node inherits from the containers above it: the field values they

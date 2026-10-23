@@ -1,7 +1,7 @@
 // Scoped fields: a container's `fields` reach every step inside it, for
 // params and `when` guards alike. The nearest declaration wins.
 use super::always::{always_registry, run, started};
-use super::item_templates::run_names;
+use super::item_templates::{item_registry, run_names};
 use super::*;
 
 /// A `fields` block declaring one string field `name` with `default`.
@@ -90,7 +90,25 @@ fn a_groups_field_stays_inside_the_group() {
         ] }}"#,
         name_field("leaked.txt")
     );
-    assert_eq!(run_names(&json, one_file()), ["{{fields.name}}"]);
+    // The step after the group can't see `name`, so the run is refused
+    // rather than handing the step the literal placeholder (ISS-1).
+    let def = parse_def(&json);
+    let reporter = PipelineReporter::new_noop();
+    let registry = item_registry();
+    let error = execute_pipeline(
+        &def,
+        one_file(),
+        &registry,
+        &reporter,
+        &NoopContext,
+        fake_now,
+    )
+    .unwrap_err()
+    .to_string();
+    assert!(
+        error.contains("Node 'name': {{fields.name}} names a field neither"),
+        "{error}"
+    );
 }
 
 /// A group declaring `action`, holding a `start` and a `stop` step guarded
@@ -139,4 +157,59 @@ fn a_groups_own_guard_reads_its_own_field() {
         "action is stop, so g is skipped"
     );
     assert!(seen.lock().unwrap().is_empty());
+}
+
+// --- Unfilled fields (ISS-1): refused before any step runs ---
+
+/// A `test-capture` step `id` guarded on `{{fields.<field>}}`.
+fn guarded_on(id: &str, field: &str) -> String {
+    format!(
+        r#"{{ "id": "{id}", "type": "test-capture",
+            "when": {{ "value": "{{{{fields.{field}}}}}", "op": "equals", "expected": "x" }} }}"#
+    )
+}
+
+/// The run's error and whether it emitted `PipelineStarted`.
+fn refused(json: &str) -> (String, bool) {
+    let (registry, seen) = always_registry();
+    let (result, events) = run(json, &registry);
+    assert!(seen.lock().unwrap().is_empty(), "no step may run");
+    let started = events
+        .iter()
+        .any(|e| matches!(e, PipelineEvent::PipelineStarted { .. }));
+    (result.expect_err("the run must fail").to_string(), started)
+}
+
+#[test]
+fn a_field_declared_with_no_value_stops_the_run_before_it_starts() {
+    let json = format!(
+        r#"{{ "nodes": [{{ "id": "checks", "type": "group",
+            "fields": {{ "version": {{ "type": "string", "label": "Version" }} }},
+            "nodes": [{}] }}] }}"#,
+        guarded_on("crates", "version")
+    );
+    let (error, started) = refused(&json);
+    assert!(!started, "refused before PipelineStarted");
+    assert!(error.contains("'crates'"), "{error}");
+    assert!(error.contains("{{fields.version}}"), "{error}");
+    assert!(
+        error.contains("'checks'"),
+        "names the declaring node: {error}"
+    );
+}
+
+#[test]
+fn a_field_no_node_in_scope_declares_stops_the_run_before_it_starts() {
+    let json = format!(
+        r#"{{ "nodes": [
+            {{ "id": "write-config", "type": "test-capture", "fields": {} }},
+            {} ] }}"#,
+        name_field("x"),
+        guarded_on("flatten", "name")
+    );
+    let (error, started) = refused(&json);
+    assert!(!started, "refused before PipelineStarted");
+    assert!(error.contains("'flatten'"), "{error}");
+    assert!(error.contains("{{fields.name}}"), "{error}");
+    assert!(error.contains("declares"), "{error}");
 }

@@ -189,6 +189,7 @@ pub fn execute_pipeline(
     now_ms: impl Fn() -> u64 + Copy + 'static,
 ) -> Result<PipelineResult, BntoError> {
     field_values::check_field_values(&definition.nodes)?;
+    field_values::check_field_refs(&definition.nodes)?;
     raw_params::check_raw_params(&definition.nodes, registry)?;
     let flow = flow::root_flow(definition)?;
     let count_keys = count_keys::count_keys_for(&definition.nodes, registry);

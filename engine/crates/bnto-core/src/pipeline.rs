@@ -102,8 +102,9 @@ pub struct PipelineNode {
     pub edges: Vec<PipelineEdge>,
 
     /// Node-level field declarations — user-facing controls that map to
-    /// `{{fields.*}}` templates in this node's parameters. Each node is
-    /// self-contained: its fields resolve into its own params.
+    /// `{{fields.*}}` templates. They resolve into this node's params and
+    /// guard and every node inside it (`executor::field_scope`); a reference
+    /// nothing fills stops the run before any step (`missing_fields`).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub fields: BTreeMap<String, FieldDef>,
 
