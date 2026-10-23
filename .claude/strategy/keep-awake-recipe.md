@@ -119,7 +119,7 @@ Affects `keep-awake`, `download-video`, `flatten-folders`. Branch on `isRecipeBr
 
 - A bundled script can switch off any check with `# shellcheck disable=…`, including `all`; allow only listed codes (today SC2016) and assert it.
 - Run ShellCheck with `--norc` so a developer's `~/.shellcheckrc` can't change local results.
-- Not done: CI's ubuntu-latest ShellCheck version can differ from a developer's. Pin it if a version bump ever changes results.
+- Pinned since (follow-up): CI installs ShellCheck v0.11.0 by checksum instead of using the runner image's copy.
 
 ### F: Refresh the new-recipe checklist and stale recipe counts
 
@@ -303,7 +303,7 @@ Gaps the PRs above left open on purpose, collected from their "As built" and "No
 - **macOS tests in CI:** `bnto/tests/keep_awake.rs` is macOS-gated and CI has no macOS job, so the macOS round trips run only locally (fix A).
 - **Unsupported host in the TUI and `bnto dry-run`:** only `bnto run` refuses; a TUI run there skips every step (PR 6). `bnto check` doesn't flag a recipe that runs nowhere.
 - **Web:** `llms-full.txt` doesn't list a recipe's OSes (PR 7); there's no `system` mascot, and three descriptions still say "CLI/desktop only" with no desktop app yet (fix C).
-- **Tooling:** CI's ShellCheck isn't version-pinned (fix E); `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9).
+- **Tooling:** `-CommandWithArgs` for pwsh 7.4+ isn't used (PR 9): it was an escape hatch in case `-EncodedCommand` caused trouble, and it hasn't.
 
 ## CLI journey matrix (`.claude/journeys/cli.md`, added in PR 3)
 
