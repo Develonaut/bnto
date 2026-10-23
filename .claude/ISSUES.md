@@ -15,7 +15,6 @@
 | ISS-1 | An unresolved `{{fields.*}}` template reaches its step as text   | engine   | Open   |
 | ISS-4 | `run_loop` in `tui/mod.rs` is 277 lines (limit: 20 per function) | tui      | Open   |
 | ISS-5 | Nothing enforces the 20-line function limit                      | tooling  | Open   |
-| ISS-6 | `pre-commit.md` says Lighthouse CI runs on every PR; it's manual | docs     | Open   |
 | ISS-7 | The CLI's telemetry notice links `bnto.io/telemetry`, a 404      | web docs | Open   |
 | ISS-8 | Most CLI integration tests run `bnto` against the real `~/.bnto` | cli test | Open   |
 
@@ -42,12 +41,6 @@ Fields resolve per node (`collect_field_values(&node.fields, …)`). A template 
 **Found:** October 23, 2026 (dogfooding PR 4).
 
 code-standards.md says functions stay under 20 lines, "no escape hatch". `rust-file-size` (#731) checks Rust file length and ESLint `max-lines` checks TypeScript file length, but nothing checks function length in either language. ISS-4 is the worst known case. Measure first (for example, clippy's `too_many_lines` with `too-many-lines-threshold = 20` in `clippy.toml`, and ESLint's `max-lines-per-function`), then decide: enforce with an allowlist that only shrinks, or change the rule.
-
-### ISS-6: `pre-commit.md` says Lighthouse CI runs on every PR
-
-**Found:** October 23, 2026 (CI review).
-
-`.claude/rules/pre-commit.md:30` says `lighthouse.yml` runs on every PR and blocks merge. It's `workflow_dispatch` only, and Lighthouse runs inside `release.yml`; its last PR run was March 18, 2026. Correct the doc: on a PR, `task seo:audit` runs locally, and the release gate runs Lighthouse.
 
 ### ISS-7: The CLI's telemetry notice links `bnto.io/telemetry`, a 404
 

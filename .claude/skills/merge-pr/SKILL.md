@@ -56,10 +56,9 @@ Parse `statusCheckRollup` from Step 2. For each check:
 
 **Required checks to verify:**
 
-| Check             | Workflow                                                                  | Blocking?                                                                                                   |
-| ----------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **CI Gate**       | `ci.yml` — Rust lint/test + TypeScript build/test/lint                    | Yes — must pass                                                                                             |
-| **Lighthouse CI** | `lighthouse.yml` — Performance, Accessibility, Best Practices, SEO audits | Yes — error-level assertions (a11y, best practices, SEO ≥ 90) must pass. Performance warnings are advisory. |
+| Check       | Workflow                                               | Blocking?       |
+| ----------- | ------------------------------------------------------ | --------------- |
+| **CI Gate** | `ci.yml` — Rust lint/test + TypeScript build/test/lint | Yes — must pass |
 
 **Determine status for EACH required check:**
 
@@ -67,7 +66,7 @@ Parse `statusCheckRollup` from Step 2. For each check:
 - Any check failing = CI FAIL — list the failing checks with their names and conclusions
 - Any check pending = CI PENDING — list pending checks, ask user if they want to wait
 
-**If Lighthouse CI is failing:** Note which categories failed and their scores. If only **performance** warnings (warn level, not error), the check still passes — performance is advisory. If **accessibility, best practices, or SEO** assertions fail (error level), that blocks merge. Suggest running `/lighthouse-audit --ci` to download reports and triage.
+**Lighthouse doesn't run on PRs.** The release gate runs it (`release.yml`). If the PR changes `apps/web/`, check that its pre-commit summary reports `task seo:audit` passing; if it doesn't, suggest running `/lighthouse-audit --local` before merging.
 
 **If CI is not passing, present the failures and stop.** Do not offer to merge with failing CI.
 
@@ -106,7 +105,7 @@ Present a clear summary to the user:
 
 ### Checks
 - CI Gate: PASS / FAIL / PENDING
-- Lighthouse CI: PASS / FAIL (list failing categories + scores) / PENDING
+- Local Lighthouse (`task seo:audit`, web changes only): REPORTED PASSING / NOT REPORTED / N/A
 - Merge conflicts: None / CONFLICTING
 - Description: Accurate / Needs update (details)
 

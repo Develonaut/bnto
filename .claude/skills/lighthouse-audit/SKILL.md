@@ -13,7 +13,7 @@ Run Lighthouse CI against all public routes, identify failing accessibility/SEO/
 | Flag      | Description                                                     |
 | --------- | --------------------------------------------------------------- |
 | `--local` | (Default) Run `task seo:audit` locally to produce fresh reports |
-| `--ci`    | Parse reports from the latest CI run via `gh run download`      |
+| `--ci`    | Parse reports from the latest release run via `gh run download` |
 
 ## Step 1: Activate Personas
 
@@ -40,15 +40,17 @@ Reports are written to `.lighthouseci/` as JSON files (one per URL).
 
 ### CI mode (`--ci`)
 
-Download the latest Lighthouse CI artifacts from GitHub Actions:
+Download the Lighthouse reports from the latest release run. Lighthouse runs in the release gate against the tag's Vercel preview (the `lighthouse` job in `release.yml`), not on PRs. `lighthouse.yml` only runs when started by hand, so use it only if someone just did.
 
 ```bash
-# Find the latest Lighthouse CI run
-gh run list --workflow="Lighthouse CI" --limit=1 --json databaseId,status,conclusion
+# Find the latest release run
+gh run list --workflow=release.yml --limit=1 --json databaseId,headBranch,status,conclusion
 
-# Download artifacts
-gh run download <run-id> --name lhci-results --dir .lighthouseci/
+# Download its reports (the artifact is named lighthouse-results)
+gh run download <run-id> --name lighthouse-results --dir .lighthouseci/
 ```
+
+A release run skips Lighthouse when the release has no web changes, so the latest run may have no `lighthouse-results` artifact. Pick an older run in that case.
 
 **Stop if no recent run exists or the run failed before producing reports.**
 
