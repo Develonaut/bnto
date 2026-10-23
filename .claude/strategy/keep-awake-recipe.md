@@ -294,6 +294,7 @@ Its own design doc first. `powershell.exe -NoProfile -NonInteractive -EncodedCom
 - **Ours:** the state file records the session's pid and process start time; a pid counts only while the process there started at that time and before the session's end. The first version matched `Win32_Process.CommandLine` against the encoded code, but WMI queries pushed steps past their 60s limit on CI's Windows runner; `Get-Process` is fast, and no other process can share both a pid and a start time.
 - **PowerShell 5.1 details:** flag values are written in decimal, since `0x80000001` parses as a negative Int32; idle time is worked out modulo 2^32, since `[Environment]::TickCount` wraps; the home folder is `$homeDir`, since `$home` is read-only.
 - **Lint gate:** PSScriptAnalyzer over bundled PowerShell steps (SEC-38), required in Windows CI.
+- **First-run time:** the Windows step's limit is 180s, not 60s. On CI's Windows runner the first runs of the script took over 60s and later ones under a second (each serialized test's timestamps), which points at a first-sight scan of new PowerShell content, most likely Defender's cloud check, rather than a hang. A user's very first start could hit the same wait.
 
 ## Follow-ups
 
