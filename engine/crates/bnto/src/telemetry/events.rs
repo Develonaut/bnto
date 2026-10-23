@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use super::bucket;
+use super::recipe_label::RecipeLabel;
 
 /// A telemetry event ready to send to PostHog.
 #[derive(Debug, Clone)]
@@ -51,30 +52,36 @@ pub fn cli_recipe_run(
         .prop("success", success)
 }
 
-/// Recipe run with per-node param overrides captured.
+/// Recipe run, with its `-p` overrides: names only for a bundled recipe
+/// (see `recipe_label`), the count for any recipe.
 pub fn cli_recipe_run_with_params(
-    slug: &str,
+    recipe: &RecipeLabel,
     duration_ms: u64,
     file_count: usize,
     total_bytes: u64,
     output_file_count: usize,
     success: bool,
-    param_names: &[String],
 ) -> Event {
     let mut event = cli_recipe_run(
-        slug,
+        &recipe.slug,
         duration_ms,
         file_count,
         total_bytes,
         output_file_count,
         success,
     );
-    if !param_names.is_empty() {
-        let names: Vec<serde_json::Value> = param_names.iter().map(|n| n.clone().into()).collect();
-        event.properties.insert("param_names".into(), names.into());
+    if recipe.param_count > 0 {
         event
             .properties
-            .insert("param_count".into(), param_names.len().into());
+            .insert("param_count".into(), recipe.param_count.into());
+    }
+    if !recipe.param_names.is_empty() {
+        let names: Vec<serde_json::Value> = recipe
+            .param_names
+            .iter()
+            .map(|n| n.clone().into())
+            .collect();
+        event.properties.insert("param_names".into(), names.into());
     }
     event
 }
@@ -140,10 +147,19 @@ mod tests {
         assert_eq!(e.properties["success"], true);
     }
 
+    fn label(slug: &str, names: &[&str], count: usize) -> RecipeLabel {
+        RecipeLabel {
+            slug: slug.to_string(),
+            param_names: names.iter().map(|n| n.to_string()).collect(),
+            param_count: count,
+        }
+    }
+
     #[test]
     fn cli_recipe_run_with_params_captures_names() {
-        let params = vec!["quality".to_string(), "format".to_string()];
-        let e = cli_recipe_run_with_params("compress-images", 500, 1, 50_000, 1, true, &params);
+        let recipe = label("compress-images", &["quality", "format"], 2);
+        let e = cli_recipe_run_with_params(&recipe, 500, 1, 50_000, 1, true);
+        assert_eq!(e.properties["slug"], "compress-images");
         assert_eq!(e.properties["param_count"], 2);
         let names = e.properties["param_names"].as_array().unwrap();
         assert_eq!(names[0], "quality");
@@ -152,9 +168,18 @@ mod tests {
 
     #[test]
     fn cli_recipe_run_with_no_params_omits_field() {
-        let e = cli_recipe_run_with_params("compress-images", 500, 1, 50_000, 1, true, &[]);
+        let e =
+            cli_recipe_run_with_params(&label("compress-images", &[], 0), 500, 1, 50_000, 1, true);
         assert!(!e.properties.contains_key("param_names"));
         assert!(!e.properties.contains_key("param_count"));
+    }
+
+    #[test]
+    fn a_custom_recipe_run_sends_the_param_count_without_names() {
+        let e = cli_recipe_run_with_params(&label("custom", &[], 2), 500, 1, 50_000, 1, true);
+        assert_eq!(e.properties["slug"], "custom");
+        assert_eq!(e.properties["param_count"], 2);
+        assert!(!e.properties.contains_key("param_names"));
     }
 
     #[test]

@@ -17,7 +17,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 3b  | Move the TUI's terminal setup out of `tui/mod.rs`  | `refactor/tui-terminal-module` | Merged (#729) |
 | 4   | Enforce the Rust file-size limit                   | `feat/rust-file-size-check`    | Merged (#731) |
 | 5   | Verify a release shipped                           | `feat/release-verify`          | Merged (#730) |
-| 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Not started   |
+| 6a  | Stop sending custom recipe names in telemetry      | `fix/telemetry-custom-slugs`   | Merged (#734) |
 | 6b  | Keep `test_list_command` out of the real `~/.bnto` | `test/list-sandboxed`          | Not started   |
 | 7a  | Source kinds and project consent                   | `feat/recipe-source-kinds`     | Not started   |
 | 7b  | Load project recipes from `.bnto/recipes/`         | `feat/project-recipes`         | Not started   |
