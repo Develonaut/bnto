@@ -1019,6 +1019,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           name: "Resize",
           outputPorts: [],
           parameters: {
+            enlarge: false,
             maintainAspect: true,
             quality: 80,
             width: 800,
@@ -1175,6 +1176,7 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           name: "Resize",
           outputPorts: [],
           parameters: {
+            enlarge: false,
             maintainAspect: true,
             quality: 80,
             width: 150,
