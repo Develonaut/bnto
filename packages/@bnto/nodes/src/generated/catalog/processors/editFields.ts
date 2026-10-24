@@ -11,7 +11,7 @@ export const editFieldsProcessor: ProcessorDef = {
   nodeType: "edit-fields",
   name: "Edit Fields",
   description:
-    "Edit fields on each item, setting them from static values or templates over its other fields, such as {{item.first}} {{item.last}}; files pass through unchanged.",
+    "Edit fields on each item, setting them from static values or templates over its other fields and its file name, such as {{item.first}} {{item.last}} or {{file}}; files pass through unchanged.",
   category: "data",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,

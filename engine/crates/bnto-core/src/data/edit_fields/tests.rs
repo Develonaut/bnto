@@ -138,11 +138,16 @@ fn test_file_and_item_fields_fill_in_one_value() {
         file("a.csv", json!({ "x": "1" })),
         file("b.csv", json!({ "x": "2" })),
     ];
-    let values = json!({ "label": "{{file}}: {{item.x}}", "tags": ["{{file}}"] });
+    let values = json!({
+        "label": "{{file}}: {{item.x}}",
+        "tags": ["{{file}}"],
+        "pair": { "src": "{{file}}" }
+    });
     let out = run(json!({ "values": values }), files).unwrap();
     assert_eq!(out.files[0].metadata["label"], "a.csv: 1");
     assert_eq!(out.files[1].metadata["label"], "b.csv: 2");
     assert_eq!(out.files[1].metadata["tags"], json!(["b.csv"]));
+    assert_eq!(out.files[1].metadata["pair"], json!({ "src": "b.csv" }));
 }
 
 #[test]
@@ -155,6 +160,9 @@ fn test_file_is_the_name_as_it_travels_as_assert_and_report_read_it() {
     assert_eq!(out.files[0].metadata["source"], "sub/a.csv");
 }
 
+/// Outside a loop only: the item's own metadata is filled in after the
+/// template is scanned. Inside a loop, or through `{{fields.*}}`, the
+/// executor fills the value into the template first (ISS-35).
 #[test]
 fn test_a_filled_field_that_reads_like_file_is_kept_as_written() {
     let meta = edited(

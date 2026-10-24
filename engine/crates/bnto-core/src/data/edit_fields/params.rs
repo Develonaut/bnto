@@ -60,9 +60,9 @@ fn values_param() -> ParameterDef {
         label: "Values".to_string(),
         description: "Field name to value. A value can read the item's other fields, \
                       e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); \
-                      one that is exactly \
-                      {{item.<key>}} keeps that field's type. Templates read the fields \
-                      the item arrived with, and one it lacks fails the run."
+                      one that is exactly {{item.<key>}} keeps that field's type. \
+                      Templates read the fields the item arrived with, and one it \
+                      lacks fails the run."
             .to_string(),
         param_type: ParameterType::Object,
         constraints: Some(Constraints {
