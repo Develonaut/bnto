@@ -1,16 +1,19 @@
-// Files set aside so a cycle of writes (a swap) can run.
+// Copies set aside so a cycle of writes (a swap) can run.
 //
-// A regular file is moved (O(1)) into a `.bnto-staged-*` folder inside the
-// output folder (hidden on Unix, not on Windows), made only when a cycle
-// needs one; the swap's next write puts a new file at its old name. From the
-// move until its last reader has written, the staged file is the only copy.
-// A finished write removes the folder and reports a removal that fails.
-// Anything else keeps a folder holding files and leaves it registered: a
-// failed write names it in its error, and the process's end (Ctrl+C handler,
-// TUI exit) names every registered folder with `report_kept_staging`, so it
-// is named even when Ctrl+C beats the error to the screen. Nothing here
-// deletes a folder holding files except `finish`. `file-collect` skips any
-// folder with this prefix.
+// The file a swap's next write replaces is copied into a `.bnto-staged-*`
+// folder inside the output folder (hidden on Unix, not on Windows), made
+// only when a cycle needs one. Copied, not moved: until that write replaces
+// it, the original stays where the user put it, so a write that fails, runs
+// out of space or is stopped first loses nothing. The cost is a full copy of
+// the file being swapped. From that write until the staged copy's last reader
+// has written, the copy is the only one of the old content. A finished write
+// removes the folder and reports a removal that fails. Anything else keeps a
+// folder holding copies and leaves it registered: a failed write names it in
+// its error, and the process's end (Ctrl+C handler, TUI exit) names every
+// registered folder still on disk with `report_kept_staging`, so it is named
+// even when Ctrl+C beats the error to the screen. Nothing here deletes a
+// folder holding copies except `finish`. `file-collect` skips any folder
+// with this prefix.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
@@ -34,12 +37,13 @@ impl Staging {
         }
     }
 
-    /// Set `file` aside (the next write replaces it) and return where it is.
+    /// Copy `file` aside (the next write replaces it) and return where the
+    /// copy is. The original stays in place.
     pub fn stage(&mut self, file: &Path) -> Result<PathBuf, String> {
         let leaf = file.file_name().map(|n| n.to_string_lossy().into_owned());
         let name = format!("{}-{}", self.count, leaf.unwrap_or_default());
         let copy = self.dir()?.join(name);
-        set_aside(file, &copy)
+        std::fs::copy(file, &copy)
             .map_err(|e| format!("Cannot set {} aside for the swap: {e}", file.display()))?;
         self.count += 1;
         Ok(copy)
@@ -69,7 +73,7 @@ impl Staging {
         unregister(&path);
         dir.close().map_err(|e| {
             format!(
-                "Every file was written, but the folder of files set aside for a swap, \
+                "Every file was written, but the folder of copies set aside for a swap, \
                  {}, could not be removed ({e}); delete it by hand",
                 path.display()
             )
@@ -111,17 +115,6 @@ impl Drop for Staging {
     }
 }
 
-/// Move `file` to `aside`: a rename in the output folder is O(1) whatever
-/// the size. A symlink is copied instead (moving a relative link breaks it),
-/// and so is a file a rename can't move (another drive).
-fn set_aside(file: &Path, aside: &Path) -> std::io::Result<()> {
-    let regular = std::fs::symlink_metadata(file).is_ok_and(|m| m.file_type().is_file());
-    if regular && std::fs::rename(file, aside).is_ok() {
-        return Ok(());
-    }
-    std::fs::copy(file, aside).map(|_| ())
-}
-
 /// Staging folders on disk right now, for the Ctrl+C handler to report.
 static LIVE: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
 
@@ -145,13 +138,19 @@ pub fn forget(folder: &Path) {
     unregister(folder);
 }
 
-/// Print a warning for each staging folder still registered: one a write
-/// left when it was stopped or panicked. Called by whatever ends the process
-/// once writes are stopped (`GATE.stop_and_wait`): the Ctrl+C handler before
-/// `process::exit`, and the TUI after it restores the terminal. The folders
-/// are kept, never deleted: an interrupted swap's copy may be the only one.
+/// Print a warning for each registered staging folder still on disk: one a
+/// write kept when it failed, was stopped or panicked (the user may have
+/// deleted it since). Called by whatever ends the process once writes are
+/// stopped (`GATE.stop_and_wait`): the Ctrl+C handler before `process::exit`,
+/// and the TUI after it restores the terminal. The folders are kept, never
+/// deleted: a swap's staged copy may be the only one.
 pub fn report_kept_staging() {
-    warn(&kept_lines(&std::mem::take(&mut *lock_live())));
+    let registered = std::mem::take(&mut *lock_live());
+    warn(&kept_lines(&still_there(registered)));
+}
+
+fn still_there(dirs: Vec<PathBuf>) -> Vec<PathBuf> {
+    dirs.into_iter().filter(|d| d.exists()).collect()
 }
 
 fn warn(lines: &[String]) {
@@ -165,7 +164,7 @@ fn warn(lines: &[String]) {
 fn kept_lines(dirs: &[PathBuf]) -> Vec<String> {
     let line = |d: &PathBuf| {
         format!(
-            "a write didn't finish; files set aside for a swap are kept in {}",
+            "a write didn't finish; copies set aside for a swap are kept in {}",
             d.display()
         )
     };
@@ -205,36 +204,29 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&copy).unwrap(), "BBBB");
         staging.finish().unwrap();
         assert!(!copy.exists());
-        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 0);
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 1);
     }
 
     #[test]
-    fn test_a_regular_file_is_moved_aside_not_copied() {
-        // O(1) whatever its size; the swap's next write puts a file back.
+    fn test_staging_copies_and_leaves_the_original_in_place() {
+        // RED (ISS-48 review 4, against the move): until the swap's write
+        // replaces it, the user's file stays where they put it, so a write
+        // that fails or is stopped first loses nothing.
         let (out, mut staging, copy) = staged();
-        assert!(!out.path().join("b.txt").exists());
+        assert_eq!(
+            std::fs::read_to_string(out.path().join("b.txt")).unwrap(),
+            "BBBB"
+        );
         assert_eq!(std::fs::read_to_string(&copy).unwrap(), "BBBB");
         staging.finish().unwrap();
     }
 
-    #[cfg(unix)]
     #[test]
-    fn test_a_symlink_is_copied_aside_and_left_in_place() {
-        // Moving a relative link into the staging folder would break it.
-        let out = tempfile::tempdir().unwrap();
-        std::fs::write(out.path().join("t.txt"), "TARGET").unwrap();
-        let link = out.path().join("l.txt");
-        std::os::unix::fs::symlink("t.txt", &link).unwrap();
-        let mut staging = Staging::new(out.path());
-        let copy = staging.stage(&link).unwrap();
-        assert_eq!(std::fs::read_to_string(&copy).unwrap(), "TARGET");
-        assert!(
-            std::fs::symlink_metadata(&link)
-                .unwrap()
-                .file_type()
-                .is_symlink()
-        );
-        staging.finish().unwrap();
+    fn test_the_report_skips_a_kept_folder_deleted_since() {
+        let gone = tempfile::tempdir().unwrap().path().join("deleted");
+        let here = tempfile::tempdir().unwrap();
+        let kept = still_there(vec![gone, here.path().to_path_buf()]);
+        assert_eq!(kept, [here.path().to_path_buf()]);
     }
 
     #[test]

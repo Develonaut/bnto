@@ -63,24 +63,74 @@ fn same_file(a: &Path, b: &Path) -> bool {
     FileData::Path(a.to_path_buf()).is_at(b)
 }
 
-/// One line per pair, naming both destinations.
-/// Says how they meet: an existing file both reach, or a new path both
-/// lead to.
+/// One line per pair, naming both destinations (apart, see `shown`) and how
+/// they meet.
 pub fn describe(paths: &[PathBuf], pairs: &[(usize, usize)]) -> Vec<String> {
     let line = |&(i, j): &(usize, usize)| {
         let (a, b) = (&paths[i], &paths[j]);
-        let how = if same_file(a, b) {
-            "both reach one existing file, through a link"
-        } else {
-            "both lead to one new path, through a folder link, a dangling link or `..`"
-        };
         format!(
-            "{} and {} would be one file on disk ({how}), so one write would replace the other",
-            a.display(),
-            b.display()
+            "{} and {} would be one file on disk ({}), so one write would replace the other",
+            shown(a),
+            shown(b),
+            how_they_meet(a, b)
         )
     };
     pairs.iter().map(line).collect()
+}
+
+/// Why two destinations are one file: a new path both lead to, a symlink,
+/// two directory entries for one file (hard links), or one entry the
+/// filesystem reaches by both names (Unicode forms, Windows short names).
+fn how_they_meet(a: &Path, b: &Path) -> &'static str {
+    if !same_file(a, b) {
+        return "both lead to one new path, through a folder link, a dangling link or `..`";
+    }
+    if is_symlink(a) || is_symlink(b) {
+        return "one is a symlink to the other's file";
+    }
+    match (canonical_parent(a), canonical_parent(b)) {
+        (Some(x), Some(y)) if x == y && listed(&x, a) && listed(&x, b) => {
+            "they are hard links to one file"
+        }
+        (Some(x), Some(y)) if x == y => "the filesystem treats the two names as one file",
+        _ => "both reach one existing file, through a folder link or a hard link",
+    }
+}
+
+fn is_symlink(path: &Path) -> bool {
+    std::fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink())
+}
+
+fn canonical_parent(path: &Path) -> Option<PathBuf> {
+    dunce::canonicalize(path.parent()?).ok()
+}
+
+/// Whether `dir` has an entry spelled exactly as `path`'s file name.
+fn listed(dir: &Path, path: &Path) -> bool {
+    let Some(name) = path.file_name() else {
+        return false;
+    };
+    let entries = std::fs::read_dir(dir).into_iter().flatten().flatten();
+    entries.into_iter().any(|e| e.file_name() == name)
+}
+
+/// `path` for a refusal: with its file name's non-ASCII characters escaped
+/// after it when it has any, since two Unicode forms of one name (`café`
+/// composed and decomposed) print the same.
+pub fn shown(path: &Path) -> String {
+    let leaf = path.file_name().map(|n| n.to_string_lossy().into_owned());
+    match leaf.filter(|l| !l.is_ascii()) {
+        Some(leaf) => format!("{} (\"{}\")", path.display(), escaped(&leaf)),
+        None => path.display().to_string(),
+    }
+}
+
+fn escaped(name: &str) -> String {
+    let char_shown = |c: char| match c.is_ascii() {
+        true => c.to_string(),
+        false => c.escape_unicode().to_string(),
+    };
+    name.chars().map(char_shown).collect()
 }
 
 #[cfg(test)]
@@ -192,5 +242,52 @@ mod tests {
             "{lines:?}"
         );
         assert!(lines[0].contains("one file on disk"), "{lines:?}");
+    }
+
+    #[test]
+    fn test_hard_links_are_called_hard_links() {
+        let (_dir, _a, b, l) = linked();
+        assert_eq!(how_they_meet(&b, &l), "they are hard links to one file");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_a_symlink_is_called_a_symlink() {
+        let (dir, _a, b, _) = linked();
+        let s = dir.path().join("s.txt");
+        std::os::unix::fs::symlink("b.txt", &s).unwrap();
+        assert_eq!(
+            how_they_meet(&s, &b),
+            "one is a symlink to the other's file"
+        );
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_two_unicode_forms_of_one_name_say_so_and_print_apart() {
+        // RED (ISS-48 review 4): an existing NFC `café` and an NFD output
+        // were said to meet "through a link", and both names printed alike.
+        let dir = tempfile::tempdir().unwrap();
+        let nfc = dir.path().join("caf\u{e9}");
+        std::fs::write(&nfc, "ONE").unwrap();
+        let nfd = dir.path().join("cafe\u{301}");
+        let line = &describe(&[nfc, nfd], &[(0, 1)])[0];
+        assert!(
+            line.contains("the filesystem treats the two names as one file"),
+            "{line}"
+        );
+        assert!(
+            line.contains("caf\\u{e9}") && line.contains("cafe\\u{301}"),
+            "{line}"
+        );
+    }
+
+    #[test]
+    fn test_an_ascii_name_is_shown_as_is() {
+        assert_eq!(shown(Path::new("out/b.txt")), "out/b.txt");
+        assert_eq!(
+            shown(Path::new("out/caf\u{e9}")),
+            "out/caf\u{e9} (\"caf\\u{e9}\")"
+        );
     }
 }

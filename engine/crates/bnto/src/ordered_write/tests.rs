@@ -211,3 +211,58 @@ fn test_a_swap_stopped_between_steps_keeps_the_only_copy_for_the_report() {
     assert!(staging::is_registered(&folders[0]));
     staging::forget(&folders[0]);
 }
+
+// --- new destinations: claimed first, created by their own copy ---
+
+#[test]
+fn test_writes_into_a_fresh_folder_leave_no_placeholder_behind() {
+    // Each placeholder is released just before its copy, so the copy makes
+    // the file (and can clone it); none is left empty or doubled.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let out = tempfile::tempdir().unwrap();
+    let paths = [
+        out.path().join("a.txt"),
+        out.path().join("sub").join("b.txt"),
+    ];
+    write_all(&reading(&src), &paths, out.path()).unwrap();
+    assert_eq!(read(out.path(), "a.txt"), "AAAA");
+    assert_eq!(read(&out.path().join("sub"), "b.txt"), "BBBB");
+    assert_eq!(names_in(out.path()), 2);
+    drop(dir);
+}
+
+#[test]
+fn test_a_write_failing_midway_removes_the_claims_it_never_wrote() {
+    // Write 0's source is gone, so it fails; write 1's placeholder (and the
+    // folder made for it) must not stay behind as an empty "output".
+    let (dir, src) = folder(&[("b.txt", "BBBB")]);
+    let out = tempfile::tempdir().unwrap();
+    let files = [
+        result("a.txt", FileData::Path(dir.path().join("gone.txt"))),
+        result("b.txt", FileData::Path(src[0].clone())),
+    ];
+    let paths = [
+        out.path().join("a.txt"),
+        out.path().join("sub").join("b.txt"),
+    ];
+    let error = write_all(&files, &paths, out.path()).unwrap_err();
+    assert!(error.contains("Cannot write"), "{error}");
+    assert_eq!(names_in(out.path()), 0, "{error}");
+}
+
+#[test]
+fn test_a_new_name_taken_after_planning_is_refused_before_any_write() {
+    // The portable stand-in for two names a filesystem treats as one: the
+    // claim finds the file there, so the earlier write never runs.
+    let out = tempfile::tempdir().unwrap();
+    let paths = [out.path().join("a.txt"), out.path().join("b.txt")];
+    let planned = claims::missing(&paths);
+    std::fs::write(&paths[1], "TAKEN").unwrap();
+    let error = Claims::claim(&paths, &planned).err().unwrap();
+    assert!(
+        error.starts_with("Output refused, nothing was written"),
+        "{error}"
+    );
+    assert!(!paths[0].exists(), "nothing was written");
+    assert_eq!(read(out.path(), "b.txt"), "TAKEN");
+}

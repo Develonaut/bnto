@@ -3,11 +3,12 @@
 // A result that is a `Path` (often the user's own input) is read when its
 // write runs. If another write's destination is that same file (ISS-48:
 // `a` renamed to `b.txt` written beside `b.txt`), it waits until the file
-// has been read; a swap stages one file aside first, as `bnto_file::relocate`
-// parks one file to run a swap of moves. A plan whose destinations are one
-// file on disk can't keep both, so it's refused before any write: links are
-// found by name and identity (`aliases`), and any other names a filesystem
-// treats as one by creating every new destination exclusively (`claims`).
+// has been read; a swap first copies one file into a staging folder
+// (`staging`), as `bnto_file::relocate` parks one file to run a swap of
+// moves. A plan whose destinations are one file on disk can't keep both, so
+// it's refused before any write: links are found by name and identity
+// (`aliases`), and any other names a filesystem treats as one by creating
+// every new destination exclusively first (`claims`).
 // Every write goes through `GATE`, so a quitting process (Ctrl+C, the TUI
 // exiting) stops it between steps instead of ending it mid-copy.
 
@@ -35,8 +36,11 @@ pub use gate::{GATE, WriteGate};
 pub use progressive::{forget_progressive, note_progressive};
 pub use staging::report_kept_staging;
 
-/// Refuse a plan two of whose destinations are one file on disk (a link),
-/// naming them. A dry run calls this too, so it refuses what a run would.
+/// Refuse a plan two of whose destinations are one file on disk through a
+/// link, a folder link or `..`, naming them. A dry run calls this too, so it
+/// refuses those as a run would; names only the filesystem treats as one
+/// (Unicode forms, Windows short names) are caught by the run's exclusive
+/// creates (`claims`), which a dry run doesn't make.
 pub fn check(files: &[PipelineFileResult], paths: &[PathBuf]) -> Result<(), String> {
     let pairs = aliases::shared_destinations(files, paths);
     if pairs.is_empty() {
@@ -65,8 +69,9 @@ fn refusal(listing: &str, by_iterations: &[PathBuf]) -> String {
 }
 
 /// Write `files[i]` to `paths[i]` for every `i`, ordered so a write never
-/// replaces a file a later write still reads. Staged copies go in a hidden
-/// folder inside `output_dir`; a failure to remove it is an error.
+/// replaces a file a later write still reads. A swap's staged copies go in
+/// a `.bnto-staged-*` folder inside `output_dir`, removed once every write
+/// is done; a failure to remove it is an error.
 pub fn write_all(
     files: &[PipelineFileResult],
     paths: &[PathBuf],
@@ -75,9 +80,11 @@ pub fn write_all(
     write_through(&GATE, files, paths, output_dir)
 }
 
-/// What a write stopped by a quitting process reports. Nobody may read it:
-/// the quitter reports kept staging folders itself, then exits.
-const STOPPED: &str = "Stopped before every file was written: bnto is quitting";
+/// What a write stopped by a quitting process reports. `bnto run` can print
+/// it (as `Error writing output: …`) before the Ctrl+C handler exits, so it
+/// reads as a full sentence; kept staging folders are named after it. (A
+/// quitting TUI has already left the screen that would show it.)
+const STOPPED: &str = "Stopped: bnto is quitting. The files written before that are kept.";
 
 /// `write_all` through `gate`, which stops it between steps when bnto quits.
 fn write_through(
@@ -88,7 +95,7 @@ fn write_through(
 ) -> Result<(), String> {
     check(files, paths)?;
     // First, so it drops last: a quitter waiting on the gate goes on only
-    // once the staging folder below is removed, or kept and registered.
+    // once `run` below has dropped (staging kept or removed, claims undone).
     let Some(_writing) = gate.enter() else {
         return Err(STOPPED.to_string());
     };
@@ -97,7 +104,8 @@ fn write_through(
     let mut run = Run::new(files, paths, output_dir)?;
     for step in steps {
         if gate.stopping() {
-            // Dropping `run` keeps a folder holding copies, for the report.
+            // Dropping `run` keeps a staging folder holding copies (still
+            // registered for the quitter's report) and undoes unreleased claims.
             return Err(STOPPED.to_string());
         }
         if let Err(e) = run.step(step) {
@@ -142,10 +150,11 @@ impl<'a> Run<'a> {
                 Ok(())
             }
             Step::Write(i) => {
+                // The claim already proved the name free; the copy creates
+                // the file itself, which lets it clone (APFS).
+                self.claims.release(i);
                 let data = self.staged.get(&i).unwrap_or(&self.files[i].data);
-                write_one(data, &self.paths[i])?;
-                self.claims.written(i);
-                Ok(())
+                write_one(data, &self.paths[i])
             }
         }
     }
@@ -154,7 +163,7 @@ impl<'a> Run<'a> {
     fn failed(mut self, error: String) -> String {
         match self.staging.keep() {
             Some(dir) => format!(
-                "{error}\n  Files set aside for a swap are kept in {}",
+                "{error}\n  Copies set aside for a swap are kept in {}",
                 dir.display()
             ),
             None => error,

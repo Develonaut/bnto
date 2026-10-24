@@ -5,7 +5,10 @@
 // other threads. Mid-swap, a staged copy can be the only copy of a file, so
 // the process first stops the gate: no new write starts, a write in progress
 // stops after its current step, and the quitter waits for that before it
-// reports kept staging folders and exits.
+// reports kept staging folders and exits. Only the final write goes through
+// the gate: progressive writes (`progressive_output`) don't. They copy only
+// onto names nothing holds yet and stage nothing, so one cut short leaves at
+// worst a partial new file, which the final write would have replaced.
 
 use std::sync::{Condvar, Mutex, MutexGuard};
 
