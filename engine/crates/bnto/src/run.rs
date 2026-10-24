@@ -15,7 +15,8 @@ use crate::run_watchdog::{self, Watched};
 use crate::telemetry::recipe_label::{RecipeLabel, recipe_label};
 use crate::unfilled_fields::refuse_unfilled;
 use crate::{
-    context, dry_run, host_support, input, progress, run_limit, run_message, telemetry, vars,
+    context, dry_run, host_support, input, progress, recipe_source, run_limit, run_message,
+    telemetry, vars,
 };
 
 /// The `bnto run` switches that change what a run does.
@@ -65,7 +66,8 @@ pub fn run_recipe(
     catalog: &RecipeCatalog,
 ) {
     let verdict = RunVerdict::new(flags.json);
-    let raw_json = read_recipe(recipe_path, catalog, &verdict);
+    let raw_json = recipe_source::read_recipe(recipe_path, catalog);
+    let raw_json = verdict.or_fail(raw_json, "Error reading recipe:");
     refuse_unsupported_host(recipe_path, &raw_json, &verdict);
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
@@ -139,14 +141,6 @@ fn refuse_unsupported_host(recipe_path: &str, raw_json: &str, verdict: &RunVerdi
     if let Some(why) = host_support::unsupported_host(recipe_path, raw_json, host) {
         verdict.fail("Error:", why);
     }
-}
-
-/// Read recipe JSON — try catalog slug first, then disk path.
-fn read_recipe(path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
-    if let Some(entry) = catalog.resolve(path) {
-        return entry.definition_json.clone();
-    }
-    verdict.or_fail(std::fs::read_to_string(path), "Error reading recipe:")
 }
 
 /// Collect file count, byte total and the recipe's telemetry label.

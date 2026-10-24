@@ -69,6 +69,13 @@ bnto list
 # OS's install hint
 bnto info compress-images
 
+# Preview what a recipe (a slug or a .bnto.json path, as for `bnto run`) will
+# do: its dependencies and the shell commands it would run, writing nothing.
+# With input files it also previews the files it would make, which runs the
+# pipeline, so a recipe with shell steps asks for consent as `bnto run` does
+bnto dry-run download-video
+bnto dry-run recipe.bnto.json photo.jpg
+
 # Check recipe files without running them: unknown node types, parameters a
 # node refuses (e.g. a file-filter regex that doesn't compile), malformed
 # {{…}} placeholders, and every edge problem at every level (cycles, edges to
@@ -184,6 +191,7 @@ src/
 +-- cli.rs                 # clap definitions for every subcommand
 +-- dispatch.rs            # Routes a parsed subcommand to its implementation
 +-- run.rs                 # `bnto run` flow (consent, engine run, progressive output)
++-- recipe_source.rs       # A recipe argument to JSON: a catalog slug, else a file path (run, dry-run, install)
 +-- host_support.rs        # Refuses a recipe with no steps for this OS; the [macOS]-style badge
 +-- run_output.rs          # Writes run results and prints the summary
 +-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary

@@ -7,7 +7,7 @@ use colored::Colorize;
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
 use crate::unfilled_fields::refuse_unfilled;
-use crate::{dry_run, host_support, info, list};
+use crate::{dry_run, host_support, info, list, recipe_source};
 
 /// `bnto list` — print the catalog grouped by category.
 pub fn list_recipes(catalog: &RecipeCatalog) {
@@ -23,52 +23,50 @@ pub fn show_info(slug: &str, catalog: &RecipeCatalog) {
     info::print_recipe_info(slug, &recipe_info);
 }
 
-/// `bnto dry-run <recipe>` — preview what a recipe will do.
+/// `bnto dry-run <recipe>` — preview what a recipe (slug or path) will do.
 pub fn show_dry_run(
-    slug: &str,
+    recipe_arg: &str,
     inputs: &[String],
     param_overrides: &[String],
     yes: bool,
     catalog: &RecipeCatalog,
 ) {
-    refuse_unsupported_host(slug, catalog);
-    refuse_unfilled_fields(slug, param_overrides, catalog);
+    let Ok(json) = recipe_source::read_recipe(recipe_arg, catalog) else {
+        exit_unknown_recipe(recipe_arg);
+    };
+    refuse_unsupported_host(recipe_arg, &json);
+    or_exit(refuse_unfilled(&json, param_overrides));
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
-    if let Some(entry) = catalog.resolve(slug)
-        && !inputs.is_empty()
-    {
-        check_trust(slug, &entry.definition_json, yes, catalog);
-        dry_run::print_shell_note(&entry.definition_json);
+    if !inputs.is_empty() {
+        check_trust(recipe_arg, &json, yes, catalog);
+        dry_run::print_shell_note(&json);
     }
-    let Some(result) = dry_run::dry_run_recipe(slug, inputs, param_overrides, catalog) else {
-        exit_unknown_recipe(slug);
-    };
-    dry_run::print_dry_run(slug, &result);
+    let result = or_exit(dry_run::dry_run_recipe(
+        recipe_arg,
+        &json,
+        inputs,
+        param_overrides,
+    ));
+    dry_run::print_dry_run(recipe_arg, &result);
 }
 
 /// Stop a recipe with no branch for this OS, as `bnto run` does: a preview
 /// of a run that would be refused would mislead.
-fn refuse_unsupported_host(slug: &str, catalog: &RecipeCatalog) {
-    let Some(entry) = catalog.resolve(slug) else {
-        return;
-    };
+fn refuse_unsupported_host(recipe_arg: &str, json: &str) {
     let host = bnto_core::HostPlatform::current();
-    if let Some(why) = host_support::unsupported_host(slug, &entry.definition_json, host) {
+    if let Some(why) = host_support::unsupported_host(recipe_arg, json, host) {
         eprintln!("{} {why}", "Error:".red());
         process::exit(1);
     }
 }
 
-/// Stop a recipe with a `{{fields.*}}` nothing fills, as `bnto run` does.
-fn refuse_unfilled_fields(slug: &str, param_overrides: &[String], catalog: &RecipeCatalog) {
-    let Some(entry) = catalog.resolve(slug) else {
-        return;
-    };
-    if let Err(why) = refuse_unfilled(&entry.definition_json, param_overrides) {
+/// The value, or print the error and exit 1, as `bnto run` does.
+fn or_exit<T>(result: Result<T, String>) -> T {
+    result.unwrap_or_else(|why| {
         eprintln!("{} {why}", "Error:".red());
         process::exit(1);
-    }
+    })
 }
 
 /// Report an unknown recipe slug, then exit.
