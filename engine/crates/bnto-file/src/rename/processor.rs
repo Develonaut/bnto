@@ -10,11 +10,12 @@ use bnto_core::processor::{
 };
 use bnto_core::progress::ProgressReporter;
 
-use super::naming::{build_final_filename, split_filename};
+use super::naming::build_final_filename;
 use super::param_access::get_int_param;
 use super::params::build_rename_parameters;
 use super::result_metadata::build_rename_metadata;
 use super::transform::apply_all_transformations;
+use crate::split_extension::split_extension;
 
 /// The rename-files node processor. Stateless — config comes from `NodeInput.params`.
 /// File data passes through unchanged; only the filename is modified.
@@ -67,7 +68,7 @@ impl NodeProcessor for RenameFiles {
         require_filename(&input.filename)?;
 
         progress.report(10, "Parsing filename...");
-        let (original_stem, original_ext) = split_filename(&input.filename);
+        let (original_stem, original_ext) = split_extension(&input.filename);
 
         progress.report(30, "Applying transformations...");
         let stem = apply_all_transformations(original_stem, &input.params);
@@ -419,6 +420,48 @@ mod tests {
         let output = processor.process(input, &progress, &NoopContext).unwrap();
 
         assert_eq!(output.files[0].filename, "photo.jpg");
+    }
+
+    #[test]
+    fn test_suffix_keeps_file_in_dotted_folder() {
+        // ISS-23: the dot in `v1.2` used to split the name, so the suffix
+        // landed in the folder name and moved the file to `v1-x.2/`.
+        let processor = RenameFiles::new();
+        let params = string_param("suffix", "-x");
+        let input = make_input(b"data", "v1.2/README", params);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "v1.2/README-x");
+    }
+
+    #[test]
+    fn test_suffix_goes_before_extension_in_dotted_folder() {
+        let processor = RenameFiles::new();
+        let params = string_param("suffix", "-x");
+        let input = make_input(b"data", "v1.2/notes.txt", params);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "v1.2/notes-x.txt");
+    }
+
+    #[test]
+    fn test_extension_override_keeps_dotted_folder() {
+        // `{{ext}}` and `extension` used to see `2/README` as the extension.
+        let processor = RenameFiles::new();
+        let params = string_param("extension", "md");
+        let input = make_input(b"data", "v1.2/README", params);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "v1.2/README.md");
     }
 
     // =========================================================================
