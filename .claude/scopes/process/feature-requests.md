@@ -120,6 +120,7 @@ Draft the reply to the requester. A warning about data loss or security comes fi
 - **Today:** the recipe tried (or where it stops), with the command and output.
 - **Defects found:** ISS-<n> (with link).
 - **Generic piece:** what bnto should add, and its prior art.
+- **For review:** (optional) open questions for the `/workflow-expert` review.
 - **Won't build:** the literal shape, and why.
 - **Tracked in:** ISSUES.md / PLAN.md entries.
 

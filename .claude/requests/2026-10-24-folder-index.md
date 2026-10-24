@@ -24,8 +24,8 @@ The recipe reads sizes from disk metadata only, and writes the index into a fold
   5. `edit-fields` saves `lead: {{item.folder}}`.
   6. `file-rename` with `pattern: {{item.rel}}` restores the name. Then `summarize` with `groupBy: lead`.
   - **`flatten: false` is required.** `file-collect` defaults to `flatten: true`, which strips the folders, so every file becomes its own group (`x`, `y`, `d`, `top`, `r`) with no error.
-  - **Edge case:** a path shallower than N loses its extension (`top`, not `top.bin`).
-  - **Edge case ([ISS-23](../ISSUES.md#iss-23-file-rename-splits-the-extension-on-a-dot-anywhere-in-the-path)):** a file with no extension in a dotted folder lands in the wrong group: `v1.2/README` groups as `v1/_.2`, not `v1.2`.
+  - **Edge case:** a path with N or fewer segments loses its extension (`top`, not `top.bin`, at N=1). At N=3 that's every third-level file: `a/b/c.bin` groups as `a/b/c`.
+  - **Edge case ([ISS-23](https://github.com/Develonaut/bnto/pull/746), fixed in #746):** a file with no extension in a dotted folder lands in the wrong group: `v1.2/README` groups as `v1/_.2`, not `v1.2`.
   - Windows names are fine, since `file-collect` keeps folders with `slash_path` when `flatten` is off.
   - Without step 1, step 2 fails: the item has no `filename` field yet.
 
@@ -37,8 +37,8 @@ The recipe reads sizes from disk metadata only, and writes the index into a fold
   q: 1
   ```
 
-- **Defects found:** [ISS-23](../ISSUES.md#iss-23-file-rename-splits-the-extension-on-a-dot-anywhere-in-the-path) (`file-rename` splits the extension anywhere in the path), [ISS-24](../ISSUES.md#iss-24-edit-fields-leaves-file-as-text) (`edit-fields` leaves `{{file}}` as text).
-- **Generic piece:** **template filters** (already in [PLAN.md's backlog](../PLAN.md#engine-from-the-october-21-dogfood-sessions)): `{{item.filename | split('/') | first(2) | join('/')}}`. Prior art: n8n `.split('/').slice(0,2).join('/')`, NiFi `getDelimitedField`, Zapier Text > Split, and Liquid or Jinja `split`/`join`.
+- **Defects found:** [ISS-23](https://github.com/Develonaut/bnto/pull/746) (`file-rename` splits the extension anywhere in the path; fixed in #746), [ISS-24](https://github.com/Develonaut/bnto/pull/748) (`edit-fields` leaves `{{file}}` as text; fixed in #748).
+- **Generic piece:** **template filters** (already in [PLAN.md's backlog](../PLAN.md#engine-from-the-october-21-dogfood-sessions)): `{{item.filename | split('/') | first(2) | join('/')}}`. Prior art: n8n `.split('/').slice(0,2).join('/')`, NiFi `getDelimitedField`, Zapier Text > Split, and Liquid's `split`/`join` (Jinja has `join` but no `split`; Ansible adds one).
   - Jinja's `first` takes no count. Settle `first(n)` against `regex_replace` (Ansible-style) in the `/workflow-expert` review.
 - **Won't build:** a `top-folder` node or a `depth` param on `file-inspect`. Each serves one use case, and no comparable tool has one.
 - **Tracked in:** PLAN.md → Template filters (acceptance cases added).
@@ -60,14 +60,14 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
 - **Won't build:** a "human size" node, or a `format` param on `summarize`. Formatting is a template concern: `file-render` and `report` need it too.
 - **Tracked in:** PLAN.md → Template filters.
 
-## 3. The output node's `directory` with `{{env.*}}`
+## 3. Write the output into a folder an environment value names
 
 - **Verdict:** defect, a silent wrong result like ISS-1 (fixed in #741).
 - **Today**, with `secrets: [{"key": "SOME_KEY"}]`, `directory: {{env.SOME_KEY}}` and `SOME_KEY` set:
   - `bnto check` passes.
   - `bnto run` exits 0 with "1 file written to {{env.SOME_KEY}}/", and the file lands in a folder literally named `./{{env.SOME_KEY}}/`.
   - With `SOME_KEY` unset, the run is refused ("Missing required secrets") but the folder is still created first.
-  - Other leftovers are dropped too: `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`.
+  - An unknown `{{ctx.*}}` key is dropped and other leftovers stay as text: `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`.
   - The consumer writes with `file-copy` meanwhile, whose `destination` already fills `{{env.*}}` from declared secrets.
 - **Defects found:** [ISS-22](../ISSUES.md#iss-22-the-output-nodes-directory-leaves-env-as-a-literal-folder-name). While reproducing it: [ISS-21](../ISSUES.md#iss-21-the-tui-deletes-the-contents-of-a-recipes-output-folder-before-each-run), the TUI deletes the contents of a recipe's output folder before every run.
 - **Generic piece:** none; it's a fix.
@@ -89,7 +89,7 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
 > 5. `edit-fields` with `lead: {{item.folder}}`.
 > 6. `file-rename` with `pattern: {{item.rel}}`.
 >
-> Then group with `summarize` (`groupBy: lead`). Paths shallower than N lose their extension. Here it is at N=1, tested on a small tree, with a `report` step that prints each group and its count:
+> Then group with `summarize` (`groupBy: lead`). A path with N or fewer segments loses its extension: at N=3, `a/b/c.bin` groups as `a/b/c`. Here it is at N=1, tested on a small tree, with a `report` step that prints each group and its count:
 >
 > ```json
 > {

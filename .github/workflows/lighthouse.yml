@@ -30,33 +30,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Build all packages in dependency order (same as CI)
-      - name: "Build: @bnto/nodes"
-        run: pnpm --filter @bnto/nodes run build
-
-      - name: "Build: @bnto/registry"
-        run: pnpm --filter @bnto/registry run build
-
-      - name: "Build: @bnto/auth"
-        run: pnpm --filter @bnto/auth run build
-
-      - name: "Build: @bnto/backend"
-        run: pnpm --filter @bnto/backend run build
-
-      - name: "Build: @bnto/core"
-        run: pnpm --filter @bnto/core run build
-
-      - name: "Build: @bnto/ui"
-        run: pnpm --filter @bnto/ui run build
-
-      - name: "Build: @bnto/form"
-        run: pnpm --filter @bnto/form run build
-
-      - name: "Build: @bnto/editor"
-        run: pnpm --filter @bnto/editor run build
-
+      # The web app and every package it depends on, in dependency order.
       - name: "Build: @bnto/web"
-        run: pnpm --filter @bnto/web run build
+        run: pnpm turbo run build --filter=@bnto/web
 
       - name: Generate Lighthouse config
         run: pnpm exec tsx scripts/generate-lighthouserc.ts --with-server

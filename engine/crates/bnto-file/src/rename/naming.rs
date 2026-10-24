@@ -1,15 +1,6 @@
-// Filename assembly — stem/extension splitting, pattern templates, and counters.
+// Filename assembly — pattern templates, extension override, and counters.
 
 use super::param_access::{get_int_param, get_string_param};
-
-/// Split a filename into stem and extension on the last dot.
-/// ".gitignore" and "README" have no extension (empty string).
-pub(super) fn split_filename(filename: &str) -> (&str, &str) {
-    match filename.rfind('.') {
-        Some(pos) if pos > 0 => (&filename[..pos], &filename[pos + 1..]),
-        _ => (filename, ""),
-    }
-}
 
 /// If a pattern is provided, apply it (overriding the transformed stem).
 /// Otherwise reconstruct from transformed stem + resolved extension.
@@ -95,40 +86,6 @@ fn get_current_date() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // =========================================================================
-    // split_filename Tests
-    // =========================================================================
-
-    #[test]
-    fn test_split_simple_filename() {
-        let (stem, ext) = split_filename("photo.jpg");
-        assert_eq!(stem, "photo");
-        assert_eq!(ext, "jpg");
-    }
-
-    #[test]
-    fn test_split_filename_multiple_dots() {
-        // "archive.tar.gz" — extension is the LAST part after the last dot.
-        let (stem, ext) = split_filename("archive.tar.gz");
-        assert_eq!(stem, "archive.tar");
-        assert_eq!(ext, "gz");
-    }
-
-    #[test]
-    fn test_split_filename_no_extension() {
-        let (stem, ext) = split_filename("README");
-        assert_eq!(stem, "README");
-        assert_eq!(ext, "");
-    }
-
-    #[test]
-    fn test_split_dotfile() {
-        // ".gitignore" starts with a dot — the whole thing is the stem.
-        let (stem, ext) = split_filename(".gitignore");
-        assert_eq!(stem, ".gitignore");
-        assert_eq!(ext, "");
-    }
 
     // =========================================================================
     // Pattern / Date Helper Tests

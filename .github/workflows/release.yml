@@ -63,7 +63,9 @@ jobs:
 
           engine=$(echo "$CHANGED" | grep -q '^engine/' && echo true || echo false)
           # Engine changes reach the web app through the WASM bundle.
-          web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/|engine/)' && echo true || echo false)
+          # turbo.json and pnpm-workspace.yaml decide what the TypeScript job runs
+          # and how the site builds, so a change to either also redeploys the web app.
+          web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/|engine/|turbo\.json$|pnpm-workspace\.yaml$)' && echo true || echo false)
           convex=$(echo "$CHANGED" | grep -q '^packages/@bnto/backend/convex/' && echo true || echo false)
 
           echo "engine=$engine" >> "$GITHUB_OUTPUT"
@@ -197,83 +199,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: "Build: @bnto/nodes"
-        run: pnpm --filter @bnto/nodes run build
+      # Every workspace package, as in ci.yml's TypeScript job.
+      - name: Build (type-check all packages)
+        run: pnpm turbo run build
 
-      - name: "Build: @bnto/registry"
-        run: pnpm --filter @bnto/registry run build
+      - name: Lint
+        run: pnpm turbo run lint
 
-      - name: "Build: @bnto/auth"
-        run: pnpm --filter @bnto/auth run build
-
-      - name: "Build: @bnto/backend"
-        run: pnpm --filter @bnto/backend run build
-
-      - name: "Build: @bnto/core"
-        run: pnpm --filter @bnto/core run build
-
-      - name: "Build: @bnto/form"
-        run: pnpm --filter @bnto/form run build
-
-      - name: "Build: @bnto/ui"
-        run: pnpm --filter @bnto/ui run build
-
-      - name: "Build: @bnto/editor"
-        run: pnpm --filter @bnto/editor run build
-
-      - name: "Build: @bnto/web"
-        run: pnpm --filter @bnto/web run build
-
-      - name: "Lint: @bnto/nodes"
-        run: pnpm --filter @bnto/nodes run lint
-
-      - name: "Lint: @bnto/registry"
-        run: pnpm --filter @bnto/registry run lint
-
-      - name: "Lint: @bnto/auth"
-        run: pnpm --filter @bnto/auth run lint
-
-      - name: "Lint: @bnto/core"
-        run: pnpm --filter @bnto/core run lint
-
-      - name: "Lint: @bnto/form"
-        run: pnpm --filter @bnto/form run lint
-
-      - name: "Lint: @bnto/ui"
-        run: pnpm --filter @bnto/ui run lint
-
-      - name: "Lint: @bnto/editor"
-        run: pnpm --filter @bnto/editor run lint
-
-      - name: "Lint: @bnto/backend"
-        run: pnpm --filter @bnto/backend run lint
-
-      - name: "Lint: @bnto/web"
-        run: pnpm --filter @bnto/web run lint
-
-      - name: "Test: @bnto/nodes"
-        run: pnpm --filter @bnto/nodes run test
-
-      - name: "Test: @bnto/registry"
-        run: pnpm --filter @bnto/registry run test
-
-      - name: "Test: @bnto/backend"
-        run: pnpm --filter @bnto/backend run test
-
-      - name: "Test: @bnto/core"
-        run: pnpm --filter @bnto/core run test
-
-      - name: "Test: @bnto/form"
-        run: pnpm --filter @bnto/form run test
-
-      - name: "Test: @bnto/ui"
-        run: pnpm --filter @bnto/ui run test
-
-      - name: "Test: @bnto/editor"
-        run: pnpm --filter @bnto/editor run test
-
-      - name: "Test: @bnto/web"
-        run: pnpm --filter @bnto/web run test
+      - name: Test
+        run: pnpm turbo run test
 
   # ── Gate: all required CI checks must pass ──
   ci-gate:

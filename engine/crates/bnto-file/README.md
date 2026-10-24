@@ -34,7 +34,7 @@ src/
 │   ├── params.rs           # Parameter schema (metadata)
 │   ├── param_access.rs     # Typed reads from the params map
 │   ├── transform.rs        # Sanitize, find/replace, case, prefix/suffix
-│   ├── naming.rs           # Stem/ext split, pattern templates, counters
+│   ├── naming.rs           # Pattern templates, extension override, counters
 │   └── result_metadata.rs  # originalFilename/newFilename/transformsApplied
 ├── decode/           # FileDecode processor (file-decode)
 │   ├── mod.rs              # NodeProcessor impl (per-file), decoded output
@@ -42,6 +42,7 @@ src/
 │   ├── encoding.rs         # Encoding enum, base64 decode, error reasons
 │   └── output_name.rs      # `filename` template ({{name}}, {{ext}})
 ├── glob.rs           # File-name glob, compiled once; shared by collect and filter
+├── split_extension.rs # Stem/extension split on the last `/` segment; shared by rename and decode
 ├── filter/           # FileFilter processor (file-filter)
 │   ├── mod.rs              # NodeProcessor impl (per-file), extension / pattern / size criteria
 │   ├── params.rs           # Parameter schema

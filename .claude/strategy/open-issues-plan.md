@@ -38,19 +38,20 @@ Split into 8 PRs. PRs 1–5 are independent, and PR 6 depends on PR 5. PRs 7–8
 
 `ci.yml` lists packages one per step for build (l.270–294), lint (l.302–326) and test (l.333–354). `@bnto/i18n` is in none of them, though it has `build`, `test` and `lint` scripts. Replace each list with one `pnpm turbo run <task>` over the workspace. CI has no Turbo cache, so every task runs, and a new package is included automatically. Do the same in `release.yml` if it repeats the lists.
 
-### Files (~0 new, ~2 modified)
+### Files (~0 new, 4 modified)
 
-- `.github/workflows/ci.yml`, and `.github/workflows/release.yml` if it repeats the lists
-- `.claude/ISSUES.md`: add ISS-13 (logged here, but not yet in the file), then delete it in this PR
+- `.github/workflows/ci.yml` and `.github/workflows/release.yml` (both repeat the list), plus `.github/workflows/lighthouse.yml`, which had a third copy
+- the `web` change filters in `ci.yml` and `release.yml` gain `turbo.json` and `pnpm-workspace.yaml`, since they now decide what the job runs
+- `.claude/ISSUES.md`: delete ISS-13
 
 ### Key change
 
 ```yaml
 - name: Build packages
-  run: pnpm turbo run build --filter='./packages/**' --filter=@bnto/web
+  run: pnpm turbo run build
 ```
 
-The same goes for lint and test. Turbo prefixes every log line with the package name (`@bnto/i18n:test:`), so the logs stay readable.
+The same goes for lint and test. No `--filter`: one would skip any new app under `apps/`, and CI should run exactly what `task check` runs. The only cost is `@bnto/desktop`'s three `echo` placeholders. On Actions, Turbo groups each task's output under its name (`@bnto/i18n:test`), so the logs stay readable.
 
 ### RED tests
 
@@ -60,7 +61,7 @@ The same goes for lint and test. Turbo prefixes every log line with the package 
 ### Verification
 
 ```bash
-pnpm turbo run build lint test --filter='./packages/**' --filter=@bnto/web --dry=json | jq -r '.tasks[].taskId' | sort | grep i18n
+pnpm turbo run build lint test --dry=json | jq -r '.tasks[].taskId' | sort | grep i18n
 gh pr checks <n>   # TypeScript job log lists @bnto/i18n tasks
 ```
 
