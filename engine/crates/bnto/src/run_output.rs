@@ -128,7 +128,8 @@ fn done_wording(dry_run: bool) -> (&'static str, &'static str, &'static str) {
 }
 
 /// ` (N already there, left as is)` for files a write found at their
-/// destination already (the source itself); empty when there were none.
+/// destination already, so didn't write: the source itself, or a file at a
+/// made-up name already holding the result's bytes (held). Empty when none.
 fn left_as_is_note(unchanged: usize, dry_run: bool) -> String {
     if unchanged == 0 {
         return String::new();

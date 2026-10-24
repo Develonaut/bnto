@@ -1,7 +1,7 @@
 # Decision: A made-up output name skips files already there
 
 **Created:** October 24, 2026
-**Status:** Decided while fixing the data-loss bug below (branch `fix/suffix-skips-existing-files`), with three cold reviews. Option 2 was chosen over the "skip anything there" fix the bug report suggested.
+**Status:** Decided while fixing the data-loss bug below (branch `fix/suffix-skips-existing-files`), with cold reviews on October 24, 2026: two of the whole branch, then one of its third commit. Option 2 was chosen over the "skip anything there" fix the bug report suggested.
 **Applies to:** `engine/crates/bnto/src/output_names.rs` and `output_names/folder.rs`, and every caller: the CLI's final write and dry run (`io.rs`), progressive copies (`progressive_output.rs`, from `bnto run`'s reporter and the TUI bridge's), and the TUI results listing (`tui/bridge/output.rs`).
 
 ## Context
@@ -20,7 +20,7 @@ Write mode keeps two results with one name apart by writing the later one as `st
 Option 2, in `output_names/folder.rs` (`spot` returns `Free`, `Held` or `Taken`):
 
 - Only a suffixed name is checked; a result's own name still replaces its namesake, even over the same bytes.
-- **Held means left as is.** A held file isn't written again: `io.rs` skips it and counts it with the files "already there, left as is" (as it does for a source written back to its own folder, ISS-36), the dry run says it would be left, and progressive output skips it too. Rewriting it would have given it the source's mode and a new mtime, and copied a large file again after comparing it. The TUI lists a held file like a written one, since it is this run's result.
+- **Held means left as is.** A held file isn't written again: `io.rs` skips it and counts it with the files "already there, left as is" (as it does for a source written back to its own folder, ISS-36), the dry run says it would be left, and progressive output skips it too. The rename warning names held files on their own line (`already there under a new name, holding the same bytes, left as is`), so it agrees with the summary. Rewriting it would have given it the source's mode and a new mtime, and copied a large file again after comparing it. The TUI lists a held file like a written one, since it is this run's result.
 - An entry whose name differs only in case counts as taken, and so do a folder and a link. Only a regular file is ever held. It's found with `symlink_metadata`, so a link isn't followed.
 - **The listing alone isn't trusted.** When it shows nothing under the name, `symlink_metadata` is asked about the path itself:
   - A file it finds is held or taken like a listed one. That catches one file the filesystem knows under a spelling the listing doesn't match (APFS takes NFC and NFD `é` as one name), and a folder bnto can write but not list.

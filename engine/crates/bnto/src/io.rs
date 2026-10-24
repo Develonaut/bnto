@@ -299,35 +299,43 @@ fn no_row_warning_text(unmatched: &[&str]) -> String {
     )
 }
 
-/// Print one warning line naming the files written under a new name.
+/// Print a warning line naming the files written under a new name, and one
+/// naming those left as is under one (held), each only when there are any.
 pub fn warn_renamed(outcome: &WriteOutcome, dry_run: bool) {
     use colored::Colorize;
 
-    if let WriteOutcome::Written { renamed, .. } = outcome
-        && !renamed.is_empty()
-    {
-        let warning = "Warning:".yellow().bold();
-        eprintln!("  {warning} {}", renamed_warning_text(renamed, dry_run));
+    if let WriteOutcome::Written { renamed, .. } = outcome {
+        for line in renamed_warning_lines(renamed, dry_run) {
+            eprintln!("  {} {line}", "Warning:".yellow().bold());
+        }
     }
 }
 
-/// `N file(s) written under a new name …: a → a_1`, names capped.
-fn renamed_warning_text(renamed: &[Renamed], dry_run: bool) -> String {
+/// `N file(s) written under a new name …: a → a_1`, then `N file(s) already
+/// there under a new name, holding the same bytes, left as is: …`.
+fn renamed_warning_lines(renamed: &[Renamed], dry_run: bool) -> Vec<String> {
+    let (held, written): (Vec<&Renamed>, Vec<&Renamed>) = renamed.iter().partition(|r| r.held);
+    let (write, left) = if dry_run {
+        ("would be written", "would be left")
+    } else {
+        ("written", "left")
+    };
+    let clash = format!("{write} under a new name, since another has the same name (case ignored)");
+    let kept = format!("already there under a new name, holding the same bytes, {left} as is");
+    [(written, clash), (held, kept)]
+        .into_iter()
+        .filter(|(files, _)| !files.is_empty())
+        .map(|(files, what)| format!("{} {what}: {}", count_files(files.len()), pairs(&files)))
+        .collect()
+}
+
+/// `a → a_1, b → b_1`, names capped.
+fn pairs(renamed: &[&Renamed]) -> String {
     let pairs: Vec<String> = renamed
         .iter()
         .map(|r| format!("{} → {}", r.from, r.to))
         .collect();
-    let pairs: Vec<&str> = pairs.iter().map(String::as_str).collect();
-    let verb = if dry_run {
-        "would be written"
-    } else {
-        "written"
-    };
-    format!(
-        "{} {verb} under a new name, since another has the same name (case ignored): {}",
-        count_files(renamed.len()),
-        capped_names(&pairs)
-    )
+    capped_names(&pairs.iter().map(String::as_str).collect::<Vec<_>>())
 }
 
 /// `1 file` / `N files`.
@@ -738,6 +746,7 @@ mod tests {
         Renamed {
             from: from.into(),
             to: to.into(),
+            held: false,
         }
     }
 
@@ -790,15 +799,46 @@ mod tests {
     fn test_renamed_warning_text_names_each_file_and_its_new_name() {
         let one = [renamed("logo.svg", "logo_1.svg")];
         assert_eq!(
-            renamed_warning_text(&one, false),
-            "1 file written under a new name, since another has the same name \
-             (case ignored): logo.svg → logo_1.svg"
+            renamed_warning_lines(&one, false),
+            [
+                "1 file written under a new name, since another has the same name \
+              (case ignored): logo.svg → logo_1.svg"
+            ]
         );
         let two = [renamed("a.svg", "a_1.svg"), renamed("A.svg", "A_2.svg")];
         assert_eq!(
-            renamed_warning_text(&two, true),
-            "2 files would be written under a new name, since another has the same \
-             name (case ignored): a.svg → a_1.svg, A.svg → A_2.svg"
+            renamed_warning_lines(&two, true),
+            [
+                "2 files would be written under a new name, since another has the same \
+              name (case ignored): a.svg → a_1.svg, A.svg → A_2.svg"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_a_held_file_is_named_as_left_as_is_not_written() {
+        // RED: a held file was listed as "written under a new name" while
+        // the summary said it was left as is.
+        let held = Renamed {
+            held: true,
+            ..renamed("b.txt", "b_2.txt")
+        };
+        let both = [renamed("a.svg", "a_1.svg"), held];
+        assert_eq!(
+            renamed_warning_lines(&both, false),
+            [
+                "1 file written under a new name, since another has the same name \
+                 (case ignored): a.svg → a_1.svg",
+                "1 file already there under a new name, holding the same bytes, left \
+                 as is: b.txt → b_2.txt",
+            ]
+        );
+        assert_eq!(
+            renamed_warning_lines(&both[1..], true),
+            [
+                "1 file already there under a new name, holding the same bytes, would \
+              be left as is: b.txt → b_2.txt"
+            ]
         );
     }
 

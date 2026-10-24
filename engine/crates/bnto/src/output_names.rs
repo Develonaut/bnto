@@ -17,11 +17,13 @@ use bnto_core::processor::FileData;
 
 use folder::Spot;
 
-/// A result file written under a different name than the pipeline gave it.
+/// A result file placed under a different name than the pipeline gave it:
+/// written there, or `held` (left as is, a file there held its bytes).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Renamed {
     pub from: String,
     pub to: String,
+    pub held: bool,
 }
 
 /// Where one result goes: the name it's written under, and whether a file
@@ -33,7 +35,9 @@ pub struct Claimed {
 }
 
 /// The names claimed so far in one run's output folder, and the made-up
-/// names a file already there was found to take (not checked again).
+/// names a file already there was found to take (not checked again). One
+/// value serves one folder: both sets are keyed by folded name only, so
+/// passing another `dir` to `claim` would mix two folders' names.
 #[derive(Debug, Default)]
 pub struct OutputNames {
     taken: HashSet<String>,
@@ -98,6 +102,7 @@ pub fn plan<'a>(
             renamed.push(Renamed {
                 from: name.to_string(),
                 to: claimed.name.clone(),
+                held: claimed.held,
             });
         }
         claims.push(claimed);
@@ -218,7 +223,8 @@ mod tests {
             renamed,
             [Renamed {
                 from: "logo.svg".into(),
-                to: "logo_1.svg".into()
+                to: "logo_1.svg".into(),
+                held: false,
             }]
         );
     }

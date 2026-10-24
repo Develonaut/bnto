@@ -155,10 +155,24 @@ fn test_a_rerun_leaves_its_own_identical_result_as_is() {
     // the name (not `b_3`), but copied over it, so the file got the source's
     // mode and a new mtime. It's this run's result already: left as is and
     // reported so, while `b.txt`, a result's own name, is still written.
+    assert_rerun_leaves_b_2_as_is(false);
+}
+
+#[test]
+fn test_a_progressive_rerun_leaves_its_own_identical_result_as_is() {
+    // The loop's copy must skip the held `b_2.txt` too, not just the final
+    // write: without that skip it rewrote the file (new mtime, the source's
+    // mode) before the final write left it.
+    assert_rerun_leaves_b_2_as_is(true);
+}
+
+/// Run the fixture twice, aging `b_2.txt` (2020 mtime, 0600 on unix) in
+/// between, and check the rerun left it as is and said so, line by line.
+fn assert_rerun_leaves_b_2_as_is(progressive: bool) {
     let root = fixture();
     let out = root.path().join("out");
     let sandbox = Sandbox::new();
-    let first = run(&sandbox, root.path(), &recipe(&out, false), &[]);
+    let first = run(&sandbox, root.path(), &recipe(&out, progressive), &[]);
     assert!(first.status.success(), "{first:?}");
     let b2 = out.join("b_2.txt");
     let old = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_577_836_800);
@@ -170,7 +184,7 @@ fn test_a_rerun_leaves_its_own_identical_result_as_is() {
         std::fs::set_permissions(&b2, std::fs::Permissions::from_mode(0o600)).unwrap();
     }
 
-    let second = run(&sandbox, root.path(), &recipe(&out, false), &[]);
+    let second = run(&sandbox, root.path(), &recipe(&out, progressive), &[]);
     let stderr = String::from_utf8_lossy(&second.stderr);
     assert!(second.status.success(), "stderr: {stderr}");
     assert_eq!(contents(&out), kept(), "stderr: {stderr}");
@@ -181,8 +195,15 @@ fn test_a_rerun_leaves_its_own_identical_result_as_is() {
         use std::os::unix::fs::PermissionsExt;
         assert_eq!(meta.permissions().mode() & 0o777, 0o600);
     }
+    // The warning and the summary agree: `b_2.txt` was left, not written.
+    let lines: Vec<&str> = stderr.lines().map(str::trim).collect();
+    let held = "Warning: 1 file already there under a new name, holding the same \
+                bytes, left as is: b.txt → b_2.txt";
+    assert!(lines.contains(&held), "{stderr}");
+    assert!(!stderr.contains("written under a new name"), "{stderr}");
     assert!(
-        stderr.contains("1 file written") && stderr.contains("1 already there, left as is"),
+        stderr.contains("Done. 1 file written to")
+            && stderr.contains("(1 already there, left as is)"),
         "{stderr}"
     );
 }

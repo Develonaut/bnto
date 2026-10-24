@@ -12,8 +12,9 @@ use crate::output_names::OutputNames;
 /// folders for names with subdirectories. `names` spans the whole run, so a
 /// name an earlier iteration wrote isn't replaced, and each file lands where
 /// the final write puts it. A made-up name whose file already holds the
-/// bytes (`held`) is left as is. Errors are ignored: the final write after
-/// the run writes every file again and reports failures.
+/// bytes (`held`) is left as is, here and in the final write. Errors are
+/// ignored: the final write after the run writes every file again (all but
+/// the held ones) and reports failures.
 pub fn write_progressive_files(
     output_dir: &str,
     files: &[ProgressOutputFile],
@@ -68,6 +69,38 @@ mod tests {
             std::fs::read(out.path().join("mine.txt")).unwrap(),
             b"user file"
         );
+    }
+
+    #[test]
+    fn leaves_a_made_up_names_file_already_holding_the_bytes_as_is() {
+        // RED: deleting the `held` skip copied over the identical `b_1.txt`,
+        // giving it a new mtime (and the source's mode).
+        let out = tempfile::tempdir().unwrap();
+        let held = out.path().join("b_1.txt");
+        std::fs::write(&held, "BBBB").unwrap();
+        let old = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_577_836_800);
+        let file = std::fs::File::options().write(true).open(&held).unwrap();
+        file.set_modified(old).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&held, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        let mut names = OutputNames::default();
+        let dir = out.path().to_str().unwrap();
+        for body in ["AAAA", "BBBB"] {
+            let files = [output("b.txt", FileData::Bytes(body.into()))];
+            write_progressive_files(dir, &files, &mut names);
+        }
+
+        let meta = std::fs::metadata(&held).unwrap();
+        assert_eq!(meta.modified().unwrap(), old, "b_1.txt was rewritten");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(meta.permissions().mode() & 0o777, 0o600);
+        }
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
     }
 
     #[test]
