@@ -133,7 +133,7 @@ Relative links that don't resolve from the file they're in:
 
 **Found:** October 24, 2026 (evaluating [a feature request](requests/2026-10-24-folder-index.md)).
 
-A recipe with `secrets: [SOME_KEY]` and an output node `directory: "{{env.SOME_KEY}}"`, run with `SOME_KEY` set:
+A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{{env.SOME_KEY}}"`, run with `SOME_KEY` set:
 
 - `bnto check` passes.
 - `bnto run` exits 0 and prints `1 file written to {{env.SOME_KEY}}/`.
@@ -151,4 +151,4 @@ A recipe with `secrets: [SOME_KEY]` and an output node `directory: "{{env.SOME_K
 
 **Found:** October 24, 2026 (evaluating [a feature request](requests/2026-10-24-folder-index.md)).
 
-`edit-fields` fills only `{{item.*}}` (`engine/crates/bnto-core/src/data/edit_fields/fill.rs:55-58`, `placeholder::resolve(text, ITEM, …)`), so `name: "{{file}}"` sets the literal text `{{file}}` with no error. `assert`, `report` and `file-render` fill `{{file}}` with the file's name (`bnto-core/src/control/placeholder.rs:14-16`).
+`edit-fields` fills only `{{item.*}}` (`engine/crates/bnto-core/src/data/edit_fields/fill.rs:55-58`, `placeholder::resolve(text, ITEM, …)`), so `name: "{{file}}"` sets the literal text `{{file}}` with no error. `assert` and `report` fill `{{file}}` with the file's name through `placeholder::resolve_file` (`bnto-core/src/control/assert/mod.rs:132`, `control/report/lines.rs:39`), and `file-render` with its own token (`bnto-file/src/render/fill.rs:18`).

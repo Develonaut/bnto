@@ -99,7 +99,7 @@ Record the evaluation in `.claude/requests/YYYY-MM-DD-<slug>.md` (format below),
 
 **The repo is public.** A record never names the requester, their company or product, or any private project. Describe the consumer instead ("a consumer that pins bnto by commit"), and restate their setup in generic terms.
 
-Draft the reply to the requester, in this order:
+Draft the reply to the requester. A warning about data loss or security comes first, before anything else. Then, in this order:
 
 1. what works today, with the recipe;
 2. what's a bug, and the workaround until it's fixed;
