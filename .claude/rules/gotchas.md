@@ -182,6 +182,8 @@ OutputFile { data: FileData::Path(path), .. }
 
 **The CLI's input files are `FileData::Path` too.** `bnto run` argument files enter the pipeline as references to the user's own files (`read_pipeline_file` in `bnto/src/io.rs`). So code that writes results out must use `copy_to()`, never `write_to()`: `write_to()` renames a `Path`, which would move the user's original into the output folder. Only `overwrite` mode renames sources, on purpose.
 
+**A copy can land on an input the run hasn't read yet.** Writing into a folder that holds the run's inputs, `a` renamed to `b.txt` replaced `b.txt` before `b` was copied out, and `b`'s content was gone (ISS-48). The final write goes through `bnto/src/ordered_write/`: each write waits until no later write still reads its destination (matched by file identity, not name), and a swap stages one file aside first. Progressive writes can't see later iterations' sources, so they leave any destination that already holds a file to the final write. A new path that writes several results must go through `ordered_write` too.
+
 **Never copy a file onto itself.** `std::fs::copy(p, p)` opens the destination for writing first, so it empties the file and returns `Ok(0)` (an output folder that is the input's own folder did this, ISS-36). `copy_to()` and `write_to()` check `FileData::is_at(dest)`, which compares file identity (`same-file`), not names, so `..`, symlinks, hard links and another case on macOS/Windows all count, and leave such a file as is. Any new code that opens a destination for writing from a `Path` source goes through `copy_to()` or makes the same check.
 
 ## Recipe Edges Route Files

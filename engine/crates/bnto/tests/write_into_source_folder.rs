@@ -142,3 +142,90 @@ fn test_writing_a_file_elsewhere_still_says_written() {
     assert!(!stderr.contains("left as is"), "{stderr}");
     assert_eq!(std::fs::read(out.path().join("a.txt")).unwrap(), CONTENT);
 }
+
+// --- a write onto another input that hasn't been read yet (ISS-48) ---
+
+/// A folder holding `a.txt` = `AAAA` and `b.txt` = `BBBB`.
+fn two_inputs() -> (tempfile::TempDir, [std::path::PathBuf; 2]) {
+    let dir = temp_output_dir();
+    let (a, b) = (dir.path().join("a.txt"), dir.path().join("b.txt"));
+    std::fs::write(&a, "AAAA").unwrap();
+    std::fs::write(&b, "BBBB").unwrap();
+    (dir, [a, b])
+}
+
+/// `file-rename` turning `a` into `b`: `a.txt` comes out named `b.txt`.
+fn a_to_b() -> serde_json::Value {
+    json!({ "id": "ren", "type": "file-rename", "parameters": { "find": "a", "replace": "b" } })
+}
+
+/// Each file in `dir` with its content, sorted by name.
+fn contents(dir: &Path) -> Vec<(String, String)> {
+    let mut files: Vec<(String, String)> = std::fs::read_dir(dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .map(|p| {
+            let name = p.file_name().unwrap().to_string_lossy().into_owned();
+            (name, std::fs::read_to_string(&p).unwrap())
+        })
+        .collect();
+    files.sort();
+    files
+}
+
+/// What the a → b runs must leave: `a.txt` untouched, `a`'s copy at
+/// `b.txt`, and `b`'s content kept at its new name `b_1.txt`.
+fn kept_both() -> Vec<(String, String)> {
+    [("a.txt", "AAAA"), ("b.txt", "AAAA"), ("b_1.txt", "BBBB")]
+        .iter()
+        .map(|(n, c)| (n.to_string(), c.to_string()))
+        .collect()
+}
+
+#[test]
+fn test_a_rename_onto_another_inputs_name_keeps_that_inputs_content() {
+    // RED (ISS-48): `a`'s output is planned as `b.txt` and `b`'s as
+    // `b_1.txt`; copying `a` first replaced `b.txt` before `b` was read, so
+    // all three files held AAAA and BBBB was gone.
+    let (dir, [a, b]) = two_inputs();
+    let output = run(&recipe(dir.path(), &[a_to_b()]), &[&a, &b], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert_eq!(contents(dir.path()), kept_both(), "stderr: {stderr}");
+    assert!(stderr.contains("2 files written"), "{stderr}");
+}
+
+/// `file-list` of `a.txt` and `b.txt` in `dir`, renamed `a` → `b` inside a
+/// progressive loop, written back into `dir`.
+fn progressive_rename_recipe(dir: &Path) -> serde_json::Value {
+    let dir = dir.to_str().unwrap();
+    json!({
+        "name": "Progressive Rename", "type": "group",
+        "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "none" } },
+            { "id": "list", "type": "file-list",
+              "parameters": { "base": dir, "paths": ["a.txt", "b.txt"] } },
+            { "id": "each", "type": "loop",
+              "parameters": { "mode": "forEach", "outputPersistence": "progressive" },
+              "nodes": [a_to_b()], "edges": [] },
+            { "id": "output", "type": "output",
+              "parameters": { "mode": "write", "directory": dir } }
+        ],
+        "edges": [
+            { "id": "e1", "source": "input", "target": "list" },
+            { "id": "e2", "source": "list", "target": "each" },
+            { "id": "e3", "source": "each", "target": "output" }
+        ]
+    })
+}
+
+#[test]
+fn test_a_progressive_rename_onto_a_later_inputs_name_keeps_its_content() {
+    // RED (ISS-48): the first iteration's progressive copy replaced `b.txt`
+    // before the second iteration read it.
+    let (dir, _) = two_inputs();
+    let output = run(&progressive_rename_recipe(dir.path()), &[], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert_eq!(contents(dir.path()), kept_both(), "stderr: {stderr}");
+}

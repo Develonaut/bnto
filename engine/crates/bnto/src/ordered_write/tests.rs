@@ -1,0 +1,127 @@
+use super::*;
+
+fn result(name: &str, data: FileData) -> PipelineFileResult {
+    PipelineFileResult {
+        name: name.to_string(),
+        data,
+        mime_type: "text/plain".to_string(),
+        metadata: serde_json::Map::new(),
+    }
+}
+
+/// A folder holding each `(name, content)` file, and the files' paths.
+fn folder(files: &[(&str, &str)]) -> (tempfile::TempDir, Vec<PathBuf>) {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = files
+        .iter()
+        .map(|(name, body)| {
+            let path = dir.path().join(name);
+            std::fs::write(&path, body).unwrap();
+            path
+        })
+        .collect();
+    (dir, paths)
+}
+
+/// Results reading each source, in order.
+fn reading(sources: &[PathBuf]) -> Vec<PipelineFileResult> {
+    sources
+        .iter()
+        .map(|s| result("unused", FileData::Path(s.clone())))
+        .collect()
+}
+
+fn read(dir: &Path, name: &str) -> String {
+    std::fs::read_to_string(dir.join(name)).unwrap()
+}
+
+fn names_in(dir: &Path) -> usize {
+    std::fs::read_dir(dir).unwrap().count()
+}
+
+#[test]
+fn test_a_write_onto_a_later_source_reads_that_source_first() {
+    // RED (ISS-48): a → b.txt ran first and replaced b.txt before b → b_1.txt
+    // read it, so BBBB was lost.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let paths = [dir.path().join("b.txt"), dir.path().join("b_1.txt")];
+    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    assert_eq!(read(dir.path(), "a.txt"), "AAAA");
+    assert_eq!(read(dir.path(), "b.txt"), "AAAA");
+    assert_eq!(read(dir.path(), "b_1.txt"), "BBBB");
+}
+
+#[test]
+fn test_a_swap_swaps_and_leaves_no_staging_folder() {
+    // RED: a → b.txt and b → a.txt; either order alone loses one file.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let paths = [src[1].clone(), src[0].clone()];
+    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    assert_eq!(read(dir.path(), "a.txt"), "BBBB");
+    assert_eq!(read(dir.path(), "b.txt"), "AAAA");
+    assert_eq!(names_in(dir.path()), 2, "the staging folder is removed");
+}
+
+#[test]
+fn test_a_three_way_rotation_keeps_every_file() {
+    // RED: a → b.txt, b → c.txt, c → a.txt.
+    let (dir, src) = folder(&[("a.txt", "A"), ("b.txt", "B"), ("c.txt", "C")]);
+    let paths = [src[1].clone(), src[2].clone(), src[0].clone()];
+    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    assert_eq!(read(dir.path(), "a.txt"), "C");
+    assert_eq!(read(dir.path(), "b.txt"), "A");
+    assert_eq!(read(dir.path(), "c.txt"), "B");
+}
+
+#[test]
+fn test_a_case_only_swap_keeps_both_contents() {
+    // RED on a case-insensitive filesystem: a → `B.txt` is a write onto
+    // b.txt, which b → a.txt still reads. On a case-sensitive one `B.txt` is
+    // a new file and only the a.txt write has to wait. Both keep each file.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let paths = [dir.path().join("B.txt"), src[0].clone()];
+    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    assert_eq!(read(dir.path(), "B.txt"), "AAAA");
+    assert_eq!(read(dir.path(), "a.txt"), "BBBB");
+}
+
+#[test]
+fn test_bytes_and_untouched_sources_write_as_before() {
+    // Guard: no waiting, no staging when nothing reads a destination.
+    let (dir, src) = folder(&[("a.txt", "AAAA")]);
+    let out = tempfile::tempdir().unwrap();
+    let files = [
+        result("a.txt", FileData::Path(src[0].clone())),
+        result("new.txt", FileData::Bytes(b"new".to_vec())),
+    ];
+    let paths = [
+        out.path().join("a.txt"),
+        out.path().join("sub").join("new.txt"),
+    ];
+    write_all(&files, &paths, out.path()).unwrap();
+    assert_eq!(read(out.path(), "a.txt"), "AAAA");
+    assert_eq!(read(&out.path().join("sub"), "new.txt"), "new");
+    assert_eq!(read(dir.path(), "a.txt"), "AAAA");
+    assert_eq!(names_in(out.path()), 2);
+}
+
+#[test]
+fn test_a_failed_write_says_where_staged_copies_are_kept() {
+    let out = tempfile::tempdir().unwrap();
+    let file = out.path().join("b.txt");
+    std::fs::write(&file, "BBBB").unwrap();
+    let mut staging = Staging::new(out.path());
+    staging.stage(&file).unwrap();
+    let run = Run {
+        files: &[],
+        paths: &[],
+        staging,
+        staged: HashMap::new(),
+    };
+    let text = run.failed("Cannot write x".to_string());
+    assert!(text.starts_with("Cannot write x\n"), "{text}");
+    assert!(
+        text.contains("Copies set aside for a swap are kept in"),
+        "{text}"
+    );
+}

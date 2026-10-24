@@ -45,6 +45,7 @@ mod list;
 mod live_bar;
 pub mod logging;
 mod migrate;
+mod ordered_write;
 mod output_names;
 mod overwrite;
 mod package_manager;

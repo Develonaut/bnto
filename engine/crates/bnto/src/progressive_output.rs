@@ -12,9 +12,11 @@ use crate::output_names::OutputNames;
 /// folders for names with subdirectories. `names` spans the whole run, so a
 /// name an earlier iteration wrote isn't replaced, and each file lands where
 /// the final write puts it. A made-up name whose file already holds the
-/// bytes (`held`) is left as is, here and in the final write. Errors are
-/// ignored: the final write after the run writes every file again (all but
-/// the held ones) and reports failures.
+/// bytes (`held`) is left as is, here and in the final write. Any other
+/// destination that already holds a file is left for the final write: it may
+/// be a later iteration's source, not read yet (ISS-48), and only the final
+/// write sees every source. Errors are ignored: the final write after the run
+/// writes every file again (all but the held ones) and reports failures.
 pub fn write_progressive_files(
     output_dir: &str,
     files: &[ProgressOutputFile],
@@ -23,10 +25,10 @@ pub fn write_progressive_files(
     for file in files {
         let dir = Path::new(output_dir);
         let claimed = names.claim(dir, &file.name, &file.data);
-        if claimed.held {
+        let path = dir.join(claimed.name);
+        if claimed.held || std::fs::symlink_metadata(&path).is_ok() {
             continue;
         }
-        let path = dir.join(claimed.name);
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
@@ -119,6 +121,27 @@ mod tests {
             std::fs::read(out.path().join("sub").join("a.txt")).unwrap(),
             b"nested"
         );
+    }
+
+    #[test]
+    fn leaves_a_file_already_at_a_destination_for_the_final_write() {
+        // RED (ISS-48): iteration 1 renames `a` to `b.txt`; copying it then
+        // replaced `b.txt` before iteration 2 read it. A later iteration's
+        // source can't be known yet, so an occupied destination waits for
+        // the final write, which orders its writes (see `ordered_write`).
+        let out = tempfile::tempdir().unwrap();
+        let (a, b) = (out.path().join("a.txt"), out.path().join("b.txt"));
+        std::fs::write(&a, "AAAA").unwrap();
+        std::fs::write(&b, "BBBB").unwrap();
+        let dir = out.path().to_str().unwrap();
+        let mut names = OutputNames::default();
+
+        write_progressive_files(dir, &[output("b.txt", FileData::Path(a))], &mut names);
+        assert_eq!(std::fs::read_to_string(&b).unwrap(), "BBBB");
+
+        write_progressive_files(dir, &[output("b.txt", FileData::Path(b))], &mut names);
+        let written = out.path().join("b_1.txt");
+        assert_eq!(std::fs::read_to_string(written).unwrap(), "BBBB");
     }
 
     #[test]
