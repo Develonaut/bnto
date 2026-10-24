@@ -11,15 +11,22 @@ use crate::output_names::OutputNames;
 /// Copy an iteration's output files into `output_dir`, creating parent
 /// folders for names with subdirectories. `names` spans the whole run, so a
 /// name an earlier iteration wrote isn't replaced, and each file lands where
-/// the final write puts it. Errors are ignored: the final write after the run
-/// writes every file again and reports failures.
+/// the final write puts it. A made-up name whose file already holds the
+/// bytes (`held`) is left as is, here and in the final write. Errors are
+/// ignored: the final write after the run writes every file again (all but
+/// the held ones) and reports failures.
 pub fn write_progressive_files(
     output_dir: &str,
     files: &[ProgressOutputFile],
     names: &mut OutputNames,
 ) {
     for file in files {
-        let path = Path::new(output_dir).join(names.claim(&file.name));
+        let dir = Path::new(output_dir);
+        let claimed = names.claim(dir, &file.name, &file.data);
+        if claimed.held {
+            continue;
+        }
+        let path = dir.join(claimed.name);
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
@@ -65,6 +72,39 @@ mod tests {
     }
 
     #[test]
+    fn leaves_a_made_up_names_file_already_holding_the_bytes_as_is() {
+        // RED: deleting the `held` skip copied over the identical `b_1.txt`,
+        // giving it a new mtime. (`Bytes` data is written with `fs::write`,
+        // which keeps the mode, so only the mtime check proves this.)
+        let out = tempfile::tempdir().unwrap();
+        let held = out.path().join("b_1.txt");
+        std::fs::write(&held, "BBBB").unwrap();
+        let old = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_577_836_800);
+        let file = std::fs::File::options().write(true).open(&held).unwrap();
+        file.set_modified(old).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&held, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        let mut names = OutputNames::default();
+        let dir = out.path().to_str().unwrap();
+        for body in ["AAAA", "BBBB"] {
+            let files = [output("b.txt", FileData::Bytes(body.into()))];
+            write_progressive_files(dir, &files, &mut names);
+        }
+
+        let meta = std::fs::metadata(&held).unwrap();
+        assert_eq!(meta.modified().unwrap(), old, "b_1.txt was rewritten");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(meta.permissions().mode() & 0o777, 0o600);
+        }
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
+    }
+
+    #[test]
     fn creates_subdirectories_for_nested_names() {
         let out = tempfile::tempdir().unwrap();
 
@@ -88,7 +128,8 @@ mod tests {
         let out = tempfile::tempdir().unwrap();
         let dir = out.path().to_str().unwrap();
         let mut names = OutputNames::default();
-        for (name, body) in [("Logo.svg", "first"), ("logo.svg", "second")] {
+        let iterations = [("Logo.svg", "first"), ("logo.svg", "second")];
+        for (name, body) in iterations {
             let files = [output(name, FileData::Bytes(body.into()))];
             write_progressive_files(dir, &files, &mut names);
         }
@@ -97,12 +138,42 @@ mod tests {
             b"second"
         );
 
-        let result = PipelineResult {
-            files: ["Logo.svg", "logo.svg"]
-                .into_iter()
-                .map(|name| PipelineFileResult {
+        // A loop that ends the recipe hands the final write its own files.
+        crate::io::write_results(&text_result(&iterations), dir).unwrap();
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
+    }
+
+    #[test]
+    fn a_step_after_the_loop_leaves_the_loops_suffixed_copy() {
+        // Pins a deliberate change: when a step after the loop changes its
+        // files, the final write finds the loop's `logo_1.svg` holding other
+        // bytes and can't tell it from a user's file, so it keeps it and
+        // writes `logo_2.svg`. It used to replace it (2 files, not 3).
+        let out = tempfile::tempdir().unwrap();
+        let dir = out.path().to_str().unwrap();
+        let mut names = OutputNames::default();
+        for (name, body) in [("Logo.svg", "first"), ("logo.svg", "second")] {
+            let files = [output(name, FileData::Bytes(body.into()))];
+            write_progressive_files(dir, &files, &mut names);
+        }
+        let changed = [("Logo.svg", "final-1"), ("logo.svg", "final-2")];
+        crate::io::write_results(&text_result(&changed), dir).unwrap();
+
+        let read = |name: &str| std::fs::read_to_string(out.path().join(name)).unwrap();
+        assert_eq!(read("Logo.svg"), "final-1");
+        assert_eq!(read("logo_1.svg"), "second");
+        assert_eq!(read("logo_2.svg"), "final-2");
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 3);
+    }
+
+    /// A pipeline result of text files, each `(name, body)`.
+    fn text_result(files: &[(&str, &str)]) -> PipelineResult {
+        PipelineResult {
+            files: files
+                .iter()
+                .map(|(name, body)| PipelineFileResult {
                     name: name.to_string(),
-                    data: FileData::Bytes(b"final".to_vec()),
+                    data: FileData::Bytes(body.as_bytes().to_vec()),
                     mime_type: "text/plain".to_string(),
                     metadata: serde_json::Map::new(),
                 })
@@ -110,8 +181,31 @@ mod tests {
             duration_ms: 0,
             warnings: vec![],
             node_metadata: Default::default(),
-        };
-        crate::io::write_results(&result, dir).unwrap();
-        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
+        }
+    }
+
+    #[test]
+    fn a_made_up_name_skips_a_users_file_and_matches_the_final_write() {
+        // RED (data loss): the second `b.txt` was copied over the user's
+        // `b_1.txt`. Now it goes to `b_2.txt`, and the final write, which
+        // finds that copy already there, picks `b_2.txt` too: no extra file.
+        let out = tempfile::tempdir().unwrap();
+        let dir = out.path().to_str().unwrap();
+        std::fs::write(out.path().join("b_1.txt"), "CCCC").unwrap();
+        let iterations = [("b.txt", "AAAA"), ("b.txt", "BBBB")];
+        let mut names = OutputNames::default();
+        for (name, body) in iterations {
+            let files = [output(name, FileData::Bytes(body.into()))];
+            write_progressive_files(dir, &files, &mut names);
+        }
+        crate::io::write_results(&text_result(&iterations), dir).unwrap();
+
+        let read = |name: &str| std::fs::read_to_string(out.path().join(name)).unwrap();
+        assert_eq!(read("b_1.txt"), "CCCC");
+        assert_eq!(
+            (read("b.txt"), read("b_2.txt")),
+            ("AAAA".into(), "BBBB".into())
+        );
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 3);
     }
 }

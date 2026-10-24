@@ -20,20 +20,19 @@ use crate::{host_support, input, io, run_limit};
 
 mod events;
 mod output;
+mod reporter;
 
-pub use crate::progressive_output::write_progressive_files;
 pub use events::map_pipeline_event;
 use output::extract_file_metadata;
 pub use output::{FileResultMeta, build_output_files};
+use reporter::{channel_reporter, progressive_dir};
 
 /// Message sent from the bridge thread back to the TUI event loop.
 #[derive(Debug)]
 pub enum BridgeEvent {
-    /// A pipeline progress event from the engine.
+    /// A pipeline progress event from the engine. A finished iteration's
+    /// progressive files are already written when it arrives.
     Progress(PipelineEvent),
-    /// Output directory resolved — sent before pipeline execution starts.
-    /// Used by progressive output to write files as iterations complete.
-    OutputDir(String),
     /// Pipeline finished — output files written to this directory.
     Done(RunDone),
     /// Pipeline or setup failed with an error message.
@@ -121,8 +120,8 @@ fn try_run_bridge(
     // Prepare inputs (validates files, applies param overrides to definition).
     let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
     let mode = resolve_mode(&job.definition_json);
-    let output_dir = resolve_output_dir(tx, job, &mode, ctx, &prepared.files);
-    let reporter = channel_reporter(tx);
+    let output_dir = resolve_output_dir(job, &mode, ctx, &prepared.files);
+    let reporter = channel_reporter(tx, progressive_dir(job.preview_mode, &mode, &output_dir));
     // Run the pipeline (blocking — this is why we're on a background thread).
     let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
         return Ok(());
@@ -207,27 +206,23 @@ fn resolve_mode(definition_json: &str) -> String {
         .unwrap_or_else(|_| "write".to_string())
 }
 
-/// Resolve the output directory and announce it to the TUI.
+/// Resolve the output directory.
 ///
-/// Preview mode writes nothing (empty string, no event). Overwrite mode
-/// reports the source directory, since files are renamed in place.
+/// Preview mode writes nothing (empty string). Overwrite mode reports the
+/// source directory, since files are renamed in place.
 fn resolve_output_dir(
-    tx: &mpsc::Sender<BridgeEvent>,
     job: &BridgeJob,
     mode: &str,
     ctx: &NativeContext,
     files: &[bnto_core::PipelineFile],
 ) -> String {
     if job.preview_mode {
-        return String::new();
-    }
-    let dir_str = if mode == "overwrite" {
+        String::new()
+    } else if mode == "overwrite" {
         source_dir(&job.selected_files)
     } else {
         run_output_dir(job, ctx, files)
-    };
-    let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
-    dir_str
+    }
 }
 
 /// Directory of the first selected file (or ".").
@@ -262,14 +257,6 @@ fn emptied_temp_dir(slug: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
     let _ = std::fs::remove_dir_all(&dir);
     dir
-}
-
-/// A reporter that forwards engine events to the TUI via the channel.
-fn channel_reporter(tx: &mpsc::Sender<BridgeEvent>) -> PipelineReporter {
-    let progress_tx = tx.clone();
-    PipelineReporter::new(move |event| {
-        let _ = progress_tx.send(BridgeEvent::Progress(event));
-    })
 }
 
 /// Preview mode: extract file previews, skip writing.
@@ -477,6 +464,129 @@ mod tests {
         fs::write(&earlier, b"old").unwrap();
         run_on_photo("replace", rename_recipe_json(Some(folder.path())));
         assert_eq!(fs::read(&earlier).unwrap(), b"new");
+    }
+
+    // --- Progressive loop output ---
+
+    /// Inputs `a.txt` (`AAAA`) and `b.txt` (`BBBB`) in one folder.
+    fn ab_inputs() -> (tempfile::TempDir, Vec<PathBuf>) {
+        let inputs = tempfile::tempdir().unwrap();
+        let files = [("a.txt", "AAAA"), ("b.txt", "BBBB")].map(|(name, body)| {
+            let path = inputs.path().join(name);
+            fs::write(&path, body).unwrap();
+            path
+        });
+        (inputs, files.to_vec())
+    }
+
+    /// A progressive loop running `inner`, then `after` (if any), then `output`.
+    fn progressive_recipe_json(
+        inner: serde_json::Value,
+        after: Option<serde_json::Value>,
+        output: serde_json::Value,
+    ) -> String {
+        let mut nodes = vec![
+            serde_json::json!({ "id": "input", "type": "input",
+                "parameters": { "mode": "file-upload" } }),
+            serde_json::json!({ "id": "each", "type": "loop", "nodes": [inner], "edges": [],
+                "parameters": { "mode": "forEach", "outputPersistence": "progressive" } }),
+        ];
+        nodes.extend(after);
+        nodes.push(serde_json::json!({ "id": "output", "type": "output", "parameters": output }));
+        serde_json::json!({ "nodes": nodes }).to_string()
+    }
+
+    /// `a` renamed to `b`, so both results are `b.txt`.
+    fn a_to_b() -> serde_json::Value {
+        serde_json::json!({ "id": "ren", "type": "file-rename",
+            "parameters": { "find": "a", "replace": "b" } })
+    }
+
+    /// Write mode into `folder`, which already holds the user's `b_1.txt`.
+    fn write_beside_users_file(folder: &std::path::Path) -> serde_json::Value {
+        fs::write(folder.join("b_1.txt"), "CCCC").unwrap();
+        serde_json::json!({ "mode": "write", "directory": folder.to_str().unwrap() })
+    }
+
+    /// Each file in `dir` with its content, sorted by name.
+    fn contents(dir: &std::path::Path) -> Vec<(String, String)> {
+        let mut files: Vec<(String, String)> = fs::read_dir(dir)
+            .unwrap()
+            .map(|entry| {
+                let path = entry.unwrap().path();
+                let name = path.file_name().unwrap().to_string_lossy().into_owned();
+                (name, fs::read_to_string(&path).unwrap())
+            })
+            .collect();
+        files.sort();
+        files
+    }
+
+    fn pairs(files: &[(&str, &str)]) -> Vec<(String, String)> {
+        files
+            .iter()
+            .map(|(n, c)| (n.to_string(), c.to_string()))
+            .collect()
+    }
+
+    #[test]
+    fn a_progressive_runs_list_matches_its_files_and_keeps_the_users() {
+        // RED: the second `b.txt` was listed and written as `b_1.txt`, over
+        // the user's file. Now the loop's copies, the listing and the final
+        // write agree on `b_2.txt`, and `b_1.txt` is neither replaced nor
+        // listed.
+        let (_inputs, files) = ab_inputs();
+        let folder = tempfile::tempdir().unwrap();
+        let output = write_beside_users_file(folder.path());
+        let json = progressive_recipe_json(a_to_b(), None, output);
+
+        let done = run_job("progressive", json, files);
+
+        assert_eq!(listed(&done), ["b.txt", "b_2.txt"]);
+        let expected = [("b.txt", "AAAA"), ("b_1.txt", "CCCC"), ("b_2.txt", "BBBB")];
+        assert_eq!(contents(folder.path()), pairs(&expected));
+    }
+
+    #[test]
+    fn a_progressive_loops_copies_are_written_by_the_bridge() {
+        // The bridge passes the output folder to its reporter, so the loop's
+        // copies land as it runs: `b.txt` and `b_2.txt`, under the loop's
+        // names. A step after the loop renames the results to `b-x…`, so
+        // only those come from the final write and the listing.
+        let (_inputs, files) = ab_inputs();
+        let folder = tempfile::tempdir().unwrap();
+        let output = write_beside_users_file(folder.path());
+        let suffix = serde_json::json!({ "id": "x", "type": "file-rename",
+            "parameters": { "suffix": "-x" } });
+        let json = progressive_recipe_json(a_to_b(), Some(suffix), output);
+
+        let done = run_job("progressive-after", json, files);
+
+        assert_eq!(listed(&done), ["b-x.txt", "b-x_1.txt"]);
+        let expected = [
+            ("b-x.txt", "AAAA"),
+            ("b-x_1.txt", "BBBB"),
+            ("b.txt", "AAAA"),
+            ("b_1.txt", "CCCC"),
+            ("b_2.txt", "BBBB"),
+        ];
+        assert_eq!(contents(folder.path()), pairs(&expected));
+    }
+
+    #[test]
+    fn an_overwrite_run_makes_no_progressive_copies() {
+        // As in `bnto run`: overwrite renames each file in its own folder
+        // after the run, so the loop copies nothing out as it goes.
+        let (inputs, files) = ab_inputs();
+        let prefix = serde_json::json!({ "id": "ren", "type": "file-rename",
+            "parameters": { "prefix": "renamed-" } });
+        let output = serde_json::json!({ "mode": "overwrite" });
+        let json = progressive_recipe_json(prefix, None, output);
+
+        run_job("progressive-overwrite", json, files);
+
+        let expected = [("renamed-a.txt", "AAAA"), ("renamed-b.txt", "BBBB")];
+        assert_eq!(contents(inputs.path()), pairs(&expected));
     }
 
     #[test]
@@ -735,27 +845,5 @@ mod tests {
         }];
         let outputs = build_output_files(&meta);
         assert!(outputs.is_empty(), "{outputs:?}");
-    }
-
-    #[test]
-    fn write_progressive_files_copies_a_path_and_keeps_the_source() {
-        // Guards: an argument file passes through as a path to the user's
-        // own file, so writing it out must copy, never move it.
-        let temp = tempfile::tempdir().unwrap();
-        let src = temp.path().join("original.mp4");
-        fs::write(&src, b"video").unwrap();
-        let out = temp.path().join("out");
-        fs::create_dir(&out).unwrap();
-
-        let files = [bnto_core::events::ProgressOutputFile {
-            name: "renamed.mp4".into(),
-            data: FileData::Path(src.clone()),
-            mime_type: "video/mp4".into(),
-        }];
-        let mut names = crate::output_names::OutputNames::default();
-        write_progressive_files(&out.to_string_lossy(), &files, &mut names);
-
-        assert_eq!(fs::read(out.join("renamed.mp4")).unwrap(), b"video");
-        assert!(src.exists(), "source must survive a progressive write");
     }
 }

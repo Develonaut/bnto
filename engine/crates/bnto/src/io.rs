@@ -48,23 +48,28 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 ///
 /// Uses `FileData::copy_to()` which copies for path-referenced files
 /// and writes bytes for in-memory files. Source files are never modified,
-/// and a file already at its destination is left as is.
+/// and a file already at its destination, or a made-up name's file already
+/// holding the result's bytes, is left as is.
 ///
 /// Names that would land on one file are kept apart (see `output_names`).
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
-    let (paths, renamed) = destinations(result, output_dir);
-    let unchanged = already_there(result, &paths);
-    for (file, out_path) in result.files.iter().zip(&paths) {
-        write_one(file, out_path)?;
+    let (dests, renamed) = destinations(result, output_dir);
+    let unchanged = already_there(result, &dests);
+    for (file, dest) in result.files.iter().zip(&dests) {
+        if !dest.held {
+            write_one(file, &dest.path)?;
+        }
     }
     Ok(Placed { renamed, unchanged })
 }
 
-/// What a write did besides writing: the files written under a new name, and
-/// how many were already at their destination (the source itself), left as is.
+/// What a write did besides writing: the files given a new name (written, or
+/// held: already holding the bytes and left as is), and
+/// how many were already there (the source itself, or a file holding the
+/// result's bytes at its made-up name), left as is.
 #[derive(Debug, Default, PartialEq)]
 pub struct Placed {
     pub renamed: Vec<Renamed>,
@@ -74,27 +79,42 @@ pub struct Placed {
 /// What `write_results` would do, writing nothing (a dry run).
 fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
-    let (paths, renamed) = destinations(result, output_dir);
-    let unchanged = already_there(result, &paths);
+    let (dests, renamed) = destinations(result, output_dir);
+    let unchanged = already_there(result, &dests);
     Ok(Placed { renamed, unchanged })
 }
 
-/// Each result file's path under `output_dir`, with the files given a new
-/// name so no two land on one file.
-fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<PathBuf>, Vec<Renamed>) {
-    let (names, renamed) = output_names::plan(result.files.iter().map(|f| f.name.as_str()));
-    let paths = names
-        .iter()
-        .map(|n| Path::new(output_dir).join(n))
-        .collect();
-    (paths, renamed)
+/// Where one result file goes, and whether the file there already holds its
+/// bytes at a made-up name (`output_names::Claimed::held`), so it's not written.
+struct Destination {
+    path: PathBuf,
+    held: bool,
 }
 
-/// How many result files already are the file at their destination, e.g. an
-/// input written back into its own folder (ISS-36). `copy_to` leaves those.
-fn already_there(result: &PipelineResult, paths: &[PathBuf]) -> usize {
-    let files = result.files.iter().zip(paths);
-    files.filter(|(file, path)| file.data.is_at(path)).count()
+/// Each result file's destination under `output_dir`, with the files given a
+/// new name so no two land on one file and none on a file already there.
+fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<Destination>, Vec<Renamed>) {
+    let dir = Path::new(output_dir);
+    let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
+    let (claims, renamed) = output_names::plan(dir, files);
+    let dests = claims
+        .into_iter()
+        .map(|c| Destination {
+            path: dir.join(&c.name),
+            held: c.held,
+        })
+        .collect();
+    (dests, renamed)
+}
+
+/// How many result files are already there: the file at their destination,
+/// e.g. an input written back into its own folder (ISS-36), which `copy_to`
+/// leaves, or a held file, which isn't written.
+fn already_there(result: &PipelineResult, dests: &[Destination]) -> usize {
+    let files = result.files.iter().zip(dests);
+    files
+        .filter(|(file, d)| d.held || file.data.is_at(&d.path))
+        .count()
 }
 
 fn write_one(file: &PipelineFileResult, out_path: &Path) -> Result<(), String> {
@@ -125,8 +145,9 @@ fn check_file_names(result: &PipelineResult) -> Result<(), String> {
 /// Outcome of a mode-aware write operation.
 #[derive(Debug, PartialEq)]
 pub enum WriteOutcome {
-    /// Files were copied to an output directory; `renamed` lists those
-    /// written under a new name so they didn't replace one another.
+    /// Files were copied to an output directory; `renamed` lists those given
+    /// a new name so they didn't replace one another, including held ones
+    /// (already holding the bytes, left as is and not written).
     /// `count` excludes the `unchanged` files, already there and left as is.
     Written {
         dir: String,
@@ -280,35 +301,43 @@ fn no_row_warning_text(unmatched: &[&str]) -> String {
     )
 }
 
-/// Print one warning line naming the files written under a new name.
+/// Print a warning line naming the files written under a new name, and one
+/// naming those left as is under one (held), each only when there are any.
 pub fn warn_renamed(outcome: &WriteOutcome, dry_run: bool) {
     use colored::Colorize;
 
-    if let WriteOutcome::Written { renamed, .. } = outcome
-        && !renamed.is_empty()
-    {
-        let warning = "Warning:".yellow().bold();
-        eprintln!("  {warning} {}", renamed_warning_text(renamed, dry_run));
+    if let WriteOutcome::Written { renamed, .. } = outcome {
+        for line in renamed_warning_lines(renamed, dry_run) {
+            eprintln!("  {} {line}", "Warning:".yellow().bold());
+        }
     }
 }
 
-/// `N file(s) written under a new name …: a → a_1`, names capped.
-fn renamed_warning_text(renamed: &[Renamed], dry_run: bool) -> String {
+/// `N file(s) written under a new name …: a → a_1`, then `N file(s) already
+/// there under a new name, holding the same bytes, left as is: …`.
+fn renamed_warning_lines(renamed: &[Renamed], dry_run: bool) -> Vec<String> {
+    let (held, written): (Vec<&Renamed>, Vec<&Renamed>) = renamed.iter().partition(|r| r.held);
+    let (write, left) = if dry_run {
+        ("would be written", "would be left")
+    } else {
+        ("written", "left")
+    };
+    let clash = format!("{write} under a new name, since another has the same name (case ignored)");
+    let kept = format!("already there under a new name, holding the same bytes, {left} as is");
+    [(written, clash), (held, kept)]
+        .into_iter()
+        .filter(|(files, _)| !files.is_empty())
+        .map(|(files, what)| format!("{} {what}: {}", count_files(files.len()), pairs(&files)))
+        .collect()
+}
+
+/// `a → a_1, b → b_1`, names capped.
+fn pairs(renamed: &[&Renamed]) -> String {
     let pairs: Vec<String> = renamed
         .iter()
         .map(|r| format!("{} → {}", r.from, r.to))
         .collect();
-    let pairs: Vec<&str> = pairs.iter().map(String::as_str).collect();
-    let verb = if dry_run {
-        "would be written"
-    } else {
-        "written"
-    };
-    format!(
-        "{} {verb} under a new name, since another has the same name (case ignored): {}",
-        count_files(renamed.len()),
-        capped_names(&pairs)
-    )
+    capped_names(&pairs.iter().map(String::as_str).collect::<Vec<_>>())
 }
 
 /// `1 file` / `N files`.
@@ -719,6 +748,7 @@ mod tests {
         Renamed {
             from: from.into(),
             to: to.into(),
+            held: false,
         }
     }
 
@@ -771,15 +801,46 @@ mod tests {
     fn test_renamed_warning_text_names_each_file_and_its_new_name() {
         let one = [renamed("logo.svg", "logo_1.svg")];
         assert_eq!(
-            renamed_warning_text(&one, false),
-            "1 file written under a new name, since another has the same name \
-             (case ignored): logo.svg → logo_1.svg"
+            renamed_warning_lines(&one, false),
+            [
+                "1 file written under a new name, since another has the same name \
+              (case ignored): logo.svg → logo_1.svg"
+            ]
         );
         let two = [renamed("a.svg", "a_1.svg"), renamed("A.svg", "A_2.svg")];
         assert_eq!(
-            renamed_warning_text(&two, true),
-            "2 files would be written under a new name, since another has the same \
-             name (case ignored): a.svg → a_1.svg, A.svg → A_2.svg"
+            renamed_warning_lines(&two, true),
+            [
+                "2 files would be written under a new name, since another has the same \
+              name (case ignored): a.svg → a_1.svg, A.svg → A_2.svg"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_a_held_file_is_named_as_left_as_is_not_written() {
+        // RED: a held file was listed as "written under a new name" while
+        // the summary said it was left as is.
+        let held = Renamed {
+            held: true,
+            ..renamed("b.txt", "b_2.txt")
+        };
+        let both = [renamed("a.svg", "a_1.svg"), held];
+        assert_eq!(
+            renamed_warning_lines(&both, false),
+            [
+                "1 file written under a new name, since another has the same name \
+                 (case ignored): a.svg → a_1.svg",
+                "1 file already there under a new name, holding the same bytes, left \
+                 as is: b.txt → b_2.txt",
+            ]
+        );
+        assert_eq!(
+            renamed_warning_lines(&both[1..], true),
+            [
+                "1 file already there under a new name, holding the same bytes, would \
+              be left as is: b.txt → b_2.txt"
+            ]
         );
     }
 
