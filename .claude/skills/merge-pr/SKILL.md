@@ -7,7 +7,7 @@ description: Verify and merge a pull request into main
 
 Verify a pull request is ready to merge and merge it after user approval. This skill handles CI verification, description auditing, conflict detection, and squash merge.
 
-**This is NOT a code review.** Run `/code-review` separately before `/merge-pr`. This skill checks merge readiness — CI, conflicts, description accuracy — not code quality.
+**This is NOT a code review.** The author's cold review (`/code-review`) happens before the PR. Here, check that the PR description records its outcome (`Cold review: N findings, …`); if it doesn't, the PR isn't ready. This skill checks merge readiness — CI, conflicts, description accuracy — not code quality.
 
 ## Step 1: Identify the PR
 
@@ -106,6 +106,7 @@ Present a clear summary to the user:
 ### Checks
 - CI Gate: PASS / FAIL / PENDING
 - Local Lighthouse (`task seo:audit`, web changes only): REPORTED PASSING / NOT REPORTED / N/A
+- Cold review: RECORDED (`Cold review: N findings, …` in the description) / MISSING (not ready)
 - Merge conflicts: None / CONFLICTING
 - Description: Accurate / Needs update (details)
 

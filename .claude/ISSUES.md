@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-19**.
+- **IDs never get reused.** The next one is **ISS-21**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                  | Area        | Status                                           |
@@ -24,6 +24,8 @@
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines     | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                 | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell           | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                  | docs        | Open                                             |
+| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links               | docs        | Open                                             |
 
 ---
 
@@ -98,3 +100,21 @@ The recipe's `image-resize` sets `width: 800` (`engine/crates/bnto-engine/recipe
 **Found:** October 24, 2026 (v0.18.2 release run 40096930376).
 
 `terminate_all_kills_orphaned_grandchild_on_windows` (`engine/crates/bnto/src/context.rs:743`) starts `cmd /c start /b powershell … $PID; Start-Sleep 30` and waits once, `recv_timeout(20 s)`, for PowerShell to print its PID (`:758-759`). On the release's Windows runner PowerShell didn't print in time: `called Result::unwrap() on an Err value: Timeout`. The same commit passed the same job on #743's CI an hour earlier, so the failure is timing, not code. It failed the release's CI Gate. Wait on PowerShell's start with a longer bound, or start a lighter process for the grandchild, so a slow runner can't fail a release.
+
+### ISS-19: `/pickup` says hooks may be 30 lines; the limit is 20
+
+**Found:** October 24, 2026 (cold review of #745).
+
+`.claude/skills/pickup/SKILL.md:310-311` tells agents that hooks are "thin reactive wrappers (< 30 lines)" and that a hook is too big at ">30 lines". [code-standards.md](rules/code-standards.md) caps every function at 20 lines (`.tsx` at 60), and ESLint enforces it (#739). `/code-review` had the same stale "hooks get 30" until #745.
+
+### ISS-20: 12 broken links in `.claude/` docs; nothing checks links
+
+**Found:** October 24, 2026 (cold review of #745).
+
+Relative links that don't resolve from the file they're in:
+
+- `.claude/PLAN.md:168, 172, 439, 850, 878`: `.claude/strategy/…` paths written root-relative, the missing `file-node-ecosystem.md`, and `research/reports/Shell%20script%20injection%20safety.md`.
+- four in `.claude/plans/inherited-watching-hennessy.md`.
+- one each in `.claude/skills/pickup/SKILL.md:202`, `.claude/skills/groom/SKILL.md` and `.claude/strategy/engine-owned-schema.md`.
+
+`task docs:validate` (`scripts/validate-docs.ts`) checks crate READMEs and node docs only, never links. `CLAUDE.md`'s 115 root-relative links (`.claude/rules/…`) work for agents, which read from the repo root, but not on GitHub; keep that convention or not, but say so. Fix the 12 and add a link check to `docs:validate` (a Python sketch that lists them: walk `.claude/**/*.md`, resolve each Markdown link target against the file's folder).

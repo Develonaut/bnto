@@ -150,9 +150,28 @@ cd apps/web && pnpm exec playwright test --update-snapshots && pnpm exec playwri
 
 **This is a hard gate.** Do NOT proceed to the commit step without updating PLAN.md. Skipping this causes other agents to pick up finished work or miss unblocked waves.
 
-## Step 8: Proof of Work Summary
+## Step 8: Cold Review (MANDATORY)
 
-Present a summary to the user before committing:
+**The last gate before you push** ([`/code-review`](../skills/code-review/SKILL.md), [cold-review.md](../decisions/cold-review.md)).
+
+**First, make the work complete:**
+
+- code, tests and cleanup;
+- the PLAN.md and ISSUES.md updates;
+- the automated checks passing;
+- the work committed on your branch (Step 10's committing rules; don't push yet);
+- the PR description drafted.
+
+**Then hand it all to a fresh agent:**
+
+- **The reviewer:** a new agent (never a fork) on Opus or a stronger model, given only the work, its brief and the draft PR description.
+- **What it does:** reviews the branch, the commit messages and the PR description against these docs and reports findings. It doesn't edit anything.
+- **Your part:** fix or justify every finding (a blocking finding is fixed unless the user agrees otherwise), commit the fixes, update the draft, and re-run the automated checks. If your fixes changed more than wording, run a second cold review; if that one still finds blocking or should-fix problems, fix them and ask the user before a third.
+- **Once per PR, before its first push, docs-only included.** **After the PR opens,** a commit that changes more than wording (a CI fix, a requested change) gets its own cold review before it's pushed. A self-review in your own session doesn't count.
+
+## Step 9: Proof of Work Summary
+
+Present a summary to the user before pushing:
 
 1. **Branch** -- name of the feature branch this work is on (e.g., `feat/execution-history`)
 2. **PR target** -- `main` (always). Confirm you are creating a PR targeting `main`.
@@ -164,9 +183,10 @@ Present a summary to the user before committing:
 8. **TS checks result** -- confirm `task ui:build`, `task ui:test`, `task ui:lint` passed clean
 9. **Rust checks result** -- confirm `task wasm:lint`, `task wasm:test` passed clean (skip if no Rust files touched)
 10. **Lighthouse audit result** -- confirm `task seo:audit` passed clean, or SKIPPED (no `apps/web/` changes)
-11. **Files changed** -- brief description of each
+11. **Cold review** -- findings count and outcome (e.g. `3 findings, 2 fixed, 1 justified`), with each justification. The PR description carries the same line
+12. **Files changed** -- brief description of each
 
-## Step 9: Commit & Branch Workflow
+## Step 10: Commit & Branch Workflow
 
 **Branch-based development is mandatory.** `main` is protected — all changes go through PRs with CI gate.
 
@@ -190,6 +210,8 @@ Present a summary to the user before committing:
    - Unrelated changes bundled together
 
 ### Pushing & PRs
+
+- **Push only after the cold review (Step 8).** The PR description carries its `Cold review: …` line.
 
 - **Only commit YOUR OWN work.** If `git status` shows changes from other agents or unrelated work, DO NOT stage or commit those files. Only stage files you personally created or modified as part of your current task.
 - **Push to your feature branch**, then create a PR targeting `main`.

@@ -714,7 +714,7 @@ Features and ideas. Defects (bugs, standards violations, stale docs, security ga
 - [ ] `engine` — **Item-level `filter` node** (`value`/`op`/`expected` + `keep`), sharing one comparison module with `assert` so their ops never drift. After the `not-equals` migration
 - [ ] `engine` — **`file-render` `escape: json`**, unless template filters' `| tojson` makes it redundant
 - [ ] `engine` — **Template filters**: pipe filters with Jinja-compatible syntax in the shared interpolator (not MiniJinja in params); an unresolved root leaves the whole expression as written. Plan per [feature-planning.md](scopes/process/feature-planning.md) and `/workflow-expert` review before code. Unblocks TOML in `spreadsheet-read`, filtering by file age, and camelCase i18n keys
-- [ ] `process` — **"Cold review" gate** before work counts as done, built from the `/code-review` skill. Waiting on Ryan for the reference version in another of his repos (never name that repo in bnto files)
+- [x] `process` — **"Cold review" gate** before work counts as done: `/code-review` is now the cold review (a fresh agent on the most capable model reviews the work against the docs and reports), required by pre-commit.md, `/pre-commit`, `/pickup` and the Agent Workflow. See [cold-review.md](decisions/cold-review.md)
 - Declined October 24, 2026: node codegen as a bnto recipe (codegen stays in TS; ISS-16 handles its size), and implementing `vector-optimize` `precision` (removed instead; ISS-15)
 
 ### Engine: Sprint 12B Follow-Up (remaining)
