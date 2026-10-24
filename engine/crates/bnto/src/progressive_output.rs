@@ -19,7 +19,8 @@ pub fn write_progressive_files(
     names: &mut OutputNames,
 ) {
     for file in files {
-        let path = Path::new(output_dir).join(names.claim(&file.name));
+        let dir = Path::new(output_dir);
+        let path = dir.join(names.claim(dir, &file.name, &file.data));
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }
@@ -88,7 +89,8 @@ mod tests {
         let out = tempfile::tempdir().unwrap();
         let dir = out.path().to_str().unwrap();
         let mut names = OutputNames::default();
-        for (name, body) in [("Logo.svg", "first"), ("logo.svg", "second")] {
+        let iterations = [("Logo.svg", "first"), ("logo.svg", "second")];
+        for (name, body) in iterations {
             let files = [output(name, FileData::Bytes(body.into()))];
             write_progressive_files(dir, &files, &mut names);
         }
@@ -97,12 +99,13 @@ mod tests {
             b"second"
         );
 
+        // The final write gets the iterations' own files, as a run does.
         let result = PipelineResult {
-            files: ["Logo.svg", "logo.svg"]
+            files: iterations
                 .into_iter()
-                .map(|name| PipelineFileResult {
+                .map(|(name, body)| PipelineFileResult {
                     name: name.to_string(),
-                    data: FileData::Bytes(b"final".to_vec()),
+                    data: FileData::Bytes(body.into()),
                     mime_type: "text/plain".to_string(),
                     metadata: serde_json::Map::new(),
                 })
@@ -113,5 +116,44 @@ mod tests {
         };
         crate::io::write_results(&result, dir).unwrap();
         assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
+    }
+
+    #[test]
+    fn a_made_up_name_skips_a_users_file_and_matches_the_final_write() {
+        // RED (data loss): the second `b.txt` was copied over the user's
+        // `b_1.txt`. Now it goes to `b_2.txt`, and the final write, which
+        // finds that copy already there, picks `b_2.txt` too: no extra file.
+        let out = tempfile::tempdir().unwrap();
+        let dir = out.path().to_str().unwrap();
+        std::fs::write(out.path().join("b_1.txt"), "CCCC").unwrap();
+        let bodies = ["AAAA", "BBBB"];
+        let mut names = OutputNames::default();
+        for body in bodies {
+            let files = [output("b.txt", FileData::Bytes(body.into()))];
+            write_progressive_files(dir, &files, &mut names);
+        }
+        let result = PipelineResult {
+            files: bodies
+                .into_iter()
+                .map(|body| PipelineFileResult {
+                    name: "b.txt".to_string(),
+                    data: FileData::Bytes(body.into()),
+                    mime_type: "text/plain".to_string(),
+                    metadata: serde_json::Map::new(),
+                })
+                .collect(),
+            duration_ms: 0,
+            warnings: vec![],
+            node_metadata: Default::default(),
+        };
+        crate::io::write_results(&result, dir).unwrap();
+
+        let read = |name: &str| std::fs::read_to_string(out.path().join(name)).unwrap();
+        assert_eq!(read("b_1.txt"), "CCCC");
+        assert_eq!(
+            (read("b.txt"), read("b_2.txt")),
+            ("AAAA".into(), "BBBB".into())
+        );
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 3);
     }
 }

@@ -49,8 +49,8 @@ fn landing_places(
 ) -> Vec<Option<(String, PathBuf)>> {
     match mode {
         "write" => {
-            let (names, _) =
-                crate::output_names::plan(result.files.iter().map(|f| f.name.as_str()));
+            let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
+            let (names, _) = crate::output_names::plan(output_dir, files);
             names
                 .into_iter()
                 .map(|name| Some((name.clone(), output_dir.join(name))))
@@ -159,5 +159,38 @@ mod tests {
             ("logo_1.svg".to_string(), Some(900)),
         ];
         assert_eq!(listed, expected);
+    }
+
+    #[test]
+    fn a_users_file_at_a_made_up_name_is_kept_and_not_listed() {
+        // RED (data loss): the second `logo.svg` went to `logo_1.svg`, the
+        // user's own file. The bridge lists before it writes, as here; both
+        // must pick `logo_2.svg`, and the user's file stays out of the list.
+        let dir = tempfile::tempdir().unwrap();
+        let mine = dir.path().join("logo_1.svg");
+        std::fs::write(&mine, b"mine").unwrap();
+        let result = PipelineResult {
+            files: ["<svg/>", "<svg></svg>"]
+                .map(|body| PipelineFileResult {
+                    name: "logo.svg".into(),
+                    data: bnto_core::FileData::Bytes(body.into()),
+                    mime_type: "image/svg+xml".into(),
+                    metadata: serde_json::Map::new(),
+                })
+                .into(),
+            duration_ms: 1,
+            warnings: Vec::new(),
+            node_metadata: Default::default(),
+        };
+        let out = dir.path().to_str().unwrap();
+        let meta = extract_file_metadata(&result, "write", out);
+        crate::io::write_results(&result, out).unwrap();
+
+        let listed: Vec<(String, u64)> = build_output_files(&meta)
+            .into_iter()
+            .map(|f| (f.name, f.size_bytes))
+            .collect();
+        assert_eq!(listed, [("logo.svg".into(), 6), ("logo_2.svg".into(), 11)]);
+        assert_eq!(std::fs::read(&mine).unwrap(), b"mine");
     }
 }

@@ -4,10 +4,16 @@
 // one file on Windows and macOS (an exact match on Linux too), so the later
 // one is written as `stem_1.ext`, `stem_2.ext`…, the suffix `file-copy`'s
 // `rename` conflict mode uses. Case is folded on every OS so a recipe writes
-// the same files everywhere. Names are kept apart from each other only, not
-// from files already in the output folder: a rerun replaces its own output.
+// the same files everywhere. A result keeps its own name even when the output
+// folder holds a file by that name (write mode replaces it), but a suffixed
+// name bnto made up never replaces a file there (see `folder`).
+
+mod folder;
 
 use std::collections::HashSet;
+use std::path::Path;
+
+use bnto_core::processor::FileData;
 
 /// A result file written under a different name than the pipeline gave it.
 #[derive(Debug, Clone, PartialEq)]
@@ -23,12 +29,16 @@ pub struct OutputNames {
 }
 
 impl OutputNames {
-    /// The name to write `name` under: itself when free, else the first free
-    /// suffixed form. Either way it's taken from then on.
-    pub fn claim(&mut self, name: &str) -> String {
+    /// The name to write `data` under in `dir`: `name` when no earlier claim
+    /// has it, else the first suffixed form no claim has and that replaces
+    /// nothing in `dir` but a file already holding `data`'s bytes. Either
+    /// way it's taken from then on.
+    pub fn claim(&mut self, dir: &Path, name: &str, data: &FileData) -> String {
         let mut chosen = name.to_string();
         let mut n = 0;
-        while self.taken.contains(&fold(&chosen)) {
+        while self.taken.contains(&fold(&chosen))
+            || (n > 0 && !folder::may_take(dir, &chosen, data))
+        {
             n += 1;
             chosen = suffixed(name, n);
         }
@@ -37,13 +47,16 @@ impl OutputNames {
     }
 }
 
-/// Each name's write name, in order, and the ones that changed.
-pub fn plan<'a>(names: impl IntoIterator<Item = &'a str>) -> (Vec<String>, Vec<Renamed>) {
+/// Each file's write name in `dir`, in order, and the ones that changed.
+pub fn plan<'a>(
+    dir: &Path,
+    files: impl IntoIterator<Item = (&'a str, &'a FileData)>,
+) -> (Vec<String>, Vec<Renamed>) {
     let mut claimed = OutputNames::default();
     let mut chosen = Vec::new();
     let mut renamed = Vec::new();
-    for name in names {
-        let to = claimed.claim(name);
+    for (name, data) in files {
+        let to = claimed.claim(dir, name, data);
         if to != name {
             renamed.push(Renamed {
                 from: name.to_string(),
@@ -75,8 +88,29 @@ fn suffixed(name: &str, n: usize) -> String {
 mod tests {
     use super::*;
 
+    const NEW: &[u8] = b"BBBB";
+
+    /// The names `names` are written under in an empty folder.
     fn claims(names: &[&str]) -> Vec<String> {
-        plan(names.iter().copied()).0
+        let dir = tempfile::tempdir().unwrap();
+        claims_in(dir.path(), names)
+    }
+
+    /// The names `names` are written under in `dir`, each holding `NEW`.
+    fn claims_in(dir: &Path, names: &[&str]) -> Vec<String> {
+        let data = FileData::Bytes(NEW.to_vec());
+        plan(dir, names.iter().map(|n| (*n, &data))).0
+    }
+
+    /// A folder holding each `(name, content)` file; names may hold `/`.
+    fn folder_with(files: &[(&str, &[u8])]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, content) in files {
+            let path = dir.path().join(name);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, content).unwrap();
+        }
+        dir
     }
 
     #[test]
@@ -135,7 +169,10 @@ mod tests {
 
     #[test]
     fn test_plan_lists_only_the_names_that_changed() {
-        let (_, renamed) = plan(["x.svg", "Logo.svg", "logo.svg"]);
+        let dir = tempfile::tempdir().unwrap();
+        let data = FileData::Bytes(NEW.to_vec());
+        let files = ["x.svg", "Logo.svg", "logo.svg"].map(|n| (n, &data));
+        let (_, renamed) = plan(dir.path(), files);
         assert_eq!(
             renamed,
             [Renamed {
@@ -149,8 +186,105 @@ mod tests {
     fn test_one_registry_keeps_names_apart_across_claims() {
         // The progressive writer claims one iteration at a time; the names it
         // picks must match the final write's plan over the whole result.
+        let dir = tempfile::tempdir().unwrap();
+        let data = FileData::Bytes(NEW.to_vec());
         let mut names = OutputNames::default();
-        let progressive = [names.claim("Logo.svg"), names.claim("logo.svg")];
+        let progressive = [
+            names.claim(dir.path(), "Logo.svg", &data),
+            names.claim(dir.path(), "logo.svg", &data),
+        ];
         assert_eq!(progressive.to_vec(), claims(&["Logo.svg", "logo.svg"]));
+    }
+
+    // --- files already in the output folder ---
+
+    #[test]
+    fn test_a_made_up_name_skips_a_file_already_in_the_folder() {
+        // RED (data loss): the second `b.txt` was written as `b_1.txt` over
+        // the user's own `b_1.txt`, which no output was named.
+        let dir = folder_with(&[("b_1.txt", b"CCCC")]);
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b.txt"]),
+            ["b.txt", "b_2.txt"]
+        );
+    }
+
+    #[test]
+    fn test_a_file_differing_only_in_case_counts_as_there() {
+        // RED: `B_1.TXT` is `b_1.txt` on Windows and macOS, so it's skipped
+        // on every OS, even holding the same bytes.
+        let dir = folder_with(&[("B_1.TXT", NEW)]);
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b.txt"]),
+            ["b.txt", "b_2.txt"]
+        );
+    }
+
+    #[test]
+    fn test_a_gap_in_the_existing_suffixes_is_filled() {
+        // RED: with `b_1` and `b_3` there, the free numbers are 2, then 4.
+        let dir = folder_with(&[("b_1.txt", b"one"), ("b_3.txt", b"three")]);
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b.txt", "b.txt"]),
+            ["b.txt", "b_2.txt", "b_4.txt"]
+        );
+    }
+
+    #[test]
+    fn test_a_made_up_name_skips_a_file_in_a_subfolder() {
+        // RED: the folder looked in is the one the name lands in.
+        let dir = folder_with(&[("sub/b_1.txt", b"CCCC")]);
+        assert_eq!(
+            claims_in(dir.path(), &["sub/b.txt", "sub/b.txt"]),
+            ["sub/b.txt", "sub/b_2.txt"]
+        );
+    }
+
+    #[test]
+    fn test_a_made_up_name_skips_a_folder_by_that_name() {
+        // RED: a write onto a folder fails; the next number is free.
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("b_1.txt")).unwrap();
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b.txt"]),
+            ["b.txt", "b_2.txt"]
+        );
+    }
+
+    #[test]
+    fn test_a_made_up_name_skips_a_same_sized_file_with_other_bytes() {
+        // RED: same length as `NEW`, so only the bytes tell them apart.
+        let dir = folder_with(&[("b_1.txt", b"CCCC")]);
+        let src = folder_with(&[("b.txt", NEW)]);
+        let data = FileData::Path(src.path().join("b.txt"));
+        let files = ["b.txt", "b.txt"].map(|n| (n, &data));
+        assert_eq!(plan(dir.path(), files).0, ["b.txt", "b_2.txt"]);
+    }
+
+    #[test]
+    fn test_a_made_up_name_may_take_a_file_holding_the_same_bytes() {
+        // Guards: a rerun, or the final write after a progressive one, finds
+        // its own `b_1.txt` there. Replacing it with the same bytes loses
+        // nothing, so the run keeps writing `b_1.txt`, not `b_2.txt`.
+        let dir = folder_with(&[("b_1.txt", NEW)]);
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b.txt"]),
+            ["b.txt", "b_1.txt"]
+        );
+        let src = folder_with(&[("b.txt", NEW)]);
+        let data = FileData::Path(src.path().join("b.txt"));
+        let files = ["b.txt", "b.txt"].map(|n| (n, &data));
+        assert_eq!(plan(dir.path(), files).0, ["b.txt", "b_1.txt"]);
+    }
+
+    #[test]
+    fn test_a_results_own_name_still_replaces_a_file_by_that_name() {
+        // Guards write mode's contract: only a file with the same name as
+        // an output is replaced, and that one is.
+        let dir = folder_with(&[("b.txt", b"old"), ("b_1.txt", b"old")]);
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b_1.txt"]),
+            ["b.txt", "b_1.txt"]
+        );
     }
 }

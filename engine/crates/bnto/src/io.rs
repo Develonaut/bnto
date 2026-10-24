@@ -80,13 +80,12 @@ fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, Str
 }
 
 /// Each result file's path under `output_dir`, with the files given a new
-/// name so no two land on one file.
+/// name so no two land on one file and none on a file already there.
 fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<PathBuf>, Vec<Renamed>) {
-    let (names, renamed) = output_names::plan(result.files.iter().map(|f| f.name.as_str()));
-    let paths = names
-        .iter()
-        .map(|n| Path::new(output_dir).join(n))
-        .collect();
+    let dir = Path::new(output_dir);
+    let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
+    let (names, renamed) = output_names::plan(dir, files);
+    let paths = names.iter().map(|n| dir.join(n)).collect();
     (paths, renamed)
 }
 

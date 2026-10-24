@@ -102,7 +102,7 @@ bnto install download-video
 
 ### Output names
 
-With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. Names are only kept apart from each other: a file already in the output folder from an earlier run is replaced.
+With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. A file already in the output folder with a result's own name is replaced. A suffixed name never replaces one: if `logo_1.svg` is already there, the later file is written as `logo_2.svg`, unless `logo_1.svg` already holds exactly the same bytes (an earlier run's identical result), so a rerun writes the same files again.
 
 ### Time limit
 
