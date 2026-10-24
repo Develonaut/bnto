@@ -74,7 +74,8 @@ mod tests {
     #[test]
     fn leaves_a_made_up_names_file_already_holding_the_bytes_as_is() {
         // RED: deleting the `held` skip copied over the identical `b_1.txt`,
-        // giving it a new mtime (and the source's mode).
+        // giving it a new mtime. (`Bytes` data is written with `fs::write`,
+        // which keeps the mode, so only the mtime check proves this.)
         let out = tempfile::tempdir().unwrap();
         let held = out.path().join("b_1.txt");
         std::fs::write(&held, "BBBB").unwrap();

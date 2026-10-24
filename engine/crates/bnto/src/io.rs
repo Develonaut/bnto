@@ -66,7 +66,8 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed
     Ok(Placed { renamed, unchanged })
 }
 
-/// What a write did besides writing: the files written under a new name, and
+/// What a write did besides writing: the files given a new name (written, or
+/// held: already holding the bytes and left as is), and
 /// how many were already there (the source itself, or a file holding the
 /// result's bytes at its made-up name), left as is.
 #[derive(Debug, Default, PartialEq)]
@@ -144,8 +145,9 @@ fn check_file_names(result: &PipelineResult) -> Result<(), String> {
 /// Outcome of a mode-aware write operation.
 #[derive(Debug, PartialEq)]
 pub enum WriteOutcome {
-    /// Files were copied to an output directory; `renamed` lists those
-    /// written under a new name so they didn't replace one another.
+    /// Files were copied to an output directory; `renamed` lists those given
+    /// a new name so they didn't replace one another, including held ones
+    /// (already holding the bytes, left as is and not written).
     /// `count` excludes the `unchanged` files, already there and left as is.
     Written {
         dir: String,

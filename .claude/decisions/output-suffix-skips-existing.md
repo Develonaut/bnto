@@ -1,7 +1,7 @@
 # Decision: A made-up output name skips files already there
 
 **Created:** October 24, 2026
-**Status:** Decided while fixing the data-loss bug below (branch `fix/suffix-skips-existing-files`), with cold reviews on October 24, 2026: two of the whole branch, then one of its third commit. Option 2 was chosen over the "skip anything there" fix the bug report suggested.
+**Status:** Decided while fixing the data-loss bug below (branch `fix/suffix-skips-existing-files`), with cold reviews on October 24, 2026: two of the whole branch, then one each of its third and fourth commits. Option 2 was chosen over the "skip anything there" fix the bug report suggested.
 **Applies to:** `engine/crates/bnto/src/output_names.rs` and `output_names/folder.rs`, and every caller: the CLI's final write and dry run (`io.rs`), progressive copies (`progressive_output.rs`, from `bnto run`'s reporter and the TUI bridge's), and the TUI results listing (`tui/bridge/output.rs`).
 
 ## Context
