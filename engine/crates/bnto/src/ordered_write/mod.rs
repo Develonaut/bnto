@@ -40,15 +40,27 @@ pub use staging::report_kept_staging;
 /// link, a folder link or `..`, naming them. A dry run calls this too, so it
 /// refuses those as a run would; names only the filesystem treats as one
 /// (Unicode forms, Windows short names) are caught by the run's exclusive
-/// creates (`claims`), which a dry run doesn't make.
-pub fn check(files: &[PipelineFileResult], paths: &[PathBuf]) -> Result<(), String> {
-    let pairs = aliases::shared_destinations(files, paths);
+/// creates (`claims`), which a dry run doesn't make. `held[i]` marks a
+/// result whose made-up name's file already holds its bytes (`output_names`):
+/// it's not written, so it clashes only with a write that would replace it.
+pub fn check(files: &[PipelineFileResult], paths: &[PathBuf], held: &[bool]) -> Result<(), String> {
+    let pairs = aliases::shared_kept(paths, &left_as_is(files, paths, held));
     if pairs.is_empty() {
         return Ok(());
     }
     let lines = aliases::describe(paths, &pairs);
     let listing = relocate::listing(&lines, ("conflict", "conflicts"));
     Err(refusal(&listing, &progressive::already_written(paths)))
+}
+
+/// Which writes leave their destination as is: a held file, or a file
+/// already at its destination (ISS-36). `held` may be shorter (none held).
+fn left_as_is(files: &[PipelineFileResult], paths: &[PathBuf], held: &[bool]) -> Vec<bool> {
+    let held_at = |i: usize| held.get(i).copied().unwrap_or(false);
+    let pairs = files.iter().zip(paths).enumerate();
+    pairs
+        .map(|(i, (f, p))| held_at(i) || f.data.is_at(p))
+        .collect()
 }
 
 /// The refusal text. Files a progressive loop already wrote are named: the
@@ -71,13 +83,23 @@ fn refusal(listing: &str, by_iterations: &[PathBuf]) -> String {
 /// Write `files[i]` to `paths[i]` for every `i`, ordered so a write never
 /// replaces a file a later write still reads. A swap's staged copies go in
 /// a `.bnto-staged-*` folder inside `output_dir`, removed once every write
-/// is done; a failure to remove it is an error.
+/// is done; a failure to remove it is an error. A `held[i]` result isn't
+/// written: its file already holds its bytes (see `check`).
 pub fn write_all(
     files: &[PipelineFileResult],
     paths: &[PathBuf],
+    held: &[bool],
     output_dir: &Path,
 ) -> Result<(), String> {
-    write_through(&GATE, files, paths, output_dir)
+    write_through(&GATE, Writes { files, paths, held }, output_dir)
+}
+
+/// One final write's results, destinations and held marks.
+#[derive(Clone, Copy)]
+struct Writes<'a> {
+    files: &'a [PipelineFileResult],
+    paths: &'a [PathBuf],
+    held: &'a [bool],
 }
 
 /// What a write stopped by a quitting process reports. `bnto run` can print
@@ -87,21 +109,18 @@ pub fn write_all(
 const STOPPED: &str = "Stopped: bnto is quitting. The files written before that are kept.";
 
 /// `write_all` through `gate`, which stops it between steps when bnto quits.
-fn write_through(
-    gate: &WriteGate,
-    files: &[PipelineFileResult],
-    paths: &[PathBuf],
-    output_dir: &Path,
-) -> Result<(), String> {
-    check(files, paths)?;
+fn write_through(gate: &WriteGate, writes: Writes, output_dir: &Path) -> Result<(), String> {
+    let Writes { files, paths, held } = writes;
+    check(files, paths, held)?;
     // First, so it drops last: a quitter waiting on the gate goes on only
     // once `run` below has dropped (staging kept or removed, claims undone).
     let Some(_writing) = gate.enter() else {
         return Err(STOPPED.to_string());
     };
     // Planned before the claims create the new destinations empty.
-    let steps = order::order(&readers::waits(files, paths));
-    let mut run = Run::new(files, paths, output_dir)?;
+    let kept = left_as_is(files, paths, held);
+    let steps = order::order(&readers::waits_kept(files, paths, &kept));
+    let mut run = Run::new(writes, output_dir)?;
     for step in steps {
         if gate.stopping() {
             // Dropping `run` keeps a staging folder holding copies (still
@@ -118,6 +137,7 @@ fn write_through(
 struct Run<'a> {
     files: &'a [PipelineFileResult],
     paths: &'a [PathBuf],
+    held: &'a [bool],
     staging: Staging,
     /// Writes that read a staged copy instead of their own source.
     staged: HashMap<usize, FileData>,
@@ -125,18 +145,16 @@ struct Run<'a> {
 }
 
 impl<'a> Run<'a> {
-    /// A run whose new destinations are claimed; refused if two clash.
-    fn new(
-        files: &'a [PipelineFileResult],
-        paths: &'a [PathBuf],
-        output_dir: &Path,
-    ) -> Result<Self, String> {
+    /// A run whose new destinations are claimed; refused if two clash. A
+    /// held file exists, so it's never claimed.
+    fn new(writes: Writes<'a>, output_dir: &Path) -> Result<Self, String> {
         Ok(Self {
-            files,
-            paths,
+            files: writes.files,
+            paths: writes.paths,
+            held: writes.held,
             staging: Staging::new(output_dir),
             staged: HashMap::new(),
-            claims: Claims::claim(paths, &claims::missing(paths))?,
+            claims: Claims::claim(writes.paths, &claims::missing(writes.paths))?,
         })
     }
 
@@ -149,6 +167,8 @@ impl<'a> Run<'a> {
                 }
                 Ok(())
             }
+            // A held file already holds the result's bytes: left as is.
+            Step::Write(i) if self.held.get(i) == Some(&true) => Ok(()),
             Step::Write(i) => {
                 // The claim already proved the name free; the copy creates
                 // the file itself, which lets it clone (APFS).

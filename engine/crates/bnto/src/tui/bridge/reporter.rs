@@ -26,6 +26,11 @@ pub fn channel_reporter(
     progressive: Option<String>,
 ) -> PipelineReporter {
     let progress_tx = tx.clone();
+    // A new run: what an earlier one in this session wrote to the folder
+    // isn't this run's, so a refusal won't list it (`ordered_write::check`).
+    if let Some(dir) = &progressive {
+        crate::ordered_write::forget_progressive(std::path::Path::new(dir));
+    }
     // RefCell: the reporter is `Fn` and only called on the bridge thread.
     let names = RefCell::new(OutputNames::default());
     PipelineReporter::new(move |event| {

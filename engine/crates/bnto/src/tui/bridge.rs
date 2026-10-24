@@ -609,6 +609,49 @@ mod tests {
         assert_eq!(fs::read(folder.path().join("b_1.txt")).unwrap(), b"BBBB");
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_progressive_refusal_names_what_iterations_wrote() {
+        // `out/sub` → `.`: iteration 1 writes `sub/b.txt` (= `b.txt`), then
+        // the final write sees the conflict. The bridge thread makes the
+        // progressive copies before the final write, so the refusal can name
+        // them and must not say "nothing was written".
+        let inputs = tempfile::tempdir().unwrap();
+        let (a, b) = (inputs.path().join("a.txt"), inputs.path().join("b.txt"));
+        fs::write(&a, b"AAAA").unwrap();
+        fs::write(&b, b"BBBB").unwrap();
+        let out = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(".", out.path().join("sub")).unwrap();
+        let rename = serde_json::json!({ "id": "ren", "type": "file-rename",
+            "parameters": { "find": "a", "replace": "sub/b" } });
+        let recipe = serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+            { "id": "each", "type": "loop",
+              "parameters": { "mode": "forEach", "outputPersistence": "progressive" },
+              "nodes": [rename], "edges": [] },
+            { "id": "output", "type": "output", "parameters": {
+                "mode": "write", "directory": out.path().to_string_lossy() } }
+        ], "edges": [
+            { "id": "e1", "source": "input", "target": "each" },
+            { "id": "e2", "source": "each", "target": "output" }
+        ] });
+        let job = BridgeJob {
+            slug: "progressive".into(),
+            definition_json: recipe.to_string(),
+            selected_files: vec![a, b],
+            param_overrides: HashMap::new(),
+            preview_mode: false,
+        };
+        let (tx, rx) = mpsc::channel();
+        run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
+        let Some(BridgeEvent::Error(error)) = rx.try_iter().last() else {
+            panic!("expected the final write to be refused");
+        };
+        assert!(!error.contains("nothing was written"), "{error}");
+        assert!(error.contains("Loop iterations already wrote"), "{error}");
+        assert!(error.contains("sub/b.txt"), "{error}");
+    }
+
     #[test]
     fn the_results_list_only_this_runs_outputs() {
         // What the wipe used to protect: files already in the folder must

@@ -6,6 +6,7 @@ use std::path::Path;
 
 use bnto_core::events::ProgressOutputFile;
 
+use crate::ordered_write::{GATE, WriteGate};
 use crate::output_names::OutputNames;
 
 /// Copy an iteration's output files into `output_dir`, creating parent
@@ -17,26 +18,46 @@ use crate::output_names::OutputNames;
 /// be a later iteration's source, not read yet (ISS-48), and only the final
 /// write sees every source. Errors are ignored: the final write after the run
 /// writes every file again (all but the held ones) and reports failures.
+/// Each copy goes through `ordered_write::GATE`, so Ctrl+C or quitting the
+/// TUI waits for the file being copied and copies no more.
 pub fn write_progressive_files(
     output_dir: &str,
     files: &[ProgressOutputFile],
     names: &mut OutputNames,
 ) {
+    write_progressive_through(&GATE, Path::new(output_dir), files, names);
+}
+
+/// `write_progressive_files` through `gate`.
+fn write_progressive_through(
+    gate: &WriteGate,
+    dir: &Path,
+    files: &[ProgressOutputFile],
+    names: &mut OutputNames,
+) {
+    let Some(_writing) = gate.enter() else { return };
     for file in files {
-        let dir = Path::new(output_dir);
-        let claimed = names.claim(dir, &file.name, &file.data);
-        let path = dir.join(claimed.name);
-        if claimed.held || std::fs::symlink_metadata(&path).is_ok() {
-            continue;
+        if gate.stopping() {
+            return;
         }
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        // Copy, never rename: a Path output may be the user's own file,
-        // and the final write reads it again.
-        if file.data.copy_to(&path).is_ok() {
-            crate::ordered_write::note_progressive(&path);
-        }
+        copy_one(dir, file, names);
+    }
+}
+
+/// Copy one file to its claimed name, unless the name is held or occupied.
+fn copy_one(dir: &Path, file: &ProgressOutputFile, names: &mut OutputNames) {
+    let claimed = names.claim(dir, &file.name, &file.data);
+    let path = dir.join(claimed.name);
+    if claimed.held || std::fs::symlink_metadata(&path).is_ok() {
+        return;
+    }
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    // Copy, never rename: a Path output may be the user's own file, and the
+    // final write reads it again.
+    if file.data.copy_to(&path).is_ok() {
+        crate::ordered_write::note_progressive(&path);
     }
 }
 
@@ -144,6 +165,42 @@ mod tests {
         write_progressive_files(dir, &[output("b.txt", FileData::Path(b))], &mut names);
         let written = out.path().join("b_1.txt");
         assert_eq!(std::fs::read_to_string(written).unwrap(), "BBBB");
+    }
+
+    #[test]
+    fn copies_nothing_once_bnto_is_quitting() {
+        // Progressive copies used to skip the write gate, so Ctrl+C or a TUI
+        // quit could end the process mid-copy; now a quitting gate stops them.
+        let out = tempfile::tempdir().unwrap();
+        let gate = WriteGate::new();
+        gate.stop_and_wait(|| {});
+        let files = [output("a.txt", FileData::Bytes(b"A".to_vec()))];
+        write_progressive_through(&gate, out.path(), &files, &mut OutputNames::default());
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn a_held_name_and_an_occupied_name_are_both_skipped() {
+        // #759's skip (a made-up name already holding the bytes) and ISS-48's
+        // (any file already at the name) both apply.
+        let out = tempfile::tempdir().unwrap();
+        std::fs::write(out.path().join("a.txt"), "USER").unwrap();
+        std::fs::write(out.path().join("a_1.txt"), "SAME").unwrap();
+        let dir = out.path().to_str().unwrap();
+        let files = [
+            output("a.txt", FileData::Bytes(b"NEW".to_vec())),
+            output("a.txt", FileData::Bytes(b"SAME".to_vec())),
+        ];
+        write_progressive_files(dir, &files, &mut OutputNames::default());
+        assert_eq!(
+            std::fs::read_to_string(out.path().join("a.txt")).unwrap(),
+            "USER"
+        );
+        assert_eq!(
+            std::fs::read_to_string(out.path().join("a_1.txt")).unwrap(),
+            "SAME"
+        );
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
     }
 
     #[test]

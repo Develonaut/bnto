@@ -16,10 +16,21 @@ use bnto_core::processor::FileData;
 /// it, so only sources sharing a destination's stamp need the identity check.
 pub(super) type Stamp = (u64, Option<SystemTime>);
 
-/// For each write `i`, the other writes whose source is the file at
-/// `paths[i]`: they must run before write `i` replaces it.
+/// `waits_kept` with only files already at their destination left as is.
+#[cfg(test)]
 pub fn waits(files: &[PipelineFileResult], paths: &[PathBuf]) -> Vec<Vec<usize>> {
-    let replaced = replaced_stamps(files, paths);
+    waits_kept(files, paths, &super::left_as_is(files, paths, &[]))
+}
+
+/// For each write `i`, the other writes whose source is the file at
+/// `paths[i]`: they must run before write `i` replaces it. A write with
+/// `kept[i]` replaces nothing (left as is, or held) and waits for nothing.
+pub fn waits_kept(
+    files: &[PipelineFileResult],
+    paths: &[PathBuf],
+    kept: &[bool],
+) -> Vec<Vec<usize>> {
+    let replaced = replaced_stamps(paths, kept);
     // The usual run writes into an empty folder: no source stats needed.
     if replaced.iter().all(Option::is_none) {
         return vec![Vec::new(); paths.len()];
@@ -34,17 +45,12 @@ pub fn waits(files: &[PipelineFileResult], paths: &[PathBuf]) -> Vec<Vec<usize>>
 }
 
 /// For each write, the stamp of the file it would replace: `None` when its
-/// destination is empty, or is its own source (left as is, ISS-36).
-fn replaced_stamps(files: &[PipelineFileResult], paths: &[PathBuf]) -> Vec<Option<Stamp>> {
-    let pairs = files.iter().zip(paths);
+/// destination is empty, or the write leaves it as is (its own source,
+/// ISS-36, or a held file already holding the result's bytes).
+fn replaced_stamps(paths: &[PathBuf], kept: &[bool]) -> Vec<Option<Stamp>> {
+    let pairs = paths.iter().zip(kept);
     pairs
-        .map(|(file, dest)| {
-            if file.data.is_at(dest) {
-                None
-            } else {
-                stamp(dest)
-            }
-        })
+        .map(|(dest, &kept)| if kept { None } else { stamp(dest) })
         .collect()
 }
 

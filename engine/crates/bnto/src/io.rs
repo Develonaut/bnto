@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use bnto_core::{PipelineFile, PipelineFileResult, PipelineResult};
+use bnto_core::{PipelineFile, PipelineResult};
 
 use crate::ordered_write;
 use crate::output_names::{self, Renamed};
@@ -60,18 +60,14 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed
 
     let (dests, renamed) = destinations(result, output_dir);
     let unchanged = already_there(result, &dests);
-    let (files, paths) = writes(result, &dests);
-    ordered_write::write_all(&files, &paths, Path::new(output_dir))?;
+    let (paths, held) = split(&dests);
+    ordered_write::write_all(&result.files, &paths, &held, Path::new(output_dir))?;
     Ok(Placed { renamed, unchanged })
 }
 
-/// The result files to write and where: all but the held ones.
-fn writes(
-    result: &PipelineResult,
-    dests: &[Destination],
-) -> (Vec<PipelineFileResult>, Vec<PathBuf>) {
-    let pairs = result.files.iter().zip(dests).filter(|(_, d)| !d.held);
-    pairs.map(|(f, d)| (f.clone(), d.path.clone())).unzip()
+/// Each destination's path, and whether it's held (left as is, not written).
+fn split(dests: &[Destination]) -> (Vec<PathBuf>, Vec<bool>) {
+    dests.iter().map(|d| (d.path.clone(), d.held)).unzip()
 }
 
 /// What a write did besides writing: the files given a new name (written, or
@@ -88,8 +84,8 @@ pub struct Placed {
 fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
     let (dests, renamed) = destinations(result, output_dir);
-    let (files, paths) = writes(result, &dests);
-    ordered_write::check(&files, &paths)?;
+    let (paths, held) = split(&dests);
+    ordered_write::check(&result.files, &paths, &held)?;
     let unchanged = already_there(result, &dests);
     Ok(Placed { renamed, unchanged })
 }

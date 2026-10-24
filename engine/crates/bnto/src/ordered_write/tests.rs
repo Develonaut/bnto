@@ -39,13 +39,27 @@ fn names_in(dir: &Path) -> usize {
     std::fs::read_dir(dir).unwrap().count()
 }
 
+/// `files` to `paths`, none held.
+fn writes<'a>(files: &'a [PipelineFileResult], paths: &'a [PathBuf]) -> Writes<'a> {
+    Writes {
+        files,
+        paths,
+        held: &[],
+    }
+}
+
+/// `write_all` with no held files.
+fn write_plain(files: &[PipelineFileResult], paths: &[PathBuf], dir: &Path) -> Result<(), String> {
+    write_all(files, paths, &[], dir)
+}
+
 #[test]
 fn test_a_write_onto_a_later_source_reads_that_source_first() {
     // RED (ISS-48): a → b.txt ran first and replaced b.txt before b → b_1.txt
     // read it, so BBBB was lost.
     let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
     let paths = [dir.path().join("b.txt"), dir.path().join("b_1.txt")];
-    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    write_plain(&reading(&src), &paths, dir.path()).unwrap();
     assert_eq!(read(dir.path(), "a.txt"), "AAAA");
     assert_eq!(read(dir.path(), "b.txt"), "AAAA");
     assert_eq!(read(dir.path(), "b_1.txt"), "BBBB");
@@ -56,7 +70,7 @@ fn test_a_swap_swaps_and_leaves_no_staging_folder() {
     // RED: a → b.txt and b → a.txt; either order alone loses one file.
     let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
     let paths = [src[1].clone(), src[0].clone()];
-    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    write_plain(&reading(&src), &paths, dir.path()).unwrap();
     assert_eq!(read(dir.path(), "a.txt"), "BBBB");
     assert_eq!(read(dir.path(), "b.txt"), "AAAA");
     assert_eq!(names_in(dir.path()), 2, "the staging folder is removed");
@@ -67,7 +81,7 @@ fn test_a_three_way_rotation_keeps_every_file() {
     // RED: a → b.txt, b → c.txt, c → a.txt.
     let (dir, src) = folder(&[("a.txt", "A"), ("b.txt", "B"), ("c.txt", "C")]);
     let paths = [src[1].clone(), src[2].clone(), src[0].clone()];
-    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    write_plain(&reading(&src), &paths, dir.path()).unwrap();
     assert_eq!(read(dir.path(), "a.txt"), "C");
     assert_eq!(read(dir.path(), "b.txt"), "A");
     assert_eq!(read(dir.path(), "c.txt"), "B");
@@ -80,7 +94,7 @@ fn test_a_case_only_swap_keeps_both_contents() {
     // a new file and only the a.txt write has to wait. Both keep each file.
     let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
     let paths = [dir.path().join("B.txt"), src[0].clone()];
-    write_all(&reading(&src), &paths, dir.path()).unwrap();
+    write_plain(&reading(&src), &paths, dir.path()).unwrap();
     assert_eq!(read(dir.path(), "B.txt"), "AAAA");
     assert_eq!(read(dir.path(), "a.txt"), "BBBB");
 }
@@ -98,7 +112,7 @@ fn test_bytes_and_untouched_sources_write_as_before() {
         out.path().join("a.txt"),
         out.path().join("sub").join("new.txt"),
     ];
-    write_all(&files, &paths, out.path()).unwrap();
+    write_plain(&files, &paths, out.path()).unwrap();
     assert_eq!(read(out.path(), "a.txt"), "AAAA");
     assert_eq!(read(&out.path().join("sub"), "new.txt"), "new");
     assert_eq!(read(dir.path(), "a.txt"), "AAAA");
@@ -126,7 +140,7 @@ fn test_a_write_failing_after_staging_keeps_the_staged_copy_and_names_it() {
     std::fs::set_permissions(&src[0], readonly).unwrap();
     let paths = [src[1].clone(), src[0].clone()];
 
-    let error = write_all(&reading(&src), &paths, dir.path()).unwrap_err();
+    let error = write_plain(&reading(&src), &paths, dir.path()).unwrap_err();
 
     let folders = staging_folders(dir.path());
     assert_eq!(folders.len(), 1, "{error}");
@@ -161,7 +175,7 @@ fn test_destinations_that_are_one_file_are_refused_before_any_write() {
     std::fs::hard_link(&src[1], &link).unwrap();
     let paths = [link, src[1].clone()];
 
-    let error = write_all(&reading(&src), &paths, dir.path()).unwrap_err();
+    let error = write_plain(&reading(&src), &paths, dir.path()).unwrap_err();
 
     assert!(
         error.starts_with("Output refused, nothing was written: 1 conflict"),
@@ -180,8 +194,9 @@ fn test_a_write_after_quitting_writes_nothing() {
     let gate = WriteGate::new();
     gate.stop_and_wait(|| {});
     let paths = [src[1].clone(), src[0].clone()];
+    let files = reading(&src);
 
-    let error = write_through(&gate, &reading(&src), &paths, dir.path()).unwrap_err();
+    let error = write_through(&gate, writes(&files, &paths), dir.path()).unwrap_err();
 
     assert_eq!(error, STOPPED);
     assert_eq!(read(dir.path(), "a.txt"), "AAAA");
@@ -197,7 +212,7 @@ fn test_a_swap_stopped_between_steps_keeps_the_only_copy_for_the_report() {
     let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
     let paths = [src[1].clone(), src[0].clone()];
     let files = reading(&src);
-    let mut run = Run::new(&files, &paths, dir.path()).unwrap();
+    let mut run = Run::new(writes(&files, &paths), dir.path()).unwrap();
     let steps = order::order(&readers::waits(&files, &paths));
     for step in steps.into_iter().take(2) {
         run.step(step).unwrap();
@@ -224,7 +239,7 @@ fn test_writes_into_a_fresh_folder_leave_no_placeholder_behind() {
         out.path().join("a.txt"),
         out.path().join("sub").join("b.txt"),
     ];
-    write_all(&reading(&src), &paths, out.path()).unwrap();
+    write_plain(&reading(&src), &paths, out.path()).unwrap();
     assert_eq!(read(out.path(), "a.txt"), "AAAA");
     assert_eq!(read(&out.path().join("sub"), "b.txt"), "BBBB");
     assert_eq!(names_in(out.path()), 2);
@@ -245,7 +260,7 @@ fn test_a_write_failing_midway_removes_the_claims_it_never_wrote() {
         out.path().join("a.txt"),
         out.path().join("sub").join("b.txt"),
     ];
-    let error = write_all(&files, &paths, out.path()).unwrap_err();
+    let error = write_plain(&files, &paths, out.path()).unwrap_err();
     assert!(error.contains("Cannot write"), "{error}");
     assert_eq!(names_in(out.path()), 0, "{error}");
 }
@@ -265,4 +280,51 @@ fn test_a_new_name_taken_after_planning_is_refused_before_any_write() {
     );
     assert!(!paths[0].exists(), "nothing was written");
     assert_eq!(read(out.path(), "b.txt"), "TAKEN");
+}
+
+// --- held files (#759): already holding the result's bytes, not written ---
+
+#[test]
+fn test_a_held_file_is_not_written_and_waits_for_nothing() {
+    // `b`'s result is held at `b_1.txt` (a progressive copy), so its write
+    // reads nothing: `a` may replace `b.txt` at once, and `b_1.txt` is left
+    // byte for byte as it was, mtime included.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB"), ("b_1.txt", "BBBB")]);
+    let files = reading(&src[..2]);
+    let paths = [src[1].clone(), src[2].clone()];
+    let before = std::fs::metadata(&src[2]).unwrap().modified().unwrap();
+    write_all(&files, &paths, &[false, true], dir.path()).unwrap();
+    assert_eq!(read(dir.path(), "b.txt"), "AAAA");
+    assert_eq!(read(dir.path(), "b_1.txt"), "BBBB");
+    let after = std::fs::metadata(&src[2]).unwrap().modified().unwrap();
+    assert_eq!(before, after, "a held file is never rewritten");
+    assert_eq!(names_in(dir.path()), 3, "no staging folder");
+}
+
+#[test]
+fn test_two_held_names_for_one_file_are_no_clash() {
+    let (dir, src) = folder(&[("a.txt", "AAAA")]);
+    let link = dir.path().join("l.txt");
+    std::fs::hard_link(&src[0], &link).unwrap();
+    let files = [
+        result("x", FileData::Bytes(b"AAAA".to_vec())),
+        result("y", FileData::Bytes(b"AAAA".to_vec())),
+    ];
+    let paths = [src[0].clone(), link];
+    assert!(check(&files, &paths, &[true, true]).is_ok());
+}
+
+#[test]
+fn test_a_write_through_a_link_onto_a_held_file_is_refused() {
+    // The held file is the result; replacing it through a link loses it.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("held.txt", "HELD")]);
+    let link = dir.path().join("l.txt");
+    std::fs::hard_link(&src[1], &link).unwrap();
+    let files = [
+        result("held", FileData::Bytes(b"HELD".to_vec())),
+        result("a", FileData::Path(src[0].clone())),
+    ];
+    let paths = [src[1].clone(), link];
+    let error = check(&files, &paths, &[true, false]).unwrap_err();
+    assert!(error.contains("one file on disk"), "{error}");
 }

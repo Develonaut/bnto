@@ -11,23 +11,32 @@
 
 use std::path::{Path, PathBuf};
 
-use bnto_core::PipelineFileResult;
 use bnto_core::processor::FileData;
 
 use super::landing::landing_key;
 use super::readers::stamp;
 
+/// `shared_kept` with only files already at their destination left as is.
+#[cfg(test)]
+pub fn shared_destinations(
+    files: &[bnto_core::PipelineFileResult],
+    paths: &[PathBuf],
+) -> Vec<(usize, usize)> {
+    shared_kept(paths, &super::left_as_is(files, paths, &[]))
+}
+
 /// Each pair of writes `(i, j)`, `i < j`, whose destinations are one file
-/// though their names differ, unless both writes leave that file as is.
-pub fn shared_destinations(files: &[PipelineFileResult], paths: &[PathBuf]) -> Vec<(usize, usize)> {
+/// though their names differ, unless both leave that file as is (`kept`: its
+/// own source, or a held file already holding the result's bytes). One that
+/// writes would replace the other's file, kept or not.
+pub fn shared_kept(paths: &[PathBuf], kept: &[bool]) -> Vec<(usize, usize)> {
     let identical = same_stamp_pairs(paths)
         .into_iter()
         .filter(|&(i, j)| same_file(&paths[i], &paths[j]));
     let mut pairs: Vec<_> = identical.chain(same_landing_pairs(paths)).collect();
     pairs.sort_unstable();
     pairs.dedup();
-    let left_as_is = |k: usize| files[k].data.is_at(&paths[k]);
-    pairs.retain(|&(i, j)| !(left_as_is(i) && left_as_is(j)));
+    pairs.retain(|&(i, j)| !(kept[i] && kept[j]));
     pairs
 }
 
@@ -136,6 +145,7 @@ fn escaped(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bnto_core::PipelineFileResult;
 
     fn from(src: &Path) -> PipelineFileResult {
         PipelineFileResult {
