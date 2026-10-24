@@ -1,8 +1,8 @@
-# Changelog: what changed, everywhere bnto shows up — 4 PRs
+# Changelog: what changed, everywhere bnto shows up — 5 PRs
 
 **Created:** October 24, 2026
-**Status:** Decided by Ryan on October 24, 2026: a curated `CHANGELOG.md`, surfaced by a site badge, links from the CLI and TUI notices, and an RSS/Atom feed. Not started.
-**Related:** [releases.md](../scopes/process/releases.md), [cli-upgrade.md](cli-upgrade.md), [feature-requests.md](../scopes/process/feature-requests.md) (this was evaluated as a request)
+**Status:** Decided by Ryan on October 24, 2026: a curated `CHANGELOG.md`, surfaced by a site page and Atom feed, a "New in vX" badge, `bnto changelog`, and links from the CLI and TUI update notices. Not started.
+**Related:** [releases.md](../scopes/process/releases.md), [cli-upgrade.md](cli-upgrade.md)
 
 ## Context
 
@@ -16,19 +16,35 @@
 - **The site shows the version** only in its install demo.
 - **The best user-facing notes are buried.** They're the "What users get" sections hand-written in each version-bump PR (#737, #743).
 
-**The web is in maintenance mode** (PLAN.md, the CLI/TUI-first pivot). This plan is a deliberate exception, approved by Ryan.
+**The web is in maintenance mode** (PLAN.md, the CLI/TUI-first pivot). PRs 2 and 3 are a deliberate exception, approved by Ryan on October 24, 2026, and recorded in PLAN.md.
 
 **What changes:**
 
-- a new curated changelog, written in the bump PR;
+- a new curated changelog, written in the bump PR and checked in CI and at tag time;
 - the GitHub Release body;
-- a `/changelog` page with a feed;
+- a `/changelog` page with an Atom feed;
 - a "new" badge on the site;
-- links from the CLI and TUI notices, and a new `bnto changelog` command.
+- a new `bnto changelog` command;
+- the CLI and TUI update notices, and `bnto upgrade`'s output.
 
-**What doesn't change:** no node, recipe or processor counts. Cost stays at $0: everything is static at build time, and the badge state lives in each visitor's own browser storage.
+**What doesn't change:** no node, recipe or processor counts. No new service: everything on the site is static at build time, the badge state lives in each visitor's own browser storage, and `bnto changelog` reads a file compiled into the binary. Cost stays at $0.
 
-Split into 4 PRs. PR 1 comes first. PRs 2 and 4 depend only on it and are independent of each other; PR 3 depends on PR 2.
+Split into 5 PRs. PR 1 comes first. PRs 2 and 4 depend only on it. PR 3 depends on PR 2. PR 5 depends on PR 4, and links to the page PR 2 builds.
+
+## Design
+
+| Question                      | Choice                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Curated or generated          | **Curated**, a few plain lines per release. Generating it from commits (Conventional Commits with git-cliff or release-please) gives what GitHub's notes already give: every PR title, mostly internal. It would also need every squash title to follow a format. Changesets (a file per PR) adds a step to every PR, for a repo with one release number. The bump PR already has a hand-written "What users get", so curating costs no more. |
+| Where the file lives          | **`engine/crates/bnto/CHANGELOG.md`**, with a one-line root `CHANGELOG.md` pointing at it. `cargo publish` packages only the files inside the crate's folder, so `include_str!` can't reach a root file from a published crate. Inside the crate, it ships in the published package, so the CLI reads it offline.                                                                                                                             |
+| Format                        | [Keep a Changelog](https://keepachangelog.com/): `## [0.18.2] - 2026-10-24`, then `### Added`, `### Changed`, `### Deprecated`, `### Removed`, `### Fixed` and `### Security`, each a `- ` list. No `[Unreleased]` section: entries are written in the bump PR. Older releases (before 0.18.0) are left to GitHub Releases.                                                                                                                   |
+| When it's enforced            | In CI on every PR (the release version must have a non-empty entry), and again when a stable tag is cut (`task release:tag`, `release.yml`). A bump PR with an empty stub fails CI before it merges.                                                                                                                                                                                                                                          |
+| Pre-release versions          | `bump-version.sh` accepts them (`scripts/bump-version.sh:12`), but pre-release tags don't publish crates and aren't version-checked (`check-release-version.sh:14-17`). They get no stub and need no entry. The stable release's entry covers what its pre-releases shipped.                                                                                                                                                                  |
+| GitHub Release body           | The entry first, then the current deploy and surfaces block, then GitHub's generated "What's Changed". `softprops/action-gh-release` with `generate_release_notes: true` asks GitHub's API to generate the notes, and the API puts the given body _before_ them, so the generated list always comes last.                                                                                                                                     |
+| Site                          | Read the file at build time, the way the install demo reads `engine/Cargo.toml` (`apps/web/lib/getBntoCliVersion.ts:12-15`). Fetching GitHub Releases at runtime would add a network call, a rate limit and a render cost, for notes that aren't curated.                                                                                                                                                                                     |
+| Badge state                   | The visitor's `localStorage`. A cookie or Convex would mean server state, and Convex would need an account.                                                                                                                                                                                                                                                                                                                                   |
+| What the CLI can show offline | Only the versions compiled into the running binary. An older bnto can't know a newer release's notes, so anything that announces a newer version links to `https://bnto.io/changelog#<version>`.                                                                                                                                                                                                                                              |
+| TUI notice                    | `bnto changelog`, not the URL. The notice sits on the right of the status line and the key hints get what's left (`tui/render.rs:201-222`). At 80×24 only `Tab pane` fits beside today's notice, so a URL would push out every hint. Running `bnto changelog` in a shell prints the CLI notice with the link to the new release, then the installed version's notes.                                                                          |
 
 ---
 
@@ -39,45 +55,83 @@ Split into 4 PRs. PR 1 comes first. PRs 2 and 4 depend only on it and are indepe
 
 ### What
 
-The changelog follows the [Keep a Changelog](https://keepachangelog.com/) format: `## [0.18.2] - 2026-10-24`, then `### Added`, `### Changed`, `### Fixed` and `### Security`. It's written in plain words for users. Internal PRs are left out unless they change what a user sees.
+The changelog is written in plain words for users. Internal PRs are left out unless they change what a user sees.
 
-- **Location:** the canonical file is `engine/crates/bnto/CHANGELOG.md`. It ships inside the published crate, so the CLI can read it offline (PR 4). The root `CHANGELOG.md` is a one-line pointer.
 - **Backfill:** 0.18.0, 0.18.1 and 0.18.2, from their bump PRs and release notes.
-- **Gate:** `task version:bump` adds an empty `## [X.Y.Z] - <date>` stub. `scripts/check-release-version.sh` (run by `task release:tag` and the release workflow) refuses a stable tag whose entry is missing or empty.
-- **Release body:** `release.yml` puts the entry first, then GitHub's generated "All changes" list and the deploy status as now.
+- **Stub:** `task version:bump` adds `## [X.Y.Z] - <date>` above the newest entry, dated the day the bump runs (UTC). If the tag will go out on a later day, the author sets the date by hand before merging the bump PR; no check compares the date with the tag's. Running the bump twice adds one stub. A pre-release version gets none.
+- **Gate:** `scripts/check-changelog.sh` fails when the release version's entry is missing or has no `- ` item. CI runs it on every PR. `check-release-version.sh` runs it too, so `task release:tag` and the release workflow (`release.yml:32-33`) refuse a stable tag with no entry.
+- **Release body:** a new step before "Create GitHub Release" (`release.yml:649`) writes `release-body.md` with `scripts/release-body.sh`. The action reads it through `body_path:` in place of the inline `body:` (`release.yml:656-670`). The body is:
+  1. `## What's new`, then the entry (a pre-release has none);
+  2. the "Deployed" and "Surfaces" block, unchanged;
+  3. GitHub's appended "What's Changed" list, as now.
+- **Script tests** run in CI, in the "Crate Publish List" job (`ci.yml:312-324`, already required by the CI Gate). They're also in a new `task check:scripts`, which `task check` runs. `scripts/tests/` doesn't exist yet; this PR adds it.
 
-### Files (~3 new, ~4 modified)
+### Files (~7 new, ~6 modified)
 
 **New:**
 
 - `engine/crates/bnto/CHANGELOG.md`
-- `CHANGELOG.md` (the pointer)
-- `scripts/changelog-entry.sh`: prints one version's entry; shared by the check and `release.yml`
+- `CHANGELOG.md`: the pointer
+- `scripts/release-version.sh`: prints `[workspace.package] version`. The awk moves here from `check-release-version.sh:19-23`
+- `scripts/changelog-entry.sh`: prints one version's entry
+- `scripts/check-changelog.sh`: the gate
+- `scripts/release-body.sh`: the release body
+- `scripts/tests/changelog.sh`: plain-bash tests for all of the above
 
 **Modified:**
 
-- `scripts/bump-version.sh`
-- `scripts/check-release-version.sh`
-- `.github/workflows/release.yml` (release body, around l.720)
-- `.claude/scopes/process/releases.md`
+- `scripts/bump-version.sh`: adds the stub
+- `scripts/check-release-version.sh`: uses `release-version.sh`, then runs `check-changelog.sh`
+- `.github/workflows/release.yml`: `create-release` job (l.619). A new "Write the release body" step after "Summarize deploy results" (l.629-647); `body:` (l.656-670) becomes `body_path: release-body.md`
+- `.github/workflows/ci.yml`: two steps in `crate-publish-check` (l.312-324), "Changelog script tests" and "Changelog has the release version's entry"
+- `Taskfile.yml`: `check:scripts`, added to `check` (l.36-62)
+- `.claude/scopes/process/releases.md`: "How to Cut a Release" and "One number everywhere" say the bump PR writes the entry
 
-### Key function
+### Key functions
 
-`scripts/changelog-entry.sh <version>` prints the section between `## [<version>]` and the next `## [`, and exits 1 when it's missing or blank.
+```bash
+scripts/changelog-entry.sh <version>  # the lines between `## [<version>]` and the next `## [`; exit 1 if missing or no `- ` item
+scripts/check-changelog.sh [version]  # default: release-version.sh; a pre-release passes; else changelog-entry.sh or fail
+scripts/release-body.sh <tag>         # stdout: entry (stable tags), then the deploy block from VERCEL, CONVEX, CARGO, ENGINE_CHANGED, WEB_CHANGED, CONVEX_CHANGED
+```
 
 ### RED tests
 
-- `changelog-entry.sh 0.18.2` prints the 0.18.2 entry. An unknown version exits 1, and so does a stub with no items.
-- `check-release-version.sh v9.9.9` fails, naming the missing entry, even when the workspace version matches.
-- `bump-version.sh` adds a stub dated today, and adds it only once.
+In `scripts/tests/changelog.sh`. Each case runs in a temp dir holding a small `engine/Cargo.toml`, a fixture changelog and a no-op `cargo` first on `PATH`, so nothing touches the repo or runs `cargo update`.
 
-Shell scripts are tested with a bats or plain-bash test file under `scripts/tests/`, run by `task check`. If none exists, add `task check:scripts`.
+- **`changelog-entry.sh`:**
+  - `0.18.2` prints that entry's sections, without its heading, and stops at the next `## [`;
+  - the last entry ends at end of file;
+  - an unknown version exits 1, naming the version and the file;
+  - a stub with no `- ` item exits 1.
+- **`check-changelog.sh`:**
+  - a stable version with an entry passes;
+  - a stub fails, naming the version and `engine/crates/bnto/CHANGELOG.md`;
+  - `1.0.0-beta.1` passes.
+- **`check-release-version.sh`:**
+  - `v9.9.9` with a matching workspace version but no entry fails, naming the missing entry;
+  - with the entry it passes;
+  - a pre-release tag still passes untouched.
+- **`bump-version.sh`:**
+  - `0.18.3` adds `## [0.18.3] - <today, UTC>` directly above `## [0.18.2]`;
+  - a second run adds no second stub;
+  - `1.0.0-beta.1` adds no stub.
+- **`release-body.sh`:**
+  - `v0.18.2` prints `## What's new`, then the entry, then `## Deployed`;
+  - `v1.0.0-beta.1` starts with `## Deployed` and has no entry.
+- **The real file:** `check-changelog.sh` passes on the repo, since the backfill holds 0.18.2.
 
 ### Verification
 
 ```bash
-bash scripts/tests/changelog.sh && task check
+bash scripts/tests/changelog.sh
+./scripts/check-changelog.sh
+./scripts/check-release-version.sh v0.18.2
+VERCEL=Deployed CONVEX=Skipped CARGO=Deployed ENGINE_CHANGED=true WEB_CHANGED=true CONVEX_CHANGED=false ./scripts/release-body.sh v0.18.2
+task check:scripts && task check
 ```
+
+The `body_path` change itself first runs on the next tag. Check that release's page: the entry first, "What's Changed" last.
 
 ### No count changes
 
@@ -86,66 +140,98 @@ bash scripts/tests/changelog.sh && task check
 ## PR 2: A `/changelog` page and feed on bnto.io
 
 **Branch:** `feat/web-changelog` from `main`, after PR 1
-**One sentence:** bnto.io renders the changelog at `/changelog`, with an anchor per version and an Atom feed.
+**One sentence:** bnto.io publishes each release's notes at `/changelog`, anchored by version, with an Atom feed beside it.
 
 ### What
 
-The page is a statically generated server component. It reads `engine/crates/bnto/CHANGELOG.md` at build time, the same way the site already reads `engine/Cargo.toml` for the install demo (`apps/web/lib/getBntoCliVersion.ts`). A pure parser turns the file into versions, dates and sections. `/changelog.xml` is an Atom feed generated from the same parse.
+The page is a statically generated server component. `readChangelog()` reads `../../engine/crates/bnto/CHANGELOG.md` from `apps/web` at build time, as `getBntoCliVersion.ts:12-15` does. A pure parser turns the file into releases, dates, sections and items. Items keep backtick code as code segments, and are rendered as text, never as HTML.
 
-The page is linked from the footer and listed in:
+- **The page** is `app/(app)/changelog/page.tsx`, so it gets the Navbar and Footer. A static segment wins over `(app)/[bnto]`, and `changelog` is already in `RESERVED_PATHS` (`apps/web/lib/bntoRegistry.ts:86`). Each release is an `h2` whose `id` is its version (`id="0.18.2"`), newest first.
+- **Metadata:** `page.tsx` exports `metadata`, as `explore/page.tsx:16` does, with `alternates.types` for `application/atom+xml` pointing at `/changelog.xml` (feed discovery). There's no layout file.
+- **The feed:** `/changelog.xml` is a `force-static` route (like `app/llms.txt/route.ts:4`) serving Atom built from the same parse. Each entry's `id` and link is `https://bnto.io/changelog#<version>`. The feed's `updated` is the newest release's date, not the build time.
+- **Linked from:** the footer's Company section (`FooterLinks.tsx:12-19`). **Listed in:**
+  - the sitemap (`buildStaticSitemapEntries.ts:6-27`);
+  - Lighthouse (`scripts/generate-lighthouserc.ts:29`);
+  - `scripts/seo/collectUrls.ts:11`.
 
-- the sitemap (`buildStaticSitemapEntries.ts`);
-- Lighthouse (`scripts/generate-lighthouserc.ts`);
-- `scripts/seo/collectUrls.ts`.
-
-### Files (~6 new, ~5 modified)
+### Files (~9 new, ~6 modified)
 
 **New:**
 
-- `apps/web/lib/changelog/parseChangelog.ts` and its test
-- `apps/web/app/(app)/changelog/page.tsx` and `layout.tsx` (metadata)
-- `apps/web/app/changelog.xml/route.ts` (static)
+- `apps/web/lib/changelog/readChangelog.ts`: server-only file read
+- `apps/web/lib/changelog/parseChangelog.ts`
+- `apps/web/lib/changelog/buildAtomFeed.ts`
+- `apps/web/lib/changelog/__tests__/parseChangelog.test.ts`
+- `apps/web/lib/changelog/__tests__/buildAtomFeed.test.ts`
+- `apps/web/app/(app)/changelog/page.tsx`
+- `apps/web/app/(app)/changelog/_components/ChangelogRelease.tsx`
+- `apps/web/app/changelog.xml/route.ts`
 - `apps/web/e2e/pages/changelog.spec.ts`
 
 **Modified:**
 
-- the sitemap, Lighthouse and `collectUrls` files above
-- `FooterLinks.tsx`
-- `site-navigation.spec.ts`
+- `apps/web/app/buildStaticSitemapEntries.ts`
+- `scripts/generate-lighthouserc.ts`
+- `scripts/seo/collectUrls.ts`
+- `scripts/seo/collectUrls.test.ts`: asserts `https://bnto.io/changelog`, beside the existing page asserts (l.13-16)
+- `apps/web/components/blocks/Footer/FooterLinks.tsx`
+- `apps/web/e2e/pages/site-navigation.spec.ts`: `/changelog` in `PUBLIC_ROUTES` (l.11-23), and the footer link (`footer-link-changelog`, from `FooterSectionColumn.tsx:36`)
 
-### Key function
+### Key functions
 
 ```ts
-export function parseChangelog(markdown: string): ChangelogRelease[]; // { version, date, sections: { kind, items[] }[] }
+type Segment = { text: string; code: boolean };
+type ChangelogRelease = {
+  version: string;
+  date: string;
+  sections: { kind: SectionKind; items: Segment[][] }[];
+};
+export function parseChangelog(markdown: string): ChangelogRelease[];
+export function buildAtomFeed(releases: ChangelogRelease[], siteUrl: string): string;
 ```
 
 ### RED tests
 
-**Unit:**
+**Unit, `parseChangelog`:**
 
-- The three backfilled releases parse in order, newest first.
-- Section kinds are preserved.
-- An empty section is dropped.
-- Malformed headings are skipped, not thrown on.
+- The three backfilled releases parse newest first, with their versions and dates.
+- The six section kinds are kept in file order. An unknown `### Kind` is skipped.
+- An empty section is dropped, and so is a release with no items (a stub).
+- Malformed headings and the link-reference lines at the bottom are skipped, not thrown on.
+- `` `bnto upgrade` `` becomes a code segment. An unclosed backtick stays text.
+- The live file's newest release equals `getBntoCliVersion()`.
 
-**E2E (`@browser`):**
+**Unit, `buildAtomFeed`:**
 
-- `/changelog` shows each version as a heading with an `id` anchor (`#0.18.2`).
+- One `<entry>` per release, newest first, each with `id` `https://bnto.io/changelog#<version>`.
+- The feed's `updated` is the newest release's date.
+- `&` and `<` in an item are escaped.
+
+**E2E (`@browser`, `apps/web/e2e/pages/changelog.spec.ts`):**
+
+- `/changelog` returns under 400 and shows an `h2` per release, newest first. `page.locator('[id="0.18.2"]')` is visible: `#0.18.2` isn't a valid CSS selector, though it's a fine URL fragment.
 - `not-found-heading` is absent.
-- `/changelog.xml` is valid Atom with one entry per release.
+- `/changelog#0.18.0` scrolls that heading into view.
+- The head has `link[rel="alternate"][type="application/atom+xml"]` ending in `/changelog.xml`.
+- `request.get("/changelog.xml")`: 200, `application/atom+xml`, and as many `<entry>` as the page has headings.
 
 ### Verification
 
 ```bash
-cd apps/web && pnpm exec vitest run lib/changelog && pnpm exec playwright test e2e/pages/changelog.spec.ts
+(cd apps/web && pnpm exec vitest run lib/changelog)
+pnpm exec tsx scripts/seo/collectUrls.test.ts
+pnpm turbo run build --filter=@bnto/web | grep changelog   # /changelog and /changelog.xml both listed as static (○)
+(cd apps/web && pnpm exec playwright test e2e/pages/changelog.spec.ts e2e/pages/site-navigation.spec.ts)
 task e2e && task seo:audit && task check
 ```
 
+`collectUrls.test.ts` is a `node:assert` script that no CI job runs today, so it's run by hand here.
+
 ### Count changes
 
-- Sitemap static entries: +1
-- Lighthouse static pages: +1
-- `collectUrls`: +1
+- Sitemap static entries: 5 → 6
+- Lighthouse static pages: 4 → 5
+- `collectUrls` static pages: 5 → 6
 
 None of these counts is asserted exactly.
 
@@ -158,110 +244,224 @@ None of these counts is asserted exactly.
 
 ### What
 
-The badge is a small client leaf in the site header. It reads the latest version at build time (from PR 2's parser, as a prop from a server parent).
+The header is `apps/web/components/blocks/Navbar.tsx`, a server component. `app/(app)/layout.tsx:11` renders it, and so do `(dev)/layout.tsx`, `editor/layout.tsx` and `not-found.tsx`. Every one of those routes is prerendered, so the file read happens at build. Navbar reads the latest version with `getLatestChangelogVersion()` (PR 2's parser) and passes it to a client leaf, `NewReleaseBadge`.
 
 - **When it shows:** the visitor's `localStorage` `bnto:last-seen-version` is older than the latest.
-- **When it hides:** after the visitor follows it or dismisses it.
-- **First-time visitors:** if they've never seen any version, it sets the key silently without showing, so the badge means "new since you were last here".
-- **Storage:** every read and write is wrapped in try/catch, so blocked storage just means no badge.
+- **When it hides:** after the visitor follows it or dismisses it. Both write the latest version.
+- **First-time visitors:** with no stored version, it stores the latest without showing, so the badge means "new since you were last here".
+- **No flash, no shift:** the badge renders nothing on the server and on the first client render, and reads storage in a `useEffect` after mount. That keeps hydration clean. It's positioned `absolute` under the logo's `ToolbarGroup` (`Navbar.tsx:14-32`, made `relative`), so it takes no layout space when it appears (no CLS).
+- **Storage:** every read and write is wrapped in try/catch, so blocked storage just means no badge. `apps/web/lib/useDismissible.ts` isn't reused or copied: it reads `localStorage` in its initial state, with no try/catch (l.12-15).
 - **Telemetry:** none beyond the existing pageview.
 
-### Files (~3 new, ~2 modified)
+### Files (~6 new, ~1 modified)
 
 **New:**
 
 - `apps/web/components/blocks/NewReleaseBadge.tsx`
-- `apps/web/lib/changelog/shouldShowBadge.ts` and its test
+- `apps/web/components/blocks/useNewReleaseBadge.ts`: mount-time read, follow/dismiss write
+- `apps/web/lib/changelog/getLatestChangelogVersion.ts`
+- `apps/web/lib/changelog/shouldShowBadge.ts`
+- `apps/web/lib/changelog/__tests__/shouldShowBadge.test.ts`
+- `apps/web/e2e/pages/new-release-badge.spec.ts`
 
 **Modified:**
 
-- the header component
-- an e2e spec
+- `apps/web/components/blocks/Navbar.tsx`
+
+### Key function
+
+```ts
+export function shouldShowBadge(lastSeen: string | null, latest: string): boolean;
+```
 
 ### RED tests
 
 **Unit, `shouldShowBadge(lastSeen, latest)`:**
 
 - no last-seen version → false;
-- older → true;
+- older → true, compared numerically (`0.9.0` is older than `0.10.0`);
 - equal → false;
-- a newer local value (from a pre-release) → false.
+- a newer local value (from a pre-release) → false;
+- an unparseable value → false.
 
-**E2E:**
+**E2E (`@browser`, `apps/web/e2e/pages/new-release-badge.spec.ts`).** Storage is seeded with `page.addInitScript`.
 
-- a seeded old version shows the badge;
-- clicking it lands on `/changelog#<latest>`;
-- after a reload, the badge is gone.
+- A seeded `0.0.1` shows "New in v<latest>".
+- Clicking it lands on `/changelog#<latest>` with `[id="<latest>"]` in view.
+- After a reload, the badge is gone.
+- A first visit shows no badge, and afterwards stores the latest.
+- With `localStorage` throwing, there's no badge and no captured page error.
+- The server HTML (`request.get("/")`) has no badge.
+- The logo's bounding box is the same with and without the badge.
 
 ### Verification
 
 ```bash
-task e2e && task check
+(cd apps/web && pnpm exec vitest run lib/changelog)
+(cd apps/web && pnpm exec playwright test e2e/pages/new-release-badge.spec.ts)
+task e2e && task seo:audit && task check
 ```
 
-Page-level screenshots are regenerated (two passes) if the header shifts.
+Playwright and Lighthouse start with empty storage, so they see no badge, and page-level screenshots shouldn't change. If one does, regenerate it in two passes.
 
 ### No count changes
 
 ---
 
-## PR 4: The CLI and TUI point to what changed
+## PR 4: A `bnto changelog` command
 
 **Branch:** `feat/cli-changelog` from `main`, after PR 1
-**One sentence:** `bnto changelog` prints a version's notes from the changelog shipped in the binary, and the update notices link to them.
+**One sentence:** `bnto changelog [version]` prints a release's notes from the changelog compiled into the binary.
 
 ### What
 
-- **`bnto changelog [version]`** reads `include_str!("../CHANGELOG.md")`. It defaults to the running version and works offline. `--all` lists every version.
-- **The update notices** (`update_check/notice.rs`, and the TUI's) add `What's new: https://bnto.io/changelog#<version>`.
-- **After a successful install,** `bnto upgrade` runs the new binary's `bnto changelog <new version>`, so the user sees the headline items immediately.
+- **The source:** `include_str!("../CHANGELOG.md")` in `src/changelog.rs`. It works offline and costs no network call.
+- **Which version:** it defaults to the running version. `v0.18.2` and `0.18.2` both work. The notes go to stdout, and errors to stderr.
+- **A version this bnto doesn't have:**
+  - Newer than the running one: it exits 1 with "0.19.0 is newer than this bnto (0.18.2). Read it at https://bnto.io/changelog#0.19.0, or run `bnto upgrade`."
+  - Any other: it exits 1, naming the versions this bnto covers.
+- **The update notice:** it runs before `bnto changelog` as before any command but `tui` and `upgrade` (`dispatch.rs:39-43`).
+- **Telemetry:** the command reports itself as `changelog` (`Command::name()`, `cli.rs:178-193`).
 
 ### Files (~2 new, ~5 modified)
 
 **New:**
 
 - `engine/crates/bnto/src/changelog.rs`
-- `engine/crates/bnto/tests/changelog_command.rs` (sandboxed)
+- `engine/crates/bnto/tests/changelog_command.rs`: uses `tests/helpers/sandbox.rs`
 
 **Modified:**
 
-- `cli.rs` and `dispatch.rs` (the command)
-- `update_check/notice.rs`
-- the TUI's notice render
-- `upgrade/` (print after install)
-- the crate README
+- `engine/crates/bnto/src/main.rs`: `mod changelog;`
+- `engine/crates/bnto/src/cli.rs`: `Command::Changelog { version: Option<String> }`, and its `name()`
+- `engine/crates/bnto/src/dispatch.rs`: the `run_command` arm (l.48-66)
+- `engine/crates/bnto/README.md`: the Usage block
+- `.claude/journeys/cli.md`: rows CH1 to CH3 (below)
 
-### Key function
+### Key API
 
 ```rust
-pub fn entry(changelog: &str, version: &str) -> Option<&str>
+/// One version's entry, without its heading; None when missing or it has no item.
+pub fn entry<'a>(changelog: &'a str, version: &str) -> Option<&'a str>;
+/// Every version with an entry, newest first.
+pub fn versions(changelog: &str) -> Vec<&str>;
+/// Where bnto.io shows a version's notes: https://bnto.io/changelog#<version>.
+pub fn notes_url(version: Version) -> String;
+/// `bnto changelog [version]`.
+pub fn run_changelog(version: Option<&str>);
 ```
 
 ### RED tests
 
-**Unit:**
+**Unit (`changelog.rs`, on a fixture string):**
 
-- `entry` finds 0.18.2;
-- an unknown version gives `None`;
-- the last entry ends at end of file.
+- `entry` finds 0.18.2 and stops at the next heading;
+- the last entry ends at end of file;
+- an unknown version, and a stub with no item, give `None`;
+- `versions` is newest first;
+- `notes_url(Version(0, 19, 0))` is `https://bnto.io/changelog#0.19.0`;
+- the shipped changelog has the running version's entry. This test is skipped for a pre-release build.
 
-**Integration, with `Sandbox`:**
+**Integration (`tests/changelog_command.rs`, sandboxed):**
 
-- `bnto changelog 0.18.2` prints its items and exits 0;
-- an unknown version exits 1, naming the versions it knows;
-- the update notice text contains the link (a unit test on `notice()`).
-
-**TUI:** the snapshot of the screen showing the update notice updates in two passes.
+- `bnto changelog` prints the running version's notes and exits 0;
+- `bnto changelog 0.18.0` and `bnto changelog v0.18.0` print 0.18.0's notes and exit 0;
+- `bnto changelog 0.0.1` exits 1, naming the versions it covers;
+- `bnto changelog 99.0.0` exits 1 with `https://bnto.io/changelog#99.0.0` and `bnto upgrade`, and prints nothing on stdout.
 
 ### Verification
 
 ```bash
-cd engine && cargo test -p bnto changelog && task tui:test && task check
+(cd engine && cargo test -p bnto --bin bnto changelog::)
+(cd engine && cargo test -p bnto --test changelog_command)
+task wasm:lint && task cli:test
 ```
 
 ### Count changes
 
-None to nodes or recipes. `bnto --help` gains a command, so update any CLI help golden or snapshot.
+None to nodes or recipes. `bnto --help` gains a command, and there's no help golden: `test_help_flag` (`tests/cli_commands.rs:15-21`) checks one substring.
+
+---
+
+## PR 5: Version announcements say what changed
+
+**Branch:** `feat/notices-whats-new` from `main`, after PRs 2 and 4
+**One sentence:** Every message that announces a new bnto version also says where to read what changed in it.
+
+### What
+
+Four places announce a new version. Each gains a pointer to the notes:
+
+- **The CLI notice** (`update_check/notice.rs:5-8`, printed by `update_check/mod.rs:36`) gains a second line: `What's new: https://bnto.io/changelog#0.19.0`. The first line is unchanged. It stays on stderr.
+- **The TUI notice** (`tui_notice()`, `notice.rs:10-13`) becomes `bnto 0.19.0: bnto upgrade · bnto changelog`. That's 3 columns longer than today's `bnto 0.19.0 available, run bnto upgrade`, so the 80×24 status line still has room for the `Tab pane` hint. A URL wouldn't fit (see Design).
+- **`bnto upgrade --check`** prints `notice()` instead of its own copy of the first line (`upgrade/mod.rs:30`), so it gets the link too.
+- **After a successful install,** `bnto upgrade` shows the new version's notes. It runs `<exe> changelog <new version>`, with the path resolved before the install (`upgrade/mod.rs:38`). On Linux, `current_exe()` read after the install would end in `(deleted)`. This step is best-effort and never changes the exit code:
+  - It runs with `BNTO_NO_UPDATE_CHECK=1` and null stdin, with its output captured.
+  - On success, its stdout is printed.
+  - If it can't start or exits non-zero, `bnto upgrade` prints `What's new in 0.19.0: https://bnto.io/changelog#0.19.0` instead, never the child's error, and still exits 0.
+
+### Files (~1 new, ~11 modified)
+
+**New:**
+
+- `engine/crates/bnto/src/upgrade/whats_new.rs`
+
+**Modified:**
+
+- `engine/crates/bnto/src/update_check/notice.rs`: both forms. Its tests change: `names_both_versions_and_the_command` (l.27-33) and `the_tui_form_fits_a_status_line` (l.19-25)
+- `engine/crates/bnto/src/update_check/mod.rs`: `pub use notice::tui_notice`, for the snapshots
+- `engine/crates/bnto/src/upgrade/mod.rs`: `--check` uses `notice()`; `install()` calls `whats_new` after "Upgraded …" (l.49-50)
+- `engine/crates/bnto/src/tui/screen_snapshots.rs`: `update_available()` (l.277-282) hard-codes the notice string on l.280. It builds it with `update_check::tui_notice(Version(99, 0, 0))` instead, so the snapshot follows the real text
+- `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_80x24.snap`
+- `engine/crates/bnto/src/tui/snapshots/bnto__tui__screen_snapshots__home_update_available_120x36.snap`
+- `engine/crates/bnto/tests/update_notice.rs`: `a_newer_cached_release_is_mentioned` (l.73-83). Its first-line assert still passes (`contains`); add one for the link line
+- `engine/crates/bnto/tests/upgrade.rs`: the cases below, and a `fake_cargo` variant that installs a stub `bnto`
+- `engine/crates/bnto/README.md`: the "Updates" notice example (l.19-27)
+- `.claude/journeys/cli.md`: rows CH4 and CH5
+- `.claude/strategy/cli-upgrade.md`: a follow-up line in its Status (the notice is now two lines)
+
+### Key API
+
+```rust
+/// "bnto 0.19.0 is available (you have 0.18.2). Run `bnto upgrade`.\nWhat's new: https://bnto.io/changelog#0.19.0"
+pub fn notice(current: Version, latest: Version) -> String;
+/// "bnto 0.19.0: bnto upgrade · bnto changelog"
+pub fn tui_notice(latest: Version) -> String;
+/// After an upgrade: the new binary's notes for `latest`, else the link. Never fails.
+pub fn show_whats_new(exe: &Path, latest: Version);
+```
+
+### RED tests
+
+**Unit (`notice.rs`):**
+
+- `notice()` is the unchanged first line, then `What's new: https://bnto.io/changelog#0.17.0`;
+- `tui_notice(Version(0, 17, 0))` is `bnto 0.17.0: bnto upgrade · bnto changelog`;
+- `tui_notice(Version(99, 99, 99))` is at most 44 columns wide.
+
+**TUI:** both `home_update_available` snapshots change, in two passes. The 80×24 one still shows `Tab pane`.
+
+**Integration (`tests/update_notice.rs`):** with a cached 99.0.0, `bnto list` in a terminal prints both notice lines. The opt-out, CI and piped cases still print neither.
+
+**Integration (`tests/upgrade.rs`, unix):**
+
+- `check_reports_a_newer_release_and_caches_it` (l.121-134) also shows the link line.
+- **The new binary has the notes:** the fake cargo replaces `cargo/bin/bnto` with a stub that echoes `notes for $2`. The output contains `notes for 99.0.0`, has no fallback line, and the exit is 0.
+- **The new binary lacks them:** in `a_cargo_install_is_upgraded_with_cargo` (l.137-152), the fake cargo leaves the copied binary, which doesn't know 99.0.0. The upgrade still exits 0 and prints `What's new in 99.0.0: https://bnto.io/changelog#99.0.0`. The child's "newer than this bnto" error doesn't appear.
+- **A failed install** (`a_failed_cargo_install_says_so`, l.155-164) prints no notes and no link.
+
+### Verification
+
+```bash
+(cd engine && cargo test -p bnto --bin bnto -- update_check:: upgrade::)
+(cd engine && cargo test -p bnto --test update_notice --test upgrade)
+task tui:snapshots:update && git diff engine/crates/bnto/src/tui/snapshots && task tui:test
+task wasm:lint && task cli:test
+```
+
+### Count changes
+
+None to nodes or recipes. Two TUI snapshot files change.
 
 ---
 
@@ -269,9 +469,24 @@ None to nodes or recipes. `bnto --help` gains a command, so update any CLI help 
 
 ```
 PR 1 (curated changelog + release gate)
-├── PR 2 (/changelog page + Atom feed)   depends on PR 1
-│   └── PR 3 (site "New in vX" badge)    depends on PR 2
-└── PR 4 (bnto changelog + notice links) depends on PR 1
+├── PR 2 (/changelog page + Atom feed)          depends on PR 1
+│   └── PR 3 (site "New in vX" badge)           depends on PR 2
+└── PR 4 (bnto changelog)                       depends on PR 1
+    └── PR 5 (announcements say what changed)   depends on PR 4; links to PR 2's page
 ```
 
-Release after PRs 1–4, so 0.18.3 (or the next minor) is the first release whose notes appear on the site, in the CLI and in GitHub.
+PRs 2 and 4 can run in parallel. **Merge PR 2 before PR 5.** PR 5's links point at `bnto.io/changelog#<version>`, and bnto.io only deploys to production from a stable release (`deploy-production`, `release.yml:441-445`). A release that shipped PR 5 without PR 2 would link to a 404.
+
+Once both have shipped, every stable release keeps the page current. The bump changes `engine/`, which counts as a web change (`release.yml:68`), so the site redeploys. `cargo-publish` and `deploy-production` both start after the release gate (l.444, l.517). The notice only appears after a once-a-day check sees the new crate, so the anchor is live by then in practice.
+
+Release after PRs 1–5, so the next release is the first whose notes appear on the site, in the CLI and TUI, and in GitHub.
+
+## Journeys (add to `.claude/journeys/cli.md`)
+
+| ID  | Journey                                                                                                                                                                  | PR  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --- |
+| CH1 | `bnto changelog` → the installed version's notes on stdout, offline, exit 0                                                                                              | 4   |
+| CH2 | `bnto changelog <older version>` → its notes; a version it doesn't cover → exit 1, naming the versions it does                                                           | 4   |
+| CH3 | `bnto changelog <newer version>` → exit 1 with `https://bnto.io/changelog#<version>` and `bnto upgrade`, nothing on stdout                                               | 4   |
+| CH4 | A newer release is cached → the CLI notice's second line links its notes; the TUI status line says `bnto changelog`                                                      | 5   |
+| CH5 | `bnto upgrade` on a cargo install → the new version's notes after "Upgraded …"; if the new binary can't print them, `What's new in <version>: <link>`; exit 0 either way | 5   |
