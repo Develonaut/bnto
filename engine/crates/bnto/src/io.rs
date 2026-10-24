@@ -48,23 +48,27 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 ///
 /// Uses `FileData::copy_to()` which copies for path-referenced files
 /// and writes bytes for in-memory files. Source files are never modified,
-/// and a file already at its destination is left as is.
+/// and a file already at its destination, or a made-up name's file already
+/// holding the result's bytes, is left as is.
 ///
 /// Names that would land on one file are kept apart (see `output_names`).
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
-    let (paths, renamed) = destinations(result, output_dir);
-    let unchanged = already_there(result, &paths);
-    for (file, out_path) in result.files.iter().zip(&paths) {
-        write_one(file, out_path)?;
+    let (dests, renamed) = destinations(result, output_dir);
+    let unchanged = already_there(result, &dests);
+    for (file, dest) in result.files.iter().zip(&dests) {
+        if !dest.held {
+            write_one(file, &dest.path)?;
+        }
     }
     Ok(Placed { renamed, unchanged })
 }
 
 /// What a write did besides writing: the files written under a new name, and
-/// how many were already at their destination (the source itself), left as is.
+/// how many were already there (the source itself, or a file holding the
+/// result's bytes at its made-up name), left as is.
 #[derive(Debug, Default, PartialEq)]
 pub struct Placed {
     pub renamed: Vec<Renamed>,
@@ -74,26 +78,42 @@ pub struct Placed {
 /// What `write_results` would do, writing nothing (a dry run).
 fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
-    let (paths, renamed) = destinations(result, output_dir);
-    let unchanged = already_there(result, &paths);
+    let (dests, renamed) = destinations(result, output_dir);
+    let unchanged = already_there(result, &dests);
     Ok(Placed { renamed, unchanged })
 }
 
-/// Each result file's path under `output_dir`, with the files given a new
-/// name so no two land on one file and none on a file already there.
-fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<PathBuf>, Vec<Renamed>) {
-    let dir = Path::new(output_dir);
-    let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
-    let (names, renamed) = output_names::plan(dir, files);
-    let paths = names.iter().map(|n| dir.join(n)).collect();
-    (paths, renamed)
+/// Where one result file goes, and whether the file there already holds its
+/// bytes at a made-up name (`output_names::Claimed::held`), so it's not written.
+struct Destination {
+    path: PathBuf,
+    held: bool,
 }
 
-/// How many result files already are the file at their destination, e.g. an
-/// input written back into its own folder (ISS-36). `copy_to` leaves those.
-fn already_there(result: &PipelineResult, paths: &[PathBuf]) -> usize {
-    let files = result.files.iter().zip(paths);
-    files.filter(|(file, path)| file.data.is_at(path)).count()
+/// Each result file's destination under `output_dir`, with the files given a
+/// new name so no two land on one file and none on a file already there.
+fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<Destination>, Vec<Renamed>) {
+    let dir = Path::new(output_dir);
+    let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
+    let (claims, renamed) = output_names::plan(dir, files);
+    let dests = claims
+        .into_iter()
+        .map(|c| Destination {
+            path: dir.join(&c.name),
+            held: c.held,
+        })
+        .collect();
+    (dests, renamed)
+}
+
+/// How many result files are already there: the file at their destination,
+/// e.g. an input written back into its own folder (ISS-36), which `copy_to`
+/// leaves, or a held file, which isn't written.
+fn already_there(result: &PipelineResult, dests: &[Destination]) -> usize {
+    let files = result.files.iter().zip(dests);
+    files
+        .filter(|(file, d)| d.held || file.data.is_at(&d.path))
+        .count()
 }
 
 fn write_one(file: &PipelineFileResult, out_path: &Path) -> Result<(), String> {

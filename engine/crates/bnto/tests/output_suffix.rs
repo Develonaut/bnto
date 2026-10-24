@@ -98,7 +98,20 @@ fn assert_run_keeps_the_users_file(progressive: bool) {
     assert!(output.status.success(), "stderr: {stderr}");
     assert_eq!(contents(&out), kept(), "stderr: {stderr}");
     assert!(stderr.contains("b.txt → b_2.txt"), "{stderr}");
-    assert!(stderr.contains("2 files written"), "{stderr}");
+    // A progressive loop copied `b_2.txt` out already, and the final write
+    // can't tell that copy from an earlier run's identical file, so it's
+    // left as is and reported so. `b.txt` is a result's own name: written.
+    let done = if progressive {
+        "1 file written to"
+    } else {
+        "2 files written to"
+    };
+    assert!(stderr.contains(done), "{stderr}");
+    assert_eq!(
+        stderr.contains("1 already there, left as is"),
+        progressive,
+        "{stderr}"
+    );
 }
 
 #[test]
@@ -137,15 +150,39 @@ fn test_a_dry_run_names_the_made_up_name_a_run_would_use() {
 }
 
 #[test]
-fn test_a_rerun_writes_the_same_files_again() {
-    // RED on the first run's loss; then a guard: the rerun finds its own
-    // `b_2.txt` holding the same bytes and writes it there again, not `b_3`.
+fn test_a_rerun_leaves_its_own_identical_result_as_is() {
+    // RED: the rerun found its own `b_2.txt` holding the same bytes, took
+    // the name (not `b_3`), but copied over it, so the file got the source's
+    // mode and a new mtime. It's this run's result already: left as is and
+    // reported so, while `b.txt`, a result's own name, is still written.
     let root = fixture();
     let out = root.path().join("out");
     let sandbox = Sandbox::new();
-    for _ in 0..2 {
-        let output = run(&sandbox, root.path(), &recipe(&out, false), &[]);
-        assert!(output.status.success(), "{output:?}");
+    let first = run(&sandbox, root.path(), &recipe(&out, false), &[]);
+    assert!(first.status.success(), "{first:?}");
+    let b2 = out.join("b_2.txt");
+    let old = std::time::UNIX_EPOCH + std::time::Duration::from_secs(1_577_836_800);
+    let file = std::fs::File::options().write(true).open(&b2).unwrap();
+    file.set_modified(old).unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&b2, std::fs::Permissions::from_mode(0o600)).unwrap();
     }
-    assert_eq!(contents(&out), kept());
+
+    let second = run(&sandbox, root.path(), &recipe(&out, false), &[]);
+    let stderr = String::from_utf8_lossy(&second.stderr);
+    assert!(second.status.success(), "stderr: {stderr}");
+    assert_eq!(contents(&out), kept(), "stderr: {stderr}");
+    let meta = std::fs::metadata(&b2).unwrap();
+    assert_eq!(meta.modified().unwrap(), old, "b_2.txt was rewritten");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(meta.permissions().mode() & 0o777, 0o600);
+    }
+    assert!(
+        stderr.contains("1 file written") && stderr.contains("1 already there, left as is"),
+        "{stderr}"
+    );
 }

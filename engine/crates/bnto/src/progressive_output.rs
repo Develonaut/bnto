@@ -11,8 +11,9 @@ use crate::output_names::OutputNames;
 /// Copy an iteration's output files into `output_dir`, creating parent
 /// folders for names with subdirectories. `names` spans the whole run, so a
 /// name an earlier iteration wrote isn't replaced, and each file lands where
-/// the final write puts it. Errors are ignored: the final write after the run
-/// writes every file again and reports failures.
+/// the final write puts it. A made-up name whose file already holds the
+/// bytes (`held`) is left as is. Errors are ignored: the final write after
+/// the run writes every file again and reports failures.
 pub fn write_progressive_files(
     output_dir: &str,
     files: &[ProgressOutputFile],
@@ -20,7 +21,11 @@ pub fn write_progressive_files(
 ) {
     for file in files {
         let dir = Path::new(output_dir);
-        let path = dir.join(names.claim(dir, &file.name, &file.data));
+        let claimed = names.claim(dir, &file.name, &file.data);
+        if claimed.held {
+            continue;
+        }
+        let path = dir.join(claimed.name);
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }

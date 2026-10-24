@@ -121,8 +121,7 @@ fn try_run_bridge(
     let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
     let mode = resolve_mode(&job.definition_json);
     let output_dir = resolve_output_dir(job, &mode, ctx, &prepared.files);
-    let progressive = progressive_dir(job.preview_mode, &mode, &output_dir);
-    let reporter = channel_reporter(tx, progressive);
+    let reporter = channel_reporter(tx, progressive_dir(job.preview_mode, &mode, &output_dir));
     // Run the pipeline (blocking — this is why we're on a background thread).
     let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
         return Ok(());
@@ -467,37 +466,127 @@ mod tests {
         assert_eq!(fs::read(&earlier).unwrap(), b"new");
     }
 
+    // --- Progressive loop output ---
+
+    /// Inputs `a.txt` (`AAAA`) and `b.txt` (`BBBB`) in one folder.
+    fn ab_inputs() -> (tempfile::TempDir, Vec<PathBuf>) {
+        let inputs = tempfile::tempdir().unwrap();
+        let files = [("a.txt", "AAAA"), ("b.txt", "BBBB")].map(|(name, body)| {
+            let path = inputs.path().join(name);
+            fs::write(&path, body).unwrap();
+            path
+        });
+        (inputs, files.to_vec())
+    }
+
+    /// A progressive loop running `inner`, then `after` (if any), then `output`.
+    fn progressive_recipe_json(
+        inner: serde_json::Value,
+        after: Option<serde_json::Value>,
+        output: serde_json::Value,
+    ) -> String {
+        let mut nodes = vec![
+            serde_json::json!({ "id": "input", "type": "input",
+                "parameters": { "mode": "file-upload" } }),
+            serde_json::json!({ "id": "each", "type": "loop", "nodes": [inner], "edges": [],
+                "parameters": { "mode": "forEach", "outputPersistence": "progressive" } }),
+        ];
+        nodes.extend(after);
+        nodes.push(serde_json::json!({ "id": "output", "type": "output", "parameters": output }));
+        serde_json::json!({ "nodes": nodes }).to_string()
+    }
+
+    /// `a` renamed to `b`, so both results are `b.txt`.
+    fn a_to_b() -> serde_json::Value {
+        serde_json::json!({ "id": "ren", "type": "file-rename",
+            "parameters": { "find": "a", "replace": "b" } })
+    }
+
+    /// Write mode into `folder`, which already holds the user's `b_1.txt`.
+    fn write_beside_users_file(folder: &std::path::Path) -> serde_json::Value {
+        fs::write(folder.join("b_1.txt"), "CCCC").unwrap();
+        serde_json::json!({ "mode": "write", "directory": folder.to_str().unwrap() })
+    }
+
+    /// Each file in `dir` with its content, sorted by name.
+    fn contents(dir: &std::path::Path) -> Vec<(String, String)> {
+        let mut files: Vec<(String, String)> = fs::read_dir(dir)
+            .unwrap()
+            .map(|entry| {
+                let path = entry.unwrap().path();
+                let name = path.file_name().unwrap().to_string_lossy().into_owned();
+                (name, fs::read_to_string(&path).unwrap())
+            })
+            .collect();
+        files.sort();
+        files
+    }
+
+    fn pairs(files: &[(&str, &str)]) -> Vec<(String, String)> {
+        files
+            .iter()
+            .map(|(n, c)| (n.to_string(), c.to_string()))
+            .collect()
+    }
+
     #[test]
     fn a_progressive_runs_list_matches_its_files_and_keeps_the_users() {
-        // Guards: the loop's copies go out on the bridge thread before the
-        // listing and final write are planned, so all three agree on
-        // `b_2.txt` and the user's `b_1.txt` is neither replaced nor listed.
-        let inputs = tempfile::tempdir().unwrap();
-        let (a, b) = (inputs.path().join("a.txt"), inputs.path().join("b.txt"));
-        fs::write(&a, "AAAA").unwrap();
-        fs::write(&b, "BBBB").unwrap();
+        // RED: the second `b.txt` was listed and written as `b_1.txt`, over
+        // the user's file. Now the loop's copies, the listing and the final
+        // write agree on `b_2.txt`, and `b_1.txt` is neither replaced nor
+        // listed.
+        let (_inputs, files) = ab_inputs();
         let folder = tempfile::tempdir().unwrap();
-        fs::write(folder.path().join("b_1.txt"), "CCCC").unwrap();
-        let rename = serde_json::json!({ "id": "ren", "type": "file-rename",
-            "parameters": { "find": "a", "replace": "b" } });
-        let json = serde_json::json!({ "nodes": [
-            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
-            { "id": "each", "type": "loop", "nodes": [rename], "edges": [],
-              "parameters": { "mode": "forEach", "outputPersistence": "progressive" } },
-            { "id": "output", "type": "output",
-              "parameters": { "mode": "write", "directory": folder.path().to_str().unwrap() } }
-        ] });
+        let output = write_beside_users_file(folder.path());
+        let json = progressive_recipe_json(a_to_b(), None, output);
 
-        let done = run_job("progressive", json.to_string(), vec![a, b]);
+        let done = run_job("progressive", json, files);
 
         assert_eq!(listed(&done), ["b.txt", "b_2.txt"]);
-        let read = |name: &str| fs::read_to_string(folder.path().join(name)).unwrap();
-        assert_eq!(read("b_1.txt"), "CCCC");
-        assert_eq!(
-            (read("b.txt"), read("b_2.txt")),
-            ("AAAA".into(), "BBBB".into())
-        );
-        assert_eq!(fs::read_dir(folder.path()).unwrap().count(), 3);
+        let expected = [("b.txt", "AAAA"), ("b_1.txt", "CCCC"), ("b_2.txt", "BBBB")];
+        assert_eq!(contents(folder.path()), pairs(&expected));
+    }
+
+    #[test]
+    fn a_progressive_loops_copies_are_written_by_the_bridge() {
+        // The bridge passes the output folder to its reporter, so the loop's
+        // copies land as it runs: `b.txt` and `b_2.txt`, under the loop's
+        // names. A step after the loop renames the results to `b-x…`, so
+        // only those come from the final write and the listing.
+        let (_inputs, files) = ab_inputs();
+        let folder = tempfile::tempdir().unwrap();
+        let output = write_beside_users_file(folder.path());
+        let suffix = serde_json::json!({ "id": "x", "type": "file-rename",
+            "parameters": { "suffix": "-x" } });
+        let json = progressive_recipe_json(a_to_b(), Some(suffix), output);
+
+        let done = run_job("progressive-after", json, files);
+
+        assert_eq!(listed(&done), ["b-x.txt", "b-x_1.txt"]);
+        let expected = [
+            ("b-x.txt", "AAAA"),
+            ("b-x_1.txt", "BBBB"),
+            ("b.txt", "AAAA"),
+            ("b_1.txt", "CCCC"),
+            ("b_2.txt", "BBBB"),
+        ];
+        assert_eq!(contents(folder.path()), pairs(&expected));
+    }
+
+    #[test]
+    fn an_overwrite_run_makes_no_progressive_copies() {
+        // As in `bnto run`: overwrite renames each file in its own folder
+        // after the run, so the loop copies nothing out as it goes.
+        let (inputs, files) = ab_inputs();
+        let prefix = serde_json::json!({ "id": "ren", "type": "file-rename",
+            "parameters": { "prefix": "renamed-" } });
+        let output = serde_json::json!({ "mode": "overwrite" });
+        let json = progressive_recipe_json(prefix, None, output);
+
+        run_job("progressive-overwrite", json, files);
+
+        let expected = [("renamed-a.txt", "AAAA"), ("renamed-b.txt", "BBBB")];
+        assert_eq!(contents(inputs.path()), pairs(&expected));
     }
 
     #[test]

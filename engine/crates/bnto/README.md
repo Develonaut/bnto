@@ -102,7 +102,7 @@ bnto install download-video
 
 ### Output names
 
-With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. A file already in the output folder with a result's own name is replaced. A suffixed name never replaces one: if `logo_1.svg` is already there, the later file is written as `logo_2.svg`, unless `logo_1.svg` already holds exactly the same bytes (an earlier run's identical result), so a rerun writes the same files again.
+With `--output` (the `output` step's `write` mode), every result lands as its own file. Names that match, or differ only in case (`Logo.svg` and `logo.svg`, one file on Windows and macOS), are told apart the same way on every OS: the later file is written as `logo_1.svg`, `logo_2.svg`…, the suffix `file-copy`'s `rename` conflict mode uses, and a warning names each one. The `Done.` count is the number of files on disk. A file already in the output folder with a result's own name is replaced. A suffixed name never replaces one: if `logo_1.svg` is already there, the later file is written as `logo_2.svg`, unless `logo_1.svg` already holds exactly the same bytes (an earlier run's identical result). That file is left as is and counted as already there, so a rerun adds no new files.
 
 ### Time limit
 
@@ -226,7 +226,7 @@ src/
     +-- app.rs             # App state machine (Screen enum, AppModel, update())
     +-- app/               # AppMessage enum and AppModel construction
     +-- bridge.rs          # Pipeline execution bridge (engine -> TUI progress)
-    +-- bridge/            # Engine event mapping and output-file helpers
+    +-- bridge/            # Engine event mapping, output-file helpers, and the reporter that writes progressive copies
     +-- config.rs          # Persistent settings (theme, output dir)
     +-- event.rs           # Terminal event polling
     +-- format.rs          # File size and path formatting

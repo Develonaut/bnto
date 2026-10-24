@@ -1,15 +1,15 @@
-// Whether a suffixed name bnto made up may land in the output folder.
+// What a suffixed name bnto made up would land on in the output folder.
 //
-// Free when no entry there folds to it, or when the one that does has exactly
-// that name and already holds exactly the bytes about to be written: this
-// run's own progressive copy, or an earlier run's identical result. Writing
-// those again loses nothing, and taking them keeps a run's names the same
-// whether its files went out progressively, in the final write, or a rerun.
-// Any other entry, a user's file, a link or a folder, sends the name to the
-// next number. The listing folds names as the run's own names are folded;
-// the filesystem itself is then asked too, since it may hold one file under
-// a name the listing spells differently. The folder is checked every time,
-// never cached, so a file a step wrote there mid-run counts too.
+// Free when no entry there folds to it. Held when the one that does has
+// exactly that name and already holds exactly the bytes the result has: this
+// run's own progressive copy, or an earlier run's identical result. A held
+// file is the result already, so it's left as is, and taking it keeps a run's
+// names the same whether its files went out progressively, in the final
+// write, or in a rerun. Any other entry (a user's file, a link, a folder)
+// takes the name. The listing folds names as the run's own names are folded;
+// the filesystem is then asked too, since it may hold one file under a name
+// the listing spells differently. Nothing is cached here, so a file a step
+// wrote there mid-run counts too.
 
 use std::fs::File;
 use std::io::Read;
@@ -22,24 +22,36 @@ use super::fold;
 /// Bytes compared per read when checking a file already there.
 const CHUNK: usize = 64 * 1024;
 
-/// Whether writing `data` as `name` in `dir` replaces nothing but a copy of
-/// itself. `name` may hold subfolders; the folder it lands in is the one read.
-pub fn may_take(dir: &Path, name: &str, data: &FileData) -> bool {
+/// What a name would land on in the output folder.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Spot {
+    /// Nothing there: the result is written.
+    Free,
+    /// A regular file by exactly that name already holds the result's
+    /// bytes: it's left as is.
+    Held,
+    /// Something else is there: the name moves on.
+    Taken,
+}
+
+/// What `data` written as `name` in `dir` would land on. `name` may hold
+/// subfolders; the folder it lands in is the one read.
+pub fn spot(dir: &Path, name: &str, data: &FileData) -> Spot {
     let path = dir.join(name);
     let (Some(folder), Some(leaf)) = (path.parent(), path.file_name()) else {
-        return false;
+        return Spot::Taken;
     };
     let leaf = leaf.to_string_lossy();
     match folded_matches(folder, &leaf).as_slice() {
-        [] => nothing_at(&path, data),
-        [only] if *only == *leaf => holds(&path, data),
-        _ => false,
+        [] => unlisted(&path, data),
+        [only] if *only == *leaf => held_or_taken(&path, data),
+        _ => Spot::Taken,
     }
 }
 
 /// The entries of `folder` whose names fold to `leaf`'s. A folder that can't
 /// be listed (not made yet, or no read permission) gives none, and
-/// `nothing_at` decides.
+/// `unlisted` decides.
 fn folded_matches(folder: &Path, leaf: &str) -> Vec<String> {
     let key = fold(leaf);
     let Ok(entries) = std::fs::read_dir(folder) else {
@@ -51,16 +63,26 @@ fn folded_matches(folder: &Path, leaf: &str) -> Vec<String> {
         .collect()
 }
 
-/// With no entry listed under `path`'s name, whether the filesystem agrees.
-/// It can know a file the listing doesn't show under that spelling (APFS
-/// takes an NFC and an NFD `é` as one name) or in a folder it won't list
-/// (write but no read permission). An entry it finds may still be taken
-/// when it holds `data`'s bytes. A lookup that fails another way (no search
-/// permission) is free: the write fails the same way, replacing nothing.
-fn nothing_at(path: &Path, data: &FileData) -> bool {
+/// With no entry listed under `path`'s name, ask the filesystem. It can know
+/// a file the listing doesn't show under that spelling (APFS takes an NFC
+/// and an NFD `é` as one name) or in a folder it won't list (write but no
+/// read permission); what it finds is held or taken like a listed file. A
+/// lookup that fails, `NotFound` or any other way (no search permission on
+/// the folder), is free: creating the file then fails the same way, so
+/// nothing is replaced and the write reports the error. Calling those taken
+/// would take every number, and the claim would never end.
+fn unlisted(path: &Path, data: &FileData) -> Spot {
     match std::fs::symlink_metadata(path) {
-        Err(_) => true,
-        Ok(_) => holds(path, data),
+        Err(_) => Spot::Free,
+        Ok(_) => held_or_taken(path, data),
+    }
+}
+
+fn held_or_taken(path: &Path, data: &FileData) -> Spot {
+    if holds(path, data) {
+        Spot::Held
+    } else {
+        Spot::Taken
     }
 }
 

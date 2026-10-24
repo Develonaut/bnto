@@ -122,7 +122,7 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - `bnto run` exits 0 and prints `1 file written to {{env.SOME_KEY}}/`.
 - The file lands in `./{{env.SOME_KEY}}/note.txt`; the folder `SOME_KEY` names stays empty.
 
-`resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:252-254`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). ISS-21, the TUI wipe this could have pointed at a real folder, is fixed (#750).
+`resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:247-249`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). ISS-21, the TUI wipe this could have pointed at a real folder, is fixed (#750).
 
 ### ISS-25: Watermark Images runs with an empty overlay and fails every time
 
@@ -301,7 +301,7 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 
 **Found:** October 24, 2026 (fixing ISS-21).
 
-In overwrite mode the results screen names `source_dir`, the first selected file's folder, as "the output folder" (`engine/crates/bnto/src/tui/bridge.rs:234`). With files from several folders the label is wrong (the list itself is correct since the ISS-21 fix).
+In overwrite mode the results screen names `source_dir`, the first selected file's folder, as "the output folder" (`engine/crates/bnto/src/tui/bridge.rs:229`). With files from several folders the label is wrong (the list itself is correct since the ISS-21 fix).
 
 - **Fix:** in overwrite mode, say the files were renamed in place, or name each folder.
 - **Regression test:** a screen snapshot of overwrite results with files from two folders.
@@ -321,7 +321,7 @@ The engine refuses an undeclared param before any step runs, for every consumer,
 
 **Found:** October 24, 2026 (second cold review of the ISS-21 fix; reproduced with the CLI, temp `HOME` and `BNTO_HOME`).
 
-A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs`) and the TUI (outside overwrite mode, `resolve_output_dir` resolves and creates the recipe's folder and sends it as `OutputDir`, `tui/bridge.rs:224-229`) both do it, and once ISS-21 is fixed the TUI's results list doesn't show them. In write mode, an iteration file that a later step renames also stays on disk under its old name.
+A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs`) and the TUI (outside preview and overwrite mode, the bridge's reporter copies into the folder `resolve_output_dir` resolves and creates: `progressive_dir` and `channel_reporter`, `tui/bridge/reporter.rs:18-39`) both do it, and once ISS-21 is fixed the TUI's results list doesn't show them. In write mode, an iteration file that a later step renames also stays on disk under its old name.
 
 - **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
 - **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
@@ -330,7 +330,7 @@ A loop with `outputPersistence: "progressive"` copies each iteration's files int
 
 **Found:** October 24, 2026 (second cold review of the ISS-21 fix).
 
-Since the ISS-21 fix, overwrite results from a picked folder or from several folders are listed, but `OutputFile` drops the path `FileResultMeta` carries. Open still joins `results.output_dir` with the name (`engine/crates/bnto/src/tui/app_helpers/results.rs:11`), and in overwrite mode that's the first selected file's folder (`source_dir`, `tui/bridge.rs:234`). For a picked `photos/` folder it opens `parent/renamed-a.txt`, which doesn't exist. With two folders, both rows read `renamed-a.txt` and both open the first folder's file. Related: ISS-43 (the folder label).
+Since the ISS-21 fix, overwrite results from a picked folder or from several folders are listed, but `OutputFile` drops the path `FileResultMeta` carries. Open still joins `results.output_dir` with the name (`engine/crates/bnto/src/tui/app_helpers/results.rs:11`), and in overwrite mode that's the first selected file's folder (`source_dir`, `tui/bridge.rs:229`). For a picked `photos/` folder it opens `parent/renamed-a.txt`, which doesn't exist. With two folders, both rows read `renamed-a.txt` and both open the first folder's file. Related: ISS-43 (the folder label).
 
 - **Fix:** carry each result's path into `OutputFile`, open that, and show which folder a row is in when names repeat.
 - **Regression test:** an overwrite run over two folders, then Open on each row opens that row's file.

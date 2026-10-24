@@ -50,10 +50,12 @@ fn landing_places(
     match mode {
         "write" => {
             let files = result.files.iter().map(|f| (f.name.as_str(), &f.data));
-            let (names, _) = crate::output_names::plan(output_dir, files);
-            names
+            // A held file is left as is, not written, but it's this run's
+            // result all the same, so it's listed like a written one.
+            let (claims, _) = crate::output_names::plan(output_dir, files);
+            claims
                 .into_iter()
-                .map(|name| Some((name.clone(), output_dir.join(name))))
+                .map(|c| Some((c.name.clone(), output_dir.join(c.name))))
                 .collect()
         }
         "overwrite" => result.files.iter().map(renamed_in_place).collect(),

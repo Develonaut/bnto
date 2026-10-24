@@ -15,6 +15,8 @@ use std::path::Path;
 
 use bnto_core::processor::FileData;
 
+use folder::Spot;
+
 /// A result file written under a different name than the pipeline gave it.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Renamed {
@@ -22,50 +24,85 @@ pub struct Renamed {
     pub to: String,
 }
 
-/// The names claimed so far in one run's output folder.
+/// Where one result goes: the name it's written under, and whether a file
+/// by that made-up name already holds its bytes, so it's left as is.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Claimed {
+    pub name: String,
+    pub held: bool,
+}
+
+/// The names claimed so far in one run's output folder, and the made-up
+/// names a file already there was found to take (not checked again).
 #[derive(Debug, Default)]
 pub struct OutputNames {
     taken: HashSet<String>,
+    occupied: HashSet<String>,
 }
 
 impl OutputNames {
-    /// The name to write `data` under in `dir`: `name` when no earlier claim
-    /// has it, else the first suffixed form no claim has and that replaces
-    /// nothing in `dir` but a file already holding `data`'s bytes. Either
-    /// way it's taken from then on.
-    pub fn claim(&mut self, dir: &Path, name: &str, data: &FileData) -> String {
-        let mut chosen = name.to_string();
+    /// Where to put `data` in `dir`: `name` when no earlier claim has it,
+    /// else the first suffixed form no claim has and no file in `dir` takes
+    /// (one already holding `data`'s bytes is `held`). Taken from then on.
+    pub fn claim(&mut self, dir: &Path, name: &str, data: &FileData) -> Claimed {
         let mut n = 0;
-        while self.taken.contains(&fold(&chosen))
-            || (n > 0 && !folder::may_take(dir, &chosen, data))
-        {
+        loop {
+            let chosen = if n == 0 {
+                name.to_string()
+            } else {
+                suffixed(name, n)
+            };
+            if let Some(held) = self.free(dir, &chosen, n > 0, data) {
+                self.taken.insert(fold(&chosen));
+                return Claimed { name: chosen, held };
+            }
             n += 1;
-            chosen = suffixed(name, n);
         }
-        self.taken.insert(fold(&chosen));
-        chosen
+    }
+
+    /// `Some(held)` when `chosen` is free for this claim, `None` when it's
+    /// taken. Only a `made_up` name is checked against the folder.
+    fn free(&mut self, dir: &Path, chosen: &str, made_up: bool, data: &FileData) -> Option<bool> {
+        let key = fold(chosen);
+        if self.taken.contains(&key) {
+            return None;
+        }
+        if !made_up {
+            return Some(false);
+        }
+        if self.occupied.contains(&key) {
+            return None;
+        }
+        match folder::spot(dir, chosen, data) {
+            Spot::Free => Some(false),
+            Spot::Held => Some(true),
+            Spot::Taken => {
+                self.occupied.insert(key);
+                None
+            }
+        }
     }
 }
 
-/// Each file's write name in `dir`, in order, and the ones that changed.
+/// Where each file goes in `dir`, in order, and the ones renamed.
 pub fn plan<'a>(
     dir: &Path,
     files: impl IntoIterator<Item = (&'a str, &'a FileData)>,
-) -> (Vec<String>, Vec<Renamed>) {
-    let mut claimed = OutputNames::default();
-    let mut chosen = Vec::new();
+) -> (Vec<Claimed>, Vec<Renamed>) {
+    let mut names = OutputNames::default();
+    let mut claims = Vec::new();
     let mut renamed = Vec::new();
     for (name, data) in files {
-        let to = claimed.claim(dir, name, data);
-        if to != name {
+        let claimed = names.claim(dir, name, data);
+        if claimed.name != name {
             renamed.push(Renamed {
                 from: name.to_string(),
-                to: to.clone(),
+                to: claimed.name.clone(),
             });
         }
-        chosen.push(to);
+        claims.push(claimed);
     }
-    (chosen, renamed)
+    (claims, renamed)
 }
 
 /// The key two names share when they'd be one file on some OS.
@@ -99,7 +136,11 @@ mod tests {
     /// The names `names` are written under in `dir`, each holding `NEW`.
     fn claims_in(dir: &Path, names: &[&str]) -> Vec<String> {
         let data = FileData::Bytes(NEW.to_vec());
-        plan(dir, names.iter().map(|n| (*n, &data))).0
+        names_of(plan(dir, names.iter().map(|n| (*n, &data))).0)
+    }
+
+    fn names_of(claims: Vec<Claimed>) -> Vec<String> {
+        claims.into_iter().map(|c| c.name).collect()
     }
 
     /// A folder holding each `(name, content)` file; names may hold `/`.
@@ -190,8 +231,8 @@ mod tests {
         let data = FileData::Bytes(NEW.to_vec());
         let mut names = OutputNames::default();
         let progressive = [
-            names.claim(dir.path(), "Logo.svg", &data),
-            names.claim(dir.path(), "logo.svg", &data),
+            names.claim(dir.path(), "Logo.svg", &data).name,
+            names.claim(dir.path(), "logo.svg", &data).name,
         ];
         assert_eq!(progressive.to_vec(), claims(&["Logo.svg", "logo.svg"]));
     }
@@ -258,23 +299,49 @@ mod tests {
         let src = folder_with(&[("b.txt", NEW)]);
         let data = FileData::Path(src.path().join("b.txt"));
         let files = ["b.txt", "b.txt"].map(|n| (n, &data));
-        assert_eq!(plan(dir.path(), files).0, ["b.txt", "b_2.txt"]);
+        assert_eq!(names_of(plan(dir.path(), files).0), ["b.txt", "b_2.txt"]);
     }
 
     #[test]
-    fn test_a_made_up_name_may_take_a_file_holding_the_same_bytes() {
-        // Guards: a rerun, or the final write after a progressive one, finds
-        // its own `b_1.txt` there. Replacing it with the same bytes loses
-        // nothing, so the run keeps writing `b_1.txt`, not `b_2.txt`.
+    fn test_a_made_up_name_holding_the_same_bytes_is_taken_and_held() {
+        // A rerun, or the final write after a progressive one, finds its own
+        // `b_1.txt` there: the run keeps `b_1.txt`, not `b_2.txt`, and marks
+        // it held so it's left as is. RED for `held`, a guard for the name.
         let dir = folder_with(&[("b_1.txt", NEW)]);
-        assert_eq!(
-            claims_in(dir.path(), &["b.txt", "b.txt"]),
-            ["b.txt", "b_1.txt"]
-        );
+        let bytes = FileData::Bytes(NEW.to_vec());
         let src = folder_with(&[("b.txt", NEW)]);
-        let data = FileData::Path(src.path().join("b.txt"));
-        let files = ["b.txt", "b.txt"].map(|n| (n, &data));
-        assert_eq!(plan(dir.path(), files).0, ["b.txt", "b_1.txt"]);
+        let path = FileData::Path(src.path().join("b.txt"));
+        for data in [&bytes, &path] {
+            let files = ["b.txt", "b.txt"].map(|n| (n, data));
+            let claims = plan(dir.path(), files).0;
+            let held: Vec<bool> = claims.iter().map(|c| c.held).collect();
+            assert_eq!(held, [false, true]);
+            assert_eq!(names_of(claims), ["b.txt", "b_1.txt"]);
+        }
+    }
+
+    #[test]
+    fn test_a_files_own_name_is_never_held() {
+        // Guards: a result's own name is written even over the same bytes;
+        // only a name bnto made up is checked against the folder.
+        let dir = folder_with(&[("b.txt", NEW)]);
+        let data = FileData::Bytes(NEW.to_vec());
+        let claims = plan(dir.path(), [("b.txt", &data)]).0;
+        assert!(!claims[0].held);
+    }
+
+    #[test]
+    fn test_a_name_a_users_file_took_stays_taken_for_later_claims() {
+        // The folder is read once per made-up name a file there takes: a
+        // later claim moves past the user's `b_1.txt` without listing or
+        // looking it up again, so it stays taken even once the file is gone.
+        let dir = folder_with(&[("b_1.txt", b"CCCC")]);
+        let data = FileData::Bytes(NEW.to_vec());
+        let mut names = OutputNames::default();
+        assert_eq!(names.claim(dir.path(), "b.txt", &data).name, "b.txt");
+        assert_eq!(names.claim(dir.path(), "b.txt", &data).name, "b_2.txt");
+        std::fs::remove_file(dir.path().join("b_1.txt")).unwrap();
+        assert_eq!(names.claim(dir.path(), "b.txt", &data).name, "b_3.txt");
     }
 
     #[cfg(unix)]
