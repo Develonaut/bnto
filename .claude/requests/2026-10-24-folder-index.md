@@ -16,15 +16,17 @@ The recipe reads sizes from disk metadata only, and writes the index into a fold
 `a/b/c/d.bin` gives `a` at N=1, `a/b` at N=2 and `a/b/c` at N=3. A shallower path, or a top-level file, comes back whole. Backslashes come out as `/`.
 
 - **Verdict:** doable today, clumsily.
-- **Today:** five nodes, all of them renaming files just to compute one field. `file-rename`'s regex `find` runs on the whole relative path's stem (`bnto-file/src/rename/transform.rs:54-59`). The steps:
-  1. `edit-fields` saves `rel: {{item.filename}}`.
-  2. `file-rename` with `find: ^([^/]+(?:/[^/]+){0,N-1})(?:/.*)?$` and `replace: $1/_`.
-  3. `file-inspect`, whose `folder` is now the leading part.
-  4. `edit-fields` saves `lead: {{item.folder}}`.
-  5. `file-rename` with `pattern: {{item.rel}}` restores the name, then `summarize` with `groupBy: lead`.
+- **Today:** six nodes after `file-collect`, two of them renaming files just to compute one field. `file-rename`'s regex `find` runs on the whole relative path's stem (`bnto-file/src/rename/transform.rs:54-59`). The steps:
+  1. `file-inspect`, which sets `filename` (the relative name) and `folder`.
+  2. `edit-fields` saves `rel: {{item.filename}}`.
+  3. `file-rename` with `find: ^([^/]+(?:/[^/]+){0,N-1})(?:/.*)?$` and `replace: $1/_`.
+  4. `file-inspect` again, whose `folder` is now the leading part.
+  5. `edit-fields` saves `lead: {{item.folder}}`.
+  6. `file-rename` with `pattern: {{item.rel}}` restores the name. Then `summarize` with `groupBy: lead`.
   - N=1 over `a/x.bin`, `a/b/y.bin`, `a/b/c/d.bin`, `top.bin` and `q/r.bin` grouped as `a` (3 files), `top` and `q`.
   - **Edge case:** a path shallower than N loses its extension (`top`, not `top.bin`).
   - Windows names are fine, since `file-collect` already uses `slash_path`.
+  - Without step 1, step 2 fails: the item has no `filename` field yet.
 - **Defects found:** [ISS-23](../ISSUES.md) (`file-rename` splits the extension anywhere in the path), [ISS-24](../ISSUES.md) (`edit-fields` leaves `{{file}}` as text).
 - **Generic piece:** **template filters** (already in [PLAN.md's backlog](../PLAN.md#engine-from-the-october-21-dogfood-sessions)): `{{item.filename | split('/') | first(2) | join('/')}}`. Prior art: n8n `.split('/').slice(0,2).join('/')`, NiFi `getDelimitedField`, Zapier Text > Split, and Liquid or Jinja `split`/`join`.
   - Jinja's `first` takes no count. Settle `first(n)` against `regex_replace` (Ansible-style) in the `/workflow-expert` review.
@@ -42,7 +44,7 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
   - `unit` (fixed, so columns line up);
   - `decimals`.
 
-  `{{item.sum_size | filesizeformat(binary=true, unit='GiB', decimals=2)}}`. It reads numbers the way `summarize` does (`summarize/total.rs:1-6`), and replaces the two hand-rolled size formatters (`bnto/src/tui/format.rs:19`, `tonkotsu/src/format_size.rs:4`).
+  `{{item.sum_size | filesizeformat(binary=true, unit='GiB', decimals=2)}}`. It reads numbers the way `summarize` does (`summarize/total.rs:1-6`), and replaces the CLI's hand-rolled size formatter (`bnto/src/tui/format.rs:19`). tonkotsu keeps its own (`tonkotsu/src/format_size.rs:4`): it's a standalone crate with no `bnto-core` dependency.
 
 - **For review:** the request's `2.79 GB` is base 1024. Strict labels give `2.79 GiB`, or `3.00 GB` at base 1000. A desktop file manager's label is one platform's opinion, so the filter shouldn't default to it silently.
 - **Won't build:** a "human size" node, or a `format` param on `summarize`. Formatting is a template concern: `file-render` and `report` need it too.
@@ -50,15 +52,16 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
 
 ## 3. The output node's `directory` with `{{env.*}}`
 
-- **Verdict:** defect, a silent wrong result like ISS-1.
+- **Verdict:** defect, a silent wrong result like ISS-1 (fixed in #741).
 - **Today**, with `secrets: [SOME_KEY]`, `directory: {{env.SOME_KEY}}` and `SOME_KEY` set:
   - `bnto check` passes.
   - `bnto run` exits 0 with "1 file written to {{env.SOME_KEY}}/", and the file lands in a folder literally named `./{{env.SOME_KEY}}/`.
   - With `SOME_KEY` unset, the run is refused ("Missing required secrets") but the folder is still created first.
   - Other leftovers are dropped too: `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`.
+  - The consumer writes with `file-copy` meanwhile, whose `destination` already fills `{{env.*}}` from declared secrets.
 - **Defects found:** [ISS-22](../ISSUES.md). While reproducing it: [ISS-21](../ISSUES.md), the TUI deletes the contents of a recipe's output folder before every run.
 - **Generic piece:** none; it's a fix.
-  - The output directory fills every namespace a run has, and refuses any placeholder left over, as `{{vars.*}}` and `{{fields.*}}` already do (#741).
+  - The output directory fills every namespace a run has, and refuses any placeholder left over, as unset `{{vars.*}}` already do and `{{fields.*}}` do since #741 (in the engine) and #742 (before consent).
   - `bnto check` flags the ones no run can fill.
   - ISS-21 is fixed first, so filling `{{env.*}}` can't point the TUI's wipe at a real folder.
 - **Tracked in:** ISSUES.md.
@@ -67,10 +70,23 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
 
 > Thanks, these were useful. Each outcome, and where it stands:
 >
-> **Leading path segments:** possible today, but clumsy. Save `{{item.filename}}` with `edit-fields`. Then use `file-rename` with `find: ^([^/]+(?:/[^/]+){0,N-1})(?:/.*)?$` and `replace: $1/_`, and run `file-inspect`, whose `folder` is now the leading part. Copy it into a field, rename back with `pattern: {{item.rel}}`, and group with `summarize`. Paths shallower than N lose their extension. Rather than a dedicated node, bnto is getting template filters, so this becomes `{{item.filename | split('/') | first(2) | join('/')}}` in any field of any node.
+> **Leading path segments:** possible today, but clumsy. After `file-collect`:
 >
-> **Readable sizes:** not possible with nodes yet; `shell-run` is the stopgap. It's coming as a `filesizeformat` template filter, with a fixed unit and decimals, usable wherever templates are. Base-1024 units will most likely be labelled `GiB`.
+> 1. `file-inspect`.
+> 2. `edit-fields` with `rel: {{item.filename}}`.
+> 3. `file-rename` with `find: ^([^/]+(?:/[^/]+){0,N-1})(?:/.*)?$` and `replace: $1/_`.
+> 4. `file-inspect` again: its `folder` is now the leading part.
+> 5. `edit-fields` with `lead: {{item.folder}}`.
+> 6. `file-rename` with `pattern: {{item.rel}}`.
 >
-> **`{{env.*}}` in the output directory:** a bug, thanks for the clear repro. bnto will fill it, and will refuse a run whose output directory still holds an unfilled placeholder, instead of creating a folder by that name. Until then, keep `file-copy`, or pass `--output "$SOME_KEY"`.
+> Then group with `summarize` (`groupBy: lead`). Paths shallower than N lose their extension.
 >
-> We also found and logged two related bugs: `file-rename` mishandles a folder name containing a dot, and `edit-fields` doesn't fill `{{file}}`.
+> Rather than a dedicated node, we plan to add template filters to bnto. This would then be one expression in any field of any node, along the lines of `{{item.filename | split('/') | first(2) | join('/')}}`. The exact syntax is still to be settled.
+>
+> **Readable sizes:** not possible with nodes yet; `shell-run` is the stopgap. We plan to cover it with a template filter in the same effort, likely along the lines of Jinja's `filesizeformat`, with a fixed unit and decimals, usable wherever templates are. How base-1024 units are labelled (`GB` or `GiB`) is still to be decided.
+>
+> **`{{env.*}}` in the output directory:** a bug, thanks for the clear repro. bnto will fill it, and will refuse a run whose output directory still holds an unfilled placeholder, instead of creating a folder by that name. Until then, keep writing with `file-copy`, or pass `--output "$SOME_KEY"`.
+>
+> **Please run this recipe with `bnto run`, not the TUI, for now.** While reproducing your report we found that the TUI empties a recipe's output folder before each run. It's being fixed first.
+>
+> We also found and logged two smaller bugs: `file-rename` mishandles a folder name containing a dot, and `edit-fields` doesn't fill `{{file}}`.

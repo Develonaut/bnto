@@ -42,7 +42,7 @@ If so, it's a **defect**, not a feature:
 
 ### 3. Try it with today's nodes
 
-Build the recipe and run it, sandboxed: a temp `HOME` and `BNTO_HOME`, and never the real `~/.bnto`. Don't argue from memory. Use the live catalog (`bnto list`, `bnto info <node>`, `packages/@bnto/nodes/docs/`).
+Build the recipe and run it, sandboxed: a temp `HOME` and `BNTO_HOME`, and never the real `~/.bnto`. Don't argue from memory. For what nodes exist and what each one takes, use the generated docs (`packages/@bnto/nodes/docs/`) and `engine/catalog.snapshot.json`. `bnto list` and `bnto info` describe recipes, not nodes.
 
 - **It works:** the answer is that recipe. Say so first in the reply. If it's useful beyond this requester, consider adding it as an example.
 - **It works, but clumsily:** record the recipe and what makes it clumsy (too many steps, a side effect, a lossy edge case). Clumsiness is evidence for step 4, not proof that a new node is needed.
@@ -88,7 +88,7 @@ These mean a design has drifted into one product's opinions:
 
 ### 7. Review, then plan
 
-- **`/workflow-expert` review.** Every new node, param or verb gets one against `node-vocabulary.md` before code.
+- **`/workflow-expert` review.** Every new node, param or verb gets one against `node-vocabulary.md` before code. Give the reviewer the live catalog, not the skill's own node table, which is stale until ISS-17 is fixed.
 - **Plan if it's big.** Work that spans two or more PRs gets a plan per [feature-planning.md](feature-planning.md).
 - **Tests.** The request's examples become the RED tests.
 - **Reviews.** Every PR gets a cold review ([cold-review.md](../../decisions/cold-review.md)).
@@ -96,6 +96,8 @@ These mean a design has drifted into one product's opinions:
 ### 8. Record it and reply
 
 Record the evaluation in `.claude/requests/YYYY-MM-DD-<slug>.md` (format below), and link it from any ISSUES.md entry or PLAN.md task it creates.
+
+**The repo is public.** A record never names the requester, their company or product, or any private project. Describe the consumer instead ("a consumer that pins bnto by commit"), and restate their setup in generic terms.
 
 Draft the reply to the requester, in this order:
 
@@ -109,12 +111,12 @@ Draft the reply to the requester, in this order:
 ```markdown
 # Request: <one-line outcome>
 
-**Received:** <date>, from <who / which consumer>. **Evaluated:** <date>.
+**Received:** <date>, from <a generic description, never a name>. **Evaluated:** <date>.
 **Source:** <where the request lives>.
 
 ## <n>. <outcome, restated>
 
-- **Verdict:** doable today | doable today, clumsily | defect | missing generic piece
+- **Verdict:** doable today | doable today, clumsily | defect | missing generic piece | declined (only one product's opinion; no generic piece behind it)
 - **Today:** the recipe tried (or where it stops), with the command and output.
 - **Defects found:** ISS-<n> (with link).
 - **Generic piece:** what bnto should add, and its prior art.

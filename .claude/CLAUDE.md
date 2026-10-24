@@ -357,7 +357,7 @@ These rules do NOT auto-load. Read them yourself when you start working in a sco
 | ------------------------------------------------------------------ | ------------------------------------------------------ |
 | [scopes/security/security.md](.claude/scopes/security/security.md) | Security audit checklist — auth, API, input validation |
 
-**Process (planning + releases):**
+**Process (planning, releases, requests):**
 
 | Document                                                                         | Purpose                                                                                      |
 | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
