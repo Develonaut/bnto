@@ -700,9 +700,22 @@ Features and ideas. Defects (bugs, standards violations, stale docs, security ga
 - [x] `engine` — **Rename `shell-command` → `shell-run`** with a migration. Consent, trust and dry-run now match on `bnto_shell::NODE_TYPE`, not a string literal
 - [x] `engine` — **Refuse params a node doesn't declare** (before the camelCase rename, so old keys fail loudly): `bnto check` reports them and a run's pre-flight refuses them; renamed types and params point at `bnto migrate` (`bnto-core/src/renamed.rs`)
 - [x] `engine` — **camelCase params** with a migration: the 14 snake_case params, renamed per node type by `bnto migrate`. `bnto-engine/tests/param_names.rs` now fails any new snake_case param
-- [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals`
+- [ ] `engine` — **Shared param meanings** with a migration: `file-sort` `case` → `caseSensitive: boolean`; `spreadsheet-merge` `deduplicate` → `removeDuplicates`; `spreadsheet-export` `overwrite` → `conflict` enum; `assert` `op` `not_equals` → `not-equals` (the `assert` part is PR 11 of [open-issues-plan.md](strategy/open-issues-plan.md))
 - [ ] `engine` — **Output suffixes**: `image-overlay` `-overlay` → `-overlaid`; `vector-optimize` adds `-optimized`. Regenerate goldens
 - [ ] `engine` — **Decide `transform` vs `edit-fields`** before `transform` gets a processor (see Engine: Future Node Operations)
+
+### Engine: From the October 21 Dogfood Sessions
+
+**Priority: Medium.** Features from seven October 21 sessions whose work never landed. Defects from the same sessions are ISS-14 to ISS-17 in [ISSUES.md](ISSUES.md), planned in [open-issues-plan.md](strategy/open-issues-plan.md#part-c-features-and-ideas-from-the-handoff-to-planmds-backlog-not-issues). Their unfinished code was on another machine and is rebuilt from these designs (decided October 24, 2026). Each new node or param gets a `/workflow-expert` review against [node-vocabulary.md](scopes/rust/node-vocabulary.md) before code.
+
+- [ ] `engine` — **`file-replace` node** ("Replace Text in Files", Change class, new verb `replace` with its "Not" list vs `rename`): `find`/`replace` (as `file-rename`), `patternMode: literal | regex`, `caseSensitive`; output suffix `-replaced`. Note `file-rename`'s `find` silently meaning "text or regex" as an audit row. Splicing between README markers is out of scope
+- [ ] `engine` — **`file-filter` content criterion** (`contentPattern`, read but pass `FileData::Path`, binary/non-UTF-8 never match): this is [dogfooding.md](strategy/dogfooding.md) row 9, Phase 3
+- [ ] `engine` — **`spreadsheet-read` `field`** (a dotted key to the records, e.g. `data.items`), then **object entries** (one item per entry, `key` = the entry name)
+- [ ] `engine` — **Item-level `filter` node** (`value`/`op`/`expected` + `keep`), sharing one comparison module with `assert` so their ops never drift. After the `not-equals` migration
+- [ ] `engine` — **`file-render` `escape: json`**, unless template filters' `| tojson` makes it redundant
+- [ ] `engine` — **Template filters**: pipe filters with Jinja-compatible syntax in the shared interpolator (not MiniJinja in params); an unresolved root leaves the whole expression as written. Plan per [feature-planning.md](scopes/process/feature-planning.md) and `/workflow-expert` review before code. Unblocks TOML in `spreadsheet-read`, filtering by file age, and camelCase i18n keys
+- [ ] `process` — **"Cold review" gate** before work counts as done, built from the `/code-review` skill. Waiting on Ryan for the reference version in another of his repos (never name that repo in bnto files)
+- Declined October 24, 2026: node codegen as a bnto recipe (codegen stays in TS; ISS-16 handles its size), and implementing `vector-optimize` `precision` (removed instead; ISS-15)
 
 ### Engine: Sprint 12B Follow-Up (remaining)
 
