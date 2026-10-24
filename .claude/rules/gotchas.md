@@ -113,7 +113,7 @@ A Turbo task's cache key covers the files inside its package. A task that also r
 "lint": { "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/eslint.config.base.mjs"] }
 ```
 
-A file one package reads goes in that package's own `turbo.json`, which extends the root one and inherits the task's `dependsOn` and `outputs` (see `packages/@bnto/nodes/turbo.json`):
+A file one package reads goes in that package's own `turbo.json`, which extends the root one and inherits the task's `dependsOn` and `outputs` (see `packages/@bnto/registry/turbo.json`). Its `inputs` **replace** the root task's `inputs` rather than adding to them, so repeat any root input the task needs:
 
 ```json
 {
@@ -122,7 +122,7 @@ A file one package reads goes in that package's own `turbo.json`, which extends 
 }
 ```
 
-Don't use `globalDependencies`, which would invalidate every task's cache. `task check:turbo-inputs` (and CI) fail when an ESLint config imports an unlisted file outside its package. Other reads, like a test's `readFileSync` of a root file, nothing checks: add the input in the same PR.
+Don't use `globalDependencies`, which would invalidate every task's cache. `task check:turbo-inputs` (and CI) fail when an ESLint config imports an unlisted file outside its package. Nothing checks other reads: a test's `readFileSync` of a root file, or a test's static `import` of one (`@bnto/nodes` imports `engine/catalog.snapshot.json`). Add the input in the same PR.
 
 ## Turbopack + Node.js Subpath Imports on Vercel
 
