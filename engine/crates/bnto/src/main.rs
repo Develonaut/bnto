@@ -52,6 +52,7 @@ mod progress;
 mod progress_indent;
 mod progress_line;
 mod progressive_output;
+mod recipe_output_dir;
 mod run;
 mod run_limit;
 mod run_message;

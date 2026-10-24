@@ -81,6 +81,17 @@ impl Tui {
         Self::launch_full(cols, rows, &[], recipes, None)
     }
 
+    /// Like [`Tui::launch_with_library`], with `files` in the start folder too.
+    #[allow(dead_code)] // each journey file uses a subset
+    pub fn launch_with_library_and_files(
+        cols: u16,
+        rows: u16,
+        recipes: &[&std::path::Path],
+        files: &[&std::path::Path],
+    ) -> Self {
+        Self::launch_full(cols, rows, files, recipes, None)
+    }
+
     fn launch_full(
         cols: u16,
         rows: u16,
