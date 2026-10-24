@@ -438,7 +438,23 @@ mod tests {
     }
 
     #[test]
+    fn test_suffix_keeps_dotfile_whole() {
+        // A leading dot is no extension: `dir/.env` used to split into
+        // `dir/` + `env`, so the suffix gave `dir/-x.env`.
+        let processor = RenameFiles::new();
+        let params = string_param("suffix", "-x");
+        let input = make_input(b"data", "dir/.env", params);
+
+        let output = processor
+            .process(input, &noop_progress(), &NoopContext)
+            .unwrap();
+
+        assert_eq!(output.files[0].filename, "dir/.env-x");
+    }
+
+    #[test]
     fn test_suffix_goes_before_extension_in_dotted_folder() {
+        // Guard: a name with an extension already split correctly.
         let processor = RenameFiles::new();
         let params = string_param("suffix", "-x");
         let input = make_input(b"data", "v1.2/notes.txt", params);
