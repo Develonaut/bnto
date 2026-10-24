@@ -44,7 +44,7 @@ fn finish_preview(
 
 /// Hand the outputs to the execution screen, then move on to results.
 fn finish_results(model: AppModel, done: RunDone, slug: String) -> AppModel {
-    let files = bridge::build_output_files(&done.output_dir, &done.file_metadata);
+    let files = bridge::build_output_files(&done.file_metadata);
     let reported = done
         .message
         .map(|message| ExecutionMessage::Reported { message });

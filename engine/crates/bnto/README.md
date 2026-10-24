@@ -206,6 +206,7 @@ src/
 +-- install_trust.rs       # Whether `--yes` may run recipe-authored install commands
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
 +-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
++-- recipe_output_dir.rs   # A recipe's own output folder, templates resolved (run + TUI)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (pipeline events -> lines)
 +-- progress_line.rs       # A step's live line: bar of files, or spinner + running message

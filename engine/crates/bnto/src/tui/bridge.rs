@@ -132,7 +132,7 @@ fn try_run_bridge(
         return Ok(());
     }
     // Normal mode: write output files using mode-aware dispatch.
-    let file_metadata = extract_file_metadata(&result);
+    let file_metadata = extract_file_metadata(&result, &mode, &output_dir);
     let message = (mode == "message")
         .then(|| run_message(&result, recipe_output_label(&job.definition_json)))
         .flatten();
@@ -435,10 +435,15 @@ mod tests {
         let inputs = tempfile::tempdir().unwrap();
         let photo = inputs.path().join("photo.txt");
         fs::write(&photo, b"new").unwrap();
+        run_job(slug, definition_json, vec![photo])
+    }
+
+    /// Run `definition_json` on `selected_files` the way the TUI does.
+    fn run_job(slug: &str, definition_json: String, selected_files: Vec<PathBuf>) -> RunDone {
         let job = BridgeJob {
             slug: slug.into(),
             definition_json,
-            selected_files: vec![photo],
+            selected_files,
             param_overrides: HashMap::new(),
             preview_mode: false,
         };
@@ -481,11 +486,84 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         fs::write(folder.path().join("notes.txt"), b"mine").unwrap();
         let done = run_on_photo("listing", rename_recipe_json(Some(folder.path())));
-        let listed: Vec<String> = build_output_files(&done.output_dir, &done.file_metadata)
+        assert_eq!(listed(&done), ["renamed-photo.txt"]);
+    }
+
+    /// The names the results screen would list for `done`.
+    fn listed(done: &RunDone) -> Vec<String> {
+        build_output_files(&done.file_metadata)
             .into_iter()
             .map(|f| f.name)
-            .collect();
-        assert_eq!(listed, ["renamed-photo.txt"]);
+            .collect()
+    }
+
+    /// Rename each file to `renamed-<name>` in place, optionally collecting
+    /// a picked folder's files first.
+    fn overwrite_recipe_json(collect: bool) -> String {
+        let mut nodes = vec![serde_json::json!(
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } }
+        )];
+        if collect {
+            nodes.push(serde_json::json!({ "id": "collect", "type": "file-collect",
+                "parameters": { "pattern": "*", "recursive": false } }));
+        }
+        nodes.push(serde_json::json!({ "id": "rename", "type": "file-rename",
+            "parameters": { "prefix": "renamed-" } }));
+        nodes.push(serde_json::json!({ "id": "output", "type": "output",
+            "parameters": { "mode": "overwrite" } }));
+        serde_json::json!({ "nodes": nodes }).to_string()
+    }
+
+    #[test]
+    fn overwrite_results_list_the_files_renamed_in_a_picked_folder() {
+        // Overwrite renames in each file's own folder; a picked folder's
+        // files sit inside it, not beside it.
+        let parent = tempfile::tempdir().unwrap();
+        let picked = parent.path().join("photos");
+        fs::create_dir(&picked).unwrap();
+        fs::write(picked.join("a.txt"), b"a").unwrap();
+        fs::write(picked.join("b.txt"), b"b").unwrap();
+        let done = run_job(
+            "ow-folder",
+            overwrite_recipe_json(true),
+            vec![picked.clone()],
+        );
+        assert!(
+            picked.join("renamed-a.txt").exists(),
+            "the run renamed nothing"
+        );
+        let mut names = listed(&done);
+        names.sort();
+        assert_eq!(names, ["renamed-a.txt", "renamed-b.txt"]);
+    }
+
+    #[test]
+    fn overwrite_results_list_files_renamed_in_two_folders() {
+        // Both `a.txt`s become `renamed-a.txt`, each in its own folder. A
+        // `renamed-a_1.txt` beside the first is the user's, not a result.
+        let (one, two) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+        for dir in [&one, &two] {
+            fs::write(dir.path().join("a.txt"), b"a").unwrap();
+        }
+        fs::write(one.path().join("renamed-a_1.txt"), b"mine").unwrap();
+        let files = vec![one.path().join("a.txt"), two.path().join("a.txt")];
+        let done = run_job("ow-two", overwrite_recipe_json(false), files);
+        assert!(
+            two.path().join("renamed-a.txt").exists(),
+            "the run renamed nothing"
+        );
+        assert_eq!(listed(&done), ["renamed-a.txt", "renamed-a.txt"]);
+    }
+
+    #[test]
+    fn a_message_run_lists_no_results_from_its_folder() {
+        // Message mode writes nothing, so a file already in the recipe's
+        // folder under an output's name is not this run's.
+        let folder = tempfile::tempdir().unwrap();
+        fs::write(folder.path().join("renamed-photo.txt"), b"mine").unwrap();
+        let json = rename_recipe_json(Some(folder.path())).replace("\"write\"", "\"message\"");
+        let done = run_on_photo("message", json);
+        assert_eq!(listed(&done), Vec::<String>::new());
     }
 
     #[test]
@@ -523,7 +601,7 @@ mod tests {
             warnings: Vec::new(),
             node_metadata: Default::default(),
         };
-        let meta = extract_file_metadata(&result);
+        let meta = extract_file_metadata(&result, "write", "out");
         assert_eq!(meta.len(), 1);
         assert_eq!(meta[0].name, "photo.jpg");
         assert_eq!(meta[0].original_size, Some(780_000));
@@ -547,14 +625,20 @@ mod tests {
     fn extract_metadata_prefers_the_input_size() {
         // resize → convert: convert's originalSize is the resized image.
         let result = result_with(serde_json::json!({ "originalSize": 300, "inputSize": 900 }));
-        assert_eq!(extract_file_metadata(&result)[0].original_size, Some(900));
+        assert_eq!(
+            extract_file_metadata(&result, "write", "out")[0].original_size,
+            Some(900)
+        );
     }
 
     #[test]
     fn extract_metadata_ignores_an_input_size_alone() {
         // No node reported sizes (a rename), so no comparison is shown.
         let result = result_with(serde_json::json!({ "inputSize": 900 }));
-        assert_eq!(extract_file_metadata(&result)[0].original_size, None);
+        assert_eq!(
+            extract_file_metadata(&result, "write", "out")[0].original_size,
+            None
+        );
     }
 
     #[test]
@@ -570,7 +654,7 @@ mod tests {
             warnings: Vec::new(),
             node_metadata: Default::default(),
         };
-        let meta = extract_file_metadata(&result);
+        let meta = extract_file_metadata(&result, "write", "out");
         assert_eq!(meta[0].original_size, None);
     }
 
@@ -592,7 +676,7 @@ mod tests {
             warnings: Vec::new(),
             node_metadata: Default::default(),
         };
-        let meta = extract_file_metadata(&result);
+        let meta = extract_file_metadata(&result, "write", "out");
         assert_eq!(meta[0].original_size, None);
     }
 
@@ -604,9 +688,10 @@ mod tests {
 
         let meta = vec![FileResultMeta {
             name: "photo.jpg".into(),
+            path: dir.join("photo.jpg"),
             original_size: Some(780),
         }];
-        let outputs = build_output_files(&dir.to_string_lossy(), &meta);
+        let outputs = build_output_files(&meta);
         assert_eq!(outputs.len(), 1);
         assert_eq!(outputs[0].original_size, Some(780));
         assert_eq!(outputs[0].size_bytes, 290);
@@ -645,9 +730,10 @@ mod tests {
 
         let meta = vec![FileResultMeta {
             name: "different.txt".into(),
+            path: dir.join("different.txt"),
             original_size: Some(500),
         }];
-        let outputs = build_output_files(&dir.to_string_lossy(), &meta);
+        let outputs = build_output_files(&meta);
         assert!(outputs.is_empty(), "{outputs:?}");
     }
 
