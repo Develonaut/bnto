@@ -21,27 +21,28 @@
 
 Scope rules live under `.claude/scopes/<scope>/`. Read the relevant files yourself when working in that scope; persona skills (`/rust-expert`, `/frontend-engineer`, etc.) will load them for you when invoked.
 
-| If you're working on...       | Read this first                                                                                                                                |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Any UI / styling work         | [scopes/web/theming.md](.claude/scopes/web/theming.md)                                                                                         |
-| React components              | [scopes/web/components.md](.claude/scopes/web/components.md)                                                                                   |
-| Page composition              | [scopes/web/pages.md](.claude/scopes/web/pages.md)                                                                                             |
-| Animation / motion            | [scopes/web/animation.md](.claude/scopes/web/animation.md)                                                                                     |
-| Loading states                | [scopes/web/skeletons.md](.claude/scopes/web/skeletons.md)                                                                                     |
-| Performance / Core Web Vitals | [scopes/web/performance.md](.claude/scopes/web/performance.md)                                                                                 |
-| TypeScript patterns           | [scopes/web/typescript.md](.claude/scopes/web/typescript.md)                                                                                   |
-| SEO & URL strategy            | [scopes/web/seo.md](.claude/scopes/web/seo.md)                                                                                                 |
-| Auth routing                  | [scopes/web/auth-routing.md](.claude/scopes/web/auth-routing.md)                                                                               |
-| Feature flags & A/B testing   | [scopes/web/feature-flags.md](.claude/scopes/web/feature-flags.md)                                                                             |
-| `@bnto/core` internals        | [scopes/backend/core-api.md](.claude/scopes/backend/core-api.md)                                                                               |
-| Convex queries / mutations    | [scopes/backend/convex.md](.claude/scopes/backend/convex.md)                                                                                   |
-| Node system responsibilities  | [scopes/rust/node-responsibilities.md](.claude/scopes/rust/node-responsibilities.md)                                                           |
-| Adding a new engine node      | [scopes/rust/engine-node-patterns.md](.claude/scopes/rust/engine-node-patterns.md)                                                             |
-| Naming a node, verb or param  | [scopes/rust/node-vocabulary.md](.claude/scopes/rust/node-vocabulary.md)                                                                       |
-| Adding a new recipe           | [scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe](.claude/scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe) |
-| Security / trust boundaries   | [scopes/security/security.md](.claude/scopes/security/security.md)                                                                             |
-| Planning multi-PR features    | [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md)                                                               |
-| Releases & versioning         | [scopes/process/releases.md](.claude/scopes/process/releases.md)                                                                               |
+| If you're working on...       | Read this first                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Any UI / styling work         | [scopes/web/theming.md](.claude/scopes/web/theming.md)                                                                                           |
+| React components              | [scopes/web/components.md](.claude/scopes/web/components.md)                                                                                     |
+| Page composition              | [scopes/web/pages.md](.claude/scopes/web/pages.md)                                                                                               |
+| Animation / motion            | [scopes/web/animation.md](.claude/scopes/web/animation.md)                                                                                       |
+| Loading states                | [scopes/web/skeletons.md](.claude/scopes/web/skeletons.md)                                                                                       |
+| Performance / Core Web Vitals | [scopes/web/performance.md](.claude/scopes/web/performance.md)                                                                                   |
+| TypeScript patterns           | [scopes/web/typescript.md](.claude/scopes/web/typescript.md)                                                                                     |
+| SEO & URL strategy            | [scopes/web/seo.md](.claude/scopes/web/seo.md)                                                                                                   |
+| Auth routing                  | [scopes/web/auth-routing.md](.claude/scopes/web/auth-routing.md)                                                                                 |
+| Feature flags & A/B testing   | [scopes/web/feature-flags.md](.claude/scopes/web/feature-flags.md)                                                                               |
+| `@bnto/core` internals        | [scopes/backend/core-api.md](.claude/scopes/backend/core-api.md)                                                                                 |
+| Convex queries / mutations    | [scopes/backend/convex.md](.claude/scopes/backend/convex.md)                                                                                     |
+| Node system responsibilities  | [scopes/rust/node-responsibilities.md](.claude/scopes/rust/node-responsibilities.md)                                                             |
+| Adding a new engine node      | [scopes/rust/engine-node-patterns.md](.claude/scopes/rust/engine-node-patterns.md)                                                               |
+| Naming a node, verb or param  | [scopes/rust/node-vocabulary.md](.claude/scopes/rust/node-vocabulary.md)                                                                         |
+| Adding a new recipe           | [scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe](.claude/scopes/rust/engine-node-patterns.md#checklist-adding-a-new-recipe)   |
+| Security / trust boundaries   | [scopes/security/security.md](.claude/scopes/security/security.md)                                                                               |
+| Planning multi-PR features    | [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md)                                                                 |
+| Evaluating a feature request  | [scopes/process/feature-requests.md](.claude/scopes/process/feature-requests.md) — outcome first, defect check, try today's nodes, generic piece |
+| Releases & versioning         | [scopes/process/releases.md](.claude/scopes/process/releases.md)                                                                                 |
 
 ### Strategy & Reference
 
@@ -358,10 +359,11 @@ These rules do NOT auto-load. Read them yourself when you start working in a sco
 
 **Process (planning + releases):**
 
-| Document                                                                         | Purpose                                                                        |
-| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md) | Multi-PR feature plans — structure, RED tests, dependency chains, verification |
-| [scopes/process/releases.md](.claude/scopes/process/releases.md)                 | Release process — tag-triggered pipeline, versioning, rollback                 |
+| Document                                                                         | Purpose                                                                                      |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [scopes/process/feature-planning.md](.claude/scopes/process/feature-planning.md) | Multi-PR feature plans — structure, RED tests, dependency chains, verification               |
+| [scopes/process/releases.md](.claude/scopes/process/releases.md)                 | Release process — tag-triggered pipeline, versioning, rollback                               |
+| [scopes/process/feature-requests.md](.claude/scopes/process/feature-requests.md) | Evaluating a feature request — outcome first, generic pieces, records in `.claude/requests/` |
 
 ### Strategy & Reference (read on demand)
 
