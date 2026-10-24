@@ -18,7 +18,6 @@
 | ISS-10 | `task check` skips the crate publish checks CI runs                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-12 | Released CLIs send no telemetry: the PostHog key is never set          | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-13 | CI never builds, lints or tests `@bnto/i18n`                           | ci          | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-14 | `optimize-images-for-web` enlarges images smaller than 800 px          | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-15 | `vector-optimize`'s `precision` param does nothing                     | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines     | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
@@ -51,7 +50,7 @@ Every package's `eslint.config.mjs` imports `../../eslint.config.base.mjs` (or `
 
 **Found:** October 23, 2026 (ISS-5, PR #740).
 
-CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:382-389`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.
+CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:316-323`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.
 
 ### ISS-11: The consent prompt suggests `bnto dry-run <path>`, which refuses paths
 
@@ -64,12 +63,6 @@ When `bnto run` asks for consent, it suggests running `bnto dry-run {recipe_arg}
 **Found:** October 24, 2026 (planning ISS-7).
 
 `engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`). Needs Ryan's decision: ship the key, or say telemetry is off.
-
-### ISS-13: CI never builds, lints or tests `@bnto/i18n`
-
-**Found:** October 24, 2026 (planning ISS-9 and ISS-10).
-
-`.github/workflows/ci.yml` names each package in its build (l.270–294), lint (l.302–326) and test (l.333–354) steps, and `@bnto/i18n` is in none of them (`grep -c i18n .github/workflows/ci.yml` is 0), though its `package.json` has `build`, `test` and `lint` scripts. A hand-written list drifts: a new package is skipped until someone adds it.
 
 ### ISS-14: `optimize-images-for-web` enlarges images smaller than 800 px
 
