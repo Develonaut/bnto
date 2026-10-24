@@ -1,0 +1,13 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/engine/catalog.snapshot.json",
+        "$TURBO_ROOT$/engine/crates/bnto-core/src/lib.rs"
+      ]
+    }
+  }
+}

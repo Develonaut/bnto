@@ -282,6 +282,9 @@ jobs:
       - name: "Check: sherif (package.json consistency)"
         run: pnpm sherif -p @bnto/package.json
 
+      - name: "Check: Turbo lint inputs (scripts/turbo/checkLintInputs.ts)"
+        run: pnpm exec tsx --test scripts/turbo/missingLintInputs.test.ts && pnpm exec tsx scripts/turbo/checkLintInputs.ts
+
       - name: Lint
         run: pnpm turbo run lint
 
