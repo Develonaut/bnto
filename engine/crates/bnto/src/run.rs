@@ -279,21 +279,11 @@ fn resolve_effective_output_dir(
     process_ctx: &dyn bnto_core::ProcessContext,
     files: &[bnto_core::PipelineFile],
 ) -> String {
-    // Explicit --output always wins.
     if let Some(dir) = output_override {
         return dir.to_string();
     }
-    // Try recipe's output node directory param.
-    if let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(definition_json)
-        && let Some(recipe_dir) = bnto_core::resolve_output_directory(&def)
-    {
-        // Two-pass: resolve {{ctx.*}} first, then {{node.*}} (input file metadata).
-        let resolved = bnto_core::resolve_ctx_templates(&recipe_dir, process_ctx);
-        let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, files);
-        return bnto_core::resolve_node_templates(&resolved, &node_outputs);
-    }
-    // Default: current directory.
-    ".".to_string()
+    crate::recipe_output_dir::recipe_output_dir(definition_json, process_ctx, files)
+        .unwrap_or_else(|| ".".to_string())
 }
 
 /// Print `<recipe> with N files...` (or the input mode label).

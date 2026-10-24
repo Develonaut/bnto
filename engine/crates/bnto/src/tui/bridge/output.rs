@@ -1,70 +1,100 @@
 // Bridge output files — engine metadata extraction and reading written
 // files back for the results screen.
 
+use std::path::{Path, PathBuf};
+
+use bnto_core::pipeline::{PipelineFileResult, PipelineResult};
+
 use super::super::screens::results::OutputFile;
 
-/// Per-file metadata extracted from engine results before writing to disk.
+/// Per-file metadata extracted from engine results before writing to disk:
+/// where the output mode puts the file and the name it's listed under.
 #[derive(Debug, Clone)]
 pub struct FileResultMeta {
     pub name: String,
+    pub path: PathBuf,
     pub original_size: Option<u64>,
 }
 
-/// Extract per-file metadata (original size) from the engine's PipelineResult.
-/// A size is shown only when a node reported one (`originalSize`), and is
-/// then the file's size as it entered the pipeline when known: a middle
-/// step's `originalSize` is that step's input, not the user's file.
-pub fn extract_file_metadata(result: &bnto_core::pipeline::PipelineResult) -> Vec<FileResultMeta> {
+/// Each result file the run writes, with where it lands and its original
+/// size. `mode` is the output node's: `write` copies into `output_dir`
+/// under the names `output_names` keeps apart, `overwrite` renames each file
+/// in its own folder, and `message`/`none` write nothing, so list nothing.
+pub fn extract_file_metadata(
+    result: &PipelineResult,
+    mode: &str,
+    output_dir: &str,
+) -> Vec<FileResultMeta> {
+    let landed = landing_places(result, mode, Path::new(output_dir));
     result
         .files
         .iter()
-        .map(|f| {
-            let reported = f.metadata.get("originalSize").and_then(|v| v.as_u64());
-            let input = f
-                .metadata
-                .get(bnto_core::INPUT_SIZE_KEY)
-                .and_then(|v| v.as_u64());
-            let original_size = reported.map(|r| input.unwrap_or(r));
-            FileResultMeta {
-                name: f.name.clone(),
-                original_size,
-            }
+        .zip(landed)
+        .filter_map(|(file, landed)| {
+            let (name, path) = landed?;
+            Some(FileResultMeta {
+                name,
+                path,
+                original_size: original_size(file),
+            })
         })
         .collect()
 }
 
-/// Read output files from the bridge's output directory, merging engine
-/// metadata. Listed in the order the run produced them (`file_metadata`),
-/// since `read_dir` order is arbitrary; files it didn't report go last, by name.
-pub fn build_output_files(output_dir: &str, file_metadata: &[FileResultMeta]) -> Vec<OutputFile> {
-    let Ok(entries) = std::fs::read_dir(std::path::Path::new(output_dir)) else {
-        return Vec::new();
-    };
-    let mut files: Vec<OutputFile> = entries
-        .flatten()
-        .map(|entry| output_file(&entry, file_metadata))
-        .collect();
-    let position = |name: &str| file_metadata.iter().position(|m| m.name == name);
-    files.sort_by(|a, b| {
-        let key = |f: &OutputFile| (position(&f.name).unwrap_or(usize::MAX), f.name.clone());
-        key(a).cmp(&key(b))
-    });
-    files
+/// Per result file, its listed name and path, or `None` if nothing is written.
+fn landing_places(
+    result: &PipelineResult,
+    mode: &str,
+    output_dir: &Path,
+) -> Vec<Option<(String, PathBuf)>> {
+    match mode {
+        "write" => {
+            let (names, _) =
+                crate::output_names::plan(result.files.iter().map(|f| f.name.as_str()));
+            names
+                .into_iter()
+                .map(|name| Some((name.clone(), output_dir.join(name))))
+                .collect()
+        }
+        "overwrite" => result.files.iter().map(renamed_in_place).collect(),
+        _ => vec![None; result.files.len()],
+    }
 }
 
-/// One results-screen entry, with `original_size` matched by filename.
-fn output_file(entry: &std::fs::DirEntry, file_metadata: &[FileResultMeta]) -> OutputFile {
-    let name = entry.file_name().to_string_lossy().into_owned();
-    let size_bytes = entry.metadata().map(|m| m.len()).unwrap_or(0);
-    let original_size = file_metadata
+/// Where overwrite mode renames `file` to, listed by its file name.
+fn renamed_in_place(file: &PipelineFileResult) -> Option<(String, PathBuf)> {
+    let dest = crate::overwrite::destination(&file.data, &file.name)?;
+    let name = dest.file_name()?.to_string_lossy().into_owned();
+    Some((name, dest))
+}
+
+/// A size is shown only when a node reported one (`originalSize`), and is
+/// then the file's size as it entered the pipeline when known: a middle
+/// step's `originalSize` is that step's input, not the user's file.
+fn original_size(file: &PipelineFileResult) -> Option<u64> {
+    let reported = file.metadata.get("originalSize").and_then(|v| v.as_u64());
+    let input = file
+        .metadata
+        .get(bnto_core::INPUT_SIZE_KEY)
+        .and_then(|v| v.as_u64());
+    reported.map(|r| input.unwrap_or(r))
+}
+
+/// The files this run wrote, in the order it produced them, with their
+/// sizes on disk. Only the run's own: a recipe's folder can also hold the
+/// user's files and earlier runs' results, which aren't this run's.
+pub fn build_output_files(file_metadata: &[FileResultMeta]) -> Vec<OutputFile> {
+    file_metadata
         .iter()
-        .find(|m| m.name == name)
-        .and_then(|m| m.original_size);
-    OutputFile {
-        name,
-        size_bytes,
-        original_size,
-    }
+        .filter_map(|meta| {
+            let on_disk = std::fs::metadata(&meta.path).ok()?;
+            on_disk.is_file().then(|| OutputFile {
+                name: meta.name.clone(),
+                size_bytes: on_disk.len(),
+                original_size: meta.original_size,
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -83,13 +113,51 @@ mod tests {
             .iter()
             .map(|n| FileResultMeta {
                 name: n.to_string(),
+                path: dir.path().join(n),
                 original_size: None,
             })
             .collect();
-        let listed: Vec<String> = build_output_files(dir.path().to_str().unwrap(), &meta)
+        let listed: Vec<String> = build_output_files(&meta)
             .into_iter()
             .map(|f| f.name)
             .collect();
         assert_eq!(listed, names);
+    }
+
+    #[test]
+    fn outputs_are_listed_under_the_names_they_were_written_as() {
+        // Two results named `logo.svg` are written as `logo.svg` and
+        // `logo_1.svg` (output_names); both are this run's results, each
+        // with its own original size.
+        let sizes = [
+            serde_json::json!({}),
+            serde_json::json!({ "originalSize": 900 }),
+        ];
+        let result = PipelineResult {
+            files: sizes
+                .map(|metadata| PipelineFileResult {
+                    name: "logo.svg".into(),
+                    data: bnto_core::FileData::Bytes(b"<svg/>".to_vec()),
+                    mime_type: "image/svg+xml".into(),
+                    metadata: metadata.as_object().unwrap().clone(),
+                })
+                .into(),
+            duration_ms: 1,
+            warnings: Vec::new(),
+            node_metadata: Default::default(),
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let out = dir.path().to_str().unwrap();
+        crate::io::write_results(&result, out).unwrap();
+        let listed: Vec<(String, Option<u64>)> =
+            build_output_files(&extract_file_metadata(&result, "write", out))
+                .into_iter()
+                .map(|f| (f.name, f.original_size))
+                .collect();
+        let expected = [
+            ("logo.svg".to_string(), None),
+            ("logo_1.svg".to_string(), Some(900)),
+        ];
+        assert_eq!(listed, expected);
     }
 }

@@ -39,8 +39,18 @@ fn plan_one(data: &FileData, name: &str, seen: &mut HashSet<PathBuf>) -> Result<
         let why = format!("{} is in the run more than once", src.display());
         return Err(refused(&why));
     }
-    let dest = src.parent().unwrap_or(Path::new(".")).join(leaf(name)?);
+    let dest = dest_beside(&src, name)?;
     Ok(Move { src, dest })
+}
+
+/// Where overwrite mode renames a file to: its pipeline name's last segment,
+/// in the source file's own folder. `None` for data or a name it would refuse.
+pub(crate) fn destination(data: &FileData, name: &str) -> Option<PathBuf> {
+    dest_beside(&source_path(data).ok()?, name).ok()
+}
+
+fn dest_beside(src: &Path, name: &str) -> Result<PathBuf, String> {
+    Ok(src.parent().unwrap_or(Path::new(".")).join(leaf(name)?))
 }
 
 fn source_path(data: &FileData) -> Result<PathBuf, String> {
