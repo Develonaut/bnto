@@ -191,7 +191,7 @@ Three places read "slug, else file" on their own: `run.rs:145` reads both, `inst
 ```rust
 /// A slug in the catalog, else a .bnto.json path.
 pub fn read_recipe(arg: &str, catalog: &RecipeCatalog) -> std::io::Result<String>
-pub fn dry_run_recipe(recipe_arg: &str, definition_json: &str, inputs: &[String], params: &[String]) -> Option<DryRunResult>
+pub fn dry_run_recipe(recipe_arg: &str, definition_json: &str, inputs: &[String], params: &[String]) -> Result<DryRunResult, String>
 ```
 
 ### RED tests
