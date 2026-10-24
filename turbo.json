@@ -13,10 +13,33 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "@bnto/web#build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/engine/Cargo.toml"],
+      "outputs": ["dist/**", ".next/**"]
+    },
     "test": {
       "dependsOn": ["build"]
     },
-    "lint": {},
+    "@bnto/nodes#test": {
+      "dependsOn": ["build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/engine/catalog.snapshot.json",
+        "$TURBO_ROOT$/engine/crates/bnto-core/src/lib.rs"
+      ]
+    },
+    "@bnto/registry#test": {
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/README.md", "$TURBO_ROOT$/.prettierrc"]
+    },
+    "@bnto/web#test": {
+      "dependsOn": ["build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/engine/Cargo.toml"]
+    },
+    "lint": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/eslint.config.base.mjs"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

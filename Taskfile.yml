@@ -50,6 +50,8 @@ tasks:
       - task: ui:test
       - echo "=== typescript lint ==="
       - task: ui:lint
+      - echo "=== turbo cache inputs ==="
+      - task: check:turbo-inputs
       - echo "=== theme codegen check ==="
       - task: theme:check
       - echo "=== docs validation ==="
@@ -128,6 +130,13 @@ tasks:
     desc: Validate crate README documentation is complete
     cmds:
       - pnpm exec tsx scripts/validate-docs.ts
+
+  # Turbo cache inputs (ISS-9)
+  check:turbo-inputs:
+    desc: Fail naming every Turbo lint task that doesn't hash a file outside its package that its ESLint config reads
+    cmds:
+      - pnpm exec tsx --test scripts/turbo/missingLintInputs.test.ts
+      - pnpm exec tsx scripts/turbo/checkLintInputs.ts
 
   # Dogfood recipes (recipes/): repo chores done by bnto itself
   check:recipes:

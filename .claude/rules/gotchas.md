@@ -103,6 +103,18 @@ pnpm 10 requires explicit opt-in for native dependency builds.
 }
 ```
 
+## Turbo Hashes Only a Package's Own Files
+
+A Turbo task's cache key covers the files inside its package. A task that also reads a file outside it (the root `eslint.config.base.mjs`, `README.md`, `engine/Cargo.toml`) replays a stale cached result when only that file changes: `task check` passes, and CI, which has no Turbo cache, fails.
+
+**Fix:** list the file in that task's `inputs` in `turbo.json`, beside `$TURBO_DEFAULT$` (which keeps the package's own files):
+
+```json
+"lint": { "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/eslint.config.base.mjs"] }
+```
+
+Use per-task `inputs` (a `<pkg>#<task>` entry when one package reads it), not `globalDependencies`, which would invalidate every task's cache. A `<pkg>#<task>` entry replaces the generic task, so repeat its `dependsOn` and `outputs`. `task check:turbo-inputs` (and CI) fail when an ESLint config imports an unlisted file outside its package. Other reads, like a test's `readFileSync` of a root file, nothing checks: add the input in the same PR.
+
 ## Turbopack + Node.js Subpath Imports on Vercel
 
 Turbopack on Vercel does NOT support Node.js subpath imports (`#components/*` via `package.json` `imports` field). Builds fail with `Module not found: Can't resolve '#components/...'`. Setting `turbopack.root` to the monorepo root makes it worse — breaks the `imports` field resolution entirely. `resolveAlias` workarounds also fail.

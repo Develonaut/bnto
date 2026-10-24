@@ -73,32 +73,41 @@ gh pr checks <n>   # TypeScript job log lists @bnto/i18n tasks
 
 **Branch:** `fix/turbo-root-inputs` from `main`
 **One sentence:** Each Turbo task's inputs include the root files it reads.
+**Status:** Built (October 24, 2026). It differs from the first draft of this section in four ways, listed under "As built".
 
 ### What
 
-Five root files are read by tasks but hashed by none:
+Six root files are read by tasks but hashed by none:
 
-| File                                 | Task                                      |
-| ------------------------------------ | ----------------------------------------- |
-| `eslint.config.base.mjs`             | lint                                      |
-| `engine/catalog.snapshot.json`       | test                                      |
-| `engine/crates/bnto-core/src/lib.rs` | test (the Rust format-version sync test)  |
-| `README.md`                          | test                                      |
-| `engine/Cargo.toml`                  | build (the CLI version shown on the site) |
+| File                                 | Task                                                                       |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `eslint.config.base.mjs`             | every package's `lint`                                                     |
+| `engine/catalog.snapshot.json`       | `@bnto/nodes#test`                                                         |
+| `engine/crates/bnto-core/src/lib.rs` | `@bnto/nodes#test` (the Rust format-version sync test)                     |
+| `README.md`                          | `@bnto/registry#test`                                                      |
+| `.prettierrc`                        | `@bnto/registry#test` (`renderReadme` formats with the config it resolves) |
+| `engine/Cargo.toml`                  | `@bnto/web#build` and `@bnto/web#test` (`getBntoCliVersion` and its test)  |
 
-Add them as per-task `inputs` (`$TURBO_DEFAULT$` plus `$TURBO_ROOT$/…`), not `globalDependencies`, which would invalidate every task's cache on a lint-rule change. A check script fails if a package's ESLint config imports a root file that its lint inputs don't list.
+Add them as per-task `inputs` (`$TURBO_DEFAULT$` plus `$TURBO_ROOT$/…`), not `globalDependencies`, which would invalidate every task's cache on a lint-rule change. A check fails if a package's ESLint config imports a file outside the package that its lint inputs don't list.
 
-### Files (~1 new, ~3 modified)
+### As built
 
-**New:**
+- **Per-package entries for the one-package reads.** Only `lint` gets generic inputs, since every package's lint reads the base config. The other reads get `@bnto/nodes#test`, `@bnto/registry#test`, `@bnto/web#build` and `@bnto/web#test` entries, so a README edit re-runs one test task, not every package's. A `<pkg>#<task>` entry replaces the generic one, so each repeats `dependsOn` (and `outputs` for the build).
+- **Two reads the draft missed:** `.prettierrc` (registry test) and `engine/Cargo.toml` in `@bnto/web#test`.
+- **The check is TypeScript, not bash:** `scripts/turbo/missingLintInputs.ts` (pure, tested with `node:test`) and `scripts/turbo/checkLintInputs.ts` (reads `pnpm turbo run lint --dry=json`). Path resolution in bash needs `realpath -m`, which macOS lacks. It skips comments (the base config's usage example is an import line) and follows a root file's own relative imports.
+- **Only ESLint imports are checked.** A test's `readFileSync` of a root file builds its path at run time, which no static check reads reliably; [gotchas.md](../rules/gotchas.md#turbo-hashes-only-a-packages-own-files) says to add the input in the same PR.
 
-- `scripts/check-turbo-inputs.sh`: reads `pnpm turbo run lint build test --dry=json` (about 1–2 s, nothing builds). It fails naming any `*#lint` task whose inputs lack a `../` import from that package's `eslint.config.mjs`.
+### Files (2 new + 1 test, 5 modified)
+
+**New:** `scripts/turbo/missingLintInputs.ts`, `scripts/turbo/missingLintInputs.test.ts`, `scripts/turbo/checkLintInputs.ts`
 
 **Modified:**
 
-- `turbo.json`: `inputs` for `lint`, `build`, `test`, and the `@bnto/editor#build` and `@bnto/form#build` overrides
-- `Taskfile.yml`: `check:turbo-inputs`, added to `check:`
-- `.github/workflows/ci.yml`: run the check in the TypeScript job
+- `turbo.json`: `lint` inputs, and the four per-package entries above
+- `Taskfile.yml`: `check:turbo-inputs` (the tests, then the check), added to `check:`
+- `.github/workflows/ci.yml`: one step in the TypeScript job's hygiene section
+- `.claude/rules/gotchas.md`: "Turbo Hashes Only a Package's Own Files"
+- `.claude/ISSUES.md`: ISS-9 deleted
 
 ### Key change
 
@@ -108,14 +117,14 @@ Add them as per-task `inputs` (`$TURBO_DEFAULT$` plus `$TURBO_ROOT$/…`), not `
 
 ### RED tests
 
-- `pnpm -s turbo run lint --dry=json --filter=@bnto/auth | jq '.tasks[0].inputs' | grep eslint.config.base` finds nothing today.
-- `scripts/check-turbo-inputs.sh` exits 1 on `main`, naming every `*#lint` task.
-- Adding a comment line to `eslint.config.base.mjs` changes `@bnto/auth#lint`'s hash. Revert afterwards.
+- With a rule that fails every file added to `eslint.config.base.mjs`, `pnpm turbo run lint --filter=@bnto/auth` replays the cache (same hash, exit 0) while `eslint .` in the package exits 1. After the fix it's a cache miss and exits 1.
+- `task check:turbo-inputs` against `main`'s `turbo.json` exits 1, naming all ten `*#lint` tasks that have an ESLint config.
+- Appending a line to `README.md`, `engine/Cargo.toml` or `engine/catalog.snapshot.json` changes only the hashes of the tasks that read it (dry run).
 
 ### Verification
 
 ```bash
-bash scripts/check-turbo-inputs.sh
+task check:turbo-inputs
 task check
 ```
 
