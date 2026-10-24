@@ -333,13 +333,7 @@ Write the code to make your tests pass. Follow the rules in `CLAUDE.md` and `.cl
 
 **Don't copy blindly** — adapt the layout, structure, and interaction patterns to fit our design system. The value is in the _composition patterns_, not the exact styling.
 
-### Step 7: Verify — Code Review + Automated Checks
-
-#### 7a: Code Review
-
-Run `/code-review` to audit all your changes against the project's coding standards, architecture rules, and known gotchas. Fix any violations before proceeding. This is a critical quality gate — do not skip it.
-
-#### 7b: Automated Checks
+### Step 7: Verify — Automated Checks
 
 Run ALL checks. Do not skip any even if you think your changes are safe:
 
@@ -437,6 +431,21 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 **Do NOT skip this step.** PLAN.md changes MUST be included in your commit and PR. The `/pre-commit` and `/merge-pr` skills will verify this.
 
+### Step 9a: Cold Review (MANDATORY — the last gate before you push)
+
+Make the work complete first:
+
+1. **Re-run the Step 7 checks.** Step 8 added tests and cleanup since they last ran.
+2. **Commit on your branch, but don't push yet.**
+3. **Draft the PR description** in Step 9c's format.
+
+Then run [`/code-review`](../code-review/SKILL.md). It hands the branch, its commits and your draft description to a fresh agent on Opus or a stronger model. That agent reviews them against the docs and reports findings. Wait for its report, then:
+
+- **Answer every finding.** Fix it or justify it. Commit the fixes, update the draft, and re-run the checks.
+- **Second review:** If your fixes changed more than wording, run a second cold review; if that one still finds blocking or should-fix problems, fix them and ask the user before a third.
+
+Don't substitute a review of your own, and don't push before this. **After the PR opens,** a commit that changes more than wording (a CI fix, a requested change) gets its own cold review before it's pushed.
+
 ### Step 9b: Proof of Work
 
 After all checks pass, provide a summary:
@@ -448,7 +457,8 @@ After all checks pass, provide a summary:
 5. **If yes:** What e2e tests did you write or update? List spec files and the flows they cover. List screenshot assertions. **Confirm you visually inspected each screenshot using the Read tool** and describe what you see. If no e2e tests, explain why and confirm user approved the skip.
 6. **If no UI touched:** What unit/integration tests did you write? List test files and what they cover.
 7. **Checks result** — confirm `task check` (or individual checks) passed clean. List which checks ran.
-8. **Files changed** — files created/modified, with brief description of each
+8. **Cold review** — the outcome line (e.g. `Cold review: 3 findings, 2 fixed, 1 justified`) and each justification
+9. **Files changed** — files created/modified, with brief description of each
 
 ### Step 9c: Create the PR
 
@@ -467,6 +477,7 @@ When creating the PR with `gh pr create`, use this format for the body:
 - What you manually verified (e.g., "Read the generated output file and confirmed correct CSV headers")
 - For UI changes: what screenshots you captured and visually inspected
 - For docs/config-only changes: what you reviewed to confirm correctness
+- Cold review: <N> findings, <X> fixed, <Y> justified (each justification below)
 ```
 
 **The Verification section documents what YOU did, not what someone else should do.** It's proof of work — past tense, specific, with results. Not a forward-looking checklist of TODOs.

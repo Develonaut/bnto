@@ -282,7 +282,7 @@ bnto/
 7. **Test boundaries** — Write tests for engine logic and API contracts
 8. **E2E test** — If you touched UI, run `task e2e` (requires `task dev` running — Next.js + Convex on port 4000). Start it yourself if needed — never skip because "the stack isn't running"
 9. **Mark done** — Update the plan when complete
-10. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit
+10. **Pre-commit** — Follow [pre-commit.md](.claude/rules/pre-commit.md) before every commit. Its last gate is the **cold review** (Step 8, `/code-review`): a fresh agent on the most capable model reviews the finished work against these docs and reports; you fix or justify every finding and record the outcome in the PR. See [cold-review.md](.claude/decisions/cold-review.md)
 11. **Push & PR** — Push your branch, create a PR targeting `main`. CI Gate must pass before merge
 
 **Branch protection:** `main` requires the CI Gate check (Rust + TypeScript) to pass via PR. Direct pushes to `main` are blocked.
@@ -411,4 +411,4 @@ Persona skills are domain experts that can be activated to adopt specialized kno
 
 | Project Manager | `.claude/PLAN.md`, `.claude/ROADMAP.md` — roadmap alignment, sprint planning | `/project-manager` |
 
-The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review. The `/code-review` and `/pre-commit` skills invoke `/technical-writer` when changes affect package structure or public API.
+The `/groom` workflow skill invokes `/project-manager` automatically to run a full plan review. `/code-review` is the cold review: the author launches a fresh agent on the most capable model, which reviews the work against these docs and reports. The reviewer and `/pre-commit` invoke `/technical-writer` when changes affect package structure or public API.

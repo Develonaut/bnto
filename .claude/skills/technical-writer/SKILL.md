@@ -81,7 +81,7 @@ When activated by another workflow, perform a scoped review:
 1. **Identify changed packages** — which packages/crates had files modified?
 2. **Read the READMEs** for those packages
 3. **Check if changes invalidate documentation** — new exports, renamed files, changed directory structure, new commands, removed features
-4. **Flag or fix** — if the README needs updating, update it. If you're unsure, flag it as a note for the user
+4. **Flag or fix** — under `/pre-commit`, update a README that needs it, or flag it as a note if you're unsure. Under `/code-review` (a cold review), only report: the reviewer never edits, so list each README change as a finding
 
 ---
 
