@@ -285,6 +285,8 @@ Developer-facing landing page. Pieces 1-9: copy polish, nav restructure, hero an
 
 **Next: TUI snapshots + journey tests** (3 PRs), so TUI changes get the same checks the web has: [tui-testing.md](strategy/tui-testing.md). **Then: CLI upgrade notices.** A once-a-day update check, `bnto upgrade`, and a TUI status-line notice (3 PRs): [cli-upgrade.md](strategy/cli-upgrade.md).
 
+**Queued (October 24, 2026): a user-facing changelog** (5 PRs): a curated `CHANGELOG.md` written in each bump PR, a `/changelog` page and Atom feed, a "New in vX" badge on bnto.io, `bnto changelog`, and links from the CLI and TUI update notices: [changelog.md](strategy/changelog.md). **Web exception:** its two site PRs (page + feed, badge) are an exception to the web's maintenance mode, approved by Ryan on October 24, 2026. Nothing else on the web is unfrozen.
+
 Desktop (Tauri) and monetization are deep backlog.
 
 ---
@@ -800,7 +802,7 @@ Features and ideas. Defects (bugs, standards violations, stale docs, security ga
 
 ### Infra: Web-Only — FROZEN (web in maintenance mode)
 
-**Frozen (April 2026).** Web infra items that only matter when web is actively developed:
+**Frozen (April 2026).** One approved exception: the two site PRs of [changelog.md](strategy/changelog.md) (Ryan, October 24, 2026). Web infra items that only matter when web is actively developed:
 
 - Convex preview deployments for release verification (pair preview Convex with preview Vercel)
 - SEO validation graduation (slim E2E to redirects + 404 only, metadata validated in unit tests)
@@ -833,9 +835,9 @@ Features and ideas. Defects (bugs, standards violations, stale docs, security ga
 
 **Promoted.** Design spike promoted to Sprint 16 Wave 5 (`strategy/recipe-secrets.md`). Depends on `{{env.*}}` template namespace (Wave 4).
 
-### Infra: Conventional Commits + Auto-Changelog
+### ~~Infra: Conventional Commits + Auto-Changelog~~ → [changelog.md](strategy/changelog.md)
 
-**Priority: Low.** Enforce `feat:`, `fix:`, `BREAKING CHANGE:` commit format. Auto-generate `CHANGELOG.md` on release tags. Not blocking anything.
+**Replaced (October 24, 2026).** Ryan chose a curated `engine/crates/bnto/CHANGELOG.md`, written in each release's bump PR, over one generated from commits: generated notes repeat GitHub's list of every PR title, mostly internal work. Planned in 5 PRs in [changelog.md](strategy/changelog.md#design), queued in [What's Next](#whats-next).
 
 ### Infra: Production Deploy Protection (GitHub Environments)
 
