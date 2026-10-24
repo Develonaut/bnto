@@ -107,13 +107,22 @@ pnpm 10 requires explicit opt-in for native dependency builds.
 
 A Turbo task's cache key covers the files inside its package. A task that also reads a file outside it (the root `eslint.config.base.mjs`, `README.md`, `engine/Cargo.toml`) replays a stale cached result when only that file changes: `task check` passes, and CI, which has no Turbo cache, fails.
 
-**Fix:** list the file in that task's `inputs` in `turbo.json`, beside `$TURBO_DEFAULT$` (which keeps the package's own files):
+**Fix:** list the file in that task's `inputs`, beside `$TURBO_DEFAULT$` (which keeps the package's own files). A file every package reads goes in the root `turbo.json`:
 
 ```json
 "lint": { "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/eslint.config.base.mjs"] }
 ```
 
-Use per-task `inputs` (a `<pkg>#<task>` entry when one package reads it), not `globalDependencies`, which would invalidate every task's cache. A `<pkg>#<task>` entry replaces the generic task, so repeat its `dependsOn` and `outputs`. `task check:turbo-inputs` (and CI) fail when an ESLint config imports an unlisted file outside its package. Other reads, like a test's `readFileSync` of a root file, nothing checks: add the input in the same PR.
+A file one package reads goes in that package's own `turbo.json`, which extends the root one and inherits the task's `dependsOn` and `outputs` (see `packages/@bnto/nodes/turbo.json`):
+
+```json
+{
+  "extends": ["//"],
+  "tasks": { "test": { "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/README.md"] } }
+}
+```
+
+Don't use `globalDependencies`, which would invalidate every task's cache. `task check:turbo-inputs` (and CI) fail when an ESLint config imports an unlisted file outside its package. Other reads, like a test's `readFileSync` of a root file, nothing checks: add the input in the same PR.
 
 ## Turbopack + Node.js Subpath Imports on Vercel
 

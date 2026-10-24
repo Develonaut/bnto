@@ -5,6 +5,7 @@
  */
 
 import { posix } from "node:path";
+import ts from "typescript";
 
 /** A `<pkg>#lint` task from `turbo run lint --dry=json`. */
 export interface LintTask {
@@ -14,18 +15,17 @@ export interface LintTask {
   inputs: readonly string[];
 }
 
-/** `import … from "./x"`, `import "../x"` and `export … from "./x"`. */
-const RELATIVE_IMPORT = /\b(?:from|import)\s*["'](\.{1,2}\/[^"']+)["']/g;
-
-/** Block comments and whole-line `//` comments, whose usage examples aren't imports. */
-const COMMENT = /\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm;
-
 const isOutside = (dir: string, file: string) => posix.relative(dir, file).startsWith("../");
 
+const isRelative = (specifier: string) => specifier.startsWith("./") || specifier.startsWith("../");
+
+/** Repo-relative files `file` imports: static, re-exported or dynamic. TypeScript's scanner skips comments and strings. */
 function relativeImports(file: string, source: string): string[] {
-  const dir = posix.dirname(file);
-  const code = source.replace(COMMENT, "");
-  return [...code.matchAll(RELATIVE_IMPORT)].map((m) => posix.join(dir, m[1]));
+  const { importedFiles } = ts.preProcessFile(source, true, true);
+  return importedFiles
+    .map((imported) => imported.fileName)
+    .filter(isRelative)
+    .map((specifier) => posix.join(posix.dirname(file), specifier));
 }
 
 /**
@@ -40,15 +40,9 @@ export function missingLintInputs(
 ): string[] {
   const hashed = new Set(task.inputs.map((input) => posix.join(task.directory, input)));
   const queue = [posix.join(task.directory, entry)];
-  const seen = new Set(queue);
-  const missing: string[] = [];
   for (const file of queue) {
-    if (isOutside(task.directory, file) && !hashed.has(file)) missing.push(file);
-    for (const next of relativeImports(file, read(file))) {
-      if (seen.has(next)) continue;
-      seen.add(next);
-      queue.push(next);
-    }
+    const unseen = relativeImports(file, read(file)).filter((next) => !queue.includes(next));
+    queue.push(...new Set(unseen));
   }
-  return missing;
+  return queue.filter((file) => isOutside(task.directory, file) && !hashed.has(file));
 }

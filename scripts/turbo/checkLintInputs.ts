@@ -16,8 +16,10 @@ interface DryRunTask extends Omit<LintTask, "inputs"> {
 }
 
 function lintTasks(): DryRunTask[] {
+  // On Windows `pnpm` is a `pnpm.cmd` shim, which only a shell can start.
   const out = execFileSync("pnpm", ["-s", "turbo", "run", "lint", "--dry=json"], {
     encoding: "utf8",
+    shell: process.platform === "win32",
   });
   const { tasks } = JSON.parse(out.slice(out.indexOf("{"))) as { tasks: DryRunTask[] };
   return tasks.filter((t) => t.taskId.endsWith("#lint"));

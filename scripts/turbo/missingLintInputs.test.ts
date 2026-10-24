@@ -53,6 +53,36 @@ describe("missingLintInputs", () => {
     assert.deepEqual(missingLintInputs(task, reader(files)), []);
   });
 
+  it("finds an import after a glob string that looks like a comment start", () => {
+    const files = {
+      "apps/web/eslint.config.mjs": `const files = ["**/*.tsx"];\nimport { baseConfig } from "../../${BASE}";\nconst ignores = ["**/*.test.ts"];`,
+      [BASE]: ``,
+    };
+    assert.deepEqual(missingLintInputs({ directory: "apps/web", inputs: [] }, reader(files)), [
+      BASE,
+    ]);
+  });
+
+  it("finds a re-export (`export … from`)", () => {
+    const files = {
+      "packages/ui/eslint.config.mjs": `export { default } from "../../${BASE}";`,
+      [BASE]: ``,
+    };
+    assert.deepEqual(missingLintInputs({ directory: "packages/ui", inputs: [] }, reader(files)), [
+      BASE,
+    ]);
+  });
+
+  it("finds a dynamic import", () => {
+    const files = {
+      "packages/ui/eslint.config.mjs": `const { baseConfig } = await import("../../${BASE}");`,
+      [BASE]: ``,
+    };
+    assert.deepEqual(missingLintInputs({ directory: "packages/ui", inputs: [] }, reader(files)), [
+      BASE,
+    ]);
+  });
+
   it("follows a root file's own relative imports", () => {
     const files = {
       "packages/ui/eslint.config.mjs": `import { baseConfig } from "../../${BASE}";`,
