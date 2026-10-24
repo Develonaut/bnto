@@ -1117,7 +1117,7 @@ fn test_dry_run_subcommand_copies_nothing() {
     let past = filetime::FileTime::from_unix_time(1_000_000_000, 0);
     filetime::set_file_mtime(&old, past).unwrap();
 
-    // `dry-run` resolves catalog slugs only, so the fixture goes into a library.
+    // The fixture goes into a library and runs by slug (paths: dry_run_path.rs).
     let home = temp_output_dir();
     let library = home.path().join("recipes");
     std::fs::create_dir_all(&library).unwrap();
@@ -1148,7 +1148,7 @@ fn test_dry_run_subcommand_copies_nothing() {
     assert_eq!(mtime, past, "destination mtime changed");
 }
 
-/// Put the shell-run fixture into a fresh library (dry-run resolves slugs only).
+/// Put the shell-run fixture into a fresh library, to dry-run it by slug.
 fn library_with_shell_recipe() -> tempfile::TempDir {
     let home = temp_output_dir();
     let library = home.path().join("recipes");

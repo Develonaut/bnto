@@ -307,19 +307,13 @@ fn exit_still_missing(still_missing: &[&DependencyStatus]) -> ! {
     std::process::exit(1);
 }
 
-/// Look up recipe JSON — try catalog slug first, then disk path.
+/// Look up recipe JSON (a slug, else a path), exiting when it's neither.
 fn read_recipe_json(slug: &str, catalog: &RecipeCatalog) -> String {
-    if let Some(entry) = catalog.resolve(slug) {
-        return entry.definition_json.clone();
-    }
-    match std::fs::read_to_string(slug) {
-        Ok(json) => json,
-        Err(_) => {
-            eprintln!("{} Unknown recipe: {slug}", "Error:".red());
-            eprintln!("Run {} to see available recipes.", "bnto list".cyan());
-            std::process::exit(1);
-        }
-    }
+    crate::recipe_source::read_recipe(slug, catalog).unwrap_or_else(|_| {
+        eprintln!("{} Unknown recipe: {slug}", "Error:".red());
+        eprintln!("Run {} to see available recipes.", "bnto list".cyan());
+        std::process::exit(1);
+    })
 }
 
 /// Read a single line and return true if it's empty or "y"/"yes".

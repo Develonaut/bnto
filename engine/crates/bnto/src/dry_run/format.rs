@@ -6,14 +6,14 @@ use super::DryRunResult;
 use super::shell::format_command_line;
 
 /// Print dry-run results to stdout with colored formatting.
-pub fn print_dry_run(slug: &str, result: &DryRunResult) {
+pub fn print_dry_run(recipe_arg: &str, result: &DryRunResult) {
     println!("\n{}", result.name.bold());
     println!("{}\n", result.description);
 
     print_dependencies(result);
     print_shell_commands(result);
     print_file_previews(result);
-    print_footer(slug, result);
+    print_footer(recipe_arg, result);
 }
 
 fn print_dependencies(result: &DryRunResult) {
@@ -106,7 +106,7 @@ fn print_file_previews(result: &DryRunResult) {
     }
 }
 
-fn print_footer(slug: &str, result: &DryRunResult) {
+fn print_footer(recipe_arg: &str, result: &DryRunResult) {
     if let Some(output_dir) = &result.output_dir {
         println!("\n  {}  {output_dir}", "Output:".dimmed());
     }
@@ -124,7 +124,7 @@ fn print_footer(slug: &str, result: &DryRunResult) {
 
     println!(
         "\n{}",
-        format!("Run with: bnto run {slug} <input>").dimmed()
+        format!("Run with: bnto run {recipe_arg} <input>").dimmed()
     );
 }
 

@@ -16,7 +16,6 @@ mod shell_note;
 use bnto_core::{Dependency, HostPlatform, PipelineDefinition};
 use bnto_engine::deps::collect_pipeline_dependencies;
 
-use crate::catalog::RecipeCatalog;
 use files::FilePreview;
 use shell::ShellCommandInfo;
 
@@ -44,82 +43,99 @@ pub struct DryRunResult {
 /// Without inputs: static analysis only (shell commands, dependencies).
 /// With inputs: also runs the pipeline without writing, extracts file
 /// transformation previews from the engine's metadata.
-#[expect(clippy::too_many_lines)]
+///
+/// `definition_json` is the recipe as `recipe_source::read_recipe` read it;
+/// `recipe_arg` (the slug or path the user typed) names a recipe with no
+/// `name`. Fails only on JSON that isn't a recipe.
 pub fn dry_run_recipe(
-    slug: &str,
+    recipe_arg: &str,
+    definition_json: &str,
     inputs: &[String],
     param_overrides: &[String],
-    catalog: &RecipeCatalog,
-) -> Option<DryRunResult> {
-    let entry = catalog.resolve(slug)?;
-    let mut def: PipelineDefinition = serde_json::from_str(&entry.definition_json).ok()?;
+) -> Result<DryRunResult, String> {
+    let mut def: PipelineDefinition =
+        serde_json::from_str(definition_json).map_err(|e| format!("Invalid recipe JSON: {e}"))?;
+    let (name, description) = heading(definition_json, recipe_arg);
 
     // Apply field overrides before resolving shell-run templates.
     let refused = shell::apply_field_overrides(&mut def, param_overrides);
-
     let registry = bnto_engine::create_registry();
-    let dependencies = collect_pipeline_dependencies(&def, &registry, HostPlatform::current());
-
-    // Static analysis: extract shell commands and count other nodes.
-    let mut shell_commands = Vec::new();
-    let mut other_node_count = 0;
-    shell::collect_shell_commands(&def.nodes, &mut shell_commands, &mut other_node_count);
-
-    // Pipeline preview: run with stubbed data if inputs are provided.
-    let (file_previews, output_dir, duration_ms, warnings) = if inputs.is_empty() {
-        (vec![], None, None, vec![])
-    } else {
-        match files::run_preview(&entry.definition_json, inputs, param_overrides) {
-            Ok(result) => {
-                let previews = files::extract_previews(&result);
-                (
-                    previews,
-                    None, // No output dir — we didn't write anything.
-                    Some(result.duration_ms),
-                    result.warnings,
-                )
-            }
-            Err(e) => {
-                eprintln!("Warning: pipeline preview failed: {e}");
-                (vec![], None, None, vec![])
-            }
-        }
-    };
-
-    let warnings = [refused, warnings].concat();
-    Some(DryRunResult {
-        name: entry.name.clone(),
-        description: entry.description.clone(),
-        dependencies,
+    let (shell_commands, other_node_count) = shell_steps(&def);
+    let preview = preview_files(definition_json, inputs, param_overrides);
+    Ok(DryRunResult {
+        name,
+        description,
+        dependencies: collect_pipeline_dependencies(&def, &registry, HostPlatform::current()),
         shell_commands,
-        file_previews,
+        file_previews: preview.file_previews,
         other_node_count,
-        output_dir,
-        duration_ms,
-        warnings,
+        output_dir: None, // Nothing is written, so there's no output dir.
+        duration_ms: preview.duration_ms,
+        warnings: [refused, preview.warnings].concat(),
         time_limit: def.time_limit_secs(),
     })
 }
 
+/// Static analysis: the shell commands, and how many other nodes there are.
+fn shell_steps(def: &PipelineDefinition) -> (Vec<ShellCommandInfo>, usize) {
+    let mut shell_commands = Vec::new();
+    let mut other_node_count = 0;
+    shell::collect_shell_commands(&def.nodes, &mut shell_commands, &mut other_node_count);
+    (shell_commands, other_node_count)
+}
+
+/// The recipe's `name` (else `fallback`) and `metadata.description`, as the
+/// catalog reads them.
+fn heading(definition_json: &str, fallback: &str) -> (String, String) {
+    let val: serde_json::Value = serde_json::from_str(definition_json).unwrap_or_default();
+    let name = val["name"].as_str().unwrap_or(fallback).to_string();
+    let description = val["metadata"]["description"].as_str().unwrap_or_default();
+    (name, description.to_string())
+}
+
+/// What the pipeline preview found; empty when it didn't run.
+#[derive(Default)]
+struct FilesPreview {
+    file_previews: Vec<FilePreview>,
+    duration_ms: Option<u64>,
+    warnings: Vec<String>,
+}
+
+/// Run the pipeline without writes when there are inputs to preview.
+fn preview_files(definition_json: &str, inputs: &[String], params: &[String]) -> FilesPreview {
+    if inputs.is_empty() {
+        return FilesPreview::default();
+    }
+    match files::run_preview(definition_json, inputs, params) {
+        Ok(result) => FilesPreview {
+            file_previews: files::extract_previews(&result),
+            duration_ms: Some(result.duration_ms),
+            warnings: result.warnings,
+        },
+        Err(e) => {
+            eprintln!("Warning: pipeline preview failed: {e}");
+            FilesPreview::default()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-
     use super::*;
 
-    fn catalog() -> RecipeCatalog {
-        RecipeCatalog::load(Path::new("/nonexistent"))
+    /// Dry-run a bundled recipe by slug, as `bnto dry-run <slug>` reads it.
+    fn bundled(slug: &str, params: &[String]) -> Result<DryRunResult, String> {
+        let library = tempfile::tempdir().unwrap();
+        let catalog = crate::catalog::RecipeCatalog::load(library.path());
+        let json = &catalog.resolve(slug).expect("bundled slug").definition_json;
+        dry_run_recipe(slug, json, &[], params)
     }
 
     // --- Static analysis tests (migrated from old dry_run.rs) ---
 
     #[test]
     fn dry_run_known_recipe_with_shell_commands() {
-        let c = catalog();
-        let result = dry_run_recipe("download-video", &[], &[], &c);
-        assert!(result.is_some(), "download-video should exist");
-
-        let result = result.unwrap();
+        let result = bundled("download-video", &[]).unwrap();
         assert_eq!(result.name, "Download Video");
         assert!(!result.shell_commands.is_empty());
         // No inputs → no file previews.
@@ -127,16 +143,31 @@ mod tests {
     }
 
     #[test]
-    fn dry_run_unknown_recipe() {
-        let c = catalog();
-        let result = dry_run_recipe("nonexistent-recipe", &[], &[], &c);
-        assert!(result.is_none());
+    fn dry_run_refuses_json_that_is_not_a_recipe() {
+        let err = dry_run_recipe("broken.bnto.json", "{ not json", &[], &[]).unwrap_err();
+        assert!(err.starts_with("Invalid recipe JSON"), "{err}");
+    }
+
+    #[test]
+    fn the_preview_heading_comes_from_the_json() {
+        let json = r#"{ "name": "Mine", "metadata": { "description": "Does a thing" },
+          "nodes": [] }"#;
+        let result = dry_run_recipe("mine.bnto.json", json, &[], &[]).unwrap();
+        assert_eq!(result.name, "Mine");
+        assert_eq!(result.description, "Does a thing");
+    }
+
+    #[test]
+    fn a_recipe_with_no_name_is_named_by_its_argument() {
+        let result = dry_run_recipe("recipes/mine.bnto.json", r#"{"nodes":[]}"#, &[], &[]);
+        let result = result.unwrap();
+        assert_eq!(result.name, "recipes/mine.bnto.json");
+        assert_eq!(result.description, "");
     }
 
     #[test]
     fn dry_run_resolves_field_defaults() {
-        let c = catalog();
-        let result = dry_run_recipe("download-video", &[], &[], &c).unwrap();
+        let result = bundled("download-video", &[]).unwrap();
         let cmd = &result.shell_commands[0];
 
         assert_eq!(cmd.command, "yt-dlp");
@@ -154,8 +185,7 @@ mod tests {
 
     #[test]
     fn dry_run_shows_runtime_placeholders() {
-        let c = catalog();
-        let result = dry_run_recipe("download-video", &[], &[], &c).unwrap();
+        let result = bundled("download-video", &[]).unwrap();
         let cmd = &result.shell_commands[0];
 
         assert!(
@@ -167,20 +197,14 @@ mod tests {
 
     #[test]
     fn dry_run_no_shell_commands() {
-        let c = catalog();
-        let result = dry_run_recipe("compress-images", &[], &[], &c);
-        assert!(result.is_some());
-
-        let result = result.unwrap();
+        let result = bundled("compress-images", &[]).unwrap();
         assert!(result.shell_commands.is_empty());
         assert!(result.other_node_count > 0);
     }
 
     #[test]
     fn dry_run_with_param_override() {
-        let c = catalog();
-        let result =
-            dry_run_recipe("download-video", &[], &["format=webm".to_string()], &c).unwrap();
+        let result = bundled("download-video", &["format=webm".to_string()]).unwrap();
         let cmd = &result.shell_commands[0];
 
         assert!(
@@ -197,16 +221,14 @@ mod tests {
 
     #[test]
     fn dry_run_output_mode() {
-        let c = catalog();
-        let result = dry_run_recipe("download-video", &[], &[], &c).unwrap();
+        let result = bundled("download-video", &[]).unwrap();
         let cmd = &result.shell_commands[0];
         assert_eq!(cmd.output_mode, "file");
     }
 
     #[test]
     fn dry_run_has_dependencies() {
-        let c = catalog();
-        let result = dry_run_recipe("download-video", &[], &[], &c).unwrap();
+        let result = bundled("download-video", &[]).unwrap();
         let dep_names: Vec<&str> = result
             .dependencies
             .iter()
@@ -218,8 +240,7 @@ mod tests {
 
     #[test]
     fn dry_run_image_recipe_no_dependencies() {
-        let c = catalog();
-        let result = dry_run_recipe("compress-images", &[], &[], &c).unwrap();
+        let result = bundled("compress-images", &[]).unwrap();
         assert!(result.dependencies.is_empty());
     }
 
@@ -227,8 +248,7 @@ mod tests {
 
     #[test]
     fn format_dry_run_contains_command() {
-        let c = catalog();
-        let result = dry_run_recipe("download-video", &[], &[], &c).unwrap();
+        let result = bundled("download-video", &[]).unwrap();
         let formatted = format::format_dry_run_plain(&result);
         assert!(formatted.contains("yt-dlp"));
         assert!(formatted.contains("Download Video"));
@@ -236,8 +256,7 @@ mod tests {
 
     #[test]
     fn format_dry_run_no_shell_shows_message() {
-        let c = catalog();
-        let result = dry_run_recipe("compress-images", &[], &[], &c).unwrap();
+        let result = bundled("compress-images", &[]).unwrap();
         let formatted = format::format_dry_run_plain(&result);
         assert!(formatted.contains("No shell commands"));
     }

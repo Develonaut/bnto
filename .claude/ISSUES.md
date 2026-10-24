@@ -10,20 +10,19 @@
 - **IDs never get reused.** The next one is **ISS-21**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
-| ID     | Issue                                                                  | Area        | Status                                           |
-| ------ | ---------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
-| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404            | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`       | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`           | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-10 | `task check` skips the crate publish checks CI runs                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set          | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-15 | `vector-optimize`'s `precision` param does nothing                     | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines     | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-17 | The `/workflow-expert` skill's node inventory is stale                 | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-18 | A Windows process test times out waiting 20 s for PowerShell           | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                  | docs        | Open                                             |
-| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links               | docs        | Open                                             |
+| ID     | Issue                                                              | Area        | Status                                           |
+| ------ | ------------------------------------------------------------------ | ----------- | ------------------------------------------------ |
+| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404        | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`   | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`       | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-10 | `task check` skips the crate publish checks CI runs                | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set      | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-15 | `vector-optimize`'s `precision` param does nothing                 | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-17 | The `/workflow-expert` skill's node inventory is stale             | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-18 | A Windows process test times out waiting 20 s for PowerShell       | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20              | docs        | Open                                             |
+| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links           | docs        | Open                                             |
 
 ---
 
@@ -50,12 +49,6 @@ Every package's `eslint.config.mjs` imports `../../eslint.config.base.mjs` (or `
 **Found:** October 23, 2026 (ISS-5, PR #740).
 
 CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:316-323`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.
-
-### ISS-11: The consent prompt suggests `bnto dry-run <path>`, which refuses paths
-
-**Found:** October 23, 2026 (ISS-1 part 2).
-
-When `bnto run` asks for consent, it suggests running `bnto dry-run {recipe_arg}` to inspect the commands (`engine/crates/bnto/src/consent.rs:42`), and declining says so again. For a recipe run by path, that command fails: `show_dry_run` resolves only catalog slugs (`engine/crates/bnto/src/inspect.rs`, `catalog.resolve(slug)`), so `bnto dry-run recipes/release-verify.bnto.json` prints `Error: Unknown recipe: …` and exits 1. Either let `bnto dry-run` read a recipe file as `bnto run` does (`run.rs` `read_recipe`), or suggest it only for slugs.
 
 ### ISS-12: Released CLIs send no telemetry: the PostHog key is never set
 

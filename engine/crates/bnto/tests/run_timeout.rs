@@ -218,7 +218,7 @@ fn test_check_refuses_a_time_limit_of_zero() {
 
 #[test]
 fn test_dry_run_preview_past_its_time_limit_is_stopped() {
-    // `dry-run` resolves catalog slugs only, so the recipe goes into a library.
+    // The recipe goes into a library and runs by slug (paths: dry_run_path.rs).
     let home = temp_output_dir();
     let library = home.path().join("recipes");
     std::fs::create_dir_all(&library).unwrap();
