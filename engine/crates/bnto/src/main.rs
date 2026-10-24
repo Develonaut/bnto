@@ -117,12 +117,14 @@ fn main() {
 /// Kill spawned command trees (shell-run children + grandchildren) on
 /// SIGINT/SIGTERM — they run in their own process groups, so the terminal's
 /// Ctrl+C no longer reaches them on its own. Then delete any run scratch
-/// dirs, which `process::exit` would otherwise leave behind, and name any
-/// output folder's staged swap copies, kept since one may be the only copy.
+/// dirs, which `process::exit` would otherwise leave behind. A write in
+/// progress stops at its next step first, then any output folder's staged
+/// swap copies are named, kept since one may be the only copy.
 fn install_signal_handler() {
     let _ = ctrlc::set_handler(|| {
         process_registry::global().terminate_all();
         scratch::remove_live_dirs();
+        ordered_write::GATE.stop_and_wait();
         ordered_write::report_kept_staging();
         process::exit(130);
     });

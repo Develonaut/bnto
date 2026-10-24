@@ -1,11 +1,14 @@
 // Copies set aside so a cycle of writes (a swap) can run.
 //
-// The copies live in a hidden `.bnto-staged-*` folder inside the output
-// folder, made only when a cycle needs one. A finished write removes it and
-// reports a removal that fails; a failed write keeps it, since a copy may
-// then be the only one left. Ctrl+C exits without destructors, so the signal
-// handler reports the folders still on disk (`report_kept_staging`), never
-// deleting them. `file-collect` skips folders with this prefix.
+// The copies live in a `.bnto-staged-*` folder inside the output folder
+// (hidden on Unix, not on Windows), made only when a cycle needs one. A
+// finished write removes it and reports a removal that fails. Anything else
+// keeps a folder holding copies, since one may be the only copy left: a
+// failed write names it in its error; a write stopped by a quitting process
+// or unwound by a panic leaves it registered, and the quitter (Ctrl+C
+// handler, TUI exit) names it with `report_kept_staging`. Nothing here ever
+// deletes a folder holding copies except `finish`. `file-collect` skips any
+// folder with this prefix.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
@@ -42,10 +45,11 @@ impl Staging {
 
     /// Keep the copies on disk (a failed write); where they are, if any.
     /// The caller reports the folder, so the signal handler no longer does.
+    /// A folder made for a copy that then failed holds no copy: removed.
     pub fn keep(&mut self) -> Option<PathBuf> {
-        let dir = self.dir.take().filter(|_| self.count > 0)?;
+        let dir = self.dir.take()?;
         unregister(dir.path());
-        Some(dir.keep())
+        (self.count > 0).then(|| dir.keep())
     }
 
     /// Remove the staging folder after a finished write, naming it if that
@@ -84,10 +88,18 @@ impl Staging {
 }
 
 impl Drop for Staging {
-    /// A staging dropped mid-write (a panic) is removed by its `TempDir`.
+    /// Dropped mid-write (a stop or a panic): a folder holding copies is
+    /// kept and stays registered for `report_kept_staging`; an empty one
+    /// is removed. A panic prints the warning too, since no quitter may.
     fn drop(&mut self) {
-        if let Some(dir) = &self.dir {
+        let Some(dir) = self.dir.take() else { return };
+        if self.count == 0 {
             unregister(dir.path());
+            return;
+        }
+        let kept = dir.keep();
+        if std::thread::panicking() {
+            warn(&kept_lines(std::slice::from_ref(&kept)));
         }
     }
 }
@@ -103,14 +115,31 @@ fn unregister(path: &Path) {
     lock_live().retain(|live| live != path);
 }
 
-/// Print a warning for each staging folder still on disk. Called by the
-/// Ctrl+C handler before `process::exit`, which skips destructors: an
-/// interrupted swap's copy may be the only one, so it's kept, not deleted.
+/// Whether `folder` is registered for the interrupt report.
+#[cfg(test)]
+pub fn is_registered(folder: &Path) -> bool {
+    lock_live().iter().any(|live| live == folder)
+}
+
+/// Drop a test's folder from the report, as `report_kept_staging` would.
+#[cfg(test)]
+pub fn forget(folder: &Path) {
+    unregister(folder);
+}
+
+/// Print a warning for each staging folder still registered: one a write
+/// left when it was stopped or panicked. Called by whatever ends the process
+/// once writes are stopped (`GATE.stop_and_wait`): the Ctrl+C handler before
+/// `process::exit`, and the TUI after it restores the terminal. The folders
+/// are kept, never deleted: an interrupted swap's copy may be the only one.
 pub fn report_kept_staging() {
+    warn(&kept_lines(&std::mem::take(&mut *lock_live())));
+}
+
+fn warn(lines: &[String]) {
     use colored::Colorize;
 
-    let dirs = std::mem::take(&mut *lock_live());
-    for line in kept_lines(&dirs) {
+    for line in lines {
         eprintln!("  {} {line}", "Warning:".yellow().bold());
     }
 }
@@ -118,7 +147,7 @@ pub fn report_kept_staging() {
 fn kept_lines(dirs: &[PathBuf]) -> Vec<String> {
     let line = |d: &PathBuf| {
         format!(
-            "interrupted mid-write; copies set aside for a swap are kept in {}",
+            "a write was interrupted; copies set aside for a swap are kept in {}",
             d.display()
         )
     };
@@ -172,10 +201,63 @@ mod tests {
 
     #[test]
     fn test_the_folder_is_named_as_file_collect_skips() {
-        let (_out, staging, copy) = staged();
+        let (_out, mut staging, copy) = staged();
         let folder = copy.parent().unwrap().file_name().unwrap();
         assert!(folder.to_string_lossy().starts_with(STAGED_COPIES_PREFIX));
+        staging.finish().unwrap();
+    }
+
+    #[test]
+    fn test_a_staging_dropped_mid_write_keeps_its_copies_for_the_report() {
+        // RED (ISS-48 review): a stop or a panic drops the staging before
+        // `finish` or `keep`; its TempDir used to delete what may be the
+        // only copy of a file.
+        let (_out, staging, copy) = staged();
         drop(staging);
+        assert_eq!(std::fs::read_to_string(&copy).unwrap(), "BBBB");
+        assert!(is_live(&copy), "the quitter must still be able to name it");
+        unregister(copy.parent().unwrap());
+    }
+
+    #[test]
+    fn test_a_panic_mid_write_keeps_the_staged_copies() {
+        // RED (ISS-48 review): unwinding ran the TempDir's delete.
+        let out = tempfile::tempdir().unwrap();
+        let file = out.path().join("b.txt");
+        std::fs::write(&file, "BBBB").unwrap();
+        let copy = std::sync::Mutex::new(None);
+        let panicked = std::panic::catch_unwind(|| {
+            let mut staging = Staging::new(out.path());
+            *copy.lock().unwrap() = Some(staging.stage(&file).unwrap());
+            panic!("a write panicked mid-swap");
+        });
+        assert!(panicked.is_err());
+        let copy = copy.into_inner().unwrap().unwrap();
+        assert_eq!(std::fs::read_to_string(&copy).unwrap(), "BBBB");
+        unregister(copy.parent().unwrap());
+    }
+
+    #[test]
+    fn test_a_staging_dropped_with_no_copy_is_removed() {
+        let out = tempfile::tempdir().unwrap();
+        let mut staging = Staging::new(out.path());
+        assert!(staging.stage(&out.path().join("missing.txt")).is_err());
+        drop(staging);
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn test_keeping_a_folder_with_no_copy_removes_and_unregisters_it() {
+        // RED (ISS-48 review, note 6): the copy failed after the folder was
+        // made; `keep` dropped it but left a stale entry for the report.
+        let out = tempfile::tempdir().unwrap();
+        let mut staging = Staging::new(out.path());
+        assert!(staging.stage(&out.path().join("missing.txt")).is_err());
+        let folder = std::fs::read_dir(out.path()).unwrap().next().unwrap();
+        let folder = folder.unwrap().path();
+        assert_eq!(staging.keep(), None);
+        assert!(!folder.exists());
+        assert!(!is_live(&folder));
     }
 
     #[test]

@@ -1,43 +1,57 @@
 // Destinations with different names that are one file on disk.
 //
-// `output_names` keeps names apart, but a symlink or hard link in the output
-// folder can still make two destinations one file. Ordering can't save both
-// writes then: the later copy replaces the earlier one through the link, and
-// a write that leaves its file as is (ISS-36) would be reported as kept while
-// the other write replaced it. Such a plan is refused, as `relocate` refuses
-// two moves onto one path. Two writes that both leave the file as is are fine.
+// `output_names` keeps names apart, but links can still make two
+// destinations one file: an existing file through a symlink or hard link
+// (matched by identity), or a new one through a folder symlink or a
+// dangling link (matched by where it lands, see `landing`). Ordering can't
+// save both writes then: the later copy replaces the earlier one, and a
+// write that leaves its file as is (ISS-36) would be reported as kept while
+// the other replaced it. Such a plan is refused, as `relocate` refuses two
+// moves onto one path. Two writes that both leave the file as is are fine.
 
 use std::path::{Path, PathBuf};
 
 use bnto_core::PipelineFileResult;
 use bnto_core::processor::FileData;
 
+use super::landing::landing_key;
 use super::readers::stamp;
 
 /// Each pair of writes `(i, j)`, `i < j`, whose destinations are one file
 /// though their names differ, unless both writes leave that file as is.
 pub fn shared_destinations(files: &[PipelineFileResult], paths: &[PathBuf]) -> Vec<(usize, usize)> {
-    let mut pairs = Vec::new();
-    for (i, j) in same_stamp_pairs(paths) {
-        let left_as_is = |k: usize| files[k].data.is_at(&paths[k]);
-        if same_file(&paths[i], &paths[j]) && !(left_as_is(i) && left_as_is(j)) {
-            pairs.push((i, j));
-        }
-    }
+    let identical = same_stamp_pairs(paths)
+        .into_iter()
+        .filter(|&(i, j)| same_file(&paths[i], &paths[j]));
+    let mut pairs: Vec<_> = identical.chain(same_landing_pairs(paths)).collect();
+    pairs.sort_unstable();
+    pairs.dedup();
+    let left_as_is = |k: usize| files[k].data.is_at(&paths[k]);
+    pairs.retain(|&(i, j)| !(left_as_is(i) && left_as_is(j)));
     pairs
 }
 
 /// Pairs of existing destinations sharing a stamp: the only ones that can be
 /// one file. Most runs write into an empty folder and get none.
 fn same_stamp_pairs(paths: &[PathBuf]) -> Vec<(usize, usize)> {
-    let mut stamped: Vec<_> = paths
+    let stamped = paths
         .iter()
         .enumerate()
-        .filter_map(|(i, p)| stamp(p).map(|s| (s, i)))
-        .collect();
-    stamped.sort();
-    let groups = stamped.chunk_by(|x, y| x.0 == y.0);
-    let pairs_in = |g: &[(_, usize)]| {
+        .filter_map(|(i, p)| stamp(p).map(|s| (s, i)));
+    pairs_by_key(stamped.collect())
+}
+
+/// Pairs of destinations that land on one path, new files included.
+fn same_landing_pairs(paths: &[PathBuf]) -> Vec<(usize, usize)> {
+    let keyed = paths.iter().enumerate().map(|(i, p)| (landing_key(p), i));
+    pairs_by_key(keyed.collect())
+}
+
+/// Every pair of indexes `(i, j)`, `i < j`, that share a key.
+fn pairs_by_key<K: Ord>(mut keyed: Vec<(K, usize)>) -> Vec<(usize, usize)> {
+    keyed.sort();
+    let groups = keyed.chunk_by(|x, y| x.0 == y.0);
+    let pairs_in = |g: &[(K, usize)]| {
         let ids: Vec<usize> = g.iter().map(|(_, i)| *i).collect();
         let pairs = (0..ids.len()).flat_map(|a| (a + 1..ids.len()).map(move |b| (a, b)));
         pairs.map(|(a, b)| (ids[a], ids[b])).collect::<Vec<_>>()
@@ -53,7 +67,7 @@ fn same_file(a: &Path, b: &Path) -> bool {
 pub fn describe(paths: &[PathBuf], pairs: &[(usize, usize)]) -> Vec<String> {
     let line = |&(i, j): &(usize, usize)| {
         format!(
-            "{} and {} are one file on disk (a link), so one write would replace the other",
+            "{} and {} are one file on disk (through a link), so one write would replace the other",
             paths[i].display(),
             paths[j].display()
         )
@@ -143,6 +157,20 @@ mod tests {
         let s = dir.path().join("s.txt");
         std::os::unix::fs::symlink("b.txt", &s).unwrap();
         let paths = [s, b.clone()];
+        assert_eq!(shared_destinations(&[from(&a), from(&b)], &paths), [(0, 1)]);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_two_new_files_through_a_folder_link_are_a_conflict() {
+        // ISS-48 review 2: neither exists, so only where they land tells.
+        let (_dir, a, b, _) = linked();
+        let out = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(".", out.path().join("sub")).unwrap();
+        let paths = [
+            out.path().join("sub").join("b.txt"),
+            out.path().join("b.txt"),
+        ];
         assert_eq!(shared_destinations(&[from(&a), from(&b)], &paths), [(0, 1)]);
     }
 

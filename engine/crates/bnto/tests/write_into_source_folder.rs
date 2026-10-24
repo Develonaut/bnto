@@ -286,3 +286,21 @@ fn test_two_inputs_that_are_one_file_left_as_is_still_run() {
     assert!(stderr.contains("2 already there, left as is"), "{stderr}");
     assert_eq!(std::fs::read_to_string(&b).unwrap(), "BBBB");
 }
+
+#[cfg(unix)]
+#[test]
+fn test_two_new_files_that_are_one_path_through_a_folder_link_are_refused() {
+    // RED (ISS-48 review 2): `out/sub` → `.`, so `sub/b.txt` (a renamed) and
+    // `b.txt` are one new file. Neither existed, so the identity check saw
+    // nothing; the run said `2 files written` and `out` held only BBBB.
+    let (_inputs, [a, b]) = two_inputs();
+    let out = temp_output_dir();
+    std::os::unix::fs::symlink(".", out.path().join("sub")).unwrap();
+    let to_sub = json!({ "id": "ren", "type": "file-rename",
+        "parameters": { "find": "a", "replace": "sub/b" } });
+    let output = run(&recipe(out.path(), &[to_sub]), &[&a, &b], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("are one file on disk"), "{stderr}");
+    assert!(!out.path().join("b.txt").exists(), "nothing is written");
+}

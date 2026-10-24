@@ -15,6 +15,7 @@ use super::screens::execution::{
 };
 use super::screens::results::format_duration;
 use super::theme::Theme;
+use super::wrap_lines::wrap_lines;
 
 /// Render the execution screen.
 pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Theme, area: Rect) {
@@ -34,7 +35,8 @@ pub fn draw_execution(frame: &mut ratatui::Frame, model: &AppModel, theme: &Them
         return;
     }
 
-    let header = header_lines(exec, theme, file_rows(exec, theme, inner.height));
+    let width = usize::from(inner.width);
+    let header = header_lines(exec, theme, file_rows(exec, theme, inner), width);
     let header_height = header.len() as u16;
 
     let [top, bottom] =
@@ -85,10 +87,11 @@ fn consent_lines<'a>(
 /// so a long FILES list can't push it off a short terminal.
 const MIN_OUTPUT_ROWS: usize = 4;
 
-/// How many FILES rows fit in a panel `height` rows tall, after the rest of
-/// the header and the OUTPUT pane's rows.
-fn file_rows(exec: &ExecutionModel, theme: &Theme, height: u16) -> usize {
-    let full = header_lines(exec, theme, usize::MAX).len();
+/// How many FILES rows fit in the `panel`, after the rest of the header and
+/// the OUTPUT pane's rows.
+fn file_rows(exec: &ExecutionModel, theme: &Theme, panel: Rect) -> usize {
+    let height = panel.height;
+    let full = header_lines(exec, theme, usize::MAX, usize::from(panel.width)).len();
     let file_lines = if show_files(exec) {
         exec.files.len()
     } else {
@@ -102,20 +105,36 @@ fn file_rows(exec: &ExecutionModel, theme: &Theme, height: u16) -> usize {
     usize::from(height).saturating_sub(full - file_lines + output)
 }
 
-/// Build header lines: status, steps, files (at most `file_rows`), errors.
-fn header_lines<'a>(exec: &'a ExecutionModel, theme: &'a Theme, file_rows: usize) -> Vec<Line<'a>> {
+/// Build header lines: status, steps, files (at most `file_rows`), errors
+/// (wrapped to `width`).
+fn header_lines<'a>(
+    exec: &'a ExecutionModel,
+    theme: &'a Theme,
+    file_rows: usize,
+    width: usize,
+) -> Vec<Line<'a>> {
     let mut lines = status_lines(exec, theme);
     lines.extend(steps_lines(exec, theme));
     if show_files(exec) {
         lines.extend(files_lines(exec, theme, file_rows));
     }
     if let Some(error) = &exec.error {
-        lines.push(Line::from(Span::styled(
-            format!("  Error: {error}"),
-            theme.heading(),
-        )));
+        lines.extend(error_lines(error, theme, width));
     }
     lines
+}
+
+/// The error, one row per line it holds, each wrapped to `width`: a failed
+/// write's later lines name where kept copies are, and must show in full.
+fn error_lines(error: &str, theme: &Theme, width: usize) -> Vec<Line<'static>> {
+    let row = |(i, part): (usize, &str)| {
+        let text = match i {
+            0 => format!("  Error: {part}"),
+            _ => format!("  {}", part.trim_start()),
+        };
+        Line::from(Span::styled(text, theme.heading()))
+    };
+    wrap_lines(error.lines().enumerate().map(row).collect(), width)
 }
 
 fn status_lines<'a>(exec: &ExecutionModel, theme: &Theme) -> Vec<Line<'a>> {
@@ -321,6 +340,53 @@ fn file_marker(status: &FileStatus, theme: &Theme) -> (&'static str, ratatui::st
 mod tests {
     use super::*;
     use crate::tui::screens::execution::{NodeProgress, NodeStatus};
+
+    /// The execution screen's text at `width` x `height`, rows joined.
+    fn screen_text(model: &AppModel, width: u16, height: u16) -> String {
+        use ratatui::{Terminal, backend::TestBackend};
+        let theme = Theme::from_variant(crate::tui::theme::ThemeVariant::LosAngeles);
+        let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+        terminal
+            .draw(|f| draw_execution(f, model, &theme, f.area()))
+            .unwrap();
+        let buffer = terminal.backend().buffer();
+        let row = |y| {
+            (0..width)
+                .map(|x| buffer[(x, y)].symbol())
+                .collect::<String>()
+        };
+        (0..height).map(row).collect::<Vec<_>>().join("\n")
+    }
+
+    #[test]
+    fn a_failed_writes_kept_copies_folder_is_shown_in_full() {
+        // RED (ISS-48 review): the write error's second line names the folder
+        // holding the only copy of a file; as one unwrapped line it was cut off.
+        use crate::tui::screens::execution::{self, ExecutionMessage};
+        let folder = "/Users/someone/Pictures/2026/holiday/.bnto-staged-Xy12Ab";
+        let error = format!(
+            "Cannot write /Users/someone/Pictures/2026/holiday/a.txt: Permission denied \
+             (os error 13)\n  Copies set aside for a swap are kept in {folder}"
+        );
+        let failed = ExecutionMessage::PipelineFailed {
+            node_id: String::new(),
+            error,
+        };
+        let home = tempfile::tempdir().unwrap();
+        let paths = crate::storage::BntoPaths {
+            home: home.path().to_path_buf(),
+        };
+        let variant = crate::tui::theme::ThemeVariant::LosAngeles;
+        let mut model = AppModel::with_paths(variant, None, false, paths);
+        model.execution = Some(execution::update(ExecutionModel::new("s"), failed));
+
+        let screen = screen_text(&model, 80, 24);
+        assert!(screen.contains(folder), "cut:\n{screen}");
+        assert!(
+            screen.contains("Copies set aside for a swap are kept in"),
+            "{screen}"
+        );
+    }
 
     #[test]
     fn a_skipped_node_is_marked_and_says_so() {

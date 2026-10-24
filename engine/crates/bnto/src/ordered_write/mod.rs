@@ -6,8 +6,12 @@
 // has been read; a swap stages one file aside first, as `bnto_file::relocate`
 // parks one file to run a swap of moves. A plan whose destinations are one
 // file through a link can't keep both, so it's refused before any write.
+// Every write goes through `GATE`, so a quitting process (Ctrl+C, the TUI
+// exiting) stops it between steps instead of ending it mid-copy.
 
 mod aliases;
+mod gate;
+mod landing;
 mod order;
 mod readers;
 mod staging;
@@ -22,6 +26,7 @@ use bnto_file::relocate;
 use order::Step;
 use staging::Staging;
 
+pub use gate::{GATE, WriteGate};
 pub use staging::report_kept_staging;
 
 /// Refuse a plan two of whose destinations are one file on disk (a link),
@@ -44,14 +49,32 @@ pub fn write_all(
     paths: &[PathBuf],
     output_dir: &Path,
 ) -> Result<(), String> {
+    write_through(&GATE, files, paths, output_dir)
+}
+
+/// What a write stopped by a quitting process reports. Nobody may read it:
+/// the quitter reports kept staging folders itself, then exits.
+const STOPPED: &str = "Stopped before every file was written: bnto is quitting";
+
+/// `write_all` through `gate`, which stops it between steps when bnto quits.
+fn write_through(
+    gate: &WriteGate,
+    files: &[PipelineFileResult],
+    paths: &[PathBuf],
+    output_dir: &Path,
+) -> Result<(), String> {
     check(files, paths)?;
-    let mut run = Run {
-        files,
-        paths,
-        staging: Staging::new(output_dir),
-        staged: HashMap::new(),
+    // First, so it drops last: a quitter waiting on the gate goes on only
+    // once the staging folder below is removed, or kept and registered.
+    let Some(_writing) = gate.enter() else {
+        return Err(STOPPED.to_string());
     };
+    let mut run = Run::new(files, paths, output_dir);
     for step in order::order(&readers::waits(files, paths)) {
+        if gate.stopping() {
+            // Dropping `run` keeps a folder holding copies, for the report.
+            return Err(STOPPED.to_string());
+        }
         if let Err(e) = run.step(step) {
             return Err(run.failed(e));
         }
@@ -67,7 +90,16 @@ struct Run<'a> {
     staged: HashMap<usize, FileData>,
 }
 
-impl Run<'_> {
+impl<'a> Run<'a> {
+    fn new(files: &'a [PipelineFileResult], paths: &'a [PathBuf], output_dir: &Path) -> Self {
+        Self {
+            files,
+            paths,
+            staging: Staging::new(output_dir),
+            staged: HashMap::new(),
+        }
+    }
+
     fn step(&mut self, step: Step) -> Result<(), String> {
         match step {
             Step::Stage { at, readers } => {

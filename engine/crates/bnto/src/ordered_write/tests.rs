@@ -171,3 +171,43 @@ fn test_destinations_that_are_one_file_are_refused_before_any_write() {
     assert_eq!(read(dir.path(), "b.txt"), "BBBB");
     assert_eq!(read(dir.path(), "l.txt"), "BBBB");
 }
+
+// --- a quitting process stops writes between steps ---
+
+#[test]
+fn test_a_write_after_quitting_writes_nothing() {
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let gate = WriteGate::new();
+    gate.stop_and_wait();
+    let paths = [src[1].clone(), src[0].clone()];
+
+    let error = write_through(&gate, &reading(&src), &paths, dir.path()).unwrap_err();
+
+    assert_eq!(error, STOPPED);
+    assert_eq!(read(dir.path(), "a.txt"), "AAAA");
+    assert_eq!(read(dir.path(), "b.txt"), "BBBB");
+    assert_eq!(names_in(dir.path()), 2, "no staging folder");
+}
+
+#[test]
+fn test_a_swap_stopped_between_steps_keeps_the_only_copy_for_the_report() {
+    // What a stop after `Write(0)` of a swap leaves: b.txt already holds
+    // a's content, so the staged copy is the only BBBB. Dropping the run (as
+    // `write_through` does on a stop) must keep it and leave it registered.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let paths = [src[1].clone(), src[0].clone()];
+    let files = reading(&src);
+    let mut run = Run::new(&files, &paths, dir.path());
+    let steps = order::order(&readers::waits(&files, &paths));
+    for step in steps.into_iter().take(2) {
+        run.step(step).unwrap();
+    }
+    drop(run);
+
+    let folders = staging_folders(dir.path());
+    assert_eq!(folders.len(), 1);
+    assert_eq!(read(&folders[0], "0-b.txt"), "BBBB");
+    assert_eq!(read(dir.path(), "b.txt"), "AAAA");
+    assert!(staging::is_registered(&folders[0]));
+    staging::forget(&folders[0]);
+}
