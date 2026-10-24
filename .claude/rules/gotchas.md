@@ -161,6 +161,8 @@ OutputFile { data: FileData::Path(path), .. }
 
 **The CLI's input files are `FileData::Path` too.** `bnto run` argument files enter the pipeline as references to the user's own files (`read_pipeline_file` in `bnto/src/io.rs`). So code that writes results out must use `copy_to()`, never `write_to()`: `write_to()` renames a `Path`, which would move the user's original into the output folder. Only `overwrite` mode renames sources, on purpose.
 
+**Never copy a file onto itself.** `std::fs::copy(p, p)` opens the destination for writing first, so it empties the file and returns `Ok(0)` (an output folder that is the input's own folder did this, ISS-36). `copy_to()` and `write_to()` check `FileData::is_at(dest)`, which compares file identity (`same-file`), not names, so `..`, symlinks, hard links and another case on macOS/Windows all count, and leave such a file as is. Any new code that opens a destination for writing from a `Path` source goes through `copy_to()` or makes the same check.
+
 ## Recipe Edges Route Files
 
 The engine honors a recipe's `edges` (see [engine-execution.md](../strategy/engine-execution.md#edges-and-data-flow)). Three things catch people out:

@@ -71,24 +71,34 @@ fn print_done(
     dry_run: bool,
 ) {
     let duration = format_duration(summary.duration_ms);
-    let count = summary.files_written;
-    let (written, renamed, tag) = done_wording(dry_run);
     let done = "Done.".green().bold();
     if let Some(message) = message {
+        let tag = done_wording(dry_run).2;
         eprintln!("\n{}\n\n{done} in {duration}{tag}", message_block(message));
         return;
     }
+    let text = done_text(outcome, summary.files_written, &duration, dry_run);
+    eprintln!("\n{done} {text}");
+}
+
+/// The `Done.` line's text after `Done.` for a write outcome; `count` is the
+/// files written or renamed.
+fn done_text(outcome: &io::WriteOutcome, count: usize, duration: &str, dry_run: bool) -> String {
+    let (written, renamed, tag) = done_wording(dry_run);
     match outcome {
-        io::WriteOutcome::Written { dir, .. } => eprintln!(
-            "\n{done} {count} file{} {written} to {dir}/ in {duration}{tag}",
+        io::WriteOutcome::Written { dir, unchanged, .. } => format!(
+            "{count} file{} {written} to {dir}/{} in {duration}{tag}",
             plural_s(count),
+            left_as_is_note(*unchanged, dry_run),
         ),
-        io::WriteOutcome::Overwritten { .. } => eprintln!(
-            "\n{done} {count} file{} {renamed} in {duration}{tag}",
-            plural_s(count),
-        ),
-        io::WriteOutcome::Message { summary: text } => eprintln!("\n{done} {text}{tag}"),
-        io::WriteOutcome::None => eprintln!("\n{done} in {duration}{tag}"),
+        io::WriteOutcome::Overwritten { .. } => {
+            format!(
+                "{count} file{} {renamed} in {duration}{tag}",
+                plural_s(count)
+            )
+        }
+        io::WriteOutcome::Message { summary: text } => format!("{text}{tag}"),
+        io::WriteOutcome::None => format!("in {duration}{tag}"),
     }
 }
 
@@ -115,6 +125,16 @@ fn done_wording(dry_run: bool) -> (&'static str, &'static str, &'static str) {
     } else {
         ("written", "renamed in place", "")
     }
+}
+
+/// ` (N already there, left as is)` for files a write found at their
+/// destination already (the source itself); empty when there were none.
+fn left_as_is_note(unchanged: usize, dry_run: bool) -> String {
+    if unchanged == 0 {
+        return String::new();
+    }
+    let verb = if dry_run { "would be left" } else { "left" };
+    format!(" ({unchanged} already there, {verb} as is)")
 }
 
 /// "" for one file, "s" otherwise.
@@ -162,6 +182,41 @@ mod tests {
     #[test]
     fn test_message_block_without_a_label_is_the_indented_text() {
         assert_eq!(message_block(&message(None, "a\nb")), "  a\n  b");
+    }
+
+    #[test]
+    fn test_left_as_is_note_only_when_a_file_was_already_there() {
+        assert_eq!(left_as_is_note(0, false), "");
+        assert_eq!(left_as_is_note(1, false), " (1 already there, left as is)");
+        assert_eq!(
+            left_as_is_note(2, true),
+            " (2 already there, would be left as is)"
+        );
+    }
+
+    fn written(unchanged: usize) -> io::WriteOutcome {
+        io::WriteOutcome::Written {
+            dir: "F".into(),
+            count: 0,
+            renamed: vec![],
+            unchanged,
+        }
+    }
+
+    #[test]
+    fn test_done_text_says_a_file_already_there_was_left_as_is() {
+        assert_eq!(
+            done_text(&written(1), 0, "1ms", false),
+            "0 files written to F/ (1 already there, left as is) in 1ms"
+        );
+        assert_eq!(
+            done_text(&written(1), 0, "1ms", true),
+            "0 files would be written to F/ (1 already there, would be left as is) in 1ms (dry run)"
+        );
+        assert_eq!(
+            done_text(&written(0), 1, "1ms", false),
+            "1 file written to F/ in 1ms"
+        );
     }
 
     #[test]

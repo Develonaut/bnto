@@ -33,6 +33,8 @@ impl FileData {
                 // Try rename first (O(1) on same filesystem).
                 match std::fs::rename(src, dest) {
                     Ok(()) => Ok(()),
+                    // Already there: copy + delete would empty, then remove it.
+                    Err(_) if self.is_at(dest) => Ok(()),
                     Err(_) => {
                         // Cross-device: fall back to copy + delete.
                         std::fs::copy(src, dest)?;
@@ -61,14 +63,28 @@ impl FileData {
     /// Copy file content to a destination path, preserving the source.
     ///
     /// `Bytes` writes data directly. `Path` copies the file on disk.
-    /// Unlike `write_to()`, the source file is never removed.
+    /// Unlike `write_to()`, the source file is never removed. A `Path`
+    /// already at `dest` (see `is_at`) is left as is: copying a file onto
+    /// itself opens it for writing first, which empties it.
     pub fn copy_to(&self, dest: &Path) -> Result<(), std::io::Error> {
         match self {
             FileData::Bytes(data) => std::fs::write(dest, data),
+            FileData::Path(_) if self.is_at(dest) => Ok(()),
             FileData::Path(src) => {
                 std::fs::copy(src, dest)?;
                 Ok(())
             }
+        }
+    }
+
+    /// True when this is a `Path` whose file `dest` already is, by identity
+    /// rather than by name: the same path, or one reaching the same file
+    /// through `..`, a symlink, a hard link or another case on a
+    /// case-insensitive filesystem. False for `Bytes` or a missing `dest`.
+    pub fn is_at(&self, dest: &Path) -> bool {
+        match self {
+            FileData::Path(src) => same_file::is_same_file(src, dest).unwrap_or(false),
+            FileData::Bytes(_) => false,
         }
     }
 
@@ -222,5 +238,102 @@ mod tests {
 
         let data = FileData::Path(path);
         assert_eq!(data.into_bytes().unwrap(), b"disk content");
+    }
+
+    // --- Never copy a file onto itself (ISS-36) ---
+
+    const KEPT: &[u8] = b"important";
+
+    /// `dir/a.txt` holding `KEPT`, the source every same-file test copies.
+    fn source(dir: &Path) -> PathBuf {
+        let src = dir.join("a.txt");
+        std::fs::write(&src, KEPT).unwrap();
+        src
+    }
+
+    /// Copy `src` to `dest`, which names `src` itself, and check it survived.
+    fn assert_copy_leaves(src: &Path, dest: &Path) {
+        let data = FileData::Path(src.to_path_buf());
+        data.copy_to(dest).unwrap();
+        assert_eq!(std::fs::read(src).unwrap(), KEPT, "copy onto itself");
+        assert!(data.is_at(dest), "{} is {}", dest.display(), src.display());
+    }
+
+    #[test]
+    fn test_copy_to_the_same_path_leaves_the_file_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        assert_copy_leaves(&src, &src);
+    }
+
+    #[test]
+    fn test_copy_to_the_same_file_through_dot_dot_leaves_it_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        std::fs::create_dir(temp.path().join("sub")).unwrap();
+        assert_copy_leaves(&src, &temp.path().join("sub").join("..").join("a.txt"));
+    }
+
+    #[test]
+    fn test_copy_to_a_hard_link_of_the_source_leaves_it_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        let link = temp.path().join("link.txt");
+        std::fs::hard_link(&src, &link).unwrap();
+        assert_copy_leaves(&src, &link);
+    }
+
+    #[test]
+    fn test_copy_to_the_same_file_in_another_case_leaves_it_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        let other_case = temp.path().join("A.TXT");
+        if !other_case.exists() {
+            return; // case-sensitive filesystem: `A.TXT` is another file.
+        }
+        assert_copy_leaves(&src, &other_case);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_copy_to_the_same_file_through_a_symlinked_folder_leaves_it_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let dir = temp.path().join("real");
+        std::fs::create_dir(&dir).unwrap();
+        let src = source(&dir);
+        let linked = temp.path().join("linked");
+        std::os::unix::fs::symlink(&dir, &linked).unwrap();
+        assert_copy_leaves(&src, &linked.join("a.txt"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_copy_to_a_symlink_pointing_at_the_source_leaves_it_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        let link = temp.path().join("link.txt");
+        std::os::unix::fs::symlink(&src, &link).unwrap();
+        assert_copy_leaves(&src, &link);
+    }
+
+    #[test]
+    fn test_is_at_only_for_the_source_file_itself() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        let twin = temp.path().join("twin.txt");
+        std::fs::write(&twin, KEPT).unwrap();
+        let data = FileData::Path(src.clone());
+        assert!(!data.is_at(&twin), "same bytes, different file");
+        assert!(!data.is_at(&temp.path().join("missing.txt")));
+        assert!(!FileData::Bytes(KEPT.to_vec()).is_at(&src));
+    }
+
+    #[test]
+    fn test_write_to_the_same_path_keeps_the_file() {
+        // Guard: a move onto itself is a no-op, never copy-then-delete.
+        let temp = tempfile::tempdir().unwrap();
+        let src = source(temp.path());
+        FileData::Path(src.clone()).write_to(&src).unwrap();
+        assert_eq!(std::fs::read(&src).unwrap(), KEPT);
     }
 }

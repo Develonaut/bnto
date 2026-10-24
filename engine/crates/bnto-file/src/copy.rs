@@ -810,6 +810,52 @@ mod tests {
     }
 
     #[test]
+    fn test_overwrite_into_the_source_folder_leaves_the_file_as_is() {
+        // ISS-36: the destination is the source itself, so a copy would
+        // truncate it to 0 bytes.
+        let dir = TempDir::new().unwrap();
+        let src = dir.path().join("a.txt");
+        fs::write(&src, b"important").unwrap();
+        let input = NodeInput {
+            data: FileData::Path(src.clone()),
+            filename: "a.txt".to_string(),
+            mime_type: None,
+            params: params(&[
+                (
+                    "destination",
+                    serde_json::json!(dir.path().to_str().unwrap()),
+                ),
+                ("conflict", serde_json::json!("overwrite")),
+            ]),
+        };
+        FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        assert_eq!(fs::read(&src).unwrap(), b"important");
+    }
+
+    #[test]
+    fn test_newer_into_the_source_folder_is_up_to_date_and_unchanged() {
+        // Guard: the same file has the same time, so `newer` never copies.
+        let (_root, src, _dest) = newer_fixture(100_000);
+        let dir = src.parent().unwrap().to_path_buf();
+        let input = NodeInput {
+            data: FileData::Path(src.clone()),
+            filename: "src.txt".to_string(),
+            mime_type: None,
+            params: params(&[
+                ("destination", serde_json::json!(dir.to_str().unwrap())),
+                ("conflict", serde_json::json!("newer")),
+            ]),
+        };
+        let out = FileCopy::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        assert_eq!(flags(&out), (0, 1, 0));
+        assert_eq!(fs::read(&src).unwrap(), b"new bytes");
+    }
+
+    #[test]
     fn test_newer_never_deletes_destination_only_files() {
         let (_root, src, dest) = newer_fixture(100_000);
         put_target(&dest, 10_000);

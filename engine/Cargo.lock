@@ -187,6 +187,7 @@ dependencies = [
 name = "bnto-core"
 version = "0.18.2"
 dependencies = [
+ "same-file",
  "serde",
  "serde_json",
  "tempfile",
