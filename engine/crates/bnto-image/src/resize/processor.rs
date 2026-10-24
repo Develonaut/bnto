@@ -917,4 +917,111 @@ mod tests {
         assert_eq!(w, 30, "Rot180: width=30");
         assert_eq!(h, 20, "Rot180: aspect 3:2 preserved → height=20");
     }
+
+    // =========================================================================
+    // enlarge — leave images smaller than the target alone
+    // =========================================================================
+
+    /// A large JPEG image (1200×800).
+    const TEST_LARGE_JPEG: &[u8] = include_bytes!("../../../../../test-fixtures/images/large.jpg");
+
+    fn with_enlarge(
+        mut params: serde_json::Map<String, serde_json::Value>,
+        enlarge: bool,
+    ) -> serde_json::Map<String, serde_json::Value> {
+        params.insert("enlarge".to_string(), serde_json::Value::Bool(enlarge));
+        params
+    }
+
+    fn resized_dimensions(
+        data: &[u8],
+        params: serde_json::Map<String, serde_json::Value>,
+    ) -> (u32, u32) {
+        let input = make_input(data, "photo.jpg", params);
+        let output = ResizeImages::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        get_image_dimensions(file_bytes(&output.files[0].data))
+    }
+
+    #[test]
+    fn test_get_enlarge_default_true() {
+        assert!(ResizeImages::get_enlarge(&serde_json::Map::new()));
+    }
+
+    #[test]
+    fn test_get_enlarge_explicit_false() {
+        assert!(!ResizeImages::get_enlarge(&with_enlarge(
+            width_params(800),
+            false
+        )));
+    }
+
+    #[test]
+    fn test_metadata_declares_enlarge() {
+        let meta = ResizeImages::new().metadata();
+        let enlarge = meta
+            .parameters
+            .iter()
+            .find(|p| p.name == "enlarge")
+            .unwrap();
+        assert_eq!(enlarge.label, "Enlarge Smaller Images");
+        assert!(matches!(
+            enlarge.param_type,
+            bnto_core::metadata::ParameterType::Boolean
+        ));
+        assert_eq!(enlarge.default, Some(serde_json::json!(true)));
+        assert_eq!(enlarge.group.as_deref(), Some("dimensions"));
+    }
+
+    #[test]
+    fn test_resize_no_enlarge_keeps_400px_image() {
+        let params = with_enlarge(width_params(800), false);
+        assert_eq!(resized_dimensions(TEST_MEDIUM_JPEG, params), (400, 400));
+    }
+
+    #[test]
+    fn test_resize_enlarge_scales_400px_image_up() {
+        let params = with_enlarge(width_params(800), true);
+        assert_eq!(resized_dimensions(TEST_MEDIUM_JPEG, params), (800, 800));
+    }
+
+    #[test]
+    fn test_resize_no_enlarge_still_shrinks_large_image() {
+        // 1200×800 at width 800 → 800×533, whatever enlarge says.
+        for enlarge in [true, false] {
+            let params = with_enlarge(width_params(800), enlarge);
+            assert_eq!(resized_dimensions(TEST_LARGE_JPEG, params), (800, 533));
+        }
+    }
+
+    #[test]
+    fn test_resize_no_enlarge_height_only() {
+        let small = with_enlarge(height_params(600), false);
+        assert_eq!(resized_dimensions(TEST_MEDIUM_JPEG, small), (400, 400));
+        let large = with_enlarge(height_params(400), false);
+        assert_eq!(resized_dimensions(TEST_LARGE_JPEG, large), (600, 400));
+    }
+
+    #[test]
+    fn test_resize_no_enlarge_metadata_reports_kept_size() {
+        let input = make_input(
+            TEST_MEDIUM_JPEG,
+            "photo.jpg",
+            with_enlarge(width_params(800), false),
+        );
+        let output = ResizeImages::new()
+            .process(input, &ProgressReporter::new_noop(), &NoopContext)
+            .unwrap();
+        assert_eq!(output.metadata["newWidth"], 400);
+        assert_eq!(output.metadata["newHeight"], 400);
+    }
+
+    #[test]
+    fn test_resize_no_enlarge_uses_oriented_dimensions() {
+        // Stored 60×40, orientation 6 (rotate 90°) → 40×60 as shown. Width 100 keeps 40×60.
+        let exif_jpeg = inject_exif_orientation(&create_test_jpeg(60, 40), 6);
+        let params = with_enlarge(width_params(100), false);
+        assert_eq!(resized_dimensions(&exif_jpeg, params), (40, 60));
+    }
 }

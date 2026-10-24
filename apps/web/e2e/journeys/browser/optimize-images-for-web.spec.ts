@@ -51,6 +51,22 @@ test.describe("optimize-images-for-web — browser execution @browser", () => {
     expect(dims.height).toBeLessThan(800);
   });
 
+  test("image narrower than 800px keeps its size", async ({ page }) => {
+    await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
+
+    // medium.jpg is 400x400: the resize step must not enlarge it to 800x800.
+    await uploadFiles(page, [path.join(IMAGE_FIXTURES_DIR, "medium.jpg")]);
+
+    await runAndComplete(page);
+
+    const buffer = await downloadAndVerify(page, {
+      filenamePattern: /\.webp$/i,
+      magicBytes: MAGIC.WEBP_RIFF,
+    });
+
+    expect(getWebPDimensions(buffer)).toEqual({ width: 400, height: 400 });
+  });
+
   test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {
     await navigateToRecipe(page, "optimize-images-for-web", "Optimize Images for Web Online Free");
 

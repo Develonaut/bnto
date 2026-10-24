@@ -55,6 +55,7 @@
       },
       "metadata": {},
       "parameters": {
+        "enlarge": false,
         "maintainAspect": true,
         "quality": 80,
         "width": 150
