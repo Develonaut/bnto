@@ -204,14 +204,14 @@ pub fn dry_run_recipe(recipe_arg: &str, definition_json: &str, inputs: &[String]
 **Sandboxed CLI** (`helpers::Sandbox`):
 
 - An absolute path and a relative path to `fixtures/shell-file-input.bnto.json` both preview.
-- **The journey:** declining `bnto run <path> <input>` prints `bnto dry-run <path>`, and that exact command then exits 0.
+- **The journey:** declining `bnto run <path> -p key=value <input>` prints `bnto dry-run <path> -p key=value` (each word quoted when it needs it), and that exact command then exits 0, for a recipe with a required field too.
 - An unfilled `{{fields.*}}` in a path recipe exits 1.
 - A missing file exits 1, and so does invalid JSON.
 
 ### Verification
 
 ```bash
-cd engine && cargo test -p bnto recipe_source dry_run && cargo test -p bnto --no-fail-fast --test dry_run_path --test cli_commands --test unfilled_fields
+cd engine && cargo test -p bnto --bin bnto recipe_source && cargo test -p bnto --bin bnto dry_run && cargo test -p bnto --no-fail-fast --test dry_run_path --test cli_commands --test unfilled_fields
 task check
 ```
 
@@ -232,12 +232,12 @@ These files start `bnto` with no HOME or BNTO_HOME, so every run writes a sessio
 - `progressive_output`, `report_file_names`, `run_args`, `run_json`, `run_temp_files`, `shell_each`, `shell_options`
 - `dry_run_temp_files` and `run_timeout`
 
-All their paths are absolute. Where a test sets its own working directory (`shell_each`, `shell_options`) or temp vars (`file_join`, `run_temp_files`), it sets them after `sandbox.command()`, so they still win. Library-only workarounds (`dry_run_temp_files`, `run_timeout`) write into `sandbox.bnto_home()`.
+All their paths are absolute. Where a test sets its own working directory (`shell_each`, `shell_options`) or temp vars (`file_join`, `run_temp_files`), it sets them after `sandbox.command()`, so they still win. The library workarounds for `bnto dry-run` (`dry_run_temp_files`, `run_timeout`) write into `sandbox.bnto_home()`, or pass the fixture path, which `bnto dry-run` takes since PR 4.
 
 ### Files (~0 new, ~19 modified)
 
 - The 18 test files above
-- `tests/helpers/sandbox.rs`: add `home()` and `work()`
+- `tests/helpers/sandbox.rs`: add `home()`. PR 4 already added `work_dir()` (the working directory) and `sh()`; use those, don't add a second accessor
 
 ### RED tests
 

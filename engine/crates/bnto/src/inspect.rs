@@ -31,15 +31,13 @@ pub fn show_dry_run(
     yes: bool,
     catalog: &RecipeCatalog,
 ) {
-    let Ok(json) = recipe_source::read_recipe(recipe_arg, catalog) else {
-        exit_unknown_recipe(recipe_arg);
-    };
+    let json = read_recipe(recipe_arg, catalog);
     refuse_unsupported_host(recipe_arg, &json);
     or_exit(refuse_unfilled(&json, param_overrides));
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
     if !inputs.is_empty() {
-        check_trust(recipe_arg, &json, yes, catalog);
+        check_trust(recipe_arg, &json, param_overrides, yes, catalog);
         dry_run::print_shell_note(&json);
     }
     let result = or_exit(dry_run::dry_run_recipe(
@@ -49,6 +47,19 @@ pub fn show_dry_run(
         param_overrides,
     ));
     dry_run::print_dry_run(recipe_arg, &result);
+}
+
+/// The recipe's JSON (a slug, else a path), or exit: "Unknown recipe" when
+/// there's no such slug or file, else the read error, as `bnto run` gives.
+fn read_recipe(recipe_arg: &str, catalog: &RecipeCatalog) -> String {
+    match recipe_source::read_recipe(recipe_arg, catalog) {
+        Ok(json) => json,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => exit_unknown_recipe(recipe_arg),
+        Err(e) => {
+            eprintln!("{} {e}", "Error reading recipe:".red());
+            process::exit(1);
+        }
+    }
 }
 
 /// Stop a recipe with no branch for this OS, as `bnto run` does: a preview
@@ -69,9 +80,9 @@ fn or_exit<T>(result: Result<T, String>) -> T {
     })
 }
 
-/// Report an unknown recipe slug, then exit.
-fn exit_unknown_recipe(slug: &str) -> ! {
-    eprintln!("{} Unknown recipe: {slug}", "Error:".red());
+/// Report an unknown recipe (for dry-run: no such slug or file), then exit.
+fn exit_unknown_recipe(recipe_arg: &str) -> ! {
+    eprintln!("{} Unknown recipe: {recipe_arg}", "Error:".red());
     eprintln!("Run {} to see available recipes.", "bnto list".cyan());
     process::exit(1);
 }

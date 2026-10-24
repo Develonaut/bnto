@@ -28,6 +28,7 @@ mod context;
 mod dispatch;
 mod doctor;
 pub mod dry_run;
+mod dry_run_hint;
 mod field_owner;
 mod host_support;
 mod info;

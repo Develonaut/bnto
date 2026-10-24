@@ -64,25 +64,63 @@ fn dry_run_previews_a_recipe_by_relative_path() {
     assert_shell_preview(&output);
 }
 
-#[test]
-fn the_dry_run_a_declined_run_suggests_works() {
-    let sandbox = Sandbox::new();
-    shell_recipe_in_work_dir(&sandbox);
+/// Decline `bnto run <args>` (stdin closed) and return the command line it
+/// suggests, e.g. `bnto dry-run recipe.bnto.json -p version=1.2.3`.
+fn declined_suggestion(sandbox: &Sandbox, args: &[&str]) -> String {
     let declined = sandbox
         .command()
-        .args(["run", SHELL_RECIPE, &fixture_image("small.jpg")])
+        .arg("run")
+        .args(args)
         .stdin(Stdio::null())
         .output()
         .unwrap();
     let err = stderr(&declined);
     assert_eq!(declined.status.code(), Some(1), "{err}");
-    let suggested = err
+    let line = err
         .split("Run bnto dry-run ")
         .nth(1)
         .and_then(|rest| rest.split(" (without input files)").next())
         .unwrap_or_else(|| panic!("no dry-run suggestion: {err}"));
-    assert_eq!(suggested, SHELL_RECIPE);
-    assert_shell_preview(&dry_run(&sandbox, &[suggested]));
+    format!("bnto dry-run {line}")
+}
+
+#[test]
+fn the_dry_run_a_declined_run_suggests_works() {
+    let sandbox = Sandbox::new();
+    shell_recipe_in_work_dir(&sandbox);
+    let image = fixture_image("small.jpg");
+    let suggested = declined_suggestion(&sandbox, &[SHELL_RECIPE, &image]);
+    assert_eq!(suggested, format!("bnto dry-run {SHELL_RECIPE}"));
+    assert_shell_preview(&dry_run(&sandbox, &[SHELL_RECIPE]));
+}
+
+#[test]
+fn a_declined_runs_suggestion_carries_its_params() {
+    // release-verify's shape: the dry run needs the same -p as the run.
+    let sandbox = Sandbox::new();
+    std::fs::write(sandbox.work_dir().join("unset.bnto.json"), UNSET_VERSION).unwrap();
+    let args = ["unset.bnto.json", "-p", "version=1.2.3"];
+    let suggested = declined_suggestion(&sandbox, &args);
+    assert_eq!(suggested, "bnto dry-run unset.bnto.json -p version=1.2.3");
+    let words: Vec<&str> = suggested.split_whitespace().skip(2).collect();
+    let output = dry_run(&sandbox, &words);
+    assert!(output.status.success(), "stderr: {}", stderr(&output));
+    assert!(stdout(&output).contains("1.2.3"), "{}", stdout(&output));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_declined_runs_suggestion_pastes_into_a_shell_as_printed() {
+    // A path with a space and a value with a space and a quote must each
+    // stay one argument when the suggestion is pasted.
+    let sandbox = Sandbox::new();
+    std::fs::write(sandbox.work_dir().join("my unset.bnto.json"), UNSET_VERSION).unwrap();
+    let args = ["my unset.bnto.json", "-p", "version=1.2 it's"];
+    let suggested = declined_suggestion(&sandbox, &args);
+    let line = suggested.replacen("bnto ", "\"$BNTO\" ", 1);
+    let output = sandbox.sh(&line).stdin(Stdio::null()).output().unwrap();
+    assert!(output.status.success(), "{line}: {}", stderr(&output));
+    assert!(stdout(&output).contains("1.2 it's"), "{}", stdout(&output));
 }
 
 #[test]
@@ -138,6 +176,18 @@ fn dry_run_of_a_missing_file_exits_1() {
     let err = stderr(&output);
     assert_eq!(output.status.code(), Some(1), "{err}");
     assert!(err.contains("Unknown recipe: missing.bnto.json"), "{err}");
+}
+
+#[test]
+fn dry_run_of_an_unreadable_path_reports_the_read_error() {
+    // A directory exists but isn't a recipe file: say why, not "unknown".
+    let sandbox = Sandbox::new();
+    std::fs::create_dir(sandbox.work_dir().join("folder.bnto.json")).unwrap();
+    let output = dry_run(&sandbox, &["folder.bnto.json"]);
+    let err = stderr(&output);
+    assert_eq!(output.status.code(), Some(1), "{err}");
+    assert!(err.contains("Error reading recipe:"), "{err}");
+    assert!(!err.contains("Unknown recipe"), "{err}");
 }
 
 #[test]

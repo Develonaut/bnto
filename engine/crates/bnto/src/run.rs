@@ -66,8 +66,7 @@ pub fn run_recipe(
     catalog: &RecipeCatalog,
 ) {
     let verdict = RunVerdict::new(flags.json);
-    let raw_json = recipe_source::read_recipe(recipe_path, catalog);
-    let raw_json = verdict.or_fail(raw_json, "Error reading recipe:");
+    let raw_json = read_recipe(recipe_path, catalog, &verdict);
     refuse_unsupported_host(recipe_path, &raw_json, &verdict);
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
@@ -75,7 +74,7 @@ pub fn run_recipe(
     // Before consent, so nobody approves a run the engine would refuse.
     let unfilled = refuse_unfilled(&raw_json, param_overrides);
     verdict.or_fail(unfilled, "Error:");
-    check_trust(recipe_path, &raw_json, flags.yes, catalog);
+    check_trust(recipe_path, &raw_json, param_overrides, flags.yes, catalog);
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
     let limited = run_limit::apply(&prepared.definition_json, flags.timeout);
@@ -141,6 +140,14 @@ fn refuse_unsupported_host(recipe_path: &str, raw_json: &str, verdict: &RunVerdi
     if let Some(why) = host_support::unsupported_host(recipe_path, raw_json, host) {
         verdict.fail("Error:", why);
     }
+}
+
+/// The recipe's JSON (`recipe_source`'s slug-else-path), or the run fails.
+fn read_recipe(recipe_path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
+    verdict.or_fail(
+        recipe_source::read_recipe(recipe_path, catalog),
+        "Error reading recipe:",
+    )
 }
 
 /// Collect file count, byte total and the recipe's telemetry label.

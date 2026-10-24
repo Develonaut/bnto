@@ -200,6 +200,7 @@ src/
 +-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
 +-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
++-- dry_run_hint.rs        # The quoted `bnto dry-run … -p …` line a declined run suggests
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)
 +-- check_targets.rs       # `bnto check` arguments to recipe files (a folder walked recursively, sorted)

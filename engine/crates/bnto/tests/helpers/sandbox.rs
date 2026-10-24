@@ -24,7 +24,19 @@ impl Sandbox {
     /// `bnto` run inside the sandbox. Telemetry is off by env, which also
     /// keeps Windows (whose config dir ignores env vars) from writing state.
     pub fn command(&self) -> Command {
-        let mut cmd = Command::new(bnto_bin());
+        self.sandboxed(Command::new(bnto_bin()))
+    }
+
+    /// `sh -c <line>` inside the sandbox, for a command line bnto printed:
+    /// `$BNTO` is the bnto binary, so `line` can say `"$BNTO" run …`.
+    #[cfg(unix)]
+    pub fn sh(&self, line: &str) -> Command {
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", line]).env("BNTO", bnto_bin());
+        self.sandboxed(cmd)
+    }
+
+    fn sandboxed(&self, mut cmd: Command) -> Command {
         cmd.current_dir(self.work.path())
             .env("HOME", self.home.path())
             .env("BNTO_HOME", self.bnto_home())
