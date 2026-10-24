@@ -277,6 +277,49 @@ mod tests {
         assert_eq!(plan(dir.path(), files).0, ["b.txt", "b_1.txt"]);
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn test_a_made_up_name_skips_a_file_in_a_folder_it_cannot_list() {
+        // RED (data loss): with write but no read permission the listing
+        // came back empty, so the user's `b_1.txt` was replaced.
+        use std::os::unix::fs::PermissionsExt;
+        let dir = folder_with(&[("b_1.txt", b"CCCC")]);
+        let set = |mode| {
+            let mode = std::fs::Permissions::from_mode(mode);
+            std::fs::set_permissions(dir.path(), mode).unwrap();
+        };
+        set(0o300);
+        let claimed = claims_in(dir.path(), &["b.txt", "b.txt"]);
+        set(0o700);
+        assert_eq!(claimed, ["b.txt", "b_2.txt"]);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn test_a_made_up_name_skips_a_file_spelled_in_another_unicode_form() {
+        // RED (data loss): APFS takes the NFD `café_1.txt` there as the NFC
+        // name the run makes up, but the listing's spelling didn't match.
+        let dir = folder_with(&[("cafe\u{301}_1.txt", b"CCCC")]);
+        assert_eq!(
+            claims_in(dir.path(), &["caf\u{e9}.txt", "caf\u{e9}.txt"]),
+            ["caf\u{e9}.txt", "caf\u{e9}_2.txt"]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_a_made_up_name_skips_a_link_even_to_the_same_bytes() {
+        // RED: only a regular file holding the bytes may be taken; a write
+        // through a link would land on whatever it points at.
+        let dir = folder_with(&[("target.txt", NEW)]);
+        let link = dir.path().join("b_1.txt");
+        std::os::unix::fs::symlink(dir.path().join("target.txt"), link).unwrap();
+        assert_eq!(
+            claims_in(dir.path(), &["b.txt", "b.txt"]),
+            ["b.txt", "b_2.txt"]
+        );
+    }
+
     #[test]
     fn test_a_results_own_name_still_replaces_a_file_by_that_name() {
         // Guards write mode's contract: only a file with the same name as

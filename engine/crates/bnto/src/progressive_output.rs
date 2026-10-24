@@ -99,13 +99,42 @@ mod tests {
             b"second"
         );
 
-        // The final write gets the iterations' own files, as a run does.
-        let result = PipelineResult {
-            files: iterations
-                .into_iter()
+        // A loop that ends the recipe hands the final write its own files.
+        crate::io::write_results(&text_result(&iterations), dir).unwrap();
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
+    }
+
+    #[test]
+    fn a_step_after_the_loop_leaves_the_loops_suffixed_copy() {
+        // Pins a deliberate change: when a step after the loop changes its
+        // files, the final write finds the loop's `logo_1.svg` holding other
+        // bytes and can't tell it from a user's file, so it keeps it and
+        // writes `logo_2.svg`. It used to replace it (2 files, not 3).
+        let out = tempfile::tempdir().unwrap();
+        let dir = out.path().to_str().unwrap();
+        let mut names = OutputNames::default();
+        for (name, body) in [("Logo.svg", "first"), ("logo.svg", "second")] {
+            let files = [output(name, FileData::Bytes(body.into()))];
+            write_progressive_files(dir, &files, &mut names);
+        }
+        let changed = [("Logo.svg", "final-1"), ("logo.svg", "final-2")];
+        crate::io::write_results(&text_result(&changed), dir).unwrap();
+
+        let read = |name: &str| std::fs::read_to_string(out.path().join(name)).unwrap();
+        assert_eq!(read("Logo.svg"), "final-1");
+        assert_eq!(read("logo_1.svg"), "second");
+        assert_eq!(read("logo_2.svg"), "final-2");
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 3);
+    }
+
+    /// A pipeline result of text files, each `(name, body)`.
+    fn text_result(files: &[(&str, &str)]) -> PipelineResult {
+        PipelineResult {
+            files: files
+                .iter()
                 .map(|(name, body)| PipelineFileResult {
                     name: name.to_string(),
-                    data: FileData::Bytes(body.into()),
+                    data: FileData::Bytes(body.as_bytes().to_vec()),
                     mime_type: "text/plain".to_string(),
                     metadata: serde_json::Map::new(),
                 })
@@ -113,9 +142,7 @@ mod tests {
             duration_ms: 0,
             warnings: vec![],
             node_metadata: Default::default(),
-        };
-        crate::io::write_results(&result, dir).unwrap();
-        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
+        }
     }
 
     #[test]
@@ -126,27 +153,13 @@ mod tests {
         let out = tempfile::tempdir().unwrap();
         let dir = out.path().to_str().unwrap();
         std::fs::write(out.path().join("b_1.txt"), "CCCC").unwrap();
-        let bodies = ["AAAA", "BBBB"];
+        let iterations = [("b.txt", "AAAA"), ("b.txt", "BBBB")];
         let mut names = OutputNames::default();
-        for body in bodies {
-            let files = [output("b.txt", FileData::Bytes(body.into()))];
+        for (name, body) in iterations {
+            let files = [output(name, FileData::Bytes(body.into()))];
             write_progressive_files(dir, &files, &mut names);
         }
-        let result = PipelineResult {
-            files: bodies
-                .into_iter()
-                .map(|body| PipelineFileResult {
-                    name: "b.txt".to_string(),
-                    data: FileData::Bytes(body.into()),
-                    mime_type: "text/plain".to_string(),
-                    metadata: serde_json::Map::new(),
-                })
-                .collect(),
-            duration_ms: 0,
-            warnings: vec![],
-            node_metadata: Default::default(),
-        };
-        crate::io::write_results(&result, dir).unwrap();
+        crate::io::write_results(&text_result(&iterations), dir).unwrap();
 
         let read = |name: &str| std::fs::read_to_string(out.path().join(name)).unwrap();
         assert_eq!(read("b_1.txt"), "CCCC");

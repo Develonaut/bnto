@@ -205,7 +205,7 @@ CI runs the engine's fmt, clippy, and tests on Windows as well as Linux (`rust-w
   let name = bnto_core::slash_path(rel);
   ```
 
-- **Names that differ only in case are one file.** On Windows and macOS `Logo.svg` and `logo.svg` share a path, so code that puts several files in one folder compares names case-folded on every OS, so a recipe acts the same everywhere. Moves and renames go through `bnto_file::relocate` (refuses the plan). The CLI's `--output` writes go through `bnto/src/output_names.rs` (later file becomes `logo_1.svg`, or the next number not already in the folder). Don't key a "taken names" set on the raw name.
+- **Names that differ only in case are one file.** On Windows and macOS `Logo.svg` and `logo.svg` share a path, so code that puts several files in one folder compares names case-folded on every OS, so a recipe acts the same everywhere. Moves and renames go through `bnto_file::relocate` (refuses the plan). The CLI's `--output` writes go through `bnto/src/output_names.rs` (later file becomes `logo_1.svg`, or the next number not already in the folder; a file with exactly that name holding exactly the same bytes may be taken, since writing it again loses nothing). Don't key a "taken names" set on the raw name.
 - **No `/nonexistent`-style absolute paths in tests.** On Windows `/nonexistent` resolves to `C:\nonexistent` and may be creatable, so "can't be created" tests write outside the sandbox and pass or fail by accident. To get a path that can't be created, put it under a regular file in a temp dir:
 
   ```rust

@@ -20,20 +20,19 @@ use crate::{host_support, input, io, run_limit};
 
 mod events;
 mod output;
+mod reporter;
 
-pub use crate::progressive_output::write_progressive_files;
 pub use events::map_pipeline_event;
 use output::extract_file_metadata;
 pub use output::{FileResultMeta, build_output_files};
+use reporter::{channel_reporter, progressive_dir};
 
 /// Message sent from the bridge thread back to the TUI event loop.
 #[derive(Debug)]
 pub enum BridgeEvent {
-    /// A pipeline progress event from the engine.
+    /// A pipeline progress event from the engine. A finished iteration's
+    /// progressive files are already written when it arrives.
     Progress(PipelineEvent),
-    /// Output directory resolved — sent before pipeline execution starts.
-    /// Used by progressive output to write files as iterations complete.
-    OutputDir(String),
     /// Pipeline finished — output files written to this directory.
     Done(RunDone),
     /// Pipeline or setup failed with an error message.
@@ -121,8 +120,9 @@ fn try_run_bridge(
     // Prepare inputs (validates files, applies param overrides to definition).
     let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
     let mode = resolve_mode(&job.definition_json);
-    let output_dir = resolve_output_dir(tx, job, &mode, ctx, &prepared.files);
-    let reporter = channel_reporter(tx);
+    let output_dir = resolve_output_dir(job, &mode, ctx, &prepared.files);
+    let progressive = progressive_dir(job.preview_mode, &mode, &output_dir);
+    let reporter = channel_reporter(tx, progressive);
     // Run the pipeline (blocking — this is why we're on a background thread).
     let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
         return Ok(());
@@ -207,27 +207,23 @@ fn resolve_mode(definition_json: &str) -> String {
         .unwrap_or_else(|_| "write".to_string())
 }
 
-/// Resolve the output directory and announce it to the TUI.
+/// Resolve the output directory.
 ///
-/// Preview mode writes nothing (empty string, no event). Overwrite mode
-/// reports the source directory, since files are renamed in place.
+/// Preview mode writes nothing (empty string). Overwrite mode reports the
+/// source directory, since files are renamed in place.
 fn resolve_output_dir(
-    tx: &mpsc::Sender<BridgeEvent>,
     job: &BridgeJob,
     mode: &str,
     ctx: &NativeContext,
     files: &[bnto_core::PipelineFile],
 ) -> String {
     if job.preview_mode {
-        return String::new();
-    }
-    let dir_str = if mode == "overwrite" {
+        String::new()
+    } else if mode == "overwrite" {
         source_dir(&job.selected_files)
     } else {
         run_output_dir(job, ctx, files)
-    };
-    let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
-    dir_str
+    }
 }
 
 /// Directory of the first selected file (or ".").
@@ -262,14 +258,6 @@ fn emptied_temp_dir(slug: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
     let _ = std::fs::remove_dir_all(&dir);
     dir
-}
-
-/// A reporter that forwards engine events to the TUI via the channel.
-fn channel_reporter(tx: &mpsc::Sender<BridgeEvent>) -> PipelineReporter {
-    let progress_tx = tx.clone();
-    PipelineReporter::new(move |event| {
-        let _ = progress_tx.send(BridgeEvent::Progress(event));
-    })
 }
 
 /// Preview mode: extract file previews, skip writing.
@@ -477,6 +465,39 @@ mod tests {
         fs::write(&earlier, b"old").unwrap();
         run_on_photo("replace", rename_recipe_json(Some(folder.path())));
         assert_eq!(fs::read(&earlier).unwrap(), b"new");
+    }
+
+    #[test]
+    fn a_progressive_runs_list_matches_its_files_and_keeps_the_users() {
+        // Guards: the loop's copies go out on the bridge thread before the
+        // listing and final write are planned, so all three agree on
+        // `b_2.txt` and the user's `b_1.txt` is neither replaced nor listed.
+        let inputs = tempfile::tempdir().unwrap();
+        let (a, b) = (inputs.path().join("a.txt"), inputs.path().join("b.txt"));
+        fs::write(&a, "AAAA").unwrap();
+        fs::write(&b, "BBBB").unwrap();
+        let folder = tempfile::tempdir().unwrap();
+        fs::write(folder.path().join("b_1.txt"), "CCCC").unwrap();
+        let rename = serde_json::json!({ "id": "ren", "type": "file-rename",
+            "parameters": { "find": "a", "replace": "b" } });
+        let json = serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+            { "id": "each", "type": "loop", "nodes": [rename], "edges": [],
+              "parameters": { "mode": "forEach", "outputPersistence": "progressive" } },
+            { "id": "output", "type": "output",
+              "parameters": { "mode": "write", "directory": folder.path().to_str().unwrap() } }
+        ] });
+
+        let done = run_job("progressive", json.to_string(), vec![a, b]);
+
+        assert_eq!(listed(&done), ["b.txt", "b_2.txt"]);
+        let read = |name: &str| fs::read_to_string(folder.path().join(name)).unwrap();
+        assert_eq!(read("b_1.txt"), "CCCC");
+        assert_eq!(
+            (read("b.txt"), read("b_2.txt")),
+            ("AAAA".into(), "BBBB".into())
+        );
+        assert_eq!(fs::read_dir(folder.path()).unwrap().count(), 3);
     }
 
     #[test]
@@ -735,27 +756,5 @@ mod tests {
         }];
         let outputs = build_output_files(&meta);
         assert!(outputs.is_empty(), "{outputs:?}");
-    }
-
-    #[test]
-    fn write_progressive_files_copies_a_path_and_keeps_the_source() {
-        // Guards: an argument file passes through as a path to the user's
-        // own file, so writing it out must copy, never move it.
-        let temp = tempfile::tempdir().unwrap();
-        let src = temp.path().join("original.mp4");
-        fs::write(&src, b"video").unwrap();
-        let out = temp.path().join("out");
-        fs::create_dir(&out).unwrap();
-
-        let files = [bnto_core::events::ProgressOutputFile {
-            name: "renamed.mp4".into(),
-            data: FileData::Path(src.clone()),
-            mime_type: "video/mp4".into(),
-        }];
-        let mut names = crate::output_names::OutputNames::default();
-        write_progressive_files(&out.to_string_lossy(), &files, &mut names);
-
-        assert_eq!(fs::read(out.join("renamed.mp4")).unwrap(), b"video");
-        assert!(src.exists(), "source must survive a progressive write");
     }
 }

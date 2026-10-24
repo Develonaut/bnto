@@ -5,9 +5,11 @@
 // run's own progressive copy, or an earlier run's identical result. Writing
 // those again loses nothing, and taking them keeps a run's names the same
 // whether its files went out progressively, in the final write, or a rerun.
-// Any other entry, a user's file or a folder, sends the name to the next
-// number. The folder is listed for every check, never cached, so a file a
-// step wrote there mid-run counts too.
+// Any other entry, a user's file, a link or a folder, sends the name to the
+// next number. The listing folds names as the run's own names are folded;
+// the filesystem itself is then asked too, since it may hold one file under
+// a name the listing spells differently. The folder is checked every time,
+// never cached, so a file a step wrote there mid-run counts too.
 
 use std::fs::File;
 use std::io::Read;
@@ -29,14 +31,15 @@ pub fn may_take(dir: &Path, name: &str, data: &FileData) -> bool {
     };
     let leaf = leaf.to_string_lossy();
     match folded_matches(folder, &leaf).as_slice() {
-        [] => true,
+        [] => nothing_at(&path, data),
         [only] if *only == *leaf => holds(&path, data),
         _ => false,
     }
 }
 
 /// The entries of `folder` whose names fold to `leaf`'s. A folder that can't
-/// be read (not made yet) has none.
+/// be listed (not made yet, or no read permission) gives none, and
+/// `nothing_at` decides.
 fn folded_matches(folder: &Path, leaf: &str) -> Vec<String> {
     let key = fold(leaf);
     let Ok(entries) = std::fs::read_dir(folder) else {
@@ -48,9 +51,23 @@ fn folded_matches(folder: &Path, leaf: &str) -> Vec<String> {
         .collect()
 }
 
-/// Whether the regular file at `path` holds exactly `data`'s bytes.
+/// With no entry listed under `path`'s name, whether the filesystem agrees.
+/// It can know a file the listing doesn't show under that spelling (APFS
+/// takes an NFC and an NFD `é` as one name) or in a folder it won't list
+/// (write but no read permission). An entry it finds may still be taken
+/// when it holds `data`'s bytes. A lookup that fails another way (no search
+/// permission) is free: the write fails the same way, replacing nothing.
+fn nothing_at(path: &Path, data: &FileData) -> bool {
+    match std::fs::symlink_metadata(path) {
+        Err(_) => true,
+        Ok(_) => holds(path, data),
+    }
+}
+
+/// Whether `path` is a regular file (not a link to one) holding exactly
+/// `data`'s bytes.
 fn holds(path: &Path, data: &FileData) -> bool {
-    let Ok(meta) = std::fs::metadata(path) else {
+    let Ok(meta) = std::fs::symlink_metadata(path) else {
         return false;
     };
     if !meta.is_file() || data.len().ok() != Some(meta.len()) {

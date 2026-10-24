@@ -40,26 +40,11 @@ fn done(output_dir: &str) -> RunDone {
 // --- Bridge events ---
 
 #[test]
-fn output_dir_starts_progressive_output_and_leaves_the_model() {
-    let dir = tempfile::tempdir().unwrap();
-    let mut progressive = None;
-    let model = apply_bridge_event(
-        model_on_execution(&dir, false),
-        BridgeEvent::OutputDir("/out".into()),
-        &mut progressive,
-    );
-    let (out, _names) = progressive.expect("progressive output starts");
-    assert_eq!(out, "/out");
-    assert!(matches!(model.screen, Screen::Execution { .. }));
-}
-
-#[test]
 fn an_error_fails_the_execution() {
     let dir = tempfile::tempdir().unwrap();
     let model = apply_bridge_event(
         model_on_execution(&dir, false),
         BridgeEvent::Error("boom".into()),
-        &mut None,
     );
     let execution = model.execution.expect("still on the execution screen");
     assert_eq!(execution.status, ExecutionStatus::Failed);
@@ -72,7 +57,6 @@ fn done_in_preview_mode_opens_the_preview_screen() {
     let model = apply_bridge_event(
         model_on_execution(&dir, true),
         BridgeEvent::Done(done("/out")),
-        &mut None,
     );
     assert_eq!(
         model.screen,
@@ -93,7 +77,6 @@ fn done_in_normal_mode_reaches_results_with_the_output_dir() {
     let model = apply_bridge_event(
         model_on_execution(&dir, false),
         BridgeEvent::Done(done("/out")),
-        &mut None,
     );
     assert_eq!(model.screen, Screen::Results { slug: "s".into() });
     assert!(model.execution.is_none());

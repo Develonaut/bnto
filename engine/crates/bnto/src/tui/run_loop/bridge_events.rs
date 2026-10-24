@@ -4,10 +4,7 @@
 use std::sync::mpsc;
 use std::time::Instant;
 
-use bnto_core::events::PipelineEvent;
-
 use super::finish::finish_run;
-use crate::output_names::OutputNames;
 use crate::tui::app::{AppMessage, AppModel, Screen, update};
 use crate::tui::bridge::{self, BridgeEvent};
 use crate::tui::screens::execution::{ExecutionMessage, ExecutionStatus};
@@ -18,8 +15,6 @@ pub(super) struct RunBridge {
     rx: Option<mpsc::Receiver<BridgeEvent>>,
     /// When the run started, for its elapsed timer.
     started: Option<Instant>,
-    /// The run's output folder and the names its iterations have written there.
-    progressive: Option<(String, OutputNames)>,
 }
 
 /// One frame of run upkeep: start the bridge, apply its events, tick the
@@ -57,26 +52,16 @@ fn start_if_idle(model: &AppModel, run: &mut RunBridge) {
 fn drain(mut model: AppModel, run: &mut RunBridge) -> AppModel {
     let Some(rx) = &run.rx else { return model };
     while let Ok(event) = rx.try_recv() {
-        model = apply_bridge_event(model, event, &mut run.progressive);
+        model = apply_bridge_event(model, event);
     }
     model
 }
 
-/// The model after one bridge event. `OutputDir` starts `progressive`.
-pub(super) fn apply_bridge_event(
-    model: AppModel,
-    event: BridgeEvent,
-    progressive: &mut Option<(String, OutputNames)>,
-) -> AppModel {
+/// The model after one bridge event. Progressive files are already on disk:
+/// the bridge thread writes them before it sends the event.
+pub(super) fn apply_bridge_event(model: AppModel, event: BridgeEvent) -> AppModel {
     match event {
-        BridgeEvent::OutputDir(dir) => {
-            *progressive = Some((dir, OutputNames::default()));
-            model
-        }
-        BridgeEvent::Progress(pe) => {
-            write_progressive(&pe, progressive);
-            update(model, bridge::map_pipeline_event(pe))
-        }
+        BridgeEvent::Progress(pe) => update(model, bridge::map_pipeline_event(pe)),
         BridgeEvent::Done(done) => finish_run(model, done),
         BridgeEvent::Error(error) => update(
             model,
@@ -85,16 +70,6 @@ pub(super) fn apply_bridge_event(
                 error,
             }),
         ),
-    }
-}
-
-/// Write a finished iteration's output files to disk before mapping.
-fn write_progressive(event: &PipelineEvent, progressive: &mut Option<(String, OutputNames)>) {
-    if let PipelineEvent::IterationCompleted { output_files, .. } = event
-        && !output_files.is_empty()
-        && let Some((dir, names)) = progressive
-    {
-        bridge::write_progressive_files(dir, output_files, names);
     }
 }
 
