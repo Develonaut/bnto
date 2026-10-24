@@ -52,6 +52,12 @@ describe("image-resize", () => {
     expect(ma.type).toBe("boolean");
     expect(ma.default).toBe(true);
   });
+
+  it("has enlarge: boolean, default true", () => {
+    const enlarge = proc.parameters.find((p) => p.name === "enlarge")!;
+    expect(enlarge.type).toBe("boolean");
+    expect(enlarge.default).toBe(true);
+  });
 });
 
 // =============================================================================
