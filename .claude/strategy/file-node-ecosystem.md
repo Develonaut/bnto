@@ -184,7 +184,6 @@ Dedicated SVG optimization processor in the `vector` category. Fundamentally dif
 
 | Param             | Type    | Description                                                   |
 | ----------------- | ------- | ------------------------------------------------------------- |
-| `precision`       | integer | Decimal precision for coordinates (default: 3)                |
 | `remove_comments` | boolean | Strip XML comments (default: true)                            |
 | `remove_metadata` | boolean | Strip editor metadata (Illustrator, Inkscape) (default: true) |
 | `collapse_groups` | boolean | Flatten unnecessary `<g>` wrappers (default: true)            |

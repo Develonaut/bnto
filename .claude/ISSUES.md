@@ -17,7 +17,6 @@
 | ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`       | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-10 | `task check` skips the crate publish checks CI runs                | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-12 | Released CLIs send no telemetry: the PostHog key is never set      | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-15 | `vector-optimize`'s `precision` param does nothing                 | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale             | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell       | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
@@ -55,12 +54,6 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 24, 2026 (planning ISS-7).
 
 `engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`). Needs Ryan's decision: ship the key, or say telemetry is off.
-
-### ISS-15: `vector-optimize`'s `precision` param does nothing
-
-**Found:** October 21, 2026 (dogfood sessions); checked October 24, 2026.
-
-`precision` (default 3, range 0–8) is declared and shown in every UI, but nothing reads it. Its description says "reserved for Tier 2" (`engine/crates/bnto-vector/src/optimize/processor.rs:78`). The bundled `optimize-svg` recipe sets it. Decided October 24: remove the param (with a `bnto migrate` step), don't implement it.
 
 ### ISS-16: `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines
 

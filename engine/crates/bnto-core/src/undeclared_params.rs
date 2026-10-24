@@ -103,6 +103,24 @@ mod tests {
     }
 
     #[test]
+    fn a_removed_param_points_at_bnto_migrate() {
+        let found = undeclared_params(
+            "vector-optimize",
+            &params(json!({ "minify": true, "precision": 3 })),
+            &declared(&["minify"]),
+        );
+        assert_eq!(
+            found,
+            [UndeclaredParam {
+                param: "precision".into(),
+                message: "vector-optimize has no param \"precision\" \
+                          (removed because it never did anything; run `bnto migrate` on the recipe)"
+                    .into(),
+            }]
+        );
+    }
+
+    #[test]
     fn every_undeclared_param_is_listed_in_key_order() {
         let found = undeclared_params(
             "file-filter",

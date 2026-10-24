@@ -126,8 +126,8 @@ pub mod vars;
 /// tallied from its pipeline events.
 pub mod run_summary;
 
-/// Node types and params a migration renamed, so errors can name the new
-/// spelling and point at `bnto migrate`.
+/// Node types and params a migration renamed or removed, so errors can name
+/// the new spelling (or why it went) and point at `bnto migrate`.
 pub mod renamed;
 
 /// Relative paths as output-file names, `/`-separated on every OS.

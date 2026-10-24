@@ -1,7 +1,7 @@
-// Node types and params a `bnto migrate` step renamed. When a recipe still
-// uses an old name, `bnto check` and a run's pre-flight name the new one
-// and point at `bnto migrate`, instead of a bare "unknown". Add a row here
-// in the same PR as the migration that renames it.
+// Node types and params a `bnto migrate` step renamed or removed. When a
+// recipe still uses an old name, `bnto check` and a run's pre-flight name
+// the new one (or why it went) and point at `bnto migrate`, instead of a
+// bare "unknown". Add a row here in the same PR as the migration.
 
 /// `(old type, new type)` for every renamed node type. `bnto migrate`'s
 /// tests check it applies each one.
@@ -31,6 +31,11 @@ pub const PARAMS: &[(&str, &str, &str)] = &[
     ("spreadsheet-lookup", "match_on", "matchOn"),
 ];
 
+/// `(node type, param, why)` for every param a node no longer has, under
+/// the node's current type. `bnto migrate`'s tests check it drops each one.
+pub const REMOVED_PARAMS: &[(&str, &str, &str)] =
+    &[("vector-optimize", "precision", "it never did anything")];
+
 /// `message` about an unknown `node_type`, with the rename hint appended
 /// when a migration renamed that type.
 pub fn with_node_type_hint(message: String, node_type: &str) -> String {
@@ -48,17 +53,27 @@ fn node_type_hint(node_type: &str) -> Option<String> {
 }
 
 /// What to append to an "unknown param" message for `param` on
-/// `node_type`, when a migration renamed it.
+/// `node_type`, when a migration renamed or removed it.
 pub(crate) fn param_hint(node_type: &str, param: &str) -> Option<String> {
-    PARAMS
+    let renamed = PARAMS
         .iter()
         .find(|(t, old, _)| *t == node_type && *old == param)
-        .map(|(_, _, new)| hint(new))
+        .map(|(_, _, new)| hint(new));
+    renamed.or_else(|| removed_hint(node_type, param))
+}
+
+fn removed_hint(node_type: &str, param: &str) -> Option<String> {
+    REMOVED_PARAMS
+        .iter()
+        .find(|(t, removed, _)| *t == node_type && *removed == param)
+        .map(|(_, _, why)| format!("removed because {why}; {MIGRATE}"))
 }
 
 fn hint(new: &str) -> String {
-    format!("renamed to \"{new}\"; run `bnto migrate` on the recipe")
+    format!("renamed to \"{new}\"; {MIGRATE}")
 }
+
+const MIGRATE: &str = "run `bnto migrate` on the recipe";
 
 #[cfg(test)]
 mod tests {
@@ -110,5 +125,18 @@ mod tests {
     fn the_same_param_on_another_node_has_no_hint() {
         assert_eq!(param_hint("image-resize", "compression"), None);
         assert_eq!(param_hint("image-compress", "quality"), None);
+    }
+
+    #[test]
+    fn a_removed_param_says_why_and_points_at_bnto_migrate() {
+        assert_eq!(
+            param_hint("vector-optimize", "precision").as_deref(),
+            Some("removed because it never did anything; run `bnto migrate` on the recipe")
+        );
+    }
+
+    #[test]
+    fn a_removed_params_name_on_another_node_has_no_hint() {
+        assert_eq!(param_hint("image-resize", "precision"), None);
     }
 }

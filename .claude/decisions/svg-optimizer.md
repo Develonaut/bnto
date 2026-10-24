@@ -131,6 +131,10 @@ PR #375 has everything except the optimization core:
 
 Tier 1 alone is a competitive product. Tier 2 (especially path optimization) makes it comparable to SVGO for most real-world SVGs. We can always iterate — ship Tier 1 fast, add Tier 2 passes incrementally.
 
+## Update: `precision` Removed (October 24, 2026)
+
+The shipped processor declared a `precision` param for Tier 2, but no Tier 2 pass was built, so nothing read it and every UI showed a control that did nothing (ISS-15). Ryan chose to remove it rather than build Tier 2: bnto's own SVGs gained 1.5% from optimizing ([dogfooding.md](../strategy/dogfooding.md)), so more SVG work isn't worth it here. `bnto migrate` drops `precision` from old recipes, and `bnto check` and a run point a recipe that still sets it at `bnto migrate` (`REMOVED_PARAMS` in `engine/crates/bnto-core/src/renamed.rs`). If Tier 2 is ever built, it brings a precision param back with the pass that reads it.
+
 ## Open Questions
 
 1. **Minify mode:** Should minified output omit all whitespace (single-line SVG) or preserve minimal formatting? SVGO defaults to single-line. Consider a `pretty` param for readable output.

@@ -2537,21 +2537,6 @@
           },
           "default": true,
           "surfaceable": true
-        },
-        {
-          "name": "precision",
-          "label": "Numeric Precision",
-          "description": "Decimal places for numeric values (reserved for Tier 2)",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 3,
-          "constraints": {
-            "min": 0.0,
-            "max": 8.0,
-            "required": false
-          },
-          "surfaceable": true
         }
       ]
     },
@@ -4645,21 +4630,6 @@
             "type": "boolean"
           },
           "default": true,
-          "surfaceable": true
-        },
-        {
-          "name": "precision",
-          "label": "Numeric Precision",
-          "description": "Decimal places for numeric values (reserved for Tier 2)",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 3,
-          "constraints": {
-            "min": 0.0,
-            "max": 8.0,
-            "required": false
-          },
           "surfaceable": true
         }
       ],
@@ -7759,7 +7729,6 @@
             "parameters": {
               "collapseGroups": true,
               "minify": true,
-              "precision": 3,
               "removeComments": true,
               "removeMetadata": true
             },
