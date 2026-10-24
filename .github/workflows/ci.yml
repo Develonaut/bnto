@@ -269,9 +269,10 @@ jobs:
 
       # Every workspace package, the same commands `task check` runs. Turbo
       # finds the packages and orders them, so a new one can't be left out
-      # of a hand-written list. Log lines carry the package name
-      # (`@bnto/i18n:test:`). Test re-runs no build: it replays the build
-      # step's results from Turbo's local cache.
+      # of a hand-written list. On Actions, each package's output is a
+      # collapsible group named after its task (`@bnto/i18n:test`). Test
+      # re-runs no build: it replays the build step's results from Turbo's
+      # local cache.
 
       - name: Build (type-check all packages)
         run: pnpm turbo run build
