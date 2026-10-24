@@ -1,6 +1,11 @@
-// A write-mode output pointed at the input's own folder (ISS-36): the file
-// is already where the run would copy it, so it must be left as is, never
-// truncated by a copy onto itself. Every run uses the sandboxed HOME.
+// Write-mode output into a folder that holds the run's inputs or links.
+//
+// A file already at its destination is left as is, never truncated by a
+// copy onto itself (ISS-36). A write never replaces an input a later write
+// still reads (ISS-48), in a final or a progressive write. Destinations that
+// are one file on disk (a link, a folder link, a filesystem that treats two
+// names as one) are refused before anything is written. Every run uses the
+// sandboxed HOME.
 
 mod helpers;
 
@@ -243,7 +248,7 @@ fn assert_refused_through_link(dir: &Path, a: &Path, b: &Path, extra: &[&str]) {
     let output = run(&recipe(dir, &[a_to_l()]), &[a, b], extra);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "stderr: {stderr}");
-    assert!(stderr.contains("are one file on disk"), "{stderr}");
+    assert!(stderr.contains("one file on disk"), "{stderr}");
     assert_eq!(std::fs::read_to_string(b).unwrap(), "BBBB", "{stderr}");
     assert_eq!(std::fs::read_to_string(a).unwrap(), "AAAA", "{stderr}");
 }
@@ -301,6 +306,53 @@ fn test_two_new_files_that_are_one_path_through_a_folder_link_are_refused() {
     let output = run(&recipe(out.path(), &[to_sub]), &[&a, &b], &[]);
     let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(!output.status.success(), "stderr: {stderr}");
-    assert!(stderr.contains("are one file on disk"), "{stderr}");
+    assert!(stderr.contains("one file on disk"), "{stderr}");
     assert!(!out.path().join("b.txt").exists(), "nothing is written");
+}
+
+/// `sub/b` replacing `a`: `a.txt` comes out named `sub/b.txt`.
+fn a_to_sub_b() -> serde_json::Value {
+    json!({ "id": "ren", "type": "file-rename", "parameters": { "find": "a", "replace": "sub/b" } })
+}
+
+#[cfg(unix)]
+#[test]
+fn test_a_progressive_refusal_names_what_iterations_already_wrote() {
+    // RED (ISS-48 review 3): with `out/sub` → `.`, iteration 1 wrote
+    // `sub/b.txt` (= `b.txt`) before the final write saw the conflict, yet
+    // the refusal said "nothing was written".
+    let (inputs, _) = two_inputs();
+    let out = temp_output_dir();
+    std::os::unix::fs::symlink(".", out.path().join("sub")).unwrap();
+    let mut recipe = progressive_rename_recipe(inputs.path());
+    recipe["nodes"][2]["nodes"] = json!([a_to_sub_b()]);
+    recipe["nodes"][3]["parameters"]["directory"] = json!(out.path().to_str().unwrap());
+    let output = run(&recipe, &[], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("one file on disk"), "{stderr}");
+    assert!(!stderr.contains("nothing was written"), "{stderr}");
+    assert!(stderr.contains("Loop iterations already wrote"), "{stderr}");
+    assert!(stderr.contains("sub/b.txt"), "{stderr}");
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn test_two_new_names_one_file_by_unicode_normalization_are_refused() {
+    // RED (ISS-48 review 3): APFS treats `café` composed (NFC) and
+    // decomposed (NFD) as one name. Both were new, so no check matched
+    // them; the run said `2 files written` and one file held TWO.
+    let (one, two) = (temp_output_dir(), temp_output_dir());
+    let nfc = one.path().join("caf\u{e9}");
+    let nfd = two.path().join("cafe\u{301}");
+    std::fs::write(&nfc, "ONE").unwrap();
+    std::fs::write(&nfd, "TWO").unwrap();
+    let out = temp_output_dir();
+    let output = run(&recipe(out.path(), &[]), &[&nfc, &nfd], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("one file on disk"), "{stderr}");
+    assert!(stderr.contains("nothing was written"), "{stderr}");
+    let left = std::fs::read_dir(out.path()).unwrap().count();
+    assert_eq!(left, 0, "nothing is written: {stderr}");
 }

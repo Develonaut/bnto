@@ -366,7 +366,7 @@ mod tests {
         let folder = "/Users/someone/Pictures/2026/holiday/.bnto-staged-Xy12Ab";
         let error = format!(
             "Cannot write /Users/someone/Pictures/2026/holiday/a.txt: Permission denied \
-             (os error 13)\n  Copies set aside for a swap are kept in {folder}"
+             (os error 13)\n  Files set aside for a swap are kept in {folder}"
         );
         let failed = ExecutionMessage::PipelineFailed {
             node_id: String::new(),
@@ -383,7 +383,7 @@ mod tests {
         let screen = screen_text(&model, 80, 24);
         assert!(screen.contains(folder), "cut:\n{screen}");
         assert!(
-            screen.contains("Copies set aside for a swap are kept in"),
+            screen.contains("Files set aside for a swap are kept in"),
             "{screen}"
         );
     }

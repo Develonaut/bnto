@@ -64,12 +64,20 @@ fn same_file(a: &Path, b: &Path) -> bool {
 }
 
 /// One line per pair, naming both destinations.
+/// Says how they meet: an existing file both reach, or a new path both
+/// lead to.
 pub fn describe(paths: &[PathBuf], pairs: &[(usize, usize)]) -> Vec<String> {
     let line = |&(i, j): &(usize, usize)| {
+        let (a, b) = (&paths[i], &paths[j]);
+        let how = if same_file(a, b) {
+            "both reach one existing file, through a link"
+        } else {
+            "both lead to one new path, through a folder link, a dangling link or `..`"
+        };
         format!(
-            "{} and {} are one file on disk (through a link), so one write would replace the other",
-            paths[i].display(),
-            paths[j].display()
+            "{} and {} would be one file on disk ({how}), so one write would replace the other",
+            a.display(),
+            b.display()
         )
     };
     pairs.iter().map(line).collect()
@@ -183,6 +191,6 @@ mod tests {
             lines[0].contains("l.txt") && lines[0].contains("b.txt"),
             "{lines:?}"
         );
-        assert!(lines[0].contains("are one file on disk"), "{lines:?}");
+        assert!(lines[0].contains("one file on disk"), "{lines:?}");
     }
 }

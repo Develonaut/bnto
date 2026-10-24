@@ -167,7 +167,7 @@ fn test_destinations_that_are_one_file_are_refused_before_any_write() {
         error.starts_with("Output refused, nothing was written: 1 conflict"),
         "{error}"
     );
-    assert!(error.contains("are one file on disk"), "{error}");
+    assert!(error.contains("one file on disk"), "{error}");
     assert_eq!(read(dir.path(), "b.txt"), "BBBB");
     assert_eq!(read(dir.path(), "l.txt"), "BBBB");
 }
@@ -178,7 +178,7 @@ fn test_destinations_that_are_one_file_are_refused_before_any_write() {
 fn test_a_write_after_quitting_writes_nothing() {
     let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
     let gate = WriteGate::new();
-    gate.stop_and_wait();
+    gate.stop_and_wait(|| {});
     let paths = [src[1].clone(), src[0].clone()];
 
     let error = write_through(&gate, &reading(&src), &paths, dir.path()).unwrap_err();
@@ -197,7 +197,7 @@ fn test_a_swap_stopped_between_steps_keeps_the_only_copy_for_the_report() {
     let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
     let paths = [src[1].clone(), src[0].clone()];
     let files = reading(&src);
-    let mut run = Run::new(&files, &paths, dir.path());
+    let mut run = Run::new(&files, &paths, dir.path()).unwrap();
     let steps = order::order(&readers::waits(&files, &paths));
     for step in steps.into_iter().take(2) {
         run.step(step).unwrap();

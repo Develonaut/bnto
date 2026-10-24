@@ -34,7 +34,9 @@ pub fn write_progressive_files(
         }
         // Copy, never rename: a Path output may be the user's own file,
         // and the final write reads it again.
-        let _ = file.data.copy_to(&path);
+        if file.data.copy_to(&path).is_ok() {
+            crate::ordered_write::note_progressive(&path);
+        }
     }
 }
 

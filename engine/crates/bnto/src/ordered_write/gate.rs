@@ -50,9 +50,13 @@ impl WriteGate {
     }
 
     /// Stop every write at its next step, and wait until none is running.
-    pub fn stop_and_wait(&self) {
+    /// `on_wait` runs first if a write is mid-step (say why bnto pauses).
+    pub fn stop_and_wait(&self, on_wait: impl FnOnce()) {
         let mut state = self.lock();
         state.stopping = true;
+        if state.active > 0 {
+            on_wait();
+        }
         while state.active > 0 {
             state = self.idle.wait(state).unwrap_or_else(|e| e.into_inner());
         }
@@ -82,7 +86,7 @@ mod tests {
     #[test]
     fn test_no_write_starts_once_stopping() {
         let gate = WriteGate::new();
-        gate.stop_and_wait();
+        gate.stop_and_wait(|| {});
         assert!(gate.stopping());
         assert!(gate.enter().is_none());
     }
@@ -94,13 +98,31 @@ mod tests {
         std::thread::scope(|s| {
             let writing = gate.enter().unwrap();
             s.spawn(|| {
-                gate.stop_and_wait();
+                gate.stop_and_wait(|| {});
                 done_tx.send(()).unwrap();
             });
             let early = done_rx.recv_timeout(Duration::from_millis(100));
             assert!(early.is_err(), "returned while a write was mid-step");
             drop(writing);
             done_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+        });
+    }
+
+    #[test]
+    fn test_the_wait_is_announced_only_when_a_write_is_mid_step() {
+        // Ctrl+C prints "Finishing the current file..." through `on_wait`.
+        let idle = WriteGate::new();
+        let mut said = false;
+        idle.stop_and_wait(|| said = true);
+        assert!(!said, "nothing to finish, nothing said");
+
+        let busy = WriteGate::new();
+        let (said_tx, said_rx) = mpsc::channel();
+        std::thread::scope(|s| {
+            let writing = busy.enter().unwrap();
+            s.spawn(|| busy.stop_and_wait(|| said_tx.send(()).unwrap()));
+            said_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+            drop(writing);
         });
     }
 }

@@ -5,14 +5,18 @@
 // `a` renamed to `b.txt` written beside `b.txt`), it waits until the file
 // has been read; a swap stages one file aside first, as `bnto_file::relocate`
 // parks one file to run a swap of moves. A plan whose destinations are one
-// file through a link can't keep both, so it's refused before any write.
+// file on disk can't keep both, so it's refused before any write: links are
+// found by name and identity (`aliases`), and any other names a filesystem
+// treats as one by creating every new destination exclusively (`claims`).
 // Every write goes through `GATE`, so a quitting process (Ctrl+C, the TUI
 // exiting) stops it between steps instead of ending it mid-copy.
 
 mod aliases;
+mod claims;
 mod gate;
 mod landing;
 mod order;
+mod progressive;
 mod readers;
 mod staging;
 
@@ -23,10 +27,12 @@ use bnto_core::PipelineFileResult;
 use bnto_core::processor::FileData;
 use bnto_file::relocate;
 
+use claims::Claims;
 use order::Step;
 use staging::Staging;
 
 pub use gate::{GATE, WriteGate};
+pub use progressive::{forget_progressive, note_progressive};
 pub use staging::report_kept_staging;
 
 /// Refuse a plan two of whose destinations are one file on disk (a link),
@@ -38,7 +44,24 @@ pub fn check(files: &[PipelineFileResult], paths: &[PathBuf]) -> Result<(), Stri
     }
     let lines = aliases::describe(paths, &pairs);
     let listing = relocate::listing(&lines, ("conflict", "conflicts"));
-    Err(format!("Output refused, nothing was written: {listing}"))
+    Err(refusal(&listing, &progressive::already_written(paths)))
+}
+
+/// The refusal text. Files a progressive loop already wrote are named: the
+/// final write wrote nothing, but the run did.
+fn refusal(listing: &str, by_iterations: &[PathBuf]) -> String {
+    if by_iterations.is_empty() {
+        return format!("Output refused, nothing was written: {listing}");
+    }
+    let names: Vec<String> = by_iterations
+        .iter()
+        .map(|p| p.display().to_string())
+        .collect();
+    let wrote = relocate::listing(&names, ("file", "files"));
+    format!(
+        "Output refused, the final write wrote nothing: {listing}\n  \
+         Loop iterations already wrote (left as they are): {wrote}"
+    )
 }
 
 /// Write `files[i]` to `paths[i]` for every `i`, ordered so a write never
@@ -69,8 +92,10 @@ fn write_through(
     let Some(_writing) = gate.enter() else {
         return Err(STOPPED.to_string());
     };
-    let mut run = Run::new(files, paths, output_dir);
-    for step in order::order(&readers::waits(files, paths)) {
+    // Planned before the claims create the new destinations empty.
+    let steps = order::order(&readers::waits(files, paths));
+    let mut run = Run::new(files, paths, output_dir)?;
+    for step in steps {
         if gate.stopping() {
             // Dropping `run` keeps a folder holding copies, for the report.
             return Err(STOPPED.to_string());
@@ -88,16 +113,23 @@ struct Run<'a> {
     staging: Staging,
     /// Writes that read a staged copy instead of their own source.
     staged: HashMap<usize, FileData>,
+    claims: Claims,
 }
 
 impl<'a> Run<'a> {
-    fn new(files: &'a [PipelineFileResult], paths: &'a [PathBuf], output_dir: &Path) -> Self {
-        Self {
+    /// A run whose new destinations are claimed; refused if two clash.
+    fn new(
+        files: &'a [PipelineFileResult],
+        paths: &'a [PathBuf],
+        output_dir: &Path,
+    ) -> Result<Self, String> {
+        Ok(Self {
             files,
             paths,
             staging: Staging::new(output_dir),
             staged: HashMap::new(),
-        }
+            claims: Claims::claim(paths, &claims::missing(paths))?,
+        })
     }
 
     fn step(&mut self, step: Step) -> Result<(), String> {
@@ -111,7 +143,9 @@ impl<'a> Run<'a> {
             }
             Step::Write(i) => {
                 let data = self.staged.get(&i).unwrap_or(&self.files[i].data);
-                write_one(data, &self.paths[i])
+                write_one(data, &self.paths[i])?;
+                self.claims.written(i);
+                Ok(())
             }
         }
     }
@@ -120,7 +154,7 @@ impl<'a> Run<'a> {
     fn failed(mut self, error: String) -> String {
         match self.staging.keep() {
             Some(dir) => format!(
-                "{error}\n  Copies set aside for a swap are kept in {}",
+                "{error}\n  Files set aside for a swap are kept in {}",
                 dir.display()
             ),
             None => error,

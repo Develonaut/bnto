@@ -72,7 +72,7 @@ fn end_session(
     writes: &crate::ordered_write::WriteGate,
     commands: &crate::process_registry::ProcessRegistry,
 ) {
-    writes.stop_and_wait();
+    writes.stop_and_wait(|| {});
     commands.terminate_all();
 }
 

@@ -74,10 +74,10 @@ pub mod join;
 /// WASM bridge — JS-callable functions for file operations.
 pub mod wasm_bridge;
 
-/// Name prefix of the hidden folder the CLI's output step copies files into
-/// to run a swap of writes. It's removed when the write ends, but one left by
-/// an interrupted run must not become a later run's input, so `file-collect`
-/// skips folders with this prefix.
+/// Name prefix of the folder the CLI and TUI output step sets files aside in
+/// to run a swap of writes (hidden on Unix, not on Windows). A finished write
+/// removes it; one a failed or interrupted write left must not become a later
+/// run's input, so `file-collect` skips any folder with this prefix.
 pub const STAGED_COPIES_PREFIX: &str = ".bnto-staged-";
 
 pub use collect::FileCollect;
