@@ -521,6 +521,21 @@ mod tests {
     }
 
     #[test]
+    fn test_edit_fields_fills_file_with_each_rows_name_in_and_out_of_a_loop() {
+        let edit = r#"{ "id": "edit", "type": "edit-fields",
+            "parameters": { "values": { "label": "{{file}}-{{item.first}}" } } }"#;
+        let looped = format!(r#"{{ "id": "each", "type": "loop", "children": [{edit}] }}"#);
+        for recipe in [edit.to_string(), looped] {
+            let result = run_edit_and_rename(&recipe).expect("pipeline should succeed");
+            let names: Vec<&str> = result.files.iter().map(|f| f.name.as_str()).collect();
+            assert_eq!(
+                names,
+                ["people_row0.csv-Ada.txt", "people_row1.csv-Grace.txt"]
+            );
+        }
+    }
+
+    #[test]
     fn test_an_unknown_field_in_edit_fields_fails_the_run_naming_it() {
         let edit = r#"{ "id": "edit", "type": "edit-fields",
             "parameters": { "values": { "label": "{{item.first}} {{item.middle}}" } } }"#;

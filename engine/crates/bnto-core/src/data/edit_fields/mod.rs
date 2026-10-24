@@ -4,8 +4,8 @@
 // fields `values` names, each value a static one or a template over the
 // fields the file arrived with (`{{item.first}} {{item.last}}`). Files pass
 // through with their data untouched; only their metadata changes. It runs as
-// a batch and fills `{{item.*}}` itself, so a field an item lacks fails the
-// run naming the field and the item. (Inside a loop the executor fills them
+// a batch and fills `{{item.*}}` and `{{file}}` (the file's name) itself, so a
+// field an item lacks fails the run naming the field and the item. (Inside a loop the executor fills them
 // from the loop's item first, and refuses a key that item lacks.) A dry run
 // sets fields too: nothing is written.
 
@@ -109,7 +109,7 @@ impl NodeProcessor for EditFields {
 
 /// One file with its fields set, its data and name as they arrived.
 fn edit_file(params: &EditFieldsParams, f: BatchFile) -> Result<OutputFile, BntoError> {
-    let set = fill::fill_values(&params.values, &f.metadata)
+    let set = fill::fill_values(&params.values, &f.filename, &f.metadata)
         .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", f.filename)))?;
     let mut metadata = if params.keep_only_set {
         serde_json::Map::new()

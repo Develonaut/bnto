@@ -7,7 +7,7 @@ use crate::metadata::{Constraints, ParameterDef, ParameterType};
 /// The node's params, read and checked.
 #[derive(Debug)]
 pub(super) struct EditFieldsParams {
-    /// Field name to value; strings may read `{{item.KEY}}`.
+    /// Field name to value; strings may read `{{item.KEY}}` and `{{file}}`.
     pub values: Map<String, Value>,
     /// Drop every field the item carried that `values` doesn't set.
     pub keep_only_set: bool,
@@ -59,7 +59,8 @@ fn values_param() -> ParameterDef {
         name: "values".to_string(),
         label: "Values".to_string(),
         description: "Field name to value. A value can read the item's other fields, \
-                      e.g. {{item.first}} {{item.last}}; one that is exactly \
+                      e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); \
+                      one that is exactly \
                       {{item.<key>}} keeps that field's type. Templates read the fields \
                       the item arrived with, and one it lacks fails the run."
             .to_string(),
