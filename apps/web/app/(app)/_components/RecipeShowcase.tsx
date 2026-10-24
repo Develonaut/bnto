@@ -20,6 +20,7 @@ export function RecipeShowcase() {
           <img
             src="/mascots/octopus-chef.svg"
             alt=""
+            loading="lazy"
             width={280}
             height={280}
             className="shrink-0"

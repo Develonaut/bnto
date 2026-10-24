@@ -12,6 +12,7 @@ export function HeroMascot() {
         <img
           src="/mascots/sushi-thumbsup.svg"
           alt=""
+          fetchPriority="high"
           aria-hidden
           className="h-52 w-auto drop-shadow-lg lg:h-64"
         />
