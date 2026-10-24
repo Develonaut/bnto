@@ -38,6 +38,9 @@ jobs:
               - 'pnpm-lock.yaml'
               - 'package.json'
               - 'tsconfig*.json'
+              # The TypeScript job's task graph and package list.
+              - 'turbo.json'
+              - 'pnpm-workspace.yaml'
 
   # ── Rust CI (only when engine files changed) ──
   rust:

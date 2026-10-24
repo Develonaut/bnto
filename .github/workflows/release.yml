@@ -63,7 +63,8 @@ jobs:
 
           engine=$(echo "$CHANGED" | grep -q '^engine/' && echo true || echo false)
           # Engine changes reach the web app through the WASM bundle.
-          web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/|engine/)' && echo true || echo false)
+          # turbo.json and pnpm-workspace.yaml decide what the TypeScript job runs.
+          web=$(echo "$CHANGED" | grep -qE '^(apps/|packages/|engine/|turbo\.json$|pnpm-workspace\.yaml$)' && echo true || echo false)
           convex=$(echo "$CHANGED" | grep -q '^packages/@bnto/backend/convex/' && echo true || echo false)
 
           echo "engine=$engine" >> "$GITHUB_OUTPUT"
