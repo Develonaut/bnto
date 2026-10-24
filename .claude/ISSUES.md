@@ -7,16 +7,23 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-12**.
+- **IDs never get reused.** The next one is **ISS-19**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
-| ID     | Issue                                                                  | Area     | Status |
-| ------ | ---------------------------------------------------------------------- | -------- | ------ |
-| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404            | web docs | Open   |
-| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`       | cli test | Open   |
-| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`           | tooling  | Open   |
-| ISS-10 | `task check` skips the crate publish checks CI runs                    | tooling  | Open   |
-| ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths | cli      | Open   |
+| ID     | Issue                                                                  | Area        | Status                                           |
+| ------ | ---------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
+| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404            | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`       | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`           | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-10 | `task check` skips the crate publish checks CI runs                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set          | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-13 | CI never builds, lints or tests `@bnto/i18n`                           | ci          | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-14 | `optimize-images-for-web` enlarges images smaller than 800 px          | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-15 | `vector-optimize`'s `precision` param does nothing                     | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines     | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-17 | The `/workflow-expert` skill's node inventory is stale                 | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-18 | A Windows process test times out waiting 20 s for PowerShell           | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 
 ---
 
@@ -49,3 +56,45 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 23, 2026 (ISS-1 part 2).
 
 When `bnto run` asks for consent, it suggests running `bnto dry-run {recipe_arg}` to inspect the commands (`engine/crates/bnto/src/consent.rs:42`), and declining says so again. For a recipe run by path, that command fails: `show_dry_run` resolves only catalog slugs (`engine/crates/bnto/src/inspect.rs`, `catalog.resolve(slug)`), so `bnto dry-run recipes/release-verify.bnto.json` prints `Error: Unknown recipe: …` and exits 1. Either let `bnto dry-run` read a recipe file as `bnto run` does (`run.rs` `read_recipe`), or suggest it only for slugs.
+
+### ISS-12: Released CLIs send no telemetry: the PostHog key is never set
+
+**Found:** October 24, 2026 (planning ISS-7).
+
+`engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`). Needs Ryan's decision: ship the key, or say telemetry is off.
+
+### ISS-13: CI never builds, lints or tests `@bnto/i18n`
+
+**Found:** October 24, 2026 (planning ISS-9 and ISS-10).
+
+`.github/workflows/ci.yml` names each package in its build (l.270–294), lint (l.302–326) and test (l.333–354) steps, and `@bnto/i18n` is in none of them (`grep -c i18n .github/workflows/ci.yml` is 0), though its `package.json` has `build`, `test` and `lint` scripts. A hand-written list drifts: a new package is skipped until someone adds it.
+
+### ISS-14: `optimize-images-for-web` enlarges images smaller than 800 px
+
+**Found:** October 21, 2026 (dogfood sessions); reproduced October 24, 2026.
+
+The recipe's `image-resize` sets `width: 800` (`engine/crates/bnto-engine/recipes/optimize-images-for-web.bnto.json`), and `image-resize` always scales, so `test-fixtures/images/medium.jpg` (400×400) comes out 800×800. "Optimize for web" makes small images bigger. `generate-thumbnails` has the same shape.
+
+### ISS-15: `vector-optimize`'s `precision` param does nothing
+
+**Found:** October 21, 2026 (dogfood sessions); checked October 24, 2026.
+
+`precision` (default 3, range 0–8) is declared and shown in every UI, but nothing reads it. Its description says "reserved for Tier 2" (`engine/crates/bnto-vector/src/optimize/processor.rs:78`). The bundled `optimize-svg` recipe sets it. Decided October 24: remove the param (with a `bnto migrate` step), don't implement it.
+
+### ISS-16: `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines
+
+**Found:** October 21, 2026 (dogfood sessions); checked October 24, 2026.
+
+`packages/@bnto/nodes/eslint.config.mjs:6` ignores `scripts/**`, so `scripts/generate-from-catalog.ts` reached 1,381 lines against the 250-line cap, and its functions against the 20-line one, with nothing flagging it. Codegen stays in TypeScript (decided October 24, 2026).
+
+### ISS-17: The `/workflow-expert` skill's node inventory is stale
+
+**Found:** October 21, 2026 (dogfood sessions); checked October 24, 2026.
+
+`.claude/skills/workflow-expert/SKILL.md:30` still says recipes use "the 6 implemented browser operations", and its operations table predates most of today's nodes. The skill reviews every new node and param, so a stale inventory steers it wrong.
+
+### ISS-18: A Windows process test times out waiting 20 s for PowerShell
+
+**Found:** October 24, 2026 (v0.18.2 release run 40096930376).
+
+`terminate_all_kills_orphaned_grandchild_on_windows` (`engine/crates/bnto/src/context.rs:743`) starts `cmd /c start /b powershell … $PID; Start-Sleep 30` and waits once, `recv_timeout(20 s)`, for PowerShell to print its PID (`:758-759`). On the release's Windows runner PowerShell didn't print in time: `called Result::unwrap() on an Err value: Timeout`. The same commit passed the same job on #743's CI an hour earlier, so the failure is timing, not code. It failed the release's CI Gate. Wait on PowerShell's start with a longer bound, or start a lighter process for the grandchild, so a slow runner can't fail a release.
