@@ -14,7 +14,7 @@ use bnto_core::processor::FileData;
 
 /// Size and modified time: one file has one stamp, whatever path reaches
 /// it, so only sources sharing a destination's stamp need the identity check.
-type Stamp = (u64, Option<SystemTime>);
+pub(super) type Stamp = (u64, Option<SystemTime>);
 
 /// For each write `i`, the other writes whose source is the file at
 /// `paths[i]`: they must run before write `i` replaces it.
@@ -62,7 +62,7 @@ fn sources_by_stamp(files: &[PipelineFileResult]) -> HashMap<Stamp, Vec<usize>> 
 }
 
 /// The stamp of the file at `path`, following links; `None` when nothing is there.
-fn stamp(path: &Path) -> Option<Stamp> {
+pub(super) fn stamp(path: &Path) -> Option<Stamp> {
     let meta = std::fs::metadata(path).ok()?;
     Some((meta.len(), meta.modified().ok()))
 }

@@ -229,3 +229,60 @@ fn test_a_progressive_rename_onto_a_later_inputs_name_keeps_its_content() {
     assert!(output.status.success(), "stderr: {stderr}");
     assert_eq!(contents(dir.path()), kept_both(), "stderr: {stderr}");
 }
+
+// --- two destinations that are one file through a link ---
+
+/// `file-rename` turning `a` into `l`: `a.txt` comes out named `l.txt`.
+fn a_to_l() -> serde_json::Value {
+    json!({ "id": "ren", "type": "file-rename", "parameters": { "find": "a", "replace": "l" } })
+}
+
+/// Run a → l into `dir`, where `l.txt` is a link to `b.txt`, and check the
+/// run refused before writing: `b.txt`, reached through the link, keeps BBBB.
+fn assert_refused_through_link(dir: &Path, a: &Path, b: &Path, extra: &[&str]) {
+    let output = run(&recipe(dir, &[a_to_l()]), &[a, b], extra);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(!output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("are one file on disk"), "{stderr}");
+    assert_eq!(std::fs::read_to_string(b).unwrap(), "BBBB", "{stderr}");
+    assert_eq!(std::fs::read_to_string(a).unwrap(), "AAAA", "{stderr}");
+}
+
+#[cfg(unix)]
+#[test]
+fn test_a_write_through_a_symlink_onto_an_input_left_as_is_is_refused() {
+    // RED (cold review): `l.txt` → `b.txt`. `b`'s write leaves b.txt as is,
+    // so `a` → l.txt waited for nothing and replaced b.txt through the link,
+    // while the summary said b.txt was "already there, left as is".
+    let (dir, [a, b]) = two_inputs();
+    std::os::unix::fs::symlink("b.txt", dir.path().join("l.txt")).unwrap();
+    assert_refused_through_link(dir.path(), &a, &b, &[]);
+}
+
+#[test]
+fn test_a_write_through_a_hard_link_onto_an_input_left_as_is_is_refused() {
+    // RED (cold review): the same loss through a hard link.
+    let (dir, [a, b]) = two_inputs();
+    std::fs::hard_link(&b, dir.path().join("l.txt")).unwrap();
+    assert_refused_through_link(dir.path(), &a, &b, &[]);
+}
+
+#[test]
+fn test_a_dry_run_through_a_link_is_refused_too() {
+    let (dir, [a, b]) = two_inputs();
+    std::fs::hard_link(&b, dir.path().join("l.txt")).unwrap();
+    assert_refused_through_link(dir.path(), &a, &b, &["--dry-run"]);
+}
+
+#[test]
+fn test_two_inputs_that_are_one_file_left_as_is_still_run() {
+    // Guard: both writes leave the file as is, so nothing can be lost.
+    let (dir, [_, b]) = two_inputs();
+    let link = dir.path().join("l.txt");
+    std::fs::hard_link(&b, &link).unwrap();
+    let output = run(&recipe(dir.path(), &[]), &[&b, &link], &[]);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "stderr: {stderr}");
+    assert!(stderr.contains("2 already there, left as is"), "{stderr}");
+    assert_eq!(std::fs::read_to_string(&b).unwrap(), "BBBB");
+}

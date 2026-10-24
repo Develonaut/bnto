@@ -73,6 +73,7 @@ impl<'a> Walker<'a> {
 
     fn visit(&mut self, entry: &DirEntry) -> Result<(), BntoError> {
         match kind(entry) {
+            Kind::Dir if is_staged_copies(entry) => Ok(()),
             Kind::Dir if self.recursive => self.walk(&entry.path()),
             Kind::File => {
                 self.collect(entry.path());
@@ -109,6 +110,14 @@ impl<'a> Walker<'a> {
         };
         self.progress.report_count(count as u64, &message);
     }
+}
+
+/// A folder of copies the CLI's output step set aside for a swap, left by
+/// an interrupted run: never a run's input (see `STAGED_COPIES_PREFIX`).
+fn is_staged_copies(entry: &DirEntry) -> bool {
+    let name = entry.file_name();
+    name.to_string_lossy()
+        .starts_with(crate::STAGED_COPIES_PREFIX)
 }
 
 /// The entry's type as `Path::is_dir` / `is_file` would see it. `read_dir`

@@ -105,23 +105,69 @@ fn test_bytes_and_untouched_sources_write_as_before() {
     assert_eq!(names_in(out.path()), 2);
 }
 
-#[test]
-fn test_a_failed_write_says_where_staged_copies_are_kept() {
-    let out = tempfile::tempdir().unwrap();
-    let file = out.path().join("b.txt");
-    std::fs::write(&file, "BBBB").unwrap();
-    let mut staging = Staging::new(out.path());
-    staging.stage(&file).unwrap();
-    let run = Run {
-        files: &[],
-        paths: &[],
-        staging,
-        staged: HashMap::new(),
+/// The `.bnto-staged-*` folders in `dir`.
+fn staging_folders(dir: &Path) -> Vec<PathBuf> {
+    let entries = std::fs::read_dir(dir).unwrap().map(|e| e.unwrap().path());
+    let staged = |p: &PathBuf| {
+        let name = p.file_name().unwrap().to_string_lossy().into_owned();
+        name.starts_with(bnto_file::STAGED_COPIES_PREFIX)
     };
-    let text = run.failed("Cannot write x".to_string());
-    assert!(text.starts_with("Cannot write x\n"), "{text}");
-    assert!(
-        text.contains("Copies set aside for a swap are kept in"),
-        "{text}"
+    entries.filter(staged).collect()
+}
+
+#[test]
+fn test_a_write_failing_after_staging_keeps_the_staged_copy_and_names_it() {
+    // The swap stages b.txt, writes a → b.txt, then fails writing the staged
+    // b → a.txt (read-only). The staged copy is now the only BBBB: it must
+    // survive, and the error must say where it is.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let mut readonly = std::fs::metadata(&src[0]).unwrap().permissions();
+    readonly.set_readonly(true);
+    std::fs::set_permissions(&src[0], readonly).unwrap();
+    let paths = [src[1].clone(), src[0].clone()];
+
+    let error = write_all(&reading(&src), &paths, dir.path()).unwrap_err();
+
+    let folders = staging_folders(dir.path());
+    assert_eq!(folders.len(), 1, "{error}");
+    assert_eq!(
+        std::fs::read_to_string(folders[0].join("0-b.txt")).unwrap(),
+        "BBBB"
     );
+    assert!(error.contains("Cannot write"), "{error}");
+    assert!(error.contains(&folders[0].display().to_string()), "{error}");
+    assert_eq!(read(dir.path(), "a.txt"), "AAAA");
+    assert_eq!(read(dir.path(), "b.txt"), "AAAA");
+    allow_removal(&src[0]);
+}
+
+/// Windows can't delete a read-only file, so the temp dir couldn't clean up.
+#[cfg(windows)]
+#[allow(clippy::permissions_set_readonly_false)]
+fn allow_removal(path: &Path) {
+    let mut writable = std::fs::metadata(path).unwrap().permissions();
+    writable.set_readonly(false);
+    std::fs::set_permissions(path, writable).unwrap();
+}
+
+#[cfg(not(windows))]
+fn allow_removal(_: &Path) {}
+
+#[test]
+fn test_destinations_that_are_one_file_are_refused_before_any_write() {
+    // l.txt is a hard link to b.txt, which b's write leaves as is.
+    let (dir, src) = folder(&[("a.txt", "AAAA"), ("b.txt", "BBBB")]);
+    let link = dir.path().join("l.txt");
+    std::fs::hard_link(&src[1], &link).unwrap();
+    let paths = [link, src[1].clone()];
+
+    let error = write_all(&reading(&src), &paths, dir.path()).unwrap_err();
+
+    assert!(
+        error.starts_with("Output refused, nothing was written: 1 conflict"),
+        "{error}"
+    );
+    assert!(error.contains("are one file on disk"), "{error}");
+    assert_eq!(read(dir.path(), "b.txt"), "BBBB");
+    assert_eq!(read(dir.path(), "l.txt"), "BBBB");
 }

@@ -88,6 +88,8 @@ pub struct Placed {
 fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
     let (dests, renamed) = destinations(result, output_dir);
+    let (files, paths) = writes(result, &dests);
+    ordered_write::check(&files, &paths)?;
     let unchanged = already_there(result, &dests);
     Ok(Placed { renamed, unchanged })
 }
