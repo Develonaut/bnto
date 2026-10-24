@@ -266,6 +266,7 @@ export const ENGINE_NODE_PARAM_FIELDS: Record<string, NodeParamFields> = {
     width: { suffix: "px", group: "dimensions" },
     height: { suffix: "px", group: "dimensions" },
     maintainAspect: { group: "dimensions" },
+    enlarge: { group: "dimensions" },
     quality: {
       suffix: "%",
       control: "slider",

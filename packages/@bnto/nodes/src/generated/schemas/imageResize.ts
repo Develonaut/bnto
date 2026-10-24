@@ -12,6 +12,7 @@ export const imageResizeParamsSchema = z.object({
   width: z.number().min(1).optional(),
   height: z.number().min(1).optional(),
   maintainAspect: z.boolean().optional().default(true),
+  enlarge: z.boolean().optional().default(true),
   quality: z.number().min(1).max(100).optional().default(80),
 });
 
@@ -36,6 +37,11 @@ export const imageResizeNodeSchema: NodeSchema = {
       label: "Maintain Aspect Ratio",
       description:
         "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box",
+    },
+    enlarge: {
+      label: "Enlarge Smaller Images",
+      description:
+        "Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger",
     },
     quality: {
       label: "Quality",

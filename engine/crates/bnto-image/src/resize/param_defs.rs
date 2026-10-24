@@ -10,6 +10,7 @@ pub(super) fn resize_param_defs() -> Vec<ParameterDef> {
         dimension_param("width", "Width", "Target width in pixels"),
         dimension_param("height", "Height", "Target height in pixels"),
         maintain_aspect_param(),
+        enlarge_param(),
         quality_param_def(),
     ]
 }
@@ -36,6 +37,18 @@ fn maintain_aspect_param() -> ParameterDef {
         name: "maintainAspect".to_string(),
         label: "Maintain Aspect Ratio".to_string(),
         description: "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box".to_string(),
+        param_type: ParameterType::Boolean,
+        default: Some(serde_json::json!(true)),
+        group: Some("dimensions".to_string()),
+        ..Default::default()
+    }
+}
+
+fn enlarge_param() -> ParameterDef {
+    ParameterDef {
+        name: "enlarge".to_string(),
+        label: "Enlarge Smaller Images".to_string(),
+        description: "Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger".to_string(),
         param_type: ParameterType::Boolean,
         default: Some(serde_json::json!(true)),
         group: Some("dimensions".to_string()),

@@ -17,6 +17,7 @@
 | width | number | - | ≥ 1 | Target width in pixels |
 | height | number | - | ≥ 1 | Target height in pixels |
 | maintainAspect | boolean | true | - | Keep the original width-to-height ratio. With both width and height set, the image fits inside that box |
+| enlarge | boolean | true | - | Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger |
 | quality | number | 80 | 1-100 | Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality. |
 
 ## Configuration Example
@@ -26,6 +27,7 @@
   "type": "image-resize",
   "parameters": {
       "maintainAspect": true,
+      "enlarge": true,
       "quality": 80
   }
 }

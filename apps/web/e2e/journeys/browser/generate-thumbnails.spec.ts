@@ -53,12 +53,9 @@ test.describe("generate-thumbnails — browser execution @browser", () => {
     const uploadBytes = fs.statSync(path.join(IMAGE_FIXTURES_DIR, "small.jpg")).size;
     await expect(outputFile.getByTestId("original-size")).toHaveText(formatBytes(uploadBytes));
 
-    // Verify thumbnail dimensions — default resize is 150px width
-    // small.jpg is 100x100, so resized width clamps to 100 (smaller than target)
-    const dims = getWebPDimensions(buffer);
-    expect(dims.width).toBeLessThanOrEqual(150);
-    expect(dims.width).toBeGreaterThan(0);
-    expect(dims.height).toBeGreaterThan(0);
+    // Verify thumbnail dimensions — default resize is 150px width, without enlarging.
+    // small.jpg is 100x100, smaller than the target, so it keeps its size.
+    expect(getWebPDimensions(buffer)).toEqual({ width: 100, height: 100 });
   });
 
   test("batch: multiple images auto-download as ZIP on completion", async ({ page }) => {

@@ -19,7 +19,6 @@
 | ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-12 | Released CLIs send no telemetry: the PostHog key is never set          | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-13 | CI never builds, lints or tests `@bnto/i18n`                           | ci          | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-14 | `optimize-images-for-web` enlarges images smaller than 800 px          | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-15 | `vector-optimize`'s `precision` param does nothing                     | engine      | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines     | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                 | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
@@ -70,12 +69,6 @@ When `bnto run` asks for consent, it suggests running `bnto dry-run {recipe_arg}
 **Found:** October 24, 2026 (planning ISS-9 and ISS-10).
 
 `.github/workflows/ci.yml` names each package in its build (l.270–294), lint (l.302–326) and test (l.333–354) steps, and `@bnto/i18n` is in none of them (`grep -c i18n .github/workflows/ci.yml` is 0), though its `package.json` has `build`, `test` and `lint` scripts. A hand-written list drifts: a new package is skipped until someone adds it.
-
-### ISS-14: `optimize-images-for-web` enlarges images smaller than 800 px
-
-**Found:** October 21, 2026 (dogfood sessions); reproduced October 24, 2026.
-
-The recipe's `image-resize` sets `width: 800` (`engine/crates/bnto-engine/recipes/optimize-images-for-web.bnto.json`), and `image-resize` always scales, so `test-fixtures/images/medium.jpg` (400×400) comes out 800×800. "Optimize for web" makes small images bigger. `generate-thumbnails` has the same shape.
 
 ### ISS-15: `vector-optimize`'s `precision` param does nothing
 
