@@ -11,7 +11,7 @@ export const editFieldsProcessor: ProcessorDef = {
   nodeType: "edit-fields",
   name: "Edit Fields",
   description:
-    "Edit fields on each item, setting them from static values or templates over its other fields, such as {{item.first}} {{item.last}}; files pass through unchanged.",
+    "Edit fields on each item, setting them from static values or templates over its other fields and its file name, such as {{item.first}} {{item.last}} or {{file}}; files pass through unchanged.",
   category: "data",
   accepts: [] as const,
   platforms: ["browser", "cli", "desktop"] as const,
@@ -20,7 +20,7 @@ export const editFieldsProcessor: ProcessorDef = {
       name: "values",
       label: "Values",
       description:
-        "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}; one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
+        "Field name to value. A value can read the item's other fields, e.g. {{item.first}} {{item.last}}, and {{file}} (the file's name); one that is exactly {{item.<key>}} keeps that field's type. Templates read the fields the item arrived with, and one it lacks fails the run.",
       type: "object" as const,
       constraints: { required: true },
     },

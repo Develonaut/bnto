@@ -4,10 +4,11 @@
 // fields `values` names, each value a static one or a template over the
 // fields the file arrived with (`{{item.first}} {{item.last}}`). Files pass
 // through with their data untouched; only their metadata changes. It runs as
-// a batch and fills `{{item.*}}` itself, so a field an item lacks fails the
-// run naming the field and the item. (Inside a loop the executor fills them
-// from the loop's item first, and refuses a key that item lacks.) A dry run
-// sets fields too: nothing is written.
+// a batch and fills `{{item.*}}` and `{{file}}` (the file's name) itself, so
+// a field an item lacks fails the run naming the field and the item. (Inside
+// a loop the executor fills `{{item.*}}` from the loop's item first, and
+// refuses a key that item lacks; it never fills `{{file}}`.) A dry run sets
+// fields too: nothing is written.
 
 mod fill;
 mod params;
@@ -44,8 +45,8 @@ impl NodeProcessor for EditFields {
             node_type: "edit-fields".to_string(),
             name: "Edit Fields".to_string(),
             description: "Edit fields on each item, setting them from static values or templates \
-                          over its other fields, such as {{item.first}} {{item.last}}; files pass \
-                          through unchanged."
+                          over its other fields and its file name, such as {{item.first}} \
+                          {{item.last}} or {{file}}; files pass through unchanged."
                 .to_string(),
             category: NodeCategory::Data,
             accepts: vec![],
@@ -109,7 +110,7 @@ impl NodeProcessor for EditFields {
 
 /// One file with its fields set, its data and name as they arrived.
 fn edit_file(params: &EditFieldsParams, f: BatchFile) -> Result<OutputFile, BntoError> {
-    let set = fill::fill_values(&params.values, &f.metadata)
+    let set = fill::fill_values(&params.values, &f.filename, &f.metadata)
         .map_err(|why| BntoError::InvalidInput(format!("{}: {why}", f.filename)))?;
     let mut metadata = if params.keep_only_set {
         serde_json::Map::new()

@@ -1,24 +1,28 @@
 // The values edit-fields sets on one item, every `{{item.KEY}}` filled from
-// the fields that item arrived with.
+// the fields that item arrived with and every `{{file}}` with its name.
 //
 // Outside a loop the executor hands `{{item.*}}` to this node as written
-// (`resolves_items`), so it fills them here, once per file. A key the item
-// lacks is a recipe mistake: it fails the run instead of becoming "".
+// (`resolves_items`), so it fills them here, once per file; `{{file}}` always
+// reaches it as written. Both are filled as assert and report fill them
+// (`placeholder::resolve_file`). A key the item lacks is a recipe mistake: it
+// fails the run instead of becoming "".
 
 use serde_json::{Map, Value};
 
-use crate::control::placeholder::{self, ITEM};
+use crate::control::placeholder;
 
-/// `values` with every `{{item.KEY}}` filled from `item`, or why one can't
-/// be: the field being set, the key, and the fields `item` does have.
+/// `values` filled for the file `name`: `{{file}}` with `name`, every
+/// `{{item.KEY}}` from `item`, or why one can't be: the field being set, the
+/// key, and the fields `item` does have.
 pub(super) fn fill_values(
     values: &Map<String, Value>,
+    name: &str,
     item: &Map<String, Value>,
 ) -> Result<Map<String, Value>, String> {
     values
         .iter()
         .map(|(field, value)| {
-            let filled = fill(value, item).map_err(|key| unknown(field, &key, item))?;
+            let filled = fill(value, name, item).map_err(|key| unknown(field, &key, item))?;
             Ok((field.clone(), filled))
         })
         .collect()
@@ -36,13 +40,13 @@ fn unknown(field: &str, key: &str, item: &Map<String, Value>) -> String {
 
 /// One value filled, recursing into lists and maps; `Err` is the first key
 /// `item` lacks.
-fn fill(value: &Value, item: &Map<String, Value>) -> Result<Value, String> {
+fn fill(value: &Value, name: &str, item: &Map<String, Value>) -> Result<Value, String> {
     match value {
-        Value::String(text) => fill_text(text, item),
-        Value::Array(values) => values.iter().map(|v| fill(v, item)).collect(),
+        Value::String(text) => fill_text(text, name, item),
+        Value::Array(values) => values.iter().map(|v| fill(v, name, item)).collect(),
         Value::Object(map) => map
             .iter()
-            .map(|(k, v)| Ok((k.clone(), fill(v, item)?)))
+            .map(|(k, v)| Ok((k.clone(), fill(v, name, item)?)))
             .collect::<Result<Map<_, _>, _>>()
             .map(Value::Object),
         other => Ok(other.clone()),
@@ -51,11 +55,11 @@ fn fill(value: &Value, item: &Map<String, Value>) -> Result<Value, String> {
 
 /// A sole `{{item.KEY}}` is the field itself, type and all (as the executor
 /// resolves a sole placeholder); any other text stays text.
-fn fill_text(text: &str, item: &Map<String, Value>) -> Result<Value, String> {
+fn fill_text(text: &str, name: &str, item: &Map<String, Value>) -> Result<Value, String> {
     if let Some(key) = sole_item_key(text) {
         return item.get(key).cloned().ok_or_else(|| key.to_string());
     }
-    placeholder::resolve(text, ITEM, item).map(Value::String)
+    placeholder::resolve_file(text, name, item).map(Value::String)
 }
 
 /// KEY when `text` (trimmed) is exactly one `{{item.KEY}}`.
