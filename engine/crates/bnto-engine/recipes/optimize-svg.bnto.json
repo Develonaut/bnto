@@ -58,8 +58,7 @@
         "removeComments": true,
         "removeMetadata": true,
         "collapseGroups": true,
-        "minify": true,
-        "precision": 3
+        "minify": true
       },
       "inputPorts": [],
       "outputPorts": []

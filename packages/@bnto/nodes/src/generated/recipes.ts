@@ -2401,7 +2401,6 @@ export const GENERATED_RECIPES: readonly GeneratedRecipe[] = [
           parameters: {
             collapseGroups: true,
             minify: true,
-            precision: 3,
             removeComments: true,
             removeMetadata: true,
           },

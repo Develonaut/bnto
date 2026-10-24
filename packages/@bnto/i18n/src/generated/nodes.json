@@ -668,10 +668,6 @@
       "minify": {
         "label": "Minify",
         "description": "Remove unnecessary whitespace and newlines"
-      },
-      "precision": {
-        "label": "Numeric Precision",
-        "description": "Decimal places for numeric values (reserved for Tier 2)"
       }
     },
     "vectorRasterize": {

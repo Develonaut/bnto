@@ -72,20 +72,6 @@ impl NodeProcessor for OptimizeSvg {
                     constraints: None,
                     ..Default::default()
                 },
-                ParameterDef {
-                    name: "precision".to_string(),
-                    label: "Numeric Precision".to_string(),
-                    description: "Decimal places for numeric values (reserved for Tier 2)"
-                        .to_string(),
-                    param_type: ParameterType::Number,
-                    default: Some(serde_json::json!(3)),
-                    constraints: Some(Constraints {
-                        min: Some(0.0),
-                        max: Some(8.0),
-                        required: false,
-                    }),
-                    ..Default::default()
-                },
             ],
             requires: vec![],
         }
@@ -128,21 +114,8 @@ impl NodeProcessor for OptimizeSvg {
             metadata,
         })
     }
-
-    fn validate(&self, params: &serde_json::Map<String, serde_json::Value>) -> Vec<String> {
-        let mut errors = Vec::new();
-        if let Some(precision) = params.get("precision").and_then(|v| v.as_u64())
-            && precision > 8
-        {
-            errors.push(format!(
-                "precision must be between 0 and 8, got {precision}"
-            ));
-        }
-        errors
-    }
 }
 
-#[expect(clippy::too_many_lines)]
 fn extract_config(params: &serde_json::Map<String, serde_json::Value>) -> OptimizeConfig {
     OptimizeConfig {
         remove_comments: params
@@ -161,10 +134,6 @@ fn extract_config(params: &serde_json::Map<String, serde_json::Value>) -> Optimi
             .get("minify")
             .and_then(|v| v.as_bool())
             .unwrap_or(true),
-        precision: params
-            .get("precision")
-            .and_then(|v| v.as_u64())
-            .unwrap_or(3) as u8,
     }
 }
 
@@ -231,9 +200,19 @@ mod tests {
     }
 
     #[test]
-    fn test_metadata_has_five_params() {
+    fn test_metadata_declares_only_the_params_it_reads() {
+        // `precision` was declared for Tier 2 but never read; removed (ISS-15).
         let meta = OptimizeSvg.metadata();
-        assert_eq!(meta.parameters.len(), 5);
+        let names: Vec<_> = meta.parameters.iter().map(|p| p.name.as_str()).collect();
+        assert_eq!(
+            names,
+            [
+                "removeComments",
+                "removeMetadata",
+                "collapseGroups",
+                "minify"
+            ]
+        );
     }
 
     #[test]
@@ -246,14 +225,6 @@ mod tests {
     fn test_validate_passes_with_no_params() {
         let errors = OptimizeSvg.validate(&empty_params());
         assert!(errors.is_empty(), "Default params should pass validation");
-    }
-
-    #[test]
-    fn test_validate_rejects_precision_too_high() {
-        let mut params = empty_params();
-        params.insert("precision".to_string(), serde_json::json!(9));
-        let errors = OptimizeSvg.validate(&params);
-        assert!(!errors.is_empty(), "precision=9 should fail validation");
     }
 
     #[test]

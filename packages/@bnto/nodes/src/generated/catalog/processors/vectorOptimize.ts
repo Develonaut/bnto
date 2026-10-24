@@ -43,14 +43,6 @@ export const vectorOptimizeProcessor: ProcessorDef = {
       type: "boolean" as const,
       default: true,
     },
-    {
-      name: "precision",
-      label: "Numeric Precision",
-      description: "Decimal places for numeric values (reserved for Tier 2)",
-      type: "number" as const,
-      default: 3,
-      constraints: { min: 0, max: 8, required: false },
-    },
   ],
   inputCardinality: "perFile" as const,
 };
