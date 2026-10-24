@@ -13,25 +13,23 @@ impl ResizeImages {
     /// Calculate final (width, height) from params and original dimensions.
     /// With `maintain_aspect`, a single dimension derives the other from the ratio,
     /// and both dimensions fit the image inside the box (like CSS `object-fit: contain`).
+    /// Without `enlarge`, neither side ends up bigger than the original's.
     pub(super) fn calculate_dimensions(
         target_width: Option<u32>,
         target_height: Option<u32>,
         original_width: u32,
         original_height: u32,
         maintain_aspect: bool,
+        enlarge: bool,
     ) -> Result<(u32, u32), BntoError> {
         validate_inputs(target_width, target_height, original_width, original_height)?;
-        let (final_width, final_height) = match (target_width, target_height) {
-            (Some(w), Some(h)) => {
-                resolve_both(w, h, original_width, original_height, maintain_aspect)
-            }
-            (Some(w), None) => {
-                resolve_width_only(w, original_width, original_height, maintain_aspect)
-            }
-            (None, Some(h)) => {
-                resolve_height_only(h, original_width, original_height, maintain_aspect)
-            }
-            (None, None) => unreachable!(),
+        let original = (original_width, original_height);
+        let target = resolve_target(target_width, target_height, original, maintain_aspect);
+        // Cap before the maximum check, so a size only enlarging took over the limit is kept.
+        let (final_width, final_height) = if enlarge {
+            target
+        } else {
+            no_larger_than(target, original)
         };
         validate_final_dimensions(final_width, final_height)?;
         Ok((final_width, final_height))
@@ -65,6 +63,28 @@ fn validate_inputs(
         ));
     }
     Ok(())
+}
+
+/// The size the targets ask for, before any cap. Callers check one target is set.
+fn resolve_target(
+    target_width: Option<u32>,
+    target_height: Option<u32>,
+    (orig_w, orig_h): (u32, u32),
+    maintain_aspect: bool,
+) -> (u32, u32) {
+    match (target_width, target_height) {
+        (Some(w), Some(h)) => resolve_both(w, h, orig_w, orig_h, maintain_aspect),
+        (Some(w), None) => resolve_width_only(w, orig_w, orig_h, maintain_aspect),
+        (None, Some(h)) => resolve_height_only(h, orig_w, orig_h, maintain_aspect),
+        (None, None) => unreachable!(),
+    }
+}
+
+/// Cap each side at the original's. With the aspect kept, both sides scale by
+/// one factor, so an upscale caps to exactly the original size; a stretch
+/// (`maintainAspect: false`) caps only the side that would grow.
+fn no_larger_than((w, h): (u32, u32), (orig_w, orig_h): (u32, u32)) -> (u32, u32) {
+    (w.min(orig_w), h.min(orig_h))
 }
 
 /// Fit inside the w×h box: the side that hits its limit first is exact, the other
@@ -127,84 +147,87 @@ mod tests {
     #[test]
     fn test_calculate_dimensions_both_specified_matching_ratio() {
         // 300×200 box has the same 3:2 ratio as 1200×800, so it fills exactly.
-        let result = ResizeImages::calculate_dimensions(Some(300), Some(200), 1200, 800, true);
+        let result =
+            ResizeImages::calculate_dimensions(Some(300), Some(200), 1200, 800, true, true);
         assert_eq!(result.unwrap(), (300, 200));
     }
 
     #[test]
     fn test_calculate_dimensions_both_with_aspect_fits_width() {
         // Square into a wide 50×20 box: height is the tight side → 20×20.
-        let result = ResizeImages::calculate_dimensions(Some(50), Some(20), 100, 100, true);
+        let result = ResizeImages::calculate_dimensions(Some(50), Some(20), 100, 100, true, true);
         assert_eq!(result.unwrap(), (20, 20));
     }
 
     #[test]
     fn test_calculate_dimensions_both_with_aspect_fits_height() {
         // 1200×800 into a 300×300 box: width is the tight side → 300×200.
-        let result = ResizeImages::calculate_dimensions(Some(300), Some(300), 1200, 800, true);
+        let result =
+            ResizeImages::calculate_dimensions(Some(300), Some(300), 1200, 800, true, true);
         assert_eq!(result.unwrap(), (300, 200));
     }
 
     #[test]
     fn test_calculate_dimensions_both_with_aspect_upscales_to_fit() {
         // Small image grows until one side touches the box: 100×50 → 400×200.
-        let result = ResizeImages::calculate_dimensions(Some(400), Some(400), 100, 50, true);
+        let result = ResizeImages::calculate_dimensions(Some(400), Some(400), 100, 50, true, true);
         assert_eq!(result.unwrap(), (400, 200));
     }
 
     #[test]
     fn test_calculate_dimensions_both_with_aspect_favicon_svg() {
         // The 3117×2744 favicon SVG into a 512×512 box: 512 × 2744/3117 = 450.7 → 451.
-        let result = ResizeImages::calculate_dimensions(Some(512), Some(512), 3117, 2744, true);
+        let result =
+            ResizeImages::calculate_dimensions(Some(512), Some(512), 3117, 2744, true, true);
         assert_eq!(result.unwrap(), (512, 451));
     }
 
     #[test]
     fn test_calculate_dimensions_both_with_aspect_minimum_1px() {
         // 1000×1 into a 2×2 box: height 0.002 rounds to 0 → clamped to 1.
-        let result = ResizeImages::calculate_dimensions(Some(2), Some(2), 1000, 1, true);
+        let result = ResizeImages::calculate_dimensions(Some(2), Some(2), 1000, 1, true, true);
         assert_eq!(result.unwrap(), (2, 1));
     }
 
     #[test]
     fn test_calculate_dimensions_both_no_aspect_stretches() {
         // maintainAspect=false keeps the exact box, distorting the image.
-        let result = ResizeImages::calculate_dimensions(Some(50), Some(20), 100, 100, false);
+        let result = ResizeImages::calculate_dimensions(Some(50), Some(20), 100, 100, false, true);
         assert_eq!(result.unwrap(), (50, 20));
     }
 
     #[test]
     fn test_calculate_dimensions_width_only_with_aspect() {
         // Width=600, original=1200×800 → height = 600 × (800/1200) = 400
-        let result = ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, true, true);
         assert_eq!(result.unwrap(), (600, 400));
     }
 
     #[test]
     fn test_calculate_dimensions_height_only_with_aspect() {
         // Height=400, original=1200×800 → width = 400 × (1200/800) = 600
-        let result = ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, true, true);
         assert_eq!(result.unwrap(), (600, 400));
     }
 
     #[test]
     fn test_calculate_dimensions_width_only_no_aspect() {
         // Width=600, maintainAspect=false → height stays at original (800)
-        let result = ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, false);
+        let result = ResizeImages::calculate_dimensions(Some(600), None, 1200, 800, false, true);
         assert_eq!(result.unwrap(), (600, 800));
     }
 
     #[test]
     fn test_calculate_dimensions_height_only_no_aspect() {
         // Height=400, maintainAspect=false → width stays at original (1200)
-        let result = ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, false);
+        let result = ResizeImages::calculate_dimensions(None, Some(400), 1200, 800, false, true);
         assert_eq!(result.unwrap(), (1200, 400));
     }
 
     #[test]
     fn test_calculate_dimensions_neither_specified_is_error() {
         // No width or height — that's an error.
-        let result = ResizeImages::calculate_dimensions(None, None, 1200, 800, true);
+        let result = ResizeImages::calculate_dimensions(None, None, 1200, 800, true, true);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("At least one dimension"));
@@ -213,7 +236,7 @@ mod tests {
     #[test]
     fn test_calculate_dimensions_zero_original_is_error() {
         // Original image has zero dimensions — can't compute aspect ratio.
-        let result = ResizeImages::calculate_dimensions(Some(100), None, 0, 800, true);
+        let result = ResizeImages::calculate_dimensions(Some(100), None, 0, 800, true, true);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("zero dimensions"));
@@ -222,7 +245,8 @@ mod tests {
     #[test]
     fn test_calculate_dimensions_exceeds_max_is_error() {
         // Target exceeds MAX_DIMENSION (16384).
-        let result = ResizeImages::calculate_dimensions(Some(20000), Some(20000), 100, 100, false);
+        let result =
+            ResizeImages::calculate_dimensions(Some(20000), Some(20000), 100, 100, false, true);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
         assert!(err.contains("exceed maximum"));
@@ -232,7 +256,7 @@ mod tests {
     fn test_calculate_dimensions_aspect_ratio_rounds_correctly() {
         // 1920×1080 resized to width=1280
         // height = 1280 × (1080/1920) = 1280 × 0.5625 = 720.0 (exact)
-        let result = ResizeImages::calculate_dimensions(Some(1280), None, 1920, 1080, true);
+        let result = ResizeImages::calculate_dimensions(Some(1280), None, 1920, 1080, true, true);
         assert_eq!(result.unwrap(), (1280, 720));
     }
 
@@ -240,7 +264,7 @@ mod tests {
     fn test_calculate_dimensions_aspect_ratio_rounds_up() {
         // 1000×333 resized to width=500
         // height = 500 × (333/1000) = 500 × 0.333 = 166.5 → rounds to 167
-        let result = ResizeImages::calculate_dimensions(Some(500), None, 1000, 333, true);
+        let result = ResizeImages::calculate_dimensions(Some(500), None, 1000, 333, true, true);
         let (_, h) = result.unwrap();
         assert_eq!(h, 167); // rounded from 166.5
     }
@@ -249,10 +273,68 @@ mod tests {
     fn test_calculate_dimensions_tiny_aspect_minimum_1px() {
         // 1000×1 resized to width=2
         // height = 2 × (1/1000) = 0.002 → rounds to 0 → clamped to 1
-        let result = ResizeImages::calculate_dimensions(Some(2), None, 1000, 1, true);
+        let result = ResizeImages::calculate_dimensions(Some(2), None, 1000, 1, true, true);
         let (w, h) = result.unwrap();
         assert_eq!(w, 2);
         assert_eq!(h, 1); // minimum 1px
+    }
+
+    // =========================================================================
+    // enlarge: false — never bigger than the original on either side
+    // =========================================================================
+
+    #[test]
+    fn test_no_enlarge_keeps_smaller_image_at_its_size() {
+        // 400×400 with width 800: enlarging would give 800×800.
+        let result = ResizeImages::calculate_dimensions(Some(800), None, 400, 400, true, false);
+        assert_eq!(result.unwrap(), (400, 400));
+    }
+
+    #[test]
+    fn test_enlarge_scales_smaller_image_up() {
+        let result = ResizeImages::calculate_dimensions(Some(800), None, 400, 400, true, true);
+        assert_eq!(result.unwrap(), (800, 800));
+    }
+
+    #[test]
+    fn test_no_enlarge_still_shrinks_larger_image() {
+        for enlarge in [true, false] {
+            let result =
+                ResizeImages::calculate_dimensions(Some(800), None, 1600, 1600, true, enlarge);
+            assert_eq!(result.unwrap(), (800, 800), "enlarge: {enlarge}");
+        }
+    }
+
+    #[test]
+    fn test_no_enlarge_height_only() {
+        let small = ResizeImages::calculate_dimensions(None, Some(800), 400, 400, true, false);
+        assert_eq!(small.unwrap(), (400, 400));
+        let large = ResizeImages::calculate_dimensions(None, Some(800), 1600, 1600, true, false);
+        assert_eq!(large.unwrap(), (800, 800));
+    }
+
+    #[test]
+    fn test_no_enlarge_fit_box_keeps_smaller_image() {
+        // 100×50 into a 400×400 box would grow to 400×200.
+        let result = ResizeImages::calculate_dimensions(Some(400), Some(400), 100, 50, true, false);
+        assert_eq!(result.unwrap(), (100, 50));
+    }
+
+    #[test]
+    fn test_no_enlarge_stretch_caps_each_side() {
+        // maintainAspect=false into 800×200: width would grow, height shrinks.
+        let result =
+            ResizeImages::calculate_dimensions(Some(800), Some(200), 400, 400, false, false);
+        assert_eq!(result.unwrap(), (400, 200));
+    }
+
+    #[test]
+    fn test_no_enlarge_caps_before_the_maximum_check() {
+        // 100×1 at height 200 would be 20000×200, over the limit. Not enlarging, it stays.
+        let enlarged = ResizeImages::calculate_dimensions(None, Some(200), 100, 1, true, true);
+        assert!(enlarged.is_err());
+        let kept = ResizeImages::calculate_dimensions(None, Some(200), 100, 1, true, false);
+        assert_eq!(kept.unwrap(), (100, 1));
     }
 
     // =========================================================================

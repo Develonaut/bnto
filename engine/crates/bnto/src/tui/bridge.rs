@@ -14,6 +14,7 @@ use bnto_engine::run_pipeline;
 
 use crate::context::NativeContext;
 use crate::dry_run::files::FilePreview;
+use crate::recipe_output_dir::recipe_output_dir;
 use crate::run_watchdog::{self, Watched};
 use crate::{host_support, input, io, run_limit};
 
@@ -131,7 +132,7 @@ fn try_run_bridge(
         return Ok(());
     }
     // Normal mode: write output files using mode-aware dispatch.
-    let file_metadata = extract_file_metadata(&result);
+    let file_metadata = extract_file_metadata(&result, &mode, &output_dir);
     let message = (mode == "message")
         .then(|| run_message(&result, recipe_output_label(&job.definition_json)))
         .flatten();
@@ -223,7 +224,7 @@ fn resolve_output_dir(
     let dir_str = if mode == "overwrite" {
         source_dir(&job.selected_files)
     } else {
-        fresh_output_dir(job, ctx, files)
+        run_output_dir(job, ctx, files)
     };
     let _ = tx.send(BridgeEvent::OutputDir(dir_str.clone()));
     dir_str
@@ -238,28 +239,29 @@ fn source_dir(selected_files: &[PathBuf]) -> String {
         .unwrap_or_else(|| ".".to_string())
 }
 
-/// Recreate the output directory: the recipe's output node directory param
-/// (with {{ctx.*}} + {{node.*}} resolved), else a per-recipe temp dir.
-fn fresh_output_dir(
+/// The folder this run writes into, created if missing: the recipe's own
+/// folder (as `bnto run` resolves it), else the TUI's temp folder for it.
+/// A recipe's folder may be the user's (`~/Documents/Reports`), so nothing
+/// in it is deleted; the write replaces only files named like an output.
+fn run_output_dir(
     job: &BridgeJob,
     ctx: &NativeContext,
     files: &[bnto_core::PipelineFile],
 ) -> String {
-    let recipe_dir = serde_json::from_str::<PipelineDefinition>(&job.definition_json)
-        .ok()
-        .and_then(|def| {
-            let dir = bnto_core::resolve_output_directory(&def)?;
-            let resolved = bnto_core::resolve_ctx_templates(&dir, ctx);
-            let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, files);
-            Some(bnto_core::resolve_node_templates(&resolved, &node_outputs))
-        });
-    let output_dir = match recipe_dir {
+    let output_dir = match recipe_output_dir(&job.definition_json, ctx, files) {
         Some(dir) => PathBuf::from(dir),
-        None => std::env::temp_dir().join(format!("bnto-tui-{}", job.slug)),
+        None => emptied_temp_dir(&job.slug),
     };
-    let _ = std::fs::remove_dir_all(&output_dir);
     let _ = std::fs::create_dir_all(&output_dir);
     output_dir.to_string_lossy().into_owned()
+}
+
+/// The TUI's own temp folder for `slug`, emptied of the last run's files.
+/// The only output folder bnto owns, so the only one it may clear.
+fn emptied_temp_dir(slug: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
+    let _ = std::fs::remove_dir_all(&dir);
+    dir
 }
 
 /// A reporter that forwards engine events to the TUI via the channel.
@@ -410,6 +412,177 @@ mod tests {
         assert!(message.contains("This machine runs"), "{message}");
     }
 
+    // --- Output folder (ISS-21) ---
+
+    /// A recipe that renames each file to `renamed-<name>` and writes it to
+    /// `directory` (no output folder when `None`).
+    fn rename_recipe_json(directory: Option<&std::path::Path>) -> String {
+        let mut output = serde_json::json!({ "mode": "write" });
+        if let Some(dir) = directory {
+            output["directory"] = dir.to_string_lossy().into_owned().into();
+        }
+        serde_json::json!({ "nodes": [
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } },
+            { "id": "rename", "type": "file-rename", "parameters": { "prefix": "renamed-" } },
+            { "id": "output", "type": "output", "parameters": output }
+        ] })
+        .to_string()
+    }
+
+    /// Run `definition_json` on one input `photo.txt` (holding "new") the way
+    /// the TUI does, returning the finished run.
+    fn run_on_photo(slug: &str, definition_json: String) -> RunDone {
+        let inputs = tempfile::tempdir().unwrap();
+        let photo = inputs.path().join("photo.txt");
+        fs::write(&photo, b"new").unwrap();
+        run_job(slug, definition_json, vec![photo])
+    }
+
+    /// Run `definition_json` on `selected_files` the way the TUI does.
+    fn run_job(slug: &str, definition_json: String, selected_files: Vec<PathBuf>) -> RunDone {
+        let job = BridgeJob {
+            slug: slug.into(),
+            definition_json,
+            selected_files,
+            param_overrides: HashMap::new(),
+            preview_mode: false,
+        };
+        let (tx, rx) = mpsc::channel();
+        run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
+        match rx.try_iter().last() {
+            Some(BridgeEvent::Done(done)) => done,
+            last => panic!("expected the run to finish, got {last:?}"),
+        }
+    }
+
+    #[test]
+    fn a_run_keeps_files_already_in_the_recipes_folder() {
+        // The recipe's folder is the user's (`~/Documents/Reports`), not
+        // bnto's: a run writes into it and deletes nothing, as `bnto run` does.
+        let folder = tempfile::tempdir().unwrap();
+        let canary = folder.path().join("notes.txt");
+        fs::write(&canary, b"mine").unwrap();
+        run_on_photo("keep", rename_recipe_json(Some(folder.path())));
+        assert_eq!(fs::read(&canary).unwrap(), b"mine", "a user file was lost");
+        assert_eq!(
+            fs::read(folder.path().join("renamed-photo.txt")).unwrap(),
+            b"new"
+        );
+    }
+
+    #[test]
+    fn a_run_replaces_only_the_file_named_like_its_output() {
+        let folder = tempfile::tempdir().unwrap();
+        let earlier = folder.path().join("renamed-photo.txt");
+        fs::write(&earlier, b"old").unwrap();
+        run_on_photo("replace", rename_recipe_json(Some(folder.path())));
+        assert_eq!(fs::read(&earlier).unwrap(), b"new");
+    }
+
+    #[test]
+    fn the_results_list_only_this_runs_outputs() {
+        // What the wipe used to protect: files already in the folder must
+        // not show up as this run's results.
+        let folder = tempfile::tempdir().unwrap();
+        fs::write(folder.path().join("notes.txt"), b"mine").unwrap();
+        let done = run_on_photo("listing", rename_recipe_json(Some(folder.path())));
+        assert_eq!(listed(&done), ["renamed-photo.txt"]);
+    }
+
+    /// The names the results screen would list for `done`.
+    fn listed(done: &RunDone) -> Vec<String> {
+        build_output_files(&done.file_metadata)
+            .into_iter()
+            .map(|f| f.name)
+            .collect()
+    }
+
+    /// Rename each file to `renamed-<name>` in place, optionally collecting
+    /// a picked folder's files first.
+    fn overwrite_recipe_json(collect: bool) -> String {
+        let mut nodes = vec![serde_json::json!(
+            { "id": "input", "type": "input", "parameters": { "mode": "file-upload" } }
+        )];
+        if collect {
+            nodes.push(serde_json::json!({ "id": "collect", "type": "file-collect",
+                "parameters": { "pattern": "*", "recursive": false } }));
+        }
+        nodes.push(serde_json::json!({ "id": "rename", "type": "file-rename",
+            "parameters": { "prefix": "renamed-" } }));
+        nodes.push(serde_json::json!({ "id": "output", "type": "output",
+            "parameters": { "mode": "overwrite" } }));
+        serde_json::json!({ "nodes": nodes }).to_string()
+    }
+
+    #[test]
+    fn overwrite_results_list_the_files_renamed_in_a_picked_folder() {
+        // Overwrite renames in each file's own folder; a picked folder's
+        // files sit inside it, not beside it.
+        let parent = tempfile::tempdir().unwrap();
+        let picked = parent.path().join("photos");
+        fs::create_dir(&picked).unwrap();
+        fs::write(picked.join("a.txt"), b"a").unwrap();
+        fs::write(picked.join("b.txt"), b"b").unwrap();
+        let done = run_job(
+            "ow-folder",
+            overwrite_recipe_json(true),
+            vec![picked.clone()],
+        );
+        assert!(
+            picked.join("renamed-a.txt").exists(),
+            "the run renamed nothing"
+        );
+        let mut names = listed(&done);
+        names.sort();
+        assert_eq!(names, ["renamed-a.txt", "renamed-b.txt"]);
+    }
+
+    #[test]
+    fn overwrite_results_list_files_renamed_in_two_folders() {
+        // Both `a.txt`s become `renamed-a.txt`, each in its own folder. A
+        // `renamed-a_1.txt` beside the first is the user's, not a result.
+        let (one, two) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+        for dir in [&one, &two] {
+            fs::write(dir.path().join("a.txt"), b"a").unwrap();
+        }
+        fs::write(one.path().join("renamed-a_1.txt"), b"mine").unwrap();
+        let files = vec![one.path().join("a.txt"), two.path().join("a.txt")];
+        let done = run_job("ow-two", overwrite_recipe_json(false), files);
+        assert!(
+            two.path().join("renamed-a.txt").exists(),
+            "the run renamed nothing"
+        );
+        assert_eq!(listed(&done), ["renamed-a.txt", "renamed-a.txt"]);
+    }
+
+    #[test]
+    fn a_message_run_lists_no_results_from_its_folder() {
+        // Message mode writes nothing, so a file already in the recipe's
+        // folder under an output's name is not this run's.
+        let folder = tempfile::tempdir().unwrap();
+        fs::write(folder.path().join("renamed-photo.txt"), b"mine").unwrap();
+        let json = rename_recipe_json(Some(folder.path())).replace("\"write\"", "\"message\"");
+        let done = run_on_photo("message", json);
+        assert_eq!(listed(&done), Vec::<String>::new());
+    }
+
+    #[test]
+    fn a_recipe_without_a_folder_gets_an_emptied_bnto_temp_folder() {
+        // Only bnto's own temp folder is cleared, so it holds one run.
+        let slug = format!("iss21-temp-{}", std::process::id());
+        let temp = std::env::temp_dir().join(format!("bnto-tui-{slug}"));
+        fs::create_dir_all(&temp).unwrap();
+        fs::write(temp.join("stale.txt"), b"last run").unwrap();
+        let done = run_on_photo(&slug, rename_recipe_json(None));
+        assert_eq!(std::path::Path::new(&done.output_dir), temp);
+        assert!(
+            !temp.join("stale.txt").exists(),
+            "the last run's file stayed"
+        );
+        assert!(temp.join("renamed-photo.txt").exists());
+        let _ = fs::remove_dir_all(&temp);
+    }
+
     #[test]
     fn extract_metadata_reads_original_size() {
         let mut metadata = serde_json::Map::new();
@@ -428,7 +601,7 @@ mod tests {
             warnings: Vec::new(),
             node_metadata: Default::default(),
         };
-        let meta = extract_file_metadata(&result);
+        let meta = extract_file_metadata(&result, "write", "out");
         assert_eq!(meta.len(), 1);
         assert_eq!(meta[0].name, "photo.jpg");
         assert_eq!(meta[0].original_size, Some(780_000));
@@ -452,14 +625,20 @@ mod tests {
     fn extract_metadata_prefers_the_input_size() {
         // resize → convert: convert's originalSize is the resized image.
         let result = result_with(serde_json::json!({ "originalSize": 300, "inputSize": 900 }));
-        assert_eq!(extract_file_metadata(&result)[0].original_size, Some(900));
+        assert_eq!(
+            extract_file_metadata(&result, "write", "out")[0].original_size,
+            Some(900)
+        );
     }
 
     #[test]
     fn extract_metadata_ignores_an_input_size_alone() {
         // No node reported sizes (a rename), so no comparison is shown.
         let result = result_with(serde_json::json!({ "inputSize": 900 }));
-        assert_eq!(extract_file_metadata(&result)[0].original_size, None);
+        assert_eq!(
+            extract_file_metadata(&result, "write", "out")[0].original_size,
+            None
+        );
     }
 
     #[test]
@@ -475,7 +654,7 @@ mod tests {
             warnings: Vec::new(),
             node_metadata: Default::default(),
         };
-        let meta = extract_file_metadata(&result);
+        let meta = extract_file_metadata(&result, "write", "out");
         assert_eq!(meta[0].original_size, None);
     }
 
@@ -497,7 +676,7 @@ mod tests {
             warnings: Vec::new(),
             node_metadata: Default::default(),
         };
-        let meta = extract_file_metadata(&result);
+        let meta = extract_file_metadata(&result, "write", "out");
         assert_eq!(meta[0].original_size, None);
     }
 
@@ -509,9 +688,10 @@ mod tests {
 
         let meta = vec![FileResultMeta {
             name: "photo.jpg".into(),
+            path: dir.join("photo.jpg"),
             original_size: Some(780),
         }];
-        let outputs = build_output_files(&dir.to_string_lossy(), &meta);
+        let outputs = build_output_files(&meta);
         assert_eq!(outputs.len(), 1);
         assert_eq!(outputs[0].original_size, Some(780));
         assert_eq!(outputs[0].size_bytes, 290);
@@ -542,18 +722,19 @@ mod tests {
     }
 
     #[test]
-    fn build_output_files_handles_unmatched() {
+    fn build_output_files_skips_files_the_run_did_not_write() {
+        // `other.txt` was already in the folder; `different.txt` never landed.
         let temp = tempfile::tempdir().unwrap();
         let dir = temp.path().to_path_buf();
         fs::write(dir.join("other.txt"), vec![0u8; 100]).unwrap();
 
         let meta = vec![FileResultMeta {
             name: "different.txt".into(),
+            path: dir.join("different.txt"),
             original_size: Some(500),
         }];
-        let outputs = build_output_files(&dir.to_string_lossy(), &meta);
-        assert_eq!(outputs.len(), 1);
-        assert_eq!(outputs[0].original_size, None);
+        let outputs = build_output_files(&meta);
+        assert!(outputs.is_empty(), "{outputs:?}");
     }
 
     #[test]

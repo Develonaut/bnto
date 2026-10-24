@@ -7,6 +7,8 @@
 
 mod plan;
 
+pub(crate) use plan::destination;
+
 use bnto_core::PipelineResult;
 use bnto_file::relocate;
 

@@ -15,7 +15,8 @@ use crate::run_watchdog::{self, Watched};
 use crate::telemetry::recipe_label::{RecipeLabel, recipe_label};
 use crate::unfilled_fields::refuse_unfilled;
 use crate::{
-    context, dry_run, host_support, input, progress, run_limit, run_message, telemetry, vars,
+    context, dry_run, host_support, input, progress, recipe_source, run_limit, run_message,
+    telemetry, vars,
 };
 
 /// The `bnto run` switches that change what a run does.
@@ -73,7 +74,7 @@ pub fn run_recipe(
     // Before consent, so nobody approves a run the engine would refuse.
     let unfilled = refuse_unfilled(&raw_json, param_overrides);
     verdict.or_fail(unfilled, "Error:");
-    check_trust(recipe_path, &raw_json, flags.yes, catalog);
+    check_trust(recipe_path, &raw_json, param_overrides, flags.yes, catalog);
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
     let limited = run_limit::apply(&prepared.definition_json, flags.timeout);
@@ -141,12 +142,12 @@ fn refuse_unsupported_host(recipe_path: &str, raw_json: &str, verdict: &RunVerdi
     }
 }
 
-/// Read recipe JSON — try catalog slug first, then disk path.
-fn read_recipe(path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
-    if let Some(entry) = catalog.resolve(path) {
-        return entry.definition_json.clone();
-    }
-    verdict.or_fail(std::fs::read_to_string(path), "Error reading recipe:")
+/// The recipe's JSON (`recipe_source`'s slug-else-path), or the run fails.
+fn read_recipe(recipe_path: &str, catalog: &RecipeCatalog, verdict: &RunVerdict) -> String {
+    verdict.or_fail(
+        recipe_source::read_recipe(recipe_path, catalog),
+        "Error reading recipe:",
+    )
 }
 
 /// Collect file count, byte total and the recipe's telemetry label.
@@ -279,21 +280,11 @@ fn resolve_effective_output_dir(
     process_ctx: &dyn bnto_core::ProcessContext,
     files: &[bnto_core::PipelineFile],
 ) -> String {
-    // Explicit --output always wins.
     if let Some(dir) = output_override {
         return dir.to_string();
     }
-    // Try recipe's output node directory param.
-    if let Ok(def) = serde_json::from_str::<bnto_core::PipelineDefinition>(definition_json)
-        && let Some(recipe_dir) = bnto_core::resolve_output_directory(&def)
-    {
-        // Two-pass: resolve {{ctx.*}} first, then {{node.*}} (input file metadata).
-        let resolved = bnto_core::resolve_ctx_templates(&recipe_dir, process_ctx);
-        let node_outputs = bnto_core::build_node_outputs_for_input(&def.nodes, files);
-        return bnto_core::resolve_node_templates(&resolved, &node_outputs);
-    }
-    // Default: current directory.
-    ".".to_string()
+    crate::recipe_output_dir::recipe_output_dir(definition_json, process_ctx, files)
+        .unwrap_or_else(|| ".".to_string())
 }
 
 /// Print `<recipe> with N files...` (or the input mode label).

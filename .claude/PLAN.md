@@ -864,7 +864,7 @@ Features and ideas. Defects (bugs, standards violations, stale docs, security ga
 > Custom XML-level optimizer using roxmltree/xmlwriter (already in WASM binary via resvg transitive chain — zero new deps). 9 cleanup passes: remove metadata, comments, DOCTYPE/PI, editor namespaces, empty containers, empty attributes, unused xmlns, collapse redundant groups, minify whitespace.
 
 - [x] `engine/crates/bnto-vector` — `vector-optimize` processor (custom roxmltree/xmlwriter approach) (PR #379)
-- [x] Params: `precision`, `removeComments`, `removeMetadata`, `collapseGroups`, `minify`
+- [x] Params: `removeComments`, `removeMetadata`, `collapseGroups`, `minify` (`precision` removed October 2026: it never did anything; ISS-15)
 - [x] `engine/recipes/` — `optimize-svg.bnto.json`
 - [x] Codegen + golden tests + test count updates
 - [x] **Delivers:** `/optimize-svg` recipe page

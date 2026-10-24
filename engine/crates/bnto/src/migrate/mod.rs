@@ -12,6 +12,7 @@ use colored::Colorize;
 use serde_json::Value;
 
 mod camel_case_params;
+mod removed_params;
 
 /// A single migration transform applied to a recipe JSON document.
 struct Migration {
@@ -53,6 +54,12 @@ fn all_migrations() -> Vec<Migration> {
             description: "Rename snake_case params to camelCase",
             applies: camel_case_params::has_snake_case_params,
             apply: camel_case_params::rename_snake_case_params,
+        },
+        // Last, so it finds params under their current types and names.
+        Migration {
+            description: "Remove params their nodes no longer have",
+            applies: removed_params::has_removed_params,
+            apply: removed_params::drop_removed_params,
         },
     ]
 }
@@ -663,6 +670,21 @@ mod tests {
                 value["nodes"][0]["parameters"],
                 json!({ *new: 1 }),
                 "{node_type}: {old} → {new}"
+            );
+        }
+    }
+
+    #[test]
+    fn migrate_drops_every_removed_param() {
+        for (node_type, param, _) in bnto_core::renamed::REMOVED_PARAMS {
+            let mut value = json!({ "id": "r", "type": "group", "nodes": [
+                { "id": "n", "type": node_type, "parameters": { *param: 1, "kept": 2 } }
+            ] });
+            apply_migrations(&mut value);
+            assert_eq!(
+                value["nodes"][0]["parameters"],
+                json!({ "kept": 2 }),
+                "{node_type}: {param}"
             );
         }
     }

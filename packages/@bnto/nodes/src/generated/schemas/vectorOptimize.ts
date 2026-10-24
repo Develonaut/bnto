@@ -13,7 +13,6 @@ export const vectorOptimizeParamsSchema = z.object({
   removeMetadata: z.boolean().optional().default(true),
   collapseGroups: z.boolean().optional().default(true),
   minify: z.boolean().optional().default(true),
-  precision: z.number().min(0).max(8).optional().default(3),
 });
 
 /** Inferred TypeScript type for vector-optimize node parameters. */
@@ -40,10 +39,6 @@ export const vectorOptimizeNodeSchema: NodeSchema = {
     minify: {
       label: "Minify",
       description: "Remove unnecessary whitespace and newlines",
-    },
-    precision: {
-      label: "Numeric Precision",
-      description: "Decimal places for numeric values (reserved for Tier 2)",
     },
   },
 };

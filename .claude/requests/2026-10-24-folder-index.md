@@ -69,16 +69,16 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
   - With `SOME_KEY` unset, the run is refused ("Missing required secrets") but the folder is still created first.
   - An unknown `{{ctx.*}}` key is dropped and other leftovers stay as text: `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`.
   - The consumer writes with `file-copy` meanwhile, whose `destination` already fills `{{env.*}}` from declared secrets.
-- **Defects found:** [ISS-22](../ISSUES.md#iss-22-the-output-nodes-directory-leaves-env-as-a-literal-folder-name). While reproducing it: [ISS-21](../ISSUES.md#iss-21-the-tui-deletes-the-contents-of-a-recipes-output-folder-before-each-run), the TUI deletes the contents of a recipe's output folder before every run.
+- **Defects found:** [ISS-22](../ISSUES.md#iss-22-the-output-nodes-directory-leaves-env-as-a-literal-folder-name). While reproducing it: [ISS-21](https://github.com/Develonaut/bnto/pull/750), the TUI deleted the contents of a recipe's output folder before every run (fixed in #750).
 - **Generic piece:** none; it's a fix.
   - The output directory fills every namespace a run has, and refuses any placeholder left over, as unset `{{vars.*}}` already do and `{{fields.*}}` do since #741 (in the engine) and #742 (before consent).
   - `bnto check` flags the ones no run can fill.
-  - ISS-21 is fixed first, so filling `{{env.*}}` can't point the TUI's wipe at a real folder.
+  - ISS-21 was fixed first (#750), so filling `{{env.*}}` can't point the TUI's wipe at a real folder.
 - **Tracked in:** ISSUES.md.
 
 ## Reply
 
-> Thanks, these were useful. One warning first: **please run this recipe with `bnto run`, not the TUI, for now.** While reproducing your report we found that the TUI empties a recipe's output folder before each run. It's being fixed first.
+> Thanks, these were useful. One warning first: **until you're on the next bnto release, run this recipe with `bnto run`, not the TUI.** While reproducing your report we found that the TUI emptied a recipe's output folder before each run. That's fixed on `main` and ships in the next release.
 >
 > **What works today: leading path segments.** Possible, but clumsy. Collect with `file-collect` and `flatten: false` (the default strips the folders, and every file then lands in a group of its own), then:
 >

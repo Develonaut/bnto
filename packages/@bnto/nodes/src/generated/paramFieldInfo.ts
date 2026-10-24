@@ -180,6 +180,7 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     width: { type: "number", control: "number", required: false, min: 1 },
     height: { type: "number", control: "number", required: false, min: 1 },
     maintainAspect: { type: "boolean", control: "switch", required: false },
+    enlarge: { type: "boolean", control: "switch", required: false },
     quality: { type: "number", control: "slider", required: false, min: 1, max: 100 },
   },
   "image-strip-exif": {
@@ -327,7 +328,6 @@ export const NODE_PARAM_FIELD_INFO: Record<string, Record<string, NodeParamField
     removeMetadata: { type: "boolean", control: "switch", required: false },
     collapseGroups: { type: "boolean", control: "switch", required: false },
     minify: { type: "boolean", control: "switch", required: false },
-    precision: { type: "number", control: "slider", required: false, min: 0, max: 8 },
   },
   "vector-rasterize": {
     format: {

@@ -28,6 +28,14 @@ impl ResizeImages {
             .unwrap_or(true)
     }
 
+    /// Default: true (scale smaller images up to the target).
+    pub(super) fn get_enlarge(params: &serde_json::Map<String, serde_json::Value>) -> bool {
+        params
+            .get("enlarge")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true)
+    }
+
     pub(super) fn get_quality(params: &serde_json::Map<String, serde_json::Value>) -> u8 {
         params
             .get("quality")
@@ -43,6 +51,7 @@ pub(super) struct ResizeParams {
     pub width: Option<u32>,
     pub height: Option<u32>,
     pub maintain_aspect: bool,
+    pub enlarge: bool,
     pub quality: u8,
 }
 
@@ -52,6 +61,7 @@ impl ResizeParams {
             width: ResizeImages::get_width(params),
             height: ResizeImages::get_height(params),
             maintain_aspect: ResizeImages::get_maintain_aspect(params),
+            enlarge: ResizeImages::get_enlarge(params),
             quality: ResizeImages::get_quality(params),
         }
     }
@@ -64,6 +74,7 @@ impl ResizeParams {
             orig_w,
             orig_h,
             self.maintain_aspect,
+            self.enlarge,
         )
     }
 }

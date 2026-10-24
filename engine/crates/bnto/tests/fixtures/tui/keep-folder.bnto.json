@@ -1,0 +1,98 @@
+{
+  "id": "keep-folder",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Keep Folder",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Renames files into a folder that already holds other files, for TUI journey TJ14.",
+    "category": "file"
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "settings": {
+    "iteration": "auto"
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "version": "1.0.0",
+      "name": "Input",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "file-upload",
+        "accept": ["*/*"],
+        "extensions": [],
+        "label": "any files",
+        "multiple": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "files"
+        }
+      ]
+    },
+    {
+      "id": "rename",
+      "type": "file-rename",
+      "version": "1.0.0",
+      "name": "Rename",
+      "position": {
+        "x": 250,
+        "y": 0
+      },
+      "metadata": {},
+      "parameters": {
+        "prefix": "renamed-"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "version": "1.0.0",
+      "name": "Output",
+      "position": {
+        "x": 500,
+        "y": 0
+      },
+      "metadata": {},
+      "parameters": {
+        "mode": "write",
+        "directory": "{{ctx.paths.output_dir}}/kept",
+        "label": "Renamed Files"
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "files"
+        }
+      ],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "rename"
+    },
+    {
+      "id": "e2",
+      "source": "rename",
+      "target": "output"
+    }
+  ]
+}

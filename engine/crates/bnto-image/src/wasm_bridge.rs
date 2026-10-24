@@ -237,6 +237,7 @@ pub fn compress_image_combined(
 ///       "width": 800,                // Target width in pixels
 ///       "height": 600,               // Target height (optional; with width + maintainAspect, fits inside)
 ///       "maintainAspect": true,      // Preserve aspect ratio (default: true)
+///       "enlarge": true,             // Scale up smaller images (default: true)
 ///       "quality": 80                // JPEG quality 1-100 (default: 80)
 ///     }
 ///     ```

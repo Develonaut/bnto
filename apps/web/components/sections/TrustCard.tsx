@@ -28,6 +28,7 @@ export function TrustCard({
           <img
             src={mascot}
             alt=""
+            loading="lazy"
             width={mascotSize}
             height={mascotSize}
             className="mx-auto shrink-0"

@@ -8,12 +8,19 @@ use std::process;
 use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
-use crate::{storage, trust, trust_gate};
+use crate::{dry_run_hint, storage, trust, trust_gate};
 
 /// Check trust level for a recipe and prompt for consent if needed.
 ///
-/// Exits the process when the user declines.
-pub fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog: &RecipeCatalog) {
+/// Exits the process when the user declines, suggesting the `bnto dry-run`
+/// that inspects the same recipe with the same `params` (the run's `-p`).
+pub fn check_trust(
+    recipe_arg: &str,
+    raw_json: &str,
+    params: &[String],
+    skip_consent: bool,
+    catalog: &RecipeCatalog,
+) {
     if skip_consent {
         return;
     }
@@ -27,7 +34,7 @@ pub fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog
         return;
     };
     if !trust::prompt_consent(&request.recipe_name, &request.commands) {
-        exit_declined(recipe_arg);
+        exit_declined(recipe_arg, params);
     }
     if let Some(path) = trust_path {
         trust_gate::record_approval(&path, request.hash);
@@ -35,11 +42,11 @@ pub fn check_trust(recipe_arg: &str, raw_json: &str, skip_consent: bool, catalog
 }
 
 /// Explain the refusal and how to inspect the commands safely, then exit.
-fn exit_declined(recipe_arg: &str) -> ! {
+fn exit_declined(recipe_arg: &str, params: &[String]) -> ! {
     eprintln!("{} Execution cancelled.", "Aborted:".red().bold());
     eprintln!(
         "Run {} (without input files) to inspect the commands without running them.",
-        format!("bnto dry-run {recipe_arg}").cyan()
+        dry_run_hint::dry_run_command(recipe_arg, params).cyan()
     );
     process::exit(1);
 }

@@ -10,23 +10,19 @@
 - **IDs never get reused.** The next one is **ISS-25**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
-| ID     | Issue                                                                     | Area        | Status                                                                        |
-| ------ | ------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------- |
-| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404               | web docs    | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`          | cli test    | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`              | tooling     | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-10 | `task check` skips the crate publish checks CI runs                       | tooling     | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-11 | The consent prompt suggests `bnto dry-run <path>`, which refuses paths    | cli         | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set             | cli         | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-14 | `optimize-images-for-web` enlarges images smaller than 800 px             | engine      | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-15 | `vector-optimize`'s `precision` param does nothing                        | engine      | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines        | tooling     | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-17 | The `/workflow-expert` skill's node inventory is stale                    | docs        | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-18 | A Windows process test times out waiting 20 s for PowerShell              | engine test | Scheduled ([plan](strategy/open-issues-plan.md))                              |
-| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                     | docs        | Open                                                                          |
-| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                  | docs        | Open                                                                          |
-| ISS-21 | The TUI deletes the contents of a recipe's output folder before each run  | tui         | In progress ([#750](https://github.com/Develonaut/bnto/pull/750)) — fix first |
-| ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name | cli         | Open                                                                          |
+| ID     | Issue                                                                     | Area        | Status                                           |
+| ------ | ------------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
+| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404               | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`          | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`              | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-10 | `task check` skips the crate publish checks CI runs                       | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set             | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines        | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-17 | The `/workflow-expert` skill's node inventory is stale                    | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-18 | A Windows process test times out waiting 20 s for PowerShell              | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                     | docs        | Open                                             |
+| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                  | docs        | Open                                             |
+| ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name | cli         | Open                                             |
 
 ---
 
@@ -54,29 +50,11 @@ Every package's `eslint.config.mjs` imports `../../eslint.config.base.mjs` (or `
 
 CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scripts/check-own-version-crates.sh` (`.github/workflows/ci.yml:316-323`), but no task does, so `task check` can't catch them. #740 added `#[expect]` lines to tonkotsu without bumping its own version: `task check` exited 0 and CI failed (`tonkotsu-0.1.2/src/field.rs ... differ`). Add both scripts to `task check` (the own-version one needs network, to download the published crate), or say in pre-commit.md that a change to a crate with its own version needs that bump.
 
-### ISS-11: The consent prompt suggests `bnto dry-run <path>`, which refuses paths
-
-**Found:** October 23, 2026 (ISS-1 part 2).
-
-When `bnto run` asks for consent, it suggests running `bnto dry-run {recipe_arg}` to inspect the commands (`engine/crates/bnto/src/consent.rs:42`), and declining says so again. For a recipe run by path, that command fails: `show_dry_run` resolves only catalog slugs (`engine/crates/bnto/src/inspect.rs`, `catalog.resolve(slug)`), so `bnto dry-run recipes/release-verify.bnto.json` prints `Error: Unknown recipe: …` and exits 1. Either let `bnto dry-run` read a recipe file as `bnto run` does (`run.rs` `read_recipe`), or suggest it only for slugs.
-
 ### ISS-12: Released CLIs send no telemetry: the PostHog key is never set
 
 **Found:** October 24, 2026 (planning ISS-7).
 
 `engine/crates/bnto/src/telemetry/mod.rs:57` reads the key from the `BNTO_POSTHOG_KEY` env var at run time, and telemetry is inactive without one (`:60`). Nothing sets it: there's no `option_env!`, no build script, and nothing in `release.yml` (`grep -rn BNTO_POSTHOG_KEY` finds only `mod.rs` and a test). So shipped CLIs collect nothing, while the first-run notice says bnto "collects anonymous usage data" and the code comment calls the key "safe to embed". `bnto telemetry status` also reports "Effective: true" without checking for a key (`mod.rs:134`). Needs Ryan's decision: ship the key, or say telemetry is off.
-
-### ISS-14: `optimize-images-for-web` enlarges images smaller than 800 px
-
-**Found:** October 21, 2026 (dogfood sessions); reproduced October 24, 2026.
-
-The recipe's `image-resize` sets `width: 800` (`engine/crates/bnto-engine/recipes/optimize-images-for-web.bnto.json`), and `image-resize` always scales, so `test-fixtures/images/medium.jpg` (400×400) comes out 800×800. "Optimize for web" makes small images bigger. `generate-thumbnails` has the same shape.
-
-### ISS-15: `vector-optimize`'s `precision` param does nothing
-
-**Found:** October 21, 2026 (dogfood sessions); checked October 24, 2026.
-
-`precision` (default 3, range 0–8) is declared and shown in every UI, but nothing reads it. Its description says "reserved for Tier 2" (`engine/crates/bnto-vector/src/optimize/processor.rs:78`). The bundled `optimize-svg` recipe sets it. Decided October 24: remove the param (with a `bnto migrate` step), don't implement it.
 
 ### ISS-16: `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines
 
@@ -114,12 +92,6 @@ Relative links that don't resolve from the file they're in:
 
 `task docs:validate` (`scripts/validate-docs.ts`) checks crate READMEs and node docs only, never links. `CLAUDE.md`'s 115 root-relative links (`.claude/rules/…`) work for agents, which read from the repo root, but not on GitHub; keep that convention or not, but say so. Fix the 12 and add a link check to `docs:validate` (a Python sketch that lists them: walk `.claude/**/*.md`, resolve each Markdown link target against the file's folder).
 
-### ISS-21: The TUI deletes the contents of a recipe's output folder before each run
-
-**Found:** October 24, 2026 (evaluating [a feature request](requests/2026-10-24-folder-index.md)). **Severity: data loss; fix first.**
-
-`fresh_output_dir` (`engine/crates/bnto/src/tui/bridge.rs:243-263`) resolves the recipe's output-node `directory` and then calls `std::fs::remove_dir_all` on it (`:260`) before recreating it, on every write-mode TUI run (preview returns first, and overwrite uses the source folder). That `directory` is the recipe's own folder, not a bnto temp folder: a recipe that writes into `~/Documents/Reports` loses everything already there when it's run from the TUI. A canary file in a library recipe's `directory` was deleted by one TUI run (reproduced via tmux in a sandbox). `bnto run` doesn't do this. Only a bnto-owned temp folder may be emptied. A recipe's folder must be written into the way `bnto run` writes: nothing already there is deleted, and only a file with the same name as an output is replaced (`output_names` keeps one run's names apart, not from files already present).
-
 ### ISS-22: The output node's `directory` leaves `{{env.*}}` as a literal folder name
 
 **Found:** October 24, 2026 (evaluating [a feature request](requests/2026-10-24-folder-index.md)).
@@ -130,4 +102,4 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - `bnto run` exits 0 and prints `1 file written to {{env.SOME_KEY}}/`.
 - The file lands in `./{{env.SOME_KEY}}/note.txt`; the folder `SOME_KEY` names stays empty.
 
-`resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:252-254`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). Fix after ISS-21, so a filled `{{env.*}}` can't point the TUI's wipe at a real folder.
+`resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:252-254`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). ISS-21, the TUI wipe this could have pointed at a real folder, is fixed (#750).

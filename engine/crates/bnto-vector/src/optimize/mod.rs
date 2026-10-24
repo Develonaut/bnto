@@ -18,7 +18,6 @@ pub struct OptimizeConfig {
     pub remove_metadata: bool,
     pub collapse_groups: bool,
     pub minify: bool,
-    pub precision: u8,
 }
 
 impl Default for OptimizeConfig {
@@ -28,7 +27,6 @@ impl Default for OptimizeConfig {
             remove_metadata: true,
             collapse_groups: true,
             minify: true,
-            precision: 3,
         }
     }
 }

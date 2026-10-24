@@ -134,6 +134,50 @@ fn tj3_compress_an_image_and_see_the_result() {
 
 #[test]
 #[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
+fn tj14_a_run_keeps_what_is_already_in_the_recipes_folder() {
+    // ISS-21: the TUI emptied a recipe's output folder before each run.
+    let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/tui/keep-folder.bnto.json");
+    let inputs = tempfile::tempdir().unwrap();
+    let report = inputs.path().join("report.txt");
+    std::fs::write(&report, b"new").unwrap();
+    let mut tui = Tui::launch_with_library_and_files(120, 36, &[&recipe], &[&report]);
+
+    let folder = tui.bnto_home().join("output/kept");
+    std::fs::create_dir_all(&folder).unwrap();
+    std::fs::write(folder.join("notes.txt"), b"mine").unwrap();
+    std::fs::write(folder.join("renamed-report.txt"), b"old").unwrap();
+
+    tui.wait_for("keep-folder"); // the home Library pane lists file names
+    tui.press(&[Key::Enter]); // Library pane is focused: open the library
+    tui.wait_for("Keep Folder");
+    tui.press(&[Key::Enter]); // ...and the recipe
+    tui.wait_for("report.txt");
+    tui.press(&[Key::Char(' ')]);
+    tui.wait_for("1 file selected");
+    tui.press(&[Key::Tab]); // to the rename's fields
+    tui.wait_for("> Sanitize");
+    focus_run(&mut tui);
+    tui.press(&[Key::Enter]);
+
+    let screen = tui.wait_until("the results screen", |screen| {
+        ["R E S U L T S", "Completed in", "renamed-report.txt"]
+            .iter()
+            .all(|part| screen.contains(part))
+    });
+    assert!(
+        !screen.contains("notes.txt"),
+        "listed as a result:\n{screen}"
+    );
+    assert_eq!(std::fs::read(folder.join("notes.txt")).unwrap(), b"mine");
+    assert_eq!(
+        std::fs::read(folder.join("renamed-report.txt")).unwrap(),
+        b"new"
+    );
+}
+
+#[test]
+#[cfg_attr(windows, ignore = "ConPTY journeys not yet stable in CI")]
 fn tj5_shell_output_streams_live_and_stays_after_the_run() {
     let recipe = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/tui/slow-shell.bnto.json");

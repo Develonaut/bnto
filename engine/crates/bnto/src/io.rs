@@ -1,8 +1,8 @@
 // File I/O helpers — read input files and write pipeline results.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use bnto_core::{PipelineFile, PipelineResult};
+use bnto_core::{PipelineFile, PipelineFileResult, PipelineResult};
 
 use crate::output_names::{self, Renamed};
 
@@ -47,27 +47,64 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 /// Parent directories are created automatically before writing.
 ///
 /// Uses `FileData::copy_to()` which copies for path-referenced files
-/// and writes bytes for in-memory files. Source files are never modified.
+/// and writes bytes for in-memory files. Source files are never modified,
+/// and a file already at its destination is left as is.
 ///
-/// Names that would land on one file are kept apart (see `output_names`);
-/// returns the files written under a new name.
-pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Vec<Renamed>, String> {
+/// Names that would land on one file are kept apart (see `output_names`).
+pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
     std::fs::create_dir_all(output_dir).map_err(|e| format!("Cannot create {output_dir}: {e}"))?;
 
-    let (names, renamed) = output_names::plan(result.files.iter().map(|f| f.name.as_str()));
-    for (file, name) in result.files.iter().zip(&names) {
-        let out_path = Path::new(output_dir).join(name);
-        if let Some(parent) = out_path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
-        }
-        file.data
-            .copy_to(&out_path)
-            .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))?;
+    let (paths, renamed) = destinations(result, output_dir);
+    let unchanged = already_there(result, &paths);
+    for (file, out_path) in result.files.iter().zip(&paths) {
+        write_one(file, out_path)?;
     }
+    Ok(Placed { renamed, unchanged })
+}
 
-    Ok(renamed)
+/// What a write did besides writing: the files written under a new name, and
+/// how many were already at their destination (the source itself), left as is.
+#[derive(Debug, Default, PartialEq)]
+pub struct Placed {
+    pub renamed: Vec<Renamed>,
+    pub unchanged: usize,
+}
+
+/// What `write_results` would do, writing nothing (a dry run).
+fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
+    check_file_names(result)?;
+    let (paths, renamed) = destinations(result, output_dir);
+    let unchanged = already_there(result, &paths);
+    Ok(Placed { renamed, unchanged })
+}
+
+/// Each result file's path under `output_dir`, with the files given a new
+/// name so no two land on one file.
+fn destinations(result: &PipelineResult, output_dir: &str) -> (Vec<PathBuf>, Vec<Renamed>) {
+    let (names, renamed) = output_names::plan(result.files.iter().map(|f| f.name.as_str()));
+    let paths = names
+        .iter()
+        .map(|n| Path::new(output_dir).join(n))
+        .collect();
+    (paths, renamed)
+}
+
+/// How many result files already are the file at their destination, e.g. an
+/// input written back into its own folder (ISS-36). `copy_to` leaves those.
+fn already_there(result: &PipelineResult, paths: &[PathBuf]) -> usize {
+    let files = result.files.iter().zip(paths);
+    files.filter(|(file, path)| file.data.is_at(path)).count()
+}
+
+fn write_one(file: &PipelineFileResult, out_path: &Path) -> Result<(), String> {
+    if let Some(parent) = out_path.parent() {
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
+    }
+    file.data
+        .copy_to(out_path)
+        .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))
 }
 
 /// Fail on a result file with no name, for a real write and a dry run alike.
@@ -90,10 +127,12 @@ fn check_file_names(result: &PipelineResult) -> Result<(), String> {
 pub enum WriteOutcome {
     /// Files were copied to an output directory; `renamed` lists those
     /// written under a new name so they didn't replace one another.
+    /// `count` excludes the `unchanged` files, already there and left as is.
     Written {
         dir: String,
         count: usize,
         renamed: Vec<Renamed>,
+        unchanged: usize,
     },
     /// Files were renamed in place (overwrite mode).
     Overwritten { count: usize },
@@ -121,16 +160,16 @@ pub fn write_results_with_mode(
 ) -> Result<WriteOutcome, String> {
     match mode {
         "write" => {
-            check_file_names(result)?;
-            let renamed = if dry_run {
-                output_names::plan(result.files.iter().map(|f| f.name.as_str())).1
+            let placed = if dry_run {
+                plan_results(result, output_dir)?
             } else {
                 write_results(result, output_dir)?
             };
             Ok(WriteOutcome::Written {
                 dir: output_dir.to_string(),
-                count: result.files.len(),
-                renamed,
+                count: result.files.len() - placed.unchanged,
+                renamed: placed.renamed,
+                unchanged: placed.unchanged,
             })
         }
         "overwrite" => crate::overwrite::overwrite_in_place(result, dry_run)
@@ -607,6 +646,56 @@ mod tests {
         assert!(!out_dir.exists(), "dry run must not create the output dir");
     }
 
+    // --- a file already at its destination (ISS-36) ---
+
+    #[test]
+    fn test_write_mode_into_the_source_folder_leaves_the_file_as_is() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("a.txt");
+        std::fs::write(&src, b"important").unwrap();
+        let result = make_result_with_path(src.clone(), "a.txt");
+
+        let outcome =
+            write_results_with_mode(&result, "write", temp.path().to_str().unwrap(), false)
+                .unwrap();
+
+        assert_eq!(std::fs::read(&src).unwrap(), b"important");
+        assert!(
+            matches!(
+                outcome,
+                WriteOutcome::Written {
+                    count: 0,
+                    unchanged: 1,
+                    ..
+                }
+            ),
+            "{outcome:?}"
+        );
+    }
+
+    #[test]
+    fn test_dry_run_write_mode_into_the_source_folder_counts_it_as_left() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("a.txt");
+        std::fs::write(&src, b"important").unwrap();
+        let result = make_result_with_path(src, "a.txt");
+
+        let outcome =
+            write_results_with_mode(&result, "write", temp.path().to_str().unwrap(), true).unwrap();
+
+        assert!(
+            matches!(
+                outcome,
+                WriteOutcome::Written {
+                    count: 0,
+                    unchanged: 1,
+                    ..
+                }
+            ),
+            "{outcome:?}"
+        );
+    }
+
     // --- output names that clash ---
 
     fn make_result_with_paths(files: &[(std::path::PathBuf, &str)]) -> PipelineResult {
@@ -672,6 +761,7 @@ mod tests {
             dir: out_dir.to_str().unwrap().to_string(),
             count: 2,
             renamed: vec![renamed("logo.svg", "logo_1.svg")],
+            unchanged: 0,
         };
         assert_eq!(outcome, expected);
         assert!(!out_dir.exists());

@@ -1320,6 +1320,17 @@
           "group": "dimensions"
         },
         {
+          "name": "enlarge",
+          "label": "Enlarge Smaller Images",
+          "description": "Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true,
+          "group": "dimensions"
+        },
+        {
           "name": "quality",
           "label": "Quality",
           "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
@@ -2525,21 +2536,6 @@
             "type": "boolean"
           },
           "default": true,
-          "surfaceable": true
-        },
-        {
-          "name": "precision",
-          "label": "Numeric Precision",
-          "description": "Decimal places for numeric values (reserved for Tier 2)",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 3,
-          "constraints": {
-            "min": 0.0,
-            "max": 8.0,
-            "required": false
-          },
           "surfaceable": true
         }
       ]
@@ -3915,6 +3911,17 @@
           "group": "dimensions"
         },
         {
+          "name": "enlarge",
+          "label": "Enlarge Smaller Images",
+          "description": "Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger",
+          "paramType": {
+            "type": "boolean"
+          },
+          "default": true,
+          "surfaceable": true,
+          "group": "dimensions"
+        },
+        {
           "name": "quality",
           "label": "Quality",
           "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality.",
@@ -4623,21 +4630,6 @@
             "type": "boolean"
           },
           "default": true,
-          "surfaceable": true
-        },
-        {
-          "name": "precision",
-          "label": "Numeric Precision",
-          "description": "Decimal places for numeric values (reserved for Tier 2)",
-          "paramType": {
-            "type": "number"
-          },
-          "default": 3,
-          "constraints": {
-            "min": 0.0,
-            "max": 8.0,
-            "required": false
-          },
           "surfaceable": true
         }
       ],
@@ -6180,6 +6172,7 @@
             "name": "Resize",
             "outputPorts": [],
             "parameters": {
+              "enlarge": false,
               "maintainAspect": true,
               "quality": 80,
               "width": 800
@@ -6359,6 +6352,7 @@
             "name": "Resize",
             "outputPorts": [],
             "parameters": {
+              "enlarge": false,
               "maintainAspect": true,
               "quality": 80,
               "width": 150
@@ -7735,7 +7729,6 @@
             "parameters": {
               "collapseGroups": true,
               "minify": true,
-              "precision": 3,
               "removeComments": true,
               "removeMetadata": true
             },

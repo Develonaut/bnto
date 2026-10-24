@@ -67,6 +67,9 @@ const config = {
     assert: {
       assertions: {
         "categories:performance": ["warn", { minScore: 0.9 }],
+        // The LCP image must be in the HTML, eager and fetchpriority=high (ISS-30).
+        // A pass/fail check, unlike LCP timing, so it can gate. N/A when LCP is text.
+        "lcp-discovery-insight": ["error", { minScore: 1 }],
         "categories:accessibility": ["error", { minScore: 0.9 }],
         "categories:best-practices": ["error", { minScore: 0.9 }],
         // Vercel previews send x-robots-tag: noindex, tanking SEO score

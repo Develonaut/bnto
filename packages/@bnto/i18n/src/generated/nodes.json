@@ -478,6 +478,10 @@
         "label": "Maintain Aspect Ratio",
         "description": "Keep the original width-to-height ratio. With both width and height set, the image fits inside that box"
       },
+      "enlarge": {
+        "label": "Enlarge Smaller Images",
+        "description": "Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger"
+      },
       "quality": {
         "label": "Quality",
         "description": "Output quality (1 = lowest, 100 = highest). JPEG and WebP are encoded lossily at this quality."
@@ -664,10 +668,6 @@
       "minify": {
         "label": "Minify",
         "description": "Remove unnecessary whitespace and newlines"
-      },
-      "precision": {
-        "label": "Numeric Precision",
-        "description": "Decimal places for numeric values (reserved for Tier 2)"
       }
     },
     "vectorRasterize": {

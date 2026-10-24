@@ -11,6 +11,7 @@ export function FooterBrand() {
       <img
         src="/mascots/sushi-shop.svg"
         alt=""
+        loading="lazy"
         width={260}
         height={260}
         className="shrink-0"

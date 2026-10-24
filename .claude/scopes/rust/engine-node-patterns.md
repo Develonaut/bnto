@@ -495,7 +495,7 @@ Steps: get -> and_then (type coerce) -> unwrap_or (default) -> clamp (bounds).
 | `name()` doesn't match registry key                                     | Align to return the registry key (category-first: `"image-compress"`)                                  |
 | Noun type name, or a verb not in the vocabulary                         | Pick a verb from [node-vocabulary.md](node-vocabulary.md), or add one there                            |
 | New param name for an idea another node already has                     | Reuse the [Shared Params](node-vocabulary.md#shared-params) name and values                            |
-| Renamed a shipped type or param with no migration                       | Add a `bnto migrate` step in `engine/crates/bnto/src/migrate/` and a row in `bnto-core/src/renamed.rs` |
+| Renamed or removed a shipped type or param with no migration            | Add a `bnto migrate` step in `engine/crates/bnto/src/migrate/` and a row in `bnto-core/src/renamed.rs` |
 | Crate README missing processors                                         | Update the Processors table when adding/removing processors                                            |
 | Crate name doesn't match category                                       | Rename crate to match (e.g., `bnto-csv` → `bnto-spreadsheet`)                                          |
 | Processor file name doesn't match operation                             | Rename file to match (e.g., `csv_to_json.rs` → `convert.rs`)                                           |

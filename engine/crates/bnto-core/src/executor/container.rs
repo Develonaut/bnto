@@ -199,7 +199,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
 ///
 /// For `Path` variant files, this clones only the ~50-byte PathBuf reference,
 /// not the multi-GB file content. The consumer (CLI progress reporter, TUI bridge)
-/// uses `write_to()` to move the file to its destination.
+/// uses `copy_to()` to copy the file to its destination.
 fn build_progress_files(
     persistence: &OutputPersistence,
     files: &[PipelineFile],

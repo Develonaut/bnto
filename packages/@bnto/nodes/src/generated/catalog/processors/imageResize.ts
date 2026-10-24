@@ -38,6 +38,14 @@ export const imageResizeProcessor: ProcessorDef = {
       default: true,
     },
     {
+      name: "enlarge",
+      label: "Enlarge Smaller Images",
+      description:
+        "Scale up images smaller than the target. When off, an image is only ever made smaller, never bigger",
+      type: "boolean" as const,
+      default: true,
+    },
+    {
       name: "quality",
       label: "Quality",
       description:

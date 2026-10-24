@@ -146,6 +146,13 @@ describe("engine defaults flow through to schemas", () => {
     expect(zodDefault).toBe(engineDefault);
   });
 
+  it("image-resize enlarge default matches engine", () => {
+    const engineDefault = getProcessorDefaults("image-resize").enlarge;
+    const zodDefault = imageResizeParamsSchema.shape.enlarge.parse(undefined);
+    expect(engineDefault).toBe(true);
+    expect(zodDefault).toBe(engineDefault);
+  });
+
   it("spreadsheet-clean defaults match engine", () => {
     const engineDefaults = getProcessorDefaults("spreadsheet-clean");
     const zodTrimDefault = spreadsheetCleanParamsSchema.shape.trimWhitespace.parse(undefined);
