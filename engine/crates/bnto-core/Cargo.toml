@@ -29,6 +29,8 @@ thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 unicode-normalization = { workspace = true }
+# File identity, so a copy never opens its own source for writing.
+same-file = { workspace = true }
 # Optional: TypeScript codegen. Enabled via the `ts` feature so release
 # builds (WASM, CLI) don't pay for the ts-rs trait impls.
 ts-rs = { workspace = true, optional = true }
