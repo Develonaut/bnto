@@ -10,46 +10,46 @@
 - **IDs never get reused.** The next one is **ISS-54**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
-| ID     | Issue                                                                                 | Area        | Status                                                       |
-| ------ | ------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------ |
-| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404                           | web docs    | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`                      | cli test    | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`                          | tooling     | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-10 | `task check` skips the crate publish checks CI runs                                   | tooling     | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set                         | cli         | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-17 | The `/workflow-expert` skill's node inventory is stale                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-18 | A Windows process test times out waiting 20 s for PowerShell                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md))             |
-| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                                 | docs        | Open                                                         |
-| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                              | docs        | Open                                                         |
-| ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name             | cli         | Open                                                         |
-| ISS-25 | Watermark Images runs with an empty overlay and fails every time                      | engine      | Open                                                         |
-| ISS-26 | The site's `$pageview` overwrites `$current_url` with a bare path                     | web         | Open                                                         |
-| ISS-27 | `recipe_run_failed` always reports `errorCategory: "unknown"`                         | core        | Open                                                         |
-| ISS-28 | `result_downloaded` is never sent for the automatic download                          | web         | Open                                                         |
-| ISS-29 | Errors on bnto.io go unseen: exception capture is off                                 | core        | Open                                                         |
-| ISS-31 | Another app's events land in bnto.io's PostHog project                                | analytics   | Open                                                         |
-| ISS-32 | TUI journeys time out when the machine is busy                                        | tui test    | Open                                                         |
-| ISS-33 | Output names and extension reads split on a dot in a folder name                      | engine      | Open                                                         |
-| ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                | engine      | Open                                                         |
-| ISS-35 | Inside a loop, a data value is filled in as a template                                | engine      | Open                                                         |
-| ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                           | web perf    | Open                                                         |
-| ISS-38 | CI and release skip jobs for root files those jobs read                               | ci          | Open                                                         |
-| ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                    | tooling     | Open                                                         |
-| ISS-40 | `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled                     | cli         | Open                                                         |
-| ISS-41 | Four CLI unit tests load the catalog from `/nonexistent`                              | cli test    | Open                                                         |
-| ISS-42 | Two `@bnto/nodes` tests import the catalog through a path that doesn't exist          | tooling     | Open                                                         |
-| ISS-43 | The TUI labels overwrite results with the first file's folder only                    | tui         | Open                                                         |
-| ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate`         | web         | Open — needs Ryan's decision                                 |
-| ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted              | cli tui     | Open                                                         |
-| ISS-46 | The TUI's Open action uses the first folder for overwrite results                     | tui         | Open                                                         |
-| ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image | web perf    | Open                                                         |
-| ISS-48 | **A write can overwrite an input file the run hasn't read yet**                       | cli         | In progress (`fix/never-overwrite-unread-input`) — fix first |
-| ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build           | tooling     | Open                                                         |
-| ISS-50 | `bnto dry-run` shows shell commands with broken quoting                               | cli         | Open                                                         |
-| ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                      | tooling     | Open                                                         |
-| ISS-52 | **`file-copy` with `conflict: overwrite` can replace an input the run hasn't read**   | engine      | Open — fix first                                             |
-| ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect          | engine      | Open                                                         |
+| ID     | Issue                                                                                                 | Area        | Status                                           |
+| ------ | ----------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------ |
+| ISS-7  | The CLI's telemetry notice links `bnto.io/telemetry`, a 404                                           | web docs    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-8  | Most CLI integration tests run `bnto` against the real `~/.bnto`                                      | cli test    | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-9  | Turbo's lint cache ignores the root `eslint.config.base.mjs`                                          | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-10 | `task check` skips the crate publish checks CI runs                                                   | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-12 | Released CLIs send no telemetry: the PostHog key is never set                                         | cli         | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
+| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                                                 | docs        | Open                                             |
+| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                                              | docs        | Open                                             |
+| ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
+| ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
+| ISS-26 | The site's custom `$pageview` overwrites `$current_url` with a bare path                              | web         | Open                                             |
+| ISS-27 | `recipe_run_failed` always reports `errorCategory: "unknown"`                                         | core        | Open                                             |
+| ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
+| ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
+| ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
+| ISS-32 | TUI journeys time out when the machine is busy                                                        | tui test    | Open                                             |
+| ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
+| ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
+| ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
+| ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
+| ISS-38 | CI and release skip jobs for root files those jobs read                                               | ci          | Open                                             |
+| ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                                    | tooling     | Open                                             |
+| ISS-40 | `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled                                     | cli         | Open                                             |
+| ISS-41 | About two dozen engine tests point at `/nonexistent`                                                  | cli test    | Open                                             |
+| ISS-42 | Two `@bnto/nodes` tests import the catalog through a path that doesn't exist                          | tooling     | Open                                             |
+| ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
+| ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
+| ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
+| ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
+| ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
+| ISS-48 | **A write can overwrite an input file the run hasn't read yet** (fix first)                           | cli         | In progress (`fix/never-overwrite-unread-input`) |
+| ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
+| ISS-50 | `bnto dry-run` shows shell commands with broken quoting                                               | cli         | Open                                             |
+| ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
+| ISS-52 | **`file-copy` with `conflict: overwrite` can replace an input the run hasn't read** (fix first)       | engine      | Open                                             |
+| ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
 
 ---
 
@@ -178,6 +178,7 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - **What PostHog shows:** no `$exception` events in 180 days; every event reports `$exception_capture_enabled_server_side = false`. Only the error boundary's `app_error` reaches PostHog (1 event in 90 days).
 - **Why:** `packages/core/src/adapters/posthog/posthogAdapter.ts:44-63` doesn't enable exception autocapture, and the project doesn't either.
 - **Effect:** unhandled rejections are invisible. For example, `runAction` throws at `recipeStepperActions.ts:127` with no `recipe_run_failed`. Runs are also undercounted: 58 starts against 42 completions and 13 failures leaves 3 with no outcome event, and a run that completes with no results emits nothing (`:133`).
+- **Why the tests missed it:** `posthogAdapter.ts` has no test file (only `flagAdapter.test.ts` sits beside it), so nothing asserts its init options.
 - **Fix:** enable exception capture, and give every run exactly one outcome event.
 - **Regression test:** a unit test on the PostHog adapter's init options that exception capture is on, and a check that every run emits exactly one of `recipe_run_completed` / `recipe_run_failed`.
 
@@ -262,7 +263,7 @@ A PR that changes only one of these files skips the jobs that read it, and the C
 
 - **Rust jobs:** `ci.yml`'s `engine` filter is `engine/**`, `recipes/**` and the workflow. The engine's tests read `test-fixtures/` at the repo root (e.g. `engine/crates/bnto-spreadsheet/tests/common/mod.rs:19`, `include_bytes!("../../../../../test-fixtures/csv/simple.csv")`), so a fixture-only change runs no Rust job.
 - **TypeScript job:** the `web` filter misses `eslint.config.base.mjs`, which every package's `eslint.config.mjs` imports (`packages/core/eslint.config.mjs:1`), and the root files ISS-9's fix adds as task inputs (`README.md`, `.prettierrc`, `engine/Cargo.toml`, `engine/catalog.snapshot.json`, `engine/crates/bnto-core/src/lib.rs`). A lint-rule-only change runs no lint.
-- **Release:** `release.yml`'s change detection is narrower than CI's: `engine` is `^engine/` (no `recipes/`, no `test-fixtures/`) and `web` is `^(apps/|packages/|engine/)` (no `pnpm-lock.yaml`, `package.json`, `tsconfig*.json`). A dependency-only release skips the TypeScript job and the web deploy.
+- **Release:** `release.yml`'s change detection is narrower than CI's: `engine` is `^engine/` (no `recipes/`, no `test-fixtures/`) and `web` is `^(apps/|packages/|engine/|turbo\.json$|pnpm-workspace\.yaml$)` since #747 (no `pnpm-lock.yaml`, `package.json`, `tsconfig*.json`). A dependency-only release skips the TypeScript job and the web deploy.
 
 - **Fix:** derive the filters from what the jobs read, and keep `ci.yml` and `release.yml` from drifting: one list both use (a shared script, or the release job calling the same filter).
 - **Regression test:** a check (in `task check`) that every root file a task or test reads is in the matching filter, the same way ISS-9's fix checks Turbo's inputs.
@@ -271,7 +272,7 @@ A PR that changes only one of these files skips the jobs that read it, and the C
 
 **Found:** October 24, 2026 (fixing ISS-9, reproduced by the fixer with a probe).
 
-In a git worktree, with ISS-9's fix in place, a staged rule in `eslint.config.base.mjs` that fails every file passed the pre-commit hook: the hook's lint printed `@bnto/auth:lint: cache hit` with `main`'s old hash and the commit went through. Run outside the hook, the same task hashes differently and fails. Likely cause: git sets `GIT_DIR` during hooks, and Turbo then hashes a different tree (a comment in `formatVersion.test.ts` describes the same effect in worktrees). Not yet confirmed.
+In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.config.base.mjs` that fails every file passed the pre-commit hook: the hook's lint printed `@bnto/auth:lint: cache hit` with `main`'s old hash and the commit went through. Run outside the hook, the same task hashes differently and fails. Likely cause: git sets `GIT_DIR` during hooks, and Turbo then hashes a different tree (a comment in `formatVersion.test.ts` describes the same effect in worktrees). Not yet confirmed.
 
 - **Fix:** run the hook's Turbo tasks with `GIT_DIR` unset (or `--force` for lint), and confirm the hash matches a plain run.
 - **Regression test:** in a worktree, a staged lint-breaking change to the base config fails `git commit`.
@@ -285,11 +286,11 @@ In a git worktree, with ISS-9's fix in place, a staged rule in `eslint.config.ba
 - **Fix:** give `dry-run` the same `--vars` (shared argument struct with `run`), and fill vars before the preview.
 - **Regression test:** a sandboxed `bnto dry-run --vars` shows the filled value where `bnto run` would use it.
 
-### ISS-41: Four CLI unit tests load the catalog from `/nonexistent`
+### ISS-41: About two dozen engine tests point at `/nonexistent`
 
 **Found:** October 24, 2026 (fixing ISS-11).
 
-`RecipeCatalog::load(Path::new("/nonexistent"))` in `engine/crates/bnto/src/list.rs:281`, `info.rs:139` and `install.rs:562, 591`, the pattern gotchas.md's Windows section forbids (`/nonexistent` is `C:\nonexistent` on Windows, and could exist). They only read, so they pass today.
+24 uses of `"/nonexistent` in `engine/` tests on `main` (`git grep -n '"/nonexistent' -- engine/`), about 18 of them `RecipeCatalog::load(Path::new("/nonexistent"))` in the `bnto` crate: `list.rs:281`, `info.rs:139`, `install.rs:556, 585`, `catalog.rs:289, 325`, `doctor.rs:239`, `install_trust.rs:47`, `tui/app.rs:280, 1527, 1710`, `trust.rs:305`, `context.rs:841` and the `tui/screens` and `detail_loader.rs` tests, plus `bnto-core/src/editor/mod.rs:429` and `bnto-file/src/collect/tests.rs:264`. That's the pattern gotchas.md's Windows section forbids: `/nonexistent` is `C:\nonexistent` on Windows, and could exist. Most only read, so they pass today.
 
 - **Fix:** an empty temp dir, or a test helper that builds a catalog with no library.
 - **Regression test:** a grep check in `task check` for `"/nonexistent"` in `engine/`.
@@ -327,7 +328,7 @@ The engine refuses an undeclared param before any step runs, for every consumer,
 
 **Found:** October 24, 2026 (second cold review of the ISS-21 fix; reproduced with the CLI, temp `HOME` and `BNTO_HOME`).
 
-A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs`) and the TUI (`resolve_output_dir` sends `OutputDir` for every mode but overwrite, `tui/bridge.rs:224-229`) both do it, and once ISS-21 is fixed the TUI's results list doesn't show them. In write mode, an iteration file that a later step renames also stays on disk under its old name.
+A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs`) and the TUI (outside overwrite mode, `resolve_output_dir` resolves and creates the recipe's folder and sends it as `OutputDir`, `tui/bridge.rs:224-229`) both do it, and once ISS-21 is fixed the TUI's results list doesn't show them. In write mode, an iteration file that a later step renames also stays on disk under its old name.
 
 - **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
 - **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
@@ -345,9 +346,9 @@ Since the ISS-21 fix, overwrite results from a picked folder or from several fol
 
 **Found:** October 24, 2026 (cold review of the homepage LCP fix, #753, measured with Playwright).
 
-The recipe pages (the SEO landing pages) have the homepage's problem: `/compress-images` preloads `Logo.svg`, `sushi-thumbsup.svg` and `sushi-onigiri.svg`, and onigiri sits about 7,000 px down on mobile (`app/(app)/[bnto]/_components/CategoryFeaturesSection.tsx`). The likely LCP image, `RecipeHeroMascot` (250-630 px down), has no `fetchPriority`.
+The recipe pages (the SEO landing pages) have the homepage's problem: `/compress-images` preloads `Logo.svg`, `sushi-thumbsup.svg` and `sushi-onigiri.svg`, and onigiri, the FAQ mascot (`_utils/sectionMascots.ts:18`, rendered by `app/(app)/[bnto]/_components/RecipeFaqSection.tsx:18`), sits about 7,000 px down on mobile. The likely LCP image, `RecipeHeroMascot` (250-630 px down), has no `fetchPriority`.
 
-- **Fix:** as on the homepage (`fix/homepage-lcp`): lazy below-the-fold images, `fetchPriority="high"` on the hero.
+- **Fix:** as on the homepage (#753): lazy below-the-fold images, `fetchPriority="high"` on the hero.
 - **Regression test:** extend `e2e/pages/homepage-loading.spec.ts`'s checks to a recipe page; the Lighthouse `lcp-discovery-insight` assertion already covers every recipe URL once its LCP is the image.
 
 ### ISS-48: A write can overwrite an input file the run hasn't read yet
@@ -379,7 +380,7 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 ### ISS-51: The Turbo-inputs check guards lint only, not test or build reads
 
-**Found:** October 24, 2026 (second cold review of the ISS-9 fix).
+**Found:** October 24, 2026 (second cold review of the ISS-9 fix). Applies once that fix (#756) merges: the check it describes arrives with it.
 
 `task check:turbo-inputs` (`scripts/turbo/checkLintInputs.ts`) fails when an ESLint config imports a file outside its package that the `lint` task doesn't hash. Nothing checks `test` or `build`. Their root reads (`README.md`, `.prettierrc`, `engine/Cargo.toml`, the catalog snapshot) are listed by hand, so a new one goes stale silently. `@bnto/nodes`' tests import `engine/catalog.snapshot.json` statically (`catalogValidation.test.ts:30`, `nodeTypes.test.ts:9`), which the check's `ts.preProcessFile` code would already catch if it scanned test sources.
 
@@ -392,14 +393,14 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 `F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, a `file-rename` (`find: a`, `replace: b`) then `file-copy` into `F` with `conflict: overwrite`, run on both files: `BBBB` is lost. With `main` at #745, `b.txt` ends up empty (the copy onto itself, ISS-36's bug). With #752, it ends up `AAAA`. The node copies one file at a time (`bnto-file/src/copy.rs:137`), so it can't see that a later file reads the destination. `skip` (the default) and `rename` keep every file.
 
-- **Fix:** plan the whole batch before copying, as the output node now does (`engine/crates/bnto/src/ordered_write/`). Move that ordering into a shared crate both use, or refuse an overwrite whose destination is another input still to be read.
+- **Fix:** plan the whole batch before copying, as ISS-48's fix does for the output node (`engine/crates/bnto/src/ordered_write/`, on `fix/never-overwrite-unread-input`). Move that ordering into a shared crate both use, or refuse an overwrite whose destination is another input still to be read.
 - **Regression test:** the repro above keeps `BBBB` under `conflict: overwrite` (or is refused before anything is copied).
 
 ### ISS-53: An interrupted move can leave `.bnto-rename-*` files that later runs collect
 
-**Found:** October 24, 2026 (fixing ISS-48, whose swap staging folder is now reported on Ctrl+C and skipped by `file-collect`).
+**Found:** October 24, 2026 (fixing ISS-48, whose fix reports its swap staging folder on Ctrl+C and has `file-collect` skip it).
 
 `bnto_file::relocate` parks a file under a temporary `.bnto-rename-<n>-<leaf>` name while it runs a chain or swap of renames (`engine/crates/bnto-file/src/relocate/execute.rs:139`). An overwrite-mode output or `file-move` interrupted at that point (Ctrl+C runs `process::exit`, which skips cleanup) leaves the parked file under that name, with nothing reporting it. `file-collect` doesn't skip `.bnto-rename-*`, so a later run over the folder picks it up as an input.
 
-- **Fix:** as for ISS-48's staging folders: register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
+- **Fix:** as ISS-48's fix does for its staging folders: register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
 - **Regression test:** a parked `.bnto-rename-*` file isn't collected, and an interrupted relocate prints where its parked files are.
