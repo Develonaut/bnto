@@ -124,6 +124,55 @@ fn test_keep_only_set_drops_every_other_field() {
     assert_eq!(meta["label"], "Ada");
 }
 
+// --- The file's name ---
+
+#[test]
+fn test_a_field_set_to_file_is_the_files_name() {
+    let meta = edited(json!({ "source": "{{file}}" }), json!({}));
+    assert_eq!(meta["source"], "row.csv");
+}
+
+#[test]
+fn test_file_and_item_fields_fill_in_one_value() {
+    let files = vec![
+        file("a.csv", json!({ "x": "1" })),
+        file("b.csv", json!({ "x": "2" })),
+    ];
+    let values = json!({
+        "label": "{{file}}: {{item.x}}",
+        "tags": ["{{file}}"],
+        "pair": { "src": "{{file}}" }
+    });
+    let out = run(json!({ "values": values }), files).unwrap();
+    assert_eq!(out.files[0].metadata["label"], "a.csv: 1");
+    assert_eq!(out.files[1].metadata["label"], "b.csv: 2");
+    assert_eq!(out.files[1].metadata["tags"], json!(["b.csv"]));
+    assert_eq!(out.files[1].metadata["pair"], json!({ "src": "b.csv" }));
+}
+
+#[test]
+fn test_file_is_the_name_as_it_travels_as_assert_and_report_read_it() {
+    let out = run(
+        json!({ "values": { "source": "{{file}}" } }),
+        vec![file("sub/a.csv", json!({}))],
+    )
+    .unwrap();
+    assert_eq!(out.files[0].metadata["source"], "sub/a.csv");
+}
+
+/// Outside a loop only: the item's own metadata is filled in after the
+/// template is scanned. Inside a loop, or through `{{fields.*}}`, the
+/// executor fills the value into the template first (ISS-35).
+#[test]
+fn test_a_filled_field_that_reads_like_file_is_kept_as_written() {
+    let meta = edited(
+        json!({ "copy": "{{item.note}}", "text": "{{item.note}}!" }),
+        json!({ "note": "{{file}}" }),
+    );
+    assert_eq!(meta["copy"], "{{file}}");
+    assert_eq!(meta["text"], "{{file}}!");
+}
+
 // --- Unknown fields ---
 
 #[test]
@@ -239,6 +288,10 @@ fn test_values_is_a_required_key_value_map_and_keep_only_set_a_switch() {
     assert_eq!(values.control.as_deref(), Some("keyValue"));
     assert_eq!(values.constraints.as_ref().map(|c| c.required), Some(true));
     assert!(values.description.contains("{{item."), "current syntax");
+    assert!(
+        values.description.contains("{{file}}"),
+        "names the file token"
+    );
     let keep = &meta.parameters[1];
     assert_eq!(keep.default, Some(json!(false)));
     assert_eq!(keep.control.as_deref(), Some("switch"));
