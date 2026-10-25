@@ -2,7 +2,7 @@
 // pipeline events: live progress as throttled `NodeProgress`, command output
 // lines as `CommandOutput`.
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::events::PipelineEvent;
 use crate::progress::{LiveProgress, ProgressReporter};
@@ -20,7 +20,7 @@ pub(super) fn build_node_reporter<F: Fn() -> u64 + Copy>(
 ) -> ProgressReporter {
     let (live, output) = (ctx.reporter.clone(), ctx.reporter.clone());
     let (live_id, output_id) = (node_id.to_string(), node_id.to_string());
-    let clock = Rc::clone(&ctx.live_clock);
+    let clock = Arc::clone(&ctx.live_clock);
     ProgressReporter::with_live(
         move |progress, message| live.emit(node_progress(&live_id, progress, message)),
         move |line| {

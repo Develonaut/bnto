@@ -105,6 +105,13 @@ pub trait ProcessContext: Send + Sync {
     fn recorded_writes(&self) -> Vec<PathBuf> {
         Vec::new()
     }
+
+    /// `BntoError::TimedOut` once the run has passed its time limit
+    /// (`settings.timeout`), so a batch node can stop between files. `Ok`
+    /// for a run with no limit, and everywhere but a batch node's context.
+    fn check_time_limit(&self) -> Result<(), BntoError> {
+        Ok(())
+    }
 }
 
 /// No-op context for browser (WASM) execution.
@@ -216,5 +223,12 @@ mod tests {
     fn test_noop_context_output_dir_returns_none() {
         let ctx = NoopContext;
         assert!(ctx.output_dir().is_none());
+    }
+
+    #[test]
+    fn test_noop_context_has_no_time_limit() {
+        // The browser's context: its runs are timed by the executor between
+        // steps and by the worker race in `@bnto/core`, never from here.
+        assert!(NoopContext.check_time_limit().is_ok());
     }
 }

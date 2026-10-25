@@ -5,11 +5,13 @@
 // move is planned and checked before any runs (shared with `output`
 // overwrite mode, see `crate::relocate`): one bad name, or one move that
 // would replace a file, refuses the whole run, on a dry run too. Moves are
-// renames only, so a file on another drive is refused, never copied.
+// renames only, so a file on another drive is refused, never copied. Once the
+// run's time limit passes, no more moves start (ISS-60).
 
 mod params;
 mod plan;
 mod root;
+mod stopped;
 
 use bnto_core::metadata::{InputCardinality, NodeCategory, NodeMetadata};
 use bnto_core::processor::{
@@ -94,18 +96,26 @@ impl NodeProcessor for FileMove {
             .map_err(|e| BntoError::InvalidInput(refused(&e)))?;
         let planned = plan::plan(&input.files, &mut root).map_err(BntoError::InvalidInput)?;
         let moves = real_moves(&planned.moves);
-        let conflicts = relocate::conflicts(&moves);
-        if !conflicts.is_empty() {
-            let text = relocate::listing(&conflicts, ("conflict", "conflicts"));
-            return Err(BntoError::InvalidInput(refused(&text)));
-        }
+        refuse_conflicts(&moves)?;
         let moved = moves.len();
-        if !ctx.dry_run() {
-            relocate::run_in_order(moves).map_err(BntoError::ProcessingFailed)?;
+        if !ctx.dry_run()
+            && let Err(stopped) = relocate::run_checked(moves, &|| ctx.check_time_limit())
+        {
+            return Err(stopped::handed_over(stopped, input.files, planned));
         }
         progress.report_output(&summary(moved, input.files.len() - moved, &root, ctx));
         Ok(outputs(input.files, planned, ctx.dry_run()))
     }
+}
+
+/// Refuse the whole batch when a move would replace a file.
+fn refuse_conflicts(moves: &[Move]) -> Result<(), BntoError> {
+    let conflicts = relocate::conflicts(moves);
+    if conflicts.is_empty() {
+        return Ok(());
+    }
+    let text = relocate::listing(&conflicts, ("conflict", "conflicts"));
+    Err(BntoError::InvalidInput(refused(&text)))
 }
 
 /// The moves that change a path (a file already in place stays put).
@@ -152,3 +162,5 @@ fn outputs(files: Vec<BatchFile>, planned: Planned, dry_run: bool) -> NodeOutput
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod time_tests;

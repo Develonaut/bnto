@@ -5,7 +5,8 @@
 // item is checked before any is deleted, so one file outside `base` (via
 // `..` or a link), a folder, or an in-memory item refuses the whole run, on
 // a dry run too. A file already gone is skipped and counted. Items pass
-// through flagged `deleted` or `skipped`, as file-copy's do.
+// through flagged `deleted` or `skipped`, as file-copy's do. Once the run's
+// time limit passes, no more deletes start (ISS-60).
 
 mod params;
 mod target;
@@ -101,8 +102,10 @@ impl NodeProcessor for FileDelete {
         let params = DeleteParams::read(&input.params).map_err(BntoError::InvalidInput)?;
         let root = target::base_root(&params.base).map_err(BntoError::InvalidInput)?;
         let targets = plan(&input.files, &root, &params.base).map_err(BntoError::InvalidInput)?;
-        if !ctx.dry_run() {
-            delete_all(&input.files, &targets)?;
+        if !ctx.dry_run()
+            && let Err((done, error)) = delete_all(&input.files, &targets, ctx)
+        {
+            return Err(handed_over(error, input.files, &targets, done));
         }
         let deleted = targets.iter().filter(|t| **t != Target::Missing).count();
         let skipped = targets.len() - deleted;
@@ -126,15 +129,39 @@ fn plan(files: &[BatchFile], root: &std::path::Path, base: &str) -> Result<Vec<T
     Ok(targets)
 }
 
-fn delete_all(files: &[BatchFile], targets: &[Target]) -> Result<(), BntoError> {
-    for (file, target) in files.iter().zip(targets) {
+/// Delete each target in order, first asking whether the run's time is up
+/// (ISS-60). On a failure, how many items were finished before it.
+fn delete_all(
+    files: &[BatchFile],
+    targets: &[Target],
+    ctx: &dyn ProcessContext,
+) -> Result<(), (usize, BntoError)> {
+    for (i, (file, target)) in files.iter().zip(targets).enumerate() {
         if let Target::File(path) = target {
+            ctx.check_time_limit().map_err(|e| (i, e))?;
             std::fs::remove_file(path).map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to delete {}: {e}", file.filename))
+                let why = format!("Failed to delete {}: {e}", file.filename);
+                (i, BntoError::ProcessingFailed(why))
             })?;
         }
     }
     Ok(())
+}
+
+/// `error`, carrying the first `done` items when the run's time ran out, as
+/// a per-file node hands over the files it finished. A failed delete hands
+/// over nothing, as before (ISS-87).
+fn handed_over(
+    error: BntoError,
+    files: Vec<BatchFile>,
+    targets: &[Target],
+    done: usize,
+) -> BntoError {
+    if done == 0 || !error.is_timeout() {
+        return error;
+    }
+    let finished = files.into_iter().take(done).collect();
+    BntoError::with_output(error, outputs(finished, &targets[..done]))
 }
 
 fn summary(deleted: usize, skipped: usize, base: &str, ctx: &dyn ProcessContext) -> String {
@@ -186,3 +213,5 @@ fn outputs(files: Vec<BatchFile>, targets: &[Target]) -> NodeOutput {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod time_tests;

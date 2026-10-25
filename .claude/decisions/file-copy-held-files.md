@@ -76,7 +76,7 @@ Both nest: a loop inside a branch inside a loop. Auto-iteration needs nothing ex
 **What it fixes.**
 
 - **ISS-59:** both iteration orders, `newer`, nested loops, and row 6 (fan-out), which ISS-59's entry didn't cover yet.
-- **ISS-60:** the same `RunScope` is where the run's deadline goes. Add `time_is_up(&self) -> Result<(), BntoError>` (default `Ok`) answered from `ctx.time_limit` and `live_clock`, and have `file-copy`/`file-move`/`file-delete` check it before each file. That's a small second PR on this one.
+- **ISS-60:** the same `RunScope` is where the run's deadline goes. Add `time_is_up(&self) -> Result<(), BntoError>` (default `Ok`) answered from `ctx.time_limit` and `live_clock`, and have `file-copy`/`file-move`/`file-delete` check it before each file. That's a small second PR on this one (built, as `check_time_limit`; see Order below).
 - **ISS-58:** not fixed. It's param resolution (`resolve_node_params`), not something a node asks the run for. Its own fix (fill only the loop's keys for a `resolves_items` node) is independent and can land in any order.
 - **Later:** `file-move` and `file-delete` could also ask `held_elsewhere` and refuse rows 8 and 10 up front instead of failing partway. That's optional, since nothing is lost there.
 
@@ -183,7 +183,7 @@ Ryan chose **option 1**, as recommended. It protects exactly the files the run s
 Order:
 
 1. **PR 1, ISS-59 (built, below):** the held frames, `RunScope` and `held_elsewhere`, used by `file-copy`, with the engine-execution.md notes.
-2. **PR 2, ISS-60:** `time_is_up` on `RunScope`, checked by `file-copy`, `file-move` and `file-delete` before each file.
+2. **PR 2, ISS-60 (built):** the run's limit on `RunScope`, checked by `file-copy`, `file-move` and `file-delete` before each file. The method is named `check_time_limit`, after the executor's own check, rather than `time_is_up`. See engine-execution.md's [Run Time Limit](../strategy/engine-execution.md#run-time-limit-settingstimeout).
 3. **ISS-58:** independent; any time.
 
 Whether `file-move` and `file-delete` should also refuse a source `held_elsewhere` up front (rows 8 and 10) is logged as ISS-82. Nothing is lost there today, so it waits.

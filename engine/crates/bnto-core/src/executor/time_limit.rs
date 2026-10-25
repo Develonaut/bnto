@@ -34,13 +34,22 @@ impl TimeLimit {
     }
 }
 
+/// `TimedOut` once a run with `limit` has passed it by `now_ms`; `Ok`
+/// without a limit (the clock isn't read then).
+pub(super) fn check_limit(
+    limit: Option<TimeLimit>,
+    now_ms: &dyn Fn() -> u64,
+) -> Result<(), BntoError> {
+    match limit {
+        Some(limit) => limit.check(now_ms()),
+        None => Ok(()),
+    }
+}
+
 impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
     /// `TimedOut` once the run has passed its time limit; `Ok` without one.
     pub(super) fn check_time_limit(&self) -> Result<(), BntoError> {
-        match self.time_limit {
-            Some(limit) => limit.check((self.now_ms)()),
-            None => Ok(()),
-        }
+        check_limit(self.time_limit, &self.now_ms)
     }
 }
 
