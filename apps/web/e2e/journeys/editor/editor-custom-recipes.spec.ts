@@ -1,6 +1,6 @@
 import path from "path";
 import { test, expect } from "../../fixtures";
-import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR } from "../../helpers";
+import { IMAGE_FIXTURES_DIR, CSV_FIXTURES_DIR, getWebPDimensions } from "../../helpers";
 import {
   navigateToEditor,
   addNodeFromPalette,
@@ -9,6 +9,7 @@ import {
   setNumberParam,
   setTextParam,
   setSelectParam,
+  setSwitchParam,
   runEditorWithFiles,
   openRunPanel,
   exportRecipe,
@@ -38,10 +39,12 @@ test.describe("editor custom recipes @browser", () => {
     await addNodeFromPalette(page, "Compress Images");
     await expect(nodeCards).toHaveCount(5); // Input + 3 ops + Output
 
-    // CONFIGURE — set resize width (matches optimize-images-for-web predefined recipe)
+    // CONFIGURE — resize to width 800 without enlarging smaller images
+    // (matches optimize-images-for-web predefined recipe)
     await selectNode(page, "Resize");
     await ensureConfigPanelOpen(page);
     await setNumberParam(page, "width", 800);
+    await setSwitchParam(page, "enlarge", false);
 
     // CONFIGURE — set convert format to webp
     await selectNode(page, "Convert");
@@ -58,6 +61,8 @@ test.describe("editor custom recipes @browser", () => {
     assertWebP(buffer);
     expect(buffer.length).toBeGreaterThan(0);
     expect(download.suggestedFilename()).toMatch(/\.webp$/i);
+    // The 100×100 input is narrower than 800, so it keeps its size
+    expect(getWebPDimensions(buffer)).toEqual({ width: 100, height: 100 });
 
     // DRIFT CHECK
     const { buffer: exportBuffer } = await exportRecipe(page);
@@ -149,10 +154,12 @@ test.describe("editor custom recipes @browser", () => {
     await addNodeFromPalette(page, "Rename Files");
     await expect(nodeCards).toHaveCount(5); // Input + 3 ops + Output
 
-    // CONFIGURE — resize to thumbnail size (matches generate-thumbnails predefined recipe)
+    // CONFIGURE — resize to thumbnail size without enlarging smaller images
+    // (matches generate-thumbnails predefined recipe)
     await selectNode(page, "Resize");
     await ensureConfigPanelOpen(page);
     await setNumberParam(page, "width", 150);
+    await setSwitchParam(page, "enlarge", false);
 
     // CONFIGURE — convert to WebP
     await selectNode(page, "Convert");
@@ -174,6 +181,8 @@ test.describe("editor custom recipes @browser", () => {
     assertWebP(buffer);
     expect(buffer.length).toBeGreaterThan(0);
     expect(download.suggestedFilename()).toMatch(/\.webp$/i);
+    // The 100×100 input is narrower than 150, so it keeps its size
+    expect(getWebPDimensions(buffer)).toEqual({ width: 100, height: 100 });
 
     // DRIFT CHECK
     const { buffer: exportBuffer } = await exportRecipe(page);
