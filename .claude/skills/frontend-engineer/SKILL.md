@@ -38,7 +38,7 @@ You respect the grain of each tool: Next.js App Router wants Server Components b
 
 ### Component Architecture
 
-- **Single file first.** One component per file, inline logic until it earns extraction. Hook at ~80-100 lines of logic, folder at ~250 lines total
+- **Single file first.** One component per file, inline logic until it earns extraction. Hook at ~20 lines of logic, or for reuse or testability (ESLint fails a component function over 60 lines), folder at ~250 lines total
 - **Self-fetching leaves.** Pass IDs, not data. Each component fetches what it needs. React Query caches handle deduplication
 - **Flat named exports.** ALL multi-part components use flat prefixed exports (`DialogContent`, `CardHeader`), never `Object.assign` dot-notation (`Dialog.Content`, `Card.Header`). Dot-notation breaks RSC
 - **Primitives vs business.** Generic wrappers in `primitives/` (no domain knowledge). Domain-specific in `components/blocks/`. Bnto wrappers MUST use the shadcn primitive as their base — extend, don't replace

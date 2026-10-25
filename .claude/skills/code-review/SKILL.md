@@ -170,7 +170,7 @@ Use the audit table from Step 1b. Every file with `VIOLATION` status must be add
 
 Skip if no `.tsx` component files changed.
 
-- [ ] **Start inline, extract when earned**: Logic inline is fine. Hooks only when > 80 lines or reuse needed
+- [ ] **Start inline, extract when earned**: Logic inline is fine. A hook once the component holds ~20+ lines of logic, or for reuse or testability ([pre-commit.md](../../rules/pre-commit.md) Step 2)
 - [ ] **Self-fetching**: Components fetch own data by ID. Pass IDs, not data
 - [ ] **CSS-first states**: Hover/focus/active via pseudo-classes, not `useState`. Data attributes over ternary classes
 - [ ] **Flat named exports**: No `Object.assign` dot-notation. All compound components use prefixed flat exports
