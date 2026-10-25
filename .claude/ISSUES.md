@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-54**.
+- **IDs never get reused.** The next one is **ISS-55**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -48,6 +48,7 @@
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
 | ISS-52 | **`file-copy` with `conflict: overwrite` can replace an input the run hasn't read** (fix first)       | engine      | Open                                             |
 | ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
+| ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
 
 ---
 
@@ -320,7 +321,7 @@ The engine refuses an undeclared param before any step runs, for every consumer,
 
 **Found:** October 24, 2026 (second cold review of the ISS-21 fix; reproduced with the CLI, temp `HOME` and `BNTO_HOME`).
 
-A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs`) and the TUI (outside preview and overwrite mode, the bridge's reporter copies into the folder `resolve_output_dir` resolves and creates: `progressive_dir` and `channel_reporter`, `tui/bridge/reporter.rs:18-39`) both do it, and once ISS-21 is fixed the TUI's results list doesn't show them. In write mode, an iteration file that a later step renames also stays on disk under its old name.
+A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs:214`) and the TUI both do it. Outside preview and overwrite mode, the TUI bridge's reporter copies each finished iteration's files on the pipeline's thread, into the folder that `resolve_output_dir` (`tui/bridge.rs:213`) resolves and creates: see `progressive_dir` and `channel_reporter`, `tui/bridge/reporter.rs:18-44`. Since the ISS-21 fix (#750), the TUI's results list doesn't show those files. In write mode, an iteration file that a later step renames also stays on disk under its old name.
 
 - **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
 - **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
@@ -387,3 +388,12 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** as the output node's write does for its staging folders (`engine/crates/bnto/src/ordered_write/staging.rs`): register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
 - **Regression test:** a parked `.bnto-rename-*` file isn't collected, and an interrupted relocate prints where its parked files are.
+
+### ISS-54: The `scripts/seo` tests never run
+
+**Found:** October 24, 2026 (planning the changelog, [changelog.md](strategy/changelog.md)).
+
+`scripts/seo/collectUrls.test.ts` and `scripts/seo/indexNowOutcome.test.ts` run in no workflow, Taskfile task or Turbo task. Outside `.claude/`, a grep for `scripts/seo` finds no runner but the two submit scripts' (`Taskfile.yml:246,250`, `release.yml:601,607`), and the root `test` script is `turbo run test`, which covers workspace packages only. A change that breaks the URL list or the IndexNow outcome parsing passes CI.
+
+- **Fix:** a `task check:scripts` that runs them with `pnpm exec tsx --test` (as `check:turbo-inputs` runs `scripts/turbo`), added to `task check`, plus a CI step. Scheduled in the changelog plan: its PR 1 adds `check:scripts`, and its PR 2 runs both `scripts/seo` tests there and in CI, then deletes this issue.
+- **Regression test:** `task check:scripts` fails when one of those tests fails.
