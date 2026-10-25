@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-65**.
+- **IDs never get reused.** The next one is **ISS-66**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -50,6 +50,7 @@
 | ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
 | ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
+| ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 
 ---
 
@@ -409,3 +410,12 @@ ESLint fails any `.tsx` function over 60 lines (`eslint.config.base.mjs`, the `.
 
 - **Fix:** build the footer from the same `-p` values and `--vars` files, as `DryRunHint` does for the declined-run hint (`engine/crates/bnto/src/dry_run_hint.rs`), each one shell word.
 - **Regression test:** `bnto dry-run <path> -p version=1.2.3 --vars vars.json` ends `Run with: bnto run <path> -p version=1.2.3 --vars vars.json <input>`.
+
+### ISS-65: Nothing lints the root `scripts/` folder
+
+**Found:** October 25, 2026 (cold review of the ISS-20 fix).
+
+ESLint runs per workspace package (`turbo run lint`), and the workspaces are `packages/*`, `packages/@bnto/*` and `apps/*` (`pnpm-workspace.yaml`). The repo root has only `eslint.config.base.mjs`, which packages import, so the 14 TypeScript files in `scripts/` (`validate-docs.ts`, `generate-theme.ts`, `scripts/turbo/`, `scripts/seo/`, `scripts/docs/`) get no function-length, file-length or complexity checks. `validate-docs.ts`'s `main()` reached 21 lines unflagged (fixed with ISS-20). Like ISS-16, which is `@bnto/nodes` ignoring its own `scripts/`.
+
+- **Fix:** a root `eslint.config.mjs` over `scripts/**` built on `baseConfig`, run by `task ui:lint` (or a `check:scripts` task) and CI, with any existing overruns on a suppressions baseline.
+- **Regression test:** a function over 20 lines in `scripts/` fails lint.
