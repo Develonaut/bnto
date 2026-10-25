@@ -5,8 +5,8 @@
  * in engine/recipes/. Both use the same .bnto.json Definition format.
  */
 
-import path from "path";
-import fs from "fs";
+import path from "node:path";
+import fs from "node:fs";
 import { expect } from "../fixtures";
 
 // ---------------------------------------------------------------------------

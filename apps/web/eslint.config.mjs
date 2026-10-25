@@ -17,7 +17,6 @@ const eslintConfig = defineConfig([
     ".next-e2e/**",
     "out/**",
     "build/**",
-    "e2e/**",
     "next-env.d.ts",
     "public/wasm/**",
     "playwright-report/**",
@@ -49,6 +48,14 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/consistent-type-imports": [
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
       ],
 
       // --- React hooks ---
@@ -147,13 +154,20 @@ const eslintConfig = defineConfig([
       "no-restricted-syntax": "off",
     },
   },
-  // Test files naturally have long describe blocks
+  // Test files naturally have long describe blocks. All of e2e/ is test code
+  // (specs and their fixtures and helpers), like __tests__/.
   {
-    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"],
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**", "e2e/**"],
     rules: {
       "max-lines-per-function": "off",
       "max-lines": "off",
     },
+  },
+  // A Playwright fixture hands its value on by calling `use`, which the hooks
+  // rule mistakes for React's `use()`. Nothing in e2e/ is React.
+  {
+    files: ["e2e/**"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
   },
 ]);
 

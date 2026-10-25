@@ -271,7 +271,7 @@ task check                # vet + test + build (full quality gate)
 | Gotcha                                                    | Prevention                                                                                                                 |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Importing from `@playwright/test` instead of `./fixtures` | Shared fixture provides error capture, overlay hiding, and error detection — tests without it miss real failures           |
-| Missing `reducedMotion: "reduce"`                         | Animations make screenshots non-deterministic; always set at top of describe block                                         |
+| `test.use({ reducedMotion: "reduce" })` in a spec         | Not a `test.use` option: a no-op that fails the type-check. `playwright.config.ts` reduces motion for every spec           |
 | Asserting menu items without opening the menu             | Dropdown/popover items only exist in DOM when open — click the trigger first                                               |
 | Using CSS class selectors                                 | Classes change on styling updates; use semantic selectors (`getByRole`, `getByText`) or `data-testid`                      |
 | Duplicate elements across responsive breakpoints          | Mobile and desktop toolbars may both render — use `:visible` pseudo-class                                                  |
@@ -300,7 +300,7 @@ task check                # vet + test + build (full quality gate)
 ## E2E Test Template
 
 ```typescript
-import path from "path";
+import path from "node:path";
 import { test, expect } from "../../fixtures";
 import {
   IMAGE_FIXTURES_DIR,
@@ -311,8 +311,6 @@ import {
   runAndComplete,
   downloadAndVerify,
 } from "../../helpers";
-
-test.use({ reducedMotion: "reduce" });
 
 test.describe("recipe-name — browser execution @browser", () => {
   test("detects browser execution mode", async ({ page }) => {

@@ -112,7 +112,7 @@ What happens when things go wrong.
 - **Execution flows** verified programmatically via magic bytes, data attributes, file sizes, and download events in `journeys/browser/` specs
 - Shared helpers in `apps/web/e2e/helpers.ts` (`uploadFiles`, `runAndComplete`, `downloadAndVerify`, `navigateToRecipe`, `assertBrowserExecution`)
 - SEO tests (W10-W15) verify HTML source, not client-rendered content
-- Use `test.use({ reducedMotion: "reduce" })` for deterministic rendering
+- Motion is reduced for every spec by `playwright.config.ts` (`use.contextOptions.reducedMotion`), for deterministic rendering
 - Import `{ test, expect }` from `./fixtures` (shared fixture captures console/page errors)
 - `data-testid` attributes for reliable state detection in interaction tests
 - Test tags: `@browser` (no Convex needed) and `@auth` (needs Convex) for selective runs via `--grep`

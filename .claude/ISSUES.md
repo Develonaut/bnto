@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-84**.
+- **IDs never get reused.** The next one is **ISS-87**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -45,7 +45,6 @@
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 | ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-68 | `FormStoreContext.tsx` exports four hooks and a provider from one `.tsx` file                         | form        | Open                                             |
-| ISS-69 | E2E specs are never type-checked or linted                                                            | web test    | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
 | ISS-71 | Two `task seo:audit` runs at once collide on port 3000                                                | tooling     | Open                                             |
 | ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
@@ -59,6 +58,9 @@
 | ISS-81 | Three web docs show dot-notation components the flat-exports rule bans                                | docs        | Open                                             |
 | ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
 | ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
+| ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
+| ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
+| ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
 
 ---
 
@@ -364,21 +366,6 @@ On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` 
 - **Fix:** keep the context and `FormStoreProvider` in the `.tsx` file and move each hook to its own `.ts` file (`useFormValue.ts`, `useFormValues.ts`, `useFormFiles.ts`, `useFormOnChange.ts`), updating the three importers.
 - **Regression test:** a test per hook that pins what it reads from the provider; lint passing on the moved files.
 
-### ISS-69: E2E specs are never type-checked or linted
-
-**Found:** October 25, 2026 (fixing ISS-28, the automatic download's telemetry).
-
-`apps/web/eslint.config.mjs` ignores `e2e/**`, and the only type-check, `next build` (`task check`, the pre-commit `typecheck` hook), passes while `pnpm exec tsc --noEmit -p apps/web` reports an error in a spec:
-
-```
-e2e/pages/homepage-loading.spec.ts(24,14): error TS2353: Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'Fixtures<…>'.
-```
-
-`reducedMotion` isn't a `test.use` option, so that line does nothing. Motion is reduced anyway, by `use.contextOptions.reducedMotion` in `apps/web/playwright.config.ts`. But [pre-commit.md](rules/pre-commit.md) tells every spec to "Always set `test.use({ reducedMotion: "reduce" })`", which is the line that fails to type-check (and only that one spec does it).
-
-- **Fix:** type-check the specs (a `tsc --noEmit` step over `apps/web/e2e` in `task check`, the hook and CI), and lint them. Drop the `test.use` line and the pre-commit.md instruction, since the config already reduces motion.
-- **Regression test:** a type error in an E2E spec fails `task check`.
-
 ### ISS-70: Recipe pages record no download a user clicks for
 
 **Found:** October 25, 2026 (fixing ISS-28, the automatic download's telemetry).
@@ -502,3 +489,30 @@ Flat, `file-move` refuses a batch that holds one file twice before anything move
 
 - **Fix:** check the source first (or tell the two apart in the error) and say "`<source>` doesn't exist" when it's the source.
 - **Regression test:** copying a `Path` whose file is gone fails naming the source, not the destination.
+
+### ISS-84: E2E specs pass `navigateToRecipe` a page heading it ignores
+
+**Found:** October 25, 2026 (fixing ISS-69, linting the E2E specs).
+
+`navigateToRecipe(page, slug, _h1?)` (`apps/web/e2e/helpers.ts:45`) waits for the `recipe-heading` test ID and never reads `_h1`. It checked the heading's text until #208 standardized selectors on `getByTestId`, which kept the parameter. 64 calls in 18 specs still pass a heading: 62 as text (`navigateToRecipe(page, "clean-csv", "Clean CSV Online Free")`) and 2 as `recipe.h1` (`pipeline-smoke.spec.ts:72`, `recipe-switching.spec.ts:110`). Each reads as if it checks the page title, and a page that renders the wrong heading passes.
+
+- **Fix:** either assert the heading text again (`expect(page.getByTestId("recipe-heading")).toHaveText(h1)`), or drop the parameter and the 64 arguments.
+- **Regression test:** if the check comes back, a spec that navigates with the wrong heading fails.
+
+### ISS-85: `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips
+
+**Found:** October 25, 2026 (cold review of the ISS-69 fix).
+
+[code-standards.md](rules/code-standards.md) allows one exported function per file and bans `helpers.ts` grab bags, which `scripts/hooks/check-grab-bags.sh` rejects by name at commit. `apps/web/e2e/helpers.ts` exports 16 functions and constants (`navigateToRecipe`, `uploadFiles`, `runAndComplete`, `downloadAndVerify`, …), but the hook's lefthook entry and `task check:grab-bags` both leave out `**/e2e/**` (`lefthook.yml:79`, `Taskfile.yml:178`), so it's never checked. Since ISS-69 the E2E specs are linted, but no lint rule counts exports.
+
+- **Fix:** split `helpers.ts` by domain under `e2e/helpers/` (some already live there: `assertions.ts`, `editor.ts`, `parseCsv.ts`) with one export per file, update the imports, and stop excluding `e2e/` from the grab-bag check.
+- **Regression test:** `task check:grab-bags -- apps/web/e2e/helpers.ts` fails until the split, then the file is gone.
+
+### ISS-86: Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it
+
+**Found:** October 25, 2026 (cold review of the ISS-69 fix).
+
+Formatting is applied only by the pre-commit hook (`prettier --write {staged_files}`, `lefthook.yml`), which a commit without hooks skips. Neither `.github/workflows/ci.yml` nor `task check` runs `prettier --check` (the root `format:check` script has no caller). `pnpm prettier --check "apps/**/*.{ts,tsx}" "packages/**/*.{ts,tsx}"` reports 54 files, most in `packages/core/src` (15), `packages/ui/src` (11) and `packages/@bnto/backend` (11), and `apps/web/e2e/telemetryHelper.ts`, untouched since #32.
+
+- **Fix:** format the files in one PR, then add `pnpm format:check` (or a narrower glob) to `task check` and CI's TypeScript job.
+- **Regression test:** an unformatted file fails `task check` and CI.

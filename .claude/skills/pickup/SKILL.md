@@ -400,7 +400,7 @@ If screenshots already exist and the change modifies visual output, run with `--
 
 **E2e test conventions:**
 
-- Always set `test.use({ reducedMotion: "reduce" })` to disable animations
+- Motion is already reduced for every spec (`use.contextOptions.reducedMotion` in `playwright.config.ts`). `reducedMotion` isn't a `test.use` option, so don't add one
 - Use `data-testid` markers for reliable state detection
 - Use semantic selectors (`getByRole`, `getByText`) over CSS classes
 - Reference existing spec files for patterns

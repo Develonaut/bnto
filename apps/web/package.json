@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "next build",
+    "build": "tsc --noEmit -p tsconfig.typecheck.json && next build",
     "dev": "next dev --port 4000",
     "start": "next start",
     "test": "vitest run",
