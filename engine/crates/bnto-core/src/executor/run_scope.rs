@@ -21,7 +21,7 @@ use super::time_limit::{TimeLimit, check_limit};
 /// The files this run has written, in order, shared by every node of the run.
 pub(super) type WriteLog = Rc<Mutex<Vec<PathBuf>>>;
 
-/// The consumer's context, with the run's held files and write log.
+/// The consumer's context, with the run's held files, write log and time limit.
 pub(super) struct RunScope<'a> {
     inner: &'a dyn ProcessContext,
     held: Option<&'a HeldFiles>,

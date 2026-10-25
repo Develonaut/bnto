@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use bnto_core::{BntoError, NoopContext, ProcessContext};
 
 /// The limit the run reports, as `settings.timeout` would give it.
-pub(crate) const LIMIT_SECS: u64 = 2;
+const LIMIT_SECS: u64 = 2;
 
 /// A context whose run has time for `left` more files.
 pub(crate) struct TimeRunsOut {

@@ -76,7 +76,7 @@ Both nest: a loop inside a branch inside a loop. Auto-iteration needs nothing ex
 **What it fixes.**
 
 - **ISS-59:** both iteration orders, `newer`, nested loops, and row 6 (fan-out), which ISS-59's entry didn't cover yet.
-- **ISS-60:** the same `RunScope` is where the run's deadline goes. Add `time_is_up(&self) -> Result<(), BntoError>` (default `Ok`) answered from `ctx.time_limit` and `live_clock`, and have `file-copy`/`file-move`/`file-delete` check it before each file. That's a small second PR on this one.
+- **ISS-60:** the same `RunScope` is where the run's deadline goes. Add `time_is_up(&self) -> Result<(), BntoError>` (default `Ok`) answered from `ctx.time_limit` and `live_clock`, and have `file-copy`/`file-move`/`file-delete` check it before each file. That's a small second PR on this one (built, as `check_time_limit`; see Order below).
 - **ISS-58:** not fixed. It's param resolution (`resolve_node_params`), not something a node asks the run for. Its own fix (fill only the loop's keys for a `resolves_items` node) is independent and can land in any order.
 - **Later:** `file-move` and `file-delete` could also ask `held_elsewhere` and refuse rows 8 and 10 up front instead of failing partway. That's optional, since nothing is lost there.
 
