@@ -47,7 +47,6 @@
 | ISS-60 | A batch node can't see the run's time limit and keeps starting work past it                           | engine      | Open                                             |
 | ISS-61 | Two docs name hook and function files in kebab-case; the code uses camelCase                          | docs        | Open                                             |
 | ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
-| ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
@@ -383,15 +382,6 @@ ESLint fails any `.tsx` function over 60 lines (`eslint.config.base.mjs`, the `.
 
 - **Fix:** give all three one threshold that fits under 60 (pre-commit.md's ~20 lines of logic, or reuse, or testability).
 - **Regression test:** none; a docs fix.
-
-### ISS-63: `SliderPresets.tsx` exports two hooks from a `.tsx` file
-
-**Found:** October 25, 2026 (cold review of the ISS-19 fix).
-
-`packages/ui/src/interaction/Slider/SliderPresets.tsx` exports `useSortedPresets` (`:13`) and `useValueToIndex` (`:22`). [code-standards.md](rules/code-standards.md) allows one exported hook per file. Being in a `.tsx` file also puts both under ESLint's 60-line `.tsx` limit instead of the 20 a hook gets. It's the only `.tsx` file under `packages/` or `apps/` that exports a `use*` hook.
-
-- **Fix:** move each hook to its own `.ts` file (`useSortedPresets.ts`, `useValueToIndex.ts`).
-- **Regression test:** none beyond lint passing on the moved files.
 
 ### ISS-64: A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`
 

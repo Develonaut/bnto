@@ -2,8 +2,9 @@
 
 import { useCallback, useMemo } from "react";
 
-import { useSortedPresets, useValueToIndex } from "./SliderPresets";
 import type { SliderPreset } from "./SliderPresets";
+import { useSortedPresets } from "./useSortedPresets";
+import { useValueToIndex } from "./useValueToIndex";
 
 function useResolvedValue(
   hasPresets: boolean,
