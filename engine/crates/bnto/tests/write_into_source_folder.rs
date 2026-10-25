@@ -311,6 +311,7 @@ fn test_two_new_files_that_are_one_path_through_a_folder_link_are_refused() {
 }
 
 /// `sub/b` replacing `a`: `a.txt` comes out named `sub/b.txt`.
+#[cfg(unix)]
 fn a_to_sub_b() -> serde_json::Value {
     json!({ "id": "ren", "type": "file-rename", "parameters": { "find": "a", "replace": "sub/b" } })
 }
