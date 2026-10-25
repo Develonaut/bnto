@@ -33,7 +33,8 @@ Goal: the TUI gets the same two layers the web has. Agents can then validate a T
 - Every journey runs with a temp `HOME` and `BNTO_HOME`, and telemetry and the update check off. It never touches a real `~/.bnto`.
 - Snapshots are text; a selected row shows as its `▸` marker. Styles stay out of snapshots unless a test is about style, which keeps diffs readable.
 - Fixed sizes, `120x36` and `80x24`. The narrow size catches overflow like the help-bar overlap.
-- Waits poll for text with a timeout, never a fixed sleep (Playwright's auto-wait model).
+- Waits poll for text with a timeout, never a fixed sleep (Playwright's auto-wait model). A wait passes only on a settled screen (the same text on two reads a poll apart). The budget is a generous 30 s, so a busy machine can't fail a correct journey; set `BNTO_TUI_WAIT_SECS` to change it.
+- A journey that presses a key and then checks the screen to decide its next key uses `Tui::step` (or waits for the change it expects, as `select` does), never `press` and an immediate read. On a busy machine the redraw lags, so an immediate read sees the frame from before the key and the journey presses past its target. This was the cause of the "TUI journeys time out when the machine is busy" failures, not the budget.
 - Snapshot updates work like the web's two-pass rule: `cargo insta review` (or `INSTA_UPDATE=always`), then a clean re-run.
 
 ---

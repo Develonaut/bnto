@@ -5,29 +5,37 @@
 #[path = "tui/harness.rs"]
 mod harness;
 
-use harness::{Key, Tui};
+use harness::{Key, Tui, selected_row};
 
 /// Move down to the detail screen's Run button with `j`. Not Tab: on Run
-/// itself Tab starts the run, and this checks the screen between presses.
+/// itself Tab starts the run, and this checks the screen between presses
+/// (each one's answer, never an older frame: one `j` too many skips Run).
 fn focus_run(tui: &mut Tui) {
+    let mut screen = tui.screen();
     for _ in 0..20 {
-        if tui.screen().contains("▸ Run →") {
+        if screen.contains("▸ Run →") {
             return;
         }
-        tui.press(&[Key::Char('j')]);
+        screen = tui.step(Key::Char('j'));
     }
-    panic!("never reached Run. Screen:\n{}", tui.screen());
+    panic!("never reached Run. Screen:\n{screen}");
 }
 
-/// Press Down until the selection marker sits on `name`.
+/// Press Down until the selection marker sits on `name`. Each press waits
+/// for the marker to move, so a slow redraw can't make it press past `name`.
 fn select(tui: &mut Tui, name: &str) {
+    let mut screen = tui.wait_until("a selection marker", |s| selected_row(s).is_some());
     for _ in 0..40 {
-        if tui.selected_row().is_some_and(|row| row.contains(name)) {
+        let row = selected_row(&screen).unwrap_or_default().to_string();
+        if row.contains(name) {
             return;
         }
         tui.press(&[Key::Down]);
+        screen = tui.wait_until(&format!("the selection to move off {row:?}"), |s| {
+            selected_row(s).is_some_and(|moved| moved != row)
+        });
     }
-    panic!("never selected {name}. Screen:\n{}", tui.screen());
+    panic!("never selected {name}. Screen:\n{screen}");
 }
 
 #[test]
@@ -49,7 +57,7 @@ fn tj2_scroll_to_keep_awake_and_open_it() {
     // Keep Awake sits below the fold at 120x36; the pane must scroll to it.
     let mut tui = Tui::launch(120, 36);
     tui.wait_for("R E C I P E S");
-    tui.press(&[Key::Tab]);
+    tui.step(Key::Tab); // focus Recipes
     select(&mut tui, "Keep Awake");
     tui.press(&[Key::Enter]);
     tui.wait_until("keep-awake's detail with its Action field", |screen| {
@@ -79,7 +87,7 @@ fn tj12_a_library_copy_never_hides_the_built_in() {
     tui.wait_until("the library copy and the full catalog count", |screen| {
         screen.contains("keep-awake") && screen.contains("22 recipes")
     });
-    tui.press(&[Key::Tab]);
+    tui.step(Key::Tab); // focus Recipes
     select(&mut tui, "Keep Awake");
     tui.press(&[Key::Enter]);
     tui.wait_for("Keep Awake  [built-in]");
@@ -109,7 +117,7 @@ fn tj3_compress_an_image_and_see_the_result() {
         .join("../../../test-fixtures/images/gradient.jpg");
     let mut tui = Tui::launch_with(120, 36, &[&fixture]);
     tui.wait_for("R E C I P E S");
-    tui.press(&[Key::Tab]);
+    tui.step(Key::Tab); // focus Recipes
     select(&mut tui, "Compress Images");
     tui.press(&[Key::Enter]);
 

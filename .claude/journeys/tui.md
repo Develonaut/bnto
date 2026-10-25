@@ -2,7 +2,7 @@
 
 **Domain:** `bnto tui`, the terminal UI. Covers home, library, recipe detail, file picking, consent, live execution and results.
 **Status:** Snapshots (#681) and journeys TJ1–TJ3, TJ5, TJ6 and TJ10–TJ14 run on every PR in the CI Gate. The other journeys are planned.
-**Last Updated:** October 24, 2026
+**Last Updated:** October 25, 2026
 
 ---
 
@@ -17,7 +17,7 @@ Many people use bnto through the TUI. Its bugs are visual and only show at certa
 | Screen snapshots | Each screen rendered in-process at 120x36 and 80x24, stored as `insta` text           | `engine/crates/bnto/src/tui/screen_snapshots.rs`, `tui/snapshots/`            | `task tui:snapshots` (update: `task tui:snapshots:update`, review with `git diff`) |
 | Journeys         | The real `bnto tui` in a pseudo-terminal, driven by keys, read through a VT100 screen | `engine/crates/bnto/tests/tui_journeys.rs`, harness in `tests/tui/harness.rs` | `task tui:test` (both layers)                                                      |
 
-Every journey runs with temp `HOME`, `BNTO_HOME` and config dirs, and never touches a real `~/.bnto`. Waits poll for text and fail with the screen the user saw. Wait for _every_ part you assert on, because a read can land mid-draw.
+Every journey runs with temp `HOME`, `BNTO_HOME` and config dirs, and never touches a real `~/.bnto`. Waits poll for text and fail with the screen the user saw. Wait for _every_ part you assert on, because a read can land mid-draw. When a check decides the next key (press Down until a row is selected), press with `Tui::step` or wait for the change, so the check never reads the frame from before the key. Waits allow 30 s (`BNTO_TUI_WAIT_SECS` overrides it).
 
 ## Gate Map
 

@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-66**.
+- **IDs never get reused.** The next one is **ISS-68**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -24,7 +24,6 @@
 | ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
-| ISS-32 | TUI journeys time out when the machine is busy                                                        | tui test    | Open                                             |
 | ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
 | ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
 | ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
@@ -51,6 +50,8 @@
 | ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
+| ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
+| ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 
 ---
 
@@ -144,16 +145,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - **What PostHog shows:** 190 events (`$pageview`, `$web_vitals` and a custom event) from three hosts outside bnto.io, June 14 to October 7, 2026, arriving through a different `/ingest` proxy. The project's test-account filters exclude only localhost, an internal cohort and one IP, so these count in web analytics.
 - **Fix:** this is a PostHog config fix, not a repo change. Either give that app its own project key, or add a `$host` filter (`^(www\.)?bnto\.io$`) to the test-account filters.
 - **No repo test:** it's project config. After the fix, rerun the review's `$host` breakdown to confirm only bnto.io remains.
-
-### ISS-32: TUI journeys time out when the machine is busy
-
-**Found:** October 24, 2026 (`task check` on `docs/feature-request-guide`, while five Rust builds ran in other worktrees).
-
-- **What failed:** `tj2_scroll_to_keep_awake_and_open_it`, `tj3_compress_an_image_and_see_the_result` and `tj12_a_library_copy_never_hides_the_built_in`, each timed out waiting for a screen (`engine/crates/bnto/tests/tui/harness.rs:169`, `tests/tui_journeys.rs:30`). The suite took 17 s. The captured screens show half-drawn frames (a list's rows repeated).
-- **Rerun alone:** 9 of 9 passed in 2.9 s, on the same commit.
-- **Why:** every wait has a fixed 10 s budget (`WAIT`, `harness.rs:16`), and the journeys run in parallel, so a loaded machine starves the pseudo-terminals. CI runners can be just as busy.
-- **Fix:** make the budget generous (or scale it with an env var CI can set), and wait for the screen to settle rather than polling a single frame, so a slow machine can't fail a correct journey. Run the suite under load to confirm (e.g. `cargo test -p bnto --test tui_journeys` alongside a `cargo build`).
-- **Regression test:** the fix is the test harness itself; prove it by running the suite with `--test-threads=16` under a parallel build several times without a failure.
 
 ### ISS-33: Output names and extension reads split on a dot in a folder name
 
@@ -419,3 +410,21 @@ ESLint runs per workspace package (`turbo run lint`), and the workspaces are `pa
 
 - **Fix:** a root `eslint.config.mjs` over `scripts/**` built on `baseConfig`, run by `task ui:lint` (or a `check:scripts` task) and CI, with any existing overruns on a suppressions baseline.
 - **Regression test:** a function over 20 lines in `scripts/` fails lint.
+
+### ISS-66: Down past the last home recipe hides the selection until you press Up as many times
+
+**Found:** October 25, 2026 (fixing ISS-32: a journey that pressed Down too often ran off the Recipes pane).
+
+On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` with no upper bound (`engine/crates/bnto/src/tui/screens/home.rs:133-139`). Its comment says "app.rs clamps if needed", but nothing does: the only other write is `saturating_sub(1)` on Up. Past the last recipe no row matches the cursor (`render_home_panes.rs:84`), so the `▸` marker disappears and the pane scrolls back to the top. The user has to press Up once for every extra Down before a recipe is selected again. Enter still opens the last recipe, because only the confirm path clamps (`app_helpers/home_detail.rs:57`).
+
+- **Fix:** stop at the last recipe in `CursorDown`, the way the Library pane bounds its cursor (it wraps with `%`; pick one behaviour for both panes), and correct the comment.
+- **Regression test:** a `home.rs` unit test pressing Down more times than there are recipes keeps the cursor on the last one, and a render check that the marker stays on screen.
+
+### ISS-67: `update_notice.rs` opens its ptys in parallel with no lock
+
+**Found:** October 25, 2026 (cold review of the ISS-32 fix).
+
+`engine/crates/bnto/tests/update_notice.rs:47` calls `native_pty_system().openpty(size)` from `run_in_terminal`, and its four pty tests run in parallel in one process. The ISS-32 fix found that on macOS some of many concurrent launches in one process fail with `failed to openpty: Unknown error: -6` (5 of 160 launches in a probe of 3 processes × 12 threads, 0 of 288 with launches taken in turn, likely `ptsname`'s shared buffer). The TUI journey harness now opens one pty at a time (`OPEN_PTY` in `tests/tui/harness.rs`); this file doesn't. Not yet seen failing in a real run.
+
+- **Fix:** take the same lock around `openpty` and the spawn in `run_in_terminal`, or share the harness's launch.
+- **Regression test:** run the file's tests with `--test-threads=16` beside a parallel build several times without a failure.
