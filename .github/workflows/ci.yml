@@ -315,7 +315,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate documentation
-        run: pnpm exec tsx scripts/validate-docs.ts
+        run: pnpm exec tsx --test scripts/docs/brokenLinks.test.ts && pnpm exec tsx scripts/validate-docs.ts
 
   # ── Validate release workflow matches workspace crates ──
   crate-publish-check:

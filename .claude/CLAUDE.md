@@ -307,6 +307,8 @@ See [core-principles.md](.claude/strategy/core-principles.md) for the full treat
 
 ## Documentation Index
 
+**Links:** this file writes its links from the repo root (`.claude/rules/…`), where agents read it. Every other doc links from its own folder, as GitHub resolves links. `task docs:validate` checks both ([brokenLinks.ts](scripts/docs/brokenLinks.ts)).
+
 ### Universal Rules (auto-loaded)
 
 Four rules auto-load on every session because they apply to every change, regardless of scope.

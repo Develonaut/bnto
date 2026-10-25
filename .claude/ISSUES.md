@@ -19,7 +19,6 @@
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                                              | docs        | Open                                             |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
 | ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
@@ -95,18 +94,6 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 24, 2026 (v0.18.2 release run 40096930376).
 
 `terminate_all_kills_orphaned_grandchild_on_windows` (`engine/crates/bnto/src/context.rs:743`) starts `cmd /c start /b powershell … $PID; Start-Sleep 30` and waits once, `recv_timeout(20 s)`, for PowerShell to print its PID (`:758-759`). On the release's Windows runner PowerShell didn't print in time: `called Result::unwrap() on an Err value: Timeout`. The same commit passed the same job on #743's CI an hour earlier, so the failure is timing, not code. It failed the release's CI Gate. Wait on PowerShell's start with a longer bound, or start a lighter process for the grandchild, so a slow runner can't fail a release.
-
-### ISS-20: 12 broken links in `.claude/` docs; nothing checks links
-
-**Found:** October 24, 2026 (cold review of #745).
-
-Relative links that don't resolve from the file they're in:
-
-- `.claude/PLAN.md:168, 172, 439, 850, 878`: `.claude/strategy/…` paths written root-relative, the missing `file-node-ecosystem.md`, and `research/reports/Shell%20script%20injection%20safety.md`.
-- four in `.claude/plans/inherited-watching-hennessy.md`.
-- one each in `.claude/skills/pickup/SKILL.md:202`, `.claude/skills/groom/SKILL.md` and `.claude/strategy/engine-owned-schema.md`.
-
-`task docs:validate` (`scripts/validate-docs.ts`) checks crate READMEs and node docs only, never links. `CLAUDE.md`'s 115 root-relative links (`.claude/rules/…`) work for agents, which read from the repo root, but not on GitHub; keep that convention or not, but say so. Fix the 12 and add a link check to `docs:validate` (a Python sketch that lists them: walk `.claude/**/*.md`, resolve each Markdown link target against the file's folder).
 
 ### ISS-22: The output node's `directory` leaves `{{env.*}}` as a literal folder name
 

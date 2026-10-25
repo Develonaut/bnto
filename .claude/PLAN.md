@@ -165,11 +165,11 @@ Accounts earn their keep: execution history (IndexedDB for unauth, Convex for au
 
 ### Sprint 4: Recipe Editor (Headless-First) — COMPLETE
 
-Headless-first editor: Wave 1 (`@bnto/nodes` pure functions — CRUD, adapters, tests), Wave 2 (Zustand store, ReactFlow adapters, hooks), Wave 3 (Motorway MVP — BentoCanvas, EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor). Architecture: `@bnto/nodes` → pure functions → Zustand store → React hooks → visual skin. Two entry points: `createBlankDefinition()` or `loadRecipe(slug)`. See [editor-architecture.md](.claude/strategy/editor-architecture.md), [visual-editor.md](.claude/strategy/visual-editor.md).
+Headless-first editor: Wave 1 (`@bnto/nodes` pure functions — CRUD, adapters, tests), Wave 2 (Zustand store, ReactFlow adapters, hooks), Wave 3 (Motorway MVP — BentoCanvas, EditorToolbar, NodePalette, NodeConfigPanel, RecipeEditor). Architecture: `@bnto/nodes` → pure functions → Zustand store → React hooks → visual skin. Two entry points: `createBlankDefinition()` or `loadRecipe(slug)`. See [editor-architecture.md](strategy/editor-architecture.md), [visual-editor.md](strategy/visual-editor.md).
 
 ### Sprint 4C: Input & Output Nodes — COMPLETE
 
-Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: Wave 1 (`@bnto/nodes` — I/O types, schemas, recipe updates, 22 tests), Wave 2 (`@bnto/core` adapter reads I/O nodes, editor store singleton constraints), Wave 3 (generic InputRenderer/OutputRenderer, I/O compartment rendering), Wave 4 (RecipeShell migration, per-slug I/O code deleted, E2E verified). See [io-nodes.md](.claude/strategy/io-nodes.md).
+Self-describing recipes via `input` and `output` node types (PR #102). 4 waves: Wave 1 (`@bnto/nodes` — I/O types, schemas, recipe updates, 22 tests), Wave 2 (`@bnto/core` adapter reads I/O nodes, editor store singleton constraints), Wave 3 (generic InputRenderer/OutputRenderer, I/O compartment rendering), Wave 4 (RecipeShell migration, per-slug I/O code deleted, E2E verified). See [io-nodes.md](strategy/io-nodes.md).
 
 ### Sprint 4D: Extract `@bnto/ui` (Motorway Design System) — COMPLETE
 
@@ -849,7 +849,7 @@ Features and ideas. Defects (bugs, standards violations, stale docs, security ga
 
 ### Engine: Vector Format Support — `bnto-vector` Crate (2 of 3 Phases Complete)
 
-**Priority: Backlog (EPS → SVG CLI-only remaining).** New `vector` node category (counterpart to `image`/raster) with three incremental phases. Phases 1-2 shipped. New `bnto-vector` crate houses all vector operations. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+**Priority: Backlog (EPS → SVG CLI-only remaining).** New `vector` node category (counterpart to `image`/raster) with three incremental phases. Phases 1-2 shipped. New `bnto-vector` crate houses all vector operations. Full strategy: [file-node-ecosystem.md](strategy/file-node-ecosystem.md)
 
 **Phase 1 — SVG → Raster (extend `image-convert`): DONE**
 
@@ -877,7 +877,7 @@ Promoted to Sprint 17 Wave 4.
 
 ### ~~Backlog: File Node Ecosystem — BRU-Style Composable File Operations~~ → Sprint 17 Wave 2
 
-**Promoted to Sprint 17 Wave 2.** `file-rename` enhancement and `file-sanitize` shipped in Sprint 16. Remaining nodes (`file-filter`, `file-collect`, `file-copy`, `file-inspect`) promoted to Sprint 17. Full strategy: [file-node-ecosystem.md](.claude/strategy/file-node-ecosystem.md)
+**Promoted to Sprint 17 Wave 2.** `file-rename` enhancement and `file-sanitize` shipped in Sprint 16. Remaining nodes (`file-filter`, `file-collect`, `file-copy`, `file-inspect`) promoted to Sprint 17. Full strategy: [file-node-ecosystem.md](strategy/file-node-ecosystem.md)
 
 ### Triage: Homepage hero — BRU-style file recipe showcase
 
