@@ -86,7 +86,22 @@ fn test_check_passes_every_bundled_recipe() {
     assert_eq!(recipes.len(), BUNDLED_RECIPES, "{recipes:?}");
     let (ok, lines) = run_check(&recipes);
     assert!(ok, "stdout: {lines:?}");
-    assert_eq!(lines, [format!("Check: PASS ({BUNDLED_RECIPES} recipes)")]);
+    // Watermark Images leaves its overlay for the run: the web form or
+    // `-p` gives it (ISS-25).
+    let watermark = recipes
+        .iter()
+        .find(|path| path.ends_with("watermark-images.bnto.json"))
+        .unwrap();
+    assert_eq!(
+        lines,
+        [
+            format!(
+                "{watermark}: note: node \"overlay\" (image-overlay), param \"overlay\": \
+                 left for run time; give it with bnto run -p overlay:overlay=<value>"
+            ),
+            format!("Check: PASS ({BUNDLED_RECIPES} recipes, 1 note)"),
+        ]
+    );
 }
 
 /// Fixtures that leave a required param for the test to pass with

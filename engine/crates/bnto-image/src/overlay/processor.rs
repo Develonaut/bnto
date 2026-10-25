@@ -291,6 +291,18 @@ mod tests {
         assert!(errors[0].contains("overlay"));
     }
 
+    #[test]
+    fn test_validate_refuses_an_empty_or_blank_overlay() {
+        // The bundled recipe ships `"overlay": ""` (ISS-25).
+        let processor = OverlayImage::new();
+        for blank in ["", "  "] {
+            let mut params = serde_json::Map::new();
+            params.insert("overlay".to_string(), blank.into());
+            let errors = processor.validate(&params);
+            assert_eq!(errors, ["overlay is required"], "overlay {blank:?}");
+        }
+    }
+
     // =========================================================================
     // Happy path
     // =========================================================================

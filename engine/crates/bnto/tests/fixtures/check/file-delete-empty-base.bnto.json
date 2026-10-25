@@ -1,8 +1,8 @@
 {
-  "id": "check-file-delete-bad",
+  "id": "check-file-delete-empty-base",
   "type": "group",
   "version": "1.0.0",
-  "name": "Check File Delete Bad",
+  "name": "Check File Delete Empty Base",
   "nodes": [
     { "id": "input", "type": "input", "parameters": { "mode": "none" } },
     { "id": "empty-base", "type": "file-delete", "parameters": { "base": "" } },

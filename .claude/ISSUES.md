@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-72**.
+- **IDs never get reused.** The next one is **ISS-76**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -20,7 +20,6 @@
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
-| ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
 | ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
@@ -54,6 +53,10 @@
 | ISS-69 | E2E specs are never type-checked or linted                                                            | web test    | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
 | ISS-71 | Two `task seo:audit` runs at once collide on port 3000                                                | tooling     | Open                                             |
+| ISS-72 | Two editor E2E journeys fail: the exported Resize step has `enlarge: true`                            | web test    | Open                                             |
+| ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
+| ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
+| ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
 
 ---
 
@@ -110,15 +113,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - The file lands in `./{{env.SOME_KEY}}/note.txt`; the folder `SOME_KEY` names stays empty.
 
 `resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:247-249`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). ISS-21, the TUI wipe this could have pointed at a real folder, is fixed (#750).
-
-### ISS-25: Watermark Images runs with an empty overlay and fails every time
-
-**Found:** October 24, 2026 (PostHog review of bnto.io, July 26 to October 24, 2026).
-
-- **What PostHog shows:** `recipe_run_failed` for `watermark-images`, 2 of 2 runs, from 2 people (August 27 and September 20, 2026). Both failed with "Failed to decode overlay image: The image format could not be determined", and the page had 2 rage clicks on October 11.
-- **Why:** the bundled recipe defaults `"overlay": ""` (`engine/crates/bnto-engine/recipes/watermark-images.bnto.json:64`). `check_overlay` (`engine/crates/bnto-image/src/overlay/validate.rs:22-27`) only rejects a _missing_ `overlay`, so an empty string passes and fails later at decode (`overlay/processor.rs:116-121`), even though the param is `required`.
-- **Fix:** validation refuses an empty `overlay`, naming the param. The web runner then shouldn't start the run until an overlay is chosen.
-- **Regression test:** every test today supplies an overlay (the E2E spec uploads one at `apps/web/e2e/journeys/browser/watermark-images.spec.ts:24`, the golden fixtures embed one), so nothing ran the recipe as shipped. Test the class, not just this recipe: for every bundled recipe, a `required` param left at its shipped default is refused before the run, naming the param.
 
 ### ISS-29: Errors on bnto.io go unseen: exception capture is off
 
@@ -457,3 +451,38 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 - **Fix:** the URLs can already move: the generator takes `--base-url` (line 24). What's fixed is `startServerCommand` (line 60, Next's default port) and the `seo:audit` task, which passes no `--base-url` (`Taskfile.yml:246`). Take a port from an env var (as `E2E_PORT` does) and use it for both `--base-url` and `next start --port`.
 - **Regression test:** two `task seo:audit` runs with different ports at the same time both pass.
+
+### ISS-72: Two editor E2E journeys fail: the exported Resize step has `enlarge: true`
+
+**Found:** October 25, 2026 (full `task e2e` while fixing ISS-25).
+
+- **What fails:** `editor-custom-recipes.spec.ts` CR1 ("web-ready image pipeline") and CR4 ("thumbnail generator") fail at `assertDefinitionMatchesFixture` (`apps/web/e2e/helpers/definitions.ts:112`): `Expected: false, Received: true`. They fail the same with main's WASM, so the engine isn't involved.
+- **Why:** each journey builds a Resize step in the editor and compares the exported definition's params with a bundled recipe (`DEFINITIONS_DIR` is `engine/crates/bnto-engine/recipes`). #749 set `"enlarge": false` in `optimize-images-for-web.bnto.json:58` and `generate-thumbnails.bnto.json:58`, but the journeys never set it, so the editor exports the node's default, `true`. `task check` and CI run no E2E, and the release gate runs only the `browser` project (`release.yml:339`), so nothing has run these since #749.
+- **Fix:** have both journeys turn off "enlarge" on the Resize step, as the recipes they mirror do.
+- **Regression test:** CR1 and CR4 themselves, passing again.
+
+### ISS-73: The web runner starts a run with a required param left empty
+
+**Found:** October 25, 2026 (cold review of the ISS-25 fix).
+
+- **What happens:** on Watermark Images, Run is enabled once files are added (`RunButton.tsx:43`, `disabled: !hasFiles`), with no overlay chosen. Since ISS-25's fix the engine refuses the run before any step and the banner names the overlay. But `runAction` (`recipeStepperActions.ts:127-155`) still sends `recipe_run_started` (line 140) and then, through `captureFailed` (line 174), `recipe_run_failed`, so PostHog counts every forgotten overlay as a failed run, which is how ISS-25 was found.
+- **Why:** the runner checks only that files exist. Which params are required is already in TypeScript: the generated schemas (`overlay: z.string()`), and the form marks the field required (`packages/@bnto/form/src/SchemaField.tsx:34`). What's missing is a check for a blank value.
+- **Fix:** a pure function, from the recipe's processor schemas and the stepper's config, that lists required params with no value (absent, null or blank text, the engine's rule in `bnto_core::required_params`). Run stays disabled, and labelled with the first one, until it's empty.
+- **Regression test:** a unit test for the function, and the watermark E2E: Run is disabled until an overlay is uploaded, and no `recipe_run_failed` is sent.
+
+### ISS-74: A required param with no value is refused only after consent and after `-o` is made
+
+**Found:** October 25, 2026 (cold review of the ISS-25 fix).
+
+- **What happens:** `bnto run watermark-images photo.jpg --yes -o out` exits 1 with `Node 'overlay': param "overlay" (Overlay Image) is required`, and leaves an empty `out/`. A recipe that needs approval asks for it first, then is refused. `bnto dry-run watermark-images photo.jpg` ends with `Run with: bnto run watermark-images <input>`, a command that would be refused, and the run's message doesn't name the `-p` that fills it.
+- **Why:** the check is in the engine's pre-flight (`executor/raw_params.rs`, called from `execute_pipeline`, `executor/mod.rs:193`), which `bnto run` reaches after `check_trust` (`bnto/src/run.rs:78`) and `run_target` (`run.rs:91`). Undeclared params and `validate_raw` refusals have always been checked there too. Unfilled `{{fields.*}}` are refused before consent ("so nobody approves a run the engine would refuse", `run.rs`), and ISS-22 is the same folder-first problem for `{{env.*}}`.
+- **Fix:** have `bnto run` and `bnto dry-run` run the raw-param checks (undeclared, required with no value, `validate_raw`) on the definition with `-p` applied, before consent and before any folder is made, naming the `-p node:param=…` that fills a required one, as `refuse_unfilled` does for fields.
+- **Regression test:** a CLI test: a bundled recipe left with an empty required param is refused before consent, names the `-p`, and creates no `-o` folder. The dry run says so too.
+
+### ISS-75: The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file
+
+**Found:** October 25, 2026 (second cold review of the ISS-25 fix).
+
+- **What happens:** `bnto check` notes Watermark Images' overlay as `left for run time; give it with bnto run -p overlay:overlay=<value>`, but the value must be the image as base64 text. `bnto run watermark-images photo.jpg --yes -o out -p overlay:overlay=photo.jpg` fails with `Invalid base64 in overlay parameter` (`engine/crates/bnto-image/src/overlay/params.rs:69`). Nothing in `engine/crates/bnto/src` reads a file-type param from a path, so the recipe is out of reach from the CLI in practice; `check/run_time/mod.rs:180` documents that "a file param takes its base64 text".
+- **Fix:** let `-p` give a `File` param as a path that the CLI reads and encodes, and say so in the note. ISS-74's `-p` hint should then name a path, not a blob.
+- **Regression test:** a CLI test: `bnto run watermark-images photo.jpg -p overlay:overlay=<logo.png path>` writes a watermarked image.

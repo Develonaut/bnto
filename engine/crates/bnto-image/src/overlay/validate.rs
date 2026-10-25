@@ -18,12 +18,12 @@ pub(super) fn validate_params(params: &Params) -> Vec<String> {
     .collect()
 }
 
-/// Overlay image is required.
+/// Overlay image is required: blank text has no image to decode.
 fn check_overlay(params: &Params) -> Option<String> {
     params
         .get("overlay")
         .and_then(|v| v.as_str())
-        .is_none()
+        .is_none_or(|overlay| overlay.trim().is_empty())
         .then(|| "overlay is required".to_string())
 }
 

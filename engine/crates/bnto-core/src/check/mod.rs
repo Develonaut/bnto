@@ -22,7 +22,7 @@ use crate::renamed::with_node_type_hint;
 use crate::undeclared_params::undeclared_params;
 use edges::{Level, edge_findings};
 pub use run_time::RunTimeParam;
-use run_time::{LeftOut, Subject, left_out};
+use run_time::{LeftOut, Subject, left_out, refusals};
 
 /// One problem `check_pipeline` found in a recipe.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -156,10 +156,11 @@ fn check_node(node: &PipelineNode, scope: &Scope, recipe: &Recipe<'_>, report: &
     }
 }
 
-/// An unknown type, or what the node's processor refuses in its params, with
-/// the params it needs sorted into notes and problems.
+/// An unknown type, or what the node's processor refuses in its params (its
+/// `validate`, and required params with no value), with the params it needs
+/// sorted into notes and problems.
 ///
-/// `validate` sees the params as a run with no overrides would: field
+/// They're checked as a run with no overrides would see them: field
 /// defaults (its own and its containers') filled in, other placeholders left
 /// as written.
 #[expect(clippy::too_many_lines)]
@@ -181,7 +182,7 @@ fn check_processor(
             .map(|problem| finding(node, None, problem)),
     );
     let params = resolve_fields(&node.params, &scope.fields);
-    let written = processor.validate(&params);
+    let written = refusals(processor, &params);
     if written.is_empty() {
         return;
     }
