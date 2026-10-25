@@ -423,6 +423,21 @@ fn test_collect_skips_a_folder_of_staged_copies() {
 }
 
 #[test]
+fn test_collect_skips_a_file_parked_by_a_stopped_move() {
+    // RED (ISS-53): a move stopped mid-swap leaves one file under its
+    // `.bnto-rename-*` name; a later run over the folder must not take it as
+    // an input. Other files whose names start with a dot are still taken.
+    let dir = setup_test_dir();
+    let parked = format!("{}0-notes.txt", crate::PARKED_NAME_PREFIX);
+    fs::write(dir.path().join(&parked), b"parked").unwrap();
+    fs::write(dir.path().join("subfolder").join(&parked), b"parked").unwrap();
+    fs::write(dir.path().join(".notes.txt"), b"kept").unwrap();
+
+    let names = collect_names(dir.path(), &[("pattern", serde_json::json!("*.txt"))]);
+    assert_eq!(names, [".notes.txt", "document.txt", "readme.txt"]);
+}
+
+#[test]
 fn test_collect_pattern_applies_at_every_depth() {
     let dir = setup_test_dir();
     let deep = dir.path().join("subfolder").join("deeper");

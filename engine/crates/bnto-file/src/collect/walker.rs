@@ -75,6 +75,7 @@ impl<'a> Walker<'a> {
         match kind(entry) {
             Kind::Dir if is_staged_copies(entry) => Ok(()),
             Kind::Dir if self.recursive => self.walk(&entry.path()),
+            Kind::File if is_parked(entry) => Ok(()),
             Kind::File => {
                 self.collect(entry.path());
                 Ok(())
@@ -118,6 +119,14 @@ fn is_staged_copies(entry: &DirEntry) -> bool {
     let name = entry.file_name();
     name.to_string_lossy()
         .starts_with(crate::STAGED_COPIES_PREFIX)
+}
+
+/// A file a move parked to break a swap, left by a stopped run: never a
+/// run's input (see `PARKED_NAME_PREFIX`).
+fn is_parked(entry: &DirEntry) -> bool {
+    let name = entry.file_name();
+    name.to_string_lossy()
+        .starts_with(crate::PARKED_NAME_PREFIX)
 }
 
 /// The entry's type as `Path::is_dir` / `is_file` would see it. `read_dir`

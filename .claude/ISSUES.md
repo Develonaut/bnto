@@ -35,7 +35,6 @@
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
 | ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
-| ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
 | ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
@@ -274,15 +273,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** run the same import scan over each package's test and build sources against `test` and `build` inputs. Runtime `readFileSync` reads stay a documented manual step.
 - **Regression test:** a package test that imports an unlisted root file fails the check.
-
-### ISS-53: An interrupted move can leave `.bnto-rename-*` files that later runs collect
-
-**Found:** October 24, 2026 (fixing the output node's write, which now reports its swap staging folder on Ctrl+C and has `file-collect` skip it).
-
-`bnto_file::relocate` parks a file under a temporary `.bnto-rename-<n>-<leaf>` name while it runs a chain or swap of renames (`engine/crates/bnto-file/src/relocate/execute.rs:139`). An overwrite-mode output or `file-move` interrupted at that point (Ctrl+C runs `process::exit`, which skips cleanup) leaves the parked file under that name, with nothing reporting it. `file-collect` doesn't skip `.bnto-rename-*`, so a later run over the folder picks it up as an input.
-
-- **Fix:** as the output node's write does for its staging folders (`engine/crates/bnto/src/ordered_write/staging.rs`): register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
-- **Regression test:** a parked `.bnto-rename-*` file isn't collected, and an interrupted relocate prints where its parked files are.
 
 ### ISS-54: The `scripts/seo` tests never run
 

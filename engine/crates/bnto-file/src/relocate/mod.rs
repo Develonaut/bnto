@@ -10,12 +10,14 @@
 
 mod conflicts;
 mod execute;
+mod parked;
 mod platform;
 
 use std::path::{Path, PathBuf};
 
 pub use conflicts::{conflicts, listing};
 pub use execute::run_in_order;
+pub use parked::take_parked;
 pub use platform::check_platform_name;
 
 /// One move, `src` to `dest`. A rename is a move within one folder.
