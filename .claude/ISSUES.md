@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-64**.
+- **IDs never get reused.** The next one is **ISS-65**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -50,6 +50,7 @@
 | ISS-61 | Two docs name hook and function files in kebab-case; the code uses camelCase                          | docs        | Open                                             |
 | ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
 | ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
+| ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 
 ---
 
@@ -412,3 +413,12 @@ ESLint fails any `.tsx` function over 60 lines (`eslint.config.base.mjs`, the `.
 
 - **Fix:** move each hook to its own `.ts` file (`useSortedPresets.ts`, `useValueToIndex.ts`).
 - **Regression test:** none beyond lint passing on the moved files.
+
+### ISS-64: A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`
+
+**Found:** October 25, 2026 (second cold review of the ISS-40 fix).
+
+`print_footer` (`engine/crates/bnto/src/dry_run/format.rs`) prints `Run with: bnto run <recipe> <input>` from the recipe argument alone. `bnto dry-run drive.bnto.json --vars vars.json` previews `$ echo D:/Art`, then suggests `bnto run drive.bnto.json <input>`, which stops on `unresolved {{vars.Drive}}` unless `BNTO_VAR_DRIVE` is set. A recipe with a required field fails the same way, since the `-p` values are dropped too.
+
+- **Fix:** build the footer from the same `-p` values and `--vars` files, as `DryRunHint` does for the declined-run hint (`engine/crates/bnto/src/dry_run_hint.rs`), each one shell word.
+- **Regression test:** `bnto dry-run <path> -p version=1.2.3 --vars vars.json` ends `Run with: bnto run <path> -p version=1.2.3 --vars vars.json <input>`.
