@@ -5,16 +5,32 @@
 
 use std::io::{Read, Write};
 use std::num::NonZeroU16;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant};
 
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
 use tempfile::TempDir;
 
-/// How long `wait_for` polls before failing with the screen it last saw.
-const WAIT: Duration = Duration::from_secs(10);
+/// How long a wait polls before failing with the screen it last saw. Generous
+/// on purpose: a correct journey on a busy machine must still pass, and a
+/// broken one fails all the same, only later. `BNTO_TUI_WAIT_SECS` overrides it.
+const WAIT_SECS: u64 = 30;
 const POLL: Duration = Duration::from_millis(25);
+
+/// Held while a session opens its pty and spawns `bnto tui`. Journeys run in
+/// parallel, and concurrent `openpty` calls in one process fail on macOS
+/// (`failed to openpty: Unknown error: -6`).
+static OPEN_PTY: Mutex<()> = Mutex::new(());
+
+/// The wait budget, from `BNTO_TUI_WAIT_SECS` when it's set to a number.
+fn wait_budget() -> Duration {
+    let secs = std::env::var("BNTO_TUI_WAIT_SECS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(WAIT_SECS);
+    Duration::from_secs(secs)
+}
 
 /// A key, as the bytes a terminal sends for it.
 #[derive(Clone, Copy, Debug)]
@@ -105,7 +121,6 @@ impl Tui {
             pixel_width: 0,
             pixel_height: 0,
         };
-        let pair = native_pty_system().openpty(size).expect("open a pty");
         let homes = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
         let work = work_dir(&homes);
         std::fs::create_dir_all(&work).unwrap();
@@ -122,7 +137,12 @@ impl Tui {
             seed_update_cache(homes.1.path(), latest);
             allow_update_check(&mut cmd);
         }
-        let child = pair.slave.spawn_command(cmd).expect("spawn bnto tui");
+        let (pair, child) = {
+            let _one_at_a_time = OPEN_PTY.lock().unwrap_or_else(PoisonError::into_inner);
+            let pair = native_pty_system().openpty(size).expect("open a pty");
+            let child = pair.slave.spawn_command(cmd).expect("spawn bnto tui");
+            (pair, child)
+        };
         drop(pair.slave);
 
         let [rows_nz, cols_nz] =
@@ -151,16 +171,39 @@ impl Tui {
         self
     }
 
+    /// Press `key` and wait for the TUI's answer: the screen (styles
+    /// included) changes, then holds still for a poll. A check made after
+    /// `step` can't judge the frame from before the key, which on a busy
+    /// machine made journeys press past what they looked for. Only for keys
+    /// that change a still screen (not one with a live timer).
+    #[allow(dead_code)] // each journey file uses a subset
+    pub fn step(&mut self, key: Key) -> String {
+        let before = self.read().1;
+        self.press(&[key]);
+        let mut last = None;
+        self.poll(&format!("the screen to answer {key:?}"), |_, styled| {
+            let settled = last.as_deref() == Some(styled);
+            last = Some(styled.to_string());
+            settled && styled != before
+        })
+    }
+
     /// The screen as text, one line per row, trailing spaces trimmed.
     pub fn screen(&self) -> String {
+        self.read().0
+    }
+
+    /// The screen as text, and with its styles as escape codes.
+    fn read(&self) -> (String, String) {
         let parser = self.screen.lock().unwrap();
         let screen = parser.screen();
         let (_, cols) = screen.size();
-        screen
+        let text = screen
             .rows(0, cols.get())
             .map(|row| row.trim_end().to_string())
             .collect::<Vec<_>>()
-            .join("\n")
+            .join("\n");
+        (text, screen.contents_formatted())
     }
 
     /// Wait until the screen shows `text`, then return the screen.
@@ -168,18 +211,32 @@ impl Tui {
         self.wait_until(&format!("{text:?} to show"), |screen| screen.contains(text))
     }
 
-    /// Wait until `done` holds for the screen, then return it. Fails with
-    /// the last screen seen, so a failing journey shows what the user saw.
+    /// Wait until `done` holds for a settled screen (the same text on two
+    /// reads a poll apart), then return it. A single read can land mid-draw.
+    /// Fails with the last screen seen, so a failing journey shows what the
+    /// user saw.
     pub fn wait_until(&self, what: &str, done: impl Fn(&str) -> bool) -> String {
+        let mut last = None;
+        self.poll(what, |text, _| {
+            let settled = last.as_deref() == Some(text);
+            last = Some(text.to_string());
+            settled && done(text)
+        })
+    }
+
+    /// Read the screen every poll until `done(text, styled)` holds, then
+    /// return its text, or fail with it once the wait budget runs out.
+    fn poll(&self, what: &str, mut done: impl FnMut(&str, &str) -> bool) -> String {
         let start = Instant::now();
+        let budget = wait_budget();
         loop {
-            let screen = self.screen();
-            if done(&screen) {
-                return screen;
+            let (text, styled) = self.read();
+            if done(&text, &styled) {
+                return text;
             }
             assert!(
-                start.elapsed() < WAIT,
-                "timed out waiting for {what}. Screen:\n{screen}"
+                start.elapsed() < budget,
+                "timed out after {budget:?} waiting for {what}. Screen:\n{text}"
             );
             thread::sleep(POLL);
         }
@@ -190,14 +247,12 @@ impl Tui {
     pub fn bnto_home(&self) -> &std::path::Path {
         self._homes.1.path()
     }
+}
 
-    /// The row holding the `▸` selection marker, if one is on screen.
-    pub fn selected_row(&self) -> Option<String> {
-        self.screen()
-            .lines()
-            .find(|line| line.contains('▸'))
-            .map(str::to_string)
-    }
+/// The row of `screen` holding the `▸` selection marker, if it shows one.
+#[allow(dead_code)] // each journey file uses a subset
+pub fn selected_row(screen: &str) -> Option<&str> {
+    screen.lines().find(|line| line.contains('▸'))
 }
 
 impl Drop for Tui {

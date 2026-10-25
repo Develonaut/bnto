@@ -24,7 +24,6 @@
 | ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
-| ISS-32 | TUI journeys time out when the machine is busy                                                        | tui test    | Open                                             |
 | ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
 | ISS-34 | `file-rename`'s `prefix`, `case` and `sanitize` rename the folders too                                | engine      | Open                                             |
 | ISS-35 | Inside a loop, a data value is filled in as a template                                                | engine      | Open                                             |
@@ -144,16 +143,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - **What PostHog shows:** 190 events (`$pageview`, `$web_vitals` and a custom event) from three hosts outside bnto.io, June 14 to October 7, 2026, arriving through a different `/ingest` proxy. The project's test-account filters exclude only localhost, an internal cohort and one IP, so these count in web analytics.
 - **Fix:** this is a PostHog config fix, not a repo change. Either give that app its own project key, or add a `$host` filter (`^(www\.)?bnto\.io$`) to the test-account filters.
 - **No repo test:** it's project config. After the fix, rerun the review's `$host` breakdown to confirm only bnto.io remains.
-
-### ISS-32: TUI journeys time out when the machine is busy
-
-**Found:** October 24, 2026 (`task check` on `docs/feature-request-guide`, while five Rust builds ran in other worktrees).
-
-- **What failed:** `tj2_scroll_to_keep_awake_and_open_it`, `tj3_compress_an_image_and_see_the_result` and `tj12_a_library_copy_never_hides_the_built_in`, each timed out waiting for a screen (`engine/crates/bnto/tests/tui/harness.rs:169`, `tests/tui_journeys.rs:30`). The suite took 17 s. The captured screens show half-drawn frames (a list's rows repeated).
-- **Rerun alone:** 9 of 9 passed in 2.9 s, on the same commit.
-- **Why:** every wait has a fixed 10 s budget (`WAIT`, `harness.rs:16`), and the journeys run in parallel, so a loaded machine starves the pseudo-terminals. CI runners can be just as busy.
-- **Fix:** make the budget generous (or scale it with an env var CI can set), and wait for the screen to settle rather than polling a single frame, so a slow machine can't fail a correct journey. Run the suite under load to confirm (e.g. `cargo test -p bnto --test tui_journeys` alongside a `cargo build`).
-- **Regression test:** the fix is the test harness itself; prove it by running the suite with `--test-threads=16` under a parallel build several times without a failure.
 
 ### ISS-33: Output names and extension reads split on a dot in a folder name
 
