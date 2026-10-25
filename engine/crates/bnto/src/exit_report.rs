@@ -1,8 +1,8 @@
 // Names, as the process ends, what a stopped run kept on disk.
 //
 // Two things can hold the only copy of a file: an output write's staged swap
-// copies (`ordered_write::report_kept_staging`), and a file a move parked.
-// `bnto_file::relocate` (overwrite-mode output, `file-move`) breaks a swap
+// copies (documented and reported in `ordered_write::staging`), and a file a
+// move parked, reported here. `bnto_file::relocate` (overwrite-mode output, `file-move`) breaks a swap
 // by parking one file (or a folder `file-move` moves) under a
 // `.bnto-rename-*` name until its final rename. Ctrl+C in `bnto run`
 // (`process::exit` skips cleanup) or quitting the TUI mid-run can land in
@@ -20,8 +20,9 @@ pub fn report_kept_on_exit() {
     report_parked_files();
 }
 
-/// Moves aren't stopped first: one may still finish its final rename after
-/// this runs (a stale line at worst), but none can park a file after it
+/// Print a warning for each file a move parked and hadn't renamed, still on
+/// disk. Moves aren't stopped first: one may still finish its final rename
+/// after this runs (a stale line at worst), but none can park a file after it
 /// (`take_parked` refuses every later park).
 fn report_parked_files() {
     use colored::Colorize;

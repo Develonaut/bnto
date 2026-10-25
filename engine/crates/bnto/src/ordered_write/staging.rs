@@ -9,8 +9,9 @@
 // has written, the copy is the only one of the old content. A finished write
 // removes the folder and reports a removal that fails. Anything else keeps a
 // folder holding copies and leaves it registered: a failed write names it in
-// its error, and the process's end (Ctrl+C handler, TUI exit) names every
-// registered folder still on disk with `report_kept_staging`, so it is named
+// its error, and the process's end (Ctrl+C handler, TUI exit, through
+// `exit_report`) names every registered folder still on disk with
+// `report_kept_staging`, so it is named
 // even when Ctrl+C beats the error to the screen. Nothing here deletes a
 // folder holding copies except `finish`. `file-collect` skips any folder
 // with this prefix.
@@ -141,8 +142,9 @@ pub fn forget(folder: &Path) {
 /// Print a warning for each registered staging folder still on disk: one a
 /// write kept when it failed, was stopped or panicked (the user may have
 /// deleted it since). Called by whatever ends the process once writes are
-/// stopped (`GATE.stop_and_wait`): the Ctrl+C handler before `process::exit`,
-/// and the TUI after it restores the terminal. The folders are kept, never
+/// stopped (`GATE.stop_and_wait`), through `exit_report::report_kept_on_exit`:
+/// the Ctrl+C handler before `process::exit`, and the TUI after it restores
+/// the terminal. The folders are kept, never
 /// deleted: a swap's staged copy may be the only one.
 pub fn report_kept_staging() {
     let registered = std::mem::take(&mut *lock_live());
