@@ -42,7 +42,7 @@
       "type": "shell-run",
       "parameters": {
         "shell": "sh",
-        "script": "# nonexistent-paths: fail naming every line of an engine Rust file that\n# points at a made-up absolute path such as \"/nonexistent\". On Windows that is\n# C:\\nonexistent, which can exist (gotchas.md, Windows Portability): use a\n# path under a temp dir instead. Each argument is one file, relative to\n# engine/crates.\n# Gap: a content-search node will replace this step (dogfooding.md, PR 9).\ncd engine/crates || exit 2\nfound=$(grep -HnE '\"/[^\"]*nonexistent' -- \"$@\")\ncase $? in\n  0) ;;\n  1) echo \"No engine Rust file points at a made-up absolute path.\"; exit 0 ;;\n  *) exit 2 ;;\nesac\necho \"Made-up absolute paths (use a path under a temp dir; see gotchas.md):\" >&2\nprintf '%s\\n' \"$found\" | sed 's|^|  engine/crates/|' >&2\nexit 1\n",
+        "script": "# nonexistent-paths: fail naming every line of an engine Rust file that\n# points at a made-up absolute path such as \"/nonexistent\". On Windows that is\n# C:\\nonexistent, which can exist (gotchas.md, Windows Portability): use a\n# path under a temp dir instead. Each argument is one file, relative to\n# engine/crates.\n# Gap: a content-search node will replace this step (dogfooding.md, PR 9).\ncd engine/crates || exit 2\nfound=$(grep -HniE '\"/[^\"]*nonexistent' -- \"$@\")\ncase $? in\n  0) ;;\n  1) echo \"No engine Rust file points at a made-up absolute path.\"; exit 0 ;;\n  *) exit 2 ;;\nesac\necho \"Made-up absolute paths (use a path under a temp dir; see gotchas.md):\" >&2\nprintf '%s\\n' \"$found\" | sed 's|^|  engine/crates/|' >&2\nexit 1\n",
         "args": [
           {
             "each": ["{{file}}"]

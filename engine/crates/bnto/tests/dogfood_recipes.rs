@@ -262,3 +262,62 @@ fn rust_file_size_passes_when_every_file_is_within_the_limit() {
     let output = run_in(root, &dogfood_recipe("rust-file-size"));
     assert!(output.status.success(), "{}", text(&output));
 }
+
+/// A Rust line pointing at the made-up absolute path `/<path>`. Built at run
+/// time so this file never holds one itself (the check scans it too).
+fn made_up_path_line(path: &str) -> String {
+    format!("let p = Path::new(\"/{path}\");\n")
+}
+
+#[test]
+fn nonexistent_paths_fails_naming_each_made_up_path() {
+    let root = temp_output_dir();
+    let root = root.path();
+    write(
+        root,
+        "engine/crates/demo/src/lib.rs",
+        &format!("fn f() {{}}\n{}", made_up_path_line("nonexistent")),
+    );
+    write(
+        root,
+        "engine/crates/demo/tests/journey.rs",
+        &made_up_path_line("tmp/NonExistent_dir"),
+    );
+    // Not a path, or not Rust: not checked.
+    write(
+        root,
+        "engine/crates/demo/src/ok.rs",
+        r#"let slug = "nonexistent-recipe";"#,
+    );
+    write(
+        root,
+        "engine/crates/demo/README.md",
+        &made_up_path_line("nonexistent"),
+    );
+
+    let output = run_in(root, &dogfood_recipe("nonexistent-paths"));
+    let all = text(&output);
+    assert!(!output.status.success(), "made-up paths passed: {all}");
+    assert!(all.contains("engine/crates/demo/src/lib.rs:2:"), "{all}");
+    assert!(
+        all.contains("engine/crates/demo/tests/journey.rs:1:"),
+        "{all}"
+    );
+    for fine in ["ok.rs", "README.md"] {
+        assert!(!all.contains(fine), "{fine} reported: {all}");
+    }
+}
+
+#[test]
+fn nonexistent_paths_passes_when_every_path_is_real() {
+    let root = temp_output_dir();
+    let root = root.path();
+    write(
+        root,
+        "engine/crates/demo/src/lib.rs",
+        "let missing = tmp.path().join(\"missing\");\nlet slug = \"nonexistent-recipe\";\n",
+    );
+
+    let output = run_in(root, &dogfood_recipe("nonexistent-paths"));
+    assert!(output.status.success(), "{}", text(&output));
+}
