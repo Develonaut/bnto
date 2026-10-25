@@ -94,9 +94,25 @@ function deleteFileAction(ctx: ActionContext, index: number) {
 }
 
 function downloadAllAction(ctx: ActionContext) {
-  const results = ctx.refs.getBrowserResults();
+  downloadResults(ctx, ctx.refs.getBrowserResults(), "manual");
+}
+
+/**
+ * Download every result and record it. The automatic download after a run
+ * and the `downloadAll` action both come here; `trigger` keeps the automatic
+ * download apart from downloads a user asks for.
+ */
+function downloadResults(
+  ctx: ActionContext,
+  results: BrowserFileResult[],
+  trigger: "auto" | "manual",
+) {
   core.executions.downloadAllResults(results, ctx.slug);
-  core.telemetry.capture("result_downloaded", { slug: ctx.slug, fileCount: results.length });
+  core.telemetry.capture("result_downloaded", {
+    slug: ctx.slug,
+    fileCount: results.length,
+    trigger,
+  });
 }
 
 function resetExecutionAction(ctx: ActionContext) {
@@ -132,10 +148,7 @@ async function runAction(ctx: ActionContext) {
 
   if (result.status === "completed" && result.results.length > 0) {
     captureCompleted(props, durationMs, result.results);
-    core.executions.downloadAllResults(
-      result.results as Parameters<typeof core.executions.downloadAllResults>[0],
-      ctx.slug,
-    );
+    downloadResults(ctx, result.results, "auto");
   } else if (result.status === "failed") {
     captureFailed(props, durationMs, result.error ?? "unknown");
   }

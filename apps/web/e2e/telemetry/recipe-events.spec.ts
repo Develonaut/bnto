@@ -71,23 +71,17 @@ test.describe("recipe telemetry events @browser", () => {
     expect(completed[0].properties?.durationMs).toBeGreaterThan(0);
     expect(completed[0].properties?.outputBytes).toBeGreaterThan(0);
 
-    // --- result_downloaded (via Download All auto-download) ---
-    // Auto-download fires on completion, so result_downloaded should
-    // already be captured. If not present, it means auto-download
-    // uses downloadAllResults directly (not handleDownloadAll).
-    // The manual "Download All" button triggers the event.
-    const downloadAllBtn = page.getByTestId("download-all-button", ":visible");
-
-    // Only assert manual download if the button is visible
-    if (await downloadAllBtn.isVisible()) {
-      await downloadAllBtn.click();
-      await waitForTelemetryEvent(page, "result_downloaded");
-      events = await getTelemetryEvents(page);
-      const downloaded = filterEvents(events, "result_downloaded");
-      expect(downloaded.length).toBeGreaterThanOrEqual(1);
-      expect(downloaded[0].properties).toMatchObject({
-        slug: "compress-images",
-      });
-    }
+    // --- result_downloaded (the automatic download on completion) ---
+    // A successful run downloads its results without a click, and that
+    // download is recorded too.
+    await waitForTelemetryEvent(page, "result_downloaded");
+    events = await getTelemetryEvents(page);
+    const downloaded = filterEvents(events, "result_downloaded");
+    expect(downloaded).toHaveLength(1);
+    expect(downloaded[0].properties).toEqual({
+      slug: "compress-images",
+      fileCount: 1,
+      trigger: "auto",
+    });
   });
 });
