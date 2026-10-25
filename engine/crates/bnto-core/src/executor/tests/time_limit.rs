@@ -1,7 +1,7 @@
 // The run's time limit (`settings.timeout`): once it has passed, no step,
 // file, loop iteration or closing step starts, and the run fails naming
 // the limit. A run with no limit is never stopped.
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 
 use super::always::{Seen, always_registry, seen_names, started};
 use super::*;
@@ -40,13 +40,63 @@ impl crate::processor::NodeProcessor for TickProcessor {
     }
 }
 
+thread_local! {
+    /// The files the batch tick processor started, in order.
+    static BATCH_STARTED: RefCell<Vec<String>> = const { RefCell::new(Vec::new()) };
+}
+
+/// A batch node that asks the run whether its time is up before each file,
+/// then moves the clock on by 3s, standing in for a slow copy or move.
+struct TickBatch;
+
+impl crate::processor::NodeProcessor for TickBatch {
+    fn name(&self) -> &str {
+        "tick-batch"
+    }
+
+    fn metadata(&self) -> crate::metadata::NodeMetadata {
+        crate::metadata::NodeMetadata {
+            input_cardinality: crate::metadata::InputCardinality::Batch,
+            ..crate::processor::NodeProcessor::metadata(&EchoProcessor)
+        }
+    }
+
+    fn process(
+        &self,
+        _input: NodeInput,
+        _progress: &ProgressReporter,
+        _ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        unreachable!("tick-batch only runs as a batch")
+    }
+
+    fn process_batch(
+        &self,
+        input: crate::processor::BatchInput,
+        _progress: &ProgressReporter,
+        ctx: &dyn ProcessContext,
+    ) -> Result<NodeOutput, BntoError> {
+        for file in &input.files {
+            ctx.check_time_limit()?;
+            BATCH_STARTED.with(|started| started.borrow_mut().push(file.filename.clone()));
+            CLOCK.with(|clock| clock.set(clock.get() + 3000));
+        }
+        Ok(NodeOutput {
+            files: Vec::new(),
+            metadata: serde_json::Map::new(),
+        })
+    }
+}
+
 /// The closing-step registry plus `test-tick` (1.5s per file) and
-/// `test-tick-long` (3s per file), both moving the clock.
+/// `test-tick-long` (3s per file), both moving the clock, and
+/// `test-tick-batch` (3s per file, asking the run's limit before each).
 fn tick_registry() -> (NodeRegistry, Seen) {
     let (mut registry, seen) = always_registry();
     for (key, step_ms) in [("test-tick", 1500), ("test-tick-long", 3000)] {
         registry.register(key, Box::new(TickProcessor { step_ms }));
     }
+    registry.register("test-tick-batch", Box::new(TickBatch));
     (registry, seen)
 }
 
@@ -56,6 +106,7 @@ fn run_timed(
     files: Vec<PipelineFile>,
 ) -> (Result<PipelineResult, BntoError>, Vec<PipelineEvent>, Seen) {
     CLOCK.with(|clock| clock.set(0));
+    BATCH_STARTED.with(|started| started.borrow_mut().clear());
     let (registry, seen) = tick_registry();
     let recorder = RecordingReporter::new();
     let reporter = recorder.reporter();
@@ -217,4 +268,45 @@ fn test_a_loop_that_continues_on_error_still_stops_at_the_time_limit() {
         "error: {err}"
     );
     assert_eq!(seen_names(&seen), vec!["a.txt"]);
+}
+
+fn batch_started() -> Vec<String> {
+    BATCH_STARTED.with(|started| started.borrow().clone())
+}
+
+fn three_files() -> Vec<PipelineFile> {
+    ["a.txt", "b.txt", "c.txt"]
+        .iter()
+        .map(|name| make_file(name, b"x"))
+        .collect()
+}
+
+#[test]
+fn test_a_batch_node_sees_the_run_pass_its_time_limit() {
+    // RED (ISS-60): a batch node gets every file in one call, so only it can
+    // stop between them. The run's limit reaches it through its context.
+    let (result, _, _) = run_timed(
+        r#"{ "settings": { "timeout": 2 }, "nodes": [
+            { "id": "copy", "type": "test-tick-batch" }
+        ] }"#,
+        three_files(),
+    );
+    let err = result.expect_err("the run passed its limit after a.txt");
+    assert_eq!(err.to_string(), "Run timed out after 2s");
+    assert!(err.is_timeout());
+    assert_eq!(
+        batch_started(),
+        vec!["a.txt"],
+        "b.txt and c.txt never started"
+    );
+}
+
+#[test]
+fn test_a_batch_node_in_a_run_without_a_limit_is_never_stopped() {
+    let (result, _, _) = run_timed(
+        r#"{ "nodes": [ { "id": "copy", "type": "test-tick-batch" } ] }"#,
+        three_files(),
+    );
+    assert!(result.is_ok(), "{:?}", result.err());
+    assert_eq!(batch_started(), vec!["a.txt", "b.txt", "c.txt"]);
 }

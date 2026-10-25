@@ -106,9 +106,9 @@ src/
     ├── primitive.rs      # Leaf node execution
     ├── container.rs      # Container execution (loop, group, parallel)
     ├── held.rs           # Files a loop or graph level holds for later steps (held_elsewhere)
-    ├── run_scope.rs      # A batch node's ProcessContext: the consumer's, plus the run's held files and writes
+    ├── run_scope.rs      # A batch node's ProcessContext: the consumer's, plus the run's held files, writes and time limit
     ├── node_events.rs    # NodeStarted / NodeCompleted / NodeFailed events
-    ├── time_limit.rs     # The run's time limit, checked before each node, file and iteration
+    ├── time_limit.rs     # The run's time limit, checked before each node, file and iteration (batch nodes ask it per file)
     └── tests/            # 25 test modules
 ```
 

@@ -83,6 +83,9 @@ pub mod join;
 /// WASM bridge — JS-callable functions for file operations.
 pub mod wasm_bridge;
 
+#[cfg(test)]
+mod time_runs_out;
+
 /// Name prefix of the folder the CLI and TUI output step sets files aside in
 /// to run a swap of writes (hidden on Unix, not on Windows). A finished write
 /// removes it; one a failed or interrupted write left must not become a later

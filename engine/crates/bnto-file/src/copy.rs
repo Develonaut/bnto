@@ -71,7 +71,7 @@ impl NodeProcessor for FileCopy {
     ) -> Result<NodeOutput, BntoError> {
         let files = per_file(input)?;
         refuse_replacing_read_files(&files, ctx)?;
-        copy_each(files, |input| self.process(input, progress, ctx))
+        copy_each(files, ctx, |input| self.process(input, progress, ctx))
     }
 
     #[expect(clippy::too_many_lines)]

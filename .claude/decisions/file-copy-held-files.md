@@ -183,7 +183,7 @@ Ryan chose **option 1**, as recommended. It protects exactly the files the run s
 Order:
 
 1. **PR 1, ISS-59 (built, below):** the held frames, `RunScope` and `held_elsewhere`, used by `file-copy`, with the engine-execution.md notes.
-2. **PR 2, ISS-60:** `time_is_up` on `RunScope`, checked by `file-copy`, `file-move` and `file-delete` before each file.
+2. **PR 2, ISS-60 (built):** the run's limit on `RunScope`, checked by `file-copy`, `file-move` and `file-delete` before each file. The method is named `check_time_limit`, after the executor's own check, rather than `time_is_up`. See engine-execution.md's [Run Time Limit](../strategy/engine-execution.md#run-time-limit-settingstimeout).
 3. **ISS-58:** independent; any time.
 
 Whether `file-move` and `file-delete` should also refuse a source `held_elsewhere` up front (rows 8 and 10) is logged as ISS-82. Nothing is lost there today, so it waits.

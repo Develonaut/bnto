@@ -16,7 +16,7 @@ mod platform;
 use std::path::{Path, PathBuf};
 
 pub use conflicts::{conflicts, listing};
-pub use execute::run_in_order;
+pub use execute::{Stopped, run_checked, run_in_order};
 pub use parked::take_parked;
 pub use platform::check_platform_name;
 

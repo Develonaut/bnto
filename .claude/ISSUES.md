@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-87**.
+- **IDs never get reused.** The next one is **ISS-88**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -39,7 +39,6 @@
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
-| ISS-60 | A batch node can't see the run's time limit and keeps starting work past it                           | engine      | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
@@ -61,6 +60,7 @@
 | ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
 | ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
 | ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
+| ISS-87 | `file-move`/`file-delete` hand over nothing when a move or delete fails partway                       | engine      | Open                                             |
 
 ---
 
@@ -312,15 +312,6 @@ A per-file node inside a loop gets `{{item.*}}` from the file's current metadata
 - **Fix:** for a node that fills items itself (`resolves_items`), inside a loop, fill only the loop's keys and leave the rest as written, so the node fills them from each file's metadata. Not for `shell-run`, which also declares `resolves_items` but fills only inside `each` groups: a leftover `{{item.*}}` elsewhere in its command must still be refused.
 - **Regression test:** inside a loop, `file-inspect` then `file-copy` with `destination: "<dir>/{{item.extension}}"` copies each file into its extension's folder.
 
-### ISS-60: A batch node can't see the run's time limit and keeps starting work past it
-
-**Found:** October 25, 2026 (second cold review of the ISS-52 fix, which makes `file-copy` a batch node).
-
-The executor checks the run's `timeout` before each step, loop iteration and per-file node's file (`bnto-core/src/executor/time_limit.rs`, `primitive.rs`), so nothing new starts once it has passed. A batch node gets the whole batch in one call, and `ProcessContext` has no deadline, so it can't stop between files. After the limit, `file-copy` keeps starting copies until the CLI's watchdog ends the process about 2 s later (`bnto/src/run_watchdog.rs`). A copy cut off then can leave its destination truncated: `overwrite` copies with `std::fs::copy`, and `newer` truncates the target and writes in place (`copy_newer.rs`). `file-move` and `file-delete` have the same gap, though a rename or a delete cut off can't leave a half-written file.
-
-- **Fix:** let a node ask whether the run's time is up (a `ProcessContext` method the executor provides, defaulting to "no"), and have `file-copy`, `file-move` and `file-delete` check it before each file, failing with the run's timeout and handing over what they finished.
-- **Regression test:** a `file-copy` batch whose run passes its limit after the first file copies no more files and fails with the timeout.
-
 ### ISS-64: A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`
 
 **Found:** October 25, 2026 (second cold review of the ISS-40 fix).
@@ -516,3 +507,12 @@ Formatting is applied only by the pre-commit hook (`prettier --write {staged_fil
 
 - **Fix:** format the files in one PR, then add `pnpm format:check` (or a narrower glob) to `task check` and CI's TypeScript job.
 - **Regression test:** an unformatted file fails `task check` and CI.
+
+### ISS-87: `file-move`/`file-delete` hand over nothing when a move or delete fails partway
+
+**Found:** October 25, 2026 (fixing ISS-60, which makes both hand over what they finished when the run's time runs out).
+
+A batch node that fails partway can hand its finished files to the run's closing steps with `BntoError::with_output`, as a per-file node's are (engine-execution.md, "Closing Steps"). `file-copy` does for any failure (`copy_batch::copy_each`). `file-move` and `file-delete` do only for the time limit: a rename that fails after others ran ("Stopped: <dest> now exists", `relocate::run_checked` returning `Stopped::Failed`, mapped in `engine/crates/bnto-file/src/move/stopped.rs`) or a `remove_file` that fails after earlier deletes (`delete/mod.rs`, `handed_over` keeps only a timeout's items) fails with no output. A closing step that logs what was moved or deleted then gets no files, though some were.
+
+- **Fix:** hand over the files under the destination (move) and the items finished (delete) for any failure after work began, as for the timeout.
+- **Regression test:** a `file-move` whose second rename finds its target taken, and a `file-delete` whose second delete fails, each fail handing over the first file.
