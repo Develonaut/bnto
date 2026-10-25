@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-61**.
+- **IDs never get reused.** The next one is **ISS-64**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -19,7 +19,6 @@
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-19 | `/pickup` says hooks may be 30 lines; the limit is 20                                                 | docs        | Open                                             |
 | ISS-20 | 12 broken links in `.claude/` docs; nothing checks links                                              | docs        | Open                                             |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
@@ -49,6 +48,9 @@
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
 | ISS-59 | **Inside a loop, `file-copy` can still replace an input another iteration reads**                     | engine      | Open                                             |
 | ISS-60 | A batch node can't see the run's time limit and keeps starting work past it                           | engine      | Open                                             |
+| ISS-61 | Two docs name hook and function files in kebab-case; the code uses camelCase                          | docs        | Open                                             |
+| ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
+| ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
 
 ---
 
@@ -93,12 +95,6 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 24, 2026 (v0.18.2 release run 40096930376).
 
 `terminate_all_kills_orphaned_grandchild_on_windows` (`engine/crates/bnto/src/context.rs:743`) starts `cmd /c start /b powershell … $PID; Start-Sleep 30` and waits once, `recv_timeout(20 s)`, for PowerShell to print its PID (`:758-759`). On the release's Windows runner PowerShell didn't print in time: `called Result::unwrap() on an Err value: Timeout`. The same commit passed the same job on #743's CI an hour earlier, so the failure is timing, not code. It failed the release's CI Gate. Wait on PowerShell's start with a longer bound, or start a lighter process for the grandchild, so a slow runner can't fail a release.
-
-### ISS-19: `/pickup` says hooks may be 30 lines; the limit is 20
-
-**Found:** October 24, 2026 (cold review of #745).
-
-`.claude/skills/pickup/SKILL.md:310-311` tells agents that hooks are "thin reactive wrappers (< 30 lines)" and that a hook is too big at ">30 lines". [code-standards.md](rules/code-standards.md) caps every function at 20 lines (`.tsx` at 60), and ESLint enforces it (#739). `/code-review` had the same stale "hooks get 30" until #745.
 
 ### ISS-20: 12 broken links in `.claude/` docs; nothing checks links
 
@@ -393,3 +389,36 @@ The executor checks the run's `timeout` before each step, loop iteration and per
 
 - **Fix:** let a node ask whether the run's time is up (a `ProcessContext` method the executor provides, defaulting to "no"), and have `file-copy`, `file-move` and `file-delete` check it before each file, failing with the run's timeout and handing over what they finished.
 - **Regression test:** a `file-copy` batch whose run passes its limit after the first file copies no more files and fails with the timeout.
+
+### ISS-61: Two docs name hook and function files in kebab-case; the code uses camelCase
+
+**Found:** October 25, 2026 (fixing ISS-19).
+
+[code-standards.md](rules/code-standards.md)'s "One Export Per File" table gives `use-run-workflow.ts` and `validate-workflow.ts` as file names, and `.claude/skills/pickup/SKILL.md:303` says hooks are `use-kebab-case.ts` and pure functions `kebab-case.ts`. The same rules file's naming table says camelCase (`useRunWorkflow.ts`, `formatDuration.ts`), and so does the code: `git ls-files 'packages/**/use-*.ts' 'apps/**/use-*.ts'` finds no files, against 89 `use[A-Z]*.ts`.
+
+- **Fix:** change both docs to camelCase names.
+- **Regression test:** none; a docs fix.
+
+### ISS-62: Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60
+
+**Found:** October 25, 2026 (cold review of the ISS-19 fix).
+
+These say a component keeps its logic inline until it reaches about 80 to 100 lines, and only then earns a hook:
+
+- `.claude/scopes/web/components.md:11` (">80-100 lines of logic + JSX") and `:39` ("100+ lines");
+- `.claude/skills/frontend-engineer/SKILL.md:41` ("Hook at ~80-100 lines of logic");
+- `.claude/skills/code-review/SKILL.md:173` ("Hooks only when > 80 lines").
+
+ESLint fails any `.tsx` function over 60 lines (`eslint.config.base.mjs`, the `.tsx` override of `max-lines-per-function`), so a component can't get there. [pre-commit.md](rules/pre-commit.md)'s Step 2 says "~20+ lines of logic", so the docs also disagree with each other.
+
+- **Fix:** give all three one threshold that fits under 60 (pre-commit.md's ~20 lines of logic, or reuse, or testability).
+- **Regression test:** none; a docs fix.
+
+### ISS-63: `SliderPresets.tsx` exports two hooks from a `.tsx` file
+
+**Found:** October 25, 2026 (cold review of the ISS-19 fix).
+
+`packages/ui/src/interaction/Slider/SliderPresets.tsx` exports `useSortedPresets` (`:13`) and `useValueToIndex` (`:22`). [code-standards.md](rules/code-standards.md) allows one exported hook per file. Being in a `.tsx` file also puts both under ESLint's 60-line `.tsx` limit instead of the 20 a hook gets. It's the only `.tsx` file under `packages/` or `apps/` that exports a `use*` hook.
+
+- **Fix:** move each hook to its own `.ts` file (`useSortedPresets.ts`, `useValueToIndex.ts`).
+- **Regression test:** none beyond lint passing on the moved files.
