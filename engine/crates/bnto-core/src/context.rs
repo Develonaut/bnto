@@ -81,6 +81,30 @@ pub trait ProcessContext: Send + Sync {
     fn dry_run(&self) -> bool {
         false
     }
+
+    // --- The run, as a batch node sees it ---
+    //
+    // The executor answers these for a batch node (`executor/run_scope.rs`,
+    // which forwards every method above to the consumer's context: a method
+    // added here needs a line there). Elsewhere they hold nothing.
+
+    /// The name of a file a later step of this run still reads from the file
+    /// at `path`, outside the files this node was handed: another loop
+    /// iteration's, a branch's that runs later. `None` when nothing does.
+    fn held_elsewhere(&self, path: &Path) -> Option<String> {
+        let _ = path;
+        None
+    }
+
+    /// Note that this run wrote the file at `path` (a copy made onto it).
+    fn record_write(&self, path: &Path) {
+        let _ = path;
+    }
+
+    /// Every file this run has written so far, in order (`record_write`).
+    fn recorded_writes(&self) -> Vec<PathBuf> {
+        Vec::new()
+    }
 }
 
 /// No-op context for browser (WASM) execution.

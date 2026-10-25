@@ -111,6 +111,9 @@ pub mod logging;
 /// avoid reading multi-GB files into memory.
 pub mod file_data;
 
+/// A file's size and modified time, for finding one file under two paths.
+pub mod file_stamp;
+
 /// Simple dotenv parser — loads KEY=VALUE pairs from `.env` files.
 /// No crate dependency, handles comments, quotes, and `export` prefix.
 pub mod dotenv;

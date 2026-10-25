@@ -108,6 +108,7 @@ fn run_segment<F: Fn() -> u64 + Copy>(
 /// Run a graph level segment by segment. Every node records into the
 /// level's layer, so a node reads any node that ran before it at this level.
 /// The level hands back the files its output sources name, in their order.
+/// A segment sees the files kept for later segments as held (`held.rs`).
 #[expect(clippy::too_many_lines)]
 fn run_graph<'a, F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
@@ -116,7 +117,7 @@ fn run_graph<'a, F: Fn() -> u64 + Copy>(
     file_offset: usize,
     mode: IterationMode,
 ) -> Result<NodeExecutionResult, ChainFailure> {
-    let mut level_ctx = ctx.layer();
+    let mut level_ctx = ctx.layer_with_held();
     let mut routed = Routed::new(graph, files);
     let mut level = NodeExecutionResult::holding(Vec::new());
     for range in segments(graph) {
@@ -159,5 +160,8 @@ fn run_graph_segment<'a, F: Fn() -> u64 + Copy>(
     let position = ChainPosition::starting_at(range.start, graph.order.len());
     let nodes = &graph.order[range];
     let files = routed.take(&graph.inputs[nodes[0].id.as_str()]);
+    if let Some(held) = &ctx.held {
+        held.replace(routed.held_files());
+    }
     run_segment(ctx, nodes, files, file_offset, position, mode)
 }

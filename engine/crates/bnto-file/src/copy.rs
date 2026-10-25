@@ -70,7 +70,7 @@ impl NodeProcessor for FileCopy {
         ctx: &dyn ProcessContext,
     ) -> Result<NodeOutput, BntoError> {
         let files = per_file(input)?;
-        refuse_replacing_read_files(&files)?;
+        refuse_replacing_read_files(&files, ctx)?;
         copy_each(files, |input| self.process(input, progress, ctx))
     }
 
@@ -118,7 +118,7 @@ impl NodeProcessor for FileCopy {
         }
 
         if conflict == "newer" {
-            let output = process_newer(input, &dest_path, dry_run)?;
+            let output = process_newer(input, &dest_path, ctx)?;
             progress.report(100, "Done");
             return Ok(output);
         }
@@ -128,21 +128,7 @@ impl NodeProcessor for FileCopy {
 
         // Write the file (if not skipped).
         if let Some(path) = final_path.as_ref().filter(|_| !dry_run) {
-            // Create parent directories if the filename contains subdirs.
-            if let Some(parent) = path.parent()
-                && !parent.exists()
-            {
-                std::fs::create_dir_all(parent).map_err(|e| {
-                    BntoError::ProcessingFailed(format!(
-                        "Failed to create parent dir {}: {e}",
-                        parent.display()
-                    ))
-                })?;
-            }
-
-            input.data.copy_to(path).map_err(|e| {
-                BntoError::ProcessingFailed(format!("Failed to write {}: {e}", path.display()))
-            })?;
+            write_copy(&input, path, ctx)?;
         }
 
         progress.report(100, "Done");
@@ -172,6 +158,28 @@ impl NodeProcessor for FileCopy {
     }
 }
 
+/// Copy `input` to `path`, creating the folders a name with subdirs needs,
+/// and record the copy with the run. A file already at `path` is left as
+/// is (ISS-36): no copy is made, so none is recorded.
+fn write_copy(input: &NodeInput, path: &Path, ctx: &dyn ProcessContext) -> Result<(), BntoError> {
+    if let Some(parent) = path.parent()
+        && !parent.exists()
+    {
+        std::fs::create_dir_all(parent).map_err(|e| {
+            let at = parent.display();
+            BntoError::ProcessingFailed(format!("Failed to create parent dir {at}: {e}"))
+        })?;
+    }
+    let in_place = input.data.is_at(path);
+    input.data.copy_to(path).map_err(|e| {
+        BntoError::ProcessingFailed(format!("Failed to write {}: {e}", path.display()))
+    })?;
+    if !in_place {
+        ctx.record_write(path);
+    }
+    Ok(())
+}
+
 /// The `destination` folder, `.` when unset.
 fn destination(params: &serde_json::Map<String, serde_json::Value>) -> &str {
     params
@@ -199,8 +207,8 @@ pub(crate) fn conflict_mode(params: &serde_json::Map<String, serde_json::Value>)
 const CONFLICT_DESCRIPTION: &str = "What to do when a file with the same name already \
     exists. \"newer\" copies only when the destination is missing or older than the source \
     (path input only), keeps the source's modified time, and never deletes. A copy that would \
-    replace a file another incoming file is read from is refused before anything is copied \
-    (inside a loop, each iteration's files are checked on their own).";
+    replace a file the run still reads (another incoming file's, another loop iteration's or \
+    another branch's) is refused before the step copies anything.";
 
 #[expect(clippy::too_many_lines)]
 fn build_copy_params() -> Vec<ParameterDef> {

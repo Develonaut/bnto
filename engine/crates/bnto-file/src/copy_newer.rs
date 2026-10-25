@@ -3,8 +3,8 @@
 // Keeps mtimes comparable across FAT and Google Drive, which round them, by
 // treating a gap within `toleranceMs` as equal. Never deletes anything.
 
-use bnto_core::BntoError;
 use bnto_core::processor::{FileData, NodeInput, NodeOutput, OutputFile};
+use bnto_core::{BntoError, ProcessContext};
 use filetime::FileTime;
 use std::fs::{self, OpenOptions};
 use std::path::Path;
@@ -20,12 +20,13 @@ enum Outcome {
 }
 
 /// Copy `input` to `dest_path` if the target is missing or older, and report
-/// the outcome per file; a dry run decides the same and writes nothing.
+/// the outcome per file; a dry run decides the same and writes nothing. A
+/// copy made is recorded with the run (`ProcessContext::record_write`).
 /// Path data only: bytes carry no source time.
 pub(crate) fn process_newer(
     input: NodeInput,
     dest_path: &Path,
-    dry_run: bool,
+    ctx: &dyn ProcessContext,
 ) -> Result<NodeOutput, BntoError> {
     let FileData::Path(src) = &input.data else {
         return Err(BntoError::InvalidInput(
@@ -40,8 +41,9 @@ pub(crate) fn process_newer(
         )));
     }
     let outcome = decide(src, dest_path, tolerance_ms(&input.params)?)?;
-    if outcome == Outcome::Copied && !dry_run {
+    if outcome == Outcome::Copied && !ctx.dry_run() {
         overwrite_in_place(src, dest_path)?;
+        ctx.record_write(dest_path);
     }
     Ok(passthrough_output(input, outcome))
 }

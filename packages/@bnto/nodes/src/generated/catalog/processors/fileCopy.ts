@@ -33,7 +33,7 @@ export const fileCopyProcessor: ProcessorDef = {
       name: "conflict",
       label: "Conflict Resolution",
       description:
-        "What to do when a file with the same name already exists. \"newer\" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes. A copy that would replace a file another incoming file is read from is refused before anything is copied (inside a loop, each iteration's files are checked on their own).",
+        "What to do when a file with the same name already exists. \"newer\" copies only when the destination is missing or older than the source (path input only), keeps the source's modified time, and never deletes. A copy that would replace a file the run still reads (another incoming file's, another loop iteration's or another branch's) is refused before the step copies anything.",
       type: "enum" as const,
       options: ["skip", "overwrite", "rename", "newer"] as const,
       default: "skip",

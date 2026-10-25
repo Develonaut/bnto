@@ -60,4 +60,6 @@ pub(crate) fn copy_each(
 }
 
 #[cfg(test)]
+mod held_tests;
+#[cfg(test)]
 mod tests;

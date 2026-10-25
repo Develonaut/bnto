@@ -369,6 +369,7 @@ mod containers;
 mod edges;
 mod edges_always;
 mod errors;
+mod held_files;
 mod item_templates;
 mod metadata;
 mod node_outputs;

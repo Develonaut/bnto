@@ -93,6 +93,15 @@ Container nodes control how files flow through their children.
 
 Non-container nodes are leaves -- they receive files and transform them via their `NodeProcessor`.
 
+### Files Held Outside a Step
+
+A batch node gets the files its level hands it, but the run can still hold others that later steps read from disk: a loop's other iterations (later ones, and finished ones whose results still read from their sources), and the files a graph level keeps for branches that run later. The executor tracks these as frames (`executor/held.rs`), one per loop and graph level, chained outward. A batch node's `ProcessContext` is a `RunScope` (`executor/run_scope.rs`) that forwards everything to the consumer's context and adds:
+
+- `held_elsewhere(path)`: the name of a held file at `path`.
+- `record_write(path)` and `recorded_writes()`: the files the run has written so far.
+
+`file-copy` refuses an `overwrite`/`newer` copy onto a held file, and once earlier copies have run, the refusal names them. In the browser nothing is ever held: it has no files on disk. Decision: [file-copy-held-files.md](../decisions/file-copy-held-files.md).
+
 ### Node Output Metadata
 
 After a leaf node runs, the executor records its node-level `NodeOutput.metadata` under its node id, and every later node in the run reads it through `{{node.<id>.<key>}}`. Records flow the way files do: along a chain, out of a group to the nodes after it, and out of a loop as every iteration's records merged in order (iterations don't see each other's). A per-file node's record merges its files' metadata in file order. Keys a processor declares as counts (`NodeProcessor::count_keys`, e.g. file-copy's `copied`) add up instead of taking the later value, so the record holds totals for the whole node. The run's result carries every node's final record (`PipelineResult::node_metadata`), which `bnto run --json` reports per node. See [recipe-fields.md](recipe-fields.md#node-output-references) for the template rules.
@@ -154,7 +163,7 @@ The rule, applied within each chain (`executor/chain.rs`, `executor/closing.rs`)
 - **Auto-iteration:** a branching level runs as linear segments, each through the existing chain or auto-iteration code. Fan-in and fan-out points are barriers like batch nodes, so adding a branch to an auto recipe changes where its per-file passes split.
 - **Events:** `PipelineStarted.nodes` lists nodes in execution order, and `node_index` is the execution position.
 
-**Watch for:** a step that moves or deletes a shared file (`file-move`, `file-delete`, an overwriting output) takes it from branches that run after it. They then fail naming the missing file. A recipe saved by the frozen editor, which never writes edges, keeps its old edges when a node is added, so the run is refused, naming the unconnected node, until the editor wires edges.
+**Watch for:** a step that moves or deletes a shared file (`file-move`, `file-delete`, an overwriting output) takes it from branches that run after it. They then fail naming the missing file (ISS-82). A `file-copy` that would replace a file a later branch still reads is refused before it copies anything (see "Files Held Outside a Step" above). A recipe saved by the frozen editor, which never writes edges, keeps its old edges when a node is added, so the run is refused, naming the unconnected node, until the editor wires edges.
 
 ### Run Time Limit (`settings.timeout`)
 

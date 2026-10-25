@@ -67,6 +67,11 @@ impl<'a> Routed<'a> {
         }
     }
 
+    /// Every file still held for a consumer to come.
+    pub(super) fn held_files(&self) -> impl Iterator<Item = &PipelineFile> {
+        self.held.values().flat_map(|held| &held.files)
+    }
+
     /// The files of `sources`, joined in the order given (edge order).
     pub(super) fn take(&mut self, sources: &[Source<'a>]) -> Vec<PipelineFile> {
         let mut files = Vec::new();

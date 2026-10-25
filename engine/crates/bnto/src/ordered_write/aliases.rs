@@ -11,8 +11,8 @@
 
 use std::path::{Path, PathBuf};
 
+use bnto_core::file_stamp::stamp;
 use bnto_core::processor::FileData;
-use bnto_file::readers::stamp;
 
 use super::landing::landing_key;
 
