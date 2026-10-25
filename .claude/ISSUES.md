@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-64**.
+- **IDs never get reused.** The next one is **ISS-65**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -32,7 +32,6 @@
 | ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
 | ISS-38 | CI and release skip jobs for root files those jobs read                                               | ci          | Open                                             |
 | ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                                    | tooling     | Open                                             |
-| ISS-40 | `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled                                     | cli         | Open                                             |
 | ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
@@ -51,6 +50,7 @@
 | ISS-61 | Two docs name hook and function files in kebab-case; the code uses camelCase                          | docs        | Open                                             |
 | ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
 | ISS-63 | `SliderPresets.tsx` exports two hooks from a `.tsx` file                                              | ui          | Open                                             |
+| ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 
 ---
 
@@ -244,15 +244,6 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 - **Fix:** run the hook's Turbo tasks with `GIT_DIR` unset (or `--force` for lint), and confirm the hash matches a plain run.
 - **Regression test:** in a worktree, a staged lint-breaking change to the base config fails `git commit`.
 
-### ISS-40: `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled
-
-**Found:** October 24, 2026 (fixing ISS-11).
-
-`bnto run` takes `--vars <FILE>` for `{{vars.KEY}}` placeholders (`engine/crates/bnto/src/cli.rs:129-132`); `DryRunArgs` (`cli.rs:148-162`) has only the recipe, inputs, `-p` and `--yes`. A dry run of a recipe that uses `{{vars.*}}` previews it with the placeholders unfilled, so it shows a different plan from the run it previews.
-
-- **Fix:** give `dry-run` the same `--vars` (shared argument struct with `run`), and fill vars before the preview.
-- **Regression test:** a sandboxed `bnto dry-run --vars` shows the filled value where `bnto run` would use it.
-
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 
 **Found:** October 24, 2026 (fixing ISS-21).
@@ -422,3 +413,12 @@ ESLint fails any `.tsx` function over 60 lines (`eslint.config.base.mjs`, the `.
 
 - **Fix:** move each hook to its own `.ts` file (`useSortedPresets.ts`, `useValueToIndex.ts`).
 - **Regression test:** none beyond lint passing on the moved files.
+
+### ISS-64: A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`
+
+**Found:** October 25, 2026 (second cold review of the ISS-40 fix).
+
+`print_footer` (`engine/crates/bnto/src/dry_run/format.rs`) prints `Run with: bnto run <recipe> <input>` from the recipe argument alone. `bnto dry-run drive.bnto.json --vars vars.json` previews `$ echo D:/Art`, then suggests `bnto run drive.bnto.json <input>`, which stops on `unresolved {{vars.Drive}}` unless `BNTO_VAR_DRIVE` is set. A recipe with a required field fails the same way, since the `-p` values are dropped too.
+
+- **Fix:** build the footer from the same `-p` values and `--vars` files, as `DryRunHint` does for the declined-run hint (`engine/crates/bnto/src/dry_run_hint.rs`), each one shell word.
+- **Regression test:** `bnto dry-run <path> -p version=1.2.3 --vars vars.json` ends `Run with: bnto run <path> -p version=1.2.3 --vars vars.json <input>`.

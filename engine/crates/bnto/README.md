@@ -72,9 +72,11 @@ bnto info compress-images
 # Preview what a recipe (a slug or a .bnto.json path, as for `bnto run`) will
 # do: its dependencies and the shell commands it would run, writing nothing.
 # With input files it also previews the files it would make, which runs the
-# pipeline, so a recipe with shell steps asks for consent as `bnto run` does
+# pipeline, so a recipe with shell steps asks for consent as `bnto run` does.
+# --vars fills {{vars.KEY}} as `bnto run` does; an unset key stops the preview
 bnto dry-run download-video
 bnto dry-run recipe.bnto.json photo.jpg
+bnto dry-run backup.bnto.json --vars machine.json
 
 # Check recipe files without running them: unknown node types, parameters a
 # node refuses (e.g. a file-filter regex that doesn't compile), malformed
@@ -197,10 +199,10 @@ src/
 +-- run_verdict.rs         # A run's last stderr line and its `--json` summary line, from one RunSummary
 +-- run_limit.rs           # A run's time limit: the recipe's settings.timeout or `--timeout`
 +-- run_watchdog.rs        # Kills a run's child processes once its time limit passes (run, TUI, dry-run preview)
-+-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run
++-- vars.rs                # `--vars` files and `{{vars.*}}` resolution before a run or dry run
 +-- update_check/          # Daily crates.io check, cached; the "newer bnto" notice
 +-- consent.rs             # `shell-run` trust/consent gate (run + dry-run)
-+-- dry_run_hint.rs        # The quoted `bnto dry-run … -p …` line a declined run suggests
++-- dry_run_hint.rs        # The quoted `bnto dry-run … -p … --vars …` line a declined run suggests
 +-- shell_word.rs          # Quotes an argument as one sh / PowerShell word, for printed command lines
 +-- inspect.rs             # `bnto list` / `info` / `dry-run`
 +-- check.rs               # `bnto check` (recipe files checked on disk, findings + notes + verdict)

@@ -51,7 +51,7 @@ fn run_command(command: Command, session: Session) {
         Command::Run(args) => run_from_args(args, &session),
         Command::List => list_recipes(catalog),
         Command::Info { recipe } => show_info(&recipe, catalog),
-        Command::DryRun(a) => show_dry_run(&a.recipe, &a.inputs, &a.param, a.yes, catalog),
+        Command::DryRun(args) => show_dry_run(&args, catalog),
         Command::Check { paths } => check::run_check(&paths),
         Command::Install { recipe, yes, all } => {
             install::run_install(recipe.as_deref(), yes, all, catalog)
@@ -72,7 +72,7 @@ fn run_from_args(args: RunArgs, session: &Session) {
     let flags = RunFlags {
         yes: args.yes,
         dry_run: args.dry_run,
-        vars: &args.vars,
+        vars: &args.vars.files,
         json: args.json,
         timeout: args.timeout,
     };

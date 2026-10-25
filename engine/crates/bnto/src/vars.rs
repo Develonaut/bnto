@@ -1,4 +1,4 @@
-// `bnto run --vars <file.json>` — load run vars and resolve `{{vars.KEY}}`.
+// `bnto run --vars` and `bnto dry-run --vars` — load run vars and resolve `{{vars.KEY}}`.
 //
 // Each file is one JSON object. Later files win over earlier ones, and a
 // `BNTO_VAR_<KEY>` environment variable (key upper-cased) wins over every file.
