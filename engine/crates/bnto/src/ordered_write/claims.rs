@@ -10,10 +10,17 @@
 // refused before anything is replaced. Just before its own write, each
 // placeholder is removed again (`release`), so the copy creates the file
 // itself: copying onto an existing file can't clone it (APFS `clonefile`),
-// turning an O(1) copy of a large file into a full one. Undoing only ever
-// removes a placeholder this run made that is still empty, and the folders
-// made for it if they're empty. SIGKILL or power loss after claiming can
-// leave such empty files under output names; a rerun replaces them.
+// turning an O(1) copy of a large file into a full one. A released write
+// that creates its file and then fails (disk full, file too large) leaves it
+// empty; the run removes it then (`Run::step`). Undoing only ever removes an
+// empty file at a destination that was missing when the run planned, and the
+// folders made for it if they're empty. Between `release` and the copy,
+// another process could create an equivalent name; that race is out of scope.
+// SIGKILL or power loss after claiming can leave empty files under output
+// names. A rerun replaces one at a name the recipe gives, but not at a
+// made-up name (`b_1.txt`): `output_names` never takes a name a file holds,
+// and an empty file doesn't hold the result, so the rerun writes `b_2.txt`.
+// Such stray empty files are safe to delete.
 
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
@@ -52,11 +59,14 @@ impl Claims {
 
     /// Write `i` is about to run: remove its placeholder, if it's still the
     /// empty file this run made, so the write creates the file itself.
-    pub fn release(&mut self, i: usize) {
-        if let Some(at) = self.files.iter().position(|(k, _)| *k == i) {
-            let (_, path) = self.files.remove(at);
-            remove_if_empty(&path);
-        }
+    /// Whether `i` was claimed (its destination was missing at planning).
+    pub fn release(&mut self, i: usize) -> bool {
+        let Some(at) = self.files.iter().position(|(k, _)| *k == i) else {
+            return false;
+        };
+        let (_, path) = self.files.remove(at);
+        remove_if_empty(&path);
+        true
     }
 
     fn claim_one(&mut self, i: usize, path: &Path) -> Result<(), String> {
@@ -112,8 +122,10 @@ impl Claims {
 }
 
 impl Drop for Claims {
-    /// Undo the claims whose write never ran (a refusal, a failed write, a
-    /// stop): the placeholders, then the folders made for them, if empty.
+    /// Undo the claims never released, i.e. whose write never started (a
+    /// refusal, an earlier write failing, a stop): those placeholders, if
+    /// still empty, then every folder made for a claim, if empty by then. A
+    /// released write's own failure is cleaned up by `Run::step`.
     fn drop(&mut self) {
         for (_, path) in &self.files {
             remove_if_empty(path);
@@ -125,7 +137,7 @@ impl Drop for Claims {
 }
 
 /// Remove a placeholder, only while it's still empty: never a file with content.
-fn remove_if_empty(path: &Path) {
+pub fn remove_if_empty(path: &Path) {
     if std::fs::symlink_metadata(path).is_ok_and(|m| m.is_file() && m.len() == 0) {
         let _ = std::fs::remove_file(path);
     }

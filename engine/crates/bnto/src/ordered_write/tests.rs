@@ -328,3 +328,65 @@ fn test_a_write_through_a_link_onto_a_held_file_is_refused() {
     let error = check(&files, &paths, &[true, false]).unwrap_err();
     assert!(error.contains("one file on disk"), "{error}");
 }
+
+// --- a write that creates its file, then fails ---
+
+/// Creates the file, then fails: a disk filling up, or `ulimit -f 0`.
+fn create_then_fail(_: &FileData, path: &Path) -> Result<(), String> {
+    std::fs::File::create(path).map_err(|e| e.to_string())?;
+    Err(format!("Cannot write {}: File too large", path.display()))
+}
+
+/// Run every step of writing `files` to `paths` with `write` in place of
+/// `write_one`, stopping at the first error, then drop the run.
+fn run_with(
+    files: &[PipelineFileResult],
+    paths: &[PathBuf],
+    out: &Path,
+    write: fn(&FileData, &Path) -> Result<(), String>,
+) -> Result<(), String> {
+    let mut run = Run::new(writes(files, paths), out)?;
+    run.write = write;
+    let steps = order::order(&readers::waits(files, paths));
+    steps.into_iter().try_for_each(|step| run.step(step))
+}
+
+#[test]
+fn test_a_new_file_a_failed_write_created_is_removed() {
+    // RED (ISS-48 short review): after `release`, a write that created its
+    // file then failed (`ulimit -f 0` → File too large) left a 0-byte output
+    // under the recipe's name; before release existed, Drop removed it.
+    let (_dir, src) = folder(&[("a.txt", "AAAA")]);
+    let out = tempfile::tempdir().unwrap();
+    let paths = [out.path().join("sub").join("a-cleaned.txt")];
+    let error = run_with(&reading(&src), &paths, out.path(), create_then_fail).unwrap_err();
+    assert!(error.contains("File too large"), "{error}");
+    assert_eq!(names_in(out.path()), 0, "no empty file, no empty folder");
+}
+
+#[test]
+fn test_a_failed_write_onto_an_existing_file_leaves_it() {
+    // Guard: only a name missing at planning is cleaned up; an existing
+    // file, even an empty one, is the user's.
+    let (_dir, src) = folder(&[("a.txt", "AAAA")]);
+    let out = tempfile::tempdir().unwrap();
+    let existing = out.path().join("a.txt");
+    std::fs::write(&existing, "").unwrap();
+    let paths = [existing.clone()];
+    assert!(run_with(&reading(&src), &paths, out.path(), create_then_fail).is_err());
+    assert!(existing.exists());
+}
+
+#[test]
+fn test_a_failed_write_that_wrote_some_bytes_keeps_them() {
+    // Guard: never remove a file with content, even a partial one.
+    fn write_then_fail(_: &FileData, path: &Path) -> Result<(), String> {
+        std::fs::write(path, "PART").map_err(|e| e.to_string())?;
+        Err("Cannot write: disk full".to_string())
+    }
+    let (_dir, src) = folder(&[("a.txt", "AAAA")]);
+    let out = tempfile::tempdir().unwrap();
+    let paths = [out.path().join("new.txt")];
+    assert!(run_with(&reading(&src), &paths, out.path(), write_then_fail).is_err());
+    assert_eq!(read(out.path(), "new.txt"), "PART");
+}

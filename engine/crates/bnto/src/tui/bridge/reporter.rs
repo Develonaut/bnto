@@ -90,6 +90,23 @@ mod tests {
     }
 
     #[test]
+    fn a_new_run_forgets_what_earlier_runs_wrote_to_its_folder() {
+        // The TUI runs many recipes in one process. A refusal lists the files
+        // this run's iterations wrote; an earlier run's must not show up.
+        let temp = tempfile::tempdir().unwrap();
+        let earlier = temp.path().join("earlier.txt");
+        crate::ordered_write::note_progressive(&earlier);
+        let paths = [earlier];
+        assert_eq!(crate::ordered_write::already_written(&paths).len(), 1);
+
+        let (tx, _rx) = mpsc::channel();
+        let dir = temp.path().to_string_lossy().into_owned();
+        let _reporter = channel_reporter(&tx, Some(dir));
+
+        assert!(crate::ordered_write::already_written(&paths).is_empty());
+    }
+
+    #[test]
     fn previews_and_overwrites_copy_nothing_as_they_run() {
         assert_eq!(progressive_dir(true, "write", "/out"), None);
         assert_eq!(progressive_dir(false, "overwrite", "/src"), None);

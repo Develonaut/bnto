@@ -33,6 +33,8 @@ use order::Step;
 use staging::Staging;
 
 pub use gate::{GATE, WriteGate};
+#[cfg(test)]
+pub use progressive::already_written;
 pub use progressive::{forget_progressive, note_progressive};
 pub use staging::report_kept_staging;
 
@@ -142,6 +144,8 @@ struct Run<'a> {
     /// Writes that read a staged copy instead of their own source.
     staged: HashMap<usize, FileData>,
     claims: Claims,
+    /// How one file is written: `write_one`, or a failing stand-in in tests.
+    write: fn(&FileData, &Path) -> Result<(), String>,
 }
 
 impl<'a> Run<'a> {
@@ -155,6 +159,7 @@ impl<'a> Run<'a> {
             staging: Staging::new(output_dir),
             staged: HashMap::new(),
             claims: Claims::claim(writes.paths, &claims::missing(writes.paths))?,
+            write: write_one,
         })
     }
 
@@ -169,14 +174,22 @@ impl<'a> Run<'a> {
             }
             // A held file already holds the result's bytes: left as is.
             Step::Write(i) if self.held.get(i) == Some(&true) => Ok(()),
-            Step::Write(i) => {
-                // The claim already proved the name free; the copy creates
-                // the file itself, which lets it clone (APFS).
-                self.claims.release(i);
-                let data = self.staged.get(&i).unwrap_or(&self.files[i].data);
-                write_one(data, &self.paths[i])
-            }
+            Step::Write(i) => self.write(i),
         }
+    }
+
+    /// Write `i`. The claim already proved a new name free, so the copy
+    /// creates the file itself, which lets it clone (APFS). If it then fails
+    /// (disk full, file too large), the empty file it created is removed: the
+    /// name was missing at planning, so it's nobody's file.
+    fn write(&mut self, i: usize) -> Result<(), String> {
+        let new = self.claims.release(i);
+        let data = self.staged.get(&i).unwrap_or(&self.files[i].data);
+        let written = (self.write)(data, &self.paths[i]);
+        if written.is_err() && new {
+            claims::remove_if_empty(&self.paths[i]);
+        }
+        written
     }
 
     /// `error`, plus where the staged copies were kept, if there are any.
