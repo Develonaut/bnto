@@ -27,7 +27,7 @@ import { DEFINITION_JSON_SCHEMA } from "./generated/definitionSchema";
 
 // Import raw JSON to validate generated module matches it exactly
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-import catalog from "../../../engine/catalog.snapshot.json";
+import catalog from "../../../../engine/catalog.snapshot.json";
 
 // =============================================================================
 // Generated module matches raw JSON

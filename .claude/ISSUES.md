@@ -37,7 +37,6 @@
 | ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                                    | tooling     | Open                                             |
 | ISS-40 | `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled                                     | cli         | Open                                             |
 | ISS-41 | About two dozen engine tests point at `/nonexistent`                                                  | cli test    | Open                                             |
-| ISS-42 | Two `@bnto/nodes` tests import the catalog through a path that doesn't exist                          | tooling     | Open                                             |
 | ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
@@ -287,15 +286,6 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 
 - **Fix:** an empty temp dir, or a test helper that builds a catalog with no library.
 - **Regression test:** a grep check in `task check` for `"/nonexistent"` in `engine/`.
-
-### ISS-42: Two `@bnto/nodes` tests import the catalog through a path that doesn't exist
-
-**Found:** October 24, 2026 (fixing ISS-9).
-
-`packages/@bnto/nodes/src/catalogValidation.test.ts:30` and `nodeTypes.test.ts:9` import `../../../engine/catalog.snapshot.json`. From the file that's `packages/engine/catalog.snapshot.json`, which doesn't exist; Vite happens to resolve it to the repo root's `engine/`. A Vite upgrade could break both tests.
-
-- **Fix:** `../../../../engine/catalog.snapshot.json`, or an alias, and a Turbo input for it (ISS-9's fix hashes the root file).
-- **Regression test:** none beyond the tests themselves resolving the right file.
 
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 

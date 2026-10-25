@@ -6,7 +6,7 @@ import { getNodeTypeInfo } from "./getNodeTypeInfo";
 
 // Derive expected count from the engine catalog snapshot (source of truth)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-import catalog from "../../../engine/catalog.snapshot.json";
+import catalog from "../../../../engine/catalog.snapshot.json";
 const EXPECTED_NODE_TYPES = (catalog as { nodeTypes: unknown[] }).nodeTypes.length;
 
 describe("NODE_TYPES", () => {
