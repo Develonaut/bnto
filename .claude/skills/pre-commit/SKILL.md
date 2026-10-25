@@ -91,7 +91,7 @@ If any files in `apps/web/` were modified, run the Lighthouse CI audit locally:
 task seo:audit         # Build + run Lighthouse against all public routes — must pass
 ```
 
-This runs Lighthouse against 10 public URLs (homepage, 6 recipe pages, pricing, FAQ, privacy) and asserts:
+This runs Lighthouse against every public URL (homepage, pricing, FAQ, privacy and one page per recipe) and asserts:
 
 - **Performance:** ≥ 90 (warn level — report but don't block)
 - **Accessibility, Best Practices, SEO:** ≥ 90 (error level — must pass)

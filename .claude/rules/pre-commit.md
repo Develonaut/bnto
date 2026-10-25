@@ -27,7 +27,7 @@ If any check fails: fix the errors, re-run from the top.
 task seo:audit         # Build + run Lighthouse against all public routes -- must pass
 ```
 
-On a PR, this local audit is the only Lighthouse check: CI doesn't run Lighthouse on PRs. Error-level assertions (accessibility, best practices, SEO >= 90) must pass; performance warnings are advisory. If audits fail, run `/lighthouse-audit --local` to triage and fix. The release gate runs Lighthouse again against the tag's Vercel preview (the `lighthouse` job in `release.yml`), so a regression that skipped this step fails the release instead. `lighthouse.yml` runs only when started by hand (`workflow_dispatch`).
+On a PR, this local audit is the only Lighthouse check: CI doesn't run Lighthouse on PRs. Error-level assertions (accessibility, best practices, SEO >= 90) must pass; performance warnings are advisory. If audits fail, run `/lighthouse-audit --local` to triage and fix. The release gate runs Lighthouse again against the tag's Vercel preview (the `lighthouse` job in `release.yml`), so a regression that skipped this step fails the release instead. `lighthouse.yml` runs only when started by hand (`workflow_dispatch`). The audit serves the build on a free port the OS picks, not Next's default 3000, so audits in several worktrees can run at once.
 
 ## Step 2: Architecture & Bento Box Compliance
 

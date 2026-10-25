@@ -41,6 +41,8 @@ jobs:
               # The TypeScript job's task graph and package list.
               - 'turbo.json'
               - 'pnpm-workspace.yaml'
+              # Tested by the TypeScript job's "Lighthouse config" step.
+              - 'scripts/generate-lighthouserc*.ts'
 
   # ── Rust CI (only when engine files changed) ──
   rust:
@@ -290,6 +292,9 @@ jobs:
 
       - name: "Check: Turbo lint inputs (scripts/turbo/checkLintInputs.ts)"
         run: pnpm exec tsx --test scripts/turbo/missingLintInputs.test.ts && pnpm exec tsx scripts/turbo/checkLintInputs.ts
+
+      - name: "Check: Lighthouse config (scripts/generate-lighthouserc.test.ts)"
+        run: pnpm exec tsx --test scripts/generate-lighthouserc.test.ts
 
       - name: Lint
         run: pnpm turbo run lint
