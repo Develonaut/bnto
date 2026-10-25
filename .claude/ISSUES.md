@@ -315,6 +315,8 @@ A per-file node inside a loop gets `{{item.*}}` from the file's current metadata
 
 The ISS-52 fix refuses a `file-copy` over a file another file of its batch is read from. Inside an explicit `loop`, each iteration hands the node one file, so it never sees the others. `F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, and a loop holding `file-rename` (`a` → `b`) and `file-copy` into `F` with `conflict: overwrite`, run on both files, still leaves `b.txt` = `AAAA`. The same recipe without the loop, flat or with `settings.iteration: "auto"`, is refused. `main` behaved the same before the fix, so this isn't a regression.
 
+**The same loss happens without a loop** (reproduced October 25, 2026 on `12617b3f`). A graph level holds files for branches that run later (`executor/routed.rs`). With edges `input → file-filter (a.txt) → file-rename → file-copy` and `input → output`, the copy replaces `F/b.txt`, and the output writes `b.txt` = `AAAA`. A finished iteration's file is exposed too, not only later ones: the loop given `b`, then `a` also leaves `AAAA`. Design options: [iss-59-options.md](decisions/iss-59-options.md).
+
 - **Fix:** give the node the run's other inputs to check against: the loop's whole batch, or every `Path` the run holds. That needs a way for the executor to pass more than the iteration's files to a node (a `ProcessContext` method, say). Or refuse an `overwrite`/`newer` copy over any file the run read as an input.
 - **Regression test:** the repro above inside a `loop` keeps `BBBB` (or is refused before anything is copied).
 
