@@ -114,7 +114,7 @@ The `useReady()` guard is essential: `ConvexProvider` mounts after hydration via
 
 ### Abstraction boundary
 
-`packages/core/src/adapters/convex/paginated-query.ts` re-exports `usePaginatedQuery` from `convex/react`. If the backend ever changes, this one file gets rewritten. Consumers (hooks) never import from `convex/react` directly.
+Convex adapters in `packages/core/src/adapters/convex/` hold the function refs: `getExecutionHistoryRef()` in `executionAdapter.ts` returns the paginated history query's ref and args. No paginated hook ships yet, so nothing re-exports `usePaginatedQuery`; the first one adds that re-export under `adapters/convex/`. If the backend ever changes, only the adapters get rewritten. Consumers (hooks) never import from `convex/react` directly.
 
 ---
 

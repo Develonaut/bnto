@@ -225,4 +225,4 @@ export function usePaginatedHook(id: string, options?: { pageSize?: number }) {
 - [ ] Always guard: `ready && condition ? args : "skip"`
 - [ ] Include `!ready` in `isLoading` so consumers see loading state before provider mounts
 - [ ] Transform via `useMemo` -- `usePaginatedQuery` returns raw Convex docs
-- [ ] Adapter file (`adapters/convex/paginated-query.ts`) is the abstraction boundary -- hooks never import `convex/react` directly
+- [ ] The function ref and args come from a Convex adapter (`getExecutionHistoryRef()` in `adapters/convex/executionAdapter.ts`), and a service adds the `transform` (`historyService`). No adapter re-exports `usePaginatedQuery` yet: the first paginated hook adds one under `adapters/convex/`, so hooks never import `convex/react` directly

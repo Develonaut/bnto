@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-80**.
+- **IDs never get reused.** The next one is **ISS-81**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -41,7 +41,6 @@
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
 | ISS-59 | **Inside a loop, `file-copy` can still replace an input another iteration reads**                     | engine      | Open                                             |
 | ISS-60 | A batch node can't see the run's time limit and keeps starting work past it                           | engine      | Open                                             |
-| ISS-61 | Two docs name hook and function files in kebab-case; the code uses camelCase                          | docs        | Open                                             |
 | ISS-62 | Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60     | docs        | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
@@ -58,6 +57,7 @@
 | ISS-77 | The TUI asks to allow a shell recipe's commands for a run it then refuses                             | tui         | Open                                             |
 | ISS-78 | The TUI never fills `{{vars.*}}`: a step gets the text as written                                     | tui         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
+| ISS-80 | The paginated hook sample runs `transform` on a whole page; the real transform maps one doc           | docs        | Open                                             |
 
 ---
 
@@ -327,15 +327,6 @@ The executor checks the run's `timeout` before each step, loop iteration and per
 - **Fix:** let a node ask whether the run's time is up (a `ProcessContext` method the executor provides, defaulting to "no"), and have `file-copy`, `file-move` and `file-delete` check it before each file, failing with the run's timeout and handing over what they finished.
 - **Regression test:** a `file-copy` batch whose run passes its limit after the first file copies no more files and fails with the timeout.
 
-### ISS-61: Two docs name hook and function files in kebab-case; the code uses camelCase
-
-**Found:** October 25, 2026 (fixing ISS-19).
-
-[code-standards.md](rules/code-standards.md)'s "One Export Per File" table gives `use-run-workflow.ts` and `validate-workflow.ts` as file names, and `.claude/skills/pickup/SKILL.md:303` says hooks are `use-kebab-case.ts` and pure functions `kebab-case.ts`. The same rules file's naming table says camelCase (`useRunWorkflow.ts`, `formatDuration.ts`), and so does the code: `git ls-files 'packages/**/use-*.ts' 'apps/**/use-*.ts'` finds no files, against 89 `use[A-Z]*.ts`.
-
-- **Fix:** change both docs to camelCase names.
-- **Regression test:** none; a docs fix.
-
 ### ISS-62: Three docs let a component keep 80-100 lines of logic inline; ESLint caps a `.tsx` function at 60
 
 **Found:** October 25, 2026 (cold review of the ISS-19 fix).
@@ -493,3 +484,12 @@ The ISS-22 fix refuses every `{{…}}` in the output node's `directory` that no 
 
 - **Fix:** refuse an unclosed `{{` in the folder in `fill_output_directory`, and have `bnto check` run its placeholder-form check on the output node's `directory`.
 - **Regression test:** `out-{{ctx.date` is refused by `bnto run` with no folder made, and `bnto check` flags it.
+
+### ISS-80: The paginated hook sample runs `transform` on a whole page; the real transform maps one doc
+
+**Found:** October 25, 2026 (cold review of the ISS-61 fix).
+
+The `usePaginatedHook` sample in [core-api.md](scopes/backend/core-api.md) ("Convex Native Pagination") and [data-fetching-strategy.md](strategy/data-fetching-strategy.md) ("Paginated hooks") gets `{ funcRef, args, transform }` from the client and runs `transform(results)` on the whole page array. The one real ref method, `core.executions.historyRefMethod()` (`packages/core/src/clients/executionClient.ts:94`, via `historyService.serverRef()`), returns `toExecutionFromEvent` as its `transform`, which maps a single doc (`packages/core/src/transforms/executionEvent.ts:8`, `(doc: RawExecutionEventDoc): Execution`). The first paginated hook written from the sample won't type-check.
+
+- **Fix:** make the two agree: the sample maps each result (`results.map(transform)`), or `serverRef()` returns an array transform. Name `historyRefMethod()` in the sample instead of the placeholder `core.domain.refMethod`.
+- **Regression test:** none; a docs fix (or, if the service changes, a unit test that `serverRef().transform` maps a page).
