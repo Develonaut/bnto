@@ -32,7 +32,7 @@ test.describe("PostHog telemetry @browser", () => {
     expect(pageviews.length).toBeGreaterThanOrEqual(1);
 
     // An absolute URL, as PostHog sets on every other event. A bare path here
-    // replaced PostHog's own value and broke URL filters (ISS-26).
+    // replaced PostHog's own value and broke URL filters.
     const origin = new URL(page.url()).origin;
     expect(pageviews[0].properties?.$current_url).toBe(`${origin}/`);
   });
