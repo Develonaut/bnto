@@ -1,5 +1,7 @@
-// Names the files a stopped move left under a temporary name.
+// Names, as the process ends, what a stopped run kept on disk.
 //
+// Two things can hold the only copy of a file: an output write's staged swap
+// copies (`ordered_write::report_kept_staging`), and a file a move parked.
 // `bnto_file::relocate` (overwrite-mode output, `file-move`) breaks a swap
 // by parking one file (or a folder `file-move` moves) under a
 // `.bnto-rename-*` name until its final rename. Ctrl+C in `bnto run`
@@ -10,13 +12,18 @@
 
 use std::path::PathBuf;
 
-/// Print a warning for each file a move parked and hadn't renamed by the
-/// time the process ends. Called next to `report_kept_staging`: by the
-/// Ctrl+C handler before `process::exit`, and by the TUI once the terminal
-/// is restored. Moves aren't stopped first: one may still finish its final
-/// rename after this runs (a stale line at worst), but none can park a file
-/// after it (`take_parked` refuses every later park).
-pub fn report_parked_files() {
+/// Print a warning for each kept staging folder, then for each file a move
+/// parked and hadn't renamed. Called by the Ctrl+C handler before
+/// `process::exit`, and by the TUI once the terminal is restored.
+pub fn report_kept_on_exit() {
+    crate::ordered_write::report_kept_staging();
+    report_parked_files();
+}
+
+/// Moves aren't stopped first: one may still finish its final rename after
+/// this runs (a stale line at worst), but none can park a file after it
+/// (`take_parked` refuses every later park).
+fn report_parked_files() {
     use colored::Colorize;
 
     for line in parked_lines(&bnto_file::relocate::take_parked()) {

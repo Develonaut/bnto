@@ -29,6 +29,7 @@ mod dispatch;
 mod doctor;
 pub mod dry_run;
 mod dry_run_hint;
+mod exit_report;
 mod field_owner;
 mod host_support;
 mod info;
@@ -49,7 +50,6 @@ mod ordered_write;
 mod output_names;
 mod overwrite;
 mod package_manager;
-mod parked_report;
 mod process_registry;
 mod progress;
 mod progress_indent;
@@ -129,8 +129,7 @@ fn install_signal_handler() {
         process_registry::global().terminate_all();
         ordered_write::GATE.stop_and_wait(|| eprintln!("\n  Finishing the current file..."));
         scratch::remove_live_dirs();
-        ordered_write::report_kept_staging();
-        parked_report::report_parked_files();
+        exit_report::report_kept_on_exit();
         process::exit(130);
     });
 }

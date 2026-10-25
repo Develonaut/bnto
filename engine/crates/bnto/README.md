@@ -220,7 +220,7 @@ src/
 +-- io.rs                  # File I/O (read inputs, write pipeline results)
 +-- output_names.rs        # Keeps result names apart in the output folder (case ignored)
 +-- ordered_write/         # Orders the final write so no copy replaces an input still to be read
-+-- parked_report.rs       # Names files a stopped move left under a `.bnto-rename-*` name
++-- exit_report.rs         # At the end of a stopped run, names kept staging folders and parked files
 +-- recipe_output_dir.rs   # A recipe's own output folder, templates resolved (run + TUI)
 +-- list.rs                # `bnto list` command (grouped recipe listing)
 +-- progress.rs            # Stderr progress reporter (pipeline events -> lines)
