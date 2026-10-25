@@ -53,7 +53,6 @@
 | ISS-69 | E2E specs are never type-checked or linted                                                            | web test    | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
 | ISS-71 | Two `task seo:audit` runs at once collide on port 3000                                                | tooling     | Open                                             |
-| ISS-72 | Two editor E2E journeys fail: the exported Resize step has `enlarge: true`                            | web test    | Open                                             |
 | ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
@@ -451,15 +450,6 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 - **Fix:** the URLs can already move: the generator takes `--base-url` (line 24). What's fixed is `startServerCommand` (line 60, Next's default port) and the `seo:audit` task, which passes no `--base-url` (`Taskfile.yml:246`). Take a port from an env var (as `E2E_PORT` does) and use it for both `--base-url` and `next start --port`.
 - **Regression test:** two `task seo:audit` runs with different ports at the same time both pass.
-
-### ISS-72: Two editor E2E journeys fail: the exported Resize step has `enlarge: true`
-
-**Found:** October 25, 2026 (full `task e2e` while fixing ISS-25).
-
-- **What fails:** `editor-custom-recipes.spec.ts` CR1 ("web-ready image pipeline") and CR4 ("thumbnail generator") fail at `assertDefinitionMatchesFixture` (`apps/web/e2e/helpers/definitions.ts:112`): `Expected: false, Received: true`. They fail the same with main's WASM, so the engine isn't involved.
-- **Why:** each journey builds a Resize step in the editor and compares the exported definition's params with a bundled recipe (`DEFINITIONS_DIR` is `engine/crates/bnto-engine/recipes`). #749 set `"enlarge": false` in `optimize-images-for-web.bnto.json:58` and `generate-thumbnails.bnto.json:58`, but the journeys never set it, so the editor exports the node's default, `true`. `task check` and CI run no E2E, and the release gate runs only the `browser` project (`release.yml:339`), so nothing has run these since #749.
-- **Fix:** have both journeys turn off "enlarge" on the Resize step, as the recipes they mirror do.
-- **Regression test:** CR1 and CR4 themselves, passing again.
 
 ### ISS-73: The web runner starts a run with a required param left empty
 
