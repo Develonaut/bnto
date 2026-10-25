@@ -39,10 +39,11 @@ impl std::fmt::Display for RunTimeParam {
     }
 }
 
-/// What `validate` refuses in a node once its left-out params are sorted.
+/// What the run refuses in a node (`refusals`) once its left-out params are
+/// sorted.
 #[derive(Default)]
 pub(super) struct LeftOut {
-    /// What `validate` still refuses with every givable param given.
+    /// What the run still refuses with every givable param given.
     pub problems: Vec<String>,
     /// Needed params `-p` can give.
     pub givable: Vec<String>,
