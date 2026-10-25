@@ -148,7 +148,7 @@ New core functionality is exposed via its domain namespace on the `core` singlet
 | **Transform outside `select`**              | Every `.map()`, `toFoo()`, or spread on query data MUST be inside `select`. The hook body runs every render — referentially unstable transforms cause infinite re-render loops |
 | **Service calling service**                 | Services are single-domain. Cross-domain logic lives in clients. If a service needs another domain's data, it's doing too much                                                 |
 | **Direct Convex import in app code**        | `apps/web` never imports from `@bnto/backend` or `@bnto/auth`. Only `@bnto/core` internals (adapters) do                                                                       |
-| **`usePaginatedQuery` without ready guard** | Always: `ready && condition ? args : "skip"`. Include `!ready` in `isLoading`                                                                                                  |
+| **`usePaginatedQuery` without ready guard** | Always: `ready ? args : "skip"`, or `ready && id ? args : "skip"` for a hook that takes an ID. Include `!ready` in `isLoading`                                                 |
 | **Zustand whole-store selector**            | `useStore(s => s.field)`, never `useStore()`. Selecting the whole store causes re-render on every change                                                                       |
 | **Leaking adapter types**                   | Public API types live in `types/`. Adapter-specific types (Convex `Doc<"workflows">`) stay inside adapters. Transforms convert at the boundary                                 |
 

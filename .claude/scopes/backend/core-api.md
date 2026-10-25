@@ -206,23 +206,24 @@ Paginated lists use Convex's native `usePaginatedQuery` for real-time per-page s
 **All paginated hooks MUST guard on `useReady()`** -- the `ConvexProvider` mounts after hydration. Without the guard, `usePaginatedQuery` crashes on the first render.
 
 ```typescript
-export function usePaginatedHook(id: string, options?: { pageSize?: number }) {
+export function useExecutionHistory(options?: { pageSize?: number }) {
   const ready = core.auth.useReady();
   const { pageSize = 24 } = options ?? {};
-  const { funcRef, args, transform } = core.domain.refMethod(id);
+  const { funcRef, args, transform } = core.executions.historyRefMethod();
   const { results, status, loadMore } = usePaginatedQuery(
     funcRef,
-    ready && id ? args : "skip", // skip until provider + valid ID
+    ready ? args : "skip", // skip until the provider mounts
     { initialNumItems: pageSize },
   );
-  const items = useMemo(() => transform(results), [results, transform]);
+  // `transform` maps one doc (`toExecutionFromEvent`), so map it over the page
+  const items = useMemo(() => results.map(transform), [results, transform]);
   return { items, isLoading: !ready || status === "LoadingFirstPage", status, loadMore };
 }
 ```
 
 **Rules:**
 
-- [ ] Always guard: `ready && condition ? args : "skip"`
+- [ ] Always guard: `ready ? args : "skip"`, adding any ID the hook takes (`ready && id ? args : "skip"`)
 - [ ] Include `!ready` in `isLoading` so consumers see loading state before provider mounts
-- [ ] Transform via `useMemo` -- `usePaginatedQuery` returns raw Convex docs
+- [ ] Map each result inside `useMemo` (`results.map(transform)`) -- `usePaginatedQuery` returns raw Convex docs, and a ref's `transform` maps one doc
 - [ ] The function ref and args come from a Convex adapter (`getExecutionHistoryRef()` in `adapters/convex/executionAdapter.ts`), and a service adds the `transform` (`historyService`). No adapter re-exports `usePaginatedQuery` yet: the first paginated hook adds one under `adapters/convex/`, so hooks never import `convex/react` directly

@@ -9,18 +9,18 @@ A page file is a blueprint. When you open it, you should immediately see every s
 ```tsx
 // GOOD -- every piece visible, reads like a table of contents
 <PageLayout>
-  <PageLayout.Header>
+  <PageLayoutHeader>
     <WorkflowTitle workflowId={workflowId} />
     <WorkflowActions workflowId={workflowId} />
-  </PageLayout.Header>
-  <PageLayout.Content>
+  </PageLayoutHeader>
+  <PageLayoutContent>
     <WorkflowEditor workflowId={workflowId} />
     <ExecutionHistory workflowId={workflowId} />
-  </PageLayout.Content>
-  <PageLayout.Sidebar>
+  </PageLayoutContent>
+  <PageLayoutSidebar>
     <WorkflowMeta workflowId={workflowId} />
     <NodePalette />
-  </PageLayout.Sidebar>
+  </PageLayoutSidebar>
 </PageLayout>
 
 // BAD -- opaque, have to open WorkflowPage to understand anything
@@ -47,7 +47,7 @@ Don't group domain components under a namespace (`WorkflowSidebar.Details`, `Wor
 
 Layout structure is generic. Domain content is specific. Separate them cleanly.
 
-**Generic shell components** (`PageLayout.Header`, `PageLayout.Content`, `PageLayout.Sidebar`) handle consistent layout, spacing, and structure across all content types. They live in shared `components/`.
+**Generic shell components** (`PageLayoutHeader`, `PageLayoutContent`, `PageLayoutSidebar`, flat named exports per [components.md](components.md#compound-composition--flat-named-exports)) handle consistent layout, spacing, and structure across all content types. They live in shared `components/`.
 
 **Domain leaf components** (`WorkflowTitle`, `ExecutionStatus`) handle domain-specific rendering. They live in the route's `_components/` folder.
 
@@ -92,19 +92,19 @@ Header elements, back links, navigation controls -- extract into named leaf comp
 
 ```tsx
 // GOOD -- each piece has a name
-<PageLayout.Header>
+<PageLayoutHeader>
   <BackToDashboardLink />
   <WorkflowNavigation workflowId={workflowId} />
-</PageLayout.Header>
+</PageLayoutHeader>
 
 // BAD -- raw JSX obscures the structure
-<PageLayout.Header>
+<PageLayoutHeader>
   <Link href="/dashboard" className="inline-flex items-center gap-1.5 ...">
     <ArrowLeft className="size-4" />
     Back to dashboard
   </Link>
   ...
-</PageLayout.Header>
+</PageLayoutHeader>
 ```
 
 ### 7. Server components by default — push `"use client"` to leaves
