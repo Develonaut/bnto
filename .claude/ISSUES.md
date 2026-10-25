@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-69**.
+- **IDs never get reused.** The next one is **ISS-72**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -21,7 +21,6 @@
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
-| ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
 | ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
@@ -52,6 +51,9 @@
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 | ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 | ISS-68 | `FormStoreContext.tsx` exports four hooks and a provider from one `.tsx` file                         | form        | Open                                             |
+| ISS-69 | E2E specs are never type-checked or linted                                                            | web test    | Open                                             |
+| ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
+| ISS-71 | Two `task seo:audit` runs at once collide on port 3000                                                | tooling     | Open                                             |
 
 ---
 
@@ -117,15 +119,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - **Why:** the bundled recipe defaults `"overlay": ""` (`engine/crates/bnto-engine/recipes/watermark-images.bnto.json:64`). `check_overlay` (`engine/crates/bnto-image/src/overlay/validate.rs:22-27`) only rejects a _missing_ `overlay`, so an empty string passes and fails later at decode (`overlay/processor.rs:116-121`), even though the param is `required`.
 - **Fix:** validation refuses an empty `overlay`, naming the param. The web runner then shouldn't start the run until an overlay is chosen.
 - **Regression test:** every test today supplies an overlay (the E2E spec uploads one at `apps/web/e2e/journeys/browser/watermark-images.spec.ts:24`, the golden fixtures embed one), so nothing ran the recipe as shipped. Test the class, not just this recipe: for every bundled recipe, a `required` param left at its shipped default is refused before the run, naming the param.
-
-### ISS-28: `result_downloaded` is never sent for the automatic download
-
-**Found:** October 24, 2026 (PostHog review).
-
-- **What PostHog shows:** no `result_downloaded` events in 180 days, so PostHog doesn't know the event exists.
-- **Why:** it's captured only by the manual "Download all" action (`apps/web/app/(app)/[bnto]/_stores/recipeStepperActions.ts:99`). A successful run downloads its results automatically (`:133-137`, `downloadAllResults`) without capturing it.
-- **Why the test missed it:** the E2E check (`apps/web/e2e/telemetry/recipe-events.spec.ts:74-90`) asserts only when the button is visible.
-- **Regression test:** assert `result_downloaded` on the automatic-download path, with no visibility condition.
 
 ### ISS-29: Errors on bnto.io go unseen: exception capture is off
 
@@ -428,3 +421,39 @@ On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` 
 
 - **Fix:** keep the context and `FormStoreProvider` in the `.tsx` file and move each hook to its own `.ts` file (`useFormValue.ts`, `useFormValues.ts`, `useFormFiles.ts`, `useFormOnChange.ts`), updating the three importers.
 - **Regression test:** a test per hook that pins what it reads from the provider; lint passing on the moved files.
+
+### ISS-69: E2E specs are never type-checked or linted
+
+**Found:** October 25, 2026 (fixing ISS-28, the automatic download's telemetry).
+
+`apps/web/eslint.config.mjs` ignores `e2e/**`, and the only type-check, `next build` (`task check`, the pre-commit `typecheck` hook), passes while `pnpm exec tsc --noEmit -p apps/web` reports an error in a spec:
+
+```
+e2e/pages/homepage-loading.spec.ts(24,14): error TS2353: Object literal may only specify known properties, and 'reducedMotion' does not exist in type 'Fixtures<…>'.
+```
+
+`reducedMotion` isn't a `test.use` option, so that line does nothing. Motion is reduced anyway, by `use.contextOptions.reducedMotion` in `apps/web/playwright.config.ts`. But [pre-commit.md](rules/pre-commit.md) tells every spec to "Always set `test.use({ reducedMotion: "reduce" })`", which is the line that fails to type-check (and only that one spec does it).
+
+- **Fix:** type-check the specs (a `tsc --noEmit` step over `apps/web/e2e` in `task check`, the hook and CI), and lint them. Drop the `test.use` line and the pre-commit.md instruction, since the config already reduces motion.
+- **Regression test:** a type error in an E2E spec fails `task check`.
+
+### ISS-70: Recipe pages record no download a user clicks for
+
+**Found:** October 25, 2026 (fixing ISS-28, the automatic download's telemetry).
+
+On a recipe page, `result_downloaded` is sent only for the automatic download after a run (`trigger: "auto"`):
+
+- **Per-file downloads send nothing.** The result list's download button calls `actions.downloadResult` (`apps/web/app/(app)/[bnto]/_components/RecipeStepper/RecipeStepperResultList/RecipeStepperResultListRoot.tsx:40`), which only downloads (`_stores/recipeStepperActions.ts`, `downloadResult`).
+- **The `downloadAll` action has no caller.** No component calls it, so its `trigger: "manual"` event can't fire. The `download-all-button` test ID is the editor's (`packages/editor/src/components/RunPanel/RunHeader.tsx:104`), and the `execution.downloadAll` string ("Download all") in `@bnto/i18n` isn't used on the recipe page.
+- **Not covered here:** the editor (`packages/editor`) makes no telemetry calls at all, so its automatic download (`actions/runExecution.ts:124`) and its "Download all" button (`components/RunPanel/useRunHandlers.ts:35`) send no `result_downloaded` either. The editor is frozen, so whether it should is a separate decision.
+- **Fix:** record per-file downloads (a `trigger` of their own, e.g. `"file"`), and either give the recipe page a "Download all" button or delete the unused action.
+- **Regression test:** a unit test that `downloadResult` sends `result_downloaded`, and a check that every action in `RecipeStepperActions` has a caller.
+
+### ISS-71: Two `task seo:audit` runs at once collide on port 3000
+
+**Found:** October 25, 2026 (running `task seo:audit` for ISS-28 while another worktree's agent ran it).
+
+`scripts/generate-lighthouserc.ts:24,60` points every audit at `http://localhost:3000` and starts the server with `pnpm --filter @bnto/web start`, Next's default port. Two checkouts auditing at once share that port: one run's Lighthouse loads the other checkout's server, or a server that is shutting down. On October 25 the ISS-28 run failed at `/pricing` with `CHROME_INTERSTITIAL_ERROR` ("Chrome prevented page load with an interstitial") while port 3000 belonged to `next-server` in another worktree. The E2E runs already avoid this with `E2E_PORT` (`apps/web/playwright.config.ts`).
+
+- **Fix:** the URLs can already move: the generator takes `--base-url` (line 24). What's fixed is `startServerCommand` (line 60, Next's default port) and the `seo:audit` task, which passes no `--base-url` (`Taskfile.yml:246`). Take a port from an env var (as `E2E_PORT` does) and use it for both `--base-url` and `next start --port`.
+- **Regression test:** two `task seo:audit` runs with different ports at the same time both pass.
