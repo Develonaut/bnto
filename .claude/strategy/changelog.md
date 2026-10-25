@@ -174,8 +174,9 @@ The page is a statically generated server component. `readChangelog()` reads `..
 - `scripts/generate-lighthouserc.ts`
 - `scripts/seo/collectUrls.ts`
 - `scripts/seo/collectUrls.test.ts`: asserts `https://bnto.io/changelog`, beside the existing page asserts (l.13-16)
-- `.github/workflows/ci.yml`: a "Check: SEO URL list" step after the Turbo lint inputs step (l.285-286) in the TypeScript job, running `pnpm exec tsx --test scripts/seo/collectUrls.test.ts` the same way. Nothing runs `scripts/seo` tests today
+- `.github/workflows/ci.yml`: a "Check: SEO URL list" step after the Turbo lint inputs step (l.285-286) in the TypeScript job, running `pnpm exec tsx --test scripts/seo/collectUrls.test.ts scripts/seo/indexNowOutcome.test.ts` the same way. Nothing runs `scripts/seo` tests today (ISS-54)
 - `Taskfile.yml`: the same command in PR 1's `check:scripts`
+- `.claude/ISSUES.md`: ISS-54's row and section deleted, since this step fixes it
 - `apps/web/turbo.json`: `$TURBO_ROOT$/engine/crates/bnto/CHANGELOG.md` in both the `build` and `test` inputs, beside `$TURBO_ROOT$/engine/Cargo.toml`. The page, the feed and the live-file test read it from outside `apps/web`, and Turbo hashes only a package's own files (gotchas.md, "Turbo Hashes Only a Package's Own Files"). Without it, a changelog-only edit would replay a cached build
 - `apps/web/components/blocks/Footer/FooterLinks.tsx`
 - `apps/web/e2e/pages/site-navigation.spec.ts`: `/changelog` in `PUBLIC_ROUTES` (l.12-24), and the footer link (`footer-link-changelog`, from `FooterSectionColumn.tsx:36`)
@@ -222,7 +223,7 @@ export function buildAtomFeed(releases: ChangelogRelease[], siteUrl: string): st
 
 ```bash
 (cd apps/web && pnpm exec vitest run lib/changelog)
-pnpm exec tsx --test scripts/seo/collectUrls.test.ts
+pnpm exec tsx --test scripts/seo/collectUrls.test.ts scripts/seo/indexNowOutcome.test.ts
 pnpm turbo run build --filter=@bnto/web | grep changelog   # /changelog and /changelog.xml both listed as static (○)
 (cd apps/web && pnpm exec playwright test e2e/pages/changelog.spec.ts e2e/pages/site-navigation.spec.ts)
 task e2e && task seo:audit && task check
