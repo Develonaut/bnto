@@ -25,11 +25,11 @@ Like a traditional Japanese bento box where each compartment serves a specific p
 
 **Every exported component, hook, or utility function gets its own file.** No exceptions for "they're related" or "they're small."
 
-| Type           | Rule                            | File naming            |
-| -------------- | ------------------------------- | ---------------------- |
-| **Components** | One exported component per file | `WorkflowCard.tsx`     |
-| **Hooks**      | One exported hook per file      | `use-run-workflow.ts`  |
-| **Functions**  | One exported function per file  | `validate-workflow.ts` |
+| Type           | Rule                            | File naming           |
+| -------------- | ------------------------------- | --------------------- |
+| **Components** | One exported component per file | `WorkflowCard.tsx`    |
+| **Hooks**      | One exported hook per file      | `useRunWorkflow.ts`   |
+| **Functions**  | One exported function per file  | `validateWorkflow.ts` |
 
 **The only exception:** Compound primitives that mirror a single HTML element's anatomy (shadcn's `Card` + `CardHeader` + `CardContent`) can share a file in `primitives/`. These MUST be exported as flat named exports with prefixed names (e.g., `CardHeader`, not `Card.Header`).
 
