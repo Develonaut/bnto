@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-67**.
+- **IDs never get reused.** The next one is **ISS-68**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -51,6 +51,7 @@
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
+| ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
 
 ---
 
@@ -418,3 +419,12 @@ On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` 
 
 - **Fix:** stop at the last recipe in `CursorDown`, the way the Library pane bounds its cursor (it wraps with `%`; pick one behaviour for both panes), and correct the comment.
 - **Regression test:** a `home.rs` unit test pressing Down more times than there are recipes keeps the cursor on the last one, and a render check that the marker stays on screen.
+
+### ISS-67: `update_notice.rs` opens its ptys in parallel with no lock
+
+**Found:** October 25, 2026 (cold review of the ISS-32 fix).
+
+`engine/crates/bnto/tests/update_notice.rs:47` calls `native_pty_system().openpty(size)` from `run_in_terminal`, and its four pty tests run in parallel in one process. The ISS-32 fix found that on macOS some of many concurrent launches in one process fail with `failed to openpty: Unknown error: -6` (5 of 160 launches in a probe of 3 processes × 12 threads, 0 of 288 with launches taken in turn, likely `ptsname`'s shared buffer). The TUI journey harness now opens one pty at a time (`OPEN_PTY` in `tests/tui/harness.rs`); this file doesn't. Not yet seen failing in a real run.
+
+- **Fix:** take the same lock around `openpty` and the spawn in `run_in_terminal`, or share the harness's launch.
+- **Regression test:** run the file's tests with `--test-threads=16` beside a parallel build several times without a failure.
