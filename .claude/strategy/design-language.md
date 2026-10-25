@@ -86,7 +86,7 @@ Inspired by Mini Motorways — buildings popping up, roads drawing themselves, n
 
 **CSS-first.** 95% of animations use CSS keyframes + custom properties. `motion/react` reserved for exit animations (`AnimatePresence`), layout animations, and gesture interactions.
 
-For implementation details, tokens, and the `Animate.*` component API: see [animation.md](../scopes/web/animation.md).
+For implementation details, tokens, and the animation component API (`ScaleIn`, `SlideUp`, `FadeIn`, …): see [animation.md](../scopes/web/animation.md).
 
 ---
 
@@ -150,7 +150,7 @@ This is the "traffic flowing through the map" moment. Nodes pop up in sequence a
 
 ### Edit ↔ Run Mode Transition
 
-When the editor enters run mode (Sprint 6), the canvas grid fades and panels slide out. The transition should feel like pressing "Play" in Mini Motorways — the editing scaffolding disappears and the simulation begins. Grid fade: CSS `opacity` transition (~300ms ease-out). Panel slide-out: `Animate.FadeIn` reversed or `AnimatePresence` exit.
+When the editor enters run mode (Sprint 6), the canvas grid fades and panels slide out. The transition should feel like pressing "Play" in Mini Motorways — the editing scaffolding disappears and the simulation begins. Grid fade: CSS `opacity` transition (~300ms ease-out). Panel slide-out: `FadeIn` reversed or `AnimatePresence` exit.
 
 ### Node Deletion
 

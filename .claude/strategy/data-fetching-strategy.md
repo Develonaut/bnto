@@ -96,16 +96,17 @@ export function useWorkflowById(workflowId: string) {
 ### Paginated hooks (Convex native)
 
 ```typescript
-export function usePaginatedHook(id: string, options?: { pageSize?: number }) {
+export function useExecutionHistory(options?: { pageSize?: number }) {
   const ready = core.auth.useReady();
   const { pageSize = 24 } = options ?? {};
-  const { funcRef, args, transform } = core.domain.refMethod(id);
+  const { funcRef, args, transform } = core.executions.historyRefMethod();
   const { results, status, loadMore } = usePaginatedQuery(
     funcRef,
-    ready && id ? args : "skip", // skip until provider + valid ID
+    ready ? args : "skip", // skip until the provider mounts
     { initialNumItems: pageSize },
   );
-  const items = useMemo(() => transform(results), [results, transform]);
+  // `transform` maps one doc (`toExecutionFromEvent`), so map it over the page
+  const items = useMemo(() => results.map(transform), [results, transform]);
   return { items, isLoading: !ready || status === "LoadingFirstPage", status, loadMore };
 }
 ```

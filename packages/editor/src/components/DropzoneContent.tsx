@@ -4,7 +4,7 @@ import { UploadIcon } from "@bnto/ui";
  * Presentational content for the file dropzone.
  *
  * Renders the upload icon, "Drag & drop" prompt, and accepted-types label.
- * Used inside `<FileUpload.Dropzone>` by the editor's InputRenderer.
+ * Used inside `<FileUploadDropzone>` by the editor's InputRenderer.
  */
 export function DropzoneContent({ label }: { label: string }) {
   return (
@@ -13,9 +13,7 @@ export function DropzoneContent({ label }: { label: string }) {
         <UploadIcon className="size-6" />
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium text-foreground">
-          Drag & drop files here
-        </p>
+        <p className="text-sm font-medium text-foreground">Drag & drop files here</p>
         <p className="mt-1 text-xs text-muted-foreground">
           or click to browse &middot; accepts {label}
         </p>

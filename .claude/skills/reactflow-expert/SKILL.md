@@ -352,7 +352,7 @@ Each `@bnto/nodes` node type maps to a visual compartment variant (color, icon, 
 
 The ReactFlow expert owns the graph interaction layer. The Frontend Engineer owns the component architecture, theming, and animation system. They collaborate on:
 
-- **Wave 3 (Visual skin):** Frontend Engineer handles component composition (RecipeEditor, EditorToolbar, NodeConfigPanel, NodePalette), theming (Motorway design tokens), and animation (Animate.\* API). ReactFlow Expert handles canvas interaction, connection validation, drag-and-drop, and the Definition ↔ Flow adapter bridge.
+- **Wave 3 (Visual skin):** Frontend Engineer handles component composition (RecipeEditor, EditorToolbar, NodeConfigPanel, NodePalette), theming (Motorway design tokens), and animation (the animation components: `ScaleIn`, `FadeIn`, …). ReactFlow Expert handles canvas interaction, connection validation, drag-and-drop, and the Definition ↔ Flow adapter bridge.
 - **Wave 4 (Execution visualization):** Frontend Engineer handles progress UI patterns. ReactFlow Expert handles mapping execution state to node visual state on the canvas.
 
 **Rule:** If it's about ReactFlow APIs, graph state, or canvas interaction → ReactFlow Expert. If it's about component patterns, theming, or animation → Frontend Engineer. The adapter layer is the seam where both collaborate.

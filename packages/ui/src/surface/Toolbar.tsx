@@ -18,14 +18,14 @@ import { Card } from "./Card";
  *
  * Usage:
  *   <Toolbar>
- *     <Toolbar.Group>
+ *     <ToolbarGroup>
  *       <Button>A</Button>
  *       <Button>B</Button>
- *     </Toolbar.Group>
- *     <Toolbar.Divider />
- *     <Toolbar.Group>
+ *     </ToolbarGroup>
+ *     <ToolbarDivider />
+ *     <ToolbarGroup>
  *       <Button>C</Button>
- *     </Toolbar.Group>
+ *     </ToolbarGroup>
  *   </Toolbar>
  */
 

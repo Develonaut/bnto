@@ -53,11 +53,11 @@ Components fetch their own data. Pass IDs, not data. Multiple components fetchin
 
 ```tsx
 // Page composes self-fetching leaves
-<Sidebar.Content>
+<SidebarContent>
   <WorkflowTitle workflowId={workflowId} />
   <WorkflowDescription workflowId={workflowId} />
   <WorkflowMeta workflowId={workflowId} />
-</Sidebar.Content>
+</SidebarContent>
 ```
 
 ### Loading states

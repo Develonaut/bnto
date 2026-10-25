@@ -14,9 +14,10 @@ interface PanelRootProps extends Omit<ComponentProps<typeof Card>, "children"> {
   children: ReactNode;
 }
 
-/* CSS property transition (not an entrance animation) — Animate.* components
-   handle keyframe entrances; property transitions on width/padding are the
-   correct CSS-first approach per the animation decision tree. */
+/* CSS property transition (not an entrance animation) — the animation
+   components (`ScaleIn`, `FadeIn`, …) handle keyframe entrances; property
+   transitions on width/padding are the correct CSS-first approach per the
+   animation decision tree. */
 const PANEL_BASE =
   "flex h-full flex-col motion-safe:transition-[width,padding] motion-safe:duration-slow motion-safe:ease-spring-bouncy";
 

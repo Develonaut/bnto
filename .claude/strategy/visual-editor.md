@@ -53,7 +53,7 @@ Each node type has a distinct icon (from Lucide) that acts as its "building silh
 - Variable width/height based on node type tier (compact 100px, standard 140px, wide 200px, container 240px+)
 - Category-driven variant colors via `.surface-{variant}` CSS classes — nodes of the same category share a color (image=primary, spreadsheet=secondary, file=accent, data=muted, control=warning)
 - Elevation-driven execution state: idle → none/sm (resting), pending → sm (waiting), active → md (rising), completed → lg (springy pop)
-- Springy entrance animation (`Animate.ScaleIn` with `spring-bouncy` easing)
+- Springy entrance animation (`ScaleIn` with `spring-bouncy` easing)
 - Pressable interaction (Motorway press effect)
 
 ### Grid Layout

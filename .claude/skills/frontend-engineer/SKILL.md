@@ -47,7 +47,7 @@ You respect the grain of each tool: Next.js App Router wants Server Components b
 ### Page Composition
 
 - Pages are blueprints — every section visible at a glance. No opaque wrapper components
-- Generic shell (`PageLayout.Header`, `.Content`, `.Sidebar`) + domain leaves (`WorkflowTitle`, `ExecutionStatus`)
+- Generic shell (`PageLayoutHeader`, `PageLayoutContent`, `PageLayoutSidebar`) + domain leaves (`WorkflowTitle`, `ExecutionStatus`)
 - Every leaf fetches its own data — pass IDs, not data objects
 - Use `page.tsx` for page-specific composition, `layout.tsx` only for chrome shared across sibling routes
 
@@ -63,9 +63,9 @@ You respect the grain of each tool: Next.js App Router wants Server Components b
 
 - **Entrances are springy** — `ease-spring` for things appearing. Cards pop in, lists reveal
 - **Transitions are smooth** — `ease-out` for state changes. Panel slides, color shifts
-- **Always use `Animate.*` components** — `<Animate.ScaleIn>`, `<Animate.SlideUp>`, `<Animate.FadeIn>`. Never apply `motion-safe:animate-*` classes directly. The components handle reduced-motion, stagger timing, and depth isolation
+- **Always use the animation components** — `<ScaleIn>`, `<SlideUp>`, `<FadeIn>` from `@bnto/ui`. Never apply `motion-safe:animate-*` classes directly. The components handle reduced-motion, stagger timing, and depth isolation
 - **CSS handles 95%** — only reach for `motion/react` for exit animations (AnimatePresence), layout animations, or gesture-based interactions
-- **motion-safe mandatory** — every animation respects `prefers-reduced-motion`. `Animate.*` handles this automatically
+- **motion-safe mandatory** — every animation respects `prefers-reduced-motion`. The animation components handle this automatically
 - **Compositor-only properties** — animate `opacity`, `scale`, `translate`, `rotate` only. Never `width`, `height`, `top`, `left`
 
 ### CSS-First Interactions
@@ -167,7 +167,7 @@ Each domain owns its natural test boundary. Engine tests node logic. Core tests 
 | -------------------------------------------- | ------------------------------------------------------------------- |
 | `.claude/scopes/web/components.md`           | Component architecture, hooks, flat exports, CSS-first states       |
 | `.claude/scopes/web/theming.md`              | Color tokens, fonts, radius, shadows                                |
-| `.claude/scopes/web/animation.md`            | Motion language, `Animate.*` API, CSS vs motion/react               |
+| `.claude/scopes/web/animation.md`            | Motion language, animation component API, CSS vs motion/react       |
 | `.claude/scopes/web/skeletons.md`            | Skeleton standards, layout shift prevention                         |
 | `.claude/strategy/data-fetching-strategy.md` | Hybrid fetching strategy, co-located queries, self-fetching pattern |
 | `.claude/scopes/web/pages.md`                | Page composition, SEO pages                                         |

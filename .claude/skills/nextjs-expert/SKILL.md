@@ -309,7 +309,7 @@ Bnto uses Turbopack for development (`next dev --turbopack`). Key differences fr
 | `force-dynamic` on a page that could be static | Unnecessary server compute on every request                   | Default to static, use ISR if data changes                         |
 | `cookies()` or `headers()` in shared utilities | Accidentally makes every importing route dynamic              | Only call in route-specific server code                            |
 | Large `node_modules` imports in client code    | Bloats bundle — 200KB library for one function                | Find smaller alternative or tree-shake                             |
-| Inline `style={{}}` for animations             | Forces client rendering, causes layout thrashing              | CSS classes, `Animate.*` components                                |
+| Inline `style={{}}` for animations             | Forces client rendering, causes layout thrashing              | CSS classes, animation components (`ScaleIn`, `FadeIn`)            |
 | `window` checks without dynamic import         | `typeof window !== "undefined"` still ships the code          | `next/dynamic` with `ssr: false`                                   |
 | Missing `key` prop on dynamic lists            | React re-renders entire list instead of patching              | Stable, unique keys (not array index for reorderable lists)        |
 | `JSON.parse(JSON.stringify(data))` for cloning | Drops dates, functions, symbols. Slow for large objects       | `structuredClone()` or spread for shallow                          |

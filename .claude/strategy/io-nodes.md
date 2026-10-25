@@ -15,7 +15,7 @@ Recipes are not self-describing. The `.bnto.json` definition says _what to do_ b
 ```
 UI layer (hardcoded per slug)          Recipe definition (.bnto.json)
 ─────────────────────────────          ────────────────────────────────
-FileUpload.Dropzone                    file-system "list" → {{.INPUT_DIR}}/*
+FileUploadDropzone                     file-system "list" → {{.INPUT_DIR}}/*
   accept={recipe.accept}               ↓
   ↓                                    loop → process node
 RecipeConfigSection                     ↓
@@ -231,11 +231,11 @@ Each consumer reads I/O nodes differently:
 
 ### Generic `InputRenderer`
 
-Replaces the hardcoded `FileUpload.Dropzone` + `RecipeConfigSection` switch. Reads the input node from the recipe definition and renders the appropriate widget.
+Replaces the hardcoded `FileUploadDropzone` + `RecipeConfigSection` switch. Reads the input node from the recipe definition and renders the appropriate widget.
 
 ```
 Input node → InputRenderer
-  mode: "file-upload" → FileUpload.Dropzone (accept from node params)
+  mode: "file-upload" → FileUploadDropzone (accept from node params)
   mode: "text"        → Textarea (placeholder from node params) [future]
   mode: "url"         → URL input (placeholder from node params) [future]
   mode: "none"        → nothing (recipe takes no input)

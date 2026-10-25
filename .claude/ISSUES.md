@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-88**.
+- **IDs never get reused.** The next one is **ISS-89**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -53,14 +53,13 @@
 | ISS-77 | The TUI asks to allow a shell recipe's commands for a run it then refuses                             | tui         | Open                                             |
 | ISS-78 | The TUI never fills `{{vars.*}}`: a step gets the text as written                                     | tui         | Open                                             |
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
-| ISS-80 | The paginated hook sample runs `transform` on a whole page; the real transform maps one doc           | docs        | Open                                             |
-| ISS-81 | Three web docs show dot-notation components the flat-exports rule bans                                | docs        | Open                                             |
 | ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
 | ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
 | ISS-84 | E2E specs pass `navigateToRecipe` a page heading it ignores                                           | web test    | Open                                             |
 | ISS-85 | `e2e/helpers.ts` is a 16-export grab bag the grab-bag check skips                                     | web test    | Open                                             |
 | ISS-86 | Nothing checks Prettier formatting in CI or `task check`; 54 TS files fail it                         | tooling     | Open                                             |
 | ISS-87 | `file-move`/`file-delete` hand over nothing when a move or delete fails partway                       | engine      | Open                                             |
+| ISS-88 | `FileUpload` context errors and two web comments name dot-notation components                         | ui          | Open                                             |
 
 ---
 
@@ -440,29 +439,6 @@ The ISS-22 fix refuses every `{{…}}` in the output node's `directory` that no 
 - **Fix:** refuse an unclosed `{{` in the folder in `fill_output_directory`, and have `bnto check` run its placeholder-form check on the output node's `directory`.
 - **Regression test:** `out-{{ctx.date` is refused by `bnto run` with no folder made, and `bnto check` flags it.
 
-### ISS-80: The paginated hook sample runs `transform` on a whole page; the real transform maps one doc
-
-**Found:** October 25, 2026 (cold review of the ISS-61 fix).
-
-The `usePaginatedHook` sample in [core-api.md](scopes/backend/core-api.md) ("Convex Native Pagination") and [data-fetching-strategy.md](strategy/data-fetching-strategy.md) ("Paginated hooks") gets `{ funcRef, args, transform }` from the client and runs `transform(results)` on the whole page array. The one real ref method, `core.executions.historyRefMethod()` (`packages/core/src/clients/executionClient.ts:94`, via `historyService.serverRef()`), returns `toExecutionFromEvent` as its `transform`, which maps a single doc (`packages/core/src/transforms/executionEvent.ts:8`, `(doc: RawExecutionEventDoc): Execution`). The first paginated hook written from the sample won't type-check.
-
-- **Fix:** make the two agree: the sample maps each result (`results.map(transform)`), or `serverRef()` returns an array transform. Name `historyRefMethod()` in the sample instead of the placeholder `core.domain.refMethod`.
-- **Regression test:** none; a docs fix (or, if the service changes, a unit test that `serverRef().transform` maps a page).
-
-### ISS-81: Three web docs show dot-notation components the flat-exports rule bans
-
-**Found:** October 25, 2026 (fixing ISS-62).
-
-[gotchas.md](rules/gotchas.md) and [code-standards.md](rules/code-standards.md) ban `Object.assign` dot-notation components (`<Card.Header>`), since they break React Server Components, and `scripts/hooks/check-object-assign.sh` rejects them at commit. Three docs still give them as the pattern to follow:
-
-- [pages.md](scopes/web/pages.md):10-24 and :95-101 mark `<PageLayout.Header>`, `<PageLayout.Content>` and `<PageLayout.Sidebar>` as GOOD. No `PageLayout` exists in `apps/` or `packages/`.
-- [components.md](scopes/web/components.md):56 composes self-fetching leaves inside `<Sidebar.Content>`.
-- `.claude/skills/frontend-engineer/SKILL.md:66` says "Always use `Animate.*` components — `<Animate.ScaleIn>`, `<Animate.SlideUp>`, `<Animate.FadeIn>`". `packages/ui/src/animation/Animate/index.tsx` exports them flat (`ScaleIn`, `SlideUp`, `FadeIn`), and no code writes `<Animate.` (only a JSDoc comment, `packages/ui/src/animation/Animate/types.ts:6`, names `<Animate.Stagger>`).
-- The same names in prose: `.claude/skills/frontend-engineer/SKILL.md:50` ("Generic shell (`PageLayout.Header`, `.Content`, `.Sidebar`)") and [pages.md](scopes/web/pages.md):50.
-
-- **Fix:** rewrite the examples, prose and the JSDoc comment with flat prefixed names (`PageLayoutHeader`, `SidebarContent`, `<ScaleIn>`), as gotchas.md shows.
-- **Regression test:** none; a docs fix.
-
 ### ISS-82: Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds
 
 **Found:** October 25, 2026 (designing the ISS-59 fix; see [file-copy-held-files.md](decisions/file-copy-held-files.md), rows 7 to 12).
@@ -516,3 +492,17 @@ A batch node that fails partway can hand its finished files to the run's closing
 
 - **Fix:** hand over the files under the destination (move) and the items finished (delete) for any failure after work began, as for the timeout.
 - **Regression test:** a `file-move` whose second rename finds its target taken, and a `file-delete` whose second delete fails, each fail handing over the first file.
+
+### ISS-88: `FileUpload` context errors and two web comments name dot-notation components
+
+**Found:** October 25, 2026 (cold review of the ISS-80/ISS-81 fix).
+
+[gotchas.md](rules/gotchas.md) bans dot-notation components, and `@bnto/ui` exports `FileUpload`'s parts flat (`packages/ui/src/interaction/FileUpload/index.ts`: `FileUploadDropzone`, `FileUploadItem`, `FileUploadClear`, …). Its context hooks still name the parts with dots in their runtime errors, so a misplaced part throws "`FileUpload.Dropzone` must be used within `FileUpload`":
+
+- the `consumer` strings passed to `useFileUploadContext` / `useFileUploadItemContext` in `FileUploadClear.tsx:19`, `FileUploadDropzone.tsx:22`, `FileUploadItemDelete.tsx:19-20` and `FileUploadItemMetadata.tsx:12`;
+- the item context's error, "must be used within `FileUpload.Item`" (`context.ts:43`).
+
+Two `apps/web` comments do the same: `app/editor/layout.tsx:12` ("`AppShell.Main` default clearance"; the export is `AppShellMain`) and `components/blocks/AuthGate.tsx:22` (the section header `AuthGate.Action`).
+
+- **Fix:** use the flat names (`FileUploadDropzone`, `FileUploadItem`, `AppShellMain`, `AuthGateAction`).
+- **Regression test:** a `@bnto/ui` test that rendering `FileUploadDropzone` outside `FileUpload` throws an error naming `FileUploadDropzone`.

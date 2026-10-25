@@ -11,7 +11,7 @@ import { PopoverClose } from "../../overlay/Popover";
  * A styled interactive container for a single menu row.
  * Compose children freely -- icons, labels, descriptions.
  *
- * Wraps itself in Menu.Close so clicking any item closes the
+ * Wraps itself in MenuClose so clicking any item closes the
  * menu automatically.
  *
  * Renders a <button> by default. Use `asChild` to merge onto a
