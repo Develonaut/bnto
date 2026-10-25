@@ -168,7 +168,7 @@ function checkLinks(): string[] {
     .map(
       ({ file, line, target }) =>
         `ERROR: ${file}:${line} links ${target}, which doesn't exist.\n` +
-        `       Links resolve from the file's own folder (scripts/docs/brokenLinks.ts).`,
+        `       scripts/docs/brokenLinks.ts says how links resolve.`,
     );
 }
 

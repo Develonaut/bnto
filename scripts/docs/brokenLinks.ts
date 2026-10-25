@@ -8,8 +8,8 @@
  * the `#anchor`.
  *
  * Checked: inline links and images, and reference definitions (`[ref]: path`).
- * Not checked: `<angle-bracket>` targets and HTML `href`/`src`, which no doc
- * uses today.
+ * Not checked: `<angle-bracket>` targets and HTML `href`/`src`. Today the
+ * only such link is README.md's logo `<img src>`, which resolves.
  */
 
 import { posix } from "node:path";
@@ -29,8 +29,8 @@ const ROOT_RELATIVE_FILE = ".claude/CLAUDE.md";
 
 // `[text](target)` or `![alt](target)`, with an optional `"title"` or `'title'`.
 const INLINE_LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'))?\)/g;
-// `[ref]: target`, at the start of a line.
-const REFERENCE = /^ {0,3}\[[^\]]+\]:\s*([^\s<]\S*)/g;
+// `[ref]: target`, at the start of a line. A `[^note]:` footnote isn't a link.
+const REFERENCE = /^ {0,3}\[(?!\^)[^\]]+\]:\s*([^\s<]\S*)/g;
 const FENCE = /^\s*(`{3,}|~{3,})(.*)$/;
 const CODE_SPAN = /`[^`]*`/g;
 const URL_SCHEME = /^[a-z][a-z0-9+.-]*:/i;

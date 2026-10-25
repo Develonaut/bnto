@@ -104,6 +104,11 @@ describe("brokenLinks", () => {
     ]);
   });
 
+  it("doesn't read a footnote definition as a link", () => {
+    const source = "Text[^1].\n\n[^1]: Some explanation here.";
+    assert.deepEqual(brokenLinks("README.md", source, repo()), []);
+  });
+
   it("checks a link with a single-quoted title", () => {
     assert.deepEqual(brokenLinks("README.md", "[x](gone.md 'Gone')", repo()), [
       { file: "README.md", line: 1, target: "gone.md" },
