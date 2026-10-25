@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-90**.
+- **IDs never get reused.** The next one is **ISS-92**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -43,7 +43,6 @@
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
 | ISS-66 | Down past the last home recipe hides the selection until you press Up as many times                   | tui         | Open                                             |
 | ISS-67 | `update_notice.rs` opens its ptys in parallel with no lock                                            | cli test    | Open                                             |
-| ISS-68 | `FormStoreContext.tsx` exports four hooks and a provider from one `.tsx` file                         | form        | Open                                             |
 | ISS-70 | Recipe pages record no download a user clicks for                                                     | web         | Open                                             |
 | ISS-73 | The web runner starts a run with a required param left empty                                          | web         | Open                                             |
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
@@ -60,6 +59,8 @@
 | ISS-87 | `file-move`/`file-delete` hand over nothing when a move or delete fails partway                       | engine      | Open                                             |
 | ISS-88 | `FileUpload` context errors and two web comments name dot-notation components                         | ui          | Open                                             |
 | ISS-89 | In a fresh worktree, `task seo:audit` fails at the first URL with no hint: there's no `.env.local`    | tooling     | Open                                             |
+| ISS-90 | `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses                       | form        | Open                                             |
+| ISS-91 | 28 TS files use `React.*` namespace types the import rule bans                                        | web         | Open                                             |
 
 ---
 
@@ -347,15 +348,6 @@ On the home screen, `CursorDown` in the Recipes pane adds 1 to `recipes_cursor` 
 - **Fix:** take the same lock around `openpty` and the spawn in `run_in_terminal`, or share the harness's launch.
 - **Regression test:** run the file's tests with `--test-threads=16` beside a parallel build several times without a failure.
 
-### ISS-68: `FormStoreContext.tsx` exports four hooks and a provider from one `.tsx` file
-
-**Found:** October 25, 2026 (cold review of the ISS-63 fix).
-
-`packages/@bnto/form/src/FormStoreContext.tsx:63` exports `FormStoreProvider`, `useFormValue`, `useFormValues`, `useFormFiles` and `useFormOnChange`. [code-standards.md](rules/code-standards.md) allows one exported hook per file. Being in a `.tsx` file also puts the four hooks under ESLint's 60-line `.tsx` limit instead of the 20 a hook gets. ISS-63 called `SliderPresets.tsx` the only `.tsx` file exporting a hook, but its search matched `export function use…`, not an `export { … }` list. `git grep -nE "export \{[^}]*use[A-Z]" -- 'packages/*.tsx' 'apps/*.tsx'` finds only this file. `SchemaForm.tsx`, `controls/WatermarkPreviewControl.tsx` and the package's `index.ts` import from it.
-
-- **Fix:** keep the context and `FormStoreProvider` in the `.tsx` file and move each hook to its own `.ts` file (`useFormValue.ts`, `useFormValues.ts`, `useFormFiles.ts`, `useFormOnChange.ts`), updating the three importers.
-- **Regression test:** a test per hook that pins what it reads from the provider; lint passing on the moved files.
-
 ### ISS-70: Recipe pages record no download a user clicks for
 
 **Found:** October 25, 2026 (fixing ISS-28, the automatic download's telemetry).
@@ -506,3 +498,21 @@ Two `apps/web` comments do the same: `app/editor/layout.tsx:12` ("`AppShell.Main
 
 - **Fix:** have `seo:audit` refuse before the build when `NEXT_PUBLIC_CONVEX_URL` is unset, naming `apps/web/.env.local` and [environment-variables.md](environment-variables.md).
 - **Regression test:** `task seo:audit` in a checkout with no `apps/web/.env.local` fails before building, naming the file.
+
+### ISS-90: `@bnto/form` exports `FormStoreProvider` and four hooks nothing outside it uses
+
+**Found:** October 25, 2026 (cold review of the ISS-68 fix).
+
+`packages/@bnto/form/src/index.ts:13-17` re-exports `FormStoreProvider`, `useFormValue`, `useFormValues`, `useFormFiles` and `useFormOnChange`. Searching `packages` and `apps` outside `packages/@bnto/form` for those names finds nothing: consumers import only `SchemaForm`, `SchemaField` and their types (`apps/web/app/(app)/[bnto]/_components/DynamicRecipeConfig.tsx:6`, `packages/editor/src/index.ts:101-104`). `SchemaForm` mounts the provider itself, and the controls read it from inside the package, so the five exports are dead ([code-standards.md](rules/code-standards.md), YAGNI). `useFormValue` has no caller even inside the package, only its test. knip doesn't flag them because it treats a package entry's exports as public.
+
+- **Fix:** drop the five re-exports from `index.ts`, and delete `useFormValue` and its test unless a control needs it.
+- **Regression test:** none; `task check` (build, lint, knip) passes without the exports.
+
+### ISS-91: 28 TS files use `React.*` namespace types the import rule bans
+
+**Found:** October 25, 2026 (cold review of the ISS-68 fix).
+
+[code-standards.md](rules/code-standards.md) ("Import Discipline") says to use named type imports (`import type { ComponentProps } from "react"`), never `React.ComponentProps` and the like. A search for `React\.[A-Z]` in `packages/` and `apps/` `.ts`/`.tsx` files lists 28 files, e.g. `children: React.ReactNode` (`packages/@bnto/form/src/FormStoreContext.tsx:30`, `packages/core/src/BntoCoreProvider.tsx:10`), `React.ChangeEvent` (`packages/@bnto/form/src/controls/TextControl.tsx:9`), `React.CSSProperties` (`apps/web/app/globalErrorStyles.ts`) and `React.ComponentProps` (`apps/web/components/blocks/NavButton.tsx:21`). They compile through the global `React` namespace from `@types/react`, so nothing catches them.
+
+- **Fix:** switch each to a named `import type` from `"react"`, and add a lint rule that bans `React.` type references (`no-restricted-syntax` on a `TSQualifiedName` whose left side is `React`) so new ones fail.
+- **Regression test:** a file that writes `React.ReactNode` fails `task ui:lint`.

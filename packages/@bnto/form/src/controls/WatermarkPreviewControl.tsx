@@ -2,7 +2,9 @@
 
 import { useCallback, useMemo } from "react";
 import type { ControlProps } from "./types";
-import { useFormFiles, useFormOnChange, useFormValues } from "../FormStoreContext";
+import { useFormFiles } from "../useFormFiles";
+import { useFormOnChange } from "../useFormOnChange";
+import { useFormValues } from "../useFormValues";
 import { POSITIONS, imageAreaStyle, overlayPositionStyle } from "./watermarkLayout";
 import { useSourcePreview } from "./useSourcePreview";
 

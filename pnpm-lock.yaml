@@ -315,6 +315,9 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.13
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.13)
       eslint:
         specifier: 'catalog:'
         version: 9.39.3(jiti@2.6.1)

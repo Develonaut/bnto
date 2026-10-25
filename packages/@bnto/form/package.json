@@ -26,6 +26,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "^19.0.0",
     "eslint": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",

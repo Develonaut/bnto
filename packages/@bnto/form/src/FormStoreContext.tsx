@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useMemo } from "react";
 
 /**
  * FormStoreContext — provides cross-field value access for controls.
@@ -8,7 +8,8 @@ import { createContext, useContext, useMemo } from "react";
  * Controls like WatermarkPreviewControl need to read sibling field values
  * (watermark image, position, opacity) to render a live preview. This
  * context passes the full values map + files so any control can peek at
- * siblings without prop drilling.
+ * siblings without prop drilling. Each hook that reads it has its own file:
+ * `useFormValue`, `useFormValues`, `useFormFiles`, `useFormOnChange`.
  */
 
 interface FormStoreValue {
@@ -34,31 +35,5 @@ function FormStoreProvider({ values, files, onChange, children }: FormStoreProvi
   return <FormStoreCtx.Provider value={ctx}>{children}</FormStoreCtx.Provider>;
 }
 
-/** Read a single sibling form value by param name. */
-function useFormValue(name: string): unknown {
-  const ctx = useContext(FormStoreCtx);
-  return ctx?.values[name];
-}
-
-/** Read all current form values. */
-function useFormValues(): Record<string, unknown> {
-  const ctx = useContext(FormStoreCtx);
-  return ctx?.values ?? {};
-}
-
-/** Read the input files provided to the form. */
-function useFormFiles(): File[] {
-  const ctx = useContext(FormStoreCtx);
-  return ctx?.files ?? [];
-}
-
-const NOOP_ON_CHANGE = () => {};
-
-/** Get the form-level onChange handler for setting sibling field values. */
-function useFormOnChange(): (name: string, value: unknown) => void {
-  const ctx = useContext(FormStoreCtx);
-  return ctx?.onChange ?? NOOP_ON_CHANGE;
-}
-
-export { FormStoreProvider, useFormValue, useFormValues, useFormFiles, useFormOnChange };
+export { FormStoreProvider, FormStoreCtx };
 export type { FormStoreValue };
