@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-55**.
+- **IDs never get reused.** The next one is **ISS-57**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -48,6 +48,8 @@
 | ISS-52 | **`file-copy` with `conflict: overwrite` can replace an input the run hasn't read** (fix first)       | engine      | Open                                             |
 | ISS-53 | An interrupted move can leave `.bnto-rename-*` files that later runs collect                          | engine      | Open                                             |
 | ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
+| ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
+| ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 
 ---
 
@@ -387,3 +389,21 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 - **Fix:** a `task check:scripts` that runs them with `pnpm exec tsx --test` (as `check:turbo-inputs` runs `scripts/turbo`), added to `task check`, plus a CI step. Scheduled in the changelog plan: its PR 1 adds `check:scripts`, and its PR 2 runs both `scripts/seo` tests there and in CI, then deletes this issue.
 - **Regression test:** `task check:scripts` fails when one of those tests fails.
+
+### ISS-55: A printed command line with a word that starts with `=` fails in zsh
+
+**Found:** October 25, 2026 (cold review of the ISS-50 fix).
+
+`shell_word` (`engine/crates/bnto/src/shell_word.rs`) treats `=` as plain anywhere in a word, so a word that starts with `=` stays bare. zsh, macOS's default shell, expands a leading `=word` to that command's path: `zsh -c 'echo =1.2'` prints `zsh:1: 1.2 not found`. A declined run's `bnto dry-run … -p …` hint and a dry run's `$` lines both go through `shell_word`, so a pasted line with such a value fails in zsh. `sh` and PowerShell are fine.
+
+- **Fix:** treat `=` as plain only after a word's first char.
+- **Regression test:** `shell_word("=1.2")` is quoted, and `version=1.2` stays bare.
+
+### ISS-56: A dry run's command whose program path needs quotes won't paste into PowerShell
+
+**Found:** October 25, 2026 (cold review of the ISS-50 fix).
+
+On Windows, `format_command_line` (`engine/crates/bnto/src/dry_run/shell.rs`) quotes the program like any other word, for PowerShell. PowerShell reads a quoted first word as a string, so `'C:\Program Files\tool.exe' arg` fails with an unexpected token; it runs only as `& 'C:\Program Files\tool.exe' arg`. Unquoted it failed too, before ISS-50's fix.
+
+- **Fix:** on Windows, put `& ` before a program word that needed quotes.
+- **Regression test:** a Windows unit test: a step whose `command` holds a space shows `& '<command>' …`.
