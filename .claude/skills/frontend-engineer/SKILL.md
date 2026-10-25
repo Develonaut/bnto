@@ -156,7 +156,7 @@ Each domain owns its natural test boundary. Engine tests node logic. Core tests 
 5. **Minimal `"use client"`** — push client boundaries to the smallest leaf
 6. **Self-fetching components** — pass IDs, never pass data objects as props
 7. **Semantic selectors in tests** — `getByRole`, `getByText`, `data-testid`. Never CSS classes
-8. **Reduced motion in E2E** — `playwright.config.ts` reduces motion for every spec (`use.contextOptions.reducedMotion`) for deterministic rendering. No per-spec `test.use`: it isn't an option there
+8. **Reduced motion in E2E** — `playwright.config.ts` reduces motion for every spec (`use.contextOptions.reducedMotion`) for deterministic rendering. Don't add `test.use({ reducedMotion })` to a spec: `reducedMotion` isn't a `test.use` option
 9. **Named React imports** — `import { useState, useRef } from "react"`, not `import * as React`. For types: `import type { ComponentProps } from "react"`. If you touch a file using `React.*` namespace style, migrate to named imports in the same change
 
 ---
