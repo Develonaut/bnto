@@ -22,7 +22,7 @@ use super::{Move, key, occupied, parked, same_file};
 type Check<'a> = &'a dyn Fn() -> Result<(), BntoError>;
 
 /// Why a checked run ended before its last move.
-pub enum Stopped {
+pub(crate) enum Stopped {
     /// A move failed: what happened, how far the run got and what it left.
     Failed(String),
     /// The check stopped the run between moves, with no file parked.
@@ -44,7 +44,7 @@ pub fn run_in_order(moves: Vec<Move>) -> Result<(), String> {
 
 /// `run_in_order`, asking `check` before each move made while no file is
 /// parked, and stopping where it fails.
-pub fn run_checked(moves: Vec<Move>, check: Check) -> Result<(), Stopped> {
+pub(crate) fn run_checked(moves: Vec<Move>, check: Check) -> Result<(), Stopped> {
     let total = moves.len();
     let mut runner = Runner::new(moves);
     match runner.run(check) {

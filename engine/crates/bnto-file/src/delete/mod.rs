@@ -149,8 +149,8 @@ fn delete_all(
 }
 
 /// `error`, carrying the first `done` items when the run's time ran out, as
-/// the run's closing steps would get them from a per-file node. A failed
-/// delete hands over nothing, as before.
+/// a per-file node hands over the files it finished. A failed delete hands
+/// over nothing, as before (ISS-84).
 fn handed_over(
     error: BntoError,
     files: Vec<BatchFile>,

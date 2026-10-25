@@ -18,6 +18,7 @@ Write failing tests BEFORE implementing the processor.
 - [ ] **Implement `NodeProcessor` trait** — `name()`, `metadata()`, `process()`, `validate()`
 - [ ] **`metadata()` complete** — all parameters have types, defaults, constraints, descriptions
 - [ ] **`metadata().input_cardinality`** — declare `PerFile` (default) or `Batch`. See [smart-iteration.md](../../strategy/smart-iteration.md)
+- [ ] **A batch node with slow per-file work asks the run between files** — call `ctx.check_time_limit()?` before each file, as `file-copy`, `file-move` and `file-delete` do, and hand over what it finished with the error (`BntoError::with_output`). The executor can only stop between steps, and a batch is one step. See [engine-execution.md](../../strategy/engine-execution.md#run-time-limit-settingstimeout)
 - [ ] **`process()` parameter contract** — every param in `metadata()` is read and used in ALL code paths
 - [ ] **`validate()`** — validate param combinations that metadata constraints can't express
 - [ ] **`FileData` selection** — processors that don't modify file content MUST emit `FileData::Path` (zero-copy), not `FileData::Bytes`. See [FileData Selection](#filedata-selection) below
