@@ -111,13 +111,13 @@ User navigates to /editor
 
 ## Custom Recipe Tests (Multi-Node Compositions)
 
-| ID  | Test                                | Pipeline                                          | Tag                  | What it verifies                                                 |
-| --- | ----------------------------------- | ------------------------------------------------- | -------------------- | ---------------------------------------------------------------- |
-| CR1 | Web-ready image pipeline (3 nodes)  | Resize → Convert (WebP) → Compress                | `@editor` `@browser` | Multi-image-op chaining, format conversion, size reduction       |
-| CR2 | Compress + organize (2 nodes)       | Compress → Rename (suffix)                        | `@editor` `@browser` | Cross-type chaining (image → file), filename mutation            |
-| CR3 | Clean & standardize CSV (2 nodes)   | Clean → Rename Columns                            | `@editor` `@browser` | CSV multi-op chaining, whitespace trim, dedup, empty row removal |
-| CR4 | Thumbnail generator (3 nodes)       | Resize (100px) → Convert (WebP) → Rename (prefix) | `@editor` `@browser` | Image + file cross-type chain, small output, filename mutation   |
-| CR5 | All 6 operations added individually | One of each op                                    | `@editor`            | All node types addable, correct operations in exported JSON      |
+| ID  | Test                                | Pipeline                                                      | Tag                  | What it verifies                                                             |
+| --- | ----------------------------------- | ------------------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------- |
+| CR1 | Web-ready image pipeline (3 nodes)  | Resize (800px, no enlarge) → Convert (WebP) → Compress        | `@editor` `@browser` | Multi-image-op chaining, format conversion, small input keeps its size       |
+| CR2 | Compress + organize (2 nodes)       | Compress → Rename (suffix)                                    | `@editor` `@browser` | Cross-type chaining (image → file), filename mutation                        |
+| CR3 | Clean & standardize CSV (2 nodes)   | Clean → Rename Columns                                        | `@editor` `@browser` | CSV multi-op chaining, whitespace trim, dedup, empty row removal             |
+| CR4 | Thumbnail generator (3 nodes)       | Resize (150px, no enlarge) → Convert (WebP) → Rename (prefix) | `@editor` `@browser` | Image + file cross-type chain, small input keeps its size, filename mutation |
+| CR5 | All 6 operations added individually | One of each op                                                | `@editor`            | All node types addable, correct operations in exported JSON                  |
 
 ---
 

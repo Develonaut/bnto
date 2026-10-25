@@ -222,6 +222,17 @@ export async function setSelectParam(page: Page, paramName: string, optionValue:
   await page.getByTestId(`select-option-${optionValue}`).click();
 }
 
+/**
+ * Turn a switch (boolean) parameter on or off in the config panel.
+ *
+ * Requires a node to be selected and the config panel to be open.
+ */
+export async function setSwitchParam(page: Page, paramName: string, checked: boolean) {
+  const control = page.getByTestId(`control-switch-param-${paramName}`);
+  await control.waitFor({ timeout: 3_000 });
+  await control.setChecked(checked);
+}
+
 // ---------------------------------------------------------------------------
 // Execution & Export (re-exported from editor-execution.ts)
 // ---------------------------------------------------------------------------
