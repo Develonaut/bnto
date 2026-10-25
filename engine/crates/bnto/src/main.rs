@@ -45,6 +45,7 @@ mod list;
 mod live_bar;
 pub mod logging;
 mod migrate;
+mod ordered_write;
 mod output_names;
 mod overwrite;
 mod package_manager;
@@ -115,12 +116,17 @@ fn main() {
 
 /// Kill spawned command trees (shell-run children + grandchildren) on
 /// SIGINT/SIGTERM — they run in their own process groups, so the terminal's
-/// Ctrl+C no longer reaches them on its own. Then delete any run scratch
-/// dirs, which `process::exit` would otherwise leave behind.
+/// Ctrl+C no longer reaches them on its own. A write in progress then stops
+/// at its next step, before anything it may read goes: the run scratch dirs
+/// (which `process::exit` would otherwise leave behind) are deleted only
+/// after. Last, any output folder's staged swap copies are named, kept since
+/// one may be the only copy.
 fn install_signal_handler() {
     let _ = ctrlc::set_handler(|| {
         process_registry::global().terminate_all();
+        ordered_write::GATE.stop_and_wait(|| eprintln!("\n  Finishing the current file..."));
         scratch::remove_live_dirs();
+        ordered_write::report_kept_staging();
         process::exit(130);
     });
 }

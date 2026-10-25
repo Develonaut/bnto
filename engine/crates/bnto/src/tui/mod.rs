@@ -78,6 +78,8 @@ pub fn launch_tui(
     );
     logger.flush();
     terminal::restore(&mut terminal)?;
+    // After the restore, so the warning lands on the normal screen.
+    crate::ordered_write::report_kept_staging();
     result
 }
 

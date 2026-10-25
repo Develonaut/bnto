@@ -407,6 +407,24 @@ fn test_collect_walks_every_depth_and_skips_folders() {
 }
 
 #[test]
+fn test_collect_skips_a_folder_of_staged_copies() {
+    // RED: an interrupted write leaves its swap copies in a `.bnto-staged-*`
+    // folder inside the output folder; a later run over that folder must not
+    // take them as inputs. Other hidden folders are still walked.
+    let dir = setup_test_dir();
+    let staged = dir
+        .path()
+        .join(format!("{}abc", crate::STAGED_COPIES_PREFIX));
+    fs::create_dir(&staged).unwrap();
+    fs::write(staged.join("0-b.txt"), b"copy").unwrap();
+    fs::create_dir(dir.path().join(".hidden")).unwrap();
+    fs::write(dir.path().join(".hidden").join("kept.txt"), b"k").unwrap();
+
+    let names = collect_names(dir.path(), &[("pattern", serde_json::json!("*.txt"))]);
+    assert_eq!(names, ["document.txt", "kept.txt", "readme.txt"]);
+}
+
+#[test]
 fn test_collect_pattern_applies_at_every_depth() {
     let dir = setup_test_dir();
     let deep = dir.path().join("subfolder").join("deeper");

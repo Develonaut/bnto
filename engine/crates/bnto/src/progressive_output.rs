@@ -6,33 +6,58 @@ use std::path::Path;
 
 use bnto_core::events::ProgressOutputFile;
 
+use crate::ordered_write::{GATE, WriteGate};
 use crate::output_names::OutputNames;
 
 /// Copy an iteration's output files into `output_dir`, creating parent
 /// folders for names with subdirectories. `names` spans the whole run, so a
 /// name an earlier iteration wrote isn't replaced, and each file lands where
 /// the final write puts it. A made-up name whose file already holds the
-/// bytes (`held`) is left as is, here and in the final write. Errors are
-/// ignored: the final write after the run writes every file again (all but
-/// the held ones) and reports failures.
+/// bytes (`held`) is left as is, here and in the final write. Any other
+/// destination that already holds a file is left for the final write: it may
+/// be a later iteration's source, not read yet (ISS-48), and only the final
+/// write sees every source. Errors are ignored: the final write after the run
+/// writes every file again (all but the held ones) and reports failures.
+/// Each copy goes through `ordered_write::GATE`, so Ctrl+C or quitting the
+/// TUI waits for the file being copied and copies no more.
 pub fn write_progressive_files(
     output_dir: &str,
     files: &[ProgressOutputFile],
     names: &mut OutputNames,
 ) {
+    write_progressive_through(&GATE, Path::new(output_dir), files, names);
+}
+
+/// `write_progressive_files` through `gate`.
+fn write_progressive_through(
+    gate: &WriteGate,
+    dir: &Path,
+    files: &[ProgressOutputFile],
+    names: &mut OutputNames,
+) {
+    let Some(_writing) = gate.enter() else { return };
     for file in files {
-        let dir = Path::new(output_dir);
-        let claimed = names.claim(dir, &file.name, &file.data);
-        if claimed.held {
-            continue;
+        if gate.stopping() {
+            return;
         }
-        let path = dir.join(claimed.name);
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        // Copy, never rename: a Path output may be the user's own file,
-        // and the final write reads it again.
-        let _ = file.data.copy_to(&path);
+        copy_one(dir, file, names);
+    }
+}
+
+/// Copy one file to its claimed name, unless the name is held or occupied.
+fn copy_one(dir: &Path, file: &ProgressOutputFile, names: &mut OutputNames) {
+    let claimed = names.claim(dir, &file.name, &file.data);
+    let path = dir.join(claimed.name);
+    if claimed.held || std::fs::symlink_metadata(&path).is_ok() {
+        return;
+    }
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    // Copy, never rename: a Path output may be the user's own file, and the
+    // final write reads it again.
+    if file.data.copy_to(&path).is_ok() {
+        crate::ordered_write::note_progressive(&path);
     }
 }
 
@@ -119,6 +144,63 @@ mod tests {
             std::fs::read(out.path().join("sub").join("a.txt")).unwrap(),
             b"nested"
         );
+    }
+
+    #[test]
+    fn leaves_a_file_already_at_a_destination_for_the_final_write() {
+        // RED (ISS-48): iteration 1 renames `a` to `b.txt`; copying it then
+        // replaced `b.txt` before iteration 2 read it. A later iteration's
+        // source can't be known yet, so an occupied destination waits for
+        // the final write, which orders its writes (see `ordered_write`).
+        let out = tempfile::tempdir().unwrap();
+        let (a, b) = (out.path().join("a.txt"), out.path().join("b.txt"));
+        std::fs::write(&a, "AAAA").unwrap();
+        std::fs::write(&b, "BBBB").unwrap();
+        let dir = out.path().to_str().unwrap();
+        let mut names = OutputNames::default();
+
+        write_progressive_files(dir, &[output("b.txt", FileData::Path(a))], &mut names);
+        assert_eq!(std::fs::read_to_string(&b).unwrap(), "BBBB");
+
+        write_progressive_files(dir, &[output("b.txt", FileData::Path(b))], &mut names);
+        let written = out.path().join("b_1.txt");
+        assert_eq!(std::fs::read_to_string(written).unwrap(), "BBBB");
+    }
+
+    #[test]
+    fn copies_nothing_once_bnto_is_quitting() {
+        // Progressive copies used to skip the write gate, so Ctrl+C or a TUI
+        // quit could end the process mid-copy; now a quitting gate stops them.
+        let out = tempfile::tempdir().unwrap();
+        let gate = WriteGate::new();
+        gate.stop_and_wait(|| {});
+        let files = [output("a.txt", FileData::Bytes(b"A".to_vec()))];
+        write_progressive_through(&gate, out.path(), &files, &mut OutputNames::default());
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn a_held_name_and_an_occupied_name_are_both_skipped() {
+        // #759's skip (a made-up name already holding the bytes) and ISS-48's
+        // (any file already at the name) both apply.
+        let out = tempfile::tempdir().unwrap();
+        std::fs::write(out.path().join("a.txt"), "USER").unwrap();
+        std::fs::write(out.path().join("a_1.txt"), "SAME").unwrap();
+        let dir = out.path().to_str().unwrap();
+        let files = [
+            output("a.txt", FileData::Bytes(b"NEW".to_vec())),
+            output("a.txt", FileData::Bytes(b"SAME".to_vec())),
+        ];
+        write_progressive_files(dir, &files, &mut OutputNames::default());
+        assert_eq!(
+            std::fs::read_to_string(out.path().join("a.txt")).unwrap(),
+            "USER"
+        );
+        assert_eq!(
+            std::fs::read_to_string(out.path().join("a_1.txt")).unwrap(),
+            "SAME"
+        );
+        assert_eq!(std::fs::read_dir(out.path()).unwrap().count(), 2);
     }
 
     #[test]

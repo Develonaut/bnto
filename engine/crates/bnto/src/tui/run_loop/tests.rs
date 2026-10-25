@@ -134,3 +134,29 @@ fn other_screens_and_a_terminal_too_short_get_no_resize() {
     assert_eq!(viewport_resize(&Screen::Home, 30), None);
     assert_eq!(viewport_resize(&Screen::Browser, 0), None);
 }
+
+// --- Quitting mid-write ---
+
+#[test]
+fn quitting_waits_for_a_write_in_progress_and_starts_no_new_one() {
+    // ISS-48 review: Ctrl+C / q mid-write ended the session while the bridge
+    // thread was copying, and `main` returning killed it mid-swap.
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    let gate = crate::ordered_write::WriteGate::new();
+    let commands = crate::process_registry::ProcessRegistry::new();
+    let (ended_tx, ended_rx) = mpsc::channel();
+    std::thread::scope(|s| {
+        let bridge_writing = gate.enter().expect("no quit yet");
+        s.spawn(|| {
+            super::end_session(&gate, &commands);
+            ended_tx.send(()).unwrap();
+        });
+        let early = ended_rx.recv_timeout(Duration::from_millis(100));
+        assert!(early.is_err(), "the session ended under a running write");
+        drop(bridge_writing);
+        ended_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    });
+    assert!(gate.enter().is_none(), "a write started after quitting");
+}

@@ -43,7 +43,6 @@
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
 | ISS-46 | The TUI's Open action uses the first folder for overwrite results                                     | tui         | Open                                             |
 | ISS-47 | Recipe pages preload a far-below-the-fold mascot and don't prioritize their LCP image                 | web perf    | Open                                             |
-| ISS-48 | **A write can overwrite an input file the run hasn't read yet** (fix first)                           | cli         | In progress (`fix/never-overwrite-unread-input`) |
 | ISS-49 | A half-written `.next-e2e` from an interrupted E2E run breaks the web build                           | tooling     | Open                                             |
 | ISS-50 | `bnto dry-run` shows shell commands with broken quoting                                               | cli         | Open                                             |
 | ISS-51 | The Turbo-inputs check guards lint only, not test or build reads                                      | tooling     | Open                                             |
@@ -344,15 +343,6 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 - **Fix:** as on the homepage (#753): lazy below-the-fold images, `fetchPriority="high"` on the hero.
 - **Regression test:** extend `e2e/pages/homepage-loading.spec.ts`'s checks to a recipe page; the Lighthouse `lcp-discovery-insight` assertion already covers every recipe URL once its LCP is the image.
 
-### ISS-48: A write can overwrite an input file the run hasn't read yet
-
-**Found:** October 24, 2026 (fixing ISS-36, #752). **Severity: data loss; fix first.**
-
-`F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, a `file-rename` with `find: a`, `replace: b`, and a write-mode output into `F`, run on both files: `bnto run` prints `Done. 2 files written` and leaves `a.txt`, `b.txt` and `b_1.txt` all holding `AAAA`. `BBBB` is gone (reproduced with `main` at #745, temp `HOME` and `BNTO_HOME`). `output_names` plans `a`'s output as `b.txt` and `b`'s as `b_1.txt`, then the first copy replaces `F/b.txt` before the second copy reads it. Progressive writes can do the same between loop iterations.
-
-- **Fix:** before writing, refuse a plan whose destination is another input of the same run that hasn't been written yet, or order the writes (through a temp name for swaps) the way `bnto_file::relocate` already does for moves.
-- **Regression test:** the repro above keeps `BBBB` (or is refused before anything is written), in `bnto run` and the TUI bridge.
-
 ### ISS-49: A half-written `.next-e2e` from an interrupted E2E run breaks the web build
 
 **Found:** October 24, 2026 (`task check` on `fix/homepage-lcp`).
@@ -382,18 +372,18 @@ The recipe pages (the SEO landing pages) have the homepage's problem: `/compress
 
 ### ISS-52: `file-copy` with `conflict: overwrite` can replace an input the run hasn't read
 
-**Found:** October 24, 2026 (fixing ISS-48, which fixes the output node's write). **Severity: data loss; fix first.**
+**Found:** October 24, 2026 (fixing the output node's write, which could replace an input the run hadn't read). **Severity: data loss; fix first.**
 
 `F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, a `file-rename` (`find: a`, `replace: b`) then `file-copy` into `F` with `conflict: overwrite`, run on both files: `BBBB` is lost. With `main` at #745, `b.txt` ends up empty (the copy onto itself, ISS-36's bug). With #752, it ends up `AAAA`. The node copies one file at a time (`bnto-file/src/copy.rs:137`), so it can't see that a later file reads the destination. `skip` (the default) and `rename` keep every file.
 
-- **Fix:** plan the whole batch before copying, as ISS-48's fix does for the output node (`engine/crates/bnto/src/ordered_write/`, on `fix/never-overwrite-unread-input`). Move that ordering into a shared crate both use, or refuse an overwrite whose destination is another input still to be read.
+- **Fix:** plan the whole batch before copying, as the output node's write does (`engine/crates/bnto/src/ordered_write/`). Move that ordering into a shared crate both use, or refuse an overwrite whose destination is another input still to be read.
 - **Regression test:** the repro above keeps `BBBB` under `conflict: overwrite` (or is refused before anything is copied).
 
 ### ISS-53: An interrupted move can leave `.bnto-rename-*` files that later runs collect
 
-**Found:** October 24, 2026 (fixing ISS-48, whose fix reports its swap staging folder on Ctrl+C and has `file-collect` skip it).
+**Found:** October 24, 2026 (fixing the output node's write, which now reports its swap staging folder on Ctrl+C and has `file-collect` skip it).
 
 `bnto_file::relocate` parks a file under a temporary `.bnto-rename-<n>-<leaf>` name while it runs a chain or swap of renames (`engine/crates/bnto-file/src/relocate/execute.rs:139`). An overwrite-mode output or `file-move` interrupted at that point (Ctrl+C runs `process::exit`, which skips cleanup) leaves the parked file under that name, with nothing reporting it. `file-collect` doesn't skip `.bnto-rename-*`, so a later run over the folder picks it up as an input.
 
-- **Fix:** as ISS-48's fix does for its staging folders: register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
+- **Fix:** as the output node's write does for its staging folders (`engine/crates/bnto/src/ordered_write/staging.rs`): register parked names so the Ctrl+C handler names them, and have `file-collect` skip `.bnto-rename-*`.
 - **Regression test:** a parked `.bnto-rename-*` file isn't collected, and an interrupted relocate prints where its parked files are.

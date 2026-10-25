@@ -26,6 +26,11 @@ pub fn channel_reporter(
     progressive: Option<String>,
 ) -> PipelineReporter {
     let progress_tx = tx.clone();
+    // A new run: what an earlier one in this session wrote to the folder
+    // isn't this run's, so a refusal won't list it (`ordered_write::check`).
+    if let Some(dir) = &progressive {
+        crate::ordered_write::forget_progressive(std::path::Path::new(dir));
+    }
     // RefCell: the reporter is `Fn` and only called on the bridge thread.
     let names = RefCell::new(OutputNames::default());
     PipelineReporter::new(move |event| {
@@ -82,6 +87,23 @@ mod tests {
             sent,
             BridgeEvent::Progress(PipelineEvent::IterationCompleted { .. })
         ));
+    }
+
+    #[test]
+    fn a_new_run_forgets_what_earlier_runs_wrote_to_its_folder() {
+        // The TUI runs many recipes in one process. A refusal lists the files
+        // this run's iterations wrote; an earlier run's must not show up.
+        let temp = tempfile::tempdir().unwrap();
+        let earlier = temp.path().join("earlier.txt");
+        crate::ordered_write::note_progressive(&earlier);
+        let paths = [earlier];
+        assert_eq!(crate::ordered_write::already_written(&paths).len(), 1);
+
+        let (tx, _rx) = mpsc::channel();
+        let dir = temp.path().to_string_lossy().into_owned();
+        let _reporter = channel_reporter(&tx, Some(dir));
+
+        assert!(crate::ordered_write::already_written(&paths).is_empty());
     }
 
     #[test]

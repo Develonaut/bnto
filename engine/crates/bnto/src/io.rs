@@ -2,8 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use bnto_core::{PipelineFile, PipelineFileResult, PipelineResult};
+use bnto_core::{PipelineFile, PipelineResult};
 
+use crate::ordered_write;
 use crate::output_names::{self, Renamed};
 
 /// Read a file (or directory) from disk into a PipelineFile.
@@ -47,9 +48,10 @@ pub fn read_pipeline_file(path: &str) -> Result<PipelineFile, String> {
 /// Parent directories are created automatically before writing.
 ///
 /// Uses `FileData::copy_to()` which copies for path-referenced files
-/// and writes bytes for in-memory files. Source files are never modified,
-/// and a file already at its destination, or a made-up name's file already
-/// holding the result's bytes, is left as is.
+/// and writes bytes for in-memory files. Source files are never moved, a
+/// file already at its destination, or a made-up name's file already holding
+/// the result's bytes, is left as is, and a source another write lands on is
+/// read before it's replaced (see `ordered_write`).
 ///
 /// Names that would land on one file are kept apart (see `output_names`).
 pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
@@ -58,12 +60,14 @@ pub fn write_results(result: &PipelineResult, output_dir: &str) -> Result<Placed
 
     let (dests, renamed) = destinations(result, output_dir);
     let unchanged = already_there(result, &dests);
-    for (file, dest) in result.files.iter().zip(&dests) {
-        if !dest.held {
-            write_one(file, &dest.path)?;
-        }
-    }
+    let (paths, held) = split(&dests);
+    ordered_write::write_all(&result.files, &paths, &held, Path::new(output_dir))?;
     Ok(Placed { renamed, unchanged })
+}
+
+/// Each destination's path, and whether it's held (left as is, not written).
+fn split(dests: &[Destination]) -> (Vec<PathBuf>, Vec<bool>) {
+    dests.iter().map(|d| (d.path.clone(), d.held)).unzip()
 }
 
 /// What a write did besides writing: the files given a new name (written, or
@@ -80,6 +84,8 @@ pub struct Placed {
 fn plan_results(result: &PipelineResult, output_dir: &str) -> Result<Placed, String> {
     check_file_names(result)?;
     let (dests, renamed) = destinations(result, output_dir);
+    let (paths, held) = split(&dests);
+    ordered_write::check(&result.files, &paths, &held)?;
     let unchanged = already_there(result, &dests);
     Ok(Placed { renamed, unchanged })
 }
@@ -115,16 +121,6 @@ fn already_there(result: &PipelineResult, dests: &[Destination]) -> usize {
     files
         .filter(|(file, d)| d.held || file.data.is_at(&d.path))
         .count()
-}
-
-fn write_one(file: &PipelineFileResult, out_path: &Path) -> Result<(), String> {
-    if let Some(parent) = out_path.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| format!("Cannot create {}: {e}", parent.display()))?;
-    }
-    file.data
-        .copy_to(out_path)
-        .map_err(|e| format!("Cannot write {}: {e}", out_path.display()))
 }
 
 /// Fail on a result file with no name, for a real write and a dry run alike.
@@ -723,6 +719,41 @@ mod tests {
             ),
             "{outcome:?}"
         );
+    }
+
+    // --- a write onto an input not read yet (ISS-48) ---
+
+    #[test]
+    fn test_write_mode_swapping_two_inputs_names_keeps_both() {
+        // RED (ISS-48): `a` → `b.txt` replaced b.txt before `b` → `a.txt`
+        // read it. The TUI's final write takes this same path.
+        let temp = tempfile::tempdir().unwrap();
+        let (a, b) = (temp.path().join("a.txt"), temp.path().join("b.txt"));
+        std::fs::write(&a, "AAAA").unwrap();
+        std::fs::write(&b, "BBBB").unwrap();
+        let mut result = make_result_with_path(a.clone(), "b.txt");
+        result
+            .files
+            .extend(make_result_with_path(b.clone(), "a.txt").files);
+
+        let outcome =
+            write_results_with_mode(&result, "write", temp.path().to_str().unwrap(), false)
+                .unwrap();
+
+        assert_eq!(std::fs::read_to_string(&a).unwrap(), "BBBB");
+        assert_eq!(std::fs::read_to_string(&b).unwrap(), "AAAA");
+        assert!(
+            matches!(
+                outcome,
+                WriteOutcome::Written {
+                    count: 2,
+                    unchanged: 0,
+                    ..
+                }
+            ),
+            "{outcome:?}"
+        );
+        assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), 2);
     }
 
     // --- output names that clash ---
