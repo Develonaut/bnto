@@ -8,7 +8,7 @@ Write components naturally. Data fetching, state, handlers, derived values -- pu
 
 ### When to extract a hook
 
-- The component is getting long (>80-100 lines of logic + JSX)
+- The component holds ~20+ lines of logic (state, effects, handlers, derived values). ESLint fails a `.tsx` function over 60 lines, JSX included ([code-standards.md](../../rules/code-standards.md)), so extract well before that
 - You want to reuse the same logic in multiple components
 - The logic is complex enough that it's hard to follow inline
 - You want to test the logic independently from rendering
@@ -36,7 +36,7 @@ export function WorkflowTitle({ workflowId }: { workflowId: string }) {
 ```
 
 ```tsx
-// This has earned a hook -- complex state, multiple concerns, 100+ lines.
+// This has earned a hook -- complex state, multiple concerns, more logic than fits inline.
 "use client";
 
 export function WorkflowEditor({ workflowId, onSuccess }: WorkflowEditorProps) {
