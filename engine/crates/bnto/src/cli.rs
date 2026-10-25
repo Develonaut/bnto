@@ -126,10 +126,8 @@ pub struct RunArgs {
     #[arg(long)]
     pub dry_run: bool,
 
-    /// JSON file of run vars for {{vars.KEY}} placeholders. Repeatable;
-    /// later files win, and BNTO_VAR_<KEY> beats every file.
-    #[arg(long = "vars", value_name = "FILE")]
-    pub vars: Vec<String>,
+    #[command(flatten)]
+    pub vars: RunVars,
 
     /// Also print the run's summary as one JSON line on stdout, on success
     /// and failure alike. stderr and exit codes are unchanged.
@@ -160,6 +158,19 @@ pub struct DryRunArgs {
     /// inputs make the preview execute the pipeline).
     #[arg(long)]
     pub yes: bool,
+
+    #[command(flatten)]
+    pub vars: RunVars,
+}
+
+// `--vars`, shared by `bnto run` and `bnto dry-run` so a preview fills the
+// same `{{vars.KEY}}` values as the run. No doc comment: clap would read it.
+#[derive(Args)]
+pub struct RunVars {
+    /// JSON file of run vars for {{vars.KEY}} placeholders. Repeatable;
+    /// later files win, and BNTO_VAR_<KEY> beats every file.
+    #[arg(long = "vars", value_name = "FILE")]
+    pub files: Vec<String>,
 }
 
 /// `bnto telemetry` subcommands.

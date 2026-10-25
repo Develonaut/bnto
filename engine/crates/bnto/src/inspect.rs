@@ -5,9 +5,11 @@ use std::process;
 use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
+use crate::cli::DryRunArgs;
 use crate::consent::check_trust;
+use crate::dry_run_hint::DryRunHint;
 use crate::unfilled_fields::refuse_unfilled;
-use crate::{dry_run, host_support, info, list, recipe_source};
+use crate::{dry_run, host_support, info, list, recipe_source, vars};
 
 /// `bnto list` — print the catalog grouped by category.
 pub fn list_recipes(catalog: &RecipeCatalog) {
@@ -24,29 +26,23 @@ pub fn show_info(slug: &str, catalog: &RecipeCatalog) {
 }
 
 /// `bnto dry-run <recipe>` — preview what a recipe (slug or path) will do.
-pub fn show_dry_run(
-    recipe_arg: &str,
-    inputs: &[String],
-    param_overrides: &[String],
-    yes: bool,
-    catalog: &RecipeCatalog,
-) {
+pub fn show_dry_run(args: &DryRunArgs, catalog: &RecipeCatalog) {
+    let (recipe_arg, params) = (args.recipe.as_str(), args.param.as_slice());
     let json = read_recipe(recipe_arg, catalog);
     refuse_unsupported_host(recipe_arg, &json);
-    or_exit(refuse_unfilled(&json, param_overrides));
+    // Vars fill in where `bnto run` fills them, so the preview, its unset
+    // checks and its consent see the values the run would use.
+    let json = or_exit(vars::apply(&json, &args.vars.files));
+    or_exit(refuse_unfilled(&json, params));
     // With inputs the preview executes the pipeline (shell commands
     // included), so it needs the same consent as `bnto run`.
-    if !inputs.is_empty() {
-        check_trust(recipe_arg, &json, param_overrides, yes, catalog);
+    if !args.inputs.is_empty() {
+        let given = DryRunHint::new(recipe_arg, params, &args.vars.files);
+        check_trust(&json, &given, args.yes, catalog);
         dry_run::print_shell_note(&json);
     }
-    let result = or_exit(dry_run::dry_run_recipe(
-        recipe_arg,
-        &json,
-        inputs,
-        param_overrides,
-    ));
-    dry_run::print_dry_run(recipe_arg, &result);
+    let result = dry_run::dry_run_recipe(recipe_arg, &json, &args.inputs, params);
+    dry_run::print_dry_run(recipe_arg, &or_exit(result));
 }
 
 /// The recipe's JSON (a slug, else a path), or exit: "Unknown recipe" when

@@ -9,6 +9,7 @@ use colored::Colorize;
 
 use crate::catalog::RecipeCatalog;
 use crate::consent::check_trust;
+use crate::dry_run_hint::DryRunHint;
 use crate::run_output::write_output;
 use crate::run_verdict::RunVerdict;
 use crate::run_watchdog::{self, Watched};
@@ -72,9 +73,9 @@ pub fn run_recipe(
     // values that run, and the prompt shows them rather than the template.
     let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
     // Before consent, so nobody approves a run the engine would refuse.
-    let unfilled = refuse_unfilled(&raw_json, param_overrides);
-    verdict.or_fail(unfilled, "Error:");
-    check_trust(recipe_path, &raw_json, param_overrides, flags.yes, catalog);
+    verdict.or_fail(refuse_unfilled(&raw_json, param_overrides), "Error:");
+    let given = DryRunHint::new(recipe_path, param_overrides, flags.vars);
+    check_trust(&raw_json, &given, flags.yes, catalog);
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
     let limited = run_limit::apply(&prepared.definition_json, flags.timeout);

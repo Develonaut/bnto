@@ -32,7 +32,6 @@
 | ISS-37 | The homepage loads ~500 KB of JS that competes with its CSS                                           | web perf    | Open                                             |
 | ISS-38 | CI and release skip jobs for root files those jobs read                                               | ci          | Open                                             |
 | ISS-39 | The pre-commit hook in a worktree replays stale Turbo lint results                                    | tooling     | Open                                             |
-| ISS-40 | `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled                                     | cli         | Open                                             |
 | ISS-43 | The TUI labels overwrite results with the first file's folder only                                    | tui         | Open                                             |
 | ISS-44 | In the browser, a renamed or removed param's error says to run `bnto migrate` (needs Ryan's decision) | web         | Open                                             |
 | ISS-45 | Progressive loop writes in message/none mode land in the folder unlisted                              | cli tui     | Open                                             |
@@ -243,15 +242,6 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 
 - **Fix:** run the hook's Turbo tasks with `GIT_DIR` unset (or `--force` for lint), and confirm the hash matches a plain run.
 - **Regression test:** in a worktree, a staged lint-breaking change to the base config fails `git commit`.
-
-### ISS-40: `bnto dry-run` has no `--vars`, so `{{vars.*}}` previews unfilled
-
-**Found:** October 24, 2026 (fixing ISS-11).
-
-`bnto run` takes `--vars <FILE>` for `{{vars.KEY}}` placeholders (`engine/crates/bnto/src/cli.rs:129-132`); `DryRunArgs` (`cli.rs:148-162`) has only the recipe, inputs, `-p` and `--yes`. A dry run of a recipe that uses `{{vars.*}}` previews it with the placeholders unfilled, so it shows a different plan from the run it previews.
-
-- **Fix:** give `dry-run` the same `--vars` (shared argument struct with `run`), and fill vars before the preview.
-- **Regression test:** a sandboxed `bnto dry-run --vars` shows the filled value where `bnto run` would use it.
 
 ### ISS-43: The TUI labels overwrite results with the first file's folder only
 
