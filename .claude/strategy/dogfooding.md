@@ -24,7 +24,7 @@ Recipes first, using `shell-run` where bnto has no node yet; then each product g
 | 7c  | Project recipes in the TUI                         | `feat/tui-project-recipes`     | Not started   |
 | 7d  | Move bnto's dogfood recipes to `.bnto/recipes/`    | `chore/move-dogfood-recipes`   | Not started   |
 | 8   | `file-inspect` line count, replacing the awk step  | `feat/file-inspect-line-count` | Not started   |
-| 9   | Content search, replacing the grep step            | `feat/content-search`          | Not started   |
+| 9   | Content search, replacing the grep steps           | `feat/content-search`          | Not started   |
 | 10  | `http-request` node, replacing the curl steps      | `feat/http-request`            | Not started   |
 
 ```
