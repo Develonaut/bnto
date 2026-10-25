@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-57**.
+- **IDs never get reused.** The next one is **ISS-58**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -24,7 +24,6 @@
 | ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-25 | Watermark Images runs with an empty overlay and fails every time                                      | engine      | Open                                             |
 | ISS-26 | The site's custom `$pageview` overwrites `$current_url` with a bare path                              | web         | Open                                             |
-| ISS-27 | `recipe_run_failed` always reports `errorCategory: "unknown"`                                         | core        | Open                                             |
 | ISS-28 | `result_downloaded` is never sent for the automatic download                                          | web         | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
@@ -48,6 +47,7 @@
 | ISS-54 | The `scripts/seo` tests never run                                                                     | tooling     | Scheduled ([plan](strategy/changelog.md))        |
 | ISS-55 | A printed command line with a word that starts with `=` fails in zsh                                  | cli         | Open                                             |
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
+| ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 
 ---
 
@@ -141,18 +141,6 @@ A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{
 - **Effect:** `$pathname` and `$host` are still correct, but URL filters, entry-URL and full-URL breakdowns are wrong.
 - **Fix:** drop the override. Better, drop the manual hook and let posthog-js track App Router navigation (`capture_pageview: "history_change"`).
 - **Regression test:** the telemetry E2E specs (`apps/web/e2e/telemetry/`) never assert on `$pageview`'s properties. Assert the captured `$pageview` has an absolute `$current_url`.
-
-### ISS-27: `recipe_run_failed` always reports `errorCategory: "unknown"`
-
-**Found:** October 24, 2026 (PostHog review).
-
-- **What PostHog shows:** 13 of 13 `recipe_run_failed` events in 90 days have `errorCategory = unknown`.
-- **Why:** the patterns in `packages/core/src/lib/categorizeError.ts:3-9` match none of the real messages:
-  - Safari's network failure "Load failed";
-  - Chrome's "The requested file could not be read…";
-  - the engine's "Failed to decode…".
-- **Fix:** add categories from the messages actually seen, each with a unit test.
-- **Regression test:** `categorizeError.test.ts` uses made-up messages (`"NetworkError: failed to fetch"`), never ones users hit. Add a case for each real message above, so a category can't drift from what browsers and the engine actually say.
 
 ### ISS-28: `result_downloaded` is never sent for the automatic download
 
@@ -387,3 +375,12 @@ On Windows, `format_command_line` (`engine/crates/bnto/src/dry_run/shell.rs`) qu
 
 - **Fix:** on Windows, put `& ` before a program word that needed quotes.
 - **Regression test:** a Windows unit test: a step whose `command` holds a space shows `& '<command>' …`.
+
+### ISS-57: `errorCategory` reports `out_of_memory` for any message containing `oom`
+
+**Found:** October 25, 2026 (fixing ISS-27, the error categories).
+
+`categorizeError` (`packages/core/src/lib/categorizeError.ts`) matches `/out of memory|OOM/i`: case-insensitive, with no word boundary. Any message with "oom" in it (`room`, `zoom`, `bloom`) is reported as `out_of_memory`, and the pattern runs before the `load failed`, `file_unreadable` and `decode_failed` patterns, so it can take their messages too. Some engine messages carry a file name (`engine/crates/bnto-core/src/executor/primitive.rs:148`), so a run on `bedroom.jpg` that fails with `Invalid input: Node 'rename': {{item.name}} has no value for bedroom.jpg (it has no item values)` is reported as `out_of_memory` instead of `unknown`.
+
+- **Fix:** match `OOM` only as a whole, upper-case word (`/out of memory/i` or `/\bOOM\b/`).
+- **Regression test:** the message above isn't `out_of_memory`, and neither is `"zoom"` or `"Classroom"`, while `"out of memory"` and `"OOM"` still are.
