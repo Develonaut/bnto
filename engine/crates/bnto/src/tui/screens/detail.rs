@@ -139,7 +139,7 @@ impl DetailModel {
     /// Production code uses `detail_loader::load_detail_from_entry()` directly.
     #[cfg(test)]
     pub fn from_slug(slug: &str, registry: &bnto_core::registry::NodeRegistry) -> Option<Self> {
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         let entry = catalog.resolve(slug)?;
         super::detail_loader::load_detail_from_entry(entry, registry, None)
     }

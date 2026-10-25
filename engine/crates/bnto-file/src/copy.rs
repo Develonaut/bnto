@@ -389,6 +389,8 @@ mod tests {
 
     #[test]
     fn test_copy_fails_without_create_dirs() {
+        let base = TempDir::new().unwrap();
+        let dest = base.path().join("missing");
         let processor = FileCopy::new();
         let progress = ProgressReporter::new_noop();
 
@@ -396,10 +398,7 @@ mod tests {
             b"data",
             "file.txt",
             params(&[
-                (
-                    "destination",
-                    serde_json::json!("/tmp/nonexistent_bnto_test_dir_12345"),
-                ),
+                ("destination", serde_json::json!(dest.to_str().unwrap())),
                 ("createDirs", serde_json::json!(false)),
             ]),
         );

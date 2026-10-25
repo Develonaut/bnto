@@ -87,7 +87,6 @@ mod tests {
     use super::*;
     use crate::catalog::{RecipeCatalog, RecipeSource};
     use std::fmt::Write;
-    use std::path::Path;
 
     /// Format grouped recipes as plain text (no ANSI colors) for test assertions.
     fn format_recipe_list(groups: &[RecipeGroup]) -> String {
@@ -278,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_all_catalog_recipes_appear_in_output() {
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let catalog = RecipeCatalog::bundled_only();
         let groups = group_recipes(catalog.all());
         let total: usize = groups.iter().map(|g| g.recipes.len()).sum();
         assert_eq!(

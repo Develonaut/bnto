@@ -553,7 +553,7 @@ mod tests {
         // yt-dlp is declared only in download-video's recipe-level `requires`
         // (no processor declares it), so it must come from recipe scanning.
         let registry = bnto_engine::create_registry();
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let catalog = RecipeCatalog::bundled_only();
         let deps = collect_all_recipe_deps(&registry, &catalog);
         assert!(deps.iter().any(|d| d.binary == "yt-dlp"), "got: {deps:?}");
     }
@@ -582,7 +582,7 @@ mod tests {
 
     #[test]
     fn read_recipe_json_from_catalog() {
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent"));
+        let catalog = RecipeCatalog::bundled_only();
         let json = read_recipe_json("download-video", &catalog);
         assert!(json.contains("download-video") || json.contains("shell-run"));
     }

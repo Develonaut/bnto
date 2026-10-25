@@ -406,7 +406,8 @@ mod tests {
 
     #[test]
     fn list_library_recipes_missing_dir() {
-        assert!(list_library_recipes(std::path::Path::new("/nonexistent/path")).is_empty());
+        let tmp = tempfile::tempdir().unwrap();
+        assert!(list_library_recipes(&tmp.path().join("missing")).is_empty());
     }
 
     #[test]

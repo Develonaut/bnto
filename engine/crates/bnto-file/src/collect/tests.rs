@@ -260,10 +260,8 @@ fn test_collect_nonexistent_dir_fails() {
     let processor = FileCollect::new();
     let progress = ProgressReporter::new_noop();
 
-    let input = dir_input(
-        Path::new("/nonexistent/path/that/does/not/exist"),
-        serde_json::Map::new(),
-    );
+    let tmp = TempDir::new().unwrap();
+    let input = dir_input(&tmp.path().join("missing"), serde_json::Map::new());
     let result = processor.process(input, &progress, &NoopContext);
 
     assert!(result.is_err(), "Nonexistent directory should fail");

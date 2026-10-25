@@ -1,0 +1,88 @@
+{
+  "id": "nonexistent-paths",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Nonexistent Paths",
+  "metadata": {
+    "description": "Fails the run naming every line of a Rust file under engine/crates that points at a made-up absolute path such as \"/nonexistent\": on Windows that is C:\\nonexistent, which can exist (gotchas.md). Run it from the repo root."
+  },
+  "nodes": [
+    {
+      "id": "input",
+      "type": "input",
+      "parameters": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "crates",
+      "type": "file-list",
+      "parameters": {
+        "paths": ["engine/crates"]
+      }
+    },
+    {
+      "id": "walk",
+      "type": "file-collect",
+      "parameters": {
+        "flatten": false
+      }
+    },
+    {
+      "id": "rust",
+      "type": "file-filter",
+      "parameters": {
+        "namePattern": "[.]rs$",
+        "patternMode": "regex",
+        "keep": true
+      }
+    },
+    {
+      "id": "search",
+      "type": "shell-run",
+      "parameters": {
+        "shell": "sh",
+        "script": "# nonexistent-paths: fail naming every line of an engine Rust file that\n# points at a made-up absolute path such as \"/nonexistent\". On Windows that is\n# C:\\nonexistent, which can exist (gotchas.md, Windows Portability): use a\n# path under a temp dir instead. Each argument is one file, relative to\n# engine/crates.\n# Gap: a content-search node will replace this step (dogfooding.md, PR 9).\ncd engine/crates || exit 2\nfound=$(grep -HnE '\"/[^\"]*nonexistent' -- \"$@\")\ncase $? in\n  0) ;;\n  1) echo \"No engine Rust file points at a made-up absolute path.\"; exit 0 ;;\n  *) exit 2 ;;\nesac\necho \"Made-up absolute paths (use a path under a temp dir; see gotchas.md):\" >&2\nprintf '%s\\n' \"$found\" | sed 's|^|  engine/crates/|' >&2\nexit 1\n",
+        "args": [
+          {
+            "each": ["{{file}}"]
+          }
+        ]
+      }
+    },
+    {
+      "id": "output",
+      "type": "output",
+      "parameters": {
+        "mode": "none"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "input",
+      "target": "crates"
+    },
+    {
+      "id": "e2",
+      "source": "crates",
+      "target": "walk"
+    },
+    {
+      "id": "e3",
+      "source": "walk",
+      "target": "rust"
+    },
+    {
+      "id": "e4",
+      "source": "rust",
+      "target": "search"
+    },
+    {
+      "id": "e5",
+      "source": "search",
+      "target": "output"
+    }
+  ]
+}

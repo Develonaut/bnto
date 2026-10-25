@@ -133,10 +133,9 @@ fn collect_types(nodes: &[bnto_core::PipelineNode], types: &mut Vec<String>) {
 mod tests {
     use super::*;
     use std::fmt::Write;
-    use std::path::Path;
 
     fn catalog() -> RecipeCatalog {
-        RecipeCatalog::load(Path::new("/nonexistent"))
+        RecipeCatalog::bundled_only()
     }
 
     /// Format recipe info as plain text (no ANSI colors) for test assertions.

@@ -250,7 +250,7 @@ mod tests {
     #[test]
     fn extensions_for_compress_images() {
         let registry = bnto_engine::create_registry();
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         let entry = catalog.resolve("compress-images").unwrap();
         let exts = extensions_for_recipe(&entry.definition_json, &registry);
         assert!(

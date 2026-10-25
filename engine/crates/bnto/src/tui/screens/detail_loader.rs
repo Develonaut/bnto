@@ -342,7 +342,7 @@ mod tests {
 
     /// Test convenience: resolve a slug through the catalog and load its detail.
     fn load_detail(slug: &str, registry: &NodeRegistry) -> Option<DetailModel> {
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         let entry = catalog.resolve(slug)?;
         load_detail_from_entry(entry, registry, None)
     }
@@ -489,7 +489,7 @@ mod tests {
     #[test]
     fn all_catalog_recipes_load() {
         let registry = registry();
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         for entry in catalog.all() {
             let result = load_detail_from_entry(entry, &registry, None);
             assert!(
@@ -503,7 +503,7 @@ mod tests {
     #[test]
     fn all_loaded_params_have_labels() {
         let registry = registry();
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         for entry in catalog.all() {
             let detail = load_detail_from_entry(entry, &registry, None).unwrap();
             for param in &detail.params {
@@ -826,7 +826,7 @@ mod tests {
 
     #[test]
     fn download_video_recipe_json_parses() {
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         let entry = catalog.resolve("download-video").unwrap();
         let def: PipelineDefinition =
             serde_json::from_str(&entry.definition_json).expect("should parse");

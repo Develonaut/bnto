@@ -426,7 +426,8 @@ mod tests {
 
     #[test]
     fn load_missing_file_returns_error() {
-        let result = EditorModel::load(Path::new("/nonexistent/recipe.bnto.json"));
+        let dir = tempfile::tempdir().unwrap();
+        let result = EditorModel::load(&dir.path().join("recipe.bnto.json"));
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), EditorError::NotFound(_)));
     }

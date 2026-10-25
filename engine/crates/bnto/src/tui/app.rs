@@ -277,7 +277,7 @@ fn handle_open_settings(model: AppModel) -> AppModel {
 /// slugs or parse failures.
 #[cfg(test)]
 fn resolve_input_mode_for_slug(slug: &str) -> bnto_core::InputMode {
-    let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+    let catalog = crate::catalog::RecipeCatalog::bundled_only();
     let Some(entry) = catalog.resolve(slug) else {
         return bnto_core::InputMode::FileUpload;
     };
@@ -1524,7 +1524,7 @@ mod tests {
         // Write a recipe file so the library has entries.
         let recipes_dir = paths.recipes_dir();
         let _ = std::fs::create_dir_all(&recipes_dir);
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         std::fs::write(
             recipes_dir.join("compress-images.bnto.json"),
             &catalog.resolve("compress-images").unwrap().definition_json,
@@ -1707,7 +1707,7 @@ mod tests {
         // Write a recipe file.
         let recipes_dir = paths.recipes_dir();
         let _ = std::fs::create_dir_all(&recipes_dir);
-        let catalog = crate::catalog::RecipeCatalog::load(std::path::Path::new("/nonexistent"));
+        let catalog = crate::catalog::RecipeCatalog::bundled_only();
         std::fs::write(
             recipes_dir.join("compress-images.bnto.json"),
             &catalog.resolve("compress-images").unwrap().definition_json,

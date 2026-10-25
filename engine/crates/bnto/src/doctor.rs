@@ -232,11 +232,10 @@ fn print_recipe_secret_status(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::Path;
 
     #[test]
     fn parse_catalog_parses_every_bundled_recipe() {
-        let catalog = RecipeCatalog::load(Path::new("/nonexistent/path"));
+        let catalog = RecipeCatalog::bundled_only();
         let recipes = parse_catalog(&catalog);
         assert_eq!(recipes.definitions.len(), 22);
         assert_eq!(recipes.slugs.len(), 22);

@@ -61,6 +61,7 @@ tasks:
       - task: check:budgets
       - task: check:assets
       - task: check:rust-size
+      - task: check:nonexistent-paths
       - echo "=== all checks passed ==="
 
   # CLI tasks (engine/crates/bnto)
@@ -160,6 +161,12 @@ tasks:
     deps: [cli:build]
     # --yes: the line count is a shell step, and Task can't answer consent.
     cmds: ["{{.BNTO}} run recipes/rust-file-size.bnto.json --yes"]
+
+  check:nonexistent-paths:
+    desc: Fail naming every engine Rust line that points at a made-up absolute path like "/nonexistent" (gotchas.md)
+    deps: [cli:build]
+    # --yes: the search is a shell step, and Task can't answer consent.
+    cmds: ["{{.BNTO}} run recipes/nonexistent-paths.bnto.json --yes"]
 
   check:grab-bags:
     desc: "Fail naming every utils/helpers/hooks.ts(x) file: the ones given (task check:grab-bags -- <files>), else the staged ones"
