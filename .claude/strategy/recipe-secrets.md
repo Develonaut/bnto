@@ -154,7 +154,8 @@ Add an optional `secrets` array to `PipelineDefinition`:
 - `key` matches the `{{env.KEY}}` placeholder used in node params
 - `required: true` means the pipeline refuses to start without it
 - `required: false` means the pipeline runs with a fallback (empty string or default)
-- The `secrets` array is purely declarative — it doesn't change how `{{env.*}}` resolves, it just enables pre-flight checks
+- In a step's params, the `secrets` array doesn't change how `{{env.*}}` resolves; it just enables pre-flight checks
+- The output node's `directory` is stricter: it fills `{{env.KEY}}` only for a declared `KEY`, and refuses one that's undeclared, unset or empty (see [recipe-fields.md](recipe-fields.md#the-output-folder))
 
 **Validation at execution time:**
 

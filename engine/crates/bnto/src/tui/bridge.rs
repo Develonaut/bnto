@@ -120,7 +120,7 @@ fn try_run_bridge(
     // Prepare inputs (validates files, applies param overrides to definition).
     let prepared = input::prepare_inputs(&job.definition_json, &args, &override_args)?;
     let mode = resolve_mode(&job.definition_json);
-    let output_dir = resolve_output_dir(job, &mode, ctx, &prepared.files);
+    let output_dir = resolve_output_dir(job, &mode, ctx, &prepared)?;
     let reporter = channel_reporter(tx, progressive_dir(job.preview_mode, &mode, &output_dir));
     // Run the pipeline (blocking — this is why we're on a background thread).
     let Some(result) = run_watched(tx, prepared, &reporter, ctx)? else {
@@ -208,21 +208,24 @@ fn resolve_mode(definition_json: &str) -> String {
 
 /// Resolve the output directory.
 ///
+/// The recipe's own folder is filled first in every mode, as `bnto run`
+/// does, so a placeholder nothing fills stops the run before any step.
 /// Preview mode writes nothing (empty string). Overwrite mode reports the
 /// source directory, since files are renamed in place.
 fn resolve_output_dir(
     job: &BridgeJob,
     mode: &str,
     ctx: &NativeContext,
-    files: &[bnto_core::PipelineFile],
-) -> String {
-    if job.preview_mode {
+    prepared: &input::PreparedInput,
+) -> Result<String, String> {
+    let recipe_dir = recipe_output_dir(&prepared.definition_json, ctx, &prepared.files)?;
+    Ok(if job.preview_mode {
         String::new()
     } else if mode == "overwrite" {
         source_dir(&job.selected_files)
     } else {
-        run_output_dir(job, ctx, files)
-    }
+        run_output_dir(&job.slug, recipe_dir)
+    })
 }
 
 /// Directory of the first selected file (or ".").
@@ -238,14 +241,10 @@ fn source_dir(selected_files: &[PathBuf]) -> String {
 /// folder (as `bnto run` resolves it), else the TUI's temp folder for it.
 /// A recipe's folder may be the user's (`~/Documents/Reports`), so nothing
 /// in it is deleted; the write replaces only files named like an output.
-fn run_output_dir(
-    job: &BridgeJob,
-    ctx: &NativeContext,
-    files: &[bnto_core::PipelineFile],
-) -> String {
-    let output_dir = match recipe_output_dir(&job.definition_json, ctx, files) {
+fn run_output_dir(slug: &str, recipe_dir: Option<String>) -> String {
+    let output_dir = match recipe_dir {
         Some(dir) => PathBuf::from(dir),
-        None => emptied_temp_dir(&job.slug),
+        None => emptied_temp_dir(slug),
     };
     let _ = std::fs::create_dir_all(&output_dir);
     output_dir.to_string_lossy().into_owned()
@@ -464,6 +463,71 @@ mod tests {
         fs::write(&earlier, b"old").unwrap();
         run_on_photo("replace", rename_recipe_json(Some(folder.path())));
         assert_eq!(fs::read(&earlier).unwrap(), b"new");
+    }
+
+    #[test]
+    fn a_folder_placeholder_nothing_fills_is_refused_before_the_folder_is_made() {
+        // ISS-22: `out-{{ctx.nope}}` used to become `out-` and be created.
+        // Preview and overwrite runs refuse it too, as `bnto run` does.
+        for (preview_mode, mode) in [(false, "write"), (true, "write"), (false, "overwrite")] {
+            let parent = tempfile::tempdir().unwrap();
+            let mut def: serde_json::Value = serde_json::from_str(&rename_recipe_json(Some(
+                &parent.path().join("out-{{ctx.nope}}"),
+            )))
+            .unwrap();
+            def["nodes"][2]["parameters"]["mode"] = mode.into();
+            let inputs = tempfile::tempdir().unwrap();
+            let photo = inputs.path().join("photo.txt");
+            fs::write(&photo, b"new").unwrap();
+            let job = BridgeJob {
+                slug: "unfilled".into(),
+                definition_json: def.to_string(),
+                selected_files: vec![photo.clone()],
+                param_overrides: HashMap::new(),
+                preview_mode,
+            };
+            let (tx, rx) = mpsc::channel();
+            run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
+            let events: Vec<BridgeEvent> = rx.try_iter().collect();
+            let [BridgeEvent::Error(message)] = events.as_slice() else {
+                panic!("{mode}, preview {preview_mode}: expected only an error, got {events:?}");
+            };
+            assert!(message.contains("{{ctx.nope}}"), "{message}");
+            let made = fs::read_dir(parent.path()).unwrap().count();
+            assert_eq!(made, 0, "{mode}, preview {preview_mode}: made a folder");
+            assert!(photo.exists(), "{mode}, preview {preview_mode}: a step ran");
+        }
+    }
+
+    #[test]
+    fn the_forms_value_for_an_output_field_names_the_folder() {
+        // ISS-22: the folder is filled from the definition the form's values
+        // were applied to, not the recipe as written.
+        let parent = tempfile::tempdir().unwrap();
+        let mut def: serde_json::Value = serde_json::from_str(&rename_recipe_json(Some(
+            &parent.path().join("{{fields.sub}}"),
+        )))
+        .unwrap();
+        def["nodes"][2]["fields"] =
+            serde_json::json!({ "sub": { "type": "string", "label": "Sub", "default": "draft" } });
+        let inputs = tempfile::tempdir().unwrap();
+        let photo = inputs.path().join("photo.txt");
+        fs::write(&photo, b"new").unwrap();
+        let job = BridgeJob {
+            slug: "field-folder".into(),
+            definition_json: def.to_string(),
+            selected_files: vec![photo],
+            param_overrides: HashMap::from([("output:sub".to_string(), "final".to_string())]),
+            preview_mode: false,
+        };
+        let (tx, rx) = mpsc::channel();
+        run_bridge_in(&tx, &job, NativeContext::current_dir().unwrap());
+        let Some(BridgeEvent::Done(done)) = rx.try_iter().last() else {
+            panic!("expected the run to finish");
+        };
+        let folder = parent.path().join("final");
+        assert_eq!(done.output_dir, folder.to_string_lossy());
+        assert_eq!(fs::read(folder.join("renamed-photo.txt")).unwrap(), b"new");
     }
 
     // --- Progressive loop output ---

@@ -170,16 +170,17 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 
 ### Active Namespaces
 
-| Namespace         | Source                                      | Example                    | Resolved By                                                                  |
-| ----------------- | ------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------- |
-| `{{fields.*}}`    | Field values (user-configured or defaults)  | `{{fields.format}}`        | Engine, before node execution; an unfilled one fails the run before any step |
-| `{{output_dir}}`  | Engine execution context                    | `{{output_dir}}/file.mp4`  | Shell-command processor                                                      |
-| `{{url}}`         | Input node URL value                        | `{{url}}`                  | Shell-command processor                                                      |
-| `{{input}}`       | Input node text value                       | `{{input}}`                | Shell-command processor                                                      |
-| `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`) | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run or `bnto dry-run`; an unset key fails either  |
-| `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms       | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                                     |
-| `{{node.<id>.*}}` | An earlier node's output metadata           | `{{node.step1.count}}`     | Engine, before each node runs (see below)                                    |
-| `{{entry.*}}`     | One entry of a `report` node's `each` list  | `{{entry.status}}`         | The `report` node, once per entry (see below)                                |
+| Namespace         | Source                                            | Example                    | Resolved By                                                                    |
+| ----------------- | ------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| `{{fields.*}}`    | Field values (user-configured or defaults)        | `{{fields.format}}`        | Engine, before node execution; an unfilled one fails the run before any step   |
+| `{{output_dir}}`  | Engine execution context                          | `{{output_dir}}/file.mp4`  | Shell-command processor                                                        |
+| `{{url}}`         | Input node URL value                              | `{{url}}`                  | Shell-command processor                                                        |
+| `{{input}}`       | Input node text value                             | `{{input}}`                | Shell-command processor                                                        |
+| `{{vars.*}}`      | Run vars (`--vars` files, `BNTO_VAR_<KEY>`)       | `{{vars.Drive}}/Art`       | Consumer (CLI), before the run or `bnto dry-run`; an unset key fails either    |
+| `{{env.*}}`       | The environment, a project `.env`, `~/.bnto/.env` | `{{env.API_KEY}}`          | Engine, before node execution; the output folder reads only declared `secrets` |
+| `{{ctx.started}}` | The run's start, RFC 3339 UTC with ms             | `2026-10-17T15:22:56.123Z` | Engine, the same for every node of a run                                       |
+| `{{node.<id>.*}}` | An earlier node's output metadata                 | `{{node.step1.count}}`     | Engine, before each node runs (see below)                                      |
+| `{{entry.*}}`     | One entry of a `report` node's `each` list        | `{{entry.status}}`         | The `report` node, once per entry (see below)                                  |
 
 ### Per-Entry References
 
@@ -197,14 +198,22 @@ All template variables use Handlebars-style double-brace syntax (`{{...}}`). Thi
 - **Who can read it.** Only nodes that run after it in the same run, in execution order. At a level with edges that's the topological order, so a node on another branch that ran earlier counts, not only the nodes upstream of it. A reference to a node that hasn't run yet, or to a key it didn't set, behaves as any unknown placeholder: a sole placeholder stays as written, an interpolated one becomes empty.
 - **Types.** A sole placeholder (`"{{node.step1.names}}"`) keeps the JSON type: an array stays an array, a number a number. Interpolation (`"found {{node.step1.count}}"`) stringifies.
 - **Containers.** A child's record is visible to its later siblings and to every node after the container. Loop iterations are independent: a child reads what was recorded before the loop and by earlier siblings in its own iteration, never another iteration's. After the loop, the iterations' records are merged in order, so the last iteration wins a shared key and a count key adds up. `iteration: "auto"` per-file runs behave the same way.
-- **The input node.** `{{node.<input id>.*}}` holds the first input file's `filename`, `filename_stem`, `filename_title` and `filename_ext`, seeded before any node runs. The CLI and TUI also resolve these in the output directory before the run; processing nodes' records don't exist yet there.
+- **The input node.** `{{node.<input id>.*}}` holds the first input file's `filename`, `filename_stem`, `filename_title` and `filename_ext`, seeded before any node runs. The output folder can read these too (see below); processing nodes' records don't exist yet there.
+
+### The Output Folder
+
+`bnto run` and the TUI make the output node's `directory` before any step runs, so its placeholders are filled then, by one function both share (`bnto_core::fill_output_directory`):
+
+- **What fills it.** The output node's fields in scope, `{{env.<KEY>}}` for a `KEY` the recipe declares in `secrets`, every `{{ctx.*}}` but `started` (the run hasn't started), and the input node's file metadata. `bnto run` fills `{{vars.*}}` in the whole recipe before this; the TUI fills no vars.
+- **Anything else stops the run.** A placeholder with no value, an empty one (`{{env.ROOT}}/out` would be `/out`), or one nothing fills before the run (`{{item.*}}`, a processing step's `{{node.*}}`, an undeclared `{{env.*}}`) is refused, one line each, before any folder is made. `bnto run` refuses before consent; the TUI asks consent first (ISS-77). This holds in every output mode and in a dry run or preview, even where nothing is written to the folder, as `bnto check` flags it in any mode. `--output` replaces the folder, so it skips all this.
+- **A secret in a folder name is printed.** The run's summary names the folder it wrote to, filled in.
+- **`bnto check`** flags the ones no run can fill. It passes `{{vars.*}}`, which `bnto run` can fill. An undeclared `{{fields.*}}` is the field check's finding.
 
 ### Future Namespaces (Not Implemented)
 
-| Namespace    | Source                | Example         | Use Case              |
-| ------------ | --------------------- | --------------- | --------------------- |
-| `{{env.*}}`  | Environment variables | `{{env.HOME}}`  | User-specific paths   |
-| `{{meta.*}}` | Recipe metadata       | `{{meta.name}}` | Dynamic output naming |
+| Namespace    | Source          | Example         | Use Case              |
+| ------------ | --------------- | --------------- | --------------------- |
+| `{{meta.*}}` | Recipe metadata | `{{meta.name}}` | Dynamic output naming |
 
 ---
 

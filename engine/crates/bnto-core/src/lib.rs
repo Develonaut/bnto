@@ -142,6 +142,9 @@ pub mod required_params;
 /// `{{fields.*}}` references no field value fills.
 pub mod missing_fields;
 
+/// The output node's `directory`, filled before a run, or refused.
+pub mod output_directory;
+
 /// Civil (calendar) UTC time from epoch time, with no date crate.
 /// `rfc3339_utc` is the one format for times nodes and templates report.
 pub mod time;
@@ -166,10 +169,7 @@ pub use editor::{EditorError, EditorModel, EditorNode, EditorSnapshot, EditorSou
 pub use errors::BntoError;
 pub use events::{PipelineEvent, PipelineReporter};
 pub use executor::execute_pipeline;
-pub use executor::template::{
-    build_input_metadata, build_node_outputs_for_input, resolve_ctx_templates,
-    resolve_node_templates,
-};
+pub use executor::template::{build_input_metadata, build_node_outputs_for_input};
 pub use field_def::{FieldDef, FieldDefs, FieldOption};
 pub use file_data::FileData;
 pub use graph::{Flow, GraphError, LevelGraph, Source, level_errors, level_flow};
@@ -179,10 +179,11 @@ pub use metadata::{
     NodeMetadata, NodeTypeInfo, ParamCondition, ParamConditionEntry, ParameterDef, ParameterType,
     all_node_types, io_container::io_container_param_defs, node_type_params,
 };
+pub use output_directory::fill_output_directory;
 pub use pipeline::{
     INPUT_SIZE_KEY, InputMode, IterationMode, NodeMetadataById, PipelineDefinition, PipelineFile,
     PipelineFileResult, PipelineNode, PipelineResult, PipelineSettings, first_processing_node_id,
-    resolve_input_mode, resolve_output_directory, resolve_output_mode,
+    resolve_input_mode, resolve_output_mode,
 };
 pub use pipeline_edge::PipelineEdge;
 pub use processor::{BatchFile, BatchInput, NodeProcessor};

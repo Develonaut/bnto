@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-77**.
+- **IDs never get reused.** The next one is **ISS-80**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -19,7 +19,6 @@
 | ISS-16 | `@bnto/nodes` lint skips `scripts/`; codegen script is 1,381 lines                                    | tooling     | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-17 | The `/workflow-expert` skill's node inventory is stale                                                | docs        | Scheduled ([plan](strategy/open-issues-plan.md)) |
 | ISS-18 | A Windows process test times out waiting 20 s for PowerShell                                          | engine test | Scheduled ([plan](strategy/open-issues-plan.md)) |
-| ISS-22 | The output node's `directory` leaves `{{env.*}}` as a literal folder name                             | cli         | Open                                             |
 | ISS-29 | Errors on bnto.io go unseen: exception capture is off                                                 | core        | Open                                             |
 | ISS-31 | Another app's events land in bnto.io's PostHog project                                                | analytics   | Open                                             |
 | ISS-33 | Output names and extension reads split on a dot in a folder name                                      | engine      | Open                                             |
@@ -56,6 +55,9 @@
 | ISS-74 | A required param with no value is refused only after consent and after `-o` is made                   | cli         | Open                                             |
 | ISS-75 | The CLI can't give Watermark Images an overlay: `-p` takes base64 text, not a file                    | cli         | Open                                             |
 | ISS-76 | A TUI whose terminal restore fails skips the kept-files report                                        | tui         | Open                                             |
+| ISS-77 | The TUI asks to allow a shell recipe's commands for a run it then refuses                             | tui         | Open                                             |
+| ISS-78 | The TUI never fills `{{vars.*}}`: a step gets the text as written                                     | tui         | Open                                             |
+| ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 
 ---
 
@@ -100,18 +102,6 @@ CI's Crate Publish List job runs `scripts/check-crate-publish-list.sh` and `scri
 **Found:** October 24, 2026 (v0.18.2 release run 40096930376).
 
 `terminate_all_kills_orphaned_grandchild_on_windows` (`engine/crates/bnto/src/context.rs:743`) starts `cmd /c start /b powershell … $PID; Start-Sleep 30` and waits once, `recv_timeout(20 s)`, for PowerShell to print its PID (`:758-759`). On the release's Windows runner PowerShell didn't print in time: `called Result::unwrap() on an Err value: Timeout`. The same commit passed the same job on #743's CI an hour earlier, so the failure is timing, not code. It failed the release's CI Gate. Wait on PowerShell's start with a longer bound, or start a lighter process for the grandchild, so a slow runner can't fail a release.
-
-### ISS-22: The output node's `directory` leaves `{{env.*}}` as a literal folder name
-
-**Found:** October 24, 2026 (evaluating [a feature request](requests/2026-10-24-folder-index.md)).
-
-A recipe with `secrets: [{"key": "SOME_KEY"}]` and an output node `directory: "{{env.SOME_KEY}}"`, run with `SOME_KEY` set:
-
-- `bnto check` passes.
-- `bnto run` exits 0 and prints `1 file written to {{env.SOME_KEY}}/`.
-- The file lands in `./{{env.SOME_KEY}}/note.txt`; the folder `SOME_KEY` names stays empty.
-
-`resolve_effective_output_dir` (`engine/crates/bnto/src/run.rs`) and the TUI's copy (`tui/bridge.rs:247-249`) fill only `{{ctx.*}}` and `{{node.*}}`, and an unknown `{{ctx.*}}` key becomes `""`. So `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`. With `SOME_KEY` unset, the run is refused, but the folder is created first (`progressive_dir`, `run.rs`). Fill every namespace a run has (`env` from declared secrets, as `file-copy`'s `destination` does), refuse any placeholder left over before consent and before any folder is made (as `{{fields.*}}` are refused since #741 and #742), and have `bnto check` flag the ones no run can fill (`{{item.*}}`, a processing step's `{{node.*}}`). ISS-21, the TUI wipe this could have pointed at a real folder, is fixed (#750).
 
 ### ISS-29: Errors on bnto.io go unseen: exception capture is off
 
@@ -213,7 +203,7 @@ In a git worktree, with ISS-9's fix (#756) in place, a staged rule in `eslint.co
 
 **Found:** October 24, 2026 (fixing ISS-21).
 
-In overwrite mode the results screen names `source_dir`, the first selected file's folder, as "the output folder" (`engine/crates/bnto/src/tui/bridge.rs:229`). With files from several folders the label is wrong (the list itself is correct since the ISS-21 fix).
+In overwrite mode the results screen names `source_dir`, the first selected file's folder, as "the output folder" (`engine/crates/bnto/src/tui/bridge.rs:232`). With files from several folders the label is wrong (the list itself is correct since the ISS-21 fix).
 
 - **Fix:** in overwrite mode, say the files were renamed in place, or name each folder.
 - **Regression test:** a screen snapshot of overwrite results with files from two folders.
@@ -233,7 +223,7 @@ The engine refuses an undeclared param before any step runs, for every consumer,
 
 **Found:** October 24, 2026 (second cold review of the ISS-21 fix; reproduced with the CLI, temp `HOME` and `BNTO_HOME`).
 
-A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs:214`) and the TUI both do it. Outside preview and overwrite mode, the TUI bridge's reporter copies each finished iteration's files on the pipeline's thread, into the folder that `resolve_output_dir` (`tui/bridge.rs:213`) resolves and creates: see `progressive_dir` and `channel_reporter`, `tui/bridge/reporter.rs:18-44`. Since the ISS-21 fix (#750), the TUI's results list doesn't show those files. In write mode, an iteration file that a later step renames also stays on disk under its old name.
+A loop with `outputPersistence: "progressive"` copies each iteration's files into the output node's `directory` even when the output is in `message` or `none` mode, which promise to write nothing: `file-list-loop-progressive.bnto.json` with `mode: "message"` and a `directory` left `a.txt` and `b.txt` there. `bnto run` (`progressive_dir`, `run.rs:230`) and the TUI both do it. Outside preview and overwrite mode, the TUI bridge's reporter copies each finished iteration's files on the pipeline's thread, into the folder that `resolve_output_dir` (`tui/bridge.rs:215`) resolves and creates: see `progressive_dir` and `channel_reporter`, `tui/bridge/reporter.rs:18-44`. Since the ISS-21 fix (#750), the TUI's results list doesn't show those files. In write mode, an iteration file that a later step renames also stays on disk under its old name.
 
 - **Fix:** decide what progressive persistence means per mode: either only in write mode, or always, with those files listed. Then make the CLI and the TUI agree.
 - **Regression test:** a progressive loop in message mode with a `directory` leaves the folder untouched (or lists what it wrote), in `bnto run` and the TUI bridge.
@@ -242,7 +232,7 @@ A loop with `outputPersistence: "progressive"` copies each iteration's files int
 
 **Found:** October 24, 2026 (second cold review of the ISS-21 fix).
 
-Since the ISS-21 fix, overwrite results from a picked folder or from several folders are listed, but `OutputFile` drops the path `FileResultMeta` carries. Open still joins `results.output_dir` with the name (`engine/crates/bnto/src/tui/app_helpers/results.rs:11`), and in overwrite mode that's the first selected file's folder (`source_dir`, `tui/bridge.rs:229`). For a picked `photos/` folder it opens `parent/renamed-a.txt`, which doesn't exist. With two folders, both rows read `renamed-a.txt` and both open the first folder's file. Related: ISS-43 (the folder label).
+Since the ISS-21 fix, overwrite results from a picked folder or from several folders are listed, but `OutputFile` drops the path `FileResultMeta` carries. Open still joins `results.output_dir` with the name (`engine/crates/bnto/src/tui/app_helpers/results.rs:11`), and in overwrite mode that's the first selected file's folder (`source_dir`, `tui/bridge.rs:232`). For a picked `photos/` folder it opens `parent/renamed-a.txt`, which doesn't exist. With two folders, both rows read `renamed-a.txt` and both open the first folder's file. Related: ISS-43 (the folder label).
 
 - **Fix:** carry each result's path into `OutputFile`, open that, and show which folder a row is in when names repeat.
 - **Regression test:** an overwrite run over two folders, then Open on each row opens that row's file.
@@ -456,7 +446,7 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 **Found:** October 25, 2026 (cold review of the ISS-25 fix).
 
 - **What happens:** `bnto run watermark-images photo.jpg --yes -o out` exits 1 with `Node 'overlay': param "overlay" (Overlay Image) is required`, and leaves an empty `out/`. A recipe that needs approval asks for it first, then is refused. `bnto dry-run watermark-images photo.jpg` ends with `Run with: bnto run watermark-images <input>`, a command that would be refused, and the run's message doesn't name the `-p` that fills it.
-- **Why:** the check is in the engine's pre-flight (`executor/raw_params.rs`, called from `execute_pipeline`, `executor/mod.rs:193`), which `bnto run` reaches after `check_trust` (`bnto/src/run.rs:78`) and `run_target` (`run.rs:91`). Undeclared params and `validate_raw` refusals have always been checked there too. Unfilled `{{fields.*}}` are refused before consent ("so nobody approves a run the engine would refuse", `run.rs`), and ISS-22 is the same folder-first problem for `{{env.*}}`.
+- **Why:** the check is in the engine's pre-flight (`executor/raw_params.rs`, called from `execute_pipeline`, `executor/mod.rs:193`), which `bnto run` reaches after `check_trust` (`bnto/src/run.rs:85`) and after `progressive_dir` makes the `-o` folder (`run.rs:230-234`). Undeclared params and `validate_raw` refusals have always been checked there too. Unfilled `{{fields.*}}`, inputs and the output folder's placeholders (since the ISS-22 fix) are refused before consent ("so nobody approves a run the engine would refuse", `run.rs:75-83`).
 - **Fix:** have `bnto run` and `bnto dry-run` run the raw-param checks (undeclared, required with no value, `validate_raw`) on the definition with `-p` applied, before consent and before any folder is made, naming the `-p node:param=…` that fills a required one, as `refuse_unfilled` does for fields.
 - **Regression test:** a CLI test: a bundled recipe left with an empty required param is refused before consent, names the `-p`, and creates no `-o` folder. The dry run says so too.
 
@@ -476,3 +466,30 @@ On a recipe page, `result_downloaded` is sent only for the automatic download af
 
 - **Fix:** run the report whatever the restore returns (after it, so the warning lands on the normal screen), then return the restore error, or the run's error first if both failed.
 - **Regression test:** with a restore that fails, the kept-files report still runs.
+
+### ISS-77: The TUI asks to allow a shell recipe's commands for a run it then refuses
+
+**Found:** October 25, 2026 (fixing ISS-22).
+
+`bnto run` checks a run's `{{fields.*}}`, inputs and output folder before it asks to allow a shell recipe's commands (`engine/crates/bnto/src/run.rs:77-85`), so nobody approves a run that is then refused. The TUI asks first: `consent::gate` (`tui/app_helpers/consent.rs:13-20`) decides only whether the recipe is trusted, and the checks run after the user allows, on the bridge thread: inputs and the output folder in `try_run_bridge` (`tui/bridge.rs:121-123`), unfilled fields in the engine's pre-flight. For an untrusted shell recipe whose output folder names an unset secret, or with a field left empty, the TUI shows the consent prompt, and allowing it ends in an error. Nothing runs and no folder is made, so this is a wasted approval, not a safety gap.
+
+- **Fix:** run the same checks before `consent::gate` holds the run (the TUI knows the files and form values then), and show the refusal instead of the prompt. Preparing inputs walks picked folders, so keep it off the update thread (the bridge does it on its own thread today).
+- **Regression test:** an untrusted shell recipe whose output folder reads an undeclared `{{env.*}}` goes straight to the error, with no consent prompt.
+
+### ISS-78: The TUI never fills `{{vars.*}}`: a step gets the text as written
+
+**Found:** October 25, 2026 (cold review of the ISS-22 fix).
+
+Run vars (`--vars` files, `BNTO_VAR_<KEY>`) are the consumer's to fill ([recipe-fields.md](strategy/recipe-fields.md#active-namespaces)). `bnto run` and `bnto dry-run` do (`vars::apply`, `engine/crates/bnto/src/run.rs:274`, `inspect.rs:35`), and refuse an unset key. Nothing under `engine/crates/bnto/src/tui/` calls it, and the engine leaves a `{{vars.*}}` as written (`interpolated_value`, `bnto-core/src/executor/template.rs`, `_ => None`). So a recipe that `bnto run` fills from `BNTO_VAR_DRIVE` runs in the TUI with the literal text `{{vars.Drive}}` in its step's params, and in its output folder it's refused ("has no value") even with `BNTO_VAR_DRIVE` set.
+
+- **Fix:** fill vars in the TUI from `BNTO_VAR_<KEY>` (it has no `--vars` files), or refuse a run with any left, before consent.
+- **Regression test:** a TUI bridge run of a recipe whose step reads `{{vars.X}}`, with `BNTO_VAR_X` set, gets the value; with it unset, the run is refused naming `{{vars.X}}`.
+
+### ISS-79: An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it
+
+**Found:** October 25, 2026 (cold review of the ISS-22 fix).
+
+The ISS-22 fix refuses every `{{…}}` in the output node's `directory` that no run fills, but only closed ones. `fill_output_directory` reads placeholders with the executor's `interpolate`, which keeps an unclosed `{{` as text (`bnto-core/src/executor/interpolate.rs:15-17`), so `directory: "out-{{ctx.date"` names a folder `out-{{ctx.date`. `bnto check` passes it (`Check: PASS (1 recipe)`): its malformed-placeholder finding never sees I/O nodes, since `check_node` returns early for them (`bnto-core/src/check/mod.rs:137-141`).
+
+- **Fix:** refuse an unclosed `{{` in the folder in `fill_output_directory`, and have `bnto check` run its placeholder-form check on the output node's `directory`.
+- **Regression test:** `out-{{ctx.date` is refused by `bnto run` with no folder made, and `bnto check` flags it.

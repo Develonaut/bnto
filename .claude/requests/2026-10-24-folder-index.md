@@ -69,12 +69,12 @@ At base 1024 with GB and 2 decimals, 3000000000 gives `2.79 GB`; with 1 decimal,
   - With `SOME_KEY` unset, the run is refused ("Missing required secrets") but the folder is still created first.
   - An unknown `{{ctx.*}}` key is dropped and other leftovers stay as text: `out-{{ctx.nope}}-{{item.x}}` writes to `out--{{item.x}}/`.
   - The consumer writes with `file-copy` meanwhile, whose `destination` already fills `{{env.*}}` from declared secrets.
-- **Defects found:** [ISS-22](../ISSUES.md#iss-22-the-output-nodes-directory-leaves-env-as-a-literal-folder-name). While reproducing it: [ISS-21](https://github.com/Develonaut/bnto/pull/750), the TUI deleted the contents of a recipe's output folder before every run (fixed in #750).
+- **Defects found:** ISS-22, the output folder's placeholders (fixed). While reproducing it: [ISS-21](https://github.com/Develonaut/bnto/pull/750), the TUI deleted the contents of a recipe's output folder before every run (fixed in #750).
 - **Generic piece:** none; it's a fix.
   - The output directory fills every namespace a run has, and refuses any placeholder left over, as unset `{{vars.*}}` already do and `{{fields.*}}` do since #741 (in the engine) and #742 (before consent).
   - `bnto check` flags the ones no run can fill.
   - ISS-21 was fixed first (#750), so filling `{{env.*}}` can't point the TUI's wipe at a real folder.
-- **Tracked in:** ISSUES.md.
+- **Tracked in:** nothing open; ISS-22 is fixed. With it, `directory: "{{env.SOME_KEY}}"` writes into the folder `SOME_KEY` names.
 
 ## Reply
 

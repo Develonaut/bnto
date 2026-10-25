@@ -3,7 +3,8 @@
 // Walks the nodes the way the executor does (I/O markers skipped, container
 // children entered) and reports unknown node types, params a node's
 // `validate` refuses, malformed `{{…}}` placeholders, `always` on an I/O
-// marker, where it has no effect, and every edge problem at every level.
+// marker, where it has no effect, every edge problem at every level, and
+// placeholders in the output folder no run can fill.
 // A param left out for `bnto run -p` to give is a note, not a problem.
 
 mod edges;
@@ -15,6 +16,7 @@ mod when;
 use crate::executor::field_scope::{FieldValues, declare};
 use crate::executor::resolve::resolve_fields;
 use crate::missing_fields::missing_fields;
+use crate::output_directory::output_directory_findings;
 use crate::pipeline::{PipelineDefinition, PipelineNode, is_container_node, is_io_node};
 use crate::processor::NodeProcessor;
 use crate::registry::NodeRegistry;
@@ -76,9 +78,9 @@ pub fn check_pipeline(definition: &PipelineDefinition, registry: &NodeRegistry) 
         platforms: os_scope::PLATFORMS.to_vec(),
     };
     check_level(&root, &scope, &recipe, &mut report);
-    report
-        .findings
-        .extend(undeclared_field_findings(&definition.nodes));
+    let findings = &mut report.findings;
+    findings.extend(undeclared_field_findings(&definition.nodes));
+    findings.extend(output_directory_findings(definition));
     report
 }
 

@@ -72,23 +72,22 @@ pub fn run_recipe(
     // Vars fill in before consent (SEC-29), so the approval is pinned to the
     // values that run, and the prompt shows them rather than the template.
     let raw_json = resolve_vars(&raw_json, flags.vars, &verdict);
-    // Before consent, so nobody approves a run the engine would refuse.
+    // Fields, inputs and the output folder are all checked before consent,
+    // so nobody approves a run the engine would refuse (ISS-22).
     verdict.or_fail(refuse_unfilled(&raw_json, param_overrides), "Error:");
-    let given = DryRunHint::new(recipe_path, param_overrides, flags.vars);
-    check_trust(&raw_json, &given, flags.yes, catalog);
     let prepared = input::prepare_inputs(&raw_json, inputs, param_overrides);
     let mut prepared = verdict.or_fail(prepared, "Error:");
     let limited = run_limit::apply(&prepared.definition_json, flags.timeout);
     let (definition_json, time_limit) = verdict.or_fail(limited, "Error:");
     prepared.definition_json = definition_json;
+    let (ctx, target) = run_context(output_override, flags, time_limit, &prepared, &verdict);
+    let given = DryRunHint::new(recipe_path, param_overrides, flags.vars);
+    check_trust(&raw_json, &given, flags.yes, catalog);
     print_run_banner(recipe_path, &raw_json, &prepared);
     let stats = run_stats(recipe_path, &prepared, param_overrides, catalog);
     log_run_start(logger, &stats);
 
     let start = Instant::now();
-    let ctx = context::NativeContext::current_dir().map(|c| c.with_dry_run(flags.dry_run));
-    let ctx = verdict.or_fail(ctx, "Error:");
-    let target = run_target(output_override, flags.dry_run, time_limit, &prepared, &ctx);
     // `ctx` lives to the end of this function: its scratch dir holds the
     // temp files the output step copies from, and dropping it deletes them.
     match execute(prepared, &ctx, &target, logger, &verdict) {
@@ -187,6 +186,22 @@ fn log_run_start(logger: &Arc<dyn Logger>, stats: &RunStats) {
     });
 }
 
+/// The run's context and where it writes. An output folder with a
+/// placeholder nothing fills ends the run here, before the folder is made.
+fn run_context(
+    output_override: Option<&str>,
+    flags: RunFlags,
+    time_limit: Option<u64>,
+    prepared: &input::PreparedInput,
+    verdict: &RunVerdict,
+) -> (context::NativeContext, RunTarget) {
+    let ctx = context::NativeContext::current_dir().map(|c| c.with_dry_run(flags.dry_run));
+    let ctx = verdict.or_fail(ctx, "Error:");
+    let target = run_target(output_override, flags.dry_run, time_limit, prepared, &ctx);
+    let target = verdict.or_fail(target, "Error:");
+    (ctx, target)
+}
+
 /// Resolve the output mode and directory for this run.
 fn run_target(
     output_override: Option<&str>,
@@ -194,19 +209,19 @@ fn run_target(
     time_limit: Option<u64>,
     prepared: &input::PreparedInput,
     ctx: &context::NativeContext,
-) -> RunTarget {
+) -> Result<RunTarget, String> {
     let def_json = &prepared.definition_json;
     let def = serde_json::from_str::<bnto_core::PipelineDefinition>(def_json).ok();
-    RunTarget {
+    Ok(RunTarget {
         mode: def
             .as_ref()
             .map_or_else(|| "write".to_string(), bnto_core::resolve_output_mode),
         // Priority chain: explicit --output > recipe directory param > default "."
-        output_dir: resolve_effective_output_dir(output_override, def_json, ctx, &prepared.files),
+        output_dir: resolve_effective_output_dir(output_override, def_json, ctx, &prepared.files)?,
         dry_run,
         time_limit,
         label: def.as_ref().and_then(run_message::output_label),
-    }
+    })
 }
 
 /// Directory the progress reporter writes iteration output to, creating it
@@ -273,19 +288,20 @@ fn fail_run(logger: &Arc<dyn Logger>, e: &bnto_core::BntoError, verdict: &RunVer
 
 /// Resolve the effective output directory using the priority chain:
 /// 1. Explicit `--output` flag (highest priority)
-/// 2. Recipe's output node `directory` parameter (with {{ctx.*}} + {{node.*}} templates resolved)
+/// 2. Recipe's output node `directory` parameter, every placeholder filled
+///    (an `Err` names each one nothing fills)
 /// 3. Default: current directory (".")
 fn resolve_effective_output_dir(
     output_override: Option<&str>,
     definition_json: &str,
     process_ctx: &dyn bnto_core::ProcessContext,
     files: &[bnto_core::PipelineFile],
-) -> String {
+) -> Result<String, String> {
     if let Some(dir) = output_override {
-        return dir.to_string();
+        return Ok(dir.to_string());
     }
-    crate::recipe_output_dir::recipe_output_dir(definition_json, process_ctx, files)
-        .unwrap_or_else(|| ".".to_string())
+    let dir = crate::recipe_output_dir::recipe_output_dir(definition_json, process_ctx, files)?;
+    Ok(dir.unwrap_or_else(|| ".".to_string()))
 }
 
 /// Print `<recipe> with N files...` (or the input mode label).
