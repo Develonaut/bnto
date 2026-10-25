@@ -7,7 +7,7 @@
 - **Add an issue when you find one,** even mid-task: verify it first (a file and line, a command, a log), then add a row and a section. Don't fix it in an unrelated PR (single-concern rule).
 - **Pick one up** by setting its status to `In progress (<branch>)`. A larger fix gets its own plan.
 - **The PR that fixes an issue deletes it** from this file. Git history keeps the record.
-- **IDs never get reused.** The next one is **ISS-82**.
+- **IDs never get reused.** The next one is **ISS-84**.
 - **Status values:** `Open`, `Scheduled` (link to the plan that owns it), `In progress (<branch>)`.
 
 | ID     | Issue                                                                                                 | Area        | Status                                           |
@@ -39,7 +39,6 @@
 | ISS-56 | A dry run's command whose program path needs quotes won't paste into PowerShell                       | cli         | Open                                             |
 | ISS-57 | `errorCategory` reports `out_of_memory` for any message containing `oom`                              | core        | Open                                             |
 | ISS-58 | Inside a loop, a batch node's `{{item.*}}` can't read a key added in the iteration                    | engine      | Open                                             |
-| ISS-59 | **Inside a loop, `file-copy` can still replace an input another iteration reads**                     | engine      | Open                                             |
 | ISS-60 | A batch node can't see the run's time limit and keeps starting work past it                           | engine      | Open                                             |
 | ISS-64 | A dry run's `Run with: bnto run …` footer drops the dry run's `-p` and `--vars`                       | cli         | Open                                             |
 | ISS-65 | Nothing lints the root `scripts/` folder                                                              | tooling     | Open                                             |
@@ -58,6 +57,8 @@
 | ISS-79 | An unclosed `{{` in the output folder becomes part of its name, and `bnto check` passes it            | cli         | Open                                             |
 | ISS-80 | The paginated hook sample runs `transform` on a whole page; the real transform maps one doc           | docs        | Open                                             |
 | ISS-81 | Three web docs show dot-notation components the flat-exports rule bans                                | docs        | Open                                             |
+| ISS-82 | Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds         | engine      | Open                                             |
+| ISS-83 | A `file-copy` whose source is gone says it failed to write the destination                            | engine      | Open                                             |
 
 ---
 
@@ -309,17 +310,6 @@ A per-file node inside a loop gets `{{item.*}}` from the file's current metadata
 - **Fix:** for a node that fills items itself (`resolves_items`), inside a loop, fill only the loop's keys and leave the rest as written, so the node fills them from each file's metadata. Not for `shell-run`, which also declares `resolves_items` but fills only inside `each` groups: a leftover `{{item.*}}` elsewhere in its command must still be refused.
 - **Regression test:** inside a loop, `file-inspect` then `file-copy` with `destination: "<dir>/{{item.extension}}"` copies each file into its extension's folder.
 
-### ISS-59: Inside a loop, `file-copy` can still replace an input another iteration reads
-
-**Found:** October 25, 2026 (cold review of the ISS-52 fix; reproduced by the reviewer). **Severity: data loss.**
-
-The ISS-52 fix refuses a `file-copy` over a file another file of its batch is read from. Inside an explicit `loop`, each iteration hands the node one file, so it never sees the others. `F/a.txt` = `AAAA`, `F/b.txt` = `BBBB`, and a loop holding `file-rename` (`a` → `b`) and `file-copy` into `F` with `conflict: overwrite`, run on both files, still leaves `b.txt` = `AAAA`. The same recipe without the loop, flat or with `settings.iteration: "auto"`, is refused. `main` behaved the same before the fix, so this isn't a regression.
-
-**The same loss happens without a loop** (reproduced October 25, 2026 on `12617b3f`). A graph level holds files for branches that run later (`executor/routed.rs`). With edges `input → file-filter (a.txt) → file-rename → file-copy` and `input → output`, the copy replaces `F/b.txt`, and the output writes `b.txt` = `AAAA`. A finished iteration's file is exposed too, not only later ones: the loop given `b`, then `a` also leaves `AAAA`. Design options: [iss-59-options.md](decisions/iss-59-options.md).
-
-- **Fix:** give the node the run's other inputs to check against: the loop's whole batch, or every `Path` the run holds. That needs a way for the executor to pass more than the iteration's files to a node (a `ProcessContext` method, say). Or refuse an `overwrite`/`newer` copy over any file the run read as an input.
-- **Regression test:** the repro above inside a `loop` keeps `BBBB` (or is refused before anything is copied).
-
 ### ISS-60: A batch node can't see the run's time limit and keeps starting work past it
 
 **Found:** October 25, 2026 (second cold review of the ISS-52 fix, which makes `file-copy` a batch node).
@@ -494,3 +484,21 @@ The `usePaginatedHook` sample in [core-api.md](scopes/backend/core-api.md) ("Con
 
 - **Fix:** rewrite the examples, prose and the JSDoc comment with flat prefixed names (`PageLayoutHeader`, `SidebarContent`, `<ScaleIn>`), as gotchas.md shows.
 - **Regression test:** none; a docs fix.
+
+### ISS-82: Inside a loop or a branch, `file-move`/`file-delete` fail partway on a file another one holds
+
+**Found:** October 25, 2026 (designing the ISS-59 fix; see [file-copy-held-files.md](decisions/file-copy-held-files.md), rows 7 to 12).
+
+Flat, `file-move` refuses a batch that holds one file twice before anything moves ("in the run more than once"), and `file-delete` deletes it once and counts the rest as missing. Inside a `loop`, each iteration hands the node one file, so neither sees the other. `bnto run` with `F/a.txt` given twice and `loop { file-move into O }` moves it in iteration 1, then fails iteration 2 with "`F/a.txt` doesn't exist". `loop { file-copy to O, file-delete }` on the same input deletes it in iteration 1, then fails iteration 2's copy. Across a fan-out the same happens to a branch that runs later (engine-execution.md's "Watch for"). Nothing is lost beyond what the recipe asked for, but the run stops partway instead of being refused up front.
+
+- **Fix:** have `file-move` and `file-delete` ask `ProcessContext::held_elsewhere` about each source before acting, and refuse, before anything moves or is deleted, a source a later iteration or branch still reads, as `file-copy` does for destinations.
+- **Regression test:** the two loop recipes above are refused before anything moves or is deleted, naming the file.
+
+### ISS-83: A `file-copy` whose source is gone says it failed to write the destination
+
+**Found:** October 25, 2026 (designing the ISS-59 fix).
+
+`file-copy` maps any error from `FileData::copy_to` to "Failed to write `<destination>`: …" (`engine/crates/bnto-file/src/copy.rs`, `write_copy`). When the source is missing, `std::fs::copy` fails to open it, and the message blames the destination: `loop { file-copy to O (rename), file-delete }` run on `F/a.txt` twice fails with "Failed to write `O/a_1.txt`: No such file or directory (os error 2)", though `O` exists and `F/a.txt` is the file that's gone.
+
+- **Fix:** check the source first (or tell the two apart in the error) and say "`<source>` doesn't exist" when it's the source.
+- **Regression test:** copying a `Path` whose file is gone fails naming the source, not the destination.

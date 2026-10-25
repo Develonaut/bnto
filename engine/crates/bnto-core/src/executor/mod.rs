@@ -18,6 +18,9 @@
 //   - `field_scope.rs` — the fields a node sees: its containers', then its own
 //   - `template.rs` — multi-namespace template resolution (env, ctx, node, item)
 //   - `time_limit.rs` — the run's time limit, checked before work starts
+//   - `node_events.rs` — a node's started / completed / failed events
+//   - `held.rs` — files the run holds outside the running step (loops, branches)
+//   - `run_scope.rs` — a batch node's context: the consumer's plus the run's
 //
 // Pure Rust — no WASM deps. Works with `cargo test` natively.
 // The WASM bridge (`bnto-wasm/src/execute.rs`) handles JS type conversions.
@@ -32,9 +35,11 @@ mod field_values;
 mod flow;
 mod flow_closing;
 mod guard;
+mod held;
 pub(crate) mod interpolate;
 mod leaf_output;
 pub mod loop_config;
+mod node_events;
 pub mod node_outputs;
 mod node_reporter;
 mod primitive;
@@ -43,12 +48,14 @@ mod reserved_tokens;
 pub mod resolve;
 mod result;
 mod routed;
+mod run_scope;
 mod segments;
 pub mod template;
 mod time_limit;
 mod unfilled_items;
 
 use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::context::ProcessContext;
 use crate::errors::BntoError;
@@ -59,7 +66,10 @@ use crate::pipeline::{
 use crate::registry::NodeRegistry;
 use chain::run_node_chain;
 use closing::ChainFailure;
+use held::HeldFiles;
+use node_events::{emit_node_completed, emit_node_failure, emit_node_started};
 use node_outputs::{CountKeys, NodeOutputs, NodeRecords};
+use run_scope::WriteLog;
 use time_limit::TimeLimit;
 
 #[cfg(test)]
@@ -103,6 +113,10 @@ struct PipelineContext<'a, F: Fn() -> u64 + Copy> {
     node_outputs: NodeOutputs<'a>,
     /// Each node's count keys, which merges of its records add up.
     count_keys: &'a CountKeys,
+    /// Files the enclosing loops and graph levels hold for later steps.
+    held: Option<Arc<HeldFiles>>,
+    /// Every file the run's nodes wrote so far (`record_write`).
+    writes: WriteLog,
 }
 
 impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
@@ -122,6 +136,8 @@ impl<F: Fn() -> u64 + Copy> PipelineContext<'_, F> {
             parent_node_id: self.parent_node_id.clone(),
             node_outputs: self.node_outputs.layer(),
             count_keys: self.count_keys,
+            held: self.held.clone(),
+            writes: Rc::clone(&self.writes),
         }
     }
 }
@@ -249,6 +265,8 @@ fn build_root_context<'a, F: Fn() -> u64 + Copy + 'static>(
         parent_node_id: None,
         node_outputs: NodeOutputs::root(seed),
         count_keys,
+        held: None,
+        writes: WriteLog::default(),
     }
 }
 
@@ -302,21 +320,6 @@ fn fail_pipeline<F: Fn() -> u64 + Copy>(
 
 // --- Internal: Node Dispatch ---
 
-/// Emit NodeFailed and return the error. The run's PipelineFailed comes
-/// later, from `fail_pipeline`, once the closing steps have run.
-fn emit_node_failure<F: Fn() -> u64 + Copy>(
-    ctx: &PipelineContext<F>,
-    node_id: &str,
-    error: BntoError,
-) -> BntoError {
-    ctx.reporter.emit(PipelineEvent::NodeFailed {
-        node_id: node_id.to_string(),
-        error: error.to_string(),
-        parent_node_id: ctx.parent_node_id.clone(),
-    });
-    error
-}
-
 /// Execute a single node — dispatches to primitive or container handler.
 ///
 /// Emits NodeStarted, delegates to the appropriate handler, then emits
@@ -349,36 +352,6 @@ fn execute_node<F: Fn() -> u64 + Copy>(
         }
         Err(error) => Err(emit_node_failure(ctx, &node.id, error)),
     }
-}
-
-fn emit_node_started<F: Fn() -> u64 + Copy>(
-    ctx: &PipelineContext<F>,
-    node: &PipelineNode,
-    node_index: usize,
-    total_nodes: usize,
-) {
-    ctx.reporter.emit(PipelineEvent::NodeStarted {
-        node_id: node.id.clone(),
-        node_index,
-        total_nodes,
-        node_type: node.node_type.clone(),
-        parent_node_id: ctx.parent_node_id.clone(),
-    });
-}
-
-fn emit_node_completed<F: Fn() -> u64 + Copy>(
-    ctx: &PipelineContext<F>,
-    node_id: &str,
-    node_start: u64,
-    files_processed: usize,
-) {
-    let duration_ms = (ctx.now_ms)() - node_start;
-    ctx.reporter.emit(PipelineEvent::NodeCompleted {
-        node_id: node_id.to_string(),
-        duration_ms,
-        files_processed,
-        parent_node_id: ctx.parent_node_id.clone(),
-    });
 }
 
 fn dispatch_node<F: Fn() -> u64 + Copy>(

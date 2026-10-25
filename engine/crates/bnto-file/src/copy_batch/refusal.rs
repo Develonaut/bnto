@@ -1,10 +1,11 @@
 // The check that runs before any copy: a copy that would replace a file
-// another file of the batch is read from refuses the whole batch.
+// another file of the batch is read from, or one a later step of the run
+// still reads (another loop iteration's, a branch's), refuses the whole batch.
 
 use std::path::{Path, PathBuf};
 
-use bnto_core::BntoError;
 use bnto_core::processor::{FileData, NodeInput};
+use bnto_core::{BntoError, ProcessContext};
 
 use super::PerFile;
 use crate::copy::{conflict_mode, dest_path};
@@ -16,21 +17,44 @@ use crate::relocate;
 const HINT: &str = "Copy into another folder, or use conflict \"skip\" or \"rename\".";
 
 /// Refuse the batch, before any copy, when a copy would replace a file
-/// another file of the batch is read from. A dry run is refused the same.
-pub(crate) fn refuse_replacing_read_files(files: &[PerFile]) -> Result<(), BntoError> {
+/// another file of the batch, or a later step of the run, reads. A dry run
+/// is refused the same. The refusal names the copies the run made before it.
+pub(crate) fn refuse_replacing_read_files(
+    files: &[PerFile],
+    ctx: &dyn ProcessContext,
+) -> Result<(), BntoError> {
     let inputs: Vec<&NodeInput> = files.iter().map(|f| &f.input).collect();
-    let conflicts = conflicts(&inputs);
+    let conflicts = conflicts(&inputs, ctx);
     if conflicts.is_empty() {
         return Ok(());
     }
     let listing = relocate::listing(&conflicts, ("conflict", "conflicts"));
-    Err(BntoError::InvalidInput(format!(
-        "File copy refused, nothing copied: {listing}\n  {HINT}"
+    Err(BntoError::InvalidInput(refused(
+        &listing,
+        &ctx.recorded_writes(),
     )))
 }
 
+/// The refusal: "nothing copied" when the run has copied nothing yet, else
+/// the copies earlier steps (a loop's earlier iterations) already made.
+fn refused(listing: &str, earlier: &[PathBuf]) -> String {
+    if earlier.is_empty() {
+        return format!("File copy refused, nothing copied: {listing}\n  {HINT}");
+    }
+    // Indented once more, so the paths sit under their heading.
+    let copied: Vec<String> = earlier
+        .iter()
+        .map(|p| format!("  {}", p.display()))
+        .collect();
+    let copied = relocate::listing(&copied, ("file", "files"));
+    format!(
+        "File copy refused, nothing more copied: {listing}\n  \
+         Copied earlier in this run: {copied}\n  {HINT}"
+    )
+}
+
 /// One line per copy that would replace a file another file is read from.
-fn conflicts(inputs: &[&NodeInput]) -> Vec<String> {
+fn conflicts(inputs: &[&NodeInput], ctx: &dyn ProcessContext) -> Vec<String> {
     let dests: Vec<PathBuf> = inputs.iter().map(|input| dest_path(input)).collect();
     let replaced: Vec<Option<&Path>> = inputs
         .iter()
@@ -38,15 +62,16 @@ fn conflicts(inputs: &[&NodeInput]) -> Vec<String> {
         .map(|(input, dest)| replaces(input, dest).then_some(dest.as_path()))
         .collect();
     let sources: Vec<&FileData> = inputs.iter().map(|input| &input.data).collect();
-    let line = |(i, readers): (usize, &Vec<usize>)| {
-        let reader = inputs[*readers.first()?];
-        Some(conflict(inputs[i], &dests[i], reader))
+    let in_batch = readers_of(&sources, &replaced);
+    let line = |(i, dest): (usize, &Option<&Path>)| {
+        let dest = (*dest)?;
+        let reader = match in_batch[i].first() {
+            Some(&j) => inputs[j].filename.clone(),
+            None => ctx.held_elsewhere(dest)?,
+        };
+        Some(conflict(inputs[i], dest, &reader))
     };
-    readers_of(&sources, &replaced)
-        .iter()
-        .enumerate()
-        .filter_map(line)
-        .collect()
+    replaced.iter().enumerate().filter_map(line).collect()
 }
 
 /// Whether copying `input` to `dest` replaces the file there: `overwrite`
@@ -64,15 +89,14 @@ fn replaces(input: &NodeInput, dest: &Path) -> bool {
 }
 
 /// One refusal line: the destination, what would be copied over it, and the
-/// file read from it.
-fn conflict(input: &NodeInput, dest: &Path, reader: &NodeInput) -> String {
+/// name of the file read from it.
+fn conflict(input: &NodeInput, dest: &Path, reader: &str) -> String {
     let from = match &input.data {
         FileData::Path(src) => src.display().to_string(),
         _ => input.filename.clone(),
     };
     format!(
-        "{}: copying {from} over it would replace the file {} is read from",
+        "{}: copying {from} over it would replace the file {reader} is read from",
         dest.display(),
-        reader.filename
     )
 }

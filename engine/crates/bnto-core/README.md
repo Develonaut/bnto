@@ -92,6 +92,7 @@ src/
 ├── definition.rs         # Document-shape types for .bnto.json (authoring view)
 ├── definition_schema.rs  # JSON Schema generator for .bnto.json
 ├── slash_path.rs         # slash_path(): relative path -> `/`-joined output name on every OS
+├── file_stamp.rs         # stamp(): a file's size and mtime, to find one file under two paths
 ├── required_params.rs    # missing_required(): required params left out (no default) or blank; pre-flight refuses them
 ├── time.rs               # rfc3339_utc() / parse_rfc3339_utc(): epoch ms <-> RFC 3339 UTC
 ├── control/              # Control processors: assert (fail the run when a comparison does not hold), report (print a templated line)
@@ -104,8 +105,11 @@ src/
     ├── closing.rs        # After a failure: skip nodes, run `always` closing steps
     ├── primitive.rs      # Leaf node execution
     ├── container.rs      # Container execution (loop, group, parallel)
+    ├── held.rs           # Files a loop or graph level holds for later steps (held_elsewhere)
+    ├── run_scope.rs      # A batch node's ProcessContext: the consumer's, plus the run's held files and writes
+    ├── node_events.rs    # NodeStarted / NodeCompleted / NodeFailed events
     ├── time_limit.rs     # The run's time limit, checked before each node, file and iteration
-    └── tests/            # 13 test modules, 45+ tests
+    └── tests/            # 25 test modules
 ```
 
 ## Development
@@ -123,7 +127,7 @@ task wasm:lint
 
 ## Testing
 
-Extensive executor tests in `src/executor/tests/` (13 modules, 45+ test functions):
+Extensive executor tests in `src/executor/tests/` (25 modules):
 
 - `basic.rs` - simple pipeline execution
 - `containers.rs` - loop/group/parallel node semantics
@@ -132,3 +136,4 @@ Extensive executor tests in `src/executor/tests/` (13 modules, 45+ test function
 - `progress.rs` - event emission ordering
 - `recipes.rs` - full recipe integration tests
 - `sub_pipelines.rs` - nested pipeline execution
+- `held_files.rs` - what a batch node sees of the run: files held by other loop iterations and branches, writes so far

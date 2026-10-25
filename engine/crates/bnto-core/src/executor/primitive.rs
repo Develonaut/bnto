@@ -13,6 +13,7 @@ use crate::renamed::with_node_type_hint;
 use super::field_scope::FieldValues;
 use super::leaf_output::LeafOutput;
 use super::node_reporter::build_node_reporter;
+use super::run_scope::RunScope;
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
 
 /// Resolve the processor for a node, returning a descriptive error on miss.
@@ -312,7 +313,8 @@ fn process_source<F: Fn() -> u64 + Copy>(
     Ok(out.into_result(&node.id, 0))
 }
 
-/// Process all files at once through a batch processor.
+/// Process all files at once through a batch processor. Its context adds
+/// what the run knows that the batch can't see (`run_scope.rs`).
 #[expect(clippy::too_many_lines)]
 fn process_batch<F: Fn() -> u64 + Copy>(
     ctx: &PipelineContext<F>,
@@ -350,7 +352,7 @@ fn process_batch<F: Fn() -> u64 + Copy>(
     };
 
     let progress = build_node_reporter(ctx, &node.id);
-    let output = processor.process_batch(batch_input, &progress, ctx.process_ctx)?;
+    let output = processor.process_batch(batch_input, &progress, &RunScope::of(ctx))?;
 
     emit_file_progress(
         ctx,

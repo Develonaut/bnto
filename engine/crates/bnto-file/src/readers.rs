@@ -8,13 +8,9 @@
 
 use std::collections::HashMap;
 use std::path::Path;
-use std::time::SystemTime;
 
+use bnto_core::file_stamp::{Stamp, stamp};
 use bnto_core::processor::FileData;
-
-/// Size and modified time: one file has one stamp, whatever path reaches
-/// it, so only sources sharing a destination's stamp need the identity check.
-pub type Stamp = (u64, Option<SystemTime>);
 
 /// For each write `i`, the other files whose source is the file at
 /// `replaced[i]`, the file write `i` would replace. `None` (the write replaces
@@ -46,12 +42,6 @@ fn sources_by_stamp(sources: &[&FileData]) -> HashMap<Stamp, Vec<usize>> {
         }
     }
     by_stamp
-}
-
-/// The stamp of the file at `path`, following links; `None` when nothing is there.
-pub fn stamp(path: &Path) -> Option<Stamp> {
-    let meta = std::fs::metadata(path).ok()?;
-    Some((meta.len(), meta.modified().ok()))
 }
 
 #[cfg(test)]

@@ -3,6 +3,7 @@
 // Loop runs children per-file; group/parallel run on the full batch.
 
 use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::errors::BntoError;
 use crate::events::{PipelineEvent, ProgressOutputFile};
@@ -10,6 +11,7 @@ use crate::pipeline::{IterationMode, PipelineDefinition, PipelineFile};
 
 use super::field_scope::FieldValues;
 use super::flow::{level_flow_of, run_level};
+use super::held::HeldFiles;
 use super::loop_config::{OnErrorStrategy, OutputPersistence, parse_loop_config};
 use super::node_outputs::{NodeRecords, merge_records};
 use super::{NodeExecutionResult, PipelineContext, PipelineNodeRef};
@@ -82,6 +84,10 @@ fn inside<'a, F: Fn() -> u64 + Copy>(
 /// When `onError: "continue"`, failed iterations are skipped with a warning
 /// instead of killing the entire loop. If ALL iterations fail, the loop fails.
 ///
+/// Each iteration sees the loop's other files as held (`held.rs`): the ones
+/// still to come, and every finished iteration's results, which may still
+/// read from their sources.
+///
 /// Iterations are independent: children read the output metadata recorded
 /// before the loop and by earlier siblings in their own iteration, never by
 /// another iteration. Nodes after the loop read every successful iteration's
@@ -103,6 +109,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
     let mut total_processed: usize = 0;
     let mut warnings: Vec<String> = Vec::new();
     let mut records = NodeRecords::new();
+    let held = HeldFiles::holding(ctx.held.as_ref(), &files);
 
     for (i, file) in files.into_iter().enumerate() {
         ctx.check_time_limit()?;
@@ -114,7 +121,8 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
             total_iterations,
         });
 
-        let loop_ctx = build_loop_context(ctx, node, &fields, &file);
+        held.release(i);
+        let loop_ctx = build_loop_context(ctx, node, &fields, &held, &file);
         let result = execute_sub_pipeline(&loop_ctx, sub_definition, vec![file], file_offset + i);
 
         match result {
@@ -124,6 +132,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                 total_processed += exec_result.files_processed;
                 warnings.extend(exec_result.warnings);
                 merge_records(&mut records, exec_result.node_outputs, ctx.count_keys);
+                held.hold(&exec_result.output_files);
 
                 let progress_files =
                     build_progress_files(&config.output_persistence, &exec_result.output_files);
@@ -165,15 +174,7 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
                     }
                 }
 
-                // Emit zero-file completion so TUI progress tracking stays consistent.
-                ctx.reporter.emit(PipelineEvent::IterationCompleted {
-                    node_id: container_id.to_string(),
-                    iteration: i,
-                    total_iterations,
-                    duration_ms: iter_duration,
-                    files_produced: 0,
-                    output_files: Vec::new(),
-                });
+                emit_empty_completion(ctx, container_id, i, total_iterations, iter_duration);
             }
         }
     }
@@ -192,6 +193,25 @@ fn execute_loop<F: Fn() -> u64 + Copy>(
         warnings,
         node_outputs: records,
     })
+}
+
+/// A failed iteration's IterationCompleted, with no files, so TUI progress
+/// tracking stays consistent.
+fn emit_empty_completion<F: Fn() -> u64 + Copy>(
+    ctx: &PipelineContext<F>,
+    node_id: &str,
+    iteration: usize,
+    total_iterations: usize,
+    duration_ms: u64,
+) {
+    ctx.reporter.emit(PipelineEvent::IterationCompleted {
+        node_id: node_id.to_string(),
+        iteration,
+        total_iterations,
+        duration_ms,
+        files_produced: 0,
+        output_files: Vec::new(),
+    });
 }
 
 /// Convert iteration output files to `ProgressOutputFile` for event emission.
@@ -217,11 +237,13 @@ fn build_progress_files(
     }
 }
 
-/// Build a PipelineContext for a single loop iteration.
+/// Build a PipelineContext for a single loop iteration, seeing the loop's
+/// fields and its `held` files.
 fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
     ctx: &'a PipelineContext<'a, F>,
     container: PipelineNodeRef,
     fields: &Rc<FieldValues>,
+    held: &Arc<HeldFiles>,
     file: &PipelineFile,
 ) -> PipelineContext<'a, F> {
     let item_data = if file.metadata.is_empty() {
@@ -231,6 +253,7 @@ fn build_loop_context<'a, F: Fn() -> u64 + Copy>(
     };
     PipelineContext {
         loop_item: item_data,
+        held: Some(Arc::clone(held)),
         ..inside(ctx, container, fields)
     }
 }
